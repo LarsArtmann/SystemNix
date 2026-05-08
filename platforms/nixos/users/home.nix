@@ -276,11 +276,12 @@ in {
         "x-scheme-handler/terminal" = ["kitty.desktop"];
         "application/x-terminal-emulator" = ["kitty.desktop"];
 
-        # Text files (use terminal editors for now)
-        "text/plain" = ["kitty.desktop"];
-        "text/markdown" = ["kitty.desktop"];
-        "application/json" = ["kitty.desktop"];
-        "application/x-yaml" = ["kitty.desktop"];
+        # Text / code files
+        "text/plain" = ["zed.desktop"];
+        "text/markdown" = ["zed.desktop"];
+        "text/x-yaml" = ["zed.desktop"];
+        "application/json" = ["zed.desktop"];
+        "application/x-yaml" = ["zed.desktop"];
 
         # Images
         "image/avif" = ["helium.desktop"];
