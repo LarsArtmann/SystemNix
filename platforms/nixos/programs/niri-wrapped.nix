@@ -21,6 +21,11 @@ in {
     programs.niri.settings = {
       prefer-no-csd = true;
 
+      spawn-at-startup = [
+        {command = ["kitty" "-e" "sudo" "btop"];}
+        {command = ["kitty" "-e" "nvtop"];}
+      ];
+
       screenshot-path = "~/Pictures/screenshots/%Y-%m-%d %H-%M-%S.png";
 
       xwayland-satellite.path = lib.getExe pkgs.xwayland-satellite;
@@ -436,13 +441,13 @@ in {
       awww-wallpaper = {
         Unit = {
           Description = "Set wallpaper (self-healing via PartOf)";
-          After = ["awww-daemon.service"];
+          After = ["graphical-session.target"];
           PartOf = ["awww-daemon.service" "graphical-session.target"];
         };
         Service = {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = "${wallpaper-set}/bin/wallpaper-set restore ${wallpaperDir}";
+          ExecStart = "${wallpaper-set}/bin/wallpaper-set restore";
         };
         Install.WantedBy = ["graphical-session.target"];
       };
