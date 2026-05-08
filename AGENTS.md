@@ -392,6 +392,8 @@ AI agent task tracking protocol:
 | BTRFS dual layout | Root uses zstd compression, `/data` uses zstd:3 with async discard. Docker lives on `/data`. |
 | Niri BindsTo patched | Upstream niri.service uses `BindsTo=graphical-session.target` — we replace with `Wants=` in `niri-config.nix`. `BindsTo` kills niri when the target stops during `just switch`; `Wants` pulls in the target (activating waybar etc.) without the hard binding. |
 | awww-daemon BrokenPipe | Upstream awww 0.12.0 panics on BrokenPipe at `daemon/src/main.rs:712:32` (Wayland disconnect during suspend/output hotplug). `Restart=always` covers it. Never use `BindsTo` for wallpaper services — use `PartOf` for restart propagation. |
+| awww-wallpaper ordering cycle | `awww-wallpaper` must NOT have `After=["awww-daemon.service"]` — it creates a cycle: `wallpaper → daemon → graphical-session → wallpaper`. The wallpaper-set script has its own 60s wait loop for the daemon socket, so `After=["graphical-session.target"]` is sufficient. |
+| Niri portal config | Niri ships `niri-portals.conf` with `default=gnome;gtk`. Without a GNOME session, the Settings interface times out and `color-scheme=dark` never reaches browsers. Override via `xdg.portal.config.niri.default = ["gtk" "wlr"]`. |
 
 ### lib/ Shared Helpers
 
