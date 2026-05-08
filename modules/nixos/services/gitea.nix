@@ -327,7 +327,11 @@ _: {
             StartLimitIntervalSec = lib.mkForce 300;
           };
           serviceConfig =
-            serviceDefaults {}
+            harden {
+              ProtectHome = lib.mkForce false;
+              NoNewPrivileges = false;
+            }
+            // serviceDefaults {}
             // {
               WatchdogSec = lib.mkForce "30";
             };

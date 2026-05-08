@@ -66,7 +66,6 @@ _: {
           "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
           "gitea.${domain}" = protectedVHost "gitea" config.services.gitea.settings.server.HTTP_PORT;
           "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-          "photomap.${domain}" = protectedVHost "photomap" config.services.photomap.port;
           "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
           "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
           "tasks.${domain}" = {
@@ -105,6 +104,7 @@ _: {
           // {
             OOMScoreAdjust = lib.mkForce (-500);
             AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
+            WatchdogSec = "30";
           };
       };
     };
