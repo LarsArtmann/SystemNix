@@ -381,6 +381,16 @@
       golangciLintAutoConfigureOverlay
       mrSyncOverlay
       jscpdOverlay
+      # d2 unconditionally depends on libgbm/playwright-driver (Linux-only).
+      # On Darwin, libgbm → mesa → libdrm fails the platform check.
+      # Override via callPackage with stubs so d2 evaluates cleanly.
+      (_final: prev:
+        prev.lib.optionalAttrs prev.stdenv.isDarwin {
+          d2 = prev.callPackage (prev.path + "/pkgs/by-name/d2/d2/package.nix") {
+            libgbm = prev.runCommand "libgbm-stub" {} "mkdir $out";
+            playwright-driver = {browsers = prev.runCommand "playwright-stub" {} "mkdir $out";};
+          };
+        })
     ];
 
     # Linux-only overlays (custom packages that only make sense on NixOS)
