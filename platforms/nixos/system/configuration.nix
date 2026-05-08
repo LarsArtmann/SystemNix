@@ -169,6 +169,9 @@
         enable = true;
       };
 
+      # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
+      openseo.enable = true;
+
       # Centralized AI model storage (/data/ai/)
       ai-models.enable = true;
 

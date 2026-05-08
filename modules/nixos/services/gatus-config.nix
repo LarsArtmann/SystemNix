@@ -155,6 +155,13 @@ _: {
                 insecure = true;
               };
             }
+            {
+              name = "OpenSEO";
+              group = "Productivity";
+              url = "http://localhost:${toString config.services.openseo.port}";
+              interval = "5m";
+              conditions = ["[STATUS] == 200"];
+            }
           ];
         };
       };

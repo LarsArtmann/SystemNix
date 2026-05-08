@@ -83,6 +83,7 @@ _: {
             '';
           };
           "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
+          "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
         };
       };
 

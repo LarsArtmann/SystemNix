@@ -297,6 +297,26 @@ manifest-restart:
 manifest-backup:
     sudo systemctl start manifest-db-backup && echo "Backup complete (/var/lib/manifest/backup/)" || echo "Backup failed"
 
+# OpenSEO SEO suite status
+[group('services')]
+[linux]
+openseo-status:
+    systemctl status openseo --no-pager 2>/dev/null | head -15
+    @echo ""
+    @echo "Dashboard: https://seo.home.lan"
+
+# OpenSEO logs (last N lines)
+[group('services')]
+[linux]
+openseo-logs N="200":
+    journalctl -u openseo --no-pager -n {{ N }}
+
+# Restart OpenSEO
+[group('services')]
+[linux]
+openseo-restart:
+    sudo systemctl restart openseo
+
 # Sync GitHub repos to Gitea mirror
 [group('services')]
 [linux]

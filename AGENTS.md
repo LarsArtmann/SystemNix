@@ -33,7 +33,8 @@ SystemNix/
 │   ├── photomap.nix             # AI photo exploration
 │   ├── signoz.nix               # Observability (traces/metrics/logs)
 │   ├── sops.nix                 # Secrets management
-│   └── taskchampion.nix         # Taskwarrior sync server
+│   ├── taskchampion.nix         # Taskwarrior sync server
+│   └── openseo.nix              # SEO suite (rank tracking, keywords, backlinks)
 │
 ├── pkgs/                        # Custom packages
 │   ├── aw-watcher-utilization.nix # ActivityWatch system utilization watcher (Python)
@@ -425,6 +426,7 @@ Caddy reverse-proxy ports are derived from service module options — NOT hardco
 | TaskChampion | `config.services.taskchampion-sync-server.port` |
 | ComfyUI | `config.services.comfyui.port` |
 | Gatus | `config.services.gatus-config.port` (via nixpkgs `settings.web.port`) |
+| OpenSEO | `config.services.openseo.port` |
 
 **Rule:** When adding a new service behind caddy, always define a `port` option in the service module and reference it in `caddy.nix`. Never hardcode port numbers in caddy. For nixpkgs modules, use the module's own port option (e.g., `settings.web.port`).
 
@@ -578,6 +580,44 @@ emeet-pixy probe            # Re-detect device
 emeet-pixy sync             # Sync state from camera
 emeet-pixy audio            # Cycle audio mode
 ```
+
+### OpenSEO — Self-Hosted SEO Suite (`modules/nixos/services/openseo.nix`)
+
+Declarative NixOS module for [OpenSEO](https://github.com/every-app/open-seo) — self-hosted alternative to Ahrefs/Semrush.
+
+| Component | Path | Purpose |
+|-----------|------|---------|
+| NixOS module | `modules/nixos/services/openseo.nix` | flake-parts module — docker-compose systemd wrapper |
+| Secrets | `platforms/nixos/secrets/openseo.yaml` | sops-encrypted DataForSEO API key |
+| Virtual host | `seo.home.lan` | Caddy reverse proxy (forward auth protected) |
+
+**Architecture:**
+- Docker container via inline `docker-compose.yml` (follows `manifest.nix` pattern)
+- Image: `ghcr.io/every-app/open-seo:latest`
+- SQLite data at `/var/lib/openseo/data` (Docker volume `openseo_data`)
+- Auth: `local_noauth` — protected behind Authelia forward auth via Caddy
+- DataForSEO API key via sops template → env file at service start
+
+**Module options (`services.openseo`):**
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `enable` | false | Enable OpenSEO service |
+| `port` | 3001 | HTTP port |
+| `imageTag` | "latest" | Docker image tag |
+
+**Sops secrets (`openseo.yaml`):**
+- `dataforseo_api_key` — DataForSEO API key (base64 `login:password`)
+
+**Cost model:** Pay-as-you-go via DataForSEO. Light use $2–5/mo, moderate $10–20/mo.
+
+```bash
+just openseo-status    # Show service status
+just openseo-restart   # Restart service
+just openseo-logs      # View logs
+```
+
+---
 
 ### Hermes AI Agent Gateway (`modules/nixos/services/hermes.nix`)
 

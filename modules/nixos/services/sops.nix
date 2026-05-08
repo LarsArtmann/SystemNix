@@ -97,8 +97,8 @@ in {
             hermes_firecrawl_api_key = "firecrawl_api_key";
           }
           // mkSecrets "openseo.yaml" {
-            owner = "openseo";
-            group = "openseo";
+            owner = "root";
+            group = "root";
             restartUnits = ["openseo.service"];
           } ["dataforseo_api_key"];
 
@@ -128,8 +128,8 @@ in {
         };
 
         templates."openseo-env" = {
-          owner = "openseo";
-          group = "openseo";
+          owner = "root";
+          group = "root";
           mode = "0400";
           restartUnits = ["openseo.service"];
           content = ''

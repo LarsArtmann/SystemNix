@@ -183,6 +183,12 @@ _: {
                 icon: homepage.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "dash"}
+            - OpenSEO:
+                href: ${svcUrl "seo"}
+                description: SEO Suite (Rank Tracking, Keywords, Backlinks)
+                icon: search.png
+                statusStyle: dot
+                siteMonitor: ${svcUrl "seo"}
       '';
 
       systemd.tmpfiles.rules = [
