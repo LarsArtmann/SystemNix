@@ -102,39 +102,41 @@ in {
             restartUnits = ["openseo.service"];
           } ["dataforseo_api_key"];
 
-        templates."gitea-sync.env" = {
-          owner = primaryUser;
-          group = "users";
-          content = ''
-            GITEA_TOKEN=${config.sops.placeholder.gitea_token}
-            GITHUB_TOKEN=${config.sops.placeholder.github_token}
-            GITHUB_USER=${config.sops.placeholder.github_user}
-          '';
-        };
+        templates = {
+          "gitea-sync.env" = {
+            owner = primaryUser;
+            group = "users";
+            content = ''
+              GITEA_TOKEN=${config.sops.placeholder.gitea_token}
+              GITHUB_TOKEN=${config.sops.placeholder.github_token}
+              GITHUB_USER=${config.sops.placeholder.github_user}
+            '';
+          };
 
-        templates."hermes-env" = {
-          owner = "hermes";
-          group = "hermes";
-          mode = "0400";
-          restartUnits = ["hermes.service"];
-          content = ''
-            DISCORD_BOT_TOKEN=${config.sops.placeholder.hermes_discord_bot_token}
-            GLM_API_KEY=${config.sops.placeholder.hermes_glm_api_key}
-            MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
-            XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
-            FAL_KEY=${config.sops.placeholder.hermes_fal_key}
-            FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
-          '';
-        };
+          "hermes-env" = {
+            owner = "hermes";
+            group = "hermes";
+            mode = "0400";
+            restartUnits = ["hermes.service"];
+            content = ''
+              DISCORD_BOT_TOKEN=${config.sops.placeholder.hermes_discord_bot_token}
+              GLM_API_KEY=${config.sops.placeholder.hermes_glm_api_key}
+              MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
+              XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
+              FAL_KEY=${config.sops.placeholder.hermes_fal_key}
+              FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
+            '';
+          };
 
-        templates."openseo-env" = {
-          owner = "root";
-          group = "root";
-          mode = "0400";
-          restartUnits = ["openseo.service"];
-          content = ''
-            DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
-          '';
+          "openseo-env" = {
+            owner = "root";
+            group = "root";
+            mode = "0400";
+            restartUnits = ["openseo.service"];
+            content = ''
+              DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
+            '';
+          };
         };
       };
     };
