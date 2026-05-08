@@ -10,7 +10,6 @@ _: {
     harden = import ../../../lib/systemd.nix {inherit lib;};
     serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
 
-    whisperUiPort = 7860;
     whisperModelsDir = config.services.ai-models.paths.whisper;
 
     # Docker compose for Whisper ASR - Gradio UI mode
@@ -30,7 +29,7 @@ _: {
           restart: unless-stopped
           command: app.py
           ports:
-            - '${toString whisperUiPort}:7860'
+            - '${toString cfg.whisperPort}:7860'
           environment:
             - MODEL=${cfg.whisperModel}
             - HSA_OVERRIDE_GFX_VERSION=11.5.1
@@ -54,6 +53,12 @@ _: {
         type = lib.types.str;
         default = "openai/whisper-large-v3";
         description = "Whisper model to use";
+      };
+
+      whisperPort = lib.mkOption {
+        type = lib.types.port;
+        default = 7860;
+        description = "Port for Whisper ASR Gradio WebUI";
       };
 
       openFirewall = lib.mkOption {
@@ -127,7 +132,7 @@ _: {
       networking.firewall = lib.mkIf cfg.openFirewall {
         allowedTCPPorts = [
           7880
-          whisperUiPort
+          cfg.whisperPort
         ];
         allowedUDPPortRanges = [
           {
@@ -145,7 +150,7 @@ _: {
         };
         "whisper.${cfg.domain}" = {
           extraConfig = ''
-            reverse_proxy localhost:${toString whisperUiPort}
+            reverse_proxy localhost:${toString cfg.whisperPort}
           '';
         };
       };

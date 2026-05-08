@@ -92,7 +92,7 @@ _: {
             {
               name = "Ollama";
               group = "AI";
-              url = "http://localhost:11434/api/tags";
+              url = "http://localhost:${toString config.services.ollama.port}/api/tags";
               interval = "60s";
               conditions = ["[STATUS] == 200"];
             }
@@ -106,14 +106,14 @@ _: {
             {
               name = "Node Exporter";
               group = "Monitoring";
-              url = "http://localhost:9100/metrics";
+              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
               interval = "60s";
               conditions = ["[STATUS] == 200"];
             }
             {
               name = "cAdvisor";
               group = "Monitoring";
-              url = "http://localhost:9110/metrics";
+              url = "http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics";
               interval = "60s";
               conditions = ["[STATUS] == 200"];
             }
@@ -127,33 +127,23 @@ _: {
             {
               name = "DNS Blocker";
               group = "Infrastructure";
-              url = "http://localhost:9090/health";
+              url = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
               interval = "30s";
               conditions = ["[STATUS] == 200"];
             }
             {
               name = "Whisper ASR";
               group = "AI";
-              url = "http://localhost:7860";
+              url = "http://localhost:${toString config.services.voice-agents.whisperPort}";
               interval = "60s";
               conditions = ["[STATUS] == 200"];
             }
             {
               name = "LiveKit";
               group = "AI";
-              url = "tcp://127.0.0.1:7880";
+              url = "tcp://127.0.0.1:${toString config.services.livekit.settings.port}";
               interval = "60s";
               conditions = ["[CONNECTED] == true"];
-            }
-            {
-              name = "Docker Daemon";
-              group = "Infrastructure";
-              url = "http://localhost:9110/metrics";
-              interval = "60s";
-              conditions = ["[STATUS] == 200"];
-              client = {
-                insecure = true;
-              };
             }
             {
               name = "OpenSEO";

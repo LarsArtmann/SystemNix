@@ -234,7 +234,7 @@ SigNoz is the sole observability platform (replaces Prometheus + Grafana). Full 
 
 ### Gatus Health Check Monitor
 
-Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wrapping the **nixpkgs `services.gatus` module**. Monitors 18 endpoints across all services with SQLite storage.
+Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wrapping the **nixpkgs `services.gatus` module**. Monitors 17 endpoints across all services with SQLite storage.
 
 | Component | Port | Purpose |
 |-----------|------|---------|
@@ -254,9 +254,8 @@ Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wr
 | Development | Gitea |
 | Media | Immich |
 | Monitoring | SigNoz, Manifest, Node Exporter, cAdvisor |
-| Productivity | TaskChampion, Twenty CRM |
+| Productivity | TaskChampion, Twenty CRM, OpenSEO |
 | AI | Ollama, ComfyUI, Whisper ASR, LiveKit |
-| Infrastructure | Docker Daemon |
 
 ### NixOS DNS Blocker
 

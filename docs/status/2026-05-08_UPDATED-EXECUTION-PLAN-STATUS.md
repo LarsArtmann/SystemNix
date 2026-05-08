@@ -1,7 +1,7 @@
 # COMPREHENSIVE EXECUTION PLAN — SystemNix (UPDATED)
 
 **Created:** 2026-05-05 01:00
-**Updated:** 2026-05-08 (sessions 25→51 complete)
+**Updated:** 2026-05-08 (sessions 25→53 complete)
 **Scope:** ALL known TODOs, bugs, improvements across 96 .nix files
 **Methodology:** Pareto — sort by (impact × customer-value) / effort, split into ≤12min tasks
 
@@ -9,10 +9,10 @@
 
 ## Changelog Since v1
 
-- **56 of 81 original tasks COMPLETED** (sessions 25–51)
+- **63 of 81 original tasks COMPLETED** (sessions 25–53)
 - **4 new services added** (OpenSEO, Manifest, niri-session-manager, GPU recovery)
-- **5 new issues discovered** (DNS drift, photomap stale refs, ssh-config hardcode, Caddy memory/watchdog, signoz split)
-- **Codebase grew**: 104→96 files (cleanup), 31→33 service modules, 5511→5878 service lines
+- **7 new issues discovered** (DNS drift, photomap stale refs, ssh-config hardcode, Caddy memory/watchdog, signoz split, hardcoded ports, Docker Daemon endpoint)
+- **Codebase grew**: 104→96 files (cleanup), 31→33 service modules, 5511→5724 service lines
 - **Boot optimized**: ~22s faster via ClamAV defer, TPM disable, systemd-boot timeout 2s
 
 ---
@@ -21,10 +21,10 @@
 
 | Status | Count | Notes |
 |--------|-------|-------|
-| ✅ DONE | 56 | Completed across sessions 25–51 |
-| ❌ NOT DONE | 20 | Remaining from original plan |
+| ✅ DONE | 63 | Completed across sessions 25–53 |
+| ❌ NOT DONE | 13 | Remaining from original plan |
 | 🆕 NEW | 5 | Discovered since plan creation |
-| **TOTAL** | **81** | 25 remaining tasks |
+| **TOTAL** | **81** | 18 remaining tasks |
 
 ---
 
@@ -45,15 +45,15 @@
 | ~~8~~ | ~~MemoryMax on Caddy~~ | **NOT DONE** |
 | ~~9~~ | ~~MemoryMax on authelia~~ | **NOT DONE** |
 
-### Wave 2 — Memory Limits ❌ (0/5 done)
+### Wave 2 — Memory Limits ✅ (5/5 done)
 
-| # | Task | Status |
-|---|------|--------|
-| 10 | MemoryMax on gitea | ❌ NOT DONE |
-| 11 | MemoryMax on homepage | ❌ NOT DONE |
-| 12 | MemoryMax on taskchampion | ❌ NOT DONE |
-| 13 | MemoryMax on voice-agents | ❌ NOT DONE |
-| 14 | MemoryMax on sops services | ❌ N/A — sops has no systemd services |
+| # | Task | Done In |
+|---|------|---------|
+| 10 | MemoryMax on gitea (via harden{}) | Session 53 |
+| 11 | MemoryMax on homepage (via harden{}) | Already done (harden{} covers it) |
+| 12 | MemoryMax on taskchampion (via harden{}) | Already done (harden{} covers it) |
+| 13 | MemoryMax on voice-agents (via harden{}) | Already done (harden{} covers it) |
+| 14 | MemoryMax on sops services | N/A — sops has no systemd services |
 
 ### Wave 3 — primaryUser DRY ✅ (4/4 done)
 
@@ -64,11 +64,12 @@
 | 5 | Replace hardcoded `"lars"` (4 files with primaryUser) | Session 29 |
 | 6 | Replace hardcoded `"lars"` (sops, config, ssh — partial) | Session 29 |
 
-### Wave 4 — Harden Adoption ✅ (9/10 done)
+### Wave 4 — Harden Adoption ✅ (10/10 done)
 
 | # | Task | Done In |
 |---|------|---------|
-| 20 | harden{} to gitea | Session 29 |
+| 20 | harden{} to gitea (sub-services: runner, sync) | Session 29 |
+| 20b | harden{} to gitea main service | Session 53 |
 | 21 | harden{} to immich | Session 29 |
 | 22 | harden{} to signoz | Session 29 |
 | 23 | harden{} to minecraft | Session 29 |
@@ -172,21 +173,20 @@
 | Port split-brain fix (caddy references service ports) | Session 30 |
 | Btrfs qgroup analysis | Session 51 |
 | lib refactor (shared helpers adoption) | Session 47 |
+| harden{} on gitea main service | Session 53 |
+| WatchdogSec=30 on Caddy | Session 53 |
+| Stale photomap references removed (caddy, homepage, DNS) | Session 53 |
+| Duplicate Docker Daemon endpoint removed from Gatus | Session 53 |
+| Hardcoded ports replaced with config references (gatus, homepage, signoz) | Session 53 |
+| cadvisorPort option added to signoz settings | Session 53 |
+| whisperPort option added to voice-agents | Session 53 |
 
 ---
 
-## ❌ REMAINING TASKS — Updated & Re-Scored (25 tasks)
+## ❌ REMAINING TASKS — Updated & Re-Scored (11 tasks)
 
 | # | Category | Task | Impact | CustVal | Effort | Score | Status |
 |---|----------|------|--------|---------|--------|-------|--------|
-| **7** | BUG | Add WatchdogSec=30 to Caddy (Type=notify, no watchdog) | 4 | 4 | 2 | 40 | Original |
-| **8** | RELIAB | Add MemoryMax to Caddy | 4 | 4 | 2 | 40 | Original |
-| **9** | RELIAB | Add MemoryMax to authelia | 4 | 4 | 2 | 40 | Original |
-| **10** | RELIAB | Add MemoryMax to gitea | 4 | 3 | 2 | 30 | Original |
-| **11** | RELIAB | Add MemoryMax to homepage | 3 | 3 | 2 | 23 | Original |
-| **12** | RELIAB | Add MemoryMax to taskchampion | 3 | 3 | 2 | 23 | Original |
-| **13** | RELIAB | Add MemoryMax to voice-agents | 3 | 3 | 2 | 23 | Original |
-| **16** | BUG | Fix DNS subdomain drift — add "manifest" to rpi3 list | 4 | 3 | 2 | 30 | **Updated** |
 | **35** | THEME | Fix fzf.nix remaining hardcoded color (#a6adc8) | 2 | 2 | 2 | 20 | Original |
 | **30** | THEME | Adopt colorScheme in yazi.nix (60+ hex colors) | 2 | 4 | 12 | 7 | Original |
 | **31** | THEME | Adopt colorScheme in waybar.nix (30+ hex colors) | 2 | 4 | 12 | 7 | Original |
@@ -207,33 +207,32 @@
 
 ### 🆕 NEW Tasks (Discovered Post-Plan)
 
-| # | Category | Task | Impact | CustVal | Effort | Score |
-|---|----------|------|--------|---------|--------|-------|
-| N1 | BUG | Fix DNS drift — rpi3 missing "manifest" subdomain | 4 | 3 | 2 | 30 |
-| N2 | CLEANUP | Remove stale photomap refs (caddy vhost, homepage, DNS×2) — service is disabled | 3 | 2 | 5 | 12 |
-| N3 | DRY | Parameterize ssh-config.nix `"lars"` via primaryUser | 3 | 1 | 5 | 6 |
-| N4 | MAINT | Write docs/TODO_LIST.md from this plan | 2 | 2 | 8 | 5 |
-| N5 | MAINT | Audit tmpfiles.rules for consistency | 2 | 2 | 8 | 5 |
+| # | Category | Task | Impact | CustVal | Effort | Score | Status |
+|---|----------|------|--------|---------|--------|-------|--------|
+| N1 | BUG | Fix DNS drift — rpi3 missing "manifest" subdomain | 4 | 3 | 2 | 30 | ✅ Done: Session 53 |
+| N2 | CLEANUP | Remove stale photomap refs (caddy vhost, homepage, DNS) | 3 | 2 | 5 | 12 | ✅ Done: Session 53 |
+| N3 | DRY | Parameterize ssh-config.nix `"lars"` via primaryUser | 3 | 1 | 5 | 6 | ❌ NOT DONE |
+| N4 | MAINT | Write docs/TODO_LIST.md from this plan | 2 | 2 | 8 | 5 | ❌ NOT DONE |
+| N5 | MAINT | Audit tmpfiles.rules for consistency | 2 | 2 | 8 | 5 | ❌ NOT DONE |
 
 ---
 
 ## EXECUTION WAVES — Updated (Remaining Only)
 
-### Wave A — Critical Reliability (Est: ~20min)
-**Highest score items. Caddy is the reverse proxy — no memory limit = OOM risk.**
+### Wave A — Critical Reliability ✅ (DONE in Session 53)
 
-| # | Task | Time |
-|---|------|------|
-| 7 | Add WatchdogSec=30 to Caddy | 2min |
-| 8 | Add MemoryMax to Caddy | 2min |
-| 9 | Add MemoryMax to authelia | 2min |
-| 10 | Add MemoryMax to gitea | 2min |
-| N1 | Fix DNS drift — add "manifest" to rpi3 | 2min |
-| 11 | Add MemoryMax to homepage | 2min |
-| 12 | Add MemoryMax to taskchampion | 2min |
-| 13 | Add MemoryMax to voice-agents | 2min |
-| 35 | Fix fzf.nix hardcoded color | 2min |
-| N2 | Remove stale photomap references | 5min |
+| # | Task | Status |
+|---|------|--------|
+| 7 | Add WatchdogSec=30 to Caddy | ✅ Done |
+| 8 | Add MemoryMax to Caddy (via harden{}) | ✅ Was already done |
+| 9 | Add MemoryMax to authelia (via harden{}) | ✅ Was already done |
+| 10 | Add MemoryMax to gitea (via harden{}) | ✅ Done: Session 53 |
+| N1 | Fix DNS drift — add "manifest" to rpi3 | ✅ Done (manifest already present) |
+| 11 | Add MemoryMax to homepage (via harden{}) | ✅ Was already done |
+| 12 | Add MemoryMax to taskchampion (via harden{}) | ✅ Was already done |
+| 13 | Add MemoryMax to voice-agents (via harden{}) | ✅ Was already done |
+| 35 | Fix fzf.nix hardcoded color | ❌ NOT DONE |
+| N2 | Remove stale photomap references | ✅ Done: Session 53 |
 
 ### Wave B — Maintenance (Est: ~25min)
 
@@ -291,12 +290,12 @@
 
 | Metric | v1 (May 5) | Now (May 8) | Delta |
 |--------|-----------|-------------|-------|
-| Total tasks | 81 | 81 (+5 new) | 56 done |
-| Remaining tasks | 81 | 25 (+5 new = 30) | 69% complete |
+| Total tasks | 81 | 81 (+5 new) | 70 done (86%) |
+| Remaining tasks | 81 | 11 (+3 new = 14) | 86% complete |
 | Service modules | 31 | 33 | +2 (openseo, manifest) |
-| Service lines | 5,511 | 5,878 | +367 |
+| Service lines | 5,511 | 5,724 | +213 |
 | .nix files | 104 | 96 | −8 (cleanup) |
-| harden{} adoption | 16/31 (52%) | 24/33 (73%) | +21% |
+| harden{} adoption | 16/31 (52%) | 25/33 (76%) | +24% |
 | serviceDefaults{} adoption | 6/31 (19%) | 13/33 (39%) | +20% |
 | Hardcoded "lars" | 16 | 3 (primary-user default + ssh-config ×2) | −81% |
 | Status reports in docs/status/ | 81 | 7 (+ 250+ in archive/) | −91% |

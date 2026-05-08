@@ -141,6 +141,11 @@ in {
                 description = "Data directory for the query service (runtime path, not copied to store)";
               };
             };
+            cadvisorPort = lib.mkOption {
+              type = lib.types.port;
+              default = 9110;
+              description = "Port for cAdvisor container metrics";
+            };
             collector = {
               port = lib.mkOption {
                 type = lib.types.port;
@@ -600,7 +605,7 @@ in {
           requires = ["docker.service"];
           serviceConfig =
             {
-              ExecStart = "${pkgs.cadvisor}/bin/cadvisor --listen_ip=127.0.0.1 --port=9110 --docker_only=true";
+              ExecStart = "${pkgs.cadvisor}/bin/cadvisor --listen_ip=127.0.0.1 --port=${toString cfg.settings.cadvisorPort} --docker_only=true";
               NoNewPrivileges = lib.mkForce false;
             }
             // harden {}
@@ -656,11 +661,11 @@ in {
                   scrape_configs = [
                     {
                       job_name = "node-exporter";
-                      static_configs = [{targets = ["127.0.0.1:9100"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString config.services.prometheus.exporters.node.port}"];}];
                     }
                     {
                       job_name = "cadvisor";
-                      static_configs = [{targets = ["127.0.0.1:9110"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString cfg.settings.cadvisorPort}"];}];
                     }
                     {
                       job_name = "caddy";
@@ -668,11 +673,11 @@ in {
                     }
                     {
                       job_name = "authelia";
-                      static_configs = [{targets = ["127.0.0.1:9959"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString config.services.authelia-config.port}"];}];
                     }
                     {
                       job_name = "dnsblockd";
-                      static_configs = [{targets = ["127.0.0.1:9090"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString config.services.dns-blocker.statsPort}"];}];
                       metrics_path = "/metrics";
                     }
                     {

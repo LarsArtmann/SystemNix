@@ -105,11 +105,11 @@ _: {
                 statusStyle: dot
                 siteMonitor: ${svcUrl "immich"}/api/server-info/ping
             - DNS Blocker:
-                href: http://localhost:9090/stats
+                href: http://localhost:${toString config.services.dns-blocker.statsPort}/stats
                 description: DNS Block Stats
                 icon: shield.png
                 statusStyle: dot
-                siteMonitor: http://localhost:9090/health
+                siteMonitor: http://localhost:${toString config.services.dns-blocker.statsPort}/health
 
         - Development:
             - Gitea:
@@ -122,7 +122,7 @@ _: {
                 description: Local AI Inference
                 icon: ollama.png
                 statusStyle: dot
-                siteMonitor: http://localhost:11434/api/tags
+                siteMonitor: http://localhost:${toString config.services.ollama.port}/api/tags
 
         - Monitoring:
             - SigNoz:
@@ -141,17 +141,17 @@ _: {
                 description: System Metrics (CPU, RAM, Disk, Network)
                 icon: prometheus.png
                 statusStyle: dot
-                siteMonitor: http://localhost:9100/metrics
+                siteMonitor: http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics
             - cAdvisor:
                 description: Container Metrics
                 icon: docker.png
                 statusStyle: dot
-                siteMonitor: http://localhost:9110/metrics
+                siteMonitor: http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics
             - dnsblockd:
                 description: DNS Block Page Server
                 icon: shield.png
                 statusStyle: dot
-                siteMonitor: http://localhost:9090/metrics
+                siteMonitor: http://localhost:${toString config.services.dns-blocker.statsPort}/metrics
             - EMEET PIXY:
                 description: Webcam Auto-Management Daemon
                 icon: camera.png
