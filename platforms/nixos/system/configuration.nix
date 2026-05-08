@@ -63,7 +63,14 @@
     xdg.portal = {
       enable = true;
       extraPortals = [pkgs.xdg-desktop-portal-gtk];
-      config.common.default = ["*"];
+      config = {
+        common.default = ["gtk" "wlr"];
+        niri = {
+          default = ["gtk" "wlr"];
+          "org.freedesktop.impl.portal.Screenshot" = ["wlr"];
+          "org.freedesktop.impl.portal.ScreenCast" = ["wlr"];
+        };
+      };
     };
 
     # Boot configuration is now handled by ./boot.nix module
