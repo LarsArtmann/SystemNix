@@ -28,6 +28,7 @@ _: {
               DATAFORSEO_API_KEY: ''${DATAFORSEO_API_KEY}
               ALLOWED_HOST: seo.${domain}
               VITE_SHOW_DEVTOOLS: "false"
+              NODE_OPTIONS: "--max-old-space-size=3072"
             ports:
               - "127.0.0.1:${toString cfg.port}:${toString cfg.port}"
             volumes:
@@ -39,7 +40,7 @@ _: {
               - no-new-privileges:true
             cap_drop:
               - ALL
-            mem_limit: 1g
+            mem_limit: 2g
             pids_limit: 100
             logging:
               driver: json-file
