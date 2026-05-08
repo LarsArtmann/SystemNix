@@ -39,7 +39,7 @@ _: {
               - no-new-privileges:true
             cap_drop:
               - ALL
-            mem_limit: 512m
+            mem_limit: 1g
             pids_limit: 100
             logging:
               driver: json-file
@@ -90,7 +90,7 @@ _: {
             KillMode = "process";
           }
           // harden {
-            MemoryMax = "1G";
+            MemoryMax = "2G";
             ReadWritePaths = [stateDir];
             ProtectHome = false;
             NoNewPrivileges = false;
