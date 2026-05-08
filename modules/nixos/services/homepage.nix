@@ -104,12 +104,6 @@ _: {
                 icon: immich.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "immich"}/api/server-info/ping
-            - PhotoMapAI:
-                href: ${svcUrl "photomap"}
-                description: CLIP Embedding Vector Map
-                icon: network-map.png
-                statusStyle: dot
-                siteMonitor: ${svcUrl "photomap"}
             - DNS Blocker:
                 href: http://localhost:9090/stats
                 description: DNS Block Stats
