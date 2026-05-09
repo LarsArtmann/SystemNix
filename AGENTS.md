@@ -383,6 +383,7 @@ AI agent task tracking protocol:
 | Darwin HM user | Must define `users.users.larsartmann.home` in `platforms/darwin/default.nix` — Home Manager requires it |
 | Different relative paths | Darwin home.nix uses `../common/`, NixOS uses `../../common/` due to directory depth |
 | Darwin overlays | Darwin uses `sharedOverlays` directly (no Linux-only overlays). perSystem applies the same shared + Linux-only overlays. No Go overlay — uses nixpkgs default. |
+| d2 Darwin overlay | d2 unconditionally depends on `libgbm`/`playwright-driver` (Linux-only). A Darwin-only overlay in `sharedOverlays` re-instantiates d2 via `callPackage` with stub packages. Do NOT remove this overlay — d2 will fail to evaluate on Darwin without it. See commit `524be5ab`. |
 | NixOS overlays separate | NixOS adds `niri.overlays.niri`, `dnsblockdOverlay`, and Python overrides on top of the shared ones |
 | SigNoz built from source | SigNoz is built from source (Go 1.25), not from a pre-built package. Takes significant build time. |
 | crush-config doesn't follow nixpkgs | The crush-config input intentionally does NOT follow nixpkgs (no `inputs.nixpkgs.follows`) |
