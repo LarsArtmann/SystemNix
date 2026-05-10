@@ -88,7 +88,7 @@ _: {
               OLLAMA_NUM_PARALLEL = "2";
               OLLAMA_KV_CACHE_TYPE = "q8_0";
               OLLAMA_KEEP_ALIVE = "1h";
-              PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.95";
+              PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45";
             };
         };
 
