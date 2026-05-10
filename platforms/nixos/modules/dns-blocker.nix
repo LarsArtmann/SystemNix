@@ -161,6 +161,7 @@ in {
       settings = {
         server = {
           interface = ["0.0.0.0" "::0"];
+          do-ip6 = false;
           access-control = [
             "127.0.0.0/8 allow"
             "::1/128 allow"
