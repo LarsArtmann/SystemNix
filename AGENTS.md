@@ -395,6 +395,7 @@ AI agent task tracking protocol:
 | awww-daemon BrokenPipe | Upstream awww 0.12.0 panics on BrokenPipe at `daemon/src/main.rs:712:32` (Wayland disconnect during suspend/output hotplug). `Restart=always` covers it. Never use `BindsTo` for wallpaper services — use `PartOf` for restart propagation. |
 | awww-wallpaper ordering cycle | `awww-wallpaper` must NOT have `After=["awww-daemon.service"]` — it creates a cycle: `wallpaper → daemon → graphical-session → wallpaper`. The wallpaper-set script has its own 60s wait loop for the daemon socket, so `After=["graphical-session.target"]` is sufficient. |
 | Niri portal config | Niri ships `niri-portals.conf` with `default=gnome;gtk`. Without a GNOME session, the Settings interface times out and `color-scheme=dark` never reaches browsers. Override via `xdg.portal.config.niri.default = ["gtk" "wlr"]`. |
+| Unbound do-ip6 | evo-x2 has no global IPv6 (link-local only). Unbound defaults `do-ip6=yes` when kernel IPv6 is enabled, causing it to prefer IPv6 root servers → all queries SERVFAIL. `do-ip6 = false` is set in both `dns-blocker.nix` and `rpi3/default.nix`. Do NOT remove these — any new unbound instance must also set `do-ip6 = false`. |
 
 ### lib/ Shared Helpers
 

@@ -120,6 +120,17 @@ _: {
             {
               name = "DNS Resolver";
               group = "Infrastructure";
+              url = "127.0.0.1";
+              dns = {
+                query-name = "google.com";
+                query-type = "A";
+              };
+              interval = "60s";
+              conditions = ["[DNS_RCODE] == NOERROR"];
+            }
+            {
+              name = "DNS Resolver TCP";
+              group = "Infrastructure";
               url = "tcp://127.0.0.1:53";
               interval = "60s";
               conditions = ["[CONNECTED] == true"];

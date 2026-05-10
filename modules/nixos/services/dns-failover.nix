@@ -51,9 +51,9 @@ _: {
         openFirewall = true;
 
         vrrpScripts.chk_unbound = {
-          script = "${pkgs.procps}/bin/pidof unbound";
-          interval = 2;
-          fall = 2;
+          script = "${pkgs.bind.dnsutils}/bin/host google.com 127.0.0.1 > /dev/null 2>&1";
+          interval = 5;
+          fall = 3;
           rise = 2;
         };
 
