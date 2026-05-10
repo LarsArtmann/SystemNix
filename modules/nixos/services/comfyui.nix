@@ -15,7 +15,7 @@ _: {
     rocmEnv =
       rocm.env
       // {
-        PYTORCH_HIP_ALLOC_CONF = "garbage_collection_threshold:0.6,max_split_size_mb:128,per_process_memory_fraction:0.95";
+        PYTORCH_HIP_ALLOC_CONF = "garbage_collection_threshold:0.6,max_split_size_mb:128,per_process_memory_fraction:0.50";
         TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL = "1";
         TORCH_COMPILE_DISABLE = "1";
         PYTHONDONTWRITEBYTECODE = "1";

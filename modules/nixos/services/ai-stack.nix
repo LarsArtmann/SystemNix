@@ -127,7 +127,6 @@ _: {
 
         environment.sessionVariables = {
           OLLAMA_HOST = "127.0.0.1:11434";
-          PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.95";
         };
       }
 
