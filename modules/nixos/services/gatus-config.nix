@@ -5,9 +5,7 @@ _: {
     ...
   }: let
     cfg = config.services.gatus-config;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
-    serviceTypes = import ../../../lib/types.nix lib;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
   in {
     options.services.gatus-config = {
       enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";

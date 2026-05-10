@@ -5,8 +5,7 @@ _: {
     ...
   }: let
     cfg = config.services.taskchampion-config;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
   in {
     options.services.taskchampion-config = {
       enable = lib.mkEnableOption "TaskChampion sync server with SystemNix configuration";

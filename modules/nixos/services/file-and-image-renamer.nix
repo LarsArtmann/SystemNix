@@ -7,7 +7,7 @@ _: {
   }: let
     cfg = config.services.file-and-image-renamer;
     inherit (config.users) primaryUser;
-    sd = import ../../../lib/systemd/service-defaults.nix lib;
+    sd = import ../../../lib/default.nix lib;
   in {
     options.services.file-and-image-renamer = {
       enable = lib.mkEnableOption "File and Image Renamer — AI-powered screenshot renaming watcher";

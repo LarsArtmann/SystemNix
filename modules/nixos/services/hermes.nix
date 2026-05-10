@@ -5,8 +5,7 @@
     lib,
     ...
   }: let
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
     cfg = config.services.hermes;
     hermesPkg = let
       # Upstream hermes-agent has a stale npmDepsHash in nix/tui.nix.
@@ -40,7 +39,6 @@
       pkgs'.hermes-agent;
     sopsEnvPath = config.sops.templates."hermes-env".path;
     oldStateDirs = ["/home/lars/.hermes" "/var/lib/hermes"];
-    serviceTypes = import ../../../lib/types.nix lib;
 
     mergeEnvScript = pkgs.writeShellScript "hermes-merge-env" ''
       set -euo pipefail

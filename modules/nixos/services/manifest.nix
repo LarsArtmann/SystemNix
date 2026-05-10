@@ -7,9 +7,7 @@ _: {
   }: let
     cfg = config.services.manifest;
     inherit (config.networking) domain;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
-    serviceTypes = import ../../../lib/types.nix lib;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
 
     stateDir = "/var/lib/manifest";
     manifestPort = cfg.port;

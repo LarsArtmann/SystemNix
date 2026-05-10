@@ -7,7 +7,7 @@ _: {
   }: let
     cfg = config.services.disk-monitor;
     inherit (config.users) primaryUser;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
     uid = builtins.toString config.users.users.${cfg.user}.uid;
 
     checkScript = pkgs.writeShellScript "disk-monitor-check" ''

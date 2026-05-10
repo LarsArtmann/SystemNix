@@ -7,9 +7,7 @@ _: {
   }: let
     cfg = config.services.dual-wan;
     inherit (lib) mkEnableOption mkOption types;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaultsLib = import ../../../lib/systemd/service-defaults.nix lib;
-    sd = serviceDefaultsLib.serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
 
     inherit (config.networking.local) lanIP gateway;
 
@@ -86,7 +84,7 @@ _: {
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
               }
-              // sd {};
+              // serviceDefaults {};
           };
 
           route-health-monitor = {
@@ -114,7 +112,7 @@ _: {
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
               }
-              // sd {};
+              // serviceDefaults {};
           };
         };
       };

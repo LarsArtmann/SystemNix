@@ -9,9 +9,7 @@ _: {
     inherit (config.users) primaryUser;
     mcJarSha1 = "97ccd4c0ed3f81bbb7bfacddd1090b0c56f9bc51";
     mcJarUrl = "https://piston-data.mojang.com/v1/objects/${mcJarSha1}/server.jar";
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
-    serviceTypes = import ../../../lib/types.nix lib;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
 
     minecraft-server-26 = pkgs.stdenv.mkDerivation {
       pname = "minecraft-server";

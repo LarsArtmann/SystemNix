@@ -7,8 +7,7 @@ _: {
   }: let
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
 
     whisperModelsDir = config.services.ai-models.paths.whisper;
 

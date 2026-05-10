@@ -10,9 +10,7 @@ _: {
     stateDir = "/var/lib/homepage-dashboard";
 
     svcUrl = subdomain: "https://${subdomain}.${domain}";
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
-    serviceTypes = import ../../../lib/types.nix lib;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
   in {
     options.services.homepage = {
       enable = lib.mkEnableOption "Homepage Dashboard service";

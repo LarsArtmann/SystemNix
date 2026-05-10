@@ -8,9 +8,7 @@ _: {
     cfg = config.services.authelia-config;
     inherit (config.networking) domain;
     authHost = "auth.${domain}";
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
-    serviceTypes = import ../../../lib/types.nix lib;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
     authPort = cfg.port;
 
     mkClient = {

@@ -7,7 +7,7 @@ _: {
   }: let
     cfg = config.services.monitor365;
     inherit (config.users) primaryUser;
-    sd = import ../../../lib/systemd/service-defaults.nix lib;
+    sd = import ../../../lib/default.nix lib;
 
     runtimeDeps = with pkgs; [
       xdotool

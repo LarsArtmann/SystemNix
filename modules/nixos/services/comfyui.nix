@@ -7,9 +7,7 @@ _: {
   }: let
     cfg = config.services.comfyui;
     inherit (config.users) primaryUser;
-    harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = (import ../../../lib/systemd/service-defaults.nix lib).serviceDefaults;
-    serviceTypes = import ../../../lib/types.nix lib;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
     rocm = import ../../../lib/rocm.nix {inherit pkgs;};
 
     rocmRuntimeLibs = rocm.runtimeLibs;
