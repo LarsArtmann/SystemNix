@@ -9,12 +9,12 @@
 # - DGA/NRD blocking, anti-piracy, NSFW, social, gambling, URL shorteners
 # - Dynamic DNS, badware hosters, safesearch enforcement
 #
-# Blocklists are shared with rpi3-dns via platforms/shared/dns-blocklists.nix
+# Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # DNS resolution: full recursive from root hints (no third-party resolver)
 {config, ...}: let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
-  blocklists = import ../../shared/dns-blocklists.nix;
+  blocklists = import ../../common/dns-blocklists.nix;
   lanIP =
     builtins.head
     config.networking.interfaces.eno1.ipv4.addresses;

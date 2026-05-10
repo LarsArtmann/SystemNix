@@ -4,7 +4,7 @@
   lib,
   ...
 }: let
-  blocklists = import ../../shared/dns-blocklists.nix;
+  blocklists = import ../../common/dns-blocklists.nix;
   inherit (config.networking.local) lanIP piIP virtualIP gateway subnet;
   interface = "eth0";
   domain = "home.lan";

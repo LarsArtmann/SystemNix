@@ -50,8 +50,8 @@ in {
     };
 
     # SublimeText configuration sync service
-    # Replaces scripts/sublime-text-sync.sh LaunchAgent creation
-    # Automatically exports SublimeText settings to dotfiles daily at 18:00
+    # NOTE: scripts/sublime-text-sync.sh was removed; this LaunchAgent is non-functional
+    # Kept for reference until SublimeText config sync is fully declarative
     "com.larsartmann.sublime-sync.plist" = {
       enable = true;
       text = ''
