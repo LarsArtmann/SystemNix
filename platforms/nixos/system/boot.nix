@@ -36,11 +36,11 @@
       "amdgpu.lockup_timeout=30000"
       "amdgpu.gpu_recovery=1" # Attempt GPU reset on hang instead of leaving GPU in dead state
       "amd_pstate=guided"
-      # GTT: allocate 32GB for GPU compute memory via Graphics Translation Table
-      # Limit GPU to 32GB of the 128GB unified memory to keep CPU workloads fed.
-      "amdgpu.gttsize=32768"
-      # TTM: limit GPU page allocations to 32GB
-      "amdgpu.ttm.pages_limit=8388608"
+      # GTT: allow GPU to address up to 112GB (128GB − 16GB reserved for CPU/system).
+      # Not pre-allocated — GPU uses what it needs dynamically.
+      "amdgpu.gttsize=114688"
+      # TTM: match GTT limit so GPU page allocations can use the full 112GB
+      "amdgpu.ttm.pages_limit=29360128"
       # IOMMU enabled — required for full 128GB memory mapping on Strix Halo.
       # Previously set to "off" for ~6% memory read improvement, but this prevented
       # the kernel from seeing the upper 64GB of RAM (only 64GB of 128GB visible).
@@ -56,11 +56,11 @@
     binfmt.emulatedSystems = ["aarch64-linux"];
   };
 
-  # TTM memory pool configuration for GPU workloads (32GB limit)
+  # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
   boot.extraModprobeConfig = ''
-    options amdgpu gttsize=32768
-    options ttm pages_limit=8388608
-    options ttm page_pool_size=8388608
+    options amdgpu gttsize=114688
+    options ttm pages_limit=29360128
+    options ttm page_pool_size=29360128
   '';
 
   # VM sysctl tuning for AI/ML workloads (128GB unified memory)
