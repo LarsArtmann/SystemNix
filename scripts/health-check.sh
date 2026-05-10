@@ -3,33 +3,7 @@
 # Replaces: health-check.sh (macOS-only), health-dashboard.sh (macOS-only), just health (inline)
 set -euo pipefail
 
-# --- Colors ---
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-DIM='\033[2m'
-BOLD='\033[1m'
-NC='\033[0m'
-
-PASS=0
-FAIL=0
-WARN=0
-
-ok() {
-  PASS=$((PASS + 1))
-  echo -e "  ${GREEN}OK${NC}    $1"
-}
-warn() {
-  WARN=$((WARN + 1))
-  echo -e "  ${YELLOW}WARN${NC}  $1"
-}
-fail() {
-  FAIL=$((FAIL + 1))
-  echo -e "  ${RED}FAIL${NC}  $1"
-}
-info() { echo -e "  ${DIM}INFO${NC}  $1"; }
-section() { echo -e "\n${BOLD}$1${NC}"; }
+source "$(dirname "$0")/lib.sh"
 
 is_darwin() { [[ "$(uname -s)" == "Darwin" ]]; }
 is_linux() { [[ "$(uname -s)" == "Linux" ]]; }
@@ -247,12 +221,4 @@ elif is_darwin; then
 fi
 
 # --- Summary ---
-echo ""
-total=$((PASS + FAIL + WARN))
-if [[ $FAIL -eq 0 ]]; then
-  echo -e "${GREEN}${BOLD}All ${PASS} checks passed${NC}${WARN:+ (${WARN} warnings)}"
-else
-  echo -e "${RED}${BOLD}${FAIL} failed${NC}, ${WARN} warnings, ${PASS} passed"
-fi
-echo ""
-[[ $FAIL -eq 0 ]]
+summary
