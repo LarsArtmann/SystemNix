@@ -440,6 +440,10 @@ in {
           ExecStart = "${pkgs.awww}/bin/awww-daemon";
           Restart = "always";
           RestartSec = "3s";
+          NoNewPrivileges = true;
+          ProtectClock = true;
+          ProtectHostname = true;
+          LockPersonality = true;
         };
         Install.WantedBy = ["graphical-session.target"];
       };
