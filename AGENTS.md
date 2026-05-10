@@ -437,14 +437,22 @@ Caddy reverse-proxy ports are derived from service module options — NOT hardco
 
 ### GPU Compute Headroom for Niri
 
-AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, causing desktop lag. Since AMD APUs lack MPS-style GPU scheduling, headroom is preserved via memory fraction limiting:
+AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, causing desktop lag. Since AMD APUs lack MPS-style GPU scheduling, headroom is preserved via memory fraction limiting.
 
-- `PYTORCH_CUDA_ALLOC_CONF=per_process_memory_fraction:0.95` — caps PyTorch/Ollama GPU memory to 95%, leaving VRAM free for niri rendering
-- `OLLAMA_NUM_PARALLEL=2` — reduced from 4 to limit concurrent GPU batches (more idle gaps for niri)
-- Set system-wide in `environment.sessionVariables` so all PyTorch processes respect it
+**GPU memory budget (73 GiB total):**
+
+| Service | Fraction | Cap | Rationale |
+|---------|----------|-----|-----------|
+| Ollama (per runner) | 0.45 | ~33 GiB | Two runners × 0.45 = 90% GPU. Leaves 7 GiB for niri |
+| ComfyUI | 0.50 | ~36 GiB | When Ollama (45%) + ComfyUI (50%) both active = 95% |
+| gpu-python | 0.95 (configurable) | ~69 GiB | Solo GPU use only; override with `GPU_MEM_FRACTION=0.8` |
+
+**Key design decisions:**
+- Fractions are set **per-service**, NOT system-wide. The old system-wide `PYTORCH_CUDA_ALLOC_CONF` session variable was removed — it gave every process a 95% cap, causing Ollama dual-runner OOM (see Incident 2026-05-10 below).
+- `OLLAMA_NUM_PARALLEL=2` — reduced from 4 to limit concurrent GPU batches
 - `gpu-python` wrapper: `gpu-python script.py` or `GPU_MEM_FRACTION=0.8 gpu-python script.py` for ad-hoc scripts
 
-**Files:** `ai-stack.nix` (Ollama env + system env + gpu-python wrapper), `comfyui.nix` (ComfyUI alloc conf)
+**Files:** `ai-stack.nix` (Ollama env + gpu-python wrapper), `comfyui.nix` (ComfyUI alloc conf)
 
 ### WatchdogSec / sd_notify Rules
 
@@ -475,6 +483,8 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 | Helium "RESTORE TABS" on every launch | Chromium writes `exit_type=Normal` only on clean JS-initiated shutdown; SIGTERM from session stop leaves it as `Crashed`. Fixed with `--restore-last-session --disable-session-crashed-bubble` wrapper flags. | Resolved |
 | watchdogd nixpkgs module broken for `device` | NixOS `services.watchdogd.settings.device` generates `device = /dev/watchdog0` but watchdogd v4.1 expects titled section `device /dev/watchdog0 { ... }`. Workaround: omit `device` from settings (default `/dev/watchdog` is the SP5100 TCO). Do NOT set `device` in `settings`. Upstream nixpkgs bug. | Workaround applied |
 | watchdogd `reset-reason` section fails | The `file` key in `reset-reason` section also fails to parse (nixpkgs module generates unquoted string paths). Only `timeout`, `interval`, `safe-exit`, and monitor plugins (`meminfo`, `filenr`, `loadavg`) work. | Accepted — no reset tracking |
+| Ollama dual-runner GPU OOM | Ollama loaded two model runners simultaneously (gemma4 + second model), each with `per_process_memory_fraction:0.95` = 138 GiB demand on 73 GiB GPU. Caused amdgpu exhaustion → niri SIGABRT → cascading OOM kills (helium, kitty, pipewire, user systemd). Fix: lowered to 0.45 per runner, removed system-wide `PYTORCH_CUDA_ALLOC_CONF` session variable. | Resolved — per-service GPU fractions |
+| awww-daemon crash loop | awww-daemon 0.12.0 panics on `unwrap()` when Wayland compositor is down. During niri crash cascade, caused 15 consecutive SIGABRTs at ~70s intervals. Fix: added ExecStartPre Wayland check, tightened StartLimitBurst to 3/300s. | Resolved — controlled failure instead of crash |
 
 ## Essential Commands
 
