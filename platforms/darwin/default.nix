@@ -52,7 +52,7 @@
     colorScheme = nix-colors.colorSchemes.catppuccin-mocha;
     colorSchemeLib = nix-colors.lib;
 
-    # Note: nixpkgs.config is now centralized in ../common/core/nix-settings.nix
+    # Note: nixpkgs.config is now centralized in ../common/nix-settings.nix
     # This eliminates duplicate allowUnfree and permittedInsecurePackages declarations
 
     # Homebrew casks for GUI applications not available in nixpkgs

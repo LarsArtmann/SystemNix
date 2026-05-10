@@ -50,7 +50,7 @@
   '';
 in {
   imports = [
-    ../../common/core/nix-settings.nix
+    ../../common/nix-settings.nix
     ../system/local-network.nix
   ];
 

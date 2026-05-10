@@ -34,7 +34,7 @@
     ../hardware/bluetooth.nix
     # emeet-pixy — now loaded via emeet-pixyd flake input NixOS module
     # Import common Nix settings for consistent configuration
-    ../../common/core/nix-settings.nix
+    ../../common/nix-settings.nix
   ];
 
   # Define color scheme option

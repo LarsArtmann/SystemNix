@@ -448,6 +448,7 @@
         ./modules/nixos/services/minecraft.nix
         ./modules/nixos/services/monitor365.nix
         ./modules/nixos/services/comfyui.nix
+        ./modules/nixos/services/dns-blocker.nix
         ./modules/nixos/services/dns-failover.nix
         ./modules/nixos/services/display-manager.nix
         ./modules/nixos/services/audio.nix
@@ -727,6 +728,7 @@
             inputs.self.nixosModules.minecraft
             inputs.self.nixosModules.monitor365
             inputs.self.nixosModules.comfyui
+            inputs.self.nixosModules.dns-blocker
             inputs.self.nixosModules.dns-failover
             inputs.self.nixosModules.display-manager
             inputs.self.nixosModules.audio

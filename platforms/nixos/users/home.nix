@@ -17,7 +17,7 @@ in {
     ../programs/swaylock.nix # Screen locker with blur + Catppuccin theme
     ../programs/zellij.nix # Zellij terminal multiplexer
     ../programs/yazi.nix # Terminal file manager with Catppuccin theme
-    ../programs/niri-wrapped.nix # Niri scrollable-tiling compositor via niri-flake HM module
+    ../desktop/niri-wrapped.nix # Niri scrollable-tiling compositor via niri-flake HM module
     ../desktop/waybar.nix # Status bar for niri
   ];
 

@@ -20,10 +20,6 @@
     config.networking.interfaces.eno1.ipv4.addresses;
   serverIP = lanIP.address;
 in {
-  imports = [
-    ../modules/dns-blocker.nix
-  ];
-
   services = {
     dns-blocker = {
       enable = true;
