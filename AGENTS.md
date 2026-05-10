@@ -413,6 +413,8 @@ Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 
 **Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 17 modules use `serviceDefaults {}`. No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
 
+**Single import pattern:** All modules use `inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;` — one import replaces three. For user-service modules that need `serviceDefaultsUser`, import the set: `sd = import ../../../lib/default.nix lib;` then call `sd.serviceDefaultsUser {}`.
+
 ### Caddy Port References
 
 Caddy reverse-proxy ports are derived from service module options — NOT hardcoded:
