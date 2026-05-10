@@ -4,8 +4,13 @@
     hostName = "evo-x2"; # Machine name
     domain = "home.lan"; # Base domain for all local services
 
-    # Disable NetworkManager - use dhcpcd instead for simpler DNS management
-    # networkmanager.enable = true;
+    # NetworkManager manages WiFi only; ethernet (eno1) stays on static IP
+    networkmanager = {
+      enable = true;
+      wifi.backend = "iwd";
+      unmanaged = ["eno1" "interface-name:eno1"];
+      dns = "none"; # Keep unbound as the sole resolver
+    };
     enableIPv6 = true;
 
     # Firewall - deny by default, only allow needed ports
@@ -34,10 +39,6 @@
     # DNS uses unbound via dns-blocker-config.nix
     nameservers = ["127.0.0.1" "9.9.9.9"];
   };
-
-  # Use NetworkManager for WiFi management only (if needed)
-  # networking.networkmanager.enable = true;
-  # networking.networkmanager.wifi.backend = "iwd";
 
   systemd = {
     # Prevent dbus-broker and polkit from restarting on every rebuild.
