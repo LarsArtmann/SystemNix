@@ -67,6 +67,10 @@ _: {
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
+            path = [
+              pkgs.iproute2
+              pkgs.util-linux
+            ];
             serviceConfig =
               {
                 Type = "simple";
