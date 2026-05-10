@@ -427,10 +427,16 @@ in {
           Description = "awww wallpaper daemon";
           After = ["graphical-session.target"];
           PartOf = ["graphical-session.target"];
-          StartLimitBurst = 5;
-          StartLimitIntervalSec = 120;
+          StartLimitBurst = 3;
+          StartLimitIntervalSec = 300;
         };
         Service = {
+          ExecStartPre = "${pkgs.writeShellScript "awww-check-wayland" ''
+            if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
+              echo "awww-daemon: WAYLAND_DISPLAY not set, compositor not ready"
+              exit 1
+            fi
+          ''}";
           ExecStart = "${pkgs.awww}/bin/awww-daemon";
           Restart = "always";
           RestartSec = "3s";
