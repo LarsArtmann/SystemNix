@@ -8,7 +8,8 @@ _: {
     cfg = config.services.dual-wan;
     inherit (lib) mkEnableOption mkOption types;
     harden = import ../../../lib/systemd.nix {inherit lib;};
-    serviceDefaults = import ../../../lib/systemd/service-defaults.nix lib;
+    serviceDefaultsLib = import ../../../lib/systemd/service-defaults.nix lib;
+    sd = serviceDefaultsLib.serviceDefaults;
 
     inherit (config.networking.local) lanIP gateway;
 
@@ -75,15 +76,13 @@ _: {
                   "WIFI_IF=${cfg.wifiInterface}"
                 ];
                 ExecStart = mptcpEndpointScript;
-                Restart = "always";
-                RestartSec = "5s";
               }
               // harden {
                 ProtectHome = false;
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
               }
-              // serviceDefaults {};
+              // sd {};
           };
 
           route-health-monitor = {
@@ -105,15 +104,13 @@ _: {
                   "CHECK_INTERVAL=${toString cfg.checkInterval}"
                 ];
                 ExecStart = routeHealthScript;
-                Restart = "always";
-                RestartSec = "5s";
               }
               // harden {
                 ProtectHome = false;
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
               }
-              // serviceDefaults {};
+              // sd {};
           };
         };
       };
