@@ -80,6 +80,10 @@ test:
 test-fast:
     nix flake check --no-build
 
+# Alias: validate = test-fast (used by pre-commit hook)
+[group('quality')]
+validate: test-fast
+
 # Format all code with treefmt
 [group('quality')]
 format:
