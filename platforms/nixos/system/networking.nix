@@ -37,7 +37,7 @@
     dhcpcd.enable = false;
 
     # DNS uses unbound via dns-blocker-config.nix
-    nameservers = ["127.0.0.1" "9.9.9.9"];
+    nameservers = ["127.0.0.1"];
   };
 
   systemd = {

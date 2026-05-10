@@ -464,6 +464,7 @@
         ./modules/nixos/services/manifest.nix
         ./modules/nixos/services/gatus-config.nix
         ./modules/nixos/services/openseo.nix
+        ./modules/nixos/services/dual-wan.nix
         # SSH module now loaded from nix-ssh-config flake input
       ];
 
@@ -743,6 +744,7 @@
             inputs.self.nixosModules.manifest
             inputs.self.nixosModules.gatus-config
             inputs.self.nixosModules.openseo
+            inputs.self.nixosModules.dual-wan
             inputs.emeet-pixyd.nixosModules.default
             ./platforms/nixos/system/configuration.nix
           ];

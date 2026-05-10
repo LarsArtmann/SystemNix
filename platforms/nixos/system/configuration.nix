@@ -179,6 +179,9 @@
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
       openseo.enable = true;
 
+      # Dual-WAN with MPTCP and route health monitoring
+      dual-wan.enable = true;
+
       # Centralized AI model storage (/data/ai/)
       ai-models.enable = true;
 
