@@ -12,7 +12,7 @@
 
       # Enhanced Nix settings for better performance and reliability
       builders-use-substitutes = true;
-      connect-timeout = 120; # Increased to 120s to handle DNS/IPv6 timeouts
+      connect-timeout = 30;
       fallback = true;
       http-connections = 25;
       log-lines = 25;
@@ -55,7 +55,6 @@
       build-max-jobs = auto
       cores = 0
 
-      # Network settings to fix IPv6 DNS issues
       netrc-file = /etc/nix/netrc
 
       # Flake settings
