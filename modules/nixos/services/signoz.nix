@@ -270,7 +270,7 @@ in {
         };
 
         systemd.services.signoz-provision = {
-          description = "SigNoz Provisioning — deploy alert rules and dashboards";
+          description = "SigNoz Provisioning — deploy alert rules, channels, and dashboards";
           after = ["signoz.service"];
           wants = ["signoz.service"];
           onFailure = ["notify-failure@%n.service"];
@@ -285,6 +285,36 @@ in {
           '';
           script = ''
             SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
+            CHANNEL_NAME="Discord Alerts"
+
+            # Deploy notification channels (idempotent: delete existing by name, then create fresh)
+            WEBHOOK_FILE="${config.sops.secrets.discord_alert_webhook_url.path}"
+            if [ -f "$WEBHOOK_FILE" ]; then
+              ${pkgs.coreutils}/bin/echo "Deploying notification channels..."
+              WEBHOOK_URL=$(${pkgs.coreutils}/bin/cat "$WEBHOOK_FILE")
+              EXISTING_CHANNELS=$(${pkgs.curl}/bin/curl -sf "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || echo '[]')
+
+              EXISTING_CHANNEL_ID=$(echo "$EXISTING_CHANNELS" | ${pkgs.jq}/bin/jq -r --arg n "$CHANNEL_NAME" '.[] | select(.name == $n) | .id // empty' | head -1)
+              if [ -n "$EXISTING_CHANNEL_ID" ]; then
+                ${pkgs.coreutils}/bin/echo "  Deleting existing channel: $CHANNEL_NAME ($EXISTING_CHANNEL_ID)"
+                ${pkgs.curl}/bin/curl -sf -X DELETE "$SIGNOZ_URL/api/v1/channels/$EXISTING_CHANNEL_ID" 2>/dev/null || true
+              fi
+
+              CHANNEL_JSON=$(${pkgs.jq}/bin/jq -n --arg url "$WEBHOOK_URL" '{
+                name: "Discord Alerts",
+                discord_configs: [{
+                  send_resolved: true,
+                  webhook_url: $url
+                }]
+              }')
+              ${pkgs.coreutils}/bin/echo "  Creating channel: $CHANNEL_NAME"
+              ${pkgs.curl}/bin/curl -sf -X POST \
+                -H "Content-Type: application/json" \
+                -d "$CHANNEL_JSON" \
+                "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || true
+            else
+              ${pkgs.coreutils}/bin/echo "Skipping channels: Discord webhook secret not found at $WEBHOOK_FILE"
+            fi
 
             # Deploy alert rules (idempotent: delete existing by name, then create fresh)
             ${pkgs.coreutils}/bin/echo "Deploying alert rules..."
@@ -347,6 +377,7 @@ in {
                 };
                 evaluationInterval = "5m";
                 name = "Disk Space Critical (>90%)";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -374,6 +405,7 @@ in {
                 };
                 evaluationInterval = "5m";
                 name = "CPU Sustained High (>90%)";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -401,6 +433,7 @@ in {
                 };
                 evaluationInterval = "5m";
                 name = "Memory Critical (>90%)";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -428,6 +461,7 @@ in {
                 };
                 evaluationInterval = "1m";
                 name = "Systemd Service Failed";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -455,6 +489,7 @@ in {
                 };
                 evaluationInterval = "5m";
                 name = "GPU Thermal Throttling (>90°C)";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -482,6 +517,7 @@ in {
                 };
                 evaluationInterval = "1m";
                 name = "DNS Blocker Down";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -509,6 +545,7 @@ in {
                 };
                 evaluationInterval = "1m";
                 name = "EMEET PIXY Daemon Down";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -536,6 +573,7 @@ in {
                 };
                 evaluationInterval = "5m";
                 name = "GPU VRAM Critical (>85%)";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };
@@ -563,6 +601,7 @@ in {
                 };
                 evaluationInterval = "1m";
                 name = "Niri Compositor Down";
+                preferredChannels = ["Discord Alerts"];
                 source = "RULE";
               };
             };

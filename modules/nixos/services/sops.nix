@@ -100,7 +100,12 @@ in {
             owner = "root";
             group = "root";
             restartUnits = ["openseo.service"];
-          } ["dataforseo_api_key"];
+          } ["dataforseo_api_key"]
+          // mkSecrets "signoz.yaml" {
+            owner = "signoz";
+            group = "signoz";
+            restartUnits = ["signoz-provision.service"];
+          } ["discord_alert_webhook_url"];
 
         templates = {
           "gitea-sync.env" = {
