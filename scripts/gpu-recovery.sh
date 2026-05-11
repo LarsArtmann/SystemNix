@@ -5,7 +5,7 @@
 # Steps:
 # 1. Stop niri (so it releases DRM master)
 # 2. Unbind amdgpu from the PCI device (tears down all DRM state)
-# 3. Rebind amdgpu (full driver reinitialization)
+# 3. Rebind amdgpu (full driver reinitialization) — with retry
 # 4. Wait for DRM device to reappear
 # 5. Start niri (re-acquires DRM master)
 # 6. If recovery fails, trigger system reboot
@@ -15,6 +15,8 @@
 set -eu
 
 DRIVER="amdgpu"
+MAX_REBIND_ATTEMPTS=3
+REBIND_RETRY_DELAY=5
 
 # Auto-detect first AMD GPU PCI address from DRM subsystem
 # Falls back to 0000:c5:00.0 (evo-x2 default) if detection fails
@@ -51,10 +53,8 @@ fi
 
 log "Stopping niri..."
 systemctl --user stop niri.service 2>/dev/null || true
-# Give niri time to release DRM master
 sleep 2
 
-# Kill any remaining niri processes
 pkill -x niri 2>/dev/null || true
 sleep 1
 
@@ -64,14 +64,26 @@ echo "$GPU_PCI" >"$UNBIND" 2>/dev/null || {
   reboot_system
 }
 
-# Wait for DRM device to disappear
 sleep 2
 
-log "Rebinding $DRIVER to $GPU_PCI..."
-echo "$GPU_PCI" >"$BIND" 2>/dev/null || {
-  log "ERROR: rebind failed."
+# Retry rebind — kernel driver may need multiple attempts after corruption
+bind_ok=false
+for attempt in $(seq 1 "$MAX_REBIND_ATTEMPTS"); do
+  log "Rebinding $DRIVER to $GPU_PCI (attempt $attempt/$MAX_REBIND_ATTEMPTS)..."
+  if echo "$GPU_PCI" >"$BIND" 2>/dev/null; then
+    bind_ok=true
+    break
+  fi
+  log "Rebind attempt $attempt failed."
+  if [ "$attempt" -lt "$MAX_REBIND_ATTEMPTS" ]; then
+    sleep "$REBIND_RETRY_DELAY"
+  fi
+done
+
+if [ "$bind_ok" = "false" ]; then
+  log "ERROR: all rebind attempts failed."
   reboot_system
-}
+fi
 
 # Wait for DRM device to reappear and initialize
 log "Waiting for GPU to reinitialize..."

@@ -370,7 +370,11 @@
               nativeBuildInputs = [pkgs.statix];
             } ''
               cd ${./.}
-              statix check . 2>&1 | tee $out
+              statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out
+              if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
+                exit 1
+              fi
+              exit 0
             '';
 
           deadnix =

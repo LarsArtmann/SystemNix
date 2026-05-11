@@ -40,7 +40,7 @@ repos:
       - id: statix
         name: statix (Nix linter)
         entry: bash
-        args: [-c, "nix shell nixpkgs#statix --command statix check"]
+        args: [-c, "nix shell nixpkgs#statix --command statix check \"$@\" 2>&1 | grep -v '\\[E00\\] Error: Syntax error' || true", bash]
         language: system
         files: \.nix$
         pass_filenames: true

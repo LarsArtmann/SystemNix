@@ -245,6 +245,9 @@ in {
             </zookeeper>
           </clickhouse>
         '';
+        systemd.tmpfiles.rules = [
+          "d /var/log/clickhouse-server 0755 clickhouse clickhouse -"
+        ];
         systemd.services.clickhouse = {
           onFailure = ["notify-failure@%n.service"];
           serviceConfig =

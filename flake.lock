@@ -91,11 +91,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778501977,
-        "narHash": "sha256-TSup25YY465MF+RxigxkyRzjP5/rXkCB0pfUVDyjr6I=",
+        "lastModified": 1778529540,
+        "narHash": "sha256-RbeZrm0mnWvidm8IRp2aYfcAvFwJlmlBzAEEB13wr64=",
         "ref": "master",
-        "rev": "d8da925e2d563bd23593da5736ca0caa59fbd639",
-        "revCount": 2373,
+        "rev": "94cc90bea06476404d63b98f8f4ed0643966283d",
+        "revCount": 2392,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -881,11 +881,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778502022,
-        "narHash": "sha256-T09aw9/FDfLR6UisRggPuPm5IA9pdzrRXf2jdsVEt9g=",
+        "lastModified": 1778530836,
+        "narHash": "sha256-5Uos8XnMzqt7C+O30zcR8NzMbytIhCtfhIUGxEdWtVs=",
         "ref": "master",
-        "rev": "eb940a2004428f2546c19d4e9e3d6f79f22cc7d8",
-        "revCount": 782,
+        "rev": "cff308f199cc2f1364bd20ac6433cee9b952d902",
+        "revCount": 807,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -972,11 +972,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778502037,
-        "narHash": "sha256-PE+UA0Owk1M0eAPeKRBInEd9W8PQDOzL599klaaFWYI=",
+        "lastModified": 1778519591,
+        "narHash": "sha256-Aaw+b7OGEpsOOekTvkXAXF9i3OD5YpiloSxDR5cfEOc=",
         "ref": "master",
-        "rev": "1d0bffa223d52d11f9cbe9733fdfc3f1f1cbf4f5",
-        "revCount": 481,
+        "rev": "71db4bf4d957eaac16ac458637017acf77068bae",
+        "revCount": 482,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
@@ -1044,11 +1044,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778507543,
-        "narHash": "sha256-QD1ZO+hqbMdBdWBdoicqvzVg2VZN8iCo8W7cwMmTdGM=",
+        "lastModified": 1778515281,
+        "narHash": "sha256-MLTmlicMThZ0msUdwnZXiW4CvSfaOdz/D2fBuuduJHQ=",
         "ref": "master",
-        "rev": "95bb4e27ab4f5c0d68237dd95248e870336431f2",
-        "revCount": 550,
+        "rev": "684df5e78a66a6d9ce9a06a1eddf1b7053037c33",
+        "revCount": 551,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -1065,11 +1065,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778444552,
-        "narHash": "sha256-f18pIiR9q/p1vHY93gmAum7aHhQOG49oGvAB9+lptRo=",
+        "lastModified": 1778534125,
+        "narHash": "sha256-NtERcpQEPjcal0WWC9ZuL5C52zU3L22Z2xkEUR1GoRs=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "dcebe66f958673729896eec2de4abfd86ef22d21",
+        "rev": "bc63bedcab3454f11c79fcdbcf90301deb562b6c",
         "type": "github"
       },
       "original": {
@@ -1097,11 +1097,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778491958,
-        "narHash": "sha256-y6MNbDv5CoQpcL+r0rg8jPkcQf88LNaIc7xie+SOKEw=",
+        "lastModified": 1778534135,
+        "narHash": "sha256-W1s5cmyCxzsFuvZV3XIpoQBw/+fItIcymn8Fd2zREpk=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "eae8bea23ba20d822fb159534d7d0ca8041e6b7d",
+        "rev": "a311d90702fa543c61169dd111d78673b72c72d5",
         "type": "github"
       },
       "original": {
@@ -1143,11 +1143,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1778515229,
-        "narHash": "sha256-f2TBzTM7na/YFNS1UWfIIhdd2+krTSBP89+ZKThQUw0=",
+        "lastModified": 1778516630,
+        "narHash": "sha256-xmwg6majO2xk1dHY4LsD2puIDyFWg8K/XQza7uC3Jr0=",
         "ref": "master",
-        "rev": "cdc8edb343a69a5ed7d34d16e554f0944838ee5e",
-        "revCount": 703,
+        "rev": "83630907f0b67db421ef84ba2c8fd98cc007edd9",
+        "revCount": 704,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -1190,11 +1190,11 @@
         "xwayland-satellite-unstable": "xwayland-satellite-unstable"
       },
       "locked": {
-        "lastModified": 1778392415,
-        "narHash": "sha256-UbEC8dOIWwCG4mww7SGhYMgM1yi8ewgKLi8O3uhX33M=",
+        "lastModified": 1778512904,
+        "narHash": "sha256-GmJZE3/rjeVwB364IGClx4TV50T5ey5V+48f0t8AUD4=",
         "owner": "sodiboo",
         "repo": "niri-flake",
-        "rev": "670859bacca122ec1158c882b4cf2828930b3669",
+        "rev": "8994a3e53989f8ce9e6f16c29da15c08e0056402",
         "type": "github"
       },
       "original": {
@@ -1498,11 +1498,11 @@
     },
     "nixpkgs-stable": {
       "locked": {
-        "lastModified": 1778003029,
-        "narHash": "sha256-q/nkKLDtHIyLjZpKhWk3cSK5IYsFqtMd6UtXF3ddjgA=",
+        "lastModified": 1778430510,
+        "narHash": "sha256-Ti+ZBvW6yrWWAg2szExVTwCd4qOJ3KlVr1tFHfyfi8Q=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "0c88e1f2bdb93d5999019e99cb0e61e1fe2af4c5",
+        "rev": "8fd9daa3db09ced9700431c5b7ad0e8ba199b575",
         "type": "github"
       },
       "original": {
@@ -1589,11 +1589,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778496074,
-        "narHash": "sha256-ifkGjiEFAqLeBlxFWtmJkms2DogNRysMGNlM9k1tFqI=",
+        "lastModified": 1778533032,
+        "narHash": "sha256-emPitPU+hYMX6Ir0MVUae+5Y3PHWWQ9eCgUDQV8a+gQ=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "e1df29e71db66cdd808aa313d7e44d7449bf58be",
+        "rev": "83359f93a6b9f75e488c503a2f5b31593b6ebf65",
         "type": "github"
       },
       "original": {
