@@ -6,13 +6,15 @@
 # This prevents the old behavior of SIGKILLing niri in a crash loop when
 # the GPU driver is truly wedged (requires reboot, not more SIGKILLs).
 #
-# State file: /tmp/niri-drm-healthcheck.state (persists across invocations)
+# State file: /var/lib/niri-drm-healthcheck/state (persists across reboots)
 # Reset: automatically reset when niri is not running or DRM errors clear.
 
 set -eu
 
-STATE_FILE="/tmp/niri-drm-healthcheck.state"
+STATE_DIR="/var/lib/niri-drm-healthcheck"
+STATE_FILE="$STATE_DIR/state"
 CONSEC_THRESHOLD=3
+mkdir -p "$STATE_DIR" 2>/dev/null || true
 
 # Only run if niri is actually running
 pgrep -x niri >/dev/null 2>&1 || {

@@ -28,6 +28,10 @@ _: {
         package = niriPkg;
       };
 
+      systemd.tmpfiles.rules = [
+        "d /var/lib/niri-drm-healthcheck 0755 ${config.users.primaryUser} users -"
+      ];
+
       systemd = {
         user = {
           units = let
