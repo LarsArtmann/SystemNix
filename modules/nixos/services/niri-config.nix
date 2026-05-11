@@ -111,8 +111,8 @@ _: {
               mkdir -p "$TEXTFILE_DIR"
 
               running=$(${pkgs.procps}/bin/pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-              restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || echo 0)
-              drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || echo 0)
+              restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
+              drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
 
               {
                 echo "niri_running $running"
