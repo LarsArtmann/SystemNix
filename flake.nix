@@ -211,14 +211,11 @@
   };
 
   outputs = inputs @ {
-    dnsblockd,
     flake-parts,
-    nix-darwin,
     nixpkgs,
     home-manager,
-    helium,
-    nur,
     nix-colors,
+    nix-darwin,
     nix-homebrew,
     homebrew-bundle,
     homebrew-cask,
@@ -227,172 +224,21 @@
     nix-amd-npu,
     nix-ssh-config,
     nixos-hardware,
-    emeet-pixyd,
     niri-session-manager,
+    sops-nix,
+    silent-sddm,
+    signoz-src,
+    signoz-collector-src,
+    crush-config,
+    helium,
+    hermes-agent,
+    nur,
     treefmt-full-flake,
-    todo-list-ai,
-    library-policy,
-    file-and-image-renamer,
-    monitor365,
-    golangci-lint-auto-configure,
-    mr-sync,
-    hierarchical-errors,
-    buildflow,
-    go-auto-upgrade,
-    go-structure-linter,
-    branching-flow,
-    art-dupl,
+    wallpapers-src,
     ...
   }: let
-    # NOTE: goOverlay removed — nixpkgs go_1_26 is already 1.26.1.
-    # Overriding go forced a from-source rebuild that invalidated the
-    # binary cache for the ENTIRE dependency tree (1094 derivations).
-    awWatcherOverlay = _final: prev: {
-      aw-watcher-utilization = prev.callPackage ./pkgs/aw-watcher-utilization.nix {};
-    };
-
-    openaudibleOverlay = _final: prev: {
-      openaudible = prev.callPackage ./pkgs/openaudible.nix {};
-    };
-
-    dnsblockdOverlay = _final: prev: {
-      dnsblockd = dnsblockd.packages.${prev.stdenv.system}.default;
-    };
-
-    netwatchOverlay = _final: prev: {
-      netwatch = prev.callPackage ./pkgs/netwatch.nix {};
-    };
-
-    jscpdOverlay = _final: prev: {
-      jscpd = prev.callPackage ./pkgs/jscpd.nix {};
-    };
-    # DISABLED: unboundDoQOverlay patches unbound for DNS-over-QUIC support.
-    # It overrides unbound's build flags which cascades to ffmpeg, linux, pipewire,
-    # and hundreds of other packages — killing binary cache hits entirely (40+ min builds).
-    # To re-enable: uncomment the overlay below and add it back to overlay lists.
-    # unboundDoQOverlay = _final: prev: let
-    #   unboundNoSlim = prev.unbound.override {withSlimLib = false;};
-    # in {
-    #   unbound = unboundNoSlim.overrideAttrs (o: {
-    #     buildInputs =
-    #       (o.buildInputs or [])
-    #       ++ [
-    #         prev.ngtcp2
-    #         prev.nghttp3
-    #       ];
-    #     configureFlags =
-    #       (o.configureFlags or [])
-    #       ++ [
-    #         "--with-libngtcp2=${prev.ngtcp2.dev}"
-    #         "--with-libnghttp3=${prev.nghttp3.dev}"
-    #       ];
-    #   });
-    # };
-    emeetPixyOverlay = emeet-pixyd.overlays.default;
-
-    # Upstream todo-list-ai has a stale outputHash on its bun-based deps derivation.
-    # On upgrade: remove fixedHash, let upstream hash attempt, if it fails:
-    #   1. Delete the hash below
-    #   2. Run: nix build .#todo-list-ai --no-link 2>&1 | grep got
-    #   3. Paste the correct hash here
-    todoListAiFixedHash = "sha256-gK2KiswUrC4iym1X0r8Ykof1H8Fb2keBsc9X0PPQPPU=";
-
-    todoListAiOverlay = _final: prev: let
-      bun = prev.bun;
-      upstream = todo-list-ai.packages.${prev.stdenv.system}.default;
-      patchedDeps = prev.stdenv.mkDerivation {
-        name = "todo-list-ai-deps";
-        src = upstream.src;
-        nativeBuildInputs = [bun];
-        buildPhase = "bun install --frozen-lockfile";
-        installPhase = "rm -rf node_modules/.cache && cp -r node_modules $out";
-        outputHashAlgo = "sha256";
-        outputHashMode = "recursive";
-        outputHash = todoListAiFixedHash;
-        dontFixup = true;
-      };
-    in {
-      todo-list-ai = upstream.overrideAttrs (_: {
-        buildPhase = ''
-          runHook preBuild
-          cp -r ${patchedDeps} node_modules
-          chmod -R u+w node_modules
-          find node_modules -type f -exec grep -q '^#!/usr/bin/env node' {} \; -print0 \
-            | xargs -0 -r sed -i '1s|^#!/usr/bin/env node|#!${bun}/bin/bun|'
-          patchShebangs node_modules/.bin
-
-          bun build ./index.ts --compile --outfile ./dist/todo-list-ai
-          runHook postBuild
-        '';
-      });
-    };
-
-    libraryPolicyOverlay = _final: prev: {
-      library-policy = library-policy.packages.${prev.stdenv.system}.default;
-    };
-
-    hierarchicalErrorsOverlay = _final: prev: {
-      hierarchical-errors = hierarchical-errors.packages.${prev.stdenv.system}.default;
-    };
-
-    golangciLintAutoConfigureOverlay = _final: prev: {
-      golangci-lint-auto-configure = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default;
-    };
-
-    mrSyncOverlay = _final: prev: {
-      mr-sync = mr-sync.packages.${prev.stdenv.system}.default;
-    };
-
-    # Disable tests for packages with flaky integration tests in sandboxed builders
-    disableTestsOverlay = _final: prev: {
-      valkey = prev.valkey.overrideAttrs (_old: {doCheck = false;});
-      aiocache = prev.python3Packages.aiocache.overrideAttrs (_old: {doCheck = false;});
-    };
-
-    # Shared overlays applied on all machines (Darwin + NixOS)
-    sharedOverlays = [
-      nur.overlays.default
-      awWatcherOverlay
-      todoListAiOverlay
-      jscpdOverlay
-      libraryPolicyOverlay
-      buildflow.overlays.default
-      go-auto-upgrade.overlays.default
-      go-structure-linter.overlays.default
-      branching-flow.overlays.default
-      art-dupl.overlays.default
-      golangciLintAutoConfigureOverlay
-      mrSyncOverlay
-      hierarchicalErrorsOverlay
-      # d2 unconditionally depends on libgbm/playwright-driver (Linux-only).
-      # On Darwin, libgbm → mesa → libdrm fails the platform check.
-      # Override via callPackage with stubs so d2 evaluates cleanly.
-      (_final: prev:
-        prev.lib.optionalAttrs prev.stdenv.isDarwin {
-          d2 = prev.callPackage (prev.path + "/pkgs/by-name/d2/d2/package.nix") {
-            libgbm = prev.runCommand "libgbm-stub" {} "mkdir $out";
-            playwright-driver = {browsers = prev.runCommand "playwright-stub" {} "mkdir $out";};
-          };
-        })
-    ];
-
-    # Linux-only overlays (custom packages that only make sense on NixOS)
-    linuxOnlyOverlays = [
-      openaudibleOverlay
-      dnsblockdOverlay
-      emeetPixyOverlay
-      monitor365.overlays.default
-      netwatchOverlay
-      file-and-image-renamer.overlays.default
-    ];
-
-    # Python test override (separate because it's NixOS-specific)
-    pythonTestOverlay = _final: prev: {
-      python313Packages = prev.python313Packages.overrideScope (_pyFinal: pyPrev: {
-        timm = pyPrev.timm.overridePythonAttrs (_: {doCheck = false;});
-        xformers = pyPrev.xformers.overridePythonAttrs (_: {doCheck = false;});
-      });
-    };
+    overlays = import ./overlays inputs;
+    inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
 
     # Shared Home Manager configuration — only user/home file path differs per system
     sharedHomeManagerConfig = {
@@ -466,7 +312,7 @@
           config.allowBroken = false; ## <-- THIS MUST ALWAYS BE FALSE!
           overlays =
             sharedOverlays
-            ++ [disableTestsOverlay]
+            ++ [disableTests]
             ++ lib.optionals (system == "x86_64-linux") linuxOnlyOverlays;
         };
 
@@ -652,7 +498,7 @@
           specialArgs = {
             inherit (inputs.self) inputs;
             inherit helium;
-            inherit nur;
+            inherit (inputs) nur;
             inherit nix-colors;
             inherit niri;
             inherit otel-tui;
@@ -670,12 +516,12 @@
                     inputs.niri.overlays.niri
                   ]
                   ++ linuxOnlyOverlays
-                  ++ [pythonTestOverlay];
+                  ++ [pythonTest];
               };
               system.configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
             }
             home-manager.nixosModules.home-manager
-            nur.modules.nixos.default
+            inputs.nur.modules.nixos.default
 
             {
               home-manager =
@@ -754,14 +600,15 @@
               nixpkgs = {
                 hostPlatform = "aarch64-linux";
                 config.allowUnfree = true;
-                overlays = [
-                  nur.overlays.default
-                  dnsblockdOverlay
-                ];
+                overlays =
+                  [
+                    inputs.nur.overlays.default
+                  ]
+                  ++ overlays.linux;
               };
             }
             home-manager.nixosModules.home-manager
-            nur.modules.nixos.default
+            inputs.nur.modules.nixos.default
             {
               home-manager =
                 sharedHomeManagerConfig
