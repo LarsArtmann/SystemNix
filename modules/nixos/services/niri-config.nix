@@ -42,20 +42,18 @@ _: {
               text =
                 if name == "niri.service"
                 then let
-                  noBindsTo =
-                    baseText
-                    |> builtins.replaceStrings
-                      ["BindsTo=graphical-session.target"]
-                      ["Wants=graphical-session.target"];
-                  unitLimits =
-                    noBindsTo
-                    |> builtins.replaceStrings
-                      ["[Unit]"]
-                      [
-                        ''                        [Unit]
-                        StartLimitBurst=3
-                        StartLimitIntervalSec=60''
-                      ];
+                  noBindsTo = builtins.replaceStrings
+                    ["BindsTo=graphical-session.target"]
+                    ["Wants=graphical-session.target"]
+                    baseText;
+                  unitLimits = builtins.replaceStrings
+                    ["[Unit]"]
+                    [
+                      ''                        [Unit]
+                      StartLimitBurst=3
+                      StartLimitIntervalSec=60''
+                    ]
+                    noBindsTo;
                 in
                   unitLimits
                   + "\nRestart=always\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\n"
@@ -63,14 +61,11 @@ _: {
                 else baseText;
             in {inherit text;};
           in
-            unitFiles
-            |> builtins.attrNames
-            |> lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
-            |> map (name: {
+            lib.listToAttrs (map (name: {
               inherit name;
               value = mkUnit name;
-            })
-            |> lib.listToAttrs;
+            }) (lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
+              (builtins.attrNames unitFiles)));
 
           services.niri-drm-healthcheck = {
             description = "Detect niri DRM zombie state and trigger GPU recovery";
