@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778507534,
-        "narHash": "sha256-IRdwwUpTBfg+uDVjo0XmlRJDS/vYVSEHWLiDmCt6gYU=",
+        "lastModified": 1778534005,
+        "narHash": "sha256-8A+TvSKmQ6Y2FRUk8zO2OBxR4fZPMEODp2Rxvu99F2c=",
         "ref": "fork",
-        "rev": "7126414353cedd12aacea0b7093845396f6312e2",
-        "revCount": 1224,
+        "rev": "9b4054c86b40dfd3789042281f33a122f15268fe",
+        "revCount": 1225,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       },

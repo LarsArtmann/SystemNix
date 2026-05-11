@@ -109,8 +109,8 @@ in {
 
         templates = {
           "gatus-env" = {
-            owner = "gatus";
-            group = "gatus";
+            owner = "root";
+            group = "root";
             restartUnits = ["gatus.service"];
             content = ''
               DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
