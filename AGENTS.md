@@ -49,7 +49,8 @@ SystemNix/
 │   ├── signoz.nix               # Observability (traces/metrics/logs)
 │   ├── sops.nix                 # Secrets management
 │   ├── taskchampion.nix         # Taskwarrior sync server
-│   └── openseo.nix              # SEO suite (rank tracking, keywords, backlinks)
+│   ├── openseo.nix              # SEO suite (rank tracking, keywords, backlinks)
+│   └── dual-wan.nix              # ECMP+MPTCP dual-WAN failover
 │
 ├── pkgs/                        # Custom packages
 │   ├── aw-watcher-utilization.nix # ActivityWatch system utilization watcher (Python)
@@ -549,6 +550,70 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 | awww-daemon crash loop | awww-daemon 0.12.0 panics on `unwrap()` when Wayland compositor is down. During niri crash cascade, caused 15 consecutive SIGABRTs at ~70s intervals. Fix: added ExecStartPre Wayland check, tightened StartLimitBurst to 3/300s. | Resolved — controlled failure instead of crash |
 
 | ~130W power ceiling | GMKtec NucBox EVO-X2 firmware enforces PPT at ~130W. No OS override possible: `ryzen_smu` lacks Strix Halo support, RAPL exposes no constraint files, BIOS has no cTDP/platform profile options. `amd_pstate=performance` + `performance` governor ensure max utilization within the ceiling. Future: check GMKtec BIOS updates, wait for `ryzen_smu` Strix Halo support. | Accepted — hardware/firmware limit |
+| WiFi interface naming | NetworkManager with `iwd` backend uses `wlan0`, not `wlp*` predictable naming from `wpa_supplicant`. All dual-WAN scripts and module defaults use `wlan0`. Do NOT change to `wlp195s0` — it was the original bug that made both `route-health-monitor` and `mptcp-endpoint-manager` silent no-ops since inception. | Resolved — wlan0 everywhere |
+| resolvconf reorders nameservers | `nameservers = ["127.0.0.1" "9.9.9.9"]` causes resolvconf to place 9.9.9.9 first when WAN flaps, bypassing unbound. Only `["127.0.0.1"]` is safe — unbound handles upstream via DoT internally. Do NOT re-add external fallback. | Resolved — 127.0.0.1 only |
+
+```bash
+# Internet / Dual-WAN (NixOS only, remote via SSH)
+just wan-status         # ECMP routes + MPTCP endpoints + recent logs
+just internet-diagnostic # Full connectivity diagnostic (interfaces, DNS, MPTCP)
+```
+
+### Dual-WAN ECMP+MPTCP Failover (`modules/nixos/services/dual-wan.nix`)
+
+Active-active dual-WAN architecture with ECMP routing and MPTCP for packet-level redundancy.
+
+**Architecture:**
+- Both paths (eno1 ethernet + WiFi hotspot) active simultaneously via ECMP weighted routing
+- MPTCP creates subflows on BOTH paths — per-packet redundancy for MPTCP-aware connections
+- `mptcpize` (from `mptcpd`) wraps non-MPTCP apps via LD_PRELOAD
+- Route health monitor adjusts ECMP weights based on ISP health
+
+**State machine** (`scripts/route-health-monitor.sh`):
+| State | Condition | eno1 weight | WiFi weight |
+|-------|-----------|-------------|-------------|
+| `eno1-only` | WiFi unavailable | default | — |
+| `ecmp` | Both paths healthy | 10 | 3 |
+| `wifi-heavy` | ISP degraded | 1 | 20 |
+| `wifi-only` | ISP dead | — | default |
+
+**Failover timing:**
+- Failover: 2 consecutive ISP failures (4s at 2s check interval)
+- Failback: 5 consecutive ISP recoveries (10s) — slow failback prevents flapping
+- MPTCP subflow switch: sub-second (kernel retransmits on surviving path)
+- Startup: detects existing route state (preserves failover across service restart)
+
+**MPTCP endpoint management:**
+- Boot: `mptcp-endpoint-manager.service` (oneshot) adds eno1 endpoint + detects WiFi
+- Runtime: NM dispatcher script fires `wifi-up`/`wifi-down` instantly (no polling)
+- Kernel path manager (`pm_type=0`) creates subflows automatically
+
+**TCP tuning** (in `dual-wan.nix` sysctls):
+- `tcp_retries1=2` — detect dead path in ~3s (vs default ~7s)
+- `tcp_retries2=8` — give up after ~90s (vs default ~13min)
+- `tcp_keepalive_time=30` — detect dead peers in 30s
+
+**Module options** (`services.dual-wan`):
+| Option | Default | Description |
+|--------|---------|-------------|
+| `enable` | false | Enable dual-WAN failover |
+| `ethernetInterface` | "eno1" | Primary ethernet interface |
+| `wifiInterface` | "wlan0" | WiFi interface (iwd naming!) |
+| `checkInterval` | 2 | Seconds between ISP health checks |
+| `failoverThreshold` | 2 | Consecutive failures before shifting to WiFi |
+| `failbackThreshold` | 5 | Consecutive successes before restoring ECMP |
+
+**Key files:**
+- Module: `modules/nixos/services/dual-wan.nix`
+- Route monitor: `scripts/route-health-monitor.sh`
+- MPTCP endpoints: `scripts/mptcp-endpoint-manager.sh`
+- Diagnostic: `scripts/internet-diagnostic.sh`
+- Enabled in: `platforms/nixos/system/configuration.nix`
+
+```bash
+just wan-status         # Routes + MPTCP endpoints + logs
+just internet-diagnostic # Full connectivity diagnostic
+```
 
 ## Essential Commands
 
@@ -582,6 +647,8 @@ just immich-backup      # Database backup
 just gitea-sync-repos   # Sync GitHub → Gitea
 just hermes-status      # Hermes gateway status
 just manifest-status    # Manifest LLM router status
+just wan-status         # Dual-WAN ECMP+MPTCP status (routes, endpoints)
+just internet-diagnostic # Full internet connectivity diagnostic
 
 # Desktop (NixOS only)
 just cam-status         # Camera state (tracking, audio, position)
