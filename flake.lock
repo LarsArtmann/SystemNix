@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778502046,
-        "narHash": "sha256-nIBIDSNvPXBaaL6YkKoXPhgFKC96MmDpJjyyQ8biXyg=",
+        "lastModified": 1778507534,
+        "narHash": "sha256-IRdwwUpTBfg+uDVjo0XmlRJDS/vYVSEHWLiDmCt6gYU=",
         "ref": "fork",
-        "rev": "9bd5566efc863d0dce133e12d2a8e4ba21c9d197",
-        "revCount": 1223,
+        "rev": "7126414353cedd12aacea0b7093845396f6312e2",
+        "revCount": 1224,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       },
@@ -836,11 +836,11 @@
     "golangci-lint-auto-configure-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778192860,
-        "narHash": "sha256-3c6TbQY4foufzQDZiuu5A5vZ0JzI0jV8+AvwufCwwiE=",
+        "lastModified": 1778502037,
+        "narHash": "sha256-PE+UA0Owk1M0eAPeKRBInEd9W8PQDOzL599klaaFWYI=",
         "ref": "master",
-        "rev": "e7a8288eeba4f5a1f86c7c4864079a5420d30c26",
-        "revCount": 480,
+        "rev": "1d0bffa223d52d11f9cbe9733fdfc3f1f1cbf4f5",
+        "revCount": 481,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
@@ -959,11 +959,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1778491559,
-        "narHash": "sha256-qducuQlqJrISk7khIVX8p7igwzw69eIsQqbrvHZx55o=",
+        "lastModified": 1778507417,
+        "narHash": "sha256-gP3bz5eu8xA2JL7US51RwazggzUiwdnx8MbAUEzv2o4=",
         "ref": "master",
-        "rev": "70bd351ec1ef4d38e6d9c8b2c4ffe87f3930ced8",
-        "revCount": 699,
+        "rev": "838b540acd8c5110947860e5528e1bc7362ec709",
+        "revCount": 700,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -1985,11 +1985,11 @@
     "wallpapers-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778491900,
-        "narHash": "sha256-bA7Kz1k7QEvMNuDPxPwbEI/7U5Etq5+ntw5+sk3sqHs=",
+        "lastModified": 1778507388,
+        "narHash": "sha256-yZjewDZKgEWt6I4TNGwwh4yE3/G7RQwciT5JY5qiC6o=",
         "ref": "master",
-        "rev": "1bb3ef27de506d0e49808b92cb2dbadaaf232350",
-        "revCount": 39,
+        "rev": "f3cc72319e57cc65cff1956e2212df883ff527bb",
+        "revCount": 40,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/wallpapers"
       },
