@@ -512,6 +512,60 @@ in {
             };
           });
 
+          "signoz/rules/gpu-vram-high.json".source = pkgs.writeText "gpu-vram-high-rule.json" (builtins.toJSON {
+            data = {
+              rule = {
+                alertType = "METRIC_BASED_ALERT";
+                description = "GPU VRAM usage above 85% on {{.Labels.card}} — risk of OOM cascade (niri SIGABRT, desktop freeze)";
+                enabled = true;
+                condition = {
+                  compositeMetricQuery = {
+                    promQueries = [
+                      {
+                        name = "A";
+                        query = "(node_amdgpu_mem_info_vram_used_bytes / node_amdgpu_mem_info_vram_total_bytes) * 100";
+                        step = 300;
+                        statsAggExpr = "last";
+                      }
+                    ];
+                  };
+                  op = "AND";
+                  target = 85;
+                };
+                evaluationInterval = "5m";
+                name = "GPU VRAM Critical (>85%)";
+                source = "RULE";
+              };
+            };
+          });
+
+          "signoz/rules/niri-down.json".source = pkgs.writeText "niri-down-rule.json" (builtins.toJSON {
+            data = {
+              rule = {
+                alertType = "METRIC_BASED_ALERT";
+                description = "Niri Wayland compositor is not running — desktop may be unresponsive";
+                enabled = true;
+                condition = {
+                  compositeMetricQuery = {
+                    promQueries = [
+                      {
+                        name = "A";
+                        query = "niri_running";
+                        step = 60;
+                        statsAggExpr = "last";
+                      }
+                    ];
+                  };
+                  op = "AND_NOT";
+                  target = 1;
+                };
+                evaluationInterval = "1m";
+                name = "Niri Compositor Down";
+                source = "RULE";
+              };
+            };
+          });
+
           "signoz/dashboards/overview.json".source = "${inputs.self}/modules/nixos/services/dashboards/signoz-overview.json";
         };
       })
