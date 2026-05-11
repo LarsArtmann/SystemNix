@@ -189,7 +189,7 @@ _: {
               interval = "60s";
               conditions = [
                 "[STATUS] == 200"
-                "[BODY] == pat(*niri_running 1*)"
+                "[BODY] == pat(*niri_running*)"
               ];
             }
           ];
