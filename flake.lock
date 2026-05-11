@@ -185,11 +185,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1778052598,
-        "narHash": "sha256-P3lfiOeDP7IA83gpRWkaKv6DFdASvlK2uBVqWCyKQmg=",
+        "lastModified": 1778535893,
+        "narHash": "sha256-aGm41vQg7XKEGvdRPnIwvuQ7AF2SOh6Qvrx+h1d6igU=",
         "ref": "master",
-        "rev": "d35c2a87106a7e3db79a6185d78bb3d29eb6da2c",
-        "revCount": 263,
+        "rev": "22f1b85d81e295bf3a9283b430089ca13c004fe5",
+        "revCount": 264,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -1065,11 +1065,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778534125,
-        "narHash": "sha256-NtERcpQEPjcal0WWC9ZuL5C52zU3L22Z2xkEUR1GoRs=",
+        "lastModified": 1778535464,
+        "narHash": "sha256-kkUQYSv70wynJ/DfnGals6r98I6bK3CVNVTN1zbAd7Y=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "bc63bedcab3454f11c79fcdbcf90301deb562b6c",
+        "rev": "b659c7ffd40fc9e3bb60d420c79c67e769b9f4ab",
         "type": "github"
       },
       "original": {
@@ -1589,11 +1589,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778533032,
-        "narHash": "sha256-emPitPU+hYMX6Ir0MVUae+5Y3PHWWQ9eCgUDQV8a+gQ=",
+        "lastModified": 1778535621,
+        "narHash": "sha256-hwzaKmwOTtHux3y7+hKjCOk+uUma3Td5Z2C+Sr9+sBw=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "83359f93a6b9f75e488c503a2f5b31593b6ebf65",
+        "rev": "d90933996d1e6ecd0caddb555ade0673b4335f01",
         "type": "github"
       },
       "original": {
