@@ -508,11 +508,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778365864,
-        "narHash": "sha256-ImoT/wqmgMImf2dAC+E0MverAdA4QXsedOeES9B7Ezw=",
+        "lastModified": 1778444552,
+        "narHash": "sha256-f18pIiR9q/p1vHY93gmAum7aHhQOG49oGvAB9+lptRo=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "2f419037039a152448c5f4ae9494154753d1b399",
+        "rev": "dcebe66f958673729896eec2de4abfd86ef22d21",
         "type": "github"
       },
       "original": {
@@ -540,11 +540,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778439846,
-        "narHash": "sha256-xmJ4ukfIQGigi3dnDULbjKfkALFugAjAqLeZIDn9fmI=",
+        "lastModified": 1778489802,
+        "narHash": "sha256-KBlRCzt77bUE9YjCARAXej9uvIfL1fKKCHXqxvWOaVU=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "ece553092a3af6d870096991caf32b1b90bb38b5",
+        "rev": "81277df82787b007da1648ce161a7589383661ff",
         "type": "github"
       },
       "original": {
@@ -580,11 +580,11 @@
     "monitor365-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778198143,
-        "narHash": "sha256-L9s7B7qsXN7uXUQ1AARy+LPWMUid3m/Urr7cD3Y33h0=",
+        "lastModified": 1778439932,
+        "narHash": "sha256-UKffYMMm06VagskzuwXNrdopBYSo+OUXAtOF9a4/YlE=",
         "ref": "master",
-        "rev": "1aba086d3ddee1ba440063a7bc790424c7ea6250",
-        "revCount": 694,
+        "rev": "0125c41bd9ce3eb1f08262c17a9ff584bfc298e2",
+        "revCount": 701,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -1007,11 +1007,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778438187,
-        "narHash": "sha256-0motMlZYTFFlsHpBTUvTKSJIqRGHG9nOnMTqWchhB7o=",
+        "lastModified": 1778489397,
+        "narHash": "sha256-MHIgV6mje2hNLMvbyIf2G83NU80RpUkDwxGjbAJMeoc=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "ce659861df34041cd0cb1eaf894855ffd258eeff",
+        "rev": "845ef6aa13d72e54ab8d4c49c15c46bdff99532f",
         "type": "github"
       },
       "original": {
@@ -1028,11 +1028,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777902203,
-        "narHash": "sha256-wco7l0crKK0jkHXvxDntI0Q7JcaVAc/Dtx/7pE2Qcu0=",
+        "lastModified": 1778463830,
+        "narHash": "sha256-d2gR6lqDvnvMfZB4in6kJWE8SqFlyk03+9+RBba2TWY=",
         "owner": "ymtdzzz",
         "repo": "otel-tui",
-        "rev": "2cecc2a1eba0168b6b9138c2c811ca14b3c4adad",
+        "rev": "647e181af692ab30618672d7484fa028a280c67a",
         "type": "github"
       },
       "original": {
@@ -1310,11 +1310,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778052425,
-        "narHash": "sha256-O+khIuxUL37bv9ioqLMn225XTua3ROC8VhbkDExcwLU=",
+        "lastModified": 1778489889,
+        "narHash": "sha256-K7NsKSgq5A1+abW89fwHmmfV3mOQnBAT4hwJX9B4Elg=",
         "ref": "master",
-        "rev": "22d38f0334a61b9cdcd1e84c2a957a1c433777ca",
-        "revCount": 327,
+        "rev": "0284c0d36f3ed3caad8753577c49f2e48e715e2b",
+        "revCount": 328,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/todo-list-ai"
       },
