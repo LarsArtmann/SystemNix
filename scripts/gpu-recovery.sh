@@ -14,8 +14,21 @@
 
 set -eu
 
-GPU_PCI="0000:c5:00.0"
 DRIVER="amdgpu"
+
+# Auto-detect first AMD GPU PCI address from DRM subsystem
+# Falls back to 0000:c5:00.0 (evo-x2 default) if detection fails
+detect_gpu_pci() {
+  for card in /sys/class/drm/card*/device; do
+    if [ -f "$card/vendor" ] && [ "$(cat "$card/vendor")" = "0x1002" ]; then
+      basename "$(readlink -f "$card")"
+      return 0
+    fi
+  done
+  echo "0000:c5:00.0"
+}
+
+GPU_PCI="${GPU_PCI:-$(detect_gpu_pci)}"
 DRM_CARD="/sys/class/drm/card1"
 UNBIND="/sys/bus/pci/drivers/$DRIVER/unbind"
 BIND="/sys/bus/pci/drivers/$DRIVER/bind"
