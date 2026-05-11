@@ -20,7 +20,7 @@ echo
 
 # 1. Network interfaces
 echo "--- Network Interfaces ---"
-ip -br addr show | grep -E 'eno1|wlp|enp' || true
+ip -br addr show | grep -E 'eno1|wl|enp' || true
 echo
 
 # 2. Default route (critical — shows ECMP if dual-WAN active)
