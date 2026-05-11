@@ -233,11 +233,11 @@ dns-diagnostics:
 internet-diagnostic:
     ssh lars@192.168.1.150 'bash -s' < scripts/internet-diagnostic.sh
 
-# Dual-WAN / ECMP status
+# Dual-WAN / ECMP status (remote: evo-x2)
 [group('services')]
 [linux]
 wan-status:
-    ssh lars@192.168.1.150 'bash -s' <<< '{{ justfile_directory() }}/scripts/route-health-monitor.sh status 2>/dev/null || echo "route-health-monitor not running"; echo; ip route show table main; echo; ip mptcp endpoint show 2>/dev/null || echo "MPTCP endpoints not available"'
+    ssh lars@192.168.1.150 'echo "=== Route Health Monitor ==="; journalctl -u route-health-monitor --no-pager -n 5 --output=cat; echo; echo "=== Default Route ==="; ip route show default; echo; echo "=== MPTCP Endpoints ==="; ip mptcp endpoint show 2>/dev/null || echo "MPTCP endpoints not available"'
 
 # Update DNS blocklist URLs to latest commits and recompute SRI hashes
 [group('services')]
