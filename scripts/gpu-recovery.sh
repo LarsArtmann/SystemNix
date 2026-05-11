@@ -8,6 +8,7 @@
 # 3. Rebind amdgpu (full driver reinitialization)
 # 4. Wait for DRM device to reappear
 # 5. Start niri (re-acquires DRM master)
+# 6. If recovery fails, trigger system reboot
 #
 # Requires: root (PolicyKit or sudo)
 
@@ -21,10 +22,18 @@ BIND="/sys/bus/pci/drivers/$DRIVER/bind"
 
 log() { echo "gpu-recovery: $*"; }
 
+reboot_system() {
+  log "Triggering system reboot — GPU is unrecoverable."
+  systemctl reboot 2>/dev/null || {
+    log "reboot failed. MANUAL INTERVENTION REQUIRED."
+    exit 1
+  }
+}
+
 # Verify GPU is still present
 if [ ! -d "$DRM_CARD" ]; then
   log "ERROR: $DRM_CARD not found. Aborting."
-  exit 1
+  reboot_system
 fi
 
 log "Stopping niri..."
@@ -39,7 +48,7 @@ sleep 1
 log "Unbinding $DRIVER from $GPU_PCI..."
 echo "$GPU_PCI" >"$UNBIND" 2>/dev/null || {
   log "ERROR: unbind failed. Device may be in use."
-  exit 1
+  reboot_system
 }
 
 # Wait for DRM device to disappear
@@ -47,9 +56,8 @@ sleep 2
 
 log "Rebinding $DRIVER to $GPU_PCI..."
 echo "$GPU_PCI" >"$BIND" 2>/dev/null || {
-  log "ERROR: rebind failed. MANUAL INTERVENTION REQUIRED."
-  log "Run: echo $GPU_PCI > $BIND"
-  exit 1
+  log "ERROR: rebind failed."
+  reboot_system
 }
 
 # Wait for DRM device to reappear and initialize
@@ -63,8 +71,8 @@ for i in $(seq 1 30); do
 done
 
 if [ ! -d "$DRM_CARD" ]; then
-  log "ERROR: GPU did not come back after 30s. Reboot required."
-  exit 1
+  log "ERROR: GPU did not come back after 30s."
+  reboot_system
 fi
 
 sleep 2
@@ -72,15 +80,15 @@ sleep 2
 log "Starting niri..."
 systemctl --user start niri.service
 
-sleep 3
+sleep 5
 
 # Verify niri is healthy
 drm_errors=$(journalctl --user -u niri --no-pager -n 10 --since "5 sec ago" 2>/dev/null |
   grep -cE "Permission denied|DeviceMissing" || true)
 
 if [ "$drm_errors" -ge 5 ]; then
-  log "ERROR: niri still has DRM errors after recovery. Reboot required."
-  exit 1
+  log "ERROR: niri still has DRM errors after recovery."
+  reboot_system
 fi
 
 log "GPU recovery successful."

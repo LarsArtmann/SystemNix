@@ -188,6 +188,30 @@ Automatic wallpaper management with daemon crash recovery:
 
 **Do NOT use `BindsTo`** — it kills the wallpaper service when the daemon crashes, preventing recovery. `PartOf` is correct: it propagates restarts without killing. This was a bug introduced in `029a911` that caused permanent wallpaper loss on daemon crash.
 
+### Niri DRM Healthcheck & GPU Recovery
+
+Automatic detection and recovery from GPU driver corruption that leaves niri in a zombie state (alive but unable to render).
+
+**DRM Healthcheck (`scripts/niri-drm-healthcheck.sh`):**
+- User timer fires every 60s (via `systemd.user.timers.niri-drm-healthcheck`)
+- Counts DRM errors (`Permission denied` / `DeviceMissing`) in niri's journal from the last 30s
+- Uses a **consecutive failure counter** (state file at `/tmp/niri-drm-healthcheck.state`)
+- Only triggers `gpu-recovery.service` after 3+ consecutive failing checks (prevents false positives)
+- Auto-resets counter when niri is not running or errors clear
+
+**GPU Recovery (`scripts/gpu-recovery.sh`):**
+- System service with `OOMScoreAdjust=-1000` (OOM-protected)
+- Unbinds amdgpu from PCI device `0000:c5:00.0`, waits 2s, rebinds
+- Waits up to 30s for GPU to reappear
+- Starts niri and verifies DRM health for 5s
+- **Auto-reboots** on any unrecoverable failure (unbind fail, rebind fail, GPU timeout, persistent DRM errors)
+- No manual intervention needed — the system self-heals or reboots
+
+**Key files:**
+- `scripts/niri-drm-healthcheck.sh` — consecutive-error detection
+- `scripts/gpu-recovery.sh` — unbind/rebind + auto-reboot
+- `modules/nixos/services/niri-config.nix` — timer and service definitions
+
 ### Crush AI Config Deployment
 
 Crush config (`~/.config/crush/`) is a flake input deployed via Home Manager on both platforms:
@@ -391,7 +415,7 @@ AI agent task tracking protocol:
 | SSH config is external | SSH configuration comes from `nix-ssh-config` flake input, not defined locally |
 | Secrets via sops-nix | Secrets are age-encrypted using the SSH host key. Managed in `modules/nixos/services/sops.nix` |
 | BTRFS dual layout | Root uses zstd compression, `/data` uses zstd:3 with async discard. Docker lives on `/data`. |
-| Niri BindsTo patched | Upstream niri.service uses `BindsTo=graphical-session.target` — we replace with `Wants=` in `niri-config.nix`. `BindsTo` kills niri when the target stops during `just switch`; `Wants` pulls in the target (activating waybar etc.) without the hard binding. |
+| Niri BindsTo patched | Upstream niri.service uses `BindsTo=graphical-session.target` — we replace with `Wants=` in `niri-config.nix`. `BindsTo` kills niri when the target stops during `just switch`; `Wants` pulls in the target (activating waybar etc.) without the hard binding. Niri has `OOMScoreAdjust=-1000` (maximum OOM protection). |
 | awww-daemon BrokenPipe | Upstream awww 0.12.0 panics on BrokenPipe at `daemon/src/main.rs:712:32` (Wayland disconnect during suspend/output hotplug). `Restart=always` covers it. Never use `BindsTo` for wallpaper services — use `PartOf` for restart propagation. |
 | awww-wallpaper ordering cycle | `awww-wallpaper` must NOT have `After=["awww-daemon.service"]` — it creates a cycle: `wallpaper → daemon → graphical-session → wallpaper`. The wallpaper-set script has its own 60s wait loop for the daemon socket, so `After=["graphical-session.target"]` is sufficient. |
 | Niri portal config | Niri ships `niri-portals.conf` with `default=gnome;gtk`. Without a GNOME session, the Settings interface times out and `color-scheme=dark` never reaches browsers. Override via `xdg.portal.config.niri.default = ["gtk" "wlr"]`. |
