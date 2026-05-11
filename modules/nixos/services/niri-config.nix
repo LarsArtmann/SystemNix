@@ -97,6 +97,42 @@ _: {
             OOMScoreAdjust = -1000;
           };
         };
+
+        services.niri-health-metrics = {
+          description = "Niri compositor health metrics for node_exporter textfile";
+          path = with pkgs; [systemd gawk];
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = pkgs.writeShellScript "niri-health-metrics" ''
+              set -euo pipefail
+              OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
+              TMP="''${OUT}.tmp"
+              TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+              mkdir -p "$TEXTFILE_DIR"
+
+              running=$(${pkgs.procps}/bin/pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
+              restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || echo 0)
+              drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || echo 0)
+
+              {
+                echo "niri_running $running"
+                echo "niri_restarts_10m $restarts"
+                echo "niri_drm_errors_30s $drm_errors"
+              } > "$TMP"
+
+              mv "$TMP" "$OUT"
+            '';
+          };
+        };
+
+        timers.niri-health-metrics = {
+          description = "Collect niri health metrics every 30s";
+          wantedBy = ["timers.target"];
+          timerConfig = {
+            OnBootSec = "30s";
+            OnUnitActiveSec = "30s";
+          };
+        };
       };
 
       environment.systemPackages = with pkgs; [
