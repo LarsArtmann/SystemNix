@@ -13,11 +13,9 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 | [monitor365](#monitor365) | Rust | Linux | Personal device monitoring agent |
 | [netwatch](#netwatch) | Rust | Linux | Real-time network diagnostics TUI |
 | [openaudible](#openaudible) | AppImage | Linux | Audible audiobook manager |
-| [golangci-lint-auto-configure](#golangci-lint-auto-configure) | Go | All | golangci-lint auto-configurator |
-| [mr-sync](#mr-sync) | Go | All | ~/.mrconfig GitHub repo sync CLI |
 | [file-and-image-renamer](#file-and-image-renamer) | Go | Linux | AI-powered screenshot renaming tool |
 
-> **Note:** emeet-pixyd is provided entirely via the `emeet-pixyd` flake input overlay — no local package file needed.
+> **Note:** emeet-pixyd, dnsblockd, golangci-lint-auto-configure, mr-sync, and other tools are provided via upstream flake input overlays — no local package file needed.
 
 ---
 
@@ -75,22 +73,6 @@ Desktop application for managing Audible audiobooks. Wrapped AppImage.
 - **Source:** `openaudible.nix` (AppImage, unfree)
 - **Platform:** Linux only (x86_64)
 - **Install:** Included in `platforms/common/packages/base.nix` for Linux
-
-### golangci-lint-auto-configure
-
-Automatically configures and optimizes golangci-lint for Go projects.
-
-- **Source:** `golangci-lint-auto-configure.nix` (Go, source from `golangci-lint-auto-configure-src` flake input)
-- **Platform:** All platforms
-- **Install:** Available as `nix build .#golangci-lint-auto-configure`
-
-### mr-sync
-
-CLI tool to keep `~/.mrconfig` in sync with your GitHub repositories.
-
-- **Source:** `mr-sync.nix` (Go, source from `mr-sync-src` flake input)
-- **Platform:** All platforms
-- **Install:** Included in `platforms/common/packages/base.nix`
 
 ### file-and-image-renamer
 

@@ -44,13 +44,14 @@ SystemNix/
 │   ├── monitor365.nix           # Device monitoring agent (Rust)
 │   ├── netwatch.nix             # Real-time network diagnostics TUI (Rust)
 │   ├── openaudible.nix          # Audible audiobook manager (AppImage)
-│   ├── golangci-lint-auto-configure.nix # golangci-lint auto-configurator (Go)
-│   ├── mr-sync.nix              # ~/.mrconfig GitHub sync CLI (Go)
-│   └── file-and-image-renamer.nix # AI screenshot renaming (Go)
+│   ├── file-and-image-renamer.nix # AI screenshot renaming (Go)
 │
 │   # External flake inputs (packages via overlay — no local pkgs/ file)
 │   # emeet-pixyd             — EMEET PIXY webcam daemon
 │   # todo-list-ai            — AI-powered TODO extraction CLI
+│   # golangci-lint-auto-configure — golangci-lint auto-configurator
+│   # mr-sync                 — ~/.mrconfig GitHub sync CLI
+│   # hierarchical-errors     — Error handling pattern analyzer
 │
 └── platforms/
     ├── common/                  # Shared (~80%)
@@ -117,7 +118,7 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 **Naming convention:** `-src` suffix = `flake = false` (source-only). No suffix = full flake.
 
 **Active overlays:**
-- `sharedOverlays` — applied on Darwin + NixOS (NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync, library-policy)
+- `sharedOverlays` — applied on Darwin + NixOS (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors)
 - `linuxOnlyOverlays` — NixOS only (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer)
 - `disableTestsOverlay` — disables flaky tests for valkey, aiocache
 - `pythonTestOverlay` — NixOS-specific Python test overrides
@@ -756,12 +757,12 @@ hermes cron list          # List cron jobs
 | `signoz-collector-src` | SigNoz collector source (flake=false) | — |
 | `todo-list-ai` | AI-powered TODO extraction CLI | Yes |
 | `library-policy` | Banned/vulnerable library detector for Go projects | Yes |
-| `golangci-lint-auto-configure-src` | golangci-lint auto-configurator (flake=false) | — |
-| `go-finding-src` | go-finding library (flake=false) | — |
+| `golangci-lint-auto-configure` | golangci-lint auto-configurator | Yes |
+| `hierarchical-errors` | Error handling pattern analyzer | Yes |
 | `homebrew-bundle` | Homebrew taps (flake=false) | — |
 | `homebrew-cask` | Homebrew cask taps (flake=false) | — |
 | `monitor365-src` | Device monitoring agent source (flake=false) | — |
-| `mr-sync-src` | ~/.mrconfig GitHub sync CLI (flake=false) | — |
+| `mr-sync` | ~/.mrconfig GitHub sync CLI | Yes |
 | `wallpapers-src` | Wallpaper collection (flake=false) | — |
 | `file-and-image-renamer-src` | AI screenshot renamer source (flake=false) | — |
 | `cmdguard-src` | Go command guard library (flake=false) | — |

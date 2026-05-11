@@ -7,6 +7,7 @@ _: {
   }: let
     cfg = config.services.niri-desktop;
     niriPkg = pkgs.niri-unstable;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
     drmHealthcheck = pkgs.writeShellApplication {
       name = "niri-drm-healthcheck";
       runtimeInputs = with pkgs; [procps systemd];
@@ -91,38 +92,49 @@ _: {
         services.gpu-recovery = {
           description = "GPU driver recovery — rebinds amdgpu to fix DRM corruption";
           path = with pkgs; [procps systemd gawk];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = "${gpuRecovery}/bin/gpu-recovery";
-            OOMScoreAdjust = -1000;
-          };
+          onFailure = ["notify-failure@%n.service"];
+          serviceConfig =
+            {
+              Type = "oneshot";
+              ExecStart = "${gpuRecovery}/bin/gpu-recovery";
+              OOMScoreAdjust = -1000;
+            }
+            // harden {
+              MemoryMax = "2G";
+              ReadWritePaths = ["/sys" "/dev"];
+            }
+            // serviceDefaults {};
         };
 
         services.niri-health-metrics = {
           description = "Niri compositor health metrics for node_exporter textfile";
           path = with pkgs; [systemd gawk];
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = pkgs.writeShellScript "niri-health-metrics" ''
-              set -euo pipefail
-              OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
-              TMP="''${OUT}.tmp"
-              TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
-              mkdir -p "$TEXTFILE_DIR"
+          serviceConfig =
+            {
+              Type = "oneshot";
+              ExecStart = pkgs.writeShellScript "niri-health-metrics" ''
+                set -euo pipefail
+                OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
+                TMP="''${OUT}.tmp"
+                TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+                mkdir -p "$TEXTFILE_DIR"
 
-              running=$(${pkgs.procps}/bin/pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-              restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
-              drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
+                running=$(${pkgs.procps}/bin/pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
+                restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
+                drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
 
-              {
-                echo "niri_running $running"
-                echo "niri_restarts_10m $restarts"
-                echo "niri_drm_errors_30s $drm_errors"
-              } > "$TMP"
+                {
+                  echo "niri_running $running"
+                  echo "niri_restarts_10m $restarts"
+                  echo "niri_drm_errors_30s $drm_errors"
+                } > "$TMP"
 
-              mv "$TMP" "$OUT"
-            '';
-          };
+                mv "$TMP" "$OUT"
+              '';
+            }
+            // harden {
+              ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
+            };
         };
 
         timers.niri-health-metrics = {
