@@ -117,15 +117,18 @@ _: {
 
     config = lib.mkIf cfg.enable {
       sops = {
-        secrets = builtins.listToAttrs (map (name: {
-          inherit name;
-          value = {
-            sopsFile = secretsDir + "/manifest.yaml";
-            owner = "root";
-            group = "root";
-            restartUnits = ["manifest.service"];
-          };
-        }) ["manifest_auth_secret" "manifest_encryption_key" "manifest_db_password"]);
+        secrets =
+          ["manifest_auth_secret" "manifest_encryption_key" "manifest_db_password"]
+          |> map (name: {
+            inherit name;
+            value = {
+              sopsFile = secretsDir + "/manifest.yaml";
+              owner = "root";
+              group = "root";
+              restartUnits = ["manifest.service"];
+            };
+          })
+          |> builtins.listToAttrs;
         templates."manifest-env" = {
           content = ''
             AUTH_SECRET=${config.sops.placeholder.manifest_auth_secret}

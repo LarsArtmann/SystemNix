@@ -43,19 +43,19 @@ _: {
                 if name == "niri.service"
                 then let
                   noBindsTo =
-                    builtins.replaceStrings
-                    ["BindsTo=graphical-session.target"]
-                    ["Wants=graphical-session.target"]
-                    baseText;
+                    baseText
+                    |> builtins.replaceStrings
+                      ["BindsTo=graphical-session.target"]
+                      ["Wants=graphical-session.target"];
                   unitLimits =
-                    builtins.replaceStrings
-                    ["[Unit]"]
-                    [
-                      ''                        [Unit]
+                    noBindsTo
+                    |> builtins.replaceStrings
+                      ["[Unit]"]
+                      [
+                        ''                        [Unit]
                         StartLimitBurst=3
                         StartLimitIntervalSec=60''
-                    ]
-                    noBindsTo;
+                      ];
                 in
                   unitLimits
                   + "\nRestart=always\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\n"
@@ -63,14 +63,14 @@ _: {
                 else baseText;
             in {inherit text;};
           in
-            lib.listToAttrs (map
-              (name: {
-                inherit name;
-                value = mkUnit name;
-              })
-              (lib.filter
-                (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
-                (builtins.attrNames unitFiles)));
+            unitFiles
+            |> builtins.attrNames
+            |> lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
+            |> map (name: {
+              inherit name;
+              value = mkUnit name;
+            })
+            |> lib.listToAttrs;
 
           services.niri-drm-healthcheck = {
             description = "Detect niri DRM zombie state and trigger GPU recovery";

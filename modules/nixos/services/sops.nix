@@ -2,20 +2,21 @@ _: let
   secretsDir = ./../../../platforms/nixos/secrets;
 
   mkSecrets = file: defaults: names:
-    builtins.listToAttrs (map (name: {
-        inherit name;
-        value = defaults // {sopsFile = secretsDir + "/${file}";};
-      })
-      names);
+    names
+    |> map (name: {
+      inherit name;
+      value = defaults // {sopsFile = secretsDir + "/${file}";};
+    })
+    |> builtins.listToAttrs;
 
   mkKeyedSecrets = file: defaults: keyMap:
-    builtins.mapAttrs (_name: key:
+    keyMap
+    |> builtins.mapAttrs (_name: key:
       defaults
       // {
         sopsFile = secretsDir + "/${file}";
         inherit key;
-      })
-    keyMap;
+      });
 in {
   flake.nixosModules.sops = {
     config,
