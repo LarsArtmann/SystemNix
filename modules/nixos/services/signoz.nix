@@ -245,6 +245,15 @@ in {
             </zookeeper>
           </clickhouse>
         '';
+        systemd.services.clickhouse = {
+          onFailure = ["notify-failure@%n.service"];
+          serviceConfig =
+            harden {
+              MemoryMax = "4G";
+              ReadWritePaths = ["/var/lib/clickhouse" "/var/log/clickhouse-server"];
+            }
+            // serviceDefaults {};
+        };
       })
 
       (lib.mkIf cfg.components.queryService {
@@ -684,6 +693,7 @@ in {
           services.amdgpu-metrics = {
             description = "AMD GPU metrics collector for node_exporter textfile";
             path = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.findutils];
+            onFailure = ["notify-failure@%n.service"];
             serviceConfig = {
               Type = "oneshot";
               ExecStart = pkgs.writeShellScript "amdgpu-metrics" ''
