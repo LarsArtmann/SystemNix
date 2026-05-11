@@ -8,7 +8,7 @@
     enable = true;
     settings = {
       # Necessary for using flakes on this system
-      experimental-features = "nix-command flakes";
+      experimental-features = "nix-command flakes pipe-operators";
 
       # Enhanced Nix settings for better performance and reliability
       builders-use-substitutes = true;
