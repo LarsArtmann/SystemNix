@@ -104,9 +104,41 @@ detect_wifi_gateway() {
 
 # --- Initialize ---
 
+detect_initial_mode() {
+  # Read the current default route to determine initial state
+  # This prevents a service restart from wiping an active WiFi failover
+  local route
+  route=$(ip route show default 2>/dev/null || echo "")
+
+  if echo "$route" | grep -q "nexthop"; then
+    # ECMP multipath route exists — check weights
+    if echo "$route" | grep -q "weight 20"; then
+      CURRENT_MODE="wifi-heavy"
+      log "detected existing wifi-heavy ECMP route on startup"
+    else
+      CURRENT_MODE="ecmp"
+      log "detected existing ECMP route on startup"
+    fi
+  elif echo "$route" | grep -q "dev $WIFI_IF"; then
+    CURRENT_MODE="wifi-only"
+    log "detected existing WiFi-only route on startup — preserving failover state"
+  else
+    CURRENT_MODE="eno1-only"
+    log "no existing route or eno1-only route detected"
+  fi
+}
+
 log "starting ECMP+MPTCP WAN monitor (primary=$ENO1_IF/$ENO1_GW, fallback=$WIFI_IF)"
 log "thresholds: failover=${FAILOVER_THRESHOLD} failures, failback=${FAILBACK_THRESHOLD} successes, interval=${CHECK_INTERVAL}s"
-set_route_single "$ENO1_GW" "$ENO1_IF"
+
+# Detect current route state instead of blindly resetting to eno1
+detect_initial_mode
+
+# Only set route if no default route exists at all
+if [ -z "$(ip route show default 2>/dev/null)" ]; then
+  set_route_single "$ENO1_GW" "$ENO1_IF"
+  log "no default route found — set eno1 as default"
+fi
 
 # --- Main loop ---
 
