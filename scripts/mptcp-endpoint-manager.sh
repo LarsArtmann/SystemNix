@@ -9,7 +9,7 @@ set -euo pipefail
 
 ENO1_IP="${ENO1_IP:-${1:-192.168.1.150}}"
 ENO1_IF="${ENO1_IF:-eno1}"
-WIFI_IF="${WIFI_IF:-wlp195s0}"
+WIFI_IF="${WIFI_IF:-wlan0}"
 LOG_TAG="mptcp-endpoint-manager"
 
 log() { logger -t "$LOG_TAG" "$@"; }

@@ -1,164 +1,184 @@
 #!/bin/bash
-# route-health-monitor — Dynamic dual-WAN route optimizer
+# route-health-monitor — Active-passive WAN failover
 #
-# Monitors latency and packet loss on both gateways (eno1 + WiFi),
-# adjusts route metrics and ECMP weights in real-time.
+# eno1 (ethernet/ISP) is ALWAYS preferred when healthy.
+# WiFi (Kittyspot hotspot) is ONLY used when ISP internet is down.
 #
-# With MPTCP, individual connections use BOTH paths simultaneously.
-# This script controls which path gets new connections and adjusts
-# the weight ratio for ECMP load distribution.
+# Health check strategy:
+#   - Phase 1: ping gateway (link-level check)
+#   - Phase 2: HTTP fetch to public endpoints (internet-level check)
+#   This catches partial ISP outages where gateway is up but internet is down.
+#
+# The script uses a consecutive-failure counter to avoid flapping:
+#   - 3+ consecutive ISP failures → failover to WiFi
+#   - 3+ consecutive ISP recoveries → failback to eno1
+#   - This prevents rapid toggling on unstable connections
 
 set -euo pipefail
 
 ENO1_GW="${ENO1_GW:-192.168.1.1}"
-WIFI_IF="${WIFI_IF:-wlp195s0}"
+ENO1_IF="${ENO1_IF:-eno1}"
+WIFI_IF="${WIFI_IF:-wlan0}"
 LOG_TAG="route-health-monitor"
-PING_COUNT=3
-PING_TIMEOUT=2
-CHECK_INTERVAL=5
-HISTORY_SIZE=6
+CHECK_INTERVAL="${CHECK_INTERVAL:-5}"
+FAILOVER_THRESHOLD="${FAILOVER_THRESHOLD:-3}"
+FAILBACK_THRESHOLD="${FAILBACK_THRESHOLD:-3}"
+GATEWAY_TIMEOUT=2
+HTTP_TIMEOUT=3
 
 log() { logger -t "$LOG_TAG" "$@"; }
 
-# Rolling latency history (in ms, 9999 = unreachable)
-# shellcheck disable=SC2034,SC2178
-declare -a ENO1_HIST=()
-# shellcheck disable=SC2034
-declare -a WIFI_HIST=()
+# --- State ---
+CURRENT_MODE="eno1"
+ISP_FAIL_COUNT=0
+ISP_OK_COUNT=0
+WIFI_AVAILABLE=false
+WIFI_GW=""
 
-push_hist() {
-  # shellcheck disable=SC2178
-  local -n arr=$1
-  local val=$2
-  arr+=("$val")
-  if ((${#arr[@]} > HISTORY_SIZE)); then
-    arr=("${arr[@]:1}")
+# --- Helpers ---
+
+set_route() {
+  local gw="$1" dev="$2"
+  ip route replace default via "$gw" dev "$dev" 2>/dev/null
+  log "ROUTE: default via $gw dev $dev"
+}
+
+check_gateway() {
+  local gw="$1" dev="$2"
+  ping -c 1 -W "$GATEWAY_TIMEOUT" -I "$dev" "$gw" >/dev/null 2>&1
+}
+
+check_internet() {
+  # HTTP-level check — catches partial ISP outages where gateway is up but WAN is down
+  # Uses curl with --interface to bind to specific interface
+  # Fall back to ping if curl unavailable
+  local dev="$1"
+  if command -v curl >/dev/null 2>&1; then
+    curl -s -o /dev/null -w '' \
+      --connect-timeout "$HTTP_TIMEOUT" \
+      --max-time "$HTTP_TIMEOUT" \
+      --interface "$dev" \
+      "http://1.1.1.1" >/dev/null 2>&1
+  else
+    ping -c 1 -W "$HTTP_TIMEOUT" -I "$dev" 1.1.1.1 >/dev/null 2>&1
   fi
 }
 
-avg_hist() {
-  # shellcheck disable=SC2178
-  local -n arr=$1
-  local sum=0 count=0
-  for v in "${arr[@]}"; do
-    sum=$((sum + v))
-    count=$((count + 1))
-  done
-  if ((count == 0)); then echo 9999; else echo $((sum / count)); fi
+detect_wifi_gateway() {
+  WIFI_GW=""
+  # Auto-detect WiFi interface if the configured one doesn't exist
+  if ! ip link show "$WIFI_IF" >/dev/null 2>&1; then
+    # Try to find any WiFi interface managed by NetworkManager
+    local detected_if
+    detected_if=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null \
+      | grep ":wifi:connected" | head -1 | cut -d: -f1 || echo "")
+    if [ -n "$detected_if" ] && [ "$detected_if" != "$WIFI_IF" ]; then
+      log "AUTO-DETECT: WiFi interface changed from $WIFI_IF to $detected_if"
+      WIFI_IF="$detected_if"
+    fi
+  fi
+
+  local state
+  state=$(nmcli -t -f GENERAL.STATE device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 || echo "")
+  if echo "$state" | grep -q "connected"; then
+    WIFI_GW=$(nmcli -t -f IP4.GATEWAY device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 || echo "")
+    if [ -n "$WIFI_GW" ]; then
+      WIFI_AVAILABLE=true
+      return 0
+    fi
+  fi
+  WIFI_AVAILABLE=false
+  return 1
 }
 
-loss_pct() {
-  local output="$1"
-  local tx rx
-  tx=$(echo "$output" | grep -oP '\d+(?= packets transmitted)' || echo "0")
-  rx=$(echo "$output" | grep -oP '\d+(?= received)' || echo "0")
-  if ((tx == 0)); then echo 100; else echo $(((tx - rx) * 100 / tx)); fi
+switch_to_wifi() {
+  if [ -z "$WIFI_GW" ]; then
+    log "FAILOVER BLOCKED: WiFi gateway not available"
+    return 1
+  fi
+  set_route "$WIFI_GW" "$WIFI_IF"
+  CURRENT_MODE="wifi"
+  log "FAILOVER: ISP down, switched to WiFi ($WIFI_IF via $WIFI_GW)"
 }
 
-avg_latency() {
-  local output="$1"
-  # Extract avg from "rtt min/avg/max/mdev = X.Y/Z.Y/W.Y/V.Y ms"
-  # Match: = <float>/<float>/<float>/<float> — capture second value (avg)
-  echo "$output" | grep -oP '=\s*[\d.]+/[\d.]+/\K[\d.]+' || echo 9999
+switch_to_eno1() {
+  set_route "$ENO1_GW" "$ENO1_IF"
+  CURRENT_MODE="eno1"
+  log "FAILBACK: ISP recovered, switched to eno1 ($ENO1_IF via $ENO1_GW)"
 }
 
-# Current state
-CURRENT_ENO1_METRIC=100
-CURRENT_WIFI_METRIC=200
-CURRENT_MODE="dual"
+# --- Main loop ---
 
-set_route_dual() {
-  local eno1_w="$1"
-  local wifi_w="$2"
-  local wifi_gw="$3"
+log "starting active-passive WAN failover monitor (primary=$ENO1_IF/$ENO1_GW, fallback=$WIFI_IF)"
+log "thresholds: failover after ${FAILOVER_THRESHOLD} failures, failback after ${FAILBACK_THRESHOLD} successes"
 
-  # Don't touch routes if no WiFi gateway
-  [ -z "$wifi_gw" ] && return 1
-
-  ip route replace default \
-    nexthop via "$ENO1_GW" dev eno1 weight "$eno1_w" \
-    nexthop via "$wifi_gw" dev "$WIFI_IF" weight "$wifi_w" \
-    2>/dev/null
-}
-
-set_route_single() {
-  local gw="$1"
-  local dev="$2"
-  ip route replace default via "$gw" dev "$dev" 2>/dev/null
-}
-
-log "starting dual-WAN route health monitor (eno1=${ENO1_GW})"
-log "warming up (${HISTORY_SIZE} x ${CHECK_INTERVAL}s)..."
+# Initial route: eno1
+set_route "$ENO1_GW" "$ENO1_IF"
 
 while true; do
-  # --- Measure eno1 ---
-  ENO1_OUT=$(ping -c $PING_COUNT -W $PING_TIMEOUT -I eno1 "$ENO1_GW" 2>&1 || true)
-  ENO1_LAT=$(avg_latency "$ENO1_OUT")
-  ENO1_LAT=${ENO1_LAT%.*} # truncate to integer
-  ENO1_LAT=${ENO1_LAT:-9999}
-  ENO1_LOSS=$(loss_pct "$ENO1_OUT")
-  push_hist ENO1_HIST "$ENO1_LAT"
+  # Detect WiFi state every cycle
+  detect_wifi_gateway || true
 
-  # --- Measure WiFi ---
-  WIFI_GW=$(nmcli -t -f IP4.GATEWAY device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 || echo "")
-  WIFI_LAT=9999
-  WIFI_LOSS=100
+  # Check ISP health: gateway first, then internet
+  ISP_GATEWAY_OK=false
+  ISP_INTERNET_OK=false
 
-  if [ -n "$WIFI_GW" ]; then
-    WIFI_OUT=$(ping -c $PING_COUNT -W $PING_TIMEOUT -I "$WIFI_IF" "$WIFI_GW" 2>&1 || true)
-    WIFI_LAT=$(avg_latency "$WIFI_OUT")
-    WIFI_LAT=${WIFI_LAT%.*}
-    WIFI_LAT=${WIFI_LAT:-9999}
-    WIFI_LOSS=$(loss_pct "$WIFI_OUT")
+  if check_gateway "$ENO1_GW" "$ENO1_IF"; then
+    ISP_GATEWAY_OK=true
+    if check_internet "$ENO1_IF"; then
+      ISP_INTERNET_OK=true
+    fi
   fi
-  push_hist WIFI_HIST "$WIFI_LAT"
 
-  # --- Compute averages ---
-  ENO1_AVG=$(avg_hist ENO1_HIST)
-  WIFI_AVG=$(avg_hist WIFI_HIST)
+  case "$CURRENT_MODE" in
+    eno1)
+      if $ISP_INTERNET_OK; then
+        # ISP healthy — reset counters
+        ISP_FAIL_COUNT=0
+      else
+        ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
+        if $ISP_GATEWAY_OK && ! $ISP_INTERNET_OK; then
+          log "ISP: gateway up but no internet (failure $ISP_FAIL_COUNT/$FAILOVER_THRESHOLD)"
+        else
+          log "ISP: gateway unreachable (failure $ISP_FAIL_COUNT/$FAILOVER_THRESHOLD)"
+        fi
 
-  # --- Decision logic ---
-  ENO1_OK=$((ENO1_AVG < 500 && ENO1_LOSS < 50 ? 1 : 0))
-  WIFI_OK=$((WIFI_AVG < 500 && WIFI_LOSS < 50 ? 1 : 0))
-
-  if ((ENO1_OK && WIFI_OK)); then
-    ENO1_W=$((1000 / (ENO1_AVG == 0 ? 1 : ENO1_AVG)))
-    WIFI_W=$((1000 / (WIFI_AVG == 0 ? 1 : WIFI_AVG)))
-    ENO1_W=$((ENO1_W > 20 ? 20 : ENO1_W))
-    ENO1_W=$((ENO1_W < 1 ? 1 : ENO1_W))
-    WIFI_W=$((WIFI_W > 20 ? 20 : WIFI_W))
-    WIFI_W=$((WIFI_W < 1 ? 1 : WIFI_W))
-
-    if [ "$CURRENT_MODE" != "dual" ] || [ "$CURRENT_ENO1_METRIC" != "$ENO1_W" ] || [ "$CURRENT_WIFI_METRIC" != "$WIFI_W" ]; then
-      if set_route_dual "$ENO1_W" "$WIFI_W" "$WIFI_GW"; then
-        log "ECMP: eno1 weight=$ENO1_W (avg=${ENO1_AVG}ms) + wifi weight=$WIFI_W (avg=${WIFI_AVG}ms)"
-        CURRENT_MODE="dual"
-        CURRENT_ENO1_METRIC=$ENO1_W
-        CURRENT_WIFI_METRIC=$WIFI_W
+        if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ] && $WIFI_AVAILABLE; then
+          switch_to_wifi
+          ISP_FAIL_COUNT=0
+          ISP_OK_COUNT=0
+        fi
       fi
-    fi
+      ;;
 
-  elif ((ENO1_OK)) && ! ((WIFI_OK)); then
-    if [ "$CURRENT_MODE" != "eno1-only" ]; then
-      set_route_single "$ENO1_GW" eno1
-      log "FAILOVER: WiFi down (avg=${WIFI_AVG}ms, loss=${WIFI_LOSS}%), eno1 only"
-      CURRENT_MODE="eno1-only"
-    fi
+    wifi)
+      if $ISP_INTERNET_OK; then
+        ISP_OK_COUNT=$((ISP_OK_COUNT + 1))
+        if [ "$ISP_OK_COUNT" -ge "$FAILBACK_THRESHOLD" ]; then
+          switch_to_eno1
+          ISP_OK_COUNT=0
+          ISP_FAIL_COUNT=0
+        else
+          log "ISP: recovering ($ISP_OK_COUNT/$FAILBACK_THRESHOLD consecutive successes)"
+        fi
+      else
+        # ISP still down while on WiFi — reset recovery counter
+        ISP_OK_COUNT=0
+      fi
 
-  elif ((WIFI_OK)) && ! ((ENO1_OK)); then
-    if [ -n "$WIFI_GW" ] && [ "$CURRENT_MODE" != "wifi-only" ]; then
-      set_route_single "$WIFI_GW" "$WIFI_IF"
-      log "FAILOVER: eno1 down (avg=${ENO1_AVG}ms, loss=${ENO1_LOSS}%), WiFi only"
-      CURRENT_MODE="wifi-only"
-    fi
+      # Also check WiFi is still alive
+      if ! $WIFI_AVAILABLE; then
+        log "CRITICAL: WiFi lost while ISP is down — no connectivity"
+        # Stay on wifi mode but log aggressively
+      fi
+      ;;
 
-  else
-    if [ "$CURRENT_MODE" != "both-down" ]; then
-      set_route_single "$ENO1_GW" eno1
-      log "CRITICAL: both paths degraded (eno1=${ENO1_AVG}ms/${ENO1_LOSS}%, wifi=${WIFI_AVG}ms/${WIFI_LOSS}%), trying eno1"
-      CURRENT_MODE="both-down"
-    fi
-  fi
+    *)
+      log "UNKNOWN MODE: $CURRENT_MODE — resetting to eno1"
+      set_route "$ENO1_GW" "$ENO1_IF"
+      CURRENT_MODE="eno1"
+      ;;
+  esac
 
-  sleep $CHECK_INTERVAL
+  sleep "$CHECK_INTERVAL"
 done

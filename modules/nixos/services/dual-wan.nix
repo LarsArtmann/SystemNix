@@ -15,7 +15,7 @@ _: {
     mptcpEndpointScript = pkgs.writeShellScript "mptcp-endpoint-manager" (builtins.readFile ../../../scripts/mptcp-endpoint-manager.sh);
   in {
     options.services.dual-wan = {
-      enable = mkEnableOption "Dual-WAN with MPTCP and route health monitoring";
+      enable = mkEnableOption "Dual-WAN active-passive failover (ethernet primary, WiFi fallback)";
 
       ethernetInterface = mkOption {
         type = types.nonEmptyStr;
@@ -26,13 +26,25 @@ _: {
       wifiInterface = mkOption {
         type = types.nonEmptyStr;
         default = "wlan0";
-        description = "WiFi interface name";
+        description = "WiFi interface name (auto-detected if this one doesn't exist)";
       };
 
       checkInterval = mkOption {
         type = types.ints.positive;
         default = 5;
         description = "Seconds between health checks";
+      };
+
+      failoverThreshold = mkOption {
+        type = types.ints.positive;
+        default = 3;
+        description = "Consecutive ISP failures before failing over to WiFi";
+      };
+
+      failbackThreshold = mkOption {
+        type = types.ints.positive;
+        default = 3;
+        description = "Consecutive ISP recoveries before failing back to ethernet";
       };
     };
 
@@ -88,11 +100,12 @@ _: {
           };
 
           route-health-monitor = {
-            description = "Dual-WAN route health monitor — dynamic ECMP failover";
+            description = "Active-passive WAN failover — ethernet primary, WiFi fallback";
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
             path = [
+              pkgs.curl
               pkgs.iproute2
               pkgs.networkmanager
               pkgs.util-linux
@@ -102,8 +115,11 @@ _: {
                 Type = "simple";
                 Environment = [
                   "ENO1_GW=${gateway}"
+                  "ENO1_IF=${cfg.ethernetInterface}"
                   "WIFI_IF=${cfg.wifiInterface}"
                   "CHECK_INTERVAL=${toString cfg.checkInterval}"
+                  "FAILOVER_THRESHOLD=${toString cfg.failoverThreshold}"
+                  "FAILBACK_THRESHOLD=${toString cfg.failbackThreshold}"
                 ];
                 ExecStart = routeHealthScript;
               }
