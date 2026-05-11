@@ -7,7 +7,7 @@ _: {
   }: let
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
 
     whisperModelsDir = config.services.ai-models.paths.whisper;
 
@@ -54,11 +54,7 @@ _: {
         description = "Whisper model to use";
       };
 
-      whisperPort = lib.mkOption {
-        type = lib.types.port;
-        default = 7860;
-        description = "Port for Whisper ASR Gradio WebUI";
-      };
+      whisperPort = serviceTypes.servicePort 7860 "Port for Whisper ASR Gradio WebUI";
 
       openFirewall = lib.mkOption {
         type = lib.types.bool;

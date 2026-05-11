@@ -107,7 +107,7 @@ _: {
               MemoryMax = "2G";
               ReadWritePaths = ["/sys" "/dev"];
             }
-            // serviceDefaults {};
+            // serviceDefaults {Restart = "no";};
         };
 
         services.niri-health-metrics = {
