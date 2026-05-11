@@ -47,6 +47,7 @@ in {
     };
 
     unbound.settings.server = {
+      verbosity = 1;
       local-zone = [''"${domain}." static''];
       local-data =
         map

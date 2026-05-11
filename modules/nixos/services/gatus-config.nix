@@ -142,6 +142,17 @@ _: {
               conditions = ["[STATUS] == 200"];
             }
             {
+              name = "Upstream DNS (Quad9)";
+              group = "Infrastructure";
+              url = "9.9.9.9";
+              dns = {
+                query-name = "google.com";
+                query-type = "A";
+              };
+              interval = "5m";
+              conditions = ["[DNS_RCODE] == NOERROR"];
+            }
+            {
               name = "Whisper ASR";
               group = "AI";
               url = "http://localhost:${toString config.services.voice-agents.whisperPort}";
