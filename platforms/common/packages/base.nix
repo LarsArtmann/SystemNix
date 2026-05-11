@@ -2,7 +2,7 @@
   pkgs,
   lib,
   helium,
-  otel-tui,
+  otel-tui ? null,
   ...
 }: let
   # Import modernize from local pkgs if available
@@ -190,9 +190,12 @@
       kubectl # Kubernetes CLI (includes fish/zsh/bash completions!)
       k9s # Kubernetes CLI To Manage Your Clusters In Style
 
-      # Observability tools
+      # Observability tools (Linux-only — otel-tui builds from source, 40+ min on macOS)
+    ]
+    ++ lib.optionals (otel-tui != null) [
       otel-tui.packages.${system}.otel-tui # OpenTelemetry terminal viewer
-
+    ]
+    ++ [
       # Nix helper tools
       nh
       statix # Lints and suggestions for Nix code

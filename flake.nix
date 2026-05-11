@@ -424,7 +424,6 @@
             inherit helium;
             inherit nur;
             inherit nix-colors;
-            inherit otel-tui;
           };
           modules = [
             {
@@ -433,6 +432,8 @@
                 config.allowUnfree = true;
                 overlays = sharedOverlays;
               };
+              # otel-tui is Linux-only (40+ min from-source build on macOS, disk-hungry)
+              _module.args.otel-tui = null;
             }
 
             # Import nix-homebrew for declarative Homebrew management
