@@ -6,26 +6,18 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 
 | Package | Language | Platform | Description |
 |---------|----------|----------|-------------|
-| [dnsblockd](#dnsblockd) | Go | Linux | DNS block page HTTP server |
 | [modernize](#modernize) | Go | All | Go code modernize linter |
 | [jscpd](#jscpd) | Node.js | All | Copy/paste detector for source code |
 | [aw-watcher-utilization](#aw-watcher-utilization) | Python | All | ActivityWatch system utilization watcher |
-| [monitor365](#monitor365) | Rust | Linux | Personal device monitoring agent |
 | [netwatch](#netwatch) | Rust | Linux | Real-time network diagnostics TUI |
 | [openaudible](#openaudible) | AppImage | Linux | Audible audiobook manager |
-| [file-and-image-renamer](#file-and-image-renamer) | Go | Linux | AI-powered screenshot renaming tool |
 
-> **Note:** emeet-pixyd, dnsblockd, golangci-lint-auto-configure, mr-sync, and other tools are provided via upstream flake input overlays — no local package file needed.
+> **Note:** The following tools are provided via upstream flake input overlays — no local package file needed:
+> dnsblockd, emeet-pixyd, monitor365, file-and-image-renamer, golangci-lint-auto-configure,
+> mr-sync, hierarchical-errors, library-policy, buildflow, go-auto-upgrade, go-structure-linter,
+> branching-flow, art-dupl, todo-list-ai.
 
 ---
-
-### dnsblockd
-
-Lightweight HTTP server that serves block pages for DNS-filtered domains. Paired with Unbound DNS resolver to provide visual feedback when a blocked domain is accessed.
-
-- **Source:** `dnsblockd.nix` (derivation) + inline Go source in flake
-- **Platform:** Linux only
-- **Config:** `platforms/nixos/system/dns-blocker-config.nix`
 
 ### modernize
 
@@ -51,14 +43,6 @@ Monitors CPU, RAM, disk, network, and sensor usage, reporting to ActivityWatch. 
 - **Platform:** All platforms
 - **Config:** `platforms/darwin/services/launchagents.nix` (macOS LaunchAgent)
 
-### monitor365
-
-Cross-platform personal device monitoring system agent. Rust CLI that collects system metrics via a plugin architecture. NixOS module available at `modules/nixos/services/monitor365.nix` (currently disabled).
-
-- **Source:** `monitor365.nix` (Rust, source from `monitor365-src` flake input)
-- **Platform:** Linux only
-- **Builds:** Only the CLI agent binary (`--package monitor365-cli`)
-
 ### netwatch
 
 Real-time network diagnostics TUI built in Rust. Shows connectivity, latency, DNS resolution, and port status.
@@ -73,14 +57,6 @@ Desktop application for managing Audible audiobooks. Wrapped AppImage.
 - **Source:** `openaudible.nix` (AppImage, unfree)
 - **Platform:** Linux only (x86_64)
 - **Install:** Included in `platforms/common/packages/base.nix` for Linux
-
-### file-and-image-renamer
-
-AI-powered screenshot and image renaming tool using GLM-4.6V Vision API.
-
-- **Source:** `file-and-image-renamer.nix` (Go, source from `file-and-image-renamer-src` flake input)
-- **Platform:** Linux only
-- **Config:** `modules/nixos/services/file-and-image-renamer.nix`
 
 ## Adding a New Package
 

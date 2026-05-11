@@ -8,6 +8,7 @@ _: {
     cfg = config.services.monitor365;
     inherit (config.users) primaryUser;
     sd = import ../../../lib/default.nix lib;
+    inherit (sd) hardenUser;
 
     runtimeDeps = with pkgs; [
       xdotool
@@ -233,6 +234,7 @@ _: {
 
           Service =
             sd.serviceDefaultsUser {RestartSec = "10";}
+            // hardenUser {MemoryMax = "1G";}
             // {
               Type = "simple";
               ExecStart = "${cfg.package}/bin/monitor365 --config /etc/monitor365/config.toml run";

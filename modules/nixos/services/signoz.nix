@@ -607,6 +607,62 @@ in {
             };
           });
 
+          "signoz/rules/ollama-down.json".source = pkgs.writeText "ollama-down-rule.json" (builtins.toJSON {
+            data = {
+              rule = {
+                alertType = "METRIC_BASED_ALERT";
+                description = "Ollama LLM service is not responding — AI inference unavailable";
+                enabled = true;
+                condition = {
+                  compositeMetricQuery = {
+                    promQueries = [
+                      {
+                        name = "A";
+                        query = "up{job=\"ollama\"}";
+                        step = 60;
+                        statsAggExpr = "last";
+                      }
+                    ];
+                  };
+                  op = "AND_NOT";
+                  target = 1;
+                };
+                evaluationInterval = "1m";
+                name = "Ollama Down";
+                preferredChannels = ["Discord Alerts"];
+                source = "RULE";
+              };
+            };
+          });
+
+          "signoz/rules/docker-down.json".source = pkgs.writeText "docker-down-rule.json" (builtins.toJSON {
+            data = {
+              rule = {
+                alertType = "METRIC_BASED_ALERT";
+                description = "Docker daemon or container runtime is not responding — all container services affected";
+                enabled = true;
+                condition = {
+                  compositeMetricQuery = {
+                    promQueries = [
+                      {
+                        name = "A";
+                        query = "up{job=\"cadvisor\"}";
+                        step = 60;
+                        statsAggExpr = "last";
+                      }
+                    ];
+                  };
+                  op = "AND_NOT";
+                  target = 1;
+                };
+                evaluationInterval = "1m";
+                name = "Docker Daemon Down";
+                preferredChannels = ["Discord Alerts"];
+                source = "RULE";
+              };
+            };
+          });
+
           "signoz/dashboards/overview.json".source = "${inputs.self}/modules/nixos/services/dashboards/signoz-overview.json";
         };
       })

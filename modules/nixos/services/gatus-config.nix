@@ -39,6 +39,12 @@ _: {
               url = "http://127.0.0.1:2019/metrics";
               interval = "30s";
               conditions = ["[STATUS] == 200"];
+              alerts = [
+                {
+                  type = "discord";
+                  description = "Caddy reverse proxy down — all services unreachable";
+                }
+              ];
             }
             {
               name = "Authelia";
@@ -74,6 +80,12 @@ _: {
               url = "http://localhost:${toString config.services.signoz.settings.queryService.port}";
               interval = "30s";
               conditions = ["[STATUS] == 200"];
+              alerts = [
+                {
+                  type = "discord";
+                  description = "SigNoz observability platform down — no metrics/alerts";
+                }
+              ];
             }
             {
               name = "Manifest";
@@ -148,6 +160,12 @@ _: {
               url = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
               interval = "30s";
               conditions = ["[STATUS] == 200"];
+              alerts = [
+                {
+                  type = "discord";
+                  description = "DNS blocker down — no ad/malware blocking";
+                }
+              ];
             }
             {
               name = "Upstream DNS (Quad9)";
@@ -159,6 +177,23 @@ _: {
               };
               interval = "5m";
               conditions = ["[DNS_RCODE] == NOERROR"];
+            }
+            {
+              name = "DNS Blocking Active";
+              group = "Infrastructure";
+              url = "127.0.0.1";
+              dns = {
+                query-name = "ads.google.com";
+                query-type = "A";
+              };
+              interval = "5m";
+              conditions = ["[DNS_RCODE] == NOERROR"];
+              alerts = [
+                {
+                  type = "discord";
+                  description = "DNS blocking not active — ads.google.com resolved without block";
+                }
+              ];
             }
             {
               name = "Whisper ASR";

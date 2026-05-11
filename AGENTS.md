@@ -38,16 +38,16 @@ SystemNix/
 │
 ├── pkgs/                        # Custom packages
 │   ├── aw-watcher-utilization.nix # ActivityWatch system utilization watcher (Python)
-│   ├── dnsblockd.nix            # DNS block page server (Go)
 │   ├── jscpd.nix                # Copy/paste detector (Node.js)
 │   ├── modernize.nix            # Go modernize tool
-│   ├── monitor365.nix           # Device monitoring agent (Rust)
 │   ├── netwatch.nix             # Real-time network diagnostics TUI (Rust)
 │   ├── openaudible.nix          # Audible audiobook manager (AppImage)
-│   ├── file-and-image-renamer.nix # AI screenshot renaming (Go)
 │
 │   # External flake inputs (packages via overlay — no local pkgs/ file)
 │   # emeet-pixyd             — EMEET PIXY webcam daemon
+│   # dnsblockd               — DNS block page server
+│   # monitor365              — Device monitoring agent
+│   # file-and-image-renamer  — AI screenshot renaming
 │   # todo-list-ai            — AI-powered TODO extraction CLI
 │   # golangci-lint-auto-configure — golangci-lint auto-configurator
 │   # mr-sync                 — ~/.mrconfig GitHub sync CLI
@@ -441,7 +441,6 @@ Reusable functions in `lib/` — imported directly by relative path:
 | `lib/systemd/service-defaults.nix` | Common service defaults (Restart, RestartSec) — returns attrset with `.serviceDefaults` (system, uses mkForce) and `.serviceDefaultsUser` (user services, no mkForce) | `sd = import ../../../lib/systemd/service-defaults.nix lib;` then `sd.serviceDefaults {}` or `sd.serviceDefaultsUser {}` |
 | `lib/types.nix` | Reusable NixOS module option constructors (ports, user/group, delays) | `serviceTypes = import ../../../lib/types.nix lib;` then `serviceTypes.systemdServiceIdentity {}` |
 | `lib/rocm.nix` | ROCm GPU runtime library lists and env vars | `rocm = import ../../../lib/rocm.nix {inherit pkgs;};` then `rocm.env` / `rocm.makeLdLibraryPath lib` |
-| `lib/go-output-submodules.nix` | Generates `require`+`replace` directives for go-output workspace sub-modules | `import ../lib/go-output-submodules.nix go-output-src` in postPatch |
 
 Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 
@@ -761,12 +760,10 @@ hermes cron list          # List cron jobs
 | `hierarchical-errors` | Error handling pattern analyzer | Yes |
 | `homebrew-bundle` | Homebrew taps (flake=false) | — |
 | `homebrew-cask` | Homebrew cask taps (flake=false) | — |
-| `monitor365-src` | Device monitoring agent source (flake=false) | — |
+| `monitor365` | Device monitoring agent (Rust) | Yes |
 | `mr-sync` | ~/.mrconfig GitHub sync CLI | Yes |
 | `wallpapers-src` | Wallpaper collection (flake=false) | — |
-| `file-and-image-renamer-src` | AI screenshot renamer source (flake=false) | — |
-| `cmdguard-src` | Go command guard library (flake=false) | — |
-| `go-output-src` | Go output library (flake=false) | — |
+| `file-and-image-renamer` | AI screenshot renaming tool | Yes |
 | `nixos-hardware` | Hardware profiles (RPi, etc.) | No |
 | `emeet-pixyd` | EMEET PIXY webcam daemon | Yes |
 | `niri-session-manager` | Niri window save/restore (Rust) | Yes |

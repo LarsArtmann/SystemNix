@@ -116,10 +116,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Monitor365 device monitoring agent source (Rust)
-    monitor365-src = {
+    # monitor365 — Device monitoring agent (Rust)
+    monitor365 = {
       url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=master";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
@@ -155,18 +155,10 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # file-and-image-renamer — AI-powered screenshot renaming tool + local Go deps
-    file-and-image-renamer-src = {
+    # file-and-image-renamer — AI-powered screenshot renaming tool
+    file-and-image-renamer = {
       url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=master";
-      flake = false;
-    };
-    cmdguard-src = {
-      url = "git+ssh://git@github.com/LarsArtmann/cmdguard?ref=master";
-      flake = false;
-    };
-    go-output-src = {
-      url = "git+ssh://git@github.com/LarsArtmann/go-output?ref=master";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
@@ -234,16 +226,14 @@
     otel-tui,
     nix-amd-npu,
     nix-ssh-config,
-    monitor365-src,
     nixos-hardware,
     emeet-pixyd,
     niri-session-manager,
     treefmt-full-flake,
     todo-list-ai,
     library-policy,
-    file-and-image-renamer-src,
-    cmdguard-src,
-    go-output-src,
+    file-and-image-renamer,
+    monitor365,
     golangci-lint-auto-configure,
     mr-sync,
     hierarchical-errors,
@@ -273,27 +263,6 @@
       netwatch = prev.callPackage ./pkgs/netwatch.nix {};
     };
 
-    monitor365Overlay = _final: prev: {
-      monitor365 = prev.callPackage ./pkgs/monitor365.nix {
-        src = prev.lib.cleanSourceWith {
-          filter = path: _type: let
-            b = baseNameOf path;
-          in
-            !(
-              b
-              == "target"
-              || b == "vendor"
-              || b == ".git"
-              || b == "docs"
-              || b == "report"
-              || b == ".crush"
-              || b == "examples"
-              || prev.lib.hasSuffix ".svg" b
-            );
-          src = monitor365-src;
-        };
-      };
-    };
     jscpdOverlay = _final: prev: {
       jscpd = prev.callPackage ./pkgs/jscpd.nix {};
     };
@@ -374,12 +343,6 @@
       mr-sync = mr-sync.packages.${prev.stdenv.system}.default;
     };
 
-    fileAndImageRenamerOverlay = _final: prev: {
-      file-and-image-renamer = prev.callPackage ./pkgs/file-and-image-renamer.nix {
-        inherit file-and-image-renamer-src cmdguard-src go-output-src;
-      };
-    };
-
     # Disable tests for packages with flaky integration tests in sandboxed builders
     disableTestsOverlay = _final: prev: {
       valkey = prev.valkey.overrideAttrs (_old: {doCheck = false;});
@@ -418,9 +381,9 @@
       openaudibleOverlay
       dnsblockdOverlay
       emeetPixyOverlay
-      monitor365Overlay
+      monitor365.overlays.default
       netwatchOverlay
-      fileAndImageRenamerOverlay
+      file-and-image-renamer.overlays.default
     ];
 
     # Python test override (separate because it's NixOS-specific)
