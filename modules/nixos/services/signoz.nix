@@ -672,7 +672,39 @@ in {
             };
           });
 
+          "signoz/rules/service-failed-spike.json".source = pkgs.writeText "service-failed-spike-rule.json" (builtins.toJSON {
+            data = {
+              rule = {
+                alertType = "METRIC_BASED_ALERT";
+                description = "Multiple systemd services failing in rapid succession — possible systemic issue";
+                enabled = true;
+                condition = {
+                  compositeMetricQuery = {
+                    promQueries = [
+                      {
+                        name = "A";
+                        query = "sum(increase(ntfy_systemd_unit_failed_total[10m]))";
+                        step = 60;
+                        statsAggExpr = "last";
+                      }
+                    ];
+                  };
+                  op = "AND";
+                  target = 3;
+                };
+                evaluationInterval = "5m";
+                name = "Service Failure Spike";
+                preferredChannels = ["Discord Alerts"];
+                source = "RULE";
+              };
+            };
+          });
+
           "signoz/dashboards/overview.json".source = "${inputs.self}/modules/nixos/services/dashboards/signoz-overview.json";
+          "signoz/dashboards/gpu.json".source = "${inputs.self}/modules/nixos/services/dashboards/gpu.json";
+          "signoz/dashboards/dns.json".source = "${inputs.self}/modules/nixos/services/dashboards/dns.json";
+          "signoz/dashboards/docker.json".source = "${inputs.self}/modules/nixos/services/dashboards/docker.json";
+          "signoz/dashboards/caddy.json".source = "${inputs.self}/modules/nixos/services/dashboards/caddy.json";
         };
       })
 

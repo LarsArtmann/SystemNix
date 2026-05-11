@@ -1,0 +1,92 @@
+{
+  "title": "GPU Metrics — AMD Radeon 8060S",
+  "description": "AMD GPU VRAM, temperature, utilization, and memory bandwidth",
+  "tags": ["gpu", "amd", "evo-x2"],
+  "layout": [
+    {"h": 6, "i": "w1", "moved": false, "static": false, "w": 6, "x": 0, "y": 0},
+    {"h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 6, "y": 0},
+    {"h": 6, "i": "w3", "moved": false, "static": false, "w": 12, "x": 0, "y": 6},
+    {"h": 6, "i": "w4", "moved": false, "static": false, "w": 6, "x": 0, "y": 12},
+    {"h": 6, "i": "w5", "moved": false, "static": false, "w": 6, "x": 6, "y": 12}
+  ],
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "GPU VRAM Usage",
+      "description": "VRAM used vs total",
+      "panelTypes": "graph",
+      "yAxisUnit": "bytes",
+      "query": {
+        "promql": {
+          "expression": "node_amdgpu_mem_info_vram_used_bytes",
+          "legend": "Used",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w2",
+      "title": "GPU Temperature",
+      "description": "AMD GPU junction temperature",
+      "panelTypes": "graph",
+      "yAxisUnit": "celsius",
+      "query": {
+        "promql": {
+          "expression": "node_amdgpu_gpu_temp_celsius",
+          "legend": "{{card}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      },
+      "thresholds": {"steps": [{"color": "green"}, {"color": "yellow", "value": 70}, {"color": "red", "value": 85}]}
+    },
+    {
+      "id": "w3",
+      "title": "GPU Utilization",
+      "description": "GPU compute and memory controller busy percentage",
+      "panelTypes": "graph",
+      "yAxisUnit": "percent",
+      "query": {
+        "promql": {
+          "expression": "node_amdgpu_gpu_busy_percent",
+          "legend": "GPU Busy {{card}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w4",
+      "title": "Memory Controller Busy",
+      "description": "GPU memory controller utilization",
+      "panelTypes": "graph",
+      "yAxisUnit": "percent",
+      "query": {
+        "promql": {
+          "expression": "node_amdgpu_mem_busy_percent",
+          "legend": "Mem Busy {{card}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w5",
+      "title": "VRAM Total",
+      "description": "Total VRAM available",
+      "panelTypes": "value",
+      "query": {
+        "promql": {
+          "expression": "node_amdgpu_mem_info_vram_total_bytes",
+          "step": 300
+        },
+        "queryType": "promql"
+      },
+      "yAxisUnit": "bytes"
+    }
+  ],
+  "variables": [],
+  "refresh": "30s",
+  "timeRange": {"from": "now-1h", "to": "now"}
+}

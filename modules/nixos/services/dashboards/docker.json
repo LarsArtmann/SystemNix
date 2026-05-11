@@ -1,0 +1,91 @@
+{
+  "title": "Docker Containers — Resource Usage",
+  "description": "CPU, memory, and network metrics per container",
+  "tags": ["docker", "containers", "evo-x2"],
+  "layout": [
+    {"h": 6, "i": "w1", "moved": false, "static": false, "w": 12, "x": 0, "y": 0},
+    {"h": 6, "i": "w2", "moved": false, "static": false, "w": 12, "x": 0, "y": 6},
+    {"h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 0, "y": 12},
+    {"h": 6, "i": "w4", "moved": false, "static": false, "w": 6, "x": 6, "y": 12},
+    {"h": 6, "i": "w5", "moved": false, "static": false, "w": 12, "x": 0, "y": 18}
+  ],
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "Container CPU Usage",
+      "description": "CPU utilization per container",
+      "panelTypes": "graph",
+      "yAxisUnit": "percent",
+      "query": {
+        "promql": {
+          "expression": "rate(container_cpu_usage_seconds_total{name!=\"\"}[5m]) * 100",
+          "legend": "{{name}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w2",
+      "title": "Container Memory Usage",
+      "description": "Memory usage per container",
+      "panelTypes": "graph",
+      "yAxisUnit": "bytes",
+      "query": {
+        "promql": {
+          "expression": "container_memory_usage_bytes{name!=\"\"}",
+          "legend": "{{name}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w3",
+      "title": "Container Network RX",
+      "description": "Network receive bytes per container",
+      "panelTypes": "graph",
+      "yAxisUnit": "Bps",
+      "query": {
+        "promql": {
+          "expression": "rate(container_network_receive_bytes_total{name!=\"\"}[5m])",
+          "legend": "{{name}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w4",
+      "title": "Container Network TX",
+      "description": "Network transmit bytes per container",
+      "panelTypes": "graph",
+      "yAxisUnit": "Bps",
+      "query": {
+        "promql": {
+          "expression": "rate(container_network_transmit_bytes_total{name!=\"\"}[5m])",
+          "legend": "{{name}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w5",
+      "title": "Container Restarts",
+      "description": "Total restarts per container",
+      "panelTypes": "graph",
+      "query": {
+        "promql": {
+          "expression": "container_restart_total{name!=\"\"}",
+          "legend": "{{name}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    }
+  ],
+  "variables": [],
+  "refresh": "30s",
+  "timeRange": {"from": "now-6h", "to": "now"}
+}

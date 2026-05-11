@@ -1,0 +1,74 @@
+{
+  "title": "DNS Blocking — Ad & Malware Filter",
+  "description": "DNS resolution, blocking status, and upstream health",
+  "tags": ["dns", "security", "evo-x2"],
+  "layout": [
+    {"h": 6, "i": "w1", "moved": false, "static": false, "w": 6, "x": 0, "y": 0},
+    {"h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 6, "y": 0},
+    {"h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 0, "y": 6},
+    {"h": 6, "i": "w4", "moved": false, "static": false, "w": 6, "x": 6, "y": 6}
+  ],
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "DNS Query Latency",
+      "description": "Unbound resolution latency",
+      "panelTypes": "graph",
+      "yAxisUnit": "s",
+      "query": {
+        "promql": {
+          "expression": "histogram_quantile(0.95, rate(unbound_response_time_seconds_bucket[5m]))",
+          "legend": "p95",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w2",
+      "title": "DNS Queries by Rcode",
+      "description": "Response codes from DNS resolver",
+      "panelTypes": "graph",
+      "query": {
+        "promql": {
+          "expression": "rate(unbound_response_rcode_total[5m])",
+          "legend": "{{rcode}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w3",
+      "title": "Unbound Cache Usage",
+      "description": "Number of entries in DNS cache",
+      "panelTypes": "graph",
+      "query": {
+        "promql": {
+          "expression": "unbound_num_queries",
+          "legend": "queries",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w4",
+      "title": "DNS Blocker Health",
+      "description": "dnsblockd service response time",
+      "panelTypes": "graph",
+      "yAxisUnit": "ms",
+      "query": {
+        "promql": {
+          "expression": "0",
+          "step": 60
+        },
+        "queryType": "promql"
+      },
+      "description": "dnsblockd metrics — placeholder until prometheus exporter is available"
+    }
+  ],
+  "variables": [],
+  "refresh": "30s",
+  "timeRange": {"from": "now-6h", "to": "now"}
+}

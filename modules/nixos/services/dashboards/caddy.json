@@ -1,0 +1,74 @@
+{
+  "title": "Caddy Reverse Proxy — HTTP Metrics",
+  "description": "Request rates, latencies, errors, and upstream health",
+  "tags": ["caddy", "http", "evo-x2"],
+  "layout": [
+    {"h": 6, "i": "w1", "moved": false, "static": false, "w": 12, "x": 0, "y": 0},
+    {"h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 0, "y": 6},
+    {"h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 6, "y": 6},
+    {"h": 6, "i": "w4", "moved": false, "static": false, "w": 12, "x": 0, "y": 12}
+  ],
+  "widgets": [
+    {
+      "id": "w1",
+      "title": "HTTP Requests per Second",
+      "description": "Request rate by host",
+      "panelTypes": "graph",
+      "yAxisUnit": "reqps",
+      "query": {
+        "promql": {
+          "expression": "rate(caddy_http_requests_total[5m])",
+          "legend": "{{host}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w2",
+      "title": "HTTP Errors",
+      "description": "Error rate by status code",
+      "panelTypes": "graph",
+      "query": {
+        "promql": {
+          "expression": "rate(caddy_http_requests_total{status_code=~\"5..\"}[5m])",
+          "legend": "{{host}} {{status_code}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w3",
+      "title": "Request Duration p95",
+      "description": "95th percentile response time",
+      "panelTypes": "graph",
+      "yAxisUnit": "s",
+      "query": {
+        "promql": {
+          "expression": "histogram_quantile(0.95, rate(caddy_http_request_duration_seconds_bucket[5m]))",
+          "legend": "{{host}}",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    },
+    {
+      "id": "w4",
+      "title": "Active Connections",
+      "description": "Caddy active connections gauge",
+      "panelTypes": "graph",
+      "query": {
+        "promql": {
+          "expression": "caddy_http_active_connections",
+          "legend": "connections",
+          "step": 60
+        },
+        "queryType": "promql"
+      }
+    }
+  ],
+  "variables": [],
+  "refresh": "30s",
+  "timeRange": {"from": "now-6h", "to": "now"}
+}
