@@ -35,7 +35,12 @@
       # under heavy compute/ML workloads on Strix Halo
       "amdgpu.lockup_timeout=30000"
       "amdgpu.gpu_recovery=1" # Attempt GPU reset on hang instead of leaving GPU in dead state
-      "amd_pstate=guided"
+      # amd_pstate=performance: bypass firmware frequency management, keep cores at max under load.
+      # Previously "guided" (firmware decides freq within min/max). Switched to "performance" to
+      # eliminate firmware freq management overhead and maintain max clocks during heavy workloads.
+      # The ~130W power ceiling is GMKtec firmware PPT — not OS-controllable (no ryzen_smu for
+      # Strix Halo yet, no RAPL constraints exposed, no platform profile in BIOS).
+      "amd_pstate=performance"
       # GTT: allow GPU to address up to 112GB (128GB − 16GB reserved for CPU/system).
       # Not pre-allocated — GPU uses what it needs dynamically.
       "amdgpu.gttsize=114688"

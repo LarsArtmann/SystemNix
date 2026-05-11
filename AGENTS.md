@@ -486,6 +486,8 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 | Ollama dual-runner GPU OOM | Ollama loaded two model runners simultaneously (gemma4 + second model), each with `per_process_memory_fraction:0.95` = 138 GiB demand on 73 GiB GPU. Caused amdgpu exhaustion → niri SIGABRT → cascading OOM kills (helium, kitty, pipewire, user systemd). Fix: lowered to 0.45 per runner, removed system-wide `PYTORCH_CUDA_ALLOC_CONF` session variable. | Resolved — per-service GPU fractions |
 | awww-daemon crash loop | awww-daemon 0.12.0 panics on `unwrap()` when Wayland compositor is down. During niri crash cascade, caused 15 consecutive SIGABRTs at ~70s intervals. Fix: added ExecStartPre Wayland check, tightened StartLimitBurst to 3/300s. | Resolved — controlled failure instead of crash |
 
+| ~130W power ceiling | GMKtec NucBox EVO-X2 firmware enforces PPT at ~130W. No OS override possible: `ryzen_smu` lacks Strix Halo support, RAPL exposes no constraint files, BIOS has no cTDP/platform profile options. `amd_pstate=performance` + `performance` governor ensure max utilization within the ceiling. Future: check GMKtec BIOS updates, wait for `ryzen_smu` Strix Halo support. | Accepted — hardware/firmware limit |
+
 ## Essential Commands
 
 Run `just` (or `just --list`) to see all recipes grouped by category. Key commands:
