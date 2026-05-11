@@ -227,6 +227,18 @@ dns-diagnostics:
     echo "=== Recent Logs ==="
     journalctl -u unbound -u dnsblockd --no-pager -n 20
 
+# Internet connectivity diagnostic (run on evo-x2 or via SSH)
+[group('services')]
+[linux]
+internet-diagnostic:
+    ssh lars@192.168.1.150 'bash -s' < scripts/internet-diagnostic.sh
+
+# Dual-WAN / ECMP status
+[group('services')]
+[linux]
+wan-status:
+    ssh lars@192.168.1.150 'bash -s' <<< '{{ justfile_directory() }}/scripts/route-health-monitor.sh status 2>/dev/null || echo "route-health-monitor not running"; echo; ip route show table main; echo; ip mptcp endpoint show 2>/dev/null || echo "MPTCP endpoints not available"'
+
 # Update DNS blocklist URLs to latest commits and recompute SRI hashes
 [group('services')]
 dns-update:

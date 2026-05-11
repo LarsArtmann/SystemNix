@@ -13,9 +13,13 @@ _: {
 
     routeHealthScript = pkgs.writeShellScript "route-health-monitor" (builtins.readFile ../../../scripts/route-health-monitor.sh);
     mptcpEndpointScript = pkgs.writeShellScript "mptcp-endpoint-manager" (builtins.readFile ../../../scripts/mptcp-endpoint-manager.sh);
+
+    mptcpizeWrapper = pkgs.writeShellScriptBin "mptcpize-run" ''
+      exec ${pkgs.mptcpd}/bin/mptcpize run "$@"
+    '';
   in {
     options.services.dual-wan = {
-      enable = mkEnableOption "Dual-WAN active-passive failover (ethernet primary, WiFi fallback)";
+      enable = mkEnableOption "Dual-WAN ECMP failover with MPTCP packet-level redundancy";
 
       ethernetInterface = mkOption {
         type = types.nonEmptyStr;
@@ -31,20 +35,20 @@ _: {
 
       checkInterval = mkOption {
         type = types.ints.positive;
-        default = 5;
-        description = "Seconds between health checks";
+        default = 2;
+        description = "Seconds between ISP health checks (lower = faster failover)";
       };
 
       failoverThreshold = mkOption {
         type = types.ints.positive;
-        default = 3;
-        description = "Consecutive ISP failures before failing over to WiFi";
+        default = 2;
+        description = "Consecutive ISP failures before shifting traffic to WiFi";
       };
 
       failbackThreshold = mkOption {
         type = types.ints.positive;
-        default = 3;
-        description = "Consecutive ISP recoveries before failing back to ethernet";
+        default = 5;
+        description = "Consecutive ISP recoveries before restoring ECMP with eno1 preferred";
       };
     };
 
@@ -53,6 +57,14 @@ _: {
         "net.mptcp.enabled" = 1;
         "net.mptcp.pm_type" = 0;
         "net.mptcp.add_addr_timeout" = 30;
+
+        "net.ipv4.tcp_retries1" = 2;
+        "net.ipv4.tcp_retries2" = 8;
+        "net.ipv4.tcp_fin_timeout" = 10;
+        "net.ipv4.tcp_keepalive_time" = 30;
+        "net.ipv4.tcp_keepalive_intvl" = 10;
+        "net.ipv4.tcp_keepalive_probes" = 3;
+        "net.ipv4.tcp_orphan_retries" = 1;
       };
 
       networking.defaultGateway = {
@@ -60,6 +72,8 @@ _: {
         interface = cfg.ethernetInterface;
         metric = 100;
       };
+
+      environment.systemPackages = [pkgs.mptcpd mptcpizeWrapper];
 
       security.polkit.extraConfig = ''
         polkit.addRule(function(action, subject) {
@@ -100,7 +114,7 @@ _: {
           };
 
           route-health-monitor = {
-            description = "Active-passive WAN failover — ethernet primary, WiFi fallback";
+            description = "ECMP+MPTCP WAN failover — eno1 primary, WiFi fallback";
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];

@@ -36,9 +36,9 @@
     # dhcpcd disabled - using static IP
     dhcpcd.enable = false;
 
-    # DNS uses unbound via dns-blocker-config.nix
-    # Fallback to Quad9 in case local unbound is down during rebuild
-    nameservers = ["127.0.0.1" "9.9.9.9"];
+    # DNS uses unbound via dns-blocker-config.nix — no external fallback
+    # (9.9.9.9 was removed: resolvconf reorders nameservers, breaking DNS when WAN is down)
+    nameservers = ["127.0.0.1"];
   };
 
   systemd = {
