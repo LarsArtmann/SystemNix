@@ -29,9 +29,9 @@
     h = builtins.hashString "sha256" "taskchampion-${seed}";
     p1 = lib.strings.substring 0 8 h;
     p2 = lib.strings.substring 8 4 h;
-    p3 = builtins.substring 0 3 (lib.strings.substring 12 4 h) + "4";
-    p4raw = lib.strings.substring 16 4 h;
-    p4 = toVariantNibble.${builtins.substring 0 1 p4raw} + builtins.substring 1 3 p4raw;
+    p3 = (h |> lib.strings.substring 12 4 |> builtins.substring 0 3) + "4";
+    p4raw = h |> lib.strings.substring 16 4;
+    p4 = toVariantNibble.${p4raw |> builtins.substring 0 1} + (p4raw |> builtins.substring 1 3);
     p5 = lib.strings.substring 20 12 h;
   in "${p1}-${p2}-${p3}-${p4}-${p5}";
 
