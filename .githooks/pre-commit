@@ -53,16 +53,15 @@ if [ -n "$STAGED_NIX" ]; then
     fi
 
     log_info "Running statix (Nix linter)..."
-    if nix shell nixpkgs#statix --command statix check . > /tmp/statix.log 2>&1; then
+    if nix shell nixpkgs#statix --command statix check -o errfmt . 2>&1 | grep -v ':E:0:' > /tmp/statix.log; then
         log_success "Statix passed! No antipatterns found."
     else
-        STATIX_IN_STAGED=$(echo "$STAGED_NIX" | while read -r f; do grep -F "$f" /tmp/statix.log 2>/dev/null && echo "MATCH"; done)
-        if [ -n "$STATIX_IN_STAGED" ]; then
+        if [ -s /tmp/statix.log ]; then
             log_error "Statix found issues in staged files!"
             cat /tmp/statix.log
             all_passed=false
         else
-            log_success "Statix passed! (warnings only in unstaged files)"
+            log_success "Statix passed! No antipatterns found."
         fi
     fi
 
