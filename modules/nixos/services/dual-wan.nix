@@ -17,6 +17,26 @@ _: {
     mptcpizeWrapper = pkgs.writeShellScriptBin "mptcpize-run" ''
       exec ${pkgs.mptcpd}/bin/mptcpize run "$@"
     '';
+
+    # NM dispatcher script for instant MPTCP endpoint management on WiFi events
+    mptcpDispatcher = pkgs.writeShellScript "mptcp-nm-dispatcher" ''
+      export PATH="${pkgs.iproute2}/bin:${pkgs.networkmanager}/bin:$PATH"
+      IFACE="$1"
+      ACTION="$2"
+
+      case "$ACTION" in
+        up)
+          if echo "$IFACE" | grep -qE '^wl|^wlan'; then
+            ${mptcpEndpointScript} wifi-up
+          fi
+          ;;
+        down)
+          if echo "$IFACE" | grep -qE '^wl|^wlan'; then
+            ${mptcpEndpointScript} wifi-down
+          fi
+          ;;
+      esac
+    '';
   in {
     options.services.dual-wan = {
       enable = mkEnableOption "Dual-WAN ECMP failover with MPTCP packet-level redundancy";
@@ -84,26 +104,35 @@ _: {
         });
       '';
 
+      networking.networkmanager.dispatcherScripts = [
+        {
+          source = mptcpDispatcher;
+          type = "basic";
+        }
+      ];
+
       systemd = {
         services = {
           mptcp-endpoint-manager = {
-            description = "MPTCP endpoint manager — syncs subflow endpoints with live interfaces";
+            description = "MPTCP endpoint manager — adds static endpoints on boot";
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
             path = [
               pkgs.iproute2
+              pkgs.networkmanager
               pkgs.util-linux
             ];
             serviceConfig =
               {
-                Type = "simple";
+                Type = "oneshot";
+                RemainAfterExit = true;
                 Environment = [
                   "ENO1_IP=${lanIP}"
                   "ENO1_IF=${cfg.ethernetInterface}"
                   "WIFI_IF=${cfg.wifiInterface}"
                 ];
-                ExecStart = mptcpEndpointScript;
+                ExecStart = "${mptcpEndpointScript} startup";
               }
               // harden {
                 ProtectHome = false;
