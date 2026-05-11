@@ -560,7 +560,6 @@
 
         # Raspberry Pi 3 — DNS cluster backup node
         nixosConfigurations."rpi3-dns" = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
           specialArgs = {
             inherit (inputs.self) inputs;
             inherit nix-ssh-config;
