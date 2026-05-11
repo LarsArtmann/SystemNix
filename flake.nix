@@ -370,7 +370,7 @@
               nativeBuildInputs = [pkgs.statix];
             } ''
               cd ${./.}
-              statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out
+              statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
               if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
                 exit 1
               fi
