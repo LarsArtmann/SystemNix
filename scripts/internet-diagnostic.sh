@@ -117,8 +117,7 @@ echo "=========================================="
 
 ROUTE_TYPE=$(ip route show default | head -1)
 if echo "$ROUTE_TYPE" | grep -q "nexthop"; then
-  warn "ECMP multipath route active (dual-WAN) — if WiFi is unstable, this breaks connectivity"
-  echo "  Fix: systemctl stop route-health-monitor && ip route replace default via 192.168.1.1 dev eno1"
+  warn "ECMP multipath route active (dual-WAN)"
 fi
 
 if ! ping -c 1 -W 2 192.168.1.1 >/dev/null 2>&1; then
@@ -127,12 +126,12 @@ fi
 
 if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
   if ping -c 1 -W 2 192.168.1.1 >/dev/null 2>&1; then
-    fail "Gateway reachable but no internet — router WAN/ISP issue"
+    fail "Gateway reachable but no internet — ISP outage. WiFi failover should activate."
   fi
 fi
 
 echo
-echo "To fix dual-WAN issues immediately:"
-echo "  sudo systemctl stop route-health-monitor mptcp-endpoint-manager"
-echo "  sudo ip route replace default via 192.168.1.1 dev eno1"
-echo "  ping -c 3 8.8.8.8  # test"
+echo "Emergency commands:"
+echo "  just wan-status                                # Check current dual-WAN state"
+echo "  sudo journalctl -u route-health-monitor -f     # Watch failover in real-time"
+echo "  sudo systemctl restart route-health-monitor    # Restart monitor (preserves route state)"
