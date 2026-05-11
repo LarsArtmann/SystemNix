@@ -96,11 +96,6 @@
       hash = "sha256-vMrmq+Fzf+dxGB1AbaVD1dQWlvgU1rao78wRqk1ZxW4=";
     }
     {
-      name = "HaGeZi-anti-piracy";
-      url = "https://raw.githubusercontent.com/hagezi/dns-blocklists/489ce87162a4824080b8ab3fb4db7c8ea65fd38c/dnsmasq/anti.piracy.txt";
-      hash = "sha256-28oXCTYykRQpDy5FJkH55XRkjmUlpd76YlUhb2e1Hco=";
-    }
-    {
       name = "HaGeZi-dyndns";
       url = "https://raw.githubusercontent.com/hagezi/dns-blocklists/489ce87162a4824080b8ab3fb4db7c8ea65fd38c/dnsmasq/dyndns.txt";
       hash = "sha256-XcKCT5e9YWAVGsAT9DZL4b/UgfDMkyhdia11CTYx+SU=";
@@ -151,6 +146,8 @@
     "deref-mail.com"
     "wbby.co"
     "9gag.com"
+    "olevod.com"
+    "www.olevod.com"
   ];
 
   extraDomains = [
