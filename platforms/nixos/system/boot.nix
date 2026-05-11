@@ -30,7 +30,6 @@
       # Re-enable if you need: TPM-sealed disk encryption (systemd-cryptenroll),
       # measured boot / remote attestation, or Secure Boot with UKI signing.
       "tpm.disabled=1"
-      "amdgpu.deepfl=1"
       # Increase ring lockup timeout (default 10s) — prevents false-positive GPU resets
       # under heavy compute/ML workloads on Strix Halo
       "amdgpu.lockup_timeout=30000"
@@ -131,7 +130,8 @@
     # dumps on SIGSEGV. Without limits, a single crash fills /var/lib/systemd/coredump.
     coredump.extraConfig = ''
       Storage=external
-      MaxUse=2G
+      Compress=yes
+      MaxUse=1G
       KeepFree=5G
     '';
   };

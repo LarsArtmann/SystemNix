@@ -27,7 +27,7 @@ _: {
             {
               name = "Caddy";
               group = "Infrastructure";
-              url = "http://localhost:2019/metrics";
+              url = "http://127.0.0.1:2019/metrics";
               interval = "30s";
               conditions = ["[STATUS] == 200"];
             }
@@ -41,7 +41,7 @@ _: {
             {
               name = "Gitea";
               group = "Development";
-              url = "http://localhost:${toString config.services.gitea.settings.server.HTTP_PORT}/api/v1/nodeinfo";
+              url = "http://localhost:${toString config.services.gitea.settings.server.HTTP_PORT}/api/v1/version";
               interval = "30s";
               conditions = ["[STATUS] == 200"];
             }
@@ -98,8 +98,9 @@ _: {
               name = "ComfyUI";
               group = "AI";
               url = "http://localhost:${toString config.services.comfyui.port}";
-              interval = "60s";
+              interval = "5m";
               conditions = ["[STATUS] == 200"];
+              client = {insecure = true;};
             }
             {
               name = "Node Exporter";

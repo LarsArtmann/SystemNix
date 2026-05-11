@@ -37,7 +37,8 @@
     dhcpcd.enable = false;
 
     # DNS uses unbound via dns-blocker-config.nix
-    nameservers = ["127.0.0.1"];
+    # Fallback to Quad9 in case local unbound is down during rebuild
+    nameservers = ["127.0.0.1" "9.9.9.9"];
   };
 
   systemd = {
