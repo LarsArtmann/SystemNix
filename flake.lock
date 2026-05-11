@@ -406,11 +406,11 @@
     "go-finding-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778224428,
-        "narHash": "sha256-OJN4wcUuJ7bCDrkfOenhvFyp2W3evArtTyPSLCR4zic=",
+        "lastModified": 1778490873,
+        "narHash": "sha256-uNvozJNhCBzbZtSodQm2qTsqthOSBTtzWmTNe4KvGXU=",
         "ref": "master",
-        "rev": "e9d3333c772c8c279262afb7f5761a5f940a1d8f",
-        "revCount": 511,
+        "rev": "92c41e2f5acfb996d05cb22460a74344544367c2",
+        "revCount": 512,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -423,11 +423,11 @@
     "go-output-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778220702,
-        "narHash": "sha256-WDItEue8JKt3NEqkUfQ/K1vXnCF5FdPPsAh0lbcnpoY=",
+        "lastModified": 1778490854,
+        "narHash": "sha256-uWe1cekPgXNc1RPHfVH4bJBGqu1nbJrOP9Oq6t490Ow=",
         "ref": "master",
-        "rev": "554f51cc86cef0f471fbb5177b55a2aa3a64d996",
-        "revCount": 240,
+        "rev": "ba53fc13c451c65ed036f0de7acb942763d48584",
+        "revCount": 241,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       },
@@ -540,11 +540,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778489802,
-        "narHash": "sha256-KBlRCzt77bUE9YjCARAXej9uvIfL1fKKCHXqxvWOaVU=",
+        "lastModified": 1778491958,
+        "narHash": "sha256-y6MNbDv5CoQpcL+r0rg8jPkcQf88LNaIc7xie+SOKEw=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "81277df82787b007da1648ce161a7589383661ff",
+        "rev": "eae8bea23ba20d822fb159534d7d0ca8041e6b7d",
         "type": "github"
       },
       "original": {
@@ -563,11 +563,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1778219069,
-        "narHash": "sha256-TkephcFsLu/URNRLCy8g4udd/DjC0Az6jlfOJstpwCY=",
+        "lastModified": 1778491559,
+        "narHash": "sha256-qducuQlqJrISk7khIVX8p7igwzw69eIsQqbrvHZx55o=",
         "ref": "master",
-        "rev": "0fabe827f5658b2369c07b2b1d1b61b49a50d9de",
-        "revCount": 698,
+        "rev": "70bd351ec1ef4d38e6d9c8b2c4ffe87f3930ced8",
+        "revCount": 699,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -580,11 +580,11 @@
     "monitor365-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1778439932,
-        "narHash": "sha256-UKffYMMm06VagskzuwXNrdopBYSo+OUXAtOF9a4/YlE=",
+        "lastModified": 1778490707,
+        "narHash": "sha256-8kAT1wFxxhS7sTHaDBOWdds3+rpbPOIfR5lvfgWgazs=",
         "ref": "master",
-        "rev": "0125c41bd9ce3eb1f08262c17a9ff584bfc298e2",
-        "revCount": 701,
+        "rev": "2f5873b731fbe875caa8e1d70a8f2b9385daa6a6",
+        "revCount": 702,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -1007,11 +1007,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778489397,
-        "narHash": "sha256-MHIgV6mje2hNLMvbyIf2G83NU80RpUkDwxGjbAJMeoc=",
+        "lastModified": 1778496074,
+        "narHash": "sha256-ifkGjiEFAqLeBlxFWtmJkms2DogNRysMGNlM9k1tFqI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "845ef6aa13d72e54ab8d4c49c15c46bdff99532f",
+        "rev": "e1df29e71db66cdd808aa313d7e44d7449bf58be",
         "type": "github"
       },
       "original": {
@@ -1539,11 +1539,11 @@
     "wallpapers-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1777071312,
-        "narHash": "sha256-sUHP48as5zRgZBNH9ArjNv9WUHTmf6esya8dFYA79lQ=",
+        "lastModified": 1778491900,
+        "narHash": "sha256-bA7Kz1k7QEvMNuDPxPwbEI/7U5Etq5+ntw5+sk3sqHs=",
         "ref": "master",
-        "rev": "2bd684b659a90db81af6f4b373698b1e8a31f373",
-        "revCount": 37,
+        "rev": "1bb3ef27de506d0e49808b92cb2dbadaaf232350",
+        "revCount": 39,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/wallpapers"
       },

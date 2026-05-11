@@ -33,7 +33,7 @@ if [ "$drm_errors" -ge 10 ]; then
     count=$(cat "$STATE_FILE" 2>/dev/null || echo 0)
   fi
   count=$((count + 1))
-  echo "$count" > "$STATE_FILE"
+  echo "$count" >"$STATE_FILE"
 
   if [ "$count" -ge "$CONSEC_THRESHOLD" ]; then
     echo "niri DRM zombie confirmed ($count consecutive checks with errors). Triggering GPU recovery."
