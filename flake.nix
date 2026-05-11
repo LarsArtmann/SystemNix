@@ -210,13 +210,7 @@
     };
   };
 
-  nixConfig = {
-    extra-experimental-features = ["nix-command" "flakes" "pipe-operators"];
-    warn-dirty = false;
-  };
-
   outputs = inputs @ {
-    self,
     flake-parts,
     nixpkgs,
     home-manager,
@@ -241,20 +235,7 @@
     nur,
     treefmt-full-flake,
     wallpapers-src,
-    dnsblockd,
-    todo-list-ai,
-    library-policy,
-    file-and-image-renamer,
-    golangci-lint-auto-configure,
-    mr-sync,
-    hierarchical-errors,
-    buildflow,
-    go-auto-upgrade,
-    go-structure-linter,
-    branching-flow,
-    art-dupl,
-    monitor365,
-    emeet-pixyd,
+    ...
   }: let
     overlays = import ./overlays inputs;
     inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
