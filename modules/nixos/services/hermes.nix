@@ -124,23 +124,15 @@
     options.services.hermes = {
       enable = lib.mkEnableOption "Hermes AI Agent Gateway";
 
-      user = lib.mkOption {
-        type = lib.types.str;
-        default = "hermes";
-        description = "System user for the gateway service";
-      };
-
-      group = lib.mkOption {
-        type = lib.types.str;
-        default = "hermes";
-        description = "System group for the gateway service";
-      };
-
-      stateDir = lib.mkOption {
-        type = lib.types.str;
-        default = "/home/hermes";
-        description = "State directory for Hermes (config, sessions, skills, memories)";
-      };
+      inherit
+        (serviceTypes.systemdServiceIdentity {
+          defaultUser = "hermes";
+          defaultStateDir = "/home/hermes";
+        })
+        user
+        group
+        stateDir
+        ;
 
       restartSec = serviceTypes.restartDelay "5";
 
