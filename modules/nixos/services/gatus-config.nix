@@ -168,8 +168,8 @@ _: {
               interval = "60s";
               conditions = [
                 "[STATUS] == 200"
-                "[BODY].contains(node_amdgpu_mem_info_vram_used_bytes)"
-                "[BODY].contains(node_amdgpu_gpu_busy_percent)"
+                "[BODY] == pat(*node_amdgpu_mem_info_vram_used_bytes*)"
+                "[BODY] == pat(*node_amdgpu_gpu_busy_percent*)"
               ];
             }
             {
@@ -179,7 +179,7 @@ _: {
               interval = "5m";
               conditions = [
                 "[STATUS] == 200"
-                "[BODY].contains(node_filesystem_avail_bytes{mountpoint=\"/\"})"
+                "[BODY] == pat(*node_filesystem_avail_bytes*)"
               ];
             }
             {
@@ -189,7 +189,7 @@ _: {
               interval = "60s";
               conditions = [
                 "[STATUS] == 200"
-                "[BODY].contains(niri_running 1)"
+                "[BODY] == pat(*niri_running 1*)"
               ];
             }
           ];
