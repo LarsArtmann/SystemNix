@@ -80,6 +80,18 @@ test:
 test-fast:
     nix flake check --no-build
 
+# Run Home Manager integration tests
+[group('quality')]
+test-hm:
+    #!/usr/bin/env bash
+    bash scripts/test-home-manager.sh
+
+# Run shell alias tests across all shells
+[group('quality')]
+test-aliases:
+    #!/usr/bin/env bash
+    bash scripts/test-shell-aliases.sh
+
 # Alias: validate = test-fast (used by pre-commit hook)
 [group('quality')]
 validate: test-fast
