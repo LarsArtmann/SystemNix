@@ -100,7 +100,6 @@ _: {
               url = "http://localhost:${toString config.services.comfyui.port}";
               interval = "5m";
               conditions = ["[STATUS] == 200"];
-              client = {insecure = true;};
             }
             {
               name = "Node Exporter";
