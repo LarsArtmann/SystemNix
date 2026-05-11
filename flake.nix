@@ -210,7 +210,13 @@
     };
   };
 
+  nixConfig = {
+    extra-experimental-features = ["nix-command" "flakes" "pipe-operators"];
+    warn-dirty = false;
+  };
+
   outputs = inputs @ {
+    self,
     flake-parts,
     nixpkgs,
     home-manager,
@@ -235,7 +241,20 @@
     nur,
     treefmt-full-flake,
     wallpapers-src,
-    ...
+    dnsblockd,
+    todo-list-ai,
+    library-policy,
+    file-and-image-renamer,
+    golangci-lint-auto-configure,
+    mr-sync,
+    hierarchical-errors,
+    buildflow,
+    go-auto-upgrade,
+    go-structure-linter,
+    branching-flow,
+    art-dupl,
+    monitor365,
+    emeet-pixyd,
   }: let
     overlays = import ./overlays inputs;
     inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
@@ -256,7 +275,7 @@
     };
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = ["aarch64-darwin" "x86_64-linux"];
+      systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
       # Import dendritic modules - each file is a self-contained flake-parts module
       imports = [
@@ -313,7 +332,7 @@
           overlays =
             sharedOverlays
             ++ [disableTests]
-            ++ lib.optionals (system == "x86_64-linux") linuxOnlyOverlays;
+            ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
         };
 
         # Use treefmt-full-flake's formatter which includes alejandra in PATH
@@ -386,50 +405,19 @@
           {
             deploy = {
               type = "app";
-              program = "${pkgs.writeShellScriptBin "deploy" ''
-                set -euo pipefail
-
-                echo "=== Deploying NixOS config to evo-x2 ==="
-                nh os switch . 2>&1
-
-                echo ""
-                echo "=== Waiting 5s for services to settle ==="
-                sleep 5
-
-                echo ""
-                echo "=== dnsblockd status ==="
-                systemctl status dnsblockd --no-pager 2>/dev/null || true
-
-                echo ""
-                echo "=== Failed units ==="
-                systemctl --failed --no-pager 2>/dev/null || true
-              ''}/bin/deploy";
+              program = "${pkgs.writeShellScriptBin "deploy" (builtins.readFile ./scripts/deploy.sh)}/bin/deploy";
               meta.description = "Deploy NixOS config to evo-x2 via nh with post-deploy checks";
             };
             validate = {
               type = "app";
-              program = "${pkgs.writeShellScriptBin "validate" ''
-                nix --extra-experimental-features "nix-command flakes" flake check --no-build
-              ''}/bin/validate";
+              program = "${pkgs.writeShellScriptBin "validate" (builtins.readFile ./scripts/validate.sh)}/bin/validate";
               meta.description = "Validate flake without building";
             };
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
             dns-diagnostics = {
               type = "app";
-              program = "${pkgs.writeShellScriptBin "dns-diagnostics" ''
-                echo "=== DNS Services ==="
-                systemctl is-active unbound dnsblockd 2>/dev/null || true
-                echo ""
-                echo "=== DNS Resolution ==="
-                ${pkgs.dig}/bin/dig google.com +short | head -1
-                echo ""
-                echo "=== DNS Blocking ==="
-                ${pkgs.dig}/bin/dig doubleclick.net +short | head -1
-                echo ""
-                echo "=== dnsblockd Stats ==="
-                ${pkgs.curl}/bin/curl -s http://127.0.0.1:9090/stats 2>/dev/null || echo "Stats unavailable"
-              ''}/bin/dns-diagnostics";
+              program = "${pkgs.writeShellScriptBin "dns-diagnostics" (builtins.readFile ./scripts/dns-diagnostics.sh)}/bin/dns-diagnostics";
               meta.description = "Run DNS stack diagnostics (resolution, blocking, stats)";
             };
           };
@@ -437,6 +425,8 @@
 
       # System configurations (maintain backward compatibility)
       flake = {
+        lib = import ./lib {inherit (nixpkgs) lib;};
+
         darwinConfigurations."Lars-MacBook-Air" = nix-darwin.lib.darwinSystem {
           specialArgs = {
             inherit (inputs.self) inputs;
@@ -601,10 +591,8 @@
                 hostPlatform = "aarch64-linux";
                 config.allowUnfree = true;
                 overlays =
-                  [
-                    inputs.nur.overlays.default
-                  ]
-                  ++ overlays.linux;
+                  [inputs.nur.overlays.default]
+                  ++ linuxOnlyOverlays;
               };
             }
             home-manager.nixosModules.home-manager

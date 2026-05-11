@@ -1,5 +1,4 @@
 {
-  dnsblockd,
   todo-list-ai,
   library-policy,
   golangci-lint-auto-configure,

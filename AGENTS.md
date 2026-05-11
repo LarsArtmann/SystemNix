@@ -26,8 +26,18 @@ SystemNix/
 │
 ├── overlays/                    # Flake overlay definitions (extracted from flake.nix)
 │   ├── default.nix              # Composes shared + linux, exports utility overlays
-│   ├── shared.nix               # 13 shared overlays (Darwin + NixOS)
-│   └── linux.nix                # 6 Linux-only overlays + disableTests + pythonTest
+│   ├── shared.nix               # 12 shared overlays (Darwin + NixOS)
+│   └── linux.nix                # 6 Linux-only overlays
+│
+├── lib/                         # Shared NixOS module helpers (exported as self.lib)
+│   ├── default.nix              # Re-exports all helpers
+│   ├── systemd.nix              # Systemd security hardening
+│   ├── user-harden.nix          # User-service hardening
+│   ├── systemd/service-defaults.nix  # Common service defaults
+│   ├── types.nix                # Reusable option constructors
+│   └── rocm.nix                 # ROCm GPU runtime helpers
+│
+├── scripts/                     # Shell scripts (deploy, diagnostics, health checks)
 │
 ├── modules/nixos/services/      # NixOS service modules (flake-parts)
 │   ├── default.nix              # Docker + Nix GC timer
@@ -123,10 +133,12 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 **Naming convention:** `-src` suffix = `flake = false` (source-only). No suffix = full flake.
 
 **Active overlays** (defined in `overlays/` directory):
-- `sharedOverlays` — applied on Darwin + NixOS (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin)
-- `linuxOnlyOverlays` — NixOS only (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer)
+- `sharedOverlays` — applied on Darwin + NixOS + rpi3-dns (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin)
+- `linuxOnlyOverlays` — NixOS + rpi3-dns only (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer)
 - `disableTests` — disables flaky tests for valkey, aiocache
 - `pythonTest` — NixOS-specific Python test overrides
+
+**rpi3-dns** uses `[NUR] ++ linuxOnlyOverlays` without sharedOverlays — intentional since it's a minimal DNS node that doesn't need aw-watcher, todo-list-ai, etc.
 
 **Rule:** Never override `vendorHash` from outside a package. Each repo owns its own hash.
 
@@ -424,9 +436,12 @@ AI agent task tracking protocol:
 | Different relative paths | Darwin home.nix uses `../common/`, NixOS uses `../../common/` due to directory depth |
 | Darwin overlays | Darwin uses `sharedOverlays` directly (no Linux-only overlays). perSystem applies the same shared + Linux-only overlays. No Go overlay — uses nixpkgs default. |
 | d2 Darwin overlay | d2 unconditionally depends on `libgbm`/`playwright-driver` (Linux-only). A Darwin-only overlay in `sharedOverlays` re-instantiates d2 via `callPackage` with stub packages. Do NOT remove this overlay — d2 will fail to evaluate on Darwin without it. See commit `524be5ab`. |
-| NixOS overlays separate | NixOS adds `niri.overlays.niri`, `dnsblockdOverlay`, and Python overrides on top of the shared ones |
+| NixOS overlays separate | NixOS adds `niri.overlays.niri` and Python overrides on top of shared + linux-only overlays |
 | SigNoz built from source | SigNoz is built from source (Go 1.25), not from a pre-built package. Takes significant build time. |
 | crush-config doesn't follow nixpkgs | The crush-config input intentionally does NOT follow nixpkgs (no `inputs.nixpkgs.follows`) |
+| `nixConfig` declares experimental features | `nix-command`, `flakes`, `pipe-operators` declared in flake.nix — no need for `--extra-experimental-features` in most cases |
+| rpi3-dns minimal overlays | rpi3-dns uses only `[NUR] ++ linuxOnlyOverlays` — no shared overlays (aw-watcher, todo-list-ai, etc.) since it's a minimal DNS node |
+| `aarch64-linux` in systems | flake-parts `systems` includes `aarch64-linux` so rpi3 packages build via perSystem if needed |
 | Theme everywhere | Catppuccin Mocha is the universal theme — all apps, terminals, bars, login screen |
 | SSH config is external | SSH configuration comes from `nix-ssh-config` flake input, not defined locally |
 | Secrets via sops-nix | Secrets are age-encrypted using the SSH host key. Managed in `modules/nixos/services/sops.nix` |
@@ -454,6 +469,8 @@ Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 **Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 3 user-service modules use `hardenUser {}` (monitor365, file-and-image-renamer, niri-drm-healthcheck). No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
 
 **Single import pattern:** All modules use `inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults serviceTypes;` — one import replaces four. For user-service modules that need `serviceDefaultsUser`, import the set: `sd = import ../../../lib/default.nix lib;` then call `sd.serviceDefaultsUser {}` and `sd.hardenUser {}`.
+
+**Flake export:** `self.lib` exports the same `lib/default.nix` as a flake output, accessible as `inputs.self.lib` in all modules. Relative imports still work and are the primary pattern.
 
 ### Caddy Port References
 
@@ -747,15 +764,15 @@ hermes cron list          # List cron jobs
 | `nixpkgs` | Package collection (unstable) | — |
 | `nix-darwin` | macOS system management | Yes |
 | `home-manager` | User configuration | Yes |
-| `flake-parts` | Modular flake architecture | No |
+| `flake-parts` | Modular flake architecture | No (no nixpkgs input) |
 | `niri` | Wayland compositor | Yes |
-| `nix-homebrew` | Homebrew management (macOS) | No |
+| `nix-homebrew` | Homebrew management (macOS) | No (no nixpkgs input) |
 | `sops-nix` | Secrets with age | Yes |
 | `nix-amd-npu` | AMD XDNA NPU driver | Yes |
 | `nix-ssh-config` | SSH configuration | Yes (+ HM) |
 | `crush-config` | AI assistant config | No |
 | `hermes-agent` | AI agent gateway (Discord, cron) | Yes |
-| `nix-colors` | Color schemes | No |
+| `nix-colors` | Color schemes | No (no nixpkgs input) |
 | `silent-sddm` | SDDM theme | Yes |
 | `nur` | Nix User Repository | Yes |
 | `helium` | Helium browser | Yes |
