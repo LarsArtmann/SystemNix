@@ -184,6 +184,36 @@
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
       flake = false;
     };
+
+    # BuildFlow — Zero-configuration build automation for Go projects
+    buildflow = {
+      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # go-auto-upgrade — Automate Go library upgrades
+    go-auto-upgrade = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # go-structure-linter — Go project structure validator
+    go-structure-linter = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-structure-linter?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # branching-flow — Error context preservation analyzer
+    branching-flow = {
+      url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # art-dupl — Code duplication detector
+    art-dupl = {
+      url = "git+ssh://git@github.com/LarsArtmann/art-dupl?ref=fork";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -215,6 +245,11 @@
     golangci-lint-auto-configure-src,
     go-finding-src,
     mr-sync-src,
+    buildflow,
+    go-auto-upgrade,
+    go-structure-linter,
+    branching-flow,
+    art-dupl,
     ...
   }: let
     # NOTE: goOverlay removed — nixpkgs go_1_26 is already 1.26.1.
@@ -381,6 +416,11 @@
       golangciLintAutoConfigureOverlay
       mrSyncOverlay
       jscpdOverlay
+      buildflow.overlays.default
+      go-auto-upgrade.overlays.default
+      go-structure-linter.overlays.default
+      branching-flow.overlays.default
+      art-dupl.overlays.default
       # d2 unconditionally depends on libgbm/playwright-driver (Linux-only).
       # On Darwin, libgbm → mesa → libdrm fails the platform check.
       # Override via callPackage with stubs so d2 evaluates cleanly.
@@ -504,6 +544,11 @@
               library-policy
               golangci-lint-auto-configure
               mr-sync
+              buildflow
+              go-auto-upgrade
+              go-structure-linter
+              branching-flow
+              art-dupl
               ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
