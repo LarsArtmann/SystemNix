@@ -89,6 +89,11 @@ validate: test-fast
 format:
     treefmt
 
+# Lint all shell scripts with shellcheck
+[group('quality')]
+validate-scripts:
+    find scripts/ -name '*.sh' -exec shellcheck {} +
+
 # System status, git status, outdated packages
 [group('quality')]
 check:

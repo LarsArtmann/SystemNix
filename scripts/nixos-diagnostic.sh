@@ -3,6 +3,8 @@
 
 set -euo pipefail
 
+FLAKE_HOST="${FLAKE_HOST:-$(hostname)}"
+FLAKE_REF=".#${FLAKE_HOST}"
 echo "🔍 NixOS Home Manager Diagnostic Tool"
 echo "====================================="
 echo "Machine: $(hostname)"
@@ -78,13 +80,13 @@ test_nixos_config() {
 
   # Test nixos-rebuild check
   echo "Running nixos-rebuild check..."
-  if sudo nixos-rebuild check --flake .#evo-x2 --show-trace; then
+  if sudo nixos-rebuild check --flake "$FLAKE_REF" --show-trace; then
     echo "✅ nixos-rebuild check passed"
   else
     echo "❌ nixos-rebuild check failed"
     echo ""
     echo "🔧 Trying to get more detailed error information..."
-    sudo nixos-rebuild build --flake .#evo-x2 --show-trace 2>&1 | head -50
+    sudo nixos-rebuild build --flake "$FLAKE_REF" --show-trace 2>&1 | head -50
     return 1
   fi
 }
@@ -125,12 +127,12 @@ provide_remediation() {
   echo "   nix-env --delete-generations old --profile /nix/var/nix/profiles/per-user/$USER/home-manager"
   echo ""
   echo "3. Rebuild configuration:"
-  echo "   sudo nixos-rebuild switch --flake .#evo-x2"
+  echo "   sudo nixos-rebuild switch --flake $FLAKE_REF"
   echo ""
   echo "4. If still failing, try cleaning the Nix store:"
   echo "   sudo nix-collect-garbage -d"
   echo "   sudo nix-store --optimise"
-  echo "   sudo nixos-rebuild switch --flake .#evo-x2"
+  echo "   sudo nixos-rebuild switch --flake $FLAKE_REF"
 }
 
 # Main execution
@@ -144,7 +146,7 @@ main() {
 
   echo ""
   echo "✅ All diagnostics passed!"
-  echo "You can safely run: sudo nixos-rebuild switch --flake .#evo-x2"
+  echo "You can safely run: sudo nixos-rebuild switch --flake $FLAKE_REF"
 }
 
 # Run with error handling
