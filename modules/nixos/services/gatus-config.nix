@@ -161,6 +161,37 @@ _: {
               interval = "5m";
               conditions = ["[STATUS] == 200"];
             }
+            {
+              name = "GPU VRAM Metrics";
+              group = "Monitoring";
+              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              interval = "60s";
+              conditions = [
+                "[STATUS] == 200"
+                "[BODY].contains(node_amdgpu_mem_info_vram_used_bytes)"
+                "[BODY].contains(node_amdgpu_gpu_busy_percent)"
+              ];
+            }
+            {
+              name = "Root Disk Space";
+              group = "Monitoring";
+              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              interval = "5m";
+              conditions = [
+                "[STATUS] == 200"
+                "[BODY].contains(node_filesystem_avail_bytes{mountpoint=\"/\"})"
+              ];
+            }
+            {
+              name = "Niri Compositor";
+              group = "Monitoring";
+              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              interval = "60s";
+              conditions = [
+                "[STATUS] == 200"
+                "[BODY].contains(niri_running 1)"
+              ];
+            }
           ];
         };
       };

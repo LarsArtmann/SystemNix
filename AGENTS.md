@@ -195,7 +195,7 @@ Automatic detection and recovery from GPU driver corruption that leaves niri in 
 **DRM Healthcheck (`scripts/niri-drm-healthcheck.sh`):**
 - User timer fires every 60s (via `systemd.user.timers.niri-drm-healthcheck`)
 - Counts DRM errors (`Permission denied` / `DeviceMissing`) in niri's journal from the last 30s
-- Uses a **consecutive failure counter** (state file at `/tmp/niri-drm-healthcheck.state`)
+- Uses a **consecutive failure counter** (state file at `/var/lib/niri-drm-healthcheck/state`)
 - Only triggers `gpu-recovery.service` after 3+ consecutive failing checks (prevents false positives)
 - Auto-resets counter when niri is not running or errors clear
 
@@ -207,10 +207,17 @@ Automatic detection and recovery from GPU driver corruption that leaves niri in 
 - **Auto-reboots** on any unrecoverable failure (unbind fail, rebind fail, GPU timeout, persistent DRM errors)
 - No manual intervention needed — the system self-heals or reboots
 
+**Niri Health Metrics (`niri-config.nix`):**
+- System timer fires every 30s, writes to node_exporter textfile collector
+- Exposes: `niri_running` (0/1), `niri_restarts_10m` (count), `niri_drm_errors_30s` (count)
+- Gatus checks `niri_running 1` — alerts if compositor is down
+- SigNoz receives all metrics via OTel prometheus scraper
+
 **Key files:**
 - `scripts/niri-drm-healthcheck.sh` — consecutive-error detection
+- `scripts/niri-health.sh` — standalone health check script
 - `scripts/gpu-recovery.sh` — unbind/rebind + auto-reboot
-- `modules/nixos/services/niri-config.nix` — timer and service definitions
+- `modules/nixos/services/niri-config.nix` — timers, services, and metrics
 
 ### Crush AI Config Deployment
 
@@ -232,6 +239,8 @@ SigNoz is the sole observability platform (replaces Prometheus + Grafana). Full 
 
 **Data pipeline:**
 - **node_exporter** (port 9100) → system metrics (CPU, RAM, disk, network, pressure)
+- **amdgpu-metrics** → GPU VRAM/busy/temp via node_exporter textfile collector (`/var/lib/prometheus-node-exporter/textfile_collectors/amdgpu.prom`, every 30s)
+- **niri-health-metrics** → compositor running/restarts/DRM errors via textfile collector (`niri.prom`, every 30s)
 - **cAdvisor** (port 9110) → Docker container metrics
 - **Caddy** (port 2019) → HTTP request rates, latencies, errors
 - **Authelia** (port 9959) → SSO health metrics
@@ -277,7 +286,7 @@ Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wr
 | Infrastructure | Caddy (metrics), Authelia, Homepage, DNS Resolver, DNS Blocker |
 | Development | Gitea |
 | Media | Immich |
-| Monitoring | SigNoz, Manifest, Node Exporter, cAdvisor |
+| Monitoring | SigNoz, Manifest, Node Exporter, cAdvisor, GPU VRAM Metrics, Root Disk Space, Niri Compositor |
 | Productivity | TaskChampion, Twenty CRM, OpenSEO |
 | AI | Ollama, ComfyUI, Whisper ASR, LiveKit |
 
