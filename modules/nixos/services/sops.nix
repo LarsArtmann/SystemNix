@@ -108,6 +108,14 @@ in {
           } ["discord_alert_webhook_url"];
 
         templates = {
+          "gatus-env" = {
+            owner = "gatus";
+            group = "gatus";
+            restartUnits = ["gatus.service"];
+            content = ''
+              DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
+            '';
+          };
           "gitea-sync.env" = {
             owner = primaryUser;
             group = "users";
