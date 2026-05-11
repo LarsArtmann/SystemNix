@@ -31,7 +31,7 @@ push_hist() {
   local -n arr=$1
   local val=$2
   arr+=("$val")
-  if (( ${#arr[@]} > HISTORY_SIZE )); then
+  if ((${#arr[@]} > HISTORY_SIZE)); then
     arr=("${arr[@]:1}")
   fi
 }
@@ -44,7 +44,7 @@ avg_hist() {
     sum=$((sum + v))
     count=$((count + 1))
   done
-  if (( count == 0 )); then echo 9999; else echo $((sum / count)); fi
+  if ((count == 0)); then echo 9999; else echo $((sum / count)); fi
 }
 
 loss_pct() {
@@ -52,7 +52,7 @@ loss_pct() {
   local tx rx
   tx=$(echo "$output" | grep -oP '\d+(?= packets transmitted)' || echo "0")
   rx=$(echo "$output" | grep -oP '\d+(?= received)' || echo "0")
-  if (( tx == 0 )); then echo 100; else echo $(( (tx - rx) * 100 / tx )); fi
+  if ((tx == 0)); then echo 100; else echo $(((tx - rx) * 100 / tx)); fi
 }
 
 avg_latency() {
@@ -94,7 +94,7 @@ while true; do
   # --- Measure eno1 ---
   ENO1_OUT=$(ping -c $PING_COUNT -W $PING_TIMEOUT -I eno1 "$ENO1_GW" 2>&1 || true)
   ENO1_LAT=$(avg_latency "$ENO1_OUT")
-  ENO1_LAT=${ENO1_LAT%.*}  # truncate to integer
+  ENO1_LAT=${ENO1_LAT%.*} # truncate to integer
   ENO1_LAT=${ENO1_LAT:-9999}
   ENO1_LOSS=$(loss_pct "$ENO1_OUT")
   push_hist ENO1_HIST "$ENO1_LAT"
@@ -118,16 +118,16 @@ while true; do
   WIFI_AVG=$(avg_hist WIFI_HIST)
 
   # --- Decision logic ---
-  ENO1_OK=$(( ENO1_AVG < 500 && ENO1_LOSS < 50 ? 1 : 0 ))
-  WIFI_OK=$(( WIFI_AVG < 500 && WIFI_LOSS < 50 ? 1 : 0 ))
+  ENO1_OK=$((ENO1_AVG < 500 && ENO1_LOSS < 50 ? 1 : 0))
+  WIFI_OK=$((WIFI_AVG < 500 && WIFI_LOSS < 50 ? 1 : 0))
 
-  if (( ENO1_OK && WIFI_OK )); then
-    ENO1_W=$(( 1000 / (ENO1_AVG == 0 ? 1 : ENO1_AVG) ))
-    WIFI_W=$(( 1000 / (WIFI_AVG == 0 ? 1 : WIFI_AVG) ))
-    ENO1_W=$(( ENO1_W > 20 ? 20 : ENO1_W ))
-    ENO1_W=$(( ENO1_W < 1 ? 1 : ENO1_W ))
-    WIFI_W=$(( WIFI_W > 20 ? 20 : WIFI_W ))
-    WIFI_W=$(( WIFI_W < 1 ? 1 : WIFI_W ))
+  if ((ENO1_OK && WIFI_OK)); then
+    ENO1_W=$((1000 / (ENO1_AVG == 0 ? 1 : ENO1_AVG)))
+    WIFI_W=$((1000 / (WIFI_AVG == 0 ? 1 : WIFI_AVG)))
+    ENO1_W=$((ENO1_W > 20 ? 20 : ENO1_W))
+    ENO1_W=$((ENO1_W < 1 ? 1 : ENO1_W))
+    WIFI_W=$((WIFI_W > 20 ? 20 : WIFI_W))
+    WIFI_W=$((WIFI_W < 1 ? 1 : WIFI_W))
 
     if [ "$CURRENT_MODE" != "dual" ] || [ "$CURRENT_ENO1_METRIC" != "$ENO1_W" ] || [ "$CURRENT_WIFI_METRIC" != "$WIFI_W" ]; then
       if set_route_dual "$ENO1_W" "$WIFI_W" "$WIFI_GW"; then
@@ -138,14 +138,14 @@ while true; do
       fi
     fi
 
-  elif (( ENO1_OK )) && ! (( WIFI_OK )); then
+  elif ((ENO1_OK)) && ! ((WIFI_OK)); then
     if [ "$CURRENT_MODE" != "eno1-only" ]; then
       set_route_single "$ENO1_GW" eno1
       log "FAILOVER: WiFi down (avg=${WIFI_AVG}ms, loss=${WIFI_LOSS}%), eno1 only"
       CURRENT_MODE="eno1-only"
     fi
 
-  elif (( WIFI_OK )) && ! (( ENO1_OK )); then
+  elif ((WIFI_OK)) && ! ((ENO1_OK)); then
     if [ -n "$WIFI_GW" ] && [ "$CURRENT_MODE" != "wifi-only" ]; then
       set_route_single "$WIFI_GW" "$WIFI_IF"
       log "FAILOVER: eno1 down (avg=${ENO1_AVG}ms, loss=${ENO1_LOSS}%), WiFi only"

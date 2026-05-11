@@ -175,6 +175,9 @@
     '';
   };
 
+  # Force performance governor — desktop/workstation with no battery concern
+  powerManagement.cpuFreqGovernor = "performance";
+
   # ZRAM: compressed in-memory swap — buffer before hitting slow disk swap.
   # memoryPercent is a VIRTUAL limit (not pre-allocation). Actual RAM used grows on-demand.
   # 25% = ~15-31GB virtual device (depending on visible RAM). At 2-3x compression, effective

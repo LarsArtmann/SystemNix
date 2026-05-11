@@ -15,7 +15,10 @@ LOG_TAG="mptcp-endpoint-manager"
 log() { logger -t "$LOG_TAG" "$@"; }
 
 # Wait for ip command
-command -v ip >/dev/null 2>&1 || { log "FATAL: ip command not found"; exit 1; }
+command -v ip >/dev/null 2>&1 || {
+  log "FATAL: ip command not found"
+  exit 1
+}
 
 add_endpoint() {
   local dev="$1" addr="$2"

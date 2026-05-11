@@ -256,7 +256,7 @@ _: {
             "d /var/lib/dnsblockd 0755 root root -"
           ]
           ++ lib.optional (!cfg.tempAllowAll) ''f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - # dnsblockd temp allowlist placeholder''
-          ++ lib.optional cfg.tempAllowAll ''          f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
+          ++ lib.optional cfg.tempAllowAll ''            f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
           '';
 
         services.dnsblockd = {
