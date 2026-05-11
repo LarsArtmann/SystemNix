@@ -194,6 +194,7 @@
         wantedBy = ["multi-user.target"];
         after = ["network-online.target"];
         wants = ["network-online.target"];
+        onFailure = ["notify-failure@%n.service"];
         startLimitIntervalSec = 600;
         startLimitBurst = 5;
 

@@ -90,6 +90,7 @@ _: {
       systemd.services.caddy = {
         after = ["authelia-main.service"];
         wants = ["authelia-main.service"];
+        onFailure = ["notify-failure@%n.service"];
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;

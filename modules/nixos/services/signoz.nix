@@ -252,6 +252,7 @@ in {
           description = "SigNoz Observability Platform";
           after = lib.optional cfg.components.clickhouse "clickhouse.service";
           requires = lib.optional cfg.components.clickhouse "clickhouse.service";
+          onFailure = ["notify-failure@%n.service"];
           wantedBy = ["multi-user.target"];
           serviceConfig =
             {
@@ -272,6 +273,7 @@ in {
           description = "SigNoz Provisioning — deploy alert rules and dashboards";
           after = ["signoz.service"];
           wants = ["signoz.service"];
+          onFailure = ["notify-failure@%n.service"];
           wantedBy = ["signoz.service"];
           path = [pkgs.curl pkgs.jq pkgs.coreutils];
           serviceConfig = {
