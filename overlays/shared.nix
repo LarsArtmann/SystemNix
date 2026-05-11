@@ -63,12 +63,9 @@
     golangci-lint-auto-configure = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default;
   };
 
-  mrSyncOverlay = _final: prev:
-    prev.lib.optionalAttrs
-    (prev.lib.hasAttr prev.stdenv.system mr-sync.packages)
-    {
-      mr-sync = mr-sync.packages.${prev.stdenv.system}.default;
-    };
+  mrSyncOverlay = _final: prev: {
+    mr-sync = mr-sync.packages.${prev.stdenv.system}.default;
+  };
 
   d2DarwinOverlay = _final: prev:
     prev.lib.optionalAttrs prev.stdenv.isDarwin {
