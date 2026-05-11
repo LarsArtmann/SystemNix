@@ -68,6 +68,7 @@ _: {
 
       systemd.services.openseo = {
         description = "OpenSEO — Self-hosted SEO suite";
+        onFailure = ["notify-failure@%n.service"];
         after = ["docker.service" "sops-nix.service"];
         requires = ["docker.service"];
         wants = ["sops-nix.service"];

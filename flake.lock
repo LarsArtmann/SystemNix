@@ -484,7 +484,7 @@
     },
     "flake-utils_4": {
       "inputs": {
-        "systems": "systems_6"
+        "systems": "systems_4"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -502,7 +502,43 @@
     },
     "flake-utils_5": {
       "inputs": {
-        "systems": "systems_7"
+        "systems": "systems_6"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_6": {
+      "inputs": {
+        "systems": "systems_8"
+      },
+      "locked": {
+        "lastModified": 1731533236,
+        "narHash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_7": {
+      "inputs": {
+        "systems": "systems_9"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -605,24 +641,24 @@
         "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
       }
     },
-    "go-finding": {
+    "go-filewatcher": {
       "flake": false,
       "locked": {
-        "lastModified": 1778490873,
-        "narHash": "sha256-uNvozJNhCBzbZtSodQm2qTsqthOSBTtzWmTNe4KvGXU=",
+        "lastModified": 1778490839,
+        "narHash": "sha256-L9rsB8KJSoEA7uKTJ3enjOErFUcDDFoFUuI+ceh07L8=",
         "ref": "master",
-        "rev": "92c41e2f5acfb996d05cb22460a74344544367c2",
-        "revCount": 512,
+        "rev": "a6f1c41649e2918e8ec08fe7617b06fc818b7f24",
+        "revCount": 209,
         "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+        "url": "ssh://git@github.com/LarsArtmann/go-filewatcher"
       },
       "original": {
         "ref": "master",
         "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+        "url": "ssh://git@github.com/LarsArtmann/go-filewatcher"
       }
     },
-    "go-finding-src": {
+    "go-finding": {
       "flake": false,
       "locked": {
         "lastModified": 1778490873,
@@ -674,6 +710,23 @@
       }
     },
     "go-finding_4": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778490873,
+        "narHash": "sha256-uNvozJNhCBzbZtSodQm2qTsqthOSBTtzWmTNe4KvGXU=",
+        "ref": "master",
+        "rev": "92c41e2f5acfb996d05cb22460a74344544367c2",
+        "revCount": 512,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      }
+    },
+    "go-finding_5": {
       "flake": false,
       "locked": {
         "lastModified": 1778490873,
@@ -799,6 +852,23 @@
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       }
     },
+    "goFindingSrc": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778079309,
+        "narHash": "sha256-rgLrNEx45b8ZxhyLY8vfYNPjiVYuG9eeZVLsGpHUj5U=",
+        "ref": "master",
+        "rev": "56cc6b20d3f74776c3845cdd70078a5acb9b60c9",
+        "revCount": 496,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      }
+    },
     "gogenfilter": {
       "flake": false,
       "locked": {
@@ -833,8 +903,31 @@
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       }
     },
-    "golangci-lint-auto-configure-src": {
+    "gogenfilter_3": {
       "flake": false,
+      "locked": {
+        "lastModified": 1778491045,
+        "narHash": "sha256-R6wpEBaDXrbd/RhTfijQuMfJH7zCe2z9d2ecmn+H/4U=",
+        "ref": "master",
+        "rev": "39962033c2a1da109cc25269f43bccb4b8cc9123",
+        "revCount": 573,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
+      }
+    },
+    "golangci-lint-auto-configure": {
+      "inputs": {
+        "flake-utils": "flake-utils_4",
+        "goFindingSrc": "goFindingSrc",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
         "lastModified": 1778502037,
         "narHash": "sha256-PE+UA0Owk1M0eAPeKRBInEd9W8PQDOzL599klaaFWYI=",
@@ -895,6 +988,31 @@
         "ref": "v2026.4.30",
         "repo": "hermes-agent",
         "type": "github"
+      }
+    },
+    "hierarchical-errors": {
+      "inputs": {
+        "flake-utils": "flake-utils_5",
+        "go-filewatcher": "go-filewatcher",
+        "go-finding": "go-finding_5",
+        "gogenfilter": "gogenfilter_3",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1778507543,
+        "narHash": "sha256-QD1ZO+hqbMdBdWBdoicqvzVg2VZN8iCo8W7cwMmTdGM=",
+        "ref": "master",
+        "rev": "95bb4e27ab4f5c0d68237dd95248e870336431f2",
+        "revCount": 550,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       }
     },
     "home-manager": {
@@ -990,8 +1108,12 @@
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       }
     },
-    "mr-sync-src": {
-      "flake": false,
+    "mr-sync": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
       "locked": {
         "lastModified": 1778192892,
         "narHash": "sha256-tcSOSpKrxhu4QJEYvk9Yf6obDEpnXhzParjPcC9SBL8=",
@@ -1037,7 +1159,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_5",
+        "systems": "systems_7",
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
@@ -1418,7 +1540,7 @@
     },
     "otel-tui": {
       "inputs": {
-        "flake-utils": "flake-utils_4",
+        "flake-utils": "flake-utils_6",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1537,18 +1659,18 @@
         "file-and-image-renamer-src": "file-and-image-renamer-src",
         "flake-parts": "flake-parts_3",
         "go-auto-upgrade": "go-auto-upgrade",
-        "go-finding-src": "go-finding-src",
         "go-output-src": "go-output-src",
         "go-structure-linter": "go-structure-linter",
-        "golangci-lint-auto-configure-src": "golangci-lint-auto-configure-src",
+        "golangci-lint-auto-configure": "golangci-lint-auto-configure",
         "helium": "helium",
         "hermes-agent": "hermes-agent",
+        "hierarchical-errors": "hierarchical-errors",
         "home-manager": "home-manager",
         "homebrew-bundle": "homebrew-bundle",
         "homebrew-cask": "homebrew-cask",
         "library-policy": "library-policy",
         "monitor365-src": "monitor365-src",
-        "mr-sync-src": "mr-sync-src",
+        "mr-sync": "mr-sync",
         "niri": "niri",
         "niri-session-manager": "niri-session-manager",
         "nix-amd-npu": "nix-amd-npu",
@@ -1748,9 +1870,39 @@
         "type": "github"
       }
     },
+    "systems_8": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_9": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "todo-list-ai": {
       "inputs": {
-        "flake-utils": "flake-utils_5",
+        "flake-utils": "flake-utils_7",
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -1917,7 +2069,7 @@
     },
     "utils": {
       "inputs": {
-        "systems": "systems_4"
+        "systems": "systems_5"
       },
       "locked": {
         "lastModified": 1731533236,

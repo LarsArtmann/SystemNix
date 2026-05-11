@@ -25,6 +25,7 @@ _: {
       };
 
       systemd.services.taskchampion-sync-server = {
+        onFailure = ["notify-failure@%n.service"];
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
         serviceConfig =

@@ -711,6 +711,7 @@ in {
         users.groups.systemd-journal-member = lib.mkIf (cfg.components.nodeExporter || cfg.components.cadvisor) {};
         systemd.services.signoz-collector = {
           description = "SigNoz OTel Collector";
+          onFailure = ["notify-failure@%n.service"];
           after = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wants = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wantedBy = ["multi-user.target"];

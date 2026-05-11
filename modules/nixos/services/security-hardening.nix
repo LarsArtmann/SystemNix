@@ -100,6 +100,7 @@ _: {
       # ClamAV: socket-activated only — don't block graphical.target at boot.
       # On-demand when something actually scans; freshclam timer keeps signatures current.
       systemd.services.clamav-daemon = {
+        onFailure = ["notify-failure@%n.service"];
         wantedBy = lib.mkForce [];
         after = lib.mkForce ["basic.target"];
       };

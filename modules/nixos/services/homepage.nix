@@ -20,6 +20,7 @@ _: {
     config = lib.mkIf cfg.enable {
       systemd.services.homepage-dashboard = {
         description = "Homepage Dashboard";
+        onFailure = ["notify-failure@%n.service"];
         wantedBy = ["multi-user.target"];
         after = ["network.target"];
         serviceConfig =

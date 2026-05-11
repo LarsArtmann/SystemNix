@@ -206,6 +206,7 @@ _: {
       };
 
       systemd.services.authelia-main = {
+        onFailure = ["notify-failure@%n.service"];
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;

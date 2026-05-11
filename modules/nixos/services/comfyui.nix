@@ -54,6 +54,7 @@ _: {
     config = lib.mkIf cfg.enable {
       systemd.services.comfyui = {
         description = "ComfyUI — Persistent AI Image Generation Server";
+        onFailure = ["notify-failure@%n.service"];
         after = ["network.target"];
         wantedBy = ["multi-user.target"];
         startLimitBurst = 3;

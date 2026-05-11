@@ -53,6 +53,7 @@ _: {
       };
 
       systemd.services.podman-photomap = {
+        onFailure = ["notify-failure@%n.service"];
         after = ["immich-server.service" "postgresql.service"];
         wants = ["immich-server.service"];
         requires = ["immich-server.service" "postgresql.service"];

@@ -170,19 +170,21 @@
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
-    golangci-lint-auto-configure-src = {
+    golangci-lint-auto-configure = {
       url = "git+ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure?ref=master";
-      flake = false;
-    };
-    go-finding-src = {
-      url = "git+ssh://git@github.com/LarsArtmann/go-finding?ref=master";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
-    mr-sync-src = {
+    mr-sync = {
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
-      flake = false;
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # hierarchical-errors — Error handling pattern analyzer for Go projects
+    hierarchical-errors = {
+      url = "git+ssh://git@github.com/LarsArtmann/hierarchical-errors?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
@@ -242,9 +244,9 @@
     file-and-image-renamer-src,
     cmdguard-src,
     go-output-src,
-    golangci-lint-auto-configure-src,
-    go-finding-src,
-    mr-sync-src,
+    golangci-lint-auto-configure,
+    mr-sync,
+    hierarchical-errors,
     buildflow,
     go-auto-upgrade,
     go-structure-linter,
@@ -360,44 +362,21 @@
       library-policy = library-policy.packages.${prev.stdenv.system}.default;
     };
 
-    fileAndImageRenamerOverlay = _final: prev: {
-      file-and-image-renamer = prev.callPackage ./pkgs/file-and-image-renamer.nix {
-        inherit file-and-image-renamer-src cmdguard-src go-output-src;
-      };
+    hierarchicalErrorsOverlay = _final: prev: {
+      hierarchical-errors = hierarchical-errors.packages.${prev.stdenv.system}.default;
     };
 
     golangciLintAutoConfigureOverlay = _final: prev: {
-      golangci-lint-auto-configure = prev.callPackage ./pkgs/golangci-lint-auto-configure.nix {
-        inherit golangci-lint-auto-configure-src go-finding-src;
-      };
+      golangci-lint-auto-configure = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default;
     };
 
-    # --- LarsArtmann Go CLI tool overlays ---
-
     mrSyncOverlay = _final: prev: {
-      mr-sync = prev.callPackage ./pkgs/mr-sync.nix {
-        src = prev.lib.cleanSourceWith {
-          filter = path: _type: let
-            b = baseNameOf path;
-          in
-            !(
-              b
-              == ".git"
-              || b == "node_modules"
-              || b == "vendor"
-              || b == "target"
-              || b == "dist"
-              || b == "bin"
-              || b == "result"
-              || b == ".crush"
-              || prev.lib.hasSuffix ".md" b
-              || prev.lib.hasSuffix ".html" b
-              || prev.lib.hasSuffix ".svg" b
-              || b == "go.work"
-              || b == "go.work.sum"
-            );
-          src = mr-sync-src;
-        };
+      mr-sync = mr-sync.packages.${prev.stdenv.system}.default;
+    };
+
+    fileAndImageRenamerOverlay = _final: prev: {
+      file-and-image-renamer = prev.callPackage ./pkgs/file-and-image-renamer.nix {
+        inherit file-and-image-renamer-src cmdguard-src go-output-src;
       };
     };
 
@@ -412,15 +391,16 @@
       nur.overlays.default
       awWatcherOverlay
       todoListAiOverlay
-      libraryPolicyOverlay
-      golangciLintAutoConfigureOverlay
-      mrSyncOverlay
       jscpdOverlay
+      libraryPolicyOverlay
       buildflow.overlays.default
       go-auto-upgrade.overlays.default
       go-structure-linter.overlays.default
       branching-flow.overlays.default
       art-dupl.overlays.default
+      golangciLintAutoConfigureOverlay
+      mrSyncOverlay
+      hierarchicalErrorsOverlay
       # d2 unconditionally depends on libgbm/playwright-driver (Linux-only).
       # On Darwin, libgbm → mesa → libdrm fails the platform check.
       # Override via callPackage with stubs so d2 evaluates cleanly.
@@ -544,6 +524,7 @@
               library-policy
               golangci-lint-auto-configure
               mr-sync
+              hierarchical-errors
               buildflow
               go-auto-upgrade
               go-structure-linter

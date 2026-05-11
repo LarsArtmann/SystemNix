@@ -217,6 +217,7 @@ _: {
       };
 
       systemd.services.gatus = {
+        onFailure = ["notify-failure@%n.service"];
         path = [pkgs.gnused pkgs.coreutils];
         preStart = ''
           WEBHOOK_FILE="${config.sops.secrets.discord_alert_webhook_url.path}"
