@@ -24,7 +24,7 @@
           };
         });
         interceptCallPackage = path: args:
-          if (path |> toString |> builtins.match ".*tui\\.nix") != null
+          if (builtins.match ".*tui\\.nix" (toString path)) != null
           then tuiFixed
           else final.callPackage path args;
       in
