@@ -25,7 +25,7 @@ _: {
 
       wifiInterface = mkOption {
         type = types.nonEmptyStr;
-        default = "wlp195s0";
+        default = "wlan0";
         description = "WiFi interface name";
       };
 
