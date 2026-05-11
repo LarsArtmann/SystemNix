@@ -1,6 +1,11 @@
 {
   description = "Lars nix-darwin + NixOS system flake - Modular Architecture with flake-parts";
 
+  nixConfig = {
+    extra-experimental-features = ["nix-command" "flakes" "pipe-operators"];
+    warn-dirty = false;
+  };
+
   inputs = {
     # Use nixpkgs-unstable to match nix-darwin master
     nixpkgs.url = "github:NixOS/nixpkgs/01fbdeef22b76df85ea168fbfe1bfd9e63681b30";

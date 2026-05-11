@@ -16,8 +16,7 @@ _: let
       // {
         sopsFile = secretsDir + "/${file}";
         inherit key;
-      })
-    keyMap;
+      });
 in {
   flake.nixosModules.sops = {
     config,
