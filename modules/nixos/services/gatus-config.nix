@@ -221,8 +221,9 @@ _: {
         preStart = ''
           WEBHOOK_FILE="${config.sops.secrets.discord_alert_webhook_url.path}"
           RUNTIME_CONFIG="/run/gatus/gatus.yaml"
+          STATIC_CONFIG="${config.services.gatus.configFile}"
           ${pkgs.coreutils}/bin/mkdir -p /run/gatus
-          ${pkgs.coreutils}/bin/cp "''${GATUS_CONFIG_PATH}" "$RUNTIME_CONFIG"
+          ${pkgs.coreutils}/bin/cp "$STATIC_CONFIG" "$RUNTIME_CONFIG"
           if [ -f "$WEBHOOK_FILE" ]; then
             WEBHOOK_URL=$(${pkgs.coreutils}/bin/cat "$WEBHOOK_FILE")
             ${pkgs.gnused}/bin/sed -i "s|__DISCORD_WEBHOOK_URL__|$WEBHOOK_URL|g" "$RUNTIME_CONFIG"
