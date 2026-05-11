@@ -248,6 +248,22 @@ _: {
                 "[BODY] == pat(*niri_running*)"
               ];
             }
+            {
+              name = "TLS Certificate Expiry";
+              group = "Infrastructure";
+              url = "https://auth.home.lan";
+              interval = "1h";
+              conditions = [
+                "[STATUS] == 200"
+                "[CERTIFICATE_EXPIRATION] > 168h"
+              ];
+              alerts = [
+                {
+                  type = "discord";
+                  description = "TLS certificate for *.home.lan expires within 7 days — renew via dnsblockd";
+                }
+              ];
+            }
           ];
         };
       };

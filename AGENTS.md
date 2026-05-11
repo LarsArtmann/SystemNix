@@ -21,8 +21,13 @@ SystemNix manages two machines through a single Nix flake:
 
 ```
 SystemNix/
-├── flake.nix                    # Entry point (flake-parts)
+├── flake.nix                    # Entry point (flake-parts) — imports overlays/
 ├── justfile                     # Task runner — ALWAYS use this over raw Nix commands
+│
+├── overlays/                    # Flake overlay definitions (extracted from flake.nix)
+│   ├── default.nix              # Composes shared + linux, exports utility overlays
+│   ├── shared.nix               # 13 shared overlays (Darwin + NixOS)
+│   └── linux.nix                # 6 Linux-only overlays + disableTests + pythonTest
 │
 ├── modules/nixos/services/      # NixOS service modules (flake-parts)
 │   ├── default.nix              # Docker + Nix GC timer
@@ -117,11 +122,11 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 
 **Naming convention:** `-src` suffix = `flake = false` (source-only). No suffix = full flake.
 
-**Active overlays:**
-- `sharedOverlays` — applied on Darwin + NixOS (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors)
+**Active overlays** (defined in `overlays/` directory):
+- `sharedOverlays` — applied on Darwin + NixOS (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin)
 - `linuxOnlyOverlays` — NixOS only (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer)
-- `disableTestsOverlay` — disables flaky tests for valkey, aiocache
-- `pythonTestOverlay` — NixOS-specific Python test overrides
+- `disableTests` — disables flaky tests for valkey, aiocache
+- `pythonTest` — NixOS-specific Python test overrides
 
 **Rule:** Never override `vendorHash` from outside a package. Each repo owns its own hash.
 
@@ -268,7 +273,7 @@ SigNoz is the sole observability platform (replaces Prometheus + Grafana). Full 
 
 ### Gatus Health Check Monitor
 
-Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wrapping the **nixpkgs `services.gatus` module**. Monitors 17 endpoints across all services with SQLite storage.
+Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wrapping the **nixpkgs `services.gatus` module**. Monitors 26+ endpoints across all services with SQLite storage and Discord alerting.
 
 | Component | Port | Purpose |
 |-----------|------|---------|
@@ -278,13 +283,14 @@ Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wr
 **Enabled via:** `services.gatus-config.enable = true` in configuration.nix
 **Virtual host:** `status.home.lan` via Caddy (forward auth protected)
 **Storage:** SQLite at `/var/lib/gatus/gatus.db`
+**Alerting:** Discord via `sops.templates."gatus-env"` → nixpkgs `environmentFile` → Gatus native `${DISCORD_WEBHOOK_URL}` interpolation
 **Systemd hardening:** `harden{}` + `serviceDefaults{}` in module
 **All endpoints use `http://localhost`** — no TLS issues with self-signed certs
 
 **Monitored endpoints:**
 | Group | Endpoints |
 |-------|-----------|
-| Infrastructure | Caddy (metrics), Authelia, Homepage, DNS Resolver, DNS Blocker |
+| Infrastructure | Caddy (metrics), Authelia, Homepage, DNS Resolver, DNS Resolver TCP, DNS Blocker, DNS Blocking Active, Upstream DNS (Quad9), TLS Certificate Expiry |
 | Development | Gitea |
 | Media | Immich |
 | Monitoring | SigNoz, Manifest, Node Exporter, cAdvisor, GPU VRAM Metrics, Root Disk Space, Niri Compositor |
@@ -435,18 +441,19 @@ AI agent task tracking protocol:
 
 Reusable functions in `lib/` — imported directly by relative path:
 
-| File | Purpose | Usage |
+|| File | Purpose | Usage |
 |------|---------|-------|
 | `lib/systemd.nix` | Security hardening (PrivateTmp, NoNewPrivileges, ProtectSystem, etc.) | `harden = import ../../../lib/systemd.nix {inherit lib;};` then `harden {MemoryMax = "512M";}` |
+| `lib/user-harden.nix` | User-service compatible hardening (excludes ProtectClock, ProtectKernelLogs, ProtectSystem, ProtectHome, CapabilityBoundingSet) | `hardenUser = import ../../../lib/user-harden.nix {inherit lib;};` then `hardenUser {MemoryMax = "512M";}` |
 | `lib/systemd/service-defaults.nix` | Common service defaults (Restart, RestartSec) — returns attrset with `.serviceDefaults` (system, uses mkForce) and `.serviceDefaultsUser` (user services, no mkForce) | `sd = import ../../../lib/systemd/service-defaults.nix lib;` then `sd.serviceDefaults {}` or `sd.serviceDefaultsUser {}` |
 | `lib/types.nix` | Reusable NixOS module option constructors (ports, user/group, delays) | `serviceTypes = import ../../../lib/types.nix lib;` then `serviceTypes.systemdServiceIdentity {}` |
 | `lib/rocm.nix` | ROCm GPU runtime library lists and env vars | `rocm = import ../../../lib/rocm.nix {inherit pkgs;};` then `rocm.env` / `rocm.makeLdLibraryPath lib` |
 
 Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 
-**Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 17 modules use `serviceDefaults {}`. No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
+**Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 3 user-service modules use `hardenUser {}` (monitor365, file-and-image-renamer, niri-drm-healthcheck). No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
 
-**Single import pattern:** All modules use `inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;` — one import replaces three. For user-service modules that need `serviceDefaultsUser`, import the set: `sd = import ../../../lib/default.nix lib;` then call `sd.serviceDefaultsUser {}`.
+**Single import pattern:** All modules use `inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults serviceTypes;` — one import replaces four. For user-service modules that need `serviceDefaultsUser`, import the set: `sd = import ../../../lib/default.nix lib;` then call `sd.serviceDefaultsUser {}` and `sd.hardenUser {}`.
 
 ### Caddy Port References
 
@@ -541,6 +548,7 @@ just check              # System status, git status, disk usage
 just test-fast          # Syntax-only validation (fast)
 just test               # Full build validation (slow)
 just format             # Format with treefmt + alejandra
+just validate-scripts   # Shellcheck all shell scripts
 just health             # Cross-platform health check
 
 # Clean
