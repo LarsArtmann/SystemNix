@@ -7,7 +7,7 @@ _: {
   }: let
     cfg = config.services.niri-desktop;
     niriPkg = pkgs.niri-unstable;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults;
     drmHealthcheck = pkgs.writeShellApplication {
       name = "niri-drm-healthcheck";
       runtimeInputs = with pkgs; [procps systemd];
@@ -74,8 +74,12 @@ _: {
 
           services.niri-drm-healthcheck = {
             description = "Detect niri DRM zombie state and trigger GPU recovery";
-            serviceConfig.Type = "oneshot";
-            serviceConfig.ExecStart = "${drmHealthcheck}/bin/niri-drm-healthcheck";
+            serviceConfig =
+              hardenUser {MemoryMax = "256M";}
+              // {
+                Type = "oneshot";
+                ExecStart = "${drmHealthcheck}/bin/niri-drm-healthcheck";
+              };
           };
 
           timers.niri-drm-healthcheck = {

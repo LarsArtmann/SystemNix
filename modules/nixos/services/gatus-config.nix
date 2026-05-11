@@ -187,7 +187,7 @@ _: {
                 query-type = "A";
               };
               interval = "5m";
-              conditions = ["[DNS_RCODE] == NOERROR"];
+              conditions = ["[BODY] == ${config.services.dns-blocker.blockIP}"];
               alerts = [
                 {
                   type = "discord";
