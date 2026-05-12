@@ -38,10 +38,17 @@ repos:
       # Note: W04 "Assignment instead of inherit" is excluded — false positive
       # on mkDerivation attrs like nativeBuildInputs = [pkg].
       # statix only accepts one target, so loop through files individually.
+      # grep -q returns 1 on no match, which would falsely fail the hook —
+      # so we use an explicit result variable instead.
       - id: statix
         name: statix (Nix linter)
         entry: bash
-        args: [-c, "for f in \"$@\"; do statix check -o errfmt \"$f\" 2>&1 | grep -v ':E:0:' | grep -q . && exit 1; done", bash]
+        args:
+          [
+            -c,
+            'for f in "$@"; do result=$(statix check -o errfmt "$f" 2>&1 | grep -v ":E:0:"); if [ -n "$result" ]; then echo "$result"; exit 1; fi; done',
+            bash,
+          ]
         language: system
         files: \.nix$
         pass_filenames: true
