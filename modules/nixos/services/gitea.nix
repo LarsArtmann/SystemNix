@@ -8,6 +8,8 @@ _: {
     inherit (config.users) primaryUser;
     giteaPkg = config.services.gitea.package;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    giteaPort = config.services.gitea.settings.server.HTTP_PORT;
+    giteaUrl = "http://localhost:${toString giteaPort}";
 
     # Script to mirror all user repos from GitHub
     mirrorGithubScript = pkgs.writeShellScriptBin "gitea-mirror-github" ''
@@ -18,14 +20,14 @@ _: {
       REPOS_FILE=$(mktemp)
       trap 'rm -f "$REPOS_FILE"' EXIT
 
-      GITEA_URL="http://localhost:3000"
+      GITEA_URL="${giteaUrl}"
       GITEA_TOKEN="''${GITEA_TOKEN:-}"
       GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
       GITHUB_USER="''${GITHUB_USER:-$(gh api user -q .login 2>/dev/null || echo "")}"
 
       if [[ -z "$GITEA_TOKEN" ]]; then
         echo "Error: GITEA_TOKEN not set"
-        echo "Create a token at http://localhost:3000/user/settings/applications"
+        echo "Create a token at ${giteaUrl}/user/settings/applications"
         exit 1
       fi
 
@@ -107,7 +109,7 @@ _: {
       STARRED_FILE=$(mktemp)
       trap 'rm -f "$STARRED_FILE"' EXIT
 
-      GITEA_URL="http://localhost:3000"
+      GITEA_URL="${giteaUrl}"
       GITEA_TOKEN="''${GITEA_TOKEN:-}"
       GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
       GITHUB_USER="''${GITHUB_USER:-$(gh api user -q .login 2>/dev/null || echo "")}"
@@ -198,11 +200,11 @@ _: {
 
       echo "=== Gitea Setup Helper ==="
       echo ""
-      echo "1. Gitea is running at: http://localhost:3000"
+      echo "1. Gitea is running at: ${giteaUrl}"
       echo "2. Create your admin account in the web UI"
       echo ""
       echo "3. Create tokens:"
-      echo "   - Gitea: http://localhost:3000/user/settings/applications"
+      echo "   - Gitea: ${giteaUrl}/user/settings/applications"
       echo "   - GitHub: https://github.com/settings/tokens/new (select 'repo' scope)"
       echo ""
       echo "4. Create credentials file:"
@@ -434,7 +436,7 @@ _: {
 
             # Wait for Gitea to be ready
             for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -s -o /dev/null -w "" "http://localhost:3000/"; then
+              if ${pkgs.curl}/bin/curl -s -o /dev/null -w "" "${giteaUrl}/"; then
                 break
               fi
               sleep 1
@@ -492,7 +494,7 @@ _: {
             [ -f "$TOKEN_FILE" ] && exit 0
 
             for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -s -o /dev/null "http://localhost:3000/"; then
+              if ${pkgs.curl}/bin/curl -s -o /dev/null "${giteaUrl}/"; then
                 break
               fi
               sleep 1
@@ -517,7 +519,7 @@ _: {
         instances.${config.networking.hostName} = {
           enable = true;
           name = config.networking.hostName;
-          url = "http://localhost:3000";
+          url = "${giteaUrl}";
           tokenFile = "/var/lib/gitea/.runner-token";
           labels = [
             "ubuntu-latest:docker://node:22-bookworm"

@@ -8,6 +8,8 @@ _: {
     cfg = config.services.gitea-repos;
     inherit (config.users) primaryUser;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    giteaPort = config.services.gitea.settings.server.HTTP_PORT;
+    giteaUrl = "http://localhost:${toString giteaPort}";
 
     # Script to ensure specific GitHub repos are mirrored to Gitea
     ensureReposScript = pkgs.writeShellScriptBin "gitea-ensure-repos" ''
@@ -15,7 +17,7 @@ _: {
       # Gets GitHub token fresh from gh CLI each run
       set -euo pipefail
 
-      GITEA_URL="http://localhost:3000"
+      GITEA_URL="${giteaUrl}"
       REPOS=(${lib.concatStringsSep " " (map (r: "\"${r}\"") cfg.repos)})
 
       # Get tokens from environment (provided via sops template EnvironmentFile)
@@ -270,7 +272,7 @@ _: {
               ExecStartPre = pkgs.writeShellScript "wait-for-gitea" ''
                 echo "Waiting for Gitea to be ready..."
                 for i in {1..30}; do
-                  if curl -s http://localhost:3000/api/v1/version &>/dev/null; then
+                  if curl -s ${giteaUrl}/api/v1/version &>/dev/null; then
                     echo "Gitea is ready!"
                     exit 0
                   fi

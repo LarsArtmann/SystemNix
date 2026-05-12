@@ -37,10 +37,11 @@ repos:
       # Nix: Linter and antipattern detection
       # Note: W04 "Assignment instead of inherit" is excluded — false positive
       # on mkDerivation attrs like nativeBuildInputs = [pkg].
+      # statix only accepts one target, so loop through files individually.
       - id: statix
         name: statix (Nix linter)
         entry: bash
-        args: [-c, "statix check -o errfmt \"$@\" 2>&1 | grep -v ':E:0:' | (grep -q '.' && exit 1 || exit 0)", bash]
+        args: [-c, "for f in \"$@\"; do statix check -o errfmt \"$f\" 2>&1 | grep -v ':E:0:' | grep -q . && exit 1; done", bash]
         language: system
         files: \.nix$
         pass_filenames: true
