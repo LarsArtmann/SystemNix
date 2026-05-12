@@ -50,10 +50,10 @@ in {
     };
 
     # SublimeText configuration sync service
-    # NOTE: scripts/sublime-text-sync.sh was removed; this LaunchAgent is non-functional
-    # Kept for reference until SublimeText config sync is fully declarative
+    # NOTE: scripts/sublime-text-sync.sh was removed; LaunchAgent disabled until
+    # SublimeText config sync is implemented declaratively
     "com.larsartmann.sublime-sync.plist" = {
-      enable = true;
+      enable = false;
       text = ''
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

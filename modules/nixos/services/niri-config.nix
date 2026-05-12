@@ -42,16 +42,18 @@ _: {
               text =
                 if name == "niri.service"
                 then let
-                  noBindsTo = builtins.replaceStrings
+                  noBindsTo =
+                    builtins.replaceStrings
                     ["BindsTo=graphical-session.target"]
                     ["Wants=graphical-session.target"]
                     baseText;
-                  unitLimits = builtins.replaceStrings
+                  unitLimits =
+                    builtins.replaceStrings
                     ["[Unit]"]
                     [
-                      ''                        [Unit]
-                      StartLimitBurst=3
-                      StartLimitIntervalSec=60''
+                      ''                          [Unit]
+                        StartLimitBurst=3
+                        StartLimitIntervalSec=60''
                     ]
                     noBindsTo;
                 in
@@ -62,10 +64,10 @@ _: {
             in {inherit text;};
           in
             lib.listToAttrs (map (name: {
-              inherit name;
-              value = mkUnit name;
-            }) (lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
-              (builtins.attrNames unitFiles)));
+                inherit name;
+                value = mkUnit name;
+              }) (lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
+                (builtins.attrNames unitFiles)));
 
           services.niri-drm-healthcheck = {
             description = "Detect niri DRM zombie state and trigger GPU recovery";
