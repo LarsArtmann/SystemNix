@@ -3,6 +3,8 @@
 #
 # Groups: core, quality, clean, services, desktop, tasks, ai, tools, disk
 
+evo_x2_ip := "192.168.1.150"
+
 default:
     @just --list
 
@@ -231,16 +233,17 @@ dns-diagnostics:
 [group('services')]
 [linux]
 internet-diagnostic:
-    ssh lars@192.168.1.150 'bash -s' < scripts/internet-diagnostic.sh
+    ssh lars@{{ evo_x2_ip }} 'bash -s' < scripts/internet-diagnostic.sh
 
 # Dual-WAN / ECMP status (remote: evo-x2)
 [group('services')]
 [linux]
 wan-status:
-    ssh lars@192.168.1.150 'echo "=== Route Health Monitor ==="; journalctl -u route-health-monitor --no-pager -n 5 --output=cat; echo; echo "=== Default Route ==="; ip route show default; echo; echo "=== MPTCP Endpoints ==="; ip mptcp endpoint show 2>/dev/null || echo "MPTCP endpoints not available"'
+    ssh lars@{{ evo_x2_ip }} 'echo "=== Route Health Monitor ==="; journalctl -u route-health-monitor --no-pager -n 5 --output=cat; echo; echo "=== Default Route ==="; ip route show default; echo; echo "=== MPTCP Endpoints ==="; ip mptcp endpoint show 2>/dev/null || echo "MPTCP endpoints not available"'
 
 # Update DNS blocklist URLs to latest commits and recompute SRI hashes
 [group('services')]
+[linux]
 dns-update:
     ./scripts/dns-update.sh
 
@@ -585,12 +588,9 @@ ai-status:
 #        just gpu-python 0.8 script.py    (80% GPU memory)
 [group('ai')]
 [linux]
-gpu-python FRACTION_OR_FILE="0.95" *ARGS="":
+gpu-python *ARGS="":
     #!/usr/bin/env bash
-    if [[ "{{ FRACTION_OR_FILE }}" == .* || "{{ FRACTION_OR_FILE }}" == *".py" ]]; then
-        exec gpu-python "{{ FRACTION_OR_FILE }}" {{ ARGS }}
-    fi
-    exec gpu-python "$@" {{ ARGS }}
+    exec gpu-python "$@"
 
 # ═══════════════════════════════════════════════════════════════════
 #  Tools

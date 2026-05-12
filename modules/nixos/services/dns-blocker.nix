@@ -7,6 +7,7 @@ _: {
   }: let
     cfg = config.services.dns-blocker;
     inherit (lib) mkEnableOption mkOption types;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
 
     categoriesJSON = pkgs.writeText "dnsblockd-categories.json" (builtins.toJSON cfg.categories);
 
@@ -313,22 +314,21 @@ _: {
 
               exec ${pkgs.dnsblockd}/bin/dnsblockd serve -c ${dnsblockdConfigFile}
             '';
-          in {
-            Type = "simple";
-            ExecStartPre = "+-${initScript}";
-            ExecStart = "${dnsblockdWrapper}";
-            StateDirectory = "dnsblockd";
-            Restart = "always";
-            RestartSec = "3s";
-
-            SupplementaryGroups = ["unbound"];
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            PrivateTmp = true;
-            RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];
-            AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
-            CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
-          };
+          in
+            harden {
+              ProtectSystem = "strict";
+              CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
+              AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
+            }
+            // serviceDefaults {RestartSec = "3s";}
+            // {
+              Type = "simple";
+              ExecStartPre = "+-${initScript}";
+              ExecStart = "${dnsblockdWrapper}";
+              StateDirectory = "dnsblockd";
+              SupplementaryGroups = ["unbound"];
+              RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];
+            };
         };
 
         user.services.dnsblockd-cert-import = {
