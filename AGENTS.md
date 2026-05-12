@@ -47,6 +47,7 @@ SystemNix/
 │   ├── immich.nix               # Photo/video management
 │   ├── photomap.nix             # AI photo exploration
 │   ├── signoz.nix               # Observability (traces/metrics/logs)
+│   ├── signoz-alerts.nix        # SigNoz alert rules + dashboards (mkRule helper)
 │   ├── sops.nix                 # Secrets management
 │   ├── taskchampion.nix         # Taskwarrior sync server
 │   ├── openseo.nix              # SEO suite (rank tracking, keywords, backlinks)
@@ -142,6 +143,45 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 **rpi3-dns** uses `[NUR] ++ linuxOnlyOverlays` without sharedOverlays — intentional since it's a minimal DNS node that doesn't need aw-watcher, todo-list-ai, etc.
 
 **Rule:** Never override `vendorHash` from outside a package. Each repo owns its own hash.
+
+**`mkPackageOverlay` helper:** Simple overlay factory for flake-input packages:
+```nix
+mkPackageOverlay = input: name: _final: prev: { ${name} = input.packages.${prev.stdenv.system}.default; };
+# Usage: mkPackageOverlay inputs.library-policy "library-policy"
+```
+Defined in `overlays/shared.nix`. Used by 4 overlays (library-policy, hierarchical-errors, golangci-lint-auto-configure, mr-sync).
+
+### Config-Derived URLs
+
+Avoid hardcoding `localhost:PORT` references. Derive URLs from service config options instead:
+
+```nix
+giteaPort = config.services.gitea.settings.server.HTTP_PORT;
+giteaUrl = "http://localhost:${toString giteaPort}";
+```
+
+This ensures consistency when port changes and makes the dependency on the service config explicit.
+
+### Service Module Header Comments
+
+All service modules start with a single `#` comment describing their purpose, followed by a blank line:
+
+```nix
+# Caddy reverse proxy: TLS termination, forward auth, virtual host routing
+{ ... }:
+```
+
+### Service Data Extraction (signoz pattern)
+
+Large data blocks (alert rules, JSON configs) should be extracted into sibling files using a helper function:
+
+```nix
+# signoz-alerts.nix exports { rules = {...}; dashboards = {...}; }
+# Main module imports: alerts = import ./signoz-alerts.nix { inherit pkgs lib inputs; };
+# Usage: environment.etc = alerts.rules // alerts.dashboards;
+```
+
+The `mkRule` helper in `signoz-alerts.nix` eliminates JSON boilerplate — each alert rule is ~5 lines instead of ~30.
 
 ### Wrapped Packages (Vimjoyer Pattern)
 
@@ -455,6 +495,8 @@ AI agent task tracking protocol:
 | otel-tui Linux-only | otel-tui is excluded from Darwin via `_module.args.otel-tui = null` in `flake.nix` + `lib.optionals (otel-tui != null)` in `base.nix`. Building from source on macOS took 40+ min and exhausted disk (dsymutil temp files). Never add otel-tui back to Darwin — it's only useful on NixOS for inspecting OTel telemetry. |
 | Darwin disk exhaustion | MacBook Air has 229 GB disk, regularly at 90-95% full. `nix-collect-garbage` hangs on this system. Build failures with `errno=28` are disk-related, not code bugs. Before major builds: (1) clear caches (`~/Library/Caches/*`), (2) run `nix-collect-garbage --delete-older-than 1d`, (3) check `df -h /`. Consider distributed builds to evo-x2. |
 | `_module.args` pattern for platform packages | When making a package Linux-only, use `_module.args.<pkg> = null` in the platform config + `pkg ? null` default in the module function args + `lib.optionals (pkg != null)` for conditional inclusion. Do NOT rely on omitting from `specialArgs` alone — Nix module system tries `_module.args` fallback and errors if missing. |
+| statix `grep -q` pre-commit bug | `grep -q .` returns exit code 1 on no match, which became the `bash -c` exit code (no explicit `exit 0`). Fixed by using a result variable: `result=$(statix ... | grep -v ...); if [ -n "$result" ]; then echo "$result"; exit 1; fi`. Do NOT use `grep -q . && exit 1` pattern in bash -c hooks without a trailing `exit 0`. |
+| statix pipe operator parse errors | statix 0.5.8 can't parse Nix pipe operator (`|>`) in `sops.nix` — produces `:E:0:Error node` lines. The pre-commit hook filters these with `grep -v ':E:0:'`. Do NOT remove the filter. |
 
 ### lib/ Shared Helpers
 
