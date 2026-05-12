@@ -11,6 +11,10 @@
   art-dupl,
   ...
 }: let
+  mkPackageOverlay = input: name: _final: prev: {
+    ${name} = input.packages.${prev.stdenv.system}.default;
+  };
+
   awWatcherOverlay = _final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };
@@ -51,22 +55,6 @@
     });
   };
 
-  libraryPolicyOverlay = _final: prev: {
-    library-policy = library-policy.packages.${prev.stdenv.system}.default;
-  };
-
-  hierarchicalErrorsOverlay = _final: prev: {
-    hierarchical-errors = hierarchical-errors.packages.${prev.stdenv.system}.default;
-  };
-
-  golangciLintAutoConfigureOverlay = _final: prev: {
-    golangci-lint-auto-configure = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default;
-  };
-
-  mrSyncOverlay = _final: prev: {
-    mr-sync = mr-sync.packages.${prev.stdenv.system}.default;
-  };
-
   d2DarwinOverlay = _final: prev:
     prev.lib.optionalAttrs prev.stdenv.isDarwin {
       d2 = prev.callPackage (prev.path + "/pkgs/by-name/d2/d2/package.nix") {
@@ -78,14 +66,14 @@ in [
   awWatcherOverlay
   todoListAiOverlay
   jscpdOverlay
-  libraryPolicyOverlay
+  (mkPackageOverlay library-policy "library-policy")
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors")
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure")
+  (mkPackageOverlay mr-sync "mr-sync")
   buildflow.overlays.default
   go-auto-upgrade.overlays.default
   go-structure-linter.overlays.default
   branching-flow.overlays.default
   art-dupl.overlays.default
-  golangciLintAutoConfigureOverlay
-  mrSyncOverlay
-  hierarchicalErrorsOverlay
   d2DarwinOverlay
 ]
