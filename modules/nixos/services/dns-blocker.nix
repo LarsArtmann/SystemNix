@@ -193,8 +193,8 @@ _: {
             root-hints = "${pkgs.dns-root-data}/root.hints";
 
             local-zone =
-              map (d: ''"${d}" transparent'') cfg.whitelist
-              ++ map (d: ''"${d}" always_nxdomain'') cfg.extraDomains;
+              map (d: ''"${d}." transparent'') cfg.whitelist
+              ++ map (d: ''"${d}." always_nxdomain'') cfg.extraDomains;
           };
 
           remote-control = {
