@@ -1,3 +1,4 @@
+# TaskChampion sync server for Taskwarrior task management
 _: {
   flake.nixosModules.taskchampion = {
     config,

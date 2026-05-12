@@ -1,3 +1,4 @@
+# PhotoMap AI: semantic photo visualization from Immich library
 _: {
   flake.nixosModules.photomap = {
     config,

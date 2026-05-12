@@ -1,3 +1,4 @@
+# Monitor365 device monitoring agent with ActivityWatch integration
 _: {
   flake.nixosModules.monitor365 = {
     config,

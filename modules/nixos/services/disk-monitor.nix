@@ -1,3 +1,4 @@
+# Btrfs disk usage monitoring with desktop notifications
 _: {
   flake.nixosModules.disk-monitor = {
     config,

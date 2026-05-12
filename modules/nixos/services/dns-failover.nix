@@ -1,3 +1,4 @@
+# DNS failover via Keepalived VRRP with Unbound health tracking
 _: {
   flake.nixosModules.dns-failover = {
     config,

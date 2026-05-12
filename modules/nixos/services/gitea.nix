@@ -1,3 +1,4 @@
+# Gitea self-hosted Git mirror: GitHub sync, Actions runner, admin setup
 _: {
   flake.nixosModules.gitea = {
     pkgs,

@@ -1,3 +1,4 @@
+# Authelia SSO/IDP: OIDC, TOTP, WebAuthn, file-based user backend
 _: {
   flake.nixosModules.authelia = {
     config,

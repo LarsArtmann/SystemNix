@@ -1,3 +1,4 @@
+# Minecraft server/client with Prism Launcher and modpack management
 _: {
   flake.nixosModules.minecraft = {
     config,

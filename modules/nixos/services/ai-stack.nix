@@ -1,3 +1,4 @@
+# AI stack: Ollama ROCm inference, llama.cpp, Unsloth Studio, AI tooling
 _: {
   flake.nixosModules.ai-stack = {
     pkgs,

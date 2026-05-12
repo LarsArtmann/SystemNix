@@ -1,3 +1,4 @@
+# AI-powered file and screenshot renaming watcher daemon
 _: {
   flake.nixosModules.file-and-image-renamer = {
     config,

@@ -1,3 +1,4 @@
+# Chromium managed policies: extensions, update controls
 _: {
   flake.nixosModules.chromium-policies = {
     config,

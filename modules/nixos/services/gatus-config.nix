@@ -1,3 +1,4 @@
+# Gatus health check monitoring with Discord alerts and endpoints
 _: {
   flake.nixosModules.gatus-config = {
     config,

@@ -1,3 +1,4 @@
+# Declarative Gitea repository mirroring from GitHub with auto-sync
 _: {
   flake.nixosModules.gitea-repos = {
     pkgs,

@@ -1,3 +1,4 @@
+# Niri Wayland compositor: DRM health checks, GPU recovery, metrics
 _: {
   flake.nixosModules.niri-config = {
     config,

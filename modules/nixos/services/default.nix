@@ -1,3 +1,4 @@
+# Default system services: Docker (auto-prune) + weekly Nix GC timer
 _: {
   flake.nixosModules.default-services = {
     config,

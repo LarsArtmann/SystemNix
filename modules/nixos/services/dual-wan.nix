@@ -1,3 +1,4 @@
+# Dual-WAN ECMP with MPTCP packet-level redundancy and failover
 _: {
   flake.nixosModules.dual-wan = {
     config,

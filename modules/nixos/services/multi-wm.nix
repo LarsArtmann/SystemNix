@@ -1,3 +1,4 @@
+# Sway backup window manager alongside Niri with Wayland utilities
 _: {
   flake.nixosModules.multi-wm = {
     config,

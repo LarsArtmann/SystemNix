@@ -1,3 +1,4 @@
+# OpenSEO self-hosted SEO suite (keyword research, rank tracking, audits)
 _: {
   flake.nixosModules.openseo = {
     config,

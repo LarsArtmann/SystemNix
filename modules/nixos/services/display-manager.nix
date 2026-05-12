@@ -1,3 +1,4 @@
+# SDDM display manager with Catppuccin theme and niri session
 _: {
   flake.nixosModules.display-manager = {
     config,

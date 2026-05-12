@@ -1,3 +1,4 @@
+# DNS blocker: Unbound + blocklists + dnsblockd block page + stats API
 _: {
   flake.nixosModules.dns-blocker = {
     config,

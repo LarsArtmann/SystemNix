@@ -1,3 +1,4 @@
+# sops-nix secret definitions for all SystemNix services
 _: let
   secretsDir = ./../../../platforms/nixos/secrets;
 

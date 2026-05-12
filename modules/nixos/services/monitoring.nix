@@ -1,3 +1,4 @@
+# System monitoring CLI tools (radeontop, strace, nethogs, etc.)
 _: {
   flake.nixosModules.monitoring = {
     config,

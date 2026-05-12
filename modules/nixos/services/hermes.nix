@@ -1,3 +1,4 @@
+# Hermes AI Agent Gateway: Discord bot, cron scheduler, messaging
 {inputs, ...}: {
   flake.nixosModules.hermes = {
     config,

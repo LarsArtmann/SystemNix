@@ -1,3 +1,4 @@
+# Manifest smart LLM router with Ollama integration and DB backups
 _: {
   flake.nixosModules.manifest = {
     config,

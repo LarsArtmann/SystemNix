@@ -1,3 +1,4 @@
+# Voice agents: LiveKit real-time communication + Whisper ASR (ROCm)
 _: {
   flake.nixosModules.voice-agents = {
     config,

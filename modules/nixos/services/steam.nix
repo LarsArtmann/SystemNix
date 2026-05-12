@@ -1,3 +1,4 @@
+# Steam gaming platform with gamemode performance tuning
 _: {
   flake.nixosModules.steam = {
     lib,

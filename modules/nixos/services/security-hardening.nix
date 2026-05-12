@@ -1,3 +1,4 @@
+# Security hardening: polkit, PAM, fail2ban, ClamAV, audit tools
 _: {
   flake.nixosModules.security-hardening = {
     config,

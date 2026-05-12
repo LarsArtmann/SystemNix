@@ -1,3 +1,4 @@
+# PipeWire audio server with ALSA/Pulse/JACK support
 _: {
   flake.nixosModules.audio = {
     config,

@@ -1,3 +1,4 @@
+# ComfyUI persistent AI image generation server (ROCm GPU acceleration)
 _: {
   flake.nixosModules.comfyui = {
     config,

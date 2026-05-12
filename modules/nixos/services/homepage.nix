@@ -1,3 +1,4 @@
+# Homepage Dashboard with Catppuccin theme and service status monitoring
 _: {
   flake.nixosModules.homepage = {
     config,

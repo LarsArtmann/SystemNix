@@ -1,3 +1,4 @@
+# Centralized AI model storage with unified directory structure
 _: {
   flake.nixosModules.ai-models = {
     config,

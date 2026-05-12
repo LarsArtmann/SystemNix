@@ -1,3 +1,4 @@
+# SigNoz observability: ClickHouse, OTel collector, dashboards, alerts
 {
   inputs,
   lib,
