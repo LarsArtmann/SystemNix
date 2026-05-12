@@ -8,6 +8,7 @@
 }: let
   colors = colorScheme.palette;
   wallpaperDir = "$HOME/.local/share/wallpapers";
+  sd = import ../../../lib/default.nix lib;
 
   wallpaper-set = pkgs.writeShellApplication {
     name = "wallpaper-set";
@@ -430,21 +431,18 @@ in {
           StartLimitBurst = 3;
           StartLimitIntervalSec = 300;
         };
-        Service = {
-          ExecStartPre = "${pkgs.writeShellScript "awww-check-wayland" ''
-            if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
-              echo "awww-daemon: WAYLAND_DISPLAY not set, compositor not ready"
-              exit 1
-            fi
-          ''}";
-          ExecStart = "${pkgs.awww}/bin/awww-daemon";
-          Restart = "always";
-          RestartSec = "3s";
-          NoNewPrivileges = true;
-          ProtectClock = true;
-          ProtectHostname = true;
-          LockPersonality = true;
-        };
+        Service =
+          sd.hardenUser {}
+          // sd.serviceDefaultsUser {RestartSec = "3s";}
+          // {
+            ExecStartPre = "${pkgs.writeShellScript "awww-check-wayland" ''
+              if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
+                echo "awww-daemon: WAYLAND_DISPLAY not set, compositor not ready"
+                exit 1
+              fi
+            ''}";
+            ExecStart = "${pkgs.awww}/bin/awww-daemon";
+          };
         Install.WantedBy = ["graphical-session.target"];
       };
 
@@ -470,16 +468,16 @@ in {
           StartLimitBurst = 3;
           StartLimitIntervalSec = 120;
         };
-        Service = {
-          ExecStart = "${pkgs.swayidle}/bin/swayidle -w timeout 43200 ${
-            pkgs.writeShellScript "swayidle-suspend" ''
-              ${pkgs.systemd}/bin/systemctl suspend
-            ''
-          } before-sleep ${pkgs.swaylock}/bin/swaylock";
-          Restart = "always";
-          RestartSec = "5s";
-          TimeoutStartSec = "10s";
-        };
+        Service =
+          sd.serviceDefaultsUser {}
+          // {
+            ExecStart = "${pkgs.swayidle}/bin/swayidle -w timeout 43200 ${
+              pkgs.writeShellScript "swayidle-suspend" ''
+                ${pkgs.systemd}/bin/systemctl suspend
+              ''
+            } before-sleep ${pkgs.swaylock}/bin/swaylock";
+            TimeoutStartSec = "10s";
+          };
         Install.WantedBy = ["graphical-session.target"];
       };
 
@@ -491,12 +489,12 @@ in {
           StartLimitBurst = 3;
           StartLimitIntervalSec = 120;
         };
-        Service = {
-          ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
-          Restart = "always";
-          RestartSec = "5s";
-          TimeoutStartSec = "10s";
-        };
+        Service =
+          sd.serviceDefaultsUser {}
+          // {
+            ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
+            TimeoutStartSec = "10s";
+          };
         Install.WantedBy = ["graphical-session.target"];
       };
     };
