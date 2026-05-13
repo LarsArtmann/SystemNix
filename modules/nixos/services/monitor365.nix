@@ -163,6 +163,26 @@ _: {
         plugin_dir = "${cfg.pluginDir}"
       ''}
     '';
+
+    serverConfig = pkgs.writeText "monitor365-server.toml" ''
+      database_url = "${cfg.server.databaseUrl}"
+      listen_addr = "${cfg.server.listenAddr}"
+      pool_size = ${toString cfg.server.poolSize}
+      request_timeout_secs = ${toString cfg.server.requestTimeoutSecs}
+      rate_limit_max_requests = ${toString cfg.server.rateLimitMaxRequests}
+      rate_limit_window_secs = ${toString cfg.server.rateLimitWindowSecs}
+      access_token_ttl_secs = ${toString cfg.server.accessTokenTtlSecs}
+      refresh_token_ttl_secs = ${toString cfg.server.refreshTokenTtlSecs}
+      device_stale_minutes = ${toString cfg.server.deviceStaleMinutes}
+      ${lib.optionalString (cfg.server.jwtSecret != null) ''
+        jwt_secret = "${cfg.server.jwtSecret}"
+      ''}
+      ${lib.optionalString (cfg.server.corsOrigins != []) ''
+        cors_origins = [${builtins.concatStringsSep ", " (map (o: "\"${o}\"") cfg.server.corsOrigins)}]
+      ''}
+    '';
+
+    serverStateDir = "${cfg.home}/server";
   in {
     options.services.monitor365 = {
       enable = lib.mkEnableOption "Monitor365 device monitoring agent";
@@ -506,58 +526,184 @@ _: {
         default = 90;
         description = "Days to retain events before cleanup";
       };
+
+      server = lib.mkOption {
+        type = lib.types.submodule {
+          options = {
+            enable = lib.mkEnableOption "Monitor365 server (dashboard + API)" // {default = false;};
+
+            package = lib.mkOption {
+              type = lib.types.package;
+              default = pkgs.monitor365-server or pkgs.monitor365;
+              description = "Monitor365 server package";
+            };
+
+            listenAddr = lib.mkOption {
+              type = lib.types.str;
+              default = "0.0.0.0:3001";
+              description = "Address to bind the server to";
+            };
+
+            databaseUrl = lib.mkOption {
+              type = lib.types.str;
+              default = "sqlite:${cfg.home}/server/monitor365.db";
+              description = "Database connection URL";
+            };
+
+            jwtSecret = lib.mkOption {
+              type = lib.types.nullOr lib.types.str;
+              default = null;
+              description = "JWT secret for auth tokens. MUST be set in production.";
+            };
+
+            corsOrigins = lib.mkOption {
+              type = lib.types.listOf lib.types.str;
+              default = [];
+              description = "Allowed CORS origins (e.g. [\"http://localhost:3001\"])";
+            };
+
+            poolSize = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 5;
+              description = "Database connection pool size";
+            };
+
+            requestTimeoutSecs = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 30;
+              description = "Request timeout in seconds";
+            };
+
+            rateLimitMaxRequests = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 100;
+              description = "Max requests per rate-limit window";
+            };
+
+            rateLimitWindowSecs = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 60;
+              description = "Rate-limit window in seconds";
+            };
+
+            accessTokenTtlSecs = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 3600;
+              description = "Access token TTL in seconds";
+            };
+
+            refreshTokenTtlSecs = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 604800;
+              description = "Refresh token TTL in seconds";
+            };
+
+            deviceStaleMinutes = lib.mkOption {
+              type = lib.types.ints.positive;
+              default = 5;
+              description = "Minutes before a device is marked offline";
+            };
+          };
+        };
+        default = {};
+        description = "Monitor365 server (dashboard/API) configuration";
+      };
     };
 
     config = lib.mkIf cfg.enable {
       environment.systemPackages = [cfg.package];
 
-      systemd.tmpfiles.rules = [
-        "d ${cfg.home} 0750 ${cfg.user} users -"
-      ];
+      systemd.tmpfiles.rules =
+        [
+          "d ${cfg.home} 0750 ${cfg.user} users -"
+        ]
+        ++ lib.optionals cfg.server.enable [
+          "d ${serverStateDir} 0750 ${cfg.user} users -"
+        ];
 
       environment.etc."monitor365/config.toml".source =
         if cfg.configPath != null
         then cfg.configPath
         else monitor365Config;
 
-      home-manager.users.${cfg.user} = {
-        xdg.configFile."monitor365/config.toml".source =
-          if cfg.configPath != null
-          then cfg.configPath
-          else monitor365Config;
+      home-manager.users.${cfg.user} = lib.mkMerge [
+        {
+          xdg.configFile."monitor365/config.toml".source =
+            if cfg.configPath != null
+            then cfg.configPath
+            else monitor365Config;
 
-        systemd.user.services.monitor365 = {
-          Unit = {
-            Description = "Monitor365 Device Monitoring Agent";
-            After = ["network.target" "graphical-session.target"];
-            Wants = ["network.target"];
-            PartOf = ["graphical-session.target"];
-            StartLimitIntervalSec = 600;
-            StartLimitBurst = 5;
-          };
-
-          Service =
-            serviceDefaultsUser {RestartSec = "10";}
-            // {
-              Type = "simple";
-              ExecStart = "${cfg.package}/bin/monitor365 --config /etc/monitor365/config.toml run";
-              WorkingDirectory = cfg.home;
-              KillMode = "mixed";
-              TimeoutStopSec = "30";
-              StandardOutput = "journal";
-              StandardError = "journal";
-
-              Environment = [
-                "PATH=${runtimePath}:/run/wrappers/bin:%h/.nix-profile/bin:/run/current-system/sw/bin"
-                "DISPLAY=:0"
-              ];
+          systemd.user.services.monitor365 = {
+            Unit = {
+              Description = "Monitor365 Device Monitoring Agent";
+              After = ["network.target" "graphical-session.target"];
+              Wants = ["network.target"];
+              PartOf = ["graphical-session.target"];
+              StartLimitIntervalSec = 600;
+              StartLimitBurst = 5;
             };
 
-          Install = {
-            WantedBy = ["graphical-session.target"];
+            Service =
+              serviceDefaultsUser {RestartSec = "10";}
+              // {
+                Type = "simple";
+                ExecStart = "${cfg.package}/bin/monitor365 --config /etc/monitor365/config.toml run";
+                WorkingDirectory = cfg.home;
+                KillMode = "mixed";
+                TimeoutStopSec = "30";
+                StandardOutput = "journal";
+                StandardError = "journal";
+
+                Environment = [
+                  "PATH=${runtimePath}:/run/wrappers/bin:%h/.nix-profile/bin:/run/current-system/sw/bin"
+                  "DISPLAY=:0"
+                ];
+              };
+
+            Install = {
+              WantedBy = ["graphical-session.target"];
+            };
           };
-        };
-      };
+        }
+        (lib.mkIf cfg.server.enable {
+          xdg.configFile."monitor365/server.toml".source = serverConfig;
+
+          systemd.user.services.monitor365-server = {
+            Unit = {
+              Description = "Monitor365 Dashboard Server";
+              After = ["network.target"];
+              Wants = ["network.target"];
+              StartLimitIntervalSec = 600;
+              StartLimitBurst = 5;
+            };
+
+            Service =
+              serviceDefaultsUser {RestartSec = "10";}
+              // {
+                Type = "simple";
+                ExecStart = "${cfg.server.package}/bin/monitor365-server";
+                WorkingDirectory = serverStateDir;
+                KillMode = "mixed";
+                TimeoutStopSec = "30";
+                StandardOutput = "journal";
+                StandardError = "journal";
+
+                Environment =
+                  [
+                    "MONITOR365_SERVER__DATABASE_URL=${cfg.server.databaseUrl}"
+                    "MONITOR365_SERVER__LISTEN_ADDR=${cfg.server.listenAddr}"
+                    "MONITOR365_SERVER__POOL_SIZE=${toString cfg.server.poolSize}"
+                  ]
+                  ++ lib.optional (cfg.server.jwtSecret != null)
+                  "MONITOR365_SERVER__JWT_SECRET=${cfg.server.jwtSecret}";
+              };
+
+            Install = {
+              WantedBy = ["default.target"];
+            };
+          };
+        })
+      ];
     };
   };
 }

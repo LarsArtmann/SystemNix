@@ -241,7 +241,7 @@
         };
       };
 
-      # Monitor365 device monitoring agent — lightweight defaults to avoid RAM pressure
+      # Monitor365 device monitoring agent + server (single-machine deployment)
       monitor365 = {
         enable = true;
         # Disable expensive collectors (screenshot, camera, photo, keystroke logging)
@@ -254,6 +254,14 @@
           notifications = lib.mkDefault false;
         };
         logging.level = lib.mkDefault "warn";
+        # Agent syncs to local server
+        cloud.endpoint = lib.mkDefault "http://localhost:3001";
+        # Server (dashboard + API) runs on the same machine
+        server = {
+          enable = lib.mkDefault true;
+          listenAddr = lib.mkDefault "0.0.0.0:3001";
+          corsOrigins = lib.mkDefault ["http://localhost:3001"];
+        };
       };
 
       smartd = {
