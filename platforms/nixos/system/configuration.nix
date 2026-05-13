@@ -241,9 +241,19 @@
         };
       };
 
-      # Monitor365 device monitoring agent (disabled: high RAM usage)
+      # Monitor365 device monitoring agent — lightweight defaults to avoid RAM pressure
       monitor365 = {
-        enable = false;
+        enable = true;
+        # Disable expensive collectors (screenshot, camera, photo, keystroke logging)
+        collectors = {
+          screenshot = lib.mkDefault false;
+          camera = lib.mkDefault false;
+          keystroke = lib.mkDefault false;
+          mouse = lib.mkDefault false;
+          clipboard = lib.mkDefault false;
+          notifications = lib.mkDefault false;
+        };
+        logging.level = lib.mkDefault "warn";
       };
 
       smartd = {
