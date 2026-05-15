@@ -153,7 +153,7 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 mkPackageOverlay = input: name: _final: prev: { ${name} = input.packages.${prev.stdenv.system}.default; };
 # Usage: mkPackageOverlay inputs.library-policy "library-policy"
 ```
-Defined in `overlays/shared.nix`. Used by 4 overlays (library-policy, hierarchical-errors, golangci-lint-auto-configure, mr-sync).
+Defined in `overlays/shared.nix`. Used by all 9 flake-input overlays (library-policy, hierarchical-errors, golangci-lint-auto-configure, mr-sync, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency.
 
 ### Config-Derived URLs
 

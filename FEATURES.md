@@ -369,10 +369,10 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | `ai-integration-test.sh` | ✅ | AI/ML stack validation | Ollama ROCm env vars, ROCm packages, DeepSeek support, OCR, PyTorch ecosystem |
 | `update-crush-latest.sh` | ✅ | Crush version updater | Before/after version, NUR eval, `--switch` flag for auto-activate |
 | `lib/paths.sh` | ✅ | Shared path constants | `PROJECT_ROOT` auto-detect, platform/user/nix paths, helper functions (`is_darwin`, `is_linux`, `ensure_dir`) |
-| `benchmark-system.sh` | ❌ | Referenced by `just benchmark` | Script does not exist |
-| `performance-monitor.sh` | ❌ | Referenced by `just perf` | Script does not exist |
-| `shell-context-detector.sh` | ❌ | Referenced by `just context` | Script does not exist |
-| `storage-cleanup.sh` | ❌ | Referenced by `just clean`/`clean-storage` | Script does not exist |
+| `benchmark-system.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
+| `performance-monitor.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
+| `shell-context-detector.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
+| `storage-cleanup.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
 
 ---
 
@@ -391,12 +391,8 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | AI models | `ai-migrate`, `ai-status` | ✅ |
 | Go dev | `go-lint`, `go-format`, `go-modernize`, `go-dev`, `go-tools-version`, etc. | ✅ |
 | Node dev | `node-lint`, `node-format`, `node-check`, `node-test`, `node-build`, `node-dev` | ✅ |
-| Cleanup | `clean`, `clean-quick`, `clean-aggressive`, `clean-storage` | ✅ |
-| Backup | `backup`, `restore`, `list-backups`, `clean-backups` | ✅ |
-| macOS Keychain | `keychain-list`, `keychain-status`, `keychain-ssh-add`, etc. | ✅ |
-| Benchmarks | `benchmark`, `perf`, `context` | ❌ | Scripts (`benchmark-system.sh`, `performance-monitor.sh`, `shell-context-detector.sh`) do not exist |
+| Cleanup | `clean`, `rust-clean` | ✅ | Comprehensive Nix/Docker/cache cleanup |
 | Dep graphs | `dep-graph` (nixos/darwin/svg/png/dot/all/verbose/view/clean) | ⚠️ | Depends on nix-visualize, may be slow |
-| Cleanup | `clean`, `clean-storage` | ❌ | References non-existent `storage-cleanup.sh` — `clean-quick` and `clean-aggressive` work |
 
 ---
 
@@ -410,7 +406,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Twenty CRM | Module exists but unclear if actively deployed | Medium |
 | Voice agents | Enabled but Whisper Docker + ROCm pipeline may need verification | Medium |
 | Unsloth Studio | Disabled by default, complex setup (PyTorch ROCm build) | Low |
-| Benchmark scripts | Justfile references `./scripts/benchmark-system.sh` etc. — may not all exist | Low |
+| Benchmark scripts | Removed from justfile — scripts never created | Low |
 | Auditd | Disabled due to NixOS 26.05 bug #483085 | Medium |
 | AppArmor | Commented out in security-hardening | Medium |
 | DNS-over-QUIC | Overlay disabled — breaks binary cache (40+ min builds) | Low |

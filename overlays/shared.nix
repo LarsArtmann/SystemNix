@@ -70,10 +70,10 @@ in [
   (mkPackageOverlay hierarchical-errors "hierarchical-errors")
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure")
   (mkPackageOverlay mr-sync "mr-sync")
-  buildflow.overlays.default
-  go-auto-upgrade.overlays.default
-  go-structure-linter.overlays.default
-  branching-flow.overlays.default
-  art-dupl.overlays.default
+  (mkPackageOverlay buildflow "buildflow")
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade")
+  (mkPackageOverlay go-structure-linter "go-structure-linter")
+  (mkPackageOverlay branching-flow "branching-flow")
+  (mkPackageOverlay art-dupl "art-dupl")
   d2DarwinOverlay
 ]
