@@ -14,7 +14,7 @@
       #   1. Delete the hash below
       #   2. Run: nix build .#nixosConfigurations.evo-x2 --no-out-link 2>&1 | grep got
       #   3. Paste the correct hash here
-      fixedHash = "sha256-Chz+NW9NXqboXHOa6PKwf5bhAkkcFtKNhvKWwg2XSPc=";
+      fixedHash = "sha256-MLcLhjTF6dgdvNBtJWzo8Nh19eNh/ZitD2b07nm61Tc=";
       baseOverlay = inputs.hermes-agent.overlays.default;
       patchedOverlay = final: prev: let
         base = baseOverlay final prev;

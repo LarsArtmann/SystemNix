@@ -831,7 +831,7 @@ Declarative NixOS module for the Hermes AI agent gateway (Discord bot, cron sche
 | Env | `/home/hermes/.env` | Merged from sops template at service start (secrets + non-secret env) |
 
 **Architecture:**
-- Installed via flake input `hermes-agent` (pinned to **v2026.4.30** in `flake.lock`)
+- Installed via flake input `hermes-agent` (pinned to **v2026.5.7** in `flake.lock`)
 - System-level systemd service (`systemd.services.hermes`) targeting `multi-user.target` — starts at boot without login
 - Dedicated system user/group (`hermes`/`hermes`) with state at `/home/hermes`
 - `binutils` in service PATH for `ctypes.util.find_library` opus resolution on NixOS

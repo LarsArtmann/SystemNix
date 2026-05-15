@@ -117,7 +117,7 @@
 
     # Hermes AI Agent — Discord/gateway agent platform
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v2026.4.30";
+      url = "github:NousResearch/hermes-agent/v2026.5.7";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
