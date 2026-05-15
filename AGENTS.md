@@ -144,6 +144,10 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 
 **Rule:** Never override `vendorHash` from outside a package. Each repo owns its own hash.
 
+**Overlay ≠ installed:** Overlays make packages available as `pkgs.<name>` but do NOT install them. Tools must also be added to `home.packages` in `platforms/common/packages/base.nix` (or a platform-specific config) to appear on PATH. All overlay tools that are meant to be user-facing are listed in `base.nix`.
+
+**`~/go/bin` legacy path:** `sessionPath` in `home-base.nix` adds `~/go/bin` to PATH for `go install`-only tools not in nixpkgs (currently `govalid`, `projects-management-automation`). Do NOT install Nix-overlay-managed tools via `go install` — they will shadow the Nix versions and become stale.
+
 **`mkPackageOverlay` helper:** Simple overlay factory for flake-input packages:
 ```nix
 mkPackageOverlay = input: name: _final: prev: { ${name} = input.packages.${prev.stdenv.system}.default; };
@@ -497,6 +501,8 @@ AI agent task tracking protocol:
 | `_module.args` pattern for platform packages | When making a package Linux-only, use `_module.args.<pkg> = null` in the platform config + `pkg ? null` default in the module function args + `lib.optionals (pkg != null)` for conditional inclusion. Do NOT rely on omitting from `specialArgs` alone — Nix module system tries `_module.args` fallback and errors if missing. |
 | statix `grep -q` pre-commit bug | `grep -q .` returns exit code 1 on no match, which became the `bash -c` exit code (no explicit `exit 0`). Fixed by using a result variable: `result=$(statix ... | grep -v ...); if [ -n "$result" ]; then echo "$result"; exit 1; fi`. Do NOT use `grep -q . && exit 1` pattern in bash -c hooks without a trailing `exit 0`. |
 | statix pipe operator parse errors | statix 0.5.8 can't parse Nix pipe operator (`|>`) in `sops.nix` — produces `:E:0:Error node` lines. The pre-commit hook filters these with `grep -v ':E:0:'`. Do NOT remove the filter. |
+| todo-list-ai overlay hash | `overlays/shared.nix:26` has a fixed-output derivation hash (`todoListAiFixedHash`) for todo-list-ai's `node_modules`. Must be updated when upstream `package.json` or `bun.lock` changes. Fix: (1) delete hash, set to `""`, (2) build, (3) grep for `got:` hash, (4) paste into shared.nix. Same pattern as hermes `fixedHash` in `hermes.nix`. |
+| go-output go-branded-id transitive dep | `go-output` v0.3.0+ imports `go-branded-id` in the root package. All repos that substitute go-output via flake input (branching-flow, go-structure-linter, file-and-image-renamer) must have `go-branded-id` in their `go.mod`/`go.sum` or the nix vendor derivation fails. When adding a new repo that depends on go-output, add `go-branded-id v0.1.0` to go.sum. |
 
 ### lib/ Shared Helpers
 
