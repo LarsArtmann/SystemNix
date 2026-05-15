@@ -48,11 +48,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778846203,
-        "narHash": "sha256-C+yzzxdTCiFC1GtBsxxhexf++Fa88MZLO/IwQmJ8h2w=",
+        "lastModified": 1778846992,
+        "narHash": "sha256-Ot8vepUI/JObYoPNSSy6VdZqydA7MVAzZxCRVACKAOQ=",
         "ref": "master",
-        "rev": "538e6fe8aa9e0c2924ecb17de6bdfa2ee6d7046f",
-        "revCount": 1571,
+        "rev": "c61bfe97912a4712038ddfc5d96587ae6003b19e",
+        "revCount": 1573,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -91,11 +91,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778846512,
-        "narHash": "sha256-8SivAqPoQaWj5G9Oln872+maZxHkaB42SAtqH4dJTxA=",
+        "lastModified": 1778847101,
+        "narHash": "sha256-FCSDaxiMtToaKFLgOsS14Z/UIH+qtNj2C9I7YvPMeE4=",
         "ref": "master",
-        "rev": "64be6b57c641a247cc85d14bb4774d9a48ce69b9",
-        "revCount": 2429,
+        "rev": "fc6d5f98d64198024a8b593b425f9066dd1bd462",
+        "revCount": 2430,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -881,11 +881,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778846090,
-        "narHash": "sha256-lqdRLiTEVe0H6EHO8nsNr3EuHFRPnnQDqLUivZ05d40=",
+        "lastModified": 1778846842,
+        "narHash": "sha256-FSEXbLVyrM83EFXSd/cYJlAqJ/NGQIwjuYsYBnYZyjY=",
         "ref": "master",
-        "rev": "b82a26fa8da1bef707ee3406003521653d5ef416",
-        "revCount": 811,
+        "rev": "922157fef2517124380178103905ee753702865b",
+        "revCount": 812,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
