@@ -212,6 +212,18 @@
       # Repo management
       mr-sync # Keep ~/.mrconfig in sync with GitHub repos
 
+      # Go tooling ecosystem (LarsArtmann)
+      art-dupl # AST-based code deduplication
+      branching-flow # Error context preservation analyzer
+      buildflow # Build automation
+      go-auto-upgrade # Automated Go version upgrades
+      go-structure-linter # Go project structure linting
+      hierarchical-errors # Error handling pattern analyzer
+
+      # Go testing
+      ginkgo # BDD testing framework for Go
+      gotools # Go tools (goimports, etc.)
+
       # Wallpaper management tools (Linux-only)
       imagemagick # Image manipulation for wallpaper management
     ]
