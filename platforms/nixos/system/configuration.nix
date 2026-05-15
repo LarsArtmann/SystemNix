@@ -220,7 +220,7 @@
 
       # Minecraft server (local network only, whitelisted)
       minecraft = {
-        enable = true;
+        enable = false;
         whitelist = {
           LartyHD = "8c9ec1ab-f64f-4003-9110-f98a1f0d7f47";
         };
