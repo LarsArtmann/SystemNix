@@ -45,49 +45,49 @@ remove_endpoint() {
 MODE="${1:-startup}"
 
 case "$MODE" in
-  startup)
-    # Add eno1 endpoint (static, always present)
-    add_endpoint "$ENO1_IF" "$ENO1_IP"
+startup)
+  # Add eno1 endpoint (static, always present)
+  add_endpoint "$ENO1_IF" "$ENO1_IP"
 
-    # Detect current WiFi connection and add endpoint if connected
-    WIFI_STATE=$(nmcli -t -f GENERAL.STATE device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 || echo "")
-    if echo "$WIFI_STATE" | grep -q "connected"; then
-      WIFI_IP=$(nmcli -t -f IP4.ADDRESS device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 | cut -d/ -f1 || echo "")
-      if [ -n "$WIFI_IP" ]; then
-        add_endpoint "$WIFI_IF" "$WIFI_IP"
-      fi
+  # Detect current WiFi connection and add endpoint if connected
+  WIFI_STATE=$(nmcli -t -f GENERAL.STATE device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 || echo "")
+  if echo "$WIFI_STATE" | grep -q "connected"; then
+    WIFI_IP=$(nmcli -t -f IP4.ADDRESS device show "$WIFI_IF" 2>/dev/null | cut -d: -f2 | cut -d/ -f1 || echo "")
+    if [ -n "$WIFI_IP" ]; then
+      add_endpoint "$WIFI_IF" "$WIFI_IP"
     fi
+  fi
 
-    log "startup complete (eno1=$ENO1_IP, wifi=$WIFI_IF)"
-    ;;
+  log "startup complete (eno1=$ENO1_IP, wifi=$WIFI_IF)"
+  ;;
 
-  wifi-up)
-    # Called by NM dispatcher on WiFi connect
-    # NM provides: DEVICE_IFACE, IP4_ADDRESS_0 (e.g. "10.79.119.35/24")
-    IFACE="${DEVICE_IFACE:-$WIFI_IF}"
-    WIFI_IP=$(echo "${IP4_ADDRESS_0:-}" | cut -d/ -f1)
+wifi-up)
+  # Called by NM dispatcher on WiFi connect
+  # NM provides: DEVICE_IFACE, IP4_ADDRESS_0 (e.g. "10.79.119.35/24")
+  IFACE="${DEVICE_IFACE:-$WIFI_IF}"
+  WIFI_IP=$(echo "${IP4_ADDRESS_0:-}" | cut -d/ -f1)
+  if [ -n "$WIFI_IP" ]; then
+    add_endpoint "$IFACE" "$WIFI_IP"
+  else
+    log "wifi-up: no IP4_ADDRESS_0 for $IFACE, querying nmcli"
+    WIFI_IP=$(nmcli -t -f IP4.ADDRESS device show "$IFACE" 2>/dev/null | cut -d: -f2 | cut -d/ -f1 || echo "")
     if [ -n "$WIFI_IP" ]; then
       add_endpoint "$IFACE" "$WIFI_IP"
-    else
-      log "wifi-up: no IP4_ADDRESS_0 for $IFACE, querying nmcli"
-      WIFI_IP=$(nmcli -t -f IP4.ADDRESS device show "$IFACE" 2>/dev/null | cut -d: -f2 | cut -d/ -f1 || echo "")
-      if [ -n "$WIFI_IP" ]; then
-        add_endpoint "$IFACE" "$WIFI_IP"
-      fi
     fi
-    ;;
+  fi
+  ;;
 
-  wifi-down)
-    # Called by NM dispatcher on WiFi disconnect
-    IFACE="${DEVICE_IFACE:-$WIFI_IF}"
-    CURRENT=$(ip mptcp endpoint show 2>/dev/null | grep "dev $IFACE" | awk '{print $2}' || echo "")
-    if [ -n "$CURRENT" ]; then
-      remove_endpoint "$CURRENT"
-    fi
-    ;;
+wifi-down)
+  # Called by NM dispatcher on WiFi disconnect
+  IFACE="${DEVICE_IFACE:-$WIFI_IF}"
+  CURRENT=$(ip mptcp endpoint show 2>/dev/null | grep "dev $IFACE" | awk '{print $2}' || echo "")
+  if [ -n "$CURRENT" ]; then
+    remove_endpoint "$CURRENT"
+  fi
+  ;;
 
-  *)
-    log "unknown mode: $MODE (expected: startup, wifi-up, wifi-down)"
-    exit 1
-    ;;
+*)
+  log "unknown mode: $MODE (expected: startup, wifi-up, wifi-down)"
+  exit 1
+  ;;
 esac

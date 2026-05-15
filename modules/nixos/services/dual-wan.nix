@@ -140,7 +140,7 @@ _: {
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
               }
-              // serviceDefaults { Restart = "no"; };
+              // serviceDefaults {Restart = "no";};
           };
 
           route-health-monitor = {

@@ -23,7 +23,7 @@
     jscpd = prev.callPackage ../pkgs/jscpd.nix {};
   };
 
-  todoListAiFixedHash = "sha256-gK2KiswUrC4iym1X0r8Ykof1H8Fb2keBsc9X0PPQPPU=";
+  todoListAiFixedHash = "sha256-1rKZziEfR9jX1XRMu2Zc5MpOi6voclbbUndQf120nkE=";
 
   todoListAiOverlay = _final: prev: let
     bun = prev.bun;

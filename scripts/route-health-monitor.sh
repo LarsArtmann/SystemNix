@@ -80,8 +80,8 @@ detect_wifi_gateway() {
   # Auto-detect WiFi interface if configured one doesn't exist
   if ! ip link show "$WIFI_IF" >/dev/null 2>&1; then
     local detected_if
-    detected_if=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null \
-      | grep ":wifi:connected" | head -1 | cut -d: -f1 || echo "")
+    detected_if=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null |
+      grep ":wifi:connected" | head -1 | cut -d: -f1 || echo "")
     if [ -n "$detected_if" ]; then
       log "AUTO-DETECT: WiFi interface $WIFI_IF not found, using $detected_if"
       WIFI_IF="$detected_if"
@@ -151,115 +151,115 @@ while true; do
   fi
 
   case "$CURRENT_MODE" in
-    ecmp)
-      # Both paths active — check if ISP degraded
-      if $ISP_OK; then
-        ISP_FAIL_COUNT=0
-      else
-        ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
-        log "ISP degraded in ECMP ($ISP_FAIL_COUNT/$FAILOVER_THRESHOLD)"
-        if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ]; then
-          if $WIFI_AVAILABLE; then
-            # Shift all weight to WiFi
-            set_route_ecmp 1 20 "$WIFI_GW" 2>/dev/null || true
-            log "ECMP SHIFT: ISP degraded → WiFi weight=20, eno1 weight=1"
-            CURRENT_MODE="wifi-heavy"
-          fi
-          ISP_FAIL_COUNT=0
-        fi
-      fi
-      ;;
-
-    wifi-heavy)
-      # ISP was degraded, WiFi carrying most traffic
-      if $ISP_OK; then
-        ISP_OK_COUNT=$((ISP_OK_COUNT + 1))
-        if [ "$ISP_OK_COUNT" -ge "$FAILBACK_THRESHOLD" ]; then
-          # ISP recovered — restore balanced ECMP
-          if $WIFI_AVAILABLE; then
-            set_route_ecmp 10 3 "$WIFI_GW" 2>/dev/null || true
-            log "ECMP RESTORE: ISP recovered → eno1 weight=10, WiFi weight=3"
-            CURRENT_MODE="ecmp"
-          else
-            set_route_single "$ENO1_GW" "$ENO1_IF"
-            log "FAILBACK: ISP recovered, WiFi gone → eno1 only"
-            CURRENT_MODE="eno1-only"
-          fi
-          ISP_OK_COUNT=0
-          ISP_FAIL_COUNT=0
-        fi
-      else
-        ISP_OK_COUNT=0
-        ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
-
-        # ISP still degraded after shifting — go WiFi-only
-        if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ] && $WIFI_AVAILABLE; then
-          set_route_single "$WIFI_GW" "$WIFI_IF"
-          log "FAILOVER: ISP dead → WiFi only ($WIFI_IF via $WIFI_GW)"
-          CURRENT_MODE="wifi-only"
-          ISP_FAIL_COUNT=0
-        fi
-      fi
-      ;;
-
-    wifi-only)
-      # ISP was dead, WiFi carrying everything
-      if $ISP_OK; then
-        ISP_OK_COUNT=$((ISP_OK_COUNT + 1))
-        if [ "$ISP_OK_COUNT" -ge "$FAILBACK_THRESHOLD" ]; then
-          if $WIFI_AVAILABLE; then
-            set_route_ecmp 10 3 "$WIFI_GW" 2>/dev/null || true
-            log "FAILBACK: ISP recovered → ECMP (eno1=10, WiFi=3)"
-            CURRENT_MODE="ecmp"
-          else
-            set_route_single "$ENO1_GW" "$ENO1_IF"
-            log "FAILBACK: ISP recovered → eno1 only"
-            CURRENT_MODE="eno1-only"
-          fi
-          ISP_OK_COUNT=0
-          ISP_FAIL_COUNT=0
-        else
-          log "ISP recovering ($ISP_OK_COUNT/$FAILBACK_THRESHOLD)"
-        fi
-      else
-        ISP_OK_COUNT=0
-        if ! $WIFI_AVAILABLE; then
-          log "CRITICAL: both ISP and WiFi down!"
-        fi
-      fi
-      ;;
-
-    eno1-only)
-      # WiFi not available or just started — eno1 only
-      if $ISP_OK; then
-        ISP_FAIL_COUNT=0
-        # Try to enable ECMP if WiFi appeared
+  ecmp)
+    # Both paths active — check if ISP degraded
+    if $ISP_OK; then
+      ISP_FAIL_COUNT=0
+    else
+      ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
+      log "ISP degraded in ECMP ($ISP_FAIL_COUNT/$FAILOVER_THRESHOLD)"
+      if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ]; then
         if $WIFI_AVAILABLE; then
-          if set_route_ecmp 10 3 "$WIFI_GW"; then
-            log "ECMP ENABLED: WiFi available → eno1 weight=10, WiFi weight=3"
-            CURRENT_MODE="ecmp"
-          fi
+          # Shift all weight to WiFi
+          set_route_ecmp 1 20 "$WIFI_GW" 2>/dev/null || true
+          log "ECMP SHIFT: ISP degraded → WiFi weight=20, eno1 weight=1"
+          CURRENT_MODE="wifi-heavy"
         fi
+        ISP_FAIL_COUNT=0
+      fi
+    fi
+    ;;
+
+  wifi-heavy)
+    # ISP was degraded, WiFi carrying most traffic
+    if $ISP_OK; then
+      ISP_OK_COUNT=$((ISP_OK_COUNT + 1))
+      if [ "$ISP_OK_COUNT" -ge "$FAILBACK_THRESHOLD" ]; then
+        # ISP recovered — restore balanced ECMP
+        if $WIFI_AVAILABLE; then
+          set_route_ecmp 10 3 "$WIFI_GW" 2>/dev/null || true
+          log "ECMP RESTORE: ISP recovered → eno1 weight=10, WiFi weight=3"
+          CURRENT_MODE="ecmp"
+        else
+          set_route_single "$ENO1_GW" "$ENO1_IF"
+          log "FAILBACK: ISP recovered, WiFi gone → eno1 only"
+          CURRENT_MODE="eno1-only"
+        fi
+        ISP_OK_COUNT=0
+        ISP_FAIL_COUNT=0
+      fi
+    else
+      ISP_OK_COUNT=0
+      ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
+
+      # ISP still degraded after shifting — go WiFi-only
+      if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ] && $WIFI_AVAILABLE; then
+        set_route_single "$WIFI_GW" "$WIFI_IF"
+        log "FAILOVER: ISP dead → WiFi only ($WIFI_IF via $WIFI_GW)"
+        CURRENT_MODE="wifi-only"
+        ISP_FAIL_COUNT=0
+      fi
+    fi
+    ;;
+
+  wifi-only)
+    # ISP was dead, WiFi carrying everything
+    if $ISP_OK; then
+      ISP_OK_COUNT=$((ISP_OK_COUNT + 1))
+      if [ "$ISP_OK_COUNT" -ge "$FAILBACK_THRESHOLD" ]; then
+        if $WIFI_AVAILABLE; then
+          set_route_ecmp 10 3 "$WIFI_GW" 2>/dev/null || true
+          log "FAILBACK: ISP recovered → ECMP (eno1=10, WiFi=3)"
+          CURRENT_MODE="ecmp"
+        else
+          set_route_single "$ENO1_GW" "$ENO1_IF"
+          log "FAILBACK: ISP recovered → eno1 only"
+          CURRENT_MODE="eno1-only"
+        fi
+        ISP_OK_COUNT=0
+        ISP_FAIL_COUNT=0
       else
-        ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
-        if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ]; then
-          if $WIFI_AVAILABLE; then
-            set_route_single "$WIFI_GW" "$WIFI_IF"
-            log "FAILOVER: ISP down, no ECMP → WiFi only ($WIFI_IF via $WIFI_GW)"
-            CURRENT_MODE="wifi-only"
-          else
-            log "ISP down ($ISP_FAIL_COUNT failures) — no WiFi fallback available"
-          fi
-          ISP_FAIL_COUNT=0
+        log "ISP recovering ($ISP_OK_COUNT/$FAILBACK_THRESHOLD)"
+      fi
+    else
+      ISP_OK_COUNT=0
+      if ! $WIFI_AVAILABLE; then
+        log "CRITICAL: both ISP and WiFi down!"
+      fi
+    fi
+    ;;
+
+  eno1-only)
+    # WiFi not available or just started — eno1 only
+    if $ISP_OK; then
+      ISP_FAIL_COUNT=0
+      # Try to enable ECMP if WiFi appeared
+      if $WIFI_AVAILABLE; then
+        if set_route_ecmp 10 3 "$WIFI_GW"; then
+          log "ECMP ENABLED: WiFi available → eno1 weight=10, WiFi weight=3"
+          CURRENT_MODE="ecmp"
         fi
       fi
-      ;;
+    else
+      ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
+      if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ]; then
+        if $WIFI_AVAILABLE; then
+          set_route_single "$WIFI_GW" "$WIFI_IF"
+          log "FAILOVER: ISP down, no ECMP → WiFi only ($WIFI_IF via $WIFI_GW)"
+          CURRENT_MODE="wifi-only"
+        else
+          log "ISP down ($ISP_FAIL_COUNT failures) — no WiFi fallback available"
+        fi
+        ISP_FAIL_COUNT=0
+      fi
+    fi
+    ;;
 
-    *)
-      log "UNKNOWN MODE: $CURRENT_MODE — resetting to eno1"
-      set_route_single "$ENO1_GW" "$ENO1_IF"
-      CURRENT_MODE="eno1-only"
-      ;;
+  *)
+    log "UNKNOWN MODE: $CURRENT_MODE — resetting to eno1"
+    set_route_single "$ENO1_GW" "$ENO1_IF"
+    CURRENT_MODE="eno1-only"
+    ;;
   esac
 
   sleep "$CHECK_INTERVAL"

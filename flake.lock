@@ -230,11 +230,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778736464,
-        "narHash": "sha256-LLfu6fru3V/VEJqUHFhkfYLZ7C0PqHST/7Df8l/QAr0=",
+        "lastModified": 1778844067,
+        "narHash": "sha256-088BNPMLVn4mSkQWq/3L5EVuwQBc0+/Vz4U0JdChD78=",
         "ref": "master",
-        "rev": "eb423248b3a4ed213c7b09c8035e53706d3ff5a5",
-        "revCount": 283,
+        "rev": "9c886fe5290e3edca756126aa94b41c80d986cb7",
+        "revCount": 284,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -2006,11 +2006,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778736407,
-        "narHash": "sha256-RwSPlhZnauBeTzlZRqo29tKFGRw3QB4MsJKg1Q6IBnk=",
+        "lastModified": 1778842999,
+        "narHash": "sha256-WUcen47sgF1sb48ESlNWD1jiMHdAtpDV8f3wWaaHHvk=",
         "ref": "master",
-        "rev": "d5f3e1e07983240c4eee45594c63270bf8d47f05",
-        "revCount": 329,
+        "rev": "529d4f9fcf63f56554cc7bed27a7c153cf59d938",
+        "revCount": 331,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/todo-list-ai"
       },

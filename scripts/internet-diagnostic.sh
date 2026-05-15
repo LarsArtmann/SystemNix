@@ -7,7 +7,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-ok()   { echo -e "${GREEN}[OK]${NC} $*"; }
+ok() { echo -e "${GREEN}[OK]${NC} $*"; }
 fail() { echo -e "${RED}[FAIL]${NC} $*"; }
 warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
 info() { echo -e "[INFO] $*"; }
