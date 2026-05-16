@@ -59,7 +59,7 @@ done
 count=0
 [ -f "$STATE_FILE" ] && count=$(cat "$STATE_FILE" 2>/dev/null || echo 0)
 count=$((count + 1))
-echo "$count" > "$STATE_FILE"
+echo "$count" >"$STATE_FILE"
 
 echo "Display watchdog: dead display, attempt $count (threshold=$RECOVERY_THRESHOLD)"
 
