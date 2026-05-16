@@ -19,6 +19,11 @@ _: {
       runtimeInputs = with pkgs; [procps systemd gawk];
       text = builtins.readFile ../../../scripts/gpu-recovery.sh;
     };
+    displayWatchdog = pkgs.writeShellApplication {
+      name = "display-watchdog";
+      runtimeInputs = with pkgs; [procps systemd kbd];
+      text = builtins.readFile ../../../scripts/display-watchdog.sh;
+    };
   in {
     options.services.niri-desktop = {
       enable = lib.mkEnableOption "Niri Wayland compositor with XWayland support";
@@ -32,6 +37,8 @@ _: {
 
       systemd.tmpfiles.rules = [
         "d /var/lib/niri-drm-healthcheck 0755 ${config.users.primaryUser} users -"
+        "d /var/lib/display-watchdog 0755 root root -"
+        "d /var/lib/prometheus-node-exporter/textfile_collectors 1777 root root -"
       ];
 
       systemd = {
@@ -91,60 +98,90 @@ _: {
           };
         };
 
-        services.gpu-recovery = {
-          description = "GPU driver recovery — rebinds amdgpu to fix DRM corruption";
-          path = with pkgs; [procps systemd gawk];
-          onFailure = ["notify-failure@%n.service"];
-          serviceConfig =
-            {
-              Type = "oneshot";
-              ExecStart = "${gpuRecovery}/bin/gpu-recovery";
-              OOMScoreAdjust = -1000;
-            }
-            // harden {
-              MemoryMax = "2G";
-              ReadWritePaths = ["/sys" "/dev"];
-            }
-            // serviceDefaults {Restart = "no";};
+        services = {
+          gpu-recovery = {
+            description = "GPU driver recovery — rebinds amdgpu to fix DRM corruption";
+            path = with pkgs; [procps systemd gawk];
+            onFailure = ["notify-failure@%n.service"];
+            serviceConfig =
+              {
+                Type = "oneshot";
+                ExecStart = "${gpuRecovery}/bin/gpu-recovery";
+                OOMScoreAdjust = -1000;
+              }
+              // harden {
+                MemoryMax = "2G";
+                ReadWritePaths = ["/sys" "/dev"];
+              }
+              // serviceDefaults {Restart = "no";};
+          };
+
+          display-watchdog = {
+            description = "Detect dead display (connected but no signal) and recover";
+            path = with pkgs; [kbd];
+            onFailure = ["notify-failure@%n.service"];
+            serviceConfig =
+              {
+                Type = "oneshot";
+                ExecStart = "${displayWatchdog}/bin/display-watchdog";
+                OOMScoreAdjust = -500;
+              }
+              // harden {
+                MemoryMax = "512M";
+                ReadWritePaths = ["/sys/class/drm" "/var/lib/display-watchdog"];
+              };
+          };
+
+          niri-health-metrics = {
+            description = "Niri compositor health metrics for node_exporter textfile";
+            path = with pkgs; [systemd gawk];
+            serviceConfig =
+              {
+                Type = "oneshot";
+                ExecStart = pkgs.writeShellScript "niri-health-metrics" ''
+                  set -euo pipefail
+                  OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
+                  TMP="''${OUT}.tmp"
+                  TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+                  mkdir -p "$TEXTFILE_DIR"
+
+                  running=$(${pkgs.procps}/bin/pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
+                  restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
+                  drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
+
+                  {
+                    echo "niri_running $running"
+                    echo "niri_restarts_10m $restarts"
+                    echo "niri_drm_errors_30s $drm_errors"
+                  } > "$TMP"
+
+                  mv "$TMP" "$OUT"
+                '';
+              }
+              // harden {
+                ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
+              };
+          };
         };
 
-        services.niri-health-metrics = {
-          description = "Niri compositor health metrics for node_exporter textfile";
-          path = with pkgs; [systemd gawk];
-          serviceConfig =
-            {
-              Type = "oneshot";
-              ExecStart = pkgs.writeShellScript "niri-health-metrics" ''
-                set -euo pipefail
-                OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
-                TMP="''${OUT}.tmp"
-                TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
-                mkdir -p "$TEXTFILE_DIR"
-
-                running=$(${pkgs.procps}/bin/pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-                restarts=$(journalctl --user -u niri --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
-                drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
-
-                {
-                  echo "niri_running $running"
-                  echo "niri_restarts_10m $restarts"
-                  echo "niri_drm_errors_30s $drm_errors"
-                } > "$TMP"
-
-                mv "$TMP" "$OUT"
-              '';
-            }
-            // harden {
-              ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
+        timers = {
+          display-watchdog = {
+            description = "Check for dead display every 30 seconds";
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnBootSec = "30s";
+              OnUnitActiveSec = "30s";
+              AccuracySec = "5s";
             };
-        };
+          };
 
-        timers.niri-health-metrics = {
-          description = "Collect niri health metrics every 30s";
-          wantedBy = ["timers.target"];
-          timerConfig = {
-            OnBootSec = "30s";
-            OnUnitActiveSec = "30s";
+          niri-health-metrics = {
+            description = "Collect niri health metrics every 30s";
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnBootSec = "30s";
+              OnUnitActiveSec = "30s";
+            };
           };
         };
       };
