@@ -8,11 +8,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778963037,
-        "narHash": "sha256-OB7PvdnXrMuYoDlwQ5kZmQ+GL1mribZLQIqk4i8UOU8=",
+        "lastModified": 1778973849,
+        "narHash": "sha256-xPIWrU2tjSN7XJzKl/3z00qeA+r8EJmRKgPRLwXnBoQ=",
         "ref": "fork",
-        "rev": "b977aeb5f46e4ec4d806ded1780fbb162bd1b018",
-        "revCount": 1271,
+        "rev": "d90e197566e41d0c327b238ef93220a8d23651e4",
+        "revCount": 1274,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       },
@@ -48,11 +48,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778966566,
-        "narHash": "sha256-4x6HzYUFr9GdpdvhIkGD465oxfZtonCLv0eY+Ru31JA=",
+        "lastModified": 1778975046,
+        "narHash": "sha256-+wj2J3fkJXAYyU8TDXeuuTvDQjYqFpygDmagxKWieGA=",
         "ref": "master",
-        "rev": "233f925dbc77f8687658c326ce701f9a3f633422",
-        "revCount": 1596,
+        "rev": "d12c22e9b85654804b9c81b226e110b69b42f9ac",
+        "revCount": 1615,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -91,11 +91,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778967222,
-        "narHash": "sha256-lnYj64Cy8WuM7dIk6C0VoM+A9ShG8Pcox5Smp3KIfHA=",
+        "lastModified": 1778973420,
+        "narHash": "sha256-0xvzpk6zk5tRb6oHkNgWoXq9Ec8+fZ0j3JAlanRbk/o=",
         "ref": "master",
-        "rev": "e4d7be84cb1365453c2d0e5e8e29e802aad76d62",
-        "revCount": 2437,
+        "rev": "c29da27b824ab9a94ea4c91a1e80e1785f0c9d71",
+        "revCount": 2438,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -825,11 +825,11 @@
     "go-finding": {
       "flake": false,
       "locked": {
-        "lastModified": 1778490873,
-        "narHash": "sha256-uNvozJNhCBzbZtSodQm2qTsqthOSBTtzWmTNe4KvGXU=",
+        "lastModified": 1778961785,
+        "narHash": "sha256-icJ+xtDzyAWwMQOtfzy9uuyBp2Nq26pfMrwjj9oLAyA=",
         "ref": "master",
-        "rev": "92c41e2f5acfb996d05cb22460a74344544367c2",
-        "revCount": 512,
+        "rev": "ca379dd94eee6620ac2f62d2db3d2d655edbbc69",
+        "revCount": 514,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -910,11 +910,11 @@
     "go-output": {
       "flake": false,
       "locked": {
-        "lastModified": 1778664241,
-        "narHash": "sha256-2/tNAEUoY0kfMzEuecH8XtkgzKsenaN/ptzNA6WBHro=",
+        "lastModified": 1778961835,
+        "narHash": "sha256-c4SI7Z5P5ppY4bUPpd4tgRVT1s31tOdoleTCYZBr2tg=",
         "ref": "master",
-        "rev": "e5ad51c0306f14d8383aac6f6375f2e39a78d6b7",
-        "revCount": 243,
+        "rev": "f4f45c02b8e44020c2cfc9c57d0b8e09e80c6492",
+        "revCount": 245,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       },
@@ -1127,11 +1127,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778962614,
-        "narHash": "sha256-P8uLqocbLkU7oG1ZS2S4uTXo97WWv6ThLsf6JY/OTiI=",
+        "lastModified": 1778973423,
+        "narHash": "sha256-GvAdjmLZ9n6rI3OKADwc0EAUZx2chV943SyVtXh7Lc0=",
         "ref": "master",
-        "rev": "c73af69d1f72f5db2e5345fc29b0ad7fddd30687",
-        "revCount": 515,
+        "rev": "352804ffc191ae8b975477bd508448a43d421611",
+        "revCount": 516,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
@@ -1252,11 +1252,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778964072,
-        "narHash": "sha256-6BG+ROzCj1Lt7GBb8Ajn4G3iR//jp/s5HVkeupRkKYU=",
+        "lastModified": 1778974028,
+        "narHash": "sha256-aWAhc5IX7QiBXyRusqLpjEvWz9jriy3oWn3eWz3iVco=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "97b2ff415eeab1f2027a3d44244fdf2849e40832",
+        "rev": "d1a5db812c3f842b9d5cd1e7717e7ab3ee4016b9",
         "type": "github"
       },
       "original": {
@@ -1275,11 +1275,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1778961717,
-        "narHash": "sha256-Bt4DtUAmIleUk4fCSpQIQra/EQ3DB65WfeKQ+9X9n/o=",
+        "lastModified": 1778973426,
+        "narHash": "sha256-IVm4oC+lwocgnyZwmXGuGxA0YdbbXP3DdbA642B1khc=",
         "ref": "master",
-        "rev": "66e67d80f9cc2ef8b1852bd0ac92ab07dc2dd889",
-        "revCount": 709,
+        "rev": "0e731e6c48a1fc6d4796ad3b5c41d505ef6b0eea",
+        "revCount": 710,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -1744,11 +1744,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778965391,
-        "narHash": "sha256-1OsjyPZn1NXcJVlfqffQiZY+VTzYSEZhi6mkX9EU4U8=",
+        "lastModified": 1778974220,
+        "narHash": "sha256-6labC7yR2u4iD1R2ZxMFnIT4/GOyHy1prJrgJvvnifI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "927317fc2d18629b0dafcd0d318bc010132c18f0",
+        "rev": "aa8f3d225bb16bbec3a1c551b1623513c9a93100",
         "type": "github"
       },
       "original": {
