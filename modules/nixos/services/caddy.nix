@@ -103,6 +103,7 @@ _: {
           }
           // serviceDefaults {}
           // {
+            ReadWritePaths = lib.mkForce ["/var/lib/caddy" "/var/log/caddy"];
             OOMScoreAdjust = lib.mkForce (-500);
             AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
             WatchdogSec = "30";
