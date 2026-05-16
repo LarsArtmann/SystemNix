@@ -251,6 +251,149 @@
     overlays = import ./overlays inputs;
     inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
 
+    # Service module paths — single source of truth for flake-parts imports AND nixosConfigurations
+    # Each entry is { path = ./modules/nixos/services/<name>.nix; module = "<nixosModule-name>"; }
+    serviceModules = [
+      {
+        path = ./modules/nixos/services/authelia.nix;
+        module = "authelia";
+      }
+      {
+        path = ./modules/nixos/services/caddy.nix;
+        module = "caddy";
+      }
+      {
+        path = ./modules/nixos/services/default.nix;
+        module = "default-services";
+      }
+      {
+        path = ./modules/nixos/services/gitea.nix;
+        module = "gitea";
+      }
+      {
+        path = ./modules/nixos/services/gitea-repos.nix;
+        module = "gitea-repos";
+      }
+      {
+        path = ./modules/nixos/services/homepage.nix;
+        module = "homepage";
+      }
+      {
+        path = ./modules/nixos/services/immich.nix;
+        module = "immich";
+      }
+      {
+        path = ./modules/nixos/services/photomap.nix;
+        module = "photomap";
+      }
+      {
+        path = ./modules/nixos/services/sops.nix;
+        module = "sops";
+      }
+      {
+        path = ./modules/nixos/services/signoz.nix;
+        module = "signoz";
+      }
+      {
+        path = ./modules/nixos/services/twenty.nix;
+        module = "twenty";
+      }
+      {
+        path = ./modules/nixos/services/taskchampion.nix;
+        module = "taskchampion";
+      }
+      {
+        path = ./modules/nixos/services/voice-agents.nix;
+        module = "voice-agents";
+      }
+      {
+        path = ./modules/nixos/services/hermes.nix;
+        module = "hermes";
+      }
+      {
+        path = ./modules/nixos/services/minecraft.nix;
+        module = "minecraft";
+      }
+      {
+        path = ./modules/nixos/services/monitor365.nix;
+        module = "monitor365";
+      }
+      {
+        path = ./modules/nixos/services/comfyui.nix;
+        module = "comfyui";
+      }
+      {
+        path = ./modules/nixos/services/dns-blocker.nix;
+        module = "dns-blocker";
+      }
+      {
+        path = ./modules/nixos/services/dns-failover.nix;
+        module = "dns-failover";
+      }
+      {
+        path = ./modules/nixos/services/display-manager.nix;
+        module = "display-manager";
+      }
+      {
+        path = ./modules/nixos/services/audio.nix;
+        module = "audio";
+      }
+      {
+        path = ./modules/nixos/services/niri-config.nix;
+        module = "niri-config";
+      }
+      {
+        path = ./modules/nixos/services/security-hardening.nix;
+        module = "security-hardening";
+      }
+      {
+        path = ./modules/nixos/services/ai-models.nix;
+        module = "ai-models";
+      }
+      {
+        path = ./modules/nixos/services/ai-stack.nix;
+        module = "ai-stack";
+      }
+      {
+        path = ./modules/nixos/services/multi-wm.nix;
+        module = "multi-wm";
+      }
+      {
+        path = ./modules/nixos/services/browser-policies.nix;
+        module = "browser-policies";
+      }
+      {
+        path = ./modules/nixos/services/steam.nix;
+        module = "steam";
+      }
+      {
+        path = ./modules/nixos/services/file-and-image-renamer.nix;
+        module = "file-and-image-renamer";
+      }
+      {
+        path = ./modules/nixos/services/disk-monitor.nix;
+        module = "disk-monitor";
+      }
+      {
+        path = ./modules/nixos/services/manifest.nix;
+        module = "manifest";
+      }
+      {
+        path = ./modules/nixos/services/gatus-config.nix;
+        module = "gatus-config";
+      }
+      {
+        path = ./modules/nixos/services/openseo.nix;
+        module = "openseo";
+      }
+      {
+        path = ./modules/nixos/services/dual-wan.nix;
+        module = "dual-wan";
+      }
+    ];
+
+    serviceModulePaths = map (sm: sm.path) serviceModules;
+
     # Shared Home Manager configuration — only user/home file path differs per system
     sharedHomeManagerConfig = {
       useGlobalPkgs = true;
@@ -269,45 +412,8 @@
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
 
-      # Import dendritic modules - each file is a self-contained flake-parts module
-      imports = [
-        ./modules/nixos/services/authelia.nix
-        ./modules/nixos/services/caddy.nix
-        ./modules/nixos/services/default.nix
-        ./modules/nixos/services/gitea.nix
-        ./modules/nixos/services/gitea-repos.nix
-        ./modules/nixos/services/homepage.nix
-        ./modules/nixos/services/immich.nix
-        ./modules/nixos/services/signoz.nix
-        ./modules/nixos/services/twenty.nix
-        ./modules/nixos/services/photomap.nix
-        ./modules/nixos/services/sops.nix
-        ./modules/nixos/services/taskchampion.nix
-        ./modules/nixos/services/voice-agents.nix
-        ./modules/nixos/services/hermes.nix
-        ./modules/nixos/services/minecraft.nix
-        ./modules/nixos/services/monitor365.nix
-        ./modules/nixos/services/comfyui.nix
-        ./modules/nixos/services/dns-blocker.nix
-        ./modules/nixos/services/dns-failover.nix
-        ./modules/nixos/services/display-manager.nix
-        ./modules/nixos/services/audio.nix
-        ./modules/nixos/services/niri-config.nix
-        ./modules/nixos/services/security-hardening.nix
-        ./modules/nixos/services/ai-models.nix
-        ./modules/nixos/services/ai-stack.nix
-        ./modules/nixos/services/monitoring.nix
-        ./modules/nixos/services/multi-wm.nix
-        ./modules/nixos/services/chromium-policies.nix
-        ./modules/nixos/services/steam.nix
-        ./modules/nixos/services/file-and-image-renamer.nix
-        ./modules/nixos/services/disk-monitor.nix
-        ./modules/nixos/services/manifest.nix
-        ./modules/nixos/services/gatus-config.nix
-        ./modules/nixos/services/openseo.nix
-        ./modules/nixos/services/dual-wan.nix
-        # SSH module now loaded from nix-ssh-config flake input
-      ];
+      # Import service modules — registered as flake-parts modules (inputs.self.nixosModules.*)
+      imports = serviceModulePaths;
 
       # Per-system configuration (packages, devShells, etc.)
       perSystem = {
@@ -494,86 +600,55 @@
             inherit nix-amd-npu;
             inherit nix-ssh-config;
           };
-          modules = [
-            {
-              nixpkgs = {
-                hostPlatform = "x86_64-linux";
-                config.allowUnfree = true;
-                overlays =
-                  sharedOverlays
-                  ++ [
-                    inputs.niri.overlays.niri
-                  ]
-                  ++ linuxOnlyOverlays
-                  ++ [pythonTest];
-              };
-              system.configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
-            }
-            home-manager.nixosModules.home-manager
-            inputs.nur.modules.nixos.default
-
-            {
-              home-manager =
-                sharedHomeManagerConfig
-                // {
-                  users.lars = _: {
-                    imports = [
-                      ./platforms/nixos/users/home.nix
-                    ];
-                  };
-                  extraSpecialArgs =
-                    sharedHomeManagerSpecialArgs
-                    // {
-                      wallpapers = inputs.wallpapers-src;
-                    };
+          modules =
+            [
+              {
+                nixpkgs = {
+                  hostPlatform = "x86_64-linux";
+                  config.allowUnfree = true;
+                  overlays =
+                    sharedOverlays
+                    ++ [
+                      inputs.niri.overlays.niri
+                    ]
+                    ++ linuxOnlyOverlays
+                    ++ [pythonTest];
                 };
-            }
+                system.configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
+              }
+              home-manager.nixosModules.home-manager
+              inputs.nur.modules.nixos.default
 
-            # Import the existing NixOS configuration
-            inputs.niri.nixosModules.niri
-            inputs.nix-amd-npu.nixosModules.default
-            inputs.sops-nix.nixosModules.sops
-            inputs.silent-sddm.nixosModules.default
-            inputs.self.nixosModules.authelia
-            inputs.self.nixosModules.caddy
-            inputs.self.nixosModules.default-services
-            inputs.self.nixosModules.gitea
-            inputs.self.nixosModules.gitea-repos
-            inputs.self.nixosModules.homepage
-            inputs.self.nixosModules.immich
-            inputs.self.nixosModules.photomap
-            inputs.self.nixosModules.sops
-            inputs.nix-ssh-config.nixosModules.ssh
-            inputs.self.nixosModules.signoz
-            inputs.self.nixosModules.twenty
-            inputs.self.nixosModules.taskchampion
-            inputs.self.nixosModules.voice-agents
-            inputs.self.nixosModules.hermes
-            inputs.self.nixosModules.minecraft
-            inputs.self.nixosModules.monitor365
-            inputs.self.nixosModules.comfyui
-            inputs.self.nixosModules.dns-blocker
-            inputs.self.nixosModules.dns-failover
-            inputs.self.nixosModules.display-manager
-            inputs.self.nixosModules.audio
-            inputs.self.nixosModules.niri-config
-            inputs.self.nixosModules.security-hardening
-            inputs.self.nixosModules.ai-models
-            inputs.self.nixosModules.ai-stack
-            inputs.self.nixosModules.monitoring
-            inputs.self.nixosModules.multi-wm
-            inputs.self.nixosModules.chromium-policies
-            inputs.self.nixosModules.steam
-            inputs.self.nixosModules.file-and-image-renamer
-            inputs.niri-session-manager.nixosModules.niri-session-manager
-            inputs.self.nixosModules.disk-monitor
-            inputs.self.nixosModules.manifest
-            inputs.self.nixosModules.gatus-config
-            inputs.self.nixosModules.openseo
-            inputs.self.nixosModules.dual-wan
-            inputs.emeet-pixyd.nixosModules.default
-            ./platforms/nixos/system/configuration.nix
-          ];
+              {
+                home-manager =
+                  sharedHomeManagerConfig
+                  // {
+                    users.lars = _: {
+                      imports = [
+                        ./platforms/nixos/users/home.nix
+                      ];
+                    };
+                    extraSpecialArgs =
+                      sharedHomeManagerSpecialArgs
+                      // {
+                        wallpapers = inputs.wallpapers-src;
+                      };
+                  };
+              }
+
+              # Import the existing NixOS configuration
+              inputs.niri.nixosModules.niri
+              inputs.nix-amd-npu.nixosModules.default
+              inputs.sops-nix.nixosModules.sops
+              inputs.silent-sddm.nixosModules.default
+            ]
+            ++ (map (sm: inputs.self.nixosModules.${sm.module}) serviceModules)
+            ++ [
+              inputs.nix-ssh-config.nixosModules.ssh
+              inputs.niri-session-manager.nixosModules.niri-session-manager
+              inputs.emeet-pixyd.nixosModules.default
+              ./platforms/nixos/system/configuration.nix
+            ];
         };
 
         # Raspberry Pi 3 — DNS cluster backup node

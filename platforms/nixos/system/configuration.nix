@@ -10,6 +10,7 @@
     # Import common packages shared with macOS
     ../../common/packages/base.nix
     ../../common/packages/fonts.nix
+    ../../common/color-scheme.nix
     # Include hardware configuration - essential for NixOS to boot
     ../hardware/hardware-configuration.nix
     # ESSENTIAL MODULES FOR FUNCTIONAL DESKTOP
@@ -27,24 +28,9 @@
     ../../common/nix-settings.nix
   ];
 
-  # Define color scheme option
-  options.colorScheme = lib.mkOption {
-    type = lib.types.attrs;
-    default = nix-colors.colorSchemes.catppuccin-mocha;
-    description = "Color scheme for the system";
-  };
-
-  # Define colorSchemeLib option (different name to avoid conflict with lib)
-  options.colorSchemeLib = lib.mkOption {
-    type = lib.types.attrs;
-    default = nix-colors.lib;
-    description = "nix-colors library functions";
-  };
-
   # Wrap all configuration in config attribute
   config = {
     # dnsblockd CA is trusted via security.pki.certificates in the dns-blocker module
-    colorSchemeLib = nix-colors.lib;
 
     # Fix for Home Manager + xdg.portal integration
     environment.pathsToLink = ["/share/applications" "/share/xdg-desktop-portal"];
@@ -150,10 +136,9 @@
       niri-desktop.enable = true;
       niri-session-manager.enable = true;
       security-hardening.enable = true;
-      monitoring-tools.enable = true;
       gatus-config.enable = true;
       multi-wm.enable = true;
-      chromium-policies.enable = true;
+      browser-policies.enable = true;
       steam-config.enable = true;
 
       # Manifest — Smart LLM router for AI agents (cost optimization)

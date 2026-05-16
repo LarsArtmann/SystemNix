@@ -1,4 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
+
 # route-health-monitor — Active-active ECMP with MPTCP for packet-level failover
 #
 # Architecture:
@@ -13,8 +15,6 @@
 #   - MPTCP-aware connections: sub-second (kernel retransmits on surviving subflow)
 #   - New TCP connections: instant (route table updated immediately)
 #   - Existing non-MPTCP connections: timeout + reconnect (tuned via tcp_retries)
-
-set -euo pipefail
 
 ENO1_GW="${ENO1_GW:-192.168.1.1}"
 ENO1_IF="${ENO1_IF:-eno1}"

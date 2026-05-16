@@ -77,12 +77,7 @@
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
-  # Automatic Nix garbage collection
-  nix.gc = {
-    automatic = true;
-    dates = "weekly";
-    options = "--delete-older-than 7d";
-  };
+  # nix.gc is defined in platforms/common/nix-settings.nix (shared)
 
   # Automatic Nix store optimization
   nix.settings.auto-optimise-store = true;

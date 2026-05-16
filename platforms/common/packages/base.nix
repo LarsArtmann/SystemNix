@@ -251,6 +251,13 @@
       # Hardware monitoring (Linux-only)
       lm_sensors # Hardware monitoring (GPU/CPU temperature)
 
+      # System diagnostics
+      radeontop # AMD GPU monitoring
+      strace # System call tracer
+      ltrace # Library call tracer
+      nethogs # Per-process network bandwidth
+      iftop # Network interface bandwidth
+
       # Additional ricing tools discovered from community configs
       wl-color-picker # Color picker for Wayland
       swappy # Screenshot annotation tool

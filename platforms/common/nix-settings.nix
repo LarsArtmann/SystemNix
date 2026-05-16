@@ -64,25 +64,7 @@
     '';
   };
 
-  # Common nixpkgs configuration (platform-agnostic except for hostPlatform)
-  nixpkgs = {
-    config = {
-      allowUnsupportedSystem = false;
-      allowUnfreePredicate = pkg:
-        builtins.elem (lib.getName pkg) [
-          "vault" # 'bsl11' licence
-          "terraform" # 'bsl11' licence
-          "idea" # 'unfree' licence (jetbrains.idea)
-          "idea-ultimate" # 'unfree' licence (legacy alias)
-          "webstorm" # 'unfree' licence
-          "goland" # 'unfree' licence
-          "rider" # 'unfree' licence
-          "google-chrome" # 'unfree' licence
-          "signal-desktop-bin" # 'agpl3Only free unfree'
-          "grayjay" # 'sfl' licence - Cross-platform application to stream and download content
-        ];
-    };
-  };
+  # Note: nixpkgs.config.allowUnfree is set in flake.nix per-system
 
   # Note: Time zone configuration is platform-specific
   # NixOS: platforms/nixos/system/networking.nix

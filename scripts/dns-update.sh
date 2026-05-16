@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BLOCKLIST_FILE="platforms/shared/dns-blocklists.nix"
+BLOCKLIST_FILE="platforms/common/dns-blocklists.nix"
 
 if [[ ! -f $BLOCKLIST_FILE ]]; then
   echo "ERROR: $BLOCKLIST_FILE not found. Run from repo root."

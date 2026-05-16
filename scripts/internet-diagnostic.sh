@@ -1,16 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # internet-diagnostic.sh — Run on evo-x2 to diagnose internet connectivity
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
-
-ok() { echo -e "${GREEN}[OK]${NC} $*"; }
-fail() { echo -e "${RED}[FAIL]${NC} $*"; }
-warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
-info() { echo -e "[INFO] $*"; }
+source "$(dirname "$0")/lib.sh"
 
 echo "=========================================="
 echo "  evo-x2 Internet Connectivity Diagnostic"
@@ -115,17 +107,19 @@ echo "=========================================="
 echo "  DIAGNOSIS SUMMARY"
 echo "=========================================="
 
+GATEWAY="${GATEWAY:-192.168.1.1}"
+
 ROUTE_TYPE=$(ip route show default | head -1)
 if echo "$ROUTE_TYPE" | grep -q "nexthop"; then
   warn "ECMP multipath route active (dual-WAN)"
 fi
 
-if ! ping -c 1 -W 2 192.168.1.1 >/dev/null 2>&1; then
-  fail "Gateway 192.168.1.1 unreachable — router may be down or cable disconnected"
+if ! ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
+  fail "Gateway $GATEWAY unreachable — router may be down or cable disconnected"
 fi
 
 if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
-  if ping -c 1 -W 2 192.168.1.1 >/dev/null 2>&1; then
+  if ping -c 1 -W 2 "$GATEWAY" >/dev/null 2>&1; then
     fail "Gateway reachable but no internet — ISP outage. WiFi failover should activate."
   fi
 fi

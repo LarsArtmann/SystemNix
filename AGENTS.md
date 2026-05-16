@@ -40,7 +40,7 @@ SystemNix/
 ├── scripts/                     # Shell scripts (deploy, diagnostics, health checks)
 │
 ├── modules/nixos/services/      # NixOS service modules (flake-parts)
-│   ├── default.nix              # Docker + Nix GC timer
+│   ├── default.nix              # Docker auto-prune (nix.gc in platforms/common/nix-settings.nix)
 │   ├── caddy.nix                # Reverse proxy (TLS via sops)
 │   ├── gitea.nix                # Git hosting + GitHub mirror
 │   ├── homepage.nix             # Service dashboard
@@ -103,14 +103,12 @@ SystemNix/
 Services are self-contained flake-parts modules in `modules/nixos/services/`. Each module:
 - Defines its own `config` options under `services.<name>`
 - Manages its own systemd services, users, and dependencies
-- Is imported in `flake.nix` via `imports = [ ./modules/nixos/services/<name>.nix ];`
-- Is wired into the NixOS configuration via `inputs.self.nixosModules.<name>`
+- Is registered via the `serviceModules` list in `flake.nix` (single source of truth)
 
 To add a new service:
 1. Create `modules/nixos/services/<name>.nix` as a flake-parts module
-2. Add it to `imports` in `flake.nix`
-3. Add `inputs.self.nixosModules.<name>` to the evo-x2 module list
-4. Enable it in `platforms/nixos/system/configuration.nix`
+2. Add an entry to the `serviceModules` list in `flake.nix` (one entry covers both imports and nixosConfigurations)
+3. Enable it in `platforms/nixos/system/configuration.nix`
 
 ### Cross-Platform Home Manager
 
@@ -155,7 +153,7 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 mkPackageOverlay = input: name: _final: prev: { ${name} = input.packages.${prev.stdenv.system}.default; };
 # Usage: mkPackageOverlay inputs.library-policy "library-policy"
 ```
-Defined in `overlays/shared.nix`. Used by all 10 flake-input overlays (library-policy, hierarchical-errors, golangci-lint-auto-configure, mr-sync, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, projects-management-automation). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency.
+Defined in `overlays/default.nix`. Passed to both `shared.nix` and `linux.nix`. Used by all 12 flake-input overlays (11 in shared.nix + dnsblockd in linux.nix). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency.
 
 ### Config-Derived URLs
 
@@ -487,6 +485,9 @@ AI agent task tracking protocol:
 | SigNoz built from source | SigNoz is built from source (Go 1.25), not from a pre-built package. Takes significant build time. |
 | crush-config doesn't follow nixpkgs | The crush-config input intentionally does NOT follow nixpkgs (no `inputs.nixpkgs.follows`) |
 | `nixConfig` declares experimental features | `nix-command`, `flakes`, `pipe-operators` declared in flake.nix — no need for `--extra-experimental-features` in most cases |
+| `serviceModules` single source of truth | Service modules listed once in `flake.nix` `serviceModules` attr — both `imports` (flake-parts) and `nixosConfigurations` derive from it. Add entry → module registered + loaded automatically. |
+| `colorScheme` shared module | `platforms/common/color-scheme.nix` defines `colorScheme` + `colorSchemeLib` options — imported by both Darwin and NixOS. No duplicate option declarations. |
+| `harden`/`hardenUser` unified | `lib/systemd.nix` has `mode ? "system"` param. `hardenUser` is `harden (args // { mode = "user"; })` — convenience wrapper in `lib/default.nix`. No separate `user-harden.nix` file. |
 | rpi3-dns minimal overlays | rpi3-dns uses only `[NUR] ++ linuxOnlyOverlays` — no shared overlays (aw-watcher, todo-list-ai, etc.) since it's a minimal DNS node |
 | `aarch64-linux` in systems | flake-parts `systems` includes `aarch64-linux` so rpi3 packages build via perSystem if needed |
 | Theme everywhere | Catppuccin Mocha is the universal theme — all apps, terminals, bars, login screen |
@@ -503,7 +504,7 @@ AI agent task tracking protocol:
 | `_module.args` pattern for platform packages | When making a package Linux-only, use `_module.args.<pkg> = null` in the platform config + `pkg ? null` default in the module function args + `lib.optionals (pkg != null)` for conditional inclusion. Do NOT rely on omitting from `specialArgs` alone — Nix module system tries `_module.args` fallback and errors if missing. |
 | statix `grep -q` pre-commit bug | `grep -q .` returns exit code 1 on no match, which became the `bash -c` exit code (no explicit `exit 0`). Fixed by using a result variable: `result=$(statix ... | grep -v ...); if [ -n "$result" ]; then echo "$result"; exit 1; fi`. Do NOT use `grep -q . && exit 1` pattern in bash -c hooks without a trailing `exit 0`. |
 | statix pipe operator parse errors | statix 0.5.8 can't parse Nix pipe operator (`|>`) in `sops.nix` — produces `:E:0:Error node` lines. The pre-commit hook filters these with `grep -v ':E:0:'`. Do NOT remove the filter. |
-| todo-list-ai overlay hash | `overlays/shared.nix:26` has a fixed-output derivation hash (`todoListAiFixedHash`) for todo-list-ai's `node_modules`. Must be updated when upstream `package.json` or `bun.lock` changes. Fix: (1) delete hash, set to `""`, (2) build, (3) grep for `got:` hash, (4) paste into shared.nix. Same pattern as hermes `fixedHash` in `hermes.nix`. |
+| todo-list-ai overlay hash | `overlays/shared.nix` has a fixed-output derivation hash (`todoListAiFixedHash`) for todo-list-ai's `node_modules`. Must be updated when upstream `package.json` or `bun.lock` changes. Fix: (1) delete hash, set to `""`, (2) build, (3) grep for `got:` hash, (4) paste into shared.nix. Same pattern as hermes `fixedHash` in `hermes.nix`. |
 | go-output go-branded-id transitive dep | `go-output` v0.3.0+ imports `go-branded-id` in the root package. All repos that substitute go-output via flake input (branching-flow, go-structure-linter, file-and-image-renamer) must have `go-branded-id` in their `go.mod`/`go.sum` or the nix vendor derivation fails. When adding a new repo that depends on go-output, add `go-branded-id v0.1.0` to go.sum. |
 
 ### lib/ Shared Helpers
@@ -512,8 +513,7 @@ Reusable functions in `lib/` — imported directly by relative path:
 
 || File | Purpose | Usage |
 |------|---------|-------|
-| `lib/systemd.nix` | Security hardening (PrivateTmp, NoNewPrivileges, ProtectSystem, etc.) | `harden = import ../../../lib/systemd.nix {inherit lib;};` then `harden {MemoryMax = "512M";}` |
-| `lib/user-harden.nix` | User-service compatible hardening (excludes ProtectClock, ProtectKernelLogs, ProtectSystem, ProtectHome, CapabilityBoundingSet) | `hardenUser = import ../../../lib/user-harden.nix {inherit lib;};` then `hardenUser {MemoryMax = "512M";}` |
+| `lib/systemd.nix` | Security hardening with `mode ? "system"` param (PrivateTmp, NoNewPrivileges, ProtectSystem, etc.). User mode (`mode = "user"`) omits system-only fields. | `harden = import ../../../lib/systemd.nix {inherit lib;};` then `harden {MemoryMax = "512M";}` or `harden {mode = "user"; MemoryMax = "256M";}` |
 | `lib/systemd/service-defaults.nix` | Common service defaults (Restart, RestartSec) — returns attrset with `.serviceDefaults` (system, uses mkForce) and `.serviceDefaultsUser` (user services, no mkForce) | `sd = import ../../../lib/systemd/service-defaults.nix lib;` then `sd.serviceDefaults {}` or `sd.serviceDefaultsUser {}` |
 | `lib/types.nix` | Reusable NixOS module option constructors (ports, user/group, delays) | `serviceTypes = import ../../../lib/types.nix lib;` then `serviceTypes.systemdServiceIdentity {}` |
 | `lib/rocm.nix` | ROCm GPU runtime library lists and env vars | `rocm = import ../../../lib/rocm.nix {inherit pkgs;};` then `rocm.env` / `rocm.makeLdLibraryPath lib` |
@@ -521,7 +521,9 @@ Reusable functions in `lib/` — imported directly by relative path:
 
 Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 
-**Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 3 user-service modules use `hardenUser {}` (monitor365, file-and-image-renamer, niri-drm-healthcheck). No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
+**`hardenUser`** is a convenience wrapper: `hardenUser = args: harden (args // { mode = "user"; });` — defined in `lib/default.nix`. No separate file.
+
+**Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 3 user-service modules use `hardenUser {}` (niri-config, file-and-image-renamer, niri-drm-healthcheck). No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
 
 **Single import pattern:** All modules use `inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults serviceTypes mkGraphicalUserService;` — one import replaces five. For user-service modules that need `serviceDefaultsUser`, import the set: `sd = import ../../../lib/default.nix lib;` then call `sd.serviceDefaultsUser {}` and `sd.hardenUser {}`.
 

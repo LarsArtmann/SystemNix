@@ -3,14 +3,11 @@
   emeet-pixyd,
   monitor365,
   file-and-image-renamer,
+  mkPackageOverlay,
   ...
 }: let
   openaudibleOverlay = _final: prev: {
     openaudible = prev.callPackage ../pkgs/openaudible.nix {};
-  };
-
-  dnsblockdOverlay = _final: prev: {
-    dnsblockd = dnsblockd.packages.${prev.stdenv.system}.default;
   };
 
   netwatchOverlay = _final: prev: {
@@ -18,7 +15,7 @@
   };
 in [
   openaudibleOverlay
-  dnsblockdOverlay
+  (mkPackageOverlay dnsblockd "dnsblockd")
   emeet-pixyd.overlays.default
   monitor365.overlays.default
   netwatchOverlay

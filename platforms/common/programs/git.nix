@@ -3,9 +3,8 @@
     enable = true;
     lfs.enable = true;
 
-    # Explicitly set signing format to silence Home Manager deprecation warning
-    # (default changed from "openpgp" to null in Home Manager 25.05)
-    signing.format = "openpgp";
+    # SSH signing — fully declarative (key managed by nix-ssh-config)
+    signing.format = "ssh";
 
     settings = {
       user = {
@@ -14,7 +13,7 @@
       };
 
       signing = {
-        key = "76687BB69B36BFB1B1C58FA878B4350389C71333";
+        key = "~/.ssh/id_ed25519.pub";
         signByDefault = true;
       };
 
@@ -29,6 +28,10 @@
 
       commit.gpgsign = true;
       tag.gpgsign = true;
+
+      "gpg.ssh" = {
+        allowedSignersFile = "~/.ssh/allowed_signers";
+      };
 
       submodule = {
         fetchJobs = 8;
@@ -48,14 +51,6 @@
 
       push = {
         autoSetupRemote = true;
-      };
-
-      gpg = {
-        format = "openpgp";
-        program =
-          if pkgs.stdenv.isDarwin
-          then "/opt/homebrew/bin/gpg"
-          else "/run/current-system/sw/bin/gpg";
       };
 
       filter = {
@@ -237,4 +232,7 @@
       ".crush"
     ];
   };
+
+  # SSH allowed signers — lets git verify SSH signatures
+  home.file.".ssh/allowed_signers".source = ./git-allowed-signers;
 }

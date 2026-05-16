@@ -25,11 +25,7 @@ _: {
         };
       };
 
-      nix.gc = {
-        automatic = true;
-        dates = "weekly";
-        options = "--delete-older-than 7d";
-      };
+      # nix.gc is defined in platforms/common/nix-settings.nix (shared)
     };
   };
 }

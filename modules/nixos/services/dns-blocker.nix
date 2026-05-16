@@ -218,36 +218,6 @@ _: {
         Certificates = {
           Install = [config.sops.secrets.dnsblockd_ca_cert.path];
         };
-        Preferences = {
-          "browser.shell.checkDefaultBrowser" = {
-            Value = false;
-            Status = "locked";
-          };
-          "widget.disable-swipe-tracker" = {
-            Value = true;
-            Status = "locked";
-          };
-          "browser.gesture.swipe.left" = {
-            Value = "";
-            Status = "locked";
-          };
-          "browser.gesture.swipe.right" = {
-            Value = "";
-            Status = "locked";
-          };
-          "browser.gesture.swipe.up" = {
-            Value = "";
-            Status = "locked";
-          };
-          "browser.gesture.swipe.down" = {
-            Value = "";
-            Status = "locked";
-          };
-          "browser.autofocus" = {
-            Value = false;
-            Status = "locked";
-          };
-        };
       };
 
       systemd = {

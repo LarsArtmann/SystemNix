@@ -39,7 +39,7 @@
     in
       pkgs'.hermes-agent;
     sopsEnvPath = config.sops.templates."hermes-env".path;
-    oldStateDirs = ["/home/lars/.hermes" "/var/lib/hermes"];
+    oldStateDirs = ["/home/${cfg.user}/.hermes" "/var/lib/hermes"];
 
     mergeEnvScript = pkgs.writeShellScript "hermes-merge-env" ''
       set -euo pipefail

@@ -10,12 +10,9 @@
   branching-flow,
   art-dupl,
   projects-management-automation,
+  mkPackageOverlay,
   ...
 }: let
-  mkPackageOverlay = input: name: _final: prev: {
-    ${name} = input.packages.${prev.stdenv.system}.default;
-  };
-
   awWatcherOverlay = _final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };

@@ -8,6 +8,7 @@ _: {
   }: let
     cfg = config.services.comfyui;
     inherit (config.users) primaryUser;
+    userHome = config.users.users.${primaryUser}.home;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
     rocm = import ../../../lib/rocm.nix {inherit pkgs;};
 
@@ -27,13 +28,13 @@ _: {
 
       package = lib.mkOption {
         type = lib.types.str;
-        default = "/home/lars/projects/anime-comic-pipeline/ComfyUI";
+        default = "${userHome}/projects/anime-comic-pipeline/ComfyUI";
         description = "Path to ComfyUI installation (mutable directory, not copied to store)";
       };
 
       venvPython = lib.mkOption {
         type = lib.types.str;
-        default = "/home/lars/projects/anime-comic-pipeline/venv/bin/python";
+        default = "${userHome}/projects/anime-comic-pipeline/venv/bin/python";
         description = "Path to the Python venv with torch/diffusers installed";
       };
 

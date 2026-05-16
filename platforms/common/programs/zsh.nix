@@ -33,7 +33,6 @@ in {
     # Environment variables
     envExtra = ''
       # Environment variables
-      export GPG_TTY=$(tty)
       export GH_PAGER=""
 
       # Note: GOPATH is now managed by Home Manager programs.go

@@ -1,7 +1,12 @@
-inputs @ {nur, ...}: {
-  shared = import ./shared.nix inputs;
+inputs @ {nur, ...}: let
+  mkPackageOverlay = input: name: _final: prev: {
+    ${name} = input.packages.${prev.stdenv.system}.default;
+  };
 
-  linux = import ./linux.nix inputs;
+  shared = import ./shared.nix (inputs // {inherit mkPackageOverlay;});
+  linux = import ./linux.nix (inputs // {inherit mkPackageOverlay;});
+in {
+  inherit mkPackageOverlay;
 
   disableTests = _final: prev: {
     valkey = prev.valkey.overrideAttrs (_old: {doCheck = false;});
@@ -15,7 +20,7 @@ inputs @ {nur, ...}: {
     });
   };
 
-  sharedOverlays = [nur.overlays.default] ++ (import ./shared.nix inputs);
+  sharedOverlays = [nur.overlays.default] ++ shared;
 
-  linuxOnlyOverlays = import ./linux.nix inputs;
+  linuxOnlyOverlays = linux;
 }

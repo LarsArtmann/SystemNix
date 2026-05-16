@@ -9,6 +9,7 @@
   imports = [
     # Cross-platform preferences (dark mode, fonts, themes — single source of truth)
     ../common/preferences.nix
+    ../common/color-scheme.nix
     ./networking/default.nix
     ./nix/settings.nix
     ./security/pam.nix
@@ -23,20 +24,6 @@
     ../common/packages/fonts.nix
   ];
 
-  # Define color scheme option
-  options.colorScheme = lib.mkOption {
-    type = lib.types.attrs;
-    default = nix-colors.colorSchemes.${config.preferences.appearance.colorSchemeName};
-    description = "Color scheme for system";
-  };
-
-  # Define colorSchemeLib option (different name to avoid conflict with lib)
-  options.colorSchemeLib = lib.mkOption {
-    type = lib.types.attrs;
-    default = nix-colors.lib;
-    description = "nix-colors library functions";
-  };
-
   # Wrap all configuration in config attribute
   config = {
     # Build-time validation: Ensure critical packages exist in nixpkgs
@@ -47,10 +34,6 @@
         message = "d2 package not found in nixpkgs - verify package name and availability";
       }
     ];
-
-    # Define color scheme and utilities
-    colorScheme = nix-colors.colorSchemes.catppuccin-mocha;
-    colorSchemeLib = nix-colors.lib;
 
     # Note: nixpkgs.config is now centralized in ../common/nix-settings.nix
     # This eliminates duplicate allowUnfree and permittedInsecurePackages declarations
