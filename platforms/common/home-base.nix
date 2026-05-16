@@ -58,13 +58,6 @@
       GONOSUMDB = "github.com/LarsArtmann/*,github.com/larsartmann/*";
     };
 
-    # PATH additions (available to all shells)
-    sessionPath = [
-      # Go binaries installed via `go install` (not managed by Nix)
-      # Currently: govalid (sivchari/govalid)
-      "${config.home.homeDirectory}/go/bin"
-    ];
-
     # Home Manager version for compatibility
     stateVersion = "24.05";
   };

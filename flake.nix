@@ -338,6 +338,7 @@
             inherit
               (pkgs)
               aw-watcher-utilization
+              govalid
               jscpd
               sqlc
               todo-list-ai

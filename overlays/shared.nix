@@ -24,6 +24,10 @@
     jscpd = prev.callPackage ../pkgs/jscpd.nix {};
   };
 
+  govalidOverlay = _final: prev: {
+    govalid = prev.callPackage ../pkgs/govalid.nix {};
+  };
+
   todoListAiFixedHash = "sha256-1rKZziEfR9jX1XRMu2Zc5MpOi6voclbbUndQf120nkE=";
 
   todoListAiOverlay = _final: prev: let
@@ -67,6 +71,7 @@ in [
   awWatcherOverlay
   todoListAiOverlay
   jscpdOverlay
+  govalidOverlay
   (mkPackageOverlay library-policy "library-policy")
   (mkPackageOverlay hierarchical-errors "hierarchical-errors")
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure")

@@ -223,6 +223,7 @@
 
       # Go testing
       ginkgo # BDD testing framework for Go
+      govalid # Type-safe struct validation code generator
       gotools # Go tools (goimports, etc.)
 
       # Wallpaper management tools (Linux-only)

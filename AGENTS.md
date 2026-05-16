@@ -55,6 +55,7 @@ SystemNix/
 │
 ├── pkgs/                        # Custom packages
 │   ├── aw-watcher-utilization.nix # ActivityWatch system utilization watcher (Python)
+│   ├── govalid.nix              # Type-safe struct validation code generator (Go)
 │   ├── jscpd.nix                # Copy/paste detector (Node.js)
 │   ├── modernize.nix            # Go modernize tool
 │   ├── netwatch.nix             # Real-time network diagnostics TUI (Rust)
@@ -147,7 +148,7 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 
 **Overlay ≠ installed:** Overlays make packages available as `pkgs.<name>` but do NOT install them. Tools must also be added to `home.packages` in `platforms/common/packages/base.nix` (or a platform-specific config) to appear on PATH. All overlay tools that are meant to be user-facing are listed in `base.nix`.
 
-**`~/go/bin` legacy path:** `sessionPath` in `home-base.nix` adds `~/go/bin` to PATH for `go install`-only tools not in nixpkgs (currently `govalid`). Do NOT install Nix-overlay-managed tools via `go install` — they will shadow the Nix versions and become stale.
+**`~/go/bin` removed:** All Go tools are now managed by Nix overlays (`mkPackageOverlay` for private repos, `pkgs/govalid.nix` for third-party). Do NOT re-add `~/go/bin` to `sessionPath` — `go install` binaries will shadow Nix versions and become stale.
 
 **`mkPackageOverlay` helper:** Simple overlay factory for flake-input packages:
 ```nix
