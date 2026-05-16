@@ -61,7 +61,7 @@
     # PATH additions (available to all shells)
     sessionPath = [
       # Go binaries installed via `go install` (not managed by Nix)
-      # Currently: govalid (sivchari/govalid), projects-management-automation
+      # Currently: govalid (sivchari/govalid)
       "${config.home.homeDirectory}/go/bin"
     ];
 

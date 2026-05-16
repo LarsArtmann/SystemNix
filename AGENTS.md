@@ -69,6 +69,7 @@ SystemNix/
 │   # golangci-lint-auto-configure — golangci-lint auto-configurator
 │   # mr-sync                 — ~/.mrconfig GitHub sync CLI
 │   # hierarchical-errors     — Error handling pattern analyzer
+│   # projects-management-automation — CLI for managing multiple projects
 │
 └── platforms/
     ├── common/                  # Shared (~80%)
@@ -135,7 +136,7 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 **Naming convention:** `-src` suffix = `flake = false` (source-only). No suffix = full flake.
 
 **Active overlays** (defined in `overlays/` directory):
-- `sharedOverlays` — applied on Darwin + NixOS + rpi3-dns (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin)
+- `sharedOverlays` — applied on Darwin + NixOS + rpi3-dns (NUR, aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, projects-management-automation, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin)
 - `linuxOnlyOverlays` — NixOS + rpi3-dns only (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer)
 - `disableTests` — disables flaky tests for valkey, aiocache
 - `pythonTest` — NixOS-specific Python test overrides
@@ -146,14 +147,14 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 
 **Overlay ≠ installed:** Overlays make packages available as `pkgs.<name>` but do NOT install them. Tools must also be added to `home.packages` in `platforms/common/packages/base.nix` (or a platform-specific config) to appear on PATH. All overlay tools that are meant to be user-facing are listed in `base.nix`.
 
-**`~/go/bin` legacy path:** `sessionPath` in `home-base.nix` adds `~/go/bin` to PATH for `go install`-only tools not in nixpkgs (currently `govalid`, `projects-management-automation`). Do NOT install Nix-overlay-managed tools via `go install` — they will shadow the Nix versions and become stale.
+**`~/go/bin` legacy path:** `sessionPath` in `home-base.nix` adds `~/go/bin` to PATH for `go install`-only tools not in nixpkgs (currently `govalid`). Do NOT install Nix-overlay-managed tools via `go install` — they will shadow the Nix versions and become stale.
 
 **`mkPackageOverlay` helper:** Simple overlay factory for flake-input packages:
 ```nix
 mkPackageOverlay = input: name: _final: prev: { ${name} = input.packages.${prev.stdenv.system}.default; };
 # Usage: mkPackageOverlay inputs.library-policy "library-policy"
 ```
-Defined in `overlays/shared.nix`. Used by all 9 flake-input overlays (library-policy, hierarchical-errors, golangci-lint-auto-configure, mr-sync, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency.
+Defined in `overlays/shared.nix`. Used by all 10 flake-input overlays (library-policy, hierarchical-errors, golangci-lint-auto-configure, mr-sync, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, projects-management-automation). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency.
 
 ### Config-Derived URLs
 
@@ -914,5 +915,6 @@ hermes cron list          # List cron jobs
 | `emeet-pixyd` | EMEET PIXY webcam daemon | Yes |
 | `niri-session-manager` | Niri window save/restore (Rust) | Yes |
 | `treefmt-full-flake` | Treefmt formatter | Yes |
+| `projects-management-automation` | CLI for managing multiple projects with workflow automation | Yes |
 
 **All LarsArtmann private repos use `git+ssh://` URLs.** No `path:` inputs remain.

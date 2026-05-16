@@ -9,6 +9,7 @@
   go-structure-linter,
   branching-flow,
   art-dupl,
+  projects-management-automation,
   ...
 }: let
   mkPackageOverlay = input: name: _final: prev: {
@@ -75,5 +76,6 @@ in [
   (mkPackageOverlay go-structure-linter "go-structure-linter")
   (mkPackageOverlay branching-flow "branching-flow")
   (mkPackageOverlay art-dupl "art-dupl")
+  (mkPackageOverlay projects-management-automation "projects-management-automation")
   d2DarwinOverlay
 ]

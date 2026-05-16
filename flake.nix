@@ -213,6 +213,12 @@
       url = "git+ssh://git@github.com/LarsArtmann/art-dupl?ref=fork";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # projects-management-automation — CLI for managing multiple projects with workflow automation
+    projects-management-automation = {
+      url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -344,6 +350,7 @@
               go-structure-linter
               branching-flow
               art-dupl
+              projects-management-automation
               ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {

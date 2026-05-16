@@ -219,6 +219,7 @@
       go-auto-upgrade # Automated Go version upgrades
       go-structure-linter # Go project structure linting
       hierarchical-errors # Error handling pattern analyzer
+      projects-management-automation # CLI for managing multiple projects with workflow automation
 
       # Go testing
       ginkgo # BDD testing framework for Go
