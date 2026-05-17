@@ -1088,11 +1088,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778988932,
-        "narHash": "sha256-+5PpXFIalVpLKiHenmcnIkaGMXoFlHly4pzcjoedvK8=",
+        "lastModified": 1779036831,
+        "narHash": "sha256-QHcb738sehI5HMMZKzFCNfMHJjmnMdGgyCKGhxsUKRs=",
         "ref": "master",
-        "rev": "f8265898e5dd8bc1caa30afa1747ddac3bd5c0c5",
-        "revCount": 826,
+        "rev": "356b8ac3e548b20910760981a6aa3bcff729e29e",
+        "revCount": 847,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -1289,11 +1289,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778954430,
-        "narHash": "sha256-oaNyOr05lblaQdtbkbN1wO0b2KLIL2O1LkmwDgdQp4I=",
+        "lastModified": 1779027260,
+        "narHash": "sha256-ZbgWWFQmSyM3HQ31nAZk2hJ7OSeNr9uRFHL8jCifY9M=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "26aaab785b0bab4af60a2c42b22760fa906ef22a",
+        "rev": "bcb774cfc3268120cd61808629f9aa7dad3750a2",
         "type": "github"
       },
       "original": {
@@ -1321,11 +1321,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778991462,
-        "narHash": "sha256-ylHiCJZvbmk12g+Z1YCAcDICDuD1kyamLhnp/UIgPZQ=",
+        "lastModified": 1779035106,
+        "narHash": "sha256-V3i+hD0CQhQsX5o1vU52SZlZtoRVgvFm+y4uVwUJf9E=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "b40e0b0c4faa6b0d7e458b67bb96820621411bde",
+        "rev": "db0422e862d7af7b7d52142e9b7ded6d1b17ac0c",
         "type": "github"
       },
       "original": {
@@ -1532,11 +1532,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1777780666,
-        "narHash": "sha256-8wURyQMdDkGUarSTKOGdCuFfYiwa3HbzwscUfn3STDE=",
+        "lastModified": 1779031424,
+        "narHash": "sha256-w/62/SPMA1xyMU2raSDkgn6QWkF4xKeTttdtJ+UV5es=",
         "owner": "LnL7",
         "repo": "nix-darwin",
-        "rev": "8c62fba0854ba15c8917aed18894dbccb48a3777",
+        "rev": "3fe4b4fb3cdf49cfe3c0079d315599a53b09b9a7",
         "type": "github"
       },
       "original": {
@@ -1589,11 +1589,11 @@
     },
     "nixos-hardware": {
       "locked": {
-        "lastModified": 1778945272,
-        "narHash": "sha256-Aipz0UiBhE2a1FYJrNc2y+5vKWo5QVkhmaIJk3/ls+g=",
+        "lastModified": 1779034340,
+        "narHash": "sha256-zhMjgfsnNPcZtMhhWoeyaUV7JVEJ4rm5YJ0whwTfo8M=",
         "owner": "NixOS",
         "repo": "nixos-hardware",
-        "rev": "379c1f274f0fa354d012f0600806de54e79f29b5",
+        "rev": "88e6bd5c2db9e0b098d8ccb081f35fe33f0f3186",
         "type": "github"
       },
       "original": {
@@ -1816,11 +1816,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778994223,
-        "narHash": "sha256-a5xJslvjQwKHBPTR35TUBIniDsrEAqL1mlDVFlCIUfo=",
+        "lastModified": 1779035697,
+        "narHash": "sha256-Lythv7rjxfr1LZ4VvFMPs798VDlEVlSjWjIyVdrTiKw=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "6271f3369da9b70b261f1e887b532a6f477471e3",
+        "rev": "6aee602cd718efa82072f23edb06fe12fa324329",
         "type": "github"
       },
       "original": {
@@ -1901,11 +1901,11 @@
         "project-meta": "project-meta"
       },
       "locked": {
-        "lastModified": 1778991568,
-        "narHash": "sha256-rgB3Z0HTDlKT/7uHYDmwpoudVkY0tu/mCCs34woyC8A=",
+        "lastModified": 1779035277,
+        "narHash": "sha256-fR98VSskARn23yVS73jc6ZI+NGTD5EKu4eRigPmA4So=",
         "ref": "master",
-        "rev": "2b9a0c6fb0a4321fd8e34362a7cda8a2f55eb1ec",
-        "revCount": 2601,
+        "rev": "08a179bdce554097f4b03473bc5e11ff8eb7838a",
+        "revCount": 2605,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
