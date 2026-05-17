@@ -517,7 +517,7 @@ Reusable functions in `lib/` — imported directly by relative path:
 | `lib/systemd/service-defaults.nix` | Common service defaults (Restart, RestartSec) — returns attrset with `.serviceDefaults` (system, uses mkForce) and `.serviceDefaultsUser` (user services, no mkForce) | `sd = import ../../../lib/systemd/service-defaults.nix lib;` then `sd.serviceDefaults {}` or `sd.serviceDefaultsUser {}` |
 | `lib/types.nix` | Reusable NixOS module option constructors (ports, user/group, delays) | `serviceTypes = import ../../../lib/types.nix lib;` then `serviceTypes.systemdServiceIdentity {}` |
 | `lib/rocm.nix` | ROCm GPU runtime library lists and env vars | `rocm = import ../../../lib/rocm.nix {inherit pkgs;};` then `rocm.env` / `rocm.makeLdLibraryPath lib` |
-| `lib/graphical-user-service.nix` | Boilerplate for Wayland-bound user services (After/PartOf/WantedBy graphical-session.target) | `mkGraphicalUserService {name = "foo"; description = "..."; serviceConfig = {...};}` |
+| `lib/docker.nix` | mkDockerServiceFactory — generates full systemd service for Docker Compose | `inherit (import ../../../lib/default.nix lib) mkDockerServiceFactory;` then `mkDs = mkDockerServiceFactory {inherit pkgs;};` |
 
 Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 
@@ -525,7 +525,11 @@ Combining: `serviceConfig = harden {MemoryMax = "1G";} // serviceDefaults {};`
 
 **Adoption status:** All service modules that manage systemd services use `harden {}` from the shared lib. 3 user-service modules use `hardenUser {}` (niri-config, file-and-image-renamer, niri-drm-healthcheck). No service should manually inline `PrivateTmp`, `NoNewPrivileges`, etc. — always use the shared helpers. For Home Manager user services, use `serviceDefaultsUser` (no `mkForce`).
 
-**Single import pattern:** All modules use `inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults serviceTypes mkGraphicalUserService;` — one import replaces five. For user-service modules that need `serviceDefaultsUser`, import the set: `sd = import ../../../lib/default.nix lib;` then call `sd.serviceDefaultsUser {}` and `sd.hardenUser {}`.
+**`mkStateDir`** generates systemd tmpfiles directory rules: `mkStateDir "/var/lib/foo" "0755" "foo" "foo"` → `"d /var/lib/foo 0755 foo foo -"`. Used by hermes (8 dirs), ai-models (18 dirs), and others.
+
+**`onFailure`** is a shared constant: `["notify-failure@%n.service"]` — 17 modules use `inherit onFailure;` instead of copy-pasting the list.
+
+**Single import pattern:** `inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;` — one import covers most needs. Add `mkDockerServiceFactory` for Docker-based services.
 
 **Flake export:** `self.lib` exports the same `lib/default.nix` as a flake output, accessible as `inputs.self.lib` in all modules. Relative imports still work and are the primary pattern.
 
