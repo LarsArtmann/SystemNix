@@ -7,4 +7,7 @@ in {
   inherit serviceDefaults serviceDefaultsUser onFailure;
   serviceTypes = import ./types.nix lib;
   mkDockerServiceFactory = {pkgs}: import ./docker.nix {inherit pkgs lib harden serviceDefaults;};
+
+  # Create a systemd-tmpfiles directory rule
+  mkStateDir = path: mode: user: group: "d ${path} ${mode} ${user} ${group} -";
 }

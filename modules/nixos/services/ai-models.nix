@@ -7,6 +7,7 @@ _: {
   }: let
     cfg = config.services.ai-models;
     inherit (config.users) primaryUser;
+    inherit (import ../../../lib/default.nix lib) mkStateDir;
   in {
     options.services.ai-models = {
       enable =
@@ -55,13 +56,11 @@ _: {
 
     config = lib.mkIf cfg.enable {
       systemd.tmpfiles.rules =
-        [
-          "d ${cfg.baseDir} 0755 ${cfg.user} ${cfg.group} -"
-          "d ${cfg.baseDir}/models 0755 ${cfg.user} ${cfg.group} -"
-          "d ${cfg.baseDir}/cache 0755 ${cfg.user} ${cfg.group} -"
-          "d ${cfg.baseDir}/workspaces 0755 ${cfg.user} ${cfg.group} -"
-        ]
-        ++ map (path: "d ${path} 0755 ${cfg.user} ${cfg.group} -") [
+        map (path: mkStateDir path "0755" cfg.user cfg.group) [
+          cfg.baseDir
+          "${cfg.baseDir}/models"
+          "${cfg.baseDir}/cache"
+          "${cfg.baseDir}/workspaces"
           cfg.paths.ollama
           cfg.paths.gguf
           cfg.paths.whisper
@@ -76,9 +75,7 @@ _: {
           cfg.paths.huggingface-transformers
           cfg.paths.unsloth
         ]
-        ++ [
-          "d ${cfg.paths.ollama-models} 0775 ${cfg.user} ${cfg.group} -"
-        ];
+        ++ [(mkStateDir cfg.paths.ollama-models "0775" cfg.user cfg.group)];
 
       environment.sessionVariables = {
         OLLAMA_MODELS = cfg.paths.ollama-models;

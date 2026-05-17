@@ -6,7 +6,7 @@
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;
     cfg = config.services.hermes;
     hermesPkg = let
       # Upstream hermes-agent has a stale npmDepsHash in nix/tui.nix.
@@ -154,16 +154,9 @@
 
       environment.systemPackages = [hermesPkg];
 
-      systemd.tmpfiles.rules = [
-        "d ${cfg.stateDir}           2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/sessions  2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/skills    2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/memories  2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/cron      2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/cache     2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/logs/curator 2770 ${cfg.user} ${cfg.group} -"
-        "d ${cfg.stateDir}/workspace 2770 ${cfg.user} ${cfg.group} -"
-      ];
+      systemd.tmpfiles.rules =
+        map (sub: mkStateDir "${cfg.stateDir}${sub}" "2770" cfg.user cfg.group)
+        ["" "/sessions" "/skills" "/memories" "/cron" "/cache" "/logs/curator" "/workspace"];
 
       system.activationScripts."hermes-setup" = lib.stringAfter (["users"] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets") ''
         mkdir -p ${cfg.stateDir}/{sessions,skills,memories,cron,cache,logs/curator,workspace}
