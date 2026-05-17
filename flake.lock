@@ -944,11 +944,11 @@
     "go-finding_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1778973466,
-        "narHash": "sha256-Z9sgzrXtISk+Ux3M1ScRRjbOAWhNgd+/c/WUcwfgwmI=",
+        "lastModified": 1778984185,
+        "narHash": "sha256-fy/RBDLS83+ONyXw6gmq7hnakzHPzMMGbXDZx01w4cI=",
         "ref": "master",
-        "rev": "3d65831857fe5971393415ac54da4d6820d82029",
-        "revCount": 515,
+        "rev": "b66fec95f1ae538bbf6cd1c24fc2bc3ec123726c",
+        "revCount": 519,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -1268,11 +1268,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778990458,
-        "narHash": "sha256-7YzlrRBhOluxMJZMpeqBXfNme4PHkSZLB2Uez+Khok8=",
+        "lastModified": 1778993657,
+        "narHash": "sha256-jDM1Et9rTlgnfSQ7VX6rsyTtfG2eUgA4MM15E0YK6IA=",
         "ref": "master",
-        "rev": "bf08ef060be400219729690183442b5577e6edd3",
-        "revCount": 573,
+        "rev": "3cc1837c0aac77e24409ad0e9e68a8258b47c964",
+        "revCount": 577,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -1321,11 +1321,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1778985598,
-        "narHash": "sha256-/jEjOv+23f1E2Hk32r96GOG0ApaDB7HKih3hxqA1mc4=",
+        "lastModified": 1778991462,
+        "narHash": "sha256-ylHiCJZvbmk12g+Z1YCAcDICDuD1kyamLhnp/UIgPZQ=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "a1286a2607cce93e7277db980492b7b64b316406",
+        "rev": "b40e0b0c4faa6b0d7e458b67bb96820621411bde",
         "type": "github"
       },
       "original": {
@@ -1816,11 +1816,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778991107,
-        "narHash": "sha256-Q/x+TiM4CmREXUh7Q7X7OIRr4kmWgMTYpID4QpGWJdE=",
+        "lastModified": 1778994223,
+        "narHash": "sha256-a5xJslvjQwKHBPTR35TUBIniDsrEAqL1mlDVFlCIUfo=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "41e6be42801d2cbcbb13c1eb0e5705ad3d5cd4c0",
+        "rev": "6271f3369da9b70b261f1e887b532a6f477471e3",
         "type": "github"
       },
       "original": {

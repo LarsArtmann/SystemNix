@@ -56,7 +56,10 @@ _: {
       name = "openseo";
       inherit composeFile;
       envTemplate = config.sops.templates."openseo-env".path;
-      extraHarden = {ProtectHome = false; NoNewPrivileges = false;};
+      extraHarden = {
+        ProtectHome = false;
+        NoNewPrivileges = false;
+      };
       preStartCommands = "rm -f /var/lib/openseo/.env";
     };
   in {
