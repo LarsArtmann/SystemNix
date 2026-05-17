@@ -147,9 +147,11 @@ _: {
         };
       };
 
-      systemd.tmpfiles.rules = docker.tmpfiles;
-      systemd.services = docker.services;
-      systemd.timers = docker.timers;
+      systemd = {
+        tmpfiles.rules = docker.tmpfiles;
+        services = docker.services;
+        timers = docker.timers;
+      };
     };
   };
 }
