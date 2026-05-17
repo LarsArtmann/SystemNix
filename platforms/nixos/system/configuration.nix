@@ -264,33 +264,6 @@
         authorizedKeys = [nix-ssh-config.sshKeys.lars];
       };
 
-      # Configure fail2ban for SSH protection
-      fail2ban = {
-        enable = true;
-        daemonSettings = {
-          DEFAULT = {
-            bantime = 3600;
-            findtime = 600;
-            maxretry = 3;
-            backend = "systemd";
-            ignoreip = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
-          };
-        };
-        jails = {
-          sshd = {
-            enabled = true;
-            settings = {
-              filter = "sshd";
-              action = "iptables-multiport[name=sshd, port=ssh, protocol=tcp]";
-              logpath = "/var/log/auth.log";
-              maxretry = 3;
-              bantime = 3600;
-              ignoreip = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
-            };
-          };
-        };
-      };
-
       # Declarative Gitea repository mirroring
       gitea-repos = {
         enable = true;
