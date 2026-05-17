@@ -25,7 +25,7 @@
     govalid = prev.callPackage ../pkgs/govalid.nix {};
   };
 
-  todoListAiFixedHash = "sha256-1rKZziEfR9jX1XRMu2Zc5MpOi6voclbbUndQf120nkE=";
+  todoListAiFixedHash = "sha256-khwiVxgNDHfqXe0Ko0V3yHDqoC+6rEkmQNV8TrOpa0I=";
 
   todoListAiOverlay = _final: prev: let
     bun = prev.bun;
@@ -34,7 +34,7 @@
       name = "todo-list-ai-deps";
       src = upstream.src;
       nativeBuildInputs = [bun];
-      buildPhase = "bun install --frozen-lockfile";
+      buildPhase = "bun install";
       installPhase = "rm -rf node_modules/.cache && cp -r node_modules $out";
       outputHashAlgo = "sha256";
       outputHashMode = "recursive";
