@@ -40,4 +40,7 @@ in {
 
   # Home Manager user services (no mkForce — HM doesn't support it)
   serviceDefaultsUser = mkDefaults false;
+
+  # onFailure handler — route service failures to the notify-failure template
+  onFailure = ["notify-failure@%n.service"];
 }

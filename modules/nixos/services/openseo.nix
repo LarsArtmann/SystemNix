@@ -8,9 +8,9 @@ _: {
   }: let
     cfg = config.services.openseo;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
-
-    stateDir = "/var/lib/openseo";
+    inherit (import ../../../lib/default.nix lib) serviceTypes;
+    dockerLib = (import ../../../lib/default.nix lib).mkDockerServiceFactory {inherit pkgs;};
+    inherit (dockerLib) mkDockerService;
 
     composeFile =
       pkgs.writeText "openseo-docker-compose.yml"
@@ -51,6 +51,14 @@ _: {
           openseo_data:
             name: openseo_data
       '';
+
+    docker = mkDockerService {
+      name = "openseo";
+      inherit composeFile;
+      envTemplate = config.sops.templates."openseo-env".path;
+      extraHarden = {ProtectHome = false; NoNewPrivileges = false;};
+      preStartCommands = "rm -f /var/lib/openseo/.env";
+    };
   in {
     options.services.openseo = {
       enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
@@ -63,41 +71,8 @@ _: {
     };
 
     config = lib.mkIf cfg.enable {
-      systemd.tmpfiles.rules = [
-        "d ${stateDir} 0755 root root -"
-      ];
-
-      systemd.services.openseo = {
-        description = "OpenSEO — Self-hosted SEO suite";
-        onFailure = ["notify-failure@%n.service"];
-        after = ["docker.service" "sops-nix.service"];
-        requires = ["docker.service"];
-        wants = ["sops-nix.service"];
-        wantedBy = ["multi-user.target"];
-        path = [pkgs.docker pkgs.docker-compose];
-
-        preStart = ''
-          rm -f ${stateDir}/.env
-          ${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} down --remove-orphans || true
-          install -m 600 ${config.sops.templates."openseo-env".path} ${stateDir}/.env
-        '';
-
-        serviceConfig =
-          {
-            ExecStart = "${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} up --remove-orphans";
-            ExecStop = "${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} down --timeout 30";
-            WorkingDirectory = stateDir;
-            TimeoutStopSec = "60";
-            KillMode = "process";
-          }
-          // harden {
-            MemoryMax = "2G";
-            ReadWritePaths = [stateDir];
-            ProtectHome = false;
-            NoNewPrivileges = false;
-          }
-          // serviceDefaults {};
-      };
+      systemd.tmpfiles.rules = docker.tmpfiles;
+      systemd.services = docker.services;
     };
   };
 }
