@@ -94,7 +94,7 @@ in {
   }: let
     cfg = config.services.signoz;
     packages = mkPackages pkgs;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes onFailure mkStateDir;
     alerts = import ./signoz-alerts.nix {inherit pkgs lib inputs;};
   in {
     options.services.signoz = {
@@ -174,7 +174,7 @@ in {
         };
         users.groups.signoz = {};
         systemd.tmpfiles.rules = [
-          "d ${cfg.settings.queryService.dataDir} 0755 signoz signoz -"
+          (mkStateDir cfg.settings.queryService.dataDir "0755" "signoz" "signoz")
         ];
 
         environment.etc."signoz/signoz.yaml".text = lib.generators.toYAML {} {
@@ -232,7 +232,7 @@ in {
           </clickhouse>
         '';
         systemd.tmpfiles.rules = [
-          "d /var/log/clickhouse-server 0755 clickhouse clickhouse -"
+          (mkStateDir "/var/log/clickhouse-server" "0755" "clickhouse" "clickhouse")
         ];
         systemd.services.clickhouse = {
           inherit onFailure;
@@ -366,7 +366,7 @@ in {
 
         systemd = {
           tmpfiles.rules = [
-            "d /var/lib/prometheus-node-exporter/textfile_collectors 0755 nobody nogroup -"
+            (mkStateDir "/var/lib/prometheus-node-exporter/textfile_collectors" "0755" "nobody" "nogroup")
           ];
 
           services.amdgpu-metrics = {

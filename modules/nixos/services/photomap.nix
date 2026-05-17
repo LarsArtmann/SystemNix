@@ -7,7 +7,7 @@ _: {
     ...
   }: let
     cfg = config.services.photomap;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;
     immichMediaDir = config.services.immich.mediaLocation;
     immichUploadDir = "${immichMediaDir}/upload";
     immichLibraryDir = "${immichMediaDir}/library";
@@ -71,14 +71,7 @@ _: {
           // serviceDefaults {RestartSec = "10s";};
       };
 
-      systemd.tmpfiles.rules = [
-        "d ${photomapDataDir} 0755 root root -"
-        "d ${photomapDataDir}/config 0755 root root -"
-        "d ${photomapDataDir}/data 0755 root root -"
-        "d ${photomapDataDir}/index 0755 root root -"
-        "d ${photomapDataDir}/index/upload 0755 root root -"
-        "d ${photomapDataDir}/index/library 0755 root root -"
-      ];
+      systemd.tmpfiles.rules = map (sub: mkStateDir "${photomapDataDir}${sub}" "0755" "root" "root") ["" "/config" "/data" "/index" "/index/upload" "/index/library"];
     };
   };
 }

@@ -9,7 +9,7 @@ _: {
     cfg = config.services.file-and-image-renamer;
     inherit (config.users) primaryUser;
     sd = import ../../../lib/default.nix lib;
-    inherit (sd) hardenUser;
+    inherit (sd) hardenUser mkStateDir;
   in {
     options.services.file-and-image-renamer = {
       enable = lib.mkEnableOption "File and Image Renamer — AI-powered screenshot renaming watcher";
@@ -52,7 +52,7 @@ _: {
       environment.systemPackages = [cfg.package];
 
       systemd.tmpfiles.rules = [
-        "d ${cfg.logDirectory} 0750 ${cfg.user} users -"
+        (mkStateDir cfg.logDirectory "0750" cfg.user "users")
       ];
 
       home-manager.users.${cfg.user} = {

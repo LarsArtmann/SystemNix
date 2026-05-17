@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.dns-blocker;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults mkStateDir;
 
     categoriesJSON = pkgs.writeText "dnsblockd-categories.json" (builtins.toJSON cfg.categories);
 
@@ -225,7 +225,7 @@ _: {
 
         tmpfiles.rules =
           [
-            "d /var/lib/dnsblockd 0755 root root -"
+            (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
           ]
           ++ lib.optional (!cfg.tempAllowAll) ''f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - # dnsblockd temp allowlist placeholder''
           ++ lib.optional cfg.tempAllowAll ''            f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent

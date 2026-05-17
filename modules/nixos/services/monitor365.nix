@@ -9,7 +9,7 @@ _: {
     cfg = config.services.monitor365;
     inherit (config.users) primaryUser;
     sd = import ../../../lib/default.nix lib;
-    inherit (sd) serviceDefaultsUser;
+    inherit (sd) serviceDefaultsUser mkStateDir;
 
     runtimeDeps = with pkgs; [
       xdotool
@@ -615,10 +615,10 @@ _: {
 
       systemd.tmpfiles.rules =
         [
-          "d ${cfg.home} 0750 ${cfg.user} users -"
+          (mkStateDir cfg.home "0750" cfg.user "users")
         ]
         ++ lib.optionals cfg.server.enable [
-          "d ${serverStateDir} 0750 ${cfg.user} users -"
+          (mkStateDir serverStateDir "0750" cfg.user "users")
         ];
 
       environment.etc."monitor365/config.toml".source =

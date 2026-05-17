@@ -9,22 +9,18 @@ _: {
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/docker.nix {inherit pkgs lib harden serviceDefaults;}) mkDockerService;
 
     whisperModelsDir = config.services.ai-models.paths.whisper;
 
-    # Docker compose for Whisper ASR - Gradio UI mode
-    # Image (beecave/insanely-fast-whisper-rocm) provides:
-    #   - /app/app.py    → Gradio WebUI (port 7860)
-    #   - /app/main.py   → Directory watcher (batch processing)
-    #   - insanely-fast-whisper CLI tool
-    # ENTRYPOINT is ["python3"], WORKDIR is /app
-    # Env var: MODEL (not WHISPER_MODEL) controls which model to load
+    whisperImage = "beecave/insanely-fast-whisper-rocm@sha256:1fa17f91846d30748751089a7ef37b490a8e3ec46e8ba4a1df15c28d1e60d3c1";
+
     whisperComposeFile = pkgs.writeText "docker-compose.whisper-asr.yml" ''
       name: voice-agents
 
       services:
         whisper-rocm:
-          image: beecave/insanely-fast-whisper-rocm@sha256:1fa17f91846d30748751089a7ef37b490a8e3ec46e8ba4a1df15c28d1e60d3c1
+          image: ${whisperImage}
           container_name: whisper-asr
           restart: unless-stopped
           command: app.py
@@ -39,6 +35,16 @@ _: {
             - /dev/dri:/dev/dri
             - /dev/kfd:/dev/kfd
     '';
+
+    docker = mkDockerService {
+      name = "whisper-asr";
+      composeFile = whisperComposeFile;
+      stateDir = "/var/lib/whisper-asr";
+      memoryMax = "8G";
+      extraHarden = {ProtectHome = "read-only";};
+      extraServiceConfig = {RestartSec = "10s";};
+      imagePull = whisperImage;
+    };
   in {
     options.services.voice-agents = {
       enable = lib.mkEnableOption "Voice agents (LiveKit + Whisper ASR)";
@@ -85,44 +91,7 @@ _: {
       };
 
       systemd = {
-        services.whisper-asr-pull = {
-          description = "Pull Whisper ASR Docker Image";
-          after = ["docker.service" "network-online.target"];
-          requires = ["docker.service"];
-          wants = ["network-online.target"];
-          wantedBy = ["whisper-asr.service"];
-          path = [pkgs.docker];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = "${pkgs.docker}/bin/docker pull beecave/insanely-fast-whisper-rocm@sha256:1fa17f91846d30748751089a7ef37b490a8e3ec46e8ba4a1df15c28d1e60d3c1";
-            TimeoutStartSec = 600;
-          };
-        };
-
-        services.whisper-asr = {
-          description = "Whisper ASR Server - Gradio WebUI (ROCm)";
-          after = ["docker.service" "network-online.target" "whisper-asr-pull.service"];
-          requires = ["docker.service"];
-          wants = ["whisper-asr-pull.service" "network-online.target"];
-          wantedBy = ["multi-user.target"];
-          startLimitBurst = 3;
-          startLimitIntervalSec = 60;
-          path = [pkgs.docker pkgs.docker-compose];
-          serviceConfig =
-            harden {}
-            // serviceDefaults {
-              RestartSec = "10s";
-            }
-            // {
-              Type = "forking";
-              RemainAfterExit = true;
-              ExecStartPre = ["-${pkgs.docker-compose}/bin/docker-compose -f ${whisperComposeFile} down --remove-orphans"];
-              ExecStart = "${pkgs.docker-compose}/bin/docker-compose -f ${whisperComposeFile} up -d whisper-rocm";
-              ExecStop = "${pkgs.docker-compose}/bin/docker-compose -f ${whisperComposeFile} down whisper-rocm";
-              TimeoutStartSec = 180;
-            };
-        };
+        services = docker.services;
       };
 
       networking.firewall = lib.mkIf cfg.openFirewall {

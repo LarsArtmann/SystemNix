@@ -11,7 +11,7 @@ _: {
     stateDir = "/var/lib/homepage-dashboard";
 
     svcUrl = subdomain: "https://${subdomain}.${domain}";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;
   in {
     options.services.homepage = {
       enable = lib.mkEnableOption "Homepage Dashboard service";
@@ -186,7 +186,7 @@ _: {
       '';
 
       systemd.tmpfiles.rules = [
-        "d ${stateDir} 0755 homepage homepage -"
+        (mkStateDir stateDir "0755" "homepage" "homepage")
         "L+ ${stateDir}/services.yaml - - - - /etc/homepage/services.yaml"
         "L+ ${stateDir}/settings.yaml - - - - /etc/homepage/settings.yaml"
         "L+ ${stateDir}/bookmarks.yaml - - - - ${pkgs.writeText "bookmarks.yaml" ""}"

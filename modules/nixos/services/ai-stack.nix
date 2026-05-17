@@ -6,7 +6,7 @@ _: {
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults mkStateDir;
     inherit (config.users) primaryUser;
     primaryGroup = "users";
 
@@ -264,12 +264,7 @@ _: {
           };
         };
 
-        systemd.tmpfiles.rules = [
-          "d ${unslothDataDir}/workspace 0755 ${primaryUser} ${primaryGroup} -"
-          "d ${unslothDataDir}/models 0755 ${primaryUser} ${primaryGroup} -"
-          "d ${unslothDataDir}/.unsloth 0755 ${primaryUser} ${primaryGroup} -"
-          "d ${unslothDataDir}/.unsloth/studio 0755 ${primaryUser} ${primaryGroup} -"
-        ];
+        systemd.tmpfiles.rules = map (sub: mkStateDir "${unslothDataDir}${sub}" "0755" primaryUser primaryGroup) ["/workspace" "/models" "/.unsloth" "/.unsloth/studio"];
       })
     ];
   };

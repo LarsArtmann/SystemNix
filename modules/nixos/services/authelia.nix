@@ -9,7 +9,7 @@ _: {
     cfg = config.services.authelia-config;
     inherit (config.networking) domain;
     authHost = "auth.${domain}";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;
     authPort = cfg.port;
 
     mkClient = {
@@ -240,7 +240,7 @@ _: {
       };
 
       systemd.tmpfiles.rules = [
-        "d /var/lib/authelia-main 0750 authelia-main authelia-main -"
+        (mkStateDir "/var/lib/authelia-main" "0750" "authelia-main" "authelia-main")
         "L+ /var/lib/authelia-main/users_database.yml - - - - /etc/authelia/users_database.yml"
       ];
     };

@@ -1,4 +1,9 @@
-{pkgs, lib, harden, serviceDefaults}: {
+{
+  pkgs,
+  lib,
+  harden,
+  serviceDefaults,
+}: {
   mkDockerService = {
     name,
     composeFile,
@@ -13,6 +18,7 @@
     wants ? ["sops-nix.service"],
     extraTmpfiles ? [],
     backup ? null,
+    imagePull ? null,
   }: let
     envFlag =
       if envTemplate != null
@@ -33,7 +39,13 @@
       {
         ${name} = {
           description = name;
-          inherit after requires wants;
+          after =
+            after
+            ++ lib.optional (imagePull != null) "${name}-pull.service";
+          inherit requires;
+          wants =
+            wants
+            ++ lib.optional (imagePull != null) "${name}-pull.service";
           wantedBy = ["multi-user.target"];
           onFailure = ["notify-failure@%n.service"];
           path = [pkgs.docker pkgs.docker-compose];
@@ -63,27 +75,50 @@
             // extraServiceConfig;
         };
       }
-      // lib.optionalAttrs (backup != null) (
-        lib.listToAttrs [{
-          name = "${name}-db-backup";
-          value = {
-            description = "${name} Database Backup";
-            after = ["${name}.service"];
-            requires = ["docker.service"];
-            onFailure = ["notify-failure@%n.service"];
-            serviceConfig = {
-              Type = "oneshot";
-              ExecStart = backup.execStart;
-              WorkingDirectory = stateDir;
+      // lib.optionalAttrs (imagePull != null) (
+        lib.listToAttrs [
+          {
+            name = "${name}-pull";
+            value = {
+              description = "Pull ${name} Docker Image";
+              after = ["docker.service" "network-online.target"];
+              requires = ["docker.service"];
+              wants = ["network-online.target"];
+              wantedBy = ["${name}.service"];
+              path = [pkgs.docker];
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                ExecStart = "${pkgs.docker}/bin/docker pull ${imagePull}";
+                TimeoutStartSec = 600;
+              };
             };
-            preStart = "mkdir -p ${stateDir}/backup";
-          };
-        }]
+          }
+        ]
+      )
+      // lib.optionalAttrs (backup != null) (
+        lib.listToAttrs [
+          {
+            name = "${name}-db-backup";
+            value = {
+              description = "${name} Database Backup";
+              after = ["${name}.service"];
+              requires = ["docker.service"];
+              onFailure = ["notify-failure@%n.service"];
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = backup.execStart;
+                WorkingDirectory = stateDir;
+              };
+              preStart = "mkdir -p ${stateDir}/backup";
+            };
+          }
+        ]
       );
 
-    timers =
-      lib.optionalAttrs (backup != null) (
-        lib.listToAttrs [{
+    timers = lib.optionalAttrs (backup != null) (
+      lib.listToAttrs [
+        {
           name = "${name}-db-backup";
           value = {
             wantedBy = ["timers.target"];
@@ -93,7 +128,8 @@
               RandomizedDelaySec = "30m";
             };
           };
-        }]
-      );
+        }
+      ]
+    );
   };
 }

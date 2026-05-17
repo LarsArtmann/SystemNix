@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.niri-desktop;
     niriPkg = pkgs.niri-unstable;
-    inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults onFailure mkStateDir;
     drmHealthcheck = pkgs.writeShellApplication {
       name = "niri-drm-healthcheck";
       runtimeInputs = with pkgs; [procps systemd];
@@ -36,9 +36,9 @@ _: {
       };
 
       systemd.tmpfiles.rules = [
-        "d /var/lib/niri-drm-healthcheck 0755 ${config.users.primaryUser} users -"
-        "d /var/lib/display-watchdog 0755 root root -"
-        "d /var/lib/prometheus-node-exporter/textfile_collectors 1777 root root -"
+        (mkStateDir "/var/lib/niri-drm-healthcheck" "0755" config.users.primaryUser "users")
+        (mkStateDir "/var/lib/display-watchdog" "0755" "root" "root")
+        (mkStateDir "/var/lib/prometheus-node-exporter/textfile_collectors" "1777" "root" "root")
       ];
 
       systemd = {
