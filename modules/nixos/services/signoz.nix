@@ -94,7 +94,7 @@ in {
   }: let
     cfg = config.services.signoz;
     packages = mkPackages pkgs;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes onFailure;
     alerts = import ./signoz-alerts.nix {inherit pkgs lib inputs;};
   in {
     options.services.signoz = {
@@ -126,11 +126,7 @@ in {
               };
             };
             queryService = {
-              port = lib.mkOption {
-                type = lib.types.port;
-                default = 8080;
-                description = "Port for the SigNoz query service web UI and API";
-              };
+              port = serviceTypes.servicePort 8080 "Port for the SigNoz query service web UI and API";
               host = lib.mkOption {
                 type = lib.types.str;
                 default = "127.0.0.1";
@@ -142,22 +138,10 @@ in {
                 description = "Data directory for the query service (runtime path, not copied to store)";
               };
             };
-            cadvisorPort = lib.mkOption {
-              type = lib.types.port;
-              default = 9110;
-              description = "Port for cAdvisor container metrics";
-            };
+            cadvisorPort = serviceTypes.servicePort 9110 "Port for cAdvisor container metrics";
             collector = {
-              port = lib.mkOption {
-                type = lib.types.port;
-                default = 4317;
-                description = "OTLP gRPC receiver port";
-              };
-              httpPort = lib.mkOption {
-                type = lib.types.port;
-                default = 4318;
-                description = "OTLP HTTP receiver port";
-              };
+              port = serviceTypes.servicePort 4317 "OTLP gRPC receiver port";
+              httpPort = serviceTypes.servicePort 4318 "OTLP HTTP receiver port";
             };
           };
         };
