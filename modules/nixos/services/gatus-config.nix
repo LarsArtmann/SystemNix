@@ -7,11 +7,19 @@ _: {
     ...
   }: let
     cfg = config.services.gatus-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkHttpCheck;
+
+    nodePort = config.services.prometheus.exporters.node.port;
+
+    discordAlert = desc: [
+      {
+        type = "discord";
+        inherit desc;
+      }
+    ];
   in {
     options.services.gatus-config = {
       enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
-
       port = serviceTypes.servicePort 8083 "HTTP port for Gatus web interface";
     };
 
@@ -35,67 +43,43 @@ _: {
             };
           };
           endpoints = [
-            {
+            (mkHttpCheck {
               name = "Caddy";
               group = "Infrastructure";
               url = "http://127.0.0.1:2019/metrics";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-              alerts = [
-                {
-                  type = "discord";
-                  description = "Caddy reverse proxy down — all services unreachable";
-                }
-              ];
-            }
-            {
+              alerts = discordAlert "Caddy reverse proxy down — all services unreachable";
+            })
+            (mkHttpCheck {
               name = "Authelia";
               group = "Infrastructure";
               url = "http://localhost:${toString config.services.authelia-config.port}/api/health";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Gitea";
               group = "Development";
               url = "http://localhost:${toString config.services.gitea.settings.server.HTTP_PORT}/api/v1/version";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Homepage";
               group = "Infrastructure";
               url = "http://localhost:${toString config.services.homepage.port}";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Immich";
               group = "Media";
               url = "http://localhost:${toString config.services.immich.port}/api/server-info/ping";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "SigNoz";
               group = "Monitoring";
               url = "http://localhost:${toString config.services.signoz.settings.queryService.port}";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-              alerts = [
-                {
-                  type = "discord";
-                  description = "SigNoz observability platform down — no metrics/alerts";
-                }
-              ];
-            }
-            {
+              alerts = discordAlert "SigNoz observability platform down — no metrics/alerts";
+            })
+            (mkHttpCheck {
               name = "Manifest";
               group = "Monitoring";
               url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-            }
+            })
             {
               name = "TaskChampion";
               group = "Productivity";
@@ -103,41 +87,35 @@ _: {
               interval = "60s";
               conditions = ["[CONNECTED] == true"];
             }
-            {
+            (mkHttpCheck {
               name = "Twenty CRM";
               group = "Productivity";
               url = "http://localhost:${toString config.services.twenty.port}/healthz";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Ollama";
               group = "AI";
               url = "http://localhost:${toString config.services.ollama.port}/api/tags";
               interval = "60s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "ComfyUI";
               group = "AI";
               url = "http://localhost:${toString config.services.comfyui.port}";
               interval = "5m";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Node Exporter";
               group = "Monitoring";
-              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              url = "http://localhost:${toString nodePort}/metrics";
               interval = "60s";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "cAdvisor";
               group = "Monitoring";
               url = "http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics";
               interval = "60s";
-              conditions = ["[STATUS] == 200"];
-            }
+            })
             {
               name = "DNS Resolver";
               group = "Infrastructure";
@@ -156,19 +134,12 @@ _: {
               interval = "60s";
               conditions = ["[CONNECTED] == true"];
             }
-            {
+            (mkHttpCheck {
               name = "DNS Blocker";
               group = "Infrastructure";
               url = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
-              interval = "30s";
-              conditions = ["[STATUS] == 200"];
-              alerts = [
-                {
-                  type = "discord";
-                  description = "DNS blocker down — no ad/malware blocking";
-                }
-              ];
-            }
+              alerts = discordAlert "DNS blocker down — no ad/malware blocking";
+            })
             {
               name = "Upstream DNS (Quad9)";
               group = "Infrastructure";
@@ -190,20 +161,14 @@ _: {
               };
               interval = "5m";
               conditions = ["[BODY] == ${config.services.dns-blocker.blockIP}"];
-              alerts = [
-                {
-                  type = "discord";
-                  description = "DNS blocking not active — ads.google.com resolved without block";
-                }
-              ];
+              alerts = discordAlert "DNS blocking not active — ads.google.com resolved without block";
             }
-            {
+            (mkHttpCheck {
               name = "Whisper ASR";
               group = "AI";
               url = "http://localhost:${toString config.services.voice-agents.whisperPort}";
               interval = "60s";
-              conditions = ["[STATUS] == 200"];
-            }
+            })
             {
               name = "LiveKit";
               group = "AI";
@@ -211,45 +176,44 @@ _: {
               interval = "60s";
               conditions = ["[CONNECTED] == true"];
             }
-            {
+            (mkHttpCheck {
               name = "OpenSEO";
               group = "Productivity";
               url = "http://localhost:${toString config.services.openseo.port}";
               interval = "5m";
-              conditions = ["[STATUS] == 200"];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "GPU VRAM Metrics";
               group = "Monitoring";
-              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              url = "http://localhost:${toString nodePort}/metrics";
               interval = "60s";
               conditions = [
                 "[STATUS] == 200"
                 "[BODY] == pat(*node_amdgpu_mem_info_vram_used_bytes*)"
                 "[BODY] == pat(*node_amdgpu_gpu_busy_percent*)"
               ];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Root Disk Space";
               group = "Monitoring";
-              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              url = "http://localhost:${toString nodePort}/metrics";
               interval = "5m";
               conditions = [
                 "[STATUS] == 200"
                 "[BODY] == pat(*node_filesystem_avail_bytes*)"
               ];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "Niri Compositor";
               group = "Monitoring";
-              url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+              url = "http://localhost:${toString nodePort}/metrics";
               interval = "60s";
               conditions = [
                 "[STATUS] == 200"
                 "[BODY] == pat(*niri_running*)"
               ];
-            }
-            {
+            })
+            (mkHttpCheck {
               name = "TLS Certificate Expiry";
               group = "Infrastructure";
               url = "https://auth.home.lan";
@@ -258,13 +222,8 @@ _: {
                 "[STATUS] == 200"
                 "[CERTIFICATE_EXPIRATION] > 168h"
               ];
-              alerts = [
-                {
-                  type = "discord";
-                  description = "TLS certificate for *.home.lan expires within 7 days — renew via dnsblockd";
-                }
-              ];
-            }
+              alerts = discordAlert "TLS certificate for *.home.lan expires within 7 days — renew via dnsblockd";
+            })
           ];
         };
       };

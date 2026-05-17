@@ -10,14 +10,13 @@ in {
   }: let
     cfg = config.services.twenty;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    libHelpers = import ../../../lib/default.nix lib;
+    inherit (libHelpers) serviceTypes;
+    inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
-    stateDir = "/var/lib/twenty";
     serverPort = cfg.port;
-
     pgUser = "postgres";
     pgDb = "twenty";
-
     serverUrl = "https://crm.${domain}";
 
     composeFile =
@@ -100,6 +99,16 @@ in {
           db-data:
           server-local-data:
       '';
+
+    docker = mkDockerService {
+      name = "twenty";
+      inherit composeFile;
+      envTemplate = config.sops.templates."twenty-env".path;
+      extraServiceConfig = {RestartSec = "10s";};
+      backup = {
+        execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T db pg_dump -U ${pgUser} ${pgDb} > /var/lib/twenty/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /var/lib/twenty/backup -name \"*.sql\" -mtime +30 -delete'";
+      };
+    };
   in {
     options.services.twenty = {
       enable = lib.mkEnableOption "Twenty CRM";
@@ -126,62 +135,10 @@ in {
         };
       };
 
-      systemd.tmpfiles.rules = [
-        "d ${stateDir} 0755 root root -"
-        "d ${stateDir}/backup 0755 root root -"
-      ];
-
       systemd = {
-        services = {
-          twenty = {
-            description = "Twenty CRM";
-            after = ["docker.service" "sops-nix.service"];
-            requires = ["docker.service"];
-            wants = ["sops-nix.service"];
-            wantedBy = ["multi-user.target"];
-            path = [pkgs.docker pkgs.docker-compose];
-
-            preStart = ''
-              mkdir -p ${stateDir}
-              cp ${config.sops.templates."twenty-env".path} ${stateDir}/.env
-              chmod 600 ${stateDir}/.env
-            '';
-
-            serviceConfig =
-              {
-                ExecStart = "${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} up --remove-orphans";
-                ExecStop = "${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} down";
-                WorkingDirectory = stateDir;
-              }
-              // harden {
-                MemoryMax = "2G";
-                ReadWritePaths = [stateDir];
-              }
-              // serviceDefaults {RestartSec = "10s";};
-          };
-
-          twenty-db-backup = {
-            description = "Twenty CRM Database Backup";
-            after = ["twenty.service"];
-            requires = ["docker.service"];
-            inherit onFailure;
-            serviceConfig = {
-              Type = "oneshot";
-              ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T db pg_dump -U ${pgUser} ${pgDb} > ${stateDir}/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find ${stateDir}/backup -name \"*.sql\" -mtime +30 -delete'";
-              WorkingDirectory = stateDir;
-            };
-            preStart = "mkdir -p ${stateDir}/backup";
-          };
-        };
-
-        timers.twenty-db-backup = {
-          wantedBy = ["timers.target"];
-          timerConfig = {
-            OnCalendar = "daily";
-            Persistent = true;
-            RandomizedDelaySec = "30m";
-          };
-        };
+        tmpfiles.rules = docker.tmpfiles;
+        services = docker.services;
+        timers = docker.timers;
       };
     };
   };

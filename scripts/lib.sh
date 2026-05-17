@@ -50,3 +50,37 @@ summary() {
   echo ""
   [[ $_FAIL -eq 0 ]]
 }
+
+# Consecutive failure counter — persists across invocations via state file.
+# Usage:
+#   state_init /var/lib/my-check state 3  # creates dir, sets vars
+#   # ... check condition ...
+#   state_hit  && echo "threshold reached"  # increment + check
+#   state_reset                              # clear counter on success
+#
+state_dir=""
+state_file=""
+state_threshold=0
+state_count=0
+
+state_init() {
+  state_dir="$1"
+  state_file="$1/$2"
+  state_threshold="$3"
+  state_count=0
+  mkdir -p "$state_dir" 2>/dev/null || true
+}
+
+state_hit() {
+  if [ -f "$state_file" ]; then
+    state_count=$(cat "$state_file" 2>/dev/null || echo 0)
+  fi
+  state_count=$((state_count + 1))
+  echo "$state_count" >"$state_file"
+  [ "$state_count" -ge "$state_threshold" ]
+}
+
+state_reset() {
+  rm -f "$state_file"
+  state_count=0
+}
