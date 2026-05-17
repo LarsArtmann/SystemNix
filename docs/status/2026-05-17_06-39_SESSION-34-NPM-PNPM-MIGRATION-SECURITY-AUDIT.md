@@ -37,7 +37,7 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 ### Infrastructure & Core Services (Cumulative)
 
 - **Dual-WAN ECMP+MPTCP** — Active-active failover with route health monitoring, MPTCP endpoint management, NM dispatcher events
-- **DNS Blocker** — Unbound + dnsblockd with 2.5M+ domains blocked, DoT upstream, `.home.lan` local records, CA trusted system-wide
+- **DNS Blocker** — Unbound full recursive resolver from root hints (no third-party), DNSSEC enabled, 2.5M+ domains blocked, `.home.lan` local records, CA trusted system-wide
 - **SigNoz Observability** — Full stack (ClickHouse, OTel Collector, Query Service). 26+ Gatus endpoints. Alert rules for GPU, DNS, Docker, Caddy, disk
 - **Caddy Reverse Proxy** — TLS termination, forward auth, virtual host routing. All ports derived from service config options
 - **SOPS Secrets** — age-encrypted via SSH host key. Templates for env-file injection
