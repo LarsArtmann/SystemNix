@@ -150,7 +150,7 @@ _: {
               cmake
               ninja
               cacert
-              nodejs_22
+              pnpm
               coreutils
               bash
             ];
@@ -209,8 +209,8 @@ _: {
                 tmpdir=$(mktemp -d)
                 cp -r ${studioFrontend}/* "$tmpdir"/
                 cd "$tmpdir"
-                ${pkgs.nodejs_22}/bin/npm install --no-fund --no-audit --loglevel=error
-                ${pkgs.nodejs_22}/bin/npm run build
+                ${pkgs.pnpm}/bin/pnpm install --no-fund --no-audit --loglevel=error
+                ${pkgs.pnpm}/bin/pnpm run build
                 mkdir -p ${studioFrontend}/dist
                 cp -r dist/* ${studioFrontend}/dist/
                 rm -rf "$tmpdir"
@@ -219,7 +219,7 @@ _: {
                   tmpdir=$(mktemp -d)
                   cp -r ${studioBackend}/core/data_recipe/oxc-validator/* "$tmpdir"/
                   cd "$tmpdir"
-                  ${pkgs.nodejs_22}/bin/npm install --no-fund --no-audit --loglevel=error
+                  ${pkgs.pnpm}/bin/pnpm install --no-fund --no-audit --loglevel=error
                   cp -r node_modules ${studioBackend}/core/data_recipe/oxc-validator/
                   rm -rf "$tmpdir"
                 fi

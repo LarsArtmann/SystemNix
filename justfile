@@ -147,6 +147,36 @@ pre-commit-run:
 pre-commit-install:
     pre-commit install
 
+# Check overlay packages for vendor hash drift (Go vendorHash + npmDepsHash)
+[group('quality')]
+hash-check:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pkgs=(
+        library-policy hierarchical-errors golangci-lint-auto-configure
+        mr-sync buildflow go-auto-upgrade go-structure-linter
+        branching-flow art-dupl projects-management-automation
+        govalid aw-watcher-utilization jscpd todo-list-ai
+    )
+    failed=0
+    for pkg in "${pkgs[@]}"; do
+        echo -n "Building $pkg... "
+        if nix build ".#$pkg" --no-link 2>&1 | grep -q "got:"; then
+            echo "HASH MISMATCH"
+            nix build ".#$pkg" --no-link 2>&1 | grep "got:" || true
+            failed=$((failed + 1))
+        else
+            echo "OK"
+        fi
+    done
+    if [ "$failed" -gt 0 ]; then
+        echo ""
+        echo "FAIL: $failed package(s) have stale hashes"
+        echo "Fix: set vendorHash to \"\" in the package's flake.nix, rebuild, grep for 'got:' hash"
+        exit 1
+    fi
+    echo "All packages OK"
+
 # ═══════════════════════════════════════════════════════════════════
 #  Clean
 # ═══════════════════════════════════════════════════════════════════
@@ -168,7 +198,6 @@ clean:
         brew autoremove 2>/dev/null && brew cleanup --prune=all -s 2>/dev/null || true
     fi
     go clean -cache -testcache 2>/dev/null || true
-    npm cache clean --force 2>/dev/null || true
     pnpm store prune 2>/dev/null || true
     cargo cache --autoclean 2>/dev/null || true
     echo ""

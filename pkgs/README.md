@@ -31,7 +31,7 @@ Builds the `modernize` analysis pass from `golang.org/x/tools` with Go 1.26. Det
 
 Copy/paste detector for programming source code — finds duplicated code across 150+ languages. Used in the project devShell.
 
-- **Source:** `jscpd.nix` (npm package, vendored lockfile in `jscpd-package-lock.json`)
+- **Source:** `jscpd.nix` (pnpm package, vendored lockfile in `jscpd-pnpm-lock.yaml`)
 - **Platform:** All platforms
 - **Install:** Available in devShell via `nix develop`
 

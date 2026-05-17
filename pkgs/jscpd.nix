@@ -1,26 +1,38 @@
 {
   lib,
-  buildNpmPackage,
+  stdenv,
   fetchzip,
+  fetchPnpmDeps,
+  nodejs,
+  pnpm,
+  pnpmConfigHook,
 }:
-buildNpmPackage rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "jscpd";
   version = "4.0.9";
 
   src = fetchzip {
-    url = "https://registry.npmjs.org/jscpd/-/jscpd-${version}.tgz";
+    url = "https://registry.npmjs.org/jscpd/-/jscpd-${finalAttrs.version}.tgz";
     hash = "sha256-aF6cIYBnK/ffO/0LPjKZZ99LsG4jpSfE7NEwQAUqZFQ=";
   };
 
   postPatch = ''
-    cp ${./jscpd-package-lock.json} package-lock.json
+    cp ${./jscpd-pnpm-lock.yaml} pnpm-lock.yaml
   '';
 
-  npmDepsHash = "sha256-oNXT0opwP+85dpH6IVLhcEi8k26qiGVzQSkeIAPnys4=";
+  nativeBuildInputs = [
+    nodejs
+    pnpm
+    pnpmConfigHook
+  ];
 
-  npmFlags = ["--legacy-peer-deps"];
+  pnpmDeps = fetchPnpmDeps {
+    inherit (finalAttrs) pname version src;
+    fetcherVersion = 3;
+    hash = "";
+  };
 
-  dontNpmBuild = true;
+  dontBuild = true;
 
   meta = {
     description = "Copy/paste detector for programming source code";
@@ -29,4 +41,4 @@ buildNpmPackage rec {
     platforms = lib.platforms.all;
     mainProgram = "jscpd";
   };
-}
+})
