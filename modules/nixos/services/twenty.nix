@@ -10,7 +10,7 @@ in {
   }: let
     cfg = config.services.twenty;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
 
     stateDir = "/var/lib/twenty";
     serverPort = cfg.port;
@@ -164,7 +164,7 @@ in {
             description = "Twenty CRM Database Backup";
             after = ["twenty.service"];
             requires = ["docker.service"];
-            onFailure = ["notify-failure@%n.service"];
+            inherit onFailure;
             serviceConfig = {
               Type = "oneshot";
               ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T db pg_dump -U ${pgUser} ${pgDb} > ${stateDir}/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find ${stateDir}/backup -name \"*.sql\" -mtime +30 -delete'";

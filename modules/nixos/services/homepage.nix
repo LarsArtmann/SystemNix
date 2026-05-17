@@ -11,7 +11,7 @@ _: {
     stateDir = "/var/lib/homepage-dashboard";
 
     svcUrl = subdomain: "https://${subdomain}.${domain}";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
   in {
     options.services.homepage = {
       enable = lib.mkEnableOption "Homepage Dashboard service";
@@ -21,7 +21,7 @@ _: {
     config = lib.mkIf cfg.enable {
       systemd.services.homepage-dashboard = {
         description = "Homepage Dashboard";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         wantedBy = ["multi-user.target"];
         after = ["network.target"];
         serviceConfig =

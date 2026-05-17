@@ -6,7 +6,7 @@
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     cfg = config.services.hermes;
     hermesPkg = let
       # Upstream hermes-agent has a stale npmDepsHash in nix/tui.nix.
@@ -195,7 +195,7 @@
         wantedBy = ["multi-user.target"];
         after = ["network-online.target"];
         wants = ["network-online.target"];
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         startLimitIntervalSec = 600;
         startLimitBurst = 5;
 

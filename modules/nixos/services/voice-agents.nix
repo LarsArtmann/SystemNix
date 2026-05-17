@@ -8,7 +8,7 @@ _: {
   }: let
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
 
     whisperModelsDir = config.services.ai-models.paths.whisper;
 

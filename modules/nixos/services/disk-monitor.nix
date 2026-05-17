@@ -128,7 +128,7 @@ _: {
 
         services.disk-monitor = {
           description = "Check disk usage and notify on threshold breaches";
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           serviceConfig =
             {
               Type = "oneshot";

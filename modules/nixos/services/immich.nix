@@ -6,7 +6,7 @@ _: {
     ...
   }: let
     cfg = config.services.immich;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
   in {
     config = lib.mkIf config.services.immich.enable {
       services.immich = {
@@ -71,7 +71,7 @@ _: {
             };
           immich-db-backup = {
             description = "Immich PostgreSQL database backup";
-            onFailure = ["notify-failure@%n.service"];
+            inherit onFailure;
             path = [config.services.postgresql.package];
             after = ["postgresql.service" "immich-server.service"];
             requires = ["postgresql.service"];

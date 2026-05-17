@@ -7,7 +7,7 @@ _: {
     ...
   }: let
     cfg = config.services.gatus-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
   in {
     options.services.gatus-config = {
       enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
@@ -270,7 +270,7 @@ _: {
       };
 
       systemd.services.gatus = {
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         serviceConfig =
           harden {
             MemoryMax = "512M";

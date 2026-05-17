@@ -7,7 +7,7 @@ _: {
     ...
   }: let
     cfg = config.services.photomap;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     immichMediaDir = config.services.immich.mediaLocation;
     immichUploadDir = "${immichMediaDir}/upload";
     immichLibraryDir = "${immichMediaDir}/library";
@@ -54,7 +54,7 @@ _: {
       };
 
       systemd.services.podman-photomap = {
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         after = ["immich-server.service" "postgresql.service"];
         wants = ["immich-server.service"];
         requires = ["immich-server.service" "postgresql.service"];

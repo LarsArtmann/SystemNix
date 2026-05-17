@@ -6,7 +6,7 @@ _: {
     ...
   }: let
     cfg = config.services.taskchampion-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
   in {
     options.services.taskchampion-config = {
       enable = lib.mkEnableOption "TaskChampion sync server with SystemNix configuration";
@@ -26,7 +26,7 @@ _: {
       };
 
       systemd.services.taskchampion-sync-server = {
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
         serviceConfig =

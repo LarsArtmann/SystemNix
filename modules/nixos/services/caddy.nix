@@ -10,7 +10,7 @@ _: {
     serverCert = config.sops.secrets.dnsblockd_server_cert.path;
     serverKey = config.sops.secrets.dnsblockd_server_key.path;
     authPort = config.services.authelia-config.port;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
 
     bindAddress =
       if config.services.dns-blocker.enable && config.services.dns-blocker.blockInterface != "lo"
@@ -91,7 +91,7 @@ _: {
       systemd.services.caddy = {
         after = ["authelia-main.service"];
         wants = ["authelia-main.service"];
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;

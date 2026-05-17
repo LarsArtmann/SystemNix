@@ -8,9 +8,10 @@ _: {
   }: let
     cfg = config.services.manifest;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    libHelpers = import ../../../lib/default.nix lib;
+    inherit (libHelpers) serviceTypes;
+    inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
-    stateDir = "/var/lib/manifest";
     manifestPort = cfg.port;
 
     secretsDir = ./../../../platforms/nixos/secrets;
@@ -105,6 +106,16 @@ _: {
           pgdata:
             name: manifest_pgdata
       '';
+
+    docker = mkDockerService {
+      name = "manifest";
+      inherit composeFile;
+      envTemplate = config.sops.templates."manifest-env".path;
+      extraServiceConfig = {RestartSec = "10s";};
+      backup = {
+        execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T postgres pg_dump -U manifest manifest > /var/lib/manifest/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /var/lib/manifest/backup -name \"*.sql\" -mtime +30 -delete'";
+      };
+    };
   in {
     options.services.manifest = {
       enable = lib.mkEnableOption "Manifest LLM router";
@@ -136,65 +147,9 @@ _: {
         };
       };
 
-      systemd.tmpfiles.rules = [
-        "d ${stateDir} 0755 root root -"
-        "d ${stateDir}/backup 0755 root root -"
-      ];
-
-      systemd = {
-        services = {
-          manifest = {
-            description = "Manifest — Smart LLM Router";
-            after = ["docker.service" "sops-nix.service"];
-            requires = ["docker.service"];
-            wants = ["sops-nix.service"];
-            wantedBy = ["multi-user.target"];
-            path = [pkgs.docker pkgs.docker-compose];
-
-            preStart = ''
-              ${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} down --remove-orphans || true
-              cp ${config.sops.templates."manifest-env".path} ${stateDir}/.env
-              chmod 600 ${stateDir}/.env
-            '';
-
-            serviceConfig =
-              {
-                ExecStart = "${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} up --remove-orphans";
-                ExecStop = "${pkgs.docker-compose}/bin/docker-compose --env-file ${stateDir}/.env -f ${composeFile} down --timeout 30";
-                WorkingDirectory = stateDir;
-                TimeoutStopSec = "60";
-                KillMode = "process";
-              }
-              // harden {
-                MemoryMax = "2G";
-                ReadWritePaths = [stateDir];
-              }
-              // serviceDefaults {RestartSec = "10s";};
-          };
-
-          manifest-db-backup = {
-            description = "Manifest Database Backup";
-            after = ["manifest.service"];
-            requires = ["docker.service"];
-            onFailure = ["notify-failure@%n.service"];
-            serviceConfig = {
-              Type = "oneshot";
-              ExecStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T postgres pg_dump -U manifest manifest > ${stateDir}/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find ${stateDir}/backup -name \"*.sql\" -mtime +30 -delete'";
-              WorkingDirectory = stateDir;
-            };
-            preStart = "mkdir -p ${stateDir}/backup";
-          };
-        };
-
-        timers.manifest-db-backup = {
-          wantedBy = ["timers.target"];
-          timerConfig = {
-            OnCalendar = "daily";
-            Persistent = true;
-            RandomizedDelaySec = "30m";
-          };
-        };
-      };
+      systemd.tmpfiles.rules = docker.tmpfiles;
+      systemd.services = docker.services;
+      systemd.timers = docker.timers;
     };
   };
 }

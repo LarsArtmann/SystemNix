@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.gitea-repos;
     inherit (config.users) primaryUser;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
     giteaPort = config.services.gitea.settings.server.HTTP_PORT;
     giteaUrl = "http://localhost:${toString giteaPort}";
 
@@ -261,7 +261,7 @@ _: {
           after = ["gitea.service" "gitea-generate-token.service" "network-online.target"];
           wants = ["network-online.target"];
           requires = ["gitea.service"];
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           startLimitIntervalSec = 300;
           startLimitBurst = 3;
           path = [pkgs.curl pkgs.jq pkgs.gh pkgs.sops pkgs.bash];

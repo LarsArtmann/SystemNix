@@ -9,7 +9,7 @@ _: {
     cfg = config.services.comfyui;
     inherit (config.users) primaryUser;
     userHome = config.users.users.${primaryUser}.home;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     rocm = import ../../../lib/rocm.nix {inherit pkgs;};
 
     rocmRuntimeLibs = rocm.runtimeLibs;
@@ -56,7 +56,7 @@ _: {
     config = lib.mkIf cfg.enable {
       systemd.services.comfyui = {
         description = "ComfyUI — Persistent AI Image Generation Server";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         after = ["network.target"];
         wantedBy = ["multi-user.target"];
         startLimitBurst = 3;

@@ -52,7 +52,7 @@ _: {
 
       # ClamAV: socket-activated only — don't block graphical.target at boot.
       systemd.services.clamav-daemon = {
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         wantedBy = lib.mkForce [];
         after = lib.mkForce ["basic.target"];
       };

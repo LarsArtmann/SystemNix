@@ -9,7 +9,7 @@ _: {
     cfg = config.services.authelia-config;
     inherit (config.networking) domain;
     authHost = "auth.${domain}";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     authPort = cfg.port;
 
     mkClient = {
@@ -207,7 +207,7 @@ _: {
       };
 
       systemd.services.authelia-main = {
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;

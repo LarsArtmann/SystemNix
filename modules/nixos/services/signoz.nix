@@ -94,7 +94,7 @@ in {
   }: let
     cfg = config.services.signoz;
     packages = mkPackages pkgs;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
     alerts = import ./signoz-alerts.nix {inherit pkgs lib inputs;};
   in {
     options.services.signoz = {
@@ -251,7 +251,7 @@ in {
           "d /var/log/clickhouse-server 0755 clickhouse clickhouse -"
         ];
         systemd.services.clickhouse = {
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           serviceConfig =
             harden {
               MemoryMax = "4G";
@@ -266,7 +266,7 @@ in {
           description = "SigNoz Observability Platform";
           after = lib.optional cfg.components.clickhouse "clickhouse.service";
           requires = lib.optional cfg.components.clickhouse "clickhouse.service";
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           wantedBy = ["multi-user.target"];
           serviceConfig =
             {
@@ -287,7 +287,7 @@ in {
           description = "SigNoz Provisioning — deploy alert rules, channels, and dashboards";
           after = ["signoz.service"];
           wants = ["signoz.service"];
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           wantedBy = ["signoz.service"];
           path = [pkgs.curl pkgs.jq pkgs.coreutils];
           serviceConfig = {
@@ -388,7 +388,7 @@ in {
           services.amdgpu-metrics = {
             description = "AMD GPU metrics collector for node_exporter textfile";
             path = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.findutils];
-            onFailure = ["notify-failure@%n.service"];
+            inherit onFailure;
             serviceConfig = {
               Type = "oneshot";
               ExecStart = pkgs.writeShellScript "amdgpu-metrics" ''
@@ -472,7 +472,7 @@ in {
         users.groups.systemd-journal-member = lib.mkIf (cfg.components.nodeExporter || cfg.components.cadvisor) {};
         systemd.services.signoz-collector = {
           description = "SigNoz OTel Collector";
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           after = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wants = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wantedBy = ["multi-user.target"];
