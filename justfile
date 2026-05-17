@@ -3,6 +3,7 @@
 #
 # Groups: core, quality, clean, services, desktop, tasks, ai, tools, disk
 
+# Must match networking.local.lanIP in platforms/nixos/system/local-network.nix
 evo_x2_ip := "192.168.1.150"
 
 default:
