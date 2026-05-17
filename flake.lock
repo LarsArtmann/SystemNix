@@ -48,11 +48,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778989960,
-        "narHash": "sha256-JgcxfVjjGcuKa4l8zQDApPIwTrtdY7vhgrq37C3ZuNE=",
+        "lastModified": 1779038845,
+        "narHash": "sha256-xq5Qxn475Ud/YygF3bdPexI/jEJ9/RvnbC2ysYp7QwA=",
         "ref": "master",
-        "rev": "a4629999e4d4b17bf724feea14cb49260453591f",
-        "revCount": 1620,
+        "rev": "416df2cade5e94eb16c3cf2337b82f6ea2c01b26",
+        "revCount": 1623,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -1088,11 +1088,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779036831,
-        "narHash": "sha256-QHcb738sehI5HMMZKzFCNfMHJjmnMdGgyCKGhxsUKRs=",
+        "lastModified": 1779037971,
+        "narHash": "sha256-gXQP3rALOYrgrXCQFLfuQjLHypgEsULJf63BLLqRLCI=",
         "ref": "master",
-        "rev": "356b8ac3e548b20910760981a6aa3bcff729e29e",
-        "revCount": 847,
+        "rev": "3d6aa966ae7a122fcab2e99ab212490abad674dd",
+        "revCount": 866,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -1268,11 +1268,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778993657,
-        "narHash": "sha256-jDM1Et9rTlgnfSQ7VX6rsyTtfG2eUgA4MM15E0YK6IA=",
+        "lastModified": 1779038678,
+        "narHash": "sha256-yBVj8yzTnM6uX6eSRaNxO+R4g8KVlTLcnv92xmeYBO0=",
         "ref": "master",
-        "rev": "3cc1837c0aac77e24409ad0e9e68a8258b47c964",
-        "revCount": 577,
+        "rev": "ce98e480a5107d20b677075ac817687fa3991965",
+        "revCount": 578,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
