@@ -6,8 +6,10 @@
 # This prevents the old behavior of SIGKILLing niri in a crash loop when
 # the GPU driver is truly wedged (requires reboot, not more SIGKILLs).
 
+# shellcheck source=./lib.sh
 set -eu
 
+# shellcheck disable=SC1091
 . "$(dirname "$0")/lib.sh"
 
 state_init "/var/lib/niri-drm-healthcheck" "state" 3
@@ -22,6 +24,7 @@ drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/
 
 if [ "$drm_errors" -ge 10 ]; then
   if state_hit; then
+    # shellcheck disable=SC2154
     echo "niri DRM zombie confirmed ($state_count consecutive checks with errors). Triggering GPU recovery."
     state_reset
     systemctl start gpu-recovery.service 2>/dev/null || {
@@ -29,6 +32,7 @@ if [ "$drm_errors" -ge 10 ]; then
       systemctl reboot 2>/dev/null || true
     }
   else
+    # shellcheck disable=SC2154
     echo "niri DRM errors detected ($drm_errors in 30s, check $state_count/$state_threshold). Waiting for confirmation."
   fi
 else

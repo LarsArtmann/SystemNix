@@ -13,8 +13,10 @@
 #   2. If SDDM doesn't come back in 15s, do VT switch to force CRTC re-enable
 #   3. After 3 consecutive failures, trigger GPU recovery (driver rebind)
 
+# shellcheck source=./lib.sh
 set -eu
 
+# shellcheck disable=SC1091
 . "$(dirname "$0")/lib.sh"
 
 state_init "/var/lib/display-watchdog" "consecutive-failures" 3
@@ -47,6 +49,7 @@ done
 }
 
 if state_hit; then
+  # shellcheck disable=SC2154
   echo "Display watchdog: $state_count consecutive failures. Triggering GPU recovery."
   state_reset
   systemctl start gpu-recovery.service 2>/dev/null || {
@@ -54,6 +57,7 @@ if state_hit; then
     systemctl reboot 2>/dev/null || true
   }
 else
+  # shellcheck disable=SC2154
   echo "Display watchdog: dead display, attempt $state_count (threshold=$state_threshold)"
 
   echo "Attempting display-manager restart..."
