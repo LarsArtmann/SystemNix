@@ -257,6 +257,9 @@
       nethogs # Per-process network bandwidth
       iftop # Network interface bandwidth
 
+      # Privacy & anonymity
+      tor-browser # Anonymous browsing bundle
+
       # Additional ricing tools discovered from community configs
       wl-color-picker # Color picker for Wayland
       swappy # Screenshot annotation tool
