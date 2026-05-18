@@ -166,9 +166,9 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 | # | Task | Effort | Impact |
 |---|------|--------|--------|
-| 12 | **nix-colors → Home Manager migration** | 6h | Consistent theming across all apps |
+| ~~12~~ | ~~nix-colors → Home Manager migration~~ | ~~6h~~ ✅ **DONE** | Consistent theming across all apps |
 | 13 | **Per-threshold SigNoz channel routing** | 2h | Better alert prioritization |
-| 14 | **Move dns-failover authPassword to sops** | 1h | Security improvement |
+| ~~14~~ | ~~Move dns-failover authPassword to sops~~ | ~~1h~~ ✅ **DONE** | Security improvement |
 | 15 | **Add `lib.mkForce false` justification comments** | 1h | Documentation/security audit trail |
 | 16 | **Deploy Dozzle** (`logs.home.lan`) | 1h | Easy Docker log access |
 | 17 | **Consolidate voice-agents Caddy vHost** | 1h | Architecture consistency |
@@ -287,7 +287,8 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 |---------|------------|--------------|
 | Session 45 | 137 | Baseline |
 | Session 46 | 121 | flake-parts + nixpkgs follows consolidation |
-| Session 47 | ~100 | flake-utils follows consolidation (19 orphan nodes removed) |
+| Session 47 (mid) | ~100 | flake-utils follows consolidation (19 orphan nodes removed) |
+| Session 47 (late) | 94 | nix-colors removal (43 nodes removed total from Session 45 baseline) |
 
 ### Remaining Binary Collisions
 

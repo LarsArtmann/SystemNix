@@ -172,6 +172,7 @@
       url = "github:LarsArtmann/treefmt-full-flake";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
