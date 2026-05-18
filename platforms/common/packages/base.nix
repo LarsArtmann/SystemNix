@@ -5,21 +5,7 @@
   otel-tui ? null,
   ...
 }: let
-  # Import modernize from local pkgs if available
   inherit (pkgs.stdenv.hostPlatform) system;
-  modernizePackage =
-    (builtins.tryEval (import ../../../pkgs/modernize.nix {
-      inherit pkgs;
-    })).value or null;
-
-  # Override gopls to remove modernize binary (we use our custom build)
-  goplsWithoutModernize = pkgs.symlinkJoin {
-    name = "gopls-without-modernize";
-    paths = [pkgs.gopls];
-    postBuild = ''
-      rm -f $out/bin/modernize
-    '';
-  };
 
   heliumPackage =
     if builtins.hasAttr "packages" helium && builtins.hasAttr system helium.packages
@@ -148,7 +134,7 @@
 
       # Go development
       go
-      goplsWithoutModernize # Custom override without modernize binary (use our custom build)
+      gopls
       golangci-lint
       golangci-lint-langserver
       go-arch-lint
@@ -228,7 +214,6 @@
       # Wallpaper management tools (Linux-only)
       imagemagick # Image manipulation for wallpaper management
     ]
-    ++ lib.optionals (modernizePackage != null) [modernizePackage]
     ++ lib.optionals stdenv.isLinux [
       awww # Simple Wayland Wallpaper for animated wallpapers (Linux-only)
       geekbench_6 # Geekbench 6 includes AI/ML benchmarking capabilities (Linux-only)

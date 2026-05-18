@@ -104,7 +104,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 | **whisper-asr.service pre-existing failure** | 🟡 P3 | Reported in Session 45 status. Not investigated. | Needs live debugging on evo-x2. |
 | **ollama/engine binary collision** | ⚪ Noise | `pkgs.buildEnv` warning: ollama's `engine` binary collides with mesa-demos `engine`. Cosmetic only. | Could exclude mesa-demos or rename. |
 | **wireshark-cli/wireshark-qt collision** | ✅ Fixed | Removed redundant `wireshark-cli` — `wireshark` (Qt) already ships all CLI tools (tshark, dumpcap, etc.). Committed as `e9dc95a9`. |
-| **modernize/gotools collision** | ⚪ Noise | Both ship `modernize` binary. | See Appendix C — resolved via `goplsWithoutModernize`. |
+| **modernize/gotools collision** | ✅ Resolved | Removed custom `pkgs/modernize.nix` — nixpkgs Go is already 1.26.2, gopls bundles `modernize`. No wrapper needed. |
 
 ---
 
@@ -296,7 +296,7 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 |-----------|--------|---------------|
 | wireshark-cli / wireshark | ✅ Fixed (`e9dc95a9`) | Done |
 | ollama/engine / mesa-demos | ⚪ Open | Exclude mesa-demos or rename |
-| modernize / gotools | ✅ Resolved | Custom build kept, gopls stripped (see Appendix C) |
+| modernize / gotools | ✅ Removed | Custom build deleted — nixpkgs Go already 1.26.2, gopls bundles modernize (see Appendix C) |
 
 ### Appendix C — modernize/gotools Binary Collision
 

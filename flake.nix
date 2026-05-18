@@ -476,9 +476,6 @@
 
         packages =
           {
-            modernize = import ./pkgs/modernize.nix {
-              inherit pkgs;
-            };
             inherit
               (pkgs)
               aw-watcher-utilization
