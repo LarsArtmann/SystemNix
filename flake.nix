@@ -39,9 +39,6 @@
       inputs.utils.follows = "flake-utils";
     };
 
-    # Add nix-colors for declarative color schemes
-    nix-colors.url = "github:misterio77/nix-colors";
-
     # Add nix-homebrew for declarative Homebrew management
     nix-homebrew.url = "github:zhaofengli-wip/nix-homebrew";
 
@@ -247,7 +244,6 @@
     flake-parts,
     nixpkgs,
     home-manager,
-    nix-colors,
     nix-darwin,
     nix-homebrew,
     homebrew-bundle,
@@ -424,11 +420,13 @@
       overwriteBackup = true;
     };
 
+    # Shared theme (Catppuccin Mocha palette)
+    theme = import ./platforms/common/theme.nix;
+
     # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
     sharedHomeManagerSpecialArgs = {
-      inherit nix-colors;
       inherit nix-ssh-config;
-      colorScheme = nix-colors.colorSchemes.catppuccin-mocha;
+      inherit (theme) colorScheme;
     };
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
@@ -559,7 +557,6 @@
             inherit nixpkgs;
             inherit helium;
             inherit nur;
-            inherit nix-colors;
           };
           modules = [
             {
@@ -616,7 +613,6 @@
             inherit (inputs.self) inputs;
             inherit helium;
             inherit (inputs) nur;
-            inherit nix-colors;
             inherit niri;
             inherit otel-tui;
             inherit nix-amd-npu;

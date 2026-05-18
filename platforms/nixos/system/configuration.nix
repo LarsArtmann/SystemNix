@@ -1,7 +1,6 @@
 {
   config,
   pkgs,
-  nix-colors,
   nix-ssh-config,
   lib,
   ...

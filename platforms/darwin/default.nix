@@ -2,7 +2,6 @@
   config,
   pkgs,
   lib,
-  nix-colors,
   ...
 }: {
   # Import Darwin-specific system configurations

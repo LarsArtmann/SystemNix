@@ -12,7 +12,7 @@ in {
       colorSchemeName = lib.mkOption {
         type = lib.types.nonEmptyStr;
         default = theme.colorSchemeName;
-        description = "nix-colors scheme name (must exist in nix-colors.colorSchemes)";
+        description = "Color scheme name (for documentation/reference)";
       };
 
       accent = lib.mkOption {
