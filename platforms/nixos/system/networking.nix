@@ -13,9 +13,10 @@
     };
     enableIPv6 = true;
 
-    # Firewall - deny by default, only allow needed ports
+    # Firewall - deny by default, trust LAN, allow public-facing ports
     firewall = {
       enable = true;
+      trustedInterfaces = ["eno1"];
       allowedTCPPorts = [22 53 80 443];
       allowedUDPPorts = [53 853]; # 53=plain DNS + DoQ, 853=DoQ-over-QUIC
     };
