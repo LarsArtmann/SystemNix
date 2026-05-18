@@ -177,6 +177,73 @@ hash-check:
     fi
     echo "All packages OK"
 
+# Build all upstream overlay packages to verify they compile after flake updates
+[group('quality')]
+test-upstream-builds:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    pkgs=(
+        library-policy hierarchical-errors golangci-lint-auto-configure
+        mr-sync buildflow go-auto-upgrade go-structure-linter
+        branching-flow art-dupl projects-management-automation
+        dnsblockd file-and-image-renamer
+        govalid aw-watcher-utilization netwatch
+        jscpd todo-list-ai
+    )
+    failed=0
+    for pkg in "${pkgs[@]}"; do
+        echo -n "Testing $pkg... "
+        if nix build ".#$pkg" --no-link 2>/dev/null; then
+            echo "OK"
+        else
+            echo "FAIL"
+            failed=$((failed + 1))
+        fi
+    done
+    if [ "$failed" -gt 0 ]; then
+        echo ""
+        echo "FAIL: $failed package(s) failed to build"
+        exit 1
+    fi
+    echo ""
+    echo "All upstream builds OK"
+
+# Auto-discover and update stale vendorHash for Go overlay packages
+# Usage: just update-vendor-hashes [pkgname] (no arg = all)
+[group('quality')]
+update-vendor-hashes PKG="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{ PKG }}" ]; then
+        pkgs=("{{ PKG }}")
+    else
+        pkgs=(
+            library-policy hierarchical-errors golangci-lint-auto-configure
+            mr-sync buildflow go-auto-upgrade go-structure-linter
+            branching-flow art-dupl projects-management-automation
+            dnsblockd file-and-image-renamer
+        )
+    fi
+    updated=0
+    for pkg in "${pkgs[@]}"; do
+        echo -n "Checking $pkg... "
+        output=$(nix build ".$pkg" --no-link 2>&1 || true)
+        if echo "$output" | grep -q "got:"; then
+            new_hash=$(echo "$output" | grep "got:" | awk '{print $2}' | head -1)
+            echo "STALE -> $new_hash"
+            # Find the flake.nix that defines this package
+            # (upstream repos own their own vendorHash)
+            echo "  Manual fix needed: set vendorHash = \"$new_hash\" in the upstream repo's flake.nix"
+            updated=$((updated + 1))
+        else
+            echo "OK"
+        fi
+    done
+    if [ "$updated" -gt 0 ]; then
+        echo ""
+        echo "Found $updated stale hash(s). Update upstream repo(s), then run 'nix flake update <input>'"
+    fi
+
 # ═══════════════════════════════════════════════════════════════════
 #  Clean
 # ═══════════════════════════════════════════════════════════════════

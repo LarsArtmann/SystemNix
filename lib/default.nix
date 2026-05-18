@@ -10,6 +10,12 @@ in {
 
   mkStateDir = path: mode: user: group: "d ${path} ${mode} ${user} ${group} -";
 
+  mkPreparedSource = {
+    pkgs,
+    goPkg,
+  }:
+    import ./prepared-source.nix {inherit pkgs lib goPkg;};
+
   mkHttpCheck = {
     name,
     group,
