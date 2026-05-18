@@ -110,9 +110,11 @@
 
     nix-ssh-config = {
       url = "github:LarsArtmann/nix-ssh-config";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.home-manager.follows = "home-manager";
-      inputs.treefmt-full-flake.follows = "treefmt-full-flake";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+        treefmt-full-flake.follows = "treefmt-full-flake";
+      };
     };
 
     # Crush AI Agent Configuration — global AI assistant settings
@@ -126,9 +128,11 @@
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
     dnsblockd = {
       url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.treefmt-nix.follows = "treefmt-nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
     };
 
     wallpapers-src = {
@@ -162,17 +166,21 @@
     # Niri session manager — automatic window save/restore
     niri-session-manager = {
       url = "github:MTeaHead/niri-session-manager";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.systems.follows = "systems";
-      inputs.treefmt-nix.follows = "treefmt-nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+        treefmt-nix.follows = "treefmt-nix";
+      };
     };
 
     # Treefmt formatter with auto-discovery for nix fmt
     treefmt-full-flake = {
       url = "github:LarsArtmann/treefmt-full-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.treefmt-nix.follows = "treefmt-nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
@@ -185,9 +193,11 @@
     # library-policy — Banned/vulnerable library detector for Go projects
     library-policy = {
       url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
-      inputs.treefmt-nix.follows = "treefmt-nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
@@ -226,69 +236,83 @@
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
     golangci-lint-auto-configure = {
       url = "git+ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.goFindingSrc.follows = "go-finding";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        goFindingSrc.follows = "go-finding";
+      };
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
     mr-sync = {
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.cmdguard.follows = "cmdguard";
-      inputs.go-output.follows = "go-output";
-      inputs.go-branded-id.follows = "go-branded-id";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        cmdguard.follows = "cmdguard";
+        go-output.follows = "go-output";
+        go-branded-id.follows = "go-branded-id";
+      };
     };
 
     # hierarchical-errors — Error handling pattern analyzer for Go projects
     hierarchical-errors = {
       url = "git+ssh://git@github.com/LarsArtmann/hierarchical-errors?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.go-finding.follows = "go-finding";
-      inputs.go-filewatcher.follows = "go-filewatcher";
-      inputs.gogenfilter.follows = "gogenfilter";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        go-finding.follows = "go-finding";
+        go-filewatcher.follows = "go-filewatcher";
+        gogenfilter.follows = "gogenfilter";
+      };
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.cmdguard.follows = "cmdguard";
-      inputs.go-finding.follows = "go-finding";
-      inputs.go-output.follows = "go-output";
-      inputs.go-branded-id.follows = "go-branded-id";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        cmdguard.follows = "cmdguard";
+        go-finding.follows = "go-finding";
+        go-output.follows = "go-output";
+        go-branded-id.follows = "go-branded-id";
+      };
     };
 
     # go-auto-upgrade — Automate Go library upgrades
     go-auto-upgrade = {
       url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.cmdguard.follows = "cmdguard";
-      inputs.go-finding.follows = "go-finding";
-      inputs.go-output.follows = "go-output";
-      inputs.go-branded-id.follows = "go-branded-id";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        cmdguard.follows = "cmdguard";
+        go-finding.follows = "go-finding";
+        go-output.follows = "go-output";
+        go-branded-id.follows = "go-branded-id";
+      };
     };
 
     # go-structure-linter — Go project structure validator
     go-structure-linter = {
       url = "git+ssh://git@github.com/LarsArtmann/go-structure-linter?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.go-finding.follows = "go-finding";
-      inputs.go-output.follows = "go-output";
-      inputs.gogenfilter.follows = "gogenfilter";
-      inputs.go-branded-id.follows = "go-branded-id";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        go-finding.follows = "go-finding";
+        go-output.follows = "go-output";
+        gogenfilter.follows = "gogenfilter";
+        go-branded-id.follows = "go-branded-id";
+      };
     };
 
     # branching-flow — Error context preservation analyzer
     branching-flow = {
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.go-finding.follows = "go-finding";
-      inputs.go-output.follows = "go-output";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        go-finding.follows = "go-finding";
+        go-output.follows = "go-output";
+      };
     };
 
     # art-dupl — Code duplication detector
@@ -301,13 +325,15 @@
     # projects-management-automation — CLI for managing multiple projects with workflow automation
     projects-management-automation = {
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
-      inputs.cmdguard.follows = "cmdguard";
-      inputs.go-output.follows = "go-output";
-      inputs.go-branded-id.follows = "go-branded-id";
-      inputs.go-filewatcher.follows = "go-filewatcher";
-      inputs.gogenfilter.follows = "gogenfilter";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils";
+        cmdguard.follows = "cmdguard";
+        go-output.follows = "go-output";
+        go-branded-id.follows = "go-branded-id";
+        go-filewatcher.follows = "go-filewatcher";
+        gogenfilter.follows = "gogenfilter";
+      };
     };
   };
 
