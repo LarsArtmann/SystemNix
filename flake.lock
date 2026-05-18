@@ -1344,11 +1344,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1779132679,
-        "narHash": "sha256-QBe2VOLAJS2cOt4p19suHN3GDPaPoqEd1C5sEMQkmA4=",
+        "lastModified": 1779133926,
+        "narHash": "sha256-4sTttVu8fzl77NVG9jyigGNsT4KzUcW7w8xpGJZMlMM=",
         "ref": "master",
-        "rev": "a80f8163e120a6d21ce9708cf843c82f0d2b8cdd",
-        "revCount": 716,
+        "rev": "5cfcd5678e8b91bea9d23058a91c41babaadeff0",
+        "revCount": 717,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },

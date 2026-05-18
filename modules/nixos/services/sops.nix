@@ -107,7 +107,7 @@ in {
             owner = primaryUser;
             group = "users";
             restartUnits = ["monitor365.service" "monitor365-server.service"];
-          } ["monitor365_cloud_auth_token" "monitor365_server_jwt_secret"]
+          } ["cloud_auth_token" "server_jwt_secret"]
           // mkSecrets "signoz.yaml" {
             owner = "signoz";
             group = "signoz";
@@ -153,7 +153,7 @@ in {
             group = "users";
             restartUnits = ["monitor365.service" "monitor365-server.service"];
             content = ''
-              MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.monitor365_server_jwt_secret}
+              MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
             '';
           };
 

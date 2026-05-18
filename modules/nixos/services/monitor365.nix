@@ -34,7 +34,7 @@ _: {
       interval_seconds = ${toString interval}
     '';
 
-    authTokenFile = config.sops.secrets.monitor365_cloud_auth_token.path;
+    authTokenFile = config.sops.secrets.cloud_auth_token.path;
     sopsEnvPath = config.sops.templates."monitor365-env".path;
 
     agentConfig = pkgs.writeText "monitor365-config.toml" ''
