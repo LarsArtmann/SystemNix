@@ -1391,11 +1391,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779131065,
-        "narHash": "sha256-9PZ3n6ogZJZzVMHi+VwO5RcZBUMwm7rjLKYOMwI3rJg=",
+        "lastModified": 1779131695,
+        "narHash": "sha256-sZiCvf7qKpSpVtN7OtBfnuYhswATk1lndBc+7inTfgs=",
         "ref": "master",
-        "rev": "1ca9d2b14001c7fc195846050bf27dd56dcbb31b",
-        "revCount": 62,
+        "rev": "3a9b403e2846daf6d0373a018bed90004cfa512a",
+        "revCount": 65,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mr-sync"
       },
