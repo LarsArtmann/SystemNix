@@ -320,6 +320,28 @@
         "type": "github"
       }
     },
+    "flake-parts_2": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "nix-ssh-config",
+          "treefmt-full-flake",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772408722,
+        "narHash": "sha256-rHuJtdcOjK7rAHpHphUb1iCvgkU3GpfvicLMwwnfMT0=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f20dc5d9b8027381c474144ecabc9034d6a839a3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -1156,11 +1178,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1779132682,
-        "narHash": "sha256-M/wIgL4ow0/2RrgV1MWBZqeoKqinTrv2EmUoCd9DcP0=",
+        "lastModified": 1779136321,
+        "narHash": "sha256-MEpvAvEuONhxaszoH7qiVwWcH1I3nDf4aGHUxJ4//PA=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "83f1e922ae03e5f2704e767474d4b3d70550c067",
+        "rev": "013709a53d60dc639a11b946eec40eb4f4195c3a",
         "type": "github"
       },
       "original": {
@@ -1505,6 +1527,22 @@
     },
     "nixpkgs_2": {
       "locked": {
+        "lastModified": 1774386573,
+        "narHash": "sha256-4hAV26quOxdC6iyG7kYaZcM3VOskcPUrdCQd/nx8obc=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "46db2e09e1d3f113a13c0d7b81e2f221c63b8ce9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_3": {
+      "locked": {
         "lastModified": 1776949667,
         "narHash": "sha256-GMSVw35Q+294GlrTUKlx087E31z7KurReQ1YHSKp5iw=",
         "owner": "NixOS",
@@ -1550,11 +1588,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779136134,
-        "narHash": "sha256-jRBNmgjhgATA8p9qRIJy0Tm/dqR4AFMAwauNqBO5+cc=",
+        "lastModified": 1779137270,
+        "narHash": "sha256-a22/ZtGkTPdcJGSUSRwyYAo3o5IjcXU/5QRsAlWXBbY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "0ab4d985ea58422e4748533b9d80d6254c846ee6",
+        "rev": "3597c5b9d064332b984fdd82f53b157814271692",
         "type": "github"
       },
       "original": {
@@ -1767,7 +1805,7 @@
         "nix-homebrew": "nix-homebrew",
         "nix-ssh-config": "nix-ssh-config",
         "nixos-hardware": "nixos-hardware",
-        "nixpkgs": "nixpkgs_2",
+        "nixpkgs": "nixpkgs_3",
         "nur": "nur",
         "otel-tui": "otel-tui",
         "projects-management-automation": "projects-management-automation",
@@ -2064,12 +2102,8 @@
     },
     "treefmt-full-flake": {
       "inputs": {
-        "flake-parts": [
-          "flake-parts"
-        ],
-        "nixpkgs": [
-          "nixpkgs"
-        ],
+        "flake-parts": "flake-parts_2",
+        "nixpkgs": "nixpkgs_2",
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
