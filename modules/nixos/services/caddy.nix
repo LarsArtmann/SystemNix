@@ -75,12 +75,6 @@ _: {
             '';
           };
           "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
-          "comfyui.${domain}" = {
-            extraConfig = ''
-              ${tlsConfig}
-              reverse_proxy localhost:${toString config.services.comfyui.port}
-            '';
-          };
           "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
           "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
         };

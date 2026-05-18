@@ -79,7 +79,7 @@ _A brutally honest audit of every feature the project actually has._
 | Ollama (LLM inference) | ✅ | `ai-stack.nix` | ROCm GPU, flash attention, 4 parallel, q8_0 KV, 24h keep-alive, user `lars` in render group |
 | llama.cpp (standalone) | ✅ | `ai-stack.nix` | ROCWMMA + MFMA custom build, installed alongside Ollama |
 | Unsloth Studio | 🔧 | `ai-stack.nix` | Optional, disabled by default — PyTorch ROCm 6.3, Node.js frontend build, port 8888 |
-| ComfyUI (image generation) | ✅ | `comfyui.nix` | ROCm GPU, bf16, OOMScoreAdjust=-100, references `/data/ai/models/comfyui` |
+| ComfyUI (image generation) | ❌ Removed | `comfyui.nix` | Disabled — prefer using AI models via code directly |
 | Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — enabled but may need verification |
 | Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload |
 

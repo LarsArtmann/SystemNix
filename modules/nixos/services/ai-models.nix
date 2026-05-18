@@ -40,7 +40,6 @@ _: {
           ollama-models = "${cfg.baseDir}/models/ollama/models";
           gguf = "${cfg.baseDir}/models/gguf";
           whisper = "${cfg.baseDir}/models/whisper";
-          comfyui = "${cfg.baseDir}/models/comfyui";
           jan = "${cfg.baseDir}/models/jan";
           vision = "${cfg.baseDir}/models/vision";
           image = "${cfg.baseDir}/models/image";
@@ -64,7 +63,6 @@ _: {
           cfg.paths.ollama
           cfg.paths.gguf
           cfg.paths.whisper
-          cfg.paths.comfyui
           cfg.paths.jan
           cfg.paths.vision
           cfg.paths.image

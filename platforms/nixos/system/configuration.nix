@@ -198,9 +198,9 @@
         enable = true;
       };
 
-      # ComfyUI — persistent AI image generation (Z-Image-Turbo stays in GPU memory)
+      # ComfyUI — disabled: prefer using AI models via code directly
       comfyui = {
-        enable = true;
+        enable = false;
       };
 
       # Minecraft server (local network only, whitelisted)

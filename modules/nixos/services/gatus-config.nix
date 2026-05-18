@@ -99,12 +99,6 @@ _: {
               interval = "60s";
             })
             (mkHttpCheck {
-              name = "ComfyUI";
-              group = "AI";
-              url = "http://localhost:${toString config.services.comfyui.port}";
-              interval = "5m";
-            })
-            (mkHttpCheck {
               name = "Node Exporter";
               group = "Monitoring";
               url = "http://localhost:${toString nodePort}/metrics";
