@@ -70,7 +70,7 @@
   # VM sysctl tuning for AI/ML workloads (128GB unified memory)
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = lib.mkForce 0; # Heuristic overcommit — prevents wild allocation beyond capacity (overrides Redis's "1")
-    "vm.swappiness" = 10; # Low swappiness: swap only under real pressure, keep RAM free for AI/GPU workloads
+    "vm.swappiness" = 1; # Minimum swap usage — 128GB RAM makes swap unnecessary for normal use
     "vm.dirty_ratio" = 10; # Start writeback at 10% memory (~13GB)
     "vm.dirty_background_ratio" = 3; # Background writeback at 3% (~4GB)
     "vm.min_free_kbytes" = 2097152; # Keep 2GB free for kernel/GPU allocations
@@ -183,13 +183,11 @@
   # Force performance governor — desktop/workstation with no battery concern
   powerManagement.cpuFreqGovernor = "performance";
 
-  # ZRAM: compressed in-memory swap — buffer before hitting slow disk swap.
-  # memoryPercent is a VIRTUAL limit (not pre-allocation). Actual RAM used grows on-demand.
-  # 25% = ~15-31GB virtual device (depending on visible RAM). At 2-3x compression, effective
-  # ~30-93GB buffer before disk swap. Combined with swappiness=10, the kernel keeps hot pages
-  # in raw RAM and only compresses cold pages under real pressure.
+  # ZRAM: minimal compressed swap — 128GB RAM makes this unnecessary for normal use.
+  # 5% = ~6.4GB virtual device. Only used as last-resort emergency buffer.
+  # swappiness=1 ensures the kernel avoids swap unless critically needed.
   zramSwap = {
     enable = true;
-    memoryPercent = 25;
+    memoryPercent = 5;
   };
 }
