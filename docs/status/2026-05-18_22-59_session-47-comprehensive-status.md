@@ -103,7 +103,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 | **photomap disabled** | 🟡 P3 | Commented out in configuration.nix due to Podman config permission issue. | Not investigated. |
 | **whisper-asr.service pre-existing failure** | 🟡 P3 | Reported in Session 45 status. Not investigated. | Needs live debugging on evo-x2. |
 | **ollama/engine binary collision** | ⚪ Noise | `pkgs.buildEnv` warning: ollama's `engine` binary collides with mesa-demos `engine`. Cosmetic only. | Could exclude mesa-demos or rename. |
-| **wireshark-cli/wireshark-qt collision** | ⚪ Noise | Both packages ship identical binaries (tshark, dumpcap, etc.). buildEnv silently ignores. | Could use only `wireshark-qt` which includes CLI tools. |
+| **wireshark-cli/wireshark-qt collision** | ✅ Fixed | Removed redundant `wireshark-cli` — `wireshark` (Qt) already ships all CLI tools (tshark, dumpcap, etc.). Committed as `e9dc95a9`. |
 | **modernize/gotools collision** | ⚪ Noise | Both ship `modernize` binary. | Could remove one. |
 
 ---
@@ -112,7 +112,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 ### Architecture & Code Quality
 
-1. **Eliminate package collisions** — 3 binary collisions (ollama/engine, wireshark, modernize) suggest duplicate packages in `base.nix`. Audit and remove redundant entries.
+1. **Eliminate package collisions** — 2 remaining binary collisions (ollama/engine, modernize). Wireshark collision fixed (commit `e9dc95a9`).
 2. **Fix `hostPlatform` deprecation** — One-line fix in `hardware-configuration.nix`, but it's auto-generated so needs a comment or post-generate patch.
 3. **Consolidate Docker service patterns** — 5 Docker-based services (openseo, manifest, twenty, hermes parts, signoz). The `mkDockerServiceFactory` is good but each module still has significant boilerplate. Consider extracting common compose patterns.
 4. **Standardize `_local_deps` pattern** — 5 repos use it with slight variations. The `file-and-image-renamer` has the most robust version (auto-injects missing deps). Propagate that pattern to all repos.
@@ -120,7 +120,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 ### Operations & Observability
 
-6. **Deploy Session 46 changes** — The flake.lock optimization (137→121 nodes, 10→1 flake-parts) is committed but never deployed. Needs `just switch` on evo-x2.
+6. **Deploy Session 46+47 changes** — Flake.lock optimizations committed and deployed. Flake-utils consolidation (commit `cbf5902a`, 10→1 instances) also committed and pushed.
 7. **Add SigNoz dashboards for new services** — OpenSEO, Twenty, Manifest may not have SigNoz dashboards yet.
 8. **Monitor365 live verification** — Renamed sops secret keys in Session 43 — never verified the agent actually works with new keys.
 9. **Add Gatus endpoints for new services** — Verify Twenty, Manifest, OpenSEO are all monitored.

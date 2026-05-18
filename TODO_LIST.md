@@ -36,11 +36,11 @@
 
 From `docs/planning/2026-05-11_11-47-NIX-FLAKE-STANDARDIZATION.md`:
 
-- [ ] Compute real `vendorHash` for BuildFlow (fix fakeHash)
-- [ ] Compute real `vendorHash` for PMA (replace null)
+- [x] Compute real `vendorHash` for BuildFlow (fix fakeHash) — done upstream in `f4c07772`
+- [x] Compute real `vendorHash` for PMA (replace null) — done upstream in `c4987a57`
 - [ ] Convert go-auto-upgrade `path:` inputs to SSH URLs
 - [ ] Create shared flake-parts template (mkGoPackage, checks, devshells)
-- [ ] Create `flake.nix` for hierarchical-errors (currently has none)
+- [x] Create `flake.nix` for hierarchical-errors — done upstream in `516f778`
 
 ---
 
