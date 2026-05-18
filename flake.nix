@@ -22,6 +22,9 @@
     # Add flake-parts for modular architecture
     flake-parts.url = "github:hercules-ci/flake-parts";
 
+    # Single flake-utils source — all inputs follow this to avoid 10+ duplicate instances
+    flake-utils.url = "github:numtide/flake-utils";
+
     # Add NUR (Nix User Repository) for other packages
     nur = {
       url = "github:nix-community/NUR";
@@ -33,6 +36,7 @@
     helium = {
       url = "github:vikingnope/helium-browser-nix-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.utils.follows = "flake-utils";
     };
 
     # Add nix-colors for declarative color schemes
@@ -63,6 +67,7 @@
     otel-tui = {
       url = "github:ymtdzzz/otel-tui";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # AMD NPU (XDNA) driver for Ryzen AI Max+ Strix Halo
@@ -131,6 +136,7 @@
     monitor365 = {
       url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
@@ -159,6 +165,7 @@
     todo-list-ai = {
       url = "git+ssh://git@github.com/LarsArtmann/todo-list-ai?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # library-policy — Banned/vulnerable library detector for Go projects
@@ -179,6 +186,7 @@
     golangci-lint-auto-configure = {
       url = "git+ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
@@ -191,18 +199,21 @@
     hierarchical-errors = {
       url = "git+ssh://git@github.com/LarsArtmann/hierarchical-errors?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # go-auto-upgrade — Automate Go library upgrades
     go-auto-upgrade = {
       url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # go-structure-linter — Go project structure validator
@@ -215,6 +226,7 @@
     branching-flow = {
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
 
     # art-dupl — Code duplication detector
@@ -227,6 +239,7 @@
     projects-management-automation = {
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
     };
   };
 
