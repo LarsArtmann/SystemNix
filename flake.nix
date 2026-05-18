@@ -23,7 +23,19 @@
     flake-parts.url = "github:hercules-ci/flake-parts";
 
     # Single flake-utils source — all inputs follow this to avoid 10+ duplicate instances
-    flake-utils.url = "github:numtide/flake-utils";
+    flake-utils = {
+      url = "github:numtide/flake-utils";
+      inputs.systems.follows = "systems";
+    };
+
+    # Single nix-systems source — flake-utils and niri-session-manager follow this
+    systems.url = "github:nix-systems/default";
+
+    # Single treefmt-nix source — dnsblockd, library-policy, niri-session-manager follow this
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     # Add NUR (Nix User Repository) for other packages
     nur = {
@@ -100,6 +112,7 @@
       url = "github:LarsArtmann/nix-ssh-config";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
+      inputs.treefmt-full-flake.follows = "treefmt-full-flake";
     };
 
     # Crush AI Agent Configuration — global AI assistant settings
@@ -115,6 +128,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
     wallpapers-src = {
@@ -149,6 +163,8 @@
     niri-session-manager = {
       url = "github:MTeaHead/niri-session-manager";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.systems.follows = "systems";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
     # Treefmt formatter with auto-discovery for nix fmt
@@ -170,6 +186,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
+      inputs.treefmt-nix.follows = "treefmt-nix";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
