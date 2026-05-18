@@ -129,6 +129,41 @@ in {
       step = 60;
       target = 3;
     };
+    "signoz/rules/nvme-thermal.json".source = mkRule {
+      name = "NVMe SSD Thermal Warning (>70°C)";
+      description = "NVMe SSD temperature above 70°C on {{.Labels.device}} — approaching throttle limit";
+      query = "node_nvme_temperature_celsius";
+      target = 70;
+    };
+    "signoz/rules/nvme-endurance.json".source = mkRule {
+      name = "NVMe SSD Endurance Critical (>50%)";
+      description = "NVMe SSD has consumed over 50% of rated endurance on {{.Labels.device}} — plan for replacement";
+      query = "node_nvme_percentage_used";
+      target = 50;
+    };
+    "signoz/rules/nvme-media-errors.json".source = mkRule {
+      name = "NVMe SSD Media Errors Detected";
+      description = "NVMe SSD has media/data integrity errors on {{.Labels.device}} — possible flash cell degradation";
+      query = "node_nvme_media_errors_total";
+      target = 0;
+    };
+    "signoz/rules/nvme-spare-low.json".source = mkRule {
+      name = "NVMe SSD Spare Blocks Low (<30%)";
+      description = "NVMe SSD available spare below 30% on {{.Labels.device}} — drive aging";
+      query = "node_nvme_available_spare_percent";
+      step = 60;
+      op = "AND_NOT";
+      target = 30;
+      interval = "5m";
+    };
+    "signoz/rules/nvme-critical-warning.json".source = mkRule {
+      name = "NVMe SSD Critical Warning";
+      description = "NVMe SSD critical warning flag is set on {{.Labels.device}} — check SMART immediately";
+      query = "node_nvme_critical_warning";
+      step = 60;
+      target = 0;
+      interval = "1m";
+    };
   };
 
   dashboards = {

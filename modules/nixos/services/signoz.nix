@@ -433,6 +433,100 @@ in {
               OnUnitActiveSec = "30s";
             };
           };
+
+          services.nvme-metrics = {
+            description = "NVMe SMART metrics collector for node_exporter textfile";
+            path = [pkgs.nvme-cli pkgs.coreutils pkgs.gnugrep];
+            inherit onFailure;
+            serviceConfig =
+              {
+                Type = "oneshot";
+                ExecStart = pkgs.writeShellScript "nvme-metrics" ''
+                  set -euo pipefail
+                  OUT="/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom"
+                  TMP="''${OUT}.tmp"
+                  DEVICE="/dev/nvme0n1"
+
+                  if ! command -v nvme &>/dev/null; then
+                    echo "nvme-cli not found, skipping" >&2
+                    exit 0
+                  fi
+
+                  SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || {
+                    echo "Failed to read SMART log from $DEVICE" >&2
+                    exit 1
+                  }
+
+                  DEV_NAME=$(basename "$DEVICE")
+
+                  extract() {
+                    local key="$1"
+                    echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+"
+                  }
+
+                  TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
+                  TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+
+                  {
+                    echo "# HELP node_nvme_temperature_celsius NVMe SSD temperature in Celsius"
+                    echo "# TYPE node_nvme_temperature_celsius gauge"
+                    echo "node_nvme_temperature_celsius{device=\"''${DEV_NAME}\"} ''${TEMP_CELSIUS}"
+
+                    echo "# HELP node_nvme_critical_warning NVMe critical warning flags (0 = none)"
+                    echo "# TYPE node_nvme_critical_warning gauge"
+                    echo "node_nvme_critical_warning{device=\"''${DEV_NAME}\"} $(extract critical_warning)"
+
+                    echo "# HELP node_nvme_available_spare_percent NVMe available spare as percentage"
+                    echo "# TYPE node_nvme_available_spare_percent gauge"
+                    echo "node_nvme_available_spare_percent{device=\"''${DEV_NAME}\"} $(extract available_spare)"
+
+                    echo "# HELP node_nvme_percentage_used NVMe endurance used percentage (0-100, 100 = worn out)"
+                    echo "# TYPE node_nvme_percentage_used gauge"
+                    echo "node_nvme_percentage_used{device=\"''${DEV_NAME}\"} $(extract percentage_used)"
+
+                    echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 512 bytes)"
+                    echo "# TYPE node_nvme_data_units_read_total counter"
+                    echo "node_nvme_data_units_read_total{device=\"''${DEV_NAME}\"} $(extract data_units_read)"
+
+                    echo "# HELP node_nvme_data_units_written_total NVMe data units written (1 unit = 512 bytes)"
+                    echo "# TYPE node_nvme_data_units_written_total counter"
+                    echo "node_nvme_data_units_written_total{device=\"''${DEV_NAME}\"} $(extract data_units_written)"
+
+                    echo "# HELP node_nvme_power_cycles_total NVMe power cycle count"
+                    echo "# TYPE node_nvme_power_cycles_total counter"
+                    echo "node_nvme_power_cycles_total{device=\"''${DEV_NAME}\"} $(extract power_cycles)"
+
+                    echo "# HELP node_nvme_power_on_hours_total NVMe power-on hours"
+                    echo "# TYPE node_nvme_power_on_hours_total counter"
+                    echo "node_nvme_power_on_hours_total{device=\"''${DEV_NAME}\"} $(extract power_on_hours)"
+
+                    echo "# HELP node_nvme_unsafe_shutdowns_total NVMe unsafe shutdown count"
+                    echo "# TYPE node_nvme_unsafe_shutdowns_total counter"
+                    echo "node_nvme_unsafe_shutdowns_total{device=\"''${DEV_NAME}\"} $(extract unsafe_shutdowns)"
+
+                    echo "# HELP node_nvme_media_errors_total NVMe media and data integrity errors"
+                    echo "# TYPE node_nvme_media_errors_total counter"
+                    echo "node_nvme_media_errors_total{device=\"''${DEV_NAME}\"} $(extract media_errors)"
+
+                    echo "# HELP node_nvme_error_log_entries_total NVMe error log entry count"
+                    echo "# TYPE node_nvme_error_log_entries_total counter"
+                    echo "node_nvme_error_log_entries_total{device=\"''${DEV_NAME}\"} $(extract num_err_log_entries)"
+                  } > "$TMP"
+
+                  mv "$TMP" "$OUT"
+                '';
+              }
+              // harden {};
+          };
+
+          timers.nvme-metrics = {
+            description = "Collect NVMe SMART metrics every 60s";
+            wantedBy = ["timers.target"];
+            timerConfig = {
+              OnBootSec = "30s";
+              OnUnitActiveSec = "60s";
+            };
+          };
         };
       })
 
