@@ -104,7 +104,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 | **whisper-asr.service pre-existing failure** | 🟡 P3 | Reported in Session 45 status. Not investigated. | Needs live debugging on evo-x2. |
 | **ollama/engine binary collision** | ⚪ Noise | `pkgs.buildEnv` warning: ollama's `engine` binary collides with mesa-demos `engine`. Cosmetic only. | Could exclude mesa-demos or rename. |
 | **wireshark-cli/wireshark-qt collision** | ✅ Fixed | Removed redundant `wireshark-cli` — `wireshark` (Qt) already ships all CLI tools (tshark, dumpcap, etc.). Committed as `e9dc95a9`. |
-| **modernize/gotools collision** | ⚪ Noise | Both ship `modernize` binary. | Could remove one. |
+| **modernize/gotools collision** | ⚪ Noise | Both ship `modernize` binary. | See Appendix C — resolved via `goplsWithoutModernize`. |
 
 ---
 
@@ -296,11 +296,61 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 |-----------|--------|---------------|
 | wireshark-cli / wireshark | ✅ Fixed (`e9dc95a9`) | Done |
 | ollama/engine / mesa-demos | ⚪ Open | Exclude mesa-demos or rename |
-| modernize / gotools | ⚪ Open | Remove one package |
+| modernize / gotools | ✅ Resolved | Custom build kept, gopls stripped (see Appendix C) |
+
+### Appendix C — modernize/gotools Binary Collision
+
+**Date:** 2026-05-18
+
+#### The Problem
+
+The `modernize` Go linter binary ships from **two sources** on PATH:
+
+1. **`pkgs/modernize.nix`** — Custom build from `golang/tools` at pinned commit `ecc727ef`, built with Go 1.26 (`buildGo126Module`). Only compiles the `modernize` subpackage (`go/analysis/passes/modernize/cmd/modernize`).
+
+2. **`pkgs.gopls`** (nixpkgs) — The standard `gopls` package bundles `modernize` as an auxiliary binary in `$out/bin/` alongside `gopls` itself.
+
+Having both on PATH creates a silent collision — whichever appears first in the PATH wins, and they may be built at different versions or with different Go toolchains.
+
+#### The Resolution
+
+The fix in `platforms/common/packages/base.nix:16-22` creates `goplsWithoutModernize` — a `symlinkJoin` wrapper around `pkgs.gopls` that strips the `modernize` binary:
+
+```nix
+goplsWithoutModernize = pkgs.symlinkJoin {
+  name = "gopls-without-modernize";
+  paths = [pkgs.gopls];
+  postBuild = ''
+    rm -f $out/bin/modernize
+  '';
+};
+```
+
+This ensures only the custom `pkgs/modernize.nix` version (pinned, Go 1.26) survives on PATH.
+
+#### Why Keep the Custom Build?
+
+- **Go version control** — Built with Go 1.26 via `buildGo126Module`, whereas nixpkgs `gopls` uses the default Go version.
+- **Commit pinning** — Locked to a specific upstream `golang/tools` commit, independent of nixpkgs' gopls release cadence.
+- **Build isolation** — Only compiles the `modernize` subpackage, not the entire `golang/tools` monorepo that `gopls` drags in.
+
+#### Files Involved
+
+| File | Role |
+|------|------|
+| `pkgs/modernize.nix` | Custom `modernize` build (Go 1.26, pinned commit) |
+| `platforms/common/packages/base.nix:10-13` | Conditional import of `modernize.nix` with `tryEval` fallback |
+| `platforms/common/packages/base.nix:16-22` | `goplsWithoutModernize` — strips `modernize` from gopls |
+| `platforms/common/packages/base.nix:151` | Installs `goplsWithoutModernize` instead of `pkgs.gopls` |
+| `platforms/common/packages/base.nix:231` | Installs custom `modernizePackage` conditionally |
+
+---
 
 ### Status Doc Corrections
 
-- Section D (Totally Fucked Up): wireshark collision upgraded from ⚪ Noise → ✅ Fixed
+- Section D (Totally Fucked Up): modernize/gotools collision upgraded from ⚪ Noise → ✅ Resolved (see Appendix C)
+- Section E.1: Updated collision count — modernize resolved, only ollama/engine remains
+- Appendix A (Remaining Binary Collisions): modernize/gotools marked ✅ Resolved
 - Section E.1: Updated collision count from 3 → 2 remaining
 - Section E.6: Updated deploy status to reflect Session 46+47 changes committed and pushed
 - Section F P1 #6: Removed wireshark from task, reduced estimated effort from 30→20 min

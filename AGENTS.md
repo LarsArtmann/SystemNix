@@ -766,16 +766,36 @@ The flake evaluation memory is dominated by **nixpkgs instantiations** — each 
 | Cleaned orphaned lock nodes | 137 → 130 nodes | ~0.5 GB |
 | **Total estimated savings** | | **~10-16 GB** |
 
+**Lockfile deduplication (session 2026-05-18 phase 2):**
+
+| Change | Nodes removed |
+|--------|-------------|
+| Added `flake-utils` top-level + follows for 9 inputs + `utils` follows for helium | 19 |
+| Added `systems` top-level + follows for flake-utils, niri-session-manager | 1 |
+| Added `treefmt-nix` top-level + follows for dnsblockd, library-policy, niri-session-manager, treefmt-full-flake | 4 |
+| `nix-ssh-config.treefmt-full-flake` follows top-level → eliminated old treefmt-full-flake + flake-parts_2 + nixpkgs_2 | 4 |
+| `niri-session-manager.{systems,treefmt-nix}` follows top-level | 2 |
+| **Total** | **123 → 93 nodes (24.4% reduction)** |
+
+**Remaining duplicates (require upstream changes):**
+- Go private repo transitive deps (cmdguard, go-branded-id, go-finding, go-output, go-filewatcher, gogenfilter) — 23 suffixed nodes. These are `flake: false` source-only inputs within each repo. Dedup requires upstream repos to accept shared library inputs as overridable, then add follows from top-level. Safe ONLY for identical-rev groups.
+- hermes-agent internals (pyproject-nix ×2, uv2nix ×1) — third-party controlled
+- nix-colors nixpkgs-lib — third-party controlled
+
 **Lockfile hygiene rules:**
 - Every input with a `nixpkgs` dependency MUST have `inputs.nixpkgs.follows = "nixpkgs"`
 - Every input with a `flake-parts` dependency SHOULD have `inputs.flake-parts.follows = "flake-parts"`
+- Every input with a `flake-utils` dependency MUST have `inputs.flake-utils.follows = "flake-utils"`
+- Every input with a `systems` dependency SHOULD have `inputs.systems.follows = "systems"`
+- Every input with a `treefmt-nix` dependency SHOULD have `inputs.treefmt-nix.follows = "treefmt-nix"`
 - After adding new follows, manually verify the lock resolves correctly: `python3 -c "import json; l=json.load(open('flake.lock')); print(l['nodes']['<input>']['inputs']['nixpkgs'])"` — should show `["nixpkgs"]`, not a direct node reference
 - `nix flake lock --update-input <name>` does NOT re-resolve follows. If a lock entry shows a direct reference instead of follows, manually edit `flake.lock` to change `"nixpkgs_X"` → `["nixpkgs"]` and run `nix flake lock` to clean up orphans
 
-**Remaining unavoidable nixpkgs instances:**
-- `nixpkgs` (nixos-unstable) — used by ALL follows chains
-- `nixpkgs_3` (root's pinned commit) — the actual root input
+**Remaining nixpkgs instances:**
+- `nixpkgs` — the root input, used by ALL follows chains
 - `nixpkgs-stable` (nixos-25.11) — niri's stable build dependency
+
+Previous rogue instances eliminated: `nixpkgs_2` (from nix-ssh-config's treefmt-full-flake) now follows top-level nixpkgs.
 
 ## Essential Commands
 
@@ -997,34 +1017,43 @@ hermes cron list          # List cron jobs
 | `nix-darwin` | macOS system management | Yes |
 | `home-manager` | User configuration | Yes |
 | `flake-parts` | Modular flake architecture | No (no nixpkgs input) |
+| `flake-utils` | Unified flake-utils source (follows by 9 inputs) | — |
+| `systems` | Unified nix-systems source (follows by flake-utils, niri-session-manager) | — |
+| `treefmt-nix` | Unified treefmt-nix source (follows by dnsblockd, library-policy, niri-session-manager, treefmt-full-flake) | Yes |
 | `niri` | Wayland compositor | Yes |
-| `nix-homebrew` | Homebrew management (macOS) | No (no nixpkgs input) |
+| `nix-homebrew` | Homebrew management (macOS) | No |
 | `sops-nix` | Secrets with age | Yes |
-| `nix-amd-npu` | AMD XDNA NPU driver | Yes |
-| `nix-ssh-config` | SSH configuration | Yes (+ HM) |
+| `nix-amd-npu` | AMD XDNA NPU driver | Yes (+ flake-parts) |
+| `nix-ssh-config` | SSH configuration | Yes (+ HM, treefmt-full-flake) |
 | `crush-config` | AI assistant config | Yes (+ flake-parts) |
 | `hermes-agent` | AI agent gateway (Discord, cron) | Yes (+ flake-parts) |
-| `nix-colors` | Color schemes | No (no nixpkgs input) |
+| `nix-colors` | Color schemes | No |
 | `silent-sddm` | SDDM theme | Yes |
-| `nur` | Nix User Repository | Yes |
-| `helium` | Helium browser | Yes |
-| `otel-tui` | OpenTelemetry TUI viewer | Yes |
+| `nur` | Nix User Repository | Yes (+ flake-parts) |
+| `helium` | Helium browser | Yes (+ flake-utils via utils) |
+| `otel-tui` | OpenTelemetry TUI viewer | Yes (+ flake-utils) |
 | `signoz-src` | SigNoz source (flake=false) | — |
 | `signoz-collector-src` | SigNoz collector source (flake=false) | — |
-| `todo-list-ai` | AI-powered TODO extraction CLI | Yes |
-| `library-policy` | Banned/vulnerable library detector for Go projects | Yes |
-| `golangci-lint-auto-configure` | golangci-lint auto-configurator | Yes |
-| `hierarchical-errors` | Error handling pattern analyzer | Yes |
+| `todo-list-ai` | AI-powered TODO extraction CLI | Yes (+ flake-utils) |
+| `library-policy` | Banned/vulnerable library detector for Go projects | Yes (+ flake-parts, treefmt-nix) |
+| `golangci-lint-auto-configure` | golangci-lint auto-configurator | Yes (+ flake-utils) |
+| `hierarchical-errors` | Error handling pattern analyzer | Yes (+ flake-utils) |
 | `homebrew-bundle` | Homebrew taps (flake=false) | — |
 | `homebrew-cask` | Homebrew cask taps (flake=false) | — |
-| `monitor365` | Device monitoring agent (Rust) | Yes |
+| `monitor365` | Device monitoring agent (Rust) | Yes (+ flake-utils) |
 | `mr-sync` | ~/.mrconfig GitHub sync CLI | Yes |
 | `wallpapers-src` | Wallpaper collection (flake=false) | — |
-| `file-and-image-renamer` | AI screenshot renaming tool | Yes |
+| `file-and-image-renamer` | AI screenshot renaming tool | Yes (+ flake-parts) |
 | `nixos-hardware` | Hardware profiles (RPi, etc.) | No |
 | `emeet-pixyd` | EMEET PIXY webcam daemon | Yes |
-| `niri-session-manager` | Niri window save/restore (Rust) | Yes |
-| `treefmt-full-flake` | Treefmt formatter | Yes (+ flake-parts) |
-| `projects-management-automation` | CLI for managing multiple projects with workflow automation | Yes |
+| `niri-session-manager` | Niri window save/restore (Rust) | Yes (+ systems, treefmt-nix) |
+| `treefmt-full-flake` | Treefmt formatter | Yes (+ flake-parts, treefmt-nix) |
+| `dnsblockd` | DNS blocklist service | Yes (+ flake-parts, treefmt-nix) |
+| `projects-management-automation` | CLI for managing multiple projects with workflow automation | Yes (+ flake-utils) |
+| `buildflow` | Build automation for Go projects | Yes (+ flake-utils) |
+| `go-auto-upgrade` | Go library upgrade automation | Yes (+ flake-utils) |
+| `go-structure-linter` | Go project structure validator | Yes |
+| `branching-flow` | Error context preservation analyzer | Yes (+ flake-utils) |
+| `art-dupl` | Code duplication detector | Yes |
 
 **All LarsArtmann private repos use `git+ssh://` URLs.** No `path:` inputs remain.
