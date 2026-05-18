@@ -483,13 +483,13 @@ AI agent task tracking protocol:
 | d2 Darwin overlay | d2 unconditionally depends on `libgbm`/`playwright-driver` (Linux-only). A Darwin-only overlay in `sharedOverlays` re-instantiates d2 via `callPackage` with stub packages. Do NOT remove this overlay — d2 will fail to evaluate on Darwin without it. See commit `524be5ab`. |
 | NixOS overlays separate | NixOS adds `niri.overlays.niri` and Python overrides on top of shared + linux-only overlays |
 | SigNoz built from source | SigNoz is built from source (Go 1.25), not from a pre-built package. Takes significant build time. |
-| crush-config doesn't follow nixpkgs | The crush-config input intentionally does NOT follow nixpkgs (no `inputs.nixpkgs.follows`) |
+| crush-config follows nixpkgs + flake-parts | crush-config now follows `inputs.nixpkgs.follows = "nixpkgs"` and `inputs.flake-parts.follows = "flake-parts"` — eliminates a separate nixpkgs instantiation (~3-5GB evaluation memory saved). Was previously not following, which caused a duplicate nixpkgs checkout in the lock. |
 | `nixConfig` declares experimental features | `nix-command`, `flakes`, `pipe-operators` declared in flake.nix — no need for `--extra-experimental-features` in most cases |
 | `serviceModules` single source of truth | Service modules listed once in `flake.nix` `serviceModules` attr — both `imports` (flake-parts) and `nixosConfigurations` derive from it. Add entry → module registered + loaded automatically. |
 | `colorScheme` shared module | `platforms/common/color-scheme.nix` defines `colorScheme` + `colorSchemeLib` options — imported by both Darwin and NixOS. No duplicate option declarations. |
 | `harden`/`hardenUser` unified | `lib/systemd.nix` has `mode ? "system"` param. `hardenUser` is `harden (args // { mode = "user"; })` — convenience wrapper in `lib/default.nix`. No separate `user-harden.nix` file. |
 | rpi3-dns minimal overlays | rpi3-dns uses only `[NUR] ++ linuxOnlyOverlays` — no shared overlays (aw-watcher, todo-list-ai, etc.) since it's a minimal DNS node |
-| `aarch64-linux` in systems | flake-parts `systems` includes `aarch64-linux` so rpi3 packages build via perSystem if needed |
+| `aarch64-linux` removed from perSystem | rpi3-dns uses its own nixpkgs instantiation in `nixosConfigurations`, independent of `perSystem`. Removed `aarch64-linux` from `systems` list to avoid evaluating overlays for that platform. rpi3 builds still work via `nixosConfigurations.rpi3-dns`. |
 | Theme everywhere | Catppuccin Mocha is the universal theme — all apps, terminals, bars, login screen |
 | SSH config is external | SSH configuration comes from `nix-ssh-config` flake input, not defined locally |
 | Secrets via sops-nix | Secrets are age-encrypted using the SSH host key. Managed in `modules/nixos/services/sops.nix` |
@@ -739,6 +739,43 @@ just wan-status         # Routes + MPTCP endpoints + logs
 just internet-diagnostic # Full connectivity diagnostic
 ```
 
+## Nix Evaluation Memory Optimization
+
+### Architecture (session 2026-05-18 audit)
+
+The flake evaluation memory is dominated by **nixpkgs instantiations** — each `import nixpkgs { overlays = ... }` evaluates ~100K package definitions.
+
+**Evaluation instantiations:**
+| Source | Systems | Overlays | Est. Memory |
+|--------|---------|----------|-------------|
+| perSystem aarch64-darwin | 1 | 14 shared + disableTests | ~3-5 GB |
+| perSystem x86_64-linux | 1 | 14 shared + 6 linux + disableTests | ~3-5 GB |
+| darwinConfigurations | 1 | 14 shared | ~3-5 GB |
+| nixosConfigurations evo-x2 | 1 | 14 shared + niri + 6 linux + pythonTest | ~3-5 GB |
+| nixosConfigurations rpi3-dns | 1 | NUR + 6 linux | ~2-3 GB |
+
+**Optimizations applied (session 2026-05-18):**
+
+| Change | Impact | Saved |
+|--------|--------|-------|
+| crush-config follows nixpkgs + flake-parts | Eliminated 1 full nixpkgs + 1 flake-parts instance | ~3-5 GB |
+| treefmt-full-flake follows nixpkgs + flake-parts | Eliminated 1 full nixpkgs + 1 flake-parts instance | ~3-5 GB |
+| hermes-agent follows flake-parts | Eliminated 1 flake-parts instance | ~0.5 GB |
+| Removed aarch64-linux from perSystem systems | Eliminated 1 full perSystem evaluation | ~3-5 GB |
+| Cleaned orphaned lock nodes | 137 → 130 nodes | ~0.5 GB |
+| **Total estimated savings** | | **~10-16 GB** |
+
+**Lockfile hygiene rules:**
+- Every input with a `nixpkgs` dependency MUST have `inputs.nixpkgs.follows = "nixpkgs"`
+- Every input with a `flake-parts` dependency SHOULD have `inputs.flake-parts.follows = "flake-parts"`
+- After adding new follows, manually verify the lock resolves correctly: `python3 -c "import json; l=json.load(open('flake.lock')); print(l['nodes']['<input>']['inputs']['nixpkgs'])"` — should show `["nixpkgs"]`, not a direct node reference
+- `nix flake lock --update-input <name>` does NOT re-resolve follows. If a lock entry shows a direct reference instead of follows, manually edit `flake.lock` to change `"nixpkgs_X"` → `["nixpkgs"]` and run `nix flake lock` to clean up orphans
+
+**Remaining unavoidable nixpkgs instances:**
+- `nixpkgs` (nixos-unstable) — used by ALL follows chains
+- `nixpkgs_3` (root's pinned commit) — the actual root input
+- `nixpkgs-stable` (nixos-25.11) — niri's stable build dependency
+
 ## Essential Commands
 
 Run `just` (or `just --list`) to see all recipes grouped by category. Key commands:
@@ -964,8 +1001,8 @@ hermes cron list          # List cron jobs
 | `sops-nix` | Secrets with age | Yes |
 | `nix-amd-npu` | AMD XDNA NPU driver | Yes |
 | `nix-ssh-config` | SSH configuration | Yes (+ HM) |
-| `crush-config` | AI assistant config | No |
-| `hermes-agent` | AI agent gateway (Discord, cron) | Yes |
+| `crush-config` | AI assistant config | Yes (+ flake-parts) |
+| `hermes-agent` | AI agent gateway (Discord, cron) | Yes (+ flake-parts) |
 | `nix-colors` | Color schemes | No (no nixpkgs input) |
 | `silent-sddm` | SDDM theme | Yes |
 | `nur` | Nix User Repository | Yes |
@@ -986,7 +1023,7 @@ hermes cron list          # List cron jobs
 | `nixos-hardware` | Hardware profiles (RPi, etc.) | No |
 | `emeet-pixyd` | EMEET PIXY webcam daemon | Yes |
 | `niri-session-manager` | Niri window save/restore (Rust) | Yes |
-| `treefmt-full-flake` | Treefmt formatter | Yes |
+| `treefmt-full-flake` | Treefmt formatter | Yes (+ flake-parts) |
 | `projects-management-automation` | CLI for managing multiple projects with workflow automation | Yes |
 
 **All LarsArtmann private repos use `git+ssh://` URLs.** No `path:` inputs remain.

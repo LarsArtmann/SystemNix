@@ -26,6 +26,7 @@
     nur = {
       url = "github:nix-community/NUR";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # Helium Browser
@@ -68,6 +69,7 @@
     nix-amd-npu = {
       url = "github:robcohen/nix-amd-npu";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # Secrets management via sops + age
@@ -102,12 +104,15 @@
     # This ensures AGENTS.md and all references are synced across machines
     crush-config = {
       url = "git+ssh://git@github.com/LarsArtmann/crush-config?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
     dnsblockd = {
       url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     wallpapers-src = {
@@ -119,6 +124,7 @@
     hermes-agent = {
       url = "github:NousResearch/hermes-agent/v2026.5.7";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # monitor365 — Device monitoring agent (Rust)
@@ -146,6 +152,7 @@
     treefmt-full-flake = {
       url = "github:LarsArtmann/treefmt-full-flake";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # todo-list-ai — AI-powered CLI tool for extracting TODOs from codebases
@@ -158,12 +165,14 @@
     library-policy = {
       url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # file-and-image-renamer — AI-powered screenshot renaming tool
     file-and-image-renamer = {
       url = "git+ssh://git@github.com/LarsArtmann/file-and-image-renamer?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
@@ -410,7 +419,7 @@
     };
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = ["aarch64-darwin" "x86_64-linux" "aarch64-linux"];
+      systems = ["aarch64-darwin" "x86_64-linux"];
 
       # Import service modules — registered as flake-parts modules (inputs.self.nixosModules.*)
       imports = serviceModulePaths;
