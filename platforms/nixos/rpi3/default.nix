@@ -157,7 +157,10 @@ in {
       priority = 50;
       routerID = 53;
       subnetPrefix = 24;
-      authPassword = "DNSClusterVRRP-evox2";
+      # TODO: When Pi 3 is provisioned, add sops-nix with age identity from SSH host key
+      # and set passwordFile = config.sops.templates."keepalived-vrrp-env".path;
+      # For now, use a static env file until sops is set up on this node.
+      passwordFile = pkgs.writeText "keepalived-vrrp-env" "VRRP_AUTH_PASSWORD=DNSClusterVRRP-evox2";
     };
   };
 

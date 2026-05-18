@@ -112,7 +112,10 @@ in {
             owner = "signoz";
             group = "signoz";
             restartUnits = ["signoz-provision.service"];
-          } ["discord_alert_webhook_url"];
+          } ["discord_alert_webhook_url"]
+          // mkSecrets "secrets.yaml" {
+            restartUnits = ["keepalived.service"];
+          } ["dns_failover_vrrp_password"];
 
         templates = {
           "gatus-env" = {
@@ -164,6 +167,15 @@ in {
             restartUnits = ["openseo.service"];
             content = ''
               DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
+            '';
+          };
+
+          "keepalived-vrrp-env" = {
+            owner = "root";
+            group = "root";
+            restartUnits = ["keepalived.service"];
+            content = ''
+              VRRP_AUTH_PASSWORD=${config.sops.placeholder.dns_failover_vrrp_password}
             '';
           };
         };

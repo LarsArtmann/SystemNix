@@ -62,7 +62,7 @@ in {
       priority = 100;
       routerID = 53;
       subnetPrefix = 24;
-      authPassword = "DNSClusterVRRP-evox2";
+      passwordFile = config.sops.templates."keepalived-vrrp-env".path;
     };
   };
 

@@ -382,9 +382,10 @@ High-availability DNS via Keepalived VRRP (`modules/nixos/services/dns-failover.
 - Virtual IP shared between nodes — LAN clients point to VIP, not individual IPs
 - Health check: tracks `unbound` process — if unbound dies, node loses VIP
 - VRRP garp refresh every 30s for rapid failover detection
-- Module options: `services.dns-failover.{enable, virtualIP, interface, priority, routerID, subnetPrefix, authPassword}`
+- Module options: `services.dns-failover.{enable, virtualIP, interface, priority, routerID, subnetPrefix, passwordFile}`
+- VRRP password stored in sops: `dns_failover_vrrp_password` secret → `keepalived-vrrp-env` template → keepalived `secretFile` (envsubst)
 - Pi 3 image built via `nixosConfigurations.rpi3-dns` in flake.nix
-- **Status**: Planned — Pi 3 hardware not yet provisioned
+- **Status**: Planned — Pi 3 hardware not yet provisioned (Pi will need sops + age identity when provisioned)
 
 ### Centralized AI Model Storage (`modules/nixos/services/ai-models.nix`)
 
