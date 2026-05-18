@@ -304,3 +304,48 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 - Section E.1: Updated collision count from 3 → 2 remaining
 - Section E.6: Updated deploy status to reflect Session 46+47 changes committed and pushed
 - Section F P1 #6: Removed wireshark from task, reduced estimated effort from 30→20 min
+
+---
+
+## Appendix B — Session 47 Late-Night Cleanup
+
+**Date:** 2026-05-18 23:45 CEST
+
+### Commits Pushed
+
+|| Commit | Hash | Description |
+|--------|------|-------------|
+| nix-colors removal | `ca28e6e3` | Removed `nix-colors` flake input (3 lock nodes). Inlined Catppuccin Mocha base16 palette into `platforms/common/theme.nix`. Removed `colorSchemeLib` option (nix-colors lib was never consumed). Removed nix-colors from all specialArgs. Est. ~500MB eval memory saved. |
+| VRRP password → sops | `720b50d4` | Changed `dns-failover.authPassword` (plaintext string) → `passwordFile` (path). Added `dns_failover_vrrp_password` sops secret + `keepalived-vrrp-env` template. Updated evo-x2 consumer (dns-blocker-config.nix) to use sops template path. Pi 3 uses static writeText with TODO for future sops setup. |
+| TODO clarification | `a58ac358` | Updated dns-failover sops task description — code is done, needs `dns_failover_vrrp_password` key added to sops-encrypted secrets.yaml on evo-x2 |
+| Flake consolidation (squashed) | `5bb11ff5` | Added `systems` + `treefmt-nix` as shared inputs. Added follows for dnsblockd, library-policy, niri-session-manager, nix-ssh-config, flake-utils. Lock nodes: 130 → 94. Est. ~3-5GB eval memory saved. |
+
+### Lockfile Node Count Progress (Updated)
+
+|| Session | Lock Nodes | What Changed |
+|---------|------------|--------------|
+| Session 45 | 137 | Baseline |
+| Session 46 | 121 | flake-parts + nixpkgs follows consolidation |
+| Session 47 (mid) | ~100 | flake-utils follows consolidation (19 orphan nodes removed) |
+| Session 47 (late) | 94 | systems + treefmt-nix dedup, nix-colors removal, lock cleanup |
+
+**Total reduction: 137 → 94 nodes (43 nodes eliminated, ~31% reduction)**
+
+### External Repo TODO Status Update
+
+| Task | Previous Status | Current Status | Evidence |
+|------|----------------|----------------|----------|
+| BuildFlow vendorHash | ❌ Fake hash | ✅ Done | `f4c07772 fix(nix): update vendorHash` — builds, binary verified |
+| PMA vendorHash | ❌ Null/missing | ✅ Done | `c4987a57 fix(nix): update vendorHash` — builds, binary verified |
+| hierarchical-errors flake.nix | ❌ No flake | ✅ Done | `516f778` — full flake.nix with overlays, apps, devshells — builds, binary verified |
+
+All three were already completed upstream before this session. The TODO_LIST.md has been updated to reflect this.
+
+### Status Doc Corrections (Appendix B)
+
+- Section B (Partially Done): nix-colors entry → now ✅ Complete (removed entirely, palette inlined)
+- Section B: dns-failover authPassword → now ✅ Done (code committed, needs sops key provisioning on evo-x2)
+- Section B: External repo flake standardization → buildflow + PMA vendorHash + hierarchical-errors flake.nix all ✅ Done
+- Section C (Not Started): Removed items 88-90 (hierarchical-errors, buildflow, PMA) — all done upstream
+- Section E.13: dns-failover authPassword in sops → ✅ Done
+- Section F P3 #20-22: All three external repo tasks ✅ Completed upstream
