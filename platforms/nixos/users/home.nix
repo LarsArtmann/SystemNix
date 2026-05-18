@@ -287,7 +287,7 @@ in {
       createDirectories = true;
       # Override to lowercase "projects" for consistency with all other custom paths
       extraConfig = {
-        XDG_PROJECTS_DIR = "${config.home.homeDirectory}/projects";
+        PROJECTS = "${config.home.homeDirectory}/projects";
       };
       # Explicitly disable session variables to silence Home Manager deprecation warning
       # (default changed from true to false in Home Manager 26.05)
