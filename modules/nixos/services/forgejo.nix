@@ -80,7 +80,7 @@ _: {
             --arg description "$description" \
             --arg uid "1" \
             '{
-              clone_addr: $clone_addr,
+              clone_addr: $clone_url,
               repo_name: $name,
               uid: ($uid | tonumber),
               private: $private,
@@ -93,12 +93,9 @@ _: {
               releases: true,
               milestones: true,
               service: "git"
-            }')" 2>/dev/null
-
-        if [[ $? -eq 0 ]]; then
+            }')" 2>/dev/null && {
           echo "  ✓ Created mirror: $name"
 
-          # Set up push mirror for owned repos (Forgejo → GitHub)
           echo "  → Setting up push mirror to GitHub: $name"
           curl -s -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
@@ -110,9 +107,7 @@ _: {
                 remote_address: $remote,
                 sync_on_commit: true
               }')" 2>/dev/null || echo "  ⚠ Push mirror setup failed (may already exist)"
-        else
-          echo "  ✗ Failed: $name"
-        fi
+        } || echo "  ✗ Failed: $name"
       done < "$REPOS_FILE"
       count=$(wc -l < "$REPOS_FILE")
 
