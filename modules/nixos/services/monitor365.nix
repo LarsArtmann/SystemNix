@@ -639,9 +639,12 @@ _: {
                     mkdir -p "$CFG_DIR"
                     cp ${agentConfig} "$CFG_DIR/config.toml"
                     if [ -f "${authTokenFile}" ] && [ -s "${authTokenFile}" ]; then
-                      echo "" >> "$CFG_DIR/config.toml"
-                      echo "[cloud]" >> "$CFG_DIR/config.toml"
-                      echo "auth_token = $(cat ${authTokenFile})" >> "$CFG_DIR/config.toml"
+                      TOKEN=$(cat "${authTokenFile}")
+                      if grep -q '^\[cloud\]' "$CFG_DIR/config.toml"; then
+                        sed -i "/^\[cloud\]/a auth_token = \"$TOKEN\"" "$CFG_DIR/config.toml"
+                      else
+                        printf '\n[cloud]\nauth_token = "%s"\n' "$TOKEN" >> "$CFG_DIR/config.toml"
+                      fi
                     fi
                   '';
                 in ["${injectAuth}"];
@@ -652,11 +655,10 @@ _: {
                 StandardOutput = "journal";
                 StandardError = "journal";
 
-                Environment =
-                  [
-                    "PATH=${runtimePath}:/run/wrappers/bin:%h/.nix-profile/bin:/run/current-system/sw/bin"
-                    "DISPLAY=:0"
-                  ];
+                Environment = [
+                  "PATH=${runtimePath}:/run/wrappers/bin:%h/.nix-profile/bin:/run/current-system/sw/bin"
+                  "DISPLAY=:0"
+                ];
                 EnvironmentFile = [sopsEnvPath];
               };
 
@@ -688,12 +690,11 @@ _: {
                 StandardOutput = "journal";
                 StandardError = "journal";
 
-                Environment =
-                  [
-                    "MONITOR365_SERVER__DATABASE_URL=${cfg.server.databaseUrl}"
-                    "MONITOR365_SERVER__LISTEN_ADDR=${cfg.server.listenAddr}"
-                    "MONITOR365_SERVER__POOL_SIZE=${toString cfg.server.poolSize}"
-                  ];
+                Environment = [
+                  "MONITOR365_SERVER__DATABASE_URL=${cfg.server.databaseUrl}"
+                  "MONITOR365_SERVER__LISTEN_ADDR=${cfg.server.listenAddr}"
+                  "MONITOR365_SERVER__POOL_SIZE=${toString cfg.server.poolSize}"
+                ];
                 EnvironmentFile = [sopsEnvPath];
               };
 
