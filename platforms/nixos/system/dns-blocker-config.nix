@@ -11,7 +11,11 @@
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # DNS resolution: full recursive from root hints (no third-party resolver)
-{config, ...}: let
+{
+  pkgs,
+  config,
+  ...
+}: let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
@@ -62,7 +66,7 @@ in {
       priority = 100;
       routerID = 53;
       subnetPrefix = 24;
-      passwordFile = config.sops.templates."keepalived-vrrp-env".path;
+      passwordFile = pkgs.writeText "keepalived-vrrp-env" "VRRP_AUTH_PASSWORD=DNSClusterVRRP-evox2";
     };
   };
 

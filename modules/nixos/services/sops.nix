@@ -33,21 +33,6 @@ in {
     };
 
     config = lib.mkIf cfg.enable {
-      system.activationScripts.sops-provision-vrrp-password = lib.stringAfter ["etc"] ''
-        secretsFile="${secretsDir}/secrets.yaml"
-        key="dns_failover_vrrp_password"
-
-        if ${pkgs.yq-go}/bin/yq ".$key" "$secretsFile" 2>/dev/null | ${pkgs.gnugrep}/bin/grep -q "null"; then
-          echo "[sops-provision] Adding $key to secrets.yaml..."
-          export SOPS_AGE_KEY=$(${lib.getExe pkgs.ssh-to-age} -private < /etc/ssh/ssh_host_ed25519_key 2>/dev/null)
-          ${lib.getExe pkgs.sops} --set "[\"$key\"] \"DNSClusterVRRP-evox2\"" "$secretsFile"
-          echo "[sops-provision] Done."
-          unset SOPS_AGE_KEY
-        else
-          echo "[sops-provision] $key already exists in secrets.yaml, skipping."
-        fi
-      '';
-
       sops = {
         defaultSopsFile = secretsDir + "/secrets.yaml";
         age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
@@ -128,10 +113,7 @@ in {
             owner = "signoz";
             group = "signoz";
             restartUnits = ["signoz-provision.service"];
-          } ["discord_alert_webhook_url"]
-          // mkSecrets "secrets.yaml" {
-            restartUnits = ["keepalived.service"];
-          } ["dns_failover_vrrp_password"];
+          } ["discord_alert_webhook_url"];
 
         templates = {
           "gatus-env" = {
@@ -183,15 +165,6 @@ in {
             restartUnits = ["openseo.service"];
             content = ''
               DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
-            '';
-          };
-
-          "keepalived-vrrp-env" = {
-            owner = "root";
-            group = "root";
-            restartUnits = ["keepalived.service"];
-            content = ''
-              VRRP_AUTH_PASSWORD=${config.sops.placeholder.dns_failover_vrrp_password}
             '';
           };
         };

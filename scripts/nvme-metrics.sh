@@ -117,6 +117,6 @@ CRITICAL_COMP_TEMP_TIME=$(extract "critical_composite_temperature_time")
   echo "# HELP node_nvme_critical_temperature_time_minutes NVMe time spent above critical temperature"
   echo "# TYPE node_nvme_critical_temperature_time_minutes counter"
   echo "node_nvme_critical_temperature_time_minutes{device=\"${DEV_NAME}\"} ${CRITICAL_COMP_TEMP_TIME}"
-} > "$TMP"
+} >"$TMP"
 
 mv "$TMP" "$OUT"

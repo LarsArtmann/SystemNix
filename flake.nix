@@ -478,6 +478,10 @@
         path = ./modules/nixos/services/dual-wan.nix;
         module = "dual-wan";
       }
+      {
+        path = ./modules/nixos/services/nvme-health-monitor.nix;
+        module = "nvme-health-monitor";
+      }
     ];
 
     serviceModulePaths = map (sm: sm.path) serviceModules;

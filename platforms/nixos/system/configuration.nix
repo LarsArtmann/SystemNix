@@ -150,6 +150,11 @@
         enable = true;
       };
 
+      # NVMe SSD health monitoring with desktop notifications for critical events
+      nvme-health-monitor = {
+        enable = true;
+      };
+
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
       openseo.enable = true;
 

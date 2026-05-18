@@ -198,6 +198,19 @@ _: {
               ];
             })
             (mkHttpCheck {
+              name = "NVMe SMART Metrics";
+              group = "Monitoring";
+              url = "http://localhost:${toString nodePort}/metrics";
+              interval = "60s";
+              conditions = [
+                "[STATUS] == 200"
+                "[BODY] == pat(*node_nvme_temperature_celsius*)"
+                "[BODY] == pat(*node_nvme_percentage_used*)"
+                "[BODY] == pat(*node_nvme_media_errors_total*)"
+              ];
+              alerts = discordAlert "NVMe SMART metrics not being collected — disk health unmonitored";
+            })
+            (mkHttpCheck {
               name = "Niri Compositor";
               group = "Monitoring";
               url = "http://localhost:${toString nodePort}/metrics";
