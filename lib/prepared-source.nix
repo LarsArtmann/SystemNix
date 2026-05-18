@@ -6,17 +6,23 @@
 #
 # Usage in a flake.nix:
 #   let
-#     mkPreparedSource = import path/to/mkPreparedSource.nix { inherit pkgs lib goPkg; };
+#     mkPreparedSource = import ./mkPreparedSource.nix { inherit pkgs lib; goPkg = pkgs.go_1_26; };
 #     preparedSrc = mkPreparedSource {
 #       name = "my-app";
-#       src = srcFiltered;  # or ./.
+#       version = "dev";
+#       src = srcFiltered;
 #       deps = {
 #         "github.com/larsartmann/go-output" = go-output;
 #         "github.com/larsartmann/go-branded-id" = go-branded-id;
 #       };
-#       subModules = [ "enum" "escape" "sort" "table" ];  # for go-output sub-modules
+#       subModules = {
+#         "github.com/larsartmann/go-output" = [ "enum" "escape" "sort" "table" ];
+#       };
+#       requireDeps = {
+#         "github.com/larsartmann/go-branded-id" = "v0.1.0";
+#       };
 #       postPatchExtra = ''
-#         # Additional sed commands, e.g. remove incompatible deps
+#         # Additional sed commands
 #       '';
 #     };
 #   in
@@ -24,9 +30,12 @@
 #
 # Parameters:
 #   - name: derivation name prefix
+#   - version: version string (default: "dev")
 #   - src: source derivation/path
 #   - deps: attrset of { "import/path" = flake-input; }
-#   - subModules: list of sub-module names (optional)
+#   - subModules: attrset of { "import/path" = [ "sub1" "sub2" ]; } (optional)
+#     Only generates replace directives — Go discovers sub-modules transitively.
+#   - requireDeps: attrset of { "import/path" = "version"; } for extra require lines (optional)
 #   - postPatchExtra: additional shell commands (optional)
 {
   pkgs,
@@ -36,10 +45,11 @@
   name,
   src,
   deps,
-  subModules ? [],
+  version ? "dev",
+  subModules ? {},
+  requireDeps ? {},
   postPatchExtra ? "",
 }: let
-  # Generate copy commands for each dep
   copyDeps =
     lib.concatStringsSep "\n"
     (lib.mapAttrsToList (
@@ -49,7 +59,6 @@
       )
       deps);
 
-  # Generate replace directives for each dep
   replaceLines =
     lib.concatStringsSep "\n"
     (lib.mapAttrsToList (
@@ -59,25 +68,31 @@
       )
       deps);
 
-  # Generate sub-module replace directives
-  subModuleLines =
+  subModuleReplace =
     lib.concatStringsSep "\n"
-    (map (
-        sub:
-          lib.concatStringsSep "\n"
-          (lib.mapAttrsToList (
-              path: _: let
-                basename = lib.last (lib.splitString "/" path);
-              in ''echo "  ${path}/${sub} => ./_local_deps/${basename}/${sub}" >> go.mod''
-            )
-            deps)
+    (lib.concatLists (
+      lib.mapAttrsToList (
+        depPath: subs:
+          map (sub: let
+            basename = lib.last (lib.splitString "/" depPath);
+          in ''echo "  ${depPath}/${sub} => ./_local_deps/${basename}/${sub}" >> go.mod'')
+          subs
       )
-      subModules);
+      subModules
+    ));
+
+  extraRequireLines =
+    lib.concatStringsSep "\n"
+    (lib.mapAttrsToList (
+        path: ver: ''echo "	${path} ${ver}" >> go.mod''
+      )
+      requireDeps);
+
+  hasRequires = requireDeps != {};
 in
   pkgs.stdenv.mkDerivation {
     pname = "${name}-prepared-source";
-    version = "dev";
-    inherit src;
+    inherit version src;
 
     dontBuild = true;
     nativeBuildInputs = [goPkg];
@@ -89,13 +104,19 @@ in
 
       ${postPatchExtra}
 
-      # Add replace directives for all private deps
-      if [ -n "$(cat go.mod | tr -d '\\n')" ]; then
+      ${lib.optionalString hasRequires ''
+        echo "" >> go.mod
+        echo 'require (' >> go.mod
+        ${extraRequireLines}
+        echo ')' >> go.mod
+      ''}
+
+      if [ -n "$(cat go.mod | tr -d '\n')" ]; then
         echo "" >> go.mod
       fi
       echo 'replace (' >> go.mod
       ${replaceLines}
-      ${subModuleLines}
+      ${subModuleReplace}
       echo ')' >> go.mod
     '';
 
