@@ -86,7 +86,6 @@ _: {
         wireguard-tools
 
         tcpdump
-        wireshark-cli
         nmap
         lynis
       ];
