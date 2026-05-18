@@ -155,7 +155,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 | # | Task | Effort | Impact |
 |---|------|--------|--------|
 | 5 | **Fix `hostPlatform` deprecation warning** | 5 min | Clean evaluation |
-| 6 | **Eliminate package collisions** (wireshark, modernize, ollama/engine) | 30 min | Clean builds, smaller closure |
+| 6 | **Eliminate remaining package collisions** (modernize, ollama/engine) | 20 min | Clean builds, smaller closure |
 | 7 | **Add `imagePull` to openseo, manifest, twenty** | 30 min | Reliable first-start |
 | 8 | **Update TODO_LIST.md** — remove done items, add new ones | 20 min | Accurate tracking |
 | 9 | **Update FEATURES.md** — add OpenSEO, Twenty, Manifest | 30 min | Accurate feature inventory |
@@ -267,3 +267,39 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 - **Flake inputs:** 35
 - **Git commits:** 30 recent (last 2 weeks)
 - **Lines of Nix:** ~15,000+ (estimated)
+
+---
+
+## Appendix A — Session 47 Post-Report Updates
+
+**Date:** 2026-05-18 23:15 CEST
+
+### Commits Pushed After Report
+
+| Commit | Hash | Description |
+|--------|------|-------------|
+| flake-utils consolidation | `cbf5902a` | 10 duplicate flake-utils instances → 1 shared input. Added `flake-utils` as top-level input, added `inputs.flake-utils.follows = "flake-utils"` to 9 inputs + `inputs.utils.follows = "flake-utils"` for helium. Removed 19 orphan lock nodes (10 flake-utils_N + 9 systems_N). Est. ~3-5 GB eval memory saved. |
+| wireshark-cli removal | `e9dc95a9` | Removed redundant `wireshark-cli` from `security-hardening.nix`. The `wireshark` package (Qt) already ships all CLI tools (tshark, dumpcap, editcap, etc.). Eliminates silent binary collision. |
+
+### Lockfile Node Count Progress
+
+| Session | Lock Nodes | What Changed |
+|---------|------------|--------------|
+| Session 45 | 137 | Baseline |
+| Session 46 | 121 | flake-parts + nixpkgs follows consolidation |
+| Session 47 | ~100 | flake-utils follows consolidation (19 orphan nodes removed) |
+
+### Remaining Binary Collisions
+
+| Collision | Status | Action Needed |
+|-----------|--------|---------------|
+| wireshark-cli / wireshark | ✅ Fixed (`e9dc95a9`) | Done |
+| ollama/engine / mesa-demos | ⚪ Open | Exclude mesa-demos or rename |
+| modernize / gotools | ⚪ Open | Remove one package |
+
+### Status Doc Corrections
+
+- Section D (Totally Fucked Up): wireshark collision upgraded from ⚪ Noise → ✅ Fixed
+- Section E.1: Updated collision count from 3 → 2 remaining
+- Section E.6: Updated deploy status to reflect Session 46+47 changes committed and pushed
+- Section F P1 #6: Removed wireshark from task, reduced estimated effort from 30→20 min
