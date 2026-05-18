@@ -13,9 +13,9 @@
     extraHarden ? {},
     extraServiceConfig ? {},
     preStartCommands ? "",
-    after ? ["docker.service" "sops-nix.service"],
+    after ? ["docker.service" "sops-nix.service" "unbound.service"],
     requires ? ["docker.service"],
-    wants ? ["sops-nix.service"],
+    wants ? ["sops-nix.service" "unbound.service"],
     extraTmpfiles ? [],
     backup ? null,
     imagePull ? null,
@@ -81,9 +81,9 @@
             name = "${name}-pull";
             value = {
               description = "Pull ${name} Docker Image";
-              after = ["docker.service" "network-online.target"];
+              after = ["docker.service" "network-online.target" "unbound.service"];
               requires = ["docker.service"];
-              wants = ["network-online.target"];
+              wants = ["network-online.target" "unbound.service"];
               wantedBy = ["${name}.service"];
               path = [pkgs.docker];
               serviceConfig = {
