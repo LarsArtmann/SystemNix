@@ -17,7 +17,7 @@
 ### Priority 2: Code Improvements
 
 - [ ] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `signoz.nix`
-- [ ] **Move `dns-failover.nix` plaintext `authPassword` to sops** — blocked on age identity (SSH host key)
+- [ ] **`dns-failover.nix` authPassword → sops** — code done, needs `dns_failover_vrrp_password` added to `secrets.yaml` (requires age key on evo-x2)
 - [ ] **Consolidate voice-agents Caddy vHost** into caddy.nix pattern — `caddy.nix`
 
 ### Priority 3: Documentation
