@@ -1,34 +1,34 @@
-# Gitea self-hosted Git mirror: GitHub sync, Actions runner, admin setup
+# Forgejo self-hosted Git forge: GitHub sync, Actions runner, admin setup
 _: {
-  flake.nixosModules.gitea = {
+  flake.nixosModules.forgejo = {
     pkgs,
     lib,
     config,
     ...
   }: let
     inherit (config.users) primaryUser;
-    giteaPkg = config.services.gitea.package;
+    forgejoPkg = config.services.forgejo.package;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
-    giteaPort = config.services.gitea.settings.server.HTTP_PORT;
-    giteaUrl = "http://localhost:${toString giteaPort}";
+    forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
+    forgejoUrl = "http://localhost:${toString forgejoPort}";
+    stateDir = config.services.forgejo.stateDir;
 
-    # Script to mirror all user repos from GitHub
-    mirrorGithubScript = pkgs.writeShellScriptBin "gitea-mirror-github" ''
-      # Mirror all repos from GitHub to Gitea
-      # Secrets managed via sops-nix (see platforms/nixos/services/sops.nix)
+    mirrorGithubScript = pkgs.writeShellScriptBin "forgejo-mirror-github" ''
+      # Mirror all repos from GitHub to Forgejo
+      # Secrets managed via sops-nix (see modules/nixos/services/sops.nix)
       set -euo pipefail
 
       REPOS_FILE=$(mktemp)
       trap 'rm -f "$REPOS_FILE"' EXIT
 
-      GITEA_URL="${giteaUrl}"
-      GITEA_TOKEN="''${GITEA_TOKEN:-}"
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
       GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
       GITHUB_USER="''${GITHUB_USER:-$(gh api user -q .login 2>/dev/null || echo "")}"
 
-      if [[ -z "$GITEA_TOKEN" ]]; then
-        echo "Error: GITEA_TOKEN not set"
-        echo "Create a token at ${giteaUrl}/user/settings/applications"
+      if [[ -z "$FORGEJO_TOKEN" ]]; then
+        echo "Error: FORGEJO_TOKEN not set"
+        echo "Create a token at ${forgejoUrl}/user/settings/applications"
         exit 1
       fi
 
@@ -40,15 +40,13 @@ _: {
 
       if [[ -z "$GITHUB_USER" ]]; then
         echo "Error: Could not detect GitHub username"
-        echo "Set GITHUB_USER in ~/.config/gitea-sync.env"
+        echo "Set GITHUB_USER in sops secrets"
         exit 1
       fi
 
       echo "Fetching repositories for GitHub user: $GITHUB_USER"
 
-      # Handle pagination for users with many repos
       page=1
-      repos=""
       while true; do
         response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/users/$GITHUB_USER/repos?per_page=100&page=$page&type=all")
@@ -61,8 +59,8 @@ _: {
         [[ -z "$name" ]] && continue
 
         existing=$(curl -s -o /dev/null -w "%{http_code}" \
-          -H "Authorization: token $GITEA_TOKEN" \
-          "$GITEA_URL/api/v1/repos/$GITHUB_USER/$name")
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$GITHUB_USER/$name")
 
         if [[ "$existing" == "200" ]]; then
           echo "✓ Already mirrored: $name"
@@ -72,9 +70,9 @@ _: {
         echo "→ Mirroring: $name"
 
         curl -s -X POST \
-          -H "Authorization: token $GITEA_TOKEN" \
+          -H "Authorization: token $FORGEJO_TOKEN" \
           -H "Content-Type: application/json" \
-          "$GITEA_URL/api/v1/repos/migrate" \
+          "$FORGEJO_URL/api/v1/repos/migrate" \
           -d "$(jq -n \
             --arg name "$name" \
             --arg clone_url "$clone_url" \
@@ -82,7 +80,7 @@ _: {
             --arg description "$description" \
             --arg uid "1" \
             '{
-              clone_addr: $clone_url,
+              clone_addr: $clone_addr,
               repo_name: $name,
               uid: ($uid | tonumber),
               private: $private,
@@ -95,29 +93,47 @@ _: {
               releases: true,
               milestones: true,
               service: "git"
-            }')"
+            }')" 2>/dev/null
+
+        if [[ $? -eq 0 ]]; then
+          echo "  ✓ Created mirror: $name"
+
+          # Set up push mirror for owned repos (Forgejo → GitHub)
+          echo "  → Setting up push mirror to GitHub: $name"
+          curl -s -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$FORGEJO_URL/api/v1/repos/$GITHUB_USER/$name/push_mirrors" \
+            -d "$(jq -n \
+              --arg remote "https://$GITHUB_USER:''${GITHUB_TOKEN}@github.com/$GITHUB_USER/$name.git" \
+              '{
+                remote_address: $remote,
+                sync_on_commit: true
+              }')" 2>/dev/null || echo "  ⚠ Push mirror setup failed (may already exist)"
+        else
+          echo "  ✗ Failed: $name"
+        fi
       done < "$REPOS_FILE"
       count=$(wc -l < "$REPOS_FILE")
 
       echo "✓ Done! $count repos processed"
     '';
 
-    # Script to mirror all starred repos from GitHub
-    mirrorStarredScript = pkgs.writeShellScriptBin "gitea-mirror-starred" ''
-      # Mirror all starred repos from GitHub to Gitea
+    mirrorStarredScript = pkgs.writeShellScriptBin "forgejo-mirror-starred" ''
+      # Mirror all starred repos from GitHub to Forgejo
       set -euo pipefail
 
       STARRED_FILE=$(mktemp)
       trap 'rm -f "$STARRED_FILE"' EXIT
 
-      GITEA_URL="${giteaUrl}"
-      GITEA_TOKEN="''${GITEA_TOKEN:-}"
+      FORGEJO_URL="${forgejoUrl}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
       GITHUB_TOKEN="''${GITHUB_TOKEN:-}"
       GITHUB_USER="''${GITHUB_USER:-$(gh api user -q .login 2>/dev/null || echo "")}"
-      GITEA_ORG="starred"
+      FORGEJO_ORG="starred"
 
-      if [[ -z "$GITEA_TOKEN" ]]; then
-        echo "Error: GITEA_TOKEN not set"
+      if [[ -z "$FORGEJO_TOKEN" ]]; then
+        echo "Error: FORGEJO_TOKEN not set"
         exit 1
       fi
 
@@ -126,21 +142,19 @@ _: {
         exit 1
       fi
 
-      # Create org if it doesn't exist
       curl -s -o /dev/null -w "%{http_code}" \
-        -H "Authorization: token $GITEA_TOKEN" \
-        "$GITEA_URL/api/v1/orgs/$GITEA_ORG" | grep -q "200" || {
-        echo "Creating organization: $GITEA_ORG"
+        -H "Authorization: token $FORGEJO_TOKEN" \
+        "$FORGEJO_URL/api/v1/orgs/$FORGEJO_ORG" | grep -q "200" || {
+        echo "Creating organization: $FORGEJO_ORG"
         curl -s -X POST \
-          -H "Authorization: token $GITEA_TOKEN" \
+          -H "Authorization: token $FORGEJO_TOKEN" \
           -H "Content-Type: application/json" \
-          "$GITEA_URL/api/v1/orgs" \
-          -d "{\"username\":\"$GITEA_ORG\",\"full_name\":\"Starred Repositories\"}"
+          "$FORGEJO_URL/api/v1/orgs" \
+          -d "{\"username\":\"$FORGEJO_ORG\",\"full_name\":\"Starred Repositories\"}"
       }
 
       echo "Fetching starred repositories..."
 
-      # Handle pagination
       page=1
       while true; do
         response=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
@@ -155,8 +169,8 @@ _: {
         name=$(echo "$full_name" | tr '/' '-')
 
         existing=$(curl -s -o /dev/null -w "%{http_code}" \
-          -H "Authorization: token $GITEA_TOKEN" \
-          "$GITEA_URL/api/v1/repos/$GITEA_ORG/$name")
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$FORGEJO_ORG/$name")
 
         if [[ "$existing" == "200" ]]; then
           echo "✓ Already mirrored: $name"
@@ -166,14 +180,14 @@ _: {
         echo "→ Mirroring: $full_name"
 
         curl -s -X POST \
-          -H "Authorization: token $GITEA_TOKEN" \
+          -H "Authorization: token $FORGEJO_TOKEN" \
           -H "Content-Type: application/json" \
-          "$GITEA_URL/api/v1/repos/migrate" \
+          "$FORGEJO_URL/api/v1/repos/migrate" \
           -d "$(jq -n \
             --arg name "$name" \
             --arg clone_url "$clone_url" \
             --arg description "$description" \
-            --arg org "$GITEA_ORG" \
+            --arg org "$FORGEJO_ORG" \
             '{
               clone_addr: $clone_url,
               repo_name: $name,
@@ -194,60 +208,47 @@ _: {
       echo "✓ Done!"
     '';
 
-    # Setup helper script
-    setupScript = pkgs.writeShellScriptBin "gitea-setup" ''
-      # Initial Gitea setup helper
+    setupScript = pkgs.writeShellScriptBin "forgejo-setup" ''
+      # Initial Forgejo setup helper
       set -euo pipefail
 
-      echo "=== Gitea Setup Helper ==="
+      echo "=== Forgejo Setup Helper ==="
       echo ""
-      echo "1. Gitea is running at: ${giteaUrl}"
+      echo "1. Forgejo is running at: ${forgejoUrl}"
       echo "2. Create your admin account in the web UI"
       echo ""
       echo "3. Create tokens:"
-      echo "   - Gitea: ${giteaUrl}/user/settings/applications"
+      echo "   - Forgejo: ${forgejoUrl}/user/settings/applications"
       echo "   - GitHub: https://github.com/settings/tokens/new (select 'repo' scope)"
       echo ""
-      echo "4. Create credentials file:"
-      echo ""
-      echo "   mkdir -p ~/.config"
-      echo "   cat > ~/.config/gitea-sync.env << 'EOF'"
-      echo "   GITEA_TOKEN=your-gitea-token"
-      echo "   GITHUB_TOKEN=your-github-token"
-      echo "   GITHUB_USER=your-github-username"
-      echo "   EOF"
-      echo ""
-      echo "5. Run initial sync:"
-      echo "   gitea-mirror-github      # Mirror your repos"
-      echo "   gitea-mirror-starred     # Mirror starred repos"
+      echo "4. Run initial sync:"
+      echo "   forgejo-mirror-github      # Mirror your repos"
+      echo "   forgejo-mirror-starred     # Mirror starred repos"
       echo ""
       echo "After setup, mirrors sync automatically every 30 minutes."
       echo ""
       echo "Status:"
-      systemctl is-active gitea && echo "✓ Gitea service: running" || echo "✗ Gitea service: stopped"
-      systemctl is-active gitea-github-sync.timer && echo "✓ Sync timer: active" || echo "✗ Sync timer: inactive"
+      systemctl is-active forgejo && echo "✓ Forgejo service: running" || echo "✗ Forgejo service: stopped"
+      systemctl is-active forgejo-github-sync.timer && echo "✓ Sync timer: active" || echo "✗ Sync timer: inactive"
     '';
   in {
-    config = lib.mkIf config.services.gitea.enable {
-      services.gitea = {
-        package = pkgs.gitea;
+    config = lib.mkIf config.services.forgejo.enable {
+      services.forgejo = {
+        package = pkgs.forgejo-lts;
 
-        # SQLite is fine for personal use (<50 repos)
         database.type = "sqlite3";
 
-        # Enable Git LFS support
         lfs.enable = true;
 
-        # Automatic weekly backups
         dump = {
           enable = true;
           interval = "weekly";
         };
 
-        stateDir = "/var/lib/gitea";
+        stateDir = "/var/lib/forgejo";
 
         settings = {
-          DEFAULT.APP_NAME = "Local Git Mirror";
+          DEFAULT.APP_NAME = "Local Git Forge";
 
           server = {
             HTTP_PORT = 3000;
@@ -261,14 +262,12 @@ _: {
             DEFAULT_PUSH_CREATE_PRIVATE = true;
           };
 
-          # Mirror configuration
           mirror = {
             ENABLED = true;
             DEFAULT_INTERVAL = "8h";
             MIN_INTERVAL = "10m";
           };
 
-          # Automatic mirror sync (runs every 30 min)
           "cron.update_mirrors" = {
             ENABLED = true;
             SCHEDULE = "@every 30m";
@@ -277,53 +276,49 @@ _: {
             PUSH_LIMIT = 50;
           };
 
-          # UI preferences
           ui = {
-            DEFAULT_THEME = "gitea-auto";
-            THEMES = "gitea-auto,gitea-light,gitea-dark,arc-green";
+            DEFAULT_THEME = "forgejo-auto";
+            THEMES = "forgejo-auto,forgejo-light,forgejo-dark,arc-green";
           };
 
-          # Security (single-user instance)
           service = {
             DISABLE_REGISTRATION = true;
             REQUIRE_SIGNIN_VIEW = false;
           };
 
           session = {
-            COOKIE_SECURE = true; # Behind Caddy HTTPS reverse proxy
+            COOKIE_SECURE = true;
           };
 
-          # Logging
           log = {
             LEVEL = "Info";
-            ROOT_PATH = "/var/lib/gitea/log";
+            ROOT_PATH = "${stateDir}/log";
           };
 
-          # Performance tuning
           "git.timeout" = {
             MIRROR = 600;
             CLONE = 600;
             PULL = 600;
           };
 
-          # CI/CD via Gitea Actions
           actions = {
             ENABLED = true;
             DEFAULT_ACTIONS_URL = "github";
           };
 
-          # Cleaner footer
           other = {
             SHOW_FOOTER_VERSION = false;
             SHOW_FOOTER_TEMPLATE_LOAD_TIME = false;
           };
+
+          federation = {
+            ENABLED = true;
+          };
         };
       };
 
-      # Systemd configuration
       systemd = {
-        # Harden the main Gitea service (managed by services.gitea)
-        services.gitea = {
+        services.forgejo = {
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;
             StartLimitIntervalSec = lib.mkForce 300;
@@ -338,25 +333,23 @@ _: {
               WatchdogSec = lib.mkForce "30";
             };
           preStart = let
-            adminSetup = pkgs.writeShellScript "gitea-admin-setup" ''
+            adminSetup = pkgs.writeShellScript "forgejo-admin-setup" ''
               set -euo pipefail
 
               ADMIN_USER="${primaryUser}"
               ADMIN_EMAIL="${primaryUser}@local"
-              PASS_FILE="/var/lib/gitea/.admin-password"
-              GITEA=${lib.getExe giteaPkg}
+              PASS_FILE="${stateDir}/.admin-password"
+              FORGEJO=${lib.getExe forgejoPkg}
 
-              # Generate password if not exists
               if [ ! -f "$PASS_FILE" ]; then
                 ${pkgs.coreutils}/bin/head -c 32 /dev/urandom | ${pkgs.coreutils}/bin/base64 > "$PASS_FILE"
                 chmod 600 "$PASS_FILE"
               fi
               ADMIN_PASS="$(${pkgs.coreutils}/bin/head -n1 "$PASS_FILE" | ${pkgs.coreutils}/bin/tr -d '\n')"
 
-              # Create admin user if not exists, sync password from file
-              if ! $GITEA admin user list | grep -q "$ADMIN_USER"; then
-                echo "Creating Gitea admin user: $ADMIN_USER"
-                $GITEA admin user create \
+              if ! $FORGEJO admin user list | grep -q "$ADMIN_USER"; then
+                echo "Creating Forgejo admin user: $ADMIN_USER"
+                $FORGEJO admin user create \
                   --username "$ADMIN_USER" \
                   --password "$ADMIN_PASS" \
                   --email "$ADMIN_EMAIL" \
@@ -364,7 +357,7 @@ _: {
                   --must-change-password=false
               else
                 echo "Ensuring password matches for $ADMIN_USER"
-                $GITEA admin user change-password \
+                $FORGEJO admin user change-password \
                   --username "$ADMIN_USER" \
                   --password "$ADMIN_PASS" \
                   --must-change-password=false 2>/dev/null || true
@@ -373,12 +366,11 @@ _: {
           in "${adminSetup}";
         };
 
-        # GitHub sync service
-        services.gitea-github-sync = {
-          description = "Sync all GitHub repos to Gitea";
-          after = ["gitea.service" "gitea-generate-token.service" "network-online.target"];
+        services.forgejo-github-sync = {
+          description = "Sync all GitHub repos to Forgejo";
+          after = ["forgejo.service" "forgejo-generate-token.service" "network-online.target"];
           wants = ["network-online.target"];
-          requires = ["gitea.service"];
+          requires = ["forgejo.service"];
           inherit onFailure;
           path = [pkgs.curl pkgs.jq pkgs.gh];
           serviceConfig =
@@ -386,10 +378,10 @@ _: {
               Type = "oneshot";
               User = primaryUser;
               EnvironmentFile = [
-                config.sops.templates."gitea-sync.env".path
-                "-/var/lib/gitea/.admin-token.env"
+                config.sops.templates."forgejo-sync.env".path
+                "-${stateDir}/.admin-token.env"
               ];
-              ExecStart = "${mirrorGithubScript}/bin/gitea-mirror-github";
+              ExecStart = "${mirrorGithubScript}/bin/forgejo-mirror-github";
             }
             // harden {
               ProtectHome = false;
@@ -397,47 +389,44 @@ _: {
             };
         };
 
-        # Schedule sync every 6 hours
-        timers.gitea-github-sync = {
-          description = "Sync GitHub repos to Gitea every 6 hours";
+        timers.forgejo-github-sync = {
+          description = "Sync GitHub repos to Forgejo every 6 hours";
           wantedBy = ["timers.target"];
           timerConfig = {
             OnBootSec = "5m";
             OnUnitActiveSec = "6h";
-            Unit = "gitea-github-sync.service";
+            Unit = "forgejo-github-sync.service";
             Persistent = true;
           };
         };
       };
 
-      # Token generation (runs after Gitea is listening)
-      systemd.services.gitea-generate-token = {
-        description = "Generate Gitea API token";
-        after = ["gitea.service"];
-        wants = ["gitea.service"];
-        wantedBy = ["gitea.service"];
+      systemd.services.forgejo-generate-token = {
+        description = "Generate Forgejo API token";
+        after = ["forgejo.service"];
+        wants = ["forgejo.service"];
+        wantedBy = ["forgejo.service"];
         serviceConfig =
           {
             Type = "oneshot";
-            User = "gitea";
-            Group = "gitea";
+            User = "forgejo";
+            Group = "forgejo";
             RemainAfterExit = true;
           }
           // harden {};
         script = let
-          tokenGen = pkgs.writeShellScript "gitea-token-gen" ''
+          tokenGen = pkgs.writeShellScript "forgejo-token-gen" ''
             set -euo pipefail
 
             ADMIN_USER="${primaryUser}"
-            TOKEN_FILE="/var/lib/gitea/.admin-token.env"
-            GITEA=${lib.getExe giteaPkg}
-            export GITEA_WORK_DIR=/var/lib/gitea
+            TOKEN_FILE="${stateDir}/.admin-token.env"
+            FORGEJO=${lib.getExe forgejoPkg}
+            export FORGEJO_WORK_DIR=${stateDir}
 
             [ -f "$TOKEN_FILE" ] && exit 0
 
-            # Wait for Gitea to be ready
             for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -s -o /dev/null -w "" "${giteaUrl}/"; then
+              if ${pkgs.curl}/bin/curl -s -o /dev/null -w "" "${forgejoUrl}/"; then
                 break
               fi
               sleep 1
@@ -446,21 +435,19 @@ _: {
             TOKEN=""
             TOKEN_NAME="sync-$(date +%s)"
 
-            # Generate new token via CLI (unique name avoids "already used" errors)
-            TOKEN=$($GITEA admin user generate-access-token \
+            TOKEN=$($FORGEJO admin user generate-access-token \
               --username "$ADMIN_USER" \
               --token-name "$TOKEN_NAME" \
               --scopes all \
               --raw 2>/dev/null) || TOKEN=""
 
-            # Validate: token must be a 40-char hex string
             if ! echo "$TOKEN" | ${pkgs.gnugrep}/bin/grep -qE '^[0-9a-f]{40}$'; then
               echo "CLI token generation failed or returned invalid token, clearing"
               TOKEN=""
             fi
 
             if [ -n "$TOKEN" ]; then
-              printf 'GITEA_TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
+              printf 'FORGEJO_TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
               chmod 600 "$TOKEN_FILE"
               echo "API token written to $TOKEN_FILE"
             else
@@ -470,38 +457,37 @@ _: {
         in "${tokenGen}";
       };
 
-      # Runner registration token generation
-      systemd.services.gitea-runner-token = {
-        description = "Generate Gitea Actions runner registration token";
-        after = ["gitea.service"];
-        wants = ["gitea.service"];
-        wantedBy = ["gitea.service"];
+      systemd.services.forgejo-runner-token = {
+        description = "Generate Forgejo Actions runner registration token";
+        after = ["forgejo.service"];
+        wants = ["forgejo.service"];
+        wantedBy = ["forgejo.service"];
         serviceConfig =
           {
             Type = "oneshot";
-            User = "gitea";
-            Group = "gitea";
+            User = "forgejo";
+            Group = "forgejo";
             RemainAfterExit = true;
           }
           // harden {};
         script = let
-          tokenGen = pkgs.writeShellScript "gitea-runner-token-gen" ''
+          tokenGen = pkgs.writeShellScript "forgejo-runner-token-gen" ''
             set -euo pipefail
 
-            TOKEN_FILE="/var/lib/gitea/.runner-token"
-            GITEA=${lib.getExe giteaPkg}
-            export GITEA_WORK_DIR=/var/lib/gitea
+            TOKEN_FILE="${stateDir}/.runner-token"
+            FORGEJO=${lib.getExe forgejoPkg}
+            export FORGEJO_WORK_DIR=${stateDir}
 
             [ -f "$TOKEN_FILE" ] && exit 0
 
             for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -s -o /dev/null "${giteaUrl}/"; then
+              if ${pkgs.curl}/bin/curl -s -o /dev/null "${forgejoUrl}/"; then
                 break
               fi
               sleep 1
             done
 
-            TOKEN=$($GITEA actions generate-runner-token 2>/dev/null) || TOKEN=""
+            TOKEN=$($FORGEJO actions generate-runner-token 2>/dev/null) || TOKEN=""
 
             if [ -n "$TOKEN" ]; then
               printf 'TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
@@ -514,14 +500,13 @@ _: {
         in "${tokenGen}";
       };
 
-      # Gitea Actions Runner
       services.gitea-actions-runner = {
         package = pkgs.gitea-actions-runner;
         instances.${config.networking.hostName} = {
           enable = true;
           name = config.networking.hostName;
-          url = "${giteaUrl}";
-          tokenFile = "/var/lib/gitea/.runner-token";
+          url = "${forgejoUrl}";
+          tokenFile = "${stateDir}/.runner-token";
           labels = [
             "ubuntu-latest:docker://node:22-bookworm"
             "ubuntu-22.04:docker://node:22-bookworm"
@@ -537,13 +522,11 @@ _: {
         };
       };
 
-      # Ensure runner starts after token generation
       systemd.services."gitea-runner-${config.networking.hostName}" = {
-        after = ["gitea-runner-token.service"];
-        requires = ["gitea-runner-token.service"];
+        after = ["forgejo-runner-token.service"];
+        requires = ["forgejo-runner-token.service"];
       };
 
-      # CLI tools
       environment.systemPackages = [
         mirrorGithubScript
         mirrorStarredScript

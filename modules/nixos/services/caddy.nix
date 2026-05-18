@@ -64,7 +64,7 @@ _: {
           };
 
           "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
-          "gitea.${domain}" = protectedVHost "gitea" config.services.gitea.settings.server.HTTP_PORT;
+          "gitea.${domain}" = protectedVHost "forgejo" config.services.forgejo.settings.server.HTTP_PORT;
           "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
           "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
           "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;

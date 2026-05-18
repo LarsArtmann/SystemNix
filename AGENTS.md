@@ -42,7 +42,7 @@ SystemNix/
 ├── modules/nixos/services/      # NixOS service modules (flake-parts)
 │   ├── default.nix              # Docker auto-prune (nix.gc in platforms/common/nix-settings.nix)
 │   ├── caddy.nix                # Reverse proxy (TLS via sops)
-│   ├── gitea.nix                # Git hosting + GitHub mirror
+│   ├── forgejo.nix              # Git forge + GitHub mirror + Actions runner
 │   ├── homepage.nix             # Service dashboard
 │   ├── immich.nix               # Photo/video management
 │   ├── photomap.nix             # AI photo exploration
@@ -159,8 +159,8 @@ Defined in `overlays/default.nix`. Passed to both `shared.nix` and `linux.nix`. 
 Avoid hardcoding `localhost:PORT` references. Derive URLs from service config options instead:
 
 ```nix
-giteaPort = config.services.gitea.settings.server.HTTP_PORT;
-giteaUrl = "http://localhost:${toString giteaPort}";
+forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
+forgejoUrl = "http://localhost:${toString forgejoPort}";
 ```
 
 This ensures consistency when port changes and makes the dependency on the service config explicit.
@@ -306,7 +306,7 @@ SigNoz is the sole observability platform (replaces Prometheus + Grafana). Full 
 - **cAdvisor** (port 9110) → Docker container metrics
 - **Caddy** (port 2019) → HTTP request rates, latencies, errors
 - **Authelia** (port 9959) → SSO health metrics
-- **journald receiver** → service logs from signoz, caddy, immich, gitea, docker, postgresql, authelia
+- **journald receiver** → service logs from signoz, caddy, immich, forgejo, docker, postgresql, authelia
 - **OTLP receiver** → traces/metrics/logs from OTel-instrumented apps (ports 4317/4318)
 
 **SigNoz OTel Collector** scrapes all Prometheus exporters via `prometheus` receiver, collects journald logs, and exports everything to ClickHouse.
@@ -347,7 +347,7 @@ Self-contained flake-parts module (`modules/nixos/services/gatus-config.nix`) wr
 | Group | Endpoints |
 |-------|-----------|
 | Infrastructure | Caddy (metrics), Authelia, Homepage, DNS Resolver, DNS Resolver TCP, DNS Blocker, DNS Blocking Active, Upstream DNS (Quad9), TLS Certificate Expiry |
-| Development | Gitea |
+| Development | Forgejo |
 | Media | Immich |
 | Monitoring | SigNoz, Manifest, Node Exporter, cAdvisor, GPU VRAM Metrics, Root Disk Space, Niri Compositor |
 | Productivity | TaskChampion, Twenty CRM, OpenSEO |
@@ -607,7 +607,7 @@ Caddy reverse-proxy ports are derived from service module options — NOT hardco
 |---------|----------------|
 | Authelia | `config.services.authelia-config.port` |
 | Immich | `config.services.immich.port` |
-| Gitea | `config.services.gitea.settings.server.HTTP_PORT` |
+| Forgejo | `config.services.forgejo.settings.server.HTTP_PORT` |
 | Homepage | `config.services.homepage.port` |
 | PhotoMap | `config.services.photomap.port` |
 | SigNoz | `config.services.signoz.settings.queryService.port` |
@@ -648,7 +648,7 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 
 **Services that support sd_notify (Type=notify, safe to use WatchdogSec):**
 - Caddy (`modules/nixos/services/caddy.nix`)
-- Gitea (`modules/nixos/services/gitea.nix`)
+- Forgejo (`modules/nixos/services/forgejo.nix`)
 
 **Services that do NOT support sd_notify (NEVER set WatchdogSec):**
 - All Python services: Hermes, ComfyUI, Immich ML
@@ -826,7 +826,7 @@ just dns-diagnostics    # Full DNS stack diagnostics
 just dns-update         # Update blocklist commits + recompute SRI hashes
 just immich-status      # Immich service status + backup count
 just immich-backup      # Database backup
-just gitea-sync-repos   # Sync GitHub → Gitea
+just forgejo-sync-repos   # Sync GitHub → Forgejo
 just hermes-status      # Hermes gateway status
 just manifest-status    # Manifest LLM router status
 just wan-status         # Dual-WAN ECMP+MPTCP status (routes, endpoints)

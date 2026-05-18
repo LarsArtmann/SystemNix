@@ -196,7 +196,7 @@ _: {
               })
               (mkClient {
                 client_id = "gitea";
-                client_name = "Gitea";
+                client_name = "Forgejo";
                 redirect_uris = [
                   "https://gitea.${domain}/user/oauth2/authelia/callback"
                 ];

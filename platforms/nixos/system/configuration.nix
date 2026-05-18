@@ -123,7 +123,7 @@
       udisks2.enable = true;
       sops-config.enable = true;
       caddy.enable = true;
-      gitea.enable = true;
+      forgejo.enable = true;
       immich.enable = true;
       authelia-config.enable = true;
       # photomap — disabled: podman config permission issue
@@ -268,8 +268,8 @@
         authorizedKeys = [nix-ssh-config.sshKeys.lars];
       };
 
-      # Declarative Gitea repository mirroring
-      gitea-repos = {
+      # Declarative Forgejo repository mirroring
+      forgejo-repos = {
         enable = true;
         repos = [
           "git@github.com:LarsArtmann/dnsblockd.git"

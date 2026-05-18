@@ -1,33 +1,31 @@
-# Declarative Gitea repository mirroring from GitHub with auto-sync
+# Declarative Forgejo repository mirroring from GitHub with auto-sync
 _: {
-  flake.nixosModules.gitea-repos = {
+  flake.nixosModules.forgejo-repos = {
     pkgs,
     lib,
     config,
     ...
   }: let
-    cfg = config.services.gitea-repos;
+    cfg = config.services.forgejo-repos;
     inherit (config.users) primaryUser;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
-    giteaPort = config.services.gitea.settings.server.HTTP_PORT;
-    giteaUrl = "http://localhost:${toString giteaPort}";
+    forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
+    forgejoUrl = "http://localhost:${toString forgejoPort}";
 
-    # Script to ensure specific GitHub repos are mirrored to Gitea
-    ensureReposScript = pkgs.writeShellScriptBin "gitea-ensure-repos" ''
-      # Ensure specific GitHub repos are mirrored to Gitea
+    ensureReposScript = pkgs.writeShellScriptBin "forgejo-ensure-repos" ''
+      # Ensure specific GitHub repos are mirrored to Forgejo
       # Gets GitHub token fresh from gh CLI each run
       set -euo pipefail
 
-      GITEA_URL="${giteaUrl}"
+      FORGEJO_URL="${forgejoUrl}"
       REPOS=(${lib.concatStringsSep " " (map (r: "\"${r}\"") cfg.repos)})
 
-      # Get tokens from environment (provided via sops template EnvironmentFile)
-      GITEA_TOKEN="''${GITEA_TOKEN:-}"
+      FORGEJO_TOKEN="''${FORGEJO_TOKEN:-}"
       GITHUB_TOKEN="''${GITHUB_TOKEN:-$(gh auth token)}"
       GITHUB_USER="''${GITHUB_USER:-}"
 
-      if [[ -z "$GITEA_TOKEN" ]]; then
-        echo "Error: GITEA_TOKEN not set in sops secrets"
+      if [[ -z "$FORGEJO_TOKEN" ]]; then
+        echo "Error: FORGEJO_TOKEN not set in sops secrets"
         exit 1
       fi
 
@@ -42,32 +40,28 @@ _: {
         exit 1
       fi
 
-      echo "=== Ensuring repos exist in Gitea ==="
+      echo "=== Ensuring repos exist in Forgejo ==="
       echo "GitHub user: $GITHUB_USER"
       echo "Repos to check: ''${#REPOS[@]}"
       echo ""
 
       for repo_url in "''${REPOS[@]}"; do
-        # Extract repo name from SSH URL (git@github.com:user/repo.git)
         repo_name=$(basename "$repo_url" .git)
         echo "Processing: $repo_name"
 
-        # Check if already exists in Gitea
         existing=$(curl -s -o /dev/null -w "%{http_code}" \
-          -H "Authorization: token $GITEA_TOKEN" \
-          "$GITEA_URL/api/v1/repos/$GITHUB_USER/$repo_name" 2>/dev/null || echo "000")
+          -H "Authorization: token $FORGEJO_TOKEN" \
+          "$FORGEJO_URL/api/v1/repos/$GITHUB_USER/$repo_name" 2>/dev/null || echo "000")
 
         if [[ "$existing" == "200" ]]; then
           echo "  ✓ Already mirrored: $repo_name"
           continue
         fi
 
-        # Get repo info from GitHub API
         echo "  → Fetching info from GitHub..."
         repo_info=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
           "https://api.github.com/repos/$GITHUB_USER/$repo_name")
 
-        # Check if repo exists on GitHub
         if echo "$repo_info" | jq -e '.message == "Not Found"' &>/dev/null; then
           echo "  ✗ Repo not found on GitHub: $repo_name"
           continue
@@ -77,11 +71,11 @@ _: {
         private=$(echo "$repo_info" | jq -r '.private')
         clone_url=$(echo "$repo_info" | jq -r '.clone_url')
 
-        echo "  → Creating mirror in Gitea..."
+        echo "  → Creating mirror in Forgejo..."
         result=$(curl -s -X POST \
-          -H "Authorization: token $GITEA_TOKEN" \
+          -H "Authorization: token $FORGEJO_TOKEN" \
           -H "Content-Type: application/json" \
-          "$GITEA_URL/api/v1/repos/migrate" \
+          "$FORGEJO_URL/api/v1/repos/migrate" \
           -d "$(jq -n \
             --arg name "$repo_name" \
             --arg clone_url "$clone_url" \
@@ -106,6 +100,18 @@ _: {
 
         if echo "$result" | jq -e '.name' &>/dev/null; then
           echo "  ✓ Created mirror: $repo_name"
+
+          echo "  → Setting up push mirror to GitHub: $repo_name"
+          curl -s -X POST \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            -H "Content-Type: application/json" \
+            "$FORGEJO_URL/api/v1/repos/$GITHUB_USER/$repo_name/push_mirrors" \
+            -d "$(jq -n \
+              --arg remote "https://$GITHUB_USER:''${GITHUB_TOKEN}@github.com/$GITHUB_USER/$repo_name.git" \
+              '{
+                remote_address: $remote,
+                sync_on_commit: true
+              }')" 2>/dev/null || echo "  ⚠ Push mirror setup failed (may already exist)"
         else
           error_msg=$(echo "$result" | jq -r '.message // "Unknown error"')
           echo "  ✗ Failed: $error_msg"
@@ -116,16 +122,11 @@ _: {
       echo "=== Done ==="
     '';
 
-    # Script to update GitHub token in sops (run manually)
-    # sops needs the age key derived from the SSH host key to decrypt.
-    # sops-nix stores this at /run/secrets.d/age-keys.txt (root:root 0600),
-    # so all sops calls must run via sudo with SOPS_AGE_KEY_FILE set.
-    updateGithubTokenScript = pkgs.writeShellScriptBin "gitea-update-github-token" ''
+    updateGithubTokenScript = pkgs.writeShellScriptBin "forgejo-update-github-token" ''
       SOPS="${pkgs.sops}/bin/sops"
       AGE_KEY_FILE="/run/secrets.d/age-keys.txt"
       set -euo pipefail
 
-      # Verify we can escalate to access the age key
       if ! sudo test -r "$AGE_KEY_FILE"; then
         echo "Error: Cannot read $AGE_KEY_FILE (need sudo)"
         exit 1
@@ -135,15 +136,12 @@ _: {
         sudo env SOPS_AGE_KEY_FILE="$AGE_KEY_FILE" "$SOPS" "$@"
       }
 
-      # Find the SystemNix repo
       find_repo() {
-        # Check FLAKE_ROOT first (set by nix commands)
         if [[ -n "''${FLAKE_ROOT:-}" ]] && [[ -d "$FLAKE_ROOT/platforms/nixos/secrets" ]]; then
           echo "$FLAKE_ROOT"
           return 0
         fi
 
-        # Check common locations
         for dir in "$HOME/projects/SystemNix" "$HOME/SystemNix" "$HOME/Setup-Mac"; do
           if [[ -d "$dir/platforms/nixos/secrets" ]]; then
             echo "$dir"
@@ -151,7 +149,6 @@ _: {
           fi
         done
 
-        # Try to find from current directory
         local curr="$PWD"
         while [[ "$curr" != "/" ]]; do
           if [[ -d "$curr/platforms/nixos/secrets" ]]; then
@@ -176,7 +173,6 @@ _: {
       echo "Repo: $REPO_ROOT"
       echo ""
 
-      # Get token from gh CLI
       if ! command -v gh &> /dev/null; then
         echo "Error: gh CLI not found"
         exit 1
@@ -192,7 +188,6 @@ _: {
 
       echo "Got fresh token: ''${GITHUB_TOKEN:0:10}..."
 
-      # Get GitHub username
       GITHUB_USER=$(gh api user -q .login 2>/dev/null || echo "")
       if [[ -z "$GITHUB_USER" ]]; then
         echo "Error: Could not get GitHub username"
@@ -201,13 +196,11 @@ _: {
       echo "GitHub user: $GITHUB_USER"
       echo ""
 
-      # Update secrets using sops (via sudo with age key)
       echo "Updating sops secrets..."
       cd "$(dirname "$SECRETS_FILE")"
 
       sops_wrapper set "$SECRETS_FILE" '["github_token"]' "\"$GITHUB_TOKEN\""
 
-      # Update github_user if needed
       CURRENT_USER=$(sops_wrapper -d --extract '["github_user"]' "$SECRETS_FILE" 2>/dev/null || echo "")
       if [[ "$CURRENT_USER" != "$GITHUB_USER" ]]; then
         echo "Updating github_user: $CURRENT_USER → $GITHUB_USER"
@@ -221,8 +214,8 @@ _: {
       echo "  cd $REPO_ROOT && sudo nixos-rebuild switch --flake .#evo-x2"
     '';
   in {
-    options.services.gitea-repos = {
-      enable = lib.mkEnableOption "Declarative Gitea repository mirroring";
+    options.services.forgejo-repos = {
+      enable = lib.mkEnableOption "Declarative Forgejo repository mirroring";
 
       user = lib.mkOption {
         type = lib.types.str;
@@ -233,7 +226,7 @@ _: {
       repos = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [];
-        description = "List of GitHub SSH URLs to mirror to Gitea";
+        description = "List of GitHub SSH URLs to mirror to Forgejo";
         example = ["git@github.com:user/repo.git"];
       };
 
@@ -245,7 +238,6 @@ _: {
     };
 
     config = lib.mkIf cfg.enable {
-      # Ensure gh, sops, and age are available
       environment.systemPackages = [
         ensureReposScript
         updateGithubTokenScript
@@ -254,13 +246,12 @@ _: {
         pkgs.age
       ];
 
-      # Systemd configuration
       systemd = lib.mkIf cfg.autoSync {
-        services.gitea-ensure-repos = {
-          description = "Ensure GitHub repos are mirrored to Gitea";
-          after = ["gitea.service" "gitea-generate-token.service" "network-online.target"];
+        services.forgejo-ensure-repos = {
+          description = "Ensure GitHub repos are mirrored to Forgejo";
+          after = ["forgejo.service" "forgejo-generate-token.service" "network-online.target"];
           wants = ["network-online.target"];
-          requires = ["gitea.service"];
+          requires = ["forgejo.service"];
           inherit onFailure;
           startLimitIntervalSec = 300;
           startLimitBurst = 3;
@@ -269,21 +260,21 @@ _: {
             {
               Type = "oneshot";
               User = cfg.user;
-              EnvironmentFile = config.sops.templates."gitea-sync.env".path;
-              ExecStartPre = pkgs.writeShellScript "wait-for-gitea" ''
-                echo "Waiting for Gitea to be ready..."
+              EnvironmentFile = config.sops.templates."forgejo-sync.env".path;
+              ExecStartPre = pkgs.writeShellScript "wait-for-forgejo" ''
+                echo "Waiting for Forgejo to be ready..."
                 for i in {1..30}; do
-                  if curl -s ${giteaUrl}/api/v1/version &>/dev/null; then
-                    echo "Gitea is ready!"
+                  if curl -s ${forgejoUrl}/api/v1/version &>/dev/null; then
+                    echo "Forgejo is ready!"
                     exit 0
                   fi
-                  echo "Gitea not ready yet, attempt $i/30..."
+                  echo "Forgejo not ready yet, attempt $i/30..."
                   sleep 2
                 done
-                echo "Gitea failed to become ready after 60 seconds"
+                echo "Forgejo failed to become ready after 60 seconds"
                 exit 1
               '';
-              ExecStart = "${ensureReposScript}/bin/gitea-ensure-repos";
+              ExecStart = "${ensureReposScript}/bin/forgejo-ensure-repos";
             }
             // serviceDefaults {Restart = "on-failure";}
             // harden {
@@ -292,14 +283,12 @@ _: {
             };
         };
 
-        # Trigger on rebuild if autoSync is enabled
         tmpfiles.rules = [
-          "L /run/gitea-repos-trigger - - - - ${ensureReposScript}/bin/gitea-ensure-repos"
+          "L /run/forgejo-repos-trigger - - - - ${ensureReposScript}/bin/forgejo-ensure-repos"
         ];
 
-        # Periodic timer to catch newly-added repos between rebuilds
-        timers.gitea-ensure-repos = {
-          description = "Ensure GitHub repos are mirrored to Gitea (daily)";
+        timers.forgejo-ensure-repos = {
+          description = "Ensure GitHub repos are mirrored to Forgejo (daily)";
           wantedBy = ["timers.target"];
           timerConfig = {
             OnCalendar = "daily";

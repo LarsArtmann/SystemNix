@@ -55,9 +55,9 @@ _: {
               url = "http://localhost:${toString config.services.authelia-config.port}/api/health";
             })
             (mkHttpCheck {
-              name = "Gitea";
+              name = "Forgejo";
               group = "Development";
-              url = "http://localhost:${toString config.services.gitea.settings.server.HTTP_PORT}/api/v1/version";
+              url = "http://localhost:${toString config.services.forgejo.settings.server.HTTP_PORT}/api/v1/version";
             })
             (mkHttpCheck {
               name = "Homepage";

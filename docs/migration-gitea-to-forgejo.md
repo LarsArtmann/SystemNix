@@ -1,6 +1,6 @@
 # Gitea → Forgejo Migration Plan
 
-**Status:** Proposal (not yet started)
+**Status:** Phase 1 COMPLETE — code migrated, build passes. Phase 2 (data migration) pending `just switch`.
 **Risk:** Medium — data is safe (SQLite backup), but 2h downtime window needed
 **Estimated effort:** 4-6 hours (implementation + testing + migration)
 

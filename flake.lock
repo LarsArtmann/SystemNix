@@ -2,7 +2,9 @@
   "nodes": {
     "art-dupl": {
       "inputs": {
-        "gogenfilter": "gogenfilter",
+        "gogenfilter": [
+          "gogenfilter"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ]
@@ -510,11 +512,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779146080,
-        "narHash": "sha256-HcyBCV63VuVblhPhvMNm53ajmebhqCkmqihhQCv6Vk4=",
+        "lastModified": 1779146206,
+        "narHash": "sha256-r8Lu020Ho4v89IqzRmLW8dMRvoHGa5AONKEJ7ZzWavE=",
         "ref": "master",
-        "rev": "5d79dde704388946f775bf6e3801d4ceab554a82",
-        "revCount": 905,
+        "rev": "f4986d1aa868143e605f7fa7cb49e05f09de4230",
+        "revCount": 907,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -525,23 +527,6 @@
       }
     },
     "gogenfilter": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1777917982,
-        "narHash": "sha256-gtMTEnL0uQ7OXVbFpIkRgNhostduN+xoEg+MADWsSS8=",
-        "ref": "refs/heads/master",
-        "rev": "235fb88077c78a5aa78d142e474154218bb98e89",
-        "revCount": 520,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
-      },
-      "original": {
-        "rev": "235fb88077c78a5aa78d142e474154218bb98e89",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
-      }
-    },
-    "gogenfilter_2": {
       "flake": false,
       "locked": {
         "lastModified": 1779116306,
@@ -708,11 +693,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1779144500,
-        "narHash": "sha256-VpYXlF5GMBimOjPyEUC3HaEjzimbqRIqdvATJlrvaZY=",
+        "lastModified": 1779146321,
+        "narHash": "sha256-rD3vn8TUsWqAS/SY72VNyPX/ju7IvV3b65baZTu0eqs=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "0153950d833bc8153aa4ebdda5dc4f59bfa0caa2",
+        "rev": "103de0aab0573d289a677a778421c862a32a52c6",
         "type": "github"
       },
       "original": {
@@ -1287,7 +1272,7 @@
         "go-finding": "go-finding",
         "go-output": "go-output",
         "go-structure-linter": "go-structure-linter",
-        "gogenfilter": "gogenfilter_2",
+        "gogenfilter": "gogenfilter",
         "golangci-lint-auto-configure": "golangci-lint-auto-configure",
         "helium": "helium",
         "hermes-agent": "hermes-agent",

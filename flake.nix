@@ -295,6 +295,7 @@
     art-dupl = {
       url = "git+ssh://git@github.com/LarsArtmann/art-dupl?ref=fork";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.gogenfilter.follows = "gogenfilter";
     };
 
     # projects-management-automation — CLI for managing multiple projects with workflow automation
@@ -355,12 +356,12 @@
         module = "default-services";
       }
       {
-        path = ./modules/nixos/services/gitea.nix;
-        module = "gitea";
+        path = ./modules/nixos/services/forgejo.nix;
+        module = "forgejo";
       }
       {
-        path = ./modules/nixos/services/gitea-repos.nix;
-        module = "gitea-repos";
+        path = ./modules/nixos/services/forgejo-repos.nix;
+        module = "forgejo-repos";
       }
       {
         path = ./modules/nixos/services/homepage.nix;

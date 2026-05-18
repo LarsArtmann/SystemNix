@@ -627,7 +627,7 @@ in {
               journald = {
                 directory = "/var/log/journal";
                 priority = "info";
-                units = ["signoz.service" "signoz-collector.service" "caddy.service" "immich-server.service" "gitea.service" "docker.service" "postgresql.service" "authelia-main.service"];
+                units = ["signoz.service" "signoz-collector.service" "caddy.service" "immich-server.service" "forgejo.service" "docker.service" "postgresql.service" "authelia-main.service"];
               };
             };
           exporters = {

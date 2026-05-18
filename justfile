@@ -450,17 +450,17 @@ openseo-logs N="200":
 openseo-restart:
     sudo systemctl restart openseo
 
-# Sync GitHub repos to Gitea mirror
+# Sync GitHub repos to Forgejo mirror
 [group('services')]
 [linux]
-gitea-sync-repos:
-    gitea-ensure-repos
+forgejo-sync-repos:
+    forgejo-ensure-repos
 
-# Update Gitea GitHub token from gh CLI
+# Update Forgejo GitHub token from gh CLI
 [group('services')]
 [linux]
-gitea-update-token:
-    gitea-update-github-token
+forgejo-update-token:
+    forgejo-update-github-token
 
 # ═══════════════════════════════════════════════════════════════════
 #  Desktop (NixOS — evo-x2)

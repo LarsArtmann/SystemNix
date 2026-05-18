@@ -112,10 +112,10 @@ _: {
                 siteMonitor: http://localhost:${toString config.services.dns-blocker.statsPort}/health
 
         - Development:
-            - Gitea:
+            - Forgejo:
                 href: ${svcUrl "gitea"}
-                description: Git Mirror (GitHub Sync)
-                icon: gitea.png
+                description: Git Forge (GitHub Sync)
+                icon: forgejo.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "gitea"}/api/v1/nodeinfo
             - Ollama:

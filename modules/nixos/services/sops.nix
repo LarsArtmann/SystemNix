@@ -42,8 +42,8 @@ in {
           // mkSecrets "secrets.yaml" {
             owner = primaryUser;
             group = "users";
-            restartUnits = ["gitea-github-sync.service" "gitea-ensure-repos.service"];
-          } ["gitea_token" "github_token" "github_user"]
+            restartUnits = ["forgejo-github-sync.service" "forgejo-ensure-repos.service"];
+          } ["forgejo_token" "github_token" "github_user"]
           // mkSecrets "authelia-secrets.yaml" {
             owner = "authelia-main";
             group = "authelia-main";
@@ -124,11 +124,11 @@ in {
               DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
             '';
           };
-          "gitea-sync.env" = {
+          "forgejo-sync.env" = {
             owner = primaryUser;
             group = "users";
             content = ''
-              GITEA_TOKEN=${config.sops.placeholder.gitea_token}
+              FORGEJO_TOKEN=${config.sops.placeholder.forgejo_token}
               GITHUB_TOKEN=${config.sops.placeholder.github_token}
               GITHUB_USER=${config.sops.placeholder.github_user}
             '';

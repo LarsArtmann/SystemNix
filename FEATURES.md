@@ -54,15 +54,15 @@ _A brutally honest audit of every feature the project actually has._
 | Docker | ✅ | `default.nix` | Always-on, overlay2, `/data/docker`, weekly auto-prune, user `lars` in docker group |
 | Caddy (reverse proxy) | ✅ | `caddy.nix` | TLS via sops certs, forward auth via Authelia, 10 virtual hosts, metrics enabled |
 | SOPS secrets management | ✅ | `sops.nix` | Age-encrypted via SSH host key, 4 sops files, auto-restart per secret |
-| Authelia SSO/IdP | ✅ | `authelia.nix` | OIDC provider, TOTP + WebAuthn 2FA, file-based auth, Gitea + Immich OIDC clients, brute-force protection |
+| Authelia SSO/IdP | ✅ | `authelia.nix` | OIDC provider, TOTP + WebAuthn 2FA, file-based auth, Forgejo + Immich OIDC clients, brute-force protection |
 | DNS Failover (Keepalived VRRP) | 📋 | `dns-failover.nix` | Two-node VRRP cluster, unbound health tracking, GARP refresh — Pi 3 not provisioned |
 
 ### Self-Hosted Applications
 
 | Service | Status | Module | Key Details |
 |---------|--------|--------|-------------|
-| Gitea (Git hosting) | ✅ | `gitea.nix` | SQLite, LFS, weekly dumps, GitHub mirror, Actions runner (Docker + native), admin auto-setup |
-| Gitea repos (declarative mirroring) | ✅ | `gitea-repos.nix` | Auto-sync on rebuild + daily timer, hardened oneshot, sops-managed tokens |
+| Forgejo (Git forge) | ✅ | `forgejo.nix` | SQLite, LFS, weekly dumps, GitHub mirror + push mirrors, Actions runner (Docker + native), admin auto-setup, federation enabled |
+| Forgejo repos (declarative mirroring) | ✅ | `forgejo-repos.nix` | Auto-sync on rebuild + daily timer, push mirrors to GitHub, hardened oneshot, sops-managed tokens |
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha theme, 5 service categories, resource widgets, health checks |
 | Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Authelia, daily DB backup, GPU access for ML |
 | PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, pinned SHA256, disabled in config |
@@ -248,7 +248,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 |---------|--------|-------|
 | earlyoom | ✅ | Kills at 10% free, protects sshd/journald/niri/waybar/pipewire, prefers ollama/python/chrome/node |
 | OOM protection | ✅ | sshd (-1000), journald (-500), waybar (-500), pipewire (-500) |
-| Systemd watchdog (sd_notify only) | ✅ | Caddy, Gitea — correctly limited to Type=notify services |
+| Systemd watchdog (sd_notify only) | ✅ | Caddy, Forgejo — correctly limited to Type=notify services |
 | Service failure notifications | ✅ | `notify-failure@` template — desktop + syslog fallback |
 | Service health check | ✅ | Every 15 min, critical services, desktop notification on failure |
 | BTRFS scrub | ✅ | Monthly auto-scrub on `/` and `/data` |
@@ -383,7 +383,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Core | `setup`, `switch`, `update`, `test`, `test-fast`, `format`, `validate`, `rollback`, `health` | ✅ |
 | DNS | `dns-status`, `dns-logs`, `dns-restart`, `dns-test`, `dns-perf`, `dns-diagnostics`, `dns-stats` | ✅ |
 | Immich | `immich-status`, `immich-logs`, `immich-backup`, `immich-restart` | ✅ |
-| Gitea | `gitea-update-token`, `gitea-sync-repos`, `gitea-setup` | ✅ |
+| Forgejo | `forgejo-update-token`, `forgejo-sync-repos`, `forgejo-setup` | ✅ |
 | Taskwarrior | `task-list`, `task-add`, `task-agent`, `task-sync`, `task-status`, `task-setup`, `task-backup` | ✅ |
 | Niri session | `session-status`, `session-restore` | ✅ |
 | Camera | `cam-status`, `cam-privacy`, `cam-track`, `cam-reset`, `cam-audio`, `cam-sync`, `cam-restart`, `cam-logs` | ✅ |
