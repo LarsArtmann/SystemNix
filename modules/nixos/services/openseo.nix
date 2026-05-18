@@ -60,7 +60,6 @@ _: {
         ProtectHome = false;
         NoNewPrivileges = false;
       };
-      preStartCommands = "rm -f /var/lib/openseo/.env";
     };
   in {
     options.services.openseo = {
