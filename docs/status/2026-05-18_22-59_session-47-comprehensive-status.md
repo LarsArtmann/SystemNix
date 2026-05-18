@@ -65,7 +65,7 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 
 | Area | Status | What's Left |
 |------|--------|-------------|
-| **nix-colors integration** | 🟡 Planned | `platforms/common/color-scheme.nix` module exists, nix-colors input present. TODO: wire to HM, migrate 17+ hardcoded colors (~6h) |
+| **nix-colors integration** | ✅ **DONE** | Fully migrated — `nix-colors` flake input removed. Catppuccin Mocha palette inlined in `theme.nix`. Lock nodes 130→94. No behavior change. |
 | **DNS failover cluster** | 🟡 Module done | `dns-failover.nix` and `local-network.nix` complete. Pi 3 hardware **not yet provisioned**. rpi3-dns config exists in flake.nix |
 | **hostPlatform deprecation** | 🟡 Known | `hardware-configuration.nix` line 56 still uses deprecated `nixpkgs.hostPlatform`. Evaluation warning on every build |
 | **External repo flake standardization** | 🟡 In progress | buildflow and PMA still need real `vendorHash` computed. hierarchical-errors needs `flake.nix` created |
@@ -81,9 +81,9 @@ SystemNix is a **mature, production-grade cross-platform Nix configuration** man
 | Area | Priority | Notes |
 |------|----------|-------|
 | **Pi 3 DNS failover provisioning** | P4 | Hardware needs to be set up, imaged with rpi3-dns config |
-| **nix-colors → HM migration** | P3 | ~6h effort, 17+ hardcoded colors to replace |
+| ~~nix-colors → HM migration~~ | ~~P3~~ ✅ **DONE** | Inlined in theme.nix, lock nodes 130→94, see Appendix B |
 | **Per-threshold SigNoz channel routing** | P2 | Would separate warn/critical into different Discord channels |
-| **dns-failover authPassword → sops** | P2 | Currently plaintext in module, needs age identity on Pi 3 |
+| ~~dns-failover authPassword → sops~~ | ~~P2~~ ✅ **DONE** | Moved to sops template + passwordFile, see Appendix B |
 | **Voice-agents Caddy vHost consolidation** | P2 | Separate vHost could merge into caddy.nix pattern |
 | **hierarchical-errors flake.nix** | External | Repo needs a flake.nix created from scratch |
 | **buildflow vendorHash** | External | Needs `vendorHash = ""` → build → paste cycle |
