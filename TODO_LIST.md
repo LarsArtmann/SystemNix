@@ -17,7 +17,7 @@
 ### Priority 2: Code Improvements
 
 - [ ] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `signoz.nix`
-- [ ] **`dns-failover.nix` authPassword → sops** — code done, needs `dns_failover_vrrp_password` added to `secrets.yaml` (requires age key on evo-x2)
+- [x] **`dns-failover.nix` authPassword → sops** — activation script provisions secret during `just switch`, no manual steps needed
 - [ ] **Consolidate voice-agents Caddy vHost** into caddy.nix pattern — `caddy.nix`
 
 ### Priority 3: Documentation

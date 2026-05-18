@@ -197,17 +197,47 @@
       inputs.flake-parts.follows = "flake-parts";
     };
 
+    # Shared Go libraries — single source of truth for all Go tool repos
+    go-finding = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-finding?ref=master";
+      flake = false;
+    };
+    go-output = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-output?ref=master";
+      flake = false;
+    };
+    gogenfilter = {
+      url = "git+ssh://git@github.com/LarsArtmann/gogenfilter?ref=master";
+      flake = false;
+    };
+    go-branded-id = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-branded-id?ref=master";
+      flake = false;
+    };
+    go-filewatcher = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-filewatcher?ref=master";
+      flake = false;
+    };
+    cmdguard = {
+      url = "git+ssh://git@github.com/LarsArtmann/cmdguard?ref=master";
+      flake = false;
+    };
+
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
     golangci-lint-auto-configure = {
       url = "git+ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.goFindingSrc.follows = "go-finding";
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
     mr-sync = {
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.cmdguard.follows = "cmdguard";
+      inputs.go-output.follows = "go-output";
+      inputs.go-branded-id.follows = "go-branded-id";
     };
 
     # hierarchical-errors — Error handling pattern analyzer for Go projects
@@ -215,6 +245,9 @@
       url = "git+ssh://git@github.com/LarsArtmann/hierarchical-errors?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.go-finding.follows = "go-finding";
+      inputs.go-filewatcher.follows = "go-filewatcher";
+      inputs.gogenfilter.follows = "gogenfilter";
     };
 
     # BuildFlow — Zero-configuration build automation for Go projects
@@ -222,6 +255,10 @@
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.cmdguard.follows = "cmdguard";
+      inputs.go-finding.follows = "go-finding";
+      inputs.go-output.follows = "go-output";
+      inputs.go-branded-id.follows = "go-branded-id";
     };
 
     # go-auto-upgrade — Automate Go library upgrades
@@ -229,12 +266,20 @@
       url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.cmdguard.follows = "cmdguard";
+      inputs.go-finding.follows = "go-finding";
+      inputs.go-output.follows = "go-output";
+      inputs.go-branded-id.follows = "go-branded-id";
     };
 
     # go-structure-linter — Go project structure validator
     go-structure-linter = {
       url = "git+ssh://git@github.com/LarsArtmann/go-structure-linter?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
+      inputs.go-finding.follows = "go-finding";
+      inputs.go-output.follows = "go-output";
+      inputs.gogenfilter.follows = "gogenfilter";
+      inputs.go-branded-id.follows = "go-branded-id";
     };
 
     # branching-flow — Error context preservation analyzer
@@ -242,6 +287,8 @@
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.go-finding.follows = "go-finding";
+      inputs.go-output.follows = "go-output";
     };
 
     # art-dupl — Code duplication detector
@@ -255,6 +302,11 @@
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
+      inputs.cmdguard.follows = "cmdguard";
+      inputs.go-output.follows = "go-output";
+      inputs.go-branded-id.follows = "go-branded-id";
+      inputs.go-filewatcher.follows = "go-filewatcher";
+      inputs.gogenfilter.follows = "gogenfilter";
     };
   };
 

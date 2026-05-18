@@ -57,7 +57,6 @@ SystemNix/
 │   ├── aw-watcher-utilization.nix # ActivityWatch system utilization watcher (Python)
 │   ├── govalid.nix              # Type-safe struct validation code generator (Go)
 │   ├── jscpd.nix                # Copy/paste detector (Node.js)
-│   ├── modernize.nix            # Go modernize tool
 │   ├── netwatch.nix             # Real-time network diagnostics TUI (Rust)
 │   ├── openaudible.nix          # Audible audiobook manager (AppImage)
 │
@@ -384,6 +383,7 @@ High-availability DNS via Keepalived VRRP (`modules/nixos/services/dns-failover.
 - VRRP garp refresh every 30s for rapid failover detection
 - Module options: `services.dns-failover.{enable, virtualIP, interface, priority, routerID, subnetPrefix, passwordFile}`
 - VRRP password stored in sops: `dns_failover_vrrp_password` secret → `keepalived-vrrp-env` template → keepalived `secretFile` (envsubst)
+- Activation script (`sops-provision-vrrp-password` in sops.nix) auto-provisions the secret during `just switch` — runs as root, derives age key from SSH host key, idempotent
 - Pi 3 image built via `nixosConfigurations.rpi3-dns` in flake.nix
 - **Status**: Planned — Pi 3 hardware not yet provisioned (Pi will need sops + age identity when provisioned)
 

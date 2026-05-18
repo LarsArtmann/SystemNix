@@ -258,7 +258,7 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 ## Metrics
 
 - **Service modules:** 35 (32 enabled)
-- **Custom packages:** 5 (aw-watcher-utilization, govalid, jscpd, modernize, netwatch, openaudible)
+- **Custom packages:** 4 (aw-watcher-utilization, govalid, jscpd, netwatch, openaudible)
 - **Overlays:** 18 (12 shared + 6 Linux-only)
 - **Cross-platform programs:** 14
 - **Shell scripts:** 16
@@ -304,45 +304,27 @@ This can only be verified by visiting `https://seo.home.lan` in a browser on the
 
 #### The Problem
 
-The `modernize` Go linter binary ships from **two sources** on PATH:
+The `modernize` Go linter binary shipped from **two sources** on PATH:
 
-1. **`pkgs/modernize.nix`** — Custom build from `golang/tools` at pinned commit `ecc727ef`, built with Go 1.26 (`buildGo126Module`). Only compiles the `modernize` subpackage (`go/analysis/passes/modernize/cmd/modernize`).
+1. **`pkgs/modernize.nix`** — Custom build from `golang/tools` at pinned commit `ecc727ef`, built with Go 1.26 (`buildGo126Module`). Only compiled the `modernize` subpackage.
 
-2. **`pkgs.gopls`** (nixpkgs) — The standard `gopls` package bundles `modernize` as an auxiliary binary in `$out/bin/` alongside `gopls` itself.
+2. **`pkgs.gopls`** (nixpkgs) — The standard `gopls` package bundles `modernize` as an auxiliary binary in `$out/bin/`.
 
-Having both on PATH creates a silent collision — whichever appears first in the PATH wins, and they may be built at different versions or with different Go toolchains.
+#### Initial Fix
 
-#### The Resolution
+`goplsWithoutModernize` symlinkJoin wrapper stripped `modernize` from gopls, keeping only the custom build.
 
-The fix in `platforms/common/packages/base.nix:16-22` creates `goplsWithoutModernize` — a `symlinkJoin` wrapper around `pkgs.gopls` that strips the `modernize` binary:
+#### Simplified (This Session)
 
-```nix
-goplsWithoutModernize = pkgs.symlinkJoin {
-  name = "gopls-without-modernize";
-  paths = [pkgs.gopls];
-  postBuild = ''
-    rm -f $out/bin/modernize
-  '';
-};
-```
+Removed the custom `pkgs/modernize.nix` build entirely. The original justification (Go 1.26) is now moot — **nixpkgs default Go is already 1.26.2**. The `gopls` package from nixpkgs bundles `modernize` at the same or newer version. No wrapper needed.
 
-This ensures only the custom `pkgs/modernize.nix` version (pinned, Go 1.26) survives on PATH.
+#### Changes Made
 
-#### Why Keep the Custom Build?
-
-- **Go version control** — Built with Go 1.26 via `buildGo126Module`, whereas nixpkgs `gopls` uses the default Go version.
-- **Commit pinning** — Locked to a specific upstream `golang/tools` commit, independent of nixpkgs' gopls release cadence.
-- **Build isolation** — Only compiles the `modernize` subpackage, not the entire `golang/tools` monorepo that `gopls` drags in.
-
-#### Files Involved
-
-| File | Role |
-|------|------|
-| `pkgs/modernize.nix` | Custom `modernize` build (Go 1.26, pinned commit) |
-| `platforms/common/packages/base.nix:10-13` | Conditional import of `modernize.nix` with `tryEval` fallback |
-| `platforms/common/packages/base.nix:16-22` | `goplsWithoutModernize` — strips `modernize` from gopls |
-| `platforms/common/packages/base.nix:151` | Installs `goplsWithoutModernize` instead of `pkgs.gopls` |
-| `platforms/common/packages/base.nix:231` | Installs custom `modernizePackage` conditionally |
+| File | Change |
+|------|--------|
+| `pkgs/modernize.nix` | **Deleted** |
+| `flake.nix` | Removed `modernize` from `perSystem packages` |
+| `platforms/common/packages/base.nix` | Removed `modernizePackage` import, `goplsWithoutModernize` wrapper, and conditional install. Reverted to plain `pkgs.gopls`. |
 
 ---
 
