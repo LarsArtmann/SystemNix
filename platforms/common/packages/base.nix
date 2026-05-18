@@ -256,6 +256,7 @@
       ltrace # Library call tracer
       nethogs # Per-process network bandwidth
       iftop # Network interface bandwidth
+      netwatch # Real-time network diagnostics TUI (interfaces, connections, packets, health probes)
 
       # Privacy & anonymity
       tor-browser # Anonymous browsing bundle
