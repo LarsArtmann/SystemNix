@@ -103,6 +103,11 @@ in {
             group = "root";
             restartUnits = ["openseo.service"];
           } ["dataforseo_api_key"]
+          // mkSecrets "monitor365.yaml" {
+            owner = primaryUser;
+            group = "users";
+            restartUnits = ["monitor365.service" "monitor365-server.service"];
+          } ["monitor365_cloud_auth_token" "monitor365_server_jwt_secret"]
           // mkSecrets "signoz.yaml" {
             owner = "signoz";
             group = "signoz";
@@ -140,6 +145,15 @@ in {
               XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
               FAL_KEY=${config.sops.placeholder.hermes_fal_key}
               FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
+            '';
+          };
+
+          "monitor365-env" = {
+            owner = primaryUser;
+            group = "users";
+            restartUnits = ["monitor365.service" "monitor365-server.service"];
+            content = ''
+              MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.monitor365_server_jwt_secret}
             '';
           };
 

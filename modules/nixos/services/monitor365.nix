@@ -34,7 +34,10 @@ _: {
       interval_seconds = ${toString interval}
     '';
 
-    monitor365Config = pkgs.writeText "monitor365-config.toml" ''
+    authTokenFile = config.sops.secrets.monitor365_cloud_auth_token.path;
+    sopsEnvPath = config.sops.templates."monitor365-env".path;
+
+    agentConfig = pkgs.writeText "monitor365-config.toml" ''
       [device]
       id = "${cfg.device.id}"
       name = "${cfg.device.name}"
@@ -118,9 +121,6 @@ _: {
         endpoint = "${cfg.cloud.endpoint}"
         sync_interval_seconds = ${toString cfg.cloud.syncInterval}
         batch_size = ${toString cfg.cloud.batchSize}
-        ${lib.optionalString (cfg.cloud.authToken != null) ''
-          auth_token = "${cfg.cloud.authToken}"
-        ''}
         ${lib.optionalString (cfg.cloud.persistencePath != null) ''
           persistence_path = "${cfg.cloud.persistencePath}"
         ''}
@@ -174,9 +174,6 @@ _: {
       access_token_ttl_secs = ${toString cfg.server.accessTokenTtlSecs}
       refresh_token_ttl_secs = ${toString cfg.server.refreshTokenTtlSecs}
       device_stale_minutes = ${toString cfg.server.deviceStaleMinutes}
-      ${lib.optionalString (cfg.server.jwtSecret != null) ''
-        jwt_secret = "${cfg.server.jwtSecret}"
-      ''}
       ${lib.optionalString (cfg.server.corsOrigins != []) ''
         cors_origins = [${builtins.concatStringsSep ", " (map (o: "\"${o}\"") cfg.server.corsOrigins)}]
       ''}
@@ -416,11 +413,6 @@ _: {
               default = 100;
               description = "Events per batch upload";
             };
-            authToken = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "API key for cloud server auth";
-            };
             persistencePath = lib.mkOption {
               type = lib.types.nullOr lib.types.str;
               default = null;
@@ -550,12 +542,6 @@ _: {
               description = "Database connection URL";
             };
 
-            jwtSecret = lib.mkOption {
-              type = lib.types.nullOr lib.types.str;
-              default = null;
-              description = "JWT secret for auth tokens. MUST be set in production.";
-            };
-
             corsOrigins = lib.mkOption {
               type = lib.types.listOf lib.types.str;
               default = [];
@@ -624,19 +610,19 @@ _: {
       environment.etc."monitor365/config.toml".source =
         if cfg.configPath != null
         then cfg.configPath
-        else monitor365Config;
+        else agentConfig;
 
       home-manager.users.${cfg.user} = lib.mkMerge [
         {
           xdg.configFile."monitor365/config.toml".source =
             if cfg.configPath != null
             then cfg.configPath
-            else monitor365Config;
+            else agentConfig;
 
           systemd.user.services.monitor365 = {
             Unit = {
               Description = "Monitor365 Device Monitoring Agent";
-              After = ["network.target" "graphical-session.target"];
+              After = ["network.target" "graphical-session.target" "sops-nix.service"];
               Wants = ["network.target"];
               PartOf = ["graphical-session.target"];
               StartLimitIntervalSec = 600;
@@ -647,17 +633,31 @@ _: {
               serviceDefaultsUser {RestartSec = "10";}
               // {
                 Type = "simple";
-                ExecStart = "${cfg.package}/bin/monitor365 --config /etc/monitor365/config.toml run";
+                ExecStartPre = let
+                  injectAuth = pkgs.writeShellScript "monitor365-inject-auth" ''
+                    CFG_DIR="$XDG_RUNTIME_DIR/monitor365"
+                    mkdir -p "$CFG_DIR"
+                    cp ${agentConfig} "$CFG_DIR/config.toml"
+                    if [ -f "${authTokenFile}" ] && [ -s "${authTokenFile}" ]; then
+                      echo "" >> "$CFG_DIR/config.toml"
+                      echo "[cloud]" >> "$CFG_DIR/config.toml"
+                      echo "auth_token = $(cat ${authTokenFile})" >> "$CFG_DIR/config.toml"
+                    fi
+                  '';
+                in ["${injectAuth}"];
+                ExecStart = "${cfg.package}/bin/monitor365 --config \$XDG_RUNTIME_DIR/monitor365/config.toml run";
                 WorkingDirectory = cfg.home;
                 KillMode = "mixed";
                 TimeoutStopSec = "30";
                 StandardOutput = "journal";
                 StandardError = "journal";
 
-                Environment = [
-                  "PATH=${runtimePath}:/run/wrappers/bin:%h/.nix-profile/bin:/run/current-system/sw/bin"
-                  "DISPLAY=:0"
-                ];
+                Environment =
+                  [
+                    "PATH=${runtimePath}:/run/wrappers/bin:%h/.nix-profile/bin:/run/current-system/sw/bin"
+                    "DISPLAY=:0"
+                  ];
+                EnvironmentFile = [sopsEnvPath];
               };
 
             Install = {
@@ -693,9 +693,8 @@ _: {
                     "MONITOR365_SERVER__DATABASE_URL=${cfg.server.databaseUrl}"
                     "MONITOR365_SERVER__LISTEN_ADDR=${cfg.server.listenAddr}"
                     "MONITOR365_SERVER__POOL_SIZE=${toString cfg.server.poolSize}"
-                  ]
-                  ++ lib.optional (cfg.server.jwtSecret != null)
-                  "MONITOR365_SERVER__JWT_SECRET=${cfg.server.jwtSecret}";
+                  ];
+                EnvironmentFile = [sopsEnvPath];
               };
 
             Install = {

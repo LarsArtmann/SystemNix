@@ -48,11 +48,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779130959,
-        "narHash": "sha256-lDAiXNpzSpIT0Y7tYV68hClvxlCkNlmC6aR5hpMWCjY=",
+        "lastModified": 1779139560,
+        "narHash": "sha256-F4fkCQV0/b295Y9EutFXUk3/u5GS6ookJ3fka6xPMwA=",
         "ref": "master",
-        "rev": "1d844951696a9e0dfceb52752a7c4da9facb2e24",
-        "revCount": 1633,
+        "rev": "1680561ac44587757c18b6776964f17a78b3b340",
+        "revCount": 1638,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -961,11 +961,11 @@
     "go-output": {
       "flake": false,
       "locked": {
-        "lastModified": 1779118323,
-        "narHash": "sha256-nBzs2CRa6ghiyz9A5vybQeUgxEVQPAVlS9IfG5bVwqw=",
+        "lastModified": 1779130900,
+        "narHash": "sha256-HDzb6/NZ6bVJBvjxvZVW+s+PMsex4aSA/szS1MVoago=",
         "ref": "master",
-        "rev": "cdc6f90bbc9cdf921febebfeee3f1c81e30d0a62",
-        "revCount": 298,
+        "rev": "8f5e3f62a4f770601ba23520e77173309d53ce54",
+        "revCount": 300,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       },
