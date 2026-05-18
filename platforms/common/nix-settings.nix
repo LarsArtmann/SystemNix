@@ -35,13 +35,14 @@
     gc =
       {
         automatic = true;
-        options = "--delete-older-than 7d";
+        options = "--delete-older-than 3d";
+        persistent = true;
       }
       // lib.optionalAttrs pkgs.stdenv.isDarwin {
         interval = {Weekday = 0;};
       }
       // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
-        dates = "weekly";
+        dates = "daily";
       };
 
     optimise.automatic = true;
