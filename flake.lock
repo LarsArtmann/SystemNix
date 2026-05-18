@@ -706,11 +706,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779132444,
-        "narHash": "sha256-H7YmlQQ6JuxXNxIV1inMUqB9ij8oJM+eZbI703jhd5I=",
+        "lastModified": 1779135406,
+        "narHash": "sha256-cps0NGUD3IGKJ5TIP0yggaNrahQ68Wpb6aj+61SSWjo=",
         "ref": "master",
-        "rev": "1d4e72ef6af0d9a42d7da1413ef61b0e80c0c3b6",
-        "revCount": 304,
+        "rev": "1678fcf4ee8928e6f72b4f5f9d463a978ca5d5ec",
+        "revCount": 305,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
