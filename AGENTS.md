@@ -502,6 +502,71 @@ AI agent task tracking protocol:
 | otel-tui Linux-only | otel-tui is excluded from Darwin via `_module.args.otel-tui = null` in `flake.nix` + `lib.optionals (otel-tui != null)` in `base.nix`. Building from source on macOS took 40+ min and exhausted disk (dsymutil temp files). Never add otel-tui back to Darwin — it's only useful on NixOS for inspecting OTel telemetry. |
 | Darwin disk exhaustion | MacBook Air has 229 GB disk, regularly at 90-95% full. `nix-collect-garbage` hangs on this system. Build failures with `errno=28` are disk-related, not code bugs. Before major builds: (1) clear caches (`~/Library/Caches/*`), (2) run `nix-collect-garbage --delete-older-than 1d`, (3) check `df -h /`. Consider distributed builds to evo-x2. |
 | `_module.args` pattern for platform packages | When making a package Linux-only, use `_module.args.<pkg> = null` in the platform config + `pkg ? null` default in the module function args + `lib.optionals (pkg != null)` for conditional inclusion. Do NOT rely on omitting from `specialArgs` alone — Nix module system tries `_module.args` fallback and errors if missing. |
+
+### The `_local_deps` Pattern (Private Go Repo Overlays)
+
+All private Go repos that are consumed as overlays use the `_local_deps` pattern: fetch the repo as a flake input (`flake = false`), copy it into `_local_deps/` in a `preparedSrc`, and add `replace` directives to `go.mod` so `go mod vendor` can resolve everything without SSH access.
+
+**Repos using this pattern:**
+| Repo | # of local deps | Key deps |
+|------|----------------|----------|
+| `projects-management-automation` | 9 | cmdguard, go-output, go-branded-id, go-composable-business-types, go-commit, go-filewatcher, project-discovery-sdk, project-meta, gogenfilter |
+| `go-structure-linter` | 4 | go-output, go-branded-id, gogenfilter, go-composable-business-types |
+| `branching-flow` | 2 | go-output, go-branded-id |
+| `mr-sync` | 3 | go-output, go-branded-id, go-commit |
+| `file-and-image-renamer` | 1 | go-output |
+
+**The preparedSrc pattern:**
+```nix
+preparedSrc = pkgs.stdenv.mkDerivation {
+  pname = "foo-prepared-source";
+  inherit version;
+  src = srcFiltered; # builtins.path excluding flake.nix, etc.
+  dontBuild = true;
+  postPatch = ''
+    mkdir -p _local_deps
+    cp -r ${dep1} _local_deps/dep1
+    cp -r ${dep2} _local_deps/dep2
+    chmod -R u+w _local_deps
+
+    # Add replace directives
+    echo "" >> go.mod
+    echo 'replace (' >> go.mod
+    echo '  github.com/larsartmann/dep1 => ./_local_deps/dep1' >> go.mod
+    echo '  github.com/larsartmann/dep2 => ./_local_deps/dep2' >> go.mod
+    echo ')' >> go.mod
+  '';
+  installPhase = ''mkdir $out; cp -r . $out/'';
+};
+```
+
+**`overrideModAttrs` + `go mod tidy`:**
+When using `_local_deps`, the go-modules derivation (vendor hash computation) must reconcile the synthetically-modified `go.mod` with `go.sum`. Add `overrideModAttrs` to run `go mod tidy` in the go-modules derivation where network IS available:
+```nix
+buildGoModule {
+  vendorHash = "...";
+  overrideModAttrs = old: { preBuild = ''go mod tidy''; };
+}
+```
+
+**Important:** `go mod tidy` in the MAIN build derivation fails because it runs with `GOPROXY=off` and no network. It ONLY works in `overrideModAttrs`.
+
+**Transitive go.sum merging:**
+When local deps are replaced, ALL transitive deps from ALL local deps must be present in `go.sum`. Example: `go-output` imports `go-branded-id`, so every repo that replaces `go-output` must also have `go-branded-id` in its `go.mod`/`go.sum`. Failure mode: "missing go.sum entry for ..."
+
+**Go sub-module tags:**
+Go sub-modules (like `go-output/testhelpers`) MUST have published tags for `go mod tidy` to resolve them via GOPROXY. If a sub-module only has a `replace` directive in its parent repo, downstream consumers can't fetch it. Fix: publish tags like `testhelpers/v0.0.0`.
+
+**Dependencies between private repos:**
+```
+go-output → go-branded-id (root package import)
+project-discovery-sdk → go-composable-business-types (indirect)
+project-meta → go-composable-business-types (direct)
+pma → project-discovery-sdk, project-meta, go-output (all via _local_deps)
+```
+
+**When upstream changes:** Changing a core dep (like go-output) cascades: ALL consumers need `go mod tidy` + `vendorHash` update. Cross-repo coordination is critical. Example: deleting `go-composable-business-types/programminglanguage` broke pma because `project-discovery-sdk` still imported it.
+
 | statix `grep -q` pre-commit bug | `grep -q .` returns exit code 1 on no match, which became the `bash -c` exit code (no explicit `exit 0`). Fixed by using a result variable: `result=$(statix ... | grep -v ...); if [ -n "$result" ]; then echo "$result"; exit 1; fi`. Do NOT use `grep -q . && exit 1` pattern in bash -c hooks without a trailing `exit 0`. |
 | statix pipe operator parse errors | statix 0.5.8 can't parse Nix pipe operator (`|>`) in `sops.nix` — produces `:E:0:Error node` lines. The pre-commit hook filters these with `grep -v ':E:0:'`. Do NOT remove the filter. |
 | todo-list-ai overlay hash | `overlays/shared.nix` has a fixed-output derivation hash (`todoListAiFixedHash`) for todo-list-ai's `node_modules`. Must be updated when upstream `package.json` or `bun.lock` changes. Fix: (1) delete hash, set to `""`, (2) build, (3) grep for `got:` hash, (4) paste into shared.nix. Same pattern as hermes `fixedHash` in `hermes.nix`. |
