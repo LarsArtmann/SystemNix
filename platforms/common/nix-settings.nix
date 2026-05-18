@@ -39,7 +39,7 @@
         persistent = true;
       }
       // lib.optionalAttrs pkgs.stdenv.isDarwin {
-        interval = {Weekday = 0;};
+        interval = {Hour = 3;};
       }
       // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
         dates = "daily";
