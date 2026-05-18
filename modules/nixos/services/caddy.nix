@@ -92,7 +92,7 @@ _: {
         };
         serviceConfig =
           harden {
-            NoNewPrivileges = false;
+            NoNewPrivileges = lib.mkForce false;
             CapabilityBoundingSet = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
           }
           // serviceDefaults {}
