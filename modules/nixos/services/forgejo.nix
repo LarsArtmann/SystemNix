@@ -4,6 +4,7 @@ _: {
     pkgs,
     lib,
     config,
+    utils,
     ...
   }: let
     inherit (config.users) primaryUser;
@@ -12,6 +13,18 @@ _: {
     forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
     forgejoUrl = "http://localhost:${toString forgejoPort}";
     stateDir = config.services.forgejo.stateDir;
+    hostName = config.networking.hostName;
+    runnerLabels = [
+      "ubuntu-latest:docker://node:22-bookworm"
+      "ubuntu-22.04:docker://node:22-bookworm"
+      "native:host"
+    ];
+    runnerSettings = {
+      log.level = "info";
+      runner.capacity = 2;
+      container.network = "host";
+    };
+    runnerConfigFile = (pkgs.formats.yaml {}).generate "runner-config.yaml" runnerSettings;
 
     mirrorGithubScript = pkgs.writeShellScriptBin "forgejo-mirror-github" ''
       # Mirror all repos from GitHub to Forgejo
@@ -462,78 +475,79 @@ _: {
         in "${tokenGen}";
       };
 
-      systemd.services.forgejo-runner-token = {
-        description = "Generate Forgejo Actions runner registration token";
-        after = ["forgejo.service"];
-        wants = ["forgejo.service"];
-        wantedBy = ["forgejo.service"];
-        serviceConfig =
-          {
-            Type = "oneshot";
-            User = "forgejo";
-            Group = "forgejo";
-            RemainAfterExit = true;
-            RuntimeDirectory = "forgejo-runner";
-            RuntimeDirectoryPreserve = "yes";
-          }
-          // harden {
-            ReadWritePaths = ["/run/forgejo-runner"];
-          };
-        script = let
-          tokenGen = pkgs.writeShellScript "forgejo-runner-token-gen" ''
-            set -euo pipefail
-
-            TOKEN_FILE="/run/forgejo-runner/token"
-            FORGEJO=${lib.getExe forgejoPkg}
-            export FORGEJO_WORK_DIR=${stateDir}
-
-            for i in $(seq 1 30); do
-              if ${pkgs.curl}/bin/curl -s -o /dev/null "${forgejoUrl}/"; then
-                break
-              fi
-              sleep 1
-            done
-
-            TOKEN=$($FORGEJO actions generate-runner-token 2>/dev/null) || TOKEN=""
-
-            if [ -n "$TOKEN" ]; then
-              printf 'TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
-              chmod 644 "$TOKEN_FILE"
-              echo "Runner registration token written to $TOKEN_FILE"
-            else
-              echo "WARNING: Failed to generate runner registration token"
-            fi
-          '';
-        in "${tokenGen}";
-      };
-
       services.gitea-actions-runner = {
         package = pkgs.forgejo-runner;
-        instances.${config.networking.hostName} = {
+        instances.${hostName} = {
           enable = true;
-          name = config.networking.hostName;
+          name = hostName;
           url = "${forgejoUrl}";
           tokenFile = "/run/forgejo-runner/token";
-          labels = [
-            "ubuntu-latest:docker://node:22-bookworm"
-            "ubuntu-22.04:docker://node:22-bookworm"
-            "native:host"
-          ];
-          settings = {
-            log.level = "info";
-            runner.capacity = 2;
-            container = {
-              network = "host";
-            };
-          };
+          labels = runnerLabels;
+          settings = runnerSettings;
         };
       };
 
-      # The nixpkgs gitea-actions-runner module names services "gitea-runner-*".
-      # Can't rename externally — just wire ordering.
-      systemd.services."gitea-runner-${config.networking.hostName}" = {
-        after = ["forgejo-runner-token.service"];
-        requires = ["forgejo-runner-token.service"];
+      systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
+        after = ["forgejo.service"];
+        wants = ["forgejo.service"];
+        serviceConfig = {
+          EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
+          ExecStartPre = lib.mkForce [
+            ("+"
+              + toString (pkgs.writeShellScript "forgejo-gen-runner-token" ''
+                set -euo pipefail
+                TOKEN_FILE="/run/forgejo-runner/token"
+                mkdir -p "$(dirname "$TOKEN_FILE")"
+
+                for i in $(seq 1 60); do
+                  ${pkgs.curl}/bin/curl -sf -o /dev/null "${forgejoUrl}/" && break
+                  sleep 1
+                done
+
+                TOKEN=$(${pkgs.util-linux}/bin/runuser -u forgejo -- \
+                  env FORGEJO_WORK_DIR=${stateDir} \
+                  ${lib.getExe forgejoPkg} actions generate-runner-token) || {
+                    echo "ERROR: Failed to generate runner registration token"
+                    exit 1
+                  }
+
+                printf 'TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
+                chmod 644 "$TOKEN_FILE"
+              ''))
+            (pkgs.writeShellScript "forgejo-register-runner" ''
+              set -euo pipefail
+
+              export INSTANCE_DIR="$STATE_DIRECTORY/${hostName}"
+              mkdir -vp "$INSTANCE_DIR"
+              cd "$INSTANCE_DIR"
+
+              source /run/forgejo-runner/token
+
+              if [ ! -f "$INSTANCE_DIR/.forgejo-migrated" ]; then
+                echo "Forcing runner re-registration (Gitea→Forgejo migration)"
+                rm -f "$INSTANCE_DIR/.runner"
+                touch "$INSTANCE_DIR/.forgejo-migrated"
+              fi
+
+              export LABELS_FILE="$INSTANCE_DIR/.labels"
+              LABELS_WANTED="$(echo ${lib.escapeShellArg (lib.concatStringsSep "\n" runnerLabels)} | sort)"
+              LABELS_CURRENT="$(cat "$LABELS_FILE" 2>/dev/null || echo "")"
+
+              if [ ! -e "$INSTANCE_DIR/.runner" ] || [ "$LABELS_WANTED" != "$LABELS_CURRENT" ]; then
+                rm -f "$INSTANCE_DIR/.runner"
+
+                ${pkgs.forgejo-runner}/bin/act_runner register --no-interactive \
+                  --instance ${lib.escapeShellArg forgejoUrl} \
+                  --token "$TOKEN" \
+                  --name ${lib.escapeShellArg hostName} \
+                  --labels ${lib.escapeShellArg (lib.concatStringsSep "," runnerLabels)} \
+                  --config ${runnerConfigFile}
+
+                echo "$LABELS_WANTED" > "$LABELS_FILE"
+              fi
+            '')
+          ];
+        };
       };
 
       # Fix ownership after Gitea→Forgejo data migration (recursively)
