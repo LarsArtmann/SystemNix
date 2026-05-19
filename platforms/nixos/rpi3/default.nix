@@ -51,6 +51,7 @@
 in {
   imports = [
     ../../common/nix-settings.nix
+    ../../common/dns-resolver.nix
     ../system/local-network.nix
   ];
 
@@ -79,7 +80,6 @@ in {
       ];
     };
     defaultGateway = gateway;
-    nameservers = ["127.0.0.1" "9.9.9.9"];
     firewall = {
       enable = true;
       allowedTCPPorts = [22 53];
@@ -90,8 +90,6 @@ in {
   time.timeZone = "Europe/Berlin";
   i18n.defaultLocale = "en_US.UTF-8";
   services = {
-    resolved.enable = false;
-
     openssh = {
       enable = true;
       settings = {
@@ -102,13 +100,10 @@ in {
 
     unbound = {
       enable = true;
-      resolveLocalQueries = true;
-      enableRootTrustAnchor = true;
 
       settings = {
         server = {
           interface = ["0.0.0.0" "::0"];
-          do-ip6 = false;
           access-control = [
             "127.0.0.0/8 allow"
             "::1/128 allow"
@@ -118,17 +113,6 @@ in {
           num-threads = 2;
           msg-cache-size = "32m";
           rrset-cache-size = "64m";
-          prefetch = true;
-          prefetch-key = true;
-
-          qname-minimisation = true;
-          hide-identity = true;
-          hide-version = true;
-
-          harden-glue = true;
-          harden-dnssec-stripped = true;
-          harden-below-nxdomain = true;
-          harden-referral-path = true;
 
           include = toString unboundIncludeFile;
 
@@ -142,11 +126,6 @@ in {
             map
             (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'')
             ["auth" "immich" "gitea" "dash" "photomap" "signoz" "tasks" "crm"];
-        };
-
-        remote-control = {
-          control-enable = true;
-          control-interface = "/run/unbound/unbound.ctl";
         };
       };
     };

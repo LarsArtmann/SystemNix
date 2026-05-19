@@ -5,7 +5,7 @@ REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 SECRETS_FILE="$REPO_ROOT/platforms/nixos/secrets/secrets.yaml"
 AGE_KEY_FILE="/run/secrets.d/age-keys.txt"
 
-if [[ ! -r "$AGE_KEY_FILE" ]]; then
+if [[ ! -r $AGE_KEY_FILE ]]; then
   echo "Error: Cannot read $AGE_KEY_FILE (need sudo)"
   exit 1
 fi

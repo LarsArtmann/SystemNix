@@ -60,7 +60,7 @@ for pid in /proc/[0-9]*; do
   w=$(awk '/write_bytes/{print $2}' "$pid/io" 2>/dev/null || continue)
   r=$(awk '/read_bytes/{print $2}' "$pid/io" 2>/dev/null || continue)
   if [ "$w" -gt 1000000 ] 2>/dev/null || [ "$r" -gt 1000000 ] 2>/dev/null; then
-    echo "$(basename $pid)  $pname  $((w/1024))  $((r/1024))"
+    echo "$(basename $pid)  $pname  $((w / 1024))  $((r / 1024))"
   fi
 done | sort -t' ' -k3 -n -r | head -20
 echo ""
@@ -72,12 +72,13 @@ read2=$(cat /sys/block/sda/stat)
 echo "Before: $read1"
 echo "After:  $read2"
 
-f1=($read1); f2=($read2)
+f1=($read1)
+f2=($read2)
 echo ""
-echo "  Reads completed:     ${f1[0]} → ${f2[0]} (delta: $((f2[0]-f1[0])))"
-echo "  Sectors read:        ${f1[2]} → ${f2[2]} (delta: $((f2[2]-f1[2])) sectors = $(( (f2[2]-f1[2])*512/1024/1024 )) MB)"
-echo "  Writes completed:    ${f1[4]} → ${f2[4]} (delta: $((f2[4]-f1[4])))"
-echo "  Sectors written:     ${f1[6]} → ${f2[6]} (delta: $((f2[6]-f1[6])) sectors = $(( (f2[6]-f1[6])*512/1024/1024 )) MB)"
+echo "  Reads completed:     ${f1[0]} → ${f2[0]} (delta: $((f2[0] - f1[0])))"
+echo "  Sectors read:        ${f1[2]} → ${f2[2]} (delta: $((f2[2] - f1[2])) sectors = $(((f2[2] - f1[2]) * 512 / 1024 / 1024)) MB)"
+echo "  Writes completed:    ${f1[4]} → ${f2[4]} (delta: $((f2[4] - f1[4])))"
+echo "  Sectors written:     ${f1[6]} → ${f2[6]} (delta: $((f2[6] - f1[6])) sectors = $(((f2[6] - f1[6]) * 512 / 1024 / 1024)) MB)"
 echo ""
 
 echo "========================================"

@@ -1,4 +1,5 @@
 {config, ...}: {
+  imports = [../../common/dns-resolver.nix];
   # Networking configuration
   networking = {
     hostName = "evo-x2"; # Machine name
@@ -33,14 +34,10 @@
       ];
     };
     defaultGateway = config.networking.local.gateway;
-
-    # dhcpcd disabled - using static IP
-    dhcpcd.enable = false;
-
-    # DNS uses unbound via dns-blocker-config.nix — no external fallback
-    # (9.9.9.9 was removed: resolvconf reorders nameservers, breaking DNS when WAN is down)
-    nameservers = ["127.0.0.1"];
   };
+
+  # dhcpcd disabled - using static IP
+  networking.dhcpcd.enable = false;
 
   systemd = {
     # Prevent dbus-broker and polkit from restarting on every rebuild.
@@ -65,9 +62,6 @@
       DefaultLimitNPROC = 65536;
     };
   };
-
-  # Disable systemd-resolved to prevent DNS conflicts
-  services.resolved.enable = false;
 
   # Set your time zone.
   time.timeZone = "Europe/Berlin"; # Adjust as needed

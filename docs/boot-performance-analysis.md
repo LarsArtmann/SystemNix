@@ -93,7 +93,6 @@ These services wait for full network-online even though they only need local res
 | Service | File | Fix |
 |---|---|---|
 | `podman-photomap` | `photomap.nix:58` | Remove `network-online.target` (only talks to local immich/postgres) |
-| `unsloth-setup` | `ai-stack.nix:140` | Remove `network-online.target` (first-time setup, not needed at boot) |
 
 ### 3. Reduce systemd-boot loader timeout — saves up to ~5s
 

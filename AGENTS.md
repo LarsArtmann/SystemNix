@@ -407,14 +407,13 @@ Unified directory structure for ALL AI models and tool data on NixOS (evo-x2).
 ├── cache/
 │   └── huggingface/    → HuggingFace Hub + Transformers cache
 └── workspaces/
-    └── unsloth/        → Unsloth Studio venv + workspace
 ```
 
 **How it works:**
 - `services.ai-models.enable = true` creates all directories via `systemd.tmpfiles.rules`
 - `services.ai-models.paths` attrset provides derived paths for all modules to reference
 - Environment variables (`OLLAMA_MODELS`, `HF_HOME`, `LLAMA_MODEL_PATH`, etc.) are set system-wide
-- All AI services (Ollama, Whisper, ComfyUI, Unsloth) reference `config.services.ai-models.paths.*`
+- All AI services (Ollama, Whisper, ComfyUI) reference `config.services.ai-models.paths.*`
 - Jan AI data folder is symlinked via Home Manager activation (`~/.config/Jan/data` → `/data/ai/models/jan`)
 
 **Module options (`services.ai-models`):**
@@ -428,7 +427,7 @@ Unified directory structure for ALL AI models and tool data on NixOS (evo-x2).
 
 **Migration:**
 ```bash
-just ai-migrate    # Move legacy /data/{models,cache,unsloth} → /data/ai/
+just ai-migrate    # Move legacy /data/{models,cache} → /data/ai/
 just ai-status     # Show current storage status
 ```
 

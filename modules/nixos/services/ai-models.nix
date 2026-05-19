@@ -48,7 +48,6 @@ _: {
           huggingface = "${cfg.baseDir}/cache/huggingface";
           huggingface-hub = "${cfg.baseDir}/cache/huggingface/hub";
           huggingface-transformers = "${cfg.baseDir}/cache/huggingface/transformers";
-          unsloth = "${cfg.baseDir}/workspaces/unsloth";
         };
       };
     };
@@ -71,7 +70,6 @@ _: {
           cfg.paths.huggingface
           cfg.paths.huggingface-hub
           cfg.paths.huggingface-transformers
-          cfg.paths.unsloth
         ]
         ++ [(mkStateDir cfg.paths.ollama-models "0775" cfg.user cfg.group)];
 
@@ -81,7 +79,6 @@ _: {
         HUGGINGFACE_HUB_CACHE = cfg.paths.huggingface-hub;
         TRANSFORMERS_CACHE = cfg.paths.huggingface-transformers;
         LLAMA_MODEL_PATH = cfg.paths.gguf;
-        UNSLOTH_MODELS = "${cfg.baseDir}/models";
       };
     };
   };

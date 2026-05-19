@@ -637,7 +637,7 @@ task-backup:
 #  AI Models (NixOS — evo-x2)
 # ═══════════════════════════════════════════════════════════════════
 
-# Migrate legacy AI data (/data/{models,cache,unsloth}) to /data/ai/
+# Migrate legacy AI data (/data/{models,cache}) to /data/ai/
 [group('ai')]
 [linux]
 ai-migrate:
@@ -649,11 +649,6 @@ ai-migrate:
     fi
     [ -d /data/models ] && [ ! -d /data/ai/models ] && mv /data/models /data/ai/models && echo "  models -> done"
     [ -d /data/cache ] && [ ! -d /data/ai/cache ] && mv /data/cache /data/ai/cache && echo "  cache -> done"
-    if [ -d /data/unsloth ] && [ ! -d /data/ai/workspaces/unsloth ]; then
-        mkdir -p /data/ai/workspaces
-        mv /data/unsloth /data/ai/workspaces/unsloth
-        echo "  unsloth -> done"
-    fi
     [ -d /data/ai/models/ollama ] && [ ! -d /data/ai/models/ollama/models ] && mkdir -p /data/ai/models/ollama/models
     sudo systemd-tmpfiles --create
     echo ""

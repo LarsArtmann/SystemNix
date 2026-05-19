@@ -78,7 +78,6 @@ _A brutally honest audit of every feature the project actually has._
 | Centralized AI model storage | ✅ | `ai-models.nix` | `/data/ai/` tree (14 dirs), env vars, tmpfiles rules — dependency for all AI services |
 | Ollama (LLM inference) | ✅ | `ai-stack.nix` | ROCm GPU, flash attention, 4 parallel, q8_0 KV, 24h keep-alive, user `lars` in render group |
 | llama.cpp (standalone) | ✅ | `ai-stack.nix` | ROCWMMA + MFMA custom build, installed alongside Ollama |
-| Unsloth Studio | 🔧 | `ai-stack.nix` | Optional, disabled by default — PyTorch ROCm 6.3, Node.js frontend build, port 8888 |
 | ComfyUI (image generation) | ❌ Removed | `comfyui.nix` | Disabled — prefer using AI models via code directly |
 | Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — enabled but may need verification |
 | Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload |
@@ -238,7 +237,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Static IP networking | ✅ | `eno1` 192.168.1.150, no DHCP/NetworkManager |
 | Firewall | ✅ | TCP 22,53,80,443; UDP 53,853 |
 | Centralized network config | ✅ | `local-network.nix` module options — lanIP, gateway, subnet, blockIP, virtualIP, piIP |
-| Local DNS records | ✅ | auth/immich/gitea/dash/photomap/unsloth/signoz/tasks/crm → `*.home.lan` |
+| Local DNS records | ✅ | auth/immich/gitea/dash/photomap/signoz/tasks/crm → `*.home.lan` |
 | SSH banner | ✅ | Legal warning banner on SSH login |
 | Private cloud cluster | ✅ | 4 Hetzner servers (`private-cloud-hetzner-0` through `-3`) defined in SSH config |
 
@@ -405,7 +404,6 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Multi-WM (Sway) | Disabled — may have bitrot | Low |
 | Twenty CRM | Module exists but unclear if actively deployed | Medium |
 | Voice agents | Enabled but Whisper Docker + ROCm pipeline may need verification | Medium |
-| Unsloth Studio | Disabled by default, complex setup (PyTorch ROCm build) | Low |
 | Benchmark scripts | Removed from justfile — scripts never created | Low |
 | Auditd | Disabled due to NixOS 26.05 bug #483085 | Medium |
 | AppArmor | Commented out in security-hardening | Medium |

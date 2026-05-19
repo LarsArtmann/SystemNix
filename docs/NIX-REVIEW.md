@@ -59,7 +59,7 @@ Several modules show deep domain expertise:
 
 - **Niri session save/restore** (`niri-wrapped.nix`, 872 lines) — crash recovery with workspace-aware restore, floating state, column widths, focus order, JSON validation, configurable fallback
 - **NixOS DNS blocker** — Unbound + dnsblockd + 25 blocklists + 2.5M domains + Quad9 DoT + local DNS records
-- **AI stack** — ROCm GPU, llama-cpp with ROCwMMa patches, centralized model storage, Unsloth Studio
+- **AI stack** — ROCm GPU, llama-cpp with ROCwMMa patches, centralized model storage
 - **Gitea** — declarative repo mirroring, API token generation, runner registration, all idempotent
 - **Minecraft** — JVM tuning (ZGC), FOV/volume conversion functions, Prism Launcher integration
 

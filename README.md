@@ -13,7 +13,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Development** | Git, GitHub CLI, Git Town, JetBrains Toolbox, (editor of choice - NOT VS Code), Fish shell, tmux, Zellij |
 | **Desktop (NixOS)** | Niri (Wayland tiling), Waybar, SDDM, Rofi, Kitty, Dunst, swaylock |
 | **Self-Hosted Services** | Immich (photos), Gitea (Git), SigNoz (observability), Homepage Dashboard, PhotoMap AI |
-| **AI/ML** | Ollama (ROCm), Unsloth Studio, llama.cpp, AMD NPU (XDNA) driver |
+| **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
 | **Monitoring** | ActivityWatch, Netdata, service health checks |
 | **Networking** | Caddy reverse proxy (TLS), Unbound DNS with 2.5M+ blocked domains, DNSSEC |
