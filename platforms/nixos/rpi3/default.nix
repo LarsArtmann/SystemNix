@@ -2,6 +2,7 @@
   config,
   pkgs,
   lib,
+  nix-ssh-config,
   ...
 }: let
   blocklists = import ../../common/dns-blocklists.nix;
@@ -148,7 +149,8 @@ in {
     users.root = {
       hashedPassword = "!";
       openssh.authorizedKeys.keys = [
-        "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKm9qk4syNtsGJgWTMNRLdGyP3UtAfAKx7XnJxZxq7dF lars@evo-x2"
+        nix-ssh-config.sshKeys.lars
+        nix-ssh-config.sshKeys.lars-evo-x2
       ];
     };
   };

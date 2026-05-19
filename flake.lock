@@ -947,11 +947,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779129861,
-        "narHash": "sha256-d+cSgWHoqblbdWLXGQnDoihRRGOr9cbL0XUdRSbTH8M=",
+        "lastModified": 1779211671,
+        "narHash": "sha256-4yYZQZhcuJlBBly9tSn8SWpOdTiEm0Wms7qC7PwMuKc=",
         "owner": "LarsArtmann",
         "repo": "nix-ssh-config",
-        "rev": "e4370ed3d5f9b9b8779935b47922b22e5b004a7a",
+        "rev": "018d1ce9a45e77423bcde740e1deea5014252c3c",
         "type": "github"
       },
       "original": {
