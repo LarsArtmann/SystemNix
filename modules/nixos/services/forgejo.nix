@@ -533,6 +533,11 @@ _: {
         requires = ["forgejo-runner-token.service"];
       };
 
+      # Fix ownership after Gitea→Forgejo data migration (recursively)
+      systemd.tmpfiles.rules = [
+        "Z ${stateDir} 0750 forgejo forgejo - -"
+      ];
+
       environment.systemPackages = [
         mirrorGithubScript
         mirrorStarredScript
