@@ -473,13 +473,17 @@ _: {
             User = "forgejo";
             Group = "forgejo";
             RemainAfterExit = true;
+            RuntimeDirectory = "forgejo-runner";
+            RuntimeDirectoryPreserve = "yes";
           }
-          // harden {};
+          // harden {
+            ReadWritePaths = ["/run/forgejo-runner"];
+          };
         script = let
           tokenGen = pkgs.writeShellScript "forgejo-runner-token-gen" ''
             set -euo pipefail
 
-            TOKEN_FILE="/run/forgejo-runner-token"
+            TOKEN_FILE="/run/forgejo-runner/token"
             FORGEJO=${lib.getExe forgejoPkg}
             export FORGEJO_WORK_DIR=${stateDir}
 
@@ -509,7 +513,7 @@ _: {
           enable = true;
           name = config.networking.hostName;
           url = "${forgejoUrl}";
-          tokenFile = "/run/forgejo-runner-token";
+          tokenFile = "/run/forgejo-runner/token";
           labels = [
             "ubuntu-latest:docker://node:22-bookworm"
             "ubuntu-22.04:docker://node:22-bookworm"
