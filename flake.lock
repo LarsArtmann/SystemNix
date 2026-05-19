@@ -93,11 +93,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779149230,
-        "narHash": "sha256-/mNM+YSjQwY4ja1TG7cnFeqpmP65PaRtzkzzkXJNa3Q=",
+        "lastModified": 1779153989,
+        "narHash": "sha256-tTmcPd7jhsd41CB7FUEN5PMdocTfzWDU7yMr7Eyna2c=",
         "ref": "master",
-        "rev": "e441de1bae13642ae5517b811e8dcd1b130e5330",
-        "revCount": 2477,
+        "rev": "c5f169c7100a7b2ca8d895fee031225847cf7f5f",
+        "revCount": 2484,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -720,11 +720,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779150831,
-        "narHash": "sha256-hI6B9zmbpIUHP06TnEtKLQ15Qxupc9EOYlJxSyfZtK4=",
+        "lastModified": 1779153679,
+        "narHash": "sha256-nvj7xzlahLxobjRVyCGGWE/bAUTv1MFpsd+WSPRl9xQ=",
         "ref": "master",
-        "rev": "579be774d4b3c9d9e8faee7b4cf11dab031f57aa",
-        "revCount": 718,
+        "rev": "8ba0ca3327db3d1e534cb50c598174d303ae5f25",
+        "revCount": 719,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
