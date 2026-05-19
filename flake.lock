@@ -93,11 +93,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779153989,
-        "narHash": "sha256-tTmcPd7jhsd41CB7FUEN5PMdocTfzWDU7yMr7Eyna2c=",
+        "lastModified": 1779159276,
+        "narHash": "sha256-kb333dn8D6zQwcZLT6xGFBoc8xpYQzhWHYG6KFK3UoM=",
         "ref": "master",
-        "rev": "c5f169c7100a7b2ca8d895fee031225847cf7f5f",
-        "revCount": 2484,
+        "rev": "03596a4d2a0ab38b17bbea5b19e1ee83d6908a6a",
+        "revCount": 2486,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -360,11 +360,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779151098,
-        "narHash": "sha256-rUMPgcb/6o+z0/bPoOePfphTNQzyKmnpk3cx/r0+QL4=",
+        "lastModified": 1779159187,
+        "narHash": "sha256-oxEO62/cCzlN3wI5OxBoVW1U6ruoIMHc+PUp1q+UhFQ=",
         "ref": "master",
-        "rev": "acdee31b39baed0a78778ac9be367c7d32a5abb3",
-        "revCount": 308,
+        "rev": "64db2dabad10bbe7ce3c25a8e91fe37ecb5f9167",
+        "revCount": 309,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
