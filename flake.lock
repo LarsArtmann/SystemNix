@@ -199,11 +199,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779132481,
-        "narHash": "sha256-R/FjgC3nFlowOQ2gKfxepXW7HA4iUcm+6de00J4nIUA=",
+        "lastModified": 1779150786,
+        "narHash": "sha256-m5nONUPsiaWTwK7YI1kvg6wtQdgZmzYu6fxW/IDQwsA=",
         "ref": "master",
-        "rev": "836bc30ba271bd2610d3332179786fd054bd35fa",
-        "revCount": 156,
+        "rev": "71ba01bf5b995e4076c75d6b811deda16cd623a6",
+        "revCount": 157,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/emeet-pixyd"
       },
@@ -225,11 +225,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779149102,
-        "narHash": "sha256-wXvU3tCqIFAJleyTwSYXk3tUFUAqf8pUi5cXOSWK9NI=",
+        "lastModified": 1779150785,
+        "narHash": "sha256-H+IsqUqBLxjcL6p7vzLOqawLZTbN6UZ6hcacpTF+wtk=",
         "ref": "master",
-        "rev": "8603f1adc73034938578da3a49505cfc021b8e5f",
-        "revCount": 324,
+        "rev": "7bced23a38812aa66a021e0b5ddab8a5d9803624",
+        "revCount": 325,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -360,11 +360,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779149088,
-        "narHash": "sha256-b7nJA7LBSxZwlcxLP/YDA3MK/ZadUzUoKCgibKvPGjk=",
+        "lastModified": 1779151098,
+        "narHash": "sha256-rUMPgcb/6o+z0/bPoOePfphTNQzyKmnpk3cx/r0+QL4=",
         "ref": "master",
-        "rev": "fa5bb50026526bc0095b4e392c45442bb7b26c89",
-        "revCount": 306,
+        "rev": "acdee31b39baed0a78778ac9be367c7d32a5abb3",
+        "revCount": 308,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
@@ -720,11 +720,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779133926,
-        "narHash": "sha256-4sTttVu8fzl77NVG9jyigGNsT4KzUcW7w8xpGJZMlMM=",
+        "lastModified": 1779150831,
+        "narHash": "sha256-hI6B9zmbpIUHP06TnEtKLQ15Qxupc9EOYlJxSyfZtK4=",
         "ref": "master",
-        "rev": "5cfcd5678e8b91bea9d23058a91c41babaadeff0",
-        "revCount": 717,
+        "rev": "579be774d4b3c9d9e8faee7b4cf11dab031f57aa",
+        "revCount": 718,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -775,11 +775,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779148742,
-        "narHash": "sha256-7EHaf4KPVPyVba/ISTtWtDKNdDv2UOEDmnvvu2gVtx4=",
+        "lastModified": 1779150737,
+        "narHash": "sha256-XwTsazpNR3m5KwkNNLyWcQeoXR/ltGzZiup/22OxRjs=",
         "ref": "master",
-        "rev": "13641346e1ef10c3d20e0d8973b4d9fab8294abb",
-        "revCount": 68,
+        "rev": "8dcd56cd32157009af1138a75d0d47fd2aaa4b88",
+        "revCount": 69,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mr-sync"
       },
