@@ -483,8 +483,6 @@ _: {
             FORGEJO=${lib.getExe forgejoPkg}
             export FORGEJO_WORK_DIR=${stateDir}
 
-            [ -f "$TOKEN_FILE" ] && exit 0
-
             for i in $(seq 1 30); do
               if ${pkgs.curl}/bin/curl -s -o /dev/null "${forgejoUrl}/"; then
                 break
