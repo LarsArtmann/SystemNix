@@ -195,10 +195,10 @@ _: {
                 ];
               })
               (mkClient {
-                client_id = "gitea";
+                client_id = "forgejo";
                 client_name = "Forgejo";
                 redirect_uris = [
-                  "https://gitea.${domain}/user/oauth2/authelia/callback"
+                  "https://forgejo.${domain}/user/oauth2/authelia/callback"
                 ];
               })
             ];

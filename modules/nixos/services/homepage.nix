@@ -113,11 +113,11 @@ _: {
 
         - Development:
             - Forgejo:
-                href: ${svcUrl "gitea"}
+                href: ${svcUrl "forgejo"}
                 description: Git Forge (GitHub Sync)
                 icon: forgejo.png
                 statusStyle: dot
-                siteMonitor: ${svcUrl "gitea"}/api/v1/nodeinfo
+                siteMonitor: ${svcUrl "forgejo"}/api/v1/nodeinfo
             - Ollama:
                 description: Local AI Inference
                 icon: ollama.png

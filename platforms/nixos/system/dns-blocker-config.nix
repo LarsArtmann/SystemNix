@@ -56,7 +56,7 @@ in {
       local-data =
         map
         (subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"'')
-        ["auth" "immich" "gitea" "dash" "signoz" "tasks" "crm" "manifest"];
+        ["auth" "immich" "forgejo" "dash" "signoz" "tasks" "crm" "manifest"];
     };
 
     dns-failover = {

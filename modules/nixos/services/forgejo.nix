@@ -228,10 +228,6 @@ _: {
     '';
   in {
     config = lib.mkIf config.services.forgejo.enable {
-      systemd.tmpfiles.rules = [
-        "z ${stateDir}/.admin-password 0600 forgejo forgejo -"
-      ];
-
       services.forgejo = {
         package = pkgs.forgejo-lts;
 
@@ -251,8 +247,8 @@ _: {
 
           server = {
             HTTP_PORT = 3000;
-            ROOT_URL = "https://gitea.${config.networking.domain}/";
-            DOMAIN = "gitea.${config.networking.domain}";
+            ROOT_URL = "https://forgejo.${config.networking.domain}/";
+            DOMAIN = "forgejo.${config.networking.domain}";
           };
 
           repository = {
@@ -317,6 +313,10 @@ _: {
       };
 
       systemd = {
+        tmpfiles.rules = [
+          "z ${stateDir}/.admin-password 0600 forgejo forgejo -"
+        ];
+
         services.forgejo = {
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;
