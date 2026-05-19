@@ -507,7 +507,7 @@ _: {
       };
 
       services.gitea-actions-runner = {
-        package = pkgs.gitea-actions-runner;
+        package = pkgs.forgejo-runner;
         instances.${config.networking.hostName} = {
           enable = true;
           name = config.networking.hostName;
@@ -528,6 +528,8 @@ _: {
         };
       };
 
+      # The nixpkgs gitea-actions-runner module names services "gitea-runner-*".
+      # Can't rename externally — just wire ordering.
       systemd.services."gitea-runner-${config.networking.hostName}" = {
         after = ["forgejo-runner-token.service"];
         requires = ["forgejo-runner-token.service"];
