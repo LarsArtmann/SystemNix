@@ -646,10 +646,11 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 **`WatchdogSec` is ONLY valid for services that implement `sd_notify()` (i.e., `Type = "notify"`).** Setting it on services that don't call `sd_notify()` causes systemd to kill them after the timeout — even though they're running perfectly fine.
 
 **Services that support sd_notify (Type=notify, safe to use WatchdogSec):**
-- Forgejo (`modules/nixos/services/forgejo.nix`)
+- _None currently verified — Forgejo sends READY=1 only, Caddy sends READY=1 only_
 
 **Services that send READY=1 but NOT WATCHDOG=1 (Type=notify, do NOT use WatchdogSec):**
-- Caddy (`modules/nixos/services/caddy.nix`) — sends READY=1 on startup but never sends periodic WATCHDOG=1; WatchdogSec kills it after the timeout
+- Forgejo (`modules/nixos/services/forgejo.nix`) — Type=notify, sends READY=1 on startup, but does NOT send periodic WATCHDOG=1 keepalives; WatchdogSec would kill it after timeout
+- Caddy (`modules/nixos/services/caddy.nix`) — Type=notify, sends READY=1 on startup but never sends periodic WATCHDOG=1; WatchdogSec kills it after the timeout
 
 **Services that do NOT support sd_notify (NEVER set WatchdogSec):**
 - All Python services: Hermes, ComfyUI, Immich ML
@@ -683,6 +684,7 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 | Forgejo runner package | `services.gitea-actions-runner` is the nixpkgs module name — uses `forgejo-runner` package (not `gitea-actions-runner`). The systemd service names (`gitea-runner-*`) come from the nixpkgs module and can't be renamed externally. | Accepted — nixpkgs naming |
 | Forgejo DNS subdomain | Subdomain is `forgejo.home.lan` — fully renamed from `gitea.home.lan` in Session 58. DNS, Caddy vhost, Forgejo ROOT_URL/DOMAIN, Authelia client_id/callback, and Homepage all use `forgejo`. | Resolved |
 | Forgejo push mirrors | Owned repos (LarsArtmann/*) get push mirrors to GitHub automatically via `forgejo-mirror-github` script. The `GITHUB_TOKEN` is embedded in the push mirror remote URL — stored in Forgejo's DB. Consider using a dedicated PAT with minimal scope. | Accepted — review later |
+| Forgejo WatchdogSec | Forgejo sends `READY=1` via sd_notify but does NOT send periodic `WATCHDOG=1`. Setting `WatchdogSec` causes systemd to kill Forgejo after the timeout. Do NOT re-add WatchdogSec to forgejo.service. | Resolved — WatchdogSec removed |
 
 ```bash
 # Internet / Dual-WAN (NixOS only, remote via SSH)

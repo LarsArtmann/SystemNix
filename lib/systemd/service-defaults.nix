@@ -10,8 +10,8 @@
 #   serviceDefaultsUser {} // { RestartSec = "10s"; }
 #
 # WatchdogSec is NOT included by default — it requires sd_notify() support
-# in the service binary. Only pass it for services that implement sd_notify
-# (e.g., Caddy, Gitea). For all others, omit it.
+# in the service binary. Verify the service sends periodic WATCHDOG=1 (not just READY=1)
+# before adding WatchdogSec.
 #
 # StartLimitBurst/StartLimitIntervalSec are NOT included here because they
 # belong in [Unit], not [Service]. Set them as top-level service options:

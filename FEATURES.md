@@ -237,7 +237,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Static IP networking | ✅ | `eno1` 192.168.1.150, no DHCP/NetworkManager |
 | Firewall | ✅ | TCP 22,53,80,443; UDP 53,853 |
 | Centralized network config | ✅ | `local-network.nix` module options — lanIP, gateway, subnet, blockIP, virtualIP, piIP |
-| Local DNS records | ✅ | auth/immich/gitea/dash/photomap/signoz/tasks/crm → `*.home.lan` |
+| Local DNS records | ✅ | auth/immich/forgejo/dash/photomap/signoz/tasks/crm → `*.home.lan` |
 | SSH banner | ✅ | Legal warning banner on SSH login |
 | Private cloud cluster | ✅ | 4 Hetzner servers (`private-cloud-hetzner-0` through `-3`) defined in SSH config |
 

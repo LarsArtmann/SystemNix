@@ -12,7 +12,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Cloud & Infra** | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker |
 | **Development** | Git, GitHub CLI, Git Town, JetBrains Toolbox, (editor of choice - NOT VS Code), Fish shell, tmux, Zellij |
 | **Desktop (NixOS)** | Niri (Wayland tiling), Waybar, SDDM, Rofi, Kitty, Dunst, swaylock |
-| **Self-Hosted Services** | Immich (photos), Gitea (Git), SigNoz (observability), Homepage Dashboard, PhotoMap AI |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, PhotoMap AI |
 | **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
 | **Monitoring** | ActivityWatch, Netdata, service health checks |
@@ -52,7 +52,7 @@ just switch             # Apply configuration
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
 ├── justfile                     # Task runner for all operations
-├── modules/nixos/services/      # NixOS service modules (Caddy, Gitea, Immich, ...)
+├── modules/nixos/services/      # NixOS service modules (Caddy, Forgejo, Immich, ...)
 ├── pkgs/                        # Custom Nix packages (dnsblockd, emeet-pixyd, modernize, jscpd, monitor365, ...)
 ├── platforms/
 │   ├── common/                  # Shared across platforms (~80% of config)
@@ -83,7 +83,7 @@ All services are defined as flake-parts modules and reverse-proxied through Cadd
 |---------|------|-----|-------------|
 | **Caddy** | 443 | `*.home.lan` | Reverse proxy with sops-managed TLS certs |
 | **Immich** | 2283 | `immich.home.lan` | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML) |
-| **Gitea** | 3000 | `gitea.home.lan` | Self-hosted Git with GitHub mirror sync |
+| **Forgejo** | 3000 | `forgejo.home.lan` | Self-hosted Git forge with GitHub mirror sync & Actions |
 | **SigNoz** | 4317, 4318, 8080 | `signoz.home.lan` | Observability: traces, metrics, logs + node_exporter + cAdvisor |
 | **Homepage** | 8082 | `dash.home.lan` | Service overview dashboard |
 | **PhotoMap AI** | 8050 | `photomap.home.lan` | AI-powered photo exploration with UMAP embeddings |
@@ -150,7 +150,7 @@ just rollback           # Revert to previous generation
 just dns-diagnostics    # Full DNS diagnostics
 just immich-status       # Check Immich service status
 just immich-backup       # Run database backup
-just gitea-sync-repos    # Sync GitHub repos to Gitea
+just forgejo-sync-repos  # Sync GitHub repos to Forgejo
 just hermes-status       # Check Hermes gateway status
 just manifest-status     # Check Manifest LLM router status
 just session-status      # Check niri session save state

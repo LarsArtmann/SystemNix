@@ -325,7 +325,6 @@ _: {
             }
             // serviceDefaults {}
             // {
-              WatchdogSec = lib.mkForce "30";
               ExecStartPre = let
                 ensurePasswordFile = pkgs.writeShellScript "forgejo-ensure-password-file" ''
                   PASS_FILE="${stateDir}/.admin-password"
