@@ -479,7 +479,7 @@ _: {
           tokenGen = pkgs.writeShellScript "forgejo-runner-token-gen" ''
             set -euo pipefail
 
-            TOKEN_FILE="${stateDir}/.runner-token"
+            TOKEN_FILE="/run/forgejo-runner-token"
             FORGEJO=${lib.getExe forgejoPkg}
             export FORGEJO_WORK_DIR=${stateDir}
 
@@ -494,7 +494,7 @@ _: {
 
             if [ -n "$TOKEN" ]; then
               printf 'TOKEN=%s\n' "$TOKEN" > "$TOKEN_FILE"
-              chmod 600 "$TOKEN_FILE"
+              chmod 644 "$TOKEN_FILE"
               echo "Runner registration token written to $TOKEN_FILE"
             else
               echo "WARNING: Failed to generate runner registration token"
@@ -509,7 +509,7 @@ _: {
           enable = true;
           name = config.networking.hostName;
           url = "${forgejoUrl}";
-          tokenFile = "${stateDir}/.runner-token";
+          tokenFile = "/run/forgejo-runner-token";
           labels = [
             "ubuntu-latest:docker://node:22-bookworm"
             "ubuntu-22.04:docker://node:22-bookworm"
