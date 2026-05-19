@@ -10,16 +10,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1779151321,
-        "narHash": "sha256-KNJda1ii2sVcT8iovi+dMqP/gJRQOmH/A9bCtVVFQA8=",
-        "ref": "fork",
-        "rev": "bf8e4fc0dacf2adfdc7e3375c7a69b3fa6e657ca",
-        "revCount": 1306,
+        "lastModified": 1779162740,
+        "narHash": "sha256-l6rTAICw85ewfhnX20rQis6xJmMqWkrlF3HtoSwUuGk=",
+        "ref": "master",
+        "rev": "0664052c2297ea1831d4d2c4ade1b03034644716",
+        "revCount": 1307,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       },
       "original": {
-        "ref": "fork",
+        "ref": "master",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       }
