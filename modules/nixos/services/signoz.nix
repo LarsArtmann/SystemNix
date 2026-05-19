@@ -516,7 +516,9 @@ in {
                   mv "$TMP" "$OUT"
                 '';
               }
-              // harden {};
+              // harden {
+                CapabilityBoundingSet = "CAP_SYS_ADMIN";
+              };
           };
 
           timers.nvme-metrics = {

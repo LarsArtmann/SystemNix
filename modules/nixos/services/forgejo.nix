@@ -228,6 +228,10 @@ _: {
     '';
   in {
     config = lib.mkIf config.services.forgejo.enable {
+      systemd.tmpfiles.rules = [
+        "z ${stateDir}/.admin-password 0600 forgejo forgejo -"
+      ];
+
       services.forgejo = {
         package = pkgs.forgejo-lts;
 

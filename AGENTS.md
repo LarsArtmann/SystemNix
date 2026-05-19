@@ -646,8 +646,10 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 **`WatchdogSec` is ONLY valid for services that implement `sd_notify()` (i.e., `Type = "notify"`).** Setting it on services that don't call `sd_notify()` causes systemd to kill them after the timeout — even though they're running perfectly fine.
 
 **Services that support sd_notify (Type=notify, safe to use WatchdogSec):**
-- Caddy (`modules/nixos/services/caddy.nix`)
 - Forgejo (`modules/nixos/services/forgejo.nix`)
+
+**Services that send READY=1 but NOT WATCHDOG=1 (Type=notify, do NOT use WatchdogSec):**
+- Caddy (`modules/nixos/services/caddy.nix`) — sends READY=1 on startup but never sends periodic WATCHDOG=1; WatchdogSec kills it after the timeout
 
 **Services that do NOT support sd_notify (NEVER set WatchdogSec):**
 - All Python services: Hermes, ComfyUI, Immich ML
@@ -655,7 +657,7 @@ AI workloads on the iGPU can starve niri (Wayland compositor) of GPU cycles, cau
 - Go services without explicit sd_notify: SigNoz, Authelia, cadvisor, EMEET PIXY
 - Rust services without explicit sd_notify: TaskChampion
 
-**Rule:** If a service isn't `Type = "notify"`, do NOT set `WatchdogSec`. The `serviceDefaults` function does NOT include `WatchdogSec` for this reason — pass it explicitly only for sd_notify-capable services.
+**Rule:** If a service isn't `Type = "notify"`, do NOT set `WatchdogSec`. Even if a service IS `Type = "notify"`, verify it sends periodic `WATCHDOG=1` — not just `READY=1` — before adding `WatchdogSec`. Caddy is `Type = "notify"` but only sends `READY=1`, so `WatchdogSec` kills it. The `serviceDefaults` function does NOT include `WatchdogSec` for this reason — pass it explicitly only for services verified to send watchdog keepalives.
 
 ## Known Issues
 
