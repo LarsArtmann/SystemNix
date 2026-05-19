@@ -313,10 +313,6 @@ _: {
       };
 
       systemd = {
-        tmpfiles.rules = [
-          "z ${stateDir}/.admin-password 0600 forgejo forgejo -"
-        ];
-
         services.forgejo = {
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;
@@ -330,6 +326,17 @@ _: {
             // serviceDefaults {}
             // {
               WatchdogSec = lib.mkForce "30";
+              ExecStartPre = let
+                ensurePasswordFile = pkgs.writeShellScript "forgejo-ensure-password-file" ''
+                  PASS_FILE="${stateDir}/.admin-password"
+                  if [ ! -f "$PASS_FILE" ]; then
+                    ${pkgs.coreutils}/bin/head -c 32 /dev/urandom | ${pkgs.coreutils}/bin/base64 > "$PASS_FILE"
+                  fi
+                  chown forgejo:forgejo "$PASS_FILE"
+                  chmod 600 "$PASS_FILE"
+                '';
+              in
+                lib.mkBefore [("+" + ensurePasswordFile)];
             };
           preStart = let
             adminSetup = pkgs.writeShellScript "forgejo-admin-setup" ''
