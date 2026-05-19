@@ -10,11 +10,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779135736,
-        "narHash": "sha256-VTMIUrp9J9Oi4kpdV8gvmHrIwqy304kB5w4BsqAtwuY=",
+        "lastModified": 1779151321,
+        "narHash": "sha256-KNJda1ii2sVcT8iovi+dMqP/gJRQOmH/A9bCtVVFQA8=",
         "ref": "fork",
-        "rev": "c05a4d17d54dc7acec87c6fe070d4c715f631b3d",
-        "revCount": 1303,
+        "rev": "bf8e4fc0dacf2adfdc7e3375c7a69b3fa6e657ca",
+        "revCount": 1306,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       },
@@ -512,11 +512,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779149075,
-        "narHash": "sha256-igScyWQw7EeymC4U7Cy7x/Pq2m0IxgpBdxi/yjHEvp8=",
+        "lastModified": 1779151650,
+        "narHash": "sha256-l5mrvC1xdpessOi0TvJHjJZXFow6fImtMj2ISoLolms=",
         "ref": "master",
-        "rev": "8a59e1a41670ad98ee79698ac049634c8467d52b",
-        "revCount": 908,
+        "rev": "44112679911f46997ccc49ee72fd14febaeae86d",
+        "revCount": 910,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -640,11 +640,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779149072,
-        "narHash": "sha256-FTepG8KjfjiAFyCCUWQNERR+HC0BIv6fqyd1ZSdxIy0=",
+        "lastModified": 1779151651,
+        "narHash": "sha256-2vWBcJBF9Mfl/9SDEJEOusl2D1XxiqK2Nz+EYWwqJcs=",
         "ref": "master",
-        "rev": "08f6db3ecf268a1112bd8521afee3821db436812",
-        "revCount": 582,
+        "rev": "73575223eff2a4d2dfcdddddebf962ae59af582b",
+        "revCount": 584,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -1152,11 +1152,11 @@
         "project-meta": "project-meta"
       },
       "locked": {
-        "lastModified": 1779135712,
-        "narHash": "sha256-YqhEtjk3EOvlHXRpYxX5QYUzviqunzd6MF1KeVYzFUE=",
+        "lastModified": 1779152778,
+        "narHash": "sha256-MT2i2BH6u/pI8JlNDkyhitYaHVBlqGdYus3DIs2q6kU=",
         "ref": "master",
-        "rev": "c4987a57b86555b39c4d57947c578969c7220884",
-        "revCount": 2620,
+        "rev": "2731cfaf5337e1136c9c13c29fdd7e4bb39505f1",
+        "revCount": 2629,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
