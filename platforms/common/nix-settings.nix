@@ -36,12 +36,12 @@
       {
         automatic = true;
         options = "--delete-older-than 3d";
-        persistent = true;
       }
       // lib.optionalAttrs pkgs.stdenv.isDarwin {
         interval = {Hour = 3;};
       }
       // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+        persistent = true;
         dates = "daily";
       };
 

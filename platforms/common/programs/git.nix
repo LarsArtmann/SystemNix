@@ -53,15 +53,6 @@
         autoSetupRemote = true;
       };
 
-      filter = {
-        "lfs" = {
-          clean = "git-lfs clean -- %f";
-          process = "git-lfs filter-process";
-          required = true;
-          smudge = "git-lfs smudge -- %f";
-        };
-      };
-
       "git-town" = {
         "sync-perennial-strategy" = "rebase";
       };
