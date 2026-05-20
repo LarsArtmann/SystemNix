@@ -73,6 +73,15 @@ buildGoModule {
 
 When upstream deps change, set `vendorHash = ""`, build, and paste the `got:` hash.
 
+### Go Repo Update Checklist
+
+Core private Go deps (`go-output`, `go-branded-id`, etc.) cascade to all consumers on change:
+
+1. Update the dep repo first (publish tags for sub-modules like `testhelpers/v0.0.0`)
+2. In each consumer repo: set `vendorHash = ""`, build, paste `got:` hash
+3. Verify transitive deps — if `go-output` imports `go-branded-id`, every consumer must have it in `go.mod`/`go.sum`
+4. Update SystemNix `flake.lock` last: `nix flake lock --update-input <repo>`
+
 ### Config-Derived URLs
 
 Never hardcode `localhost:PORT`. Derive from service config:
@@ -121,19 +130,19 @@ inherit (import ../../../lib/default.nix lib)
 
 | Issue | Why It Matters |
 |-------|---------------|
-| Darwin HM user | Must define `users.users.larsartmann.home` in `platforms/darwin/default.nix` |
-| Relative paths differ | Darwin: `../common/`, NixOS: `../../common/` |
+| Darwin HM user | `users.users.larsartmann.home` required in `platforms/darwin/default.nix` |
+| Relative paths | Darwin: `../common/`, NixOS: `../../common/` |
 | `lib.mkMerge` + flake-parts | Does not work — use inline config or imports |
-| d2 Darwin overlay | Re-instantiates d2 with stub packages; removing it breaks Darwin eval |
-| Niri `BindsTo` patched | Replaced with `Wants=` in `niri-config.nix`; `BindsTo` kills niri on `just switch` |
-| awww-wallpaper ordering | Must NOT `After=awww-daemon` — creates cycle. `After=graphical-session.target` is sufficient |
-| Unbound `do-ip6` | evo-x2 has no global IPv6. Any new unbound instance MUST set `do-ip6 = false` |
-| otel-tui Linux-only | Excluded from Darwin; never re-add — 40+ min builds + disk exhaustion |
-| Darwin disk exhaustion | 229 GB, regularly 90-95% full. `nix-collect-garbage` hangs. Clear caches before major builds |
-| `_module.args` pattern | Linux-only packages need `_module.args.<pkg> = null` in platform config + `pkg ? null` in module args |
-| `serviceModules` single source | Listed once in `flake.nix`; both imports and nixosConfigurations derive from it |
-| rpi3-dns minimal overlays | Uses `[NUR] ++ linuxOnlyOverlays` only — no shared overlays |
-| SigNoz built from source | Go 1.25 build; takes significant time |
+| d2 Darwin overlay | Re-instantiates d2 with stubs; removing it breaks Darwin eval |
+| Niri `BindsTo` → `Wants=` | `BindsTo` kills niri on `just switch` |
+| awww-wallpaper ordering | `After=awww-daemon` creates cycle; use `graphical-session.target` |
+| Unbound `do-ip6 = false` | evo-x2 has no global IPv6; any new unbound instance needs this |
+| otel-tui Darwin | Never add — 40+ min builds + disk exhaustion |
+| Darwin disk | 229 GB, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
+| `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
+| `serviceModules` single source | Listed once in `flake.nix`; both imports + nixosConfigs derive from it |
+| rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
+| SigNoz build time | Built from source (Go 1.25); takes significant time |
 
 ---
 
@@ -148,6 +157,17 @@ just update             # Update flake inputs
 ```
 
 Run `just` (or `just --list`) for the complete recipe list.
+
+## Common Build Failures
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `hash mismatch in fixed-output derivation` | Stale `vendorHash` / `npmDepsHash` | Set to `""`, build, paste `got:` hash |
+| Go vendor fail after dep update | Missing transitive dep in `go.sum` | Ensure all transitive deps from `_local_deps` are in `go.mod`/`go.sum` |
+| `errno=28` (Darwin) | Disk full | `rm -rf ~/Library/Caches/*`, `nix-collect-garbage --delete-older-than 1d` |
+| `cannot coerce null to a string` | Missing `_module.args.<pkg>` | Add `_module.args.<pkg> = null` to platform config + `pkg ? null` to module |
+| `infinite recursion` | `config` in `options` or import cycle | Check for `config.services.*` in option defaults or circular imports |
+| `attribute 'X' missing` | Overlay not applied or package not installed | Verify overlay is in `sharedOverlays`/`linuxOnlyOverlays`, then add to `base.nix` |
 
 ---
 
