@@ -165,8 +165,9 @@
       ai-models.enable = true;
 
       # AI-powered screenshot renaming watcher
+      # TEMPORARILY DISABLED: charm.land/fantasy@v0.25.0 requires Go 1.26.3, nixpkgs-unstable has 1.26.2
       file-and-image-renamer = {
-        enable = true;
+        enable = false;
       };
 
       libinput = {
