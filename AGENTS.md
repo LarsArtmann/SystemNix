@@ -149,10 +149,14 @@ All private LarsArtmann repos use `git+ssh://git@github.com/LarsArtmann/<name>?r
 
 **`mkPackageOverlay` helper:** Simple overlay factory for flake-input packages:
 ```nix
-mkPackageOverlay = input: name: _final: prev: { ${name} = input.packages.${prev.stdenv.system}.default; };
-# Usage: mkPackageOverlay inputs.library-policy "library-policy"
+mkPackageOverlay = input: name: overrides:
+  _final: prev: let pkg = input.packages.${prev.stdenv.system}.default; in {
+    ${name} = if overrides == {} then pkg else pkg.overrideAttrs overrides;
+  };
+# Usage (no overrides): mkPackageOverlay inputs.library-policy "library-policy" {}
+# Usage (vendorHash override): mkPackageOverlay inputs.mr-sync "mr-sync" { vendorHash = "sha256-..."; }
 ```
-Defined in `overlays/default.nix`. Passed to both `shared.nix` and `linux.nix`. Used by all 12 flake-input overlays (11 in shared.nix + dnsblockd in linux.nix). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency.
+Defined in `overlays/default.nix`. Passed to both `shared.nix` and `linux.nix`. Used by all 12 flake-input overlays (11 in shared.nix + dnsblockd in linux.nix). No overlay should use raw `.overlays.default` — always use `mkPackageOverlay` for consistency. The `overrides` parameter accepts an attrset passed to `overrideAttrs` — used to fix stale `vendorHash` values in upstream repos without modifying them. Pass `{}` when no overrides needed.
 
 ### Config-Derived URLs
 

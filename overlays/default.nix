@@ -1,6 +1,11 @@
 inputs @ {nur, ...}: let
-  mkPackageOverlay = input: name: _final: prev: {
-    ${name} = input.packages.${prev.stdenv.system}.default;
+  mkPackageOverlay = input: name: overrides: _final: prev: let
+    pkg = input.packages.${prev.stdenv.system}.default;
+  in {
+    ${name} =
+      if overrides == {}
+      then pkg
+      else pkg.overrideAttrs overrides;
   };
 
   shared = import ./shared.nix (inputs // {inherit mkPackageOverlay;});

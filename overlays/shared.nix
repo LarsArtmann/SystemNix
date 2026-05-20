@@ -69,15 +69,15 @@ in [
   todoListAiOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy")
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors")
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure")
-  (mkPackageOverlay mr-sync "mr-sync")
-  (mkPackageOverlay buildflow "buildflow")
-  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade")
-  (mkPackageOverlay go-structure-linter "go-structure-linter")
-  (mkPackageOverlay branching-flow "branching-flow")
-  (mkPackageOverlay art-dupl "art-dupl")
-  (mkPackageOverlay projects-management-automation "projects-management-automation")
+  (mkPackageOverlay library-policy "library-policy" {})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-imjTscWHsv2zw7OegiTiDHoKWSCM/Lamff5nzYrECEE=";})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
+  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-ewYNWIETjxKwINzdbwWNmL6+CQsNvxLR7CZqtsb9xA0=";})
+  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-W63V4gnt2itUo8etknSuyjRtMvut/7bU1kxhqOiReBM=";})
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-rG/RiwyqV4Mhko/axWyj/LakrZ8eumyDBPr0tzX5jlI=";})
+  (mkPackageOverlay branching-flow "branching-flow" {})
+  (mkPackageOverlay art-dupl "art-dupl" {})
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-lv0xp20Z6tpqVQPa6RxRPvUMDIRCRqXlAme57pg5owI=";})
   d2DarwinOverlay
 ]
