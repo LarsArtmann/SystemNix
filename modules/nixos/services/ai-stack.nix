@@ -9,8 +9,6 @@ _: {
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
     inherit (config.users) primaryUser;
 
-    inherit (pkgs.rocmPackages) rocwmma;
-
     rocm = import ../../../lib/rocm.nix {inherit pkgs;};
     rocmEnv = rocm.env;
 
