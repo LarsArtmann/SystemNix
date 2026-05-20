@@ -99,6 +99,7 @@ _: {
 
       systemd = {
         services = docker.services;
+        tmpfiles.rules = docker.tmpfiles;
       };
 
       networking.firewall = lib.mkIf cfg.openFirewall {

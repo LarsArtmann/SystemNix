@@ -178,11 +178,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779314618,
-        "narHash": "sha256-O5OXxDVvW+PxtmDAC0sR8dwf0wbT8vsHPmkuAXpOO0U=",
+        "lastModified": 1779319840,
+        "narHash": "sha256-mWt+X9YBB872iU+AQwp54R0+uU7fgZOQIdu2DdCXVlo=",
         "ref": "master",
-        "rev": "f832f9ffe6730065961c6a135a64a228a1ad5247",
-        "revCount": 281,
+        "rev": "ccd5594b29e704f02368dbbfb4f7370443a0773e",
+        "revCount": 282,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -360,11 +360,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779277297,
-        "narHash": "sha256-yArhAU8pKZWzgVvJw5WlOj/xpo8xUPN9L9BNn4JdwqE=",
+        "lastModified": 1779319840,
+        "narHash": "sha256-fmAj39aMvNREzWKHoHoTsVqfEpm6Ee8vMvuS6rnjWkM=",
         "ref": "master",
-        "rev": "e731fb98326b48625a5cd9ce5211ab4a86d06389",
-        "revCount": 337,
+        "rev": "742ef89f331eeafde19596307ae96000a356a1cf",
+        "revCount": 338,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
@@ -556,11 +556,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779310887,
-        "narHash": "sha256-BLyJvrTNsJBcwegz3RzvhhrBQUe63SSJd00TkYM+YWw=",
+        "lastModified": 1779319840,
+        "narHash": "sha256-N5CJUpZUQDncaASkmUYw+p+Mi0dAw3hQOh3uEAXXls0=",
         "ref": "master",
-        "rev": "da82d460558bdbfb133dae4e853013a484853dbb",
-        "revCount": 532,
+        "rev": "09060070d7e36f7d18beb4d7b23ff69fa9e208b4",
+        "revCount": 533,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
