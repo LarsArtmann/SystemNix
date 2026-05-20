@@ -41,8 +41,15 @@ _: {
       composeFile = whisperComposeFile;
       stateDir = "/var/lib/whisper-asr";
       memoryMax = "8G";
-      extraHarden = {ProtectHome = "read-only";};
-      extraServiceConfig = {RestartSec = "10s";};
+      extraHarden = {
+        ProtectHome = "read-only";
+        RestrictNamespaces = lib.mkForce false;
+        NoNewPrivileges = lib.mkForce false;
+      };
+      extraServiceConfig = {
+        RestartSec = "10s";
+        SupplementaryGroups = ["docker"];
+      };
       imagePull = whisperImage;
     };
   in {
