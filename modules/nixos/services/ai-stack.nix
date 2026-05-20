@@ -18,21 +18,11 @@ _: {
       (pkgs.llama-cpp.override {
         rocmSupport = true;
       }).overrideAttrs (finalAttrs: {
-        buildInputs =
-          finalAttrs.buildInputs
-          ++ [rocwmma];
         cmakeFlags =
           finalAttrs.cmakeFlags
           ++ [
-            "-DGGML_HIP_ROCWMMA_FATTN=ON"
             "-DGGML_HIP_MMQ_MFMA=ON"
           ];
-        postPatch =
-          (finalAttrs.postPatch or "")
-          + ''
-            sed -i '/target_link_libraries(ggml-hip PRIVATE/a\  target_include_directories(ggml-hip SYSTEM PRIVATE ${rocwmma}/include)' \
-              ggml/src/ggml-hip/CMakeLists.txt
-          '';
       });
 
     aiPaths = config.services.ai-models.paths;

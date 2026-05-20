@@ -132,12 +132,12 @@
     # ── Resilience: coredump storage limits ───────────────────────────────
     # AI workloads (PyTorch/ROCm, llama.cpp, Ollama) can produce 50-100GB core
     # dumps on SIGSEGV. Without limits, a single crash fills /var/lib/systemd/coredump.
-    coredump.extraConfig = ''
-      Storage=external
-      Compress=yes
-      MaxUse=1G
-      KeepFree=5G
-    '';
+    coredump.settings.Coredump = {
+      Storage = "external";
+      Compress = "yes";
+      MaxUse = "1G";
+      KeepFree = "5G";
+    };
   };
 
   # Hardware watchdog — last resort: hard-reboots the system if it becomes completely unresponsive.
