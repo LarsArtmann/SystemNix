@@ -74,21 +74,24 @@ _: {
       };
 
       systemd.services = {
-        ollama.serviceConfig =
-          {
-            DynamicUser = lib.mkForce false;
-            User = primaryUser;
-            Group = "users";
-            SupplementaryGroups = ["render"];
-            UMask = lib.mkForce "0007";
-            OOMScoreAdjust = 500;
-          }
-          // serviceDefaults {}
-          // harden {
-            MemoryMax = "32G";
-            ProtectHome = false;
-            NoNewPrivileges = false;
-          };
+        ollama = {
+          wantedBy = lib.mkForce [];
+          serviceConfig =
+            {
+              DynamicUser = lib.mkForce false;
+              User = primaryUser;
+              Group = "users";
+              SupplementaryGroups = ["render"];
+              UMask = lib.mkForce "0007";
+              OOMScoreAdjust = 500;
+            }
+            // serviceDefaults {}
+            // harden {
+              MemoryMax = "32G";
+              ProtectHome = false;
+              NoNewPrivileges = false;
+            };
+        };
       };
 
       environment.systemPackages = with pkgs; [
