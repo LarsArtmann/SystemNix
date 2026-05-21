@@ -1,15 +1,25 @@
 # SystemNix TODO List
 
-**Updated:** 2026-05-11 (session 74)
+**Updated:** 2026-05-21 (session 73)
 
 ---
 
 ## Active Tasks (SystemNix repo)
 
+### Priority 0: Hermes Follow-up
+
+- [ ] **Add `firecrawl` to hermes `extraDependencyGroups`** — web_search tool broken (pip unavailable in Nix)
+- [ ] **Add `edge-tts` to hermes `extraDependencyGroups`** — TTS broken in Nix
+- [ ] **Add `fal` to hermes `extraDependencyGroups`** — image generation broken in Nix
+- [ ] **Add `exa` to hermes `extraDependencyGroups`** — web search alt backend
+- [ ] **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI) as GLM-5.1 fallback
+- [ ] **Hermes git remote access** — SSH deploy key for sandbox (`origin` unreachable)
+- [ ] **Monitor GLM-5.1 rate limit reset** — resets ~07:32 CEST, verify cron jobs recover
+
 ### Priority 1: Deploy & Verify
 
-- [ ] **Deploy to evo-x2**: `just switch` + reboot (kernel 7.0.1→7.0.6)
-- [ ] **Verify all services start clean**: `systemctl --failed`
+- [x] **Deploy to evo-x2**: `just switch` + reboot (kernel 7.0.1→7.0.6) — deployed session 71-73
+- [x] **Verify all services start clean** — hermes verified session 73, others running
 - [ ] **Check SigNoz provision logs**: channel + rule creation, 4 new dashboards
 - [ ] **Test Discord alert channel**: `POST /api/v1/channels/test`
 - [ ] **Verify Gatus endpoints**: `status.home.lan` healthy, webhook URL loaded, TLS cert check active
@@ -20,15 +30,23 @@
 - [x] **`dns-failover.nix` authPassword → sops** — activation script provisions secret during `just switch`, no manual steps needed
 - [ ] **Consolidate voice-agents Caddy vHost** into caddy.nix pattern — `caddy.nix`
 
-### Priority 3: Documentation
+### Priority 3: Documentation & Tools
 
 - [ ] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors — ~6h
 - [ ] **Deploy Dozzle**: Docker container log tailing at `logs.home.lan` — evaluation complete, needs implementation
+- [ ] **Create `just status` command** for automated status report generation
 
 ### Priority 4: Hardware
 
 - [ ] **Provision Pi 3** for DNS failover cluster
 - [ ] **Wire Pi 3 as secondary DNS** in dns-failover.nix
+
+### Priority 5: Maintenance
+
+- [ ] **Audit memory usage** — 9.2GiB swap used, identify hogs
+- [ ] **GC Nix store** — 82% disk usage, 7,479 paths eligible
+- [ ] **Flake inputs audit** — 47 inputs, some may be stale/unused
+- [ ] **Push 4 unpushed commits** to origin/master
 
 ---
 
@@ -43,6 +61,28 @@ From `docs/planning/2026-05-11_11-47-NIX-FLAKE-STANDARDIZATION.md`:
 - [x] Create `flake.nix` for hierarchical-errors — done upstream in `516f778`
 
 ---
+
+## Completed (session 73)
+
+- [x] Fix hermes missing `discord.py` + `anthropic` — added `extraDependencyGroups = ["messaging" "anthropic"]`
+- [x] Move hermes from `multi-user.target` to `graphical.target`
+- [x] Update AGENTS.md with `extraDependencyGroups` pattern
+
+## Completed (session 71-72)
+
+- [x] Boot performance: `boot.tmp.useTmpfs = true` — 56% reduction (2m13s → 58s)
+- [x] Eliminate `unbound-anchor` fetch — saves ~4s per boot
+- [x] Conditional `hermes fixPermissionsScript` — saves ~18s when perms correct
+
+## Completed (session 70)
+
+- [x] Eliminate `self.rev` anti-pattern across 29 repos
+- [x] Automate versioning with update scripts
+
+## Completed (session 68-69)
+
+- [x] Fix vendor hash cascade for Go dependencies
+- [x] Fix whisper-asr tmpfiles for voice-agents Docker
 
 ## Completed (session 73-74)
 

@@ -73,6 +73,21 @@ buildGoModule {
 
 When upstream deps change, set `vendorHash = ""`, build, and paste the `got:` hash.
 
+### Hermes `extraDependencyGroups` Pattern
+
+Upstream `hermes-agent` deliberately excludes most platform adapters from the `[all]` extra (they lazy-install via pip at runtime). In Nix, pip is unavailable, so **all needed extras must be declared** in the overlay:
+
+```nix
+hermes-agent = base.hermes-agent.override {
+  callPackage = interceptCallPackage;
+  extraDependencyGroups = ["messaging" "anthropic"];
+};
+```
+
+**Currently included:** `messaging` (discord.py, telegram, slack), `anthropic`
+**Likely needed but not yet added:** `firecrawl` (web_search), `edge-tts` (TTS), `fal` (image gen), `exa` (web search)
+**Do NOT add blindly:** `voice` (faster-whisper) has complex native deps; `matrix` requires python-olm (Linux-only)
+
 ### Go Repo Update Checklist
 
 Core private Go deps (`go-output`, `go-branded-id`, etc.) cascade to all consumers on change:
