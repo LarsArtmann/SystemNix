@@ -82,6 +82,29 @@ Core private Go deps (`go-output`, `go-branded-id`, etc.) cascade to all consume
 3. Verify transitive deps — if `go-output` imports `go-branded-id`, every consumer must have it in `go.mod`/`go.sum`
 4. Update SystemNix `flake.lock` last: `nix flake lock --update-input <repo>`
 
+### Nix Versioning Convention
+
+**NEVER use `self.rev`/`self.shortRev` as package version.** Always hardcode semver:
+
+```nix
+# ✅ Correct
+version = "0.1.0";
+
+# ❌ Wrong — produces garbage like "dnsblockd-f832f9f"
+version = self.shortRev or self.dirtyShortRev or "dev";
+version = self.rev or self.dirtyRev or "dev";
+version = "0.0.0-" + (self.shortRev or self.dirtyShortRev or "dev");
+```
+
+**Release workflow:**
+1. Bump `version = "X.Y.Z"` in `flake.nix` (or `nix/packages/default.nix`)
+2. Commit with message like `release: v0.2.0`
+3. Tag: `git tag -a v0.2.0 -m "v0.2.0"`
+4. Push: `git push && git push origin v0.2.0`
+5. Update SystemNix: `nix flake lock --update-input <repo>`
+
+**Rationale:** `self.rev` produces unreadable package names (`dnsblockd-f832f9f`), breaks `nix search`, and makes it impossible to tell which version is installed. The version is a property of the software, not the git commit.
+
 ### Config-Derived URLs
 
 Never hardcode `localhost:PORT`. Derive from service config:
