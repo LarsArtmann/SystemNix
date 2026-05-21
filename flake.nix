@@ -434,10 +434,6 @@
         module = "monitor365";
       }
       {
-        path = ./modules/nixos/services/comfyui.nix;
-        module = "comfyui";
-      }
-      {
         path = ./modules/nixos/services/dns-blocker.nix;
         module = "dns-blocker";
       }

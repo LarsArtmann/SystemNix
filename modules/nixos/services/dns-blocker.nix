@@ -244,7 +244,7 @@ _: {
           description = "DNS Block Page Server";
           after = ["network-online.target" "unbound.service" "sops-nix.service"];
           wants = ["network-online.target" "sops-nix.service" "unbound.service"];
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["graphical.target"];
           unitConfig = {
             StartLimitBurst = 5;
             StartLimitIntervalSec = 60;

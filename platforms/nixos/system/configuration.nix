@@ -203,11 +203,6 @@
         enable = true;
       };
 
-      # ComfyUI — disabled: prefer using AI models via code directly
-      comfyui = {
-        enable = false;
-      };
-
       # Minecraft server (local network only, whitelisted)
       minecraft = {
         enable = false;

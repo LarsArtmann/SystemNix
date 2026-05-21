@@ -251,7 +251,7 @@ in {
           after = lib.optional cfg.components.clickhouse "clickhouse.service";
           requires = lib.optional cfg.components.clickhouse "clickhouse.service";
           inherit onFailure;
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["graphical.target"];
           serviceConfig =
             {
               Type = "simple";
@@ -535,7 +535,7 @@ in {
       (lib.mkIf cfg.components.cadvisor {
         systemd.services.cadvisor = {
           description = "cAdvisor — container metrics";
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["graphical.target"];
           after = ["docker.service"];
           requires = ["docker.service"];
           serviceConfig =
@@ -555,7 +555,7 @@ in {
           inherit onFailure;
           after = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wants = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["graphical.target"];
           preStart = ''
             ${packages.otelCollector}/bin/signoz-otel-collector migrate bootstrap \
               --clickhouse-dsn "${cfg.settings.clickhouse.url}" \

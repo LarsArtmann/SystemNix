@@ -22,7 +22,7 @@ _: {
       systemd.services.homepage-dashboard = {
         description = "Homepage Dashboard";
         inherit onFailure;
-        wantedBy = ["multi-user.target"];
+        wantedBy = ["graphical.target"];
         after = ["network.target"];
         serviceConfig =
           {
