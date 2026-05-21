@@ -43,6 +43,11 @@ update:
 update-nix:
     nix upgrade-nix
 
+# Show current versions of all LarsArtmann packages
+[group('core')]
+versions:
+    ./scripts/versions.sh
+
 # Emergency rollback to previous generation
 [group('core')]
 rollback:
