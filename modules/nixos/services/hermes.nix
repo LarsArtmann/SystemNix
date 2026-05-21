@@ -33,6 +33,7 @@
         // {
           hermes-agent = base.hermes-agent.override {
             callPackage = interceptCallPackage;
+            extraDependencyGroups = ["messaging" "anthropic"];
           };
         };
       pkgs' = pkgs.extend patchedOverlay;
@@ -72,9 +73,15 @@
 
     fixPermissionsScript = pkgs.writeShellScript "hermes-fix-permissions" ''
       set -euo pipefail
+
+      # Fast-path: skip expensive recursive operations if top-level looks correct
+      if [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
+         && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]; then
+        exit 0
+      fi
+
       echo "hermes-perms: fixing ownership and permissions in ${cfg.stateDir}"
       chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
-      # Ensure all directories are traversable and writable by owner
       find ${cfg.stateDir} -type d -exec chmod 2770 {} + 2>/dev/null || true
       find ${cfg.stateDir} -type f -exec chmod 0660 {} + 2>/dev/null || true
     '';

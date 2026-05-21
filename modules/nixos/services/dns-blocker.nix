@@ -221,7 +221,16 @@ _: {
       };
 
       systemd = {
-        services.unbound.reloadIfChanged = true;
+        services.unbound = {
+          reloadIfChanged = true;
+
+          # Skip unbound-anchor network fetch on every boot — certs are cached in
+          # /var/lib/unbound/ and root key updates happen via RFC 5011 auto-trust.
+          # Saves ~4s per boot.
+          preStart = lib.mkForce ''
+            ${config.services.unbound.package}/bin/unbound-control-setup -d /var/lib/unbound
+          '';
+        };
 
         tmpfiles.rules =
           [
