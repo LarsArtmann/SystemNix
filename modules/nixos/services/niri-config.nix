@@ -78,7 +78,7 @@ _: {
                 (builtins.attrNames unitFiles)));
 
           services.niri-drm-healthcheck = {
-            description = "Detect niri DRM zombie state and trigger GPU recovery";
+            description = "Detect niri DRM zombie state and restart niri";
             serviceConfig =
               hardenUser {MemoryMax = "256M";}
               // {
@@ -100,9 +100,10 @@ _: {
 
         services = {
           gpu-recovery = {
-            description = "GPU driver recovery — rebinds amdgpu to fix DRM corruption";
+            description = "GPU driver recovery — rebinds amdgpu to fix DRM corruption (DISABLED — kernel amdgpu.gpu_recovery=1 handles this)";
             path = with pkgs; [procps systemd gawk];
             inherit onFailure;
+            wantedBy = lib.mkForce [];
             serviceConfig =
               {
                 Type = "oneshot";

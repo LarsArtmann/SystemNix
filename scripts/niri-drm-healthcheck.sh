@@ -48,12 +48,9 @@ drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/
 
 if [ "$drm_errors" -ge 10 ]; then
   if state_hit; then
-    echo "niri DRM zombie confirmed ($_state_count consecutive checks with errors). Triggering GPU recovery."
+    echo "niri DRM zombie confirmed ($_state_count consecutive checks). Restarting niri."
     state_reset
-    systemctl start gpu-recovery.service 2>/dev/null || {
-      echo "gpu-recovery.service failed. System reboot required."
-      systemctl reboot 2>/dev/null || true
-    }
+    systemctl --user restart niri.service 2>/dev/null || true
   else
     echo "niri DRM errors detected ($drm_errors in 30s, check $_state_count/$_state_threshold). Waiting for confirmation."
   fi
