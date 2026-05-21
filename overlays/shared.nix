@@ -70,12 +70,12 @@ in [
   jscpdOverlay
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-imjTscWHsv2zw7OegiTiDHoKWSCM/Lamff5nzYrECEE=";})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-PuzDzLO3zEkFOjUxGHvrzf68eigB3F2iuFP0Axac7fg=";})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-AXdOv79YtYsB+xYYDupRiIoTGaFIuD+hXWsjTb6OFE4=";})
   (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-Lk0TCWmHVm0wTN1DutV1/p+ZsUhIXcwtn9Z7PgYTMhI=";})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-yUsGTYS58gQNre7D0ZPaMsQPjR3NZVa1e6aSdcPs8T8=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-PoML6yaWCJqoXNZT0ZRBgXuMIRhjgC/Mv2x2kzrLmDU=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-SHqeKngo0k2YWKZfB+2OiFGysPLo/oZzVXr6SmN8nK0=";})

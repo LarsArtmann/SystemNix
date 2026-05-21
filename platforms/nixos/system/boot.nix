@@ -62,6 +62,7 @@
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
     tmp.cleanOnBoot = true;
+    tmp.useTmpfs = true;
   };
 
   # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
