@@ -317,7 +317,7 @@
 
     # art-dupl — Code duplication detector
     art-dupl = {
-      url = "git+ssh://git@github.com/LarsArtmann/art-dupl?ref=master";
+      url = "git+ssh://git@github.com/LarsArtmann/art-dupl?ref=fork";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.gogenfilter.follows = "gogenfilter";
     };

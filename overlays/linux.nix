@@ -19,5 +19,5 @@ in [
   emeet-pixyd.overlays.default
   monitor365.overlays.default
   netwatchOverlay
-  (mkPackageOverlay file-and-image-renamer "file-and-image-renamer" {vendorHash = "sha256-FdABe/wPpG1f1hiKwqqFJGYOtw8wD1n93aXWDHhJ3Hk=";})
+  (mkPackageOverlay file-and-image-renamer "file-and-image-renamer" {vendorHash = "sha256-of+ynTDQ5ahN+6vJFM9mrNNE3je4bCnLaF3O2j0Zo88=";})
 ]

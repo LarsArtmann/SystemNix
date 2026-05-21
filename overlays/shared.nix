@@ -70,14 +70,14 @@ in [
   jscpdOverlay
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-PuzDzLO3zEkFOjUxGHvrzf68eigB3F2iuFP0Axac7fg=";})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-PLVVcrgOZumZAe8OugoQQ3Y/9HSWUf96wR2/fJAr++0=";})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-AXdOv79YtYsB+xYYDupRiIoTGaFIuD+hXWsjTb6OFE4=";})
-  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-Lk0TCWmHVm0wTN1DutV1/p+ZsUhIXcwtn9Z7PgYTMhI=";})
+  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-YHtNQ0toOVqUzJKJyNi90AfmHgR5NTwhIgRX2yu+y2w=";})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-PoML6yaWCJqoXNZT0ZRBgXuMIRhjgC/Mv2x2kzrLmDU=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-la80q+37Eh50cFYyt4n8uiOwqddSCwSVBIrzMkVv2cM=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
-  (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-SHqeKngo0k2YWKZfB+2OiFGysPLo/oZzVXr6SmN8nK0=";})
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-ma/7D1sUaAERTi/t/1d+syp7oHxSH5VamjHUIUWIJbk=";})
   d2DarwinOverlay
 ]
