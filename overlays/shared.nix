@@ -73,7 +73,7 @@ in [
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-PLVVcrgOZumZAe8OugoQQ3Y/9HSWUf96wR2/fJAr++0=";})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-AXdOv79YtYsB+xYYDupRiIoTGaFIuD+hXWsjTb6OFE4=";})
-  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-YHtNQ0toOVqUzJKJyNi90AfmHgR5NTwhIgRX2yu+y2w=";})
+  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-RaJdRf+cEYGpgcVPbs6w7ozY+HBMJCvrBXhZncYRa4c=";})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-la80q+37Eh50cFYyt4n8uiOwqddSCwSVBIrzMkVv2cM=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
