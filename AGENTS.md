@@ -80,12 +80,11 @@ Upstream `hermes-agent` deliberately excludes most platform adapters from the `[
 ```nix
 hermes-agent = base.hermes-agent.override {
   callPackage = interceptCallPackage;
-  extraDependencyGroups = ["messaging" "anthropic"];
+  extraDependencyGroups = ["messaging" "anthropic" "firecrawl" "edge-tts" "fal" "exa"];
 };
 ```
 
-**Currently included:** `messaging` (discord.py, telegram, slack), `anthropic`
-**Likely needed but not yet added:** `firecrawl` (web_search), `edge-tts` (TTS), `fal` (image gen), `exa` (web search)
+**Currently included:** `messaging` (discord.py, telegram, slack), `anthropic`, `firecrawl` (web_search), `edge-tts` (TTS), `fal` (image gen), `exa` (web search)
 **Do NOT add blindly:** `voice` (faster-whisper) has complex native deps; `matrix` requires python-olm (Linux-only)
 
 ### Go Repo Update Checklist

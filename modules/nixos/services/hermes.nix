@@ -33,7 +33,7 @@
         // {
           hermes-agent = base.hermes-agent.override {
             callPackage = interceptCallPackage;
-            extraDependencyGroups = ["messaging" "anthropic"];
+            extraDependencyGroups = ["messaging" "anthropic" "firecrawl" "edge-tts" "fal" "exa"];
           };
         };
       pkgs' = pkgs.extend patchedOverlay;
