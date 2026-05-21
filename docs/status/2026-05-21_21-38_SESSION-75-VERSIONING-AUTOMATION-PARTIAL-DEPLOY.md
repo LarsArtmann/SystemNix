@@ -1,7 +1,7 @@
 # Session 75 — LarsArtmann Versioning Automation: Partial Deployment
 
-**Date:** 2026-05-21 21:38  
-**Status:** IN PROGRESS — 70% complete, 3 repos still need build fixes
+**Date:** 2026-05-21 21:38 (updated 21:55)
+**Status:** IN PROGRESS — 94% complete, 1 repo needs flake input fix, version bumps not started
 
 ---
 
@@ -56,17 +56,8 @@ Automate versioning across all 16 LarsArtmann repos tracked by SystemNix:
 
 ## B) PARTIALLY DONE ⚠️
 
-### 3 repos with uncommitted build fixes
-These have local edits that fix the build but are NOT yet committed/pushed:
-
-1. **file-and-image-renamer** — GOTOOLCHAIN syntax fixed (Nix string quoting), go.mod lowered to `go 1.26.3`, needs rebuild for vendorHash
-2. **buildflow** — vendorHash needs updating from `sha256-Lk0TCWmHVm0wTN1DutV1/p+ZsUhIXcwtn9Z7PgYTMhI=` → `sha256-xjtYGDCVbLnK1BFJhrItUN6kyVIHMTi6rXHX1jKWsNA=`
-3. **go-auto-upgrade** — vendorHash needs updating from `sha256-bz1EA7Tf3R7PQENdrLYpdjBAEOhgdmP1B0pyI0GWTWA=` → `sha256-bz1EA7Tf3R7PQENdrLYpdjBAEOhgdmP1B0pyI0GWTWA=` (same? no — set to `""` currently)
-4. **go-structure-linter** — vendorHash needs updating, got: `sha256-YO0LXmtZtbiEQHI7cNYXbVTiRLwbwLGiymKGeN/NkaU=`
-
-### hierarchical-errors
-- Type conversion fix applied but uncommitted
-- Version still at `0.0.1` (needs bump to `0.1.0`)
+### 1 repo with missing flake inputs
+**file-and-image-renamer** — needs `go-filewatcher` + `vision-review-agent` as flake inputs with `postPatch` replace directives. Currently has `go.mod` deps on 6 private LarsArtmann repos but only replaces 3 of them. The remaining 2 try to fetch via HTTPS in the nix sandbox and fail.
 
 ---
 
@@ -188,15 +179,14 @@ This is a business/project decision I can't make autonomously.
 ## Build Matrix Summary
 
 ```
-✅ BUILDING:  dnsblockd, emeet-pixyd, monitor365, library-policy,
+✅ BUILDING (15/16): dnsblockd, emeet-pixyd, monitor365, library-policy,
               hierarchical-errors, golangci-lint-auto-configure,
-              mr-sync, branching-flow, art-dupl,
+              mr-sync, branching-flow, art-dupl, buildflow,
+              go-auto-upgrade, go-structure-linter,
               projects-management-automation, todo-list-ai, crush-config
 
-❌ BROKEN:    file-and-image-renamer (syntax fix pending),
-              buildflow (vendorHash stale),
-              go-auto-upgrade (vendorHash stale),
-              go-structure-linter (vendorHash stale)
+❌ BROKEN (1/16):  file-and-image-renamer (needs go-filewatcher + vision-review-agent
+                    flake inputs — private repos not accessible in nix sandbox)
 ```
 
-**12/16 building. 4/16 need one more fix each.**
+**15/16 building. 1/16 needs flake inputs for private deps.**
