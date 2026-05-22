@@ -55,6 +55,10 @@
       "pstore.backend=efi"
       "pstore.record_console=true"
       "pstore.max_reason=3" # PANIC, OOPS, and WARN
+      # Blacklist serial8250 — no physical serial ports on this hardware.
+      # Without this, the driver registers phantom ttyS0-S3 devices and systemd
+      # waits ~90s for them to appear, adding 1m31s to boot time.
+      "module_blacklist=serial8250"
     ];
 
     binfmt.emulatedSystems = ["aarch64-linux"];
