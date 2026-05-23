@@ -59,15 +59,6 @@ in {
             };
           }
           // {
-            forgejo_admin_password = {
-              sopsFile = secretsDir + "/secrets.yaml";
-              owner = "forgejo";
-              group = "forgejo";
-              mode = "0400";
-              restartUnits = ["forgejo.service"];
-            };
-          }
-          // {
             immich_oauth_client_secret = {
               sopsFile = secretsDir + "/authelia-secrets.yaml";
               owner = "immich";
