@@ -8,16 +8,11 @@ _: {
   }: let
     cfg = config.services.niri-desktop;
     niriPkg = pkgs.niri-unstable;
-    inherit (import ../../../lib/default.nix lib) harden hardenUser serviceDefaults onFailure mkStateDir;
+    inherit (import ../../../lib/default.nix lib) harden hardenUser onFailure mkStateDir;
     drmHealthcheck = pkgs.writeShellApplication {
       name = "niri-drm-healthcheck";
       runtimeInputs = with pkgs; [procps systemd];
       text = builtins.readFile ../../../scripts/niri-drm-healthcheck.sh;
-    };
-    gpuRecovery = pkgs.writeShellApplication {
-      name = "gpu-recovery";
-      runtimeInputs = with pkgs; [procps systemd gawk];
-      text = builtins.readFile ../../../scripts/gpu-recovery.sh;
     };
     displayWatchdog = pkgs.writeShellApplication {
       name = "display-watchdog";
@@ -99,24 +94,6 @@ _: {
         };
 
         services = {
-          gpu-recovery = {
-            description = "GPU driver recovery — rebinds amdgpu to fix DRM corruption (DISABLED — kernel amdgpu.gpu_recovery=1 handles this)";
-            path = with pkgs; [procps systemd gawk];
-            inherit onFailure;
-            wantedBy = lib.mkForce [];
-            serviceConfig =
-              {
-                Type = "oneshot";
-                ExecStart = "${gpuRecovery}/bin/gpu-recovery";
-                OOMScoreAdjust = -1000;
-              }
-              // harden {
-                MemoryMax = "2G";
-                ReadWritePaths = ["/sys" "/dev"];
-              }
-              // serviceDefaults {Restart = "no";};
-          };
-
           display-watchdog = {
             description = "Detect dead display (connected but no signal) and recover";
             path = with pkgs; [kbd];
