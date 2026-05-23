@@ -15,9 +15,9 @@
 
     manifest = 2099;
 
-    monitor365-server = 3001; # CONFLICT: same as openseo — both enabled, needs investigation
+    monitor365-server = 3001;
 
-    openseo = 3001;
+    openseo = 3002;
 
     signoz = 8080;
     signoz-otlp-grpc = 4317;

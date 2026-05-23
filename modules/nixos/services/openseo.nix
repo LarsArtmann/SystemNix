@@ -64,7 +64,7 @@ _: {
   in {
     options.services.openseo = {
       enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
-      port = serviceTypes.servicePort 3001 "HTTP port for OpenSEO dashboard";
+      port = serviceTypes.servicePort 3002 "HTTP port for OpenSEO dashboard";
       imageTag = serviceTypes.dockerImageTag "v0.0.15";
     };
 
