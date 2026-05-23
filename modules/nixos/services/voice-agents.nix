@@ -116,19 +116,6 @@ _: {
           }
         ];
       };
-
-      services.caddy.virtualHosts = {
-        "voice.${cfg.domain}" = {
-          extraConfig = ''
-            reverse_proxy localhost:7880
-          '';
-        };
-        "whisper.${cfg.domain}" = {
-          extraConfig = ''
-            reverse_proxy localhost:${toString cfg.whisperPort}
-          '';
-        };
-      };
     };
   };
 }

@@ -72,6 +72,8 @@ _: {
           "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
           "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
           "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
+          "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
+          "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
         };
       };
 
