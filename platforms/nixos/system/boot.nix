@@ -174,7 +174,7 @@
         "--avoid"
         "^(systemd|sshd|dbus-broker|systemd-logind|systemd-udevd|systemd-journald|niri|waybar|kitty|fish|pipewire|pipewire-pulse|wireplumber|swayidle|dunst)$" # Never kill these
         "--prefer"
-        "^(gopls|ollama|llama-server|python3|python|node|java|chrome|chromium|helium|vtsls|tsserver|rust-analyzer|generate_happy_girl|cargo|clang|go)$" # Kill these first (gopls = #1 victim)
+        "^(gopls|ollama|llama-server|python3|python|node|java|chrome|chromium|vtsls|tsserver|rust-analyzer|generate_happy_girl|cargo|clang|go)$" # Kill these first (by RSS — node 11GB >> helium 2.3GB)
       ];
     };
 

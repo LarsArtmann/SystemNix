@@ -1,59 +1,100 @@
 #!/bin/sh
-# Detects niri DRM zombie state and triggers GPU recovery.
+# Detects niri DRM zombie state and triggers recovery.
 #
-# Design: counts consecutive failures across invocations via a state file.
-# Only triggers gpu-recovery after CONSEC_THRESHOLD consecutive failures.
-# This prevents the old behavior of SIGKILLing niri in a crash loop when
-# the GPU driver is truly wedged (requires reboot, not more SIGKILLs).
+# Two detection methods:
+#   1. Display signal check: connected display with enabled=disabled + dpms=Off
+#      while niri is running means the GPU pipeline is wedged.
+#   2. niri journal errors: "Permission denied" or "DeviceMissing" in recent logs.
+#
+# Display death uses a lower threshold (2 consecutive checks) because GPU
+# corruption only gets worse with time. Journal errors use threshold 3.
 
 set -eu
 
-# --- State persistence (inlined from lib.sh — writeShellApplication breaks relative sourcing) ---
-_state_dir=""
-_state_file=""
-_state_threshold=0
-_state_count=0
+STATE_DIR="/var/lib/niri-drm-healthcheck"
+mkdir -p "$STATE_DIR" 2>/dev/null || true
 
-state_init() {
-  _state_dir="$1"
-  _state_file="$1/$2"
-  _state_threshold="$3"
-  _state_count=0
-  mkdir -p "$_state_dir" 2>/dev/null || true
-}
-
-state_hit() {
-  if [ -f "$_state_file" ]; then
-    _state_count=$(cat "$_state_file" 2>/dev/null || echo 0)
+read_count() {
+  if [ -f "$STATE_DIR/$1" ]; then
+    cat "$STATE_DIR/$1" 2>/dev/null || echo 0
+  else
+    echo 0
   fi
-  _state_count=$((_state_count + 1))
-  echo "$_state_count" >"$_state_file"
-  [ "$_state_count" -ge "$_state_threshold" ]
 }
 
-state_reset() {
-  rm -f "$_state_file"
-  _state_count=0
+write_count() {
+  echo "$2" >"$STATE_DIR/$1"
 }
 
-state_init "/var/lib/niri-drm-healthcheck" "state" 3
+reset_count() {
+  rm -f "$STATE_DIR/$1"
+}
 
 pgrep -x niri >/dev/null 2>&1 || {
-  state_reset
+  reset_count display
+  reset_count journal
   exit 0
 }
+
+# ── Check 1: Display signal (highest priority) ─────────────────────────────
+# If niri is running but a connected display has enabled=disabled + dpms=Off,
+# the GPU pipeline is corrupted (e.g., from earlyoom killing GPU processes).
+# This is more reliable than journal grepping because niri may not log errors
+# for a wedged DRM pipeline.
+DISPLAY_THRESHOLD=2
+
+dead_display=0
+for status_file in /sys/class/drm/card*/status; do
+  [ -f "$status_file" ] || continue
+  status=$(cat "$status_file" 2>/dev/null || echo "unknown")
+  [ "$status" = "connected" ] || continue
+
+  connector_dir=$(dirname "$status_file")
+  enabled=$(cat "$connector_dir/enabled" 2>/dev/null || echo "unknown")
+  dpms=$(cat "$connector_dir/dpms" 2>/dev/null || echo "unknown")
+
+  if [ "$enabled" = "disabled" ] && [ "$dpms" = "Off" ]; then
+    echo "Dead display while niri running: $(basename "$connector_dir") (enabled=$enabled, dpms=$dpms)"
+    dead_display=1
+    break
+  fi
+done
+
+if [ "$dead_display" -eq 1 ]; then
+  count=$(read_count display)
+  count=$((count + 1))
+  write_count display "$count"
+
+  if [ "$count" -ge "$DISPLAY_THRESHOLD" ]; then
+    echo "Display dead for $count consecutive checks (threshold=$DISPLAY_THRESHOLD). Restarting niri."
+    reset_count display
+    systemctl --user restart niri.service 2>/dev/null || true
+  else
+    echo "Display dead, check $count/$DISPLAY_THRESHOLD. Waiting for confirmation."
+  fi
+  exit 0
+else
+  reset_count display
+fi
+
+# ── Check 2: niri journal DRM errors ───────────────────────────────────────
+JOURNAL_THRESHOLD=3
 
 drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null |
   grep -cE "Permission denied|DeviceMissing" || true)
 
 if [ "$drm_errors" -ge 10 ]; then
-  if state_hit; then
-    echo "niri DRM zombie confirmed ($_state_count consecutive checks). Restarting niri."
-    state_reset
+  count=$(read_count journal)
+  count=$((count + 1))
+  write_count journal "$count"
+
+  if [ "$count" -ge "$JOURNAL_THRESHOLD" ]; then
+    echo "niri DRM zombie confirmed ($count consecutive checks). Restarting niri."
+    reset_count journal
     systemctl --user restart niri.service 2>/dev/null || true
   else
-    echo "niri DRM errors detected ($drm_errors in 30s, check $_state_count/$_state_threshold). Waiting for confirmation."
+    echo "niri DRM errors detected ($drm_errors in 30s, check $count/$JOURNAL_THRESHOLD). Waiting for confirmation."
   fi
 else
-  state_reset
+  reset_count journal
 fi
