@@ -31,12 +31,13 @@ _: {
             Environment = [
               "PORT=${toString cfg.port}"
               "HOMEPAGE_CONFIG_DIR=${stateDir}"
+              "NODE_OPTIONS=--max-old-space-size=192"
             ];
             User = "homepage";
             Group = "homepage";
             StateDirectory = "homepage-dashboard";
           }
-          // harden {}
+          // harden { MemoryMax = "384M"; }
           // serviceDefaults {};
       };
 
