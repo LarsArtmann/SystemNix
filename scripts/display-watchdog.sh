@@ -8,7 +8,7 @@
 #      niri process survives but the DRM output is wedged — black screen, no signal.
 #
 # Recovery ladder:
-#   1. If niri alive + display dead → restart niri (re-acquires DRM master)
+#   1. If niri alive + display dead → restart niri via systemctl --user -M (re-acquires DRM master)
 #   2. If niri dead + display dead → restart display-manager (SDDM)
 #   3. After 3 consecutive failures, trigger GPU recovery (driver rebind)
 
@@ -79,7 +79,7 @@ done
 # the output pipeline.
 if [ "$niri_alive" -eq 1 ]; then
   echo "niri alive but display dead — restarting niri to recover DRM pipeline"
-  systemctl --user restart niri.service 2>/dev/null || true
+  systemctl --user -M "${PRIMARY_USER:-lars}@" restart niri.service 2>/dev/null || true
   sleep 5
 
   # Verify recovery
