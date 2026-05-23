@@ -209,15 +209,15 @@ The justfile's `backup` recipes imperatively copy directories. Nix already provi
 | `scripts/nixos-diagnostic.sh` | **Keep** | Interactive diagnostics are inherently imperative; package as Nix app |
 | `scripts/benchmark-system.sh` | **Keep** | Benchmarking is inherently imperative; package as Nix derivation with hyperfine dep |
 | `scripts/health-dashboard.sh` | **Keep** | Runtime dashboard; package as Nix app |
-| `scripts/test-home-manager.sh` | **Migrate** | Convert to `nix flake check` tests / NixOS tests |
-| `scripts/test-shell-aliases.sh` | **Migrate** | Convert to `nix flake check` tests / NixOS tests |
+| `scripts/test-home-manager.sh` | **Keep** | Runtime-only verification (env vars, `$SHELL`, `$PATH`, HM symlinks); cannot be a build-time check |
+| `scripts/test-shell-aliases.sh` | **Keep** | Runtime-only verification (interactive fish aliases, `$HOME` config files); cannot be a build-time check |
 | `scripts/performance-monitor.sh` | **Keep** | Long-term monitoring is inherently imperative; package as Nix derivation |
 | `scripts/validate-deployment.sh` | **Partial** | Static validation → Nix assertions; runtime checks → packaged app |
 | `scripts/update-crush-latest.sh` | **Migrate** | Replace with `nix flake update crush-config && just switch` |
 | `scripts/ai-integration-test.sh` | **Partial** | Static checks → Nix assertions; runtime GPU checks → packaged test |
 | `scripts/shell-context-detector.sh` | **Keep** | Runtime context detection; package as Nix derivation |
 
-**Summary: 4 Migrate, 5 Partial, 8 Keep**
+**Summary: 2 Migrate, 5 Partial, 10 Keep**
 
 ### 3.2 Justfile Recipes
 
@@ -332,30 +332,9 @@ just switch               # apply
 1. Verify the Nix package is installed and working on both platforms
 2. Delete `dotfiles/activitywatch/install-utilization.sh`
 
-#### 1.5 Convert `test-home-manager.sh` and `test-shell-aliases.sh` to Nix Checks
+#### 1.5 ~~Convert `test-home-manager.sh` and `test-shell-aliases.sh` to Nix Checks~~ — Keep as-is
 
-**Current:** 304 + 195 = 499 lines of shell tests verifying Home Manager output.
-
-**Migration:** Add `checks` in flake.nix via flake-parts:
-
-```nix
-# In flake.nix or a new checks module
-perSystem = { config, pkgs, ... }: {
-  checks = {
-    shell-aliases = pkgs.runCommand "test-shell-aliases" { } ''
-      # Extract alias assertions from test-shell-aliases.sh
-      # Run against the built home-manager configuration
-      touch $out
-    '';
-    home-manager-integration = pkgs.runCommand "test-hm-integration" { } ''
-      # Verify starship config exists, fish functions are generated, etc.
-      touch $out
-    '';
-  };
-};
-```
-
-**Note:** Full NixOS tests require `nixosTests` which run in VMs. Start with `runCommand` checks that validate config files exist and have correct content, then add full VM tests later if needed.
+**Reclassified from Migrate → Keep.** Both scripts verify runtime state (`$SHELL`, `$EDITOR`, `$PATH`, interactive fish aliases, HM symlinks in `$HOME`) that a sandboxed `runCommand` derivation cannot access. The few verifiable-at-build-time assertions (starship config content, tmux settings) are already guaranteed by the Nix module system — if `nix build` succeeds, the config is exactly what was declared. Converting to `perSystem.checks` would be redundant at best, impossible at worst.
 
 ### 4.2 Phase 2 — Medium Effort
 
@@ -608,8 +587,8 @@ perSystem = { pkgs, ... }: {
 | `storage-cleanup.sh` | Delete | Subsumed by declarative `nix.gc` | Low |
 | `update-crush-latest.sh` | Delete | `nix flake update crush-config` | Low |
 | `install-utilization.sh` | Delete | Already packaged in `pkgs/` | Low |
-| `test-home-manager.sh` | Delete | Convert to `perSystem.checks` | Medium |
-| `test-shell-aliases.sh` | Delete | Convert to `perSystem.checks` | Medium |
+| `test-home-manager.sh` | Keep | Runtime-only; cannot be build-time checks | - |
+| `test-shell-aliases.sh` | Keep | Runtime-only; cannot be build-time checks | - |
 | `cleanup.sh` | Trim | Keep cache-specific cleaning; GC → declarative | Medium |
 | `health-check.sh` | Split | Static checks → assertions; runtime → packaged app | Medium |
 | `validate-deployment.sh` | Split | Static checks → assertions; runtime → packaged app | Medium |
@@ -629,7 +608,7 @@ perSystem = { pkgs, ... }: {
 |-----------|--------|---------------|
 | `_detect_platform`, `_get_nix_host`, `_nix_args` | Simplify | Platform-specific recipes or `nix eval` |
 | `clean`, `gc` | Simplify | Declarative `nix.gc` handles automatic; keep manual recipes |
-| `test-home-manager`, `test-shell-aliases` | Delete | Replaced by `nix flake check` |
+| `test-home-manager`, `test-shell-aliases` | **Keep** | Runtime-only verification; cannot be build-time checks |
 | `update-crush-latest` | Delete | Replaced by `just update crush-config` |
 
 ### 5.3 New Flake Outputs
@@ -733,17 +712,17 @@ perSystem = { pkgs, ... }: {
 
 ## 7. Implementation Checklist
 
-### Phase 1 — Quick Wins (1–2 days)
+### Phase 1 — Quick Wins (COMPLETE)
 
-- [ ] Delete `scripts/lib/paths.sh`; update all consumers
-- [ ] Add `nix.gc` configuration to both NixOS and darwin configs
-- [ ] Delete `scripts/storage-cleanup.sh` (subsumed by `nix.gc`)
-- [ ] Replace `scripts/update-crush-latest.sh` with justfile recipe
-- [ ] Delete `dotfiles/activitywatch/install-utilization.sh` (already packaged)
-- [ ] Add `perSystem.checks` for shell alias tests
-- [ ] Add `perSystem.checks` for Home Manager integration tests
-- [ ] Verify `just test` passes after all changes
-- [ ] Run `just switch` on both platforms
+- [x] Delete `scripts/lib/paths.sh`; update all consumers
+- [x] Add `nix.gc` configuration to both NixOS and darwin configs (`platforms/common/nix-settings.nix`)
+- [x] Delete `scripts/storage-cleanup.sh` (subsumed by `nix.gc`)
+- [x] Replace `scripts/update-crush-latest.sh` with justfile recipe
+- [x] Delete `dotfiles/activitywatch/install-utilization.sh` (already packaged)
+- [x] ~~Add `perSystem.checks` for shell alias tests~~ — Reclassified: runtime-only, cannot be build-time checks
+- [x] ~~Add `perSystem.checks` for Home Manager integration tests~~ — Reclassified: runtime-only, cannot be build-time checks
+- [x] Verify `just test` passes after all changes
+- [x] Run `just switch` on both platforms
 
 ### Phase 2 — Medium Effort (3–5 days)
 
