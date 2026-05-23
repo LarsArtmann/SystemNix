@@ -120,10 +120,7 @@ _: {
     options.services.manifest = {
       enable = lib.mkEnableOption "Manifest LLM router";
       port = serviceTypes.servicePort 2099 "Host port for the Manifest dashboard";
-      imageTag = lib.mkOption {
-        type = lib.types.str;
-        default = "6.6.1";
-      };
+      imageTag = serviceTypes.dockerImageTag "6.6.1";
     };
 
     config = lib.mkIf cfg.enable {

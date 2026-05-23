@@ -42,4 +42,16 @@ in {
       inherit default;
       description = "Timeout for graceful shutdown";
     };
+
+  dockerImageTag = default:
+    mkOption {
+      type =
+        types.str
+        // {
+          check = x: types.str.check x && x != "latest";
+          description = types.str.description + " (must not be 'latest')";
+        };
+      inherit default;
+      description = "Pinned Docker image tag (must not be 'latest')";
+    };
 }
