@@ -10,7 +10,7 @@
 # Recovery ladder:
 #   1. If niri alive + display dead → restart niri via systemctl --user -M (re-acquires DRM master)
 #   2. If niri dead + display dead → restart display-manager (SDDM)
-#   3. After 3 consecutive failures, trigger GPU recovery (driver rebind)
+#   3. After 3 consecutive failures, log critical alert (manual intervention required)
 
 set -eu
 
@@ -99,9 +99,8 @@ if [ "$niri_alive" -eq 1 ]; then
 
   # niri restart didn't fix it — escalate
   if state_hit; then
-    echo "Display still dead after $_state_count niri restart attempts. Rebooting."
+    echo "CRITICAL: Display still dead after $_state_count niri restart attempts. Manual intervention required."
     state_reset
-    systemctl reboot 2>/dev/null || true
   else
     echo "niri restart didn't recover display (attempt $_state_count/$_state_threshold). Will retry."
   fi
@@ -110,9 +109,8 @@ fi
 
 # ── Scenario 2: niri dead + display dead (original logic) ──────────────────
 if state_hit; then
-  echo "Display watchdog: $_state_count consecutive failures. Rebooting."
+  echo "CRITICAL: Display watchdog: $_state_count consecutive failures. Manual intervention required."
   state_reset
-  systemctl reboot 2>/dev/null || true
 else
   echo "Display watchdog: dead display, attempt $_state_count (threshold=$_state_threshold)"
 
