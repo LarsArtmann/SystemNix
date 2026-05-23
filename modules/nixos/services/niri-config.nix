@@ -126,6 +126,7 @@ _: {
                 Type = "oneshot";
                 ExecStart = "${displayWatchdog}/bin/display-watchdog";
                 OOMScoreAdjust = -500;
+                Environment = "PRIMARY_USER=${config.users.primaryUser}";
               }
               // harden {
                 MemoryMax = "512M";
