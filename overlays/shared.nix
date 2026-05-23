@@ -17,6 +17,22 @@
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };
 
+  # aw-webui jest tests fail with missing vue-template-compiler.
+  # The aw-webui package is not a top-level nixpkgs attribute — it's defined
+  # inside pkgs/applications/office/activitywatch/default.nix and passed to
+  # aw-server-rust via AW_WEBUI_DIR. We can't easily override it via overlays.
+  # Instead, override activitywatch to skip the broken npm test phase.
+  activitywatchOverlay = final: prev: let
+    awPkgs = prev.qt6Packages.callPackage (prev.path + "/pkgs/applications/office/activitywatch/default.nix") {
+      buildNpmPackage = args: prev.buildNpmPackage (args // {doCheck = false;});
+    };
+  in {
+    aw-server-rust = awPkgs.aw-server-rust;
+    activitywatch = prev.activitywatch.override {
+      aw-server-rust = final.aw-server-rust;
+    };
+  };
+
   jscpdOverlay = _final: prev: {
     jscpd = prev.callPackage ../pkgs/jscpd.nix {};
   };
@@ -66,6 +82,7 @@
     };
 in [
   awWatcherOverlay
+  activitywatchOverlay
   todoListAiOverlay
   jscpdOverlay
   govalidOverlay

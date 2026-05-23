@@ -4,7 +4,7 @@
   ...
 }: {
   services.activitywatch = {
-    enable = false;
+    enable = pkgs.stdenv.isLinux;
     package = pkgs.activitywatch;
     watchers = {
       aw-watcher-window-wayland = {
