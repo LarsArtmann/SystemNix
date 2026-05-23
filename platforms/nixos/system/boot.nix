@@ -192,11 +192,13 @@
   # Force performance governor — desktop/workstation with no battery concern
   powerManagement.cpuFreqGovernor = "performance";
 
-  # ZRAM: minimal compressed swap — 128GB RAM makes this unnecessary for normal use.
-  # 5% = ~6.4GB virtual device. Only used as last-resort emergency buffer.
+  # ZRAM: compressed swap emergency buffer.
+  # 10% = ~12.8GB virtual device on 128GB RAM. Provides headroom for OOM
+  # scenarios — the system ran for 16h with swap at 0% before crashing because
+  # the 5% (6.4GB) buffer was insufficient under AI workload memory pressure.
   # swappiness=1 ensures the kernel avoids swap unless critically needed.
   zramSwap = {
     enable = true;
-    memoryPercent = 5;
+    memoryPercent = 10;
   };
 }
