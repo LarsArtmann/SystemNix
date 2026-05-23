@@ -321,7 +321,9 @@ in {
         ]
 
         [skip_apps]
-        apps = []
+        apps = [
+            "Jan",
+        ]
 
         [app_mappings]
         "signal" = ["signal-desktop"]
