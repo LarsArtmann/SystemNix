@@ -177,13 +177,6 @@ _: {
               interval = "5m";
             })
             (mkHttpCheck {
-              name = "Hermes";
-              group = "AI";
-              url = "http://localhost:${toString config.services.hermes.port}/health";
-              interval = "60s";
-              alerts = discordAlert "Hermes AI gateway down — no agent orchestration";
-            })
-            (mkHttpCheck {
               name = "EMEET PIXY";
               group = "Monitoring";
               url = "http://localhost:8090/metrics";

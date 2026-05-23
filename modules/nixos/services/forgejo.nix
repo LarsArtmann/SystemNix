@@ -327,6 +327,8 @@ _: {
 
       systemd = {
         services.forgejo = {
+          after = ["sops-nix.service"];
+          wants = ["sops-nix.service"];
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;
             StartLimitIntervalSec = lib.mkForce 300;
@@ -336,33 +338,16 @@ _: {
               ProtectHome = lib.mkForce false;
               NoNewPrivileges = false;
             }
-            // serviceDefaults {}
-            // {
-              ExecStartPre = let
-                ensurePasswordFile = pkgs.writeShellScript "forgejo-ensure-password-file" ''
-                  PASS_FILE="${stateDir}/.admin-password"
-                  if [ ! -f "$PASS_FILE" ]; then
-                    ${pkgs.coreutils}/bin/head -c 32 /dev/urandom | ${pkgs.coreutils}/bin/base64 > "$PASS_FILE"
-                  fi
-                  chown forgejo:forgejo "$PASS_FILE"
-                  chmod 600 "$PASS_FILE"
-                '';
-              in
-                lib.mkBefore [("+" + ensurePasswordFile)];
-            };
+            // serviceDefaults {};
           preStart = let
             adminSetup = pkgs.writeShellScript "forgejo-admin-setup" ''
               set -euo pipefail
 
               ADMIN_USER="${primaryUser}"
               ADMIN_EMAIL="${primaryUser}@local"
-              PASS_FILE="${stateDir}/.admin-password"
+              PASS_FILE="${config.sops.secrets.forgejo_admin_password.path}"
               FORGEJO=${lib.getExe forgejoPkg}
 
-              if [ ! -f "$PASS_FILE" ]; then
-                ${pkgs.coreutils}/bin/head -c 32 /dev/urandom | ${pkgs.coreutils}/bin/base64 > "$PASS_FILE"
-                chmod 600 "$PASS_FILE"
-              fi
               ADMIN_PASS="$(${pkgs.coreutils}/bin/head -n1 "$PASS_FILE" | ${pkgs.coreutils}/bin/tr -d '\n')"
 
               if ! $FORGEJO admin user list | grep -q "$ADMIN_USER"; then
