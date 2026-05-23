@@ -26,4 +26,6 @@ in {
   }: {
     inherit name group url interval conditions alerts;
   };
+
+  ports = (import ./ports.nix).ports;
 }
