@@ -57,6 +57,12 @@ in {
       query = "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100";
       target = 90;
     };
+    "signoz/rules/swap-critical.json".source = mkRule {
+      name = "Swap Usage Critical (>80%)";
+      description = "Swap usage above 80% on {{.Labels.instance}} — system under severe memory pressure, OOM cascade imminent";
+      query = "(1 - (node_memory_SwapFree_bytes / node_memory_SwapTotal_bytes)) * 100";
+      target = 80;
+    };
     "signoz/rules/service-down.json".source = mkRule {
       name = "Systemd Service Failed";
       description = "Systemd service {{.Labels.name}} is in failed state";
