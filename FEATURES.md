@@ -64,7 +64,7 @@ _A brutally honest audit of every feature the project actually has._
 | Forgejo (Git forge) | ✅ | `forgejo.nix` | SQLite, LFS, weekly dumps, GitHub mirror + push mirrors, Actions runner (Docker + native), admin auto-setup, federation enabled |
 | Forgejo repos (declarative mirroring) | ✅ | `forgejo-repos.nix` | Auto-sync on rebuild + daily timer, push mirrors to GitHub, hardened oneshot, sops-managed tokens |
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha theme, 5 service categories, resource widgets, health checks |
-| Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Authelia, daily DB backup, GPU access for ML |
+| Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Authelia, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
 | PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, pinned SHA256, disabled in config |
 | SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 7 alert rules, dashboard provisioning |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |

@@ -15,15 +15,22 @@ _: {
         openFirewall = false;
         mediaLocation = "/var/lib/immich";
 
-        accelerationDevices = null;
+        accelerationDevices = ["/dev/dri/renderD128"];
 
         database.enable = true;
         redis.enable = true;
         machine-learning.enable = true;
 
-        environment.NODE_EXTRA_CA_CERTS = "/etc/ssl/certs/ca-certificates.crt";
+        environment = {
+          NODE_EXTRA_CA_CERTS = "/etc/ssl/certs/ca-certificates.crt";
+          LIBVA_DRIVER_NAME = "radeonsi";
+        };
 
         settings = {
+          ffmpeg = {
+            accel = "vaapi";
+            accelDecode = true;
+          };
           oauth = {
             enabled = true;
             issuerUrl = "https://auth.${config.networking.domain}";
