@@ -192,7 +192,7 @@
       golangci-lint-auto-configure # Auto-configure golangci-lint for Go projects
 
       # Library governance
-      library-policy # Banned/vulnerable library detector for Go projects
+      # library-policy # Disabled — go.mod local replace breaks Nix sandbox
 
       # Repo management
       mr-sync # Keep ~/.mrconfig in sync with GitHub repos
@@ -200,11 +200,11 @@
       # Go tooling ecosystem (LarsArtmann)
       art-dupl # AST-based code deduplication
       branching-flow # Error context preservation analyzer
-      buildflow # Build automation
+      # buildflow # Disabled — upstream compilation error
       go-auto-upgrade # Automated Go version upgrades
-      go-structure-linter # Go project structure linting
+      # go-structure-linter # Disabled — inconsistent vendoring
       hierarchical-errors # Error handling pattern analyzer
-      projects-management-automation # CLI for managing multiple projects with workflow automation
+      # projects-management-automation # Disabled — missing branching-flow/pkg/stats
 
       # Go testing
       ginkgo # BDD testing framework for Go

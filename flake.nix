@@ -260,7 +260,7 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-utils.follows = "flake-utils";
-        go-finding.follows = "go-finding";
+        # go-finding: NOT followed — hierarchical-errors hasn't been updated for the new Confidence type API
         go-filewatcher.follows = "go-filewatcher";
         gogenfilter.follows = "gogenfilter";
       };
@@ -562,16 +562,16 @@
               jscpd
               sqlc
               todo-list-ai
-              library-policy
+              # library-policy — disabled: go.mod local replace breaks Nix sandbox
               golangci-lint-auto-configure
               mr-sync
               hierarchical-errors
-              buildflow
+              # buildflow — disabled: upstream compilation error
               go-auto-upgrade
-              go-structure-linter
+              # go-structure-linter — disabled: inconsistent vendoring
               branching-flow
               art-dupl
-              projects-management-automation
+              # projects-management-automation — disabled: missing branching-flow/pkg/stats
               ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {

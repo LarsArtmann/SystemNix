@@ -495,6 +495,23 @@
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       }
     },
+    "go-finding_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779133454,
+        "narHash": "sha256-Za8MZdJQPS8FgQlmC+PyD+C/vEyS9WrVMayyhiEgL+w=",
+        "ref": "master",
+        "rev": "ddf6e06a2ed2d376ba67c0898ac5dd03ba90ad54",
+        "revCount": 557,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      }
+    },
     "go-output": {
       "flake": false,
       "locked": {
@@ -666,9 +683,7 @@
         "go-filewatcher": [
           "go-filewatcher"
         ],
-        "go-finding": [
-          "go-finding"
-        ],
+        "go-finding": "go-finding_2",
         "gogenfilter": [
           "gogenfilter"
         ],
