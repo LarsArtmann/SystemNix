@@ -581,6 +581,7 @@
         # Development shells for different program categories
         devShells = {
           default = pkgs.mkShell {
+            BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
             packages = with pkgs; [
               git
               nixfmt
