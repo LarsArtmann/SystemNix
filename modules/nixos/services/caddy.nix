@@ -68,12 +68,7 @@ _: {
           "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
           "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
           "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
-          "tasks.${domain}" = {
-            extraConfig = ''
-              ${tlsConfig}
-              reverse_proxy localhost:${toString config.services.taskchampion-sync-server.port}
-            '';
-          };
+          "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
           "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
           "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
           "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
