@@ -11,6 +11,8 @@ _: {
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
     inherit (import ../../../lib/docker.nix {inherit pkgs lib harden serviceDefaults;}) mkDockerService;
 
+    rocm = import ../../../lib/rocm.nix {inherit pkgs;};
+
     whisperModelsDir = config.services.ai-models.paths.whisper;
 
     whisperImage = "beecave/insanely-fast-whisper-rocm@sha256:1fa17f91846d30748751089a7ef37b490a8e3ec46e8ba4a1df15c28d1e60d3c1";
@@ -28,7 +30,7 @@ _: {
             - '${toString cfg.whisperPort}:7860'
           environment:
             - MODEL=${cfg.whisperModel}
-            - HSA_OVERRIDE_GFX_VERSION=11.5.1
+            - HSA_OVERRIDE_GFX_VERSION=${rocm.env.HSA_OVERRIDE_GFX_VERSION}
           volumes:
             - ${whisperModelsDir}:/root/.cache/huggingface
           devices:
