@@ -86,19 +86,15 @@ in [
   todoListAiOverlay
   jscpdOverlay
   govalidOverlay
-  # library-policy: disabled — go.mod has local replace directive for go-finding that breaks Nix sandbox
-  # (mkPackageOverlay library-policy "library-policy" {})
+  (mkPackageOverlay library-policy "library-policy" {})
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-Q9i+2iW0reClN+R9VUHYWoLMPoyGUXDXy4SeWkxKq20=";})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-K/dPpkbgJQOctBxphuqndErswaNA7puubhT21JJ5Y0A=";})
-  # buildflow: disabled — upstream compilation error (syntax error in migrator.go)
-  # (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-ChZeHvlRg6Y4meeO+5FiECI0szH6FnW4rmc7o36sZUA=";})
+  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-G293jWVweZnR15bdPiXbSuhe7ffs72Mi/GEPfEGxcEM=";})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
-  # go-structure-linter: disabled — inconsistent vendoring (missing go-branded-id in _local_deps)
-  # (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-crYOyOJkQkJaAlg4z0xHAkzr39E4VczkqPPETLpnCf0=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-BfHABJAHErFY8slMYjeYPPRzs9LGnVy+HOjBLI50hMk=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
-  # projects-management-automation: disabled — missing branching-flow/pkg/stats in _local_deps
-  # (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-ma/7D1sUaAERTi/t/1d+syp7oHxSH5VamjHUIUWIJbk=";})
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-wiGmT6ibqaR1afYday12whPQXU1hTwbndA8nPpMCER0=";})
   d2DarwinOverlay
 ]

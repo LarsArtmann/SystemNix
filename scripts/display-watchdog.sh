@@ -99,12 +99,9 @@ if [ "$niri_alive" -eq 1 ]; then
 
   # niri restart didn't fix it — escalate
   if state_hit; then
-    echo "Display still dead after $_state_count niri restart attempts. Triggering GPU recovery."
+    echo "Display still dead after $_state_count niri restart attempts. Rebooting."
     state_reset
-    systemctl start gpu-recovery.service 2>/dev/null || {
-      echo "gpu-recovery failed. Rebooting."
-      systemctl reboot 2>/dev/null || true
-    }
+    systemctl reboot 2>/dev/null || true
   else
     echo "niri restart didn't recover display (attempt $_state_count/$_state_threshold). Will retry."
   fi
@@ -113,12 +110,9 @@ fi
 
 # ── Scenario 2: niri dead + display dead (original logic) ──────────────────
 if state_hit; then
-  echo "Display watchdog: $_state_count consecutive failures. Triggering GPU recovery."
+  echo "Display watchdog: $_state_count consecutive failures. Rebooting."
   state_reset
-  systemctl start gpu-recovery.service 2>/dev/null || {
-    echo "gpu-recovery failed. Rebooting."
-    systemctl reboot 2>/dev/null || true
-  }
+  systemctl reboot 2>/dev/null || true
 else
   echo "Display watchdog: dead display, attempt $_state_count (threshold=$_state_threshold)"
 

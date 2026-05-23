@@ -197,6 +197,7 @@
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
+        go-finding.follows = "go-finding";
       };
     };
 
@@ -226,6 +227,10 @@
     };
     go-filewatcher = {
       url = "git+ssh://git@github.com/LarsArtmann/go-filewatcher?ref=master";
+      flake = false;
+    };
+    go-error-family = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-error-family?ref=master";
       flake = false;
     };
     cmdguard = {
@@ -301,6 +306,7 @@
         go-output.follows = "go-output";
         gogenfilter.follows = "gogenfilter";
         go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
       };
     };
 
@@ -333,6 +339,9 @@
         go-branded-id.follows = "go-branded-id";
         go-filewatcher.follows = "go-filewatcher";
         gogenfilter.follows = "gogenfilter";
+        branching-flow.follows = "branching-flow";
+        go-error-family.follows = "go-error-family";
+        go-finding.follows = "go-finding";
       };
     };
   };
@@ -562,16 +571,16 @@
               jscpd
               sqlc
               todo-list-ai
-              # library-policy — disabled: go.mod local replace breaks Nix sandbox
+              library-policy
               golangci-lint-auto-configure
               mr-sync
               hierarchical-errors
-              # buildflow — disabled: upstream compilation error
+              buildflow
               go-auto-upgrade
-              # go-structure-linter — disabled: inconsistent vendoring
+              go-structure-linter
               branching-flow
               art-dupl
-              # projects-management-automation — disabled: missing branching-flow/pkg/stats
+              projects-management-automation
               ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {

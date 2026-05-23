@@ -551,7 +551,9 @@
         "go-branded-id": [
           "go-branded-id"
         ],
-        "go-error-family": "go-error-family",
+        "go-error-family": [
+          "go-error-family"
+        ],
         "go-finding": [
           "go-finding"
         ],
@@ -1320,6 +1322,7 @@
         "flake-utils": "flake-utils",
         "go-auto-upgrade": "go-auto-upgrade",
         "go-branded-id": "go-branded-id",
+        "go-error-family": "go-error-family",
         "go-filewatcher": "go-filewatcher",
         "go-finding": "go-finding",
         "go-output": "go-output",
