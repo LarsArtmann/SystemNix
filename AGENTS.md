@@ -132,7 +132,7 @@ forgejoUrl = "http://localhost:${toString forgejoPort}";
 Single import pattern:
 ```nix
 inherit (import ../../../lib/default.nix lib)
-  harden serviceDefaults onFailure serviceTypes mkStateDir mkDockerServiceFactory;
+  harden serviceDefaults onFailure serviceTypes mkStateDir mkDockerServiceFactory ports;
 ```
 
 - `harden { MemoryMax = "1G"; }` — systemd security hardening. Use `mode = "user"` for user services (or `hardenUser` wrapper).
@@ -140,6 +140,15 @@ inherit (import ../../../lib/default.nix lib)
 - `mkStateDir "/var/lib/foo" "0755" "foo" "foo"` — tmpfiles rule.
 - `onFailure` — constant `["notify-failure@%n.service"]`.
 - `mkDockerServiceFactory { inherit pkgs; }` — generates systemd service for Docker Compose.
+- `serviceTypes.dockerImageTag "1.2.3"` — Docker image tag option that rejects `"latest"` at eval time.
+- `ports` — centralized port registry (`ports.homepage`, `ports.signoz`, etc.).
+- `mkHttpCheck { name = "..."; group = "..."; url = "..."; }` — Gatus endpoint definition.
+
+### Caddy vHost Pattern
+
+ALL vhosts are defined in `modules/nixos/services/caddy.nix`. No other module should define `services.caddy.virtualHosts`.
+
+Use `protectedVHost "subdomain" port` for services that need Authelia forward-auth (most services). Use inline config only for public endpoints.
 
 ### WatchdogSec Rules
 
