@@ -1,6 +1,6 @@
 # Twenty CRM via Docker Compose with PostgreSQL and Redis
 _: let
-  version = "latest";
+  version = "v2.7.3";
 in {
   flake.nixosModules.twenty = {
     config,

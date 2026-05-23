@@ -122,8 +122,7 @@ _: {
       port = serviceTypes.servicePort 2099 "Host port for the Manifest dashboard";
       imageTag = lib.mkOption {
         type = lib.types.str;
-        default = "latest";
-        description = "Docker image tag for manifestdotbuild/manifest";
+        default = "6.6.1";
       };
     };
 

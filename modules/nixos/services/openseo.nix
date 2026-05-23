@@ -67,8 +67,7 @@ _: {
       port = serviceTypes.servicePort 3001 "HTTP port for OpenSEO dashboard";
       imageTag = lib.mkOption {
         type = lib.types.str;
-        default = "latest";
-        description = "Docker image tag for ghcr.io/every-app/open-seo";
+        default = "v0.0.15";
       };
     };
 
