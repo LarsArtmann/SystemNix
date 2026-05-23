@@ -40,11 +40,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779394520,
-        "narHash": "sha256-1ZQcwEx/hxYhmtbJIOR1JDQkMWFest0gWrOiMA7PSsg=",
+        "lastModified": 1779577387,
+        "narHash": "sha256-1/2d3zBj+euZe9z8v3ISlKcMzH8LEVfJzKsvgOZRO64=",
         "ref": "master",
-        "rev": "ebafb93f46bc8ade911b030f62c83a4c2ce783e0",
-        "revCount": 1683,
+        "rev": "24ecb98f42a5f81ee2e99a7ccfdbdd49c0df43f5",
+        "revCount": 1691,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -568,11 +568,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779495072,
-        "narHash": "sha256-ZRIpEIs0UjIlepbed7mCLqbsRIGBt5/h+m9g4I19E9s=",
+        "lastModified": 1779577367,
+        "narHash": "sha256-Yy1sIkEbJRXCNQYa41k6xTHz7StoSgzENK+6nXE8dCg=",
         "ref": "master",
-        "rev": "3a69634ad697d9649515369d15c659fcaa675a63",
-        "revCount": 971,
+        "rev": "271c90db46e6e25b2bd143f3f61e9714716ba9bf",
+        "revCount": 972,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -766,6 +766,9 @@
           "flake-parts"
         ],
         "git-hooks-nix": "git-hooks-nix",
+        "go-finding": [
+          "go-finding"
+        ],
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -774,11 +777,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779503821,
-        "narHash": "sha256-ZnlX1LVMW2vNpsvHjAYY6USOHubvwJMTLBRLlywvKb4=",
+        "lastModified": 1779577055,
+        "narHash": "sha256-tLsoDteK/cyTQZeSlzd2LadHlidz6VzRMxUrF2d+6HU=",
         "ref": "master",
-        "rev": "a0b748e46a3636a4545b9c996d900452a8382da7",
-        "revCount": 726,
+        "rev": "f22e02c394f4eec7be133782456fff0adab0be8a",
+        "revCount": 738,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -1163,11 +1166,11 @@
     "project-meta": {
       "flake": false,
       "locked": {
-        "lastModified": 1779404353,
-        "narHash": "sha256-Oni8qe7KIIBAPIqW2+S4Ws5DjY2fXXCA1VZF93MYCWM=",
+        "lastModified": 1779495022,
+        "narHash": "sha256-ggqLUzXiyBR3NS5DfspX5Qt2Q5ufFr7IEVSekVVX/2Y=",
         "ref": "master",
-        "rev": "955b78eff1acbfe7c62fe0f67daafda08b950f5c",
-        "revCount": 266,
+        "rev": "beae805a0554c415c08ec3a3cb3b7578f7674bda",
+        "revCount": 267,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },
@@ -1179,6 +1182,9 @@
     },
     "projects-management-automation": {
       "inputs": {
+        "branching-flow": [
+          "branching-flow"
+        ],
         "cmdguard": [
           "cmdguard"
         ],
@@ -1190,8 +1196,14 @@
         ],
         "go-commit": "go-commit",
         "go-composable-business-types": "go-composable-business-types",
+        "go-error-family": [
+          "go-error-family"
+        ],
         "go-filewatcher": [
           "go-filewatcher"
+        ],
+        "go-finding": [
+          "go-finding"
         ],
         "go-output": [
           "go-output"
@@ -1206,11 +1218,11 @@
         "project-meta": "project-meta"
       },
       "locked": {
-        "lastModified": 1779495053,
-        "narHash": "sha256-MJTsMbaKr4tQG+tII6+X4q183B1rlHdI4/D8K86CKMQ=",
+        "lastModified": 1779577581,
+        "narHash": "sha256-i2eMjZEr5aZHCn0jaQYNWo3SbTr3bi5FqGZXxU+Ps+Q=",
         "ref": "master",
-        "rev": "d73cf91ce570933d4b809297dc503cabcdf6d58d",
-        "revCount": 2656,
+        "rev": "1d03ed85fdcf0870c957f412f5b966d0f0941439",
+        "revCount": 2661,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
