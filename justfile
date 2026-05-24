@@ -796,6 +796,7 @@ snapshot-migrate-data:
     sudo systemctl stop docker.service docker.socket 2>/dev/null || true
     sudo systemctl stop ollama.service 2>/dev/null || true
     sudo systemctl stop comfyui.service 2>/dev/null || true
+    sudo systemctl stop btrbk-root.timer btrbk-root.service 2>/dev/null || true
     # Stop any podman containers using /data
     for svc in $(systemctl list-units --type=service --state=running --no-legend 2>/dev/null | awk '{print $1}'); do
         if systemctl show "$svc" --property=ExecStart 2>/dev/null | grep -q '/data/'; then
