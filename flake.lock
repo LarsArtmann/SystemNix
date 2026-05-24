@@ -612,11 +612,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779571658,
-        "narHash": "sha256-pWnm0SmuUxE0aGwdRLOe7cqe0aIFccLjnD1YGHM8iBk=",
+        "lastModified": 1779585607,
+        "narHash": "sha256-J6W6QQwZPJL+aIq5NrFrIFowdD853berz3l5MC/86Aw=",
         "ref": "master",
-        "rev": "89f8a533c2cd26ab6bc19f09bfe2ea462e4a36dc",
-        "revCount": 551,
+        "rev": "1f69efcb1eeb4fee7d66d626d8eeefffc56201e0",
+        "revCount": 552,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
