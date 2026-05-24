@@ -37,7 +37,7 @@ _: {
             Group = "homepage";
             StateDirectory = "homepage-dashboard";
           }
-          // harden { MemoryMax = "384M"; }
+          // harden {MemoryMax = "384M";}
           // serviceDefaults {};
       };
 
@@ -74,10 +74,10 @@ _: {
 
       environment.etc."homepage/services.yaml".source = pkgs.writeText "homepage-services.yaml" ''
         - Infrastructure:
-            - Authelia:
+            - Pocket ID:
                 href: ${svcUrl "auth"}
-                description: SSO & Identity Provider
-                icon: authelia.png
+                description: Passkey OIDC Provider
+                icon: pocket-id.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "auth"}/api/health
             - Caddy:

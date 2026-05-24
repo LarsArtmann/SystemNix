@@ -52,9 +52,10 @@ _A brutally honest audit of every feature the project actually has._
 | Service | Status | Module | Key Details |
 |---------|--------|--------|-------------|
 | Docker | ✅ | `default.nix` | Always-on, overlay2, `/data/docker`, weekly auto-prune, user `lars` in docker group |
-| Caddy (reverse proxy) | ✅ | `caddy.nix` | TLS via sops certs, forward auth via Authelia, 10 virtual hosts, metrics enabled |
+| Caddy (reverse proxy) | ✅ | `caddy.nix` | TLS via sops certs, forward auth via oauth2-proxy + Pocket ID, 10 virtual hosts, metrics enabled |
 | SOPS secrets management | ✅ | `sops.nix` | Age-encrypted via SSH host key, 4 sops files, auto-restart per secret |
-| Authelia SSO/IdP | ✅ | `authelia.nix` | OIDC provider, TOTP + WebAuthn 2FA, file-based auth, Forgejo + Immich OIDC clients, brute-force protection |
+| Pocket ID (OIDC provider) | ✅ | `pocket-id.nix` | Passkey-only OIDC provider, Go backend, SQLite, web UI for user/client management
+| oauth2-proxy | ✅ | `oauth2-proxy.nix` | Forward-auth bridge between Caddy and Pocket ID, cookie-based sessions |
 | DNS Failover (Keepalived VRRP) | 📋 | `dns-failover.nix` | Two-node VRRP cluster, unbound health tracking, GARP refresh — Pi 3 not provisioned |
 
 ### Self-Hosted Applications
@@ -64,7 +65,7 @@ _A brutally honest audit of every feature the project actually has._
 | Forgejo (Git forge) | ✅ | `forgejo.nix` | SQLite, LFS, weekly dumps, GitHub mirror + push mirrors, Actions runner (Docker + native), admin auto-setup, federation enabled |
 | Forgejo repos (declarative mirroring) | ✅ | `forgejo-repos.nix` | Auto-sync on rebuild + daily timer, push mirrors to GitHub, hardened oneshot, sops-managed tokens |
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha theme, 5 service categories, resource widgets, health checks |
-| Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Authelia, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
+| Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
 | PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, pinned SHA256, disabled in config |
 | SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 7 alert rules, dashboard provisioning |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |

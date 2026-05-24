@@ -1,6 +1,7 @@
 {
   ports = {
-    authelia = 9091;
+    pocket-id = 1411;
+    oauth2-proxy = 4180;
     caddy-metrics = 2019;
 
     dns-blocker = 53;

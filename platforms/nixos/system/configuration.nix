@@ -120,7 +120,8 @@
       caddy.enable = true;
       forgejo.enable = true;
       immich.enable = true;
-      authelia-config.enable = true;
+      pocket-id-config.enable = true;
+      oauth2-proxy-config.enable = true;
       # photomap — disabled: podman config permission issue
       # photomap.enable = true;
       homepage.enable = true;

@@ -44,7 +44,8 @@ check_service immich-machine-learning
 check_service signoz
 check_service signoz-collector
 check_service clickhouse
-check_service authelia-main
+check_service pocket-id
+check_service oauth2-proxy
 check_service gatus
 check_service prometheus-node-exporter
 check_service cadvisor

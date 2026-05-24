@@ -44,23 +44,28 @@ in {
             group = "users";
             restartUnits = ["forgejo-github-sync.service" "forgejo-ensure-repos.service"];
           } ["forgejo_token" "github_token" "github_user"]
-          // mkSecrets "authelia-secrets.yaml" {
-            owner = "authelia-main";
-            group = "authelia-main";
-            restartUnits = ["authelia-main.service"];
-          } ["authelia_jwt_secret" "authelia_storage_encryption_key" "authelia_oidc_hmac_secret"]
+          // mkSecrets "pocket-id.yaml" {
+            owner = "pocket-id";
+            group = "pocket-id";
+            restartUnits = ["pocket-id.service"];
+          } ["pocket_id_encryption_key"]
           // {
-            authelia_oidc_issuer_private_key = {
-              sopsFile = secretsDir + "/authelia-secrets.yaml";
-              owner = "authelia-main";
-              group = "authelia-main";
-              mode = "0400";
-              restartUnits = ["authelia-main.service"];
+            oauth2_proxy_client_secret = {
+              sopsFile = secretsDir + "/pocket-id.yaml";
+              owner = "oauth2-proxy";
+              group = "oauth2-proxy";
+              restartUnits = ["oauth2-proxy.service"];
+            };
+            oauth2_proxy_cookie_secret = {
+              sopsFile = secretsDir + "/pocket-id.yaml";
+              owner = "oauth2-proxy";
+              group = "oauth2-proxy";
+              restartUnits = ["oauth2-proxy.service"];
             };
           }
           // {
             immich_oauth_client_secret = {
-              sopsFile = secretsDir + "/authelia-secrets.yaml";
+              sopsFile = secretsDir + "/pocket-id.yaml";
               owner = "immich";
               group = "immich";
               restartUnits = ["immich-server.service"];

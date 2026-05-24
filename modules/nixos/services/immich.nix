@@ -39,7 +39,7 @@ _: {
             scope = "openid profile email";
             autoLaunch = false;
             autoRegister = true;
-            buttonText = "Login with Authelia";
+            buttonText = "Login with Pocket ID";
           };
         };
       };

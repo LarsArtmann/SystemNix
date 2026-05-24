@@ -9,7 +9,8 @@ _: {
     lanSubnet = config.networking.local.subnet;
     serverCert = config.sops.secrets.dnsblockd_server_cert.path;
     serverKey = config.sops.secrets.dnsblockd_server_key.path;
-    authPort = config.services.authelia-config.port;
+    authPort = config.services.pocket-id-config.port;
+    proxyPort = config.services.oauth2-proxy-config.port;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
 
     bindAddress =
@@ -27,9 +28,9 @@ _: {
     '';
 
     forwardAuth = ''
-      forward_auth localhost:${toString authPort} {
-        uri /api/authz/forward-auth
-        copy_headers Remote-User Remote-Groups Remote-Email Remote-Name
+      forward_auth localhost:${toString proxyPort} {
+        uri /oauth2/auth
+        copy_headers X-Auth-Request-User X-Auth-Request-Email
       }
     '';
 
@@ -59,7 +60,12 @@ _: {
           "auth.${domain}" = {
             extraConfig = ''
               ${tlsConfig}
-              reverse_proxy localhost:${toString authPort}
+              handle_path /oauth2/* {
+                reverse_proxy localhost:${toString proxyPort}
+              }
+              handle {
+                reverse_proxy localhost:${toString authPort}
+              }
             '';
           };
 
@@ -80,8 +86,8 @@ _: {
       networking.firewall.allowedTCPPorts = [80 443];
 
       systemd.services.caddy = {
-        after = ["authelia-main.service"];
-        wants = ["authelia-main.service"];
+        after = ["pocket-id.service" "oauth2-proxy.service"];
+        wants = ["pocket-id.service" "oauth2-proxy.service"];
         inherit onFailure;
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;

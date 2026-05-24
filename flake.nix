@@ -379,8 +379,12 @@
     # Each entry is { path = ./modules/nixos/services/<name>.nix; module = "<nixosModule-name>"; }
     serviceModules = [
       {
-        path = ./modules/nixos/services/authelia.nix;
-        module = "authelia";
+        path = ./modules/nixos/services/pocket-id.nix;
+        module = "pocket-id";
+      }
+      {
+        path = ./modules/nixos/services/oauth2-proxy.nix;
+        module = "oauth2-proxy";
       }
       {
         path = ./modules/nixos/services/caddy.nix;

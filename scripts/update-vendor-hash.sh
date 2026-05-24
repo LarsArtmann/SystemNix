@@ -19,8 +19,8 @@ TARGET_PROJECT=""
 
 for arg in "$@"; do
   case "$arg" in
-    --check) CHECK_ONLY=true ;;
-    *) TARGET_PROJECT="$arg" ;;
+  --check) CHECK_ONLY=true ;;
+  *) TARGET_PROJECT="$arg" ;;
   esac
 done
 
@@ -32,28 +32,28 @@ NC='\033[0m'
 
 declare -A PROJECT_FILES=(
   [GmbH]="flake.nix"
-  [vision-review-agent]="flake.nix"
-  [go-plugin-mvp]="flake.nix"
-  [project-dependency-graph]="flake.nix"
-  [artmann-technologies-website]="flake.nix"
-  [go-website-template]="flake.nix"
+  [vision - review - agent]="flake.nix"
+  [go - plugin - mvp]="flake.nix"
+  [project - dependency - graph]="flake.nix"
+  [artmann - technologies - website]="flake.nix"
+  [go - website - template]="flake.nix"
   [PapDashboard]="flake.nix"
-  [standard-bug-tracking-schema]="flake.nix"
-  [lean-business-plan]="flake.nix"
+  [standard - bug - tracking - schema]="flake.nix"
+  [lean - business - plan]="flake.nix"
   [testing]="flake.nix"
-  [docs-organizer]="flake.nix"
-  [golangci-lint-auto-configure]="flake.nix"
+  [docs - organizer]="flake.nix"
+  [golangci - lint - auto - configure]="flake.nix"
   [KeyCountdown]="flake.nix"
-  [projects-management-automation]="flake.nix"
+  [projects - management - automation]="flake.nix"
   [buildflow]="flake.nix"
   [BuildFlow]="flake.nix"
-  [go-structure-linter]="flake.nix"
-  [art-dupl]="flake.nix"
-  [branching-flow]="flake.nix"
-  [go-auto-upgrade]="flake.nix"
-  [Standup-Killer]="flake.nix"
-  [hierarchical-errors]="flake.nix"
-  [library-policy]="nix/packages/default.nix"
+  [go - structure - linter]="flake.nix"
+  [art - dupl]="flake.nix"
+  [branching - flow]="flake.nix"
+  [go - auto - upgrade]="flake.nix"
+  [Standup - Killer]="flake.nix"
+  [hierarchical - errors]="flake.nix"
+  [library - policy]="nix/packages/default.nix"
   [SwettySwipperWeb]="flake.nix"
 )
 

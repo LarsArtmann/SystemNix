@@ -608,8 +608,8 @@ in {
                       static_configs = [{targets = ["127.0.0.1:2019"];}];
                     }
                     {
-                      job_name = "authelia";
-                      static_configs = [{targets = ["127.0.0.1:${toString config.services.authelia-config.port}"];}];
+                      job_name = "pocket-id";
+                      static_configs = [{targets = ["127.0.0.1:${toString config.services.pocket-id-config.port}"];}];
                     }
                     {
                       job_name = "dnsblockd";
@@ -629,7 +629,7 @@ in {
               journald = {
                 directory = "/var/log/journal";
                 priority = "info";
-                units = ["signoz.service" "signoz-collector.service" "caddy.service" "immich-server.service" "forgejo.service" "docker.service" "postgresql.service" "authelia-main.service"];
+                units = ["signoz.service" "signoz-collector.service" "caddy.service" "immich-server.service" "forgejo.service" "docker.service" "postgresql.service" "pocket-id.service" "oauth2-proxy.service"];
               };
             };
           exporters = {

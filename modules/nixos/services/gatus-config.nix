@@ -50,9 +50,9 @@ _: {
               alerts = discordAlert "Caddy reverse proxy down — all services unreachable";
             })
             (mkHttpCheck {
-              name = "Authelia";
+              name = "Pocket ID";
               group = "Infrastructure";
-              url = "http://localhost:${toString config.services.authelia-config.port}/api/health";
+              url = "http://localhost:${toString config.services.pocket-id-config.port}/api/health";
             })
             (mkHttpCheck {
               name = "Forgejo";

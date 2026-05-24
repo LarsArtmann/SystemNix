@@ -28,7 +28,7 @@ packages=(
 
 # Detect platform
 if [[ "$(uname)" == "Darwin" ]]; then
-  eval_attr="nixosConfigurations"  # won't work on Darwin for most
+  eval_attr="nixosConfigurations" # won't work on Darwin for most
   system="aarch64-darwin"
 else
   eval_attr="nixosConfigurations.evo-x2.pkgs"
@@ -39,7 +39,7 @@ printf "%-40s %-12s %-12s\n" "PACKAGE" "VERSION" "LOCKED REV"
 printf "%-40s %-12s %-12s\n" "$(printf '%.0s-' {1..40})" "$(printf '%.0s-' {1..12})" "$(printf '%.0s-' {1..12})"
 
 for entry in "${packages[@]}"; do
-  IFS=':' read -r pkg input <<< "$entry"
+  IFS=':' read -r pkg input <<<"$entry"
 
   # Get version from nix eval (skip non-package inputs like crush-config)
   ver=$(nix eval --json ".#${eval_attr}.${pkg}.version" 2>/dev/null | tr -d '"' || echo "")
