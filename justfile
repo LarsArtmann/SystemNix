@@ -727,12 +727,29 @@ snapshot:
     # Ensure toplevel is mounted (automount should handle this, but be explicit)
     if ! mountpoint -q "$ROOT" 2>/dev/null; then
         echo "Mounting $ROOT..."
-        sudo mount "$ROOT" 2>/dev/null || { echo "WARNING: Cannot mount $ROOT — skipping snapshot"; exit 0; }
+        sudo mount "$ROOT" || { echo "FATAL: Cannot mount $ROOT — cannot create pre-deploy snapshot. Aborting."; exit 1; }
+    fi
+
+    if ! [ -d "$ROOT/@" ]; then
+        echo "FATAL: $ROOT/@ not found — root subvolume missing. Aborting."; exit 1
     fi
 
     sudo mkdir -p "$SNAP_DIR"
-    sudo btrfs subvolume snapshot -r "$ROOT/@" "$SNAP_DIR/@.pre-deploy-$TS"
+    sudo btrfs subvolume snapshot -r "$ROOT/@" "$SNAP_DIR/@.pre-deploy-$TS" \
+        || { echo "FATAL: Snapshot creation failed. Aborting."; exit 1; }
     echo "Pre-deploy snapshot: $SNAP_DIR/@.pre-deploy-$TS"
+
+    # Prune old pre-deploy snapshots (keep last 5)
+    PRE_DEPLOY_COUNT=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.pre-deploy-*' | wc -l)
+    if [ "$PRE_DEPLOY_COUNT" -gt 5 ]; then
+        find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.pre-deploy-*' \
+            | sort \
+            | head -n $((PRE_DEPLOY_COUNT - 5)) \
+            | while read -r old; do
+                echo "  pruning: $(basename "$old")"
+                sudo btrfs subvolume delete "$old"
+            done
+    fi
 
 # List BTRFS snapshots
 [group('disk')]
@@ -774,11 +791,18 @@ snapshot-migrate-data:
         exit 1
     fi
 
-    # Stop services that use /data
-    echo "Stopping Docker..."
+    # Stop services that write to /data
+    echo "Stopping services that write to /data..."
     sudo systemctl stop docker.service docker.socket 2>/dev/null || true
-    echo "Stopping services using /data..."
-    sudo systemctl stop 'btrfs-snapshot-data.service' 2>/dev/null || true
+    sudo systemctl stop ollama.service 2>/dev/null || true
+    sudo systemctl stop comfyui.service 2>/dev/null || true
+    # Stop any podman containers using /data
+    for svc in $(systemctl list-units --type=service --state=running --no-legend 2>/dev/null | awk '{print $1}'); do
+        if systemctl show "$svc" --property=ExecStart 2>/dev/null | grep -q '/data/'; then
+            echo "  stopping $svc (uses /data)"
+            sudo systemctl stop "$svc" 2>/dev/null || true
+        fi
+    done
 
     # Mount toplevel
     echo "Mounting toplevel at $MNT..."

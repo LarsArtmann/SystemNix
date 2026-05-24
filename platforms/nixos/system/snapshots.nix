@@ -52,9 +52,8 @@
         exit 1
       fi
 
-      # Extract date from btrbk naming: @.20260524T120000
-      SNAP_DATE=$(basename "$LATEST" | sed 's/@\.//' | cut -dT -f1)
-      SNAP_EPOCH=$(date -d "$SNAP_DATE" +%s 2>/dev/null || echo 0)
+      # Use filesystem modification time — immune to naming convention changes
+      SNAP_EPOCH=$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)
       NOW_EPOCH=$(date +%s)
       AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
 
