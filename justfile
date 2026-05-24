@@ -724,10 +724,13 @@ snapshot:
     ROOT="/mnt/btrfs-root"
     SNAP_DIR="$ROOT/.snapshots"
 
-    # Ensure toplevel is mounted (automount should handle this, but be explicit)
+    # Ensure toplevel is mounted (automount handles this after first deploy)
     if ! mountpoint -q "$ROOT" 2>/dev/null; then
         echo "Mounting $ROOT..."
-        sudo mount "$ROOT" || { echo "FATAL: Cannot mount $ROOT — cannot create pre-deploy snapshot. Aborting."; exit 1; }
+        # Try fstab first (works after first deploy), then direct UUID (first deploy)
+        sudo mount "$ROOT" 2>/dev/null || sudo mount -t btrfs -o noatime,compress=zstd \
+            "UUID=0b629b65-a1b7-40df-a7dc-9ea5e0b04959" "$ROOT" \
+            || { echo "FATAL: Cannot mount $ROOT — cannot create pre-deploy snapshot. Aborting."; exit 1; }
     fi
 
     if ! [ -d "$ROOT/@" ]; then
