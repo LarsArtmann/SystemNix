@@ -31,6 +31,11 @@ _: {
       forward_auth localhost:${toString proxyPort} {
         uri /oauth2/auth
         copy_headers X-Auth-Request-User X-Auth-Request-Email
+
+        @unauth status 401
+        handle_response @unauth {
+          redir * https://auth.${domain}/oauth2/sign_in?rd={scheme}://{host}{uri}
+        }
       }
     '';
 

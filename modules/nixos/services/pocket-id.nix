@@ -10,10 +10,12 @@ _: {
     inherit (config.networking) domain;
     inherit (import ../../../lib/default.nix lib) serviceDefaults onFailure serviceTypes;
     pocketIdPort = cfg.port;
+    metricsPort = cfg.metricsPort;
   in {
     options.services.pocket-id-config = {
       enable = lib.mkEnableOption "Pocket ID passkey OIDC provider with SystemNix configuration";
       port = serviceTypes.servicePort 1411 "Port for Pocket ID";
+      metricsPort = serviceTypes.servicePort 9464 "Port for Pocket ID Prometheus metrics";
     };
 
     config = lib.mkIf cfg.enable {
@@ -25,6 +27,9 @@ _: {
           ANALYTICS_DISABLED = true;
           HOST = "127.0.0.1";
           PORT = toString pocketIdPort;
+          METRICS_ENABLED = true;
+          OTEL_EXPORTER_PROMETHEUS_HOST = "127.0.0.1";
+          OTEL_EXPORTER_PROMETHEUS_PORT = toString metricsPort;
         };
         credentials = {
           ENCRYPTION_KEY = config.sops.secrets.pocket_id_encryption_key.path;

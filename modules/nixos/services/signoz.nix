@@ -609,7 +609,8 @@ in {
                     }
                     {
                       job_name = "pocket-id";
-                      static_configs = [{targets = ["127.0.0.1:${toString config.services.pocket-id-config.port}"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString config.services.pocket-id-config.metricsPort}"];}];
+                      metrics_path = "/metrics";
                     }
                     {
                       job_name = "dnsblockd";
