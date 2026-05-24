@@ -63,12 +63,21 @@ Overlay makes packages available as `pkgs.<name>` but does **not** install them.
 
 ### `_local_deps` Pattern (Private Go Repos)
 
-When a Go repo has private dependencies, use `preparedSrc` to copy deps into `_local_deps/` and inject `replace` directives. The vendor derivation needs `overrideModAttrs` with `go mod tidy`:
+`mkPreparedSource` is centralized in the **`go-nix-helpers`** repo (`git+ssh://git@github.com/LarsArtmann/go-nix-helpers`). All Go repos use it as a `flake = false` input:
+
 ```nix
-buildGoModule {
-  vendorHash = "...";
-  overrideModAttrs = old: { preBuild = ''go mod tidy''; };
-}
+inputs = {
+  go-nix-helpers = {
+    url = "git+ssh://git@github.com/LarsArtmann/go-nix-helpers?ref=master";
+    flake = false;
+  };
+};
+
+# In outputs:
+mkPreparedSource = import (go-nix-helpers + "/mkPreparedSource.nix") {
+  inherit pkgs lib;
+  goPkg = pkgs.go_1_26;
+};
 ```
 
 When upstream deps change, set `vendorHash = ""`, build, and paste the `got:` hash.
