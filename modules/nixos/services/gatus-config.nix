@@ -52,7 +52,13 @@ _: {
             (mkHttpCheck {
               name = "Pocket ID";
               group = "Infrastructure";
-              url = "http://localhost:${toString config.services.pocket-id-config.port}/api/health";
+              url = "http://localhost:${toString config.services.pocket-id-config.port}/healthz";
+              conditions = ["[STATUS] == 204"];
+            })
+            (mkHttpCheck {
+              name = "oauth2-proxy";
+              group = "Infrastructure";
+              url = "http://localhost:${toString config.services.oauth2-proxy-config.port}/ping";
             })
             (mkHttpCheck {
               name = "Forgejo";

@@ -3,11 +3,12 @@ _: {
   flake.nixosModules.oauth2-proxy = {
     config,
     lib,
+    pkgs,
     ...
   }: let
     cfg = config.services.oauth2-proxy-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     proxyPort = cfg.port;
   in {
     options.services.oauth2-proxy-config = {
@@ -47,6 +48,12 @@ _: {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;
         };
+        serviceConfig =
+          harden {}
+          // serviceDefaults {}
+          // {
+            ExecStartPost = "${pkgs.curl}/bin/curl -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
+          };
       };
     };
   };

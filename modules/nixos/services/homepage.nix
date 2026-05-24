@@ -79,7 +79,7 @@ _: {
                 description: Passkey OIDC Provider
                 icon: pocket-id.png
                 statusStyle: dot
-                siteMonitor: ${svcUrl "auth"}/api/health
+                siteMonitor: ${svcUrl "auth"}/healthz
             - Caddy:
                 href: ${svcUrl "dash"}
                 description: Reverse Proxy
