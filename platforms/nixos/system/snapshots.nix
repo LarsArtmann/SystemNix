@@ -1,9 +1,12 @@
 {
+  config,
   pkgs,
   lib,
   ...
 }: let
   inherit (import ../../../lib/default.nix lib) harden onFailure;
+  # Derive root BTRFS device from hardware-configuration.nix (single source of truth)
+  rootDevice = config.fileSystems."/".device;
 in {
   # BTRFS snapshot management
   #
@@ -16,7 +19,7 @@ in {
   # Mount BTRFS toplevel for root device (needed by btrbk for snapshot operations)
   # Uses automount — only mounted when accessed, unmounts after 10min idle
   fileSystems."/mnt/btrfs-root" = {
-    device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
+    device = rootDevice;
     fsType = "btrfs";
     options = ["noatime" "compress=zstd" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
   };
