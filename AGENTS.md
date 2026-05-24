@@ -236,6 +236,7 @@ Run `just` (or `just --list`) for the complete recipe list.
 | `cannot coerce null to a string` | Missing `_module.args.<pkg>` | Add `_module.args.<pkg> = null` to platform config + `pkg ? null` to module |
 | `infinite recursion` | `config` in `options` or import cycle | Check for `config.services.*` in option defaults or circular imports |
 | `attribute 'X' missing` | Overlay not applied or package not installed | Verify overlay is in `sharedOverlays`/`linuxOnlyOverlays`, then add to `base.nix` |
+| Pocket ID / oauth2-proxy startup fail | `pocket-id.yaml` sops file not created yet | Create with `sops platforms/nixos/secrets/pocket-id.yaml` — needs `pocket_id_encryption_key`, `oauth2_proxy_client_secret`, `oauth2_proxy_cookie_secret`, `immich_oauth_client_secret` |
 
 ---
 
