@@ -1,122 +1,86 @@
 {pkgs, ...}: {
-  # BTRFS snapshots with Timeshift
-  # Provides system rollback capability for NixOS
+  # BTRFS snapshot management
+  #
+  # Root (@ subvolume): btrbk — policy-based daily snapshots, auto-pruning
+  # /data:              NOT snapshotted — mounted as BTRFS toplevel (subvolid=5)
+  #                     See `just snapshot-migrate-data` to convert to @data subvolume
+  #
+  # Pre-deploy: `just switch` auto-snapshots root before every deploy
 
-  # Install Timeshift for BTRFS snapshot management
-  environment.systemPackages = with pkgs; [
-    timeshift
-  ];
+  # Mount BTRFS toplevel for root device (needed by btrbk for snapshot operations)
+  # Uses automount — only mounted when accessed, unmounts after 10min idle
+  fileSystems."/mnt/btrfs-root" = {
+    device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
+    fsType = "btrfs";
+    options = ["noatime" "compress=zstd" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
+  };
 
-  # Create Timeshift configuration
-  environment.etc."timeshift/timeshift.json".text = ''
-    {
-      "backup_device_uuid": "0b629b65-a1b7-40df-a7dc-9ea5e0b04959",
-      "parent_device_uuid": "",
-      "do_first_run": true,
-      "btrfs_mode": true,
-      "btrfs_use_qgroup": true,
-      "schedule_monthly": false,
-      "schedule_weekly": false,
-      "schedule_daily": false,
-      "schedule_hourly": false,
-      "schedule_boot": false,
-      "schedule_persist": false,
-      "count_monthly": 2,
-      "count_weekly": 3,
-      "count_daily": 5,
-      "count_hourly": 0,
-      "count_boot": 5,
-      "snapshot_size": "0",
-      "snapshot_size_percentage": "0",
-      "date_format": "%Y-%m-%d %H:%M:%S",
-      "exclude": [
-        "timeshift/snapshots",
-        "home/*/.local/share/Trash",
-        "home/*/.thumbnail",
-        "home/*/.tmp",
-        "home/*/.Trash",
-        "home/*/.nv",
-        "home/*/.cache"
-      ],
-      "exclude-apps": []
-    }
-  '';
-
-  systemd = {
-    timers.timeshift-backup = {
-      description = "Automatic BTRFS snapshots with Timeshift";
-      timerConfig = {
-        OnCalendar = "daily";
-        Persistent = true;
-        RandomizedDelaySec = "30m";
+  # btrbk: policy-based BTRFS snapshots for root (@) subvolume
+  # Snapshots stored as /mnt/btrfs-root/.snapshots/@.YYYYMMDDTHHMMSS
+  services.btrbk.instances."root" = {
+    onCalendar = "daily";
+    snapshotOnly = true;
+    settings = {
+      snapshot_preserve_min = "7d";
+      snapshot_preserve = "14d 4w";
+      volume."/mnt/btrfs-root" = {
+        snapshot_dir = "/mnt/btrfs-root/.snapshots";
+        subvolume."@" = {};
       };
-      wantedBy = ["timers.target"];
-    };
-
-    services.timeshift-backup = {
-      description = "Create BTRFS snapshot with Timeshift";
-      onFailure = ["notify-failure@%n.service"];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = "${pkgs.timeshift}/bin/timeshift --create --scripted";
-      };
-    };
-
-    services.timeshift-verify = {
-      description = "Verify Timeshift snapshot freshness";
-      onFailure = ["notify-failure@%n.service"];
-      path = [pkgs.timeshift pkgs.coreutils pkgs.gawk];
-      serviceConfig = {
-        Type = "oneshot";
-        ExecStart = pkgs.writeShellScript "timeshift-verify" ''
-          set -euo pipefail
-          MAX_AGE_DAYS=3
-
-          SNAPSHOTS=$(${pkgs.timeshift}/bin/timeshift --list --scripted 2>/dev/null || echo "")
-
-          if echo "$SNAPSHOTS" | grep -q "0 snapshots"; then
-            echo "WARNING: No Timeshift snapshots found!"
-            exit 1
-          fi
-
-          LATEST=$(echo "$SNAPSHOTS" | grep -oP '\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}' | tail -1)
-
-          if [ -z "$LATEST" ]; then
-            echo "WARNING: Could not parse latest snapshot date"
-            exit 1
-          fi
-
-          SNAP_EPOCH=$(date -d "''${LATEST//_/-}" +%s 2>/dev/null || date -d "''${LATEST:0:10}" +%s 2>/dev/null || echo 0)
-          NOW_EPOCH=$(date +%s)
-          AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
-
-          if [ "$AGE_DAYS" -gt "$MAX_AGE_DAYS" ]; then
-            echo "WARNING: Latest Timeshift snapshot is $AGE_DAYS days old (threshold: $MAX_AGE_DAYS)"
-            exit 1
-          fi
-
-          echo "OK: Latest Timeshift snapshot is $AGE_DAYS day(s) old"
-        '';
-      };
-    };
-
-    timers.timeshift-verify = {
-      description = "Verify Timeshift snapshot freshness daily";
-      timerConfig = {
-        OnCalendar = "daily";
-        Persistent = true;
-        RandomizedDelaySec = "1h";
-      };
-      wantedBy = ["timers.target"];
     };
   };
 
-  # Enable BTRFS maintenance
-  services.btrfs = {
-    autoScrub = {
-      enable = true;
-      interval = "monthly";
-      fileSystems = ["/" "/data"];
+  # Snapshot freshness verification — alerts if root snapshots are stale
+  systemd.services."btrfs-verify-snapshots" = {
+    description = "Verify BTRFS snapshot freshness";
+    onFailure = ["notify-failure@%n.service"];
+    path = [pkgs.coreutils];
+    serviceConfig.Type = "oneshot";
+    script = ''
+      set -euo pipefail
+      MAX_AGE_DAYS=3
+
+      SNAP_DIR="/mnt/btrfs-root/.snapshots"
+      if [ ! -d "$SNAP_DIR" ]; then
+        echo "WARNING: No snapshots directory ($SNAP_DIR)"
+        exit 1
+      fi
+
+      LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.*' | sort | tail -1)
+      if [ -z "$LATEST" ]; then
+        echo "WARNING: No root snapshots found"
+        exit 1
+      fi
+
+      # Extract date from btrbk naming: @.20260524T120000
+      SNAP_DATE=$(basename "$LATEST" | sed 's/@\.//' | cut -dT -f1)
+      SNAP_EPOCH=$(date -d "$SNAP_DATE" +%s 2>/dev/null || echo 0)
+      NOW_EPOCH=$(date +%s)
+      AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
+
+      if [ "$AGE_DAYS" -gt "$MAX_AGE_DAYS" ]; then
+        echo "WARNING: Root snapshot is $AGE_DAYS days old (threshold: $MAX_AGE_DAYS)"
+        exit 1
+      fi
+
+      echo "OK: Root snapshot is $AGE_DAYS day(s) old"
+    '';
+  };
+
+  systemd.timers."btrfs-verify-snapshots" = {
+    description = "Verify BTRFS snapshot freshness daily";
+    timerConfig = {
+      OnCalendar = "daily";
+      Persistent = true;
+      RandomizedDelaySec = "1h";
     };
+    wantedBy = ["timers.target"];
+  };
+
+  # BTRFS integrity scrub
+  services.btrfs.autoScrub = {
+    enable = true;
+    interval = "monthly";
+    fileSystems = ["/" "/data"];
   };
 }

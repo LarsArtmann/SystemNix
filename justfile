@@ -24,12 +24,14 @@ setup:
     echo "Setup complete. Open a new terminal for shell changes."
 
 # Apply Nix configuration (darwin-rebuild or nh os switch)
+# Auto-snapshots BTRFS on NixOS before switching for rollback safety
 [group('core')]
 switch:
     #!/usr/bin/env bash
     if [[ "{{ os() }}" == "macos" ]]; then
         sudo /run/current-system/sw/bin/darwin-rebuild switch --flake ./ --print-build-logs
     else
+        just snapshot
         nh os switch . -- --print-build-logs
     fi
 
@@ -711,6 +713,127 @@ lint-configure *ARGS="":
 # ═══════════════════════════════════════════════════════════════════
 #  Disk (NixOS — evo-x2)
 # ═══════════════════════════════════════════════════════════════════
+
+# Create pre-deploy BTRFS snapshot of root subvolume
+[group('disk')]
+[linux]
+snapshot:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    TS="$(date +%Y-%m-%dT%H%M%S)"
+    ROOT="/mnt/btrfs-root"
+    SNAP_DIR="$ROOT/.snapshots"
+
+    # Ensure toplevel is mounted (automount should handle this, but be explicit)
+    if ! mountpoint -q "$ROOT" 2>/dev/null; then
+        echo "Mounting $ROOT..."
+        sudo mount "$ROOT" 2>/dev/null || { echo "WARNING: Cannot mount $ROOT — skipping snapshot"; exit 0; }
+    fi
+
+    sudo mkdir -p "$SNAP_DIR"
+    sudo btrfs subvolume snapshot -r "$ROOT/@" "$SNAP_DIR/@.pre-deploy-$TS"
+    echo "Pre-deploy snapshot: $SNAP_DIR/@.pre-deploy-$TS"
+
+# List BTRFS snapshots
+[group('disk')]
+[linux]
+snapshot-list:
+    #!/usr/bin/env bash
+    SNAP_DIR="/mnt/btrfs-root/.snapshots"
+    if [ ! -d "$SNAP_DIR" ]; then
+        echo "No snapshots directory. Run 'just switch' to create first snapshot."
+        exit 0
+    fi
+    COUNT=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d | wc -l)
+    echo "=== Root snapshots ($COUNT) ==="
+    find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.*' | sort | while read -r snap; do
+        basename "$snap"
+    done
+
+# One-time migration: convert /data from BTRFS toplevel to @data subvolume
+# Required before /data can be snapshotted. Stops Docker first.
+# After running: update hardware-configuration.nix to add subvol=@data, then just switch
+[group('disk')]
+[linux]
+snapshot-migrate-data:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    DATA_UUID="046ea663-da55-48b7-b516-0dcdb87ba710"
+    MNT="/mnt/btrfs-data-migrate"
+
+    echo "=== /data BTRFS Migration ==="
+    echo "This converts /data from toplevel (subvolid=5) to @data subvolume."
+    echo "Docker and all services using /data will be stopped."
+    echo ""
+    read -rp "Continue? [y/N] " CONFIRM
+    [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]] && echo "Aborted." && exit 0
+
+    # Check /data is BTRFS and mounted as toplevel
+    if ! mountpoint -q /data 2>/dev/null; then
+        echo "ERROR: /data is not mounted"
+        exit 1
+    fi
+
+    # Stop services that use /data
+    echo "Stopping Docker..."
+    sudo systemctl stop docker.service docker.socket 2>/dev/null || true
+    echo "Stopping services using /data..."
+    sudo systemctl stop 'btrfs-snapshot-data.service' 2>/dev/null || true
+
+    # Mount toplevel
+    echo "Mounting toplevel at $MNT..."
+    sudo mkdir -p "$MNT"
+    sudo mount -t btrfs -o compress=zstd:3,ssd,discard=async "UUID=$DATA_UUID" "$MNT"
+
+    # Check if @data already exists
+    if sudo btrfs subvolume show "$MNT/@data" &>/dev/null; then
+        echo "ERROR: @data subvolume already exists. Migration may have been done already."
+        sudo umount "$MNT"
+        exit 1
+    fi
+
+    # Create @data subvolume
+    echo "Creating @data subvolume..."
+    sudo btrfs subvolume create "$MNT/@data"
+
+    # Move content (everything except @data and subvolumes)
+    echo "Moving content into @data (this may take a while)..."
+    for item in "$MNT"/*; do
+        name=$(basename "$item")
+        [[ "$name" == "@data" ]] && continue
+        [[ "$name" == ".snapshots" ]] && continue
+        echo "  moving: $name"
+        sudo mv "$item" "$MNT/@data/"
+    done
+    # Handle hidden files/dirs
+    for item in "$MNT"/.*; do
+        name=$(basename "$item")
+        [[ "$name" == "." || "$name" == ".." ]] && continue
+        [[ "$name" == "@data" ]] && continue
+        echo "  moving: $name"
+        sudo mv "$item" "$MNT/@data/"
+    done
+
+    # Verify
+    echo ""
+    echo "Verification:"
+    echo "  @data subvolume:"
+    sudo btrfs subvolume show "$MNT/@data" | head -3
+    echo "  Contents:"
+    ls "$MNT/@data/" | head -20
+
+    # Unmount
+    sudo umount "$MNT"
+    sudo rmdir "$MNT"
+
+    echo ""
+    echo "=== Migration complete ==="
+    echo "Next steps:"
+    echo "  1. Edit platforms/nixos/hardware/hardware-configuration.nix"
+    echo "     Add 'subvol=@data' to /data mount options"
+    echo "  2. Run 'just switch' to apply"
+    echo "  3. Verify: mount | grep /data"
+    echo "  4. Optionally add /data to btrbk in snapshots.nix"
 
 # Disk monitor status, filesystem usage, and alert state
 [group('disk')]

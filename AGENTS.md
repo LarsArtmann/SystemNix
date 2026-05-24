@@ -148,14 +148,35 @@ inherit (import ../../../lib/default.nix lib)
 
 ALL vhosts are defined in `modules/nixos/services/caddy.nix`. No other module should define `services.caddy.virtualHosts`.
 
-Use `protectedVHost "subdomain" port` for services that need Authelia forward-auth (most services). Use inline config only for public endpoints.
+Use `protectedVHost "subdomain" port` for services that need forward-auth via oauth2-proxy + Pocket ID (most services). Use inline config only for public endpoints.
 
 ### WatchdogSec Rules
 
 **Only set `WatchdogSec` on services that send periodic `WATCHDOG=1` via `sd_notify()`.**
 
 - **Type=notify but NO watchdog keepalives** (do NOT use): Forgejo, Caddy
-- **Never use on**: Python (Hermes, ComfyUI), Node.js (Homepage), Go without sd_notify (SigNoz, Authelia), Rust without sd_notify (TaskChampion)
+- **Never use on**: Python (Hermes, ComfyUI), Node.js (Homepage), Go without sd_notify (SigNoz), Rust without sd_notify (TaskChampion)
+
+### BTRFS Snapshots (evo-x2)
+
+Managed via `platforms/nixos/system/snapshots.nix`:
+
+- **Root (`@` subvolume):** `services.btrbk` — daily snapshots, auto-pruning (14d + 4w)
+- **`/data`:** NOT snapshotted — mounted as BTRFS toplevel (subvolid=5, no `subvol=`). `btrfs subvolume snapshot` cannot snapshot the toplevel.
+- **Pre-deploy:** `just switch` auto-calls `just snapshot` (root only)
+- **Toplevel mount:** `/mnt/btrfs-root` — automounts on access, idle 10min. Needed by btrbk.
+- **Verify:** Daily timer `btrfs-verify-snapshots` alerts if root snapshots >3 days stale.
+
+**To enable /data snapshots:** Run `just snapshot-migrate-data` to convert /data from toplevel to `@data` subvolume. Then add btrbk instance for /data.
+
+**Rollback procedure:**
+```bash
+sudo mount /dev/disk/by-uuid/0b629b65-... /mnt/btrfs-root
+cd /mnt/btrfs-root
+mv @ @.broken
+btrfs subvolume snapshot .snapshots/@.<timestamp> @
+reboot
+```
 
 ---
 
@@ -189,6 +210,7 @@ Use `protectedVHost "subdomain" port` for services that need Authelia forward-au
 | `serviceModules` single source | Listed once in `flake.nix`; both imports + nixosConfigs derive from it |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
 | SigNoz build time | Built from source (Go 1.25); takes significant time |
+| `/data` BTRFS toplevel | Mounted without `subvol=` (subvolid=5) — cannot be snapshotted. Run `just snapshot-migrate-data` to convert to `@data` |
 
 ---
 
@@ -198,7 +220,7 @@ Use `protectedVHost "subdomain" port` for services that need Authelia forward-au
 just test-fast          # Syntax-only validation (fast)
 just test               # Full build validation (slow)
 just format             # treefmt + alejandra
-just switch             # Apply config (auto-detects platform)
+just switch             # Apply config (auto-snapshots BTRFS on NixOS, auto-detects platform)
 just update             # Update flake inputs
 ```
 
