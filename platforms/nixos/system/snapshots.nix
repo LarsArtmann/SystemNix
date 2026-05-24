@@ -1,4 +1,10 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  lib,
+  ...
+}: let
+  inherit (import ../../../lib/default.nix lib) harden onFailure;
+in {
   # BTRFS snapshot management
   #
   # Root (@ subvolume): btrbk — policy-based daily snapshots, auto-pruning
@@ -33,9 +39,15 @@
   # Snapshot freshness verification — alerts if root snapshots are stale
   systemd.services."btrfs-verify-snapshots" = {
     description = "Verify BTRFS snapshot freshness";
-    onFailure = ["notify-failure@%n.service"];
+    inherit onFailure;
     path = [pkgs.coreutils];
-    serviceConfig.Type = "oneshot";
+    serviceConfig =
+      harden {}
+      // {
+        Type = "oneshot";
+        ProtectSystem = "true";
+        ReadWritePaths = [];
+      };
     script = ''
       set -euo pipefail
       MAX_AGE_DAYS=3
