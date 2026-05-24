@@ -164,9 +164,9 @@ mr-sync (3 deps)
 - ⚠️ Go sub-module tags must be published manually
 - ⚠️ Transitive go.sum entries must be manually verified
 
-## Future: mkPreparedSource Helper
+## Completed: mkPreparedSource Helper
 
-The pattern is being extracted into `lib/default.nix` as `mkPreparedSource` to eliminate copy-paste errors across repos. See `lib/prepared-source.nix`.
+The pattern has been extracted into the shared [`go-nix-helpers`](https://github.com/LarsArtmann/go-nix-helpers) repo, consumed as a `flake = false` input by all Go repos. This eliminates copy-paste drift across 7+ repos. See `AGENTS.md: _local_deps` section for current usage.
 
 ## References
 
