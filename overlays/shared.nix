@@ -89,12 +89,12 @@ in [
   (mkPackageOverlay library-policy "library-policy" {})
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-Q9i+2iW0reClN+R9VUHYWoLMPoyGUXDXy4SeWkxKq20=";})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
-  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-K/dPpkbgJQOctBxphuqndErswaNA7puubhT21JJ5Y0A=";})
+  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-T2IVldw0f2N1fXd1V0ncKA938n3WRVvyrariGfBKa28=";})
   (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-Jsi00lElQE9bu2EOuAwIdZFT5V7vCzxzARQSP5xV95I=";})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-BfHABJAHErFY8slMYjeYPPRzs9LGnVy+HOjBLI50hMk=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-nfbz9ZOvyCtDP8n2PfftsLsWiPcFTU46cjulUre0XfI=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
-  (mkPackageOverlay projects-management-automation "projects-management-automation" {vendorHash = "sha256-wiGmT6ibqaR1afYday12whPQXU1hTwbndA8nPpMCER0=";})
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   d2DarwinOverlay
 ]
