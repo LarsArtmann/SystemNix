@@ -17,7 +17,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
 | **Monitoring** | ActivityWatch, Netdata, service health checks |
 | **Networking** | Caddy reverse proxy (TLS), Unbound DNS with 2.5M+ blocked domains, DNSSEC |
-| **Storage** | BTRFS with Timeshift snapshots, ZRAM swap, weekly scrub |
+| **Storage** | BTRFS with btrbk snapshots (daily + pre-deploy), ZRAM swap, monthly scrub |
 
 ## Quick Start
 
@@ -120,7 +120,7 @@ All services are defined as flake-parts modules and reverse-proxied through Cadd
 | **GPU** | AMD integrated (amdgpu), Mesa latest, ROCm compute stack |
 | **NPU** | AMD XDNA via nix-amd-npu, XRT runtime |
 | **Memory** | 128GB unified, ZRAM swap (32GB), tuned for AI/ML workloads |
-| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), Timeshift snapshots |
+| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily + pre-deploy) |
 | **Boot** | systemd-boot (50 generations), latest Linux kernel |
 | **Network** | Realtek 2.5G Ethernet, MediaTek WiFi |
 

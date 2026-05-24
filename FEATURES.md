@@ -205,7 +205,7 @@ _A brutally honest audit of every feature the project actually has._
 | BTRFS root (`/`) | ✅ | zstd compression, noatime |
 | BTRFS data (`/data`) | ✅ | zstd:3 compression, SSD optimizations, async discard, space_cache=v2 — Docker lives here |
 | FAT32 boot (`/boot`) | ✅ | Restrictive masks (fmask=0077, dmask=0077) |
-| BTRFS snapshots | ✅ | Timeshift: daily snapshots, 5 boot / 5 daily / 3 weekly / 2 monthly retention, monthly scrub |
+| BTRFS snapshots | ✅ | btrbk: daily snapshots of root (@), 14d + 4w retention, pre-deploy snapshots via `just switch`, monthly scrub |
 | ZRAM swap | ✅ | 50% of RAM (64GB compressed) |
 | AMD virtualization | ✅ | KVM-AMD + AMD microcode updates |
 
