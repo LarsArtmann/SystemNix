@@ -462,8 +462,7 @@ in {
                   extract() {
                     local key="$1"
                     local val
-                    val=$(echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+") || true
-                    echo "''${val:-0}"
+                    val=$(echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+") && echo "$val" || echo "0"
                   }
 
                   TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
