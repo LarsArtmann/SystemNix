@@ -70,13 +70,6 @@
     tmp.useTmpfs = true;
   };
 
-  # IO scheduler: bfq for responsive desktop under heavy disk pressure.
-  # Falls back to mq-deadline if bfq module fails to load.
-  services.udev.extraRules = ''
-    ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
-    ACTION=="add|change", KERNEL=="sd[a-z]*|vd[a-z]*|dm-[0-9]*", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
-  '';
-
   # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
   boot.extraModprobeConfig = ''
     options amdgpu gttsize=114688
