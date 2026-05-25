@@ -223,7 +223,7 @@ reboot
 | Docker services target | All Docker/container services use `multi-user.target` (NOT `graphical.target`) — desktop must not wait for containers |
 | sops GPG key import | `gnupg.sshKeyPaths = []` set to prevent RSA key GPG import causing 2min+ initrd hang |
 | GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices causing errors |
-| OOM crash chain | Helium (Electron) not in earlyoom `--prefer` → spawned 42 processes → OOM killed journald → cascade crash. `helium`+`electron` now in prefer list; `MemoryHigh` added to `harden` |
+| OOM crash chain | Helium (Electron) escaped cgroup limits → spawned 42 processes → OOM killed journald → cascade crash. Now mitigated by: `MemoryHigh` in `harden`, per-service `MemoryMax`, `systemd-oomd` PSI monitoring (replaces earlyoom) |
 | Jan llama-server respawn | Jan AI spawns new `llama-server` every 1-3 min (each ~1.2GB). Not a systemd service — no cgroup limits. Monitor total impact on RAM |
 | Pocket ID bootstrap | Staged deployment: deploy with Pocket ID only → visit `https://auth.home.lan/setup` → create admin passkey → create OIDC clients → update sops secrets → deploy with oauth2-proxy. See `just auth-bootstrap` |
 | Caddy `handle_path` | `handle_path /prefix/*` STRIPS the prefix before proxying. Use `handle` (not `handle_path`) when the backend expects the full path (e.g., oauth2-proxy expects `/oauth2/callback`) |
