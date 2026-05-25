@@ -61,31 +61,34 @@ _: {
           metrics
         '';
 
-        virtualHosts = {
-          "auth.${domain}" = {
-            extraConfig = ''
-              ${tlsConfig}
-              handle_path /oauth2/* {
-                reverse_proxy localhost:${toString proxyPort}
-              }
-              handle {
-                reverse_proxy localhost:${toString authPort}
-              }
-            '';
-          };
+        virtualHosts =
+          {
+            "auth.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                handle_path /oauth2/* {
+                  reverse_proxy localhost:${toString proxyPort}
+                }
+                handle {
+                  reverse_proxy localhost:${toString authPort}
+                }
+              '';
+            };
 
-          "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
-          "forgejo.${domain}" = protectedVHost "forgejo" config.services.forgejo.settings.server.HTTP_PORT;
-          "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-          "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
-          "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
-          "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
-          "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
-          "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
-          "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
-          "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
-          "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
-        };
+            "immich.${domain}" = protectedVHost "immich" config.services.immich.port;
+            "forgejo.${domain}" = protectedVHost "forgejo" config.services.forgejo.settings.server.HTTP_PORT;
+            "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
+            "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
+            "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
+            "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
+            "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
+            "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
+            "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
+          }
+          // lib.optionalAttrs config.services.voice-agents.enable {
+            "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
+            "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
+          };
       };
 
       networking.firewall.allowedTCPPorts = [80 443];
