@@ -1,6 +1,7 @@
 {lib}: {
   mode ? "system",
   MemoryMax ? "512M",
+  MemoryHigh ? "80%", # Throttle at 80% of MemoryMax before hard kill
   ProtectSystem ? "full",
   ProtectHome ? true,
   ReadWritePaths ? [],
@@ -21,6 +22,7 @@
     RestrictSUIDSGID = lib.mkDefault true;
     LockPersonality = lib.mkDefault true;
     MemoryMax = mkDefault' MemoryMax;
+    MemoryHigh = mkDefault' MemoryHigh;
     RestrictNamespaces = mkDefault' RestrictNamespaces;
     NoNewPrivileges = mkDefault' NoNewPrivileges;
   };

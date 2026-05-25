@@ -220,6 +220,11 @@ reboot
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
 | SigNoz build time | Built from source (Go 1.25); takes significant time |
 | `/data` BTRFS toplevel | Mounted without `subvol=` (subvolid=5) — cannot be snapshotted. Run `just snapshot-migrate-data` to convert to `@data` |
+| Docker services target | All Docker/container services use `multi-user.target` (NOT `graphical.target`) — desktop must not wait for containers |
+| sops GPG key import | `gnupg.sshKeyPaths = []` set to prevent RSA key GPG import causing 2min+ initrd hang |
+| GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices causing errors |
+| OOM crash chain | Helium (Electron) not in earlyoom `--prefer` → spawned 42 processes → OOM killed journald → cascade crash. `helium`+`electron` now in prefer list; `MemoryHigh` added to `harden` |
+| Jan llama-server respawn | Jan AI spawns new `llama-server` every 1-3 min (each ~1.2GB). Not a systemd service — no cgroup limits. Monitor total impact on RAM |
 
 ---
 
