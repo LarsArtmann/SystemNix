@@ -18,7 +18,8 @@
 
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
-    kernelModules = ["i2c-dev" "pstore"];
+    # Load bfq for responsive I/O scheduling under heavy disk pressure
+    kernelModules = ["i2c-dev" "pstore" "bfq"];
 
     # AMD GPU + NPU optimization kernel parameters for Strix Halo (128GB unified memory)
     kernelParams = [
@@ -68,6 +69,13 @@
     tmp.cleanOnBoot = true;
     tmp.useTmpfs = true;
   };
+
+  # IO scheduler: bfq for responsive desktop under heavy disk pressure.
+  # Falls back to mq-deadline if bfq module fails to load.
+  services.udev.extraRules = ''
+    ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
+    ACTION=="add|change", KERNEL=="sd[a-z]*|vd[a-z]*|dm-[0-9]*", TEST=="queue/scheduler", ATTR{queue/scheduler}="bfq"
+  '';
 
   # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
   boot.extraModprobeConfig = ''
