@@ -66,7 +66,7 @@ _: {
             "auth.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
-                handle_path /oauth2/* {
+                handle /oauth2/* {
                   reverse_proxy localhost:${toString proxyPort}
                 }
                 handle {

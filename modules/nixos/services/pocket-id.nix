@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.pocket-id-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     pocketIdPort = cfg.port;
     metricsPort = cfg.metricsPort;
   in {
@@ -44,6 +44,7 @@ _: {
         };
         serviceConfig =
           serviceDefaults {}
+          // harden {MemoryMax = "512M";}
           // {
             ExecStartPost = "${pkgs.curl}/bin/curl -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
           };

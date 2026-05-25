@@ -95,7 +95,7 @@
     "kernel.watchdog_thresh" = 20; # Soft lockup detection threshold in seconds (default: 10, raised to avoid GPU compute false positives)
     "kernel.hung_task_panic" = 1; # Panic when a task is stuck in D state for too long
     "kernel.hung_task_timeout_secs" = 120; # Hung task timeout (default: 120 = 2 min)
-    "vm.panic_on_oom" = 0; # Don't panic on OOM — let OOM killer do its job (earlyoom handles this)
+    "vm.panic_on_oom" = 0; # Don't panic on OOM — let cgroup limits + systemd-oomd handle it
   };
 
   # Raise per-user process limit — default 4096 is too low for desktop + AI workloads
@@ -144,6 +144,21 @@
       MaxUse = "1G";
       KeepFree = "5G";
     };
+
+    # ── OOM protection: systemd-oomd (replaces earlyoom) ──────────────────
+    # PSI-based monitoring measures actual memory pressure (process stalling)
+    # rather than free RAM thresholds — critical on unified memory where GTT
+    # allocations hide from MemAvailable.
+    # Defense layers:
+    #   1. Per-service MemoryMax cgroup limits (instant kill via harden {})
+    #   2. systemd-oomd PSI monitoring (kills under sustained pressure, per-slice)
+    #   3. watchdogd hard reboot (system completely unresponsive)
+    oomd = {
+      enable = true;
+      enableRootSlice = true;
+      enableSystemSlice = true;
+      enableUserSlices = true;
+    };
   };
 
   # Hardware watchdog — last resort: hard-reboots the system if it becomes completely unresponsive.
@@ -165,19 +180,6 @@
     };
 
     systembus-notify.enable = lib.mkForce true;
-
-    earlyoom = {
-      enable = true;
-      freeMemThreshold = 10; # Kill when free RAM drops below 10% (~12.8GB)
-      freeSwapThreshold = 10; # Kill when free swap drops below 10%
-      enableNotifications = true; # Desktop notification before killing
-      extraArgs = [
-        "--avoid"
-        "^(systemd|sshd|dbus-broker|systemd-logind|systemd-udevd|systemd-journald|niri|waybar|kitty|fish|pipewire|pipewire-pulse|wireplumber|swayidle|dunst)$" # Never kill these
-        "--prefer"
-        "^(gopls|ollama|llama-server|python3|python|node|java|chrome|chromium|helium|electron|vtsls|tsserver|rust-analyzer|generate_happy_girl|cargo|clang|go)$" # Kill these first
-      ];
-    };
 
     # ── Resilience: journald size limits ──────────────────────────────────
     # Without limits, AI services (Ollama, ComfyUI, Hermes) can fill /var/log

@@ -225,6 +225,8 @@ reboot
 | GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices causing errors |
 | OOM crash chain | Helium (Electron) not in earlyoom `--prefer` → spawned 42 processes → OOM killed journald → cascade crash. `helium`+`electron` now in prefer list; `MemoryHigh` added to `harden` |
 | Jan llama-server respawn | Jan AI spawns new `llama-server` every 1-3 min (each ~1.2GB). Not a systemd service — no cgroup limits. Monitor total impact on RAM |
+| Pocket ID bootstrap | Staged deployment: deploy with Pocket ID only → visit `https://auth.home.lan/setup` → create admin passkey → create OIDC clients → update sops secrets → deploy with oauth2-proxy. See `just auth-bootstrap` |
+| Caddy `handle_path` | `handle_path /prefix/*` STRIPS the prefix before proxying. Use `handle` (not `handle_path`) when the backend expects the full path (e.g., oauth2-proxy expects `/oauth2/callback`) |
 
 ---
 
@@ -244,6 +246,8 @@ Run `just` (or `just --list`) for the complete recipe list.
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
+| oauth2-proxy fails to start | Placeholder sops secrets in `pocket-id.yaml` | Run `just auth-bootstrap` — Pocket ID admin must be configured first |
+| Pocket ID unreachable from oauth2-proxy | DNS for `auth.home.lan` not resolving | Ensure Unbound/Caddy handles `auth.home.lan` on localhost |
 | `hash mismatch in fixed-output derivation` | Stale `vendorHash` / `npmDepsHash` | Set to `""`, build, paste `got:` hash |
 | Go vendor fail after dep update | Missing transitive dep in `go.sum` | Ensure all transitive deps from `_local_deps` are in `go.mod`/`go.sum` |
 | `errno=28` (Darwin) | Disk full | `rm -rf ~/Library/Caches/*`, `nix-collect-garbage --delete-older-than 1d` |

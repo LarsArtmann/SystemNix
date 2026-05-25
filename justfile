@@ -470,6 +470,98 @@ forgejo-update-token:
     forgejo-update-github-token
 
 # ═══════════════════════════════════════════════════════════════════
+#  Auth (Pocket ID + oauth2-proxy bootstrap)
+# ═══════════════════════════════════════════════════════════════════
+
+# Bootstrap Pocket ID admin account and OIDC clients (first-time setup)
+# Run this ON evo-x2 after deploying with Pocket ID enabled for the first time
+[group('services')]
+[linux]
+auth-bootstrap:
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    DOMAIN="home.lan"
+    AUTH_URL="https://auth.${DOMAIN}"
+
+    echo "=== Pocket ID + oauth2-proxy Bootstrap ==="
+    echo ""
+
+    # Step 1: Check Pocket ID is running
+    if ! systemctl is-active --quiet pocket-id.service 2>/dev/null; then
+        echo "ERROR: pocket-id.service is not running."
+        echo "       Run 'just switch' first, then retry."
+        exit 1
+    fi
+
+    # Step 2: Check if admin has been set up
+    echo "Step 1: Opening Pocket ID setup page in browser..."
+    echo "        If this is the first time, you will be prompted to create an admin passkey."
+    echo "        URL: ${AUTH_URL}/setup"
+    echo ""
+
+    # Step 3: Generate cookie secret
+    COOKIE_SECRET="$(openssl rand -base64 32)"
+    echo "Step 2: Generated oauth2-proxy cookie secret."
+    echo ""
+
+    # Step 4: Instructions for creating OIDC clients
+    echo "Step 3: Create OIDC clients in Pocket ID admin UI:"
+    echo ""
+    echo "  a) oauth2-proxy client:"
+    echo "     - Name: oauth2-proxy"
+    echo "     - Callback URL: ${AUTH_URL}/oauth2/callback"
+    echo "     - Logout URL: (leave empty)"
+    echo "     → Copy the Client Secret"
+    echo ""
+    echo "  b) Immich client (optional):"
+    echo "     - Name: immich"
+    echo "     - Callback URL: https://immich.${DOMAIN}/api/auth/callback"
+    echo "     - Logout URL: (leave empty)"
+    echo "     → Copy the Client Secret"
+    echo ""
+
+    # Step 5: Prompt for secrets and update sops
+    echo "Step 4: Update sops secrets with real values."
+    echo "        Run the following commands (requires age key on evo-x2):"
+    echo ""
+    echo "  sops platforms/nixos/secrets/pocket-id.yaml"
+    echo ""
+    echo "  Set these values:"
+    echo "    oauth2_proxy_client_secret: <from Pocket ID step 3a>"
+    echo "    oauth2_proxy_cookie_secret: ${COOKIE_SECRET}"
+    echo "    immich_oauth_client_secret: <from Pocket ID step 3b, or keep placeholder>"
+    echo ""
+    echo "Step 5: Deploy updated secrets:"
+    echo "  just switch"
+    echo ""
+    echo "After deploy, oauth2-proxy should start successfully."
+    echo "Test by visiting any protected service from an external network."
+
+[group('services')]
+[linux]
+auth-status:
+    #!/usr/bin/env bash
+    echo "=== Auth Services Status ==="
+    echo ""
+    echo "--- Pocket ID ---"
+    systemctl is-active pocket-id.service 2>/dev/null && echo "  Status: active" || echo "  Status: INACTIVE"
+    curl -sf --max-time 2 http://127.0.0.1:1411/healthz 2>/dev/null && echo "  Health: OK" || echo "  Health: FAIL"
+    echo ""
+    echo "--- oauth2-proxy ---"
+    systemctl is-active oauth2-proxy.service 2>/dev/null && echo "  Status: active" || echo "  Status: INACTIVE"
+    curl -sf --max-time 2 http://127.0.0.1:4180/ping 2>/dev/null && echo "  Health: OK" || echo "  Health: FAIL"
+    echo ""
+    echo "--- Secrets ---"
+    for secret in pocket_id_encryption_key oauth2_proxy_client_secret oauth2_proxy_cookie_secret immich_oauth_client_secret; do
+        if [ -f "/run/secrets.d/1/${secret}" ] || [ -f "/run/secrets/${secret}" ]; then
+            echo "  ${secret}: exists"
+        else
+            echo "  ${secret}: MISSING"
+        fi
+    done
+
+# ═══════════════════════════════════════════════════════════════════
 #  Desktop (NixOS — evo-x2)
 # ═══════════════════════════════════════════════════════════════════
 
