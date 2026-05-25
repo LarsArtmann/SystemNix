@@ -191,7 +191,7 @@
 
       # Voice agents (LiveKit + Whisper ASR)
       voice-agents = {
-        enable = true;
+        enable = false;
       };
 
       # Hermes AI Agent Gateway (Discord, cron jobs, messaging)

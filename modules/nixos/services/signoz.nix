@@ -251,7 +251,7 @@ in {
           after = lib.optional cfg.components.clickhouse "clickhouse.service";
           requires = lib.optional cfg.components.clickhouse "clickhouse.service";
           inherit onFailure;
-          wantedBy = ["graphical.target"];
+          wantedBy = ["multi-user.target"];
           serviceConfig =
             {
               Type = "simple";
@@ -461,7 +461,9 @@ in {
 
                   extract() {
                     local key="$1"
-                    echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+"
+                    local val
+                    val=$(echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+") || true
+                    echo "''${val:-0}"
                   }
 
                   TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
@@ -535,7 +537,7 @@ in {
       (lib.mkIf cfg.components.cadvisor {
         systemd.services.cadvisor = {
           description = "cAdvisor — container metrics";
-          wantedBy = ["graphical.target"];
+          wantedBy = ["multi-user.target"];
           after = ["docker.service"];
           requires = ["docker.service"];
           serviceConfig =
@@ -555,7 +557,7 @@ in {
           inherit onFailure;
           after = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wants = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
-          wantedBy = ["graphical.target"];
+          wantedBy = ["multi-user.target"];
           preStart = ''
             ${packages.otelCollector}/bin/signoz-otel-collector migrate bootstrap \
               --clickhouse-dsn "${cfg.settings.clickhouse.url}" \

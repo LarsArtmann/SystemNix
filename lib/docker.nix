@@ -46,7 +46,7 @@
           wants =
             wants
             ++ lib.optional (imagePull != null) "${name}-pull.service";
-          wantedBy = ["graphical.target"];
+          wantedBy = ["multi-user.target"];
           onFailure = ["notify-failure@%n.service"];
           path = [pkgs.docker pkgs.docker-compose];
 

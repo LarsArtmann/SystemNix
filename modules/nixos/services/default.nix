@@ -25,8 +25,8 @@ _: {
         };
       };
 
-      # Move docker daemon to graphical.target alongside container services
-      systemd.services.docker.wantedBy = lib.mkForce ["graphical.target"];
+      # Docker should start early at multi-user.target, not block graphical.target
+      systemd.services.docker.wantedBy = lib.mkForce ["multi-user.target"];
 
       # nix.gc is defined in platforms/common/nix-settings.nix (shared)
     };

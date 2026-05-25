@@ -33,7 +33,7 @@
     SUBSYSTEM=="drm", KERNEL=="card[0-9]*", GROUP="render", MODE="0660"
     SUBSYSTEM=="drm", KERNEL=="renderD[0-9]*", GROUP="render", MODE="0660"
     # Force GPU to high performance DPM state (fixes 10-15% perf loss from power saving)
-    SUBSYSTEM=="drm", KERNEL=="card*", ATTR{device/power_dpm_force_performance_level}="high"
+    SUBSYSTEM=="drm", KERNEL=="card[0-9]", ATTR{device/power_dpm_force_performance_level}="high"
   '';
 
   # Add essential system packages for AMD GPU monitoring and control

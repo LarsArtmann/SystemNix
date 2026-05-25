@@ -192,7 +192,7 @@
 
       systemd.services.hermes = {
         description = "Hermes Agent Gateway - Messaging Platform Integration";
-        wantedBy = ["graphical.target"];
+        wantedBy = ["multi-user.target"];
         after = ["network-online.target" "sops-nix.service" "unbound.service"];
         wants = ["network-online.target" "sops-nix.service" "unbound.service"];
         inherit onFailure;
