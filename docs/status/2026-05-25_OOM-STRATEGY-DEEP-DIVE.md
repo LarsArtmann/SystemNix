@@ -78,17 +78,23 @@ earlyoom reads `MemAvailable` from `/proc/meminfo`. On unified memory systems:
 
 This means earlyoom's `freeMemThreshold = 10%` (~12.8 GB) is calculated against a **fictional** MemAvailable that doesn't account for GPU allocations.
 
-### 2b. AND Logic With Swap Is Counterproductive
+### 2b. AND Logic With Swap Delays Response Under Normal Pressure
 
-earlyoom requires **both** `MemAvailable < threshold` AND `SwapFree < threshold`. Your config:
+The `lowmem_sig()` function in earlyoom's `main.c` uses `&&` (confirmed from source):
+```c
+if (m->MemAvailablePercent <= args->mem_kill_percent && m->SwapFreePercent <= args->swap_kill_percent)
+    return SIGKILL;
+```
+
+Your config:
 - `freeMemThreshold = 10` — kill when <12.8 GB free
 - `freeSwapThreshold = 10` — kill when <1.28 GB swap free (ZRAM is 12.8 GB)
 
-With `vm.swappiness = 1`, the kernel barely uses swap. So swap stays at ~90% free, meaning **the swap condition is almost never met**, and earlyoom almost never triggers — even when RAM is critically low.
+With `vm.swappiness = 1`, the kernel aggressively avoids swapping under normal-to-moderate pressure. Swap stays ~90% free. The AND condition is not met.
 
-Wait — actually this is worse. earlyoom requires BOTH to be below threshold. If swap is mostly free (which it is with swappiness=1), then earlyoom **will never kill anything** even when RAM is at 2% free.
+**However:** Under **extreme** pressure, the kernel will eventually start swapping to ZRAM. ZRAM's 12.8 GB pool is small and fills quickly. Once SwapFree drops below 10%, both conditions are met and earlyoom fires.
 
-**UPDATE:** Re-reading earlyoom docs more carefully — the AND logic means it acts when **both** conditions are true. With swappiness=1, swap stays free, so the swap condition is met (free > threshold). This means earlyoom acts based primarily on the memory condition. Actually no — both must be BELOW threshold. If swap is 90% free, SwapFreePercent is 90, which is NOT below 10. So **earlyoom is effectively disabled** because swap never drops below 10%.
+**The real problem is timing:** by the time both conditions are met, the system is already thrashing. earlyoom fires "correctly" but too late — the desktop is frozen, the wrong process may be killed, and recovery is ugly. This is not "earlyoom is disabled" — it's "earlyoom's response is delayed until the situation is already critical."
 
 ### 2c. Process Selection Is Regex-Based, Not Context-Aware
 
@@ -152,16 +158,16 @@ This is your strongest protection. When a service hits its `MemoryMax`, the **ke
 
 **GAP: The combined MemoryMax of just ollama (32G) + hermes (24G) = 56 GB. That's 44% of total RAM. If both hit their limits simultaneously, systemd kills them both — but their combined steady-state usage can still crowd out the desktop.**
 
-### Layer 2: earlyoom — **CURRENTLY EFFECTIVELY DISABLED**
+### Layer 2: earlyoom — **DELAYED RESPONSE, NOT DISABLED**
 
-Due to the AND-logic swap threshold issue (see §2b), earlyoom likely **never triggers** on this system. ZRAM swap stays mostly free (swappiness=1), so `SwapFreePercent` never drops below 10%.
+Due to the AND-logic swap threshold (source: `lowmem_sig()` in `main.c`), earlyoom does not trigger until **both** MemAvailable and SwapFree are below their thresholds. With `swappiness = 1`, swap fills late — only under extreme pressure. earlyoom would eventually fire in a true crisis, but by then the system is already thrashing. It is not "effectively disabled" — it's "responds too late to be useful." Combined with being blind to GPU/GTT allocations, the response is both delayed and based on incomplete information.
 
 ### Layer 3: ZRAM — **12.8 GB Compressed Emergency Buffer**
 
 - `memoryPercent = 10` → ~12.8 GB virtual swap device
 - Compressed at ~2:1 ratio → effective ~25 GB emergency headroom
 - `swappiness = 1` → kernel avoids using it until dire need
-- **Problem:** If earlyoom never triggers (see above), this buffer fills silently and then the kernel OOM killer fires — the slow path
+- **Problem:** earlyoom's delayed response means this buffer may fill silently before any action is taken, then the kernel OOM killer fires — the slow path
 
 ### Layer 4: watchdogd — **Last Resort: Hard Reboot**
 

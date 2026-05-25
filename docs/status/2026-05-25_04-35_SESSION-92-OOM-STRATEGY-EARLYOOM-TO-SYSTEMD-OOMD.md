@@ -13,7 +13,7 @@
 This session performed **deep research** into why OOM protection on evo-x2 has been unreliable, produced a comprehensive analysis document, and verified that the systemd-oomd migration (already committed in `059765b6`) is correct and builds cleanly.
 
 Key findings:
-1. **earlyoom was effectively disabled** — its AND-logic swap threshold (`freeSwapThreshold = 10`) never triggered because ZRAM swap stays ~90% free with `swappiness = 1`
+1. **earlyoom was slow to respond on this system** — its AND-logic swap threshold (`freeSwapThreshold = 10`) combined with `swappiness = 1` meant the system had to be in extreme distress before earlyoom would fire. With `swappiness = 1`, the kernel delays swapping aggressively, so swap stays ~90% free under normal pressure. Only when memory is critically exhausted does the kernel begin swapping to ZRAM (12.8 GB pool fills fast), at which point earlyoom would eventually trigger — but by then the system is already thrashing and may kill the wrong process (source: `lowmem_sig()` in earlyoom `main.c` uses `&&` for both conditions)
 2. **earlyoom is blind to GPU allocations** — GTT-mapped memory consumed by Ollama/hermes via ROCm is invisible to `/proc/meminfo` MemAvailable
 3. **systemd-oomd's PSI approach** measures process stalling (the *symptom*) rather than free RAM (the *cause*), making it work on unified memory systems regardless of GTT
 4. **nvtop 176 GiB** is VRAM + GTT double-counting — cosmetic, not misconfiguration
@@ -25,7 +25,7 @@ Key findings:
 
 | Metric | Session 91 | Session 92 | Notes |
 |--------|-----------|-----------|-------|
-| OOM defense | earlyoom (broken) + MemoryMax | systemd-oomd + MemoryMax | ✅ Fixed |
+| OOM defense | earlyoom (slow response) + MemoryMax | systemd-oomd + MemoryMax | ✅ Improved |
 | Services w/o MemoryMax | 3 long-running | 0 | ✅ Fixed |
 | Build status | Passing | Passing | ✅ Clean |
 | Root disk | 53% (235 GB free) | Not re-checked | — |
@@ -40,7 +40,7 @@ Key findings:
 Wrote comprehensive analysis: `docs/status/2026-05-25_OOM-STRATEGY-DEEP-DIVE.md` covering:
 
 - **Why kernel OOM killer is inadequate**: 2–15s latency, heuristics wrong for AI workloads, no rate-of-change awareness
-- **Why earlyoom was broken on this system**: AND-logic with swap threshold never met; blind to GTT allocations
+- **Why earlyoom was suboptimal on this system**: AND-logic (`lowmem_sig()` uses `&&`) means both MemAvailable AND SwapFree must be below threshold; with `swappiness = 1`, swap fills late under extreme pressure, delaying earlyoom's response until the system is already thrashing; additionally blind to GTT allocations
 - **Why unified memory makes everything harder**: GTT allocations invisible to MemAvailable, TTM page pool shows as reclaimable
 - **nvtop 176 GiB explained**: VRAM + GTT heap double-counting on APUs — cosmetic, not a problem
 - **Recommended multi-layer defense**: MemoryMax → systemd-oomd → watchdogd
@@ -138,11 +138,15 @@ Carried from session 91 (unchanged):
 
 ## D) TOTALLY FUCKED UP 💥
 
-### 1. earlyoom Was Running for Months Doing Nothing
+### 1. earlyoom Was Running for Months With Delayed Response
 
-earlyoom has been enabled since initial system setup, with `freeSwapThreshold = 10` and `vm.swappiness = 1` + ZRAM at 12.8 GB. With swappiness=1, swap stays ~90% free. earlyoom's AND logic requires **both** MemAvailable < 10% AND SwapFree < 10%. Since SwapFree never dropped below ~90%, **earlyoom literally never triggered**. It was running, consuming resources, and providing false confidence.
+earlyoom has been enabled since initial system setup, with `freeSwapThreshold = 10` and `vm.swappiness = 1` + ZRAM at 12.8 GB. The `lowmem_sig()` function in earlyoom's `main.c` requires **both** `MemAvailablePercent <= mem_term_percent && SwapFreePercent <= swap_term_percent` to trigger (confirmed from source code).
 
-The OOM crash chain from session 89 (Helium spawned 42 processes, killed journald) happened because earlyoom didn't fire — not because it chose the wrong process.
+With `swappiness = 1`, the kernel aggressively avoids swapping. Under normal-to-moderate memory pressure, swap stays ~90% free, so the AND condition is not met. Only under **extreme** pressure does the kernel begin swapping to ZRAM — and ZRAM's small 12.8 GB pool fills quickly. At that point earlyoom WOULD trigger, but the system is already thrashing.
+
+**Correction:** My initial claim that "earlyoom was effectively disabled" was an oversimplification. earlyoom was not completely inert — it would eventually fire in a true crisis. The real problems were: (1) it fires too late, after the system is already thrashing, (2) it is blind to GPU/GTT allocations which can consume 60+ GB invisibly, and (3) its process selection (`--prefer` regex list) was a static allowlist that didn't cover all AI-related process names.
+
+The OOM crash chain from session 89 (Helium spawned 42 processes, killed journald) may or may not have been preventable by earlyoom — the sequence was rapid enough that earlyoom's 10 Hz polling may not have caught it in time regardless.
 
 ### 2. No Unified Memory Awareness in Any Tool
 
@@ -243,3 +247,4 @@ This is tight but workable. But if a third heavy service starts (e.g., ComfyUI a
 | 04:34 | Fix and build passes |
 | 04:34 | Discover all changes already committed in `059765b6` — only AGENTS.md is new |
 | 04:35 | Status report written |
+| 04:50 | **Correction**: "earlyoom was effectively disabled" claim was an oversimplification — earlyoom would trigger in true crisis, but late. Updated report with accurate analysis from source code review of `lowmem_sig()`.
