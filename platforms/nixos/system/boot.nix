@@ -77,12 +77,12 @@
     options ttm page_pool_size=29360128
   '';
 
-  # VM sysctl tuning for AI/ML workloads (128GB unified memory)
+  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 64 GB unified DDR5, GPU/CPU share same RAM via GTT)
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = lib.mkForce 0; # Heuristic overcommit — prevents wild allocation beyond capacity (overrides Redis's "1")
-    "vm.swappiness" = 1; # Minimum swap usage — 128GB RAM makes swap unnecessary for normal use
-    "vm.dirty_ratio" = 10; # Start writeback at 10% memory (~13GB)
-    "vm.dirty_background_ratio" = 3; # Background writeback at 3% (~4GB)
+    "vm.swappiness" = 10; # Use swap before OOM — prevents Rust/nix build crashes (was 1, caused OOM kills on 2026-05-25)
+    "vm.dirty_ratio" = 10; # Start writeback at 10% memory (~6.4GB)
+    "vm.dirty_background_ratio" = 3; # Background writeback at 3% (~1.9GB)
     "vm.min_free_kbytes" = 2097152; # Keep 2GB free for kernel/GPU allocations
     "vm.max_map_count" = 2147483642; # Maximum for large model memory maps
     "vm.compaction_proactiveness" = 20; # Proactive compaction for hugepages
@@ -195,11 +195,12 @@
   # Force performance governor — desktop/workstation with no battery concern
   powerManagement.cpuFreqGovernor = "performance";
 
-  # ZRAM: compressed swap emergency buffer.
-  # 10% = ~12.8GB virtual device on 128GB RAM. Provides headroom for OOM
-  # scenarios — the system ran for 16h with swap at 0% before crashing because
-  # the 5% (6.4GB) buffer was insufficient under AI workload memory pressure.
-  # swappiness=1 ensures the kernel avoids swap unless critically needed.
+  # ZRAM: compressed swap emergency buffer on unified memory APU.
+  # 10% = ~6.4 GB virtual device on 64 GB unified DDR5. GPU and CPU share this RAM,
+  # so AI workloads compete directly with system processes for the same pool.
+  # swappiness=10 ensures the kernel uses swap before OOM kills.
+  # swappiness=1 caused the 2026-05-25 OOM crash (kernel killed user@1000 processes
+  # instead of swapping out nix-daemon build memory).
   zramSwap = {
     enable = true;
     memoryPercent = 10;

@@ -53,8 +53,17 @@
       # Additional Nix options for enhanced reliability
       keep-build-log = true
       keep-failed = false
-      build-max-jobs = auto
-      cores = 0
+
+      # Build parallelism limits — prevent OOM during Rust/Go compilation
+      # max-jobs: max concurrent derivations (not cores per build)
+      # cores: max cores per build job (0 = unlimited → causes OOM with 32-core Rust builds)
+      # Unified APU: 64 GB shared between CPU and GPU (Ryzen AI MAX+ 395).
+      # With GPU AI workloads active, usable RAM is lower than MemTotal suggests.
+      # 4 jobs × 8 cores = safe for even the fattest rustc codegen units.
+      # Rust builds peak at ~3-4 GB per rustc; 4×8 = 32 parallel ≈ ~64 GB peak.
+      # With swap (16 GB) this fits without OOM.
+      build-max-jobs = 4
+      cores = 8
 
       netrc-file = /etc/nix/netrc
 
