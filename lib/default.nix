@@ -21,5 +21,13 @@ in {
     inherit name group url interval conditions alerts;
   };
 
-  ports = (import ./ports.nix).ports;
+  ports = let
+    raw = (import ./ports.nix).ports;
+    values = builtins.attrValues raw;
+    deduped = map (x: x.key) (builtins.genericClosure {
+      startSet = map (v: {key = v;}) values;
+      operator = _: [];
+    });
+  in
+    assert builtins.length values == builtins.length deduped; raw;
 }

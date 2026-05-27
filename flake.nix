@@ -372,153 +372,49 @@
     wallpapers-src,
     ...
   }: let
+    lib = nixpkgs.lib;
     overlays = import ./overlays inputs;
     inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
 
-    # Service module paths — single source of truth for flake-parts imports AND nixosConfigurations
-    # Each entry is { path = ./modules/nixos/services/<name>.nix; module = "<nixosModule-name>"; }
-    serviceModules = [
-      {
-        path = ./modules/nixos/services/pocket-id.nix;
-        module = "pocket-id";
-      }
-      {
-        path = ./modules/nixos/services/oauth2-proxy.nix;
-        module = "oauth2-proxy";
-      }
-      {
-        path = ./modules/nixos/services/caddy.nix;
-        module = "caddy";
-      }
-      {
-        path = ./modules/nixos/services/default.nix;
-        module = "default-services";
-      }
-      {
-        path = ./modules/nixos/services/forgejo.nix;
-        module = "forgejo";
-      }
-      {
-        path = ./modules/nixos/services/forgejo-repos.nix;
-        module = "forgejo-repos";
-      }
-      {
-        path = ./modules/nixos/services/homepage.nix;
-        module = "homepage";
-      }
-      {
-        path = ./modules/nixos/services/immich.nix;
-        module = "immich";
-      }
-      {
-        path = ./modules/nixos/services/photomap.nix;
-        module = "photomap";
-      }
-      {
-        path = ./modules/nixos/services/sops.nix;
-        module = "sops";
-      }
-      {
-        path = ./modules/nixos/services/signoz.nix;
-        module = "signoz";
-      }
-      {
-        path = ./modules/nixos/services/twenty.nix;
-        module = "twenty";
-      }
-      {
-        path = ./modules/nixos/services/taskchampion.nix;
-        module = "taskchampion";
-      }
-      {
-        path = ./modules/nixos/services/voice-agents.nix;
-        module = "voice-agents";
-      }
-      {
-        path = ./modules/nixos/services/hermes.nix;
-        module = "hermes";
-      }
-      {
-        path = ./modules/nixos/services/minecraft.nix;
-        module = "minecraft";
-      }
-      {
-        path = ./modules/nixos/services/monitor365.nix;
-        module = "monitor365";
-      }
-      {
-        path = ./modules/nixos/services/dns-blocker.nix;
-        module = "dns-blocker";
-      }
-      {
-        path = ./modules/nixos/services/dns-failover.nix;
-        module = "dns-failover";
-      }
-      {
-        path = ./modules/nixos/services/display-manager.nix;
-        module = "display-manager";
-      }
-      {
-        path = ./modules/nixos/services/audio.nix;
-        module = "audio";
-      }
-      {
-        path = ./modules/nixos/services/niri-config.nix;
-        module = "niri-config";
-      }
-      {
-        path = ./modules/nixos/services/security-hardening.nix;
-        module = "security-hardening";
-      }
-      {
-        path = ./modules/nixos/services/ai-models.nix;
-        module = "ai-models";
-      }
-      {
-        path = ./modules/nixos/services/ai-stack.nix;
-        module = "ai-stack";
-      }
-      {
-        path = ./modules/nixos/services/multi-wm.nix;
-        module = "multi-wm";
-      }
-      {
-        path = ./modules/nixos/services/browser-policies.nix;
-        module = "browser-policies";
-      }
-      {
-        path = ./modules/nixos/services/steam.nix;
-        module = "steam";
-      }
-      {
-        path = ./modules/nixos/services/file-and-image-renamer.nix;
-        module = "file-and-image-renamer";
-      }
-      {
-        path = ./modules/nixos/services/disk-monitor.nix;
-        module = "disk-monitor";
-      }
-      {
-        path = ./modules/nixos/services/manifest.nix;
-        module = "manifest";
-      }
-      {
-        path = ./modules/nixos/services/gatus-config.nix;
-        module = "gatus-config";
-      }
-      {
-        path = ./modules/nixos/services/openseo.nix;
-        module = "openseo";
-      }
-      {
-        path = ./modules/nixos/services/dual-wan.nix;
-        module = "dual-wan";
-      }
-      {
-        path = ./modules/nixos/services/nvme-health-monitor.nix;
-        module = "nvme-health-monitor";
-      }
-    ];
+    # Auto-discover service modules from modules/nixos/services/
+    # Convention: filename must match the declared nixosModule name (e.g., forgejo.nix → nixosModules.forgejo)
+    # Files without `flake.nixosModules.<name>` (like signoz-alerts.nix helper) are skipped
+    serviceDir = ./modules/nixos/services;
+    serviceDirContents = builtins.readDir serviceDir;
+    serviceFiles = lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n) serviceDirContents;
+
+    getServiceModuleName = file: let
+      content = builtins.readFile (serviceDir + "/${file}");
+      lines = lib.strings.splitString "\n" content;
+      moduleLine = lib.findFirst (line: lib.strings.hasInfix "flake.nixosModules." line) null lines;
+    in
+      if moduleLine == null
+      then null
+      else let
+        match = builtins.match ''.*flake[.]nixosModules[.]([a-zA-Z0-9_-]+).*'' moduleLine;
+      in
+        if match != null
+        then builtins.head match
+        else null;
+
+    serviceModules = lib.filter (sm: sm != null) (
+      lib.mapAttrsToList (
+        file: _: let
+          moduleName = getServiceModuleName file;
+          expectedName = lib.removeSuffix ".nix" file;
+        in
+          if moduleName == null
+          then null
+          else
+            assert lib.assertMsg
+            (moduleName == expectedName)
+            "Service module ${file} declares nixosModules.${moduleName} but filename implies ${expectedName}. Rename the file or fix the module name."; {
+              path = serviceDir + "/${file}";
+              module = moduleName;
+            }
+      )
+      serviceFiles
+    );
 
     serviceModulePaths = map (sm: sm.path) serviceModules;
 

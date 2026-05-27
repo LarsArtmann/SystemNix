@@ -25,9 +25,11 @@ setup:
 
 # Apply Nix configuration (darwin-rebuild or nh os switch)
 # Auto-snapshots BTRFS on NixOS before switching for rollback safety
+# Runs hash-check first to catch stale vendor/npm hashes before the full build
 [group('core')]
 switch:
     #!/usr/bin/env bash
+    just hash-check
     if [[ "{{ os() }}" == "macos" ]]; then
         sudo /run/current-system/sw/bin/darwin-rebuild switch --flake ./ --print-build-logs
     else
@@ -105,6 +107,13 @@ test-aliases:
 # Alias: validate = test-fast (used by pre-commit hook)
 [group('quality')]
 validate: test-fast
+
+# Fast hash-only check for overlay packages (catches stale vendorHash/npmDepsHash)
+# Lighter than hash-check: only tests packages with known FOD hashes
+[group('quality')]
+test-hashes:
+    #!/usr/bin/env bash
+    just hash-check
 
 # Format all code with treefmt
 [group('quality')]

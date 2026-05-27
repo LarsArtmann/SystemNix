@@ -41,7 +41,7 @@
     govalid = prev.callPackage ../pkgs/govalid.nix {};
   };
 
-  todoListAiFixedHash = "sha256-iBUuLvpAI2p3OW0OvDEiwJEgNDITzqzsphQvzK0YJvw=";
+  todoListAiFixedHash = "sha256-WpViT+00F+n6GWLP77qMs4u4ilI7gn5PyBexsWPrFIQ=";
 
   todoListAiOverlay = _final: prev: let
     bun = prev.bun;

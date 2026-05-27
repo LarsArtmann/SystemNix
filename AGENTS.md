@@ -20,6 +20,7 @@ SystemNix/
 │   ├── systemd/service-defaults.nix  # serviceDefaults / serviceDefaultsUser
 │   ├── types.nix                # Reusable option constructors
 │   ├── docker.nix               # mkDockerServiceFactory
+│   ├── ports.nix                # Centralized port registry (collision-protected)
 │   └── rocm.nix                 # ROCm GPU runtime helpers
 ├── modules/nixos/services/      # flake-parts service modules
 ├── pkgs/                        # Custom packages (buildGoModule, etc.)
@@ -43,9 +44,10 @@ Two machines:
 ### Adding a Service
 
 1. Create `modules/nixos/services/<name>.nix` as a flake-parts module
-2. Add to `serviceModules` list in `flake.nix` (single source of truth)
-3. Enable in `platforms/nixos/system/configuration.nix`
-4. If behind Caddy, define a `port` option and reference it in `caddy.nix` — never hardcode ports
+2. **Convention:** filename must match the declared `flake.nixosModules.<name>` (e.g., `forgejo.nix` → `nixosModules.forgejo`). The flake auto-discovers all modules — no manual list to update.
+3. Non-module helpers (like `signoz-alerts.nix`) that don't declare `nixosModules.*` are automatically skipped
+4. Enable in `platforms/nixos/system/configuration.nix`
+5. If behind Caddy, define a `port` option and reference it in `caddy.nix` — never hardcode ports
 
 ### Custom Overlays
 
@@ -235,7 +237,7 @@ reboot
 | otel-tui Darwin | Never add — 40+ min builds + disk exhaustion |
 | Darwin disk | 229 GB, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
 | `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
-| `serviceModules` single source | Listed once in `flake.nix`; both imports + nixosConfigs derive from it |
+| `serviceModules` auto-discovery | `flake.nix` auto-discovers modules from `modules/nixos/services/*.nix` by parsing `flake.nixosModules.<name>`. Filename must match module name. Non-module files (no `nixosModules.*` declaration) are skipped |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
 | SigNoz build time | Built from source (Go 1.25); takes significant time |
 | `/data` BTRFS toplevel | Mounted without `subvol=` (subvolid=5) — cannot be snapshotted. Run `just snapshot-migrate-data` to convert to `@data` |
