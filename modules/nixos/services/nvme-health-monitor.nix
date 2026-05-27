@@ -18,7 +18,6 @@ _: {
       mkdir -p "$STATE_DIR"
 
       DEVICE="${cfg.device}"
-      METRICS_FILE="/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom"
 
       notify() {
         local urgency="$1" title="$2" body="$3"
