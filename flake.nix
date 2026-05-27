@@ -528,6 +528,7 @@
       useUserPackages = true;
       backupFileExtension = "backup";
       overwriteBackup = true;
+      home.enableNixpkgsReleaseCheck = false;
     };
 
     # Shared theme (Catppuccin Mocha palette)
