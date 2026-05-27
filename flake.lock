@@ -95,11 +95,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779858252,
-        "narHash": "sha256-FMhoM/g2g/85+RbQBXC/CVxgNeCBf9opPG8eFq7R1lo=",
+        "lastModified": 1779860668,
+        "narHash": "sha256-xpYRnL4Ci22J9AavKd83keE/Th582+WsDHRfSMNZFDw=",
         "ref": "master",
-        "rev": "fa5cd9d12d7c7f1c46cd4102a9d5099ec2153dcb",
-        "revCount": 2684,
+        "rev": "c8d206ec99fe7e20867963caea191c8e0da051c3",
+        "revCount": 2685,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -180,11 +180,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779858965,
-        "narHash": "sha256-tKpi16xg0Pmp37uo0KV+5UchVjN77hDKpdzg26WFJkA=",
+        "lastModified": 1779860920,
+        "narHash": "sha256-owqQnKEFt1nZVCguVvTTt6pcbazfW36Dc69BJae5kuI=",
         "ref": "master",
-        "rev": "86e4234ac0c4b8d296353c6d7226e46143923a01",
-        "revCount": 296,
+        "rev": "47d3154afcf8e02f1855b86d0c85caebd877a12e",
+        "revCount": 297,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -201,11 +201,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779858690,
-        "narHash": "sha256-DJtBTgbAaMzaAF5FooR1gXCKdIsV2//OC4P4qCeYY2Q=",
+        "lastModified": 1779861288,
+        "narHash": "sha256-XH/9TCyHdlQmCMu1gI/T7ok6/49mBzy4KgpFwHqDEoo=",
         "ref": "master",
-        "rev": "e92bfe3accbf495f9ae42358ca7a2a4fead5ad21",
-        "revCount": 214,
+        "rev": "fc013a809a24e4873a35b3a533934d8a6b106714",
+        "revCount": 215,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/emeet-pixyd"
       },
@@ -483,11 +483,11 @@
     "go-finding": {
       "flake": false,
       "locked": {
-        "lastModified": 1779859059,
-        "narHash": "sha256-QEdRdegC999Ny7afJlgFOqSTPotHxfO6t25BwyUFZlo=",
+        "lastModified": 1779861499,
+        "narHash": "sha256-RmPQ0qJ7/DWYqKLNKxyJDYK3k/lf4e2EfuTlXx6c9jc=",
         "ref": "master",
-        "rev": "fa0d5dcc3070e00461f4717797ce76ddc6efd7db",
-        "revCount": 617,
+        "rev": "2b895935ce9fbeb311d6152297c9ff773dd15856",
+        "revCount": 626,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -673,11 +673,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779859112,
-        "narHash": "sha256-qCymKbVfGCoPu3//TNbSMOA1RW0nBFVsv3qR1Q2RBkM=",
+        "lastModified": 1779861693,
+        "narHash": "sha256-gXMvR8AqWJ63eyemH7MytnP6TvefMnA408OEQxh+FUo=",
         "ref": "master",
-        "rev": "9cf6c122355791b4378eb514b6df557468637b42",
-        "revCount": 1009,
+        "rev": "955fb7860c9786ee085a1d16d8a5d490c38c4a5f",
+        "revCount": 1010,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -1218,11 +1218,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779857716,
-        "narHash": "sha256-g/PZvlbK8sEg2FD3kHk23PgB0Yne+vuXClynSFEBDwI=",
+        "lastModified": 1779862025,
+        "narHash": "sha256-tTVmmKPUD0H1O7AOHedLvy3B8sP/G07a8oRVKosj61I=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "807f7ca6be643bb982e1edc9e65f2c0bbefddc66",
+        "rev": "fd8b7988a9e9a2923500b5a23305c9d26f3d9cf4",
         "type": "github"
       },
       "original": {
