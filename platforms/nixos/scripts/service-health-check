@@ -37,7 +37,6 @@ check_service caddy
 check_service unbound
 check_service dnsblockd
 check_service postgresql
-check_service ollama
 check_service homepage-dashboard
 check_service immich-server
 check_service immich-machine-learning
@@ -54,8 +53,6 @@ check_service hermes
 check_service manifest
 check_service twenty
 check_service openseo
-check_service whisper-asr
-check_service livekit
 check_service docker
 check_service route-health-monitor
 check_service mptcp-endpoint-manager
@@ -68,7 +65,6 @@ check_user_service emeet-pixyd
 check_user_service niri-session-manager
 check_user_service monitor365
 check_user_service monitor365-server
-check_user_service file-and-image-renamer
 
 # === Report ===
 if [ -n "$FAILED" ]; then

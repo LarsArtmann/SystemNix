@@ -42,92 +42,93 @@
     sopsEnvPath = config.sops.templates."hermes-env".path;
     oldStateDirs = ["/home/${cfg.user}/.hermes" "/var/lib/hermes"];
 
-    mergeEnvScript = pkgs.writeShellScript "hermes-merge-env" ''
-      set -euo pipefail
-      ENV_FILE="${cfg.stateDir}/.env"
+    mergeEnvScript = pkgs.writeShellApplication {
+      name = "hermes-merge-env";
+      runtimeInputs = [pkgs.gnused];
+      text = ''
+        ENV_FILE="${cfg.stateDir}/.env"
 
-      if [ ! -f "$ENV_FILE" ]; then
-        touch "$ENV_FILE"
-        chmod 600 "$ENV_FILE"
-      fi
-
-      # Clean up deprecated keys
-      for dep_key in MESSAGING_CWD; do
-        if grep -q "^''${dep_key}=" "$ENV_FILE" 2>/dev/null; then
-          ${pkgs.gnused}/bin/sed -i "/^''${dep_key}=/d" "$ENV_FILE"
-          echo "hermes-merge: removed deprecated key $dep_key from .env"
+        if [ ! -f "$ENV_FILE" ]; then
+          touch "$ENV_FILE"
+          chmod 600 "$ENV_FILE"
         fi
-      done
 
-      # Write non-secret env vars only (secrets come from sops via EnvironmentFile)
-      for pair in "OLLAMA_API_KEY=ollama" "TERMINAL_ENV=local"; do
-        key="''${pair%%=*}"
-        value="''${pair#*=}"
-        [ -z "$key" ] && continue
-        if grep -q "^''${key}=" "$ENV_FILE" 2>/dev/null; then
-          ${pkgs.gnused}/bin/sed -i "/^''${key}=/d" "$ENV_FILE"
-        fi
-        echo "$key=$value" >> "$ENV_FILE"
-      done
-    '';
+        for dep_key in MESSAGING_CWD; do
+          if grep -q "^''${dep_key}=" "$ENV_FILE" 2>/dev/null; then
+            sed -i "/^''${dep_key}=/d" "$ENV_FILE"
+            echo "hermes-merge: removed deprecated key $dep_key from .env"
+          fi
+        done
 
-    fixPermissionsScript = pkgs.writeShellScript "hermes-fix-permissions" ''
-      set -euo pipefail
+        for pair in "OLLAMA_API_KEY=ollama" "TERMINAL_ENV=local"; do
+          key="''${pair%%=*}"
+          value="''${pair#*=}"
+          [ -z "$key" ] && continue
+          if grep -q "^''${key}=" "$ENV_FILE" 2>/dev/null; then
+            sed -i "/^''${key}=/d" "$ENV_FILE"
+          fi
+          echo "$key=$value" >> "$ENV_FILE"
+        done
+      '';
+    };
 
-      # Fast-path: skip expensive recursive operations if top-level looks correct
-      if [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
-         && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]; then
-        exit 0
-      fi
-
-      echo "hermes-perms: fixing ownership and permissions in ${cfg.stateDir}"
-      chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
-      find ${cfg.stateDir} -type d -exec chmod 2770 {} + 2>/dev/null || true
-      find ${cfg.stateDir} -type f -exec chmod 0660 {} + 2>/dev/null || true
-    '';
-
-    migrateScript = pkgs.writeShellScript "hermes-migrate-state" ''
-      set -euo pipefail
-      NEW="${cfg.stateDir}"
-
-      # Disable BTRFS Copy-on-Write on state directory to prevent SQLite corruption
-      if command -v chattr &>/dev/null; then
-        chattr +C "$NEW" 2>/dev/null || true
-      fi
-
-      # Auto-recover malformed SQLite databases
-      DB="$NEW/state.db"
-      if [ -f "$DB" ]; then
-        INTEGRITY=$(${pkgs.sqlite}/bin/sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1 || echo "error")
-        if [ "$INTEGRITY" != "ok" ]; then
-          BACKUP="$DB.malformed-$(date +%Y%m%d-%H%M%S)"
-          echo "hermes-migrate: SQLite database malformed, backing up to $BACKUP"
-          mv "$DB" "$BACKUP"
-          # Remove WAL/SHM sidecars too
-          rm -f "$DB-wal" "$DB-shm"
-        else
-          # Enforce WAL mode for resilience
-          ${pkgs.sqlite}/bin/sqlite3 "$DB" "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;" 2>/dev/null || true
-        fi
-      fi
-
-      if [ -f "$NEW/state.db" ] && [ "$(stat -c%s "$NEW/state.db" 2>/dev/null)" -gt 1048576 ]; then
-        echo "hermes-migrate: $NEW has existing state ($(stat -c%s "$NEW/state.db") bytes), skipping migration"
-        exit 0
-      fi
-
-      for OLD in ${lib.concatStringsSep " " (map (p: "\"${p}\"") oldStateDirs)}; do
-        if [ -d "$OLD" ] && [ "$(ls -A "$OLD" 2>/dev/null)" ]; then
-          echo "hermes-migrate: migrating state from $OLD to $NEW"
-          mkdir -p "$NEW"
-          ${pkgs.rsync}/bin/rsync -a --chown=${cfg.user}:${cfg.group} "$OLD/" "$NEW/"
-          echo "hermes-migrate: migration complete (from $OLD)"
+    fixPermissionsScript = pkgs.writeShellApplication {
+      name = "hermes-fix-permissions";
+      runtimeInputs = [pkgs.coreutils pkgs.findutils];
+      text = ''
+        if [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
+           && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]; then
           exit 0
         fi
-      done
 
-      echo "hermes-migrate: no old state found, skipping migration"
-    '';
+        echo "hermes-perms: fixing ownership and permissions in ${cfg.stateDir}"
+        chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
+        find ${cfg.stateDir} -type d -exec chmod 2770 {} + 2>/dev/null || true
+        find ${cfg.stateDir} -type f -exec chmod 0660 {} + 2>/dev/null || true
+      '';
+    };
+
+    migrateScript = pkgs.writeShellApplication {
+      name = "hermes-migrate-state";
+      runtimeInputs = [pkgs.coreutils pkgs.sqlite pkgs.rsync];
+      text = ''
+        NEW="${cfg.stateDir}"
+
+        if command -v chattr &>/dev/null; then
+          chattr +C "$NEW" 2>/dev/null || true
+        fi
+
+        DB="$NEW/state.db"
+        if [ -f "$DB" ]; then
+          INTEGRITY=$(sqlite3 "$DB" "PRAGMA integrity_check;" 2>&1 || echo "error")
+          if [ "$INTEGRITY" != "ok" ]; then
+            BACKUP="$DB.malformed-$(date +%Y%m%d-%H%M%S)"
+            echo "hermes-migrate: SQLite database malformed, backing up to $BACKUP"
+            mv "$DB" "$BACKUP"
+            rm -f "$DB-wal" "$DB-shm"
+          else
+            sqlite3 "$DB" "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL;" 2>/dev/null || true
+          fi
+        fi
+
+        if [ -f "$NEW/state.db" ] && [ "$(stat -c%s "$NEW/state.db" 2>/dev/null)" -gt 1048576 ]; then
+          echo "hermes-migrate: $NEW has existing state ($(stat -c%s "$NEW/state.db") bytes), skipping migration"
+          exit 0
+        fi
+
+        for OLD in ${lib.concatStringsSep " " (map (p: "\"${p}\"") oldStateDirs)}; do
+          if [ -d "$OLD" ] && [ "$(ls -A "$OLD" 2>/dev/null)" ]; then
+            echo "hermes-migrate: migrating state from $OLD to $NEW"
+            mkdir -p "$NEW"
+            rsync -a --chown=${cfg.user}:${cfg.group} "$OLD/" "$NEW/"
+            echo "hermes-migrate: migration complete (from $OLD)"
+            exit 0
+          fi
+        done
+
+        echo "hermes-migrate: no old state found, skipping migration"
+      '';
+    };
   in {
     options.services.hermes = {
       enable = lib.mkEnableOption "Hermes AI Agent Gateway";

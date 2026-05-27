@@ -61,6 +61,7 @@ in {
   boot = {
     tmp.cleanOnBoot = true;
     initrd.availableKernelModules = ["usbhid" "usb_storage" "vc4"];
+    zfs.forceImportRoot = false;
   };
 
   image.baseName = "nixos-rpi3-dns";

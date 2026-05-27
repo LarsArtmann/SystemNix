@@ -52,6 +52,22 @@ _: {
           harden {}
           // serviceDefaults {}
           // {
+            ExecStartPre = "+${pkgs.writeShellApplication {
+              name = "check-cookie-secret";
+              runtimeInputs = [pkgs.coreutils];
+              text = ''
+                secret_path="${config.sops.secrets.oauth2_proxy_cookie_secret.path}"
+                if [ ! -f "$secret_path" ]; then
+                  echo "oauth2-proxy: cookie_secret file not found: $secret_path" >&2
+                  exit 1
+                fi
+                len=$(base64 -d < "$secret_path" | wc -c)
+                if [ "$len" -ne 16 ] && [ "$len" -ne 24 ] && [ "$len" -ne 32 ]; then
+                  echo "oauth2-proxy: cookie_secret must be 16, 24, or 32 bytes (base64-decoded), got $len" >&2
+                  exit 1
+                fi
+              '';
+            }}";
             ExecStartPost = "${pkgs.curl}/bin/curl -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
           };
       };

@@ -157,6 +157,29 @@ forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
 forgejoUrl = "http://localhost:${toString forgejoPort}";
 ```
 
+### Sops + Age Toolchain
+
+sops-encrypted secrets use the SSH host key for encryption. The `sops` CLI requires **age identity format**, not raw SSH keys. Use `ssh-to-age` to convert:
+
+```bash
+# Convert SSH host key → age identity (needed by sops CLI)
+ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key > /tmp/age.key
+
+# Set a sops secret (e.g., update cookie_secret)
+sudo env SOPS_AGE_KEY_FILE=/tmp/age.key \
+  sops --set '["oauth2_proxy_cookie_secret"] "'"$(python3 -c 'import os,base64; print(base64.b64encode(os.urandom(32)).decode())')"'"' \
+  platforms/nixos/secrets/pocket-id.yaml
+
+# Cleanup
+rm /tmp/age.key
+```
+
+**Key gotchas:**
+- `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI — it needs `SOPS_AGE_KEY_FILE` with age identity format
+- `sudo` strips env vars — use `sudo env VAR=VALUE command` pattern
+- oauth2-proxy `cookie_secret` must be exactly 16, 24, or 32 bytes (AES-128/192/256)
+- Always clean up the age key file after use
+
 ### lib/ Helpers
 
 Single import pattern:

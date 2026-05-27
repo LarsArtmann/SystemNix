@@ -23,11 +23,14 @@ in {
 
   ports = let
     raw = (import ./ports.nix).ports;
-    values = builtins.attrValues raw;
-    deduped = map (x: x.key) (builtins.genericClosure {
-      startSet = map (v: {key = v;}) values;
-      operator = _: [];
-    });
+    byValue = builtins.groupBy (name: toString raw.${name}) (builtins.attrNames raw);
+    dupes = builtins.filter (v: builtins.length byValue.${v} > 1) (builtins.attrNames byValue);
+    dupeMsg = builtins.concatStringsSep "; " (map (
+        v: "port ${v} used by: ${builtins.concatStringsSep ", " byValue.${v}}"
+      )
+      dupes);
   in
-    assert builtins.length values == builtins.length deduped; raw;
+    if dupes == []
+    then raw
+    else builtins.throw "Port collision: ${dupeMsg}";
 }
