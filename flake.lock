@@ -799,11 +799,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779858699,
-        "narHash": "sha256-NwC5PCPMgo5AQ4N53IH3CpLKVc3HVzkvw1OyQ++v5H8=",
+        "lastModified": 1779862935,
+        "narHash": "sha256-gnSOCwWPWa407V/zggtACzNj29VbtXCcjgPzHSom5tk=",
         "ref": "master",
-        "rev": "2659febe4e8336ab3d66de741eb18c2e9e540689",
-        "revCount": 611,
+        "rev": "6632a8ad6451059dc7d7183ada61a401475624c2",
+        "revCount": 612,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
