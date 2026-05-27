@@ -38,14 +38,15 @@
         ],
         "nixpkgs": [
           "nixpkgs"
-        ]
+        ],
+        "systems": "systems"
       },
       "locked": {
-        "lastModified": 1779859884,
-        "narHash": "sha256-MxMvtJQcP8/bSblZQf7YhDde1quJGvtIpfPgsLAEBWQ=",
+        "lastModified": 1779864873,
+        "narHash": "sha256-OxBf2p9z3jQJCX23CJmo9MCWabfUxWIZ4d57jO+DHjU=",
         "ref": "master",
-        "rev": "cefd808db889cac49319d7298fcfbb2d1dfbe554",
-        "revCount": 1752,
+        "rev": "db2ba469089121d5fc90b29ff290757a1b37ea6e",
+        "revCount": 1753,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -483,11 +484,11 @@
     "go-finding": {
       "flake": false,
       "locked": {
-        "lastModified": 1779861499,
-        "narHash": "sha256-RmPQ0qJ7/DWYqKLNKxyJDYK3k/lf4e2EfuTlXx6c9jc=",
+        "lastModified": 1779863403,
+        "narHash": "sha256-LxDKFn+cB+1hqc0pknFBbRVSuRYGz+LKjrbZkXpTncU=",
         "ref": "master",
-        "rev": "2b895935ce9fbeb311d6152297c9ff773dd15856",
-        "revCount": 626,
+        "rev": "1cc5cd095ca201a675af93372d4c29eae7c1b317",
+        "revCount": 627,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -852,11 +853,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1779854580,
-        "narHash": "sha256-G1fhh5PqemP6Z38CLIJX4l1mPLcu1+38yEBS8z7BOM4=",
+        "lastModified": 1779865733,
+        "narHash": "sha256-JDBngwSiQ4ovXTaVgbsmvDATHokQDEYmw+ToMDd2RNo=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "1f8058c85d6ebec897d08274129e5d6d0c66e93b",
+        "rev": "e36a8df09359a1e9de4b062b2c622ce07de2dc01",
         "type": "github"
       },
       "original": {
@@ -883,11 +884,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779859264,
-        "narHash": "sha256-UzD9djETLwW6e/6JOC6AJayvqu9aft6jDtm3k2FTYjw=",
+        "lastModified": 1779864842,
+        "narHash": "sha256-g0VXPrkBcCJNrq4VHkQBD768aPUdySdQGCEKVPAxtI4=",
         "ref": "master",
-        "rev": "46bf0e06326ccbef5d32066aa06b8692662a9ff2",
-        "revCount": 774,
+        "rev": "7798f9e965218a6430cf3d7416cd4114eb8eca24",
+        "revCount": 776,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -937,14 +938,14 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems"
+        "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1779858671,
-        "narHash": "sha256-VARlYWPY3AhBifhBvaWNVq/5zlVziQ03ccfxQblVKno=",
+        "lastModified": 1779866001,
+        "narHash": "sha256-SDgYroRnuLy/RlHuTO7eIrw2w9NGwdXBDPZ7Zw0wHS8=",
         "ref": "master",
-        "rev": "f77087fa5bc746031c03c93d26624d52dd71e182",
-        "revCount": 159,
+        "rev": "76abcde52e262a0e44033e018f3c6cdcc54ec9a4",
+        "revCount": 162,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mr-sync"
       },
@@ -1218,11 +1219,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779862025,
-        "narHash": "sha256-tTVmmKPUD0H1O7AOHedLvy3B8sP/G07a8oRVKosj61I=",
+        "lastModified": 1779865636,
+        "narHash": "sha256-MiVkbBoYfk/BsTQDgk+/0Yvd1T1hYfGJt4bbEmZrKrA=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "fd8b7988a9e9a2923500b5a23305c9d26f3d9cf4",
+        "rev": "23cfc70a6bb36756831ebca292e408c9fde433e0",
         "type": "github"
       },
       "original": {
@@ -1474,7 +1475,7 @@
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
         "sops-nix": "sops-nix",
-        "systems": "systems_2",
+        "systems": "systems_3",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix",
@@ -1592,6 +1593,21 @@
       }
     },
     "systems_2": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "systems_3": {
       "locked": {
         "lastModified": 1681028828,
         "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
