@@ -507,47 +507,57 @@
           };
         };
 
-        checks = {
-          statix =
-            pkgs.runCommand "statix-check" {
-              nativeBuildInputs = [pkgs.statix];
-            } ''
-              cd ${./.}
-              statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
-              if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
-                exit 1
-              fi
-              exit 0
-            '';
-
-          deadnix =
-            pkgs.runCommand "deadnix-check" {
-              nativeBuildInputs = [pkgs.deadnix];
-            } ''
-              cd ${./.}
-              deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
-            '';
-        };
-
-        apps =
+        checks =
           {
-            deploy = {
-              type = "app";
-              program = "${pkgs.writeShellScriptBin "deploy" (builtins.readFile ./scripts/deploy.sh)}/bin/deploy";
-              meta.description = "Deploy NixOS config to evo-x2 via nh with post-deploy checks";
-            };
-            validate = {
-              type = "app";
-              program = "${pkgs.writeShellScriptBin "validate" (builtins.readFile ./scripts/validate.sh)}/bin/validate";
-              meta.description = "Validate flake without building";
-            };
+            statix =
+              pkgs.runCommand "statix-check" {
+                nativeBuildInputs = [pkgs.statix];
+              } ''
+                cd ${./.}
+                statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
+                if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
+                  exit 1
+                fi
+                exit 0
+              '';
+
+            deadnix =
+              pkgs.runCommand "deadnix-check" {
+                nativeBuildInputs = [pkgs.deadnix];
+              } ''
+                cd ${./.}
+                deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
+              '';
+          }
+          // lib.optionalAttrs pkgs.stdenv.isLinux (
+            import ./tests {inherit pkgs lib nixpkgs system;}
+          );
+
+        apps = let
+          mkApp = name: description: runtimeInputs: scriptPath: {
+            type = "app";
+            program = "${pkgs.writeShellApplication {
+              inherit name runtimeInputs;
+              text = builtins.readFile scriptPath;
+            }}/bin/${name}";
+            meta.description = description;
+          };
+        in
+          {
+            deploy =
+              mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks"
+              [pkgs.nh pkgs.systemd]
+              ./scripts/deploy.sh;
+            validate =
+              mkApp "validate" "Validate flake without building"
+              [pkgs.nix]
+              ./scripts/validate.sh;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
-            dns-diagnostics = {
-              type = "app";
-              program = "${pkgs.writeShellScriptBin "dns-diagnostics" (builtins.readFile ./scripts/dns-diagnostics.sh)}/bin/dns-diagnostics";
-              meta.description = "Run DNS stack diagnostics (resolution, blocking, stats)";
-            };
+            dns-diagnostics =
+              mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats)"
+              [pkgs.systemd pkgs.dnsutils pkgs.curl]
+              ./scripts/dns-diagnostics.sh;
           };
       };
 
