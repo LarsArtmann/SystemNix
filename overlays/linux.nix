@@ -15,7 +15,7 @@
   };
 in [
   openaudibleOverlay
-  (mkPackageOverlay dnsblockd "dnsblockd" {vendorHash = "sha256-Vd9wjU25Wk764xqnGIdt8pAqyO7XeoBg5yHzx0V+Umw=";})
+  (mkPackageOverlay dnsblockd "dnsblockd" {vendorHash = "sha256-FFcULtnmNhIJr392vRYGqZ+lvW300HWvzQoEJZj8pWw=";})
   emeet-pixyd.overlays.default
   monitor365.overlays.default
   netwatchOverlay
