@@ -41,11 +41,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779855582,
-        "narHash": "sha256-WhYtMEFH1LaXiyVaN+aGNjDFKMqFQyDvE/H/l58oInQ=",
+        "lastModified": 1779856648,
+        "narHash": "sha256-YDPQPBQAof5250zgAgfmegaYlN9CPgb8oO3dNbd6TnQ=",
         "ref": "master",
-        "rev": "c480ae84081e0597e2e42182896f661325065efb",
-        "revCount": 1746,
+        "rev": "e3d50fbd29742337d751517ec7d7308ea92b208d",
+        "revCount": 1749,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -95,11 +95,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779855565,
-        "narHash": "sha256-HqrrFL/+l2FR/EndjNfGk0vsuKCIAl193v6oMja605E=",
+        "lastModified": 1779856214,
+        "narHash": "sha256-gINM6LSsfLHNf6Ioshb50xkAas+4wIX44m7kz5wZ7/I=",
         "ref": "master",
-        "rev": "36f2b0275bf5bdcdc3ae2c24790ae4fba5744641",
-        "revCount": 2677,
+        "rev": "51becd6df47fc693644ffdee2310d4836b2cf65d",
+        "revCount": 2683,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -364,11 +364,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779757922,
-        "narHash": "sha256-iaYCW0WmORd3G0YgE+vXaDYyB7Cm/GSEfcG5XOGTBxI=",
+        "lastModified": 1779857082,
+        "narHash": "sha256-CMTp3VQDiirfSg4Wmyaew6c8bkN0odUfqz4LkW9pqp0=",
         "ref": "master",
-        "rev": "b6f4606eded048219bd7e2d3e190ba27554ba089",
-        "revCount": 364,
+        "rev": "a98403ebb0b58663fa7c8fa0a759d4d0a9e738b3",
+        "revCount": 366,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
@@ -673,11 +673,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779792565,
-        "narHash": "sha256-vg2RQ+gnSRf8BBevieTF94ZuLuW6W+CqROTBoiaRtVc=",
+        "lastModified": 1779857083,
+        "narHash": "sha256-rW8peUbD0uyGU60Vot1xK1Y7JbCVuXbJCBysnrLVsPg=",
         "ref": "master",
-        "rev": "c9ec73b7967b3316e8083fbfc7a1ac413421d2c4",
-        "revCount": 995,
+        "rev": "787968aecb2899f30204ba13d6c4738ad7d9756f",
+        "revCount": 997,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
