@@ -107,26 +107,45 @@ Core private Go deps (`go-output`, `go-branded-id`, etc.) cascade to all consume
 
 ### Nix Versioning Convention
 
-**NEVER use `self.rev`/`self.shortRev` as package version.** Always hardcode semver:
+**For published/public packages:** hardcode semver. **For internal-only overlays:** `self.rev` is fine — it auto-updates and is honest about what commit is deployed.
 
 ```nix
-# ✅ Correct
+# ✅ Published packages — hardcode semver
 version = "0.1.0";
 
-# ❌ Wrong — produces garbage like "dnsblockd-f832f9f"
-version = self.shortRev or self.dirtyShortRev or "dev";
+# ✅ Internal overlays — self.rev is fine (auto-updates with every push)
 version = self.rev or self.dirtyRev or "dev";
-version = "0.0.0-" + (self.shortRev or self.dirtyShortRev or "dev");
+
+# ❌ Always wrong — stale hardcoded version that never gets bumped
+version = "0.1.0";  # (when no formal release process exists)
 ```
 
-**Release workflow:**
+**Release workflow (for published packages):**
 1. Bump `version = "X.Y.Z"` in `flake.nix` (or `nix/packages/default.nix`)
 2. Commit with message like `release: v0.2.0`
 3. Tag: `git tag -a v0.2.0 -m "v0.2.0"`
 4. Push: `git push && git push origin v0.2.0`
 5. Update SystemNix: `nix flake lock --update-input <repo>`
 
-**Rationale:** `self.rev` produces unreadable package names (`dnsblockd-f832f9f`), breaks `nix search`, and makes it impossible to tell which version is installed. The version is a property of the software, not the git commit.
+### overrideModAttrs + `go mod tidy` Anti-Pattern
+
+**AVOID `overrideModAttrs` with `go mod tidy` in `buildGoModule`.** It causes inconsistent vendoring:
+
+```nix
+# ❌ Anti-pattern — causes "inconsistent vendoring" error on dep changes
+vendorHash = "sha256-...";
+overrideModAttrs = _: { preBuild = "go mod tidy"; };
+
+# ✅ Correct — keep go.mod tidy locally, use exact vendorHash
+vendorHash = "sha256-...";
+# (no overrideModAttrs)
+```
+
+**Why it breaks:** `buildGoModule` has two phases: (1) go-modules derivation (with network) produces vendor/, (2) main build (no network) uses vendor/ with original go.mod. `overrideModAttrs` runs `go mod tidy` in phase 1 only, producing vendor/modules.txt that doesn't match the un-tidied go.mod in phase 2 → "inconsistent vendoring" error.
+
+**Exception:** repos with complex `_local_deps` setups (like PMA with 12 private deps + sub-modules) may need `overrideModAttrs` because `mkPreparedSource` creates a go.mod state that genuinely needs tidy. In that case, ensure the committed go.mod is pre-tidied to match what the Nix build resolves.
+
+**When vendorHash breaks after a dep change:** set `vendorHash = ""`, build, paste the `got:` hash.
 
 ### Config-Derived URLs
 
