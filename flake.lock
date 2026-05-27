@@ -619,11 +619,11 @@
     "go-output": {
       "flake": false,
       "locked": {
-        "lastModified": 1779845540,
-        "narHash": "sha256-qtRNMSfMpO4800+I6aOvvDAboLCelvDGP4QghLXDeOk=",
+        "lastModified": 1779857915,
+        "narHash": "sha256-uqrzTaUe+tIPe+R3NwgUZ7ZVvSjy1MspcWp+YLffIf8=",
         "ref": "master",
-        "rev": "6ce7037d260fbc365bbb7a24b6adde2de2e8dee3",
-        "revCount": 458,
+        "rev": "f1dc3d76ba064a90f34c52628cae5d8f9eb7e635",
+        "revCount": 459,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       },
@@ -673,11 +673,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779857083,
-        "narHash": "sha256-rW8peUbD0uyGU60Vot1xK1Y7JbCVuXbJCBysnrLVsPg=",
+        "lastModified": 1779858040,
+        "narHash": "sha256-nyj9jCwXr9n2gvyJbIfQ63zeuuWT90WZsMRrukkQR2Y=",
         "ref": "master",
-        "rev": "787968aecb2899f30204ba13d6c4738ad7d9756f",
-        "revCount": 997,
+        "rev": "ba760b0aef00fd492fefbabe2b0fb6e51af2893c",
+        "revCount": 1008,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -717,11 +717,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779684540,
-        "narHash": "sha256-9tIAlN02rA2gC1+AqyX/1tOrV7xbRWwsZkeDq95VZV0=",
+        "lastModified": 1779858808,
+        "narHash": "sha256-sJAXLs4Yyi//s5CFMy7sY68MlBORcL9QiArHRPQFpmY=",
         "ref": "master",
-        "rev": "1b965e5a17f33e362ce73e0c2797824be487b42e",
-        "revCount": 555,
+        "rev": "c6999e68f57824955d95532f91d9cacfe2eb29e2",
+        "revCount": 556,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
@@ -799,11 +799,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779787827,
-        "narHash": "sha256-Qn/bRGVOrrX4ilhmEasu4tNdgLU1mdQiGcd84grYHqk=",
+        "lastModified": 1779858238,
+        "narHash": "sha256-oHZJL8XyZIfK7hzFGge+zY7VBw7Nxe239WeV0W1tv70=",
         "ref": "master",
-        "rev": "15fdeddf79305f47f569707d0b72b6b8f51e7f74",
-        "revCount": 609,
+        "rev": "8789dc168310981297e86204dbaafab15e5fa200",
+        "revCount": 610,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -883,11 +883,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779681760,
-        "narHash": "sha256-RHOdyZPKWGCn0PRMZi0RExkOl1dPQSfjTGWUyQjHvlA=",
+        "lastModified": 1779858572,
+        "narHash": "sha256-UYK8XmjeoHVjGfybhCStgTw+cWEmi3M8UJR7CoJy+1c=",
         "ref": "master",
-        "rev": "9183195d4e472fb832a753e323dcdd5724665295",
-        "revCount": 771,
+        "rev": "1f83646bd89dc014da9c4a9ef1fc75dcef74236c",
+        "revCount": 773,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -1218,11 +1218,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779855244,
-        "narHash": "sha256-txHgPDRgeFZD/sAoNtGB9KkWqPK8FMcC7KxZwXpg0Q0=",
+        "lastModified": 1779857716,
+        "narHash": "sha256-g/PZvlbK8sEg2FD3kHk23PgB0Yne+vuXClynSFEBDwI=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "bea76750ffa8d73b1796789ed1514521d87d461f",
+        "rev": "807f7ca6be643bb982e1edc9e65f2c0bbefddc66",
         "type": "github"
       },
       "original": {
