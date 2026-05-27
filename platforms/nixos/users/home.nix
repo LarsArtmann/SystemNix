@@ -185,6 +185,7 @@ in {
   };
 
   home = {
+    enableNixpkgsReleaseCheck = false;
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
     activation.jan-data-link = lib.hm.dag.entryAfter ["writeBoundary"] ''
       JAN_DATA="$HOME/.config/Jan/data"

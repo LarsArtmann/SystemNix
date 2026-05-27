@@ -699,6 +699,7 @@
                   users.root = _: {
                     programs.home-manager.enable = true;
                     home = {
+                      enableNixpkgsReleaseCheck = false;
                       stateVersion = "25.11";
                       file.".config/crush".source = inputs.crush-config;
                     };
