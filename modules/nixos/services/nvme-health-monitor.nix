@@ -201,7 +201,7 @@ _: {
                 "WAYLAND_DISPLAY=wayland-1"
                 "XDG_RUNTIME_DIR=/run/user/${uid}"
               ];
-              ExecStart = checkScript;
+              ExecStart = lib.getExe checkScript;
               StandardOutput = "journal";
               StandardError = "journal";
             }

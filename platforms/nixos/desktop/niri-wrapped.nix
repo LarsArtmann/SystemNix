@@ -435,12 +435,17 @@ in {
           sd.hardenUser {}
           // sd.serviceDefaultsUser {RestartSec = "3s";}
           // {
-            ExecStartPre = "${pkgs.writeShellScript "awww-check-wayland" ''
-              if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
-                echo "awww-daemon: WAYLAND_DISPLAY not set, compositor not ready"
-                exit 1
-              fi
-            ''}";
+            ExecStartPre = let
+              checkWayland = pkgs.writeShellApplication {
+                name = "awww-check-wayland";
+                text = ''
+                  if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
+                    echo "awww-daemon: WAYLAND_DISPLAY not set, compositor not ready"
+                    exit 1
+                  fi
+                '';
+              };
+            in "${checkWayland}/bin/awww-check-wayland";
             ExecStart = "${pkgs.awww}/bin/awww-daemon";
           };
         Install.WantedBy = ["graphical-session.target"];
@@ -471,11 +476,15 @@ in {
         Service =
           sd.serviceDefaultsUser {}
           // {
-            ExecStart = "${pkgs.swayidle}/bin/swayidle -w timeout 43200 ${
-              pkgs.writeShellScript "swayidle-suspend" ''
-                ${pkgs.systemd}/bin/systemctl suspend
-              ''
-            } before-sleep ${pkgs.swaylock}/bin/swaylock";
+            ExecStart = let
+              swayidleSuspend = pkgs.writeShellApplication {
+                name = "swayidle-suspend";
+                runtimeInputs = [pkgs.systemd];
+                text = ''
+                  systemctl suspend
+                '';
+              };
+            in "${pkgs.swayidle}/bin/swayidle -w timeout 43200 ${swayidleSuspend}/bin/swayidle-suspend before-sleep ${pkgs.swaylock}/bin/swaylock";
             TimeoutStartSec = "10s";
           };
         Install.WantedBy = ["graphical-session.target"];

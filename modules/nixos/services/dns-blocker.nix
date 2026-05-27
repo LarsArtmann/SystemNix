@@ -251,14 +251,18 @@ _: {
           };
 
           serviceConfig = let
-            initScript = pkgs.writeShellScript "dnsblockd-init" ''
-              install -d /var/lib/dnsblockd
-              ${
-                if cfg.tempAllowAll
-                then "printf 'local-zone: \".\" transparent\\n' > /var/lib/dnsblockd/temp-allowlist.conf"
-                else "[ -f /var/lib/dnsblockd/temp-allowlist.conf ] || printf '# dnsblockd temp allowlist\\n' > /var/lib/dnsblockd/temp-allowlist.conf"
-              }
-            '';
+            initScript = pkgs.writeShellApplication {
+              name = "dnsblockd-init";
+              runtimeInputs = [pkgs.coreutils];
+              text = ''
+                install -d /var/lib/dnsblockd
+                ${
+                  if cfg.tempAllowAll
+                  then ''printf 'local-zone: "." transparent\n' > /var/lib/dnsblockd/temp-allowlist.conf''
+                  else "[ -f /var/lib/dnsblockd/temp-allowlist.conf ] || printf '# dnsblockd temp allowlist\\n' > /var/lib/dnsblockd/temp-allowlist.conf"
+                }
+              '';
+            };
             caCert = config.sops.secrets.dnsblockd_ca_cert.path;
             caKey = config.sops.secrets.dnsblockd_ca_key.path;
             dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
@@ -278,22 +282,24 @@ _: {
               }
               + lib.optionalString (cfg.categories != {}) "\ncategories_file: ${categoriesJSON}"
             );
-            dnsblockdWrapper = pkgs.writeShellScript "dnsblockd-start" ''
-              set -euo pipefail
+            dnsblockdWrapper = pkgs.writeShellApplication {
+              name = "dnsblockd-start";
+              runtimeInputs = [pkgs.coreutils pkgs.dnsblockd];
+              text = ''
+                for i in $(seq 1 60); do
+                  if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
+                    break
+                  fi
+                  if [ "$i" -eq 60 ]; then
+                    echo "ERROR: sops secrets not available after 60s" >&2
+                    exit 1
+                  fi
+                  sleep 1
+                done
 
-              for i in $(${pkgs.coreutils}/bin/seq 1 60); do
-                if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
-                  break
-                fi
-                if [ "$i" -eq 60 ]; then
-                  echo "ERROR: sops secrets not available after 60s" >&2
-                  exit 1
-                fi
-                sleep 1
-              done
-
-              exec ${pkgs.dnsblockd}/bin/dnsblockd serve -c ${dnsblockdConfigFile}
-            '';
+                exec dnsblockd serve -c ${dnsblockdConfigFile}
+              '';
+            };
           in
             harden {
               ProtectSystem = "strict";
@@ -303,8 +309,8 @@ _: {
             // serviceDefaults {RestartSec = "3s";}
             // {
               Type = "simple";
-              ExecStartPre = "+-${initScript}";
-              ExecStart = "${dnsblockdWrapper}";
+              ExecStartPre = "+-${initScript}/bin/dnsblockd-init";
+              ExecStart = "${dnsblockdWrapper}/bin/dnsblockd-start";
               StateDirectory = "dnsblockd";
               SupplementaryGroups = ["unbound"];
               RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];

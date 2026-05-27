@@ -152,15 +152,20 @@ in {
         };
         Service = {
           Type = "oneshot";
-          ExecStart = "${pkgs.writeShellScript "taskwarrior-backup" ''
-            set -euo pipefail
-            BACKUP_DIR="$HOME/backups/taskwarrior"
-            mkdir -p "$BACKUP_DIR"
-            STAMP="$(${pkgs.coreutils}/bin/date '+%Y-%m-%d_%H-%M-%S')"
-            ${pkgs.taskwarrior3}/bin/task export > "$BACKUP_DIR/tasks-$STAMP.json"
-            ${pkgs.findutils}/bin/find "$BACKUP_DIR" -name "tasks-*.json" -mtime +30 -delete
-            echo "taskwarrior-backup: exported to tasks-$STAMP.json"
-          ''}";
+          ExecStart = let
+            taskwarriorBackup = pkgs.writeShellApplication {
+              name = "taskwarrior-backup";
+              runtimeInputs = [pkgs.taskwarrior3 pkgs.coreutils pkgs.findutils];
+              text = ''
+                BACKUP_DIR="$HOME/backups/taskwarrior"
+                mkdir -p "$BACKUP_DIR"
+                STAMP="$(date '+%Y-%m-%d_%H-%M-%S')"
+                task export > "$BACKUP_DIR/tasks-$STAMP.json"
+                find "$BACKUP_DIR" -name "tasks-*.json" -mtime +30 -delete
+                echo "taskwarrior-backup: exported to tasks-$STAMP.json"
+              '';
+            };
+          in "${taskwarriorBackup}/bin/taskwarrior-backup";
         };
       };
       taskwarrior-backup-failure = {

@@ -374,51 +374,53 @@ in {
             inherit onFailure;
             serviceConfig = {
               Type = "oneshot";
-              ExecStart = pkgs.writeShellApplication {
-                name = "amdgpu-metrics";
-                runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
-                text = ''
-                  OUT="/var/lib/prometheus-node-exporter/textfile_collectors/amdgpu.prom"
-                  TMP="''${OUT}.tmp"
+              ExecStart = let
+                amdgpuMetrics = pkgs.writeShellApplication {
+                  name = "amdgpu-metrics";
+                  runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk];
+                  text = ''
+                    OUT="/var/lib/prometheus-node-exporter/textfile_collectors/amdgpu.prom"
+                    TMP="''${OUT}.tmp"
 
-                  {
-                    for card in /sys/class/drm/card*/device/gpu_busy_percent; do
-                      if [ -f "$card" ]; then
-                        pct=$(cat "$card" | tr -d '%\n')
-                        card_name=$(echo "$card" | grep -oP 'card\d+')
-                        echo "node_amdgpu_gpu_busy_percent{card=\"''${card_name}\"} ''${pct}"
-                      fi
-                    done
+                    {
+                      for card in /sys/class/drm/card*/device/gpu_busy_percent; do
+                        if [ -f "$card" ]; then
+                          pct=$(cat "$card" | tr -d '%\n')
+                          card_name=$(echo "$card" | grep -oP 'card\d+')
+                          echo "node_amdgpu_gpu_busy_percent{card=\"''${card_name}\"} ''${pct}"
+                        fi
+                      done
 
-                    for mem in /sys/class/drm/card*/device/mem_busy_percent; do
-                      if [ -f "$mem" ]; then
-                        pct=$(cat "$mem" | tr -d '%\n')
-                        card_name=$(echo "$mem" | grep -oP 'card\d+')
-                        echo "node_amdgpu_mem_busy_percent{card=\"''${card_name}\"} ''${pct}"
-                      fi
-                    done
+                      for mem in /sys/class/drm/card*/device/mem_busy_percent; do
+                        if [ -f "$mem" ]; then
+                          pct=$(cat "$mem" | tr -d '%\n')
+                          card_name=$(echo "$mem" | grep -oP 'card\d+')
+                          echo "node_amdgpu_mem_busy_percent{card=\"''${card_name}\"} ''${pct}"
+                        fi
+                      done
 
-                    for temp in /sys/class/drm/card*/device/gpu_temp; do
-                      if [ -f "$temp" ]; then
-                        millideg=$(cat "$temp" | tr -d '\n')
-                        card_name=$(echo "$temp" | grep -oP 'card\d+')
-                        echo "node_amdgpu_gpu_temp_celsius{card=\"''${card_name}\"} $(awk "BEGIN{printf \"%.1f\", ''${millideg}/1000}")"
-                      fi
-                    done
+                      for temp in /sys/class/drm/card*/device/gpu_temp; do
+                        if [ -f "$temp" ]; then
+                          millideg=$(cat "$temp" | tr -d '\n')
+                          card_name=$(echo "$temp" | grep -oP 'card\d+')
+                          echo "node_amdgpu_gpu_temp_celsius{card=\"''${card_name}\"} $(awk "BEGIN{printf \"%.1f\", ''${millideg}/1000}")"
+                        fi
+                      done
 
-                    for vram in /sys/class/drm/card*/device/mem_info_vram_total /sys/class/drm/card*/device/mem_info_vram_used; do
-                      if [ -f "$vram" ]; then
-                        bytes=$(cat "$vram" | tr -d '\n')
-                        card_name=$(echo "$vram" | grep -oP 'card\d+')
-                        metric=$(echo "$vram" | awk -F/ '{print $NF}')
-                        echo "node_amdgpu_''${metric}_bytes{card=\"''${card_name}\"} ''${bytes}"
-                      fi
-                    done
-                  } > "$TMP"
+                      for vram in /sys/class/drm/card*/device/mem_info_vram_total /sys/class/drm/card*/device/mem_info_vram_used; do
+                        if [ -f "$vram" ]; then
+                          bytes=$(cat "$vram" | tr -d '\n')
+                          card_name=$(echo "$vram" | grep -oP 'card\d+')
+                          metric=$(echo "$vram" | awk -F/ '{print $NF}')
+                          echo "node_amdgpu_''${metric}_bytes{card=\"''${card_name}\"} ''${bytes}"
+                        fi
+                      done
+                    } > "$TMP"
 
-                  mv "$TMP" "$OUT"
-                '';
-              };
+                    mv "$TMP" "$OUT"
+                  '';
+                };
+              in "${amdgpuMetrics}/bin/amdgpu-metrics";
             };
           };
 
@@ -437,84 +439,86 @@ in {
             serviceConfig =
               {
                 Type = "oneshot";
-                ExecStart = pkgs.writeShellApplication {
-                  name = "nvme-metrics";
-                  runtimeInputs = [pkgs.nvme-cli pkgs.coreutils pkgs.gnugrep];
-                  text = ''
-                    OUT="/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom"
-                    TMP="''${OUT}.tmp"
-                    DEVICE="/dev/nvme0n1"
+                ExecStart = let
+                  nvmeMetrics = pkgs.writeShellApplication {
+                    name = "nvme-metrics";
+                    runtimeInputs = [pkgs.nvme-cli pkgs.coreutils pkgs.gnugrep];
+                    text = ''
+                      OUT="/var/lib/prometheus-node-exporter/textfile_collectors/nvme.prom"
+                      TMP="''${OUT}.tmp"
+                      DEVICE="/dev/nvme0n1"
 
-                    if ! command -v nvme &>/dev/null; then
-                      echo "nvme-cli not found, skipping" >&2
-                      exit 0
-                    fi
+                      if ! command -v nvme &>/dev/null; then
+                        echo "nvme-cli not found, skipping" >&2
+                        exit 0
+                      fi
 
-                    SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || {
-                      echo "Failed to read SMART log from $DEVICE" >&2
-                      exit 1
-                    }
+                      SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || {
+                        echo "Failed to read SMART log from $DEVICE" >&2
+                        exit 1
+                      }
 
-                    DEV_NAME=$(basename "$DEVICE")
+                      DEV_NAME=$(basename "$DEVICE")
 
-                    extract() {
-                      local key="$1"
-                      local val
-                      val=$(echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+") && echo "$val" || echo "0"
-                    }
+                      extract() {
+                        local key="$1"
+                        local val
+                        val=$(echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+") && echo "$val" || echo "0"
+                      }
 
-                    TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
-                    TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+                      TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
+                      TEMP_CELSIUS=$((TEMP_KELVIN - 273))
 
-                    {
-                      echo "# HELP node_nvme_temperature_celsius NVMe SSD temperature in Celsius"
-                      echo "# TYPE node_nvme_temperature_celsius gauge"
-                      echo "node_nvme_temperature_celsius{device=\"''${DEV_NAME}\"} ''${TEMP_CELSIUS}"
+                      {
+                        echo "# HELP node_nvme_temperature_celsius NVMe SSD temperature in Celsius"
+                        echo "# TYPE node_nvme_temperature_celsius gauge"
+                        echo "node_nvme_temperature_celsius{device=\"''${DEV_NAME}\"} ''${TEMP_CELSIUS}"
 
-                      echo "# HELP node_nvme_critical_warning NVMe critical warning flags (0 = none)"
-                      echo "# TYPE node_nvme_critical_warning gauge"
-                      echo "node_nvme_critical_warning{device=\"''${DEV_NAME}\"} $(extract critical_warning)"
+                        echo "# HELP node_nvme_critical_warning NVMe critical warning flags (0 = none)"
+                        echo "# TYPE node_nvme_critical_warning gauge"
+                        echo "node_nvme_critical_warning{device=\"''${DEV_NAME}\"} $(extract critical_warning)"
 
-                      echo "# HELP node_nvme_available_spare_percent NVMe available spare as percentage"
-                      echo "# TYPE node_nvme_available_spare_percent gauge"
-                      echo "node_nvme_available_spare_percent{device=\"''${DEV_NAME}\"} $(extract available_spare)"
+                        echo "# HELP node_nvme_available_spare_percent NVMe available spare as percentage"
+                        echo "# TYPE node_nvme_available_spare_percent gauge"
+                        echo "node_nvme_available_spare_percent{device=\"''${DEV_NAME}\"} $(extract available_spare)"
 
-                      echo "# HELP node_nvme_percentage_used NVMe endurance used percentage (0-100, 100 = worn out)"
-                      echo "# TYPE node_nvme_percentage_used gauge"
-                      echo "node_nvme_percentage_used{device=\"''${DEV_NAME}\"} $(extract percentage_used)"
+                        echo "# HELP node_nvme_percentage_used NVMe endurance used percentage (0-100, 100 = worn out)"
+                        echo "# TYPE node_nvme_percentage_used gauge"
+                        echo "node_nvme_percentage_used{device=\"''${DEV_NAME}\"} $(extract percentage_used)"
 
-                      echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 512 bytes)"
-                      echo "# TYPE node_nvme_data_units_read_total counter"
-                      echo "node_nvme_data_units_read_total{device=\"''${DEV_NAME}\"} $(extract data_units_read)"
+                        echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 512 bytes)"
+                        echo "# TYPE node_nvme_data_units_read_total counter"
+                        echo "node_nvme_data_units_read_total{device=\"''${DEV_NAME}\"} $(extract data_units_read)"
 
-                      echo "# HELP node_nvme_data_units_written_total NVMe data units written (1 unit = 512 bytes)"
-                      echo "# TYPE node_nvme_data_units_written_total counter"
-                      echo "node_nvme_data_units_written_total{device=\"''${DEV_NAME}\"} $(extract data_units_written)"
+                        echo "# HELP node_nvme_data_units_written_total NVMe data units written (1 unit = 512 bytes)"
+                        echo "# TYPE node_nvme_data_units_written_total counter"
+                        echo "node_nvme_data_units_written_total{device=\"''${DEV_NAME}\"} $(extract data_units_written)"
 
-                      echo "# HELP node_nvme_power_cycles_total NVMe power cycle count"
-                      echo "# TYPE node_nvme_power_cycles_total counter"
-                      echo "node_nvme_power_cycles_total{device=\"''${DEV_NAME}\"} $(extract power_cycles)"
+                        echo "# HELP node_nvme_power_cycles_total NVMe power cycle count"
+                        echo "# TYPE node_nvme_power_cycles_total counter"
+                        echo "node_nvme_power_cycles_total{device=\"''${DEV_NAME}\"} $(extract power_cycles)"
 
-                      echo "# HELP node_nvme_power_on_hours_total NVMe power-on hours"
-                      echo "# TYPE node_nvme_power_on_hours_total counter"
-                      echo "node_nvme_power_on_hours_total{device=\"''${DEV_NAME}\"} $(extract power_on_hours)"
+                        echo "# HELP node_nvme_power_on_hours_total NVMe power-on hours"
+                        echo "# TYPE node_nvme_power_on_hours_total counter"
+                        echo "node_nvme_power_on_hours_total{device=\"''${DEV_NAME}\"} $(extract power_on_hours)"
 
-                      echo "# HELP node_nvme_unsafe_shutdowns_total NVMe unsafe shutdown count"
-                      echo "# TYPE node_nvme_unsafe_shutdowns_total counter"
-                      echo "node_nvme_unsafe_shutdowns_total{device=\"''${DEV_NAME}\"} $(extract unsafe_shutdowns)"
+                        echo "# HELP node_nvme_unsafe_shutdowns_total NVMe unsafe shutdown count"
+                        echo "# TYPE node_nvme_unsafe_shutdowns_total counter"
+                        echo "node_nvme_unsafe_shutdowns_total{device=\"''${DEV_NAME}\"} $(extract unsafe_shutdowns)"
 
-                      echo "# HELP node_nvme_media_errors_total NVMe media and data integrity errors"
-                      echo "# TYPE node_nvme_media_errors_total counter"
-                      echo "node_nvme_media_errors_total{device=\"''${DEV_NAME}\"} $(extract media_errors)"
+                        echo "# HELP node_nvme_media_errors_total NVMe media and data integrity errors"
+                        echo "# TYPE node_nvme_media_errors_total counter"
+                        echo "node_nvme_media_errors_total{device=\"''${DEV_NAME}\"} $(extract media_errors)"
 
-                      echo "# HELP node_nvme_error_log_entries_total NVMe error log entry count"
-                      echo "# TYPE node_nvme_error_log_entries_total counter"
-                      echo "node_nvme_error_log_entries_total{device=\"''${DEV_NAME}\"} $(extract num_err_log_entries)"
-                    } > "$TMP"
+                        echo "# HELP node_nvme_error_log_entries_total NVMe error log entry count"
+                        echo "# TYPE node_nvme_error_log_entries_total counter"
+                        echo "node_nvme_error_log_entries_total{device=\"''${DEV_NAME}\"} $(extract num_err_log_entries)"
+                      } > "$TMP"
 
-                    mv "$TMP" "$OUT"
-                  '';
-                };
+                      mv "$TMP" "$OUT"
+                    '';
+                  };
+                in "${nvmeMetrics}/bin/nvme-metrics";
               }
               // harden {
                 CapabilityBoundingSet = "CAP_SYS_ADMIN";

@@ -538,7 +538,7 @@ _: {
 
             databaseUrl = lib.mkOption {
               type = lib.types.str;
-              default = "sqlite:${cfg.home}/server/monitor365.db";
+              default = "sqlite://${cfg.home}/server/monitor365.db";
               description = "Database connection URL";
             };
 
@@ -635,20 +635,24 @@ _: {
               // {
                 Type = "simple";
                 ExecStartPre = let
-                  injectAuth = pkgs.writeShellScript "monitor365-inject-auth" ''
-                    CFG_DIR="$XDG_RUNTIME_DIR/monitor365"
-                    mkdir -p "$CFG_DIR"
-                    cp ${agentConfig} "$CFG_DIR/config.toml"
-                    if [ -f "${authTokenFile}" ] && [ -s "${authTokenFile}" ]; then
-                      TOKEN=$(cat "${authTokenFile}")
-                      if grep -q '^\[cloud\]' "$CFG_DIR/config.toml"; then
-                        sed -i "/^\[cloud\]/a auth_token = \"$TOKEN\"" "$CFG_DIR/config.toml"
-                      else
-                        printf '\n[cloud]\nauth_token = "%s"\n' "$TOKEN" >> "$CFG_DIR/config.toml"
+                  injectAuth = pkgs.writeShellApplication {
+                    name = "monitor365-inject-auth";
+                    runtimeInputs = [pkgs.coreutils pkgs.gnused pkgs.gnugrep];
+                    text = ''
+                      CFG_DIR="$XDG_RUNTIME_DIR/monitor365"
+                      mkdir -p "$CFG_DIR"
+                      cp ${agentConfig} "$CFG_DIR/config.toml"
+                      if [ -f "${authTokenFile}" ] && [ -s "${authTokenFile}" ]; then
+                        TOKEN=$(cat "${authTokenFile}")
+                        if grep -q '^\[cloud\]' "$CFG_DIR/config.toml"; then
+                          sed -i "/^\[cloud\]/a auth_token = \"$TOKEN\"" "$CFG_DIR/config.toml"
+                        else
+                          printf '\n[cloud]\nauth_token = "%s"\n' "$TOKEN" >> "$CFG_DIR/config.toml"
+                        fi
                       fi
-                    fi
-                  '';
-                in ["${injectAuth}"];
+                    '';
+                  };
+                in ["${injectAuth}/bin/monitor365-inject-auth"];
                 ExecStart = "${cfg.package}/bin/monitor365 --config \$XDG_RUNTIME_DIR/monitor365/config.toml run";
                 WorkingDirectory = cfg.home;
                 KillMode = "mixed";

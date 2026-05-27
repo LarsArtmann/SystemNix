@@ -12,32 +12,47 @@ _: {
 
     inherit (config.networking.local) lanIP gateway;
 
-    routeHealthScript = pkgs.writeShellScript "route-health-monitor" (builtins.readFile ../../../scripts/route-health-monitor.sh);
-    mptcpEndpointScript = pkgs.writeShellScript "mptcp-endpoint-manager" (builtins.readFile ../../../scripts/mptcp-endpoint-manager.sh);
+    routeHealthScript = pkgs.writeShellApplication {
+      name = "route-health-monitor";
+      runtimeInputs = [pkgs.iproute2 pkgs.networkmanager pkgs.curl pkgs.util-linux];
+      text = builtins.readFile ../../../scripts/route-health-monitor.sh;
+    };
 
-    mptcpizeWrapper = pkgs.writeShellScriptBin "mptcpize-run" ''
-      exec ${pkgs.mptcpd}/bin/mptcpize run "$@"
-    '';
+    mptcpEndpointScript = pkgs.writeShellApplication {
+      name = "mptcp-endpoint-manager";
+      runtimeInputs = [pkgs.iproute2 pkgs.networkmanager pkgs.util-linux];
+      text = builtins.readFile ../../../scripts/mptcp-endpoint-manager.sh;
+    };
 
-    # NM dispatcher script for instant MPTCP endpoint management on WiFi events
-    mptcpDispatcher = pkgs.writeShellScript "mptcp-nm-dispatcher" ''
-      export PATH="${pkgs.iproute2}/bin:${pkgs.networkmanager}/bin:$PATH"
-      IFACE="$1"
-      ACTION="$2"
+    mptcpizeWrapper = pkgs.writeShellApplication {
+      name = "mptcpize-run";
+      runtimeInputs = [pkgs.mptcpd];
+      text = ''
+        exec mptcpize run "$@"
+      '';
+    };
 
-      case "$ACTION" in
-        up)
-          if echo "$IFACE" | grep -qE '^wl|^wlan'; then
-            ${mptcpEndpointScript} wifi-up
-          fi
-          ;;
-        down)
-          if echo "$IFACE" | grep -qE '^wl|^wlan'; then
-            ${mptcpEndpointScript} wifi-down
-          fi
-          ;;
-      esac
-    '';
+    mptcpDispatcher = pkgs.writeShellApplication {
+      name = "mptcp-nm-dispatcher";
+      runtimeInputs = [pkgs.iproute2 pkgs.networkmanager pkgs.gnugrep];
+      text = ''
+        IFACE="$1"
+        ACTION="$2"
+
+        case "$ACTION" in
+          up)
+            if echo "$IFACE" | grep -qE '^wl|^wlan'; then
+              ${mptcpEndpointScript}/bin/mptcp-endpoint-manager wifi-up
+            fi
+            ;;
+          down)
+            if echo "$IFACE" | grep -qE '^wl|^wlan'; then
+              ${mptcpEndpointScript}/bin/mptcp-endpoint-manager wifi-down
+            fi
+            ;;
+        esac
+      '';
+    };
   in {
     options.services.dual-wan = {
       enable = mkEnableOption "Dual-WAN ECMP failover with MPTCP packet-level redundancy";
@@ -107,7 +122,7 @@ _: {
 
       networking.networkmanager.dispatcherScripts = [
         {
-          source = mptcpDispatcher;
+          source = "${mptcpDispatcher}/bin/mptcp-nm-dispatcher";
           type = "basic";
         }
       ];
@@ -119,11 +134,6 @@ _: {
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
-            path = [
-              pkgs.iproute2
-              pkgs.networkmanager
-              pkgs.util-linux
-            ];
             serviceConfig =
               {
                 Type = "oneshot";
@@ -133,7 +143,7 @@ _: {
                   "ENO1_IF=${cfg.ethernetInterface}"
                   "WIFI_IF=${cfg.wifiInterface}"
                 ];
-                ExecStart = "${mptcpEndpointScript} startup";
+                ExecStart = "${mptcpEndpointScript}/bin/mptcp-endpoint-manager startup";
               }
               // harden {
                 ProtectHome = false;
@@ -148,12 +158,6 @@ _: {
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
-            path = [
-              pkgs.curl
-              pkgs.iproute2
-              pkgs.networkmanager
-              pkgs.util-linux
-            ];
             serviceConfig =
               {
                 Type = "simple";
@@ -165,7 +169,7 @@ _: {
                   "FAILOVER_THRESHOLD=${toString cfg.failoverThreshold}"
                   "FAILBACK_THRESHOLD=${toString cfg.failbackThreshold}"
                 ];
-                ExecStart = routeHealthScript;
+                ExecStart = lib.getExe routeHealthScript;
               }
               // harden {
                 ProtectHome = false;

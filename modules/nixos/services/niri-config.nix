@@ -115,28 +115,30 @@ _: {
             serviceConfig =
               {
                 Type = "oneshot";
-                ExecStart = pkgs.writeShellApplication {
-                  name = "niri-health-metrics";
-                  runtimeInputs = [pkgs.procps pkgs.systemd pkgs.gawk];
-                  text = ''
-                    OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
-                    TMP="''${OUT}.tmp"
-                    TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
-                    mkdir -p "$TEXTFILE_DIR"
+                ExecStart = let
+                  healthMetricsScript = pkgs.writeShellApplication {
+                    name = "niri-health-metrics";
+                    runtimeInputs = [pkgs.procps pkgs.systemd pkgs.gawk];
+                    text = ''
+                      OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
+                      TMP="''${OUT}.tmp"
+                      TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
+                      mkdir -p "$TEXTFILE_DIR"
 
-                    running=$(pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-                    restarts=$(journalctl _SYSTEMD_USER_UNIT=niri.service --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
-                    drm_errors=$(journalctl _SYSTEMD_USER_UNIT=niri.service --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
+                      running=$(pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
+                      restarts=$(journalctl _SYSTEMD_USER_UNIT=niri.service --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
+                      drm_errors=$(journalctl _SYSTEMD_USER_UNIT=niri.service --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
 
-                    {
-                      echo "niri_running $running"
-                      echo "niri_restarts_10m $restarts"
-                      echo "niri_drm_errors_30s $drm_errors"
-                    } > "$TMP"
+                      {
+                        echo "niri_running $running"
+                        echo "niri_restarts_10m $restarts"
+                        echo "niri_drm_errors_30s $drm_errors"
+                      } > "$TMP"
 
-                    mv "$TMP" "$OUT"
-                  '';
-                };
+                      mv "$TMP" "$OUT"
+                    '';
+                  };
+                in "${healthMetricsScript}/bin/niri-health-metrics";
               }
               // harden {
                 ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
