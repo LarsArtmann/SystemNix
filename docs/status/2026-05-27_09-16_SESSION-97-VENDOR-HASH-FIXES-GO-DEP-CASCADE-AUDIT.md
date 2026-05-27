@@ -47,21 +47,16 @@ Two Go overlay packages (`library-policy`, `mr-sync`) were broken with `inconsis
 
 ## B) Partially Done
 
-### 1. projects-management-automation — BROKEN 🔴 (Pre-existing, BLOCKED)
+### 1. projects-management-automation — STILL BROKEN 🔴 (Architecture issue)
 
-- **Error:** `go: ... does not contain package github.com/larsartmann/go-composable-business-types/programminglanguage`
-- **Root cause chain:**
-  1. `project-discovery-sdk/detection` imports `go-composable-business-types/programminglanguage`
-  2. `programminglanguage` package was **deleted** from `go-composable-business-types` in commit `c9bda50` ("refactor: remove programminglanguage package in favor of go-enry recommendation")
-  3. `project-discovery-sdk` was never updated to remove the import
-  4. Additionally: `project-discovery-sdk` has sub-modules (`detection`, `discovery`, `mr`) not declared in PMA's `subModules` → HTTPS fallback in sandbox fails
-- **Fix required (in order):**
-  1. Update `project-discovery-sdk/detection` to stop importing the deleted package
-  2. Add `project-discovery-sdk` submodules to PMA's `subModules`
-  3. Remove `overrideModAttrs` anti-pattern from PMA
-  4. Update PMA vendorHash
-- **Status:** BLOCKED on `project-discovery-sdk` update — not actionable in SystemNix
-- **Impact:** PMA overlay is dead in SystemNix; any `just switch` that includes it will fail
+- **Error:** `go: inconsistent vendoring` — submodules in vendor/ but not in go.mod
+- **Root cause:** `mkPreparedSource` adds `replace` directives for `project-discovery-sdk/detection`, `project-discovery-sdk/discovery`, `go-output/delimited`, `go-output/markup`, `go-output/serialization`. The go-modules derivation (with `overrideModAttrs` + `go mod tidy`) produces vendor/ containing these submodules. The main build's go.mod doesn't explicitly require them → inconsistency.
+- **Why it can't be fixed locally:** The submodules have no git tags on GitHub. Adding explicit `require` lines causes `go mod tidy` to fail locally (can't fetch `detection/v0.0.0`). The only way to make them work is via `replace` directives (which mkPreparedSource provides) + `go mod tidy` (which `overrideModAttrs` provides).
+- **Fix options (future):**
+  1. Publish git tags for submodules (`detection/v0.0.0`, `discovery/v0.0.0`, etc.)
+  2. Redesign `mkPreparedSource` to produce a go.mod that doesn't need `go mod tidy`
+  3. Use `proxyVendor = true` in PMA's buildGoModule (may avoid vendor consistency check)
+- **Workaround:** PMA overlay is dead but `library-policy` and `mr-sync` build fine
 
 ---
 
