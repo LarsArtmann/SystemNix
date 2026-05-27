@@ -366,7 +366,7 @@ in {
 
         systemd = {
           tmpfiles.rules = [
-            (mkStateDir "/var/lib/prometheus-node-exporter/textfile_collectors" "0755" "nobody" "nogroup")
+            (mkStateDir "/var/lib/prometheus-node-exporter/textfile_collectors" "1777" "nobody" "nogroup")
           ];
 
           services.amdgpu-metrics = {
