@@ -202,11 +202,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779861288,
-        "narHash": "sha256-XH/9TCyHdlQmCMu1gI/T7ok6/49mBzy4KgpFwHqDEoo=",
+        "lastModified": 1779873381,
+        "narHash": "sha256-4gRFu+BqwysKdX/QRynZtbw2gRbmHNUIyJLD31sSR4Q=",
         "ref": "master",
-        "rev": "fc013a809a24e4873a35b3a533934d8a6b106714",
-        "revCount": 215,
+        "rev": "db8644e8e7544831082ffb00f8b94e7f27f51071",
+        "revCount": 220,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/emeet-pixyd"
       },
@@ -1219,11 +1219,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779868891,
-        "narHash": "sha256-VJr9Q/3IdFxP1XtRcSxKsuRoCE2E7oLRDb9ZTxa4xus=",
+        "lastModified": 1779871647,
+        "narHash": "sha256-F4RZKl07z3M1ifsU0Nsge+tlcvPELKvCfKJw8YRcMFg=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "dc02274045f3b04103b82e6c2d50902a5d7f3fdc",
+        "rev": "f338e307a542f4cbbaa1a66c0fc54a5b0e9269d4",
         "type": "github"
       },
       "original": {
@@ -1258,11 +1258,11 @@
     "project-discovery-sdk": {
       "flake": false,
       "locked": {
-        "lastModified": 1779869527,
-        "narHash": "sha256-hTRDZzSR7rAW8TOcpX02+hqSU89RS3/64gWKvhY0eOo=",
+        "lastModified": 1779872333,
+        "narHash": "sha256-9H6V7kUZI+V/EhL6hAMg/uokVz5XBUsB5Dj00JL/RNQ=",
         "ref": "master",
-        "rev": "e6a1652a86ddc3f6a83930d822ac716e823e97de",
-        "revCount": 198,
+        "rev": "d695e8d770e4b78cfeadc76469190f16073fdb00",
+        "revCount": 199,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
@@ -1328,11 +1328,11 @@
         "project-meta": "project-meta"
       },
       "locked": {
-        "lastModified": 1779871120,
-        "narHash": "sha256-DEa1u0egLIeIVQbTqYp2ozo7DdAA6rNDSzQ6MqSvc3s=",
+        "lastModified": 1779874090,
+        "narHash": "sha256-bCdsziD/ab+7z1i85BPQfSNVfCqPNrPs54LxOGQvBDs=",
         "ref": "master",
-        "rev": "647cb07c583c8bc76133fcc1791a2cfc696568aa",
-        "revCount": 2690,
+        "rev": "4e6756f48175a115b154ca814867e5c1c0a9b628",
+        "revCount": 2696,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
