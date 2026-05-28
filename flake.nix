@@ -377,44 +377,22 @@
     inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
 
     # Auto-discover service modules from modules/nixos/services/
-    # Convention: filename must match the declared nixosModule name (e.g., forgejo.nix → nixosModules.forgejo)
-    # Files without `flake.nixosModules.<name>` (like signoz-alerts.nix helper) are skipped
+    # Convention: filename (minus .nix) IS the module name.
+    # Non-module files must start with _ (e.g., _signoz-alerts.nix).
+    # Non-.nix files and directories are ignored automatically.
     serviceDir = ./modules/nixos/services;
     serviceDirContents = builtins.readDir serviceDir;
-    serviceFiles = lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n) serviceDirContents;
-
-    getServiceModuleName = file: let
-      content = builtins.readFile (serviceDir + "/${file}");
-      lines = lib.strings.splitString "\n" content;
-      moduleLine = lib.findFirst (line: lib.strings.hasInfix "flake.nixosModules." line) null lines;
-    in
-      if moduleLine == null
-      then null
-      else let
-        match = builtins.match ''.*flake[.]nixosModules[.]([a-zA-Z0-9_-]+).*'' moduleLine;
-      in
-        if match != null
-        then builtins.head match
-        else null;
-
-    serviceModules = lib.filter (sm: sm != null) (
-      lib.mapAttrsToList (
-        file: _: let
-          moduleName = getServiceModuleName file;
-          expectedName = lib.removeSuffix ".nix" file;
-        in
-          if moduleName == null
-          then null
-          else
-            assert lib.assertMsg
-            (moduleName == expectedName)
-            "Service module ${file} declares nixosModules.${moduleName} but filename implies ${expectedName}. Rename the file or fix the module name."; {
-              path = serviceDir + "/${file}";
-              module = moduleName;
-            }
-      )
-      serviceFiles
-    );
+    serviceModules =
+      lib.mapAttrsToList
+      (file: _: {
+        path = serviceDir + "/${file}";
+        module = lib.removeSuffix ".nix" file;
+      })
+      (
+        lib.filterAttrs
+        (n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n))
+        serviceDirContents
+      );
 
     serviceModulePaths = map (sm: sm.path) serviceModules;
 

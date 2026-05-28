@@ -44,8 +44,8 @@ Two machines:
 ### Adding a Service
 
 1. Create `modules/nixos/services/<name>.nix` as a flake-parts module
-2. **Convention:** filename must match the declared `flake.nixosModules.<name>` (e.g., `forgejo.nix` → `nixosModules.forgejo`). The flake auto-discovers all modules — no manual list to update.
-3. Non-module helpers (like `signoz-alerts.nix`) that don't declare `nixosModules.*` are automatically skipped
+2. **Convention:** filename (minus `.nix`) IS the module name. The flake auto-discovers all `.nix` files in the directory — no manual list to update, no file parsing.
+3. Non-module helpers must be prefixed with `_` (e.g., `_signoz-alerts.nix`) — automatically skipped
 4. Enable in `platforms/nixos/system/configuration.nix`
 5. If behind Caddy, define a `port` option and reference it in `caddy.nix` — never hardcode ports
 
@@ -275,7 +275,7 @@ reboot
 | `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
 | `mkPackageOverlay` platform safety | Returns empty overlay on unsupported systems — Linux-only packages in `shared.nix` won't break Darwin eval |
 | `mkPreparedSource` auto-features | Auto-strips local `=> /home/...` replaces, auto-normalizes sub-module pseudo-versions, auto-generates `replace` directives. Use `requireDeps` for missing sub-module requires |
-| `serviceModules` auto-discovery | `flake.nix` auto-discovers modules from `modules/nixos/services/*.nix` by parsing `flake.nixosModules.<name>`. Filename must match module name. Non-module files (no `nixosModules.*` declaration) are skipped |
+| `serviceModules` auto-discovery | `flake.nix` auto-discovers all `.nix` files in `modules/nixos/services/`. Filename = module name. Helper files must use `_` prefix to be skipped. No file reading or regex parsing |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
 | SigNoz build time | Built from source (Go 1.25); takes significant time |
 | `/data` BTRFS toplevel | Mounted without `subvol=` (subvolid=5) — cannot be snapshotted. Run `just snapshot-migrate-data` to convert to `@data` |

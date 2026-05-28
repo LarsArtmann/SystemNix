@@ -97,7 +97,7 @@ in {
     cfg = config.services.signoz;
     packages = mkPackages pkgs;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes onFailure mkStateDir;
-    alerts = import ./signoz-alerts.nix {inherit pkgs lib inputs;};
+    alerts = import ./_signoz-alerts.nix {inherit pkgs lib inputs;};
   in {
     options.services.signoz = {
       enable = lib.mkEnableOption "SigNoz observability platform";
