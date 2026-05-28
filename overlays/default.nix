@@ -1,12 +1,16 @@
 inputs @ {nur, ...}: let
   mkPackageOverlay = input: name: overrides: _final: prev: let
-    pkg = input.packages.${prev.stdenv.system}.default;
-  in {
-    ${name} =
-      if overrides == {}
-      then pkg
-      else pkg.overrideAttrs overrides;
-  };
+    systemPkgs = input.packages.${prev.stdenv.system} or {};
+    pkg = systemPkgs.default or null;
+  in
+    if pkg == null
+    then {}
+    else {
+      ${name} =
+        if overrides == {}
+        then pkg
+        else pkg.overrideAttrs overrides;
+    };
 
   shared = import ./shared.nix (inputs // {inherit mkPackageOverlay;});
   linux = import ./linux.nix (inputs // {inherit mkPackageOverlay;});

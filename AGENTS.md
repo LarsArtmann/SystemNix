@@ -55,11 +55,16 @@ All private LarsArtmann repos use `git+ssh://` URLs. No `path:` inputs.
 
 **`mkPackageOverlay`** (from `overlays/default.nix`) — use for ALL flake-input overlays:
 ```nix
-mkPackageOverlay = input: name: overrides:
-  _final: prev: let pkg = input.packages.${prev.stdenv.system}.default; in {
+mkPackageOverlay = input: name: overrides: _final: prev: let
+  systemPkgs = input.packages.${prev.stdenv.system} or {};
+  pkg = systemPkgs.default or null;
+in
+  if pkg == null then {} else {
     ${name} = if overrides == {} then pkg else pkg.overrideAttrs overrides;
   };
 ```
+
+Platform-safe: returns empty overlay `{}` when the input doesn't provide a package for the current system (e.g., Linux-only packages evaluated on Darwin). No need to split overlays by platform manually.
 
 Overlay makes packages available as `pkgs.<name>` but does **not** install them. Also add to `home.packages` in `platforms/common/packages/base.nix` for PATH access.
 
@@ -81,6 +86,14 @@ mkPreparedSource = import (go-nix-helpers + "/mkPreparedSource.nix") {
   goPkg = pkgs.go_1_26;
 };
 ```
+
+**Auto-features (no manual sed needed):**
+- `subModules` auto-generates both `require` and `replace` directives for each sub-module
+- `stripLocalReplaces` (default `true`) auto-strips stale `replace X => /home/...` directives
+- `subModuleVersionNormalize` auto-normalizes pseudo-versions (`v0.0.0-20240101...`) to `v0.0.0`
+- `subModuleVersion` (default `"v0.0.0"`) sets the version for auto-generated require lines
+
+**Only use `postPatchExtra` for repo-specific patches** (e.g., removing incompatible versions, patching sub-module go.mod files). The common patterns (local replace stripping, sub-module require injection, version normalization) are handled automatically.
 
 When upstream deps change, set `vendorHash = ""`, build, and paste the `got:` hash.
 
@@ -260,6 +273,8 @@ reboot
 | otel-tui Darwin | Never add — 40+ min builds + disk exhaustion |
 | Darwin disk | 229 GB, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
 | `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
+| `mkPackageOverlay` platform safety | Returns empty overlay on unsupported systems — Linux-only packages in `shared.nix` won't break Darwin eval |
+| `mkPreparedSource` auto-features | Auto-strips local `=> /home/...` replaces, auto-generates sub-module require lines, auto-normalizes pseudo-versions. No manual sed needed for common patterns |
 | `serviceModules` auto-discovery | `flake.nix` auto-discovers modules from `modules/nixos/services/*.nix` by parsing `flake.nixosModules.<name>`. Filename must match module name. Non-module files (no `nixosModules.*` declaration) are skipped |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
 | SigNoz build time | Built from source (Go 1.25); takes significant time |

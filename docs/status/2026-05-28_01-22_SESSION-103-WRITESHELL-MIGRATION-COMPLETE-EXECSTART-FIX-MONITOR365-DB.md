@@ -3,6 +3,7 @@
 **Date:** 2026-05-28 01:22 | **Status:** Ready to Commit & Deploy | **Platform:** evo-x2 (NixOS 26.11)
 
 **Updated:** 2026-05-28 — Appendix A: Sessions 104–105 (Gatus, images registry, health check, getExe, ExecStart validation)
+**Updated:** 2026-05-28 — Appendix B: Session 106 (PMA go-output tags, overrideModAttrs removal)
 
 ---
 
@@ -85,8 +86,8 @@
 1. **Move `todo-list-ai` FOD hash upstream** — bun node_modules hash managed in SystemNix instead of upstream repo
 2. **Move `dnsblockd`/`file-and-image-renamer` vendorHash upstream** — hardcoded in `overlays/linux.nix`
 3. ~~**GitHub Actions CI** — no CI exists at all~~ **DONE (Session 104)** — `nix-check.yml` + `flake-update.yml` already exist
-4. **PMA `go.work` version** — `go 1.26.2` vs `go 1.26.3` in submodules
-5. **PMA `overrideModAttrs` anti-pattern** — still present, blocked on git tags for submodules
+4. ~~**PMA `go.work` version** — `go 1.26.2` vs `go 1.26.3` in submodules~~ **DONE (Session 106)** — already at `go 1.26.3`, no change needed
+5. ~~**PMA `overrideModAttrs` anti-pattern** — still present, blocked on git tags for submodules~~ **DONE (Session 106)** — published go-output submodule tags, removed overrideModAttrs, updated vendorHash
 6. **Convert `/data` BTRFS from toplevel to `@data` subvolume** — enables /data snapshots
 7. ~~**Gatus health checks for all services** — only partial coverage~~ **DONE (Session 104)** — added Monitor365 Server TCP check (26 endpoints). Hermes has no HTTP endpoint — not checkable via Gatus.
 8. ~~**Centralize Docker image tags** — scattered across modules~~ **DONE (Session 104)** — created `lib/images.nix` central registry. Pinned Twenty's `postgres:16` → `postgres:16-alpine` and bare `redis` → `redis:7-alpine`.
@@ -141,9 +142,9 @@
 | # | Task | Effort | Impact |
 |---|------|--------|--------|
 | 6 | Move `todo-list-ai` bun FOD hash management to upstream repo | 30 min | Eliminates most fragile hash in SystemNix |
-| 7 | Fix PMA go.work: `go 1.26.2` → `go 1.26.3` | 2 min | Unblocks local golangci-lint |
-| 8 | Publish git tags for go-output submodules (9 tags) | 10 min | Enables PMA overrideModAttrs removal |
-| 9 | Remove PMA `overrideModAttrs` after tags exist | 15 min | Eliminates anti-pattern |
+| ~~7~~ | ~~Fix PMA go.work: `go 1.26.2` → `go 1.26.3`~~ **DONE (S106)** — already at 1.26.3 | — | — |
+~~8~~ | ~~Publish git tags for go-output submodules (9 tags)~~ **DONE (S106)** — 10 tags moved to HEAD | — | — |
+~~9~~ | ~~Remove PMA `overrideModAttrs` after tags exist~~ **DONE (S106)** — removed, vendorHash updated | — | — |
 | 10 | ~~Add GitHub Actions CI~~ **DONE** — `nix-check.yml` + `flake-update.yml` already exist | — | — |
 | ~~11~~ | ~~Auto-generate `service-health-check` service list~~ **DONE (S104)** | — | — |
 | ~~12~~ | ~~Add NixOS VM test for ExecStart path correctness~~ **DONE (S105)** — `just test-exec-paths` | — | — |
@@ -241,8 +242,8 @@
 |------|-----|
 | #1 todo-list-ai FOD | Upstream repo change needed |
 | #2 vendorHash upstream | Upstream repo change needed |
-| #4 PMA go.work | Upstream repo change needed |
-| #5 PMA overrideModAttrs | Upstream repo change needed |
+| ~~#4 PMA go.work~~ | **DONE (S106)** — already at 1.26.3 |
+| ~~#5 PMA overrideModAttrs~~ | **DONE (S106)** — tags published, overrideModAttrs removed |
 | #6 BTRFS /data migration | Dangerous, needs `just snapshot-migrate-data` + reboot on evo-x2 |
 | #11 Deploy monitor365 | Needs `just switch` on evo-x2 |
 
