@@ -147,6 +147,8 @@ inherit (import ../../../lib/default.nix lib)
 | `mkDockerServiceFactory { inherit pkgs; }` | Returns `mkDockerService` for Docker Compose systemd wrappers. |
 | `ports.<name>` | Centralized port registry — use for well-known ports. |
 | `images.<name>.ref` | Pinned Docker image references (with optional digest). |
+| `mkSecretCheck pkgs { name = "..."; secretPath = "..."; message = "..."; }` | Pre-start secret validation script generator. Supports `extraCheck` for custom validation. |
+| `mkDesktopNotifyService pkgs { name = "..."; description = "..."; checkScript = "..."; runtimeInputs = [...]; user = "..."; uid = "..."; }` | Generates timer + oneshot service for desktop notifications. Defaults to `harden`; override with `hardenFn` for user services. |
 | `mkHttpCheck { name = "..."; group = "..."; url = "..."; }` | Gatus endpoint definition helper. |
 
 ---
