@@ -26,7 +26,7 @@ _: {
         after = ["network.target"];
         serviceConfig =
           {
-            ExecStart = "${pkgs.homepage-dashboard}/bin/homepage";
+            ExecStart = lib.getExe pkgs.homepage-dashboard;
             WorkingDirectory = stateDir;
             Environment = [
               "PORT=${toString cfg.port}"

@@ -68,8 +68,8 @@ _: {
           harden {}
           // serviceDefaults {}
           // {
-            ExecStartPre = "+${checkCookieSecret}/bin/check-cookie-secret";
-            ExecStartPost = "${pkgs.curl}/bin/curl -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
+            ExecStartPre = "+${lib.getExe checkCookieSecret}";
+            ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
           };
       };
     };

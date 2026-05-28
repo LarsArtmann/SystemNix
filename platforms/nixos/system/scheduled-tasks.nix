@@ -94,7 +94,7 @@ in {
         onFailure = ["notify-failure@%n.service"];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${pkgs.nur.repos.charmbracelet.crush}/bin/crush update-providers";
+          ExecStart = "${lib.getExe pkgs.nur.repos.charmbracelet.crush} update-providers";
           StandardOutput = "journal";
           StandardError = "journal";
         };
@@ -232,7 +232,7 @@ in {
         path = [pkgs.docker];
         serviceConfig = lib.mkForce {
           Type = "oneshot";
-          ExecStart = "${pkgs.docker}/bin/docker system prune -f --filter until=168h";
+          ExecStart = "${lib.getExe pkgs.docker} system prune -f --filter until=168h";
           StandardOutput = "journal";
           StandardError = "journal";
         };

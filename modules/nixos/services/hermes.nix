@@ -213,8 +213,8 @@
             Type = "simple";
             User = cfg.user;
             Group = cfg.group;
-            ExecStartPre = ["+${fixPermissionsScript}/bin/hermes-fix-permissions" "+${migrateScript}/bin/hermes-migrate-state" "${mergeEnvScript}/bin/hermes-merge-env"];
-            ExecStart = "${hermesPkg}/bin/hermes gateway run --replace";
+            ExecStartPre = ["+${lib.getExe fixPermissionsScript}" "+${lib.getExe migrateScript}" "${lib.getExe mergeEnvScript}"];
+            ExecStart = "${lib.getExe' hermesPkg "hermes"} gateway run --replace";
             WorkingDirectory = cfg.stateDir;
             Environment = [
               "HOME=${cfg.stateDir}"

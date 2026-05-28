@@ -507,7 +507,7 @@ _: {
                 config.sops.templates."forgejo-sync.env".path
                 "-${stateDir}/.admin-token.env"
               ];
-              ExecStart = "${mirrorGithubScript}/bin/forgejo-mirror-github";
+              ExecStart = lib.getExe mirrorGithubScript;
             }
             // harden {
               ProtectHome = false;

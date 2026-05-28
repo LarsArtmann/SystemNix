@@ -77,7 +77,7 @@ _: {
               hardenUser {MemoryMax = "256M";}
               // {
                 Type = "oneshot";
-                ExecStart = "${drmHealthcheck}/bin/niri-drm-healthcheck";
+                ExecStart = lib.getExe drmHealthcheck;
               };
           };
 
@@ -100,7 +100,7 @@ _: {
             serviceConfig =
               {
                 Type = "oneshot";
-                ExecStart = "${displayWatchdog}/bin/display-watchdog";
+                ExecStart = lib.getExe displayWatchdog;
                 OOMScoreAdjust = -500;
                 Environment = "PRIMARY_USER=${config.users.primaryUser}";
               }

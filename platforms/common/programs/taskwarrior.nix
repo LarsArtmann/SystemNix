@@ -174,7 +174,7 @@ in {
         };
         Service = {
           Type = "oneshot";
-          ExecStart = "${pkgs.libnotify}/bin/notify-send -u critical 'Taskwarrior backup failed' 'Check systemctl --user status taskwarrior-backup'";
+          ExecStart = "${lib.getExe pkgs.libnotify} -u critical 'Taskwarrior backup failed' 'Check systemctl --user status taskwarrior-backup'";
         };
       };
     };

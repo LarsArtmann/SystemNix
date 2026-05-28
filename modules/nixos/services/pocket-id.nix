@@ -59,8 +59,8 @@ _: {
           serviceDefaults {}
           // harden {MemoryMax = "512M";}
           // {
-            ExecStartPre = "+${checkEncryptionKey}/bin/check-pocket-id-encryption-key";
-            ExecStartPost = "${pkgs.curl}/bin/curl -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
+            ExecStartPre = "+${lib.getExe checkEncryptionKey}";
+            ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
           };
       };
     };

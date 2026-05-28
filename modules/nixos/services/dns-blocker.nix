@@ -309,8 +309,8 @@ _: {
             // serviceDefaults {RestartSec = "3s";}
             // {
               Type = "simple";
-              ExecStartPre = "+-${initScript}/bin/dnsblockd-init";
-              ExecStart = "${dnsblockdWrapper}/bin/dnsblockd-start";
+              ExecStartPre = "+-${lib.getExe initScript}";
+              ExecStart = "${lib.getExe dnsblockdWrapper}";
               StateDirectory = "dnsblockd";
               SupplementaryGroups = ["unbound"];
               RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];

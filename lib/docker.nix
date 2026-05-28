@@ -89,7 +89,7 @@
               serviceConfig = {
                 Type = "oneshot";
                 RemainAfterExit = true;
-                ExecStart = "${pkgs.docker}/bin/docker pull ${imagePull}";
+                ExecStart = "${lib.getExe pkgs.docker} pull ${imagePull}";
                 TimeoutStartSec = 600;
               };
             };

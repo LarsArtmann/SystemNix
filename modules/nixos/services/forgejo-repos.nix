@@ -282,7 +282,7 @@ _: {
               User = cfg.user;
               EnvironmentFile = config.sops.templates."forgejo-sync.env".path;
               ExecStartPre = lib.getExe waitForForgejo;
-              ExecStart = "${ensureReposScript}/bin/forgejo-ensure-repos";
+              ExecStart = lib.getExe ensureReposScript;
             }
             // serviceDefaults {Restart = "on-failure";}
             // harden {

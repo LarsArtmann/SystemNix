@@ -445,8 +445,8 @@ in {
                   fi
                 '';
               };
-            in "${checkWayland}/bin/awww-check-wayland";
-            ExecStart = "${pkgs.awww}/bin/awww-daemon";
+            in lib.getExe checkWayland;
+            ExecStart = "${lib.getExe' pkgs.awww "awww-daemon"}";
           };
         Install.WantedBy = ["graphical-session.target"];
       };
@@ -460,7 +460,7 @@ in {
         Service = {
           Type = "oneshot";
           RemainAfterExit = true;
-          ExecStart = "${wallpaper-set}/bin/wallpaper-set restore";
+          ExecStart = "${lib.getExe wallpaper-set} restore";
         };
         Install.WantedBy = ["graphical-session.target"];
       };
@@ -501,7 +501,7 @@ in {
         Service =
           sd.serviceDefaultsUser {}
           // {
-            ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
+            ExecStart = "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --watch ${lib.getExe pkgs.cliphist} store";
             TimeoutStartSec = "10s";
           };
         Install.WantedBy = ["graphical-session.target"];

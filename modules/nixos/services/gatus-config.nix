@@ -280,7 +280,7 @@ _: {
           }
           // serviceDefaults {Restart = "on-failure";}
           // {
-            ExecStartPre = "+${checkGatusEnv}/bin/check-gatus-env";
+            ExecStartPre = "+${lib.getExe checkGatusEnv}";
           };
       };
     };

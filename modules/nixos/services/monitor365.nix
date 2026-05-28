@@ -652,8 +652,8 @@ _: {
                       fi
                     '';
                   };
-                in ["${injectAuth}/bin/monitor365-inject-auth"];
-                ExecStart = "${cfg.package}/bin/monitor365 --config \$XDG_RUNTIME_DIR/monitor365/config.toml run";
+                in ["${lib.getExe injectAuth}"];
+                ExecStart = "${lib.getExe cfg.package} --config \$XDG_RUNTIME_DIR/monitor365/config.toml run";
                 WorkingDirectory = cfg.home;
                 KillMode = "mixed";
                 TimeoutStopSec = "30";
@@ -689,7 +689,7 @@ _: {
               // hardenUser {MemoryMax = "256M";}
               // {
                 Type = "simple";
-                ExecStart = "${cfg.server.package}/bin/monitor365-server";
+                ExecStart = "${lib.getExe' cfg.server.package "monitor365-server"}";
                 WorkingDirectory = serverStateDir;
                 KillMode = "mixed";
                 TimeoutStopSec = "30";

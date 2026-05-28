@@ -71,7 +71,7 @@ _: {
             // hardenUser {MemoryMax = "512M";}
             // {
               Type = "simple";
-              ExecStart = "${cfg.package}/bin/file-renamer watch";
+              ExecStart = "${lib.getExe' cfg.package "file-renamer"} watch";
               WorkingDirectory = cfg.watchDirectory;
               KillMode = "mixed";
               TimeoutStopSec = "30";

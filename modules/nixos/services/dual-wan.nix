@@ -143,7 +143,7 @@ _: {
                   "ENO1_IF=${cfg.ethernetInterface}"
                   "WIFI_IF=${cfg.wifiInterface}"
                 ];
-                ExecStart = "${mptcpEndpointScript}/bin/mptcp-endpoint-manager startup";
+                ExecStart = "${lib.getExe mptcpEndpointScript} startup";
               }
               // harden {
                 ProtectHome = false;

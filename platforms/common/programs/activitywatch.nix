@@ -30,7 +30,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${pkgs.curl}/bin/curl --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:5600/api/0/settings/theme";
+        ExecStart = "${lib.getExe pkgs.curl} --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:5600/api/0/settings/theme";
         RemainAfterExit = true;
       };
       Install.WantedBy = ["activitywatch.target"];

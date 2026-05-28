@@ -179,7 +179,7 @@ in {
         onFailure = ["crush-update-failure.service"];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${pkgs.nur.repos.charmbracelet.crush}/bin/crush update-providers";
+          ExecStart = "${lib.getExe pkgs.nur.repos.charmbracelet.crush} update-providers";
           StandardOutput = "journal";
           StandardError = "journal";
         };
@@ -188,7 +188,7 @@ in {
         description = "Log crush provider update failure";
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${pkgs.util-linux}/bin/logger -t crush-update-providers -p user.err 'Crush provider update failed — check journalctl -u crush-update-providers'";
+          ExecStart = "${lib.getExe' pkgs.util-linux "logger"} -t crush-update-providers -p user.err 'Crush provider update failed — check journalctl -u crush-update-providers'";
         };
       };
     };
