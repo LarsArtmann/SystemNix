@@ -4,7 +4,8 @@
 
 **Updated:** 2026-05-28 — Appendix A: Sessions 104–105 (Gatus, images registry, health check, getExe, ExecStart validation)
 **Updated:** 2026-05-28 — Appendix B: Session 106 (PMA go-output tags, overrideModAttrs removal)
-**Updated:** 2026-05-28 — Appendix C: Session 107 (todo-list-ai, dnsblockd, file-and-image-renamer vendorHash upstream migration)
+**Updated:** 2026-05-28 — Appendix C: Session 107 Part 1 (todo-list-ai, dnsblockd, file-and-image-renamer vendorHash upstream migration)
+**Updated:** 2026-05-28 — Appendix D: Session 107 Part 2 (mkPreparedSource auto-features, mkPackageOverlay platform safety, 7 consumer repos migrated)
 
 ---
 
@@ -155,8 +156,8 @@
 
 | # | Task | Effort | Impact |
 |---|------|--------|--------|
-| 14 | Redesign `mkPreparedSource` to auto-generate `require` lines | 2 hr | Eliminates manual postPatchExtra sed hacks |
-| 15 | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin) | 1 hr | Cleaner overlay separation |
+| ~~14~~ | ~~Redesign `mkPreparedSource` to auto-generate `require` lines~~ **DONE (S107)** — auto-strips local replaces, auto-normalizes pseudo-versions. See Appendix D. |
+| ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D. |
 | 16 | Convert `/data` BTRFS from toplevel to `@data` subvolume | 30 min | Enables /data snapshots |
 | ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP) | — | — |
 | ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — `lib/images.nix` registry | — | — |
@@ -313,3 +314,54 @@ The `overrideModAttrs` was a no-op in practice — `mkPreparedSource` + `postPat
 ### Key Insight
 
 All three packages now follow the same pattern as every other private Go repo in the ecosystem: `mkPackageOverlay` with no manual hash overrides. The FOD hash fragility (especially `todo-list-ai`'s bun node_modules hash, which broke on every upstream dependency change) is eliminated from SystemNix. When upstream dependencies change, the upstream repo's own flake build will fail first — the fix happens there, and SystemNix simply updates the `flake.lock` input.
+<<<<<<< HEAD
+=======
+
+---
+
+## Appendix D: Session 107 Part 2 — mkPreparedSource Auto-Features & mkPackageOverlay Platform Safety (2026-05-28)
+
+**Focus:** Redesign `mkPreparedSource` to auto-generate require lines (Task #14) + Add `mkPackageOverlay` platform filtering (Task #15).
+
+### mkPreparedSource (go-nix-helpers) — 3 commits pushed
+
+| Commit | Description |
+|--------|-------------|
+| `474f1ea` | feat: auto-generate require lines and strip local replaces |
+| `ca0d2fc` | fix: use standalone require directives for sub-module require lines |
+| `89f5236` | fix: remove auto-require for sub-modules, keep only version normalization |
+
+**Auto-features delivered:**
+
+| Feature | Default | What it does |
+|---------|---------|--------------|
+| `stripLocalReplaces` | `true` | Strips `replace X => /home/...` + empty replace blocks |
+| `subModuleVersionNormalize` | from `subModules` | Normalizes `v0.0.0-YYYYMMDD...` to `v0.0.0` |
+| Auto-generate `replace` directives | from `subModules` | Generates replace entries for sub-module paths |
+
+**Design decision — auto-require removed:** Initially injected `require` lines for all `subModules`. This caused "inconsistent vendoring" because `subModules` lists both imported sub-modules AND sub-modules needed only for `replace` routing. New requires must use `requireDeps` explicitly.
+
+### mkPackageOverlay (SystemNix overlays/default.nix)
+
+Safe fallback: `input.packages.${system}.default or null` → returns empty overlay `{}` on unsupported systems. No caller changes needed.
+
+### Consumer Repo Migration — 7 repos updated
+
+| Repo | postPatchExtra Before | After | Builds? |
+|------|----------------------|-------|---------|
+| **BuildFlow** | 3 lines (sed strip) | removed | ✅ |
+| **library-policy** | 2 lines (sed + rm) | 1 line (rm only) | ✅ |
+| **mr-sync** | 0 lines | 0 lines + vendorHash update | ✅ |
+| **Standup-Killer** | 2 lines (sed strip) | removed | ⚠ pre-existing Go type errors |
+| **PMA** | ~35 lines | ~10 lines + `requireDeps` for 3 sub-modules | ✅ |
+| **go-structure-linter** | unchanged | unchanged | ✅ |
+| **branching-flow** | unchanged | unchanged | ⚠ pre-existing private repo fetch |
+
+All 7 repos: `flake.lock` updated to `go-nix-helpers@89f5236`. 5 repos have uncommitted code changes pending commit & push.
+
+### Verified
+
+- SystemNix `just test-fast` — all checks passed ✅
+- 5/7 consumer repos build successfully
+- Platform filtering verified: Linux returns package, Darwin returns `{}`
+>>>>>>> e4070a45 (docs(status): Session 107 — mkPreparedSource auto-features & mkPackageOverlay platform safety)
