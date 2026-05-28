@@ -108,6 +108,36 @@ test-aliases:
 [group('quality')]
 validate: test-fast
 
+# Verify all ExecStart/ExecStartPre paths exist and are executable files
+[group('quality')]
+test-exec-paths:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    PATHS_JSON=$(nix eval --impure --raw --expr 'import ./tests/exec-start-paths.nix {flake = builtins.getFlake (toString ./.); lib = (builtins.getFlake "nixpkgs").lib;}')
+    TOTAL=$(echo "$PATHS_JSON" | jq -r '.total')
+    echo "Checking $TOTAL ExecStart paths..."
+    ERRORS=0
+    SKIPPED=0
+    OK=0
+    while IFS= read -r path; do
+        if [ ! -e "$path" ]; then
+            SKIPPED=$((SKIPPED + 1))
+        elif [ ! -f "$path" ]; then
+            echo "FAIL: '$path' is not a regular file (directory?)"
+            ERRORS=$((ERRORS + 1))
+        elif [ ! -x "$path" ]; then
+            echo "FAIL: '$path' is not executable"
+            ERRORS=$((ERRORS + 1))
+        else
+            OK=$((OK + 1))
+        fi
+    done < <(echo "$PATHS_JSON" | jq -r '.paths[]')
+    if [ "$ERRORS" -gt 0 ]; then
+        echo "FAILED: $ERRORS broken path(s), $OK ok, $SKIPPED not built"
+        exit 1
+    fi
+    echo "OK: $OK verified, $SKIPPED not built (run after 'just test' for full check)"
+
 # Fast hash-only check for overlay packages (catches stale vendorHash/npmDepsHash)
 # Lighter than hash-check: only tests packages with known FOD hashes
 [group('quality')]
