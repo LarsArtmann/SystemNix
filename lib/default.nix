@@ -29,6 +29,59 @@ in {
       '';
     };
 
+  mkDesktopNotifyService = pkgs: {
+    name,
+    description,
+    checkScript,
+    runtimeInputs,
+    user,
+    uid,
+    interval ? "5min",
+    bootDelay ? "2min",
+    hardenFn ? harden,
+    extraHarden ? {},
+    extraServiceConfig ? {},
+  }: let
+    script = pkgs.writeShellApplication {
+      name = "${name}-check";
+      inherit runtimeInputs;
+      text = checkScript;
+    };
+  in {
+    timer = {
+      description = "Periodic ${description}";
+      timerConfig = {
+        OnBootSec = bootDelay;
+        OnUnitActiveSec = interval;
+        Persistent = true;
+      };
+      wantedBy = ["timers.target"];
+    };
+
+    service = {
+      inherit description onFailure;
+      serviceConfig =
+        {
+          Type = "oneshot";
+          User = user;
+          Environment = [
+            "DISPLAY=:0"
+            "WAYLAND_DISPLAY=wayland-1"
+            "XDG_RUNTIME_DIR=/run/user/${uid}"
+          ];
+          ExecStart = lib.getExe script;
+          StandardOutput = "journal";
+          StandardError = "journal";
+        }
+        // hardenFn ({
+            ProtectHome = false;
+            NoNewPrivileges = false;
+          }
+          // extraHarden)
+        // extraServiceConfig;
+    };
+  };
+
   mkHttpCheck = {
     name,
     group,
