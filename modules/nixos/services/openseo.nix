@@ -8,9 +8,9 @@ _: {
   }: let
     cfg = config.services.openseo;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) serviceTypes images;
-    dockerLib = (import ../../../lib/default.nix lib).mkDockerServiceFactory {inherit pkgs;};
-    inherit (dockerLib) mkDockerService;
+    libHelpers = import ../../../lib/default.nix lib;
+    inherit (libHelpers) serviceTypes images;
+    inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     composeFile =
       pkgs.writeText "openseo-docker-compose.yml"

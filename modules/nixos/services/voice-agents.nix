@@ -8,8 +8,9 @@ _: {
   }: let
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
-    inherit (import ../../../lib/docker.nix {inherit pkgs lib harden serviceDefaults;}) mkDockerService;
+    libHelpers = import ../../../lib/default.nix lib;
+    inherit (libHelpers) serviceTypes;
+    inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     rocm = import ../../../lib/rocm.nix {inherit pkgs;};
 
