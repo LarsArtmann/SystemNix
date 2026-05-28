@@ -88,12 +88,12 @@ mkPreparedSource = import (go-nix-helpers + "/mkPreparedSource.nix") {
 ```
 
 **Auto-features (no manual sed needed):**
-- `subModules` auto-generates both `require` and `replace` directives for each sub-module
+- `subModules` auto-generates `replace` directives for each sub-module
+- `subModuleVersionNormalize` auto-normalizes pseudo-versions (`v0.0.0-20240101...`) to `v0.0.0` for all sub-modules
 - `stripLocalReplaces` (default `true`) auto-strips stale `replace X => /home/...` directives
-- `subModuleVersionNormalize` auto-normalizes pseudo-versions (`v0.0.0-20240101...`) to `v0.0.0`
-- `subModuleVersion` (default `"v0.0.0"`) sets the version for auto-generated require lines
+- Use `requireDeps` for sub-modules not yet in go.mod (e.g., newly added sub-module imports)
 
-**Only use `postPatchExtra` for repo-specific patches** (e.g., removing incompatible versions, patching sub-module go.mod files). The common patterns (local replace stripping, sub-module require injection, version normalization) are handled automatically.
+**Only use `postPatchExtra` for repo-specific patches** (e.g., removing incompatible versions, patching sub-module go.mod files). The common patterns (local replace stripping, version normalization) are handled automatically.
 
 When upstream deps change, set `vendorHash = ""`, build, and paste the `got:` hash.
 
@@ -274,7 +274,7 @@ reboot
 | Darwin disk | 229 GB, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
 | `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
 | `mkPackageOverlay` platform safety | Returns empty overlay on unsupported systems — Linux-only packages in `shared.nix` won't break Darwin eval |
-| `mkPreparedSource` auto-features | Auto-strips local `=> /home/...` replaces, auto-generates sub-module require lines, auto-normalizes pseudo-versions. No manual sed needed for common patterns |
+| `mkPreparedSource` auto-features | Auto-strips local `=> /home/...` replaces, auto-normalizes sub-module pseudo-versions, auto-generates `replace` directives. Use `requireDeps` for missing sub-module requires |
 | `serviceModules` auto-discovery | `flake.nix` auto-discovers modules from `modules/nixos/services/*.nix` by parsing `flake.nixosModules.<name>`. Filename must match module name. Non-module files (no `nixosModules.*` declaration) are skipped |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
 | SigNoz build time | Built from source (Go 1.25); takes significant time |
