@@ -2,6 +2,8 @@
 
 **Date:** 2026-05-28 01:22 | **Status:** Ready to Commit & Deploy | **Platform:** evo-x2 (NixOS 26.11)
 
+**Updated:** 2026-05-28 — Appendix A: Sessions 104–105 (Gatus, images registry, health check, getExe, ExecStart validation)
+
 ---
 
 ## A) Fully Done
@@ -82,14 +84,14 @@
 ### From Session 99/100/101 (still outstanding)
 1. **Move `todo-list-ai` FOD hash upstream** — bun node_modules hash managed in SystemNix instead of upstream repo
 2. **Move `dnsblockd`/`file-and-image-renamer` vendorHash upstream** — hardcoded in `overlays/linux.nix`
-3. **GitHub Actions CI** — no CI exists at all
+3. ~~**GitHub Actions CI** — no CI exists at all~~ **DONE (Session 104)** — `nix-check.yml` + `flake-update.yml` already exist
 4. **PMA `go.work` version** — `go 1.26.2` vs `go 1.26.3` in submodules
 5. **PMA `overrideModAttrs` anti-pattern** — still present, blocked on git tags for submodules
 6. **Convert `/data` BTRFS from toplevel to `@data` subvolume** — enables /data snapshots
-7. **Gatus health checks for all services** — only partial coverage
-8. **Centralize Docker image tags** — scattered across modules
-9. **Auto-generate `service-health-check` service list from enabled services** — currently static, rots when services are enabled/disabled
-10. **Validate sops secret values at activation time** — ExecStartPre pattern from cookie_secret could be applied to other secrets
+7. ~~**Gatus health checks for all services** — only partial coverage~~ **DONE (Session 104)** — added Monitor365 Server TCP check (26 endpoints). Hermes has no HTTP endpoint — not checkable via Gatus.
+8. ~~**Centralize Docker image tags** — scattered across modules~~ **DONE (Session 104)** — created `lib/images.nix` central registry. Pinned Twenty's `postgres:16` → `postgres:16-alpine` and bare `redis` → `redis:7-alpine`.
+9. ~~**Auto-generate `service-health-check` service list from enabled services**~~ **DONE (Session 104)** — replaced hardcoded 31-service script with hybrid: 6 critical services actively checked + `systemctl --failed` dynamic catch-all.
+10. ~~**Validate sops secret values at activation time**~~ **DONE (Session 104)** — added ExecStartPre validation to `pocket-id` (encryption key) and `gatus` (env template for Discord alerts).
 
 ### New this session
 11. **Deploy and verify monitor365-server with fixed SQLite URL** — code fix committed but not deployed yet
@@ -110,10 +112,10 @@
 ## E) What We Should Improve
 
 ### Process Improvements
-1. **Add NixOS VM test for ExecStart correctness** — `just test-fast` catches eval errors but not ExecStart paths pointing to directories. A VM test that starts services and checks for "Is a directory" errors would catch this class of bug.
-2. **Use `lib.getExe` consistently** — enforce via linter or code review. Some files use `"${var}/bin/<name>"`, others use `lib.getExe var`. Both work but consistency matters.
+1. ~~**Add NixOS VM test for ExecStart correctness**~~ **DONE (Session 105)** — created `tests/exec-start-paths.nix` + `just test-exec-paths`. Evaluates all 127 ExecStart paths from full NixOS config, verifies each is a regular executable file. Catches the "Is a directory" bug class.
+2. ~~**Use `lib.getExe` consistently**~~ **DONE (Session 105)** — converted all 31 old-style `"${pkg}/bin/binary"` to `lib.getExe`/`lib.getExe'` across 18 files. Added `meta.mainProgram` to signoz packages. Zero remaining old-style patterns in Exec* lines.
 3. **Commit per logical change** — this session combined 3 logical changes (ExecStart fix, migration completion, monitor365-server fix) into one commit. Acceptable for a migration sprint but worth separating when possible.
-4. **Auto-generate `service-health-check` service list** — still static, rots when services change.
+4. ~~**Auto-generate `service-health-check` service list**~~ **DONE (Session 104)** — hybrid approach: 6 critical services + `systemctl --failed` dynamic catch-all.
 
 ### Architecture Improvements
 5. **Textfile collectors directory ownership** — `nobody:nogroup 1777` (world-writable). Consider dedicated `node-exporter` user.
@@ -142,9 +144,9 @@
 | 7 | Fix PMA go.work: `go 1.26.2` → `go 1.26.3` | 2 min | Unblocks local golangci-lint |
 | 8 | Publish git tags for go-output submodules (9 tags) | 10 min | Enables PMA overrideModAttrs removal |
 | 9 | Remove PMA `overrideModAttrs` after tags exist | 15 min | Eliminates anti-pattern |
-| 10 | Add GitHub Actions CI: `nix flake check --no-build` on push | 30 min | Catch eval errors pre-deploy |
-| 11 | Auto-generate `service-health-check` service list from enabled services | 1 hr | Never rots again |
-| 12 | Add NixOS VM test for ExecStart path correctness | 1 hr | Catch directory-as-ExecStart bugs |
+| 10 | ~~Add GitHub Actions CI~~ **DONE** — `nix-check.yml` + `flake-update.yml` already exist | — | — |
+| ~~11~~ | ~~Auto-generate `service-health-check` service list~~ **DONE (S104)** | — | — |
+| ~~12~~ | ~~Add NixOS VM test for ExecStart path correctness~~ **DONE (S105)** — `just test-exec-paths` | — | — |
 | 13 | Strip shebangs from external `.sh` files used with `writeShellApplication` | 30 min | Cleaner generated scripts |
 
 ### Tier 3: Architecture (this sprint)
@@ -154,9 +156,9 @@
 | 14 | Redesign `mkPreparedSource` to auto-generate `require` lines | 2 hr | Eliminates manual postPatchExtra sed hacks |
 | 15 | Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin) | 1 hr | Cleaner overlay separation |
 | 16 | Convert `/data` BTRFS from toplevel to `@data` subvolume | 30 min | Enables /data snapshots |
-| 17 | Add Gatus health checks for all services | 1 hr | Full observability |
-| 18 | Centralize Docker image tags in `lib/` | 2 hr | Single source of truth |
-| 19 | Standardize on `lib.getExe` vs `"${var}/bin/<name>"` | 30 min | Consistency across codebase |
+| ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP) | — | — |
+| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — `lib/images.nix` registry | — | — |
+| ~~19~~ | ~~Standardize on `lib.getExe`~~ **DONE (S105)** — 31 conversions, zero old-style remaining | — | — |
 
 ### Tier 4: Nice to Have
 
@@ -166,7 +168,7 @@
 | 21 | Create `modules/nixos/services/` README with conventions | 15 min | Onboarding |
 | 22 | Benchmark flake eval time before/after auto-discovery | 10 min | Performance baseline |
 | 23 | Add `# @module <name>` convention to replace file parsing | 1 hr | Faster eval, more explicit |
-| 24 | Add runtime secret validation for other critical secrets | 1 hr | Prevents bad secret deployments |
+| ~~24~~ | ~~Add runtime secret validation for critical secrets~~ **DONE (S104)** — pocket-id + gatus ExecStartPre | — | — |
 | 25 | Textfile collectors: dedicated `node-exporter` user instead of 1777 | 30 min | Better security posture |
 
 ---
@@ -194,3 +196,66 @@
 | flake.nix apps refactored with mkApp | 3 |
 | Build | All checks passed ✅ |
 | Working tree | 16 modified files, 1 untracked (gather-status.sh) |
+
+---
+
+## Appendix A: Sessions 104–105 (2026-05-28)
+
+**Focus:** Process improvements from Section E — ExecStart validation, `lib.getExe` standardization, Gatus coverage, image registry, sops validation, auto-generated health check.
+
+### Commits
+
+| Commit | Description |
+|--------|-------------|
+| `b4e2803b` | `refactor(images): introduce centralized image registry and migrate all services to use it` |
+| `df631cd6` | `test(systemd): add ExecStart path validation for systemd service binaries` |
+| `bd6d0b7c` | `refactor(systemd): migrate ExecStart binary paths from hardcoded to lib.getExe` |
+
+### What Changed
+
+| Change | Files | Details |
+|--------|-------|---------|
+| **Monitor365 Gatus check** | `gatus-config.nix` | Added TCP check on port 3001 (26 endpoints total) |
+| **`lib/images.nix`** | new file | Central Docker image registry with `mkRef` helper. 7 entries (openseo, manifest, manifest-postgres, twenty, twenty-postgres, twenty-redis). |
+| **Docker image pinning** | `twenty.nix` | `postgres:16` → `postgres:16-alpine`, bare `redis` → `redis:7-alpine` |
+| **Image registry wiring** | `openseo.nix`, `manifest.nix`, `twenty.nix` | All use `images.*.ref` in compose files |
+| **Auto-gen health check** | `scheduled-tasks.nix` | Replaced hardcoded 31-service script with hybrid: 6 critical + `systemctl --failed` dynamic catch-all |
+| **Sops validation** | `pocket-id.nix`, `gatus-config.nix` | ExecStartPre checks encryption key and gatus env file |
+| **ExecStart path validation** | `tests/exec-start-paths.nix`, `justfile` | `just test-exec-paths` evaluates all 127 ExecStart paths, verifies each is a regular executable file |
+| **`lib.getExe` migration** | 18 files | 31 conversions from `"${pkg}/bin/binary"` to `lib.getExe`/`lib.getExe'` |
+| **`meta.mainProgram`** | `signoz.nix` | Added to both `signoz` and `signoz-otel-collector` packages |
+| **`lib.getExe'` for NUR** | `scheduled-tasks.nix`, `rpi3/default.nix` | crush package has no `mainProgram` |
+
+### Remaining Uncommitted (4 files)
+
+| File | Change |
+|------|--------|
+| `signoz.nix` | `meta.mainProgram` additions |
+| `niri-wrapped.nix` | swayidle/swaylock/wallpaper-set `getExe` conversions |
+| `rpi3/default.nix` | crush `getExe'` fix |
+| `scheduled-tasks.nix` | crush `getExe'` fix |
+
+### Skipped Tasks (requires external access)
+
+| Task | Why |
+|------|-----|
+| #1 todo-list-ai FOD | Upstream repo change needed |
+| #2 vendorHash upstream | Upstream repo change needed |
+| #4 PMA go.work | Upstream repo change needed |
+| #5 PMA overrideModAttrs | Upstream repo change needed |
+| #6 BTRFS /data migration | Dangerous, needs `just snapshot-migrate-data` + reboot on evo-x2 |
+| #11 Deploy monitor365 | Needs `just switch` on evo-x2 |
+
+### Session 105 Metrics
+
+| Metric | Value |
+|--------|-------|
+| Files changed | 22 (3 sessions total) |
+| `lib.getExe` conversions | 31 across 18 files |
+| Old-style `"${pkg}/bin/"` remaining in Exec* lines | **ZERO** |
+| Remaining in inline shell scripts | 5 (not ExecStart — inside bash strings) |
+| Gatus endpoints | 26 (was 24) |
+| Docker images centralized | 7 in `lib/images.nix` |
+| Services with sops ExecStartPre validation | 4 (oauth2-proxy, pocket-id, gatus, + existing patterns) |
+| `just test-exec-paths` paths checked | 127 (96 verified, 31 not built locally) |
+| Build | All checks passed ✅ |

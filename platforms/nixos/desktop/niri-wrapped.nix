@@ -213,7 +213,7 @@ in {
         "Mod+Shift+P".action.power-off-monitors = {};
         "Mod+Shift+S".action.suspend = {};
 
-        "Mod+W".action.spawn = sh "${wallpaper-set}/bin/wallpaper-set random ${wallpaperDir}";
+        "Mod+W".action.spawn = sh "${lib.getExe wallpaper-set} random ${wallpaperDir}";
 
         "Mod+Shift+F11".action.spawn = sh "mkdir -p ~/Pictures/screenshots && grim -g \"$(slurp)\" /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
         "Mod+F11".action.spawn = sh "mkdir -p ~/Pictures/screenshots && grim /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
@@ -445,7 +445,8 @@ in {
                   fi
                 '';
               };
-            in lib.getExe checkWayland;
+            in
+              lib.getExe checkWayland;
             ExecStart = "${lib.getExe' pkgs.awww "awww-daemon"}";
           };
         Install.WantedBy = ["graphical-session.target"];
@@ -484,7 +485,7 @@ in {
                   systemctl suspend
                 '';
               };
-            in "${pkgs.swayidle}/bin/swayidle -w timeout 43200 ${swayidleSuspend}/bin/swayidle-suspend before-sleep ${pkgs.swaylock}/bin/swaylock";
+            in "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe' pkgs.swaylock "swaylock"}";
             TimeoutStartSec = "10s";
           };
         Install.WantedBy = ["graphical-session.target"];

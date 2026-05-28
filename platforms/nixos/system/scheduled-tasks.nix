@@ -94,7 +94,7 @@ in {
         onFailure = ["notify-failure@%n.service"];
         serviceConfig = {
           Type = "oneshot";
-          ExecStart = "${lib.getExe pkgs.nur.repos.charmbracelet.crush} update-providers";
+          ExecStart = "${lib.getExe' pkgs.nur.repos.charmbracelet.crush "crush"} update-providers";
           StandardOutput = "journal";
           StandardError = "journal";
         };

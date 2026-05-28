@@ -33,6 +33,7 @@
       subPackages = ["cmd/signozotelcollector"];
       ldflags = ["-s" "-w"];
       postInstall = "mv $out/bin/signozotelcollector $out/bin/signoz-otel-collector";
+      meta.mainProgram = "signoz-otel-collector";
     };
 
     signoz = buildGoModule {
@@ -66,6 +67,7 @@
         homepage = "https://signoz.io";
         license = licenses.asl20;
         platforms = platforms.linux;
+        mainProgram = "signoz";
       };
     };
   in {
@@ -420,7 +422,8 @@ in {
                     mv "$TMP" "$OUT"
                   '';
                 };
-              in lib.getExe amdgpuMetrics;
+              in
+                lib.getExe amdgpuMetrics;
             };
           };
 
