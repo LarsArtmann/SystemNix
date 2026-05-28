@@ -7,9 +7,21 @@ _: {
     ...
   }: let
     cfg = config.services.gatus-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkHttpCheck;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkHttpCheck ports;
 
     nodePort = config.services.prometheus.exporters.node.port;
+
+    checkGatusEnv = pkgs.writeShellApplication {
+      name = "check-gatus-env";
+      runtimeInputs = [pkgs.coreutils];
+      text = ''
+        env_path="${config.sops.templates."gatus-env".path}"
+        if [ ! -s "$env_path" ]; then
+          echo "gatus: environment file is missing or empty ($env_path) — Discord alerting will fail" >&2
+          exit 1
+        fi
+      '';
+    };
 
     discordAlert = desc: [
       {
@@ -187,6 +199,13 @@ _: {
                 url = "http://localhost:${toString config.services.openseo.port}";
                 interval = "5m";
               })
+              {
+                name = "Monitor365 Server";
+                group = "Monitoring";
+                url = "tcp://127.0.0.1:${toString ports.monitor365-server}";
+                interval = "60s";
+                conditions = ["[CONNECTED] == true"];
+              }
               (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
@@ -259,7 +278,10 @@ _: {
             MemoryMax = "512M";
             ReadWritePaths = ["/var/lib/gatus"];
           }
-          // serviceDefaults {Restart = "on-failure";};
+          // serviceDefaults {Restart = "on-failure";}
+          // {
+            ExecStartPre = "+${checkGatusEnv}/bin/check-gatus-env";
+          };
       };
     };
   };

@@ -9,7 +9,7 @@ _: {
     cfg = config.services.manifest;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes;
+    inherit (libHelpers) serviceTypes images;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     manifestPort = cfg.port;
@@ -23,7 +23,7 @@ _: {
 
         services:
           manifest:
-            image: manifestdotbuild/manifest:${cfg.imageTag}
+            image: ${images.manifest.ref}
             ports:
               - "127.0.0.1:${toString manifestPort}:${toString manifestPort}"
             extra_hosts:
@@ -73,7 +73,7 @@ _: {
             restart: always
 
           postgres:
-            image: postgres:16-alpine@sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416
+            image: ${images.manifest-postgres.ref}
             environment:
               POSTGRES_USER: manifest
               POSTGRES_PASSWORD: ''${DB_PASSWORD}
@@ -120,7 +120,7 @@ _: {
     options.services.manifest = {
       enable = lib.mkEnableOption "Manifest LLM router";
       port = serviceTypes.servicePort 2099 "Host port for the Manifest dashboard";
-      imageTag = serviceTypes.dockerImageTag "6.6.1";
+      imageTag = serviceTypes.dockerImageTag images.manifest.tag;
     };
 
     config = lib.mkIf cfg.enable {

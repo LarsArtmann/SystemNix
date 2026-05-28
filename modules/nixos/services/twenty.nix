@@ -1,7 +1,5 @@
 # Twenty CRM via Docker Compose with PostgreSQL and Redis
-_: let
-  version = "v2.7.3";
-in {
+_: {
   flake.nixosModules.twenty = {
     config,
     pkgs,
@@ -11,7 +9,7 @@ in {
     cfg = config.services.twenty;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes;
+    inherit (libHelpers) serviceTypes images;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     serverPort = cfg.port;
@@ -26,7 +24,7 @@ in {
 
         services:
           server:
-            image: twentycrm/twenty:${version}
+            image: ${images.twenty.ref}
             ports:
               - "127.0.0.1:${toString serverPort}:3000"
             environment:
@@ -51,7 +49,7 @@ in {
             restart: always
 
           worker:
-            image: twentycrm/twenty:${version}
+            image: ${images.twenty.ref}
             command: ["yarn", "worker:prod"]
             environment:
               PG_DATABASE_URL: postgres://${pgUser}:''${PG_DATABASE_PASSWORD}@db:5432/${pgDb}
@@ -71,7 +69,7 @@ in {
             restart: always
 
           db:
-            image: postgres:16
+            image: ${images.twenty-postgres.ref}
             environment:
               POSTGRES_DB: ${pgDb}
               POSTGRES_PASSWORD: ''${PG_DATABASE_PASSWORD}
@@ -86,7 +84,7 @@ in {
             restart: always
 
           redis:
-            image: redis
+            image: ${images.twenty-redis.ref}
             command: ["--maxmemory-policy", "noeviction"]
             healthcheck:
               test: ["CMD", "redis-cli", "ping"]
@@ -113,6 +111,7 @@ in {
     options.services.twenty = {
       enable = lib.mkEnableOption "Twenty CRM";
       port = serviceTypes.servicePort 3200 "Host port for the Twenty CRM server";
+      imageTag = serviceTypes.dockerImageTag images.twenty.tag;
     };
 
     config = lib.mkIf cfg.enable {

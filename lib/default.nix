@@ -33,4 +33,6 @@ in {
     if dupes == []
     then raw
     else builtins.throw "Port collision: ${dupeMsg}";
+
+  images = import ./images.nix;
 }

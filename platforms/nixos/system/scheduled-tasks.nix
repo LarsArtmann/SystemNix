@@ -127,10 +127,92 @@ in {
         serviceConfig = {
           Type = "oneshot";
           ExecStart = let
+            criticalSystemServices = [
+              "caddy"
+              "forgejo"
+              "unbound"
+              "dnsblockd"
+              "postgresql"
+              "docker"
+            ];
+            ignoredFailedServices = [
+              "session-*"
+              "user@*"
+            ];
+            checkBlock = svc: "check_service ${svc}";
+            ignorePattern = builtins.concatStringsSep " | " ignoredFailedServices;
             healthCheck = pkgs.writeShellApplication {
               name = "service-health-check";
-              runtimeInputs = [pkgs.systemd pkgs.libnotify pkgs.coreutils];
-              text = builtins.readFile ../scripts/service-health-check;
+              runtimeInputs = [pkgs.systemd pkgs.libnotify pkgs.coreutils pkgs.gnugrep];
+              text = ''
+                export DISPLAY=:0
+                export WAYLAND_DISPLAY=wayland-1
+                export XDG_RUNTIME_DIR=/run/user/$(id -u)
+
+                FAILED=""
+                TOTAL=0
+
+                check_service() {
+                    TOTAL=$((TOTAL + 1))
+                    if systemctl is-active --quiet "$1" 2>/dev/null; then
+                        return 0
+                    else
+                        FAILED="$FAILED\n  $1"
+                        return 1
+                    fi
+                }
+
+                check_user_service() {
+                    TOTAL=$((TOTAL + 1))
+                    if systemctl --user is-active --quiet "$1" 2>/dev/null; then
+                        return 0
+                    else
+                        FAILED="$FAILED\n  $1 (user)"
+                        return 1
+                    fi
+                }
+
+                # === Critical system services — must be running ===
+                ${builtins.concatStringsSep "\n" (map checkBlock criticalSystemServices)}
+
+                # === Dynamic: catch any other failed system services ===
+                while IFS= read -r svc; do
+                    case "$svc" in
+                        ${ignorePattern})
+                            ;;
+                        *)
+                            if ! echo -e "$FAILED" | grep -qF "  $svc"; then
+                                TOTAL=$((TOTAL + 1))
+                                FAILED="$FAILED\n  $svc (failed)"
+                            fi
+                            ;;
+                    esac
+                done < <(systemctl --failed --no-legend --type=service 2>/dev/null | awk '{print $1}')
+
+                # === Dynamic: catch any failed user services ===
+                while IFS= read -r svc; do
+                    case "$svc" in
+                        ${ignorePattern})
+                            ;;
+                        *)
+                            if ! echo -e "$FAILED" | grep -qF "  $svc (user)"; then
+                                TOTAL=$((TOTAL + 1))
+                                FAILED="$FAILED\n  $svc (user, failed)"
+                            fi
+                            ;;
+                    esac
+                done < <(systemctl --user --failed --no-legend --type=service 2>/dev/null | awk '{print $1}')
+
+                # === Report ===
+                if [ -n "$FAILED" ]; then
+                    notify-send -u critical "Health Check: services down" "$(echo -e "$FAILED")" 2>/dev/null || true
+                    echo "FAILED:$(echo -e "$FAILED")"
+                    exit 1
+                else
+                    echo "OK: $TOTAL/$TOTAL critical services active, no failed services"
+                    exit 0
+                fi
+              '';
             };
           in "${healthCheck}/bin/service-health-check";
           User = primaryUser;

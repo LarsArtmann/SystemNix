@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.openseo;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) serviceTypes;
+    inherit (import ../../../lib/default.nix lib) serviceTypes images;
     dockerLib = (import ../../../lib/default.nix lib).mkDockerServiceFactory {inherit pkgs;};
     inherit (dockerLib) mkDockerService;
 
@@ -19,7 +19,7 @@ _: {
 
         services:
           openseo:
-            image: ghcr.io/every-app/open-seo:${cfg.imageTag}
+            image: ${images.openseo.ref}
             restart: unless-stopped
             environment:
               PORT: "${toString cfg.port}"
@@ -65,7 +65,7 @@ _: {
     options.services.openseo = {
       enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
       port = serviceTypes.servicePort 3002 "HTTP port for OpenSEO dashboard";
-      imageTag = serviceTypes.dockerImageTag "v0.0.15";
+      imageTag = serviceTypes.dockerImageTag images.openseo.tag;
     };
 
     config = lib.mkIf cfg.enable {
