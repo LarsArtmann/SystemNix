@@ -72,6 +72,34 @@ _: {
 - Import `lib/default.nix` via `import ../../../lib/default.nix lib`.
 - Use `lib.mkIf cfg.enable` to guard all config.
 
+### Module Naming
+
+Use `services.<name>` when the module wraps or configures an upstream NixOS service with the same name (e.g., `services.forgejo`, `services.immich`).
+
+Use `services.<name>-config` when the module provides its own standalone option namespace to avoid collision with upstream (e.g., `services.pocket-id-config`, `services.oauth2-proxy-config`, `services.gatus-config`).
+
+### Inputs
+
+Only use `{ inputs, ... }` when the module needs access to flake inputs:
+
+```nix
+# Needs inputs — e.g., for upstream overlays or source packages
+{ inputs, ... }: {
+  flake.nixosModules.hermes = { ... }: let
+    hermesPkg = inputs.hermes-agent.overlays.default;
+  in { ... };
+}
+```
+
+Use `_:` when the module is self-contained:
+
+```nix
+# No inputs needed
+_: {
+  flake.nixosModules.foo = { ... }: { ... };
+}
+```
+
 ---
 
 ## Adding a New Service (Checklist)
@@ -124,6 +152,142 @@ inherit (import ../../../lib/default.nix lib)
 ---
 
 ## Patterns
+
+### Secrets
+
+**Central registry (preferred):** Most sops secrets are declared in `sops.nix` to keep secrets in one place:
+
+```nix
+# In sops.nix
+sops.secrets.myapp_key = {
+  sopsFile = ./../../../platforms/nixos/secrets/myapp.yaml;
+  restartUnits = ["myapp.service"];
+};
+```
+
+**Inline (acceptable for self-contained modules):** Modules with many secrets may declare them inline:
+
+```nix
+# In myapp.nix
+sops.secrets.myapp_db_password = {
+  sopsFile = secretsDir + "/myapp.yaml";
+  restartUnits = ["myapp.service"];
+};
+```
+
+**Env templates:** Docker services commonly use sops templates for `.env` files:
+
+```nix
+sops.templates."myapp-env" = {
+  content = ''
+    DB_PASSWORD=${config.sops.placeholder.myapp_db_password}
+    API_KEY=${config.sops.placeholder.myapp_api_key}
+  '';
+};
+```
+
+**Pre-start validation:** Services that fail cryptically without secrets should validate them in `ExecStartPre`:
+
+```nix
+systemd.services.myapp.serviceConfig = {
+  ExecStartPre = "+${lib.getExe (pkgs.writeShellApplication {
+    name = "check-myapp-secrets";
+    runtimeInputs = [pkgs.coreutils];
+    text = ''
+      if [ ! -s '${config.sops.secrets.myapp_key.path}' ]; then
+        echo 'myapp: secret missing' >&2
+        exit 1
+      fi
+    '';
+  })}";
+};
+```
+
+### Timers
+
+Standard timer for periodic tasks:
+
+```nix
+systemd.timers.myapp-sync = {
+  description = "Periodic MyApp sync";
+  timerConfig = {
+    OnBootSec = "2min";
+    OnUnitActiveSec = cfg.interval;
+    Persistent = true;
+  };
+  wantedBy = ["timers.target"];
+};
+
+systemd.services.myapp-sync = {
+  description = "MyApp sync task";
+  inherit onFailure;
+  serviceConfig = {
+    Type = "oneshot";
+    ExecStart = lib.getExe syncScript;
+  } // harden {};
+};
+```
+
+### Custom User Creation
+
+Create a dedicated system user when the service needs specific permissions or isolation:
+
+```nix
+users.groups.myapp = {};
+users.users.myapp = {
+  isSystemUser = true;
+  group = "myapp";
+  home = "/var/lib/myapp";
+  createHome = true;
+  description = "MyApp service user";
+};
+```
+
+For user-configurable services, default to `config.users.primaryUser`:
+
+```nix
+options.services.myapp.user = lib.mkOption {
+  type = lib.types.str;
+  default = config.users.primaryUser;
+  description = "User to run myapp as";
+};
+```
+
+Use `serviceTypes.systemdServiceIdentity` when you need all three (user, group, stateDir) with sensible defaults:
+
+```nix
+options.services.myapp = {
+  enable = lib.mkEnableOption "MyApp";
+  inherit (serviceTypes.systemdServiceIdentity {
+    defaultUser = "myapp";
+    defaultStateDir = "/var/lib/myapp";
+  }) user group stateDir;
+};
+```
+
+### Desktop Notification Services
+
+Services that send desktop notifications need the user's graphical session environment:
+
+```nix
+let
+  uid = builtins.toString config.users.users.${cfg.user}.uid;
+in {
+  systemd.services.myapp-notify.serviceConfig = {
+    User = cfg.user;
+    Environment = [
+      "DISPLAY=:0"
+      "WAYLAND_DISPLAY=wayland-1"
+      "XDG_RUNTIME_DIR=/run/user/${uid}"
+    ];
+  } // harden {
+    ProtectHome = false;
+    NoNewPrivileges = false;
+  };
+}
+```
+
+Use `hardenUser` (which sets `mode = "user"`) instead of `harden` for user services managed by Home Manager.
 
 ### Native NixOS Service
 
@@ -267,6 +431,23 @@ In `caddy.nix`, add a `protectedVHost`:
 
 **Never** define `services.caddy.virtualHosts` in any module other than `caddy.nix`.
 
+### Home Manager Integration
+
+Some services need per-user configuration (e.g., client settings, user systemd services):
+
+```nix
+config = lib.mkIf cfg.enable {
+  home-manager.users.${cfg.user} = {
+    systemd.user.services.myapp = {
+      Unit.Description = "MyApp user service";
+      Service.ExecStart = "${lib.getExe pkgs.myapp}";
+    };
+  };
+};
+```
+
+Use `serviceDefaultsUser {}` (not `serviceDefaults {}`) for Home Manager user services — it omits `lib.mkForce` which Home Manager does not support.
+
 ---
 
 ## Non-Module Helpers
@@ -295,6 +476,11 @@ These can be imported by modules that need them.
 | **Home Manager `mkForce`** | `serviceDefaults` uses `mkForce`. For HM user services, use `serviceDefaultsUser` instead. |
 | **sops secret path** | Use `config.sops.placeholder.<name>` in templates, `config.sops.secrets.<name>.path` in service config. |
 | **Config-derived URLs** | Never hardcode `localhost:PORT`. Derive from `config.services.<name>.port` or equivalent. |
+| **User service hardening** | Use `hardenUser` (not `harden`) for Home Manager user services — it sets `mode = "user"`. |
+| **Primary user default** | User-configurable services should default to `config.users.primaryUser`. |
+| **Docker import pattern** | Always use `libHelpers.mkDockerServiceFactory { inherit pkgs; }` — do not import `lib/docker.nix` directly. |
+| **`-config` suffix** | Use when avoiding namespace collision with upstream NixOS services (e.g., `pocket-id-config`). |
+| **Image digests** | Pin Docker images with digests in `lib/images.nix` for reproducibility. |
 
 ---
 
