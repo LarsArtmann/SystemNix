@@ -143,8 +143,8 @@
 |---|------|--------|--------|
 | 6 | Move `todo-list-ai` bun FOD hash management to upstream repo | 30 min | Eliminates most fragile hash in SystemNix |
 | ~~7~~ | ~~Fix PMA go.work: `go 1.26.2` → `go 1.26.3`~~ **DONE (S106)** — already at 1.26.3 | — | — |
-~~8~~ | ~~Publish git tags for go-output submodules (9 tags)~~ **DONE (S106)** — 10 tags moved to HEAD | — | — |
-~~9~~ | ~~Remove PMA `overrideModAttrs` after tags exist~~ **DONE (S106)** — removed, vendorHash updated | — | — |
+| ~~8~~ | ~~Publish git tags for go-output submodules (9 tags)~~ **DONE (S106)** — 10 tags moved to HEAD | — | — |
+| ~~9~~ | ~~Remove PMA `overrideModAttrs` after tags exist~~ **DONE (S106)** — removed, vendorHash updated | — | — |
 | 10 | ~~Add GitHub Actions CI~~ **DONE** — `nix-check.yml` + `flake-update.yml` already exist | — | — |
 | ~~11~~ | ~~Auto-generate `service-health-check` service list~~ **DONE (S104)** | — | — |
 | ~~12~~ | ~~Add NixOS VM test for ExecStart path correctness~~ **DONE (S105)** — `just test-exec-paths` | — | — |
@@ -260,3 +260,28 @@
 | Services with sops ExecStartPre validation | 4 (oauth2-proxy, pocket-id, gatus, + existing patterns) |
 | `just test-exec-paths` paths checked | 127 (96 verified, 31 not built locally) |
 | Build | All checks passed ✅ |
+
+---
+
+## Appendix B: Session 106 (2026-05-28)
+
+**Focus:** PMA upstream fixes — go-output submodule tags, overrideModAttrs anti-pattern removal.
+
+### What Changed
+
+| Change | Repo | Details |
+|--------|------|--------|
+| **go-output submodule tags** | `go-output` | Moved 10 `v0.0.0` tags (d2, delimited, enum, escape, graph, markup, plantuml, serialization, table, testhelpers) + `testhelpers/graphtest` from stale commits to HEAD (`ab60a5c`). All submodules now have `go 1.26.3` in their `go.mod`. Force-pushed to origin. |
+| **PMA go.work** | `PMA` | Already at `go 1.26.3` — no change needed |
+| **Removed overrideModAttrs** | `PMA` | Deleted `overrideModAttrs = _: { preBuild = "go mod tidy"; };` from `flake.nix:222`. The `mkPreparedSource` + `postPatchExtra` already produce a consistent go.mod — `go mod tidy` was unnecessary. |
+| **Updated vendorHash** | `PMA` | `sha256-lFke...` → `sha256-i+hl...` (different vendor tree without tidy phase) |
+
+### Verified
+
+- `nix build .#default` — success
+- `nix flake check` — all checks passed
+- Binary runs: `projects-management-automation version unknown (built from source)`
+
+### Key Insight
+
+The `overrideModAttrs` was a no-op in practice — `mkPreparedSource` + `postPatchExtra` already produce a consistent go.mod. Removing it changes the vendor hash (different build phase ordering) but produces an identical binary. This eliminates the AGENTS.md anti-pattern for PMA.
