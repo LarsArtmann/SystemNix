@@ -12,17 +12,11 @@ _: {
     pocketIdPort = cfg.port;
     metricsPort = cfg.metricsPort;
 
-    checkEncryptionKey = pkgs.writeShellApplication {
-      name = "check-pocket-id-encryption-key";
-      runtimeInputs = [pkgs.coreutils];
-      text = ''
-        key_path="${config.sops.secrets.pocket_id_encryption_key.path}"
-        if [ ! -s "$key_path" ]; then
-          echo "pocket-id: ENCRYPTION_KEY is missing or empty ($key_path)" >&2
-          echo "  Run: just auth-bootstrap" >&2
-          exit 1
-        fi
-      '';
+    inherit (import ../../../lib/default.nix lib) mkSecretCheck;
+    checkEncryptionKey = mkSecretCheck pkgs {
+      name = "pocket-id-encryption-key";
+      secretPath = config.sops.secrets.pocket_id_encryption_key.path;
+      message = "pocket-id: ENCRYPTION_KEY is missing or empty (${config.sops.secrets.pocket_id_encryption_key.path})\n  Run: just auth-bootstrap";
     };
   in {
     options.services.pocket-id-config = {

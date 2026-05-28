@@ -10,6 +10,25 @@ in {
 
   mkStateDir = path: mode: user: group: "d ${path} ${mode} ${user} ${group} -";
 
+  mkSecretCheck = pkgs: {
+    name,
+    secretPath,
+    message,
+    extraCheck ? "",
+  }:
+    pkgs.writeShellApplication {
+      name = "check-${name}";
+      runtimeInputs = [pkgs.coreutils];
+      text = ''
+        secret_path="${secretPath}"
+        if [ ! -s "$secret_path" ]; then
+          echo "${message}" >&2
+          exit 1
+        fi
+        ${extraCheck}
+      '';
+    };
+
   mkHttpCheck = {
     name,
     group,

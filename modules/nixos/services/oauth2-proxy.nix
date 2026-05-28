@@ -8,17 +8,13 @@ _: {
   }: let
     cfg = config.services.oauth2-proxy-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkSecretCheck;
     proxyPort = cfg.port;
-    checkCookieSecret = pkgs.writeShellApplication {
-      name = "check-cookie-secret";
-      runtimeInputs = [pkgs.coreutils];
-      text = ''
-        secret_path="${config.sops.secrets.oauth2_proxy_cookie_secret.path}"
-        if [ ! -f "$secret_path" ]; then
-          echo "oauth2-proxy: cookie_secret file not found: $secret_path" >&2
-          exit 1
-        fi
+    checkCookieSecret = mkSecretCheck pkgs {
+      name = "oauth2-proxy-cookie-secret";
+      secretPath = config.sops.secrets.oauth2_proxy_cookie_secret.path;
+      message = "oauth2-proxy: cookie_secret file not found: ${config.sops.secrets.oauth2_proxy_cookie_secret.path}";
+      extraCheck = ''
         len=$(base64 -d < "$secret_path" | wc -c)
         if [ "$len" -ne 16 ] && [ "$len" -ne 24 ] && [ "$len" -ne 32 ]; then
           echo "oauth2-proxy: cookie_secret must be 16, 24, or 32 bytes (base64-decoded), got $len" >&2
