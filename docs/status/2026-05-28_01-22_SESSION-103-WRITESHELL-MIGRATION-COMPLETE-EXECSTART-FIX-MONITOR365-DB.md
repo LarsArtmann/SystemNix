@@ -4,6 +4,7 @@
 
 **Updated:** 2026-05-28 — Appendix A: Sessions 104–105 (Gatus, images registry, health check, getExe, ExecStart validation)
 **Updated:** 2026-05-28 — Appendix B: Session 106 (PMA go-output tags, overrideModAttrs removal)
+**Updated:** 2026-05-28 — Appendix C: Session 107 (todo-list-ai, dnsblockd, file-and-image-renamer vendorHash upstream migration)
 
 ---
 
@@ -83,8 +84,8 @@
 ## C) Not Started
 
 ### From Session 99/100/101 (still outstanding)
-1. **Move `todo-list-ai` FOD hash upstream** — bun node_modules hash managed in SystemNix instead of upstream repo
-2. **Move `dnsblockd`/`file-and-image-renamer` vendorHash upstream** — hardcoded in `overlays/linux.nix`
+1. ~~**Move `todo-list-ai` FOD hash upstream**~~ **DONE (Session 107)** — upstream flake.nix now manages bun deps hash
+2. ~~**Move `dnsblockd`/`file-and-image-renamer` vendorHash upstream**~~ **DONE (Session 107)** — upstream repos manage vendorHash; SystemNix removed hardcoded overrides
 3. ~~**GitHub Actions CI** — no CI exists at all~~ **DONE (Session 104)** — `nix-check.yml` + `flake-update.yml` already exist
 4. ~~**PMA `go.work` version** — `go 1.26.2` vs `go 1.26.3` in submodules~~ **DONE (Session 106)** — already at `go 1.26.3`, no change needed
 5. ~~**PMA `overrideModAttrs` anti-pattern** — still present, blocked on git tags for submodules~~ **DONE (Session 106)** — published go-output submodule tags, removed overrideModAttrs, updated vendorHash
@@ -134,14 +135,14 @@
 | 1 | Deploy and verify all changes — `just switch` | 10 min | Ship everything |
 | 2 | Verify `monitor365-server` starts after SQLite URL fix | 5 min | Confirm DB fix works |
 | 3 | Run `just test` (full build) to catch any build-time issues | 20 min | Confidence before deploy |
-| 4 | Move `dnsblockd` vendorHash to upstream repo | 15 min | Eliminates linux.nix hardcode |
-| 5 | Move `file-and-image-renamer` vendorHash to upstream repo | 15 min | Eliminates linux.nix hardcode |
+| ~~4~~ | ~~Move `dnsblockd` vendorHash to upstream repo~~ **DONE (S107)** | — | — |
+| ~~5~~ | ~~Move `file-and-image-renamer` vendorHash to upstream repo~~ **DONE (S107)** | — | — |
 
 ### Tier 2: This Week (<2 hr each)
 
 | # | Task | Effort | Impact |
 |---|------|--------|--------|
-| 6 | Move `todo-list-ai` bun FOD hash management to upstream repo | 30 min | Eliminates most fragile hash in SystemNix |
+| ~~6~~ | ~~Move `todo-list-ai` bun FOD hash management to upstream repo~~ **DONE (S107)** | — | — |
 | ~~7~~ | ~~Fix PMA go.work: `go 1.26.2` → `go 1.26.3`~~ **DONE (S106)** — already at 1.26.3 | — | — |
 | ~~8~~ | ~~Publish git tags for go-output submodules (9 tags)~~ **DONE (S106)** — 10 tags moved to HEAD | — | — |
 | ~~9~~ | ~~Remove PMA `overrideModAttrs` after tags exist~~ **DONE (S106)** — removed, vendorHash updated | — | — |
@@ -240,8 +241,8 @@
 
 | Task | Why |
 |------|-----|
-| #1 todo-list-ai FOD | Upstream repo change needed |
-| #2 vendorHash upstream | Upstream repo change needed |
+| ~~#1 todo-list-ai FOD~~ | **DONE (S107)** — upstream bun.lock + depsHash updated |
+| ~~#2 vendorHash upstream~~ | **DONE (S107)** — dnsblockd and file-and-image-renamer vendorHash moved upstream |
 | ~~#4 PMA go.work~~ | **DONE (S106)** — already at 1.26.3 |
 | ~~#5 PMA overrideModAttrs~~ | **DONE (S106)** — tags published, overrideModAttrs removed |
 | #6 BTRFS /data migration | Dangerous, needs `just snapshot-migrate-data` + reboot on evo-x2 |
@@ -285,3 +286,30 @@
 ### Key Insight
 
 The `overrideModAttrs` was a no-op in practice — `mkPreparedSource` + `postPatchExtra` already produce a consistent go.mod. Removing it changes the vendor hash (different build phase ordering) but produces an identical binary. This eliminates the AGENTS.md anti-pattern for PMA.
+
+---
+
+## Appendix C: Session 107 (2026-05-28)
+
+**Focus:** Move all hardcoded FOD/vendorHash management from SystemNix overlays to upstream repos.
+
+### What Changed
+
+| Change | Repo | Details |
+|--------|------|---------|
+| **todo-list-ai bun.lock** | `todo-list-ai` | `bun.lock` was stale (out of sync with `package.json`). Regenerated, updated `depsHash` to `sha256-WpViT+00F+n6GWLP77qMs4u4ilI7gn5PyBexsWPrFIQ=`. |
+| **todo-list-ai overlay** | `SystemNix` | Replaced 32-line `todoListAiOverlay` + `todoListAiFixedHash` with `(mkPackageOverlay todo-list-ai "todo-list-ai" {})` in `overlays/shared.nix`. |
+| **file-and-image-renamer vendorHash** | `file-and-image-renamer` | Updated `vendorHash` from stale `sha256-of+yn...` → `sha256-aH+cnh...` in upstream `flake.nix`. |
+| **file-and-image-renamer overlay** | `SystemNix` | Removed `{vendorHash = "sha256-..."}` override from `overlays/linux.nix`. |
+| **dnsblockd overlay** | `SystemNix` | Removed `{vendorHash = "sha256-..."}` override from `overlays/linux.nix`. Upstream `nix/vendor-hash.nix` was already correct. |
+
+### Verified
+
+- `nix build .#packages.x86_64-linux.todo-list-ai` — success
+- `nix build .#packages.x86_64-linux.dnsblockd` — success
+- `nix build .#packages.x86_64-linux.file-and-image-renamer` — success
+- `just test-fast` — all checks passed ✅
+
+### Key Insight
+
+All three packages now follow the same pattern as every other private Go repo in the ecosystem: `mkPackageOverlay` with no manual hash overrides. The FOD hash fragility (especially `todo-list-ai`'s bun node_modules hash, which broke on every upstream dependency change) is eliminated from SystemNix. When upstream dependencies change, the upstream repo's own flake build will fail first — the fix happens there, and SystemNix simply updates the `flake.lock` input.
