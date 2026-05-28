@@ -41,38 +41,6 @@
     govalid = prev.callPackage ../pkgs/govalid.nix {};
   };
 
-  todoListAiFixedHash = "sha256-WpViT+00F+n6GWLP77qMs4u4ilI7gn5PyBexsWPrFIQ=";
-
-  todoListAiOverlay = _final: prev: let
-    bun = prev.bun;
-    upstream = todo-list-ai.packages.${prev.stdenv.system}.default;
-    patchedDeps = prev.stdenv.mkDerivation {
-      name = "todo-list-ai-deps";
-      src = upstream.src;
-      nativeBuildInputs = [bun];
-      buildPhase = "bun install";
-      installPhase = "rm -rf node_modules/.cache && cp -r node_modules $out";
-      outputHashAlgo = "sha256";
-      outputHashMode = "recursive";
-      outputHash = todoListAiFixedHash;
-      dontFixup = true;
-    };
-  in {
-    todo-list-ai = upstream.overrideAttrs (_: {
-      buildPhase = ''
-        runHook preBuild
-        cp -r ${patchedDeps} node_modules
-        chmod -R u+w node_modules
-        find node_modules -type f -exec grep -q '^#!/usr/bin/env node' {} \; -print0 \
-          | xargs -0 -r sed -i '1s|^#!/usr/bin/env node|#!${bun}/bin/bun|'
-        patchShebangs node_modules/.bin
-
-        bun build ./index.ts --compile --outfile ./dist/todo-list-ai
-        runHook postBuild
-      '';
-    });
-  };
-
   d2DarwinOverlay = _final: prev:
     prev.lib.optionalAttrs prev.stdenv.isDarwin {
       d2 = prev.callPackage (prev.path + "/pkgs/by-name/d2/d2/package.nix") {
@@ -83,7 +51,6 @@
 in [
   awWatcherOverlay
   activitywatchOverlay
-  todoListAiOverlay
   jscpdOverlay
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {})
@@ -96,5 +63,6 @@ in [
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
+  (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
 ]
