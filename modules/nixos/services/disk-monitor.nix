@@ -33,7 +33,7 @@ _: {
           continue
         fi
 
-        read -r total used avail pct_raw _ < <(df -B1 --output=size,used,avail,pct,target "$mount" | tail -1)
+        read -r total _ avail pct_raw _ < <(df -B1 --output=size,used,avail,pct,target "$mount" | tail -1)
         pct=''${pct_raw%\%}
 
         total_gb=$(numfmt --to=iec --suffix=B "$total")
