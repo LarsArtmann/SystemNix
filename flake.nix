@@ -264,7 +264,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/hierarchical-errors?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
         # go-finding: NOT followed — hierarchical-errors hasn't been updated for the new Confidence type API
         go-filewatcher.follows = "go-filewatcher";
         gogenfilter.follows = "gogenfilter";
