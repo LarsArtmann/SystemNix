@@ -155,23 +155,29 @@ in {
 
                 check_service() {
                     TOTAL=$((TOTAL + 1))
-                    if systemctl is-active --quiet "$1" 2>/dev/null; then
-                        return 0
-                    else
-                        FAILED="$FAILED\n  $1"
-                        return 1
-                    fi
+                    # Retry up to 3 times with 2s sleep — services may be
+                    # restarting during a deploy (activating/reloading state).
+                    for _attempt in 1 2 3; do
+                        if systemctl is-active --quiet "$1" 2>/dev/null; then
+                            return 0
+                        fi
+                        sleep 2
+                    done
+                    FAILED="$FAILED\n  $1"
+                    return 1
                 }
 
                 # shellcheck disable=SC2329
                 check_user_service() {
                     TOTAL=$((TOTAL + 1))
-                    if systemctl --user is-active --quiet "$1" 2>/dev/null; then
-                        return 0
-                    else
-                        FAILED="$FAILED\n  $1 (user)"
-                        return 1
-                    fi
+                    for _attempt in 1 2 3; do
+                        if systemctl --user is-active --quiet "$1" 2>/dev/null; then
+                            return 0
+                        fi
+                        sleep 2
+                    done
+                    FAILED="$FAILED\n  $1 (user)"
+                    return 1
                 }
 
                 # === Critical system services — must be running ===
