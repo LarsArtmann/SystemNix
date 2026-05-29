@@ -27,7 +27,7 @@
 
       set_random() {
         local img
-        img=$(find "$wallpaper_dir" -maxdepth 1 -type f \\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | shuf -n1)
+        img=$(find "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
         if [[ -z $img ]]; then
           echo "No wallpaper images found in $wallpaper_dir" >&2
           return 1
