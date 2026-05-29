@@ -48,6 +48,11 @@
         playwright-driver = {browsers = prev.runCommand "playwright-stub" {} "mkdir $out";};
       };
     };
+  # crates.io API can block IPs that download without a descriptive User-Agent.
+  # Nix's fetchurl uses curl's default UA which triggers this block.
+  # The robust fix is upstream in nixpkgs (fetchCrate should set UA).
+  # Workaround: pre-fetch crates from static.crates.io CDN which doesn't block.
+  # See scripts/prefetch-crates.py for the workaround helper.
 in [
   awWatcherOverlay
   activitywatchOverlay
