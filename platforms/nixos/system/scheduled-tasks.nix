@@ -147,7 +147,8 @@ in {
               text = ''
                 export DISPLAY=:0
                 export WAYLAND_DISPLAY=wayland-1
-                export XDG_RUNTIME_DIR=/run/user/$(id -u)
+                XDG_RUNTIME_DIR=/run/user/$(id -u)
+                export XDG_RUNTIME_DIR
 
                 FAILED=""
                 TOTAL=0
@@ -162,6 +163,7 @@ in {
                     fi
                 }
 
+                # shellcheck disable=SC2329
                 check_user_service() {
                     TOTAL=$((TOTAL + 1))
                     if systemctl --user is-active --quiet "$1" 2>/dev/null; then

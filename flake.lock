@@ -42,11 +42,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1779979801,
-        "narHash": "sha256-Tj+MLdLEdrkKSzwmaK3WjV8aB4l3qn1KPUk7VpZQLic=",
+        "lastModified": 1780021648,
+        "narHash": "sha256-dwpKy8jQKtFzJ0TGXq30hd47+/jFcroPLC1WTiL5lN0=",
         "ref": "master",
-        "rev": "52cd70d40869ace75968fa72f3717f49a0c25794",
-        "revCount": 1784,
+        "rev": "a4dc178759dee8f9dc17055bb566f4150d62f20f",
+        "revCount": 1785,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -96,11 +96,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1779980173,
-        "narHash": "sha256-UB26okz+BLReplm5N7B5OSZpRDWbWEmqt57I9BoznDE=",
+        "lastModified": 1780025120,
+        "narHash": "sha256-WvGeruhDNCkr/16CQoIMkdwNIHRWNHL74PXeCNOac3Y=",
         "ref": "master",
-        "rev": "08e013e8ba0d2a2531e34cca056c8e6eea23214e",
-        "revCount": 2782,
+        "rev": "29948cabc5c9a7d453f162a303354a4318830ddb",
+        "revCount": 2795,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -854,11 +854,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1780018581,
-        "narHash": "sha256-NoaB2vhRVHUu4p3IKcW4/gjzNx6D16mqLZ8KH8C6gEs=",
+        "lastModified": 1780023903,
+        "narHash": "sha256-JKc1d0Vhanh6gmG4ZMtTOi9jbSe1wo2rlutDJ+n1WxY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "aa4c7d51b8970e6a325c1f673ef02889d6d35e77",
+        "rev": "f8da04428364a4996389da52c4d8b6f32b3ed8d3",
         "type": "github"
       },
       "original": {
@@ -1221,11 +1221,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780018774,
-        "narHash": "sha256-fcKGyQC7w1leaOWS2c1sNv8U+EoVOIYzU6+5VvbLtXg=",
+        "lastModified": 1780023261,
+        "narHash": "sha256-AjwfuujCHK2JEv6GS62BNtpyFnJd7m5SY824C4kgRC0=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "5b53ea0fc16222664d33a3dd10ce02b751636f8a",
+        "rev": "d7f413b14aeacb19f743e6b20dcaa6e7b7454e6c",
         "type": "github"
       },
       "original": {

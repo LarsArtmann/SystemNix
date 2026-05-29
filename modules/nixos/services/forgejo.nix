@@ -299,7 +299,7 @@ _: {
 
         [ -f "$TOKEN_FILE" ] && exit 0
 
-        for i in $(seq 1 30); do
+        for _ in $(seq 1 30); do
           if curl -s -o /dev/null -w "" "${forgejoUrl}/"; then
             break
           fi
@@ -337,7 +337,7 @@ _: {
         TOKEN_FILE="/run/forgejo-runner/token"
         mkdir -p "$(dirname "$TOKEN_FILE")"
 
-        for i in $(seq 1 60); do
+        for _ in $(seq 1 60); do
           curl -sf -o /dev/null "${forgejoUrl}/" && break
           sleep 1
         done
@@ -362,6 +362,7 @@ _: {
         mkdir -vp "$INSTANCE_DIR"
         cd "$INSTANCE_DIR"
 
+        # shellcheck source=/dev/null
         source /run/forgejo-runner/token
 
         if [ ! -f "$INSTANCE_DIR/.forgejo-migrated" ]; then

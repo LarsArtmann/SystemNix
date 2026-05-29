@@ -53,6 +53,7 @@
           chmod 600 "$ENV_FILE"
         fi
 
+        # shellcheck disable=SC2043
         for dep_key in MESSAGING_CWD; do
           if grep -q "^''${dep_key}=" "$ENV_FILE" 2>/dev/null; then
             sed -i "/^''${dep_key}=/d" "$ENV_FILE"

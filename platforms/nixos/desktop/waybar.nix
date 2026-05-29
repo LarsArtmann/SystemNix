@@ -32,6 +32,7 @@
         FMT="$TOTAL"
       fi
       RECENT=$(echo "$STATS" | jq -r '.recentBlocks[:3] | map(.domain) | join(", ")' 2>/dev/null || echo "")
+      # shellcheck disable=SC2028
       echo "{\"text\": \"$FMT blocked\", \"tooltip\": \"DNS Blocker\\nTotal: $TOTAL domains\\nRecent: $RECENT\"}"
     '';
   };
@@ -72,6 +73,7 @@
         album_tooltip=""
       fi
 
+      # shellcheck disable=SC2028
       echo "{\"text\": \"$icon ''${artist} - ''${title}\", \"tooltip\": \"<b>''${artist}</b> — ''${title}''${album_tooltip}\nPlayer: $player | $status\", \"class\": \"$class\"}"
     '';
   };
@@ -86,6 +88,7 @@
         CLIP_TRUNCATED="''${CLIP_TRUNCATED}..."
       fi
       COUNT=$(cliphist list | wc -l || echo "0")
+      # shellcheck disable=SC2028
       echo "{\"text\": \"$CLIP_TRUNCATED\", \"tooltip\": \"Clipboard ($COUNT items)\\nClick: open history\\nMiddle-click: clear all\"}" | sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
     '';
   };

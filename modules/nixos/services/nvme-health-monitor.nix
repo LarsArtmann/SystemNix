@@ -28,8 +28,10 @@ _: {
       }
 
       needs_notify() {
-        local key="$1" value="$2" state_file="$STATE_DIR/$key"
-        local last=$(cat "$state_file" 2>/dev/null || echo "")
+        local key="$1" value="$2"
+        local state_file="$STATE_DIR/$key"
+        local last
+        last=$(cat "$state_file" 2>/dev/null || echo "")
         if [ "$last" = "$value" ]; then
           return 1
         fi
@@ -53,6 +55,7 @@ _: {
       AVAILABLE_SPARE=$(extract "available_spare")
       PERCENTAGE_USED=$(extract "percentage_used")
       MEDIA_ERRORS=$(extract "media_errors")
+      # shellcheck disable=SC2034
       NUM_ERR_LOG=$(extract "num_err_log_entries")
       TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
       TEMP_CELSIUS=$((TEMP_KELVIN - 273))

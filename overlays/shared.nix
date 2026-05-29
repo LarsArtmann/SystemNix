@@ -54,12 +54,12 @@ in [
   jscpdOverlay
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-XVOiKTiNpBOjAaCJ7NkrZUTxWFN6odOSa/m8NjrkukE=";})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
-  (mkPackageOverlay mr-sync "mr-sync" {})
-  (mkPackageOverlay buildflow "buildflow" {})
+  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-E0m7aGN2kD85hrC1ZzJlcs5vo5a5Z3+89iGRXYmiUtE=";})
+  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-rox2xM38x2euD6+JJCV76QJT7MlsBX0L4EgM+EExDuA=";})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-+qtWbvT+M4MZFdPBGvo/422PTmWfbt/q88Y33oFMmpk=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})

@@ -204,7 +204,7 @@
       go-auto-upgrade # Automated Go version upgrades
       go-structure-linter # Go project structure validator
       hierarchical-errors # Error handling pattern analyzer
-      projects-management-automation # CLI for managing multiple projects
+      # projects-management-automation # TEMP: broken go-commit/result symlink in PMA repo
 
       # Go testing
       ginkgo # BDD testing framework for Go
