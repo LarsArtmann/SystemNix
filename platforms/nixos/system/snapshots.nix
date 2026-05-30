@@ -5,27 +5,44 @@
   ...
 }: let
   inherit (import ../../../lib/default.nix lib) harden onFailure;
-  # Derive root BTRFS device from hardware-configuration.nix (single source of truth)
   rootDevice = config.fileSystems."/".device;
-in {
-  # BTRFS snapshot management
-  #
-  # Root (@ subvolume): btrbk — policy-based daily snapshots, auto-pruning
-  # /data:              NOT snapshotted — mounted as BTRFS toplevel (subvolid=5)
-  #                     See `just snapshot-migrate-data` to convert to @data subvolume
-  #
-  # Pre-deploy: `just switch` auto-snapshots root before every deploy
+  primaryUser = config.users.primaryUser;
 
-  # Mount BTRFS toplevel for root device (needed by btrbk for snapshot operations)
-  # Uses automount — only mounted when accessed, unmounts after 10min idle
-  fileSystems."/mnt/btrfs-root" = {
-    device = rootDevice;
-    fsType = "btrfs";
-    options = ["noatime" "compress=zstd" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
+  cacheSubvolumes = {
+    "@cache-home" = "/home/${primaryUser}/.cache";
+    "@go" = "/home/${primaryUser}/go";
+    "@npm" = "/home/${primaryUser}/.npm";
+    "@cargo" = "/home/${primaryUser}/.cargo";
   };
 
-  # btrbk: policy-based BTRFS snapshots for root (@) subvolume
-  # Snapshots stored as /mnt/btrfs-root/.snapshots/@.YYYYMMDDTHHMMSS
+  cacheFileSystems =
+    lib.mapAttrs' (subvol: mountPoint: {
+      name = mountPoint;
+      value = {
+        device = rootDevice;
+        fsType = "btrfs";
+        options = [
+          "subvol=${subvol}"
+          "compress=zstd"
+          "noatime"
+          "noauto"
+          "x-systemd.automount"
+          "x-systemd.idle-timeout=10min"
+        ];
+      };
+    })
+    cacheSubvolumes;
+in {
+  fileSystems =
+    {
+      "/mnt/btrfs-root" = {
+        device = rootDevice;
+        fsType = "btrfs";
+        options = ["noatime" "compress=zstd" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
+      };
+    }
+    // cacheFileSystems;
+
   services.btrbk.instances."root" = {
     onCalendar = "daily";
     snapshotOnly = true;
@@ -39,7 +56,6 @@ in {
     };
   };
 
-  # Snapshot freshness verification — alerts if root snapshots are stale
   systemd.services."btrfs-verify-snapshots" = {
     description = "Verify BTRFS snapshot freshness";
     inherit onFailure;
@@ -67,7 +83,6 @@ in {
         exit 1
       fi
 
-      # Use filesystem modification time — immune to naming convention changes
       SNAP_EPOCH=$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)
       NOW_EPOCH=$(date +%s)
       AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
@@ -91,7 +106,6 @@ in {
     wantedBy = ["timers.target"];
   };
 
-  # BTRFS integrity scrub
   services.btrfs.autoScrub = {
     enable = true;
     interval = "monthly";
