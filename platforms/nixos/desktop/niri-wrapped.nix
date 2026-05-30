@@ -415,44 +415,44 @@ in {
       animations = {
         horizontal-view-movement = {
           kind.spring = {
-            damping-ratio = 0.8;
-            stiffness = 1000;
-            epsilon = 0.0001;
+            damping-ratio = 1.0;
+            stiffness = 80000;
+            epsilon = 0.01;
           };
         };
         window-open = {
           kind.spring = {
-            damping-ratio = 0.7;
-            stiffness = 800;
-            epsilon = 0.0001;
+            damping-ratio = 1.0;
+            stiffness = 80000;
+            epsilon = 0.01;
           };
         };
         window-close = {
           kind.spring = {
-            damping-ratio = 0.7;
-            stiffness = 800;
-            epsilon = 0.0001;
+            damping-ratio = 1.0;
+            stiffness = 80000;
+            epsilon = 0.01;
           };
         };
         window-movement = {
           kind.spring = {
-            damping-ratio = 0.8;
-            stiffness = 1000;
-            epsilon = 0.0001;
+            damping-ratio = 1.0;
+            stiffness = 80000;
+            epsilon = 0.01;
           };
         };
         window-resize = {
           kind.spring = {
-            damping-ratio = 0.8;
-            stiffness = 800;
-            epsilon = 0.0001;
+            damping-ratio = 1.0;
+            stiffness = 80000;
+            epsilon = 0.01;
           };
         };
         workspace-switch = {
           kind.spring = {
-            damping-ratio = 0.8;
-            stiffness = 1000;
-            epsilon = 0.0001;
+            damping-ratio = 1.0;
+            stiffness = 80000;
+            epsilon = 0.01;
           };
         };
       };

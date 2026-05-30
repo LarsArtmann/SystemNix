@@ -148,6 +148,13 @@
     "9gag.com"
     "olevod.com"
     "www.olevod.com"
+    "apache.org"
+    "www.apache.org"
+    "downloads.apache.org"
+    "archive.apache.org"
+    "maven.apache.org"
+    "repo.maven.apache.org"
+    "dlcdn.apache.org"
   ];
 
   extraDomains = [
