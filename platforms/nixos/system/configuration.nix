@@ -89,6 +89,7 @@
       enable = true;
       auto = "tracking-only";
       defaultAudio = "nc";
+      user = "lars";
     };
 
     # AMD GPU Support - imported from hardware module

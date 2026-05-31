@@ -17,11 +17,6 @@
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };
 
-  # aw-webui jest tests fail with missing vue-template-compiler.
-  # The aw-webui package is not a top-level nixpkgs attribute — it's defined
-  # inside pkgs/applications/office/activitywatch/default.nix and passed to
-  # aw-server-rust via AW_WEBUI_DIR. We can't easily override it via overlays.
-  # Instead, override activitywatch to skip the broken npm test phase.
   activitywatchOverlay = final: prev: let
     awPkgs = prev.qt6Packages.callPackage (prev.path + "/pkgs/applications/office/activitywatch/default.nix") {
       buildNpmPackage = args: prev.buildNpmPackage (args // {doCheck = false;});
@@ -53,14 +48,14 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" {})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-XVOiKTiNpBOjAaCJ7NkrZUTxWFN6odOSa/m8NjrkukE=";})
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
-  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-E0m7aGN2kD85hrC1ZzJlcs5vo5a5Z3+89iGRXYmiUtE=";})
-  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-rox2xM38x2euD6+JJCV76QJT7MlsBX0L4EgM+EExDuA=";})
-  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-+qtWbvT+M4MZFdPBGvo/422PTmWfbt/q88Y33oFMmpk=";})
-  (mkPackageOverlay branching-flow "branching-flow" {})
+  (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-MH4E5+SpDPSGBaRE23Ez+qjRAgkEMs4/Y/FUT6sXz3U=";})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-oerBC3M2vcec6dD4tdi3e7ZwqUGwFTNykrbPQSyceEg=";})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-MMVy22Zx0ui4LCYxGe3bbu1lz7ODolYeef1eq/xrG5Y=";})
+  (mkPackageOverlay mr-sync "mr-sync" {})
+  (mkPackageOverlay buildflow "buildflow" {vendorHash = "";})
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-WwiJCOCEOggCIeqL930SxtirurrNO8rT8vuKLFZvEgU=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-PrcJm4ZgMOMgxFF2C5bBF997b9upQBE5I+0EtSTWvTw=";})
+  (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-eL+rRV9nTzMod+U1vzMnMtbrl6GLEHOP2E1DJTKkbZk=";})
   (mkPackageOverlay art-dupl "art-dupl" {})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
