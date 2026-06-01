@@ -165,6 +165,12 @@
       # TEMPORARILY DISABLED: charm.land/fantasy@v0.25.0 requires Go 1.26.3, nixpkgs-unstable has 1.26.2
       file-and-image-renamer = {
         enable = false;
+        watchPaths = [
+          "/home/${config.users.primaryUser}/Downloads"
+          "/home/${config.users.primaryUser}/Pictures"
+        ];
+        syntheticModel = "syn:small:vision";
+        syntheticApiKeyFile = "/home/${config.users.primaryUser}/.synthetic_api_key";
       };
 
       libinput = {

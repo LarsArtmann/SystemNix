@@ -30,7 +30,13 @@ _: {
         type = lib.types.str;
         default = "/home/${cfg.user}/Desktop";
         defaultText = "/home/<user>/Desktop";
-        description = "Directory to watch for new screenshots";
+        description = "Directory to watch for new screenshots (legacy, prefer watchPaths)";
+      };
+
+      watchPaths = lib.mkOption {
+        type = lib.types.listOf lib.types.str;
+        default = [];
+        description = "Directories to watch for new screenshots (colon-separated into WATCH_PATHS)";
       };
 
       apiKeyFile = lib.mkOption {
@@ -38,6 +44,24 @@ _: {
         default = "/home/${cfg.user}/.zai_api_key";
         defaultText = "/home/<user>/.zai_api_key";
         description = "Path to the ZAI API key file";
+      };
+
+      syntheticApiKeyFile = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Path to the Synthetic.new API key file (optional fallback provider)";
+      };
+
+      model = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Override GLM model ID (env: GLM_MODEL)";
+      };
+
+      syntheticModel = lib.mkOption {
+        type = lib.types.nullOr lib.types.str;
+        default = null;
+        description = "Override Synthetic model ID (env: SYNTHETIC_MODEL)";
       };
 
       logDirectory = lib.mkOption {
@@ -78,10 +102,15 @@ _: {
               StandardOutput = "journal";
               StandardError = "journal";
 
-              Environment = [
-                "DESKTOP_PATH=${cfg.watchDirectory}"
-                "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
-              ];
+              Environment =
+                [
+                  "DESKTOP_PATH=${cfg.watchDirectory}"
+                  "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
+                ]
+                ++ lib.optional (cfg.syntheticApiKeyFile != null) "SYNTHETIC_API_KEY_FILE=${cfg.syntheticApiKeyFile}"
+                ++ lib.optional (cfg.model != null) "GLM_MODEL=${cfg.model}"
+                ++ lib.optional (cfg.syntheticModel != null) "SYNTHETIC_MODEL=${cfg.syntheticModel}"
+                ++ lib.optional (cfg.watchPaths != []) "WATCH_PATHS=${lib.concatStringsSep ":" cfg.watchPaths}";
             };
 
           Install = {
