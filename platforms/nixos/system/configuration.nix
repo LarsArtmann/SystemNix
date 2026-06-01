@@ -276,6 +276,15 @@
         ];
         autoSync = true;
       };
+
+      # Auto-commit daemon: watches ~/projects, AI-generates commit messages via MiniMax
+      projects-management-automation = {
+        enable = true;
+        paths = ["/home/${config.users.primaryUser}/projects"];
+        autoPush = false;
+        debounceSeconds = 10;
+        minCommitIntervalSeconds = 60;
+      };
     };
   };
 }

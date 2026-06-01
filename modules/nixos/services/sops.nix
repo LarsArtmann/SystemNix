@@ -164,6 +164,15 @@ in {
             '';
           };
 
+          "pma-env" = {
+            owner = primaryUser;
+            group = "users";
+            restartUnits = ["projects-management-automation.service"];
+            content = ''
+              MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
+            '';
+          };
+
           "openseo-env" = {
             owner = "root";
             group = "root";
