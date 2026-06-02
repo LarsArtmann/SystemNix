@@ -50,7 +50,22 @@ in [
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-foE0xXbKyceVGSThYzJ9KidUgfua1/64FObJQawBVYw=";})
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-Z1PWKQ2vlrtrB8660x++zXPonhehjuTa7x/bDtO8GGE=";})
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-LCz14+53dif4m6fq8I11hHkKwSueYKnjVjTl4EUQUl0=";})
+  # golangci-lint-auto-configure — go-finding API breaks (Merge→Combine) + vendorHash recompute via go mod tidy
+  (_final: prev: let
+    pkg = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default or null;
+  in
+    if pkg == null then {} else {
+      golangci-lint-auto-configure = pkg.overrideAttrs (_old: {
+        postPatch = ''
+          find . -name '*.go' -exec sed -i 's/finding\.Merge(/finding.Combine(/g' {} +
+        '';
+        vendorHash = "sha256-Y+rxN1VJcfxGLIUpme3ik7GEno9MvJKrX6uaPRH7yDg=";
+        goModules = pkg.goModules.overrideAttrs (_modOld: {
+          outputHash = "sha256-Y+rxN1VJcfxGLIUpme3ik7GEno9MvJKrX6uaPRH7yDg=";
+          preBuild = "go mod tidy";
+        });
+      });
+    })
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-khXvSx9rDHgTWa+T0ukhANdBTGvjF9++U8Ni9gdBudk=";})
   (mkPackageOverlay buildflow "buildflow" {})
   # buildflow — mkPreparedSource creates complex go.mod state; needs tidy in go-modules phase
@@ -69,8 +84,8 @@ in [
     });
   })
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EhKRJczms0gw0JniX+TFBanwIt0muK+PX0WMUk0EHxE=";})
-  # go-structure-linter — BROKEN: upstream go.sum missing template-LICENSE/types (private dep);
-  # needs upstream fix (go.sum update + _local_deps replace). Using last known-good vendorHash.
+  # go-structure-linter — BROKEN: template-LICENSE/types private dep not in _local_deps;
+  # go mod tidy fails in sandbox. Needs upstream fix. VendorHash stale after go-finding update.
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-pbXGL14SRnIF6OGjCw+5Cos4aANpKOXKzBO82bPTQnE=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-BGKYeWl9rxBDvZYOW5/IbMQRxv2toaxexmJm4iMKsic=";})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-HSgFUbQEOScJqVG8/J9JRwJtgjFtWfCdli8b7VcdYVY=";})
