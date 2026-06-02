@@ -56,17 +56,17 @@ in [
   # buildflow — mkPreparedSource creates complex go.mod state; needs tidy in go-modules phase
   (_final: prev: {
     buildflow = prev.buildflow.overrideAttrs (_old: {
-      vendorHash = "sha256-/hJ9jVxAPA754KuabIi+4yH0shjbj3xDSD8dtdkP9SM";
+      vendorHash = "sha256-3jPdEu1Lrk+IyaY/l9fBIWYDUWk/iLxoYIoSDamz9LM=";
       goModules = prev.buildflow.goModules.overrideAttrs (_modOld: {
-        outputHash = "sha256-/hJ9jVxAPA754KuabIi+4yH0shjbj3xDSD8dtdkP9SM";
+        outputHash = "sha256-3jPdEu1Lrk+IyaY/l9fBIWYDUWk/iLxoYIoSDamz9LM=";
         preBuild = "go mod tidy";
       });
     });
   })
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EhKRJczms0gw0JniX+TFBanwIt0muK+PX0WMUk0EHxE=";})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-pbXGL14SRnIF6OGjCw+5Cos4aANpKOXKzBO82bPTQnE=";})
-  (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-ahILuGZoeD7tVp9Hr2YYXoKH8fhr6413zKoqwrl1Mpw=";})
-  (mkPackageOverlay art-dupl "art-dupl" {})
+  (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-BGKYeWl9rxBDvZYOW5/IbMQRxv2toaxexmJm4iMKsic=";})
+  (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-HSgFUbQEOScJqVG8/J9JRwJtgjFtWfCdli8b7VcdYVY=";})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
