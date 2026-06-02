@@ -69,6 +69,8 @@ in [
     });
   })
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EhKRJczms0gw0JniX+TFBanwIt0muK+PX0WMUk0EHxE=";})
+  # go-structure-linter — BROKEN: upstream go.sum missing template-LICENSE/types (private dep);
+  # needs upstream fix (go.sum update + _local_deps replace). Using last known-good vendorHash.
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-pbXGL14SRnIF6OGjCw+5Cos4aANpKOXKzBO82bPTQnE=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-BGKYeWl9rxBDvZYOW5/IbMQRxv2toaxexmJm4iMKsic=";})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-HSgFUbQEOScJqVG8/J9JRwJtgjFtWfCdli8b7VcdYVY=";})
