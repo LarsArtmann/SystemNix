@@ -87,11 +87,10 @@ All services are defined as flake-parts modules and reverse-proxied through Cadd
 | **SigNoz** | 4317, 4318, 8080 | `signoz.home.lan` | Observability: traces, metrics, logs + node_exporter + cAdvisor |
 | **Homepage** | 8082 | `dash.home.lan` | Service overview dashboard |
 | **PhotoMap AI** | 8050 | `photomap.home.lan` | AI-powered photo exploration with UMAP embeddings |
-| **Authelia** | 9091 | `auth.home.lan` | SSO/IDP with OIDC, TOTP, WebAuthn 2FA |
+| **Pocket ID** | 1411 | `auth.home.lan` | SSO/IDP with passkey authentication + oauth2-proxy forward auth |
 | **Hermes** | — | — | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM) |
 | **Twenty CRM** | 3200 | `crm.home.lan` | Self-hosted CRM (Docker Compose: PostgreSQL + Redis) |
-| **ComfyUI** | 8188 | `comfyui.home.lan` | AI image generation with ROCm GPU acceleration |
-| **Voice Agents** | 7880 | — | AI voice agent platform (Docker: LiveKit + pipecat) |
+| **Voice Agents** | 7880 | — | AI voice agent platform (Docker: LiveKit + Whisper ASR) |
 | **TaskChampion** | 10222 | `tasks.home.lan` | Taskwarrior sync server (cross-platform + Android) |
 | **DNS Blocker** | 53, 9090 | — | Unbound + dnsblockd, 25 blocklists, DNS-over-TLS upstream |
 

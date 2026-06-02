@@ -369,10 +369,6 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | `ai-integration-test.sh` | ✅ | AI/ML stack validation | Ollama ROCm env vars, ROCm packages, DeepSeek support, OCR, PyTorch ecosystem |
 | `update-crush-latest.sh` | ✅ | Crush version updater | Before/after version, NUR eval, `--switch` flag for auto-activate |
 | `lib/paths.sh` | ✅ | Shared path constants | `PROJECT_ROOT` auto-detect, platform/user/nix paths, helper functions (`is_darwin`, `is_linux`, `ensure_dir`) |
-| `benchmark-system.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
-| `performance-monitor.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
-| `shell-context-detector.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
-| `storage-cleanup.sh` | ❌ | Referenced by FEATURES.md | Script does not exist — justfile command removed |
 
 ---
 
