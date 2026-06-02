@@ -59,8 +59,8 @@ in {
       prefer-no-csd = true;
 
       spawn-at-startup = [
-        {command = ["kitty" "-e" "sudo" "btop"];}
-        {command = ["kitty" "-e" "nvtop"];}
+        {command = ["ghostty" "-e" "sudo" "btop"];}
+        {command = ["ghostty" "-e" "nvtop"];}
       ];
 
       screenshot-path = "~/Pictures/screenshots/%Y-%m-%d %H-%M-%S.png";
@@ -170,8 +170,8 @@ in {
       binds = let
         sh = cmd: ["sh" "-c" cmd];
       in {
-        "Mod+Return".action.spawn = ["kitty"];
-        "Mod+Shift+Return".action.spawn = ["foot"];
+        "Mod+Return".action.spawn = ["ghostty"];
+        "Mod+Shift+Return".action.spawn = ["kitty"];
 
         "Mod+Q".action.close-window = {};
         "Mod+Shift+Q".action.quit = {};
@@ -242,7 +242,7 @@ in {
         "Mod+Shift+E".action.spawn = ["emacs"];
         "Mod+Shift+B".action.spawn = ["firefox"];
         "Mod+Z".action.spawn = ["zed"];
-        "Mod+Shift+F".action.spawn = sh "kitty --class floating -e yazi";
+        "Mod+Shift+F".action.spawn = sh "ghostty --class floating -e yazi";
         "Mod+Shift+D".action.spawn = sh "zellij --layout dev";
 
         "Mod+Shift+Escape".action.spawn = ["swaylock"];
@@ -373,6 +373,7 @@ in {
         }
         {
           matches = [
+            {app-id = "^com.mitchellh.ghostty$";}
             {app-id = "^kitty$";}
             {app-id = "^foot$";}
             {app-id = "^helium$";}

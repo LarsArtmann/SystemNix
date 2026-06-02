@@ -34,7 +34,24 @@ in {
 
   # Programs configuration
   programs = {
-    # Kitty terminal configuration (TV-friendly font size)
+    # Ghostty terminal configuration (primary)
+    ghostty = {
+      enable = true;
+      settings = {
+        font-family = "JetBrainsMono Nerd Font";
+        font-size = 16;
+        theme = "catppuccin-mocha";
+        background-opacity = 0.85;
+        confirm-close = false;
+        window-decoration = false;
+        copy-on-select = false;
+        mouse-hide-while-typing = true;
+        clipboard-read = "allow";
+        clipboard-write = "allow";
+      };
+    };
+
+    # Kitty terminal configuration (backup)
     kitty = {
       enable = true;
       package = pkgs.kitty.overrideAttrs (old: {
@@ -47,7 +64,7 @@ in {
       });
       font = {
         name = "JetBrainsMono Nerd Font";
-        size = 16; # TV viewing size (2m distance)
+        size = 16;
       };
       themeFile = "Catppuccin-Mocha";
       settings = {
@@ -249,6 +266,7 @@ in {
       # Note: xdg-utils moved to base.nix for cross-platform consistency
 
       # Desktop packages
+      # Note: ghostty managed by programs.ghostty above — don't add to packages
       # Note: kitty managed by programs.kitty above — don't add to packages
       # Note: cliphist is installed via common/packages/base.nix (Linux-only)
       dunst
@@ -356,8 +374,8 @@ in {
         "x-scheme-handler/https" = ["helium.desktop"];
 
         # Terminal
-        "x-scheme-handler/terminal" = ["kitty.desktop"];
-        "application/x-terminal-emulator" = ["kitty.desktop"];
+        "x-scheme-handler/terminal" = ["com.mitchellh.ghostty.desktop"];
+        "application/x-terminal-emulator" = ["com.mitchellh.ghostty.desktop"];
 
         # Text / code files
         "text/plain" = ["zed.desktop"];

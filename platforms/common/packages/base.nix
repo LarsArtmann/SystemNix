@@ -253,7 +253,7 @@
       wf-recorder # Screen recorder
       brillo # Brightness control utility
       pamixer # PulseAudio command line mixer
-      foot # Lightweight Wayland terminal emulator
+      ghostty # Fast, native, feature-rich terminal emulator
       zellij # Modern terminal multiplexer
     ];
 

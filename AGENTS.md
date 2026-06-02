@@ -152,6 +152,8 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 
 | Issue | Why It Matters |
 |-------|---------------|
+| Terminal hierarchy | Ghostty = primary (Mod+Return), Kitty = backup (Mod+Shift+Return), Foot = sway fallback only |
+| Ghostty app-id | Niri window rules use `^com.mitchellh.ghostty$` (not just `^ghostty$`) |
 | Darwin HM user | `users.users.larsartmann.home` required in `platforms/darwin/default.nix` |
 | Relative paths | Darwin: `../common/`, NixOS: `../../common/` |
 | `lib.mkMerge` + flake-parts | Does not work — use inline config or imports |

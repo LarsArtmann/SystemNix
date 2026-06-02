@@ -183,7 +183,7 @@
       modi = "drun,run,window";
       show-icons = true;
       icon-theme = "Papirus";
-      terminal = "kitty";
+      terminal = "ghostty";
       display-drun = " ";
       drun-display-format = "{name}";
       location = 0;
