@@ -1,353 +1,556 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BTRFS Snapshot Bloat Fix — Execution Plan</title>
-  <style>
-    :root {
-      --bg: #0f1117;
-      --surface: #1a1d27;
-      --border: #2a2d3a;
-      --text: #e1e4ed;
-      --muted: #8b8fa3;
-      --accent: #6c8cff;
-      --green: #4ade80;
-      --yellow: #fbbf24;
-      --red: #f87171;
-      --done: #22c55e;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, 'Inter', 'SF Pro', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 2rem 1.5rem;
-    }
-    h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
-    h2 { font-size: 1.3rem; margin: 2rem 0 1rem; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
-    h3 { font-size: 1.05rem; margin: 1rem 0 0.5rem; }
-    .subtitle { color: var(--muted); margin-bottom: 2rem; }
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.2rem 1.5rem;
-      margin-bottom: 1rem;
-    }
-    .phase { margin-bottom: 2.5rem; }
-    .phase-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 1rem;
-    }
-    .phase-number {
-      background: var(--accent);
-      color: var(--bg);
-      font-weight: 700;
-      width: 2rem;
-      height: 2rem;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .phase-number.done { background: var(--done); }
-    .phase-number.blocked { background: var(--red); }
-    .phase-title { font-size: 1.2rem; font-weight: 600; }
-    .phase-subtitle { color: var(--muted); font-size: 0.9rem; }
-    .status {
-      display: inline-block;
-      padding: 0.15rem 0.6rem;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .status.done { background: #22c55e22; color: var(--done); }
-    .status.in-progress { background: #6c8cff22; color: var(--accent); }
-    .status.blocked { background: #f8717122; color: var(--red); }
-    .status.todo { background: #fbbf2422; color: var(--yellow); }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 0.5rem 0;
-      font-size: 0.9rem;
-    }
-    th, td {
-      text-align: left;
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid var(--border);
-    }
-    th { color: var(--muted); font-weight: 500; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
-    code {
-      background: #0003;
-      padding: 0.15rem 0.4rem;
-      border-radius: 3px;
-      font-size: 0.85em;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-    }
-    pre {
-      background: #0003;
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      font-size: 0.85rem;
-      font-family: 'JetBrains Mono', 'Fira Code', monospace;
-      margin: 0.5rem 0;
-    }
-    .metric-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 0.75rem;
-      margin: 1rem 0;
-    }
-    .metric {
-      background: #0002;
-      border-radius: 6px;
-      padding: 0.75rem;
-      text-align: center;
-    }
-    .metric-value { font-size: 1.4rem; font-weight: 700; }
-    .metric-label { font-size: 0.75rem; color: var(--muted); }
-    .metric-value.bad { color: var(--red); }
-    .metric-value.good { color: var(--green); }
-    .metric-value.warn { color: var(--yellow); }
-    .arrow { color: var(--muted); margin: 0 0.5rem; }
-    ul { padding-left: 1.5rem; margin: 0.5rem 0; }
-    li { margin-bottom: 0.3rem; }
-    .risk { color: var(--yellow); }
-    .file-ref { color: var(--accent); font-family: monospace; font-size: 0.85em; }
-    .divider { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
-  </style>
-</head>
-<body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTRFS Snapshot Bloat Fix — Execution Plan</title>
+    <style>
+      :root {
+        --bg: #0f1117;
+        --surface: #1a1d27;
+        --border: #2a2d3a;
+        --text: #e1e4ed;
+        --muted: #8b8fa3;
+        --accent: #6c8cff;
+        --green: #4ade80;
+        --yellow: #fbbf24;
+        --red: #f87171;
+        --done: #22c55e;
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: -apple-system, "Inter", "SF Pro", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+      }
+      h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+      }
+      h2 {
+        font-size: 1.3rem;
+        margin: 2rem 0 1rem;
+        color: var(--accent);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.5rem;
+      }
+      h3 {
+        font-size: 1.05rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .subtitle {
+        color: var(--muted);
+        margin-bottom: 2rem;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 1.2rem 1.5rem;
+        margin-bottom: 1rem;
+      }
+      .phase {
+        margin-bottom: 2.5rem;
+      }
+      .phase-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .phase-number {
+        background: var(--accent);
+        color: var(--bg);
+        font-weight: 700;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .phase-number.done {
+        background: var(--done);
+      }
+      .phase-number.blocked {
+        background: var(--red);
+      }
+      .phase-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+      .phase-subtitle {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .status {
+        display: inline-block;
+        padding: 0.15rem 0.6rem;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .status.done {
+        background: #22c55e22;
+        color: var(--done);
+      }
+      .status.in-progress {
+        background: #6c8cff22;
+        color: var(--accent);
+      }
+      .status.blocked {
+        background: #f8717122;
+        color: var(--red);
+      }
+      .status.todo {
+        background: #fbbf2422;
+        color: var(--yellow);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 0.5rem 0;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        color: var(--muted);
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      code {
+        background: #0003;
+        padding: 0.15rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.85em;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+      }
+      pre {
+        background: #0003;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        margin: 0.5rem 0;
+      }
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0;
+      }
+      .metric {
+        background: #0002;
+        border-radius: 6px;
+        padding: 0.75rem;
+        text-align: center;
+      }
+      .metric-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+      }
+      .metric-label {
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .metric-value.bad {
+        color: var(--red);
+      }
+      .metric-value.good {
+        color: var(--green);
+      }
+      .metric-value.warn {
+        color: var(--yellow);
+      }
+      .arrow {
+        color: var(--muted);
+        margin: 0 0.5rem;
+      }
+      ul {
+        padding-left: 1.5rem;
+        margin: 0.5rem 0;
+      }
+      li {
+        margin-bottom: 0.3rem;
+      }
+      .risk {
+        color: var(--yellow);
+      }
+      .file-ref {
+        color: var(--accent);
+        font-family: monospace;
+        font-size: 0.85em;
+      }
+      .divider {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2rem 0;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>BTRFS Snapshot Bloat Fix</h1>
+    <p class="subtitle">
+      evo-x2 — /dev/nvme0n1p6 — 512GB NVMe — Execution Plan
+    </p>
 
-<h1>BTRFS Snapshot Bloat Fix</h1>
-<p class="subtitle">evo-x2 — /dev/nvme0n1p6 — 512GB NVMe — Execution Plan</p>
+    <h2>Current State</h2>
 
-<h2>Current State</h2>
-
-<div class="metric-grid">
-  <div class="metric">
-    <div class="metric-value bad">100%</div>
-    <div class="metric-label">Disk Usage (507/512 GB)</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value bad">285 GB</div>
-    <div class="metric-label">Exclusive in 5 Snapshots</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value warn">84 GB</div>
-    <div class="metric-label">Nix Store</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value warn">21 GB</div>
-    <div class="metric-label">ClickHouse (no TTL)</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value warn">40 GB</div>
-    <div class="metric-label">~/.cache in @ subvolume</div>
-  </div>
-</div>
-
-<div class="card">
-  <strong>Root cause:</strong> Every <code>just switch</code> churns ~84GB Nix store. Daily btrbk snapshots pin old derivations as "exclusive" data. 14d + 4w retention = up to 18 snapshots of accumulated bloat. Cache dirs (<code>.cache</code>, <code>go</code>, <code>.npm</code>, <code>.cargo</code>) are inside the <code>@</code> subvolume — snapshotted daily for no reason.
-</div>
-
-<h2>Desired State</h2>
-
-<div class="metric-grid">
-  <div class="metric">
-    <div class="metric-value good">&lt;80%</div>
-    <div class="metric-label">Disk Usage (~400 GB)</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value good">&lt;20 GB</div>
-    <div class="metric-label">Exclusive per Snapshot</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value good">7d TTL</div>
-    <div class="metric-label">ClickHouse System Logs</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value good">0 GB</div>
-    <div class="metric-label">Caches in @ Subvolume</div>
-  </div>
-  <div class="metric">
-    <div class="metric-value good">Disko</div>
-    <div class="metric-label">Declarative Disk Mgmt</div>
-  </div>
-</div>
-
-<hr class="divider">
-
-<!-- PHASE 1 -->
-<div class="phase">
-  <div class="phase-header">
-    <div class="phase-number done">1</div>
-    <div>
-      <div class="phase-title">Emergency Cleanup <span class="status done">Done</span></div>
-      <div class="phase-subtitle">Free enough space to work</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-value bad">100%</div>
+        <div class="metric-label">Disk Usage (507/512 GB)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value bad">285 GB</div>
+        <div class="metric-label">Exclusive in 5 Snapshots</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value warn">84 GB</div>
+        <div class="metric-label">Nix Store</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value warn">21 GB</div>
+        <div class="metric-label">ClickHouse (no TTL)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value warn">40 GB</div>
+        <div class="metric-label">~/.cache in @ subvolume</div>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <p>Deleted snapshot <code>@.20260527T0000</code> → freed <strong>69 GB</strong> exclusive data.</p>
-    <p>Disk went from <code>507G/512G (100%)</code> → <code>476G/512G (95%)</code>.</p>
-  </div>
-</div>
-
-<!-- PHASE 2 -->
-<div class="phase">
-  <div class="phase-header">
-    <div class="phase-number done">2</div>
-    <div>
-      <div class="phase-title">Nix Config Changes <span class="status done">Done</span></div>
-      <div class="phase-subtitle">All changes committed to SystemNix, syntax-checked, build-tested</div>
+    <div class="card">
+      <strong>Root cause:</strong> Every <code>just switch</code> churns ~84GB
+      Nix store. Daily btrbk snapshots pin old derivations as "exclusive" data.
+      14d + 4w retention = up to 18 snapshots of accumulated bloat. Cache dirs
+      (<code>.cache</code>, <code>go</code>, <code>.npm</code>,
+      <code>.cargo</code>) are inside the <code>@</code> subvolume — snapshotted
+      daily for no reason.
     </div>
-  </div>
 
-  <h3>A. Cache Subvolumes <span class="file-ref">platforms/nixos/system/snapshots.nix</span></h3>
-  <div class="card">
-    <table>
-      <tr><th>Subvolume</th><th>Mount Point</th><th>Size Excluded</th></tr>
-      <tr><td><code>@cache-home</code></td><td><code>/home/lars/.cache</code></td><td>40 GB</td></tr>
-      <tr><td><code>@go</code></td><td><code>/home/lars/go</code></td><td>9.1 GB</td></tr>
-      <tr><td><code>@npm</code></td><td><code>/home/lars/.npm</code></td><td>2.8 GB</td></tr>
-      <tr><td><code>@cargo</code></td><td><code>/home/lars/.cargo</code></td><td>1.6 GB</td></tr>
-    </table>
-    <p style="margin-top: 0.75rem">Mount options: <code>noauto, x-systemd.automount, x-systemd.idle-timeout=10min</code></p>
-    <p>Mount ordering: <code>x-systemd.requires=ensure-btrfs-cache-subvolumes.service, x-systemd.after=ensure-btrfs-cache-subvolumes.service</code></p>
-  </div>
+    <h2>Desired State</h2>
 
-  <h3>B. Systemd Service for Subvolume Creation <span class="file-ref">snapshots.nix</span></h3>
-  <div class="card">
-    <p><code>ensure-btrfs-cache-subvolumes.service</code> — oneshot, runs before mount units.</p>
-    <ul>
-      <li>Checks if subvolume exists via <code>btrfs subvolume show</code></li>
-      <li>Creates if missing, migrates data from existing dir or <code>.pre-subvol</code> backup</li>
-      <li>Handles stale regular dirs (replaces with real subvolumes)</li>
-    </ul>
-  </div>
-
-  <h3>C. Reduced btrbk Retention <span class="file-ref">snapshots.nix</span></h3>
-  <div class="card">
-    <table>
-      <tr><th>Setting</th><th>Before</th><th>After</th></tr>
-      <tr><td><code>snapshot_preserve_min</code></td><td>14d</td><td>3d</td></tr>
-      <tr><td><code>snapshot_preserve</code></td><td>14d 4w</td><td>7d 1w</td></tr>
-    </table>
-  </div>
-
-  <h3>D. ClickHouse System Log TTLs <span class="file-ref">modules/nixos/services/signoz.nix</span></h3>
-  <div class="card">
-    <p>Added <code>clickhouse-system-ttl.service</code> — applies 7-day TTL to all system log tables:</p>
-    <pre>trace_log*, query_log*, metric_log*, part_log*,
-asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre>
-    <p>Expected savings: ~15 GB once TTL kicks in and old data expires.</p>
-  </div>
-</div>
-
-<!-- PHASE 3 -->
-<div class="phase">
-  <div class="phase-header">
-    <div class="phase-number blocked">3</div>
-    <div>
-      <div class="phase-title">Fix Stale Directories &amp; Apply <span class="status blocked">Blocked — Needs sudo</span></div>
-      <div class="phase-subtitle">One-time manual step, then just switch</div>
+    <div class="metric-grid">
+      <div class="metric">
+        <div class="metric-value good">&lt;80%</div>
+        <div class="metric-label">Disk Usage (~400 GB)</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value good">&lt;20 GB</div>
+        <div class="metric-label">Exclusive per Snapshot</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value good">7d TTL</div>
+        <div class="metric-label">ClickHouse System Logs</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value good">0 GB</div>
+        <div class="metric-label">Caches in @ Subvolume</div>
+      </div>
+      <div class="metric">
+        <div class="metric-value good">Disko</div>
+        <div class="metric-label">Declarative Disk Mgmt</div>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <p class="risk">The activation script from Phase 1 created regular directories (not subvolumes) for <code>@go</code>, <code>@npm</code>, <code>@cargo</code>. These must be replaced before mounts will work.</p>
+    <hr class="divider" />
 
-    <h3>Step 1: Fix stale directories</h3>
-    <pre>sudo bash /tmp/fix-subvols.sh</pre>
-    <p>This script:</p>
-    <ul>
-      <li>Detects regular dirs vs real BTRFS subvolumes</li>
-      <li>Backs up to <code>@go.regular-dir-bak</code></li>
-      <li>Creates proper subvolume</li>
-      <li>Copies data back</li>
-    </ul>
+    <!-- PHASE 1 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-number done">1</div>
+        <div>
+          <div class="phase-title">
+            Emergency Cleanup <span class="status done">Done</span>
+          </div>
+          <div class="phase-subtitle">Free enough space to work</div>
+        </div>
+      </div>
 
-    <h3>Step 2: Apply config</h3>
-    <pre>just switch</pre>
-    <p>The new systemd service (<code>ensure-btrfs-cache-subvolumes.service</code>) will run, verify subvolumes, and mounts will activate via automount on first access.</p>
+      <div class="card">
+        <p>
+          Deleted snapshot <code>@.20260527T0000</code> → freed
+          <strong>69 GB</strong> exclusive data.
+        </p>
+        <p>
+          Disk went from <code>507G/512G (100%)</code> →
+          <code>476G/512G (95%)</code>.
+        </p>
+      </div>
+    </div>
 
-    <h3>Step 3: Verify</h3>
-    <pre>mountpoint /home/lars/.cache  # should say "is a mountpoint"
+    <!-- PHASE 2 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-number done">2</div>
+        <div>
+          <div class="phase-title">
+            Nix Config Changes <span class="status done">Done</span>
+          </div>
+          <div class="phase-subtitle">
+            All changes committed to SystemNix, syntax-checked, build-tested
+          </div>
+        </div>
+      </div>
+
+      <h3>
+        A. Cache Subvolumes
+        <span class="file-ref">platforms/nixos/system/snapshots.nix</span>
+      </h3>
+      <div class="card">
+        <table>
+          <tr>
+            <th>Subvolume</th>
+            <th>Mount Point</th>
+            <th>Size Excluded</th>
+          </tr>
+          <tr>
+            <td><code>@cache-home</code></td>
+            <td><code>/home/lars/.cache</code></td>
+            <td>40 GB</td>
+          </tr>
+          <tr>
+            <td><code>@go</code></td>
+            <td><code>/home/lars/go</code></td>
+            <td>9.1 GB</td>
+          </tr>
+          <tr>
+            <td><code>@npm</code></td>
+            <td><code>/home/lars/.npm</code></td>
+            <td>2.8 GB</td>
+          </tr>
+          <tr>
+            <td><code>@cargo</code></td>
+            <td><code>/home/lars/.cargo</code></td>
+            <td>1.6 GB</td>
+          </tr>
+        </table>
+        <p style="margin-top: 0.75rem">
+          Mount options:
+          <code>noauto, x-systemd.automount, x-systemd.idle-timeout=10min</code>
+        </p>
+        <p>
+          Mount ordering:
+          <code
+            >x-systemd.requires=ensure-btrfs-cache-subvolumes.service,
+            x-systemd.after=ensure-btrfs-cache-subvolumes.service</code
+          >
+        </p>
+      </div>
+
+      <h3>
+        B. Systemd Service for Subvolume Creation
+        <span class="file-ref">snapshots.nix</span>
+      </h3>
+      <div class="card">
+        <p>
+          <code>ensure-btrfs-cache-subvolumes.service</code> — oneshot, runs
+          before mount units.
+        </p>
+        <ul>
+          <li>
+            Checks if subvolume exists via <code>btrfs subvolume show</code>
+          </li>
+          <li>
+            Creates if missing, migrates data from existing dir or
+            <code>.pre-subvol</code> backup
+          </li>
+          <li>Handles stale regular dirs (replaces with real subvolumes)</li>
+        </ul>
+      </div>
+
+      <h3>
+        C. Reduced btrbk Retention <span class="file-ref">snapshots.nix</span>
+      </h3>
+      <div class="card">
+        <table>
+          <tr>
+            <th>Setting</th>
+            <th>Before</th>
+            <th>After</th>
+          </tr>
+          <tr>
+            <td><code>snapshot_preserve_min</code></td>
+            <td>14d</td>
+            <td>3d</td>
+          </tr>
+          <tr>
+            <td><code>snapshot_preserve</code></td>
+            <td>14d 4w</td>
+            <td>7d 1w</td>
+          </tr>
+        </table>
+      </div>
+
+      <h3>
+        D. ClickHouse System Log TTLs
+        <span class="file-ref">modules/nixos/services/signoz.nix</span>
+      </h3>
+      <div class="card">
+        <p>
+          Added <code>clickhouse-system-ttl.service</code> — applies 7-day TTL
+          to all system log tables:
+        </p>
+        <pre>
+trace_log*, query_log*, metric_log*, part_log*,
+asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre
+        >
+        <p>Expected savings: ~15 GB once TTL kicks in and old data expires.</p>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-number blocked">3</div>
+        <div>
+          <div class="phase-title">
+            Fix Stale Directories &amp; Apply
+            <span class="status blocked">Blocked — Needs sudo</span>
+          </div>
+          <div class="phase-subtitle">
+            One-time manual step, then just switch
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="risk">
+          The activation script from Phase 1 created regular directories (not
+          subvolumes) for <code>@go</code>, <code>@npm</code>,
+          <code>@cargo</code>. These must be replaced before mounts will work.
+        </p>
+
+        <h3>Step 1: Fix stale directories</h3>
+        <pre>sudo bash /tmp/fix-subvols.sh</pre>
+        <p>This script:</p>
+        <ul>
+          <li>Detects regular dirs vs real BTRFS subvolumes</li>
+          <li>Backs up to <code>@go.regular-dir-bak</code></li>
+          <li>Creates proper subvolume</li>
+          <li>Copies data back</li>
+        </ul>
+
+        <h3>Step 2: Apply config</h3>
+        <pre>just switch</pre>
+        <p>
+          The new systemd service
+          (<code>ensure-btrfs-cache-subvolumes.service</code>) will run, verify
+          subvolumes, and mounts will activate via automount on first access.
+        </p>
+
+        <h3>Step 3: Verify</h3>
+        <pre>
+mountpoint /home/lars/.cache  # should say "is a mountpoint"
 mountpoint /home/lars/go       # should say "is a mountpoint"
 mountpoint /home/lars/.npm     # should say "is a mountpoint"
-mountpoint /home/lars/.cargo   # should say "is a mountpoint"</pre>
-  </div>
-</div>
-
-<!-- PHASE 4 -->
-<div class="phase">
-  <div class="phase-header">
-    <div class="phase-number">4</div>
-    <div>
-      <div class="phase-title">Cleanup <span class="status todo">After Phase 3</span></div>
-      <div class="phase-subtitle">Free space from old snapshots, backups, and ClickHouse</div>
+mountpoint /home/lars/.cargo   # should say "is a mountpoint"</pre
+        >
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h3>Delete old snapshots</h3>
-    <pre>sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.20260526T0000
+    <!-- PHASE 4 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-number">4</div>
+        <div>
+          <div class="phase-title">
+            Cleanup <span class="status todo">After Phase 3</span>
+          </div>
+          <div class="phase-subtitle">
+            Free space from old snapshots, backups, and ClickHouse
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Delete old snapshots</h3>
+        <pre>
+sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.20260526T0000
 sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.20260528T0000
 sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.pre-deploy-2026-05-25T041055
-sudo btrfs filesystem sync /</pre>
-    <p>Expected: free ~50 GB exclusive data</p>
+sudo btrfs filesystem sync /</pre
+        >
+        <p>Expected: free ~50 GB exclusive data</p>
 
-    <h3>Delete .pre-subvol backups</h3>
-    <pre>rm -rf /home/lars/go.pre-subvol /home/lars/.cache.pre-subvol</pre>
+        <h3>Delete .pre-subvol backups</h3>
+        <pre>rm -rf /home/lars/go.pre-subvol /home/lars/.cache.pre-subvol</pre>
 
-    <h3>Delete stale regular-dir-bak dirs</h3>
-    <pre>sudo rm -rf /mnt/btrfs-root/@go.regular-dir-bak /mnt/btrfs-root/@npm.regular-dir-bak /mnt/btrfs-root/@cargo.regular-dir-bak</pre>
+        <h3>Delete stale regular-dir-bak dirs</h3>
+        <pre>
+sudo rm -rf /mnt/btrfs-root/@go.regular-dir-bak /mnt/btrfs-root/@npm.regular-dir-bak /mnt/btrfs-root/@cargo.regular-dir-bak</pre
+        >
 
-    <h3>Gitea pre-migration cleanup (19 GB)</h3>
-    <pre>sudo du -sh /var/lib/gitea.pre-forgejo-migration/*  # review contents
+        <h3>Gitea pre-migration cleanup (19 GB)</h3>
+        <pre>
+sudo du -sh /var/lib/gitea.pre-forgejo-migration/*  # review contents
 # If Forgejo is confirmed working:
-sudo rm -rf /var/lib/gitea.pre-forgejo-migration</pre>
+sudo rm -rf /var/lib/gitea.pre-forgejo-migration</pre
+        >
 
-    <h3>Verify ClickHouse TTL applied</h3>
-    <pre>sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHERE database = 'system' AND name LIKE '%trace_log%'"</pre>
-  </div>
-</div>
-
-<!-- PHASE 5 -->
-<div class="phase">
-  <div class="phase-header">
-    <div class="phase-number">5</div>
-    <div>
-      <div class="phase-title">Migrate to Disko <span class="status todo">Future</span></div>
-      <div class="phase-subtitle">Declarative disk management — replaces hardware-configuration.nix + manual subvolume creation</div>
+        <h3>Verify ClickHouse TTL applied</h3>
+        <pre>
+sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHERE database = 'system' AND name LIKE '%trace_log%'"</pre
+        >
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <h3>Why Disko?</h3>
-    <ul>
-      <li>Replaces the <code>ensure-btrfs-cache-subvolumes</code> systemd hack entirely</li>
-      <li>Subvolumes created declaratively during <code>disko install</code></li>
-      <li>Single source of truth for entire disk layout</li>
-      <li>No more manual scripts, no ordering issues</li>
-    </ul>
+    <!-- PHASE 5 -->
+    <div class="phase">
+      <div class="phase-header">
+        <div class="phase-number">5</div>
+        <div>
+          <div class="phase-title">
+            Migrate to Disko <span class="status todo">Future</span>
+          </div>
+          <div class="phase-subtitle">
+            Declarative disk management — replaces hardware-configuration.nix +
+            manual subvolume creation
+          </div>
+        </div>
+      </div>
 
-    <h3>Migration Steps</h3>
-    <ol>
-      <li>Add <code>disko</code> flake input to <code>flake.nix</code></li>
-      <li>Create <code>platforms/nixos/hardware/disko.nix</code> declaring the full disk layout:
-        <pre>{
+      <div class="card">
+        <h3>Why Disko?</h3>
+        <ul>
+          <li>
+            Replaces the <code>ensure-btrfs-cache-subvolumes</code> systemd hack
+            entirely
+          </li>
+          <li>
+            Subvolumes created declaratively during <code>disko install</code>
+          </li>
+          <li>Single source of truth for entire disk layout</li>
+          <li>No more manual scripts, no ordering issues</li>
+        </ul>
+
+        <h3>Migration Steps</h3>
+        <ol>
+          <li>Add <code>disko</code> flake input to <code>flake.nix</code></li>
+          <li>
+            Create <code>platforms/nixos/hardware/disko.nix</code> declaring the
+            full disk layout:
+            <pre>
+{
   disko.devices = {
     disk.nvme = {
       type = "disk";
@@ -383,58 +586,120 @@ sudo rm -rf /var/lib/gitea.pre-forgejo-migration</pre>
       };
     };
   };
-}</pre>
-      </li>
-      <li><code>disko --dry-run --mode format,mount</code> to verify (no changes)</li>
-      <li>Remove <code>hardware-configuration.nix</code> fileSystems, remove <code>ensure-btrfs-cache-subvolumes</code> service</li>
-      <li>Remove manual <code>fileSystems</code> entries in <code>snapshots.nix</code> (disko manages them)</li>
-      <li><code>just switch</code></li>
-    </ol>
+}</pre
+            >
+          </li>
+          <li>
+            <code>disko --dry-run --mode format,mount</code> to verify (no
+            changes)
+          </li>
+          <li>
+            Remove <code>hardware-configuration.nix</code> fileSystems, remove
+            <code>ensure-btrfs-cache-subvolumes</code> service
+          </li>
+          <li>
+            Remove manual <code>fileSystems</code> entries in
+            <code>snapshots.nix</code> (disko manages them)
+          </li>
+          <li><code>just switch</code></li>
+        </ol>
 
-    <h3 class="risk">Risks</h3>
-    <ul>
-      <li>Must perfectly match existing layout or <code>disko format</code> could wipe data</li>
-      <li>Test with <code>--dry-run</code> first</li>
-      <li>Have a rollback plan: BTRFS snapshot before running</li>
-      <li>Consider doing this during a fresh install or when you have a full backup</li>
-    </ul>
-  </div>
-</div>
+        <h3 class="risk">Risks</h3>
+        <ul>
+          <li>
+            Must perfectly match existing layout or
+            <code>disko format</code> could wipe data
+          </li>
+          <li>Test with <code>--dry-run</code> first</li>
+          <li>Have a rollback plan: BTRFS snapshot before running</li>
+          <li>
+            Consider doing this during a fresh install or when you have a full
+            backup
+          </li>
+        </ul>
+      </div>
+    </div>
 
-<hr class="divider">
+    <hr class="divider" />
 
-<h2>Expected Impact</h2>
+    <h2>Expected Impact</h2>
 
-<div class="card">
-  <table>
-    <tr><th>Change</th><th>Space Freed</th><th>Recurring Benefit</th></tr>
-    <tr><td>Cache subvolumes (excluded from @)</td><td>~54 GB per snapshot</td><td>Stops 54 GB exclusive per daily snapshot</td></tr>
-    <tr><td>Reduce retention (14d→3d, 4w→1w)</td><td>~100 GB (fewer snapshots)</td><td>Keeps max ~4 snapshots instead of ~18</td></tr>
-    <tr><td>Delete old snapshots</td><td>~50 GB</td><td>One-time</td></tr>
-    <tr><td>ClickHouse system TTL (7d)</td><td>~15 GB</td><td>Prevents unbounded growth</td></tr>
-    <tr><td>Gitea pre-migration cleanup</td><td>~19 GB</td><td>One-time</td></tr>
-    <tr style="border-top: 2px solid var(--accent)"><td><strong>Total</strong></td><td><strong>~240 GB freed</strong></td><td><strong>507 GB → ~270 GB used</strong></td></tr>
-  </table>
-</div>
+    <div class="card">
+      <table>
+        <tr>
+          <th>Change</th>
+          <th>Space Freed</th>
+          <th>Recurring Benefit</th>
+        </tr>
+        <tr>
+          <td>Cache subvolumes (excluded from @)</td>
+          <td>~54 GB per snapshot</td>
+          <td>Stops 54 GB exclusive per daily snapshot</td>
+        </tr>
+        <tr>
+          <td>Reduce retention (14d→3d, 4w→1w)</td>
+          <td>~100 GB (fewer snapshots)</td>
+          <td>Keeps max ~4 snapshots instead of ~18</td>
+        </tr>
+        <tr>
+          <td>Delete old snapshots</td>
+          <td>~50 GB</td>
+          <td>One-time</td>
+        </tr>
+        <tr>
+          <td>ClickHouse system TTL (7d)</td>
+          <td>~15 GB</td>
+          <td>Prevents unbounded growth</td>
+        </tr>
+        <tr>
+          <td>Gitea pre-migration cleanup</td>
+          <td>~19 GB</td>
+          <td>One-time</td>
+        </tr>
+        <tr style="border-top: 2px solid var(--accent)">
+          <td><strong>Total</strong></td>
+          <td><strong>~240 GB freed</strong></td>
+          <td><strong>507 GB → ~270 GB used</strong></td>
+        </tr>
+      </table>
+    </div>
 
-<h2>Verification Checklist</h2>
+    <h2>Verification Checklist</h2>
 
-<div class="card">
-  <ul>
-    <li>☐ <code>df -h /</code> shows &lt;80% usage</li>
-    <li>☐ <code>mountpoint /home/lars/.cache</code> says "is a mountpoint"</li>
-    <li>☐ <code>mountpoint /home/lars/go</code> says "is a mountpoint"</li>
-    <li>☐ <code>mountpoint /home/lars/.npm</code> says "is a mountpoint"</li>
-    <li>☐ <code>mountpoint /home/lars/.cargo</code> says "is a mountpoint"</li>
-    <li>☐ <code>systemctl status ensure-btrfs-cache-subvolumes</code> shows active/exited</li>
-    <li>☐ <code>systemctl status clickhouse-system-ttl</code> shows active/exited</li>
-    <li>☐ <code>btrfs filesystem du -s /mnt/btrfs-root/.snapshots/*</code> shows &lt;20 GB exclusive per snapshot</li>
-    <li>☐ <code>just switch</code> completes without mount failures</li>
-    <li>☐ <code>go build</code> works (go module cache accessible)</li>
-    <li>☐ <code>npm install</code> works (npm cache accessible)</li>
-    <li>☐ Next day: <code>btrfs filesystem du</code> shows reduced exclusive growth</li>
-  </ul>
-</div>
-
-</body>
+    <div class="card">
+      <ul>
+        <li>☐ <code>df -h /</code> shows &lt;80% usage</li>
+        <li>
+          ☐ <code>mountpoint /home/lars/.cache</code> says "is a mountpoint"
+        </li>
+        <li>☐ <code>mountpoint /home/lars/go</code> says "is a mountpoint"</li>
+        <li>
+          ☐ <code>mountpoint /home/lars/.npm</code> says "is a mountpoint"
+        </li>
+        <li>
+          ☐ <code>mountpoint /home/lars/.cargo</code> says "is a mountpoint"
+        </li>
+        <li>
+          ☐ <code>systemctl status ensure-btrfs-cache-subvolumes</code> shows
+          active/exited
+        </li>
+        <li>
+          ☐ <code>systemctl status clickhouse-system-ttl</code> shows
+          active/exited
+        </li>
+        <li>
+          ☐
+          <code>btrfs filesystem du -s /mnt/btrfs-root/.snapshots/*</code> shows
+          &lt;20 GB exclusive per snapshot
+        </li>
+        <li>☐ <code>just switch</code> completes without mount failures</li>
+        <li>☐ <code>go build</code> works (go module cache accessible)</li>
+        <li>☐ <code>npm install</code> works (npm cache accessible)</li>
+        <li>
+          ☐ Next day: <code>btrfs filesystem du</code> shows reduced exclusive
+          growth
+        </li>
+      </ul>
+    </div>
+  </body>
 </html>
