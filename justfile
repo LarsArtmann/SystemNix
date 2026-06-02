@@ -265,7 +265,7 @@ update-vendor-hashes PKG="":
     else
         pkgs=(
             library-policy hierarchical-errors golangci-lint-auto-configure
-            mr-sync buildflow go-auto-upgrade go-structure-linter
+            mr-sync buildflow go-auto-upgrade
             branching-flow art-dupl projects-management-automation
             dnsblockd file-and-image-renamer
         )
@@ -273,7 +273,7 @@ update-vendor-hashes PKG="":
     updated=0
     for pkg in "${pkgs[@]}"; do
         echo -n "Checking $pkg... "
-        output=$(nix build ".$pkg" --no-link 2>&1 || true)
+        output=$(nix build ".#$pkg" --no-link 2>&1 || true)
         if echo "$output" | grep -q "got:"; then
             new_hash=$(echo "$output" | grep "got:" | awk '{print $2}' | head -1)
             echo "STALE -> $new_hash"
@@ -447,7 +447,7 @@ gatus-status:
     systemctl status gatus --no-pager 2>/dev/null | head -15
     @echo ""
     @echo "Dashboard: https://status.home.lan"
-    @curl -sf http://localhost:8083/api/v1/endpoints/status 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Endpoints: {len(d)} monitored')" 2>/dev/null || echo "API: not responding yet"
+    @curl -sf http://localhost:9110/api/v1/endpoints/status 2>/dev/null | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'Endpoints: {len(d)} monitored')" 2>/dev/null || echo "API: not responding yet"
 
 # Manifest LLM router status
 [group('services')]
@@ -564,7 +564,7 @@ auth-bootstrap:
     echo "Step 4: Update sops secrets with real values."
     echo "        Run the following commands (requires age key on evo-x2):"
     echo ""
-    echo "  sops platforms/nixos/secrets/pocket-id.yaml"
+    echo "  sops platforms/nixos/secrets/secrets.yaml"
     echo ""
     echo "  Set these values:"
     echo "    oauth2_proxy_client_secret: <from Pocket ID step 3a>"
@@ -929,7 +929,7 @@ snapshot-migrate-data:
     echo "Stopping services that write to /data..."
     sudo systemctl stop docker.service docker.socket 2>/dev/null || true
     sudo systemctl stop ollama.service 2>/dev/null || true
-    sudo systemctl stop comfyui.service 2>/dev/null || true
+
     sudo systemctl stop btrbk-root.timer btrbk-root.service 2>/dev/null || true
     # Stop any podman containers using /data
     for svc in $(systemctl list-units --type=service --state=running --no-legend 2>/dev/null | awk '{print $1}'); do
