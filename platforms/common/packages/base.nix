@@ -248,12 +248,10 @@
 
       # Additional ricing tools discovered from community configs
       wl-color-picker # Color picker for Wayland
-      swappy # Screenshot annotation tool
       imv # Minimal image viewer
       wf-recorder # Screen recorder
       brillo # Brightness control utility
       pamixer # PulseAudio command line mixer
-      ghostty # Fast, native, feature-rich terminal emulator
       zellij # Modern terminal multiplexer
     ];
 
