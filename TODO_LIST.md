@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-05-21 (session 75)
+**Updated:** 2026-06-02 (session 115)
 
 ---
 
@@ -8,19 +8,14 @@
 
 ### Priority 0: Hermes Follow-up
 
-- [x] **Add `firecrawl` to hermes `extraDependencyGroups`** — added session 75, awaiting deploy
-- [x] **Add `edge-tts` to hermes `extraDependencyGroups`** — added session 75, awaiting deploy
-- [x] **Add `fal` to hermes `extraDependencyGroups`** — added session 75, awaiting deploy
-- [x] **Add `exa` to hermes `extraDependencyGroups`** — added session 75, awaiting deploy
 - [ ] **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI) as GLM-5.1 fallback
 - [ ] **Hermes git remote access** — SSH deploy key for sandbox (`origin` unreachable)
 - [ ] **Monitor GLM-5.1 rate limit** — verify cron jobs recovered after reset
 
 ### Priority 1: Deploy & Verify
 
-- [ ] **Deploy committed changes** — hermes extra deps, boot fixes, service restructuring
+- [ ] **Deploy committed changes** — ghostty migration, justfile fixes, alerting improvements
 - [ ] **Verify boot time** — expect ~35s with all optimizations
-- [ ] **Verify hermes new Python deps** — no firecrawl/edge-tts/fal/exa ImportError in journal
 - [ ] **Check SigNoz provision logs**: channel + rule creation, 4 new dashboards
 - [ ] **Test Discord alert channel**: `POST /api/v1/channels/test`
 - [ ] **Verify Gatus endpoints**: `status.home.lan` healthy, webhook URL loaded, TLS cert check active
@@ -28,8 +23,9 @@
 ### Priority 2: Code Improvements
 
 - [ ] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `signoz.nix`
-- [x] **`dns-failover.nix` authPassword → sops** — activation script provisions secret
-- [ ] **Consolidate voice-agents Caddy vHost** into caddy.nix pattern — `caddy.nix`
+- [ ] **Investigate swap exhaustion** — 13Gi/13Gi, 7 gopls instances eating ~7.4Gi RSS
+- [ ] **Flake inputs audit** — 47 inputs, some may be stale/unused
+- [ ] **Bring Darwin home.nix to parity** — terminal, editor, theme, xdg (4h, depends on whether Darwin is actively used)
 
 ### Priority 3: Documentation & Tools
 
@@ -42,23 +38,36 @@
 - [ ] **Provision Pi 3** for DNS failover cluster
 - [ ] **Wire Pi 3 as secondary DNS** in dns-failover.nix
 
-### Priority 5: Maintenance
-
-- [ ] **Investigate swap exhaustion** — 13Gi/13Gi, 7 gopls instances eating ~7.4Gi RSS
-- [ ] **Flake inputs audit** — 47 inputs, some may be stale/unused
-- [ ] **Add memory/swap alerting** to SigNoz/Gatus
-
 ---
 
 ## External Repos (Nix Flake Standardization)
 
-- [x] Compute real `vendorHash` for BuildFlow — done upstream
-- [x] Compute real `vendorHash` for PMA — done upstream
 - [ ] Convert go-auto-upgrade `path:` inputs to SSH URLs
 - [ ] Create shared flake-parts template (mkGoPackage, checks, devshells)
-- [x] Create `flake.nix` for hierarchical-errors — done upstream
 
 ---
+
+## Completed (session 115)
+
+- [x] Fix duplicate ghostty (removed from base.nix, kept HM only)
+- [x] Fix duplicate swappy (removed from base.nix, kept HM only)
+- [x] Fix justfile `gatus-status` port (8083→9110)
+- [x] Fix justfile `update-vendor-hashes` missing `#` in `nix build`
+- [x] Fix justfile `auth-bootstrap` wrong filename (pocket-id.yaml→secrets.yaml)
+- [x] Remove dead `comfyui.service` stop from `snapshot-migrate-data`
+- [x] Delete stale `authelia-secrets.yaml` (leftover from Authelia→Pocket ID migration)
+- [x] Delete stale `lib/ports.nix.bak`
+- [x] Delete boilerplate `CHANGELOG.md` (never updated, status docs are the real changelog)
+- [x] Remove 4 dead script references from FEATURES.md
+- [x] Add Gatus memory/swap metric collection checks with Discord alerts
+- [x] Verify voice-agents Caddy vHost already consolidated in caddy.nix
+- [x] Verify SigNoz already has memory-critical and swap-critical alert rules
+
+## Completed (session 112-114)
+
+- [x] Patch `golangci-lint-auto-configure` for `finding.Merge→Combine` API break
+- [x] Patch `buildflow` for `finding.Merge→Combine` + `WriteSARIF` signature change
+- [x] Disable `go-structure-linter` — broken upstream `go.sum`
 
 ## Completed (session 75)
 
