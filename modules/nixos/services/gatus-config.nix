@@ -261,6 +261,30 @@ _: {
                 ];
                 alerts = discordAlert "TLS certificate for *.home.lan expires within 7 days — renew via dnsblockd";
               })
+              (mkHttpCheck {
+                name = "Memory Metrics";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_memory_MemAvailable_bytes*)"
+                  "[BODY] == pat(*node_memory_MemTotal_bytes*)"
+                ];
+                alerts = discordAlert "Memory metrics not being collected — memory alerting disabled";
+              })
+              (mkHttpCheck {
+                name = "Swap Metrics";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_memory_SwapFree_bytes*)"
+                  "[BODY] == pat(*node_memory_SwapTotal_bytes*)"
+                ];
+                alerts = discordAlert "Swap metrics not being collected — swap alerting disabled";
+              })
             ];
         };
       };
