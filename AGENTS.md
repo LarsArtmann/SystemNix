@@ -2,6 +2,7 @@
 
 **Project Type:** Cross-Platform Nix Configuration (macOS + NixOS)
 **Repo:** `github:LarsArtmann/SystemNix`
+**Current Build:** ✅ All checks passed (`just test-fast`)
 
 ---
 
@@ -34,10 +35,10 @@ SystemNix/
 ```
 
 Two machines:
-| System | Hostname | Platform |
-|--------|----------|----------|
-| macOS | `Lars-MacBook-Air` | aarch64-darwin |
-| NixOS | `evo-x2` | x86_64-linux |
+| System | Hostname | Platform | Constraints |
+|--------|----------|----------|-------------|
+| macOS | `Lars-MacBook-Air` | aarch64-darwin | 24GB RAM, 256GB SSD (90%+ full), disk-constrained |
+| NixOS | `evo-x2` | x86_64-linux | 128GB RAM, AMD Ryzen AI Max+ 395 |
 
 ---
 
@@ -177,6 +178,9 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
 | Pocket ID bootstrap | Staged: deploy Pocket ID → `https://auth.home.lan/setup` → admin passkey → OIDC clients → sops secrets → deploy oauth2-proxy. See `just auth-bootstrap` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
+| Swap exhaustion | 7 gopls instances eating ~7.4Gi RSS (13Gi/13Gi swap). SigNoz alerting at 80% swap usage. Root cause: stale LSP processes |
+| Port 8050 latent conflict | `dns-blocker-block` and `photomap` both use 8050. Both disabled currently. Needs reassignment if both enabled |
+| Orphan modules | `ai-stack.nix` and `default-services.nix` exist but no config imports them. `dns-failover.nix` only used by rpi3 |
 
 ---
 
@@ -205,12 +209,18 @@ Both platforms import `platforms/common/home-base.nix`:
 
 ## GPU Compute Headroom (NixOS)
 
-AI workloads can starve niri of GPU cycles. Memory fractions are **per-service**, not system-wide:
+AI workloads can starve niri of GPU cycles. Memory fractions are **per-service**, not system-wide. `OLLAMA_GPU_OVERHEAD=8589934592` (8 GiB) reserves headroom for compositor.
 
-| Service | Fraction | Key Setting |
-|---------|----------|-------------|
-| Ollama | 0.45 | `OLLAMA_MAX_LOADED_MODELS=1` prevents dual-runner OOM |
-| ComfyUI | 0.50 | — |
-| gpu-python | 0.95 (configurable) | Override with `GPU_MEM_FRACTION=0.8` |
+---
 
-`OLLAMA_GPU_OVERHEAD=8589934592` (8 GiB) reserves headroom for compositor.
+## Darwin (macOS) Constraints
+
+Darwin IS actively used but heavily resource-constrained:
+
+| Constraint | Impact |
+|-----------|--------|
+| 256GB SSD, ~90%+ full | Must `nix-collect-garbage` before large builds, never add heavy packages |
+| 24GB RAM | Avoid memory-intensive builds (otel-tui takes 40+ min) |
+| No desktop config | Home Manager has 7 lines — no terminal, editor, theme parity with NixOS |
+
+**When adding packages for Darwin:** always check disk impact first. Prefer lightweight alternatives. Never add anything that builds from source for >10min.
