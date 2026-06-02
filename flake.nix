@@ -454,7 +454,6 @@
               hierarchical-errors
               buildflow
               go-auto-upgrade
-              go-structure-linter
               branching-flow
               art-dupl
               projects-management-automation

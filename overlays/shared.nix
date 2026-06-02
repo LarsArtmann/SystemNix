@@ -54,7 +54,9 @@ in [
   (_final: prev: let
     pkg = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default or null;
   in
-    if pkg == null then {} else {
+    if pkg == null
+    then {}
+    else {
       golangci-lint-auto-configure = pkg.overrideAttrs (_old: {
         postPatch = ''
           find . -name '*.go' -exec sed -i 's/finding\.Merge(/finding.Combine(/g' {} +
@@ -86,7 +88,7 @@ in [
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EhKRJczms0gw0JniX+TFBanwIt0muK+PX0WMUk0EHxE=";})
   # go-structure-linter — BROKEN: template-LICENSE/types private dep not in _local_deps;
   # go mod tidy fails in sandbox. Needs upstream fix. VendorHash stale after go-finding update.
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-pbXGL14SRnIF6OGjCw+5Cos4aANpKOXKzBO82bPTQnE=";})
+  # (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-pbXGL14SRnIF6OGjCw+5Cos4aANpKOXKzBO82bPTQnE=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-BGKYeWl9rxBDvZYOW5/IbMQRxv2toaxexmJm4iMKsic=";})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-HSgFUbQEOScJqVG8/J9JRwJtgjFtWfCdli8b7VcdYVY=";})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
