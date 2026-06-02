@@ -11,11 +11,11 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Languages** | Go 1.26, Node.js, Bun, Python 3.13, Rust |
 | **Cloud & Infra** | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker |
 | **Development** | Git, GitHub CLI, Git Town, JetBrains Toolbox, (editor of choice - NOT VS Code), Fish shell, tmux, Zellij |
-| **Desktop (NixOS)** | Niri (Wayland tiling), Waybar, SDDM, Rofi, Kitty, Dunst, swaylock |
-| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, PhotoMap AI |
+| **Desktop (NixOS)** | Niri (Wayland tiling), Waybar, SDDM, Rofi, Ghostty, Kitty, Dunst, swaylock |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI |
 | **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
-| **Monitoring** | ActivityWatch, Netdata, service health checks |
+| **Monitoring** | SigNoz (18 alert rules, 5 dashboards), Gatus (30 health checks), ActivityWatch |
 | **Networking** | Caddy reverse proxy (TLS), Unbound DNS with 2.5M+ blocked domains, DNSSEC |
 | **Storage** | BTRFS with btrbk snapshots (daily + pre-deploy), ZRAM swap, monthly scrub |
 
@@ -43,8 +43,8 @@ just switch             # Apply configuration
 
 | System | Hardware | Configuration | Command |
 |--------|----------|--------------|---------|
-| macOS (Lars-MacBook-Air) | Apple Silicon | `flake.nix#Lars-MacBook-Air` | `just switch` |
-| NixOS (evo-x2) | AMD Ryzen AI Max+ 395, 128GB | `flake.nix#evo-x2` | `just switch` |
+| macOS (Lars-MacBook-Air) | Apple Silicon, 24GB RAM, 256GB SSD | `flake.nix#Lars-MacBook-Air` | `just switch` |
+| NixOS (evo-x2) | AMD Ryzen AI Max+ 395, 128GB RAM | `flake.nix#evo-x2` | `just switch` |
 
 ## Architecture
 
@@ -52,8 +52,10 @@ just switch             # Apply configuration
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
 ├── justfile                     # Task runner for all operations
-├── modules/nixos/services/      # NixOS service modules (Caddy, Forgejo, Immich, ...)
-├── pkgs/                        # Custom Nix packages (dnsblockd, emeet-pixyd, modernize, jscpd, monitor365, ...)
+├── modules/nixos/services/     # 36 NixOS service modules (auto-discovered, 29 enabled)
+├── pkgs/                        # 5 custom packages (jscpd, govalid, netwatch, openaudible, aw-watcher)
+├── overlays/                    # 12 overlay packages via mkPackageOverlay + manual overlays
+├── lib/                         # 13 reusable helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
 │   ├── common/                  # Shared across platforms (~80% of config)
 │   │   ├── home-base.nix        # Home Manager base (14 program modules)
@@ -71,13 +73,13 @@ SystemNix/
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
 │       ├── programs/            # Rofi, swaylock, wlogout, Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
-├── scripts/                     # Operational scripts (30+)
-└── docs/                        # Architecture decisions, status reports, troubleshooting
+├── scripts/                     # 23 operational scripts
+└── docs/                        # Architecture decisions (8 ADRs), status reports, troubleshooting
 ```
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules and reverse-proxied through Caddy with TLS:
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (30 health checks) + SigNoz (18 alert rules):
 
 | Service | Port | URL | Description |
 |---------|------|-----|-------------|
@@ -86,30 +88,30 @@ All services are defined as flake-parts modules and reverse-proxied through Cadd
 | **Forgejo** | 3000 | `forgejo.home.lan` | Self-hosted Git forge with GitHub mirror sync & Actions |
 | **SigNoz** | 4317, 4318, 8080 | `signoz.home.lan` | Observability: traces, metrics, logs + node_exporter + cAdvisor |
 | **Homepage** | 8082 | `dash.home.lan` | Service overview dashboard |
-| **PhotoMap AI** | 8050 | `photomap.home.lan` | AI-powered photo exploration with UMAP embeddings |
-| **Pocket ID** | 1411 | `auth.home.lan` | SSO/IDP with passkey authentication + oauth2-proxy forward auth |
+| **Pocket ID** | 1411 | `auth.home.lan` | Passkey-based SSO/IDP + oauth2-proxy forward auth |
 | **Hermes** | — | — | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM) |
 | **Twenty CRM** | 3200 | `crm.home.lan` | Self-hosted CRM (Docker Compose: PostgreSQL + Redis) |
-| **Voice Agents** | 7880 | — | AI voice agent platform (Docker: LiveKit + Whisper ASR) |
+| **Voice Agents** | 7880 | — | AI voice agents (Docker: LiveKit + Whisper ASR with ROCm) |
 | **TaskChampion** | 10222 | `tasks.home.lan` | Taskwarrior sync server (cross-platform + Android) |
-| **DNS Blocker** | 53, 9090 | — | Unbound + dnsblockd, 25 blocklists, DNS-over-TLS upstream |
+| **DNS Blocker** | 53, 8083 | — | Unbound + dnsblockd, 10 blocklists, 2.5M+ domains blocked, DoT upstream |
 
 ### DNS Blocking
 
 - 2.5M+ blocked domains (ads, trackers, malware, telemetry, gambling)
 - Upstream: Quad9 (DNS-over-TLS) + Cloudflare fallback
 - Local `.home.lan` DNS records for all services
-- DNSSEC enabled
+- DNSSEC enabled, qname minimization
 - **DNS failover**: Raspberry Pi 3 secondary resolver with VRRP VIP (planned)
 
 ## NixOS Desktop
 
-- **Niri**: Scrollable-tiling Wayland compositor with 5 named workspaces
+- **Niri**: Scrollable-tiling Wayland compositor with 5 named workspaces, session save/restore
+- **Ghostty**: Primary terminal (GPU-accelerated, native Wayland)
+- **Kitty**: Backup terminal (GPU-accelerated, image display)
 - **Waybar**: Custom status bar with workspaces, media, weather, DNS stats, power menu
 - **SDDM**: Login manager with Catppuccin Mocha theme
 - **Theme**: Catppuccin Mocha across all applications (GTK, Qt, terminal, browser)
 - **Backup WM**: Sway configured as fallback
-- **Session restore**: Automatic window/workspace recovery after crash or reboot (systemd timer + niri IPC)
 
 ## NixOS Hardware (evo-x2)
 
@@ -205,7 +207,7 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`):
 
 ### Pre-commit Hooks
 
-8 hooks configured via `.pre-commit-config.yaml`:
+9 hooks configured via `.pre-commit-config.yaml`:
 - **gitleaks** — secret detection
 - **alejandra** — Nix formatting
 - **deadnix** — dead code detection
@@ -213,6 +215,7 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`):
 - **trailing-whitespace** — whitespace cleanup
 - **nix-check** — flake validation
 - **flake-lock-validate** — lock file integrity
+- **shellcheck** — shell script linting
 - **check-merge-conflicts** — conflict marker detection
 
 ## Documentation
@@ -221,7 +224,7 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`):
 |-------|-------------|
 | [AGENTS.md](./AGENTS.md) | AI assistant guide and project conventions |
 | [Architecture Decisions](./docs/architecture/) | ADRs for key design choices |
-| [Project Status](./docs/project-status-summary.md) | Development milestones |
+| [Project Status](./docs/status/) | Development status reports |
 | [Troubleshooting](./docs/troubleshooting/) | Common issues and solutions |
 | [Architecture Diagrams](./docs/architecture-understanding/) | Mermaid diagram collection |
 
