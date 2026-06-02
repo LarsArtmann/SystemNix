@@ -56,6 +56,11 @@ in [
   # buildflow — mkPreparedSource creates complex go.mod state; needs tidy in go-modules phase
   (_final: prev: {
     buildflow = prev.buildflow.overrideAttrs (_old: {
+      postPatch = ''
+        find . -name '*.go' -exec sed -i 's/gofinding\.Merge(/gofinding.Combine(/g; s/finding\.Merge(/finding.Combine(/g' {} +
+        sed -i 's/report\.WriteSARIF(\([^)]*\))/report.WriteSARIF(context.Background(), \1)/g' pkg/execution/workflow_result.go
+        sed -i '/^import (/a\	"context"' pkg/execution/workflow_result.go
+      '';
       vendorHash = "sha256-3jPdEu1Lrk+IyaY/l9fBIWYDUWk/iLxoYIoSDamz9LM=";
       goModules = prev.buildflow.goModules.overrideAttrs (_modOld: {
         outputHash = "sha256-3jPdEu1Lrk+IyaY/l9fBIWYDUWk/iLxoYIoSDamz9LM=";
