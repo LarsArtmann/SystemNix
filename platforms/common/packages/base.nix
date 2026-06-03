@@ -202,7 +202,7 @@
       branching-flow # Error context preservation analyzer
       buildflow # Zero-configuration build automation
       go-auto-upgrade # Automated Go version upgrades
-      # go-structure-linter # BROKEN: template-LICENSE/types private dep not in _local_deps (needs upstream fix)
+      go-structure-linter # Go project structure validator
       hierarchical-errors # Error handling pattern analyzer
       projects-management-automation # CLI for managing multiple projects
 

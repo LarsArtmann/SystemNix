@@ -693,14 +693,15 @@
         ],
         "nixpkgs": [
           "nixpkgs"
-        ]
+        ],
+        "template-LICENSE": "template-LICENSE_2"
       },
       "locked": {
-        "lastModified": 1780351270,
-        "narHash": "sha256-10VoSF48IU1zbU0kvpJ6TekrSK/5dwWjh0GgABvYapM=",
+        "lastModified": 1780495529,
+        "narHash": "sha256-0/bNURp5CLpO2sAJWyUwBupHYVbwQ5L/U5x4HH8dXU8=",
         "ref": "master",
-        "rev": "56ea576fb49bff899878360ab13e1cccd146c086",
-        "revCount": 1063,
+        "rev": "4e36317e74b8777dd86532a6ee4b5db3c1764e88",
+        "revCount": 1064,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -1753,6 +1754,23 @@
       }
     },
     "template-LICENSE": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780363165,
+        "narHash": "sha256-aJ3E3ARg0/+MwdnI43wrg0rpJKDWp3FElFqDz+K3HR0=",
+        "ref": "master",
+        "rev": "1e49122967b08a6f5c4eafa3dc9199f614a53c54",
+        "revCount": 285,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/template-LICENSE"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/template-LICENSE"
+      }
+    },
+    "template-LICENSE_2": {
       "flake": false,
       "locked": {
         "lastModified": 1780363165,

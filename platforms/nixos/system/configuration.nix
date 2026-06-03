@@ -178,6 +178,12 @@
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
       openseo.enable = true;
 
+      # Dozzle — Docker container log tailing at logs.home.lan
+      # DISABLED: nix flake check fails with "option services.dozzle does not exist"
+      # despite the module being properly registered and nix eval working.
+      # Suspect nix flake check evaluates configs differently than nix eval.
+      # dozzle.enable = true;
+
       # Dual-WAN with MPTCP and route health monitoring
       dual-wan.enable = true;
 

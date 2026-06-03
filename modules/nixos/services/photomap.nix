@@ -28,7 +28,7 @@ _: {
   in {
     options.services.photomap = {
       enable = lib.mkEnableOption "PhotoMap AI service";
-      port = serviceTypes.servicePort 8050 "Port for the PhotoMap web interface";
+      port = serviceTypes.servicePort 8051 "Port for the PhotoMap web interface";
     };
 
     config = lib.mkIf cfg.enable {

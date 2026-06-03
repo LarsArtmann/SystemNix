@@ -60,6 +60,16 @@ in {
         };
         wantedBy = ["timers.target"];
       };
+
+      stale-lsp-cleanup = {
+        description = "Daily cleanup of stale LSP processes (gopls, etc.) older than 24h";
+        timerConfig = {
+          OnCalendar = "daily";
+          Persistent = true;
+          RandomizedDelaySec = "30m";
+        };
+        wantedBy = ["timers.target"];
+      };
     };
 
     services = {
@@ -337,6 +347,49 @@ in {
                 '';
               };
             in "${rustCleanup}/bin/rust-target-cleanup";
+            StandardOutput = "journal";
+            StandardError = "journal";
+          };
+      };
+
+      stale-lsp-cleanup = {
+        description = "Kill stale LSP processes (gopls, etc.) running longer than 24h";
+        onFailure = ["notify-failure@%n.service"];
+        serviceConfig =
+          harden {
+            MemoryMax = "128M";
+            ProtectHome = "read-only";
+          }
+          // {
+            Type = "oneshot";
+            User = primaryUser;
+            ExecStart = let
+              lspCleanup = pkgs.writeShellApplication {
+                name = "stale-lsp-cleanup";
+                runtimeInputs = [pkgs.procps pkgs.coreutils];
+                text = ''
+                  MAX_AGE_SECONDS=$((24 * 3600))
+                  LSP_PROCESS_NAMES=("gopls" "typescript-language-server" "vtsls" "rust-analyzer" "lua-language-server")
+                  KILLED=0
+
+                  for proc_name in "''${LSP_PROCESS_NAMES[@]}"; do
+                    while IFS= read -r pid; do
+                      [ -z "$pid" ] && continue
+                      elapsed=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+                      [ -z "$elapsed" ] && continue
+                      if [ "$elapsed" -gt "$MAX_AGE_SECONDS" ]; then
+                        elapsed_h=$((elapsed / 3600))
+                        echo "Killing stale $proc_name (PID $pid, running ''${elapsed_h}h)"
+                        kill "$pid" 2>/dev/null || true
+                        KILLED=$((KILLED + 1))
+                      fi
+                    done < <(pgrep -u "$USER" "$proc_name" 2>/dev/null)
+                  done
+
+                  echo "Done: killed $KILLED stale LSP processes"
+                '';
+              };
+            in "${lspCleanup}/bin/stale-lsp-cleanup";
             StandardOutput = "journal";
             StandardError = "journal";
           };

@@ -8,6 +8,8 @@
     dns-blocker-stats = 8083;
     dns-blocker-block = 8050;
 
+    photomap = 8051;
+
     forgejo = 3000;
 
     homepage = 8082;
@@ -40,5 +42,7 @@
     emeet-pixyd = 8090;
 
     minecraft = 25565;
+
+    dozzle = 8084;
   };
 }
