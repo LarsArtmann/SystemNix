@@ -386,11 +386,11 @@
     "go-branded-id": {
       "flake": false,
       "locked": {
-        "lastModified": 1780306390,
-        "narHash": "sha256-Fp/pVjnlX3KIkjzBF1Ydws4MmPtpIp2cAMSNc5mYa+Q=",
+        "lastModified": 1780445431,
+        "narHash": "sha256-ktBNURAgmWmXDsjr/mbVRMaUbX6P0XyF2un+YJQCev0=",
         "ref": "master",
-        "rev": "35cad1dbf4f41b49c24631ab7da1f0926f034c17",
-        "revCount": 60,
+        "rev": "2ded4115e5b866cbf05261053391440ac6109998",
+        "revCount": 62,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
       },
@@ -712,11 +712,11 @@
     "gogenfilter": {
       "flake": false,
       "locked": {
-        "lastModified": 1780396440,
-        "narHash": "sha256-4GjQLpBTqcE+4eWlscOAz0FFDZmVo0q9ziwNRy+xh88=",
+        "lastModified": 1780398577,
+        "narHash": "sha256-3ZIEHA7RSAOg97kBwBpMzyAae/Os/ZsG9lb+XygF6V8=",
         "ref": "master",
-        "rev": "0f8d8b1a772341d4376642622c926ddbaa51fcb9",
-        "revCount": 651,
+        "rev": "6f8dde1a1916f442a7fd17ec4761a83eaeff1665",
+        "revCount": 655,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       },
@@ -840,11 +840,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780370888,
-        "narHash": "sha256-PRJj9RKTEf/sITycujP1c/BrvLJKMYXzcpwTsXNulXQ=",
+        "lastModified": 1780408569,
+        "narHash": "sha256-s7Tv6FUQThRAvW8En8XVC6HMb0uiikzVccCcCo9u/Bg=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "a7a415883195ffbd4dabec8f098f201e6eaaadf8",
+        "rev": "f384af1bec6423a0d4ba1855917ab948f64e5808",
         "type": "github"
       },
       "original": {
@@ -872,11 +872,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1780396163,
-        "narHash": "sha256-TCcFtUontjdCk8RXGFAwbIAajI5HCDOL9uMniQZOS30=",
+        "lastModified": 1780475877,
+        "narHash": "sha256-yp2GDABJF4zsXLbg3ehqOXHHMSZH8+NJJAi5YO2rqms=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "8a5070133c4a1c7a18afe4358a23524e3d37710f",
+        "rev": "64fe32501e2f95d827252632afb01f94b1d818fa",
         "type": "github"
       },
       "original": {
@@ -962,11 +962,11 @@
         "systems": "systems_7"
       },
       "locked": {
-        "lastModified": 1780349078,
-        "narHash": "sha256-uuQVBZZC4wmitZ3VjdfskXhuon3WrdHy0OV+maGJ0pA=",
+        "lastModified": 1780425735,
+        "narHash": "sha256-zNwpwQ72o7YP9zXPhxVU8juSyr5U/ObdMMo/skIETc0=",
         "ref": "master",
-        "rev": "10dfdb49bea165a175834dcb7e5ef3016a19c561",
-        "revCount": 198,
+        "rev": "f3a00a4ed1d7632677349421fae1b147de92befc",
+        "revCount": 202,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mr-sync"
       },
@@ -1256,11 +1256,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780394352,
-        "narHash": "sha256-jIc8FvoOh3cGvz3owlXyt+o2W7F3bEPD2GeirB5pDA8=",
+        "lastModified": 1780476163,
+        "narHash": "sha256-Pscyr2PiXL5eCmhsxvhCU6IpiT42dpeE2/pcpN2erJs=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "13155139e157926e7891e05c6b2b323ebc43d4e0",
+        "rev": "73a6a8de4948a1485132edc2c950ac9e71154725",
         "type": "github"
       },
       "original": {
