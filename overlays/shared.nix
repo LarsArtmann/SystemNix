@@ -78,9 +78,9 @@ in [
         sed -i 's/report\.WriteSARIF(\([^)]*\))/report.WriteSARIF(context.Background(), \1)/g' pkg/execution/workflow_result.go
         sed -i '/^import (/a\	"context"' pkg/execution/workflow_result.go
       '';
-      vendorHash = "sha256-3jPdEu1Lrk+IyaY/l9fBIWYDUWk/iLxoYIoSDamz9LM=";
+      vendorHash = "sha256-klRON6vAMONdvMIx9OVFIrWsqC13g76WwInxrdujDmg=";
       goModules = prev.buildflow.goModules.overrideAttrs (_modOld: {
-        outputHash = "sha256-3jPdEu1Lrk+IyaY/l9fBIWYDUWk/iLxoYIoSDamz9LM=";
+        outputHash = "sha256-klRON6vAMONdvMIx9OVFIrWsqC13g76WwInxrdujDmg=";
         preBuild = "go mod tidy";
       });
     });
