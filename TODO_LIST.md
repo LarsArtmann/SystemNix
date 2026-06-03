@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-02 (session 115)
+**Updated:** 2026-06-03 (session 118)
 
 ---
 
@@ -23,14 +23,12 @@
 ### Priority 2: Code Improvements
 
 - [ ] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `signoz.nix`
-- [ ] **Investigate swap exhaustion** — 13Gi/13Gi, 7 gopls instances eating ~7.4Gi RSS
-- [ ] **Flake inputs audit** — 47 inputs, some may be stale/unused
+- [ ] **Flake inputs audit** — 48 inputs, some may be stale/unused
 - [ ] **Bring Darwin home.nix to parity** — terminal, editor, theme, xdg (4h, depends on whether Darwin is actively used)
 
 ### Priority 3: Documentation & Tools
 
 - [ ] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors — ~6h
-- [ ] **Deploy Dozzle**: Docker container log tailing at `logs.home.lan`
 - [ ] **Create `just status` command** for automated status report generation
 
 ### Priority 4: Hardware
@@ -46,6 +44,22 @@
 - [ ] Create shared flake-parts template (mkGoPackage, checks, devshells)
 
 ---
+
+## Completed (session 118)
+
+- [x] Delete orphan `ai-stack.nix` module (109 lines)
+- [x] Fix port 8050 conflict — reassign photomap from 8050→8051
+- [x] Restore `go-structure-linter` — upstream fixed, overlay + package re-enabled
+- [x] Add stale LSP cleanup timer — daily, kills gopls/vtsls/rust-analyzer/lua-ls running >24h
+- [x] Deploy Dozzle — Docker log viewer at `logs.home.lan` (inline in configuration.nix)
+- [x] Add disk growth check timer — daily, alerts if `/data` grows >5G/24h
+
+## Completed (session 117)
+
+- [x] Fix `xdg-desktop-portal-gtk.service` race condition — add `After=niri.service`
+- [x] Add `Restart=on-failure` resilience to `home-manager-lars.service` (3 retries, 5s)
+- [x] Fix `dnsblockd.service` start limits — `StartLimitBurst=10/120s` + blockIP readiness check
+- [x] Eliminate ALL sed patches from overlays — fixed upstream repos, tagged semver releases
 
 ## Completed (session 115)
 

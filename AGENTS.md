@@ -178,9 +178,10 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
 | Pocket ID bootstrap | Staged: deploy Pocket ID → `https://auth.home.lan/setup` → admin passkey → OIDC clients → sops secrets → deploy oauth2-proxy. See `just auth-bootstrap` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
-| Swap exhaustion | 7 gopls instances eating ~7.4Gi RSS (13Gi/13Gi swap). SigNoz alerting at 80% swap usage. Root cause: stale LSP processes |
-| Port 8050 latent conflict | `dns-blocker-block` and `photomap` both use 8050. Both disabled currently. Needs reassignment if both enabled |
-| Orphan modules | `ai-stack.nix` and `default-services.nix` exist but no config imports them. `dns-failover.nix` only used by rpi3 |
+| Swap exhaustion | Stale LSP processes (gopls/vtsls) eating ~7.4Gi RSS. Mitigated by daily `stale-lsp-cleanup` timer killing processes >24h |
+| Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |
+| Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3. `ai-stack.nix` deleted in session 118 |
+| Dozzle module eval issue | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Use inline `virtualisation.oci-containers` in configuration.nix instead |
 
 ---
 

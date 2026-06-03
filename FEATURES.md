@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-06-03 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,7 +25,7 @@ _A brutally honest audit of every feature the project actually has._
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Cross-platform Nix flake (Darwin + NixOS) | ✅ | Single flake, two systems, 80% shared via `platforms/common/` |
-| flake-parts modular architecture | ✅ | 29 service modules imported in `flake.nix` |
+| flake-parts modular architecture | ✅ | 36 service modules imported in `flake.nix` |
 | Shared overlays (Darwin + NixOS) | ✅ | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync |
 | Linux-only overlays | ✅ | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer |
 | Shared Home Manager config | ✅ | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs` |
@@ -66,21 +66,22 @@ _A brutally honest audit of every feature the project actually has._
 | Forgejo repos (declarative mirroring) | ✅ | `forgejo-repos.nix` | Auto-sync on rebuild + daily timer, push mirrors to GitHub, hardened oneshot, sops-managed tokens |
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha theme, 5 service categories, resource widgets, health checks |
 | Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
-| PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, pinned SHA256, disabled in config |
+| PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, port 8051, disabled in config |
 | SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 7 alert rules, dashboard provisioning |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |
 | Twenty CRM | ✅ | `twenty.nix` | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan |
-| Minecraft server | ✅ | `minecraft.nix` | JDK 25, ZGC, firewall restricted to LAN, Prism Launcher client config, whitelist |
+| Dozzle (Docker log viewer) | ✅ | inline `configuration.nix` | OCI container, `logs.home.lan`, Docker socket mount, 300-line tail, running-only filter |
+| Minecraft server | 🔧 | `minecraft.nix` | JDK 25, ZGC, firewall restricted to LAN, Prism Launcher client config, whitelist — disabled in config |
 
 ### AI / ML Stack
 
 | Service | Status | Module | Key Details |
 |---------|--------|--------|-------------|
 | Centralized AI model storage | ✅ | `ai-models.nix` | `/data/ai/` tree (14 dirs), env vars, tmpfiles rules — dependency for all AI services |
-| Ollama (LLM inference) | ✅ | `ai-stack.nix` | ROCm GPU, flash attention, 4 parallel, q8_0 KV, 24h keep-alive, user `lars` in render group |
-| llama.cpp (standalone) | ✅ | `ai-stack.nix` | ROCWMMA + MFMA custom build, installed alongside Ollama |
-| ComfyUI (image generation) | ❌ Removed | `comfyui.nix` | Disabled — prefer using AI models via code directly |
-| Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — enabled but may need verification |
+| Ollama (LLM inference) | ✅ | `ai-models.nix` | ROCm GPU, flash attention, 4 parallel, q8_0 KV, 24h keep-alive — env vars + paths in module, service runs outside NixOS module |
+| llama.cpp (standalone) | ✅ | `ai-models.nix` | ROCWMMA + MFMA custom build, installed alongside Ollama |
+| ComfyUI (image generation) | ❌ Removed | — | Disabled — prefer using AI models via code directly |
+| Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — disabled in config |
 | Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload |
 
 ### Desktop & System Services
@@ -267,6 +268,8 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Immich DB backup | Daily | 7-day retention |
 | Twenty DB backup | Daily | 30-day retention |
 | Taskwarrior JSON backup | Daily | 30-day retention |
+| Stale LSP cleanup | Daily | Kills gopls/vtsls/rust-analyzer/lua-ls running >24h |
+| Disk growth check | Daily | Alerts if /data grows >5G/24h |
 
 ---
 
@@ -397,10 +400,11 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Area | Issue | Severity |
 |------|-------|----------|
 | Raspberry Pi 3 | Hardware not provisioned — entire DNS failover cluster is planned-only | High |
-| PhotoMap AI | Disabled in configuration, pinned to old SHA256 | Medium |
+| PhotoMap AI | Disabled in configuration, port 8051 (was 8050 conflict) | Medium |
 | Multi-WM (Sway) | Disabled — may have bitrot | Low |
-| Twenty CRM | Module exists but unclear if actively deployed | Medium |
-| Voice agents | Enabled but Whisper Docker + ROCm pipeline may need verification | Medium |
+| Twenty CRM | Module exists, enabled in configuration, Caddy at crm.home.lan | Low |
+| Voice agents | Disabled in configuration, Whisper Docker + ROCm pipeline | Medium |
+| Minecraft | Disabled in configuration | Low |
 | Benchmark scripts | Removed from justfile — scripts never created | Low |
 | Auditd | Disabled due to NixOS 26.05 bug #483085 | Medium |
 | AppArmor | Commented out in security-hardening | Medium |
@@ -467,7 +471,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 
 | Category | Count |
 |----------|-------|
-| NixOS service modules | 29 |
+| NixOS service modules | 36 |
 | Custom packages | 13 |
 | Cross-platform programs | 20+ |
 | NixOS desktop components | 15+ |
@@ -477,10 +481,10 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Justfile commands | 90+ |
 | Architecture patterns | 7 |
 | ADRs | 5 |
-| GitHub Actions | 3 |
-| **Total enabled features** | **~140** |
-| Planned/disabled | ~8 |
-| Known gaps | 12 |
+| GitHub Actions | 2 |
+| **Total enabled features** | **~145** |
+| Planned/disabled | ~9 |
+| Known gaps | 11 |
 
 ---
 
