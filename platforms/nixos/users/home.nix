@@ -42,7 +42,7 @@ in {
         font-size = 16;
         theme = "Catppuccin Mocha";
         background-opacity = 0.85;
-        confirm-close = false;
+        confirm-close-surface = false;
         window-decoration = false;
         copy-on-select = false;
         mouse-hide-while-typing = true;
