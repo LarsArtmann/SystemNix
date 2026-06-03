@@ -42,11 +42,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1780483233,
-        "narHash": "sha256-wXgbx/KIu0GG4UxYnUkCQhAOg8P4Cd5qwkt997Z5T+s=",
+        "lastModified": 1780491110,
+        "narHash": "sha256-+4iZju7ksRIUDDivVj19xCNrYsCnCL4ywSyAAyTDJAI=",
         "ref": "master",
-        "rev": "2a40b4b07bb57eb583b8dcc57321da8b804d0be8",
-        "revCount": 1814,
+        "rev": "bd07efd9e48f9f3352c18921333dbbcc0bc71bdd",
+        "revCount": 1823,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -873,11 +873,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1780475877,
-        "narHash": "sha256-yp2GDABJF4zsXLbg3ehqOXHHMSZH8+NJJAi5YO2rqms=",
+        "lastModified": 1780490089,
+        "narHash": "sha256-u/rNZGDneAo6G7ui0IXPJgS/w0pMS3eczHC5ULJSY+E=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "64fe32501e2f95d827252632afb01f94b1d818fa",
+        "rev": "9cb011341a2204cd35170c78f7ebe99da8d2905c",
         "type": "github"
       },
       "original": {
@@ -1257,11 +1257,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780477517,
-        "narHash": "sha256-dG9cMmAYS8+2T1HjEJrHU8TuYr6EbklPRdlQeV+NS1U=",
+        "lastModified": 1780490298,
+        "narHash": "sha256-oVqKWYvlkiofLFMKqva5xMQ0uDiiPykjfwG3w6M2x1Y=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "182e17ad17cde2ed0c80383f27468cfaa84e8ae4",
+        "rev": "d834be794251517f441c3d6a7feaf93987cc9b22",
         "type": "github"
       },
       "original": {
