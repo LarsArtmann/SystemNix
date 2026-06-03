@@ -70,6 +70,16 @@ in {
         };
         wantedBy = ["timers.target"];
       };
+
+      disk-growth-check = {
+        description = "Daily disk growth trend check — alert if /data grows >5G in 24h";
+        timerConfig = {
+          OnCalendar = "daily";
+          Persistent = true;
+          RandomizedDelaySec = "1h";
+        };
+        wantedBy = ["timers.target"];
+      };
     };
 
     services = {
@@ -390,6 +400,62 @@ in {
                 '';
               };
             in "${lspCleanup}/bin/stale-lsp-cleanup";
+            StandardOutput = "journal";
+            StandardError = "journal";
+          };
+      };
+
+      disk-growth-check = {
+        description = "Check /data disk growth trend and alert if >5G/day";
+        onFailure = ["notify-failure@%n.service"];
+        serviceConfig =
+          harden {
+            MemoryMax = "128M";
+            ProtectHome = "read-only";
+            ReadWritePaths = ["/var/lib/disk-growth"];
+          }
+          // {
+            Type = "oneshot";
+            ExecStart = let
+              diskGrowth = pkgs.writeShellApplication {
+                name = "disk-growth-check";
+                runtimeInputs = [pkgs.coreutils pkgs.util-linux];
+                text = ''
+                  STATE_DIR="/var/lib/disk-growth"
+                  STATE_FILE="$STATE_DIR/last_usage_bytes"
+                  THRESHOLD=$((5 * 1024 * 1024 * 1024))
+                  MOUNT_POINT="/data"
+
+                  current_bytes=$(df --output=used --block-size=1 "$MOUNT_POINT" | tail -1 | tr -d ' ')
+
+                  if [ -z "$current_bytes" ]; then
+                    echo "ERROR: could not read disk usage for $MOUNT_POINT"
+                    exit 1
+                  fi
+
+                  current_human=$(numfmt --to=iec --suffix=B "$current_bytes")
+                  echo "Current /data usage: $current_human"
+
+                  if [ -f "$STATE_FILE" ]; then
+                    last_bytes=$(cat "$STATE_FILE")
+                    delta=$((current_bytes - last_bytes))
+                    delta_human=$(numfmt --to=iec --suffix=B "$delta")
+
+                    if [ "$delta" -gt "$THRESHOLD" ]; then
+                      echo "WARNING: /data grew $delta_human in 24h (threshold: 5G)"
+                      exit 1
+                    else
+                      echo "Growth: $delta_human in 24h (under 5G threshold)"
+                    fi
+                  else
+                    echo "No previous measurement — recording baseline"
+                  fi
+
+                  mkdir -p "$STATE_DIR"
+                  printf '%s' "$current_bytes" > "$STATE_FILE"
+                '';
+              };
+            in "${diskGrowth}/bin/disk-growth-check";
             StandardOutput = "journal";
             StandardError = "journal";
           };

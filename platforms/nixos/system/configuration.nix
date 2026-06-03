@@ -4,7 +4,9 @@
   nix-ssh-config,
   lib,
   ...
-}: {
+}: let
+  dozzlePort = 8084;
+in {
   imports = [
     # Import common packages shared with macOS
     ../../common/packages/base.nix
@@ -107,6 +109,19 @@
     # Enable Fish shell system-wide
     programs.fish.enable = true;
 
+    # Dozzle — Docker container log tailing at logs.home.lan
+    # Inline config (not module) to avoid nix flake check eval issue
+    virtualisation.oci-containers.containers.dozzle = {
+      autoStart = true;
+      image = "amir20/dozzle:latest";
+      ports = ["127.0.0.1:${toString dozzlePort}:8080"];
+      volumes = ["/var/run/docker.sock:/var/run/docker.sock:ro"];
+      environment = {
+        DOZZLE_TAILSIZE = "300";
+        DOZZLE_FILTER = "status=running";
+      };
+    };
+
     # EMEET PIXY webcam auto-activation
     hardware.emeet-pixy = {
       enable = true;
@@ -177,12 +192,6 @@
 
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
       openseo.enable = true;
-
-      # Dozzle — Docker container log tailing at logs.home.lan
-      # DISABLED: nix flake check fails with "option services.dozzle does not exist"
-      # despite the module being properly registered and nix eval working.
-      # Suspect nix flake check evaluates configs differently than nix eval.
-      # dozzle.enable = true;
 
       # Dual-WAN with MPTCP and route health monitoring
       dual-wan.enable = true;

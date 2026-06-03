@@ -11,7 +11,7 @@ _: {
     serverKey = config.sops.secrets.dnsblockd_server_key.path;
     authPort = config.services.pocket-id-config.port;
     proxyPort = config.services.oauth2-proxy-config.port;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
 
     bindAddress =
       if config.services.dns-blocker.enable && config.services.dns-blocker.blockInterface != "lo"
@@ -88,6 +88,9 @@ _: {
           // lib.optionalAttrs config.services.voice-agents.enable {
             "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
             "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
+          }
+          // lib.optionalAttrs (config.virtualisation.oci-containers.containers ? dozzle) {
+            "logs.${domain}" = protectedVHost "logs" ports.dozzle;
           };
       };
 
