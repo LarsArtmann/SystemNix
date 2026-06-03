@@ -183,12 +183,15 @@
 
     # ── Resilience: journald size limits ──────────────────────────────────
     # Without limits, AI services (Ollama, ComfyUI, Hermes) can fill /var/log
-    # with multi-GB logs, causing system failures. 4GB is generous for 128GB RAM.
+    # with multi-GB logs, causing system failures. 16GB ensures crash forensics
+    # survive even when services spam errors for hours (see June 2025 disk-full
+    # incident where 4G was consumed by ClickHouse/Redis error flood, rotating
+    # away the crash boot logs).
     journald.extraConfig = ''
-      SystemMaxUse=4G
-      RuntimeMaxUse=1G
+      SystemMaxUse=16G
+      RuntimeMaxUse=2G
       MaxFileSec=1week
-      MaxRetentionSec=2week
+      MaxRetentionSec=1month
     '';
   };
 
