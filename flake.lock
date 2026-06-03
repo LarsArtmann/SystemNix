@@ -42,11 +42,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1780491110,
-        "narHash": "sha256-+4iZju7ksRIUDDivVj19xCNrYsCnCL4ywSyAAyTDJAI=",
+        "lastModified": 1780491908,
+        "narHash": "sha256-bYeuZztiu49uyTH05WPqqD92r4Ctu0qe5bSLkVhuZ+k=",
         "ref": "master",
-        "rev": "bd07efd9e48f9f3352c18921333dbbcc0bc71bdd",
-        "revCount": 1823,
+        "rev": "ddce05c9c0b7aee9e0b01279d08aef20b31bc75f",
+        "revCount": 1825,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
