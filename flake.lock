@@ -42,11 +42,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1780342766,
-        "narHash": "sha256-ufqsjcv3kwDKZsyLAc+FxA1+qae++SR0Ay3AFy89T6g=",
+        "lastModified": 1780483233,
+        "narHash": "sha256-wXgbx/KIu0GG4UxYnUkCQhAOg8P4Cd5qwkt997Z5T+s=",
         "ref": "master",
-        "rev": "8d9bbdc08a0876a599cbd3b036f27b72eccab31a",
-        "revCount": 1811,
+        "rev": "2a40b4b07bb57eb583b8dcc57321da8b804d0be8",
+        "revCount": 1814,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -99,14 +99,14 @@
       "locked": {
         "lastModified": 1780334309,
         "narHash": "sha256-3yw6Ob+UW+ZXa0G4ctGWBad7yf9AtYVo7iZ7Vb9CSbI=",
-        "ref": "master",
+        "ref": "refs/heads/master",
         "rev": "77185c0d418f29d161af1dd5b1df5a464f321165",
         "revCount": 2913,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
       "original": {
-        "ref": "master",
+        "rev": "77185c0d418f29d161af1dd5b1df5a464f321165",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       }
@@ -505,11 +505,11 @@
     "go-finding_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1780304009,
-        "narHash": "sha256-OZus1HdhiI/wIvrt/kSDTZ+7hOI44dBfpzcXXdjRsZ0=",
+        "lastModified": 1780368233,
+        "narHash": "sha256-H/SIzEkEWlHyVhxGxYoI+A1ccvlXBjmEXYUw0H4l8FQ=",
         "ref": "master",
-        "rev": "36f9b89fe800b9634aa57a9e99ba1cf3c2cbc601",
-        "revCount": 636,
+        "rev": "e9c4fa6e4bea64117184d6112ad3b45584503c10",
+        "revCount": 664,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -712,11 +712,11 @@
     "gogenfilter": {
       "flake": false,
       "locked": {
-        "lastModified": 1780398577,
-        "narHash": "sha256-3ZIEHA7RSAOg97kBwBpMzyAae/Os/ZsG9lb+XygF6V8=",
+        "lastModified": 1780478788,
+        "narHash": "sha256-nT76u3Qi4XPh128442Gv5lMeO9pzlETk4mvnffzwql8=",
         "ref": "master",
-        "rev": "6f8dde1a1916f442a7fd17ec4761a83eaeff1665",
-        "revCount": 655,
+        "rev": "6c28a428a37d3aa166adfd9f40e6433db0051111",
+        "revCount": 656,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       },
@@ -739,11 +739,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780312794,
-        "narHash": "sha256-yN7cBQ7JTRAasGxx9G4AZ7KKTcy9zIoqaCqW697b4Gs=",
+        "lastModified": 1780483517,
+        "narHash": "sha256-4LOytoyvrhhSEtTZJcjQA+HYMRI0M/ygmeNairemnew=",
         "ref": "master",
-        "rev": "2797950ba30098e4f192583e49405666786f4360",
-        "revCount": 566,
+        "rev": "fef6943a56aed7134dd35b4e4ee8c5e26342f3c9",
+        "revCount": 567,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
@@ -819,11 +819,11 @@
         "systems": "systems_5"
       },
       "locked": {
-        "lastModified": 1780306327,
-        "narHash": "sha256-nL6uwgOlAs12WvZi0AbqOR+cDKBFVB1vCAC0SNyd/Fw=",
+        "lastModified": 1780485476,
+        "narHash": "sha256-JJJRXsW/CzzTn00TLSKtWIckq4i69k7ra8aQ2JoSHwQ=",
         "ref": "master",
-        "rev": "30bea0742beeeb6834a2e76e0a5a571972e39949",
-        "revCount": 619,
+        "rev": "451345ce6dd23984c9b6438abcb330b30eb0c4de",
+        "revCount": 622,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -1256,11 +1256,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780476163,
-        "narHash": "sha256-Pscyr2PiXL5eCmhsxvhCU6IpiT42dpeE2/pcpN2erJs=",
+        "lastModified": 1780477517,
+        "narHash": "sha256-dG9cMmAYS8+2T1HjEJrHU8TuYr6EbklPRdlQeV+NS1U=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "73a6a8de4948a1485132edc2c950ac9e71154725",
+        "rev": "182e17ad17cde2ed0c80383f27468cfaa84e8ae4",
         "type": "github"
       },
       "original": {

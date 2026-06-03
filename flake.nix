@@ -272,7 +272,7 @@
 
     # BuildFlow — Zero-configuration build automation for Go projects
     buildflow = {
-      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
+      url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?rev=77185c0d418f29d161af1dd5b1df5a464f321165";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-utils.follows = "flake-utils";

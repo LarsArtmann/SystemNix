@@ -48,27 +48,10 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-foE0xXbKyceVGSThYzJ9KidUgfua1/64FObJQawBVYw=";})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-Z1PWKQ2vlrtrB8660x++zXPonhehjuTa7x/bDtO8GGE=";})
-  # golangci-lint-auto-configure — go-finding API breaks (Merge→Combine) + vendorHash recompute via go mod tidy
-  (_final: prev: let
-    pkg = golangci-lint-auto-configure.packages.${prev.stdenv.system}.default or null;
-  in
-    if pkg == null
-    then {}
-    else {
-      golangci-lint-auto-configure = pkg.overrideAttrs (_old: {
-        postPatch = ''
-          find . -name '*.go' -exec sed -i 's/finding\.Merge(/finding.Combine(/g' {} +
-        '';
-        vendorHash = "sha256-Y+rxN1VJcfxGLIUpme3ik7GEno9MvJKrX6uaPRH7yDg=";
-        goModules = pkg.goModules.overrideAttrs (_modOld: {
-          outputHash = "sha256-Y+rxN1VJcfxGLIUpme3ik7GEno9MvJKrX6uaPRH7yDg=";
-          preBuild = "go mod tidy";
-        });
-      });
-    })
-  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-khXvSx9rDHgTWa+T0ukhANdBTGvjF9++U8Ni9gdBudk=";})
+  (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-8/Yn3hoW/GHgq+bUxxTlGVi6pjChw6Unq/baluyrj04=";})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
+  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-1+kYoA90tD+DSuoiHFBE+jyprPo4IWuiaOIMHcOYSNU=";})
   (mkPackageOverlay buildflow "buildflow" {})
   # buildflow — mkPreparedSource creates complex go.mod state; needs tidy in go-modules phase
   (_final: prev: {
