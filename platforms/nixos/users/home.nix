@@ -40,7 +40,7 @@ in {
       settings = {
         font-family = "JetBrainsMono Nerd Font";
         font-size = 16;
-        theme = "catppuccin-mocha";
+        theme = "Catppuccin Mocha";
         background-opacity = 0.85;
         confirm-close = false;
         window-decoration = false;
