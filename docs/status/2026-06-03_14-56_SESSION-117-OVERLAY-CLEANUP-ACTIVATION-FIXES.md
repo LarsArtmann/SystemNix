@@ -35,8 +35,8 @@ Two commits landed:
 - `overlays/shared.nix` dropped from ~81 lines to 65 lines (3 big override blocks removed)
 - Fixed 3 activation test failures:
   1. `xdg-desktop-portal-gtk` — added `After=niri.service` drop-in
-  2. `home-manager-lars` — cascading failure from #1, fixed by same
-  3. `dnsblockd` — added blockIP interface readiness check (30s wait)
+  2. `home-manager-lars` — added `Restart=on-failure` with 3 retries @ 5s interval
+  3. `dnsblockd` — added blockIP interface readiness check (30s wait), increased start limits to 10/120s
 
 ### Project Stats
 

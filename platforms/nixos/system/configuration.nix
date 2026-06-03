@@ -43,13 +43,30 @@
       };
     };
 
-    # Portal-gtk must wait for niri compositor to be ready, otherwise it races
-    # during live activation (nh os test/switch) when both are restarted simultaneously
-    systemd.user.units."xdg-desktop-portal-gtk.service.d/after-niri.conf" = {
-      text = ''
-        [Unit]
-        After=niri.service
-      '';
+    systemd = {
+      # Portal-gtk must wait for niri compositor to be ready, otherwise it races
+      # during live activation (nh os test/switch) when both are restarted simultaneously
+      user.units."xdg-desktop-portal-gtk.service.d/after-niri.conf" = {
+        text = ''
+          [Unit]
+          After=niri.service
+        '';
+      };
+
+      # Home Manager activation can fail transiently during live system activation
+      # (nix profile lock, file-in-use conflicts). Retry up to 3 times with 5s delay.
+      services.home-manager-lars = {
+        startLimitBurst = 3;
+        startLimitIntervalSec = 30;
+        serviceConfig = {
+          Restart = "on-failure";
+          RestartSec = "5s";
+        };
+      };
+
+      tmpfiles.rules = [
+        "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
+      ];
     };
 
     # Boot configuration is now handled by ./boot.nix module
@@ -74,9 +91,6 @@
 
     # AccountsService avatar for SDDM login/lock screen
     services.accounts-daemon.enable = true;
-    systemd.tmpfiles.rules = [
-      "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
-    ];
 
     # Ensure Home Manager profile directory exists
     # This is required for home-manager.useUserPackages = true to work properly

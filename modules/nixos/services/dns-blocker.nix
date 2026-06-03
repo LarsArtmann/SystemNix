@@ -246,8 +246,8 @@ _: {
           wants = ["network-online.target" "sops-nix.service" "unbound.service"];
           wantedBy = ["multi-user.target"];
           unitConfig = {
-            StartLimitBurst = 5;
-            StartLimitIntervalSec = 60;
+            StartLimitBurst = 10;
+            StartLimitIntervalSec = 120;
           };
 
           serviceConfig = let
