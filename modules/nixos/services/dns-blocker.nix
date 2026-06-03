@@ -284,7 +284,7 @@ _: {
             );
             dnsblockdWrapper = pkgs.writeShellApplication {
               name = "dnsblockd-start";
-              runtimeInputs = [pkgs.coreutils pkgs.dnsblockd];
+              runtimeInputs = [pkgs.coreutils pkgs.dnsblockd pkgs.iproute2];
               text = ''
                 for i in $(seq 1 60); do
                   if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
@@ -292,6 +292,17 @@ _: {
                   fi
                   if [ "$i" -eq 60 ]; then
                     echo "ERROR: sops secrets not available after 60s" >&2
+                    exit 1
+                  fi
+                  sleep 1
+                done
+
+                for i in $(seq 1 30); do
+                  if ip addr show ${cfg.blockInterface} | grep -q "${cfg.blockIP}/"; then
+                    break
+                  fi
+                  if [ "$i" -eq 30 ]; then
+                    echo "ERROR: blockIP ${cfg.blockIP} not assigned to ${cfg.blockInterface} after 30s" >&2
                     exit 1
                   fi
                   sleep 1

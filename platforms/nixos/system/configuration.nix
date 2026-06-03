@@ -43,6 +43,15 @@
       };
     };
 
+    # Portal-gtk must wait for niri compositor to be ready, otherwise it races
+    # during live activation (nh os test/switch) when both are restarted simultaneously
+    systemd.user.units."xdg-desktop-portal-gtk.service.d/after-niri.conf" = {
+      text = ''
+        [Unit]
+        After=niri.service
+      '';
+    };
+
     # Boot configuration is now handled by ./boot.nix module
     # which provides systemd-boot with proper nvme and Ryzen AI Max+ support
 

@@ -53,21 +53,6 @@ in [
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-1+kYoA90tD+DSuoiHFBE+jyprPo4IWuiaOIMHcOYSNU=";})
   (mkPackageOverlay buildflow "buildflow" {})
-  # buildflow — mkPreparedSource creates complex go.mod state; needs tidy in go-modules phase
-  (_final: prev: {
-    buildflow = prev.buildflow.overrideAttrs (_old: {
-      postPatch = ''
-        find . -name '*.go' -exec sed -i 's/gofinding\.Merge(/gofinding.Combine(/g; s/finding\.Merge(/finding.Combine(/g' {} +
-        sed -i 's/report\.WriteSARIF(\([^)]*\))/report.WriteSARIF(context.Background(), \1)/g' pkg/execution/workflow_result.go
-        sed -i '/^import (/a\	"context"' pkg/execution/workflow_result.go
-      '';
-      vendorHash = "sha256-klRON6vAMONdvMIx9OVFIrWsqC13g76WwInxrdujDmg=";
-      goModules = prev.buildflow.goModules.overrideAttrs (_modOld: {
-        outputHash = "sha256-klRON6vAMONdvMIx9OVFIrWsqC13g76WwInxrdujDmg=";
-        preBuild = "go mod tidy";
-      });
-    });
-  })
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EhKRJczms0gw0JniX+TFBanwIt0muK+PX0WMUk0EHxE=";})
   # go-structure-linter — BROKEN: template-LICENSE/types private dep not in _local_deps;
   # go mod tidy fails in sandbox. Needs upstream fix. VendorHash stale after go-finding update.
