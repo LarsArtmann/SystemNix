@@ -319,6 +319,10 @@ in {
       projects-management-automation = {
         enable = true;
         paths = ["/home/${config.users.primaryUser}/projects"];
+        excludePaths = [
+          "/home/${config.users.primaryUser}/projects/forks"
+          "/home/${config.users.primaryUser}/projects/archived"
+        ];
         autoPush = false;
         debounceSeconds = 10;
         minCommitIntervalSeconds = 60;
