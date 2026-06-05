@@ -62,8 +62,7 @@ in {
       set -g status-right "#[fg=#${colors.base0B}]#(date '+%Y-%m-%d %H:%M')#[fg=default]"
 
       # Window/pane customization
-      setw -g window-status-current-bg "#${colors.base01}"
-      setw -g window-status-current-fg "#${colors.base05}"
+      setw -g window-status-current-style "bg=#${colors.base01},fg=#${colors.base05}"
       setw -g pane-active-border-style fg="#${colors.base0D}"
       setw -g pane-border-style fg="#${colors.base02}"
 

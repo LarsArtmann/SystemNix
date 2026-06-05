@@ -45,51 +45,51 @@
       open = {
         rules = [
           {
-            name = "*.json";
+            url = "*.json";
             use = "edit";
           }
           {
-            name = "*.toml";
+            url = "*.toml";
             use = "edit";
           }
           {
-            name = "*.yaml";
+            url = "*.yaml";
             use = "edit";
           }
           {
-            name = "*.yml";
+            url = "*.yml";
             use = "edit";
           }
           {
-            name = "*.nix";
+            url = "*.nix";
             use = "edit";
           }
           {
-            name = "*.rs";
+            url = "*.rs";
             use = "edit";
           }
           {
-            name = "*.go";
+            url = "*.go";
             use = "edit";
           }
           {
-            name = "*.ts";
+            url = "*.ts";
             use = "edit";
           }
           {
-            name = "*.js";
+            url = "*.js";
             use = "edit";
           }
           {
-            name = "*.css";
+            url = "*.css";
             use = "edit";
           }
           {
-            name = "*.md";
+            url = "*.md";
             use = "edit";
           }
           {
-            name = "*";
+            url = "*";
             use = "open";
           }
         ];
@@ -355,7 +355,7 @@
           } # Green
           # Fallback
           {
-            name = "*";
+            url = "*";
             fg = "#cdd6f4";
             icon = "📄";
           } # Text
