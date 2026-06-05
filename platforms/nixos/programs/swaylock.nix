@@ -1,4 +1,6 @@
-{pkgs, ...}: {
+{pkgs, ...}: let
+  theme = import ../../common/theme.nix;
+in {
   programs.swaylock = {
     enable = true;
     package = pkgs.swaylock-effects;
@@ -42,7 +44,7 @@
       separator-color = "00000000"; # Transparent
 
       # Layout
-      font = "JetBrainsMono Nerd Font";
+      font = theme.font.mono;
       font-size = 24;
 
       # Grace period (seconds where no password needed after waking)

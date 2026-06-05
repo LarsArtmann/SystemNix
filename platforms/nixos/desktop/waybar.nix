@@ -3,6 +3,7 @@
   pkgs,
   ...
 }: let
+  theme = import ../../common/theme.nix;
   waybarCamera = pkgs.writeShellApplication {
     name = "waybar-camera";
     runtimeInputs = [pkgs.emeet-pixyd];
@@ -309,7 +310,7 @@ in {
       * {
         border: none;
         border-radius: 0;
-        font-family: "JetBrainsMono Nerd Font";
+        font-family: "${theme.font.mono}";
         font-size: 14px;
         min-height: 0;
         padding: 0 6px;
@@ -424,7 +425,7 @@ in {
         border-radius: 8px;
         padding: 8px 12px;
         color: #cdd6f4;
-        font-family: "JetBrainsMono Nerd Font";
+        font-family: "${theme.font.mono}";
         font-size: 13px;
       }
 

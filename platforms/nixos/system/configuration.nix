@@ -6,6 +6,7 @@
   ...
 }: let
   inherit (import ../../../lib/default.nix lib) ports;
+  theme = import ../../common/theme.nix;
 in {
   imports = [
     # Import common packages shared with macOS
@@ -141,7 +142,7 @@ in {
     ];
 
     fonts.fontconfig.defaultFonts = {
-      monospace = ["JetBrainsMono Nerd Font" "Noto Sans Mono"];
+      monospace = [theme.font.mono "Noto Sans Mono"];
       sansSerif = ["DejaVu Sans" "Noto Sans"];
       serif = ["DejaVu Serif" "Noto Serif"];
       emoji = ["Noto Color Emoji"];

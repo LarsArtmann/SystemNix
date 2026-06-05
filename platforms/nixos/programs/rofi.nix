@@ -1,4 +1,6 @@
-{pkgs, ...}: {
+{pkgs, ...}: let
+  theme = import ../../common/theme.nix;
+in {
   programs.rofi = {
     enable = true;
     package = pkgs.rofi.override {
@@ -17,7 +19,7 @@
 
           background-color: @bg;
           text-color: @fg;
-          font: "JetBrainsMono Nerd Font 10";
+          font: "${theme.font.mono} 10";
       }
 
       window {
@@ -64,7 +66,7 @@
           enabled: true;
           background-color: transparent;
           text-color: @selected;
-          font: "JetBrainsMono Nerd Font 14";
+          font: "${theme.font.mono} 14";
       }
 
       entry {
@@ -158,7 +160,7 @@
           cursor: inherit;
           vertical-align: 0.5;
           horizontal-align: 0.5;
-          font: "JetBrainsMono Nerd Font 9";
+          font: "${theme.font.mono} 9";
       }
 
       error-message {

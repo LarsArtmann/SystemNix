@@ -38,7 +38,7 @@ in {
     ghostty = {
       enable = true;
       settings = {
-        font-family = "JetBrainsMono Nerd Font";
+        font-family = theme.font.mono;
         font-size = 16;
         theme = "Catppuccin Mocha";
         background-opacity = 0.85;
@@ -63,7 +63,7 @@ in {
           '';
       });
       font = {
-        name = "JetBrainsMono Nerd Font";
+        name = theme.font.mono;
         size = 16;
       };
       themeFile = "Catppuccin-Mocha";
@@ -86,7 +86,7 @@ in {
       enable = true;
       settings = {
         main = {
-          font = "JetBrainsMono Nerd Font:size=12";
+          font = "${theme.font.mono}:size=12";
           dpi-aware = "yes";
           pad = "12x12";
           shell = "fish";
@@ -130,8 +130,8 @@ in {
       userSettings = {
         ui_font_size = 14;
         buffer_font_size = 14;
-        ui_font_family = "JetBrainsMono Nerd Font";
-        buffer_font_family = "JetBrainsMono Nerd Font";
+        ui_font_family = theme.font.mono;
+        buffer_font_family = theme.font.mono;
         theme = {
           mode = "dark";
           light = "One Light";
@@ -159,7 +159,7 @@ in {
         restore_on_startup = "last_session";
         show_copilot_suggestions = false;
         terminal = {
-          font_family = "JetBrainsMono Nerd Font";
+          font_family = theme.font.mono;
           font_size = 13;
           line_height = "comfortable";
           env = {
@@ -357,7 +357,7 @@ in {
         show_panel=false
         line_size=5
         text_size=20
-        text_font=JetBrainsMono Nerd Font
+        text_font=${theme.font.mono}
         paint_mode=arrow
         early_exit=true
       '';
@@ -454,7 +454,7 @@ in {
     enable = true;
     settings = {
       global = {
-        font = "JetBrainsMono Nerd Font 13";
+        font = "${theme.font.mono} 13";
         markup = "full";
         format = "<b>%s</b>\n%b";
         sort = "yes";

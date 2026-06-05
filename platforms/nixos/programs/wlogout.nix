@@ -1,4 +1,6 @@
-_: {
+_: let
+  theme = import ../../common/theme.nix;
+in {
   # wlogout power menu with Catppuccin Mocha theme and inline SVG icons
   programs.wlogout = {
     enable = true;
@@ -54,7 +56,7 @@ _: {
       rebootSvg = icon "#a6e3a1" "<polyline points=\"23 4 23 10 17 10\"/><path d=\"M20.49 15a9 9 0 1 1-2.12-9.36L23 10\"/>";
     in ''
       * {
-        font-family: "JetBrainsMono Nerd Font";
+        font-family: "${theme.font.mono}";
         font-size: 16px;
       }
 
