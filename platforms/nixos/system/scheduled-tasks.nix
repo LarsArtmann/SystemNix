@@ -153,11 +153,11 @@ in {
               "unbound"
               "dnsblockd"
               "postgresql"
-              "docker"
             ];
             ignoredFailedServices = [
               "session-*"
               "user@*"
+              "monitor365*"
             ];
             checkBlock = svc: "check_service ${svc}";
             ignorePattern = builtins.concatStringsSep " | " ignoredFailedServices;
@@ -215,7 +215,7 @@ in {
                             fi
                             ;;
                     esac
-                done < <(systemctl --failed --no-legend --type=service 2>/dev/null | awk '{print $1}')
+                done < <(systemctl --failed --no-legend --type=service 2>/dev/null | awk '{print $2}')
 
                 # === Dynamic: catch any failed user services ===
                 while IFS= read -r svc; do
@@ -229,7 +229,7 @@ in {
                             fi
                             ;;
                     esac
-                done < <(systemctl --user --failed --no-legend --type=service 2>/dev/null | awk '{print $1}')
+                done < <(systemctl --user --failed --no-legend --type=service 2>/dev/null | awk '{print $2}')
 
                 # === Report ===
                 if [ -n "$FAILED" ]; then

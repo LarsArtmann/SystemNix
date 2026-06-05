@@ -15,7 +15,13 @@
   };
 in [
   openaudibleOverlay
-  (mkPackageOverlay dnsblockd "dnsblockd" {vendorHash = "sha256-1JzuMdW1ujWeIx7FoL1hkQHa739AMxWDM4HH3S2c68g=";})
+  (mkPackageOverlay dnsblockd "dnsblockd" {
+    vendorHash = "sha256-1JzuMdW1ujWeIx7FoL1hkQHa739AMxWDM4HH3S2c68g=";
+    postPatch = ''
+      substituteInPlace internal/otel/otel.go \
+        --replace-fail 'go.opentelemetry.io/otel/semconv/v1.40.0' 'go.opentelemetry.io/otel/semconv/v1.41.0'
+    '';
+  })
   (mkPackageOverlay emeet-pixyd "emeet-pixyd" {})
   monitor365.overlays.default
   netwatchOverlay
