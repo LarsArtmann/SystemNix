@@ -5,7 +5,7 @@
   lib,
   ...
 }: let
-  dozzlePort = 8084;
+  inherit (import ../../../lib/default.nix lib) ports;
 in {
   imports = [
     # Import common packages shared with macOS
@@ -114,7 +114,7 @@ in {
     virtualisation.oci-containers.containers.dozzle = {
       autoStart = true;
       image = "amir20/dozzle:latest";
-      ports = ["127.0.0.1:${toString dozzlePort}:8080"];
+      ports = ["127.0.0.1:${toString ports.dozzle}:8080"];
       volumes = ["/var/run/docker.sock:/var/run/docker.sock:ro"];
       environment = {
         DOZZLE_TAILSIZE = "300";
