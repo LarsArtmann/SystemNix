@@ -199,6 +199,9 @@ in {
       # Centralized AI model storage (/data/ai/)
       ai-models.enable = true;
 
+      # AI inference stack — Ollama ROCm, llama.cpp, gpu-python
+      ai-stack.enable = true;
+
       # AI-powered screenshot renaming watcher
       # TEMPORARILY DISABLED: charm.land/fantasy@v0.25.0 requires Go 1.26.3, nixpkgs-unstable has 1.26.2
       file-and-image-renamer = {

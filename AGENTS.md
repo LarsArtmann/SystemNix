@@ -180,7 +180,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
 | Swap exhaustion | Stale LSP processes (gopls/vtsls) eating ~7.4Gi RSS. Mitigated by daily `stale-lsp-cleanup` timer killing processes >24h |
 | Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |
-| Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3. `ai-stack.nix` deleted in session 118 |
+| Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3. `ai-stack.nix` restored in session 120 |
 | Dozzle module eval issue | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Use inline `virtualisation.oci-containers` in configuration.nix instead |
 
 ---

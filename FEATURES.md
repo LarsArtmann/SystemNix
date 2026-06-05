@@ -78,8 +78,9 @@ _A brutally honest audit of every feature the project actually has._
 | Service | Status | Module | Key Details |
 |---------|--------|--------|-------------|
 | Centralized AI model storage | ✅ | `ai-models.nix` | `/data/ai/` tree (14 dirs), env vars, tmpfiles rules — dependency for all AI services |
-| Ollama (LLM inference) | ✅ | `ai-models.nix` | ROCm GPU, flash attention, 4 parallel, q8_0 KV, 24h keep-alive — env vars + paths in module, service runs outside NixOS module |
-| llama.cpp (standalone) | ✅ | `ai-models.nix` | ROCWMMA + MFMA custom build, installed alongside Ollama |
+| Ollama (LLM inference) | ✅ | `ai-stack.nix` | ROCm GPU, flash attention, 2 parallel, q8_0 KV, 1h keep-alive, 32G MemoryMax, no autostart (`wantedBy = []`) |
+| llama.cpp (standalone) | ✅ | `ai-stack.nix` | ROCWMMA + MFMA custom build (`-DGGML_HIP_MMQ_MFMA=ON`) |
+| gpu-python wrapper | ✅ | `ai-stack.nix` | ROCm env vars + LD_LIBRARY_PATH for GPU-accelerated Python |
 | ComfyUI (image generation) | ❌ Removed | — | Disabled — prefer using AI models via code directly |
 | Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — disabled in config |
 | Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload |
