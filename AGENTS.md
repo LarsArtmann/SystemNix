@@ -51,6 +51,8 @@ Two machines:
 3. Non-module helpers must be prefixed with `_` (e.g., `_signoz-alerts.nix`) — automatically skipped
 4. Enable in `platforms/nixos/system/configuration.nix`
 5. If behind Caddy, define a `port` option and reference it in `caddy.nix` — never hardcode ports
+6. Import helpers from `import ../../../lib/default.nix lib` — gives `harden`, `hardenUser`, `serviceDefaults`, `onFailure`, `serviceTypes`, etc.
+7. Use `harden {} // serviceDefaults {}` for systemd hardening. User services: `hardenUser {}`
 
 ### Custom Overlays
 
@@ -182,6 +184,11 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |
 | Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3. `ai-stack.nix` restored in session 120 |
 | Dozzle module eval issue | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Use inline `virtualisation.oci-containers` in configuration.nix instead |
+| `onFailure` centralization | Always use `onFailure` from `lib/default.nix` — never hardcode `["notify-failure@%n.service"]`. Exported by `service-defaults.nix`, passed through `docker.nix` factory |
+| `dns-blocker-stats` port | Port 9090 (dnsblockd stats API), NOT 8083. 8083 is the Gatus web port. Both are in `lib/ports.nix` |
+| `theme.font.mono` | Font name `"JetBrainsMono Nerd Font"` defined once in `platforms/common/theme.nix` — reference via `theme.font.mono`, never hardcode |
+| `harden` vs `hardenUser` | User services (systemd --user) must use `hardenUser`, not `harden`. All desktop notify services should pass `hardenFn = hardenUser` |
+| `lib/default.nix` import | Always import from `lib/default.nix`, never directly from `lib/systemd.nix` or `lib/systemd/service-defaults.nix` |
 
 ---
 
