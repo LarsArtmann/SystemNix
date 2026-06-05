@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.disk-monitor;
     inherit (config.users) primaryUser;
-    inherit (import ../../../lib/default.nix lib) mkDesktopNotifyService;
+    inherit (import ../../../lib/default.nix lib) hardenUser mkDesktopNotifyService;
     uid = builtins.toString config.users.users.${cfg.user}.uid;
 
     checkScript = ''
@@ -93,6 +93,7 @@ _: {
       inherit uid;
       interval = cfg.interval;
       bootDelay = "2min";
+      hardenFn = hardenUser;
     };
   in {
     options.services.disk-monitor = {
