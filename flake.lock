@@ -1314,11 +1314,11 @@
     "project-discovery-sdk_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1780625432,
-        "narHash": "sha256-NQ4ZPpxNhg6Quxth7ZgEGHdHVIaV6V15bBhSFCn+fKc=",
+        "lastModified": 1780641480,
+        "narHash": "sha256-AXAhwUAV0xjxbuQIzPqgC36nqk09Dgb8kr9UZDMrc5s=",
         "ref": "master",
-        "rev": "25856b43a5952eb765935f2a8296bfb52b0d2d0c",
-        "revCount": 561,
+        "rev": "063a1308fb648ace956dcd1c4594072f7665ba57",
+        "revCount": 575,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
@@ -1384,10 +1384,13 @@
         "project-meta": "project-meta"
       },
       "locked": {
-        "lastModified": 1780632079,
-        "narHash": "sha256-F+LIsnYg1V45mjlc05S2UL+kzVD0ogjgMy7hnsen8rw=",
-        "path": "/home/lars/projects/projects-management-automation",
-        "type": "path"
+        "lastModified": 1780642623,
+        "narHash": "sha256-X7igU7tFH0hPNVcRbeSlS/qKdOnYjnBwk/xxtqLLMEs=",
+        "ref": "master",
+        "rev": "868f8bdfb119ed365a53dc77964622f89a31c455",
+        "revCount": 2942,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
       "original": {
         "ref": "master",
