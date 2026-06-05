@@ -455,11 +455,11 @@
     "go-filewatcher": {
       "flake": false,
       "locked": {
-        "lastModified": 1780347261,
-        "narHash": "sha256-l1Kkr8w21lhz+Qo12iqqJ9l6a41FydzO3ndIyP8v9vA=",
+        "lastModified": 1780574690,
+        "narHash": "sha256-RLG8slQxHdEi0oB+IZ0q2tBv+nVaMIr1ZvmjrIQvl28=",
         "ref": "master",
-        "rev": "85d643a63fedd3192a8aa5d409897551448cc1bb",
-        "revCount": 257,
+        "rev": "e8326ced2a87f2eda40371d605dd16880b6143b8",
+        "revCount": 287,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-filewatcher"
       },
