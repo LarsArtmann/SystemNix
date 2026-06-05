@@ -61,15 +61,6 @@
           '';
       });
     };
-
-  pmaOverlay = _final: prev: let
-    pkg = projects-management-automation.packages.${prev.stdenv.system}.default or null;
-  in
-    if pkg == null
-    then {}
-    else {
-      projects-management-automation = pkg;
-    };
 in [
   awWatcherOverlay
   activitywatchOverlay
@@ -84,7 +75,7 @@ in [
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-eKUG52pOYWW131NMpfA+yLMpayovvJUXs38Hwa08Fsk=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-BGKYeWl9rxBDvZYOW5/IbMQRxv2toaxexmJm4iMKsic=";})
   art-duplOverlay
-  pmaOverlay
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
 ]
