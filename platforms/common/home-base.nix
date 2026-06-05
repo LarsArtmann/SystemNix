@@ -1,5 +1,7 @@
 # Common Home Manager configuration for all platforms
-{config, ...}: {
+{config, ...}: let
+  privateGoPattern = "github.com/LarsArtmann/*,github.com/larsartmann/*";
+in {
   # Import common program configurations
   imports = [
     # Shell configurations (shared aliases, no duplication!)
@@ -52,10 +54,10 @@
 
       # Private Go modules (use SSH instead of public proxy)
       # Note: Both case variants needed - Go module paths are case-sensitive
-      GOPRIVATE = "github.com/LarsArtmann/*,github.com/larsartmann/*";
+      GOPRIVATE = privateGoPattern;
 
       # Disable checksum database for private repos
-      GONOSUMDB = "github.com/LarsArtmann/*,github.com/larsartmann/*";
+      GONOSUMDB = privateGoPattern;
     };
 
     # Home Manager version for compatibility
