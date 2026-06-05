@@ -6,7 +6,7 @@ _: {
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults ports;
     inherit (config.users) primaryUser;
 
     rocm = import ../../../lib/rocm.nix {inherit pkgs;};
@@ -54,7 +54,7 @@ _: {
         home = aiPaths.ollama;
         models = aiPaths.ollama-models;
         host = "127.0.0.1";
-        port = 11434;
+        port = ports.ollama;
         environmentVariables =
           rocmEnv
           // {
@@ -107,7 +107,7 @@ _: {
       ];
 
       environment.sessionVariables = {
-        OLLAMA_HOST = "127.0.0.1:11434";
+        OLLAMA_HOST = "127.0.0.1:${toString ports.ollama}";
       };
     };
   };

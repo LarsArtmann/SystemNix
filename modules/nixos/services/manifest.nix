@@ -9,7 +9,7 @@ _: {
     cfg = config.services.manifest;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes images;
+    inherit (libHelpers) serviceTypes images ports;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     manifestPort = cfg.port;
@@ -34,7 +34,7 @@ _: {
               BETTER_AUTH_SECRET: ''${AUTH_SECRET}
               MANIFEST_ENCRYPTION_KEY: ''${ENCRYPTION_KEY}
               BETTER_AUTH_URL: https://manifest.${domain}
-              OLLAMA_HOST: http://host.docker.internal:11434
+              OLLAMA_HOST: http://host.docker.internal:${toString ports.ollama}
               SEED_DATA: "false"
               NODE_ENV: production
               MANIFEST_MODE: selfhosted
