@@ -175,6 +175,7 @@ in {
 
       binds = let
         sh = cmd: ["sh" "-c" cmd];
+        screenshot = grimArgs: "mkdir -p ~/Pictures/screenshots && grim ${grimArgs} /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
       in {
         "Mod+Return".action.spawn = ["ghostty"];
         "Mod+Shift+Return".action.spawn = ["kitty"];
@@ -257,9 +258,9 @@ in {
 
         "Mod+W".action.spawn = sh "${lib.getExe wallpaper-set} random ${wallpaperDir}";
 
-        "Mod+Shift+F11".action.spawn = sh "mkdir -p ~/Pictures/screenshots && grim -g \"$(slurp)\" /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
-        "Mod+F11".action.spawn = sh "mkdir -p ~/Pictures/screenshots && grim /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
-        "Mod+Ctrl+F11".action.spawn = sh "mkdir -p ~/Pictures/screenshots && grim -o $(niri msg focused-output | head -1) /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
+        "Mod+Shift+F11".action.spawn = sh (screenshot ''-g "$(slurp)"'');
+        "Mod+F11".action.spawn = sh (screenshot "");
+        "Mod+Ctrl+F11".action.spawn = sh (screenshot "-o $(niri msg focused-output | head -1)");
 
         "XF86AudioRaiseVolume" = {
           action.spawn = sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.5";
