@@ -8,6 +8,11 @@
 }: let
   colors = colorScheme.palette;
   wallpaperDir = "$HOME/.local/share/wallpapers";
+  spring = {
+    damping-ratio = 1.0;
+    stiffness = 80000;
+    epsilon = 0.01;
+  };
   sd = import ../../../lib/default.nix lib;
 
   wallpaper-set = pkgs.writeShellApplication {
@@ -414,48 +419,12 @@ in {
       };
 
       animations = {
-        horizontal-view-movement = {
-          kind.spring = {
-            damping-ratio = 1.0;
-            stiffness = 80000;
-            epsilon = 0.01;
-          };
-        };
-        window-open = {
-          kind.spring = {
-            damping-ratio = 1.0;
-            stiffness = 80000;
-            epsilon = 0.01;
-          };
-        };
-        window-close = {
-          kind.spring = {
-            damping-ratio = 1.0;
-            stiffness = 80000;
-            epsilon = 0.01;
-          };
-        };
-        window-movement = {
-          kind.spring = {
-            damping-ratio = 1.0;
-            stiffness = 80000;
-            epsilon = 0.01;
-          };
-        };
-        window-resize = {
-          kind.spring = {
-            damping-ratio = 1.0;
-            stiffness = 80000;
-            epsilon = 0.01;
-          };
-        };
-        workspace-switch = {
-          kind.spring = {
-            damping-ratio = 1.0;
-            stiffness = 80000;
-            epsilon = 0.01;
-          };
-        };
+        horizontal-view-movement.kind.spring = spring;
+        window-open.kind.spring = spring;
+        window-close.kind.spring = spring;
+        window-movement.kind.spring = spring;
+        window-resize.kind.spring = spring;
+        workspace-switch.kind.spring = spring;
       };
     };
 
