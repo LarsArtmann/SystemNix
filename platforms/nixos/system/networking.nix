@@ -1,4 +1,8 @@
-{config, ...}: {
+{
+  config,
+  lib,
+  ...
+}: {
   imports = [../../common/dns-resolver.nix];
   # Networking configuration
   networking = {
@@ -46,7 +50,10 @@
     # that drops network connections (SSH, etc). Reload is sufficient for
     # picking up new D-Bus service files.
     services = {
-      dbus-broker.restartIfChanged = false;
+      dbus-broker = {
+        restartIfChanged = lib.mkForce false;
+        reloadIfChanged = lib.mkForce false;
+      };
       polkit.restartIfChanged = false;
 
       # Reload Nix daemon after config changes to apply settings
@@ -54,6 +61,11 @@
         restartIfChanged = true;
         serviceConfig.LimitNOFILE = 65536;
       };
+    };
+
+    user.services.dbus-broker = {
+      restartIfChanged = lib.mkForce false;
+      reloadIfChanged = lib.mkForce false;
     };
 
     # Increase file descriptor limits to prevent "Too many open files" errors
