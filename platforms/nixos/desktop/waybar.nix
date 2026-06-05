@@ -4,6 +4,7 @@
   ...
 }: let
   theme = import ../../common/theme.nix;
+  dnsStatsPort = (import ../../../lib/ports.nix).ports.dns-blocker-stats;
   waybarCamera = pkgs.writeShellApplication {
     name = "waybar-camera";
     runtimeInputs = [pkgs.emeet-pixyd];
@@ -16,7 +17,7 @@
     name = "waybar-dns-stats";
     runtimeInputs = [pkgs.curl pkgs.jq pkgs.bc];
     text = ''
-      STATS=$(curl -sf --connect-timeout 2 http://127.0.0.1:9090/stats 2>/dev/null || echo "")
+      STATS=$(curl -sf --connect-timeout 2 http://127.0.0.1:${toString dnsStatsPort}/stats 2>/dev/null || echo "")
       if [ -z "$STATS" ]; then
         echo "DNS: off"
         exit 0
@@ -200,7 +201,7 @@ in {
           exec = lib.getExe waybarDnsStats;
           return-type = "json";
           interval = 30;
-          on-click = "xdg-open http://127.0.0.1:9090/stats";
+          on-click = "xdg-open http://127.0.0.1:${toString dnsStatsPort}/stats";
         };
 
         "clock" = {

@@ -6,6 +6,7 @@
   colorScheme,
   ...
 }: let
+  theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
   wallpaperDir = "$HOME/.local/share/wallpapers";
   spring = {
@@ -117,8 +118,8 @@ in {
       };
 
       cursor = {
-        theme = "Bibata-Modern-Classic";
-        size = 96;
+        theme = theme.cursorTheme;
+        size = theme.cursorSize;
       };
 
       layout = {

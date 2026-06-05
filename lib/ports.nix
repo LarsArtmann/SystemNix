@@ -5,7 +5,7 @@
     caddy-metrics = 2019;
 
     dns-blocker = 53;
-    dns-blocker-stats = 8083;
+    dns-blocker-stats = 9090;
     dns-blocker-block = 8050;
 
     photomap = 8051;
