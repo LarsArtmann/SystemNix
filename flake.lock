@@ -506,11 +506,11 @@
     "go-finding_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1780368233,
-        "narHash": "sha256-H/SIzEkEWlHyVhxGxYoI+A1ccvlXBjmEXYUw0H4l8FQ=",
+        "lastModified": 1780622848,
+        "narHash": "sha256-+EDTHsrc6jKcYkR3tiiedc6Puz3rrN5gZluLupb8zS4=",
         "ref": "master",
-        "rev": "e9c4fa6e4bea64117184d6112ad3b45584503c10",
-        "revCount": 664,
+        "rev": "fe76486f6e10bea86a36e191eb7790afda258516",
+        "revCount": 689,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -821,11 +821,11 @@
         "systems": "systems_5"
       },
       "locked": {
-        "lastModified": 1780485476,
-        "narHash": "sha256-JJJRXsW/CzzTn00TLSKtWIckq4i69k7ra8aQ2JoSHwQ=",
+        "lastModified": 1780635804,
+        "narHash": "sha256-jw8nlt0af2zGUI73VbTVtrANLPRruzPB/HuxfIhSh9g=",
         "ref": "master",
-        "rev": "451345ce6dd23984c9b6438abcb330b30eb0c4de",
-        "revCount": 622,
+        "rev": "5aac17aa508a45c793ac228b39c41008df679996",
+        "revCount": 626,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
