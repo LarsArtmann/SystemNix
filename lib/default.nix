@@ -6,7 +6,7 @@ in {
   hardenUser = args: harden (args // {mode = "user";});
   inherit serviceDefaults serviceDefaultsUser onFailure;
   serviceTypes = import ./types.nix lib;
-  mkDockerServiceFactory = {pkgs}: import ./docker.nix {inherit pkgs lib harden serviceDefaults;};
+  mkDockerServiceFactory = {pkgs}: import ./docker.nix {inherit pkgs lib harden serviceDefaults onFailure;};
 
   mkStateDir = path: mode: user: group: "d ${path} ${mode} ${user} ${group} -";
 

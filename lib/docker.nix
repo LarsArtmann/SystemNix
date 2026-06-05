@@ -3,6 +3,7 @@
   lib,
   harden,
   serviceDefaults,
+  onFailure,
 }: {
   mkDockerService = {
     name,
@@ -28,7 +29,7 @@
       if envTemplate != null
       then "cp ${envTemplate} ${stateDir}/.env\nchmod 600 ${stateDir}/.env"
       else "";
-    composeCmd = "${pkgs.docker-compose}/bin/docker-compose";
+    composeCmd = lib.getExe pkgs.docker-compose;
   in {
     tmpfiles =
       ["d ${stateDir} 0755 root root -"]
@@ -47,7 +48,7 @@
             wants
             ++ lib.optional (imagePull != null) "${name}-pull.service";
           wantedBy = ["multi-user.target"];
-          onFailure = ["notify-failure@%n.service"];
+          inherit onFailure;
           path = [pkgs.docker pkgs.docker-compose];
 
           preStart = ''
@@ -104,7 +105,7 @@
               description = "${name} Database Backup";
               after = ["${name}.service"];
               requires = ["docker.service"];
-              onFailure = ["notify-failure@%n.service"];
+              inherit onFailure;
               serviceConfig = {
                 Type = "oneshot";
                 ExecStart = backup.execStart;
