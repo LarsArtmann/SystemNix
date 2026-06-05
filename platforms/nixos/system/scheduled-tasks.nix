@@ -157,7 +157,6 @@ in {
             ignoredFailedServices = [
               "session-*"
               "user@*"
-              "monitor365*"
             ];
             checkBlock = svc: "check_service ${svc}";
             ignorePattern = builtins.concatStringsSep " | " ignoredFailedServices;

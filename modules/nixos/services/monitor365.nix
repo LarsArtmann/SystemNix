@@ -689,6 +689,7 @@ _: {
               // hardenUser {MemoryMax = "256M";}
               // {
                 Type = "simple";
+                ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${serverStateDir}";
                 ExecStart = "${lib.getExe' cfg.server.package "monitor365-server"}";
                 WorkingDirectory = serverStateDir;
                 KillMode = "mixed";
