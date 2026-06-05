@@ -188,7 +188,10 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `dns-blocker-stats` port | Port 9090 (dnsblockd stats API), NOT 8083. 8083 is the Gatus web port. Both are in `lib/ports.nix` |
 | `theme.font.mono` | Font name `"JetBrainsMono Nerd Font"` defined once in `platforms/common/theme.nix` — reference via `theme.font.mono`, never hardcode |
 | `harden` vs `hardenUser` | User services (systemd --user) must use `hardenUser`, not `harden`. All desktop notify services should pass `hardenFn = hardenUser` |
-| `lib/default.nix` import | Always import from `lib/default.nix`, never directly from `lib/systemd.nix` or `lib/systemd/service-defaults.nix` |
+| `lib/default.nix` import | Always import from `lib/default.nix`, never directly from `lib/systemd.nix`, `lib/systemd/service-defaults.nix`, or `lib/rocm.nix` |
+| Port centralization | All ports must be in `lib/ports.nix`. If a service exposes a port option, its default should reference `ports.*` — never hardcode |
+| `pmaOverlay` removed | PMA now uses `mkPackageOverlay` like all other Go overlays. Only `art-duplOverlay` remains manual (templ vendor surgery) |
+| `rocm` via lib | ROCm helper accessed via `libHelpers.rocm {inherit pkgs;}` — not direct file import |
 
 ---
 
