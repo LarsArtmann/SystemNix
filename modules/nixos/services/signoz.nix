@@ -96,7 +96,7 @@ in {
   }: let
     cfg = config.services.signoz;
     packages = mkPackages pkgs;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes onFailure mkStateDir;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes onFailure mkStateDir ports;
     alerts = import ./_signoz-alerts.nix {inherit pkgs lib inputs;};
   in {
     options.services.signoz = {
@@ -626,7 +626,7 @@ in {
                     }
                     {
                       job_name = "emeet-pixyd";
-                      static_configs = [{targets = ["127.0.0.1:8090"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString ports.emeet-pixyd}"];}];
                       metrics_path = "/metrics";
                     }
                   ];

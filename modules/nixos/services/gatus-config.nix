@@ -203,7 +203,7 @@ _: {
               (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
-                url = "http://localhost:8090/metrics";
+                url = "http://localhost:${toString ports.emeet-pixyd}/metrics";
                 interval = "60s";
               })
               (mkHttpCheck {

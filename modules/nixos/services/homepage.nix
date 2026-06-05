@@ -11,7 +11,7 @@ _: {
     stateDir = "/var/lib/homepage-dashboard";
 
     svcUrl = subdomain: "https://${subdomain}.${domain}";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports;
   in {
     options.services.homepage = {
       enable = lib.mkEnableOption "Homepage Dashboard service";
@@ -157,7 +157,7 @@ _: {
                 description: Webcam Auto-Management Daemon
                 icon: camera.png
                 statusStyle: dot
-                siteMonitor: http://localhost:8090/metrics
+                siteMonitor: http://localhost:${toString ports.emeet-pixyd}/metrics
 
         - Productivity:
             - Twenty CRM:
