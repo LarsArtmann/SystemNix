@@ -62,18 +62,6 @@
       });
     };
 
-  hierarchicalErrorsOverlay = _final: prev: let
-    pkg = hierarchical-errors.packages.${prev.stdenv.system}.default or null;
-  in
-    if pkg == null
-    then {}
-    else {
-      hierarchical-errors = pkg.overrideAttrs (_old: {
-        vendorHash = "sha256-jDrvLeUOw7IaFe1IUBXJoTOh73vuOaNQ5uE/+oI4yeo=";
-        proxyVendor = true;
-      });
-    };
-
   pmaOverlay = _final: prev: let
     pkg = projects-management-automation.packages.${prev.stdenv.system}.default or null;
   in
@@ -88,7 +76,7 @@ in [
   jscpdOverlay
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-8/Yn3hoW/GHgq+bUxxTlGVi6pjChw6Unq/baluyrj04=";})
-  hierarchicalErrorsOverlay
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-LCz14+53dif4m6fq8I11hHkKwSueYKnjVjTl4EUQUl0=";})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-1+kYoA90tD+DSuoiHFBE+jyprPo4IWuiaOIMHcOYSNU=";})
   (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-C2GLGX7b/zJ9Ss9zo1Umm6LVlWuHk9raXK6Zd8xbcY0=";})
