@@ -107,4 +107,6 @@ in {
     else builtins.throw "Port collision: ${dupeMsg}";
 
   images = import ./images.nix;
+
+  rocm = import ./rocm.nix;
 }

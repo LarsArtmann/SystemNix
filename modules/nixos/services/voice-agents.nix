@@ -12,7 +12,7 @@ _: {
     inherit (libHelpers) serviceTypes;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
-    rocm = import ../../../lib/rocm.nix {inherit pkgs;};
+    rocm = libHelpers.rocm {inherit pkgs;};
 
     whisperModelsDir = config.services.ai-models.paths.whisper;
 

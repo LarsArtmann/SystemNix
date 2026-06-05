@@ -6,10 +6,11 @@ _: {
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults ports;
+    libHelpers = import ../../../lib/default.nix lib;
+    inherit (libHelpers) harden serviceDefaults ports;
     inherit (config.users) primaryUser;
 
-    rocm = import ../../../lib/rocm.nix {inherit pkgs;};
+    rocm = libHelpers.rocm {inherit pkgs;};
     rocmEnv = rocm.env;
 
     llama-cpp-rocwmma =
