@@ -8,54 +8,35 @@ let
     then "${image}:${tag}@${digest}"
     else "${image}:${tag}";
 in {
-  openseo = {
+  openseo = rec {
     image = "ghcr.io/every-app/open-seo";
     tag = "v0.0.15";
-    ref = mkRef {
-      image = "ghcr.io/every-app/open-seo";
-      tag = "v0.0.15";
-    };
+    ref = mkRef {inherit image tag;};
   };
-  manifest = {
+  manifest = rec {
     image = "manifestdotbuild/manifest";
     tag = "6.6.1";
-    ref = mkRef {
-      image = "manifestdotbuild/manifest";
-      tag = "6.6.1";
-    };
+    ref = mkRef {inherit image tag;};
   };
-  manifest-postgres = {
+  manifest-postgres = rec {
     image = "postgres";
     tag = "16-alpine";
     digest = "sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416";
-    ref = mkRef {
-      image = "postgres";
-      tag = "16-alpine";
-      digest = "sha256:20edbde7749f822887a1a022ad526fde0a47d6b2be9a8364433605cf65099416";
-    };
+    ref = mkRef {inherit image tag digest;};
   };
-  twenty = {
+  twenty = rec {
     image = "twentycrm/twenty";
     tag = "v2.7.3";
-    ref = mkRef {
-      image = "twentycrm/twenty";
-      tag = "v2.7.3";
-    };
+    ref = mkRef {inherit image tag;};
   };
-  twenty-postgres = {
+  twenty-postgres = rec {
     image = "postgres";
     tag = "16-alpine";
-    ref = mkRef {
-      image = "postgres";
-      tag = "16-alpine";
-    };
+    ref = mkRef {inherit image tag;};
   };
-  twenty-redis = {
+  twenty-redis = rec {
     image = "redis";
     tag = "7-alpine";
-    ref = mkRef {
-      image = "redis";
-      tag = "7-alpine";
-    };
+    ref = mkRef {inherit image tag;};
   };
 }
