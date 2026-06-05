@@ -404,11 +404,11 @@
     "go-commit": {
       "flake": false,
       "locked": {
-        "lastModified": 1780332541,
-        "narHash": "sha256-AKKWftfrWinalLpU+lM/THI5NiKJ0v+FRNwKcTwF8ZU=",
+        "lastModified": 1780626124,
+        "narHash": "sha256-xoHFwYFqzle2y6NCHSwZZhzpmFY+taARzpiTtmvCRXU=",
         "ref": "master",
-        "rev": "c24b1d57cd9aad153118401bbcc50bf0cfa99dd4",
-        "revCount": 274,
+        "rev": "35ba77ae07620b0d76c4639d9f24ebad246c351f",
+        "revCount": 279,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-commit"
       },
@@ -421,11 +421,11 @@
     "go-composable-business-types": {
       "flake": false,
       "locked": {
-        "lastModified": 1780306022,
-        "narHash": "sha256-CHG33/8FX8wunjCMb50kZ81NoWr0QBx9/NZ+NN07aLY=",
+        "lastModified": 1780575303,
+        "narHash": "sha256-Dk3ssCCqKu/rKEop9M/rQjKRhUkxzcgDfy+vHXpx1SA=",
         "ref": "master",
-        "rev": "a8bccb8ffee2fe765d96ba274bdb9ec290cb8b51",
-        "revCount": 313,
+        "rev": "20152346ac323ea337ab60ea80ce99722bb54520",
+        "revCount": 314,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-composable-business-types"
       },
@@ -1314,11 +1314,11 @@
     "project-discovery-sdk_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1780512249,
-        "narHash": "sha256-nJtHLCUrW+YEBY3nT6Dz2ECQKFDP3pgA4/i6W+MHnV4=",
+        "lastModified": 1780625432,
+        "narHash": "sha256-NQ4ZPpxNhg6Quxth7ZgEGHdHVIaV6V15bBhSFCn+fKc=",
         "ref": "master",
-        "rev": "0c822cba5f26c1006f00d0793ad8f3f152822bd4",
-        "revCount": 515,
+        "rev": "25856b43a5952eb765935f2a8296bfb52b0d2d0c",
+        "revCount": 561,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
@@ -1331,11 +1331,11 @@
     "project-meta": {
       "flake": false,
       "locked": {
-        "lastModified": 1780418541,
-        "narHash": "sha256-2CYmlK59l86vzLH5FO3BFjqRSufob/OlC0aezI4KWbo=",
+        "lastModified": 1780578507,
+        "narHash": "sha256-heGsVZEgS7pN+OWH69rpU/4nojvfKdnhiqCGVmlC5xM=",
         "ref": "master",
-        "rev": "a3e992192372dcec21bbf7d550efbb014da73675",
-        "revCount": 376,
+        "rev": "7262cf9c7459e41d1aef2f92179ef85aaefb4cec",
+        "revCount": 377,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },
@@ -1384,13 +1384,10 @@
         "project-meta": "project-meta"
       },
       "locked": {
-        "lastModified": 1780530845,
-        "narHash": "sha256-JomHx63VRrpOttaG5PpNASRERw0QQOsPJhE2LAO1Eu8=",
-        "ref": "master",
-        "rev": "9f2f0d5d14ee3486f60dd54f810fd95bcc4a9af1",
-        "revCount": 2875,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
+        "lastModified": 1780632079,
+        "narHash": "sha256-F+LIsnYg1V45mjlc05S2UL+kzVD0ogjgMy7hnsen8rw=",
+        "path": "/home/lars/projects/projects-management-automation",
+        "type": "path"
       },
       "original": {
         "ref": "master",
