@@ -7,7 +7,7 @@
 }: let
   inherit (config.users) primaryUser;
   uid = builtins.toString config.users.users.${primaryUser}.uid;
-  harden = import ../../../lib/systemd.nix {inherit lib;};
+  inherit (import ../../../lib/default.nix lib) harden onFailure;
 in {
   systemd = {
     timers = {
@@ -111,7 +111,7 @@ in {
 
       crush-update-providers = {
         description = "Update Crush AI providers";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${lib.getExe' pkgs.nur.repos.charmbracelet.crush "crush"} update-providers";
@@ -122,7 +122,7 @@ in {
 
       blocklist-auto-update = {
         description = "Download blocklists and update hashes in config";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         path = [pkgs.git pkgs.nix pkgs.gawk pkgs.gnused pkgs.python3];
         serviceConfig = {
           Type = "oneshot";
@@ -142,7 +142,7 @@ in {
 
       service-health-check = {
         description = "Check critical services and notify on failure";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         path = [pkgs.systemd pkgs.libnotify];
         serviceConfig = {
           Type = "oneshot";
@@ -255,7 +255,7 @@ in {
 
       docker-prune = {
         description = lib.mkForce "Prune unused Docker resources";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         path = [pkgs.docker];
         serviceConfig = lib.mkForce {
           Type = "oneshot";
@@ -267,7 +267,7 @@ in {
 
       rust-target-cleanup = {
         description = "Weekly Rust target/ cleanup (dirs >2GB)";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         serviceConfig =
           harden {
             MemoryMax = "256M";
@@ -363,7 +363,7 @@ in {
 
       stale-lsp-cleanup = {
         description = "Kill stale LSP processes (gopls, etc.) running longer than 24h";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         serviceConfig =
           harden {
             MemoryMax = "128M";
@@ -406,7 +406,7 @@ in {
 
       disk-growth-check = {
         description = "Check /data disk growth trend and alert if >5G/day";
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         serviceConfig =
           harden {
             MemoryMax = "128M";
