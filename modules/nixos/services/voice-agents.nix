@@ -9,7 +9,7 @@ _: {
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes;
+    inherit (libHelpers) serviceTypes ports;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     rocm = libHelpers.rocm {inherit pkgs;};
@@ -91,7 +91,7 @@ _: {
         enable = true;
         keyFile = config.sops.templates."livekit-keys.env".path;
         settings = {
-          port = 7880;
+          port = ports.livekit;
           rtc = {
             port_range_start = 50000;
             port_range_end = 51000;
@@ -107,7 +107,7 @@ _: {
 
       networking.firewall = lib.mkIf cfg.openFirewall {
         allowedTCPPorts = [
-          7880
+          ports.livekit
           cfg.whisperPort
         ];
         allowedUDPPortRanges = [

@@ -9,7 +9,7 @@ _: {
   }: let
     inherit (config.users) primaryUser;
     forgejoPkg = config.services.forgejo.package;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
     forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
     forgejoUrl = "http://localhost:${toString forgejoPort}";
     stateDir = config.services.forgejo.stateDir;
@@ -409,7 +409,7 @@ _: {
           DEFAULT.APP_NAME = "Local Git Forge";
 
           server = {
-            HTTP_PORT = 3000;
+            HTTP_PORT = ports.forgejo;
             ROOT_URL = "https://forgejo.${config.networking.domain}/";
             DOMAIN = "forgejo.${config.networking.domain}";
           };

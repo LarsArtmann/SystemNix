@@ -6,11 +6,11 @@ _: {
     ...
   }: let
     cfg = config.services.immich;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
   in {
     config = lib.mkIf config.services.immich.enable {
       services.immich = {
-        port = 2283;
+        port = ports.immich;
         host = "127.0.0.1";
         openFirewall = false;
         mediaLocation = "/var/lib/immich";
