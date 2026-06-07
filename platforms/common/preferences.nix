@@ -9,12 +9,6 @@ in {
         description = "System-wide color variant — affects GTK, Qt, portals, browsers, and macOS";
       };
 
-      colorSchemeName = lib.mkOption {
-        type = lib.types.nonEmptyStr;
-        default = theme.colorSchemeName;
-        description = "Color scheme name (for documentation/reference)";
-      };
-
       accent = lib.mkOption {
         type = lib.types.enum ["rosewater" "flamingo" "pink" "mauve" "red" "maroon" "peach" "yellow" "green" "teal" "sky" "sapphire" "blue" "lavender"];
         default = theme.accent;

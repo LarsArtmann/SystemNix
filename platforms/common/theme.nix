@@ -15,8 +15,6 @@ rec {
     monoSize = 16;
   };
 
-  colorSchemeName = "catppuccin-mocha";
-
   colorScheme = {
     slug = "catppuccin-mocha";
     name = "Catppuccin Mocha";
