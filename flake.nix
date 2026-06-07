@@ -151,7 +151,6 @@
     monitor365 = {
       url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
@@ -187,7 +186,6 @@
     todo-list-ai = {
       url = "git+ssh://git@github.com/LarsArtmann/todo-list-ai?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-utils.follows = "flake-utils";
     };
 
     # library-policy — Banned/vulnerable library detector for Go projects
@@ -243,7 +241,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
         goFindingSrc.follows = "go-finding";
       };
     };
@@ -275,7 +272,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
         cmdguard.follows = "cmdguard";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
@@ -288,7 +284,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
         cmdguard.follows = "cmdguard";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
@@ -314,7 +309,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
       };
@@ -332,7 +326,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils";
         cmdguard.follows = "cmdguard";
         go-output.follows = "go-output";
         go-branded-id.follows = "go-branded-id";
