@@ -85,7 +85,4 @@
   services.printing.enable = true;
 
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
-
-  # Automatic Nix store optimization
-  nix.settings.auto-optimise-store = true;
 }
