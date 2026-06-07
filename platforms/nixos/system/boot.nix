@@ -2,7 +2,10 @@
   pkgs,
   lib,
   ...
-}: {
+}: let
+  amdgpuGttSize = 114688;
+  ttmPagesLimit = 29360128;
+in {
   # Bootloader and Kernel Configuration
   boot = {
     # Systemd boot configuration
@@ -43,9 +46,9 @@
       "amd_pstate=performance"
       # GTT: allow GPU to address up to 112GB (128GB − 16GB reserved for CPU/system).
       # Not pre-allocated — GPU uses what it needs dynamically.
-      "amdgpu.gttsize=114688"
+      "amdgpu.gttsize=${toString amdgpuGttSize}"
       # TTM: match GTT limit so GPU page allocations can use the full 112GB
-      "amdgpu.ttm.pages_limit=29360128"
+      "amdgpu.ttm.pages_limit=${toString ttmPagesLimit}"
       # IOMMU enabled — required for full 128GB memory mapping on Strix Halo.
       # Previously set to "off" for ~6% memory read improvement, but this prevented
       # the kernel from seeing the upper 64GB of RAM (only 64GB of 128GB visible).
@@ -72,9 +75,9 @@
 
   # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
   boot.extraModprobeConfig = ''
-    options amdgpu gttsize=114688
-    options ttm pages_limit=29360128
-    options ttm page_pool_size=29360128
+    options amdgpu gttsize=${toString amdgpuGttSize}
+    options ttm pages_limit=${toString ttmPagesLimit}
+    options ttm page_pool_size=${toString ttmPagesLimit}
   '';
 
   # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 64 GB unified DDR5, GPU/CPU share same RAM via GTT)
