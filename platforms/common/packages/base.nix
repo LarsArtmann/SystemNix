@@ -205,6 +205,7 @@
       go-structure-linter # Go project structure validator
       hierarchical-errors # Error handling pattern analyzer
       projects-management-automation # CLI for managing multiple projects
+      project-meta # Per-project metadata management CLI
 
       # Go testing
       ginkgo # BDD testing framework for Go

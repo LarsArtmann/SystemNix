@@ -10,6 +10,7 @@
   branching-flow,
   art-dupl,
   projects-management-automation,
+  project-meta,
   mkPackageOverlay,
   ...
 }: let
@@ -76,6 +77,7 @@ in [
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-BGKYeWl9rxBDvZYOW5/IbMQRxv2toaxexmJm4iMKsic=";})
   art-duplOverlay
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
+  (mkPackageOverlay project-meta "project-meta" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
 ]

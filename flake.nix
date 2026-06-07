@@ -343,6 +343,12 @@
         go-finding.follows = "go-finding";
       };
     };
+
+    # project-meta — Per-project metadata management CLI
+    project-meta = {
+      url = "git+ssh://git@github.com/LarsArtmann/project-meta?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
