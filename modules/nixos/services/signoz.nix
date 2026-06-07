@@ -360,7 +360,7 @@ in {
       (lib.mkIf cfg.components.nodeExporter {
         services.prometheus.exporters.node = {
           enable = true;
-          port = 9100;
+          port = ports.signoz-node-exporter;
           listenAddress = "127.0.0.1";
           enabledCollectors = ["cpu" "diskstats" "filesystem" "loadavg" "meminfo" "netdev" "stat" "systemd" "time" "vmstat" "hwmon" "pressure"];
           extraFlags = ["--collector.filesystem.mount-points-exclude=^/(dev|proc|sys|run/k3s/.+).+$" "--collector.netdev.device-exclude=^(veth.*|br-.*|docker.*).+$" "--collector.textfile.directory=/var/lib/prometheus-node-exporter/textfile_collectors"];
@@ -612,7 +612,7 @@ in {
                     }
                     {
                       job_name = "caddy";
-                      static_configs = [{targets = ["127.0.0.1:2019"];}];
+                      static_configs = [{targets = ["127.0.0.1:${toString ports.caddy-metrics}"];}];
                     }
                     {
                       job_name = "pocket-id";

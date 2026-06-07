@@ -53,7 +53,7 @@ _: {
               (mkHttpCheck {
                 name = "Caddy";
                 group = "Infrastructure";
-                url = "http://127.0.0.1:2019/metrics";
+                url = "http://127.0.0.1:${toString ports.caddy-metrics}/metrics";
                 alerts = discordAlert "Caddy reverse proxy down — all services unreachable";
               })
               (mkHttpCheck {
