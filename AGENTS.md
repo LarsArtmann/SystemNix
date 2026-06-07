@@ -192,6 +192,9 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Port centralization | All ports must be in `lib/ports.nix`. If a service exposes a port option, its default should reference `ports.*` — never hardcode |
 | `pmaOverlay` removed | PMA now uses `mkPackageOverlay` like all other Go overlays. Only `art-duplOverlay` remains manual (templ vendor surgery) |
 | `rocm` via lib | ROCm helper accessed via `libHelpers.rocm {inherit pkgs;}` — not direct file import |
+| `colorSchemeName` removed | Dead code — use `colorScheme.slug` instead |
+| Boot GPU params | `amdgpuGttSize` / `ttmPagesLimit` in boot.nix are shared between `kernelParams` and `extraModprobeConfig` |
+| `auto-optimise-store` | In `common/nix-settings.nix`, NOT `networking.nix` |
 
 ---
 
