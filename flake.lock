@@ -1201,11 +1201,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1780856849,
-        "narHash": "sha256-M7mwB3z9t1EuuGIuS5F2a9Uait3TwsFAdjHcnNztF2g=",
+        "lastModified": 1780871170,
+        "narHash": "sha256-jj+hQLNi7qod3+LYhTKJmohsq7WOPg6Z+Cd+8F8Wgek=",
         "ref": "master",
-        "rev": "d6824d2fe7dcf97bad4eb2cdff325abf0fe54899",
-        "revCount": 628,
+        "rev": "97d2bcd9570a53750e9af5780ed2e3ac1c41a69a",
+        "revCount": 630,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -1792,11 +1792,11 @@
         "treefmt-nix": "treefmt-nix_14"
       },
       "locked": {
-        "lastModified": 1780857216,
-        "narHash": "sha256-EAVvhpwPT5cac4qLSPbHzDr+uyuvjmq2y/TkWJA+uUA=",
+        "lastModified": 1780871493,
+        "narHash": "sha256-wuspiEQ3pnwYYViYQ2/v/fzxEbc2UM2rtLtPLMIdWQ8=",
         "ref": "master",
-        "rev": "cb9a6f87704efc3a5febb296b0fa8b52ed34c20d",
-        "revCount": 2959,
+        "rev": "b90fcbd7149c61af3b4ba199fdb07f7dc0bec238",
+        "revCount": 2961,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },

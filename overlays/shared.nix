@@ -3,11 +3,13 @@
   library-policy,
   golangci-lint-auto-configure,
   mr-sync,
+  hierarchical-errors,
   buildflow,
   go-auto-upgrade,
   go-structure-linter,
   branching-flow,
   art-dupl,
+  projects-management-automation,
   project-meta,
   mkPackageOverlay,
   ...
@@ -134,6 +136,7 @@ in [
   jscpdOverlay
   govalidOverlay
   (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-h5wkT10v14GEnN7RBtWqKTXRMsX6+Qj0AanE4dOSz8U=";})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
 
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-Wiu9zbLx9ukznrzlJg4oumHA/Qx3Bh6xLPfwe4MEjgQ=";})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-6WcsIlYdwo4IvlddwHs8Df2v6f5RpWpXkCkCJHg5qF4=";})
@@ -143,7 +146,7 @@ in [
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-bv1wRqBTEYThsNp7uTF41FbqoZ/Uq3yrgcn/REFmfRE=";})
   art-duplOverlay
   projectMetaOverlay
-
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
 ]

@@ -203,8 +203,8 @@
       buildflow # Zero-configuration build automation
       go-auto-upgrade # Automated Go version upgrades
       go-structure-linter # Go project structure validator
-      # hierarchical-errors # FIXME: upstream preparedSrc has duplicate go-gitignore require + go-filewatcher/v2 mismatch
-      # projects-management-automation # FIXME: upstream missing project-discovery-sdk/preset in subModules
+      hierarchical-errors # Error handling pattern analyzer
+      projects-management-automation # CLI for managing multiple projects
       project-meta # Per-project metadata management CLI
 
       # Go testing
