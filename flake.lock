@@ -1397,11 +1397,11 @@
         "pre-commit-hooks": "pre-commit-hooks"
       },
       "locked": {
-        "lastModified": 1780852505,
-        "narHash": "sha256-AfH4soMaSpBO0rbT3rqwq6BX39Z6iLhr8TMGh2AB5Oo=",
+        "lastModified": 1780853778,
+        "narHash": "sha256-KtbWK7dzXHs7xMNQouLBnvFZuaDB5noglFGlsvDvIhg=",
         "ref": "master",
-        "rev": "daa115fb0cfaa02094450ce5910ab69180e2671e",
-        "revCount": 389,
+        "rev": "ac28026a40ddddfecdcda03ffd426d23dc6241bf",
+        "revCount": 393,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },

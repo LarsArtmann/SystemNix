@@ -463,6 +463,7 @@
               branching-flow
               art-dupl
               projects-management-automation
+              project-meta
               ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
