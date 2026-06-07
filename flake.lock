@@ -211,11 +211,11 @@
         "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
-        "lastModified": 1780857472,
-        "narHash": "sha256-Jzo/7KOzaQvJMSLDtznBKKuk4Tg7qMabLl7yKGgGPR8=",
+        "lastModified": 1780872598,
+        "narHash": "sha256-2Hz/lMkXOQq9cxQNzA8Pe55ndU4DFYQ/ySCb2+Dk/2c=",
         "ref": "master",
-        "rev": "bd0472d37a6ed7149876ad33678d465f768e58fc",
-        "revCount": 286,
+        "rev": "039bbcb42dde3a12ce314e18bd4a43d9562711d8",
+        "revCount": 289,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/emeet-pixyd"
       },
