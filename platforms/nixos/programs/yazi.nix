@@ -1,4 +1,10 @@
-{pkgs, ...}: {
+{
+  pkgs,
+  colorScheme,
+  ...
+}: let
+  colors = colorScheme.palette;
+in {
   programs.yazi = {
     enable = true;
     shellWrapperName = "y";
@@ -133,143 +139,143 @@
 
     theme = {
       manager = {
-        cwd = {fg = "#89b4fa";}; # Blue
+        cwd = {fg = "#${colors.base0D}";}; # Blue
         hovered = {
-          fg = "#1e1e2e";
-          bg = "#89b4fa";
+          fg = "#${colors.base00}";
+          bg = "#${colors.base0D}";
           bold = true;
         };
         preview_hovered = {underline = true;};
         find_keyword = {
-          fg = "#f9e2af";
+          fg = "#${colors.base0A}";
           bold = true;
           italic = true;
         }; # Yellow
         find_position = {
-          fg = "#f5c2e7";
+          fg = "#${colors.base0F}";
           bg = "reset";
           bold = true;
           italic = true;
         }; # Pink
         marker_selected = {
-          fg = "#a6e3a1";
-          bg = "#a6e3a1";
+          fg = "#${colors.base0B}";
+          bg = "#${colors.base0B}";
         }; # Green
         marker_copied = {
-          fg = "#f9e2af";
-          bg = "#f9e2af";
+          fg = "#${colors.base0A}";
+          bg = "#${colors.base0A}";
         }; # Yellow
         marker_cut = {
-          fg = "#f38ba8";
-          bg = "#f38ba8";
+          fg = "#${colors.base08}";
+          bg = "#${colors.base08}";
         }; # Red
         tab_active = {
-          fg = "#1e1e2e";
-          bg = "#89b4fa";
+          fg = "#${colors.base00}";
+          bg = "#${colors.base0D}";
         }; # Blue
         tab_inactive = {
-          fg = "#cdd6f4";
-          bg = "#313244";
+          fg = "#${colors.base05}";
+          bg = "#${colors.base02}";
         }; # Surface1
-        border_style = {fg = "#585b70";}; # Surface2
+        border_style = {fg = "#${colors.base04}";}; # Surface2
       };
 
       mode = {
         normal_main = {
-          fg = "#1e1e2e";
-          bg = "#89b4fa";
+          fg = "#${colors.base00}";
+          bg = "#${colors.base0D}";
           bold = true;
         }; # Blue
         normal_alt = {
-          fg = "#89b4fa";
-          bg = "#313244";
+          fg = "#${colors.base0D}";
+          bg = "#${colors.base02}";
         }; # Blue on Surface1
         select_main = {
-          fg = "#1e1e2e";
-          bg = "#a6e3a1";
+          fg = "#${colors.base00}";
+          bg = "#${colors.base0B}";
           bold = true;
         }; # Green
         select_alt = {
-          fg = "#a6e3a1";
-          bg = "#313244";
+          fg = "#${colors.base0B}";
+          bg = "#${colors.base02}";
         }; # Green on Surface1
         unset_main = {
-          fg = "#1e1e2e";
-          bg = "#f38ba8";
+          fg = "#${colors.base00}";
+          bg = "#${colors.base08}";
           bold = true;
         }; # Red
         unset_alt = {
-          fg = "#f38ba8";
-          bg = "#313244";
+          fg = "#${colors.base08}";
+          bg = "#${colors.base02}";
         }; # Red on Surface1
       };
 
       status = {
         separator_style = {
-          fg = "#585b70";
-          bg = "#585b70";
+          fg = "#${colors.base04}";
+          bg = "#${colors.base04}";
         }; # Surface2
         progress_label = {
-          fg = "#cdd6f4";
+          fg = "#${colors.base05}";
           bold = true;
         }; # Text
         progress_normal = {
-          fg = "#89b4fa";
-          bg = "#313244";
+          fg = "#${colors.base0D}";
+          bg = "#${colors.base02}";
         }; # Blue on Surface1
         progress_error = {
-          fg = "#f38ba8";
-          bg = "#313244";
+          fg = "#${colors.base08}";
+          bg = "#${colors.base02}";
         }; # Red on Surface1
-        permissions_t = {fg = "#89b4fa";}; # Blue
-        permissions_r = {fg = "#f9e2af";}; # Yellow
-        permissions_w = {fg = "#f38ba8";}; # Red
-        permissions_x = {fg = "#a6e3a1";}; # Green
-        permissions_s = {fg = "#6c7086";}; # Overlay0
+        permissions_t = {fg = "#${colors.base0D}";}; # Blue
+        permissions_r = {fg = "#${colors.base0A}";}; # Yellow
+        permissions_w = {fg = "#${colors.base08}";}; # Red
+        permissions_x = {fg = "#${colors.base0B}";}; # Green
+        permissions_s = {fg = "#${colors.overlay0}";}; # Overlay0
       };
 
       input = {
-        border = {fg = "#89b4fa";}; # Blue
+        border = {fg = "#${colors.base0D}";}; # Blue
         title = {};
         value = {};
         selected = {reversed = true;};
       };
 
       select = {
-        border = {fg = "#89b4fa";}; # Blue
-        active = {fg = "#f5c2e7";}; # Pink
+        border = {fg = "#${colors.base0D}";}; # Blue
+        active = {fg = "#${colors.base0F}";}; # Pink
         inactive = {};
       };
 
       tasks = {
-        border = {fg = "#89b4fa";}; # Blue
+        border = {fg = "#${colors.base0D}";}; # Blue
         title = {};
         hovered = {
-          fg = "#f5c2e7";
+          fg = "#${colors.base0F}";
           underline = true;
         }; # Pink
       };
 
       which = {
-        mask = {bg = "#1e1e2e";}; # Base
-        cand = {fg = "#94e2d5";}; # Teal
-        rest = {fg = "#9399b2";}; # Overlay2
-        desc = {fg = "#f5c2e7";}; # Pink
-        separator_style = {fg = "#585b70";}; # Surface2
+        mask = {bg = "#${colors.base00}";}; # Base
+        cand = {fg = "#${colors.base0C}";}; # Teal
+        rest = {fg = "#${colors.overlay2}";}; # Overlay2
+        desc = {fg = "#${colors.base0F}";}; # Pink
+        separator_style = {fg = "#${colors.base04}";}; # Surface2
       };
 
       help = {
-        on = {fg = "#f5c2e7";}; # Pink
-        exec = {fg = "#94e2d5";}; # Teal
-        desc = {fg = "#9399b2";}; # Overlay2
+        on = {fg = "#${colors.base0F}";}; # Pink
+        exec = {fg = "#${colors.base0C}";}; # Teal
+        desc = {fg = "#${colors.overlay2}";}; # Overlay2
         hovered = {
-          fg = "#f5c2e7";
-          bg = "#313244";
+          fg = "#${colors.base0F}";
+          bg = "#${colors.base02}";
           bold = true;
         }; # Pink on Surface1
         footer = {
-          fg = "#1e1e2e";
-          bg = "#89b4fa";
+          fg = "#${colors.base00}";
+          bg = "#${colors.base0D}";
         }; # Blue
       };
 
@@ -278,85 +284,85 @@
           # Images
           {
             mime = "image/*";
-            fg = "#f5c2e7";
+            fg = "#${colors.base0F}";
             icon = "🖼";
           } # Pink
           # Videos
           {
             mime = "video/*";
-            fg = "#fab387";
+            fg = "#${colors.base09}";
             icon = "🎬";
           } # Peach
           {
             mime = "audio/*";
-            fg = "#fab387";
+            fg = "#${colors.base09}";
             icon = "🎵";
           } # Peach
           # Archives
           {
             mime = "application/zip";
-            fg = "#f9e2af";
+            fg = "#${colors.base0A}";
             icon = "📦";
           } # Yellow
           {
             mime = "application/gzip";
-            fg = "#f9e2af";
+            fg = "#${colors.base0A}";
             icon = "📦";
           } # Yellow
           {
             mime = "application/x-tar";
-            fg = "#f9e2af";
+            fg = "#${colors.base0A}";
             icon = "📦";
           } # Yellow
           {
             mime = "application/x-bzip";
-            fg = "#f9e2af";
+            fg = "#${colors.base0A}";
             icon = "📦";
           } # Yellow
           # Documents
           {
             mime = "application/pdf";
-            fg = "#f38ba8";
+            fg = "#${colors.base08}";
             icon = "📄";
           } # Red
           {
             mime = "application/rtf";
-            fg = "#89b4fa";
+            fg = "#${colors.base0D}";
             icon = "📝";
           } # Blue
           {
             mime = "application/doc*";
-            fg = "#89b4fa";
+            fg = "#${colors.base0D}";
             icon = "📝";
           } # Blue
           # Programming
           {
             mime = "text/*";
-            fg = "#cdd6f4";
+            fg = "#${colors.base05}";
           } # Text
           {
             mime = "*/javascript";
-            fg = "#f9e2af";
+            fg = "#${colors.base0A}";
           } # Yellow
           {
             mime = "*/json";
-            fg = "#f9e2af";
+            fg = "#${colors.base0A}";
           } # Yellow
           # Executables
           {
             mime = "application/x-executable";
-            fg = "#a6e3a1";
+            fg = "#${colors.base0B}";
             icon = "⚙";
           } # Green
           {
             mime = "application/x-pie-executable";
-            fg = "#a6e3a1";
+            fg = "#${colors.base0B}";
             icon = "⚙";
           } # Green
           # Fallback
           {
             url = "*";
-            fg = "#cdd6f4";
+            fg = "#${colors.base05}";
             icon = "📄";
           } # Text
         ];

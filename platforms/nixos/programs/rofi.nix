@@ -1,5 +1,10 @@
-{pkgs, ...}: let
+{
+  pkgs,
+  colorScheme,
+  ...
+}: let
   theme = import ../../common/theme.nix;
+  colors = colorScheme.palette;
 in {
   programs.rofi = {
     enable = true;
@@ -9,13 +14,13 @@ in {
 
     theme = builtins.toFile "catppuccin-grid.rasi" ''
       * {
-          bg: #1e1e2e;
-          bg-alt: #313244;
-          fg: #cdd6f4;
-          fg-alt: #a6adc8;
-          selected: #89b4fa;
-          active: #a6e3a1;
-          urgent: #f38ba8;
+          bg: #${colors.base00};
+          bg-alt: #${colors.base02};
+          fg: #${colors.base05};
+          fg-alt: #${colors.subtext0};
+          selected: #${colors.base0D};
+          active: #${colors.base0B};
+          urgent: #${colors.base08};
 
           background-color: @bg;
           text-color: @fg;
@@ -33,7 +38,7 @@ in {
           border: 0px solid;
           border-radius: 16px;
           border-color: @selected;
-          background-color: #1e1e2ef2;
+          background-color: #${colors.base00}f2;
           cursor: "default";
       }
 
@@ -120,29 +125,29 @@ in {
       }
 
       element normal.urgent {
-          background-color: #f38ba833;
+          background-color: #${colors.base08}33;
           text-color: @urgent;
       }
 
       element normal.active {
-          background-color: #a6e3a133;
+          background-color: #${colors.base0B}33;
           text-color: @active;
       }
 
       element selected.normal {
-          background-color: #89b4fa26;
+          background-color: #${colors.base0D}26;
           text-color: @selected;
           border: 1px solid;
-          border-color: #89b4fa66;
+          border-color: #${colors.base0D}66;
       }
 
       element selected.urgent {
-          background-color: #f38ba84d;
+          background-color: #${colors.base08}4d;
           text-color: @urgent;
       }
 
       element selected.active {
-          background-color: #a6e3a14d;
+          background-color: #${colors.base0B}4d;
           text-color: @active;
       }
 
@@ -168,7 +173,7 @@ in {
           border: 2px solid;
           border-radius: 12px;
           border-color: @urgent;
-          background-color: #1e1e2ee6;
+          background-color: #${colors.base00}e6;
           text-color: @fg;
       }
 

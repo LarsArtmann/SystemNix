@@ -28,7 +28,7 @@
 
 ### Priority 3: Documentation & Tools
 
-- [ ] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors — ~6h
+- [x] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors — ~6h
 - [ ] **Create `just status` command** for automated status report generation
 
 ### Priority 4: Hardware

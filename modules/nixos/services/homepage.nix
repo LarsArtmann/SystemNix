@@ -12,6 +12,8 @@ _: {
 
     svcUrl = subdomain: "https://${subdomain}.${domain}";
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports;
+    theme = import ../../../platforms/common/theme.nix;
+    colors = theme.colorScheme.palette;
   in {
     options.services.homepage = {
       enable = lib.mkEnableOption "Homepage Dashboard service";
@@ -203,23 +205,23 @@ _: {
         "L+ ${stateDir}/docker.yaml - - - - ${pkgs.writeText "docker.yaml" ""}"
         "L+ ${stateDir}/custom.css - - - - ${pkgs.writeText "custom.css" ''
           :root {
-            --catppuccin-base: #1e1e2e;
-            --catppuccin-mantle: #181825;
-            --catppuccin-crust: #11111b;
-            --catppuccin-surface0: #313244;
-            --catppuccin-surface1: #45475a;
-            --catppuccin-overlay0: #6c7086;
-            --catppuccin-text: #cdd6f4;
-            --catppuccin-subtext: #a6adc8;
-            --catppuccin-lavender: #b4befe;
-            --catppuccin-blue: #89b4fa;
-            --catppuccin-green: #a6e3a1;
-            --catppuccin-red: #f38ba8;
+            --catppuccin-base: #${colors.base00};
+            --catppuccin-mantle: #${colors.base01};
+            --catppuccin-crust: #${colors.crust};
+            --catppuccin-surface0: #${colors.base02};
+            --catppuccin-surface1: #${colors.base03};
+            --catppuccin-overlay0: #${colors.overlay0};
+            --catppuccin-text: #${colors.base05};
+            --catppuccin-subtext: #${colors.subtext0};
+            --catppuccin-lavender: #${colors.base07};
+            --catppuccin-blue: #${colors.base0D};
+            --catppuccin-green: #${colors.base0B};
+            --catppuccin-red: #${colors.base08};
           }
           body { background-color: var(--catppuccin-crust) !important; color: var(--catppuccin-text) !important; }
           .page { background-color: var(--catppuccin-base) !important; }
           .service-card { background-color: var(--catppuccin-surface0) !important; border-radius: 12px !important; border: 1px solid var(--catppuccin-surface1) !important; color: var(--catppuccin-text) !important; }
-          .service-card:hover { border-color: var(--catppuccin-blue) !important; box-shadow: 0 4px 12px rgba(137,180,250,0.15) !important; }
+          .service-card:hover { border-color: var(--catppuccin-blue) !important; box-shadow: 0 4px 12px #${colors.base0D}26 !important; }
           .service-card .service-name { color: var(--catppuccin-text) !important; }
           .service-card .service-description { color: var(--catppuccin-subtext) !important; }
           .service-card .service-url { color: var(--catppuccin-lavender) !important; }

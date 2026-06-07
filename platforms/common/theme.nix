@@ -15,27 +15,61 @@ rec {
     monoSize = 16;
   };
 
+  colorSchemeName = "catppuccin-mocha";
+
+  colors = {
+    rosewater = "f5e0dc";
+    flamingo = "f2cdcd";
+    pink = "f5c2e7";
+    mauve = "cba6f7";
+    red = "f38ba8";
+    maroon = "eba0ac";
+    peach = "fab387";
+    yellow = "f9e2af";
+    green = "a6e3a1";
+    teal = "94e2d5";
+    sky = "89dceb";
+    sapphire = "74c7ec";
+    blue = "89b4fa";
+    lavender = "b4befe";
+    text = "cdd6f4";
+    subtext1 = "bac2de";
+    subtext0 = "a6adc8";
+    overlay2 = "9399b2";
+    overlay1 = "7f849c";
+    overlay0 = "6c7086";
+    surface2 = "585b70";
+    surface1 = "45475a";
+    surface0 = "313244";
+    base = "1e1e2e";
+    mantle = "181825";
+    crust = "11111b";
+  };
+
   colorScheme = {
     slug = "catppuccin-mocha";
     name = "Catppuccin Mocha";
     author = "Catppuccin Org";
-    palette = {
-      base00 = "1e1e2e";
-      base01 = "181825";
-      base02 = "313244";
-      base03 = "45475a";
-      base04 = "585b70";
-      base05 = "cdd6f4";
-      base06 = "f5e0dc";
-      base07 = "b4befe";
-      base08 = "f38ba8";
-      base09 = "fab387";
-      base0A = "f9e2af";
-      base0B = "a6e3a1";
-      base0C = "94e2d5";
-      base0D = "89b4fa";
-      base0E = "cba6f7";
-      base0F = "f5c2e7";
-    };
+    inherit colors;
+    palette =
+      colors
+      // {
+        base00 = colors.base;
+        base01 = colors.mantle;
+        base02 = colors.surface0;
+        base03 = colors.surface1;
+        base04 = colors.surface2;
+        base05 = colors.text;
+        base06 = colors.rosewater;
+        base07 = colors.lavender;
+        base08 = colors.red;
+        base09 = colors.peach;
+        base0A = colors.yellow;
+        base0B = colors.green;
+        base0C = colors.teal;
+        base0D = colors.blue;
+        base0E = colors.mauve;
+        base0F = colors.pink;
+      };
   };
 }

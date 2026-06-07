@@ -1,9 +1,11 @@
 {
   lib,
   pkgs,
+  colorScheme,
   ...
 }: let
   theme = import ../../common/theme.nix;
+  colors = colorScheme.palette;
   dnsStatsPort = (import ../../../lib/ports.nix).ports.dns-blocker-stats;
   waybarCamera = pkgs.writeShellApplication {
     name = "waybar-camera";
@@ -99,7 +101,7 @@
     name = "waybar-clipboard-menu";
     runtimeInputs = [pkgs.cliphist pkgs.rofi pkgs.wl-clipboard];
     text = ''
-      cliphist list | rofi -dmenu -p 'Clipboard:' -kb-delete-entry 'Ctrl+Delete' -theme-str 'window {width: 50%;} listview {columns: 1; lines: 12; scrollbar: true; } element {orientation: horizontal; padding: 8px; spacing: 8px; } element-text {horizontal-align: 0.0; vertical-align: 0.5; } scrollbar {enabled: true; width: 4px; padding: 0; } scrollbar-handle {background-color: #89b4fa; border-radius: 2px; }' | cliphist decode | wl-copy
+      cliphist list | rofi -dmenu -p 'Clipboard:' -kb-delete-entry 'Ctrl+Delete' -theme-str 'window {width: 50%;} listview {columns: 1; lines: 12; scrollbar: true; } element {orientation: horizontal; padding: 8px; spacing: 8px; } element-text {horizontal-align: 0.0; vertical-align: 0.5; } scrollbar {enabled: true; width: 4px; padding: 0; } scrollbar-handle {background-color: #${colors.base0D}; border-radius: 2px; }' | cliphist decode | wl-copy
     '';
   };
 
@@ -319,57 +321,57 @@ in {
       }
 
       window#waybar {
-        background: #1e1e2e;
-        color: #cdd6f4;
-        border-bottom: 1px solid #313244;
+        background: #${colors.base00};
+        color: #${colors.base05};
+        border-bottom: 1px solid #${colors.base02};
       }
 
       #workspaces button {
         padding: 0 8px;
         background: transparent;
-        color: #6c7086;
+        color: #${colors.overlay0};
       }
 
       #workspaces button:hover {
-        color: #cdd6f4;
+        color: #${colors.base05};
       }
 
       #workspaces button.active {
-        color: #89b4fa;
+        color: #${colors.base0D};
       }
 
       #workspaces button.urgent {
-        color: #f38ba8;
+        color: #${colors.base08};
       }
 
       #niri-window {
-        color: #a6adc8;
+        color: #${colors.subtext0};
         padding: 0 12px;
       }
 
       #clock {
-        color: #cdd6f4;
+        color: #${colors.base05};
         font-weight: bold;
         padding: 0 12px;
       }
 
       #custom-media {
-        color: #b4befe;
+        color: #${colors.base07};
         font-size: 13px;
       }
 
       #cpu, #memory, #temperature, #network, #pulseaudio, #disk,
       #custom-clipboard, #custom-dns-stats, #custom-camera, #tray, #custom-power {
         padding: 0 10px;
-        color: #a6adc8;
+        color: #${colors.subtext0};
       }
 
       #custom-camera.tracking {
-        color: #a6e3a1;
+        color: #${colors.base0B};
       }
 
       #custom-camera.privacy {
-        color: #f38ba8;
+        color: #${colors.base08};
       }
 
       #custom-camera.in-call {
@@ -377,39 +379,39 @@ in {
       }
 
       #custom-camera.offline {
-        color: #585b70;
+        color: #${colors.base04};
       }
 
       #custom-clipboard:hover, #custom-power:hover, #custom-dns-stats:hover,
       #custom-camera:hover {
-        color: #cdd6f4;
-        background: #313244;
+        color: #${colors.base05};
+        background: #${colors.base02};
       }
 
       #cpu.high, #memory.high {
-        color: #f38ba8;
+        color: #${colors.base08};
       }
 
       #disk.warning {
-        color: #f9e2af;
+        color: #${colors.base0A};
       }
 
       #disk.critical {
-        color: #f38ba8;
+        color: #${colors.base08};
         font-weight: bold;
       }
 
       #temperature.critical {
-        color: #f38ba8;
+        color: #${colors.base08};
         font-weight: bold;
       }
 
       #network.disconnected {
-        color: #f38ba8;
+        color: #${colors.base08};
       }
 
       #pulseaudio.muted {
-        color: #585b70;
+        color: #${colors.base04};
       }
 
       #tray {
@@ -417,21 +419,21 @@ in {
       }
 
       #custom-power {
-        color: #f38ba8;
+        color: #${colors.base08};
       }
 
       tooltip {
-        background: #1e1e2e;
-        border: 1px solid #45475a;
+        background: #${colors.base00};
+        border: 1px solid #${colors.base03};
         border-radius: 8px;
         padding: 8px 12px;
-        color: #cdd6f4;
+        color: #${colors.base05};
         font-family: "${theme.font.mono}";
         font-size: 13px;
       }
 
       tooltip label {
-        color: #cdd6f4;
+        color: #${colors.base05};
         padding: 2px;
       }
 
@@ -445,16 +447,16 @@ in {
       #tray:hover,
       #custom-weather:hover,
       #custom-media:hover {
-        color: #cdd6f4;
-        background: #313244;
+        color: #${colors.base05};
+        background: #${colors.base02};
       }
 
       #custom-media.paused {
-        color: #585b70;
+        color: #${colors.base04};
       }
 
       #custom-weather.error {
-        color: #585b70;
+        color: #${colors.base04};
       }
     '';
   };
