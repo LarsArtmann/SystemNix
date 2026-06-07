@@ -457,12 +457,10 @@
               library-policy
               golangci-lint-auto-configure
               mr-sync
-              hierarchical-errors
               buildflow
               go-auto-upgrade
               branching-flow
               art-dupl
-              projects-management-automation
               project-meta
               ;
           }
