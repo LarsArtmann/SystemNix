@@ -125,7 +125,12 @@ in {
             owner = "signoz";
             group = "signoz";
             restartUnits = ["signoz-provision.service"];
-          } ["discord_alert_webhook_url"];
+          } ["discord_alert_webhook_url"]
+          // mkSecrets "discordsync.yaml" {
+            owner = "discordsync";
+            group = "discordsync";
+            restartUnits = ["discordsync.service"];
+          } ["discordsync_discord_token" "discordsync_turso_url" "discordsync_turso_auth_token"];
 
         templates = {
           "gatus-env" = {
@@ -197,6 +202,18 @@ in {
             restartUnits = ["crush-daily.service"];
             content = ''
               CRUSH_DAILY_LLM_API_KEY=${config.sops.placeholder.synthetic_api_key}
+            '';
+          };
+
+          "discordsync-env" = {
+            owner = "discordsync";
+            group = "discordsync";
+            mode = "0400";
+            restartUnits = ["discordsync.service"];
+            content = ''
+              DISCORD_TOKEN=${config.sops.placeholder.discordsync_discord_token}
+              TURSO_URL=${config.sops.placeholder.discordsync_turso_url}
+              TURSO_AUTH_TOKEN=${config.sops.placeholder.discordsync_turso_auth_token}
             '';
           };
         };

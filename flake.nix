@@ -352,6 +352,17 @@
       url = "git+ssh://git@github.com/LarsArtmann/project-meta?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # DiscordSync — Continuous Discord backup with Turso cloud sync
+    discordsync = {
+      url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+      };
+    };
   };
 
   outputs = inputs @ {
