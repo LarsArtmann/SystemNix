@@ -106,6 +106,15 @@ in {
             hermes_firecrawl_api_key = "firecrawl_api_key";
             hermes_openai_api_key = "openai_api_key";
           }
+          // {
+            crush_daily_synthetic_api_key = {
+              sopsFile = secretsDir + "/hermes.yaml";
+              key = "synthetic_api_key";
+              owner = "crush-daily";
+              group = "crush-daily";
+              restartUnits = ["crush-daily.service"];
+            };
+          }
           // mkSecrets "openseo.yaml" {
             owner = "root";
             group = "root";
@@ -182,6 +191,16 @@ in {
             restartUnits = ["openseo.service"];
             content = ''
               DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
+            '';
+          };
+
+          "crush-daily-env" = {
+            owner = "crush-daily";
+            group = "crush-daily";
+            mode = "0400";
+            restartUnits = ["crush-daily.service"];
+            content = ''
+              CRUSH_DAILY_LLM_API_KEY=${config.sops.placeholder.crush_daily_synthetic_api_key}
             '';
           };
         };

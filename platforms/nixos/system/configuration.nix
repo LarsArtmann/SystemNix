@@ -251,6 +251,7 @@ in {
       # Crush Daily — AI-powered development insights from Crush databases
       crush-daily = {
         enable = true;
+        environmentFile = config.sops.templates."crush-daily-env".path;
       };
 
       # Minecraft server (local network only, whitelisted)
