@@ -3,6 +3,7 @@
   emeet-pixyd,
   monitor365,
   file-and-image-renamer,
+  crush-daily,
   mkPackageOverlay,
   ...
 }: let
@@ -22,4 +23,5 @@ in [
   monitor365.overlays.default
   netwatchOverlay
   (mkPackageOverlay file-and-image-renamer "file-and-image-renamer" {})
+  crush-daily.overlays.default
 ]

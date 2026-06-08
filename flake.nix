@@ -206,6 +206,16 @@
       inputs.flake-parts.follows = "flake-parts";
     };
 
+    # crush-daily — Daily AI-powered insights from Crush development databases
+    crush-daily = {
+      url = "git+ssh://git@github.com/LarsArtmann/crush-daily?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
+
     # Shared Go libraries — single source of truth for all Go tool repos
     go-finding = {
       url = "git+ssh://git@github.com/LarsArtmann/go-finding?ref=master";
@@ -460,7 +470,7 @@
               ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
-            inherit (pkgs) openaudible dnsblockd monitor365 netwatch emeet-pixyd file-and-image-renamer;
+            inherit (pkgs) openaudible dnsblockd monitor365 netwatch emeet-pixyd file-and-image-renamer crush-daily;
           };
 
         # Development shells for different program categories
@@ -655,6 +665,7 @@
               inputs.nix-ssh-config.nixosModules.ssh
               inputs.niri-session-manager.nixosModules.niri-session-manager
               inputs.emeet-pixyd.nixosModules.default
+              inputs.crush-daily.nixosModules.crush-daily
               ./platforms/nixos/system/configuration.nix
             ];
         };

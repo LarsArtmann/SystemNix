@@ -44,5 +44,7 @@
     minecraft = 25565;
 
     dozzle = 8084;
+
+    crush-daily = 8081;
   };
 }

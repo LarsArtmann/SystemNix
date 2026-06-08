@@ -84,6 +84,7 @@ _: {
             "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
             "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
             "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
+            "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
           }
           // lib.optionalAttrs config.services.voice-agents.enable {
             "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;

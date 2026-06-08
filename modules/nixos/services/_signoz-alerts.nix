@@ -11,6 +11,7 @@
     op ? "AND",
     target,
     interval ? "5m",
+    severity ? "critical",
   }:
     pkgs.writeText "${lib.strings.sanitizeDerivationName name}-rule.json" (builtins.toJSON {
       data = {
@@ -32,8 +33,11 @@
           };
           evaluationInterval = interval;
           inherit name;
-          preferredChannels = ["Discord Alerts"];
+          preferredChannels = lib.optional (severity == "critical") "Discord Alerts";
           source = "RULE";
+          labels = {
+            inherit severity;
+          };
         };
       };
     });
@@ -50,6 +54,7 @@ in {
       description = "CPU usage above 90% for 15 minutes on {{.Labels.instance}}";
       query = ''100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)'';
       target = 90;
+      severity = "warning";
     };
     "signoz/rules/memory-critical.json".source = mkRule {
       name = "Memory Critical (>90%)";
@@ -94,6 +99,7 @@ in {
       op = "AND_NOT";
       target = 1;
       interval = "1m";
+      severity = "warning";
     };
     "signoz/rules/gpu-vram-high.json".source = mkRule {
       name = "GPU VRAM Critical (>85%)";
@@ -118,6 +124,7 @@ in {
       op = "AND_NOT";
       target = 1;
       interval = "1m";
+      severity = "warning";
     };
     "signoz/rules/docker-down.json".source = mkRule {
       name = "Docker Daemon Down";
@@ -140,12 +147,14 @@ in {
       description = "NVMe SSD temperature above 70°C on {{.Labels.device}} — approaching throttle limit";
       query = "node_nvme_temperature_celsius";
       target = 70;
+      severity = "warning";
     };
     "signoz/rules/nvme-endurance.json".source = mkRule {
       name = "NVMe SSD Endurance Critical (>50%)";
       description = "NVMe SSD has consumed over 50% of rated endurance on {{.Labels.device}} — plan for replacement";
       query = "node_nvme_percentage_used";
       target = 50;
+      severity = "warning";
     };
     "signoz/rules/nvme-media-errors.json".source = mkRule {
       name = "NVMe SSD Media Errors Detected";
@@ -161,6 +170,7 @@ in {
       op = "AND_NOT";
       target = 30;
       interval = "5m";
+      severity = "warning";
     };
     "signoz/rules/nvme-critical-warning.json".source = mkRule {
       name = "NVMe SSD Critical Warning";

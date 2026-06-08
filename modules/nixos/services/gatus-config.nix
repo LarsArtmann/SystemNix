@@ -285,6 +285,12 @@ _: {
                 ];
                 alerts = discordAlert "Swap metrics not being collected — swap alerting disabled";
               })
+              (mkHttpCheck {
+                name = "Crush Daily";
+                group = "Development";
+                url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
+                interval = "5m";
+              })
             ];
         };
       };

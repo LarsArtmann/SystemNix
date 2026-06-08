@@ -248,6 +248,11 @@ in {
         enable = true;
       };
 
+      # Crush Daily — AI-powered development insights from Crush databases
+      crush-daily = {
+        enable = true;
+      };
+
       # Minecraft server (local network only, whitelisted)
       minecraft = {
         enable = false;

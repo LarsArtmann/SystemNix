@@ -1,4 +1,8 @@
-{colorScheme, ...}: let
+{
+  pkgs,
+  colorScheme,
+  ...
+}: let
   colors = colorScheme.palette;
 in {
   # Zellij - Modern terminal multiplexer (tmux alternative)
@@ -34,7 +38,10 @@ in {
       scrollback_lines = 10000;
 
       # Copy mode
-      copy_command = "wl-copy"; # Wayland clipboard
+      copy_command =
+        if pkgs.stdenv.isDarwin
+        then "pbcopy"
+        else "wl-copy";
       copy_clipboard = "system";
       copy_on_select = false;
 
@@ -189,8 +196,14 @@ in {
                         {
                           pane = {
                             name = "logs";
-                            command = "journalctl";
-                            args = ["-f"];
+                            command =
+                              if pkgs.stdenv.isDarwin
+                              then "log"
+                              else "journalctl";
+                            args =
+                              if pkgs.stdenv.isDarwin
+                              then ["stream"]
+                              else ["-f"];
                           };
                         }
                         {

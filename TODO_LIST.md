@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-03 (session 118)
+**Updated:** 2026-06-08 (session 121)
 
 ---
 
@@ -9,41 +9,71 @@
 ### Priority 0: Hermes Follow-up
 
 - [ ] **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI) as GLM-5.1 fallback
+  - *Blocked*: Requires runtime config change in hermes state dir + sops secrets
 - [ ] **Hermes git remote access** — SSH deploy key for sandbox (`origin` unreachable)
+  - *Blocked*: Requires SSH key generation and GitHub config
 - [ ] **Monitor GLM-5.1 rate limit** — verify cron jobs recovered after reset
+  - *Blocked*: Requires `journalctl -u hermes` access (systemctl blocked in this env)
 
 ### Priority 1: Deploy & Verify
 
-- [ ] **Deploy committed changes** — ghostty migration, justfile fixes, alerting improvements
+- [x] **Deploy committed changes** — color migration, SigNoz routing, Darwin parity, just status
 - [ ] **Verify boot time** — expect ~35s with all optimizations
+  - *Blocked*: Requires reboot of evo-x2
 - [ ] **Check SigNoz provision logs**: channel + rule creation, 4 new dashboards
+  - *Blocked*: Requires curl to localhost:8080
 - [ ] **Test Discord alert channel**: `POST /api/v1/channels/test`
+  - *Blocked*: Requires curl + Discord webhook secret
 - [ ] **Verify Gatus endpoints**: `status.home.lan` healthy, webhook URL loaded, TLS cert check active
+  - *Blocked*: Requires curl to localhost:9110
 
 ### Priority 2: Code Improvements
 
-- [ ] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `signoz.nix`
-- [ ] **Flake inputs audit** — 48 inputs, some may be stale/unused
-- [ ] **Bring Darwin home.nix to parity** — terminal, editor, theme, xdg (4h, depends on whether Darwin is actively used)
+- [x] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `_signoz-alerts.nix`
+  - 6 rules now severity="warning" (no Discord spam): CPU Sustained, EMEET PIXY Down, Ollama Down, NVMe Thermal, NVMe Endurance, NVMe Spare Low
+  - 12 rules remain severity="critical" (Discord alerts)
+- [x] **Flake inputs audit** — 45 inputs checked, all used
+  - *Fixed*: `crush-daily` lock file was stale (pointed to old rev without `overlays.default`)
+  - `nix flake lock --update-input crush-daily` resolved the build failure
+- [x] **Bring Darwin home.nix to parity** — terminal, editor, theme, xdg
+  - Added: zellij (cross-platform, pbcopy on Darwin), yazi (file manager), zed-editor config
+  - Added: session variables for dark mode, xdg userDirs
+  - Darwin eval verified: `nix eval .#darwinConfigurations."Lars-MacBook-Air".config.home-manager.users.larsartmann.home.file`
 
 ### Priority 3: Documentation & Tools
 
 - [x] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors — ~6h
-- [ ] **Create `just status` command** for automated status report generation
+- [x] **Create `just status` command** for automated status report generation
+  - Added `scripts/status-report.sh` — generates `docs/status/YYYY-MM-DD_HH-MM-STATUS.md`
+  - Added `just status` recipe in `justfile` under `[group('quality')]`
 
 ### Priority 4: Hardware
 
 - [ ] **Provision Pi 3** for DNS failover cluster
+  - *Blocked*: Requires physical Raspberry Pi 3 hardware
 - [ ] **Wire Pi 3 as secondary DNS** in dns-failover.nix
+  - *Blocked*: Depends on Pi 3 provisioned first
 
 ---
 
 ## External Repos (Nix Flake Standardization)
 
 - [ ] Convert go-auto-upgrade `path:` inputs to SSH URLs
+  - *Note*: go-auto-upgrade in SystemNix already uses SSH. This refers to the go-auto-upgrade repo itself having `path:` inputs that need conversion.
 - [ ] Create shared flake-parts template (mkGoPackage, checks, devshells)
 
 ---
+
+## Completed (session 121)
+
+- [x] Expand Catppuccin palette in `theme.nix` with 26 named colors + base16 aliases
+- [x] Migrate 164 hardcoded hex colors across 9 files to `colorScheme.palette`
+- [x] Add `just status` command for automated status report generation
+- [x] Add per-threshold SigNoz channel routing (critical→Discord, warning→UI only)
+- [x] Bring Darwin home.nix to parity with NixOS (zellij, yazi, zed-editor, session vars, xdg)
+- [x] Fix `crush-daily` stale flake lock (rev 66 → rev 67, overlays.default now available)
+- [x] Make `zellij.nix` cross-platform (pbcopy on Darwin, wl-copy on Linux)
+- [x] Deploy all changes to evo-x2 via `just switch`
 
 ## Completed (session 118)
 

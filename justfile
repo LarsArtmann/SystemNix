@@ -155,6 +155,11 @@ format:
 validate-scripts:
     find scripts/ -name '*.sh' -exec shellcheck {} +
 
+# Generate comprehensive status report (auto-saved to docs/status/)
+[group('quality')]
+status:
+    ./scripts/status-report.sh
+
 # System status, git status, outdated packages
 [group('quality')]
 check:

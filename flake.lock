@@ -173,7 +173,7 @@
         "url": "ssh://git@github.com/LarsArtmann/crush-config"
       }
     },
-    "dnsblockd": {
+    "crush-daily": {
       "inputs": {
         "flake-parts": [
           "flake-parts"
@@ -182,6 +182,34 @@
           "nixpkgs"
         ],
         "systems": "systems_4",
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1780876609,
+        "narHash": "sha256-a8/IsEUIaIAIGeOh5J/hiF2APRo2KBS1Vgn7GvFoMgU=",
+        "ref": "master",
+        "rev": "0ce307814c32d8d753533f5a6a38d33ea8d8e4fd",
+        "revCount": 69,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/crush-daily"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/crush-daily"
+      }
+    },
+    "dnsblockd": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": "systems_5",
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -207,7 +235,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_5",
+        "systems": "systems_6",
         "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
@@ -236,7 +264,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_6",
+        "systems": "systems_7",
         "treefmt-nix": "treefmt-nix_6",
         "vision-review-agent-src": "vision-review-agent-src"
       },
@@ -723,7 +751,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_7",
+        "systems": "systems_8",
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
@@ -1052,7 +1080,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_8",
+        "systems": "systems_9",
         "template-LICENSE": "template-LICENSE_2",
         "treefmt-nix": "treefmt-nix_8"
       },
@@ -1115,7 +1143,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_9",
+        "systems": "systems_10",
         "treefmt-nix": "treefmt-nix_9"
       },
       "locked": {
@@ -1197,7 +1225,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_10",
+        "systems": "systems_11",
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
@@ -1280,7 +1308,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_11",
+        "systems": "systems_12",
         "treefmt-nix": [
           "treefmt-nix"
         ]
@@ -1307,7 +1335,7 @@
           "nixpkgs"
         ],
         "rust-overlay": "rust-overlay",
-        "systems": "systems_12",
+        "systems": "systems_13",
         "treefmt-nix": "treefmt-nix_11"
       },
       "locked": {
@@ -1343,7 +1371,7 @@
           "nixpkgs"
         ],
         "project-discovery-sdk": "project-discovery-sdk",
-        "systems": "systems_13",
+        "systems": "systems_14",
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
@@ -1718,7 +1746,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_14",
+        "systems": "systems_15",
         "treefmt-nix": "treefmt-nix_13"
       },
       "locked": {
@@ -1788,7 +1816,7 @@
         ],
         "project-discovery-sdk": "project-discovery-sdk_2",
         "project-meta": "project-meta_2",
-        "systems": "systems_15",
+        "systems": "systems_16",
         "treefmt-nix": "treefmt-nix_14"
       },
       "locked": {
@@ -1901,6 +1929,7 @@
         "buildflow": "buildflow",
         "cmdguard": "cmdguard",
         "crush-config": "crush-config",
+        "crush-daily": "crush-daily",
         "dnsblockd": "dnsblockd",
         "emeet-pixyd": "emeet-pixyd",
         "file-and-image-renamer": "file-and-image-renamer",
@@ -1940,7 +1969,7 @@
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
         "sops-nix": "sops-nix",
-        "systems": "systems_16",
+        "systems": "systems_17",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
         "treefmt-nix": "treefmt-nix_16",
@@ -2177,6 +2206,21 @@
         "type": "github"
       }
     },
+    "systems_18": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "systems_2": {
       "locked": {
         "lastModified": 1681028828,
@@ -2337,7 +2381,7 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_17",
+        "systems": "systems_18",
         "treefmt-nix": "treefmt-nix_15"
       },
       "locked": {
