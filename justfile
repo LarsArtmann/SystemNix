@@ -160,6 +160,11 @@ validate-scripts:
 status:
     ./scripts/status-report.sh
 
+# Run post-deploy verification on remote NixOS host (evo-x2)
+[group('quality')]
+verify:
+    ssh evo-x2 "bash -s" < scripts/verify-deployment.sh
+
 # System status, git status, outdated packages
 [group('quality')]
 check:

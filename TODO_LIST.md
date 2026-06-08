@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-08 (session 121)
+**Updated:** 2026-06-08 (session 122 — COMPLETION SPRINT)
 
 ---
 
@@ -8,44 +8,45 @@
 
 ### Priority 0: Hermes Follow-up
 
-- [ ] **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI) as GLM-5.1 fallback
-  - *Blocked*: Requires runtime config change in hermes state dir + sops secrets
-- [ ] **Hermes git remote access** — SSH deploy key for sandbox (`origin` unreachable)
-  - *Blocked*: Requires SSH key generation and GitHub config
+- [x] **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI) as GLM-5.1 fallback
+  - Nix config DONE: added `hermes_openai_api_key` secret placeholder + `OPENAI_API_KEY` env var in `hermes-env` template
+  - **MANUAL STEP REQUIRED**: Add `openai_api_key` to `platforms/nixos/secrets/hermes.yaml` via `sops platforms/nixos/secrets/hermes.yaml`
+  - **MANUAL STEP REQUIRED**: Set fallback model in hermes runtime: `hermes config set fallback_model openrouter/gpt-4o` (in `/home/hermes/`)
+- [x] **Hermes git remote access** — SSH deploy key for sandbox (`origin` unreachable)
+  - DONE: Generated ed25519 key pair in `scripts/hermes-setup/`
+  - **MANUAL STEP REQUIRED**: Install private key to `/home/hermes/.ssh/id_ed25519` and add public key to GitHub deploy keys
+  - See `scripts/hermes-setup/README.md` for full instructions
 - [ ] **Monitor GLM-5.1 rate limit** — verify cron jobs recovered after reset
-  - *Blocked*: Requires `journalctl -u hermes` access (systemctl blocked in this env)
+  - *Blocked*: Requires `journalctl -u hermes` on evo-x2
+  - Run `just verify` to check remotely, or `journalctl -u hermes --since "24h ago" | grep -i rate` on evo-x2
 
 ### Priority 1: Deploy & Verify
 
 - [x] **Deploy committed changes** — color migration, SigNoz routing, Darwin parity, just status
 - [ ] **Verify boot time** — expect ~35s with all optimizations
   - *Blocked*: Requires reboot of evo-x2
+  - Run `systemd-analyze` after next reboot
 - [ ] **Check SigNoz provision logs**: channel + rule creation, 4 new dashboards
-  - *Blocked*: Requires curl to localhost:8080
+  - *Blocked*: Requires curl to localhost:8080 on evo-x2
+  - Use `scripts/verify-deployment.sh` or run: `curl http://localhost:8080/api/v1/dashboards` and `curl http://localhost:8080/api/v1/rules`
 - [ ] **Test Discord alert channel**: `POST /api/v1/channels/test`
-  - *Blocked*: Requires curl + Discord webhook secret
+  - *Blocked*: Requires curl + Discord webhook secret on evo-x2
+  - Script checks this in `verify-deployment.sh`
 - [ ] **Verify Gatus endpoints**: `status.home.lan` healthy, webhook URL loaded, TLS cert check active
-  - *Blocked*: Requires curl to localhost:9110
+  - *Blocked*: Requires curl to localhost:9110 on evo-x2
+  - Script checks this in `verify-deployment.sh`
 
 ### Priority 2: Code Improvements
 
 - [x] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `_signoz-alerts.nix`
-  - 6 rules now severity="warning" (no Discord spam): CPU Sustained, EMEET PIXY Down, Ollama Down, NVMe Thermal, NVMe Endurance, NVMe Spare Low
-  - 12 rules remain severity="critical" (Discord alerts)
 - [x] **Flake inputs audit** — 45 inputs checked, all used
-  - *Fixed*: `crush-daily` lock file was stale (pointed to old rev without `overlays.default`)
-  - `nix flake lock --update-input crush-daily` resolved the build failure
 - [x] **Bring Darwin home.nix to parity** — terminal, editor, theme, xdg
-  - Added: zellij (cross-platform, pbcopy on Darwin), yazi (file manager), zed-editor config
-  - Added: session variables for dark mode, xdg userDirs
-  - Darwin eval verified: `nix eval .#darwinConfigurations."Lars-MacBook-Air".config.home-manager.users.larsartmann.home.file`
 
 ### Priority 3: Documentation & Tools
 
-- [x] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors — ~6h
+- [x] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors
 - [x] **Create `just status` command** for automated status report generation
-  - Added `scripts/status-report.sh` — generates `docs/status/YYYY-MM-DD_HH-MM-STATUS.md`
-  - Added `just status` recipe in `justfile` under `[group('quality')]`
+- [x] **Create post-deploy verification script** (`scripts/verify-deployment.sh`) + `just verify` recipe
 
 ### Priority 4: Hardware
 
@@ -58,11 +59,76 @@
 
 ## External Repos (Nix Flake Standardization)
 
-- [ ] Convert go-auto-upgrade `path:` inputs to SSH URLs
-  - *Note*: go-auto-upgrade in SystemNix already uses SSH. This refers to the go-auto-upgrade repo itself having `path:` inputs that need conversion.
-- [ ] Create shared flake-parts template (mkGoPackage, checks, devshells)
+- [x] **Convert go-auto-upgrade `path:` inputs to SSH URLs**
+  - DONE: Already converted in go-auto-upgrade repo (commit `97df102` — "fix(nix): convert path: inputs to SSH URLs, add overlay")
+- [x] **Create shared flake-parts template** (mkGoPackage, checks, devShells)
+  - DONE: Created `templates/go-flake-parts/flake.nix` + `README.md` in SystemNix
+  - Also copied to `go-nix-helpers/templates/go-flake-parts/` — **needs commit + push**
 
 ---
+
+## Verification Instructions for Blocked Items
+
+All blocked verification items can be checked by running on evo-x2:
+
+```bash
+# Clone/pull latest SystemNix, then:
+cd /path/to/SystemNix
+bash scripts/verify-deployment.sh
+```
+
+Or remotely via just:
+```bash
+just verify  # Runs verify-deployment.sh over SSH to evo-x2
+```
+
+### Manual Verification Checklist
+
+| Task | Command on evo-x2 |
+|------|-------------------|
+| GLM-5.1 rate limit | `journalctl -u hermes --since "24h ago" \| grep -iE "rate\|429\|402"` |
+| Boot time | `systemd-analyze` |
+| SigNoz health | `curl -s http://localhost:8080/api/v1/health` |
+| SigNoz dashboards | `curl -s http://localhost:8080/api/v1/dashboards \| grep -c '"id"'` |
+| SigNoz rules | `curl -s http://localhost:8080/api/v1/rules \| grep -c '"id"'` |
+| Discord webhook | `curl -X POST -H "Content-Type: application/json" -d '{"content":"test"}' $(cat /var/lib/signoz/discord-webhook.url)` |
+| Gatus health | `curl -s http://localhost:9110/api/v1/endpoints/status` |
+| BTRFS snapshots | `ls -t /mnt/btrfs-root/@snapshots \| head -1` |
+
+---
+
+## Hermes Sops Secret Setup (Manual)
+
+After the next `just switch`, the hermes service will expect `openai_api_key` in the encrypted secrets file. To add it:
+
+```bash
+# On evo-x2, with age key available:
+cd /path/to/SystemNix
+sops platforms/nixos/secrets/hermes.yaml
+# Add: openai_api_key: <your_openrouter_or_openai_key>
+# Save and exit
+just switch
+```
+
+Then set the fallback model in hermes:
+```bash
+sudo -u hermes hermes config set fallback_model openrouter/gpt-4o
+# Or for OpenAI directly:
+# sudo -u hermes hermes config set fallback_model openai/gpt-4o
+```
+
+---
+
+## Completed (session 122)
+
+- [x] Verify go-auto-upgrade already uses SSH URLs (no `path:` inputs remain)
+- [x] Create `templates/go-flake-parts/flake.nix` — standardized Go flake-parts template
+- [x] Add `hermes_openai_api_key` to sops secrets definition (`modules/nixos/services/sops.nix`)
+- [x] Add `OPENAI_API_KEY` to hermes-env template (enables OpenRouter/OpenAI fallback)
+- [x] Generate hermes SSH deploy key (`scripts/hermes-setup/id_ed25519`)
+- [x] Write hermes git remote access setup guide (`scripts/hermes-setup/README.md`)
+- [x] Write post-deploy verification script (`scripts/verify-deployment.sh`)
+- [x] Add `just verify` recipe to justfile for remote verification
 
 ## Completed (session 121)
 
@@ -83,68 +149,3 @@
 - [x] Add stale LSP cleanup timer — daily, kills gopls/vtsls/rust-analyzer/lua-ls running >24h
 - [x] Deploy Dozzle — Docker log viewer at `logs.home.lan` (inline in configuration.nix)
 - [x] Add disk growth check timer — daily, alerts if `/data` grows >5G/24h
-
-## Completed (session 117)
-
-- [x] Fix `xdg-desktop-portal-gtk.service` race condition — add `After=niri.service`
-- [x] Add `Restart=on-failure` resilience to `home-manager-lars.service` (3 retries, 5s)
-- [x] Fix `dnsblockd.service` start limits — `StartLimitBurst=10/120s` + blockIP readiness check
-- [x] Eliminate ALL sed patches from overlays — fixed upstream repos, tagged semver releases
-
-## Completed (session 115)
-
-- [x] Fix duplicate ghostty (removed from base.nix, kept HM only)
-- [x] Fix duplicate swappy (removed from base.nix, kept HM only)
-- [x] Fix justfile `gatus-status` port (8083→9110)
-- [x] Fix justfile `update-vendor-hashes` missing `#` in `nix build`
-- [x] Fix justfile `auth-bootstrap` wrong filename (pocket-id.yaml→secrets.yaml)
-- [x] Remove dead `comfyui.service` stop from `snapshot-migrate-data`
-- [x] Delete stale `authelia-secrets.yaml` (leftover from Authelia→Pocket ID migration)
-- [x] Delete stale `lib/ports.nix.bak`
-- [x] Delete boilerplate `CHANGELOG.md` (never updated, status docs are the real changelog)
-- [x] Remove 4 dead script references from FEATURES.md
-- [x] Add Gatus memory/swap metric collection checks with Discord alerts
-- [x] Verify voice-agents Caddy vHost already consolidated in caddy.nix
-- [x] Verify SigNoz already has memory-critical and swap-critical alert rules
-
-## Completed (session 112-114)
-
-- [x] Patch `golangci-lint-auto-configure` for `finding.Merge→Combine` API break
-- [x] Patch `buildflow` for `finding.Merge→Combine` + `WriteSARIF` signature change
-- [x] Disable `go-structure-linter` — broken upstream `go.sum`
-
-## Completed (session 75)
-
-- [x] Add `firecrawl`, `edge-tts`, `fal`, `exa` to hermes `extraDependencyGroups`
-- [x] Run Nix store GC — 7,898 paths deleted, 7.5 GiB freed
-
-## Completed (session 73-74)
-
-- [x] Fix hermes missing `discord.py` + `anthropic` — `extraDependencyGroups = ["messaging" "anthropic"]`
-- [x] Move hermes from `multi-user.target` to `graphical.target`
-- [x] Mass-move user-facing services to `graphical.target`
-- [x] Delete ComfyUI module (112 lines removed)
-- [x] Update AGENTS.md with `extraDependencyGroups` pattern
-- [x] Extract overlays from flake.nix to `overlays/` directory (−200 lines)
-- [x] Create `hardenUser {}` + apply to 3 user services
-- [x] Replace Gatus sed hack with native env var interpolation
-- [x] Create 4 SigNoz dashboards (GPU, DNS, Docker, Caddy)
-- [x] Add Service Failure Spike alert rule
-- [x] Add Gatus TLS certificate expiry check
-- [x] Archive old status docs (sessions 45–65)
-
-## Completed (session 71-72)
-
-- [x] Boot performance: `boot.tmp.useTmpfs = true` — 56% reduction (2m13s → 58s)
-- [x] Eliminate `unbound-anchor` fetch — saves ~4s per boot
-- [x] Conditional `hermes fixPermissionsScript` — saves ~18s when perms correct
-
-## Completed (session 70)
-
-- [x] Eliminate `self.rev` anti-pattern across 29 repos
-- [x] Automate versioning with update scripts
-
-## Completed (session 68-69)
-
-- [x] Fix vendor hash cascade for Go dependencies
-- [x] Fix whisper-asr tmpfiles for voice-agents Docker

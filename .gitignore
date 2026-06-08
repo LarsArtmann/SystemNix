@@ -122,6 +122,12 @@ dotfiles/sublime-text/backups/
 .env.private
 gitea-sync.env
 
+# SSH private keys (public keys are OK to commit)
+scripts/hermes-setup/id_ed25519
+*.pem
+id_ed25519
+id_rsa
+
 # Compiled Go binaries (built by Nix, not source)
 pkgs/dnsblockd-processor/dnsblockd-processor
 platforms/nixos/programs/dnsblockd/dnsblockd
