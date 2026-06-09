@@ -249,6 +249,11 @@ in {
       bibata-cursors
 
       # Development tools
+      cargo # Rust package manager
+      rustc # Rust compiler
+      rustfmt # Rust code formatter
+      clippy # Rust linter
+      rust-analyzer # Rust language server
       gitui # Terminal UI for git
 
       # Cursor themes
