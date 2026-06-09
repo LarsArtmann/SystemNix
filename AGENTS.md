@@ -124,7 +124,25 @@ Import: `import ../../../lib/default.nix lib` — exports: `harden`, `hardenUser
 
 ### Caddy vHost Pattern
 
-ALL vhosts are defined in `modules/nixos/services/caddy.nix`. No other module should define `services.caddy.virtualHosts`. Use `protectedVHost "subdomain" port` for forward-auth via oauth2-proxy + Pocket ID.
+ALL vhosts are defined in `modules/nixos/services/caddy.nix`. No other module should define `services.caddy.virtualHosts`. Use `protectedVHost "subdomain" port` for forward-auth via oauth2-proxy + Pocket ID. Use `lib.optionalAttrs service.enable` for conditional vhosts.
+
+### Homepage Tile Pattern
+
+ALL Homepage tiles are defined in `modules/nixos/services/homepage.nix`. Tiles for services that may be disabled MUST use `lib.optionalString` guards via the `when` helper. Pattern:
+
+```nix
+when = cond: text: lib.optionalString cond text;
+'' + (when config.services.example.enable ''
+    - Example:
+        href: ${svcUrl "example"}
+        description: Example Service
+        icon: example.png
+        statusStyle: dot
+        siteMonitor: ${svcUrl "example"}
+'') + ''
+```
+
+Unconditional tiles (Pocket ID, Caddy, PostgreSQL, Redis, etc.) are always shown. Categories: Infrastructure, Media, Development, AI, Monitoring, Productivity.
 
 ### WatchdogSec Rules
 
@@ -184,7 +202,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices |
 | OOM crash chain | Helium (Electron) escaped cgroup limits → OOM killed journald → cascade. Mitigated by `MemoryHigh`, per-service `MemoryMax`, `systemd-oomd` |
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
-| Pocket ID bootstrap | Staged: deploy Pocket ID → `https://auth.home.lan/setup` → admin passkey → OIDC clients → sops secrets → deploy oauth2-proxy. See `just auth-bootstrap` |
+| Pocket ID bootstrap | Declarative: `pocket-id-config.provision.enable = true` creates admin user + OIDC clients + avatar automatically. Only manual step: register passkey at `/setup`. Client secrets auto-generated and stored in `/var/lib/pocket-id/client-secrets/`. See `just auth-bootstrap` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
 | Swap exhaustion | Stale LSP processes (gopls/vtsls) eating ~7.4Gi RSS. Mitigated by daily `stale-lsp-cleanup` timer killing processes >24h |
 | Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |

@@ -97,6 +97,9 @@ _: {
           }
           // lib.optionalAttrs (config.virtualisation.oci-containers.containers ? dozzle) {
             "logs.${domain}" = protectedVHost "logs" ports.dozzle;
+          }
+          // lib.optionalAttrs config.services.monitor365.enable {
+            "monitor.${domain}" = protectedVHost "monitor" ports.monitor365-server;
           };
       };
 

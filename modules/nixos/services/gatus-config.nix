@@ -193,13 +193,12 @@ _: {
                 url = "http://localhost:${toString config.services.openseo.port}";
                 interval = "5m";
               })
-              {
+              (mkHttpCheck {
                 name = "Monitor365 Server";
                 group = "Monitoring";
-                url = "tcp://127.0.0.1:${toString ports.monitor365-server}";
+                url = "http://localhost:${toString ports.monitor365-server}";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
-              }
+              })
               (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
@@ -287,8 +286,20 @@ _: {
               })
               (mkHttpCheck {
                 name = "Crush Daily";
-                group = "Development";
+                group = "AI";
                 url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
+                interval = "5m";
+              })
+              (mkHttpCheck {
+                name = "Dozzle";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.dozzle}";
+                interval = "5m";
+              })
+              (mkHttpCheck {
+                name = "Gatus";
+                group = "Monitoring";
+                url = "http://localhost:${toString cfg.port}";
                 interval = "5m";
               })
             ];
