@@ -190,7 +190,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `harden` vs `hardenUser` | User services (systemd --user) must use `hardenUser`, not `harden`. All desktop notify services should pass `hardenFn = hardenUser` |
 | `lib/default.nix` import | Always import from `lib/default.nix`, never directly from `lib/systemd.nix`, `lib/systemd/service-defaults.nix`, or `lib/rocm.nix` |
 | Port centralization | All ports must be in `lib/ports.nix`. If a service exposes a port option, its default should reference `ports.*` — never hardcode |
-| `pmaOverlay` removed | PMA now uses `mkPackageOverlay` like all other Go overlays. Only `art-duplOverlay` remains manual (templ vendor surgery) |
+| `art-duplOverlay` removed | Now uses `mkPackageOverlay` — templ vendor surgery no longer needed (nixpkgs 26.11 resolves modules via GOMODCACHE) |
 | `rocm` via lib | ROCm helper accessed via `libHelpers.rocm {inherit pkgs;}` — not direct file import |
 | `colorSchemeName` removed | Dead code — use `colorScheme.slug` instead |
 | Boot GPU params | `amdgpuGttSize` / `ttmPagesLimit` in boot.nix are shared between `kernelParams` and `extraModprobeConfig` |

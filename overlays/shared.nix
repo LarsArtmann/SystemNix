@@ -45,23 +45,6 @@
       };
     };
 
-  art-duplOverlay = _final: prev: let
-    pkg = art-dupl.packages.${prev.stdenv.system}.default or null;
-  in
-    if pkg == null
-    then {}
-    else {
-      art-dupl = pkg.overrideAttrs (old: {
-        vendorHash = "sha256-bRt0Vht8CCzpfET87HasVkeeK5UPXnVvHIyOXdZ66CA=";
-        preBuild =
-          old.preBuild
-          + ''
-            mkdir -p vendor/github.com/a-h/templ/runtime
-            cp -r ${prev.templ.src}/runtime/. vendor/github.com/a-h/templ/runtime/
-            sed -i '/^github.com\/a-h\/templ\/safehtml$/a github.com/a-h/templ/runtime' vendor/modules.txt
-          '';
-      });
-    };
 
   buildflowOverlay = _final: prev: let
     pkg = buildflow.packages.${prev.stdenv.system}.default or null;
@@ -144,7 +127,7 @@ in [
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-bTdDHFF4wKpsfcEmnHzphXG/JsfTo2z6wy80+zNUR7w=";})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-Bt0ZxNcvDg31AtFE6Xm/kryUC9OOqtoBbQfsE3sB8Ks=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-bv1wRqBTEYThsNp7uTF41FbqoZ/Uq3yrgcn/REFmfRE=";})
-  art-duplOverlay
+  (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
   projectMetaOverlay
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
