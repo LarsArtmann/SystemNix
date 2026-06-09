@@ -1347,11 +1347,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1780970603,
-        "narHash": "sha256-yRk+sjozc94a8NGbnUq5XxYIVF5HK0255k7sVey9/co=",
+        "lastModified": 1780972728,
+        "narHash": "sha256-505arfBVvruuuU/s2B4Bvpe8vKQ6KEvj9BKLdUCvh8g=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "b37d6a4e5034fc3a6e9a91355693fdf80323d67f",
+        "rev": "189085548b22f66869687ec1d1e016e183321c69",
         "type": "github"
       },
       "original": {
@@ -1404,11 +1404,11 @@
         "treefmt-nix": "treefmt-nix_11"
       },
       "locked": {
-        "lastModified": 1780968537,
-        "narHash": "sha256-0F+mOj9pg2I9pj2GNkSeKCw4nrHfiPXq+UAwHX4eO3I=",
+        "lastModified": 1780972494,
+        "narHash": "sha256-2Iqch42thLujdzs+9zzGS04t/x/6IUqhr/j4W0sqaiM=",
         "ref": "master",
-        "rev": "7a74b854f7dd9cc5a4f53f7bf95772e337cfd688",
-        "revCount": 1250,
+        "rev": "1ccc423e120548d4bbfa68e857e24cd5a140c311",
+        "revCount": 1258,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -1815,11 +1815,11 @@
         "treefmt-nix": "treefmt-nix_13"
       },
       "locked": {
-        "lastModified": 1780955158,
-        "narHash": "sha256-Vg0Ym4REM9cDLP0O/K4VdSHYji82b6nd6YX+62mZOjs=",
+        "lastModified": 1780973476,
+        "narHash": "sha256-TYz32irWGsgHdOtXXRQ/GCRzKh3LQhS1GJ6whcclSqU=",
         "ref": "master",
-        "rev": "238398f82f5b940c111692d691dd18aeb3016809",
-        "revCount": 403,
+        "rev": "4bd14b6cc202dc3e8a8cbf10a5c6d487761270c8",
+        "revCount": 405,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-meta"
       },
