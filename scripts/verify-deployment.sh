@@ -13,9 +13,18 @@ PASS=0
 FAIL=0
 WARN=0
 
-log_pass() { echo -e "${GREEN}✓${NC} $1"; ((PASS++)) || true; }
-log_fail() { echo -e "${RED}✗${NC} $1"; ((FAIL++)) || true; }
-log_warn() { echo -e "${YELLOW}⚠${NC} $1"; ((WARN++)) || true; }
+log_pass() {
+  echo -e "${GREEN}✓${NC} $1"
+  ((PASS++)) || true
+}
+log_fail() {
+  echo -e "${RED}✗${NC} $1"
+  ((FAIL++)) || true
+}
+log_warn() {
+  echo -e "${YELLOW}⚠${NC} $1"
+  ((WARN++)) || true
+}
 log_info() { echo -e "  → $1"; }
 
 echo "=== SystemNix Post-Deploy Verification ==="
@@ -76,7 +85,7 @@ BOOT_TIME=$(systemd-analyze 2>/dev/null | head -1 | grep -oP '[\d.]+s' | head -1
 if [ "$BOOT_TIME" != "unknown" ]; then
   # Extract numeric value
   BT_NUM=$(echo "$BOOT_TIME" | sed 's/s//')
-  if (( $(echo "$BT_NUM < 60" | bc -l 2>/dev/null || echo "0") )); then
+  if (($(echo "$BT_NUM < 60" | bc -l 2>/dev/null || echo "0"))); then
     log_pass "Boot time: $BOOT_TIME (target: <60s)"
   else
     log_warn "Boot time: $BOOT_TIME (target: ~35s, investigate if >60s)"
@@ -154,7 +163,7 @@ log_info "Memory: ${MEM_USED}MB / ${MEM_TOTAL}MB used, Swap: ${SWAP_USED}MB used
 if [ -d /mnt/btrfs-root/@snapshots ]; then
   LATEST=$(ls -t /mnt/btrfs-root/@snapshots 2>/dev/null | head -1)
   if [ -n "$LATEST" ]; then
-    AGE=$(( ( $(date +%s) - $(stat -c %Y "/mnt/btrfs-root/@snapshots/$LATEST" 2>/dev/null || echo 0) ) / 86400 ))
+    AGE=$((($(date +%s) - $(stat -c %Y "/mnt/btrfs-root/@snapshots/$LATEST" 2>/dev/null || echo 0)) / 86400))
     if [ "$AGE" -le 3 ]; then
       log_pass "BTRFS snapshot fresh: $LATEST (${AGE}d old)"
     else
