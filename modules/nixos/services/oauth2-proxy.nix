@@ -10,6 +10,13 @@ _: {
     inherit (config.networking) domain;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkSecretCheck ports;
     proxyPort = cfg.port;
+
+    provisionEnabled = config.services.pocket-id-config.provision.enable;
+    clientSecretPath =
+      if provisionEnabled
+      then "${config.services.pocket-id.dataDir}/client-secrets/oauth2-proxy"
+      else config.sops.secrets.oauth2_proxy_client_secret.path;
+
     checkCookieSecret = mkSecretCheck pkgs {
       name = "oauth2-proxy-cookie-secret";
       secretPath = config.sops.secrets.oauth2_proxy_cookie_secret.path;
@@ -34,7 +41,7 @@ _: {
         provider = "oidc";
         oidcIssuerUrl = "https://auth.${domain}";
         clientID = "oauth2-proxy";
-        clientSecretFile = config.sops.secrets.oauth2_proxy_client_secret.path;
+        clientSecretFile = clientSecretPath;
         redirectURL = "https://auth.${domain}/oauth2/callback";
         httpAddress = "http://127.0.0.1:${toString proxyPort}";
         scope = "openid profile email";
@@ -54,8 +61,8 @@ _: {
 
       systemd.services.oauth2-proxy = {
         inherit onFailure;
-        after = ["pocket-id.service"];
-        wants = ["pocket-id.service"];
+        after = ["pocket-id.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
+        wants = ["pocket-id.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;

@@ -49,7 +49,7 @@ in {
             owner = "pocket-id";
             group = "pocket-id";
             restartUnits = ["pocket-id.service"];
-          } ["pocket_id_encryption_key"]
+          } ["pocket_id_encryption_key" "pocket_id_static_api_key"]
           // {
             oauth2_proxy_client_secret = {
               sopsFile = secretsDir + "/pocket-id.yaml";

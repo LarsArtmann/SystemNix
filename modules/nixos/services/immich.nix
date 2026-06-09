@@ -5,8 +5,12 @@ _: {
     lib,
     ...
   }: let
-    cfg = config.services.immich;
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
+    provisionEnabled = config.services.pocket-id-config.provision.enable or false;
+    clientSecretPath =
+      if provisionEnabled
+      then "${config.services.pocket-id.dataDir}/client-secrets/immich"
+      else config.sops.secrets.immich_oauth_client_secret.path;
   in {
     config = lib.mkIf config.services.immich.enable {
       services.immich = {
@@ -35,7 +39,7 @@ _: {
             enabled = true;
             issuerUrl = "https://auth.${config.networking.domain}";
             clientId = "immich";
-            clientSecret._secret = config.sops.secrets.immich_oauth_client_secret.path;
+            clientSecret._secret = clientSecretPath;
             scope = "openid profile email";
             autoLaunch = false;
             autoRegister = true;
@@ -76,6 +80,10 @@ _: {
             // {
               Environment = lib.mkForce "HOME=/var/lib/immich";
             };
+          immich-server = {
+            after = lib.optional provisionEnabled "pocket-id-provision.service";
+            wants = lib.optional provisionEnabled "pocket-id-provision.service";
+          };
           immich-db-backup = {
             description = "Immich PostgreSQL database backup";
             inherit onFailure;
@@ -89,10 +97,10 @@ _: {
             };
             script = ''
               set -euo pipefail
-              backupDir="${cfg.mediaLocation}/database-backup"
+              backupDir="${config.services.immich.mediaLocation}/database-backup"
               mkdir -p "$backupDir"
               stamp="$(date +%Y%m%d-%H%M%S)"
-              pg_dump --host=/run/postgresql --clean --if-exists --dbname=${cfg.database.name} \
+              pg_dump --host=/run/postgresql --clean --if-exists --dbname=${config.services.immich.database.name} \
                 > "$backupDir/immich-$stamp.sql"
               find "$backupDir" -name "immich-*.sql" -mtime +7 -delete
               echo "immich-db-backup: completed -> immich-$stamp.sql"

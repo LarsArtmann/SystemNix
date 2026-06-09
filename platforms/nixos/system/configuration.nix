@@ -166,7 +166,18 @@ in {
       caddy.enable = true;
       forgejo.enable = true;
       immich.enable = true;
-      pocket-id-config.enable = true;
+      pocket-id-config = {
+        enable = true;
+        provision = {
+          enable = true;
+          adminUser = {
+            username = "lars";
+            email = "lars@larsartmann.com";
+            firstName = "Lars";
+            lastName = "Artmann";
+          };
+        };
+      };
       oauth2-proxy-config.enable = true;
       # photomap — disabled: podman config permission issue
       # photomap.enable = true;
