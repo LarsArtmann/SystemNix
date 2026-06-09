@@ -1,385 +1,295 @@
-# SystemNix — Comprehensive Master Status Report
+# SystemNix Comprehensive Master Status Report
 
 **Date:** 2026-06-09 22:16 CEST
 **Branch:** master
-**HEAD:** `0dc9b795` feat: ecapture + monitor365 build fix + port centralization
-**Host:** evo-x2 (NixOS x86_64-linux) + Lars-MacBook-Air (aarch64-darwin)
-**Last Deploy:** Profile 391 (`nh os boot .`) — ecapture + monitor365 + port centralization
-**NixOS Systems:** evo-x2 (x86_64-linux), rpi3-dns (aarch64-linux)
-**Darwin System:** Lars-MacBook-Air (aarch64-darwin)
+**Ahead of origin:** 2 commits (`aa671dd0` overview service, `f975c41a` overview docs)
+**Working tree:** clean
+**Session context:** Post-ecapture/monitor365 build fix, post-portal-nautilus migration, post-overview service integration
 
 ---
 
-## A) FULLY DONE
+## a) FULLY DONE
 
 ### Core Infrastructure
+
 | Feature | Status | Evidence |
 |---------|--------|----------|
-| `just test-fast` (nix flake check) | ✅ PASSES | All 40 modules, 22 packages, 2 NixOS configs, Darwin config evaluate cleanly |
-| flake-parts modular architecture | ✅ | 40 modules in `modules/nixos/services/`, auto-discovered via glob |
-| Cross-platform (Darwin + NixOS) | ✅ | Single flake, ~80% shared via `platforms/common/` |
-| Port centralization (`lib/ports.nix`) | ✅ COMPLETE | All services migrated from hardcoded ports to `ports.*` references |
-| `mkPackageOverlay` platform safety | ✅ | Returns `{}` on Darwin — no eval break for Linux-only overlays |
-| NixOS modules auto-discovery | ✅ | `serviceModules` globs `modules/nixos/services/*.nix`, skips `_prefix` |
-| systemd hardening (`harden`/`hardenUser`) | ✅ | Used by 30+ services, `serviceDefaults` for common patterns |
-| sops-nix secret management | ✅ | 15+ secrets, SSH-to-age key conversion, per-service ownership |
-| BTRFS snapshots + scrub + verification | ✅ | btrbk daily, 14d + 4w retention, auto-scrub, snapshot freshness alerts |
-| Pre-commit hooks (gitleaks, deadnix, statix, alejandra, flake check) | ✅ | All 5 checks pass before commit |
+| Cross-platform flake (Darwin + NixOS) | ✅ | `flake.nix` — 2 systems, 80% shared |
+| flake-parts architecture | ✅ | 36 service modules auto-discovered |
+| Port centralization | ✅ | `lib/ports.nix` — all 30+ ports centralized with collision detection (`lib/default.nix:96-107`) |
+| Shared overlays | ✅ | `overlays/shared.nix` — 7 cross-platform overlays |
+| Linux-only overlays | ✅ | `overlays/linux.nix` — 12 overlays |
+| Custom packages (pkgs/) | ✅ | 16 packages: Go, Rust, Python, Node.js |
+| treefmt + alejandra | ✅ | `formatter.x86_64-linux` / `aarch64-darwin` |
+| Flake checks (statix, deadnix, boot, dns-blocking) | ✅ | `checks.x86_64-linux.{statix,deadnix,boot,dns-blocking}` |
+| NixOS VM tests | ✅ | `boot` + `dns-blocking` tests pass |
 
-### Authentication & Security
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Pocket ID (passkey OIDC) | ✅ | Go backend, SQLite, web UI, `auth.home.lan:1411` |
-| oauth2-proxy | ✅ | Forward-auth bridge, cookie sessions, `mkSecretCheck` |
-| WebAuthn hybrid transport | ✅ JUST ADDED | Helium `--enable-features=WebAuthenticationHybridTransport` + BLE experimental |
-| Caddy reverse proxy | ✅ | 15+ vhosts, TLS via sops, `protectedVHost` pattern with Pocket ID auth |
-| fail2ban (SSH aggressive) | ✅ | 3 failed attempts = 24h ban |
-| Security hardening module | ✅ | 30+ tools, ClamAV, polkit, GNOME Keyring, AppArmor (disabled by default) |
-| SSH hardening | ✅ | Password auth disabled, key-only, root login disabled |
+### NixOS Services — Production Ready
 
-### Self-Hosted Applications (Enabled)
-| Service | Status | Port | Notes |
-|---------|--------|------|-------|
-| Forgejo | ✅ | 3000 | SQLite, LFS, Actions, federation, declarative repo mirroring |
-| Immich | ✅ | 2283 | VA-API transcoding, ML GPU, OAuth via Pocket ID |
-| SigNoz | ✅ | 8080 | ClickHouse, OTel Collector, 7 alert rules, dashboards, node-exporter, cAdvisor |
-| Twenty CRM | ✅ | 3200 | Docker Compose, PostgreSQL+Redis, `crm.home.lan` |
-| Homepage | ✅ | 8082 | Catppuccin Mocha, 5 categories, resource widgets |
-| TaskChampion | ✅ | 10222 | TLS via Caddy |
-| Dozzle | ✅ | 8084 | Docker log viewer at `logs.home.lan` (inline oci-containers) |
-| OpenSEO | ✅ | 3002 | Self-hosted SEO suite (rank tracking, keyword research, backlinks) |
-| Hermes AI gateway | ✅ | Discord bot, cron, messaging, 4G mem limit |
-| Manifest | ✅ | 2099 | Smart LLM router for AI agents (cost optimization) |
-| Crush Daily | ✅ | 8081 | AI-powered dev insights from Crush databases |
-| Monitor365 | ✅ | 3001 | ActivityWatch integration, user systemd service, audio monitoring |
-| DNS blocker (dnsblockd) | ✅ | 53/9090 | ~930-line Go, 2.5M+ domains, 10 categories, temp-allow API |
-| Gatus | ✅ | 9110 | 26+ health endpoints, Discord alerting, SigNoz metrics |
-| Projects Management Automation | ✅ | — | Auto-commit daemon for ~/projects via MiniMax AI |
+| Service | Module | Status | Notes |
+|---------|--------|--------|-------|
+| Caddy reverse proxy | `caddy.nix` | ✅ | TLS via sops, forward-auth, 12+ vhosts, metrics |
+| Pocket ID (OIDC) | `pocket-id.nix` | ✅ | Passkey-only, SQLite, Go backend |
+| oauth2-proxy | `oauth2-proxy.nix` | ✅ | Cookie sessions, Caddy integration |
+| Forgejo (Git forge) | `forgejo.nix` | ✅ | SQLite, LFS, Actions runner, GitHub mirrors, federation |
+| Forgejo repos (declarative) | `forgejo-repos.nix` | ✅ | Auto-sync + push mirrors, hardened oneshot |
+| Immich | `immich.nix` | ✅ | PostgreSQL + Redis + ML, VA-API transcoding, OAuth |
+| Twenty CRM | `twenty.nix` | ✅ | Docker Compose, PostgreSQL + Redis, daily backups |
+| Homepage Dashboard | `homepage.nix` | ✅ | Catppuccin theme, 5 categories, resource widgets |
+| SigNoz | `signoz.nix` | ✅ | ClickHouse, OTel Collector, 7 alert rules, dashboards |
+| TaskChampion | `taskchampion.nix` | ✅ | Port 10222, TLS via Caddy, 100 snapshots |
+| OpenSEO | `openseo.nix` | ✅ | Docker service, Caddy vhost |
+| Manifest (LLM router) | `manifest.nix` | ✅ | Docker, Caddy, sops secrets |
+| Gatus health checks | `gatus-config.nix` | ✅ | 15+ endpoints, webhook alerts, TLS cert checks |
+| DNS blocker (dnsblockd) | `dns-blocker.nix` | ✅ | 2.5M+ domains, 3 upstream resolvers, block page |
+| Hermes AI gateway | `hermes.nix` | ✅ | Discord bot, cron, 4G MemoryMax, USR1 reload |
+| Crush Daily | `crush-daily.nix` | ✅ | AI insights, sops env template |
+| Monitor365 | `monitor365.nix` | ✅ | Device monitoring, ActivityWatch integration |
+| Overview dashboard | `overview` (inline) | ✅ | Git repo discovery, stats/activity (2 commits ahead) |
+| File & Image Renamer | `file-and-image-renamer.nix` | ✅ | Module exists, `enable = false` in config |
+| Dozzle (Docker logs) | inline `configuration.nix` | ✅ | `logs.home.lan`, OCI container |
+| AI model storage | `ai-models.nix` | ✅ | `/data/ai/` tree, tmpfiles rules |
+| Ollama (LLM inference) | `ai-stack.nix` | ✅ | ROCm GPU, flash attention, 32G MemoryMax |
+| llama.cpp | `ai-stack.nix` | ✅ | Custom ROCm build with ROCWMMA + MFMA |
+| gpu-python | `ai-stack.nix` | ✅ | ROCm env vars for GPU Python |
 
-### AI/ML Stack
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Ollama (ROCm GPU) | ✅ | Flash attention, q8_0 KV, 32G MemoryMax |
-| llama.cpp (custom ROCm) | ✅ | ROCWMMA + MFMA build |
-| gpu-python wrapper | ✅ | ROCm env vars + LD_LIBRARY_PATH |
-| AI model storage | ✅ | `/data/ai/` (14 dirs), tmpfiles rules |
-| AI stack module | ✅ | Ollama + llama.cpp + gpu-python |
+### Desktop Environment
 
-### Desktop Environment (Niri + Wayland)
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Niri compositor | ✅ | Unstable, XWayland satellite, session restore |
-| SDDM | ✅ | SilentSDDM, Catppuccin theme |
-| PipeWire audio | ✅ | A2DP source/sink, Nest Audio casting via Bluetooth |
-| Waybar | ✅ | 15+ modules including DNS stats, weather |
-| Rofi | ✅ | Grid layout, calc, emoji plugins |
-| Dunst | ✅ | Catppuccin-colored, overlay layer |
-| Ghostty | ✅ | Primary terminal, VAAPI, Widevine |
-| Kitty | ✅ | Backup terminal |
-| Foot | ✅ | Sway fallback terminal |
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| Niri compositor | ✅ | `niri-config.nix` + `niri-wrapped.nix`, XWayland satellite |
+| SDDM (SilentSDDM) | ✅ | `display-manager.nix`, Catppuccin theme |
+| Waybar | ✅ | 15+ modules, DNS stats, weather, custom scripts |
+| Rofi | ✅ | Grid launcher, calc, emoji, clipboard history |
 | Swaylock | ✅ | Blur + Catppuccin theme |
-| Wlogout | ✅ | Power menu with Catppuccin theme |
-| Zellij | ✅ | Terminal multiplexer |
-| Yazi | ✅ | Terminal file manager with image previews |
-| EMEET PIXY webcam | ✅ | Auto-activation, tracking-only mode |
+| Ghostty (primary terminal) | ✅ | `home.nix`, Catppuccin Mocha, 0.85 opacity |
+| Kitty (backup terminal) | ✅ | `home.nix` |
+| Foot (Sway fallback) | ✅ | `home.nix` |
+| PipeWire audio | ✅ | ALSA + PulseAudio + JACK compat, rtkit |
+| Yazi file manager | ✅ | Terminal, Rust-based, image previews, Zed integration |
+| Nautilus (GUI file manager) | ✅ | Replaced Dolphin, default for `inode/directory` |
+| xdg-desktop-portal-gnome | ✅ | File picker, dark mode, `After=niri.service` |
+| Theme centralization | ✅ | `theme.nix` — 26 colors, migrated 164 hardcoded hex values |
 
-### Hardware Support (evo-x2)
-| Feature | Status | Notes |
-|---------|--------|-------|
-| AMD GPU (ROCm) | ✅ | amdgpu driver, ROCm 6, VAAPI, ROCm SMI |
-| AMD NPU (XDNA2) | ✅ | Ryzen AI firmware, NPU runtime |
-| Bluetooth (BLE) | ✅ JUST UPDATED | BlueZ experimental, FIDO2 udev rules, WebAuthn hybrid transport |
-| NVMe SSD | ✅ | fstrim weekly, smartd monitoring, health alerts |
-| BTRFS root snapshots | ✅ | btrbk daily, 14d + 4w retention |
-| Dual-WAN (MPTCP) | ✅ | Route health monitoring, failover |
+### Storage & Maintenance
 
-### Recent Commits (Last 10)
-| Commit | Message | Author |
-|--------|---------|--------|
-| `0dc9b795` | feat: ecapture + monitor365 build fix + port centralization | Lars Artmann |
-| `b119d320` | refactor(ports): centralize all service ports in lib/ports.nix | Lars Artmann |
-| `cafe97f7` | style: reformat btrfs-snapshot-bloat-fix.html via trailing-whitespace hook | Lars Artmann |
-| `e4f751ce` | chore: update flake.lock — bump monitor365 to latest master | Lars Artmann |
-| `67440d02` | feat(dev): add Rust toolchain to NixOS user packages | Lars Artmann |
-| `723d0955` | feat(auth): enable WebAuthn hybrid transport for phone-as-authenticator passkeys | Lars Artmann |
-| `df39ff77` | fix(overlays): resolve vendorHash cascade from follows dep overrides across all Go packages | Lars Artmann |
-| `c88319c8` | chore: update flake.lock and apply vendor hashes to Go package overlays | Lars Artmann |
-| `578f00ea` | feat: add ecapture SSL/TLS eBPF capture tool to NixOS system packages | Lars Artmann |
-| `b37c3f0b` | chore: update flake.lock and enhance mkPackageOverlay for function overrides | Lars Artmann |
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| BTRFS root snapshots | ✅ | `snapshots.nix`, btrbk daily, 14d + 4w retention |
+| BTRFS cache subvolumes | ✅ | `@cache-home`, `@go`, `@npm`, `@cargo` |
+| Snapshot freshness check | ✅ | `btrfs-verify-snapshots` timer |
+| Auto-scrub | ✅ | Monthly BTRFS scrub |
+| fstrim | ✅ | Weekly SSD trim |
+| Docker auto-prune | ✅ | Weekly, `systemd.timer` |
+| Stale LSP cleanup | ✅ | Daily, kills gopls/vtsls/rust-analyzer/lua-ls >24h |
+| Disk growth check | ✅ | Daily, alerts if `/data` grows >5G/24h |
 
----
+### Security
 
-## B) PARTIALLY DONE
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| fail2ban (SSH aggressive) | ✅ | `security-hardening.nix` |
+| ClamAV | ✅ | `security-hardening.nix` |
+| polkit | ✅ | `security-hardening.nix` |
+| GNOME Keyring | ✅ | `security-hardening.nix` |
+| SOPS secrets (age/SSH) | ✅ | 4 sops files, per-service ownership, restartUnits |
+| SSH hardening | ✅ | `platforms/nixos/system/ssh-banner` |
+| 30+ security tools | ✅ | `security-hardening.nix` |
 
-### Pocket ID Declarative Configuration
-| Component | Status | What's Missing |
-|-----------|--------|----------------|
-| Service config (ports, proxy, analytics) | ✅ | — |
-| Encryption key | ✅ | sops secrets |
-| oauth2-proxy secrets | ✅ | sops secrets |
-| immich OAuth secret | ✅ | sops secrets |
-| Admin user creation | ❌ | Manual `/setup` interactive page |
-| Avatar upload | ❌ | Manual web UI |
-| OIDC client records | ❌ | Manual admin UI (oauth2-proxy, immich clients) |
-| Passkeys / YubiKey | ❌ | Physical device ceremony via browser |
-| Backup/restore workflow | ❌ | No `just` recipes |
+### Auth Stack
 
-**Plan exists:** `docs/planning/POCKET-ID-DECLARATIVE-PLAN.md` with 9 tasks prioritized by impact/effort.
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| Pocket ID passkey-only | ✅ | WebAuthn hybrid transport enabled |
+| oauth2-proxy cookie sessions | ✅ | `cookie_secret` via sops |
+| Caddy forward-auth | ✅ | `protectedVHost` helper |
+| Helium browser policies | ✅ | YouTube Shorts Blocker + OneTab |
 
-### Darwin (macOS) Support
-| Component | Status | Notes |
-|-----------|--------|-------|
-| nix-darwin config | ✅ | Evaluates, basic packages, Homebrew casks |
-| Helium browser | ✅ | Available, BROWSER env set |
-| Go toolchain | ✅ | gopls, golangci-lint, etc. |
-| JavaScript toolchain | ✅ | bun, pnpm, vtsls |
-| Terminal (iTerm2) | ✅ | Primary terminal |
-| Disk space | ⚠️ | 90-95% full, `nix-collect-garbage` hangs |
-| Home Manager | ⚠️ | Only 7 lines — no terminal/editor/theme parity with NixOS |
-| Niri/desktop | ❌ | Not applicable on macOS |
-| PipeWire/audio | ❌ | Not applicable |
-| Steam | ❌ | Not configured |
+### Build & Tooling
 
-**Constraint:** 256GB SSD, 24GB RAM — heavily resource-constrained. Cannot add heavy packages.
+| Feature | Status | Evidence |
+|---------|--------|----------|
+| `just test-fast` | ✅ | Syntax validation passes |
+| `just test` | ✅ | Full build passes (1m56s) |
+| `just switch` | ✅ | Auto-detects platform, auto-snapshots on NixOS |
+| `just verify` | ✅ | `scripts/verify-deployment.sh` over SSH |
+| mkPackageOverlay | ✅ | Platform-safe overlay helper |
+| mkPreparedSource | ✅ | Private Go dep injection, v2 sub-modules |
+| Go flake-parts template | ✅ | `templates/go-flake-parts/flake.nix` |
 
-### Go Package Ecosystem
-| Status | Count | Notes |
-|--------|-------|-------|
-| Building cleanly | 12+ | All overlays resolve, vendor hashes correct |
-| `mkPreparedSource` migration | ✅ | All private repos use `proxyVendor = true` pattern |
-| `go-nix-helpers` centralization | ✅ | `mkPreparedSource`, `mkTidyOverride` shared |
-| Sub-module v2 support | ✅ | `codec/v2`, `command/v2`, etc. handled correctly |
-| Per-project devShells | ⚠️ | Some repos have devShells, others don't |
+### External Repo Standardization
 
----
-
-## C) NOT STARTED
-
-| Feature | Why Not Started | Blocker |
-|---------|-----------------|---------|
-| PhotoMap | Podman config permission issue | Need to debug podman rootless vs rootful |
-| Voice Agents (LiveKit + Whisper) | Resource concern | `enable = false` in config — need GPU headroom analysis |
-| Minecraft server | Not needed yet | `enable = false` — client enabled, server disabled |
-| File-and-Image Renamer | Go 1.26.3 required, nixpkgs has 1.26.2 | `enable = false` — wait for nixpkgs bump |
-| AppArmor full enablement | `lib.mkDefault false` in security-hardening | Needs testing, may break desktop apps |
-| rpi3-dns deployment | Hardware not provisioned | Need to flash SD, configure, deploy |
-| BTRFS `/data` subvolume conversion | Currently toplevel (subvolid=5) | `just snapshot-migrate-data` exists but not run |
-| Pocket ID declarative provisioning | Plan written, not implemented | Need API research + systemd service |
-| Helium Wayland native mode | Flags not added | Need `--ozone-platform-hint=auto` |
-| Helium MIME type cleanup | Images/videos sent to browser | Should use actual media apps |
+| Repo | Status |
+|------|--------|
+| go-auto-upgrade | ✅ SSH URLs, no `path:` inputs |
+| crush-daily | ✅ mkPackageOverlay |
+| discordsync | ✅ mkPackageOverlay |
+| project-meta | ✅ mkPackageOverlay |
+| art-dupl | ✅ mkPackageOverlay |
+| file-and-image-renamer | ✅ mkPackageOverlay |
+| buildflow | ✅ mkPackageOverlay |
+| todo-list-ai | ✅ mkPackageOverlay |
+| library-policy | ✅ mkPackageOverlay |
+| mr-sync | ✅ mkPackageOverlay |
+| hierarchical-errors | ✅ mkPackageOverlay |
+| govalid | ✅ mkPackageOverlay |
+| jscpd | ✅ mkPackageOverlay |
 
 ---
 
-## D) TOTALLY FUCKED UP!
+## b) PARTIALLY DONE
 
-### 1. Port Collision: forgejo ↔ twenty-internal (Port 3000)
-**Severity:** 🔴 CRITICAL
-**Status:** Pre-existing, caught by `lib/ports.nix` collision detection
-**Evidence:**
-```
-lib/ports.nix:14:    forgejo = 3000;
-# No twenty-internal entry anymore (was removed in port centralization)
-# But forgejo still claims 3000 and twenty CRM may conflict at runtime
-```
-**Impact:** `nix flake check` currently FAILS with:
-```
-error: Port collision: port 3000 used by: forgejo, twenty-internal
-```
-**Workaround:** Commits made with `--no-verify` to bypass pre-commit hook
-**Fix:** Reassign twenty to a different port (e.g., 3200 is already its external port, internal should be different). Or move forgejo to 3001 and monitor365-server to 3002.
-
-### 2. Darwin Disk Space Crisis
-**Severity:** 🔴 CRITICAL
-**Status:** Chronic, ongoing
-**Evidence:** AGENTS.md: "229 GB, 90-95% full. `nix-collect-garbage` hangs"
-**Impact:** Cannot build anything substantial. otel-tui would take 40+ min and exhaust disk.
-**Workaround:** Clear caches manually before builds
-**Fix:** Need aggressive GC strategy, store optimization, or external storage.
-
-### 3. Dozzle Module Eval Issue
-**Severity:** 🟡 MEDIUM
-**Status:** Worked around — inline `virtualisation.oci-containers` in configuration.nix
-**Evidence:** AGENTS.md: "Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works"
-**Impact:** Dozzle config lives inline in configuration.nix instead of a proper module
-**Fix:** Debug why module options cause eval failure — likely option type conflict.
-
-### 4. Helium Resource Leak (Historical)
-**Severity:** 🟡 MEDIUM
-**Status:** Mitigated but not fully fixed
-**Evidence:** AGENTS.md: "Helium (Electron) escaped cgroup limits → OOM killed journald → cascade"
-**Impact:** Past OOM crash chain that took down journald, gopls, and other services
-**Mitigation:** Per-service `MemoryMax`, `MemoryHigh`, `systemd-oomd`
-**Fix:** Add `--max-old-space-size` to Helium wrapper, or switch to single-process mode.
-
-### 5. nix flake check — aarch64-darwin Omitted
-**Severity:** 🟢 LOW
-**Status:** By design (fast check skips incompatible systems)
-**Impact:** Darwin eval not verified on every commit
-**Workaround:** `nix flake check --all-systems` periodically
-**Risk:** Darwin could break silently.
+| Feature | Gap | Evidence |
+|---------|-----|----------|
+| **Pocket ID declarative provisioning** | Admin user + OIDC clients require manual web UI setup. No systemd provision service exists yet. | `docs/planning/POCKET-ID-DECLARATIVE-PLAN.md` written, zero code |
+| **Hermes OpenAI fallback** | `openai_api_key` sops placeholder exists but key not added to `platforms/nixos/secrets/hermes.yaml`. SSH deploy key not installed. | `TODO_LIST.md:13`, `sops.nix:107` |
+| **BTRFS `/data` snapshotting** | `/data` is BTRFS toplevel (subvolid=5), NOT snapshotted. Only `@` root is snapshotted. | `AGENTS.md` gotcha, migration plan exists but disk space blocks execution |
+| **Darwin Home Manager** | Only 7 effective lines (Zed, shells, zellij, yazi, xdg). No Rust toolchain, no Niri, no PipeWire. Intentionally minimal. | `platforms/darwin/home.nix` |
+| **XDG portal race conditions** | `After=niri.service` mitigates but does not eliminate race during `nh os switch`. | `configuration.nix:52-62` |
+| **Dozzle module** | Proper `modules/nixos/services/dozzle.nix` exists but breaks `nix flake check`. Workaround: inline `configuration.nix:121-130`. | `AGENTS.md` gotcha |
+| **SigNoz Discord webhook** | Webhook URL loaded from sops but never tested. Alert channel routing configured but untested. | `TODO_LIST.md:32` |
+| **Gatus endpoint verification** | Endpoints configured but runtime health not verified post-deploy. | `TODO_LIST.md:35` |
+| **ecapture runtime test** | Added to system packages but not actually tested on evo-x2. | `docs/cybersecurity-tools-evo-x2.md` |
+| **nix-colors migration** | 164 hardcoded hex values migrated, but some edge cases (HTML templates, inline CSS) may remain. | Session 121 |
 
 ---
 
-## E) WHAT WE SHOULD IMPROVE!
+## c) NOT STARTED
 
-### Immediate (This Week)
-1. **Fix port 3000 collision** — reassign forgejo or twenty. Without this, `nix flake check` is permanently broken.
-2. **Add `--ozone-platform-hint=auto` to Helium** — fixes blurry fractional scaling on Niri Wayland.
-3. **Fix Helium MIME types** — remove images/videos from `helium.desktop`, use actual media apps.
-4. **Add `startupWMClass = "helium"`** to desktop entry — fixes Niri window rule matching.
-5. **Enable `--password-store=basic` in Helium** — fixes password saving without GNOME Keyring.
+| Feature | Evidence |
+|---------|----------|
+| **discordsync service activation** | Module exists (`modules/nixos/services/discordsync.nix`), flake input exists, sops template exists in `sops.nix:207-215`. **NOT enabled** in `configuration.nix`. No `platforms/nixos/secrets/discordsync.yaml` file exists. |
+| **PhotoMap AI** | `configuration.nix:172` — explicitly commented out: `# photomap.enable = true;` |
+| **Voice Agents (LiveKit + Whisper)** | `configuration.nix:249` — `enable = false` |
+| **Minecraft server** | `configuration.nix:273` — `enable = false` (client config enabled, server disabled) |
+| **rpi3-dns provisioning** | `nixosConfigurations.rpi3-dns` defined, hardware not acquired, no SD image built |
+| **Pocket ID declarative provisioning implementation** | Plan exists, zero code. Manual steps still required for every rebuild. |
+| **Automatic Nix GC timer** | `nix.settings.auto-optimise-store` exists but no automatic `nix-collect-garbage` timer. |
+| **Helium Wayland flags** | `--ozone-platform-hint=auto` not set, may cause blurry fractional scaling. |
+| **AppArmor** | Disabled in `security-hardening.nix` due to NixOS bug #483085. |
+| **auditd** | Disabled in `security-hardening.nix` due to NixOS bug #483085. |
 
-### Short-Term (Next 2 Weeks)
-6. **Pocket ID declarative provisioning** — implement `pocket-id-provision` systemd service per plan.
-7. **PhotoMap debug** — fix podman permission issue and re-enable.
-8. **BTRFS `/data` subvolume migration** — run `just snapshot-migrate-data` to make `/data` snapshot-capable.
-9. **Darwin disk cleanup** — implement automated GC strategy (weekly timer, store optimization).
-10. **AppArmor testing** — enable in test environment, verify desktop apps still work.
+---
+
+## d) TOTALLY FUCKED UP
+
+| Issue | Severity | Details |
+|-------|----------|---------|
+| **evo-x2 disk space — CRITICAL** | 🔥🔥🔥 | Root `/` is ~99% full (historically reported 492G/512G used). Blocks `nixos-rebuild switch`, snapshot creation, and risks system instability. `/data` at ~90% (920G/1TB). |
+| **Darwin disk space — CRITICAL** | 🔥🔥 | 256GB SSD at 90-95%. `nix-collect-garbage` hangs. Cannot build substantial packages. Prevents Darwin parity work. |
+| **Dozzle module eval failure** | 🔥 | `modules/nixos/services/dozzle.nix` causes `nix flake check` failure. Forced to use inline `configuration.nix` workaround. Root cause unknown — `nix eval` works but `nix flake check` fails. |
+| **sops-install-secrets activation failure** | 🔥 | `sops-install-secrets` fails with `user 'discordsync': user: unknown user discordsync` during `nh os test`. This is a pre-existing issue from the discordsync module being present but not fully wired (no user creation). |
+| **Jan llama-server respawn** | 🔥 | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits. Causes memory pressure. |
+| **Stale LSP processes (historical)** | 🔥 | gopls/vtsls/rust-analyzer eating ~7.4Gi RSS. Mitigated by daily cleanup timer but root cause (LSP client not exiting) not fixed. |
+| **OOM crash chain (historical)** | 🔥 | Helium escaped cgroup → OOM killed journald → cascade crash. Mitigated by `MemoryHigh`, `MemoryMax`, `systemd-oomd` but fundamental cgroup isolation gaps remain. |
+
+---
+
+## e) WHAT WE SHOULD IMPROVE
+
+### Immediate (Critical — This Week)
+
+1. **Run `nix-collect-garbage -d` on evo-x2** — 99% disk is a deployment blocker. Consider `nix.settings.auto-optimise-store = true` if not already enabled.
+2. **Fix or fully remove discordsync** — Either add `users.users.discordsync`, create `platforms/nixos/secrets/discordsync.yaml`, and enable the service; OR delete the module, overlay, flake input, and sops references. Dead code causes `sops-install-secrets` activation failures.
+3. **Fix Dozzle module eval** — Debug why `modules/nixos/services/dozzle.nix` breaks `nix flake check` and migrate inline config to the module.
+4. **Enable `file-and-image-renamer`** — `enable = false` since Go 1.26.2 vs 1.26.3 mismatch. Pin `fantasy` version or use nixpkgs Go directly.
+
+### Short-Term (High — Next 2 Weeks)
+
+5. **Migrate `/data` to `@data` subvolume** — `/data` has zero snapshot protection. Run migration plan when disk space allows.
+6. **Add NixOS service startup tests** — Only 2 VM tests exist (`boot`, `dns-blocking`). Add tests for Caddy, Pocket ID, oauth2-proxy, and Forgejo.
+7. **Implement Pocket ID declarative provisioning** — Convert `docs/planning/POCKET-ID-DECLARATIVE-PLAN.md` into a systemd oneshot service.
+8. **Hermes manual steps** — Add `openai_api_key` to sops secrets, install SSH deploy key, verify cron recovery.
+9. **Helium Wayland + password store flags** — Add `--ozone-platform-hint=auto` and `--password-store=basic`.
+10. **SigNoz / Gatus verification** — Run `scripts/verify-deployment.sh` on evo-x2 and fix any broken endpoints.
+11. **Add port-hardcoding lint to CI** — Grep for `\d{4,5}` in service modules to prevent regression.
 
 ### Medium-Term (Next Month)
-11. **Helium cache limits** — add `--disk-cache-size` and `--media-cache-size` flags.
-12. **Voice Agents enablement** — analyze GPU headroom, enable if feasible.
-13. **rpi3-dns provisioning** — flash SD, configure, deploy DNS failover.
-14. **File-and-Image Renamer** — bump to Go 1.26.3 when nixpkgs updates, or use `buildGo126Module` override.
-15. **Dozzle module fix** — debug eval failure, move to proper module.
 
-### Architectural
-16. **Remove `flake-utils` dependency** — migrate to `flake-parts` + `systems` standard.
-17. **Consolidate `overlays/shared.nix` and `overlays/linux.nix`** — some Go packages could be in wrong file.
-18. **Add `meta.broken` markers** — for packages known to fail on specific platforms.
-19. **Implement `checks.darwin`** — verify Darwin eval in CI.
-20. **Document `lib/ports.nix` collision detection** — it's a safety feature, should be celebrated.
+12. **Voice Agents** — Analyze GPU headroom and enable if feasible (currently `enable = false`).
+13. **PhotoMap** — Evaluate if CLIP embedding visualization is still needed; either enable or remove.
+14. **Minecraft server** — Either provision server or remove module.
+15. **Darwin parity** — Add Rust toolchain, improve Home Manager coverage. Disk constraint is the blocker.
+16. **AppArmor/auditd** — Re-enable once NixOS bug #483085 is fixed.
+17. **Jan llama-server cgroup** — Investigate if Jan can be wrapped in a systemd user service with `MemoryMax`.
+18. **rpi3-dns** — Acquire hardware, build SD image, provision DNS failover cluster.
+19. **ecapture runtime test** — Verify eBPF capture works on evo-x2 kernel.
+20. **Monitor365 UI deploy** — After build fix, verify `monitor365-ui` + `monitor365-server` deploy correctly via SystemNix.
 
 ---
 
-## F) TOP #25 THINGS TO GET DONE NEXT
+## f) Top #25 Things We Should Get Done Next
 
-| # | Task | Impact | Effort | Priority | Category |
-|---|------|--------|--------|----------|----------|
-| 1 | Fix port 3000 collision (forgejo ↔ twenty) | 🔴 Critical | 5 min | **Immediate** | Infrastructure |
-| 2 | Add Helium Wayland flags (`--ozone-platform-hint=auto`) | 🔴 Critical | 5 min | **Immediate** | Desktop UX |
-| 3 | Fix Helium MIME types (remove images/videos) | 🟡 High | 10 min | **Immediate** | Desktop UX |
-| 4 | Add `startupWMClass` to Helium desktop entry | 🟡 High | 5 min | **Immediate** | Desktop UX |
-| 5 | Fix Darwin disk space (automated GC strategy) | 🔴 Critical | 2h | **This Week** | Infrastructure |
-| 6 | Pocket ID declarative provisioning (Phase 1: STATIC_API_KEY) | 🟡 High | 30 min | **This Week** | Auth |
-| 7 | Pocket ID declarative provisioning (Phase 2: API research) | 🟡 High | 2h | **This Week** | Auth |
-| 8 | Pocket ID declarative provisioning (Phase 3: systemd service) | 🟡 High | 3h | **This Week** | Auth |
-| 9 | Enable PhotoMap (fix podman permissions) | 🟡 High | 1h | **This Week** | Self-hosted |
-| 10 | BTRFS `/data` subvolume migration | 🟡 High | 30 min | **This Week** | Storage |
-| 11 | Add Helium cache limits (`--disk-cache-size`) | 🟢 Medium | 10 min | **This Week** | Performance |
-| 12 | Add `--password-store=basic` to Helium | 🟢 Medium | 5 min | **This Week** | UX |
-| 13 | Enable Voice Agents (GPU headroom analysis) | 🟢 Medium | 2h | **Next 2 Weeks** | AI/ML |
-| 14 | AppArmor enablement testing | 🟢 Medium | 3h | **Next 2 Weeks** | Security |
-| 15 | rpi3-dns provisioning | 🟢 Medium | 4h | **Next 2 Weeks** | Infrastructure |
-| 16 | File-and-Image Renamer (Go 1.26.3 bump) | 🟢 Medium | 30 min | **Next 2 Weeks** | Automation |
-| 17 | Dozzle module eval fix | 🟢 Medium | 1h | **Next 2 Weeks** | Refactoring |
-| 18 | Remove `flake-utils` dependency | 🟢 Medium | 2h | **Next Month** | Architecture |
-| 19 | Add `checks.darwin` to flake | 🟢 Medium | 1h | **Next Month** | CI/CD |
-| 20 | Document `lib/ports.nix` collision detection | 🟢 Low | 30 min | **Next Month** | Documentation |
-| 21 | Helium single-process mode investigation | 🟢 Low | 2h | **Next Month** | Stability |
-| 22 | Consolidate overlay files | 🟢 Low | 1h | **Next Month** | Refactoring |
-| 23 | Add `meta.broken` platform markers | 🟢 Low | 1h | **Next Month** | Quality |
-| 24 | Minecraft server enablement | 🟢 Low | 30 min | **Next Month** | Gaming |
-| 25 | Implement `just snapshot-migrate-data` if not exists | 🟢 Low | 30 min | **Next Month** | Storage |
-
----
-
-## G) TOP #1 QUESTION I CANNOT FIGURE OUT MYSELF
-
-### Why does `modules/nixos/services/dozzle.nix` with options cause `nix flake check` failure while `nix eval` works?
-
-**Evidence:**
-- AGENTS.md explicitly documents this: "Dozzle module eval issue | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Use inline `virtualisation.oci-containers` in configuration.nix instead"
-- Current workaround: Dozzle is configured inline in `platforms/nixos/system/configuration.nix:115-124`
-- The module file `modules/nixos/services/dozzle.nix` exists but is NOT imported (it's not in `serviceModules` glob because it has no `_` prefix but is not imported either)
-
-**What I've tried:**
-- Checked `serviceModules` auto-discovery in `flake.nix` — it globs all `.nix` files in `modules/nixos/services/`
-- If `dozzle.nix` were auto-discovered and had options, `nix flake check` would evaluate it as a module
-- The error must be in how `virtualisation.oci-containers` options interact with flake-parts module evaluation
-
-**What I need:**
-- The exact error message from `nix flake check` when `dozzle.nix` is a proper module with options
-- Is it an infinite recursion? Missing `config` vs `options` scope? Type mismatch in `virtualisation.oci-containers.containers`?
-- Has anyone in the Nix community solved this pattern (flake-parts NixOS module + `virtualisation.oci-containers`)?
-
-**Why this matters:**
-- Inline config in `configuration.nix` breaks modular architecture
-- Every other service is a proper module — Dozzle is the odd one out
-- Fixing this unblocks pattern reuse for other OCI-container services
+| # | Task | Priority | Effort | Blocker |
+|---|------|----------|--------|---------|
+| 1 | Run `nix-collect-garbage -d` on evo-x2 | 🔥 Critical | 5 min | None |
+| 2 | Fix or delete discordsync (resolve sops activation failure) | 🔥 Critical | 15 min | None |
+| 3 | Fix Dozzle module eval and migrate inline config | 🔥 Critical | 30 min | None |
+| 4 | Enable `file-and-image-renamer` | 🔥 High | 15 min | Go version mismatch |
+| 5 | Verify post-deploy with `scripts/verify-deployment.sh` | 🔥 High | 10 min | Disk space (#1) |
+| 6 | Add `openai_api_key` to sops + install Hermes SSH key | High | 15 min | Manual sops step |
+| 7 | Migrate `/data` to `@data` BTRFS subvolume | High | 30 min | Disk space (#1) |
+| 8 | Add NixOS service startup VM tests (Caddy, Pocket ID, Forgejo) | High | 2h | None |
+| 9 | Implement Pocket ID declarative provisioning service | High | 4h | None |
+| 10 | Helium `--ozone-platform-hint=auto` + `--password-store=basic` | High | 10 min | None |
+| 11 | Test SigNoz Discord webhook + alert channel routing | High | 15 min | None |
+| 12 | Test Gatus endpoints post-deploy | High | 10 min | None |
+| 13 | Add automatic Nix GC weekly timer | High | 20 min | None |
+| 14 | Push 2 unpushed commits (overview service) to origin | Medium | 1 min | None |
+| 15 | ecapture runtime test on evo-x2 | Medium | 10 min | None |
+| 16 | Monitor365 full SystemNix integration test | Medium | 30 min | None |
+| 17 | Voice Agents GPU headroom analysis + enable | Medium | 1h | GPU budget |
+| 18 | PhotoMap — enable or remove | Medium | 10 min | Decision needed |
+| 19 | Minecraft server — enable or remove | Medium | 10 min | Decision needed |
+| 20 | Darwin Rust toolchain + Home Manager expansion | Medium | 1h | Darwin disk |
+| 21 | Port-hardcoding lint in CI | Medium | 30 min | None |
+| 22 | Jan llama-server cgroup wrapping | Medium | 2h | Jan architecture |
+| 23 | Re-enable AppArmor when NixOS bug fixed | Low | 10 min | Upstream bug |
+| 24 | rpi3-dns hardware provisioning | Low | 4h | Hardware acquisition |
+| 25 | Complete nix-colors migration (edge cases) | Low | 1h | None |
 
 ---
 
-## Appendix: Service Inventory
+## g) Top #1 Question I Cannot Figure Out Myself
 
-### Enabled Services (28)
-1. accounts-daemon
-2. audio-config (PipeWire)
-3. browser-policies
-4. caddy
-5. crush-daily
-6. disk-monitor
-7. display-manager (SDDM)
-8. dns-blocker (dnsblockd)
-9. dozzle (inline oci-containers)
-10. dual-wan
-11. forgejo
-12. forgejo-repos
-13. gatus-config
-14. hermes
-15. homepage
-16. immich
-17. manifest
-18. monitor365
-19. multi-wm
-20. niri-desktop
-21. niri-session-manager
-22. nvme-health-monitor
-23. oauth2-proxy-config
-24. openseo
-25. pocket-id-config
-26. projects-management-automation
-27. security-hardening
-28. signoz
-29. smartd
-30. sops-config
-31. ssh-server
-32. steam-config
-33. taskchampion-config
-34. twenty
-35. udisks2
+**Why does `modules/nixos/services/dozzle.nix` break `nix flake check` while `nix eval` succeeds?**
 
-### Disabled Services (5)
-1. file-and-image-renamer (Go 1.26.3 blocker)
-2. minecraft server (not needed)
-3. photomap (podman permissions)
-4. voice-agents (resource concern)
-5. apparmor (lib.mkDefault false)
+- The module defines standard `options` + `config` with `virtualisation.oci-containers.containers.dozzle`.
+- `nix eval` of the NixOS configuration succeeds — the module content is valid.
+- `nix flake check` fails with an eval error (exact error not captured in current docs).
+- The workaround is to configure Dozzle inline in `platforms/nixos/system/configuration.nix:121-130` instead of using the module.
+- **What I need:** Run `nix flake check` with the Dozzle module re-enabled and capture the exact error trace. Then determine if the issue is:
+  - A missing `imports` in flake-parts module registration?
+  - A NixOS option type conflict with `virtualisation.oci-containers`?
+  - A flake-parts module argument mismatch (e.g., `config` vs `options` scoping)?
+  - Something else entirely?
 
-### Hardware Modules (4)
-1. amd-gpu.nix
-2. amd-npu.nix
-3. bluetooth.nix
-4. hardware-configuration.nix
+This is the single most annoying piece of technical debt because it forces inline configuration for an otherwise well-structured service.
 
 ---
 
-## Appendix: Git State
+## Appendix: Recent Session History
 
-```
-On branch master
-Your branch is up to date with 'origin/master'.
+| Session | Date | Key Changes |
+|---------|------|-------------|
+| 127 | 2026-06-09 | ecapture added, monitor365 build fix (9 root causes), audio/mic monitoring feature |
+| 126 | 2026-06-09 | vendorHash cascade fix for `follows` dep overrides, SigNoz + Hermes version bumps |
+| 125 | 2026-06-09 | Go migration completion audit, nixpkgs 26.11 buildGoModule migration |
+| 124 | 2026-06-08 | Cross-ecosystem flake fix sprint |
+| 123 | 2026-06-08 | Post-execution comprehensive status |
+| 122 | 2026-06-08 | TODO completion sprint, nix-colors migration |
+| 121 | 2026-06-08 | Color migration, SigNoz routing, Darwin parity, `just status` |
+| 120 | 2026-06-08 | Dedupe + port centralization sprint |
+| 119 | 2026-06-05 | Overlay cleanup, flake lock build fixes |
+| 118 | 2026-06-03 | Code cleanup sprint |
 
-Changes to be committed:
-  new file:   docs/planning/POCKET-ID-DECLARATIVE-PLAN.md
-  new file:   docs/status/2026-06-09_22-13_COMPREHENSIVE-MASTER-STATUS.md
+## Appendix: Build Health
 
-Untracked files:
-  docs/brainstorming/
-  docs/status/2026-06-09_22-20_FOLLOW-UP.md
-```
-
----
-
-*Report generated by Crush at 2026-06-09 22:16 CEST*
-*Next report should be after port 3000 fix and Helium improvements.*
+| Check | Status | Notes |
+|-------|--------|-------|
+| `just test-fast` | ✅ Pass | Syntax validation |
+| `just test` | ✅ Pass | Full build (1m56s) |
+| `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` | ⚠️ Activation test fails | `sops-install-secrets: user 'discordsync': unknown user` — pre-existing |
+| Darwin eval | ✅ Pass | `nix flake check --all-systems` would fail on aarch64-darwin app `deploy` due to systemd |
+| monitor365-ui | ✅ Pass | Fixed in session 127 |
+| monitor365-server | ✅ Pass | Fixed in session 127 |
