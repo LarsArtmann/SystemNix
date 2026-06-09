@@ -40,7 +40,7 @@
       pname = "signoz";
       inherit version;
       inherit src;
-      vendorHash = "";
+      vendorHash = "sha256-4HkmDq+c7Oygei2QzlPFtdQNDdalS2M27p3ALxQKi24=";
       subPackages = ["cmd/community"];
       tags = ["timetzdata"];
 

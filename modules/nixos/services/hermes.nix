@@ -9,30 +9,14 @@
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
     cfg = config.services.hermes;
     hermesPkg = let
-      # Upstream hermes-agent has a stale npmDepsHash in nix/tui.nix.
-      # On hermes upgrade: remove fixedHash, let upstream hash attempt, if it fails:
-      #   1. Delete the hash below
-      #   2. Run: nix build .#nixosConfigurations.evo-x2 --no-out-link 2>&1 | grep got
-      #   3. Paste the correct hash here
-      fixedHash = "";
+      # Upstream (v2026.6.5+) uses fetcherVersion=2 in nix/lib.nix, no hash patching needed.
       baseOverlay = inputs.hermes-agent.overlays.default;
       patchedOverlay = final: prev: let
         base = baseOverlay final prev;
-        tuiFixed = base.hermes-agent.passthru.hermesTui.overrideAttrs (old: {
-          npmDeps = final.fetchNpmDeps {
-            inherit (old) src;
-            hash = fixedHash;
-          };
-        });
-        interceptCallPackage = path: args:
-          if (builtins.match ".*tui\\.nix" (toString path)) != null
-          then tuiFixed
-          else final.callPackage path args;
       in
         base
         // {
           hermes-agent = base.hermes-agent.override {
-            callPackage = interceptCallPackage;
             extraDependencyGroups = ["messaging" "anthropic" "firecrawl" "edge-tts" "fal" "exa"];
           };
         };
