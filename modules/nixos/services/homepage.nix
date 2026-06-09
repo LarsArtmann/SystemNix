@@ -66,10 +66,13 @@ _: {
           Development:
             style: row
             columns: 4
-          Productivity:
+          AI:
             style: row
             columns: 4
           Monitoring:
+            style: row
+            columns: 4
+          Productivity:
             style: row
             columns: 4
       '';
@@ -92,14 +95,16 @@ _: {
                 description: DNS Resolver + Blocker
                 icon: unbound.png
                 statusStyle: dot
-                # DNS runs on UDP/TCP 53 - no HTTP health check available
             - PostgreSQL:
                 description: Database Server
                 icon: postgres.png
             - Redis:
                 description: Cache (Immich)
                 icon: redis.png
-
+            - Hermes:
+                description: AI Agent Gateway (Discord, Cron, Messaging)
+                icon: ai.png
+                statusStyle: dot
         - Media:
             - Immich:
                 href: ${svcUrl "immich"}
@@ -113,7 +118,6 @@ _: {
                 icon: shield.png
                 statusStyle: dot
                 siteMonitor: http://localhost:${toString config.services.dns-blocker.statsPort}/health
-
         - Development:
             - Forgejo:
                 href: ${svcUrl "forgejo"}
@@ -121,25 +125,43 @@ _: {
                 icon: forgejo.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "forgejo"}/api/v1/nodeinfo
-            - Ollama:
-                description: Local AI Inference
-                icon: ollama.png
+        - AI:
+            - Crush Daily:
+                href: ${svcUrl "daily"}
+                description: AI-Powered Development Insights
+                icon: ai.png
                 statusStyle: dot
-                siteMonitor: http://localhost:${toString config.services.ollama.port}/api/tags
-
-        - Monitoring:
-            - SigNoz:
-                href: ${svcUrl "signoz"}
-                description: Observability Platform (Traces, Metrics, Logs)
-                icon: signoz.png
-                statusStyle: dot
-                siteMonitor: ${svcUrl "signoz"}
+                siteMonitor: ${svcUrl "daily"}/api/health
             - Manifest:
                 href: ${svcUrl "manifest"}
                 description: Smart LLM Router (Cost Optimization)
                 icon: ai.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "manifest"}/api/v1/health
+            - Ollama:
+                description: Local AI Inference
+                icon: ollama.png
+                statusStyle: dot
+                siteMonitor: http://localhost:${toString config.services.ollama.port}/api/tags
+        - Monitoring:
+            - Gatus:
+                href: ${svcUrl "status"}
+                description: Uptime & Health Check Dashboard
+                icon: gatus.png
+                statusStyle: dot
+                siteMonitor: ${svcUrl "status"}
+            - SigNoz:
+                href: ${svcUrl "signoz"}
+                description: Observability Platform (Traces, Metrics, Logs)
+                icon: signoz.png
+                statusStyle: dot
+                siteMonitor: ${svcUrl "signoz"}
+            - Dozzle:
+                href: ${svcUrl "logs"}
+                description: Docker Log Viewer
+                icon: docker.png
+                statusStyle: dot
+                siteMonitor: ${svcUrl "logs"}
             - Node Exporter:
                 description: System Metrics (CPU, RAM, Disk, Network)
                 icon: prometheus.png
@@ -160,7 +182,12 @@ _: {
                 icon: camera.png
                 statusStyle: dot
                 siteMonitor: http://localhost:${toString ports.emeet-pixyd}/metrics
-
+            - Monitor365:
+                href: http://localhost:${toString ports.monitor365-server}
+                description: Device Monitoring Agent
+                icon: monitor.png
+                statusStyle: dot
+                siteMonitor: http://localhost:${toString ports.monitor365-server}
         - Productivity:
             - Twenty CRM:
                 href: ${svcUrl "crm"}
@@ -174,7 +201,6 @@ _: {
                 icon: taskwarrior.png
                 statusStyle: dot
                 siteMonitor: ${svcUrl "tasks"}
-
             - Homepage:
                 description: This Page
                 icon: homepage.png
