@@ -51,6 +51,8 @@
 
     crush-daily = 8081;
 
+    overview = 8083;
+
     activitywatch = 5600;
   };
 }

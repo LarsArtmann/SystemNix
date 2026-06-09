@@ -353,6 +353,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # Overview — local project dashboard (discovers and browses git repos via web UI)
+    overview = {
+      url = "git+ssh://git@github.com/LarsArtmann/overview?ref=master";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-parts.follows = "flake-parts";
+    };
+
     # DiscordSync — Continuous Discord backup with Turso cloud sync
     discordsync = {
       url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=master";
@@ -389,6 +396,7 @@
     nur,
     treefmt-full-flake,
     wallpapers-src,
+    overview,
     ...
   }: let
     lib = nixpkgs.lib;
@@ -677,6 +685,7 @@
               inputs.niri-session-manager.nixosModules.niri-session-manager
               inputs.emeet-pixyd.nixosModules.default
               inputs.crush-daily.nixosModules.crush-daily
+              inputs.overview.nixosModules.default
               ./platforms/nixos/system/configuration.nix
             ];
         };

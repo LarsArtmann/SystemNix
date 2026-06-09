@@ -4,6 +4,7 @@
   monitor365,
   file-and-image-renamer,
   crush-daily,
+  overview,
   mkPackageOverlay,
   ...
 }: let
@@ -24,4 +25,5 @@ in [
   netwatchOverlay
   (mkPackageOverlay file-and-image-renamer "file-and-image-renamer" {})
   crush-daily.overlays.default
+  overview.overlays.default
 ]

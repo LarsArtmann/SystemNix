@@ -260,6 +260,14 @@ in {
         environmentFile = config.sops.templates."crush-daily-env".path;
       };
 
+      # Overview — local project dashboard (discovers git repos, shows stats/activity)
+      overview = {
+        enable = true;
+        port = ports.overview;
+        searchPaths = ["/home/${config.users.primaryUser}/projects"];
+        logLevel = "info";
+      };
+
       # Minecraft server (local network only, whitelisted)
       minecraft = {
         enable = false;
