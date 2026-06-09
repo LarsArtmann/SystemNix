@@ -4,6 +4,7 @@
   lib,
   ...
 }: let
+  ports = (import ../../../lib/default.nix lib).ports;
   version = "0.127.1";
   collectorVersion = "0.144.5";
 
@@ -52,7 +53,7 @@
         "-X github.com/SigNoz/signoz/pkg/version.hash=nix"
         "-X github.com/SigNoz/signoz/pkg/version.time=1970-01-01T00:00:00Z"
         "-X github.com/SigNoz/signoz/pkg/version.branch=nix"
-        "-X github.com/SigNoz/signoz/pkg/query-service/constants.HTTPHostPort=0.0.0.0:8080"
+        "-X github.com/SigNoz/signoz/pkg/query-service/constants.HTTPHostPort=0.0.0.0:${toString ports.signoz}"
       ];
 
       postInstall = ''
@@ -108,7 +109,7 @@ in {
             clickhouse = {
               url = lib.mkOption {
                 type = lib.types.str;
-                default = "tcp://127.0.0.1:9000";
+                default = "tcp://127.0.0.1:${toString ports.signoz-clickhouse}";
                 description = "ClickHouse connection URL";
               };
               database = lib.mkOption {
@@ -128,7 +129,7 @@ in {
               };
             };
             queryService = {
-              port = serviceTypes.servicePort 8080 "Port for the SigNoz query service web UI and API";
+              port = serviceTypes.servicePort ports.signoz "Port for the SigNoz query service web UI and API";
               host = lib.mkOption {
                 type = lib.types.str;
                 default = "127.0.0.1";
@@ -140,10 +141,10 @@ in {
                 description = "Data directory for the query service (runtime path, not copied to store)";
               };
             };
-            cadvisorPort = serviceTypes.servicePort 9110 "Port for cAdvisor container metrics";
+            cadvisorPort = serviceTypes.servicePort ports.signoz-cadvisor "Port for cAdvisor container metrics";
             collector = {
-              port = serviceTypes.servicePort 4317 "OTLP gRPC receiver port";
-              httpPort = serviceTypes.servicePort 4318 "OTLP HTTP receiver port";
+              port = serviceTypes.servicePort ports.signoz-otlp-grpc "OTLP gRPC receiver port";
+              httpPort = serviceTypes.servicePort ports.signoz-otlp-http "OTLP HTTP receiver port";
             };
           };
         };

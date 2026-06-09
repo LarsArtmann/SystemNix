@@ -26,7 +26,7 @@ _: {
   in {
     options.services.gatus-config = {
       enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
-      port = serviceTypes.servicePort 8083 "HTTP port for Gatus web interface";
+      port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
     };
 
     config = lib.mkIf cfg.enable {

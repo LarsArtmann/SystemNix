@@ -1,6 +1,7 @@
 {
   ports = {
     pocket-id = 1411;
+    pocket-id-metrics = 9464;
     oauth2-proxy = 4180;
     caddy-metrics = 2019;
 
@@ -27,10 +28,12 @@
     signoz-otlp-http = 4318;
     signoz-cadvisor = 9190;
     signoz-node-exporter = 9100;
+    signoz-clickhouse = 9000;
 
     taskchampion = 10222;
 
     twenty = 3200;
+    twenty-internal = 3000;
 
     ollama = 11434;
 
@@ -38,6 +41,8 @@
 
     whisper = 7860;
     livekit = 7880;
+    livekit-udp-start = 50000;
+    livekit-udp-end = 51000;
 
     emeet-pixyd = 8090;
 
@@ -46,5 +51,7 @@
     dozzle = 8084;
 
     crush-daily = 8081;
+
+    activitywatch = 5600;
   };
 }
