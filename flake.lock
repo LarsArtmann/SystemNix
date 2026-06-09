@@ -1477,11 +1477,11 @@
         "treefmt-nix": "treefmt-nix_9"
       },
       "locked": {
-        "lastModified": 1781022345,
-        "narHash": "sha256-tCZBPEOykuLhTvv16hWdhyqZ7LAGSJGzxzXU1m3xG7U=",
+        "lastModified": 1781023512,
+        "narHash": "sha256-GEMvbPWWamXuTIaU4G4v1HVtVkMws7C6BfT3K04olCU=",
         "ref": "master",
-        "rev": "bd8103bcf962bf51128c64bd7b3bfa102c3e5e2e",
-        "revCount": 626,
+        "rev": "07e80a46df6a3cf3708da8ad03fe44a843701940",
+        "revCount": 627,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
       },
@@ -1644,11 +1644,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781022502,
-        "narHash": "sha256-28cgcHL9s7lyLWUHcO1apXGHYnlPjRdox8ihJr2SEo4=",
+        "lastModified": 1781023352,
+        "narHash": "sha256-5U3WCqfLWnGcTFmOWQ/UU3b4os2TBshTN0h/BW1VD/4=",
         "ref": "master",
-        "rev": "eaa6959bd11d5d177aa2ebc5ae34e9f7c344095b",
-        "revCount": 839,
+        "rev": "56648f1f187383e892b688fa81b8a9808c9a20f8",
+        "revCount": 840,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       },
@@ -1705,11 +1705,11 @@
         "treefmt-nix": "treefmt-nix_12"
       },
       "locked": {
-        "lastModified": 1781022988,
-        "narHash": "sha256-kU4PJZwUNIUbcGtECn8IIeye5veaxk3YQAAg1M3PQ/0=",
+        "lastModified": 1781023429,
+        "narHash": "sha256-bfxw9FYIP/4ESIFhYzsgBZpEBqNEb8ULhyUp5MKRDV0=",
         "ref": "master",
-        "rev": "1e691531ef59ef5c6b64b4ca2548b9e473674747",
-        "revCount": 226,
+        "rev": "e7438035eb5b2ef31392049eb3c8e1a63e9fef26",
+        "revCount": 227,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mr-sync"
       },

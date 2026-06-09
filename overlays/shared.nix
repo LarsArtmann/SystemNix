@@ -14,6 +14,22 @@
   mkPackageOverlay,
   ...
 }: let
+  tidyGoBuild = ''
+    export HOME=$TMPDIR
+    go mod tidy
+  '';
+
+  mkTidyOverride = vendorHash: old: {
+    inherit vendorHash;
+    proxyVendor = true;
+    preBuild = tidyGoBuild;
+    passthru =
+      (old.passthru or {})
+      // {
+        overrideModAttrs = _: {preBuild = tidyGoBuild;};
+      };
+  };
+
   awWatcherOverlay = _final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };
@@ -49,14 +65,14 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" {})
+  (mkPackageOverlay library-policy "library-policy" (mkTidyOverride "sha256-5MBRPKVKX65FaPEazmXAnM9M1Ud5S56zsHqeLav9WDs="))
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-TSXISnjJ+7UJ+Gg4bJRo5FE5B9Oq+ifN8Il4TqYRzUw=";})
 
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
-  (mkPackageOverlay mr-sync "mr-sync" {})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-m5Y+RiJujRIANWnUR0Plc4PqX2lwLotDkOLLQyDG+mg=";})
+  (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-CEuoyksoPDmalGQB9sTH6GKvLLmrVaPy9hzlZqtZBpA="))
   (mkPackageOverlay buildflow "buildflow" {})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-RwGNQ5m7DPXc9AGTcQRgqF+mc+wQe+2ISMlHIAvfico=";})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-nWLmfhjnJerv1srwDZsslQk6C92fY75oRVn6V2mmf3c=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-jLc2LPW+zRT6n9WYMBDhJjU0f2AvvHFuBYAtcsrinjE=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
   (mkPackageOverlay project-meta "project-meta" {})
