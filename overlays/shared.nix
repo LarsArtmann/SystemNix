@@ -44,7 +44,6 @@
         playwright-driver = {browsers = prev.runCommand "playwright-stub" {} "mkdir $out";};
       };
     };
-
 in [
   awWatcherOverlay
   activitywatchOverlay
@@ -58,7 +57,7 @@ in [
   (mkPackageOverlay buildflow "buildflow" {})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-LLymDj27AANkRqB3KHm+5Nts/ly1Od/JdBEwxmhw4x4=";})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-nWLmfhjnJerv1srwDZsslQk6C92fY75oRVn6V2mmf3c=";})
-  (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-bv1wRqBTEYThsNp7uTF41FbqoZ/Uq3yrgcn/REFmfRE=";})
+  (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
   (mkPackageOverlay project-meta "project-meta" {})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})

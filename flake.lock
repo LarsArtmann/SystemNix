@@ -30,6 +30,8 @@
     "branching-flow": {
       "inputs": {
         "flake-parts": "flake-parts_2",
+        "go-branded-id": "go-branded-id",
+        "go-error-family": "go-error-family",
         "go-finding": [
           "go-finding"
         ],
@@ -44,11 +46,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1781002197,
-        "narHash": "sha256-JXvq8XD0YeTrB6GEPLWo1U8o9ztdrTrrnsSCneu9wFs=",
+        "lastModified": 1781007712,
+        "narHash": "sha256-R3rsK08sC7B91DP0vXqWVfLz9KpfS7Pkk1tmYQnoqjc=",
         "ref": "master",
-        "rev": "f99a14c5a665038ea1bce34fc6fca82b7b3f472f",
-        "revCount": 1840,
+        "rev": "c15c03d4bb8229b3106fc10c7f8833560c837528",
+        "revCount": 1841,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -178,9 +180,9 @@
         "flake-parts": [
           "flake-parts"
         ],
-        "go-branded-id": "go-branded-id",
+        "go-branded-id": "go-branded-id_2",
         "go-cqrs-lite": "go-cqrs-lite",
-        "go-error-family": "go-error-family",
+        "go-error-family": "go-error-family_2",
         "go-nix-helpers": "go-nix-helpers_3",
         "nixpkgs": [
           "nixpkgs"
@@ -777,7 +779,7 @@
         "go-branded-id": [
           "go-branded-id"
         ],
-        "go-error-family": "go-error-family_2",
+        "go-error-family": "go-error-family_3",
         "go-finding": [
           "go-finding"
         ],
@@ -823,6 +825,23 @@
       }
     },
     "go-branded-id_2": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780911580,
+        "narHash": "sha256-HQj/t1ZsLyqCkpRtAVAjM4zPJxlwdc91OTJ0GZ92PJw=",
+        "ref": "master",
+        "rev": "e997eb6a8b2c442602f48900232818f4e1b93574",
+        "revCount": 69,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
+      }
+    },
+    "go-branded-id_3": {
       "flake": false,
       "locked": {
         "lastModified": 1780911580,
@@ -941,6 +960,23 @@
       }
     },
     "go-error-family_3": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780890814,
+        "narHash": "sha256-6ORH4QgJoFs8vcD2WTNZgqmXEpCvU1VBVl0s4iafNkg=",
+        "ref": "master",
+        "rev": "0dcbd64dcfc5575bc6735f55e465706cd55ee27e",
+        "revCount": 120,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-error-family"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-error-family"
+      }
+    },
+    "go-error-family_4": {
       "flake": false,
       "locked": {
         "lastModified": 1780890814,
@@ -2074,8 +2110,8 @@
         "flake-parts": "flake-parts_5",
         "flake-utils": "flake-utils",
         "go-auto-upgrade": "go-auto-upgrade",
-        "go-branded-id": "go-branded-id_2",
-        "go-error-family": "go-error-family_3",
+        "go-branded-id": "go-branded-id_3",
+        "go-error-family": "go-error-family_4",
         "go-filewatcher": "go-filewatcher",
         "go-finding": "go-finding",
         "go-output": "go-output",
