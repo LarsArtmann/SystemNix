@@ -100,11 +100,11 @@
 
     # SigNoz observability platform sources
     signoz-src = {
-      url = "github:SigNoz/signoz/v0.117.1";
+      url = "github:SigNoz/signoz/v0.127.1";
       flake = false;
     };
     signoz-collector-src = {
-      url = "github:SigNoz/signoz-otel-collector/v0.144.2";
+      url = "github:SigNoz/signoz-otel-collector/v0.144.5";
       flake = false;
     };
 
@@ -142,7 +142,7 @@
 
     # Hermes AI Agent — Discord/gateway agent platform
     hermes-agent = {
-      url = "github:NousResearch/hermes-agent/v2026.5.16";
+      url = "github:NousResearch/hermes-agent/v2026.6.5";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
     };

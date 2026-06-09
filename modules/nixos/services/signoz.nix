@@ -4,8 +4,8 @@
   lib,
   ...
 }: let
-  version = "0.117.1";
-  collectorVersion = "0.144.2";
+  version = "0.127.1";
+  collectorVersion = "0.144.5";
 
   mkPackages = pkgs: let
     src = inputs.signoz-src;
@@ -13,7 +13,7 @@
 
     buildGoModule = pkgs.buildGoModule.override {go = pkgs.go_1_25;};
 
-    collectorVendorHash = "sha256-FEzjJTYItt6mMPUu2cFnfYP6oTjnWiqCVKO+dUIm1pg=";
+    collectorVendorHash = "sha256-Woj11mfGSyxiZvCUb32r1Jp86IyT+6Ymwl0ZhhnlzQk=";
 
     schemaMigrator = buildGoModule {
       pname = "signoz-schema-migrator";
@@ -40,7 +40,7 @@
       pname = "signoz";
       inherit version;
       inherit src;
-      vendorHash = "sha256-z6WdVvDvFsbQ1apEr+jHFPB+mLLZj3jeUUX92atTuUk=";
+      vendorHash = "";
       subPackages = ["cmd/community"];
       tags = ["timetzdata"];
 
