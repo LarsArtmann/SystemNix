@@ -243,6 +243,7 @@
       nethogs # Per-process network bandwidth
       iftop # Network interface bandwidth
       netwatch # Real-time network diagnostics TUI (interfaces, connections, packets, health probes)
+      ecapture # Capture SSL/TLS text content without CA cert using eBPF
 
       # Privacy & anonymity
       tor-browser # Anonymous browsing bundle

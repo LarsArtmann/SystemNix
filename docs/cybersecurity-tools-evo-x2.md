@@ -26,6 +26,7 @@ Best open-source security tools for the NixOS (evo-x2) machine, organized by imp
 | wireshark | Packet analysis (GUI) | ✅ Available | `security-hardening.nix:120` |
 | tcpdump | Packet capture | ✅ Available | `security-hardening.nix:151` |
 | netsniff-ng | Network packet capture | ✅ Available | `security-hardening.nix:119` |
+| ecapture | SSL/TLS capture via eBPF | ✅ Available | `base.nix:247` |
 | aircrack-ng | WiFi security testing | ✅ Available | `security-hardening.nix:121` |
 | sleuthkit | Forensic toolkit | ✅ Available | `security-hardening.nix:150` |
 | gitleaks | Secret scanning | ✅ Available | `base.nix:94` |
