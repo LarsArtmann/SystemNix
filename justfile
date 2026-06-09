@@ -523,7 +523,7 @@ forgejo-update-token:
 # ═══════════════════════════════════════════════════════════════════
 
 # Bootstrap Pocket ID admin account and OIDC clients (first-time setup)
-# Run this ON evo-x2 after deploying with Pocket ID enabled for the first time
+# Bootstrap Pocket ID admin passkey (declarative config handles the rest)
 [group('services')]
 [linux]
 auth-bootstrap:
@@ -533,59 +533,31 @@ auth-bootstrap:
     DOMAIN="home.lan"
     AUTH_URL="https://auth.${DOMAIN}"
 
-    echo "=== Pocket ID + oauth2-proxy Bootstrap ==="
+    echo "=== Pocket ID Passkey Bootstrap ==="
     echo ""
 
-    # Step 1: Check Pocket ID is running
+    # Check Pocket ID is running
     if ! systemctl is-active --quiet pocket-id.service 2>/dev/null; then
         echo "ERROR: pocket-id.service is not running."
         echo "       Run 'just switch' first, then retry."
         exit 1
     fi
 
-    # Step 2: Check if admin has been set up
-    echo "Step 1: Opening Pocket ID setup page in browser..."
-    echo "        If this is the first time, you will be prompted to create an admin passkey."
-    echo "        URL: ${AUTH_URL}/setup"
-    echo ""
+    # Check provision service ran
+    if systemctl is-active --quiet pocket-id-provision.service 2>/dev/null; then
+        echo "✓ pocket-id-provision.service: completed"
+    else
+        echo "⚠ pocket-id-provision.service: not completed yet"
+        echo "  Wait a moment and check 'just auth-status'"
+    fi
 
-    # Step 3: Generate cookie secret
-    COOKIE_SECRET="$(openssl rand -base64 32)"
-    echo "Step 2: Generated oauth2-proxy cookie secret."
     echo ""
-
-    # Step 4: Instructions for creating OIDC clients
-    echo "Step 3: Create OIDC clients in Pocket ID admin UI:"
+    echo "Open ${AUTH_URL}/setup in your browser to register your YubiKey/passkey."
     echo ""
-    echo "  a) oauth2-proxy client:"
-    echo "     - Name: oauth2-proxy"
-    echo "     - Callback URL: ${AUTH_URL}/oauth2/callback"
-    echo "     - Logout URL: (leave empty)"
-    echo "     → Copy the Client Secret"
+    echo "The admin user and OIDC clients are created automatically by Nix."
+    echo "You only need to add your passkey."
     echo ""
-    echo "  b) Immich client (optional):"
-    echo "     - Name: immich"
-    echo "     - Callback URL: https://immich.${DOMAIN}/api/auth/callback"
-    echo "     - Logout URL: (leave empty)"
-    echo "     → Copy the Client Secret"
-    echo ""
-
-    # Step 5: Prompt for secrets and update sops
-    echo "Step 4: Update sops secrets with real values."
-    echo "        Run the following commands (requires age key on evo-x2):"
-    echo ""
-    echo "  sops platforms/nixos/secrets/secrets.yaml"
-    echo ""
-    echo "  Set these values:"
-    echo "    oauth2_proxy_client_secret: <from Pocket ID step 3a>"
-    echo "    oauth2_proxy_cookie_secret: ${COOKIE_SECRET}"
-    echo "    immich_oauth_client_secret: <from Pocket ID step 3b, or keep placeholder>"
-    echo ""
-    echo "Step 5: Deploy updated secrets:"
-    echo "  just switch"
-    echo ""
-    echo "After deploy, oauth2-proxy should start successfully."
-    echo "Test by visiting any protected service from an external network."
+    echo "After passkey registration, test by visiting any protected service."
 
 [group('services')]
 [linux]
@@ -597,18 +569,98 @@ auth-status:
     systemctl is-active pocket-id.service 2>/dev/null && echo "  Status: active" || echo "  Status: INACTIVE"
     curl -sf --max-time 2 http://127.0.0.1:1411/healthz 2>/dev/null && echo "  Health: OK" || echo "  Health: FAIL"
     echo ""
+    echo "--- Pocket ID Provision ---"
+    systemctl is-active pocket-id-provision.service 2>/dev/null && echo "  Status: active" || echo "  Status: inactive (oneshot)"
+    if [ -f "/var/lib/pocket-id/.provision-migrated" ]; then
+        echo "  Migration: completed"
+    else
+        echo "  Migration: pending"
+    fi
+    echo ""
     echo "--- oauth2-proxy ---"
     systemctl is-active oauth2-proxy.service 2>/dev/null && echo "  Status: active" || echo "  Status: INACTIVE"
     curl -sf --max-time 2 http://127.0.0.1:4180/ping 2>/dev/null && echo "  Health: OK" || echo "  Health: FAIL"
     echo ""
     echo "--- Secrets ---"
-    for secret in pocket_id_encryption_key oauth2_proxy_client_secret oauth2_proxy_cookie_secret immich_oauth_client_secret; do
+    for secret in pocket_id_encryption_key pocket_id_static_api_key oauth2_proxy_client_secret oauth2_proxy_cookie_secret immich_oauth_client_secret; do
         if [ -f "/run/secrets.d/1/${secret}" ] || [ -f "/run/secrets/${secret}" ]; then
             echo "  ${secret}: exists"
         else
             echo "  ${secret}: MISSING"
         fi
     done
+    echo ""
+    echo "--- Client Secrets ---"
+    for client in oauth2-proxy immich; do
+        if [ -f "/var/lib/pocket-id/client-secrets/${client}" ]; then
+            echo "  ${client}: exists"
+        else
+            echo "  ${client}: MISSING"
+        fi
+    done
+
+# Export Pocket ID data (DB + uploads) to a ZIP backup
+[group('services')]
+[linux]
+pocket-id-export:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    BACKUP_DIR="$HOME/backups/pocket-id"
+    mkdir -p "$BACKUP_DIR"
+    STAMP=$(date +%Y%m%d-%H%M%S)
+    BACKUP_FILE="$BACKUP_DIR/pocket-id-$STAMP.zip"
+    echo "Exporting Pocket ID data to $BACKUP_FILE..."
+    pocket-id export --path "$BACKUP_FILE"
+    echo "Backup complete: $BACKUP_FILE"
+    ls -lh "$BACKUP_FILE"
+
+# Restore Pocket ID data from a ZIP backup
+# Usage: just pocket-id-restore ~/backups/pocket-id/pocket-id-YYYYMMDD-HHMMSS.zip
+[group('services')]
+[linux]
+pocket-id-restore BACKUP_FILE:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ ! -f "{{BACKUP_FILE}}" ]; then
+        echo "ERROR: Backup file not found: {{BACKUP_FILE}}"
+        exit 1
+    fi
+    echo "Stopping Pocket ID..."
+    sudo systemctl stop pocket-id.service
+    echo "Importing from {{BACKUP_FILE}}..."
+    pocket-id import --yes --path "{{BACKUP_FILE}}"
+    echo "Restarting Pocket ID..."
+    sudo systemctl start pocket-id.service
+    echo "Restore complete. Client secrets will be regenerated on next provision run."
+    echo "You may need to re-authenticate with services."
+
+# Add pocket_id_static_api_key to sops secrets (run once after enabling provision)
+[group('services')]
+[linux]
+pocket-id-add-static-key:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SOPS_FILE="platforms/nixos/secrets/pocket-id.yaml"
+    if [ ! -f "$SOPS_FILE" ]; then
+        echo "ERROR: $SOPS_FILE not found"
+        exit 1
+    fi
+    KEY=$(openssl rand -base64 32)
+    echo "Generated STATIC_API_KEY: $KEY"
+    echo ""
+    echo "Opening sops editor to add the key..."
+    ssh-to-age -private-key -i /etc/ssh/ssh_host_ed25519_key > /tmp/age.key 2>/dev/null || {
+        echo "ERROR: Failed to convert SSH key to age key. Run with sudo."
+        exit 1
+    }
+    SOPS_AGE_KEY_FILE=/tmp/age.key sops "$SOPS_FILE"
+    rm -f /tmp/age.key
+    echo ""
+    echo "Add this line to the file:"
+    echo "  pocket_id_static_api_key: $KEY"
+    echo ""
+    echo "Save and exit the editor."
+    echo "Then run: just switch"
 
 # ═══════════════════════════════════════════════════════════════════
 #  Desktop (NixOS — evo-x2)
