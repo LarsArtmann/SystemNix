@@ -212,7 +212,10 @@
         "flake-parts": [
           "flake-parts"
         ],
+        "go-branded-id": "go-branded-id_3",
         "go-cqrs-lite": "go-cqrs-lite_2",
+        "go-error-family": "go-error-family_3",
+        "go-nix-helpers": "go-nix-helpers_4",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -224,11 +227,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1780954942,
-        "narHash": "sha256-wvUpbt3WYbUw2MUGXRCTUmh8pLU7+uENLJHkLYl19Yw=",
+        "lastModified": 1781008688,
+        "narHash": "sha256-Utb5TLcEkSoFLkOYri2WA7oHqhlyLY5PNojE6eo2WHA=",
         "ref": "master",
-        "rev": "3db09484ec1bee97c7cfb667f39446037231ad8a",
-        "revCount": 219,
+        "rev": "7367614e120c142720083aa04da04ec238c101e4",
+        "revCount": 220,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -779,7 +782,7 @@
         "go-branded-id": [
           "go-branded-id"
         ],
-        "go-error-family": "go-error-family_3",
+        "go-error-family": "go-error-family_4",
         "go-finding": [
           "go-finding"
         ],
@@ -858,6 +861,23 @@
         "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
       }
     },
+    "go-branded-id_4": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780911580,
+        "narHash": "sha256-HQj/t1ZsLyqCkpRtAVAjM4zPJxlwdc91OTJ0GZ92PJw=",
+        "ref": "master",
+        "rev": "e997eb6a8b2c442602f48900232818f4e1b93574",
+        "revCount": 69,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
+      }
+    },
     "go-commit": {
       "flake": false,
       "locked": {
@@ -912,17 +932,18 @@
     "go-cqrs-lite_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1780690134,
-        "narHash": "sha256-wtNLpN7sYtCamTlaVZq+KJz+8ArPhbAhqg3NpdCaF3c=",
-        "ref": "refs/heads/master",
-        "rev": "cd55eac568512e1371a71b1f08dfe431cd0b3770",
-        "revCount": 1775,
+        "lastModified": 1780964509,
+        "narHash": "sha256-RtFmNb3focgnrBia7GO5C6oM/7GJbcqlaM8VHJJBZzY=",
+        "ref": "master",
+        "rev": "8090717898947800ae458fd0e81b428174948687",
+        "revCount": 1836,
         "type": "git",
-        "url": "file:../go-cqrs-lite"
+        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
       "original": {
+        "ref": "master",
         "type": "git",
-        "url": "file:../go-cqrs-lite"
+        "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       }
     },
     "go-error-family": {
@@ -977,6 +998,23 @@
       }
     },
     "go-error-family_4": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780890814,
+        "narHash": "sha256-6ORH4QgJoFs8vcD2WTNZgqmXEpCvU1VBVl0s4iafNkg=",
+        "ref": "master",
+        "rev": "0dcbd64dcfc5575bc6735f55e465706cd55ee27e",
+        "revCount": 120,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-error-family"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-error-family"
+      }
+    },
+    "go-error-family_5": {
       "flake": false,
       "locked": {
         "lastModified": 1780890814,
@@ -1115,11 +1153,11 @@
     "go-nix-helpers_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1780940649,
-        "narHash": "sha256-Jpp2s/HEyAsnOHmCZ8ZHYjBYyB7Qj1u/thJ+mCOzdn4=",
+        "lastModified": 1781007635,
+        "narHash": "sha256-irfzjgbrB8QQGnJqFvQsJJKZ3ZdSbVgOifcy2SHicoA=",
         "ref": "master",
-        "rev": "bc2dfb11ebbfef3645d52e5b8e8a1388084050d6",
-        "revCount": 12,
+        "rev": "7b6938272f47b81d53b24f6a081aee5601030f43",
+        "revCount": 13,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
       },
@@ -1164,6 +1202,23 @@
       }
     },
     "go-nix-helpers_7": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780940649,
+        "narHash": "sha256-Jpp2s/HEyAsnOHmCZ8ZHYjBYyB7Qj1u/thJ+mCOzdn4=",
+        "ref": "master",
+        "rev": "bc2dfb11ebbfef3645d52e5b8e8a1388084050d6",
+        "revCount": 12,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
+      }
+    },
+    "go-nix-helpers_8": {
       "flake": false,
       "locked": {
         "lastModified": 1780940649,
@@ -1243,7 +1298,7 @@
         "go-finding": [
           "go-finding"
         ],
-        "go-nix-helpers": "go-nix-helpers_4",
+        "go-nix-helpers": "go-nix-helpers_5",
         "go-output": [
           "go-output"
         ],
@@ -1477,7 +1532,7 @@
         "go-finding": [
           "go-finding"
         ],
-        "go-nix-helpers": "go-nix-helpers_5",
+        "go-nix-helpers": "go-nix-helpers_6",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -1536,7 +1591,7 @@
         "go-branded-id": [
           "go-branded-id"
         ],
-        "go-nix-helpers": "go-nix-helpers_6",
+        "go-nix-helpers": "go-nix-helpers_7",
         "go-output": [
           "go-output"
         ],
@@ -1977,7 +2032,7 @@
         "go-finding": [
           "go-finding"
         ],
-        "go-nix-helpers": "go-nix-helpers_7",
+        "go-nix-helpers": "go-nix-helpers_8",
         "go-output": [
           "go-output"
         ],
@@ -2110,8 +2165,8 @@
         "flake-parts": "flake-parts_5",
         "flake-utils": "flake-utils",
         "go-auto-upgrade": "go-auto-upgrade",
-        "go-branded-id": "go-branded-id_3",
-        "go-error-family": "go-error-family_4",
+        "go-branded-id": "go-branded-id_4",
+        "go-error-family": "go-error-family_5",
         "go-filewatcher": "go-filewatcher",
         "go-finding": "go-finding",
         "go-output": "go-output",
