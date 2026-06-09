@@ -104,7 +104,7 @@ in {
             hermes_xiaomi_api_key = "xiaomi_api_key";
             hermes_fal_key = "fal_key";
             hermes_firecrawl_api_key = "firecrawl_api_key";
-            hermes_openai_api_key = "openai_api_key";
+            # hermes_openai_api_key = "openai_api_key"; # TODO: add openai_api_key to hermes.yaml sops secret
           }
           // mkSecrets "crush-daily.yaml" {
             owner = "crush-daily";
@@ -163,7 +163,6 @@ in {
               XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
               FAL_KEY=${config.sops.placeholder.hermes_fal_key}
               FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
-              OPENAI_API_KEY=${config.sops.placeholder.hermes_openai_api_key}
             '';
           };
 

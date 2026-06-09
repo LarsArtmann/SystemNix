@@ -45,31 +45,19 @@
       };
     };
 
-
-
-
 in [
   awWatcherOverlay
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-h5wkT10v14GEnN7RBtWqKTXRMsX6+Qj0AanE4dOSz8U=";})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
+  (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-W1Z3nAEtuyqbqEUOicCXRJ5+i0fkUepLT11SnsSONuE=";})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-CEj0rDWrpZ07da/KkqDJOAmMNNm1AW3nwLNvpUexD90=";})
 
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-Wiu9zbLx9ukznrzlJg4oumHA/Qx3Bh6xLPfwe4MEjgQ=";})
-  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-6WcsIlYdwo4IvlddwHs8Df2v6f5RpWpXkCkCJHg5qF4=";})
-  buildflowOverlay = _final: prev: let
-    pkg = buildflow.packages.${prev.stdenv.system}.default or null;
-  in
-    if pkg == null
-    then {}
-    else {
-      buildflow = pkg.overrideAttrs (old: {
-        vendorHash = "";
-      });
-    };
-  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-bTdDHFF4wKpsfcEmnHzphXG/JsfTo2z6wy80+zNUR7w=";})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-Bt0ZxNcvDg31AtFE6Xm/kryUC9OOqtoBbQfsE3sB8Ks=";})
+  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-TgBtROxa/2wSF1NAee3jlu1O/4PEp2GqAnh+yyGWDxA=";})
+  (mkPackageOverlay buildflow "buildflow" {})
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-LLymDj27AANkRqB3KHm+5Nts/ly1Od/JdBEwxmhw4x4=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-nWLmfhjnJerv1srwDZsslQk6C92fY75oRVn6V2mmf3c=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-bv1wRqBTEYThsNp7uTF41FbqoZ/Uq3yrgcn/REFmfRE=";})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
   (mkPackageOverlay project-meta "project-meta" {})

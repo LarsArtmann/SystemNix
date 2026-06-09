@@ -19,7 +19,7 @@ in [
   (mkPackageOverlay dnsblockd "dnsblockd" {
     vendorHash = "sha256-ZKFAAtpWDN7Uu+GYyNQKVh0BmBvzD5WDHHLT25jBano=";
   })
-  (mkPackageOverlay emeet-pixyd "emeet-pixyd" {vendorHash = "sha256-ItfLDPbCmZiFxmp8IBlt4nmxFxeLoC7my+qaYr4S46I=";})
+  (mkPackageOverlay emeet-pixyd "emeet-pixyd" {vendorHash = "sha256-jF4RbGauIHwtxfuOz9IYDm3ik75MmcNSDoPjazpTt0c=";})
   monitor365.overlays.default
   netwatchOverlay
   (mkPackageOverlay file-and-image-renamer "file-and-image-renamer" {})
