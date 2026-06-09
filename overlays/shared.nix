@@ -61,7 +61,7 @@ in [
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-Bt0ZxNcvDg31AtFE6Xm/kryUC9OOqtoBbQfsE3sB8Ks=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-bv1wRqBTEYThsNp7uTF41FbqoZ/Uq3yrgcn/REFmfRE=";})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
-  (mkPackageOverlay project-meta "project-meta" {vendorHash = "";})
+  (mkPackageOverlay project-meta "project-meta" {})
   (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
