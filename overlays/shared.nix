@@ -68,7 +68,29 @@ in [
   (mkPackageOverlay library-policy "library-policy" (mkTidyOverride "sha256-5MBRPKVKX65FaPEazmXAnM9M1Ud5S56zsHqeLav9WDs="))
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-TSXISnjJ+7UJ+Gg4bJRo5FE5B9Oq+ifN8Il4TqYRzUw=";})
 
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-m5Y+RiJujRIANWnUR0Plc4PqX2lwLotDkOLLQyDG+mg=";})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" (old: {
+    vendorHash = "sha256-87AJDc3ESq9lFqexEzPOaZZQ553+kaoZWX+0i1+jCpU=";
+    proxyVendor = true;
+    preBuild =
+      (old.preBuild or "")
+      + ''
+        export HOME=$TMPDIR
+        go mod tidy
+      '';
+    passthru =
+      (old.passthru or {})
+      // {
+        overrideModAttrs = _: {
+          preBuild = ''
+            export GOBIN=$GOPATH/bin
+            go install github.com/a-h/templ/cmd/templ@v0.3.1020
+            $GOBIN/templ generate
+            export HOME=$TMPDIR
+            go mod tidy
+          '';
+        };
+      };
+  }))
   (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-CEuoyksoPDmalGQB9sTH6GKvLLmrVaPy9hzlZqtZBpA="))
   (mkPackageOverlay buildflow "buildflow" {})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-RwGNQ5m7DPXc9AGTcQRgqF+mc+wQe+2ISMlHIAvfico=";})
