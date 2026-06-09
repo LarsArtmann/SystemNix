@@ -9,6 +9,8 @@ inputs @ {nur, ...}: let
       ${name} =
         if overrides == {}
         then pkg
+        else if builtins.isFunction overrides
+        then pkg.overrideAttrs overrides
         else pkg.overrideAttrs overrides;
     };
 

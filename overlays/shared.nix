@@ -49,13 +49,13 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" {vendorHash = "sha256-W1Z3nAEtuyqbqEUOicCXRJ5+i0fkUepLT11SnsSONuE=";})
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-CEj0rDWrpZ07da/KkqDJOAmMNNm1AW3nwLNvpUexD90=";})
+  (mkPackageOverlay library-policy "library-policy" {})
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-TSXISnjJ+7UJ+Gg4bJRo5FE5B9Oq+ifN8Il4TqYRzUw=";})
 
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-Wiu9zbLx9ukznrzlJg4oumHA/Qx3Bh6xLPfwe4MEjgQ=";})
-  (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-TgBtROxa/2wSF1NAee3jlu1O/4PEp2GqAnh+yyGWDxA=";})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
+  (mkPackageOverlay mr-sync "mr-sync" {})
   (mkPackageOverlay buildflow "buildflow" {})
-  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-LLymDj27AANkRqB3KHm+5Nts/ly1Od/JdBEwxmhw4x4=";})
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-RwGNQ5m7DPXc9AGTcQRgqF+mc+wQe+2ISMlHIAvfico=";})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-nWLmfhjnJerv1srwDZsslQk6C92fY75oRVn6V2mmf3c=";})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
