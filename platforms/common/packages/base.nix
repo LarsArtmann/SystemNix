@@ -31,7 +31,7 @@
           cp -a ${heliumPackage}/bin $out/bin
           chmod -R u+w $out/bin
           wrapProgram $out/bin/helium \
-            --add-flags "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,AcceleratedVideoDecoder,AcceleratedVideoEncoder" \
+            --add-flags "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,AcceleratedVideoDecoder,AcceleratedVideoEncoder,WebAuthenticationHybridTransport" \
             --add-flags "--ignore-gpu-blocklist" \
             --add-flags "--enable-zero-copy" \
             --add-flags "--restore-last-session" \
