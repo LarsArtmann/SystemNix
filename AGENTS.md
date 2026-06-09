@@ -66,6 +66,10 @@ Overlay makes packages available as `pkgs.<name>` but does **not** install them.
 
 `mkPreparedSource` is centralized in `go-nix-helpers` (`git+ssh://git@github.com/LarsArtmann/go-nix-helpers`). Auto-features: `subModules` (replace directives), `subModuleVersionNormalize` (pseudo-version normalization), `stripLocalReplaces` (strips `=> /home/...`). Only use `postPatchExtra` for repo-specific patches. When upstream deps change, set `vendorHash = ""`, build, paste the `got:` hash.
 
+**Versioned sub-modules (v2+):** `mkPreparedSource`'s `subModules` feature does NOT handle `/v2` major version suffixes — the replace directives won't match the module paths in go.mod. For repos like `go-cqrs-lite` where ALL sub-modules use `/v2`, list each sub-module as an individual dep with the full versioned path: `"github.com/larsartmann/go-cqrs-lite/codec/v2" = "${go-cqrs-lite}/codec"`. The `repoName` helper in `mkPreparedSource` correctly strips the `/v2` suffix for the local directory name. Must include ALL transitive sub-modules (e.g., `command/v2`, `query/v2`, `schema/v2` even if not in root go.mod) because `go mod tidy` needs replace directives for the full dependency graph.
+
+**proxyVendor pattern for workspace repos:** `inherit proxyVendor; overrideModAttrs = _: { preBuild = "export HOME=$TMPDIR; go mod tidy"; }; preBuild = "export HOME=$TMPDIR; go mod tidy";` — go mod tidy in BOTH phases ensures consistent module resolution.
+
 ### Go Repo Update Checklist
 
 Core private Go deps (`go-output`, `go-branded-id`, etc.) cascade to all consumers on change:
@@ -79,9 +83,11 @@ Core private Go deps (`go-output`, `go-branded-id`, etc.) cascade to all consume
 
 **Published packages:** hardcode semver. **Internal overlays:** `self.rev or self.dirtyRev or "dev"` is fine.
 
-### overrideModAttrs Anti-Pattern
+### overrideModAttrs + proxyVendor Pattern
 
-**AVOID `overrideModAttrs` with `go mod tidy` in `buildGoModule`.** It causes "inconsistent vendoring" — phase 1 (go-modules derivation) gets tidied but phase 2 (main build) uses the original go.mod. Exception: complex `_local_deps` setups may need it; ensure committed go.mod is pre-tidied.
+**With `proxyVendor = true`:** `go mod tidy` is safe in BOTH `overrideModAttrs.preBuild` (go-modules derivation) and `preBuild` (main build). With `proxyVendor`, the main build uses `GOPROXY=file://$goModules` (NOT `GOPROXY=off`), so `go mod tidy` can resolve modules. This is the recommended pattern for repos using `mkPreparedSource` with private deps.
+
+**With `proxyVendor = false` (default):** AVOID `overrideModAttrs` with `go mod tidy` — it causes "inconsistent vendoring" because the main build uses `GOPROXY=off` + validates `vendor/modules.txt`.
 
 When `vendorHash` breaks after a dep change: set to `""`, build, paste `got:` hash.
 
@@ -195,6 +201,8 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `colorSchemeName` removed | Dead code — use `colorScheme.slug` instead |
 | Boot GPU params | `amdgpuGttSize` / `ttmPagesLimit` in boot.nix are shared between `kernelParams` and `extraModprobeConfig` |
 | `auto-optimise-store` | In `common/nix-settings.nix`, NOT `networking.nix` |
+| `mkPreparedSource` v2 sub-modules | `subModules` does NOT handle `/v2` suffixes — list each sub-module as individual dep with full versioned path instead |
+| `proxyVendor = true` | Required for `mkPreparedSource` repos — enables `go mod tidy` in both derivation phases without vendor/ validation issues |
 
 ---
 
