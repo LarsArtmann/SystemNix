@@ -66,7 +66,7 @@ Overlay makes packages available as `pkgs.<name>` but does **not** install them.
 
 `mkPreparedSource` is centralized in `go-nix-helpers` (`git+ssh://git@github.com/LarsArtmann/go-nix-helpers`). Auto-features: `subModules` (replace directives), `subModuleVersionNormalize` (pseudo-version normalization), `stripLocalReplaces` (strips `=> /home/...`). Only use `postPatchExtra` for repo-specific patches. When upstream deps change, set `vendorHash = ""`, build, paste the `got:` hash.
 
-**Versioned sub-modules (v2+):** `mkPreparedSource`'s `subModules` feature does NOT handle `/v2` major version suffixes — the replace directives won't match the module paths in go.mod. For repos like `go-cqrs-lite` where ALL sub-modules use `/v2`, list each sub-module as an individual dep with the full versioned path: `"github.com/larsartmann/go-cqrs-lite/codec/v2" = "${go-cqrs-lite}/codec"`. The `repoName` helper in `mkPreparedSource` correctly strips the `/v2` suffix for the local directory name. Must include ALL transitive sub-modules (e.g., `command/v2`, `query/v2`, `schema/v2` even if not in root go.mod) because `go mod tidy` needs replace directives for the full dependency graph.
+**Versioned sub-modules (v2+):** `mkPreparedSource`'s `subModules` feature handles `/v2` major version suffixes — include the version in the sub-module list entry and it will be kept in the module path but stripped from the local directory path. e.g. `subModules = { "github.com/larsartmann/go-cqrs-lite" = [ "codec/v2" "command/v2" "core" ]; };` generates `.../codec/v2 => ./_local_deps/go-cqrs-lite/codec`. Must include ALL transitive sub-modules (e.g., `command/v2`, `query/v2`, `schema/v2` even if not in root go.mod) because `go mod tidy` needs replace directives for the full dependency graph.
 
 **proxyVendor pattern for workspace repos:** `inherit proxyVendor; overrideModAttrs = _: { preBuild = "export HOME=$TMPDIR; go mod tidy"; }; preBuild = "export HOME=$TMPDIR; go mod tidy";` — go mod tidy in BOTH phases ensures consistent module resolution.
 
@@ -201,7 +201,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `colorSchemeName` removed | Dead code — use `colorScheme.slug` instead |
 | Boot GPU params | `amdgpuGttSize` / `ttmPagesLimit` in boot.nix are shared between `kernelParams` and `extraModprobeConfig` |
 | `auto-optimise-store` | In `common/nix-settings.nix`, NOT `networking.nix` |
-| `mkPreparedSource` v2 sub-modules | `subModules` does NOT handle `/v2` suffixes — list each sub-module as individual dep with full versioned path instead |
+| `mkPreparedSource` v2 sub-modules | `subModules` handles `/v2` suffixes — include version in list entry (e.g. `"codec/v2"`), it's kept in module path but stripped from local dir |
 | `proxyVendor = true` | Required for `mkPreparedSource` repos — enables `go mod tidy` in both derivation phases without vendor/ validation issues |
 
 ---
