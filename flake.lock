@@ -100,11 +100,11 @@
         "treefmt-nix": "treefmt-nix_3"
       },
       "locked": {
-        "lastModified": 1780968250,
-        "narHash": "sha256-/bRxSMJj+U1Gevyi9oUvuwkN0JKy6tSJhW9A4r8PRjU=",
+        "lastModified": 1780974710,
+        "narHash": "sha256-QyyeqtPnGTV8agx4DcQ4EenX9FERFR5i6ZOpVbr8UWY=",
         "ref": "master",
-        "rev": "0b317cf4b3ebfbc81baf885f520e9bac0298f858",
-        "revCount": 3031,
+        "rev": "6cf87c39af3a7e9820268c4438e94ef3a662ea79",
+        "revCount": 3033,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -1347,11 +1347,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1780972728,
-        "narHash": "sha256-505arfBVvruuuU/s2B4Bvpe8vKQ6KEvj9BKLdUCvh8g=",
+        "lastModified": 1780974498,
+        "narHash": "sha256-NEJSQY9OVENpzjcBNuKVE41qdZc22YBO4FK5edlFdYY=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "189085548b22f66869687ec1d1e016e183321c69",
+        "rev": "b9b99ed383eab28a456c78576ff8a7b25e3daa43",
         "type": "github"
       },
       "original": {
@@ -1404,11 +1404,11 @@
         "treefmt-nix": "treefmt-nix_11"
       },
       "locked": {
-        "lastModified": 1780972494,
-        "narHash": "sha256-2Iqch42thLujdzs+9zzGS04t/x/6IUqhr/j4W0sqaiM=",
+        "lastModified": 1780973338,
+        "narHash": "sha256-ZyeUpBr85h3ECq5J7gQOj3NJmGKe5c5RsHB+KZRrPEM=",
         "ref": "master",
-        "rev": "1ccc423e120548d4bbfa68e857e24cd5a140c311",
-        "revCount": 1258,
+        "rev": "0ba0c498200b33b13fb540d27fa1d85b1d781d84",
+        "revCount": 1261,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },

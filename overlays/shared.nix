@@ -58,7 +58,16 @@ in [
 
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {vendorHash = "sha256-Wiu9zbLx9ukznrzlJg4oumHA/Qx3Bh6xLPfwe4MEjgQ=";})
   (mkPackageOverlay mr-sync "mr-sync" {vendorHash = "sha256-6WcsIlYdwo4IvlddwHs8Df2v6f5RpWpXkCkCJHg5qF4=";})
-  (mkPackageOverlay buildflow "buildflow" {vendorHash = "sha256-RKvH3M8n2X3+5xGjolhYje8ElvIs+cP4XhJ8hjdwK7g=";})
+  buildflowOverlay = _final: prev: let
+    pkg = buildflow.packages.${prev.stdenv.system}.default or null;
+  in
+    if pkg == null
+    then {}
+    else {
+      buildflow = pkg.overrideAttrs (old: {
+        vendorHash = "";
+      });
+    };
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-bTdDHFF4wKpsfcEmnHzphXG/JsfTo2z6wy80+zNUR7w=";})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-Bt0ZxNcvDg31AtFE6Xm/kryUC9OOqtoBbQfsE3sB8Ks=";})
   (mkPackageOverlay branching-flow "branching-flow" {vendorHash = "sha256-bv1wRqBTEYThsNp7uTF41FbqoZ/Uq3yrgcn/REFmfRE=";})
