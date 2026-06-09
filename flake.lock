@@ -193,11 +193,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1781003621,
-        "narHash": "sha256-gAvMdL5YiJal6c16tQbIRp+rn90IQhiRpLVUBaO2FEk=",
+        "lastModified": 1781008373,
+        "narHash": "sha256-zg0rKMRuvwhtliu4SP+MjktAhxtYlNbTc61qHE7Cl4s=",
         "ref": "master",
-        "rev": "809f6c6eaf246d275440967bec1c1243d8bbc929",
-        "revCount": 86,
+        "rev": "c0327fdd0388942aa1e5ef973e902cfaba0fe057",
+        "revCount": 87,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -1098,11 +1098,11 @@
     "go-nix-helpers_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1780940649,
-        "narHash": "sha256-Jpp2s/HEyAsnOHmCZ8ZHYjBYyB7Qj1u/thJ+mCOzdn4=",
+        "lastModified": 1781007635,
+        "narHash": "sha256-irfzjgbrB8QQGnJqFvQsJJKZ3ZdSbVgOifcy2SHicoA=",
         "ref": "master",
-        "rev": "bc2dfb11ebbfef3645d52e5b8e8a1388084050d6",
-        "revCount": 12,
+        "rev": "7b6938272f47b81d53b24f6a081aee5601030f43",
+        "revCount": 13,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
       },
