@@ -17,7 +17,7 @@ _: {
   in {
     options.services.homepage = {
       enable = lib.mkEnableOption "Homepage Dashboard service";
-      port = serviceTypes.servicePort 8082 "HTTP port for Homepage Dashboard";
+      port = serviceTypes.servicePort ports.homepage "HTTP port for Homepage Dashboard";
     };
 
     config = lib.mkIf cfg.enable {

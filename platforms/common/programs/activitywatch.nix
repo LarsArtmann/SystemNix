@@ -2,7 +2,9 @@
   pkgs,
   lib,
   ...
-}: {
+}: let
+  ports = (import ../../../lib/default.nix lib).ports;
+in {
   services.activitywatch = {
     enable = pkgs.stdenv.isLinux;
     package = pkgs.activitywatch;
@@ -30,7 +32,7 @@
       };
       Service = {
         Type = "oneshot";
-        ExecStart = "${lib.getExe pkgs.curl} --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:5600/api/0/settings/theme";
+        ExecStart = "${lib.getExe pkgs.curl} --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:${toString ports.activitywatch}/api/0/settings/theme";
         RemainAfterExit = true;
       };
       Install.WantedBy = ["activitywatch.target"];

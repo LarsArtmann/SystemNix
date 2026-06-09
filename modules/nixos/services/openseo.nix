@@ -9,7 +9,7 @@ _: {
     cfg = config.services.openseo;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes images;
+    inherit (libHelpers) serviceTypes images ports;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     composeFile =
@@ -64,7 +64,7 @@ _: {
   in {
     options.services.openseo = {
       enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
-      port = serviceTypes.servicePort 3002 "HTTP port for OpenSEO dashboard";
+      port = serviceTypes.servicePort ports.openseo "HTTP port for OpenSEO dashboard";
       imageTag = serviceTypes.dockerImageTag images.openseo.tag;
     };
 

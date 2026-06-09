@@ -9,7 +9,7 @@ _: {
     cfg = config.services.monitor365;
     inherit (config.users) primaryUser;
     sd = import ../../../lib/default.nix lib;
-    inherit (sd) serviceDefaultsUser hardenUser mkStateDir;
+    inherit (sd) serviceDefaultsUser hardenUser mkStateDir ports;
 
     runtimeDeps = with pkgs; [
       xdotool
@@ -362,7 +362,7 @@ _: {
             };
             port = lib.mkOption {
               type = lib.types.port;
-              default = 5600;
+              default = ports.activitywatch;
               description = "ActivityWatch API port";
             };
           };
@@ -469,7 +469,7 @@ _: {
             enable = lib.mkEnableOption "Prometheus metrics endpoint" // {default = false;};
             bindAddress = lib.mkOption {
               type = lib.types.str;
-              default = "127.0.0.1:9190";
+              default = "127.0.0.1:${toString ports.signoz-cadvisor}";
               description = "Address to bind the Prometheus metrics endpoint";
             };
           };
@@ -488,7 +488,7 @@ _: {
             };
             otlpEndpoint = lib.mkOption {
               type = lib.types.str;
-              default = "http://localhost:4317";
+              default = "http://localhost:${toString ports.signoz-otlp-grpc}";
               description = "OTLP gRPC endpoint";
             };
             serviceName = lib.mkOption {
@@ -532,7 +532,7 @@ _: {
 
             listenAddr = lib.mkOption {
               type = lib.types.str;
-              default = "0.0.0.0:3001";
+              default = "0.0.0.0:${toString ports.monitor365-server}";
               description = "Address to bind the server to";
             };
 
@@ -545,7 +545,7 @@ _: {
             corsOrigins = lib.mkOption {
               type = lib.types.listOf lib.types.str;
               default = [];
-              description = "Allowed CORS origins (e.g. [\"http://localhost:3001\"])";
+              description = "Allowed CORS origins (e.g. [\"http://localhost:${toString ports.monitor365-server}\"])";
             };
 
             poolSize = lib.mkOption {

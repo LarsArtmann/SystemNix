@@ -40,16 +40,22 @@ in {
     # XDG Desktop Portal for app integration and dark mode preference
     xdg.portal = {
       enable = true;
-      extraPortals = [pkgs.xdg-desktop-portal-gtk];
+      extraPortals = [pkgs.xdg-desktop-portal-gnome pkgs.xdg-desktop-portal-gtk];
       config = {
-        common.default = ["niri" "gtk"];
+        common.default = ["niri" "gnome" "gtk"];
       };
     };
 
     systemd = {
-      # Portal-gtk must wait for niri compositor to be ready, otherwise it races
+      # Portal services must wait for niri compositor to be ready, otherwise they race
       # during live activation (nh os test/switch) when both are restarted simultaneously
       user.units."xdg-desktop-portal-gtk.service.d/after-niri.conf" = {
+        text = ''
+          [Unit]
+          After=niri.service
+        '';
+      };
+      user.units."xdg-desktop-portal-gnome.service.d/after-niri.conf" = {
         text = ''
           [Unit]
           After=niri.service
@@ -291,12 +297,12 @@ in {
         };
         logging.level = lib.mkDefault "warn";
         # Agent syncs to local server
-        cloud.endpoint = lib.mkDefault "http://localhost:3001";
+        cloud.endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
         # Server (dashboard + API) runs on the same machine
         server = {
           enable = lib.mkDefault true;
-          listenAddr = lib.mkDefault "0.0.0.0:3001";
-          corsOrigins = lib.mkDefault ["http://localhost:3001"];
+          listenAddr = lib.mkDefault "0.0.0.0:${toString ports.monitor365-server}";
+          corsOrigins = lib.mkDefault ["http://localhost:${toString ports.monitor365-server}"];
         };
       };
 

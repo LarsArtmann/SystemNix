@@ -7,7 +7,7 @@ _: {
     ...
   }: let
     cfg = config.services.photomap;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports;
     immichMediaDir = config.services.immich.mediaLocation;
     immichUploadDir = "${immichMediaDir}/upload";
     immichLibraryDir = "${immichMediaDir}/library";
@@ -28,7 +28,7 @@ _: {
   in {
     options.services.photomap = {
       enable = lib.mkEnableOption "PhotoMap AI service";
-      port = serviceTypes.servicePort 8051 "Port for the PhotoMap web interface";
+      port = serviceTypes.servicePort ports.photomap "Port for the PhotoMap web interface";
     };
 
     config = lib.mkIf cfg.enable {

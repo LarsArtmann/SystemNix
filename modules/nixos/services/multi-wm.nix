@@ -43,7 +43,7 @@ _: {
         rofi
 
         # File manager
-        kdePackages.dolphin
+        nautilus
 
         # Notification daemon - dunst configured via Home Manager (home.nix)
         # mako removed to avoid duplicate notification daemons

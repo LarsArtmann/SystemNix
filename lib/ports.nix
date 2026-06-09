@@ -33,7 +33,6 @@
     taskchampion = 10222;
 
     twenty = 3200;
-    twenty-internal = 3000;
 
     ollama = 11434;
 

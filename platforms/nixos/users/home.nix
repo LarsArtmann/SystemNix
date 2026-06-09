@@ -382,6 +382,9 @@ in {
         "x-scheme-handler/terminal" = ["com.mitchellh.ghostty.desktop"];
         "application/x-terminal-emulator" = ["com.mitchellh.ghostty.desktop"];
 
+        # File manager
+        "inode/directory" = ["org.gnome.Nautilus.desktop"];
+
         # Text / code files
         "text/plain" = ["zed.desktop"];
         "text/markdown" = ["zed.desktop"];

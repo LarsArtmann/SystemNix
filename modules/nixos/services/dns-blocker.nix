@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.dns-blocker;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults mkStateDir;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults mkStateDir ports;
 
     categoriesJSON = pkgs.writeText "dnsblockd-categories.json" (builtins.toJSON cfg.categories);
 
@@ -93,7 +93,7 @@ _: {
 
       statsPort = mkOption {
         type = types.port;
-        default = 9090;
+        default = ports.dns-blocker-stats;
         description = "Port for dnsblockd stats API (localhost only)";
       };
 

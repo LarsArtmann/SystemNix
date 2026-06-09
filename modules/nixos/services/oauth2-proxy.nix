@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.oauth2-proxy-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkSecretCheck;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkSecretCheck ports;
     proxyPort = cfg.port;
     checkCookieSecret = mkSecretCheck pkgs {
       name = "oauth2-proxy-cookie-secret";
@@ -25,7 +25,7 @@ _: {
   in {
     options.services.oauth2-proxy-config = {
       enable = lib.mkEnableOption "oauth2-proxy forward-auth with SystemNix configuration";
-      port = serviceTypes.servicePort 4180 "Port for oauth2-proxy";
+      port = serviceTypes.servicePort ports.oauth2-proxy "Port for oauth2-proxy";
     };
 
     config = lib.mkIf cfg.enable {

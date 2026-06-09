@@ -6,11 +6,11 @@ _: {
     ...
   }: let
     cfg = config.services.taskchampion-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports;
   in {
     options.services.taskchampion-config = {
       enable = lib.mkEnableOption "TaskChampion sync server with SystemNix configuration";
-      port = serviceTypes.servicePort 10222 "Port for TaskChampion sync server";
+      port = serviceTypes.servicePort ports.taskchampion "Port for TaskChampion sync server";
     };
 
     config = lib.mkIf cfg.enable {

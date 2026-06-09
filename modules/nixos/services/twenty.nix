@@ -9,7 +9,7 @@ _: {
     cfg = config.services.twenty;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes images;
+    inherit (libHelpers) serviceTypes images ports;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     serverPort = cfg.port;
@@ -110,7 +110,7 @@ _: {
   in {
     options.services.twenty = {
       enable = lib.mkEnableOption "Twenty CRM";
-      port = serviceTypes.servicePort 3200 "Host port for the Twenty CRM server";
+      port = serviceTypes.servicePort ports.twenty "Host port for the Twenty CRM server";
       imageTag = serviceTypes.dockerImageTag images.twenty.tag;
     };
 

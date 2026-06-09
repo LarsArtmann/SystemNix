@@ -10,7 +10,7 @@ _: {
     inherit (config.users) primaryUser;
     mcJarSha1 = "97ccd4c0ed3f81bbb7bfacddd1090b0c56f9bc51";
     mcJarUrl = "https://piston-data.mojang.com/v1/objects/${mcJarSha1}/server.jar";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes ports;
 
     minecraft-server-26 = pkgs.stdenv.mkDerivation {
       pname = "minecraft-server";
@@ -252,7 +252,7 @@ _: {
     options.services.minecraft = {
       enable = lib.mkEnableOption "Minecraft server";
 
-      port = serviceTypes.servicePort 25565 "Server port";
+      port = serviceTypes.servicePort ports.minecraft "Server port";
 
       jvmOpts = lib.mkOption {
         type = lib.types.str;

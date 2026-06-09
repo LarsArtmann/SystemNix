@@ -71,7 +71,7 @@ _: {
         description = "Whisper model to use";
       };
 
-      whisperPort = serviceTypes.servicePort 7860 "Port for Whisper ASR Gradio WebUI";
+      whisperPort = serviceTypes.servicePort ports.whisper "Port for Whisper ASR Gradio WebUI";
 
       openFirewall = lib.mkOption {
         type = lib.types.bool;
@@ -93,8 +93,8 @@ _: {
         settings = {
           port = ports.livekit;
           rtc = {
-            port_range_start = 50000;
-            port_range_end = 51000;
+            port_range_start = ports.livekit-udp-start;
+            port_range_end = ports.livekit-udp-end;
             use_external_ip = false;
           };
         };
@@ -112,8 +112,8 @@ _: {
         ];
         allowedUDPPortRanges = [
           {
-            from = 50000;
-            to = 51000;
+            from = ports.livekit-udp-start;
+            to = ports.livekit-udp-end;
           }
         ];
       };

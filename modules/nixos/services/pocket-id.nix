@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.pocket-id-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports;
     pocketIdPort = cfg.port;
     metricsPort = cfg.metricsPort;
 
@@ -21,8 +21,8 @@ _: {
   in {
     options.services.pocket-id-config = {
       enable = lib.mkEnableOption "Pocket ID passkey OIDC provider with SystemNix configuration";
-      port = serviceTypes.servicePort 1411 "Port for Pocket ID";
-      metricsPort = serviceTypes.servicePort 9464 "Port for Pocket ID Prometheus metrics";
+      port = serviceTypes.servicePort ports.pocket-id "Port for Pocket ID";
+      metricsPort = serviceTypes.servicePort ports.pocket-id-metrics "Port for Pocket ID Prometheus metrics";
     };
 
     config = lib.mkIf cfg.enable {
