@@ -71,6 +71,8 @@ _: {
 
       systemd.services.ollama = {
         wantedBy = lib.mkForce [];
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
         serviceConfig =
           {
             DynamicUser = lib.mkForce false;

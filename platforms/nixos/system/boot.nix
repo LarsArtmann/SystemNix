@@ -3,7 +3,6 @@
   lib,
   ...
 }: let
-  amdgpuGttSize = 114688;
   ttmPagesLimit = 29360128;
 in {
   # Bootloader and Kernel Configuration
@@ -22,7 +21,7 @@ in {
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
     # Load bfq for responsive I/O scheduling under heavy disk pressure
-    kernelModules = ["i2c-dev" "pstore" "bfq"];
+    kernelModules = ["i2c-dev" "bfq"];
 
     # AMD GPU + NPU optimization kernel parameters for Strix Halo (128GB unified memory)
     kernelParams = [
@@ -44,10 +43,8 @@ in {
       # The ~130W power ceiling is GMKtec firmware PPT — not OS-controllable (no ryzen_smu for
       # Strix Halo yet, no RAPL constraints exposed, no platform profile in BIOS).
       "amd_pstate=performance"
-      # GTT: allow GPU to address up to 112GB (128GB − 16GB reserved for CPU/system).
-      # Not pre-allocated — GPU uses what it needs dynamically.
-      "amdgpu.gttsize=${toString amdgpuGttSize}"
       # TTM: match GTT limit so GPU page allocations can use the full 112GB
+      # Note: amdgpu.gttsize is deprecated in kernel 7.0+ — use ttm.pages_limit instead
       "amdgpu.ttm.pages_limit=${toString ttmPagesLimit}"
       # IOMMU enabled — required for full 128GB memory mapping on Strix Halo.
       # Previously set to "off" for ~6% memory read improvement, but this prevented
@@ -75,7 +72,6 @@ in {
 
   # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
   boot.extraModprobeConfig = ''
-    options amdgpu gttsize=${toString amdgpuGttSize}
     options ttm pages_limit=${toString ttmPagesLimit}
     options ttm page_pool_size=${toString ttmPagesLimit}
   '';

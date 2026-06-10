@@ -192,6 +192,7 @@ in {
       multi-wm.enable = true;
       browser-policies.enable = true;
       steam-config.enable = true;
+      discordsync.enable = true;
 
       # Manifest — Smart LLM router for AI agents (cost optimization)
       manifest = {

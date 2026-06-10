@@ -126,96 +126,100 @@ in {
             group = "signoz";
             restartUnits = ["signoz-provision.service"];
           } ["discord_alert_webhook_url"]
-          // mkSecrets "discordsync.yaml" {
-            owner = "discordsync";
-            group = "discordsync";
-            restartUnits = ["discordsync.service"];
-          } ["discordsync_discord_token" "discordsync_turso_url" "discordsync_turso_auth_token"];
+          // lib.optionalAttrs config.services.discordsync.enable (
+            mkSecrets "discordsync.yaml" {
+              owner = "discordsync";
+              group = "discordsync";
+              restartUnits = ["discordsync.service"];
+            } ["discordsync_discord_token" "discordsync_turso_url" "discordsync_turso_auth_token"]
+          );
 
-        templates = {
-          "gatus-env" = {
-            owner = "root";
-            group = "root";
-            restartUnits = ["gatus.service"];
-            content = ''
-              DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
-            '';
-          };
-          "forgejo-sync.env" = {
-            owner = primaryUser;
-            group = "users";
-            content = ''
-              FORGEJO_TOKEN=${config.sops.placeholder.forgejo_token}
-              GITHUB_TOKEN=${config.sops.placeholder.github_token}
-              GITHUB_USER=${config.sops.placeholder.github_user}
-            '';
-          };
+        templates =
+          {
+            "gatus-env" = {
+              owner = "root";
+              group = "root";
+              restartUnits = ["gatus.service"];
+              content = ''
+                DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
+              '';
+            };
+            "forgejo-sync.env" = {
+              owner = primaryUser;
+              group = "users";
+              content = ''
+                FORGEJO_TOKEN=${config.sops.placeholder.forgejo_token}
+                GITHUB_TOKEN=${config.sops.placeholder.github_token}
+                GITHUB_USER=${config.sops.placeholder.github_user}
+              '';
+            };
 
-          "hermes-env" = {
-            owner = "hermes";
-            group = "hermes";
-            mode = "0400";
-            restartUnits = ["hermes.service"];
-            content = ''
-              DISCORD_BOT_TOKEN=${config.sops.placeholder.hermes_discord_bot_token}
-              GLM_API_KEY=${config.sops.placeholder.hermes_glm_api_key}
-              MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
-              XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
-              FAL_KEY=${config.sops.placeholder.hermes_fal_key}
-              FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
-            '';
-          };
+            "hermes-env" = {
+              owner = "hermes";
+              group = "hermes";
+              mode = "0400";
+              restartUnits = ["hermes.service"];
+              content = ''
+                DISCORD_BOT_TOKEN=${config.sops.placeholder.hermes_discord_bot_token}
+                GLM_API_KEY=${config.sops.placeholder.hermes_glm_api_key}
+                MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
+                XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
+                FAL_KEY=${config.sops.placeholder.hermes_fal_key}
+                FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
+              '';
+            };
 
-          "monitor365-env" = {
-            owner = primaryUser;
-            group = "users";
-            restartUnits = ["monitor365.service" "monitor365-server.service"];
-            content = ''
-              MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
-            '';
-          };
+            "monitor365-env" = {
+              owner = primaryUser;
+              group = "users";
+              restartUnits = ["monitor365.service" "monitor365-server.service"];
+              content = ''
+                MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
+              '';
+            };
 
-          "pma-env" = {
-            owner = primaryUser;
-            group = "users";
-            restartUnits = ["projects-management-automation.service"];
-            content = ''
-              MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
-            '';
-          };
+            "pma-env" = {
+              owner = primaryUser;
+              group = "users";
+              restartUnits = ["projects-management-automation.service"];
+              content = ''
+                MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
+              '';
+            };
 
-          "openseo-env" = {
-            owner = "root";
-            group = "root";
-            mode = "0400";
-            restartUnits = ["openseo.service"];
-            content = ''
-              DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
-            '';
-          };
+            "openseo-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
+              restartUnits = ["openseo.service"];
+              content = ''
+                DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
+              '';
+            };
 
-          "crush-daily-env" = {
-            owner = "crush-daily";
-            group = "crush-daily";
-            mode = "0400";
-            restartUnits = ["crush-daily.service"];
-            content = ''
-              CRUSH_DAILY_LLM_API_KEY=${config.sops.placeholder.synthetic_api_key}
-            '';
+            "crush-daily-env" = {
+              owner = "crush-daily";
+              group = "crush-daily";
+              mode = "0400";
+              restartUnits = ["crush-daily.service"];
+              content = ''
+                CRUSH_DAILY_LLM_API_KEY=${config.sops.placeholder.synthetic_api_key}
+              '';
+            };
+          }
+          // lib.optionalAttrs config.services.discordsync.enable {
+            "discordsync-env" = {
+              owner = "discordsync";
+              group = "discordsync";
+              mode = "0400";
+              restartUnits = ["discordsync.service"];
+              content = ''
+                DISCORD_TOKEN=${config.sops.placeholder.discordsync_discord_token}
+                TURSO_URL=${config.sops.placeholder.discordsync_turso_url}
+                TURSO_AUTH_TOKEN=${config.sops.placeholder.discordsync_turso_auth_token}
+              '';
+            };
           };
-
-          "discordsync-env" = {
-            owner = "discordsync";
-            group = "discordsync";
-            mode = "0400";
-            restartUnits = ["discordsync.service"];
-            content = ''
-              DISCORD_TOKEN=${config.sops.placeholder.discordsync_discord_token}
-              TURSO_URL=${config.sops.placeholder.discordsync_turso_url}
-              TURSO_AUTH_TOKEN=${config.sops.placeholder.discordsync_turso_auth_token}
-            '';
-          };
-        };
       };
     };
   };

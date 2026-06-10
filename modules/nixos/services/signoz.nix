@@ -214,7 +214,7 @@ in {
         services.clickhouse.extraServerConfig = ''
           <clickhouse>
             <keeper_server>
-              <tcp_port>9181</tcp_port>
+              <tcp_port>${toString ports.signoz-clickhouse-keeper}</tcp_port>
               <server_id>1</server_id>
               <log_storage_path>/var/lib/clickhouse/coordination/log</log_storage_path>
               <snapshot_storage_path>/var/lib/clickhouse/coordination/snapshots</snapshot_storage_path>
@@ -222,14 +222,14 @@ in {
                 <server>
                   <id>1</id>
                   <hostname>localhost</hostname>
-                  <port>9234</port>
+                  <port>${toString ports.signoz-clickhouse-raft}</port>
                 </server>
               </raft_configuration>
             </keeper_server>
             <zookeeper>
               <node>
                 <host>localhost</host>
-                <port>9181</port>
+                <port>${toString ports.signoz-clickhouse-keeper}</port>
               </node>
             </zookeeper>
           </clickhouse>
@@ -254,18 +254,31 @@ in {
           after = lib.optional cfg.components.clickhouse "clickhouse.service";
           requires = lib.optional cfg.components.clickhouse "clickhouse.service";
           inherit onFailure;
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["signoz.target"];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
           serviceConfig =
             {
               Type = "simple";
               User = "signoz";
               Group = "signoz";
               WorkingDirectory = cfg.settings.queryService.dataDir;
-              ExecStart = "${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml";
+              ExecStart = let
+                jwtFile = "${cfg.settings.queryService.dataDir}/jwt-secret";
+                wrapper = pkgs.writeShellScriptBin "signoz-wrapper" ''
+                  if [ ! -f '${jwtFile}' ]; then
+                    ${pkgs.openssl}/bin/openssl rand -base64 48 > '${jwtFile}'
+                    chmod 400 '${jwtFile}'
+                  fi
+                  export SIGNOZ_TOKENIZER_JWT_SECRET="$(cat '${jwtFile}')"
+                  exec ${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml
+                '';
+              in "${lib.getExe wrapper}";
               ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version";
             }
             // harden {
               MemoryMax = lib.mkForce "1G";
+              ReadWritePaths = [cfg.settings.queryService.dataDir];
             }
             // serviceDefaults {RestartSec = "10";};
         };
@@ -543,9 +556,11 @@ in {
       (lib.mkIf cfg.components.cadvisor {
         systemd.services.cadvisor = {
           description = "cAdvisor — container metrics";
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["signoz.target"];
           after = ["docker.service"];
           requires = ["docker.service"];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
           serviceConfig =
             {
               ExecStart = "${lib.getExe pkgs.cadvisor} --listen_ip=127.0.0.1 --port=${toString cfg.settings.cadvisorPort} --docker_only=true";
@@ -563,7 +578,9 @@ in {
           inherit onFailure;
           after = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
           wants = ["signoz.service"] ++ lib.optional cfg.components.clickhouse "clickhouse.service";
-          wantedBy = ["multi-user.target"];
+          wantedBy = ["signoz.target"];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
           preStart = ''
             ${packages.otelCollector}/bin/signoz-otel-collector migrate bootstrap \
               --clickhouse-dsn "${cfg.settings.clickhouse.url}" \

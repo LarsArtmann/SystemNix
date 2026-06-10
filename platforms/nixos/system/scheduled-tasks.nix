@@ -99,11 +99,12 @@ in {
               name = "notify-failure";
               runtimeInputs = [pkgs.libnotify pkgs.util-linux];
               text = ''
-                notify-send -u critical "Scheduled task failed" "%i — check journalctl -u %i" 2>/dev/null || \
-                  logger -t "%i" -p user.err "Scheduled task failed — check journalctl -u %i"
+                UNIT="''${1:-unknown}"
+                notify-send -u critical "Scheduled task failed" "$UNIT — check journalctl -u $UNIT" 2>/dev/null || \
+                  logger -t "$UNIT" -p user.err "Scheduled task failed — check journalctl -u $UNIT"
               '';
             };
-          in "${notifyFailure}/bin/notify-failure";
+          in "${notifyFailure}/bin/notify-failure %i";
           StandardOutput = "journal";
           StandardError = "journal";
         };

@@ -42,6 +42,8 @@ _: {
         inherit onFailure;
         wantedBy = ["multi-user.target"];
         after = ["network.target"];
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
         serviceConfig =
           {
             ExecStart = lib.getExe pkgs.homepage-dashboard;

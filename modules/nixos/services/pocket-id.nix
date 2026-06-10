@@ -171,9 +171,9 @@ _: {
 
               if [ -z "$CLIENT_ID" ]; then
                 echo "  ERROR: Failed to create client '${client.name}'. Response: $CREATE_RESPONSE" >&2
-                continue
+              else
+                echo "  Created client '${client.name}' with ID: $CLIENT_ID"
               fi
-              echo "  Created client '${client.name}' with ID: $CLIENT_ID"
             fi
 
             # Generate/get client secret

@@ -423,6 +423,10 @@ _: {
           inherit (cfg) whitelist;
         };
 
+        systemd.services.minecraft-server = {
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+        };
         systemd.services.minecraft-server.serviceConfig =
           harden {
             ProtectHome = lib.mkForce false;

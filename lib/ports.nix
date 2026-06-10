@@ -29,6 +29,8 @@
     signoz-cadvisor = 9190;
     signoz-node-exporter = 9100;
     signoz-clickhouse = 9000;
+    signoz-clickhouse-keeper = 9181;
+    signoz-clickhouse-raft = 9234;
 
     taskchampion = 10222;
 

@@ -83,6 +83,12 @@ _: {
           immich-server = {
             after = lib.optional provisionEnabled "pocket-id-provision.service";
             wants = lib.optional provisionEnabled "pocket-id-provision.service";
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+          };
+          immich-machine-learning = {
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
           };
           immich-db-backup = {
             description = "Immich PostgreSQL database backup";

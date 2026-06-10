@@ -14,6 +14,8 @@ _: {
     };
 
     config = lib.mkIf cfg.enable {
+      users.groups.plugdev = {};
+
       security = {
         polkit.enable = true;
         pam.services.swaylock = {};

@@ -221,6 +221,13 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `auto-optimise-store` | In `common/nix-settings.nix`, NOT `networking.nix` |
 | `mkPreparedSource` v2 sub-modules | `subModules` handles `/v2` suffixes — include version in list entry (e.g. `"codec/v2"`), it's kept in module path but stripped from local dir |
 | `proxyVendor = true` | Required for `mkPreparedSource` repos — enables `go mod tidy` in both derivation phases without vendor/ validation issues |
+| sops secret owners | Secrets referencing non-existent users/groups cause sops-install-secrets to fail atomically — ALL secrets blocked. Guard with `lib.optionalAttrs config.services.X.enable` |
+| `signoz.target` | SigNoz/ClickHouse use custom `signoz.target` (NOT `multi-user.target`) to avoid blocking `graphical.target`. All new SigNoz components must use `wantedBy = ["signoz.target"]` |
+| `notify-failure@%n` wrapper | `%i` in `writeShellApplication` is NOT expanded — must pass `%i` as script argument from `ExecStart`. Template: `"${scriptBin}/bin/script %i"` |
+| `startLimitBurst` | Every service using `serviceDefaults {}` MUST set `startLimitBurst = 5; startLimitIntervalSec = 300;` to prevent infinite crash loops |
+| `amdgpu.gttsize` deprecated | Kernel 7.0+ uses `ttm.pages_limit` only. Remove from both `kernelParams` and `extraModprobeConfig` |
+| SigNoz JWT secret | Auto-generated at `${cfg.settings.queryService.dataDir}/jwt-secret` via wrapper script. Never store in sops — just needs to be persistent and random |
+| GPU crash forensics | WDT hard reset empties pstore. Journal corruption is expected. The `initrd-nixos-activation` 2m50s hang was caused by sops owner validation failure, not initrd itself |
 
 ---
 
