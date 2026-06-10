@@ -90,42 +90,54 @@ in {
               mode = "0400";
             };
           }
-          // mkSecrets "voice-agents.yaml" {
-            restartUnits = ["livekit.service"];
-          } ["livekit_keys"]
-          // mkKeyedSecrets "hermes.yaml" {
-            owner = "hermes";
-            group = "hermes";
-            restartUnits = ["hermes.service"];
-          } {
-            hermes_discord_bot_token = "discord_bot_token";
-            hermes_glm_api_key = "glm_api_key";
-            hermes_minimax_api_key = "minimax_api_key";
-            hermes_xiaomi_api_key = "xiaomi_api_key";
-            hermes_fal_key = "fal_key";
-            hermes_firecrawl_api_key = "firecrawl_api_key";
-            # hermes_openai_api_key = "openai_api_key"; # TODO: add openai_api_key to hermes.yaml sops secret
-          }
-          // mkSecrets "crush-daily.yaml" {
-            owner = "crush-daily";
-            group = "crush-daily";
-            restartUnits = ["crush-daily.service"];
-          } ["synthetic_api_key"]
-          // mkSecrets "openseo.yaml" {
-            owner = "root";
-            group = "root";
-            restartUnits = ["openseo.service"];
-          } ["dataforseo_api_key"]
-          // mkSecrets "monitor365.yaml" {
-            owner = primaryUser;
-            group = "users";
-            restartUnits = ["monitor365.service" "monitor365-server.service"];
-          } ["cloud_auth_token" "server_jwt_secret"]
-          // mkSecrets "signoz.yaml" {
-            owner = "signoz";
-            group = "signoz";
-            restartUnits = ["signoz-provision.service"];
-          } ["discord_alert_webhook_url"]
+          // lib.optionalAttrs config.services.voice-agents.enable (
+            mkSecrets "voice-agents.yaml" {
+              restartUnits = ["livekit.service"];
+            } ["livekit_keys"]
+          )
+          // lib.optionalAttrs config.services.hermes.enable (
+            mkKeyedSecrets "hermes.yaml" {
+              owner = "hermes";
+              group = "hermes";
+              restartUnits = ["hermes.service"];
+            } {
+              hermes_discord_bot_token = "discord_bot_token";
+              hermes_glm_api_key = "glm_api_key";
+              hermes_minimax_api_key = "minimax_api_key";
+              hermes_xiaomi_api_key = "xiaomi_api_key";
+              hermes_fal_key = "fal_key";
+              hermes_firecrawl_api_key = "firecrawl_api_key";
+              # hermes_openai_api_key = "openai_api_key"; # TODO: add openai_api_key to hermes.yaml sops secret
+            }
+          )
+          // lib.optionalAttrs config.services.crush-daily.enable (
+            mkSecrets "crush-daily.yaml" {
+              owner = "crush-daily";
+              group = "crush-daily";
+              restartUnits = ["crush-daily.service"];
+            } ["synthetic_api_key"]
+          )
+          // lib.optionalAttrs config.services.openseo.enable (
+            mkSecrets "openseo.yaml" {
+              owner = "root";
+              group = "root";
+              restartUnits = ["openseo.service"];
+            } ["dataforseo_api_key"]
+          )
+          // lib.optionalAttrs config.services.monitor365.enable (
+            mkSecrets "monitor365.yaml" {
+              owner = primaryUser;
+              group = "users";
+              restartUnits = ["monitor365.service" "monitor365-server.service"];
+            } ["cloud_auth_token" "server_jwt_secret"]
+          )
+          // lib.optionalAttrs config.services.signoz.enable (
+            mkSecrets "signoz.yaml" {
+              owner = "signoz";
+              group = "signoz";
+              restartUnits = ["signoz-provision.service"];
+            } ["discord_alert_webhook_url"]
+          )
           // lib.optionalAttrs config.services.discordsync.enable (
             mkSecrets "discordsync.yaml" {
               owner = "discordsync";
@@ -136,14 +148,6 @@ in {
 
         templates =
           {
-            "gatus-env" = {
-              owner = "root";
-              group = "root";
-              restartUnits = ["gatus.service"];
-              content = ''
-                DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
-              '';
-            };
             "forgejo-sync.env" = {
               owner = primaryUser;
               group = "users";
@@ -153,7 +157,8 @@ in {
                 GITHUB_USER=${config.sops.placeholder.github_user}
               '';
             };
-
+          }
+          // lib.optionalAttrs config.services.hermes.enable {
             "hermes-env" = {
               owner = "hermes";
               group = "hermes";
@@ -169,15 +174,6 @@ in {
               '';
             };
 
-            "monitor365-env" = {
-              owner = primaryUser;
-              group = "users";
-              restartUnits = ["monitor365.service" "monitor365-server.service"];
-              content = ''
-                MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
-              '';
-            };
-
             "pma-env" = {
               owner = primaryUser;
               group = "users";
@@ -186,7 +182,18 @@ in {
                 MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
               '';
             };
-
+          }
+          // lib.optionalAttrs config.services.monitor365.enable {
+            "monitor365-env" = {
+              owner = primaryUser;
+              group = "users";
+              restartUnits = ["monitor365.service" "monitor365-server.service"];
+              content = ''
+                MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
+              '';
+            };
+          }
+          // lib.optionalAttrs config.services.openseo.enable {
             "openseo-env" = {
               owner = "root";
               group = "root";
@@ -196,7 +203,8 @@ in {
                 DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
               '';
             };
-
+          }
+          // lib.optionalAttrs config.services.crush-daily.enable {
             "crush-daily-env" = {
               owner = "crush-daily";
               group = "crush-daily";
@@ -204,6 +212,16 @@ in {
               restartUnits = ["crush-daily.service"];
               content = ''
                 CRUSH_DAILY_LLM_API_KEY=${config.sops.placeholder.synthetic_api_key}
+              '';
+            };
+          }
+          // lib.optionalAttrs config.services.signoz.enable {
+            "gatus-env" = {
+              owner = "root";
+              group = "root";
+              restartUnits = ["gatus.service"];
+              content = ''
+                DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
               '';
             };
           }

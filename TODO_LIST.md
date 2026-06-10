@@ -1,151 +1,97 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-08 (session 122 — COMPLETION SPRINT)
+**Updated:** 2026-06-11 (session 131)
 
 ---
 
-## Active Tasks (SystemNix repo)
+## Active Tasks
 
-### Priority 0: Hermes Follow-up
+### Priority 0: Fix Broken Services
 
-- [x] **Configure secondary LLM provider** for hermes (OpenRouter/OpenAI) as GLM-5.1 fallback
-  - Nix config DONE: added `hermes_openai_api_key` secret placeholder + `OPENAI_API_KEY` env var in `hermes-env` template
-  - **MANUAL STEP REQUIRED**: Add `openai_api_key` to `platforms/nixos/secrets/hermes.yaml` via `sops platforms/nixos/secrets/hermes.yaml`
-  - **MANUAL STEP REQUIRED**: Set fallback model in hermes runtime: `hermes config set fallback_model openrouter/gpt-4o` (in `/home/hermes/`)
-- [x] **Hermes git remote access** — SSH deploy key for sandbox (`origin` unreachable)
-  - DONE: Generated ed25519 key pair in `scripts/hermes-setup/`
-  - **MANUAL STEP REQUIRED**: Install private key to `/home/hermes/.ssh/id_ed25519` and add public key to GitHub deploy keys
-  - See `scripts/hermes-setup/README.md` for full instructions
-- [ ] **Monitor GLM-5.1 rate limit** — verify cron jobs recovered after reset
-  - *Blocked*: Requires `journalctl -u hermes` on evo-x2
-  - Run `just verify` to check remotely, or `journalctl -u hermes --since "24h ago" | grep -i rate` on evo-x2
+- [ ] **Fix Monitor365 DB path** — `unable to open database file`, both agent + server crash-looping. Investigate `stateDir`, add tmpfiles rule for parent directory, verify SQLite path in the Rust binary's config
+- [ ] **Fix aw-watcher-window-wayland startup race** — panics `Failed to connect to wayland display` before compositor ready. The watcher is configured via `services.activitywatch.watchers` in `platforms/common/programs/activitywatch.nix` — upstream HM module sets `After = ["activitywatch.service"]` but doesn't include `graphical-session.target`
+- [ ] **Fix Twenty CRM intermittent 502s** — Caddy logs show `connection refused`/`connection reset` on port 3200. Likely container OOM or PG connection exhaustion. Run `docker logs twenty-server-1 --tail=100` on evo-x2
 
-### Priority 1: Deploy & Verify
+### Priority 1: Manual Steps (Blocked on Human)
 
-- [x] **Deploy committed changes** — color migration, SigNoz routing, Darwin parity, just status
-- [ ] **Verify boot time** — expect ~35s with all optimizations
-  - *Blocked*: Requires reboot of evo-x2
-  - Run `systemd-analyze` after next reboot
-- [ ] **Check SigNoz provision logs**: channel + rule creation, 4 new dashboards
-  - *Blocked*: Requires curl to localhost:8080 on evo-x2
-  - Use `scripts/verify-deployment.sh` or run: `curl http://localhost:8080/api/v1/dashboards` and `curl http://localhost:8080/api/v1/rules`
-- [ ] **Test Discord alert channel**: `POST /api/v1/channels/test`
-  - *Blocked*: Requires curl + Discord webhook secret on evo-x2
-  - Script checks this in `verify-deployment.sh`
-- [ ] **Verify Gatus endpoints**: `status.home.lan` healthy, webhook URL loaded, TLS cert check active
-  - *Blocked*: Requires curl to localhost:9110 on evo-x2
-  - Script checks this in `verify-deployment.sh`
+- [ ] **Hermes: add OpenAI API key to sops** — `sops platforms/nixos/secrets/hermes.yaml`, add `openai_api_key`. Nix config already wired
+- [ ] **Hermes: install SSH deploy key** — private key from `scripts/hermes-setup/id_ed25519` to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
+- [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model openrouter/gpt-4o`
+- [ ] **Pocket ID SMTP** — Wire SES or Resend SMTP credentials. SES infra exists in `domains` repo. Pocket ID supports `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` env vars. Add to sops + pocket-id.nix settings
 
-### Priority 2: Code Improvements
+### Priority 2: Verify Deployed Changes
 
-- [x] **Add per-threshold SigNoz channel routing** (critical→Discord, warning→log) — `_signoz-alerts.nix`
-- [x] **Flake inputs audit** — 45 inputs checked, all used
-- [x] **Bring Darwin home.nix to parity** — terminal, editor, theme, xdg
+- [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
+- [ ] **Verify Pocket ID OTel fix** — confirm no more `https://localhost:4318` log spam after `OTEL_METRICS_EXPORTER=prometheus` setting
+- [ ] **Verify Caddy boot ordering** — confirm Caddy starts after sops-nix on reboot (no cert-not-found errors)
+- [ ] **Verify DNS A records** — `dig status.home.lan`, `dig seo.home.lan`, `dig daily.home.lan`, `dig logs.home.lan`, `dig monitor.home.lan` should resolve
+- [ ] **Audit Gatus health checks** — 6 services show DOWN with possibly wrong check URLs (SigNoz port 8080 root path, Immich `/api/server-info/ping`, Crush Daily `/api/health`, Ollama `/api/tags`, Monitor365 port 3001 root path)
 
-### Priority 3: Documentation & Tools
+### Priority 3: Infrastructure
 
-- [x] **nix-colors integration**: wire `nix-colors` to Home Manager, migrate 17+ hardcoded colors
-- [x] **Create `just status` command** for automated status report generation
-- [x] **Create post-deploy verification script** (`scripts/verify-deployment.sh`) + `just verify` recipe
+- [ ] **BTRFS `/data` subvolume migration** — `just snapshot-migrate-data`. Currently toplevel (subvolid=5), no snapshot protection for Docker/Immich/AI data
+- [ ] **Add weekly Nix GC timer** — prevent root disk from creeping back to 95%. `nix-collect-garbage -d` was run manually this session
+- [ ] **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION;` in Twenty CRM's postgres container. Silences 15,000+ log lines/day
+- [ ] **Swap investigation** — 8 GiB swap used on 128 GiB RAM. Run `smem -t -k | tail -20` and `swapoff -a && swapon -a`
 
-### Priority 4: Hardware
+### Priority 4: Documentation
 
-- [ ] **Provision Pi 3** for DNS failover cluster
-  - *Blocked*: Requires physical Raspberry Pi 3 hardware
-- [ ] **Wire Pi 3 as secondary DNS** in dns-failover.nix
-  - *Blocked*: Depends on Pi 3 provisioned first
+- [ ] **Archive old status reports** — move pre-session-100 from `docs/status/` to `docs/status/archive/` (177 → ~30 files)
+- [ ] **Create ROADMAP.md** — consolidate `docs/planning/` into single living doc
+- [ ] **Create CHANGELOG.md** — 185 commits in 2 weeks with no changelog
+
+### Priority 5: Long-Term
+
+- [ ] **Provision Pi 3** for DNS failover cluster — hardware required
+- [ ] **Auditd enablement** — blocked on NixOS 26.05 bug #483085
+- [ ] **AppArmor enablement** — commented out in security-hardening.nix
+- [ ] **Darwin Home Manager parity** — disk constrained (256GB, 90%+ full)
+- [ ] **Monitor365 agent→server auth** — no auth, anyone on LAN can POST data
+- [ ] **Disabled service triage** — voice-agents, minecraft, photomap: decide enable or remove
+- [ ] **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)
 
 ---
 
-## External Repos (Nix Flake Standardization)
+## Completed (session 131)
 
-- [x] **Convert go-auto-upgrade `path:` inputs to SSH URLs**
-  - DONE: Already converted in go-auto-upgrade repo (commit `97df102` — "fix(nix): convert path: inputs to SSH URLs, add overlay")
-- [x] **Create shared flake-parts template** (mkGoPackage, checks, devShells)
-  - DONE: Created `templates/go-flake-parts/flake.nix` + `README.md` in SystemNix
-  - Also copied to `go-nix-helpers/templates/go-flake-parts/` — **needs commit + push**
+- [x] **Fix Caddy boot ordering** — `wants = ["sops-nix.service"]` + `after` prevents 14-hour outage recurrence
+- [x] **Fix DNS A records for 5 subdomains** — status, seo, daily, logs, monitor added to both primary + RPi3 DNS
+- [x] **Fix Pocket ID OTel log spam** — `OTEL_METRICS_EXPORTER=prometheus`, `OTEL_TRACES_EXPORTER=none`, `OTEL_LOGS_EXPORTER=none`
+- [x] **Guard ALL sops secrets with optionalAttrs** — hermes, crush-daily, openseo, monitor365, signoz, voice-agents secrets + templates now wrapped in `lib.optionalAttrs config.services.X.enable`
+- [x] **Root disk cleanup** — `nix-collect-garbage -d` run by user
 
----
+## Completed (session 130)
 
-## Verification Instructions for Blocked Items
+- [x] **Homepage Dashboard YAML rewrite** — `mkGroup`/`mkService` helpers, ALLOWED_HOSTS, cache dir
+- [x] **Manifest behind auth** — moved to `protectedVHost`
+- [x] **Hermes icon fix** — `ai.png` → `hermes-icon.png`
 
-All blocked verification items can be checked by running on evo-x2:
+## Completed (session 129)
 
-```bash
-# Clone/pull latest SystemNix, then:
-cd /path/to/SystemNix
-bash scripts/verify-deployment.sh
-```
+- [x] **Pocket ID provision: header casing + URL encoding + race conditions** — fully working
+- [x] **QDirStat** — Qt disk usage analyzer added
+- [x] **NVMe APST boot delay fix** — `nvme_core.default_ps_max_latency_us=0` kernel param
 
-Or remotely via just:
-```bash
-just verify  # Runs verify-deployment.sh over SSH to evo-x2
-```
+## Completed (session 128)
 
-### Manual Verification Checklist
-
-| Task | Command on evo-x2 |
-|------|-------------------|
-| GLM-5.1 rate limit | `journalctl -u hermes --since "24h ago" \| grep -iE "rate\|429\|402"` |
-| Boot time | `systemd-analyze` |
-| SigNoz health | `curl -s http://localhost:8080/api/v1/health` |
-| SigNoz dashboards | `curl -s http://localhost:8080/api/v1/dashboards \| grep -c '"id"'` |
-| SigNoz rules | `curl -s http://localhost:8080/api/v1/rules \| grep -c '"id"'` |
-| Discord webhook | `curl -X POST -H "Content-Type: application/json" -d '{"content":"test"}' $(cat /var/lib/signoz/discord-webhook.url)` |
-| Gatus health | `curl -s http://localhost:9110/api/v1/endpoints/status` |
-| BTRFS snapshots | `ls -t /mnt/btrfs-root/@snapshots \| head -1` |
-
----
-
-## Hermes Sops Secret Setup (Manual)
-
-After the next `just switch`, the hermes service will expect `openai_api_key` in the encrypted secrets file. To add it:
-
-```bash
-# On evo-x2, with age key available:
-cd /path/to/SystemNix
-sops platforms/nixos/secrets/hermes.yaml
-# Add: openai_api_key: <your_openrouter_or_openai_key>
-# Save and exit
-just switch
-```
-
-Then set the fallback model in hermes:
-```bash
-sudo -u hermes hermes config set fallback_model openrouter/gpt-4o
-# Or for OpenAI directly:
-# sudo -u hermes hermes config set fallback_model openai/gpt-4o
-```
-
----
+- [x] **sops atomic failure fix** — discordsync owner blocked ALL secrets, wrapped with optionalAttrs
+- [x] **SigNoz decoupled from boot** — custom `signoz.target`, ~2m faster boot
+- [x] **SigNoz JWT auto-generation** — wrapper script on first start
+- [x] **Crash-loop protection** — `startLimitBurst = 5` on 9 services
+- [x] **notify-failure %i fix** — specifier passed as script argument
+- [x] **plugdev group** — eliminated 36 udev warnings
+- [x] **Deprecated amdgpu.gttsize removed**
+- [x] **ClickHouse ports centralized** in lib/ports.nix
+- [x] **Overview package build** — mkPreparedSource with 9 private Go repos
+- [x] **Discordsync enabled** + bot token regenerated
 
 ## Completed (session 122)
 
-- [x] Verify go-auto-upgrade already uses SSH URLs (no `path:` inputs remain)
-- [x] Create `templates/go-flake-parts/flake.nix` — standardized Go flake-parts template
-- [x] Add `hermes_openai_api_key` to sops secrets definition (`modules/nixos/services/sops.nix`)
-- [x] Add `OPENAI_API_KEY` to hermes-env template (enables OpenRouter/OpenAI fallback)
-- [x] Generate hermes SSH deploy key (`scripts/hermes-setup/id_ed25519`)
-- [x] Write hermes git remote access setup guide (`scripts/hermes-setup/README.md`)
-- [x] Write post-deploy verification script (`scripts/verify-deployment.sh`)
-- [x] Add `just verify` recipe to justfile for remote verification
-
-## Completed (session 121)
-
-- [x] Expand Catppuccin palette in `theme.nix` with 26 named colors + base16 aliases
-- [x] Migrate 164 hardcoded hex colors across 9 files to `colorScheme.palette`
-- [x] Add `just status` command for automated status report generation
-- [x] Add per-threshold SigNoz channel routing (critical→Discord, warning→UI only)
-- [x] Bring Darwin home.nix to parity with NixOS (zellij, yazi, zed-editor, session vars, xdg)
-- [x] Fix `crush-daily` stale flake lock (rev 66 → rev 67, overlays.default now available)
-- [x] Make `zellij.nix` cross-platform (pbcopy on Darwin, wl-copy on Linux)
-- [x] Deploy all changes to evo-x2 via `just switch`
-
-## Completed (session 118)
-
-- [x] Delete orphan `ai-stack.nix` module (109 lines)
-- [x] Fix port 8050 conflict — reassign photomap from 8050→8051
-- [x] Restore `go-structure-linter` — upstream fixed, overlay + package re-enabled
-- [x] Add stale LSP cleanup timer — daily, kills gopls/vtsls/rust-analyzer/lua-ls running >24h
-- [x] Deploy Dozzle — Docker log viewer at `logs.home.lan` (inline in configuration.nix)
-- [x] Add disk growth check timer — daily, alerts if `/data` grows >5G/24h
+- [x] Configure secondary LLM provider for hermes (Nix wiring done, manual sops step remaining)
+- [x] Hermes git remote access (SSH key generated, manual install remaining)
+- [x] nix-colors integration (164 colors migrated)
+- [x] Create `just status` command
+- [x] Create post-deploy verification script (`scripts/verify-deployment.sh`) + `just verify`
+- [x] Per-threshold SigNoz channel routing
+- [x] Flake inputs audit (45 inputs, all used)
+- [x] Darwin home.nix parity (terminal, editor, theme, xdg)

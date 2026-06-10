@@ -319,6 +319,9 @@ _: {
           METRICS_ENABLED = true;
           OTEL_EXPORTER_PROMETHEUS_HOST = "127.0.0.1";
           OTEL_EXPORTER_PROMETHEUS_PORT = toString metricsPort;
+          OTEL_METRICS_EXPORTER = "prometheus";
+          OTEL_TRACES_EXPORTER = "none";
+          OTEL_LOGS_EXPORTER = "none";
           LOG_LEVEL = "info";
           VERSION_CHECK_DISABLED = true;
           AUDIT_LOG_RETENTION_DAYS = "90";

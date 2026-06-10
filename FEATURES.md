@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-06-03 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-06-11 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,7 +25,7 @@ _A brutally honest audit of every feature the project actually has._
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Cross-platform Nix flake (Darwin + NixOS) | ✅ | Single flake, two systems, 80% shared via `platforms/common/` |
-| flake-parts modular architecture | ✅ | 36 service modules imported in `flake.nix` |
+| flake-parts modular architecture | ✅ | 39 service modules auto-discovered in `flake.nix` |
 | Shared overlays (Darwin + NixOS) | ✅ | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync |
 | Linux-only overlays | ✅ | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer |
 | Shared Home Manager config | ✅ | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs` |
@@ -52,8 +52,8 @@ _A brutally honest audit of every feature the project actually has._
 | Service | Status | Module | Key Details |
 |---------|--------|--------|-------------|
 | Docker | ✅ | `default.nix` | Always-on, overlay2, `/data/docker`, weekly auto-prune, user `lars` in docker group |
-| Caddy (reverse proxy) | ✅ | `caddy.nix` | TLS via sops certs, forward auth via oauth2-proxy + Pocket ID, 10 virtual hosts, metrics enabled |
-| SOPS secrets management | ✅ | `sops.nix` | Age-encrypted via SSH host key, 4 sops files, auto-restart per secret |
+| Caddy (reverse proxy) | ✅ | `caddy.nix` | TLS via sops certs, forward auth via oauth2-proxy + Pocket ID, 15 virtual hosts (all auth-protected), metrics enabled, sops-nix boot ordering |
+| SOPS secrets management | ✅ | `sops.nix` | Age-encrypted via SSH host key, 4 sops files, auto-restart per secret, ALL service-specific secrets guarded with `lib.optionalAttrs` |
 | Pocket ID (OIDC provider) | ✅ | `pocket-id.nix` | Passkey-only OIDC provider, Go backend, SQLite, web UI for user/client management
 | oauth2-proxy | ✅ | `oauth2-proxy.nix` | Forward-auth bridge between Caddy and Pocket ID, cookie-based sessions |
 | DNS Failover (Keepalived VRRP) | 📋 | `dns-failover.nix` | Two-node VRRP cluster, unbound health tracking, GARP refresh — Pi 3 not provisioned |
@@ -64,10 +64,10 @@ _A brutally honest audit of every feature the project actually has._
 |---------|--------|--------|-------------|
 | Forgejo (Git forge) | ✅ | `forgejo.nix` | SQLite, LFS, weekly dumps, GitHub mirror + push mirrors, Actions runner (Docker + native), admin auto-setup, federation enabled |
 | Forgejo repos (declarative mirroring) | ✅ | `forgejo-repos.nix` | Auto-sync on rebuild + daily timer, push mirrors to GitHub, hardened oneshot, sops-managed tokens |
-| Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha theme, 5 service categories, resource widgets, health checks |
+| Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha, programmatic `mkGroup`/`mkService` tiles, 5 categories, `ALLOWED_HOSTS`, cache dir, conditional tiles per service |
 | Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
 | PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, port 8051, disabled in config |
-| SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 7 alert rules, dashboard provisioning |
+| SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 7 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |
 | Twenty CRM | ✅ | `twenty.nix` | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan |
 | Dozzle (Docker log viewer) | ✅ | inline `configuration.nix` | OCI container, `logs.home.lan`, Docker socket mount, 300-line tail, running-only filter |
@@ -83,7 +83,7 @@ _A brutally honest audit of every feature the project actually has._
 | gpu-python wrapper | ✅ | `ai-stack.nix` | ROCm env vars + LD_LIBRARY_PATH for GPU-accelerated Python |
 | ComfyUI (image generation) | ❌ Removed | — | Disabled — prefer using AI models via code directly |
 | Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — disabled in config |
-| Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload |
+| Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload, OpenAI/OpenRouter fallback wiring (API key pending) |
 
 ### Desktop & System Services
 
@@ -96,8 +96,8 @@ _A brutally honest audit of every feature the project actually has._
 | Chromium policies | ✅ | `chromium-policies.nix` | YouTube Shorts Blocker + OneTab force-installed |
 | Steam gaming | ✅ | `steam.nix` | extest, protontricks, gamemode (renice=10, GPU temp 80°C), gamescope, mangohud |
 | Multi-WM (Sway backup) | 🔧 | `multi-wm.nix` | Sway as backup at SDDM login — disabled in config |
-| File & Image Renamer (AI) | ✅ | `file-and-image-renamer.nix` | Watches Desktop, ZAI API, hardened sandbox, Home Manager user service |
-| Monitor365 | ✅ | `monitor365.nix` | Device monitoring agent, ActivityWatch integration, user systemd service, hardened |
+| File & Image Renamer (AI) | 🔧 | `file-and-image-renamer.nix` | Blocked: `charm.land/fantasy@v0.25.0` requires Go 1.26.3, nixpkgs has 1.26.2 |
+| Monitor365 | ⚠️ | `monitor365.nix` | Device monitoring agent + server dashboard, ActivityWatch integration — server DB path broken, crash-looping |
 
 ### Monitoring
 
@@ -207,7 +207,7 @@ _A brutally honest audit of every feature the project actually has._
 | BTRFS root (`/`) | ✅ | zstd compression, noatime |
 | BTRFS data (`/data`) | ✅ | zstd:3 compression, SSD optimizations, async discard, space_cache=v2 — Docker lives here |
 | FAT32 boot (`/boot`) | ✅ | Restrictive masks (fmask=0077, dmask=0077) |
-| BTRFS snapshots | ✅ | btrbk: daily snapshots of root (@), 14d + 4w retention, pre-deploy snapshots via `just switch`, monthly scrub |
+| BTRFS snapshots | ✅ | btrbk: daily snapshots of root (@), 14d + 4w retention, pre-deploy snapshots via `just switch`, monthly scrub, verify timer alerts stale snapshots |
 | ZRAM swap | ✅ | 50% of RAM (64GB compressed) |
 | AMD virtualization | ✅ | KVM-AMD + AMD microcode updates |
 
@@ -240,7 +240,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Static IP networking | ✅ | `eno1` 192.168.1.150, no DHCP/NetworkManager |
 | Firewall | ✅ | TCP 22,53,80,443; UDP 53,853 |
 | Centralized network config | ✅ | `local-network.nix` module options — lanIP, gateway, subnet, blockIP, virtualIP, piIP |
-| Local DNS records | ✅ | auth/immich/forgejo/dash/photomap/signoz/tasks/crm → `*.home.lan` |
+| Local DNS records | ✅ | auth/immich/forgejo/dash/signoz/tasks/crm/manifest/status/seo/daily/logs/monitor → `*.home.lan` |
 | SSH banner | ✅ | Legal warning banner on SSH login |
 | Private cloud cluster | ✅ | 4 Hetzner servers (`private-cloud-hetzner-0` through `-3`) defined in SSH config |
 
@@ -483,8 +483,8 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Architecture patterns | 7 |
 | ADRs | 5 |
 | GitHub Actions | 2 |
-| **Total enabled features** | **~145** |
-| Planned/disabled | ~9 |
+| **Total enabled features** | **~155** |
+| Planned/disabled | ~8 |
 | Known gaps | 11 |
 
 ---
