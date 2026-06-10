@@ -102,8 +102,7 @@ _: {
 
       systemd.services.caddy = {
         after = ["pocket-id.service" "oauth2-proxy.service" "sops-nix.service"];
-        wants = ["pocket-id.service" "oauth2-proxy.service"];
-        bindsTo = ["sops-nix.service"];
+        wants = ["pocket-id.service" "oauth2-proxy.service" "sops-nix.service"];
         inherit onFailure;
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
