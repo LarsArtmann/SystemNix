@@ -172,7 +172,7 @@ in {
           enable = true;
           adminUser = {
             username = "lars";
-            email = "lars@larsartmann.com";
+            email = "lars@larsartmann.cloud";
             firstName = "Lars";
             lastName = "Artmann";
           };
