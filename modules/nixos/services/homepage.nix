@@ -13,7 +13,6 @@ _: {
     svcUrl = subdomain: "https://${subdomain}.${domain}";
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports;
 
-    when = cond: text: lib.optionalString cond text;
     hasContainer = name: config.virtualisation.oci-containers.containers ? ${name};
 
     signozEnabled = config.services.signoz.enable;
@@ -51,6 +50,7 @@ _: {
             Environment = [
               "PORT=${toString cfg.port}"
               "HOMEPAGE_CONFIG_DIR=${stateDir}"
+              "HOMEPAGE_ALLOWED_HOSTS=dash.${domain}"
               "NODE_OPTIONS=--max-old-space-size=192"
             ];
             User = "homepage";
@@ -95,201 +95,229 @@ _: {
             columns: 4
       '';
 
-      environment.etc."homepage/services.yaml".source = pkgs.writeText "homepage-services.yaml" (''
-          - Infrastructure:
-              - Pocket ID:
-                  href: ${svcUrl "auth"}
-                  description: Passkey OIDC Provider
-                  icon: pocket-id.png
-                  statusStyle: dot
-                  siteMonitor: ${svcUrl "auth"}/healthz
-              - Caddy:
-                  href: ${svcUrl "dash"}
-                  description: Reverse Proxy
-                  icon: caddy.png
-                  statusStyle: dot
-                  siteMonitor: ${svcUrl "dash"}
-              - Unbound DNS:
-                  description: DNS Resolver + Blocker
-                  icon: unbound.png
-                  statusStyle: dot
-              - PostgreSQL:
-                  description: Database Server
-                  icon: postgres.png
-              - Redis:
-                  description: Cache (Immich)
-                  icon: redis.png
-        ''
-        + (when hermesEnabled ''
-          - Hermes:
-              description: AI Agent Gateway (Discord, Cron, Messaging)
-              icon: ai.png
-              statusStyle: dot
-        '')
-        + ''
-          - Media:
-              - Immich:
-                  href: ${svcUrl "immich"}
-                  description: Photo & Video Management
-                  icon: immich.png
-                  statusStyle: dot
-                  siteMonitor: ${svcUrl "immich"}/api/server-info/ping
-              - DNS Blocker:
-                  href: http://localhost:${toString config.services.dns-blocker.statsPort}/stats
-                  description: DNS Block Stats
-                  icon: shield.png
-                  statusStyle: dot
-                  siteMonitor: http://localhost:${toString config.services.dns-blocker.statsPort}/health
-        ''
-        + (when photomapEnabled ''
-          - PhotoMap:
-              href: http://localhost:${toString config.services.photomap.port}
-              description: AI Photo Visualization
-              icon: photomap.png
-              statusStyle: dot
-              siteMonitor: http://localhost:${toString config.services.photomap.port}
-        '')
-        + ''
-          - Development:
-              - Forgejo:
-                  href: ${svcUrl "forgejo"}
-                  description: Git Forge (GitHub Sync)
-                  icon: forgejo.png
-                  statusStyle: dot
-                  siteMonitor: ${svcUrl "forgejo"}/api/v1/nodeinfo
-          - AI:
-        ''
-        + (when crushDailyEnabled ''
-          - Crush Daily:
-              href: ${svcUrl "daily"}
-              description: AI-Powered Development Insights
-              icon: ai.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "daily"}/api/health
-        '')
-        + (when manifestEnabled ''
-          - Manifest:
-              href: ${svcUrl "manifest"}
-              description: Smart LLM Router (Cost Optimization)
-              icon: ai.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "manifest"}/api/v1/health
-        '')
-        + (when ollamaEnabled ''
-          - Ollama:
-              description: Local AI Inference
-              icon: ollama.png
-              statusStyle: dot
-              siteMonitor: http://localhost:${toString config.services.ollama.port}/api/tags
-        '')
-        + (when voiceAgentsEnabled ''
-          - LiveKit:
-              href: ${svcUrl "voice"}
-              description: Real-Time Voice Infrastructure
-              icon: voice.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "voice"}
-          - Whisper ASR:
-              href: ${svcUrl "whisper"}
-              description: Speech-to-Text (Gradio)
-              icon: whisper.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "whisper"}
-        '')
-        + ''
-          - Monitoring:
-        ''
-        + (when gatusEnabled ''
-          - Gatus:
-              href: ${svcUrl "status"}
-              description: Uptime & Health Check Dashboard
-              icon: gatus.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "status"}
-        '')
-        + (when signozEnabled ''
-          - SigNoz:
-              href: ${svcUrl "signoz"}
-              description: Observability Platform (Traces, Metrics, Logs)
-              icon: signoz.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "signoz"}
-        '')
-        + (when dozzleEnabled ''
-          - Dozzle:
-              href: ${svcUrl "logs"}
-              description: Docker Log Viewer
-              icon: docker.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "logs"}
-        '')
-        + ''
-          - Node Exporter:
-              description: System Metrics (CPU, RAM, Disk, Network)
-              icon: prometheus.png
-              statusStyle: dot
-              siteMonitor: http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics
-        ''
-        + (when signozEnabled ''
-          - cAdvisor:
-              description: Container Metrics
-              icon: docker.png
-              statusStyle: dot
-              siteMonitor: http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics
-        '')
-        + ''
-          - dnsblockd:
-              description: DNS Block Page Server
-              icon: shield.png
-              statusStyle: dot
-              siteMonitor: http://localhost:${toString config.services.dns-blocker.statsPort}/metrics
-          - EMEET PIXY:
-              description: Webcam Auto-Management Daemon
-              icon: camera.png
-              statusStyle: dot
-              siteMonitor: http://localhost:${toString ports.emeet-pixyd}/metrics
-        ''
-        + (when monitor365Enabled ''
-          - Monitor365:
-              href: ${svcUrl "monitor"}
-              description: Device Monitoring Agent
-              icon: monitor.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "monitor"}
-        '')
-        + ''
-          - Productivity:
-        ''
-        + (when twentyEnabled ''
-          - Twenty CRM:
-              href: ${svcUrl "crm"}
-              description: Customer Relationship Management
-              icon: twenty.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "crm"}/healthz
-        '')
-        + ''
-          - Taskwarrior:
-              href: ${svcUrl "tasks"}
-              description: Task Sync Server (TaskChampion)
-              icon: taskwarrior.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "tasks"}
-          - Homepage:
-              description: This Page
-              icon: homepage.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "dash"}
-          - OpenSEO:
-              href: ${svcUrl "seo"}
-              description: SEO Suite (Rank Tracking, Keywords, Backlinks)
-              icon: search.png
-              statusStyle: dot
-              siteMonitor: ${svcUrl "seo"}
-        '');
+      environment.etc."homepage/services.yaml".source = let
+        mkGroup = name: services:
+          "- ${name}:\n" + lib.concatStringsSep "" services;
+
+        mkService = name: props:
+          "    - ${name}:\n"
+          + lib.concatStringsSep "" (lib.mapAttrsToList (k: v: "        ${k}: ${v}\n") props);
+
+        infraServices =
+          [
+            (mkService "Pocket ID" {
+              href = svcUrl "auth";
+              description = "Passkey OIDC Provider";
+              icon = "pocket-id.png";
+              statusStyle = "dot";
+              siteMonitor = "${svcUrl "auth"}/healthz";
+            })
+            (mkService "Caddy" {
+              href = svcUrl "dash";
+              description = "Reverse Proxy";
+              icon = "caddy.png";
+              statusStyle = "dot";
+              siteMonitor = svcUrl "dash";
+            })
+            (mkService "Unbound DNS" {
+              description = "DNS Resolver + Blocker";
+              icon = "unbound.png";
+              statusStyle = "dot";
+            })
+            (mkService "PostgreSQL" {
+              description = "Database Server";
+              icon = "postgres.png";
+            })
+            (mkService "Redis" {
+              description = "Cache (Immich)";
+              icon = "redis.png";
+            })
+          ]
+          ++ lib.optional hermesEnabled (mkService "Hermes" {
+            description = "AI Agent Gateway (Discord, Cron, Messaging)";
+            icon = "hermes-icon.png";
+            statusStyle = "dot";
+          });
+
+        mediaServices =
+          [
+            (mkService "Immich" {
+              href = svcUrl "immich";
+              description = "Photo & Video Management";
+              icon = "immich.png";
+              statusStyle = "dot";
+              siteMonitor = "${svcUrl "immich"}/api/server-info/ping";
+            })
+            (mkService "DNS Blocker" {
+              href = "http://localhost:${toString config.services.dns-blocker.statsPort}/stats";
+              description = "DNS Block Stats";
+              icon = "shield.png";
+              statusStyle = "dot";
+              siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
+            })
+          ]
+          ++ lib.optional photomapEnabled (mkService "PhotoMap" {
+            href = "http://localhost:${toString config.services.photomap.port}";
+            description = "AI Photo Visualization";
+            icon = "photomap.png";
+            statusStyle = "dot";
+            siteMonitor = "http://localhost:${toString config.services.photomap.port}";
+          });
+
+        devServices = [
+          (mkService "Forgejo" {
+            href = svcUrl "forgejo";
+            description = "Git Forge (GitHub Sync)";
+            icon = "forgejo.png";
+            statusStyle = "dot";
+            siteMonitor = "${svcUrl "forgejo"}/api/v1/nodeinfo";
+          })
+        ];
+
+        aiServices =
+          lib.optional crushDailyEnabled (mkService "Crush Daily" {
+            href = svcUrl "daily";
+            description = "AI-Powered Development Insights";
+            icon = "ai.png";
+            statusStyle = "dot";
+            siteMonitor = "${svcUrl "daily"}/api/health";
+          })
+          ++ lib.optional manifestEnabled (mkService "Manifest" {
+            href = svcUrl "manifest";
+            description = "Smart LLM Router (Cost Optimization)";
+            icon = "ai.png";
+            statusStyle = "dot";
+            siteMonitor = "${svcUrl "manifest"}/api/v1/health";
+          })
+          ++ lib.optional ollamaEnabled (mkService "Ollama" {
+            description = "Local AI Inference";
+            icon = "ollama.png";
+            statusStyle = "dot";
+            siteMonitor = "http://localhost:${toString config.services.ollama.port}/api/tags";
+          })
+          ++ lib.optionals voiceAgentsEnabled [
+            (mkService "LiveKit" {
+              href = svcUrl "voice";
+              description = "Real-Time Voice Infrastructure";
+              icon = "voice.png";
+              statusStyle = "dot";
+              siteMonitor = svcUrl "voice";
+            })
+            (mkService "Whisper ASR" {
+              href = svcUrl "whisper";
+              description = "Speech-to-Text (Gradio)";
+              icon = "whisper.png";
+              statusStyle = "dot";
+              siteMonitor = svcUrl "whisper";
+            })
+          ];
+
+        monitoringServices =
+          lib.optional gatusEnabled (mkService "Gatus" {
+            href = svcUrl "status";
+            description = "Uptime & Health Check Dashboard";
+            icon = "gatus.png";
+            statusStyle = "dot";
+            siteMonitor = svcUrl "status";
+          })
+          ++ lib.optional signozEnabled (mkService "SigNoz" {
+            href = svcUrl "signoz";
+            description = "Observability Platform (Traces, Metrics, Logs)";
+            icon = "signoz.png";
+            statusStyle = "dot";
+            siteMonitor = svcUrl "signoz";
+          })
+          ++ lib.optional dozzleEnabled (mkService "Dozzle" {
+            href = svcUrl "logs";
+            description = "Docker Log Viewer";
+            icon = "docker.png";
+            statusStyle = "dot";
+            siteMonitor = svcUrl "logs";
+          })
+          ++ [
+            (mkService "Node Exporter" {
+              description = "System Metrics (CPU, RAM, Disk, Network)";
+              icon = "prometheus.png";
+              statusStyle = "dot";
+              siteMonitor = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+            })
+          ]
+          ++ lib.optional signozEnabled (mkService "cAdvisor" {
+            description = "Container Metrics";
+            icon = "docker.png";
+            statusStyle = "dot";
+            siteMonitor = "http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics";
+          })
+          ++ [
+            (mkService "dnsblockd" {
+              description = "DNS Block Page Server";
+              icon = "shield.png";
+              statusStyle = "dot";
+              siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/metrics";
+            })
+            (mkService "EMEET PIXY" {
+              description = "Webcam Auto-Management Daemon";
+              icon = "camera.png";
+              statusStyle = "dot";
+              siteMonitor = "http://localhost:${toString ports.emeet-pixyd}/metrics";
+            })
+          ]
+          ++ lib.optional monitor365Enabled (mkService "Monitor365" {
+            href = svcUrl "monitor";
+            description = "Device Monitoring Agent";
+            icon = "monitor.png";
+            statusStyle = "dot";
+            siteMonitor = svcUrl "monitor";
+          });
+
+        productivityServices =
+          lib.optional twentyEnabled (mkService "Twenty CRM" {
+            href = svcUrl "crm";
+            description = "Customer Relationship Management";
+            icon = "twenty.png";
+            statusStyle = "dot";
+            siteMonitor = "${svcUrl "crm"}/healthz";
+          })
+          ++ [
+            (mkService "Taskwarrior" {
+              href = svcUrl "tasks";
+              description = "Task Sync Server (TaskChampion)";
+              icon = "taskwarrior.png";
+              statusStyle = "dot";
+              siteMonitor = svcUrl "tasks";
+            })
+            (mkService "Homepage" {
+              description = "This Page";
+              icon = "homepage.png";
+              statusStyle = "dot";
+              siteMonitor = svcUrl "dash";
+            })
+            (mkService "OpenSEO" {
+              href = svcUrl "seo";
+              description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
+              icon = "search.png";
+              statusStyle = "dot";
+              siteMonitor = svcUrl "seo";
+            })
+          ];
+
+        groups =
+          [
+            (mkGroup "Infrastructure" infraServices)
+            (mkGroup "Media" mediaServices)
+            (mkGroup "Development" devServices)
+          ]
+          ++ lib.optional (aiServices != []) (mkGroup "AI" aiServices)
+          ++ [
+            (mkGroup "Monitoring" monitoringServices)
+            (mkGroup "Productivity" productivityServices)
+          ];
+      in
+        pkgs.writeText "homepage-services.yaml" (lib.concatStringsSep "\n" groups);
 
       systemd.tmpfiles.rules = [
         (mkStateDir stateDir "0755" "homepage" "homepage")
+        "d /var/cache/homepage-dashboard 0755 homepage homepage -"
         "L+ ${stateDir}/services.yaml - - - - /etc/homepage/services.yaml"
         "L+ ${stateDir}/settings.yaml - - - - /etc/homepage/settings.yaml"
         "L+ ${stateDir}/bookmarks.yaml - - - - ${pkgs.writeText "bookmarks.yaml" ""}"
