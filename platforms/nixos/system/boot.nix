@@ -60,6 +60,11 @@ in {
       # Without this, the driver registers phantom ttyS0-S3 devices and systemd
       # waits ~90s for them to appear, adding 1m31s to boot time.
       "module_blacklist=serial8250"
+      # Disable NVMe APST (Autonomous Power State Transition) — prevent drive from entering
+      # deep power states with high exit latency. Suspected cause of 2m50s device detection
+      # delay on GMKtec EVO-X2 (dev-nvme0n1.device waits ~170s for controller to respond).
+      # Zero cost on desktop (no battery), could save ~2.5min boot time.
+      "nvme_core.default_ps_max_latency_us=0"
     ];
 
     binfmt.emulatedSystems = ["aarch64-linux"];
