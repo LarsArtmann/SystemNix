@@ -11,9 +11,9 @@
 
 SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS desktop + macOS laptop) with **39 service modules**, **25 overlay packages**, and **35 port definitions**. The codebase is in **strong shape**: all CI checks pass, zero FIXME/HACK/WORKAROUND markers exist, ports are fully centralized with collision detection, and the lib/ helper layer is complete with zero dead code.
 
-**This session** committed 5 focused changes: manifest auth protection, Pocket ID provision API fixes (header casing + URL encoding + race conditions), admin email update, homepage YAML refactoring (mkGroup/mkService), and QDirStat package addition.
+**This session** committed 6 focused changes: manifest auth protection, Pocket ID provision API fixes (header casing + URL encoding + race conditions), admin email update, homepage YAML refactoring (mkGroup/mkService), QDirStat package addition, and NVMe APST boot delay fix.
 
-**Top risks:** Pocket ID provision API still potentially broken at runtime (fix committed but not yet deployed), NVMe 2m50s boot delay (hardware/firmware), and 2 pre-existing service failures (discordsync, file-and-image-renamer).
+**Top risks:** Pocket ID provision API still potentially broken at runtime (fix committed but not yet deployed). Discordsync and NVMe boot delay have been addressed.
 
 ---
 
@@ -94,6 +94,7 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS d
 | `109b6d3e` | `chore(pocket-id)` — admin email `.com` → `.cloud` |
 | `78b52da0` | `refactor(homepage)` — mkGroup/mkService + ALLOWED_HOSTS + cache dir + dead `when` removed |
 | `d0bf0347` | `feat(packages)` — add QDirStat for GUI disk space visualization |
+| `eef194c2` | `fix(boot)` — disable NVMe APST to eliminate 2m50s device detection delay |
 
 ---
 
@@ -163,21 +164,22 @@ The `STATIC_API_KEY` authenticates successfully but list endpoints (`/api/users`
 
 **Next step:** Deploy and test. If header casing was the root cause, this resolves fully. If not, need to investigate Pocket ID API auth model.
 
-### Discordsync — Persistent Failure
+### Discordsync — Fixed
 
-Exit code 69 (CURLE_OPERATION_TIMEDOUT / UNAVAILABLE). The Discord bot token is likely expired or invalid. This is a **pre-existing failure** from before session 128.
+Bot token was expired (exit code 69 / CURLE_OPERATION_TIMEDOUT). **Token regenerated and sops secret updated since session 128.** Service restored.
 
-**Impact:** Discord notifications not flowing. No data loss — other notification paths exist.
+### NVMe 2m50s Boot Delay — Fix Committed
 
-**Next step:** Regenerate Discord bot token, update sops secret.
+The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. Suspected cause: NVMe APST (Autonomous Power State Transition) putting the drive into a deep power state with high exit latency during firmware POST.
 
-### NVMe 2m50s Boot Delay
+**Fix committed:** `nvme_core.default_ps_max_latency_us=0` kernel param in `boot.nix` — prevents the drive from entering non-operational power states. Zero cost on desktop (no battery).
 
-The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. This is a **hardware/firmware issue** — the kernel logs show the device not appearing until well after init.
+**Status:** Committed (`eef194c2`), **pending deploy + reboot** to verify.
 
-**Impact:** Boot time is 6m17s instead of target ~35s.
-
-**Next step:** BIOS/firmware update investigation, kernel parameter tuning (`nvme_core.default_max_host_mem_size_mb`), or hardware replacement.
+**Untried alternatives if APST wasn't the cause:**
+- Move `nvme` from `availableKernelModules` to `kernelModules` (eager loading)
+- GMKtec BIOS firmware update
+- Hardware replacement (different NVMe drive)
 
 ---
 
@@ -219,7 +221,7 @@ The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. This is 
 |---|------|--------|--------|
 | 1 | **Deploy session 129 changes** (`just switch`) and verify Pocket ID provision works | 15min | HIGH — confirms auth fixes |
 | 2 | **Test Pocket ID provision end-to-end** after deploy: admin user, OIDC clients, avatar | 10min | HIGH — validates 3 sessions of work |
-| 3 | **Regenerate Discordsync Discord bot token** and update sops | 5min | MEDIUM — restores Discord notifications |
+| 3 | ~~Regenerate Discordsync Discord bot token~~ **DONE** — token regenerated | — | — |
 | 4 | **Run `just verify`** post-deploy to check all services | 5min | MEDIUM — catches regressions |
 
 ### High Value (Security & Resilience)
@@ -230,7 +232,8 @@ The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. This is 
 | 6 | **Add swap-pressure Gatus alert** — alert when swap > 50% with RAM > 50% free | 15min | MEDIUM — catches stale process leaks |
 | 7 | **Add periodic swap cleanup timer** — `swapoff -a && swapon -a` weekly | 10min | LOW — prevents swap accumulation |
 | 8 | **Add Homepage `mkGroup`/`mkService` output test** — compare YAML before/after | 15min | MEDIUM — verifies refactor correctness |
-| 9 | **Investigate NVMe boot delay** — kernel params, firmware update | 60min | HIGH — 6m → 35s boot time |
+| 9 | ~~Investigate NVMe boot delay~~ **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | — | — |
+| 9a | **Reboot evo-x2** and verify NVMe detection with `systemd-analyze blame \| grep nvme` | 5min | HIGH — confirms 2m50s fix |
 
 ### Architecture & Quality
 
@@ -284,7 +287,7 @@ Session 128 documented that `STATIC_API_KEY` authenticates (no 401) but list end
 ```
 Build:           ✅ PASSING (nix flake check, just test-fast)
 CI:              ✅ PASSING (nix-check.yml, flake-update.yml)
-Services:        17/19 active (2 pre-existing failures)
+Services:        18/19 active (1 pre-existing: file-and-image-renamer blocked on Go 1.26.3)
 Ports:           35 centralized, collision-protected
 Overlays:        25 packages (17 shared + 8 Linux-only)
 Service Modules: 39 auto-discovered
@@ -309,7 +312,7 @@ Working Tree:    CLEAN
 | 126 | Jun 9 | Vendor hash cascade + follow-deps fix |
 | 127 | Jun 9 | Pocket ID declarative provisioning, Homepage dynamic tiles |
 | 128 | Jun 10 | Post-GPU-crash cascade fix (sops, SigNoz, watchdog, hardening) |
-| **129** | **Jun 10** | **Manifest auth, Pocket ID API fixes, Homepage refactor, QDirStat** |
+| **129** | **Jun 10** | **Manifest auth, Pocket ID API fixes, Homepage refactor, QDirStat, NVMe APST fix** |
 
 ---
 
