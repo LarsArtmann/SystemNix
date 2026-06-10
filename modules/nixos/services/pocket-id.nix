@@ -50,13 +50,13 @@ _: {
         # ── Helper: authenticated API call ──
         api_get() {
           local path="$1"
-          curl -sf -H "X-API-KEY: $API_KEY" "$API_URL$path" 2>/dev/null || true
+          curl -s -H "X-API-KEY: $API_KEY" "$API_URL$path" 2>/dev/null || true
         }
 
         api_post() {
           local path="$1"
           local body="$2"
-          curl -sf -X POST -H "Content-Type: application/json" -H "X-API-KEY: $API_KEY" \
+          curl -s -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-KEY: $API_KEY" \
             -d "$body" "$API_URL$path" 2>/dev/null || true
         }
 
@@ -92,11 +92,11 @@ _: {
         ADMIN_LAST="${cfg.provision.adminUser.lastName}"
 
         echo "Checking for admin user: $ADMIN_USERNAME..."
-        EXISTING_USER=$(api_get "/api/users?search=$ADMIN_USERNAME&pagination[limit]=1" | jq -r '.data[0].username // empty')
+        ALL_USERS=$(api_get "/api/users?pagination[limit]=100")
+        ADMIN_USER_ID=$(echo "$ALL_USERS" | jq -r '.data[] | select(.username == "'"$ADMIN_USERNAME"'") | .id // empty' | head -1)
 
-        if [ "$EXISTING_USER" = "$ADMIN_USERNAME" ]; then
-          echo "  Admin user '$ADMIN_USERNAME' already exists."
-          ADMIN_USER_ID=$(api_get "/api/users?search=$ADMIN_USERNAME&pagination[limit]=1" | jq -r '.data[0].id // empty')
+        if [ -n "$ADMIN_USER_ID" ]; then
+          echo "  Admin user '$ADMIN_USERNAME' already exists (ID: $ADMIN_USER_ID)."
         else
           echo "  Creating admin user: $ADMIN_USERNAME"
           USER_JSON=$(jq -n \
@@ -116,25 +116,35 @@ _: {
             }')
 
           CREATE_RESPONSE=$(api_post "/api/users" "$USER_JSON")
-          ADMIN_USER_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id // empty')
+          HTTP_CODE=$(echo "$CREATE_RESPONSE" | tail -1)
+          RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+          ADMIN_USER_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty')
 
-          if [ -z "$ADMIN_USER_ID" ]; then
-            echo "  ERROR: Failed to create admin user. Response: $CREATE_RESPONSE" >&2
+          if [ -n "$ADMIN_USER_ID" ]; then
+            echo "  Created admin user with ID: $ADMIN_USER_ID"
+          elif echo "$RESPONSE_BODY" | jq -e '.error | test("already in use")' >/dev/null 2>&1; then
+            echo "  User already exists (race), fetching ID..."
+            ADMIN_USER_ID=$(api_get "/api/users?pagination[limit]=100" | jq -r '.data[] | select(.username == "'"$ADMIN_USERNAME"'") | .id // empty' | head -1)
+            if [ -z "$ADMIN_USER_ID" ]; then
+              echo "  ERROR: User exists but could not fetch ID" >&2
+              exit 1
+            fi
+          else
+            echo "  ERROR: Failed to create admin user (HTTP $HTTP_CODE). Response: $RESPONSE_BODY" >&2
             exit 1
           fi
-          echo "  Created admin user with ID: $ADMIN_USER_ID"
         fi
 
         # ── Step 2: Avatar ──
         AVATAR_FILE="${cfg.provision.avatarFile}"
         if [ -f "$AVATAR_FILE" ] && [ -n "$ADMIN_USER_ID" ]; then
           echo "Checking avatar..."
-          AVATAR_RESPONSE=$(curl -sf -X PUT \
+          AVATAR_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
             -H "X-API-KEY: $API_KEY" \
             -F "file=@$AVATAR_FILE" \
             "$API_URL/api/users/$ADMIN_USER_ID/profile-picture" 2>/dev/null || true)
 
-          if [ -z "$AVATAR_RESPONSE" ]; then
+          if [ "$AVATAR_RESPONSE" = "200" ] || [ "$AVATAR_RESPONSE" = "204" ]; then
             echo "  Avatar uploaded successfully."
           else
             echo "  Avatar upload response: $AVATAR_RESPONSE"
@@ -144,7 +154,8 @@ _: {
         # ── Step 3: OIDC Clients ──
         ${lib.concatMapStringsSep "\n" (client: ''
             echo "Checking OIDC client: ${client.name}..."
-            EXISTING_CLIENT=$(api_get "/api/oidc/clients?search=${client.name}&pagination[limit]=1" | jq -r '.data[0].id // empty')
+            ALL_CLIENTS=$(api_get "/api/oidc/clients?pagination[limit]=100")
+            EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.name == "${client.name}") | .id // empty' | head -1)
 
             if [ -n "$EXISTING_CLIENT" ]; then
               echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT)."
@@ -167,10 +178,11 @@ _: {
                 }')
 
               CREATE_RESPONSE=$(api_post "/api/oidc/clients" "$CLIENT_JSON")
-              CLIENT_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id // empty')
+              RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+              CLIENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty')
 
               if [ -z "$CLIENT_ID" ]; then
-                echo "  ERROR: Failed to create client '${client.name}'. Response: $CREATE_RESPONSE" >&2
+                echo "  ERROR: Failed to create client '${client.name}'. Response: $RESPONSE_BODY" >&2
               else
                 echo "  Created client '${client.name}' with ID: $CLIENT_ID"
               fi
@@ -182,7 +194,7 @@ _: {
               echo "  Secret file already exists."
             else
               echo "  Generating client secret..."
-              SECRET_RESPONSE=$(curl -sf -X POST \
+              SECRET_RESPONSE=$(curl -s -X POST \
                 -H "X-API-KEY: $API_KEY" \
                 "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>/dev/null || true)
               CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty')
