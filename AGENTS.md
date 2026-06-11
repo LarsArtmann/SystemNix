@@ -100,8 +100,22 @@ Never hardcode `localhost:PORT`. Derive from service config.
 sops secrets use SSH host keys. The `sops` CLI needs **age identity format** — convert with `ssh-to-age`. See `justfile` `auth-bootstrap` recipe for full procedure.
 
 Key gotchas:
-- `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI — use `SOPS_AGE_KEY_FILE`
-- `sudo` strips env vars — use `sudo env VAR=VALUE command`
+- `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI — convert SSH key to age format first, then use `SOPS_AGE_KEY_FILE`
+- `sudo` strips env vars and doesn't forward them reliably — write a temp shell script, then run it with sudo:
+  ```bash
+  cat > /tmp/sops-set.sh << 'EOF'
+  export SOPS_AGE_KEY_FILE=/tmp/age-key
+  sops --set '["key_name"] "value"' path/to/file.yaml
+  EOF
+  sudo bash /tmp/sops-set.sh
+  rm /tmp/sops-set.sh /tmp/age-key
+  ```
+- Full sops edit workflow on evo-x2:
+  ```bash
+  sudo ssh-to-age < /etc/ssh/ssh_host_ed25519_key > /tmp/age-key
+  # Then use the temp-script pattern above to set/edit secrets
+  rm /tmp/age-key
+  ```
 - oauth2-proxy `cookie_secret` must be 16, 24, or 32 bytes
 
 ### lib/ Helpers
