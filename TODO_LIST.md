@@ -52,7 +52,27 @@
 - [ ] **ActivityWatch theme setting** — `platforms/common/programs/activitywatch.nix:34-46`. No HM option for theme; workaround via curl oneshot. PR to add `programs.activitywatch.theme`
 - [ ] **Darwin user definition requirement** — `platforms/darwin/default.nix:53-59`. HM on Darwin requires explicit `users.users.<name>.home` — tracks issue #6036
 
-#### Upstream Projects
+#### LarsArtmann Go Repos — Stale `go.sum` / `vendorHash`
+
+All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in SystemNix that vanish when the upstream repo commits a correct `go.sum` and updates its own flake `vendorHash`:
+
+- [ ] **`library-policy`** — `overlays/shared.nix:68`. `mkTidyOverride` (go mod tidy + proxyVendor + overrideModAttrs). Fix: commit correct `go.sum` upstream
+- [ ] **`mr-sync`** — `overlays/shared.nix:94`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
+- [ ] **`golangci-lint-auto-configure`** — `overlays/shared.nix:71-93`. `go mod tidy` + `templ generate` at build time + proxyVendor. Fix: commit `go.sum`, commit generated templ files or add proper generate step upstream
+- [ ] **`hierarchical-errors`** — `overlays/shared.nix:69` + `flake.nix:274`. Stale `vendorHash` + `go-finding` input NOT followed due to Confidence type API break. Fix: update `go-finding` usage for new API, commit correct `go.sum`, update flake `vendorHash`
+- [ ] **`go-auto-upgrade`** — `overlays/shared.nix:96`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [ ] **`go-structure-linter`** — `overlays/shared.nix:97`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [ ] **`art-dupl`** — `overlays/shared.nix:99`. Stale `vendorHash` override (on `fork` branch). Fix: update flake `vendorHash` upstream
+- [ ] **`dnsblockd`** — `overlays/linux.nix:20-22`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [ ] **`emeet-pixyd`** — `overlays/linux.nix:23`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+
+#### LarsArtmann Apps — Missing Upstream Features
+
+- [ ] **`monitor365`**: Support reading secrets from env vars (e.g., `MONITOR365_CLOUD_AUTH_TOKEN`) instead of requiring config file mutation via `sed` at runtime. Also: bundle runtime deps natively or provide `--runtime-deps-path` flag; respect `$DISPLAY` / Wayland APIs instead of hardcoding
+- [ ] **`hermes`**: Auto-create directory structure on first run (currently Nix does it); handle own state migration from old paths; sane defaults for `OLLAMA_API_KEY`/`TERMINAL_ENV`; handle deprecated config keys internally instead of requiring sed cleanup; use PID file or socket-based single-instance locking instead of `--replace` flag
+- [ ] **`discordsync`**: Add `--config` flag support alongside env vars; accept boolean `true`/`false`/`1`/`0` for `BACKFILL_ON_STARTUP`
+
+#### Third-Party Upstream Projects
 
 - [ ] **`aw-watcher-utilization` pyproject.toml** — PR to ActivityWatch repo: migrate from `poetry` to `poetry-core` build backend (eliminates nixpkgs `postPatch` too)
 - [ ] **`jscpd` lockfile** — `pkgs/jscpd.nix:20-22`. PR upstream to publish `pnpm-lock.yaml` in npm tarball or GitHub releases
