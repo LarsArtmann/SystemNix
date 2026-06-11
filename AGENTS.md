@@ -100,22 +100,15 @@ Never hardcode `localhost:PORT`. Derive from service config.
 sops secrets use SSH host keys. The `sops` CLI needs **age identity format** — convert with `ssh-to-age`. See `justfile` `auth-bootstrap` recipe for full procedure.
 
 Key gotchas:
-- `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI — convert SSH key to age format first, then use `SOPS_AGE_KEY_FILE`
-- `sudo` strips env vars and doesn't forward them reliably — write a temp shell script, then run it with sudo:
+- `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI — convert SSH key to age format first, then use `SOPS_AGE_KEY` (in-memory, not `SOPS_AGE_KEY_FILE`)
+- `ssh-to-age` on the **public** key (`.pub`) produces a recipient (`age1...`) — only useful for encryption. For decryption you need the **private** key with `-private-key` flag, which produces `AGE-SECRET-KEY-...`
+- `sudo` strips env vars — use inline `VAR=$(sudo ...)` and pass `SOPS_AGE_KEY="$VAR"` instead of writing to disk
+- One-liner pattern for setting a sops secret on evo-x2:
   ```bash
-  cat > /tmp/sops-set.sh << 'EOF'
-  export SOPS_AGE_KEY_FILE=/tmp/age-key
-  sops --set '["key_name"] "value"' path/to/file.yaml
-  EOF
-  sudo bash /tmp/sops-set.sh
-  rm /tmp/sops-set.sh /tmp/age-key
+  SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \
+    sops --set '["key_name"] "value"' path/to/file.yaml
   ```
-- Full sops edit workflow on evo-x2:
-  ```bash
-  sudo ssh-to-age < /etc/ssh/ssh_host_ed25519_key > /tmp/age-key
-  # Then use the temp-script pattern above to set/edit secrets
-  rm /tmp/age-key
-  ```
+- For editing interactively: `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops path/to/file.yaml`
 - oauth2-proxy `cookie_secret` must be 16, 24, or 32 bytes
 
 ### lib/ Helpers
