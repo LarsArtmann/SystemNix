@@ -221,10 +221,8 @@ in {
       # AI inference stack — Ollama ROCm, llama.cpp, gpu-python
       ai-stack.enable = true;
 
-      # AI-powered screenshot renaming watcher
-      # TEMPORARILY DISABLED: charm.land/fantasy@v0.25.0 requires Go 1.26.3, nixpkgs-unstable has 1.26.2
       file-and-image-renamer = {
-        enable = false;
+        enable = true;
         watchPaths = [
           "/home/${config.users.primaryUser}/Downloads"
           "/home/${config.users.primaryUser}/Pictures"
