@@ -24,6 +24,13 @@ in {
   };
 
   systemd.user.services = lib.optionalAttrs pkgs.stdenv.isLinux {
+    activitywatch-watcher-aw-watcher-window-wayland = {
+      Unit = {
+        After = lib.mkAfter ["graphical-session.target"];
+        PartOf = lib.mkAfter ["graphical-session.target"];
+      };
+    };
+
     activitywatch-theme = {
       Unit = {
         Description = "Set ActivityWatch theme to dark";

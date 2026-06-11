@@ -538,7 +538,7 @@ _: {
 
             databaseUrl = lib.mkOption {
               type = lib.types.str;
-              default = "sqlite://${cfg.home}/server/monitor365.db";
+              default = "sqlite:///${cfg.home}/server/monitor365.db";
               description = "Database connection URL";
             };
 
@@ -690,7 +690,7 @@ _: {
               // {
                 Type = "simple";
                 ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${serverStateDir}";
-                ExecStart = "${lib.getExe' cfg.server.package "monitor365-server"}";
+                ExecStart = "${lib.getExe' cfg.server.package "monitor365-server"} --config ${serverConfig}";
                 WorkingDirectory = serverStateDir;
                 KillMode = "mixed";
                 TimeoutStopSec = "30";
