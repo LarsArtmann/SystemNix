@@ -8,11 +8,10 @@
 
 ### Priority 0: Deploy & Verify
 
-- [ ] **`just switch`** — deploy Monitor365 DB fix + aw-watcher-wayland fix + file-and-image-renamer re-enable (Go 1.26.3 now available in nixpkgs)
+- [ ] **`just switch`** — deploy Monitor365 DB fix + aw-watcher-wayland fix + file-and-image-renamer re-enable (Go 1.26.3 now available in nixpkgs) + Twenty CRM collation fix service
 - [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
 - [ ] **Verify Pocket ID email sending** — test login notification or email verification after SMTP wiring + sops secret added
 - [ ] **Reset Monitor365 failed state** — `systemctl --user reset-failed monitor365-server` after deploy
-- [ ] **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION;` in Twenty CRM's Docker postgres container. Silences 15,000+ log lines/day
 
 ### Priority 1: Fix Broken Services
 

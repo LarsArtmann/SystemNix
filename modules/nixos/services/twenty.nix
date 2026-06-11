@@ -98,6 +98,27 @@ _: {
           server-local-data:
       '';
 
+    fixCollation = pkgs.writeShellApplication {
+      name = "twenty-fix-collation";
+      runtimeInputs = [pkgs.docker];
+      text = ''
+        echo "Waiting for postgres container to be ready..."
+        for i in $(seq 1 30); do
+          if docker exec twenty-db-1 pg_isready -U ${pgUser} -d postgres >/dev/null 2>&1; then
+            break
+          fi
+          sleep 2
+        done
+
+        echo "Refreshing collation versions..."
+        for db in $(docker exec twenty-db-1 psql -U ${pgUser} -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false;"); do
+          echo "  -> $db"
+          docker exec twenty-db-1 psql -U ${pgUser} -d "$db" -c "ALTER DATABASE \"$db\" REFRESH COLLATION VERSION;" 2>&1 || true
+        done
+        echo "Done."
+      '';
+    };
+
     docker = mkDockerService {
       name = "twenty";
       inherit composeFile;
@@ -136,7 +157,23 @@ _: {
 
       systemd = {
         tmpfiles.rules = docker.tmpfiles;
-        services = docker.services;
+        services =
+          docker.services
+          // {
+            twenty-fix-collation = {
+              description = "Fix PostgreSQL collation version warnings for Twenty CRM";
+              after = ["twenty.service"];
+              requires = ["docker.service"];
+              wants = ["twenty.service"];
+              wantedBy = ["multi-user.target"];
+              path = [pkgs.docker];
+              serviceConfig = {
+                Type = "oneshot";
+                ExecStart = lib.getExe fixCollation;
+                RemainAfterExit = true;
+              };
+            };
+          };
         timers = docker.timers;
       };
     };
