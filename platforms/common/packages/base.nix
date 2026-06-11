@@ -85,6 +85,7 @@
       gnupg
       pre-commit
       openssh
+      ssh-to-age
 
       # Modern CLI productivity tools
       glow # Render markdown on the CLI, with pizzazz
