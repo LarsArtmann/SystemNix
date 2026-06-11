@@ -107,7 +107,8 @@ result-*
 .claude/
 
 # Crush AI database
-.crush/
+.crush/*
+!.crush/skills/
 .crush.db*
 .crush/*.db*
 

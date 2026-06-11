@@ -97,7 +97,7 @@ Never hardcode `localhost:PORT`. Derive from service config.
 
 ### Sops + Age Toolchain
 
-sops secrets use SSH host keys. The `sops` CLI needs **age identity format** — convert with `ssh-to-age -private-key`. See `docs/skills/sops-secret-management.md` for the full workflow including common mistakes.
+sops secrets use SSH host keys. The `sops` CLI needs **age identity format** — convert with `ssh-to-age -private-key`. See `.crush/skills/sops-secret-management/SKILL.md` for the full workflow including common mistakes.
 
 Key gotchas:
 - `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI — use `SOPS_AGE_KEY` (in-memory) with the output of `ssh-to-age -private-key`
