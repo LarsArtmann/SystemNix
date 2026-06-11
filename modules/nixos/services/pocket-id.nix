@@ -320,17 +320,21 @@ _: {
           OTEL_EXPORTER_PROMETHEUS_HOST = "127.0.0.1";
           OTEL_EXPORTER_PROMETHEUS_PORT = toString metricsPort;
           OTEL_METRICS_EXPORTER = "prometheus";
-          OTEL_TRACES_EXPORTER = "none";
-          OTEL_LOGS_EXPORTER = "none";
           LOG_LEVEL = "info";
           VERSION_CHECK_DISABLED = true;
           AUDIT_LOG_RETENTION_DAYS = "90";
           DB_CONNECTION_STRING = "data/pocket-id.db";
           UPLOAD_PATH = "data/uploads";
+          SMTP_HOST = "smtp.resend.com";
+          SMTP_PORT = "465";
+          SMTP_USER = "resend";
+          SMTP_FROM = "noreply@cloud.larsartmann.com";
+          SMTP_SKIP_SSL_VERIFY = false;
         };
         credentials =
           {
             ENCRYPTION_KEY = config.sops.secrets.pocket_id_encryption_key.path;
+            SMTP_PASSWORD = config.sops.secrets.pocket_id_smtp_password.path;
           }
           // lib.optionalAttrs cfg.provision.enable {
             STATIC_API_KEY = config.sops.secrets.pocket_id_static_api_key.path;
