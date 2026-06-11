@@ -1,44 +1,40 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-11 (session 131)
+**Updated:** 2026-06-10 (session 132)
 
 ---
 
 ## Active Tasks
 
-### Priority 0: Fix Broken Services
+### Priority 0: Deploy & Verify
 
-- [ ] **Fix Monitor365 DB path** — `unable to open database file`, both agent + server crash-looping. Investigate `stateDir`, add tmpfiles rule for parent directory, verify SQLite path in the Rust binary's config
-- [ ] **Fix aw-watcher-window-wayland startup race** — panics `Failed to connect to wayland display` before compositor ready. The watcher is configured via `services.activitywatch.watchers` in `platforms/common/programs/activitywatch.nix` — upstream HM module sets `After = ["activitywatch.service"]` but doesn't include `graphical-session.target`
-- [ ] **Fix Twenty CRM intermittent 502s** — Caddy logs show `connection refused`/`connection reset` on port 3200. Likely container OOM or PG connection exhaustion. Run `docker logs twenty-server-1 --tail=100` on evo-x2
+- [ ] **`just switch`** — deploy Monitor365 DB fix + aw-watcher-wayland fix + file-and-image-renamer re-enable (Go 1.26.3 now available in nixpkgs)
+- [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
+- [ ] **Verify Pocket ID email sending** — test login notification or email verification after SMTP wiring + sops secret added
+- [ ] **Reset Monitor365 failed state** — `systemctl --user reset-failed monitor365-server` after deploy
+- [ ] **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION;` in Twenty CRM's Docker postgres container. Silences 15,000+ log lines/day
 
-### Priority 1: Manual Steps (Blocked on Human)
+### Priority 1: Fix Broken Services
+
+- [ ] **Fix Twenty CRM intermittent 502s** — Caddy logs show `connection refused`/`connection reset` on port 3200. Likely container OOM or PG connection exhaustion. Run `docker logs twenty-server-1 --tail=100`
+- [ ] **Audit Gatus health checks** — 6 services show DOWN with possibly wrong check URLs (SigNoz, Immich, Crush Daily, Ollama, Monitor365)
+
+### Priority 2: Manual Steps (Blocked on Human)
 
 - [ ] **Hermes: add OpenAI API key to sops** — `sops platforms/nixos/secrets/hermes.yaml`, add `openai_api_key`. Nix config already wired
 - [ ] **Hermes: install SSH deploy key** — private key from `scripts/hermes-setup/id_ed25519` to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model openrouter/gpt-4o`
-- [ ] **Pocket ID SMTP** — Wire SES or Resend SMTP credentials. SES infra exists in `domains` repo. Pocket ID supports `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` env vars. Add to sops + pocket-id.nix settings
-
-### Priority 2: Verify Deployed Changes
-
-- [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
-- [ ] **Verify Pocket ID OTel fix** — confirm no more `https://localhost:4318` log spam after `OTEL_METRICS_EXPORTER=prometheus` setting
-- [ ] **Verify Caddy boot ordering** — confirm Caddy starts after sops-nix on reboot (no cert-not-found errors)
-- [ ] **Verify DNS A records** — `dig status.home.lan`, `dig seo.home.lan`, `dig daily.home.lan`, `dig logs.home.lan`, `dig monitor.home.lan` should resolve
-- [ ] **Audit Gatus health checks** — 6 services show DOWN with possibly wrong check URLs (SigNoz port 8080 root path, Immich `/api/server-info/ping`, Crush Daily `/api/health`, Ollama `/api/tags`, Monitor365 port 3001 root path)
 
 ### Priority 3: Infrastructure
 
 - [ ] **BTRFS `/data` subvolume migration** — `just snapshot-migrate-data`. Currently toplevel (subvolid=5), no snapshot protection for Docker/Immich/AI data
-- [ ] **Add weekly Nix GC timer** — prevent root disk from creeping back to 95%. `nix-collect-garbage -d` was run manually this session
-- [ ] **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION;` in Twenty CRM's postgres container. Silences 15,000+ log lines/day
 - [ ] **Swap investigation** — 8 GiB swap used on 128 GiB RAM. Run `smem -t -k | tail -20` and `swapoff -a && swapon -a`
 
 ### Priority 4: Documentation
 
-- [ ] **Archive old status reports** — move pre-session-100 from `docs/status/` to `docs/status/archive/` (177 → ~30 files)
+- [ ] **Archive old status reports** — move pre-session-100 from `docs/status/` to `docs/status/archive/` (178 → ~30 files)
 - [ ] **Create ROADMAP.md** — consolidate `docs/planning/` into single living doc
-- [ ] **Create CHANGELOG.md** — 185 commits in 2 weeks with no changelog
+- [ ] **Create CHANGELOG.md** — 185+ commits with no changelog
 
 ### Priority 5: Long-Term
 
@@ -52,11 +48,23 @@
 
 ---
 
-## Completed (session 131)
+## Completed (session 131c)
+
+- [x] **Sops secret management skill** — project-local skill at `.crush/skills/sops-secret-management/SKILL.md` with gitignore whitelist
+- [x] **ssh-to-age added to system packages** — was not installed, needed `nix run` every time
+- [x] **Fix Monitor365 server DB path** — added `--config` flag to ExecStart (wasn't reading config) + fixed `sqlite://` to `sqlite:///` (3 slashes = absolute path)
+- [x] **Fix aw-watcher-window-wayland startup race** — added `After=graphical-session.target` dependency
+
+## Completed (session 131b)
+
+- [x] **Resend SMTP wiring** — `smtp.resend.com:465`, `noreply@cloud.larsartmann.com`, API key added to sops
+- [x] **Pocket ID OTel fix** — `OTEL_METRICS_EXPORTER=prometheus` (removed unnecessary traces/logs exporters)
+- [x] **AGENTS.md sops guide corrected** — ssh-to-age `-private-key`, `SOPS_AGE_KEY` in RAM, one-liner pattern
+
+## Completed (session 131a)
 
 - [x] **Fix Caddy boot ordering** — `wants = ["sops-nix.service"]` + `after` prevents 14-hour outage recurrence
 - [x] **Fix DNS A records for 5 subdomains** — status, seo, daily, logs, monitor added to both primary + RPi3 DNS
-- [x] **Fix Pocket ID OTel log spam** — `OTEL_METRICS_EXPORTER=prometheus`, `OTEL_TRACES_EXPORTER=none`, `OTEL_LOGS_EXPORTER=none`
 - [x] **Guard ALL sops secrets with optionalAttrs** — hermes, crush-daily, openseo, monitor365, signoz, voice-agents secrets + templates now wrapped in `lib.optionalAttrs config.services.X.enable`
 - [x] **Root disk cleanup** — `nix-collect-garbage -d` run by user
 

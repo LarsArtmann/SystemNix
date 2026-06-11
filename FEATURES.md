@@ -96,7 +96,7 @@ _A brutally honest audit of every feature the project actually has._
 | Chromium policies | ✅ | `chromium-policies.nix` | YouTube Shorts Blocker + OneTab force-installed |
 | Steam gaming | ✅ | `steam.nix` | extest, protontricks, gamemode (renice=10, GPU temp 80°C), gamescope, mangohud |
 | Multi-WM (Sway backup) | 🔧 | `multi-wm.nix` | Sway as backup at SDDM login — disabled in config |
-| File & Image Renamer (AI) | 🔧 | `file-and-image-renamer.nix` | Blocked: `charm.land/fantasy@v0.25.0` requires Go 1.26.3, nixpkgs has 1.26.2 |
+| File & Image Renamer (AI) | ⚠️ | `file-and-image-renamer.nix` | AI screenshot renaming via charm.land/fantasy — re-enabled in config (Go 1.26.3 now available), pending deploy |
 | Monitor365 | ⚠️ | `monitor365.nix` | Device monitoring agent + server dashboard, ActivityWatch integration — server DB path broken, crash-looping |
 
 ### Monitoring
