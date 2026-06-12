@@ -61,8 +61,8 @@ _: {
 
       systemd.services.oauth2-proxy = {
         inherit onFailure;
-        after = ["pocket-id.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
-        wants = ["pocket-id.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
+        after = ["network-online.target" "pocket-id.service" "unbound.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
+        wants = ["network-online.target" "pocket-id.service" "unbound.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;
