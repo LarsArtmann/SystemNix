@@ -55,6 +55,13 @@ _: {
           echo "$resp"
         }
 
+        api_put() {
+          local path="$1"
+          local body="$2"
+          curl -s -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            -d "$body" "$API_URL$path" 2>&1 || true
+        }
+
         api_post() {
           local path="$1"
           local body="$2"
@@ -154,33 +161,72 @@ _: {
           fi
         fi
 
+        # ── Helper: upload client logo ──
+        upload_logo() {
+          local client_id="$1"
+          local logo_file="$2"
+
+          if [ -z "$logo_file" ] || [ "$logo_file" = "null" ]; then
+            return 0
+          fi
+
+          if [ ! -f "$logo_file" ]; then
+            echo "  WARNING: Logo file not found: $logo_file" >&2
+            return 0
+          fi
+
+          echo "  Uploading logo for client $client_id..."
+          LOGO_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+            -H "X-API-Key: $API_KEY" \
+            -F "file=@$logo_file" \
+            "$API_URL/api/oidc/clients/$client_id/logo" 2>&1 || true)
+
+          if [ "$LOGO_RESPONSE" = "200" ] || [ "$LOGO_RESPONSE" = "204" ]; then
+            echo "  Logo uploaded successfully."
+          else
+            echo "  Logo upload response: $LOGO_RESPONSE"
+          fi
+        }
+
         # ── Step 3: OIDC Clients ──
-        ${lib.concatMapStringsSep "\n" (client: ''
+        ${lib.concatMapStringsSep "\n" (client: let
+            logoPath =
+              if client.logoFile != null
+              then toString client.logoFile
+              else "";
+            clientAttrs =
+              {
+                name = client.name;
+                callbackURLs = client.callbackURLs;
+                logoutCallbackURLs = client.logoutCallbackURLs or [];
+                isPublic = client.isPublic;
+                pkceEnabled = client.pkceEnabled;
+                requiresReauthentication = client.requiresReauthentication or false;
+              }
+              // lib.optionalAttrs (client.launchURL or null != null) {
+                launchURL = client.launchURL;
+              };
+            createAttrs = clientAttrs // {id = client.clientId;};
+          in ''
             echo "Checking OIDC client: ${client.name}..."
             ALL_CLIENTS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
             echo "  Clients API response: $(echo "$ALL_CLIENTS" | head -c 200)"
             EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.name == "${client.name}") | .id // empty' 2>/dev/null | head -1)
 
             if [ -n "$EXISTING_CLIENT" ]; then
-              echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT)."
+              echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT). Updating..."
+              UPDATE_RESPONSE=$(api_put "/api/oidc/clients/$EXISTING_CLIENT" '${builtins.toJSON clientAttrs}')
+              HTTP_CODE=$(echo "$UPDATE_RESPONSE" | tail -1)
+              RESPONSE_BODY=$(echo "$UPDATE_RESPONSE" | sed '$d')
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "  Client '${client.name}' updated successfully."
+              else
+                echo "  WARNING: Update failed (HTTP $HTTP_CODE): $RESPONSE_BODY" >&2
+              fi
               CLIENT_ID="$EXISTING_CLIENT"
             else
               echo "  Creating OIDC client: ${client.name}"
-              CLIENT_JSON=$(jq -n \
-                --arg id "${client.clientId}" \
-                --arg name "${client.name}" \
-                --argjson callbacks '${builtins.toJSON client.callbackURLs}' \
-                --argjson logouts '${builtins.toJSON (client.logoutCallbackURLs or [])}' \
-                '{
-                  id: $id,
-                  name: $name,
-                  callbackURLs: $callbacks,
-                  logoutCallbackURLs: $logouts,
-                  isPublic: false,
-                  pkceEnabled: false
-                }')
-
-              CREATE_RESPONSE=$(api_post "/api/oidc/clients" "$CLIENT_JSON")
+              CREATE_RESPONSE=$(api_post "/api/oidc/clients" '${builtins.toJSON createAttrs}')
               echo "  Client create response: $CREATE_RESPONSE"
               RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
               CLIENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)
@@ -195,6 +241,9 @@ _: {
                 echo "  Created client '${client.name}' with ID: $CLIENT_ID"
               fi
             fi
+
+            # Upload logo if configured
+            upload_logo "$CLIENT_ID" "${logoPath}"
 
             # Generate/get client secret
             SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
@@ -275,6 +324,31 @@ _: {
                 default = [];
                 description = "Allowed logout callback URLs";
               };
+              launchURL = lib.mkOption {
+                type = lib.types.nullOr lib.types.str;
+                default = null;
+                description = "Launch URL shown in Pocket ID UI (clicking the app redirects here)";
+              };
+              pkceEnabled = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Whether PKCE is enabled for this client";
+              };
+              isPublic = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Whether this is a public client (no client secret)";
+              };
+              requiresReauthentication = lib.mkOption {
+                type = lib.types.bool;
+                default = false;
+                description = "Whether to force passkey re-authentication on each login";
+              };
+              logoFile = lib.mkOption {
+                type = lib.types.nullOr lib.types.path;
+                default = null;
+                description = "Path to logo image for the client (PNG or SVG)";
+              };
             };
           });
           default = [
@@ -284,9 +358,17 @@ _: {
               callbackURLs = ["https://auth.${domain}/oauth2/callback"];
             }
             {
-              name = "immich";
+              name = "Immich";
               clientId = "immich";
-              callbackURLs = ["https://immich.${domain}/api/auth/callback"];
+              launchURL = "https://immich.${domain}";
+              callbackURLs = [
+                "https://immich.${domain}/auth/login"
+                "https://immich.${domain}/user-settings"
+                "app.immich:///oauth-callback"
+              ];
+              logoutCallbackURLs = ["https://immich.${domain}"];
+              pkceEnabled = true;
+              logoFile = ../../../assets/immich-logo.svg;
             }
           ];
           description = "OIDC clients to create declaratively";
