@@ -80,7 +80,8 @@ _: {
               (mkHttpCheck {
                 name = "Immich";
                 group = "Media";
-                url = "http://localhost:${toString config.services.immich.port}/api/server-info/ping";
+                url = "http://localhost:${toString config.services.immich.port}/api/system-config";
+                conditions = ["[STATUS] == 401"];
               })
               (mkHttpCheck {
                 name = "SigNoz";

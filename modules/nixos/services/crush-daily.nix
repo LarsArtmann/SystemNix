@@ -1,5 +1,5 @@
 # crush-daily — SystemNix hardening overlay for the crush-daily service
-_: {
+{pkgs, ...}: {
   flake.nixosModules.crush-daily = {
     config,
     lib,
@@ -13,6 +13,7 @@ _: {
 
       systemd.services.crush-daily = {
         inherit onFailure;
+        path = [pkgs.crush];
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
         serviceConfig =
