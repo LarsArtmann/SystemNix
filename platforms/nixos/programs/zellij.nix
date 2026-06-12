@@ -82,7 +82,7 @@ in {
               bind "Space" { NextSwapLayout; SwitchToMode "Normal"; }
               bind "d" { Detach; }
               bind "q" { Quit; }
-              bind "Escape" { SwitchToMode "Normal"; }
+              bind "Escape" { CloseFocus; SwitchToMode "Normal"; }
               bind "Ctrl a" { SwitchToMode "Normal"; }
           }
 

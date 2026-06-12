@@ -5,7 +5,6 @@
   file-and-image-renamer,
   crush-daily,
   overview,
-  mkPackageOverlay,
   ...
 }: let
   openaudibleOverlay = _final: prev: {
@@ -17,13 +16,11 @@
   };
 in [
   openaudibleOverlay
-  (mkPackageOverlay dnsblockd "dnsblockd" {
-    vendorHash = "sha256-ZKFAAtpWDN7Uu+GYyNQKVh0BmBvzD5WDHHLT25jBano=";
-  })
-  (mkPackageOverlay emeet-pixyd "emeet-pixyd" {vendorHash = "sha256-jF4RbGauIHwtxfuOz9IYDm3ik75MmcNSDoPjazpTt0c=";})
+  dnsblockd.overlays.default
+  emeet-pixyd.overlays.default
   monitor365.overlays.default
   netwatchOverlay
-  (mkPackageOverlay file-and-image-renamer "file-and-image-renamer" {})
+  file-and-image-renamer.overlays.default
   crush-daily.overlays.default
   overview.overlays.default
 ]

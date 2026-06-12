@@ -1,35 +1,19 @@
 {
   todo-list-ai,
+  buildflow,
   library-policy,
+  hierarchical-errors,
   golangci-lint-auto-configure,
   mr-sync,
-  hierarchical-errors,
-  buildflow,
   go-auto-upgrade,
   go-structure-linter,
-  branching-flow,
   art-dupl,
-  projects-management-automation,
+  branching-flow,
   project-meta,
+  projects-management-automation,
   mkPackageOverlay,
   ...
 }: let
-  tidyGoBuild = ''
-    export HOME=$TMPDIR
-    go mod tidy
-  '';
-
-  mkTidyOverride = vendorHash: old: {
-    inherit vendorHash;
-    proxyVendor = true;
-    preBuild = tidyGoBuild;
-    passthru =
-      (old.passthru or {})
-      // {
-        overrideModAttrs = _: {preBuild = tidyGoBuild;};
-      };
-  };
-
   awWatcherOverlay = _final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };
@@ -65,40 +49,17 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" (mkTidyOverride "sha256-5MBRPKVKX65FaPEazmXAnM9M1Ud5S56zsHqeLav9WDs="))
-  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {vendorHash = "sha256-TSXISnjJ+7UJ+Gg4bJRo5FE5B9Oq+ifN8Il4TqYRzUw=";})
-
-  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" (old: {
-    vendorHash = "sha256-87AJDc3ESq9lFqexEzPOaZZQ553+kaoZWX+0i1+jCpU=";
-    proxyVendor = true;
-    preBuild =
-      (old.preBuild or "")
-      + ''
-        export HOME=$TMPDIR
-        go mod tidy
-      '';
-    passthru =
-      (old.passthru or {})
-      // {
-        overrideModAttrs = _: {
-          preBuild = ''
-            export GOBIN=$GOPATH/bin
-            go install github.com/a-h/templ/cmd/templ@v0.3.1020
-            $GOBIN/templ generate
-            export HOME=$TMPDIR
-            go mod tidy
-          '';
-        };
-      };
-  }))
-  (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-CEuoyksoPDmalGQB9sTH6GKvLLmrVaPy9hzlZqtZBpA="))
+  library-policy.overlays.default
+  hierarchical-errors.overlays.default
+  golangci-lint-auto-configure.overlays.default
+  mr-sync.overlays.default
   (mkPackageOverlay buildflow "buildflow" {})
-  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-RwGNQ5m7DPXc9AGTcQRgqF+mc+wQe+2ISMlHIAvfico=";})
-  (mkPackageOverlay go-structure-linter "go-structure-linter" {vendorHash = "sha256-jLc2LPW+zRT6n9WYMBDhJjU0f2AvvHFuBYAtcsrinjE=";})
-  (mkPackageOverlay branching-flow "branching-flow" {})
-  (mkPackageOverlay art-dupl "art-dupl" {vendorHash = "sha256-p8mldrn+sJYbpswh29zdEfxsqdBunwOmhWX+vTPZh1U=";})
-  (mkPackageOverlay project-meta "project-meta" {})
-  (mkPackageOverlay projects-management-automation "projects-management-automation" {})
+  go-auto-upgrade.overlays.default
+  go-structure-linter.overlays.default
+  branching-flow.overlays.default
+  art-dupl.overlays.default
+  project-meta.overlays.default
+  projects-management-automation.overlays.default
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
 ]
