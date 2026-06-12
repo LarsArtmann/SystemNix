@@ -1,8 +1,9 @@
 # crush-daily — SystemNix hardening overlay for the crush-daily service
-{pkgs, ...}: {
+_: {
   flake.nixosModules.crush-daily = {
     config,
     lib,
+    pkgs,
     ...
   }: let
     cfg = config.services.crush-daily;
