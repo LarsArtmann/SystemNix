@@ -2406,11 +2406,11 @@
         "treefmt-nix": "treefmt-nix_13"
       },
       "locked": {
-        "lastModified": 1781118951,
-        "narHash": "sha256-yh4ap/LN0KT4MlyILHCvEgTEH6bUpYmJt5sbQ3dBIdY=",
+        "lastModified": 1781246335,
+        "narHash": "sha256-9DuqeNTdo6cl8Ji6f70AaA/qhhZAQJ+bXDs0Tr9LC98=",
         "ref": "master",
-        "rev": "77835f3660f8e93a5b2acf34707c2e6b86b27e16",
-        "revCount": 1112,
+        "rev": "69a561b0e245ce69dabf71eb4ec6c8ae26b4c563",
+        "revCount": 1117,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       },
@@ -2440,11 +2440,11 @@
     "project-discovery-sdk_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1781031461,
-        "narHash": "sha256-d+0prS6MBBD0kFM9VHTA+YgrCYvW0AYLzxaDuMxROOU=",
+        "lastModified": 1781246105,
+        "narHash": "sha256-/VtleM+EIqIW//969A8971sORyXiQ2OvAucrrDaIJDc=",
         "ref": "master",
-        "rev": "c95b86e9768fca47158280bb729e3256e739281a",
-        "revCount": 598,
+        "rev": "8b4d9472fe4192cfa67b02291bbb420b27757515",
+        "revCount": 602,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
@@ -2560,11 +2560,11 @@
         "treefmt-nix": "treefmt-nix_15"
       },
       "locked": {
-        "lastModified": 1781038082,
-        "narHash": "sha256-4whTKQ39Sdg9L0OkONtl6RPUq8bhPm0tpK74AE+i0R4=",
+        "lastModified": 1781245172,
+        "narHash": "sha256-tXwE02qOqik5Jwu5GLlrU37XipNbtte4xqNQirwP930=",
         "ref": "master",
-        "rev": "39aedcad9ca42615c017e60b286c14725c16a483",
-        "revCount": 2970,
+        "rev": "6f5c0bdd5730a7b5199b1d29f015265764285395",
+        "revCount": 2971,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
