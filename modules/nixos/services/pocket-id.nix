@@ -211,7 +211,7 @@ _: {
             echo "Checking OIDC client: ${client.name}..."
             ALL_CLIENTS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
             echo "  Clients API response: $(echo "$ALL_CLIENTS" | head -c 200)"
-            EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.name == "${client.name}") | .id // empty' 2>/dev/null | head -1)
+            EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
 
             if [ -n "$EXISTING_CLIENT" ]; then
               echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT). Updating..."
@@ -234,7 +234,7 @@ _: {
               if echo "$RESPONSE_BODY" | grep -qi "already exists"; then
                 echo "  Client '${client.name}' created in race, re-fetching..."
                 ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
-                CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.name == "${client.name}") | .id // empty' 2>/dev/null | head -1)
+                CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
               elif [ -z "$CLIENT_ID" ]; then
                 echo "  ERROR: Failed to create client '${client.name}'. Response: $RESPONSE_BODY" >&2
               else
