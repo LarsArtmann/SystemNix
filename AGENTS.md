@@ -230,6 +230,10 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `amdgpu.gttsize` deprecated | Kernel 7.0+ uses `ttm.pages_limit` only. Remove from both `kernelParams` and `extraModprobeConfig` |
 | SigNoz JWT secret | Auto-generated at `${cfg.settings.queryService.dataDir}/jwt-secret` via wrapper script. Never store in sops — just needs to be persistent and random |
 | GPU crash forensics | WDT hard reset empties pstore. Journal corruption is expected. The `initrd-nixos-activation` 2m50s hang was caused by sops owner validation failure, not initrd itself |
+| SDK discovery daemon | PMA auto-commit service starts a project-discovery daemon at `/run/project-discovery/daemon.sock`. Overview probes for it via `sdk.WithDaemonProbe(daemon.ProbeDaemon)` — falls back to embedded pipeline if daemon not running. Socket mode `0o666` for cross-service access. PMA NixOS module sets `PROJECT_DISCOVERY_DAEMON_ADDR=unix:///run/project-discovery/daemon.sock` and needs `AF_UNIX` in `RestrictAddressFamilies` |
+| `enrichment/meta` | Sub-module in project-discovery-sdk — must be in `subModules` list in flake.nix when daemon/preset is imported. Was untracked in git causing Nix build failures |
+| `crush-daily` module `pkgs` | `pkgs` must be in the inner NixOS module scope (`{ config, lib, pkgs, ... }: `), NOT the outer flake-parts scope (`{ pkgs, ... }: `). The outer scope doesn't receive `pkgs` from NixOS |
+| `cmdguard` MustNewCommand | Restored in cmdguard v2.6+ as thin wrapper around `NewCommand` (which returns `(Command, error)`). Consumers using `MustNewCommand` compile fine |
 
 ---
 
