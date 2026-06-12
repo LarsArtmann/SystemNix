@@ -108,7 +108,7 @@ in {
           tab {
               bind "n" { GoToNextTab; }
               bind "p" { GoToPreviousTab; }
-              bind "r" { SwitchToMode "rename"; }
+              bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
               bind "h" { GoToPreviousTab; }
               bind "l" { GoToNextTab; }
               bind "1" { GoToTab 1; SwitchToMode "Normal"; }
