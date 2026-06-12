@@ -351,7 +351,7 @@ in {
 
       # Auto-commit daemon: watches ~/projects, AI-generates commit messages via MiniMax
       projects-management-automation = {
-        enable = true;
+        enable = false;
         paths = ["/home/${config.users.primaryUser}/projects"];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"

@@ -82,7 +82,7 @@ in {
               bind "Space" { NextSwapLayout; SwitchToMode "Normal"; }
               bind "d" { Detach; }
               bind "q" { Quit; }
-              bind "Escape" { CloseFocus; SwitchToMode "Normal"; }
+              bind "Esc" { CloseFocus; SwitchToMode "Normal"; }
               bind "Ctrl a" { SwitchToMode "Normal"; }
           }
 
@@ -96,7 +96,7 @@ in {
               bind "J" { Resize "Decrease down"; }
               bind "K" { Resize "Decrease up"; }
               bind "L" { Resize "Decrease right"; }
-              bind "Escape" { SwitchToMode "Normal"; }
+              bind "Esc" { SwitchToMode "Normal"; }
           }
 
           // Locked mode - pass all keys through
@@ -120,7 +120,7 @@ in {
               bind "7" { GoToTab 7; SwitchToMode "Normal"; }
               bind "8" { GoToTab 8; SwitchToMode "Normal"; }
               bind "9" { GoToTab 9; SwitchToMode "Normal"; }
-              bind "Escape" { SwitchToMode "Normal"; }
+              bind "Esc" { SwitchToMode "Normal"; }
           }
       }
     '';

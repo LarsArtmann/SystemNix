@@ -2406,11 +2406,11 @@
         "treefmt-nix": "treefmt-nix_13"
       },
       "locked": {
-        "lastModified": 1781246335,
-        "narHash": "sha256-9DuqeNTdo6cl8Ji6f70AaA/qhhZAQJ+bXDs0Tr9LC98=",
+        "lastModified": 1781246697,
+        "narHash": "sha256-xb21dolnOWhs9MXsB7EFlmaxUl6qXkmLpJvvkrdWMdo=",
         "ref": "master",
-        "rev": "69a561b0e245ce69dabf71eb4ec6c8ae26b4c563",
-        "revCount": 1117,
+        "rev": "9f0b760c2a19e1e03144f992b9c4037a49e51e33",
+        "revCount": 1118,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       },
