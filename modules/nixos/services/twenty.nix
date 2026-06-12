@@ -103,7 +103,7 @@ _: {
       runtimeInputs = [pkgs.docker];
       text = ''
         echo "Waiting for postgres container to be ready..."
-        for i in $(seq 1 30); do
+        for _ in $(seq 1 30); do
           if docker exec twenty-db-1 pg_isready -U ${pgUser} -d postgres >/dev/null 2>&1; then
             break
           fi

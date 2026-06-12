@@ -260,7 +260,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        cmdguard.follows = "cmdguard";
         go-output.follows = "go-output";
         go-branded-id.follows = "go-branded-id";
       };
@@ -336,14 +335,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        cmdguard.follows = "cmdguard";
-        go-output.follows = "go-output";
-        go-branded-id.follows = "go-branded-id";
-        go-filewatcher.follows = "go-filewatcher";
-        gogenfilter.follows = "gogenfilter";
-        branching-flow.follows = "branching-flow";
-        go-error-family.follows = "go-error-family";
-        go-finding.follows = "go-finding";
       };
     };
 

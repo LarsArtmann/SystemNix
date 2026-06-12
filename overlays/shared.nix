@@ -14,6 +14,22 @@
   mkPackageOverlay,
   ...
 }: let
+  tidyGoBuild = ''
+    export HOME=$TMPDIR
+    go mod tidy
+  '';
+
+  mkTidyOverride = vendorHash: old: {
+    inherit vendorHash;
+    proxyVendor = true;
+    preBuild = tidyGoBuild;
+    passthru =
+      (old.passthru or {})
+      // {
+        overrideModAttrs = _: {preBuild = tidyGoBuild;};
+      };
+  };
+
   awWatcherOverlay = _final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   };
@@ -49,17 +65,17 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  library-policy.overlays.default
-  hierarchical-errors.overlays.default
-  golangci-lint-auto-configure.overlays.default
-  mr-sync.overlays.default
+  (mkPackageOverlay library-policy "library-policy" (mkTidyOverride "sha256-/w3ZoNNr7rJ3znsvRmKFbJU7RhFVKlAmDxEOiP3JWv4="))
+  (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
+  (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
+  (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-ZnffG1VwOYkHN+g2iXhMkGc5j1Q7BDmuq7gX4Ki+Oaw="))
   (mkPackageOverlay buildflow "buildflow" {})
-  go-auto-upgrade.overlays.default
-  go-structure-linter.overlays.default
-  branching-flow.overlays.default
-  art-dupl.overlays.default
-  project-meta.overlays.default
-  projects-management-automation.overlays.default
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EC61BwheBmfB7FbF0lghd54kv8bD0orscDtUyiGTpnA=";})
+  (mkPackageOverlay go-structure-linter "go-structure-linter" {})
+  (mkPackageOverlay branching-flow "branching-flow" {})
+  (mkPackageOverlay art-dupl "art-dupl" {})
+  (mkPackageOverlay project-meta "project-meta" {})
+  (mkPackageOverlay projects-management-automation "projects-management-automation" {})
   (mkPackageOverlay todo-list-ai "todo-list-ai" {})
   d2DarwinOverlay
 ]
