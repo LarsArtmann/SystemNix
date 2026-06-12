@@ -347,11 +347,11 @@
         "treefmt-nix": "treefmt-nix_5"
       },
       "locked": {
-        "lastModified": 1781231440,
-        "narHash": "sha256-VAOtO3Ym0o7we87ztvBNzCII5/VJzKCP4krrGCQgG6I=",
+        "lastModified": 1781242263,
+        "narHash": "sha256-RnKNrh/jpf1tQlAcPPvxO2sO2E2tAQ9hRIf9PHazy+4=",
         "ref": "master",
-        "rev": "f7346cb59cb179f9bf57bb98eba22e9797bde86a",
-        "revCount": 297,
+        "rev": "e900a70d3d2c36d8adcdb5c1f7e67a98e356036c",
+        "revCount": 298,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/emeet-pixyd"
       },
@@ -925,11 +925,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1781233015,
-        "narHash": "sha256-Zezgt4FYINrxIgV9ugjU4tnroufh4FjcXYASNGgS3Wo=",
+        "lastModified": 1781242263,
+        "narHash": "sha256-noyiqmE+v5fHKCJ2GcqHEtD0JmlCTD7HK7TsjjmkcA4=",
         "ref": "master",
-        "rev": "b152e5c88e40af76e647475b838c5387cedcbf6e",
-        "revCount": 466,
+        "rev": "4d3df2ef1fa7656eff8b309de41a8ec538e6a699",
+        "revCount": 467,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
