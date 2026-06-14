@@ -156,6 +156,17 @@ in {
     "dlcdn.apache.org"
     "myip.is"
     "extreme-ip-lookup.com"
+    "itv.com"
+    "cpt.itv.com"
+    "tom.itv.com"
+    "gtm.bde.itv.com"
+    "cassiecloud.com"
+    "cscript-cdn-irl.cassiecloud.com"
+    "splunkcloud.com"
+    "http-inputs-itv.splunkcloud.com"
+    "toots-a.akamaihd.net"
+    "akamaihd.net"
+    "region1.analytics.google.com"
   ];
 
   extraDomains = [
