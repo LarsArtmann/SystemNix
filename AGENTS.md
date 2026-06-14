@@ -206,7 +206,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
 | Pocket ID bootstrap | Declarative: `pocket-id-config.provision.enable = true` creates admin user + OIDC clients + avatar automatically. Only manual step: register passkey at `/setup`. Client secrets auto-generated and stored in `/var/lib/pocket-id/client-secrets/`. See `just auth-bootstrap` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
-| Swap exhaustion | Stale LSP processes (gopls/vtsls) eating ~7.4Gi RSS. Mitigated by daily `stale-lsp-cleanup` timer killing processes >24h |
+| Swap exhaustion | Stale LSP processes (gopls/vtsls/rust-analyzer) eating gigabytes of swap. Mitigated by `stale-lsp-cleanup` timer running every 5min, killing processes older than 5min |
 | Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |
 | Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3. `ai-stack.nix` restored in session 120 |
 | Dozzle module eval issue | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Use inline `virtualisation.oci-containers` in configuration.nix instead |

@@ -62,11 +62,11 @@ in {
       };
 
       stale-lsp-cleanup = {
-        description = "Daily cleanup of stale LSP processes (gopls, etc.) older than 24h";
+        description = "Kill stale LSP processes (gopls, etc.) older than 5min — runs every 5min";
         timerConfig = {
-          OnCalendar = "daily";
-          Persistent = true;
-          RandomizedDelaySec = "30m";
+          OnBootSec = "5min";
+          OnUnitActiveSec = "5min";
+          AccuracySec = "30s";
         };
         wantedBy = ["timers.target"];
       };
@@ -363,7 +363,7 @@ in {
       };
 
       stale-lsp-cleanup = {
-        description = "Kill stale LSP processes (gopls, etc.) running longer than 24h";
+        description = "Kill stale LSP processes (gopls, etc.) running longer than 5min";
         inherit onFailure;
         serviceConfig =
           harden {
@@ -378,7 +378,7 @@ in {
                 name = "stale-lsp-cleanup";
                 runtimeInputs = [pkgs.procps pkgs.coreutils];
                 text = ''
-                  MAX_AGE_SECONDS=$((24 * 3600))
+                  MAX_AGE_SECONDS=$((5 * 60))
                   LSP_PROCESS_NAMES=("gopls" "typescript-language-server" "vtsls" "rust-analyzer" "lua-language-server")
                   KILLED=0
 
@@ -388,8 +388,9 @@ in {
                       elapsed=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
                       [ -z "$elapsed" ] && continue
                       if [ "$elapsed" -gt "$MAX_AGE_SECONDS" ]; then
-                        elapsed_h=$((elapsed / 3600))
-                        echo "Killing stale $proc_name (PID $pid, running ''${elapsed_h}h)"
+                        elapsed_m=$((elapsed / 60))
+                        elapsed_s=$((elapsed % 60))
+                        echo "Killing stale $proc_name (PID $pid, running ''${elapsed_m}m''${elapsed_s}s)"
                         kill "$pid" 2>/dev/null || true
                         KILLED=$((KILLED + 1))
                       fi
