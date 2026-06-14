@@ -57,14 +57,14 @@
 All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in SystemNix that vanish when the upstream repo commits a correct `go.sum` and updates its own flake `vendorHash`:
 
 - [ ] **`library-policy`** — `overlays/shared.nix:68`. `mkTidyOverride` (go mod tidy + proxyVendor + overrideModAttrs). Fix: commit correct `go.sum` upstream
-- [ ] **`mr-sync`** — `overlays/shared.nix:94`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
-- [ ] **`golangci-lint-auto-configure`** — `overlays/shared.nix:71-93`. `go mod tidy` + `templ generate` at build time + proxyVendor. Fix: commit `go.sum`, commit generated templ files or add proper generate step upstream
-- [ ] **`hierarchical-errors`** — `overlays/shared.nix:69` + `flake.nix:274`. Stale `vendorHash` + `go-finding` input NOT followed due to Confidence type API break. Fix: update `go-finding` usage for new API, commit correct `go.sum`, update flake `vendorHash`
-- [ ] **`go-auto-upgrade`** — `overlays/shared.nix:96`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
-- [ ] **`go-structure-linter`** — `overlays/shared.nix:97`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
-- [ ] **`art-dupl`** — `overlays/shared.nix:99`. Stale `vendorHash` override (on `fork` branch). Fix: update flake `vendorHash` upstream
-- [ ] **`dnsblockd`** — `overlays/linux.nix:20-22`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
-- [ ] **`emeet-pixyd`** — `overlays/linux.nix:23`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [ ] **`mr-sync`** — `overlays/shared.nix:71`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
+- [ ] **`golangci-lint-auto-configure`** — `overlays/shared.nix:70`. `go mod tidy` + `templ generate` at build time + proxyVendor. Fix: commit `go.sum`, commit generated templ files or add proper generate step upstream
+- [ ] **`hierarchical-errors`** — `overlays/shared.nix:69` + `flake.nix:268-273`. Stale `vendorHash` + `go-finding` input NOT followed due to Confidence type API break. Fix: update `go-finding` usage for new API, commit correct `go.sum`, update flake `vendorHash`
+- [x] **`go-auto-upgrade`** — Fixed session 138: added `go-error-family.follows`, removed redundant vendorHash override from overlay (hash was identical to upstream's own)
+- [ ] **`go-structure-linter`** — `overlays/shared.nix:74`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [ ] **`art-dupl`** — `overlays/shared.nix:76`. Stale `vendorHash` override (on `fork` branch). Fix: update flake `vendorHash` upstream
+- [ ] **`dnsblockd`** — `overlays/linux.nix`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [ ] **`emeet-pixyd`** — `overlays/linux.nix`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
 
 #### LarsArtmann Apps — Missing Upstream Features
 
@@ -89,6 +89,11 @@ All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in S
 - [ ] **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)
 
 ---
+
+## Completed (session 138)
+
+- [x] **Flake follows consolidation** — Added missing `follows` for 7 repos: crush-daily, discordsync, overview, project-meta, projects-management-automation, mr-sync, branching-flow. Eliminated 38 duplicate lock nodes (182→144)
+- [x] **go-auto-upgrade fix** — Added `go-error-family.follows`, removed redundant vendorHash override from `overlays/shared.nix`
 
 ## Completed (session 131c)
 

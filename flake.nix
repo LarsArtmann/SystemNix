@@ -213,6 +213,9 @@
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+        go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
       };
     };
 
@@ -262,6 +265,10 @@
         nixpkgs.follows = "nixpkgs";
         go-output.follows = "go-output";
         go-branded-id.follows = "go-branded-id";
+        cmdguard.follows = "cmdguard";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
       };
     };
 
@@ -321,6 +328,11 @@
         nixpkgs.follows = "nixpkgs";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
+        go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
       };
     };
 
@@ -336,20 +348,48 @@
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+        go-finding.follows = "go-finding";
+        go-output.follows = "go-output";
+        go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
+        go-filewatcher.follows = "go-filewatcher";
+        cmdguard.follows = "cmdguard";
+        gogenfilter.follows = "gogenfilter";
+        branching-flow.follows = "branching-flow";
+        project-meta.follows = "project-meta";
       };
     };
 
     # project-meta — Per-project metadata management CLI
     project-meta = {
       url = "git+ssh://git@github.com/LarsArtmann/project-meta?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+        go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
+        go-filewatcher.follows = "go-filewatcher";
+        gogenfilter.follows = "gogenfilter";
+      };
     };
 
     # Overview — local project dashboard (discovers and browses git repos via web UI)
     overview = {
       url = "git+ssh://git@github.com/LarsArtmann/overview?ref=master";
-      inputs.nixpkgs.follows = "nixpkgs";
-      inputs.flake-parts.follows = "flake-parts";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+        go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
+        go-filewatcher.follows = "go-filewatcher";
+      };
     };
 
     # DiscordSync — Continuous Discord backup with Turso cloud sync
@@ -360,6 +400,8 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
+        go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
       };
     };
   };

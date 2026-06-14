@@ -70,7 +70,7 @@ in [
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
   (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-ZnffG1VwOYkHN+g2iXhMkGc5j1Q7BDmuq7gX4Ki+Oaw="))
   (mkPackageOverlay buildflow "buildflow" {})
-  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {vendorHash = "sha256-EC61BwheBmfB7FbF0lghd54kv8bD0orscDtUyiGTpnA=";})
+  (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {})
   (mkPackageOverlay branching-flow "branching-flow" {})
   (mkPackageOverlay art-dupl "art-dupl" {})
