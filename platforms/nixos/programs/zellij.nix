@@ -165,10 +165,19 @@ in {
             }
             {
               pane = {
-                size = 2;
+                size = 1;
                 borderless = true;
                 plugin = {
                   location = "zellij:tab-bar";
+                };
+              };
+            }
+            {
+              pane = {
+                size = 1;
+                borderless = true;
+                plugin = {
+                  location = "zellij:status-bar";
                 };
               };
             }
@@ -220,10 +229,19 @@ in {
             }
             {
               pane = {
-                size = 2;
+                size = 1;
                 borderless = true;
                 plugin = {
                   location = "zellij:tab-bar";
+                };
+              };
+            }
+            {
+              pane = {
+                size = 1;
+                borderless = true;
+                plugin = {
+                  location = "zellij:status-bar";
                 };
               };
             }
@@ -237,10 +255,19 @@ in {
             {pane = {};}
             {
               pane = {
-                size = 2;
+                size = 1;
                 borderless = true;
                 plugin = {
                   location = "zellij:tab-bar";
+                };
+              };
+            }
+            {
+              pane = {
+                size = 1;
+                borderless = true;
+                plugin = {
+                  location = "zellij:status-bar";
                 };
               };
             }
