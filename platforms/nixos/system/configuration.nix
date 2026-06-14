@@ -73,6 +73,29 @@ in {
         };
       };
 
+      # Apply Mullvad VPN settings on boot — allow LAN traffic and use local DNS.
+      # Without this, connecting to VPN blocks all local services and breaks
+      # *.home.lan resolution (Mullvad defaults to blocking LAN + own DNS).
+      services.mullvad-config = {
+        description = "Configure Mullvad VPN LAN sharing and DNS";
+        after = ["mullvad-daemon.service"];
+        requires = ["mullvad-daemon.service"];
+        wantedBy = ["multi-user.target"];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          for i in $(seq 1 20); do
+            if ${pkgs.mullvad-vpn}/bin/mullvad lan set allow 2>/dev/null; then
+              break
+            fi
+            sleep 0.5
+          done
+          ${pkgs.mullvad-vpn}/bin/mullvad dns set custom ${config.networking.local.lanIP} 2>/dev/null || true
+        '';
+      };
+
       tmpfiles.rules = [
         "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
       ];
@@ -214,6 +237,9 @@ in {
 
       # Dual-WAN with MPTCP and route health monitoring
       dual-wan.enable = true;
+
+      # Mullvad VPN daemon (required by mullvad CLI)
+      mullvad-vpn.enable = true;
 
       # Centralized AI model storage (/data/ai/)
       ai-models.enable = true;
