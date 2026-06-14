@@ -24,11 +24,6 @@ in {
       hash = "sha256-7ebNwvozNmdinyLhyNVtySiBccq+fxVE7V/Szl+DMAI=";
     }
     {
-      name = "HaGeZi-bypass-full";
-      url = hagezi "dnsmasq/doh-vpn-proxy-bypass.txt";
-      hash = "sha256-kzrAMiFYLIjAerk8bIforpj8bTGe8w5Nxbxw0RhZxG0=";
-    }
-    {
       name = "HaGeZi-native-apple";
       url = hagezi "hosts/native.apple.txt";
       hash = "sha256-+dHB5Kfp91Ry2k+5cyargGa78MZY4nEW68bYnJN7O+Q=";
@@ -126,6 +121,7 @@ in {
   ];
 
   whitelist = [
+    "mullvad.net"
     "api.immich.app"
     "immich.app"
     "github.com"
