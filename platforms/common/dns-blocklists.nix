@@ -154,6 +154,8 @@ in {
     "maven.apache.org"
     "repo.maven.apache.org"
     "dlcdn.apache.org"
+    "myip.is"
+    "extreme-ip-lookup.com"
   ];
 
   extraDomains = [

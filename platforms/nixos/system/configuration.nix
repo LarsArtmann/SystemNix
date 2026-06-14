@@ -73,17 +73,23 @@ in {
         };
       };
 
-      # Apply Mullvad VPN settings on boot — allow LAN traffic and use local DNS.
-      # Without this, connecting to VPN blocks all local services and breaks
-      # *.home.lan resolution (Mullvad defaults to blocking LAN + own DNS).
+      # Apply Mullvad VPN settings on boot and after daemon restarts.
+      # Ensures LAN traffic is allowed and apps use local unbound (not Mullvad DNS).
+      # Without this, connecting to VPN blocks all local services and bypasses blocklists.
       services.mullvad-config = {
         description = "Configure Mullvad VPN LAN sharing and DNS";
         after = ["mullvad-daemon.service"];
         requires = ["mullvad-daemon.service"];
+        bindsTo = ["mullvad-daemon.service"];
         wantedBy = ["multi-user.target"];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
+        };
+        unitConfig = {
+          Restart = "on-failure";
+          StartLimitIntervalSec = 60;
+          StartLimitBurst = 3;
         };
         script = ''
           for i in $(seq 1 20); do

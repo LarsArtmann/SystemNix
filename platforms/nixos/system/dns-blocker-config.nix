@@ -10,7 +10,7 @@
 # - Dynamic DNS, badware hosters, safesearch enforcement
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
-# DNS resolution: full recursive from root hints (no third-party resolver)
+# DNS resolution: DoT forwarding to Mullvad/Quad9 (port 853 — VPN-firewall-safe)
 {
   pkgs,
   config,

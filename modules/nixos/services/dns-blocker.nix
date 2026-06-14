@@ -188,16 +188,22 @@ _: {
 
             include = toString unboundIncludeFile;
 
-            # DNS-over-QUIC (DoQ) — RFC 9250
-            # DISABLED: unbound not compiled with ngtcp2; setting quic-port causes fatal warning
-            # quic-port = cfg.doqPort;
-
-            root-hints = "${pkgs.dns-root-data}/root.hints";
-
             local-zone =
               map (d: ''"${d}." transparent'') cfg.whitelist
               ++ map (d: ''"${d}." always_nxdomain'') cfg.extraDomains;
           };
+
+          # DNS-over-TLS forwarding — works through VPN firewalls (port 853, not 53)
+          forward-zone = [
+            {
+              name = ".";
+              forward-tls-upstream = "yes";
+              forward-addr = [
+                "194.242.2.2@853#dns.mullvad.net"
+                "9.9.9.9@853#dns.quad9.net"
+              ];
+            }
+          ];
 
           remote-control = {
             control-enable = true;
