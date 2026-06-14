@@ -297,6 +297,7 @@
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
         go-branded-id.follows = "go-branded-id";
+        go-error-family.follows = "go-error-family";
       };
     };
 
