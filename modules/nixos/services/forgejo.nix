@@ -555,12 +555,15 @@ _: {
       systemd.services."gitea-runner-${utils.escapeSystemdPath hostName}" = {
         after = ["forgejo.service"];
         wants = ["forgejo.service"];
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
         serviceConfig = {
           EnvironmentFile = lib.mkForce "-/run/forgejo-runner/token";
           ExecStartPre = lib.mkForce [
             ("+" + lib.getExe genRunnerToken)
             (lib.getExe registerRunner)
           ];
+          MemoryMax = "4G";
         };
       };
 
