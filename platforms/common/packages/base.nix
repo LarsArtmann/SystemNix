@@ -258,7 +258,6 @@
       wf-recorder # Screen recorder
       brillo # Brightness control utility
       pamixer # PulseAudio command line mixer
-      zellij # Modern terminal multiplexer
 
       # Disk space visualization
       qdirstat # Qt-based disk usage analyzer with treemap visualization

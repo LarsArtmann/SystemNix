@@ -208,9 +208,6 @@ in {
       ddcutil
       wl-clipboard # Wayland clipboard utilities (wl-copy, wl-paste)
       wl-clip-persist # Keeps clipboard content after programs close
-      rofi-calc
-      rofi-emoji
-      yazi # Terminal file manager (Rust-based, async, image previews)
       gawk # Text processing
     ];
   };
