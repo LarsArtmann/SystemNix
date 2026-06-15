@@ -100,8 +100,6 @@
               ]
               ++ lib.optional (cfg.gcsBucket != null) "GCS_BUCKET=${cfg.gcsBucket}";
             EnvironmentFile = [sopsEnvPath];
-            Restart = "on-failure";
-            RestartSec = cfg.restartSec;
             KillMode = "mixed";
             KillSignal = "SIGTERM";
             TimeoutStopSec = cfg.timeoutStopSec;
@@ -109,7 +107,10 @@
             StandardError = "journal";
             UMask = "0026";
           }
-          // serviceDefaults {RestartSec = cfg.restartSec;}
+          // serviceDefaults {
+            Restart = "on-failure";
+            RestartSec = cfg.restartSec;
+          }
           // harden {
             MemoryMax = "2G";
             ProtectHome = false;

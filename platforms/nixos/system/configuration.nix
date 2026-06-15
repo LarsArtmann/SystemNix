@@ -13,6 +13,7 @@ in {
     ../../common/packages/base.nix
     ../../common/packages/fonts.nix
     ../../common/color-scheme.nix
+    ../../common/locale.nix
     # Include hardware configuration - essential for NixOS to boot
     ../hardware/hardware-configuration.nix
     # ESSENTIAL MODULES FOR FUNCTIONAL DESKTOP

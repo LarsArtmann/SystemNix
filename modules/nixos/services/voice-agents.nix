@@ -9,14 +9,14 @@ _: {
     inherit (config.networking) domain;
     cfg = config.services.voice-agents;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes ports;
+    inherit (libHelpers) serviceTypes ports images;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     rocm = libHelpers.rocm {inherit pkgs;};
 
     whisperModelsDir = config.services.ai-models.paths.whisper;
 
-    whisperImage = "beecave/insanely-fast-whisper-rocm@sha256:1fa17f91846d30748751089a7ef37b490a8e3ec46e8ba4a1df15c28d1e60d3c1";
+    whisperImage = images.whisper-rocm.ref;
 
     whisperComposeFile = pkgs.writeText "docker-compose.whisper-asr.yml" ''
       name: voice-agents

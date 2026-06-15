@@ -114,3 +114,4 @@ sops-nix decrypts ALL secrets atomically. One bad owner → everything fails. Gu
 | `monitor365.yaml` | cloud_auth_token, server_jwt_secret |
 | `signoz.yaml` | discord_alert_webhook_url |
 | `discordsync.yaml` | discordsync_discord_token, discordsync_turso_url, discordsync_turso_auth_token |
+| `dns-failover.yaml` | vrrp_auth_password |

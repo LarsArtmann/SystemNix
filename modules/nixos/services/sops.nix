@@ -27,6 +27,7 @@ in {
   }: let
     cfg = config.services.sops-config;
     inherit (config.users) primaryUser;
+    svcEnabled = name: (config.services.${name} or {}).enable or false;
   in {
     options.services.sops-config = {
       enable = lib.mkEnableOption "sops-nix secret definitions for SystemNix services";
@@ -90,12 +91,12 @@ in {
               mode = "0400";
             };
           }
-          // lib.optionalAttrs config.services.voice-agents.enable (
+          // lib.optionalAttrs (svcEnabled "voice-agents") (
             mkSecrets "voice-agents.yaml" {
               restartUnits = ["livekit.service"];
             } ["livekit_keys"]
           )
-          // lib.optionalAttrs config.services.hermes.enable (
+          // lib.optionalAttrs (svcEnabled "hermes") (
             mkKeyedSecrets "hermes.yaml" {
               owner = "hermes";
               group = "hermes";
@@ -110,40 +111,43 @@ in {
               # hermes_openai_api_key = "openai_api_key"; # TODO: add openai_api_key to hermes.yaml sops secret
             }
           )
-          // lib.optionalAttrs config.services.crush-daily.enable (
+          // lib.optionalAttrs (svcEnabled "crush-daily") (
             mkSecrets "crush-daily.yaml" {
               owner = "crush-daily";
               group = "crush-daily";
               restartUnits = ["crush-daily.service"];
             } ["synthetic_api_key"]
           )
-          // lib.optionalAttrs config.services.openseo.enable (
+          // lib.optionalAttrs (svcEnabled "openseo") (
             mkSecrets "openseo.yaml" {
               owner = "root";
               group = "root";
               restartUnits = ["openseo.service"];
             } ["dataforseo_api_key"]
           )
-          // lib.optionalAttrs config.services.monitor365.enable (
+          // lib.optionalAttrs (svcEnabled "monitor365") (
             mkSecrets "monitor365.yaml" {
               owner = primaryUser;
               group = "users";
               restartUnits = ["monitor365.service" "monitor365-server.service"];
             } ["cloud_auth_token" "server_jwt_secret"]
           )
-          // lib.optionalAttrs config.services.signoz.enable (
+          // lib.optionalAttrs (svcEnabled "signoz" || svcEnabled "gatus-config") (
             mkSecrets "signoz.yaml" {
-              owner = "signoz";
-              group = "signoz";
-              restartUnits = ["signoz-provision.service"];
+              owner = "root";
+              group = "root";
+              restartUnits = ["signoz-provision.service" "gatus.service"];
             } ["discord_alert_webhook_url"]
           )
-          // lib.optionalAttrs config.services.discordsync.enable (
+          // lib.optionalAttrs (svcEnabled "discordsync") (
             mkSecrets "discordsync.yaml" {
               owner = "discordsync";
               group = "discordsync";
               restartUnits = ["discordsync.service"];
             } ["discordsync_discord_token" "discordsync_turso_url" "discordsync_turso_auth_token"]
+          )
+          // lib.optionalAttrs (svcEnabled "dns-failover") (
+            mkSecrets "dns-failover.yaml" {} ["vrrp_auth_password"]
           );
 
         templates =
@@ -158,7 +162,7 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs config.services.hermes.enable {
+          // lib.optionalAttrs (svcEnabled "hermes") {
             "hermes-env" = {
               owner = "hermes";
               group = "hermes";
@@ -173,7 +177,8 @@ in {
                 FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
               '';
             };
-
+          }
+          // lib.optionalAttrs (svcEnabled "hermes" && svcEnabled "projects-management-automation") {
             "pma-env" = {
               owner = primaryUser;
               group = "users";
@@ -183,7 +188,7 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs config.services.monitor365.enable {
+          // lib.optionalAttrs (svcEnabled "monitor365") {
             "monitor365-env" = {
               owner = primaryUser;
               group = "users";
@@ -193,7 +198,7 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs config.services.openseo.enable {
+          // lib.optionalAttrs (svcEnabled "openseo") {
             "openseo-env" = {
               owner = "root";
               group = "root";
@@ -204,7 +209,7 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs config.services.crush-daily.enable {
+          // lib.optionalAttrs (svcEnabled "crush-daily") {
             "crush-daily-env" = {
               owner = "crush-daily";
               group = "crush-daily";
@@ -215,7 +220,7 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs config.services.signoz.enable {
+          // lib.optionalAttrs (svcEnabled "gatus-config") {
             "gatus-env" = {
               owner = "root";
               group = "root";
@@ -225,7 +230,7 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs config.services.discordsync.enable {
+          // lib.optionalAttrs (svcEnabled "discordsync") {
             "discordsync-env" = {
               owner = "discordsync";
               group = "discordsync";
@@ -235,6 +240,13 @@ in {
                 DISCORD_TOKEN=${config.sops.placeholder.discordsync_discord_token}
                 TURSO_URL=${config.sops.placeholder.discordsync_turso_url}
                 TURSO_AUTH_TOKEN=${config.sops.placeholder.discordsync_turso_auth_token}
+              '';
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "dns-failover") {
+            "dns-failover-env" = {
+              content = ''
+                VRRP_AUTH_PASSWORD=${config.sops.placeholder.vrrp_auth_password}
               '';
             };
           };

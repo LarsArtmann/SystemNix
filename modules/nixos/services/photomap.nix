@@ -7,7 +7,7 @@ _: {
     ...
   }: let
     cfg = config.services.photomap;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports images;
     immichMediaDir = config.services.immich.mediaLocation;
     immichUploadDir = "${immichMediaDir}/upload";
     immichLibraryDir = "${immichMediaDir}/library";
@@ -34,7 +34,7 @@ _: {
     config = lib.mkIf cfg.enable {
       virtualisation.oci-containers.containers.photomap = {
         autoStart = true;
-        image = "lstein/photomapai@sha256:ca975ca6b2a00a7943fec1f578815dccfdbc212630547c70e750c724e981435d";
+        image = images.photomap.ref;
         ports = ["127.0.0.1:${toString cfg.port}:${toString cfg.port}"];
         volumes = [
           "${immichUploadDir}:/Pictures/upload:ro"

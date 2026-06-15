@@ -53,7 +53,9 @@ in {
   imports = [
     ../../common/nix-settings.nix
     ../../common/dns-resolver.nix
+    ../../common/locale.nix
     ../system/local-network.nix
+    ../system/primary-user.nix
   ];
 
   system.stateVersion = "25.11";
@@ -89,8 +91,8 @@ in {
     };
   };
 
-  time.timeZone = "Europe/Berlin";
-  i18n.defaultLocale = "en_US.UTF-8";
+  services.sops-config.enable = true;
+
   services = {
     openssh = {
       enable = true;
@@ -127,7 +129,7 @@ in {
           local-data =
             map
             (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'')
-            ["auth" "immich" "forgejo" "dash" "photomap" "signoz" "tasks" "crm" "status" "seo" "daily" "logs" "monitor"];
+            blocklists.localSubdomains;
         };
       };
     };
@@ -138,10 +140,7 @@ in {
       priority = 50;
       routerID = 53;
       subnetPrefix = 24;
-      # TODO: When Pi 3 is provisioned, add sops-nix with age identity from SSH host key
-      # and set passwordFile = config.sops.templates."keepalived-vrrp-env".path;
-      # For now, use a static env file until sops is set up on this node.
-      passwordFile = pkgs.writeText "keepalived-vrrp-env" "VRRP_AUTH_PASSWORD=DNSClusterVRRP-evox2";
+      passwordFile = config.sops.templates."dns-failover-env".path;
     };
   };
 

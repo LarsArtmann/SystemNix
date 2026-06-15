@@ -9,7 +9,7 @@ _: {
     cfg = config.services.twenty;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes images ports;
+    inherit (libHelpers) serviceTypes images ports harden;
     inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
 
     serverPort = cfg.port;
@@ -167,7 +167,8 @@ _: {
               wants = ["twenty.service"];
               wantedBy = ["multi-user.target"];
               path = [pkgs.docker];
-              serviceConfig = {
+              serviceConfig = harden {
+                MemoryMax = "512M";
                 Type = "oneshot";
                 ExecStart = lib.getExe fixCollation;
                 RemainAfterExit = true;

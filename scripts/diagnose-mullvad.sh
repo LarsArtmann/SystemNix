@@ -23,7 +23,8 @@ echo "=== rp_filter settings ==="
 sysctl net.ipv4.conf.all.rp_filter 2>&1
 sysctl net.ipv4.conf.default.rp_filter 2>&1
 for iface in $(ls /proc/sys/net/ipv4/conf/); do
-  echo -n "$iface: "; sysctl "net.ipv4.conf.$iface.rp_filter" 2>&1
+  echo -n "$iface: "
+  sysctl "net.ipv4.conf.$iface.rp_filter" 2>&1
 done
 
 echo ""

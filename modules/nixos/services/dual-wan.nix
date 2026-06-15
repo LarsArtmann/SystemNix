@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.dual-wan;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
 
     inherit (config.networking.local) lanIP gateway;
 
@@ -134,6 +134,9 @@ _: {
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
             serviceConfig =
               {
                 Type = "oneshot";
@@ -158,6 +161,9 @@ _: {
             wantedBy = ["multi-user.target"];
             after = ["network-online.target"];
             wants = ["network-online.target"];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
             serviceConfig =
               {
                 Type = "simple";

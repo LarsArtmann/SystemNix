@@ -176,6 +176,10 @@ in {
           createHome = true;
         };
         users.groups.signoz = {};
+        systemd.targets.signoz = {
+          description = "SigNoz observability stack";
+          wantedBy = ["multi-user.target"];
+        };
         systemd.tmpfiles.rules = [
           (mkStateDir cfg.settings.queryService.dataDir "0755" "signoz" "signoz")
         ];
@@ -239,6 +243,8 @@ in {
         ];
         systemd.services.clickhouse = {
           inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
           serviceConfig =
             harden {
               MemoryMax = "4G";
@@ -290,10 +296,15 @@ in {
           inherit onFailure;
           wantedBy = ["signoz.service"];
           path = [pkgs.curl pkgs.jq pkgs.coreutils];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-          };
+          serviceConfig =
+            harden {
+              MemoryMax = "512M";
+              ReadWritePaths = [cfg.settings.queryService.dataDir];
+            }
+            // {
+              Type = "oneshot";
+              RemainAfterExit = true;
+            };
           preStart = ''
             ${pkgs.coreutils}/bin/timeout 120 ${pkgs.bash}/bin/bash -c 'until ${pkgs.curl}/bin/curl -sf http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version > /dev/null 2>&1; do sleep 2; done'
           '';

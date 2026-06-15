@@ -20,6 +20,7 @@
     manifest = 2099;
 
     monitor365-server = 3001;
+    monitor365-metrics = 9191;
 
     openseo = 3002;
 

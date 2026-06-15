@@ -11,11 +11,7 @@
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # DNS resolution: DoT forwarding to Mullvad/Quad9 (port 853 — VPN-firewall-safe)
-{
-  pkgs,
-  config,
-  ...
-}: let
+{config, ...}: let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
@@ -56,7 +52,7 @@ in {
       local-data =
         map
         (subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"'')
-        ["auth" "immich" "forgejo" "dash" "signoz" "tasks" "crm" "manifest" "status" "seo" "daily" "logs" "monitor"];
+        blocklists.localSubdomains;
     };
 
     dns-failover = {
@@ -66,7 +62,7 @@ in {
       priority = 100;
       routerID = 53;
       subnetPrefix = 24;
-      passwordFile = pkgs.writeText "keepalived-vrrp-env" "VRRP_AUTH_PASSWORD=DNSClusterVRRP-evox2";
+      passwordFile = config.sops.templates."dns-failover-env".path;
     };
   };
 

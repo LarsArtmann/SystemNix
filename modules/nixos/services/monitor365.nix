@@ -469,7 +469,7 @@ _: {
             enable = lib.mkEnableOption "Prometheus metrics endpoint" // {default = false;};
             bindAddress = lib.mkOption {
               type = lib.types.str;
-              default = "127.0.0.1:${toString ports.signoz-cadvisor}";
+              default = "127.0.0.1:${toString ports.monitor365-metrics}";
               description = "Address to bind the Prometheus metrics endpoint";
             };
           };

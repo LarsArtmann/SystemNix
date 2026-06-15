@@ -83,10 +83,12 @@ _: {
           immich-server = {
             after = lib.optional provisionEnabled "pocket-id-provision.service";
             wants = lib.optional provisionEnabled "pocket-id-provision.service";
+            inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
           };
           immich-machine-learning = {
+            inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
           };

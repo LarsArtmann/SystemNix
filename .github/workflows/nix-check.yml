@@ -16,8 +16,11 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@v9
 
-      - name: Check flake evaluation
-        run: nix flake check --no-build
+      - name: Check flake evaluation (all systems)
+        run: nix flake check --no-build --all-systems
+
+      - name: Build local packages
+        run: nix build .#jscpd .#govalid .#aw-watcher-utilization -L
 
       - name: Run statix linter
         run: nix run nixpkgs#statix -- check .

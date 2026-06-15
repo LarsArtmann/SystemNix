@@ -277,6 +277,34 @@ _: {
       port = serviceTypes.servicePort ports.pocket-id "Port for Pocket ID";
       metricsPort = serviceTypes.servicePort ports.pocket-id-metrics "Port for Pocket ID Prometheus metrics";
 
+      smtp = {
+        host = lib.mkOption {
+          type = lib.types.str;
+          default = "smtp.resend.com";
+          description = "SMTP server host for sending emails";
+        };
+        port = lib.mkOption {
+          type = lib.types.port;
+          default = 465;
+          description = "SMTP server port";
+        };
+        user = lib.mkOption {
+          type = lib.types.str;
+          default = "resend";
+          description = "SMTP username for authentication";
+        };
+        from = lib.mkOption {
+          type = lib.types.str;
+          default = "noreply@cloud.larsartmann.com";
+          description = "From email address for outgoing emails";
+        };
+        skipSslVerify = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = "Skip SSL certificate verification for SMTP";
+        };
+      };
+
       provision = {
         enable = lib.mkEnableOption "automatic provisioning of admin user, OIDC clients, and avatar";
         adminUser = lib.mkOption {
@@ -407,11 +435,11 @@ _: {
           AUDIT_LOG_RETENTION_DAYS = "90";
           DB_CONNECTION_STRING = "data/pocket-id.db";
           UPLOAD_PATH = "data/uploads";
-          SMTP_HOST = "smtp.resend.com";
-          SMTP_PORT = "465";
-          SMTP_USER = "resend";
-          SMTP_FROM = "noreply@cloud.larsartmann.com";
-          SMTP_SKIP_SSL_VERIFY = false;
+          SMTP_HOST = cfg.smtp.host;
+          SMTP_PORT = toString cfg.smtp.port;
+          SMTP_USER = cfg.smtp.user;
+          SMTP_FROM = cfg.smtp.from;
+          SMTP_SKIP_SSL_VERIFY = cfg.smtp.skipSslVerify;
         };
         credentials =
           {

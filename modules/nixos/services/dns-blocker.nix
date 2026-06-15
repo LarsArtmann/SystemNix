@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.dns-blocker;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults mkStateDir ports;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure mkStateDir ports;
 
     categoriesJSON = pkgs.writeText "dnsblockd-categories.json" (builtins.toJSON cfg.categories);
 
@@ -251,6 +251,7 @@ _: {
           after = ["network-online.target" "unbound.service" "sops-nix.service"];
           wants = ["network-online.target" "sops-nix.service" "unbound.service"];
           wantedBy = ["multi-user.target"];
+          inherit onFailure;
           unitConfig = {
             StartLimitBurst = 10;
             StartLimitIntervalSec = 120;
