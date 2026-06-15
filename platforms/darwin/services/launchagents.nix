@@ -49,39 +49,6 @@ in {
       '';
     };
 
-    # SublimeText configuration sync service
-    # NOTE: scripts/sublime-text-sync.sh was removed; LaunchAgent disabled until
-    # SublimeText config sync is implemented declaratively
-    "com.larsartmann.sublime-sync.plist" = {
-      enable = false;
-      text = ''
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>Label</key>
-            <string>com.larsartmann.sublime-sync</string>
-            <key>ProgramArguments</key>
-            <array>
-                <string>${userHome}/projects/SystemNix/scripts/sublime-text-sync.sh</string>
-                <string>--export</string>
-            </array>
-            <key>StartCalendarInterval</key>
-            <dict>
-                <key>Hour</key>
-                <integer>18</integer>
-                <key>Minute</key>
-                <integer>0</integer>
-            </dict>
-            <key>StandardOutPath</key>
-            <string>${userHome}/.local/share/sublime-text/sync.log</string>
-            <key>StandardErrorPath</key>
-            <string>${userHome}/.local/share/sublime-text/sync-error.log</string>
-        </dict>
-        </plist>
-      '';
-    };
-
     # ActivityWatch Utilization Watcher
     # Nix-managed system resource monitoring (replaces manual pip install)
     # Connects to ActivityWatch server on localhost:5600
