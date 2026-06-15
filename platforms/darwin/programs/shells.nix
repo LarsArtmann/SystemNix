@@ -6,11 +6,6 @@
     nixcheck = "darwin-rebuild check --flake .";
   };
 in {
-  imports = [
-    ../../common/programs/fish.nix
-    ../../common/programs/bash.nix # Added for Bash parity
-  ];
-
   programs = {
     fish.shellAliases = lib.mkAfter nixAliases;
     zsh.shellAliases = lib.mkAfter nixAliases;
