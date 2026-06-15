@@ -6,7 +6,7 @@
 }: let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
-  dnsStatsPort = (import ../../../lib/ports.nix).ports.dns-blocker-stats;
+  dnsStatsPort = (import ../../../lib/default.nix lib).ports.dns-blocker-stats;
   waybarCamera = pkgs.writeShellApplication {
     name = "waybar-camera";
     runtimeInputs = [pkgs.emeet-pixyd];
