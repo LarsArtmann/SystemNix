@@ -526,7 +526,7 @@ _: {
 
             package = lib.mkOption {
               type = lib.types.package;
-              default = pkgs.monitor365-server or pkgs.monitor365;
+              default = pkgs.monitor365;
               description = "Monitor365 server package";
             };
 
