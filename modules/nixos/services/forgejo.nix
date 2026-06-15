@@ -264,10 +264,6 @@ _: {
         PASS_FILE="${stateDir}/.admin-password"
         FORGEJO=${lib.getExe forgejoPkg}
 
-        if [ ! -f "$PASS_FILE" ]; then
-          head -c 32 /dev/urandom | base64 > "$PASS_FILE"
-          chmod 600 "$PASS_FILE"
-        fi
         ADMIN_PASS="$(head -n1 "$PASS_FILE" | tr -d '\n')"
 
         if ! $FORGEJO admin user list | grep -q "$ADMIN_USER"; then
