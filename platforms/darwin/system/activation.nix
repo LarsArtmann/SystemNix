@@ -56,7 +56,6 @@
     };
   };
 
-  # Note: Set Darwin config path here as it relates directly to system activation paths
-  # Set Darwin configuration path (Darwin-specific)
-  environment.darwinConfig = "$HOME/.nixpkgs/darwin-configuration.nix";
+  # Set Darwin configuration path to the flake location
+  environment.darwinConfig = "$HOME/projects/SystemNix";
 }
