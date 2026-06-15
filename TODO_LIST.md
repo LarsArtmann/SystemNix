@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-10 (session 132)
+**Updated:** 2026-06-15 (session 139)
 
 ---
 
@@ -56,15 +56,15 @@
 
 All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in SystemNix that vanish when the upstream repo commits a correct `go.sum` and updates its own flake `vendorHash`:
 
-- [ ] **`library-policy`** — `overlays/shared.nix:68`. `mkTidyOverride` (go mod tidy + proxyVendor + overrideModAttrs). Fix: commit correct `go.sum` upstream
-- [ ] **`mr-sync`** — `overlays/shared.nix:71`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
-- [ ] **`golangci-lint-auto-configure`** — `overlays/shared.nix:70`. `go mod tidy` + `templ generate` at build time + proxyVendor. Fix: commit `go.sum`, commit generated templ files or add proper generate step upstream
-- [ ] **`hierarchical-errors`** — `overlays/shared.nix:69` + `flake.nix:268-273`. Stale `vendorHash` + `go-finding` input NOT followed due to Confidence type API break. Fix: update `go-finding` usage for new API, commit correct `go.sum`, update flake `vendorHash`
+- [ ] **`library-policy`** — `overlays/shared.nix`. `mkTidyOverride` (go mod tidy + proxyVendor + overrideModAttrs). Fix: commit correct `go.sum` upstream
+- [ ] **`mr-sync`** — `overlays/shared.nix`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
+- [x] **`golangci-lint-auto-configure`** — Fixed: no more override needed (upstream `go.sum` correct)
+- [x] **`hierarchical-errors`** — Fixed: no more stale `vendorHash` or `go-finding` override
 - [x] **`go-auto-upgrade`** — Fixed session 138: added `go-error-family.follows`, removed redundant vendorHash override from overlay (hash was identical to upstream's own)
-- [ ] **`go-structure-linter`** — `overlays/shared.nix:74`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
-- [ ] **`art-dupl`** — `overlays/shared.nix:76`. Stale `vendorHash` override (on `fork` branch). Fix: update flake `vendorHash` upstream
-- [ ] **`dnsblockd`** — `overlays/linux.nix`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
-- [ ] **`emeet-pixyd`** — `overlays/linux.nix`. Stale `vendorHash` override. Fix: update flake `vendorHash` upstream
+- [x] **`go-structure-linter`** — Fixed: no more stale `vendorHash` override
+- [x] **`art-dupl`** — Fixed: no more stale `vendorHash` override (on `fork` branch)
+- [x] **`dnsblockd`** — Fixed: uses `dnsblockd.overlays.default`, no stale override
+- [x] **`emeet-pixyd`** — Fixed: uses `emeet-pixyd.overlays.default`, no stale override
 
 #### LarsArtmann Apps — Missing Upstream Features
 

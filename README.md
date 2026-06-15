@@ -52,14 +52,14 @@ just switch             # Apply configuration
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
 ├── justfile                     # Task runner for all operations
-├── modules/nixos/services/     # 36 NixOS service modules (auto-discovered, 29 enabled)
-├── pkgs/                        # 5 custom packages (jscpd, govalid, netwatch, openaudible, aw-watcher)
-├── overlays/                    # 12 overlay packages via mkPackageOverlay + manual overlays
-├── lib/                         # 13 reusable helpers (harden, ports, mkDockerServiceFactory, ...)
+├── modules/nixos/services/     # 39 NixOS service modules (auto-discovered, ~37 enabled)
+├── pkgs/                        # 5 custom packages (jscpd, govalid, netwatch, openaudible, aw-watcher-utilization)
+├── overlays/                    # 25 overlay packages (17 shared + 8 Linux-only) via mkPackageOverlay
+├── lib/                         # 8 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
 │   ├── common/                  # Shared across platforms (~80% of config)
-│   │   ├── home-base.nix        # Home Manager base (14 program modules)
-│   │   ├── programs/            # Fish, Zsh, Bash, Nushell, Starship, Git, tmux, ...
+│   │   ├── home-base.nix        # Home Manager base (13 program modules)
+│   │   ├── programs/            # Fish, Zsh, Bash, Starship, Git, tmux, ...
 │   │   ├── packages/            # Cross-platform packages & fonts
 │   │   └── core/                # Nix daemon settings
 │   ├── darwin/                  # macOS-specific (nix-darwin)
@@ -73,31 +73,42 @@ SystemNix/
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
 │       ├── programs/            # Rofi, swaylock, wlogout, Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
-├── scripts/                     # 23 operational scripts
+├── scripts/                     # 29 operational scripts (26 shell + 3 Python)
 └── docs/                        # Architecture decisions (8 ADRs), status reports, troubleshooting
 ```
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (30 health checks) + SigNoz (18 alert rules):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (33 health checks) + SigNoz (18 alert rules, 6 dashboards):
 
 | Service | Port | URL | Description |
 |---------|------|-----|-------------|
 | **Caddy** | 443 | `*.home.lan` | Reverse proxy with sops-managed TLS certs |
 | **Immich** | 2283 | `immich.home.lan` | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML) |
 | **Forgejo** | 3000 | `forgejo.home.lan` | Self-hosted Git forge with GitHub mirror sync & Actions |
-| **SigNoz** | 4317, 4318, 8080 | `signoz.home.lan` | Observability: traces, metrics, logs + node_exporter + cAdvisor |
+| **SigNoz** | 4317, 4318, 8080 | `signoz.home.lan` | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards |
 | **Homepage** | 8082 | `dash.home.lan` | Service overview dashboard |
 | **Pocket ID** | 1411 | `auth.home.lan` | Passkey-based SSO/IDP + oauth2-proxy forward auth |
 | **Hermes** | — | — | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM) |
 | **Twenty CRM** | 3200 | `crm.home.lan` | Self-hosted CRM (Docker Compose: PostgreSQL + Redis) |
 | **Voice Agents** | 7880 | — | AI voice agents (Docker: LiveKit + Whisper ASR with ROCm) |
 | **TaskChampion** | 10222 | `tasks.home.lan` | Taskwarrior sync server (cross-platform + Android) |
-| **DNS Blocker** | 53, 8083 | — | Unbound + dnsblockd, 10 blocklists, 2.5M+ domains blocked, DoT upstream |
+| **Manifest** | 2099 | `manifest.home.lan` | Smart LLM router for AI agents (cost optimization) |
+| **Overview** | 8083 | — | Local project dashboard (git repo discovery, stats, activity) |
+| **Dozzle** | 8084 | `logs.home.lan` | Real-time Docker container log viewer |
+| **Monitor365** | 3001 | `monitor.home.lan` | Device monitoring agent + server dashboard |
+| **OpenSEO** | 3002 | `seo.home.lan` | Self-hosted SEO suite (rank tracking, keyword research) |
+| **Crush Daily** | 8081 | `daily.home.lan` | AI-powered development insights from Crush databases |
+| **PMA** | — | — | Projects Management Automation (AI commit messages, repo discovery) |
+| **Dual-WAN** | — | — | MPTCP dual-WAN with route health monitoring |
+| **Gatus** | 9110 | `status.home.lan` | Health check monitoring with Discord alerts |
+| **DNS Blocker** | 53, 8050 | — | Unbound + dnsblockd, 23 blocklists, 2.5M+ domains blocked, DoT upstream |
+| **Mullvad VPN** | — | — | WireGuard VPN with LAN bypass, route-based split tunneling |
+| **DiscordSync** | — | — | Continuous Discord channel backup bot |
 
 ### DNS Blocking
 
-- 2.5M+ blocked domains (ads, trackers, malware, telemetry, gambling)
+- 2.5M+ blocked domains across 23 blocklists (ads, trackers, malware, telemetry, gambling, native device trackers)
 - Upstream: Quad9 (DNS-over-TLS) + Cloudflare fallback
 - Local `.home.lan` DNS records for all services
 - DNSSEC enabled, qname minimization
@@ -180,6 +191,8 @@ Shared across macOS and NixOS via `platforms/common/programs/`:
 
 ## Flake Inputs
 
+52 inputs — key ones below:
+
 | Input | Purpose |
 |-------|---------|
 | `nixpkgs` | Package collection (unstable) |
@@ -193,17 +206,26 @@ Shared across macOS and NixOS via `platforms/common/programs/`:
 | `nix-ssh-config` | Shared SSH configuration |
 | `crush-config` | AI assistant configuration |
 | `hermes-agent` | AI agent gateway (Discord bot) |
-| `nix-colors` | Declarative color schemes |
 | `silent-sddm` | SDDM theme with Catppuccin support |
 | `signoz-src` | SigNoz observability source (built from source) |
+| `signoz-collector-src` | SigNoz OTel collector source |
+| `dnsblockd` | Custom DNS blocker (Go) |
+| `treefmt-full-flake` | Code formatting (alejandra + more) |
+| `nixos-hardware` | Hardware-specific NixOS modules |
+| `helium` | Helium browser (macOS) |
 | `nur` | Nix User Repository |
+| `wallpapers-src` | Wallpaper collection |
+
+Color schemes are defined locally in `platforms/common/theme.nix` (not via a flake input).
 
 ## CI/CD
 
-GitHub Actions workflow (`.github/workflows/nix-check.yml`):
-- **Flake check**: `nix flake check` on macOS and Ubuntu
-- **Build**: Full Darwin build on macOS runner
-- **Syntax check**: `nix flake check --no-build` on Ubuntu
+GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/PR to master (Ubuntu runner):
+- **Flake evaluation**: `nix flake check --no-build --all-systems`
+- **Package builds**: `jscpd`, `govalid`, `aw-watcher-utilization`
+- **Statix**: Nix anti-pattern linting
+- **Deadnix**: Dead code detection
+- **Formatting**: `nix fmt -- --check .`
 
 ### Pre-commit Hooks
 

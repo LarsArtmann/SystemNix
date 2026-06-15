@@ -6,8 +6,8 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 
 | Package | Language | Platform | Description |
 |---------|----------|----------|-------------|
-| [modernize](#modernize) | Go | All | Go code modernize linter |
 | [jscpd](#jscpd) | Node.js | All | Copy/paste detector for source code |
+| [govalid](#govalid) | Go | All | Go validation code generator |
 | [aw-watcher-utilization](#aw-watcher-utilization) | Python | All | ActivityWatch system utilization watcher |
 | [netwatch](#netwatch) | Rust | Linux | Real-time network diagnostics TUI |
 | [openaudible](#openaudible) | AppImage | Linux | Audible audiobook manager |
@@ -19,13 +19,12 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 
 ---
 
-### modernize
+### govalid
 
-Builds the `modernize` analysis pass from `golang.org/x/tools` with Go 1.26. Detects Go code that can use newer language features.
+Go validation code generator — generates type-safe validators from struct tags.
 
-- **Source:** `modernize.nix` (fetches from `golang/tools` repo)
+- **Source:** `govalid.nix` (Go, fetched from GitHub)
 - **Platform:** All platforms
-- **Install:** Available as `nix build .#modernize`
 
 ### jscpd
 
