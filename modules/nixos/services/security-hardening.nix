@@ -8,6 +8,7 @@ _: {
     ...
   }: let
     cfg = config.services.security-hardening;
+    inherit (import ../../../lib/default.nix lib) onFailure;
   in {
     options.services.security-hardening = {
       enable = lib.mkEnableOption "Comprehensive security hardening (polkit, PAM, fail2ban, ClamAV, security tools)";
@@ -54,7 +55,7 @@ _: {
 
       # ClamAV: socket-activated only — don't block graphical.target at boot.
       systemd.services.clamav-daemon = {
-        onFailure = ["notify-failure@%n.service"];
+        inherit onFailure;
         wantedBy = lib.mkForce [];
         after = lib.mkForce ["basic.target"];
       };
