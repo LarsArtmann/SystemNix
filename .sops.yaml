@@ -1,8 +1,12 @@
 keys:
   - &evo-x2 age133ckftlye8snhzga95fnl4np7npjry90qr3g84ya0kddctecx5hsx9uyh6
+  # rpi3-dns age key — generate via: sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age
+  # Then add: - &rpi3-dns age1<KEY>
+  # Required for rpi3 to decrypt dns-failover.yaml
 
 creation_rules:
   - path_regex: ^platforms/nixos/secrets/[^/]+\.yaml$
     key_groups:
       - age:
           - *evo-x2
+          # - *rpi3-dns  # Uncomment when rpi3 age key is added above
