@@ -156,7 +156,7 @@
         # so it can navigate to shared project directories.
         # NOTE: This uses ACLs instead of broad chmod to avoid making the entire
         # home directory writable. Only read+execute (r-x) is granted, not write.
-        primaryHome=$(getent passwd lars 2>/dev/null | cut -d: -f6)
+        primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
         if [ -n "$primaryHome" ] && [ -d "$primaryHome" ]; then
           setfacl -m "g:${cfg.group}:r-x" "$primaryHome" 2>/dev/null || chmod g+rx "$primaryHome"
         fi
