@@ -224,7 +224,12 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `mkPreparedSource` v2 sub-modules | `subModules` handles `/v2` suffixes — include version in list entry (e.g. `"codec/v2"`), it's kept in module path but stripped from local dir |
 | `proxyVendor = true` | Required for `mkPreparedSource` repos — enables `go mod tidy` in both derivation phases without vendor/ validation issues |
 | sops secret owners | Secrets referencing non-existent users/groups cause sops-install-secrets to fail atomically — ALL secrets blocked. Guard with `lib.optionalAttrs config.services.X.enable` |
-| `signoz.target` | SigNoz/ClickHouse use custom `signoz.target` (NOT `multi-user.target`) to avoid blocking `graphical.target`. All new SigNoz components must use `wantedBy = ["signoz.target"]` |
+| `signoz.target` | SigNoz/ClickHouse use custom `signoz.target` (NOT `multi-user.target`) to avoid blocking `graphical.target`. The target is defined in `signoz.nix` and itself uses `wantedBy = ["multi-user.target"]`. All new SigNoz components must use `wantedBy = ["signoz.target"]` |
+| `svcEnabled` helper | In `sops.nix`, use `svcEnabled "service-name"` instead of `config.services.X.enable` for cross-module safety (rpi3 doesn't import all modules). Defined as `name: (config.services.${name} or {}).enable or false` |
+| `locale.nix` | Shared timezone + locale in `platforms/common/locale.nix`. Never hardcode `time.timeZone` or `i18n.defaultLocale` in platform configs — import this instead |
+| `dns-failover.yaml` | Sops secret for VRRP auth password. Encrypted for evo-x2 only — rpi3 needs its age key added to `.sops.yaml` before deployment |
+| Pocket-ID SMTP | Now fully configurable via `cfg.smtp.host`, `cfg.smtp.port`, `cfg.smtp.user`, `cfg.smtp.from`, `cfg.smtp.skipSslVerify`. Never hardcode SMTP values |
+| Image registry | ALL container image references must go through `lib/images.nix` — never hardcode `image@sha256:...` in service modules. Add new images to the `images` attrset with `mkRef` |
 | `notify-failure@%n` wrapper | `%i` in `writeShellApplication` is NOT expanded — must pass `%i` as script argument from `ExecStart`. Template: `"${scriptBin}/bin/script %i"` |
 | `startLimitBurst` | Every service using `serviceDefaults {}` MUST set `startLimitBurst = 5; startLimitIntervalSec = 300;` to prevent infinite crash loops |
 | `amdgpu.gttsize` deprecated | Kernel 7.0+ uses `ttm.pages_limit` only. Remove from both `kernelParams` and `extraModprobeConfig` |
