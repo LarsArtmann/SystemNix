@@ -193,8 +193,5 @@ in {
     };
   };
 
-  nix = {
-    gc.options = lib.mkForce "--delete-older-than 7d";
-    settings.auto-optimise-store = true;
-  };
+  nix.gc.options = lib.mkForce "--delete-older-than 7d";
 }
