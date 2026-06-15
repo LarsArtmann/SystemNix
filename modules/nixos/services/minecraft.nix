@@ -37,8 +37,6 @@ _: {
 
       dontUnpack = true;
 
-      passthru.updateScript = [];
-
       meta = {
         description = "Minecraft Server";
         homepage = "https://minecraft.net";
