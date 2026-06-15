@@ -108,7 +108,6 @@ in {
               hermes_xiaomi_api_key = "xiaomi_api_key";
               hermes_fal_key = "fal_key";
               hermes_firecrawl_api_key = "firecrawl_api_key";
-              # hermes_openai_api_key = "openai_api_key"; # TODO: add openai_api_key to hermes.yaml sops secret
             }
           )
           // lib.optionalAttrs (svcEnabled "crush-daily") (
