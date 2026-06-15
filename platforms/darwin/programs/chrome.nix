@@ -1,12 +1,8 @@
 # macOS Chrome/Chromium policy configuration for extension management
 # This configures system-wide Chrome policies via nix-darwin
 {pkgs, ...}: let
-  # YouTube Shorts Blocker extension by Umut Seven
-  # Open source: https://github.com/umutseven92/shorts-blocker
-  ytShortsBlockerId = "ckagfhpboagdopichicnebandlofghbc";
-
-  # Chrome Web Store update URL
-  chromeWebStoreUpdateUrl = "https://clients2.google.com/service/update2/crx";
+  inherit (import ../../common/browser-extensions.nix) ytShortsBlocker;
+  chromeWebStoreUpdateUrl = ytShortsBlocker.updateUrl;
 in {
   # Note: nix-darwin has limited Chrome policy support compared to NixOS
   # For full enterprise policy management on macOS, you typically need:
@@ -25,7 +21,7 @@ in {
         installation_mode = "allowed";
       };
       # Force install YouTube Shorts Blocker
-      "${ytShortsBlockerId}" = {
+      "${ytShortsBlocker.id}" = {
         installation_mode = "force_installed";
         update_url = chromeWebStoreUpdateUrl;
         toolbar_pin = "force_pinned";

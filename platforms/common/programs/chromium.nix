@@ -6,15 +6,7 @@
   lib,
   ...
 }: let
-  # YouTube Shorts Blocker extension by Umut Seven
-  # - Open source: https://github.com/umutseven92/shorts-blocker
-  # - Chrome Web Store: https://chromewebstore.google.com/detail/shorts-blocker/ckagfhpboagdopichicnebandlofghbc
-  # - 10,000+ users, 4.5/5 rating, actively maintained
-  ytShortsBlocker = {
-    id = "ckagfhpboagdopichicnebandlofghbc";
-    # Chrome Web Store update URL
-    updateUrl = "https://clients2.google.com/service/update2/crx";
-  };
+  ytShortsBlocker = (import ../browser-extensions.nix).ytShortsBlocker;
 in {
   # Chromium browser with declarative extension management
   # NOTE: This Home Manager module is only used on Darwin (macOS).
