@@ -310,7 +310,7 @@ in {
 
       # Monitor365 device monitoring agent + server (single-machine deployment)
       monitor365 = {
-        enable = true;
+        enable = false; # TEMPORARILY DISABLED: sqlx compile-time DB error (upstream repo issue)
         # Disable expensive collectors (screenshot, camera, photo, keystroke logging)
         collectors = {
           screenshot = lib.mkDefault false;

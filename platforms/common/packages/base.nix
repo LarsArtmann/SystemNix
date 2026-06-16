@@ -87,9 +87,6 @@
       openssh
       ssh-to-age
 
-      # VPN / Privacy
-      mullvad-vpn # Mullvad VPN client (GUI + CLI)
-
       # Modern CLI productivity tools
       glow # Render markdown on the CLI, with pizzazz
 

@@ -65,10 +65,10 @@ in [
   activitywatchOverlay
   jscpdOverlay
   govalidOverlay
-  (mkPackageOverlay library-policy "library-policy" (mkTidyOverride "sha256-/w3ZoNNr7rJ3znsvRmKFbJU7RhFVKlAmDxEOiP3JWv4="))
+  (mkPackageOverlay library-policy "library-policy" (mkTidyOverride "sha256-v0Ia3pkXJugfXzfP4UUzBBMKWn61LuUjsLq6xZHjog8="))
   (mkPackageOverlay hierarchical-errors "hierarchical-errors" {})
   (mkPackageOverlay golangci-lint-auto-configure "golangci-lint-auto-configure" {})
-  (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-ZnffG1VwOYkHN+g2iXhMkGc5j1Q7BDmuq7gX4Ki+Oaw="))
+  (mkPackageOverlay mr-sync "mr-sync" (mkTidyOverride "sha256-IqE04potoexKr2LVAq643hjZs1Z5HOknY8giWOaxpoQ="))
   (mkPackageOverlay buildflow "buildflow" {})
   (mkPackageOverlay go-auto-upgrade "go-auto-upgrade" {})
   (mkPackageOverlay go-structure-linter "go-structure-linter" {})
