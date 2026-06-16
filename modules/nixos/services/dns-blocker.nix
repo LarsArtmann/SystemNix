@@ -320,6 +320,7 @@ _: {
             };
           in
             harden {
+              MemoryMax = "1G";
               ProtectSystem = "strict";
               CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
               AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];

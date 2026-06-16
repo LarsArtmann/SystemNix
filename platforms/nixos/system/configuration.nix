@@ -103,6 +103,17 @@ in {
         '';
       };
 
+      # Mullvad's talpid_dns periodically resets DNS settings, which can
+      # interfere with unbound. Re-apply LAN allow + custom DNS every 5 min.
+      timers.mullvad-config = {
+        wantedBy = ["timers.target"];
+        timerConfig = {
+          OnBootSec = "1min";
+          OnUnitActiveSec = "5min";
+          Persistent = true;
+        };
+      };
+
       tmpfiles.rules = [
         "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
       ];

@@ -167,6 +167,10 @@ in {
     "toots-a.akamaihd.net"
     "akamaihd.net"
     "region1.analytics.google.com"
+    # SBS On Demand streaming — required for video playback
+    "pubads.g.doubleclick.net"
+    "licensing.bitmovin.com"
+    "smetrics.sbs.com.au"
   ];
 
   extraDomains = [
