@@ -74,46 +74,6 @@ in {
         };
       };
 
-      # Apply Mullvad VPN settings on boot and after daemon restarts.
-      # Ensures LAN traffic is allowed and apps use local unbound (not Mullvad DNS).
-      # Without this, connecting to VPN blocks all local services and bypasses blocklists.
-      services.mullvad-config = {
-        description = "Configure Mullvad VPN LAN sharing and DNS";
-        after = ["mullvad-daemon.service"];
-        requires = ["mullvad-daemon.service"];
-        bindsTo = ["mullvad-daemon.service"];
-        wantedBy = ["multi-user.target"];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        unitConfig = {
-          Restart = "on-failure";
-          StartLimitIntervalSec = 60;
-          StartLimitBurst = 3;
-        };
-        script = ''
-          for i in $(seq 1 20); do
-            if ${pkgs.mullvad-vpn}/bin/mullvad lan set allow 2>/dev/null; then
-              break
-            fi
-            sleep 0.5
-          done
-          ${pkgs.mullvad-vpn}/bin/mullvad dns set custom ${config.networking.local.lanIP} 2>/dev/null || true
-        '';
-      };
-
-      # Mullvad's talpid_dns periodically resets DNS settings, which can
-      # interfere with unbound. Re-apply LAN allow + custom DNS every 5 min.
-      timers.mullvad-config = {
-        wantedBy = ["timers.target"];
-        timerConfig = {
-          OnBootSec = "1min";
-          OnUnitActiveSec = "5min";
-          Persistent = true;
-        };
-      };
-
       tmpfiles.rules = [
         "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
       ];
@@ -256,8 +216,11 @@ in {
       # Dual-WAN with MPTCP and route health monitoring
       dual-wan.enable = true;
 
-      # Mullvad VPN daemon (required by mullvad CLI)
-      mullvad-vpn.enable = true;
+      # Mullvad VPN daemon — DISABLED.
+      # talpid_dns periodically overwrites /etc/resolv.conf even when disconnected,
+      # breaking unbound resolution every ~90s. Re-enable manually only when needed:
+      #   mullvad-vpn.enable = true; mullvad dns set custom 192.168.1.150
+      mullvad-vpn.enable = false;
 
       # Centralized AI model storage (/data/ai/)
       ai-models.enable = true;
