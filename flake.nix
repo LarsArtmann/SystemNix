@@ -571,7 +571,6 @@
               treefmt
               deadnix
               shellcheck
-              just # Task runner
               statix
               gitleaks
               jq
