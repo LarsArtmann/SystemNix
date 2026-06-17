@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }: {
   imports = [../../common/dns-resolver.nix];
@@ -77,6 +78,7 @@
 
   # Enable CUPS to print documents.
   services.printing.enable = true;
+  services.printing.drivers = [pkgs.gutenprint];
 
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
 }
