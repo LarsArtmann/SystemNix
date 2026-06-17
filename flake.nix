@@ -473,6 +473,45 @@
       inherit nix-ssh-config;
       inherit (theme) colorScheme;
     };
+
+    # Single source of truth for all LarsArtmann Go tool packages.
+    # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
+    # via specialArgs (for environment.systemPackages).
+    mkLarsPackages = system: let
+      mkTidy = vendorHash: old: {
+        inherit vendorHash;
+        proxyVendor = true;
+        preBuild = ''export HOME=$TMPDIR; go mod tidy'';
+        passthru =
+          (old.passthru or {})
+          // {
+            overrideModAttrs = _: {preBuild = ''export HOME=$TMPDIR; go mod tidy'';};
+          };
+      };
+      flakePkg = input: (input.packages.${system} or {}).default or null;
+      withOverride = input: f: let
+        p = flakePkg input;
+      in
+        if p == null
+        then null
+        else p.overrideAttrs f;
+    in
+      lib.filterAttrs (_: v: v != null) {
+        art-dupl = withOverride inputs.art-dupl (_: {
+          vendorHash = "sha256-IcR8IPln7ZBB+QJP2MZKFMdr0204pgdH9IA/lIbrpjA=";
+        });
+        branching-flow = flakePkg inputs.branching-flow;
+        buildflow = flakePkg inputs.buildflow;
+        go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
+        go-structure-linter = flakePkg inputs.go-structure-linter;
+        golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
+        hierarchical-errors = flakePkg inputs.hierarchical-errors;
+        library-policy = withOverride inputs.library-policy (mkTidy "sha256-v0Ia3pkXJugfXzfP4UUzBBMKWn61LuUjsLq6xZHjog8=");
+        mr-sync = withOverride inputs.mr-sync (mkTidy "sha256-IqE04potoexKr2LVAq643hjZs1Z5HOknY8giWOaxpoQ=");
+        project-meta = flakePkg inputs.project-meta;
+        projects-management-automation = flakePkg inputs.projects-management-automation;
+        todo-list-ai = flakePkg inputs.todo-list-ai;
+      };
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["aarch64-darwin" "x86_64-linux"];
@@ -502,25 +541,9 @@
         formatter = treefmt-full-flake.formatter.${system};
 
         packages =
-          {
-            inherit
-              (pkgs)
-              aw-watcher-utilization
-              govalid
-              jscpd
-              sqlc
-              todo-list-ai
-              library-policy
-              golangci-lint-auto-configure
-              mr-sync
-              hierarchical-errors
-              buildflow
-              go-auto-upgrade
-              branching-flow
-              art-dupl
-              projects-management-automation
-              project-meta
-              ;
+          (mkLarsPackages system)
+          // {
+            inherit (pkgs) aw-watcher-utilization govalid jscpd sqlc;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
             inherit (pkgs) openaudible dnsblockd monitor365 netwatch emeet-pixyd file-and-image-renamer crush-daily;
@@ -610,6 +633,7 @@
             inherit nixpkgs;
             inherit helium;
             inherit nur;
+            larsPackages = mkLarsPackages "aarch64-darwin";
           };
           modules = [
             {
@@ -670,6 +694,7 @@
             inherit otel-tui;
             inherit nix-amd-npu;
             inherit nix-ssh-config;
+            larsPackages = mkLarsPackages "x86_64-linux";
           };
           modules =
             [

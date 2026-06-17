@@ -9,7 +9,11 @@
 # Unbound settings:
 # - do-ip6 = false (link-local IPv6 causes SERVFAIL with root servers)
 # - DNSSEC hardening, prefetch, qname-minimisation
-{config, lib, ...}: {
+{
+  config,
+  lib,
+  ...
+}: {
   networking.nameservers = ["127.0.0.1"];
 
   services.resolved.enable = false;

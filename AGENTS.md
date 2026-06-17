@@ -13,7 +13,7 @@ SystemNix/
 ├── flake.nix                    # Entry point (flake-parts)
 ├── justfile                     # Task runner
 ├── overlays/                    # Shared + Linux-only overlays
-│   ├── default.nix              # mkPackageOverlay helper
+│   ├── default.nix              # Aggregator (sharedOverlays, linuxOnlyOverlays, disableTests)
 │   ├── shared.nix               # Darwin + NixOS overlays
 │   └── linux.nix                # NixOS-only overlays
 ├── lib/                         # Shared NixOS module helpers (imported via lib/default.nix)
@@ -54,13 +54,19 @@ Two machines:
 6. Import helpers from `import ../../../lib/default.nix lib` — gives `harden`, `hardenUser`, `serviceDefaults`, `onFailure`, `serviceTypes`, etc.
 7. Use `harden {} // serviceDefaults {}` for systemd hardening. User services: `hardenUser {}`
 
-### Custom Overlays
+### LarsArtmann Go Tool Packages
 
 All private LarsArtmann repos use `git+ssh://` URLs. No `path:` inputs.
 
-Use `mkPackageOverlay` (from `overlays/default.nix`) for ALL flake-input overlays. It's platform-safe — returns empty overlay `{}` on unsupported systems. See the file for signature.
+LarsArtmann Go tool packages (art-dupl, buildflow, etc.) are defined in `mkLarsPackages` in `flake.nix`'s top-level `let` binding — NOT as overlays. This function is the single source of truth:
 
-Overlay makes packages available as `pkgs.<name>` but does **not** install them. Also add to `home.packages` in `platforms/common/packages/base.nix` for PATH access.
+1. `perSystem.packages` calls `mkLarsPackages system` so `nix build .#art-dupl` works
+2. `specialArgs` passes `larsPackages = mkLarsPackages "<system>"` to NixOS/Darwin configs
+3. `base.nix` receives `larsPackages` and adds them to `environment.systemPackages`
+
+Packages needing local overrides (vendorHash, `go mod tidy`) are handled inside `mkLarsPackages` via `overrideAttrs`. Platform safety: `flakePkg` returns `null` for unsupported systems, `filterAttrs` removes them.
+
+The remaining overlays in `overlays/shared.nix` are REAL overlays (callPackage for local .nix files, activitywatch override, d2 Darwin stub). Only `linux.nix` uses flake-input `.overlays.default` — those are legitimate overlays from upstream flakes.
 
 ### `_local_deps` Pattern (Private Go Repos)
 
@@ -193,7 +199,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | otel-tui Darwin | Never add — 40+ min builds + disk exhaustion |
 | Darwin disk | 229 GB, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
 | `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
-| `mkPackageOverlay` platform safety | Returns empty overlay on unsupported systems — Linux-only packages in `shared.nix` won't break Darwin eval |
+| `mkLarsPackages` platform safety | Returns `null` for unavailable packages on a given system, `filterAttrs` removes them — Darwin eval won't break if a Go tool lacks `aarch64-darwin` |
 | `mkPreparedSource` auto-features | Auto-strips local `=> /home/...` replaces, auto-normalizes pseudo-versions, auto-generates `replace` directives |
 | `serviceModules` auto-discovery | flake.nix auto-discovers all `.nix` files in `modules/nixos/services/`. Helper files must use `_` prefix |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
@@ -216,7 +222,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `harden` vs `hardenUser` | User services (systemd --user) must use `hardenUser`, not `harden`. All desktop notify services should pass `hardenFn = hardenUser` |
 | `lib/default.nix` import | Always import from `lib/default.nix`, never directly from `lib/systemd.nix`, `lib/systemd/service-defaults.nix`, or `lib/rocm.nix` |
 | Port centralization | All ports must be in `lib/ports.nix`. If a service exposes a port option, its default should reference `ports.*` — never hardcode |
-| `art-duplOverlay` removed | Now uses `mkPackageOverlay` — templ vendor surgery no longer needed (nixpkgs 26.11 resolves modules via GOMODCACHE) |
+| `art-dupl` vendorHash | Local override in `mkLarsPackages` (flake.nix) — upstream `fork` branch has stale `vendorHash`. When it breaks: set `vendorHash = ""`, build, paste `got:` hash |
 | `rocm` via lib | ROCm helper accessed via `libHelpers.rocm {inherit pkgs;}` — not direct file import |
 | `colorSchemeName` removed | Dead code — use `colorScheme.slug` instead |
 | Boot GPU params | `amdgpuGttSize` / `ttmPagesLimit` in boot.nix are shared between `kernelParams` and `extraModprobeConfig` |

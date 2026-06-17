@@ -17,7 +17,7 @@
 
     config = lib.mkIf cfg.enable {
       services.projects-management-automation = {
-        package = pkgs.projects-management-automation;
+        package = inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default;
         user = primaryUser;
         group = "users";
         home = "/home/${primaryUser}";

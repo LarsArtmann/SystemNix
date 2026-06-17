@@ -1,22 +1,7 @@
 inputs @ {nur, ...}: let
-  mkPackageOverlay = input: name: overrides: _final: prev: let
-    systemPkgs = input.packages.${prev.stdenv.system} or {};
-    pkg = systemPkgs.default or null;
-  in
-    if pkg == null
-    then {}
-    else {
-      ${name} =
-        if overrides == {}
-        then pkg
-        else pkg.overrideAttrs overrides;
-    };
-
-  shared = import ./shared.nix (inputs // {inherit mkPackageOverlay;});
-  linux = import ./linux.nix (inputs // {inherit mkPackageOverlay;});
+  shared = import ./shared.nix;
+  linux = import ./linux.nix inputs;
 in {
-  inherit mkPackageOverlay;
-
   disableTests = _final: prev: {
     valkey = prev.valkey.overrideAttrs (_old: {doCheck = false;});
     aiocache = prev.python3Packages.aiocache.overrideAttrs (_old: {doCheck = false;});

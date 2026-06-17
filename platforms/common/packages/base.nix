@@ -3,6 +3,7 @@
   lib,
   helium,
   otel-tui ? null,
+  larsPackages,
   ...
 }: let
   inherit (pkgs.stdenv.hostPlatform) system;
@@ -186,28 +187,6 @@
       nh
       statix # Lints and suggestions for Nix code
 
-      # AI-powered code analysis
-      todo-list-ai # Extract TODOs from codebases using AI
-
-      # Go linting automation
-      golangci-lint-auto-configure # Auto-configure golangci-lint for Go projects
-
-      # Library governance
-      library-policy
-
-      # Repo management
-      mr-sync # Keep ~/.mrconfig in sync with GitHub repos
-
-      # Go tooling ecosystem (LarsArtmann)
-      art-dupl # AST-based code deduplication
-      branching-flow # Error context preservation analyzer
-      buildflow # Zero-configuration build automation
-      go-auto-upgrade # Automated Go version upgrades
-      go-structure-linter # Go project structure validator
-      hierarchical-errors # Error handling pattern analyzer
-      projects-management-automation # CLI for managing multiple projects
-      project-meta # Per-project metadata management CLI
-
       # Go testing
       ginkgo # BDD testing framework for Go
       govalid # Type-safe struct validation code generator
@@ -274,5 +253,5 @@
   aiPackages = [pkgs.nur.repos.charmbracelet.crush];
 in {
   # System packages list
-  environment.systemPackages = essentialPackages ++ developmentPackages ++ guiPackages ++ aiPackages ++ linuxUtilities;
+  environment.systemPackages = essentialPackages ++ developmentPackages ++ (builtins.attrValues larsPackages) ++ guiPackages ++ aiPackages ++ linuxUtilities;
 }
