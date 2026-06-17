@@ -1555,6 +1555,36 @@
         "url": "ssh://git@github.com/LarsArtmann/library-policy"
       }
     },
+    "md-go-validator": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1781713842,
+        "narHash": "sha256-YDs8VxX4lTqEFbkaqR4vHqyi7dGBt1FVwX1Kv+cYdos=",
+        "ref": "master",
+        "rev": "e835a746501db6274bc4b3c66e0d2c02b3720c26",
+        "revCount": 207,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/md-go-validator"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/md-go-validator"
+      }
+    },
     "monitor365": {
       "inputs": {
         "flake-parts": "flake-parts_9",
@@ -2278,6 +2308,7 @@
         "homebrew-bundle": "homebrew-bundle",
         "homebrew-cask": "homebrew-cask",
         "library-policy": "library-policy",
+        "md-go-validator": "md-go-validator",
         "monitor365": "monitor365",
         "mr-sync": "mr-sync",
         "niri": "niri",

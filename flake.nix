@@ -404,6 +404,16 @@
         go-error-family.follows = "go-error-family";
       };
     };
+    # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
+    md-go-validator = {
+      url = "git+ssh://git@github.com/LarsArtmann/md-go-validator?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "systems";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+      };
+    };
   };
 
   outputs = inputs @ {
@@ -507,6 +517,7 @@
         golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
         hierarchical-errors = flakePkg inputs.hierarchical-errors;
         library-policy = withOverride inputs.library-policy (mkTidy "sha256-v0Ia3pkXJugfXzfP4UUzBBMKWn61LuUjsLq6xZHjog8=");
+        md-go-validator = flakePkg inputs.md-go-validator;
         mr-sync = withOverride inputs.mr-sync (mkTidy "sha256-IqE04potoexKr2LVAq643hjZs1Z5HOknY8giWOaxpoQ=");
         project-meta = flakePkg inputs.project-meta;
         projects-management-automation = flakePkg inputs.projects-management-automation;
