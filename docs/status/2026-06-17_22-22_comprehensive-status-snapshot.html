@@ -1,1250 +1,1458 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SystemNix — Status Snapshot · 2026-06-17</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0c0e14;
-    --bg-elevated: #141821;
-    --bg-card: #1a1f2b;
-    --bg-card-hover: #20263419;
-    --border: #252b38;
-    --border-bright: #323a4a;
-    --text: #dfe3ec;
-    --text-dim: #8b93a7;
-    --text-faint: #5c6378;
-    --green: #4ade80;
-    --green-bg: #4ade8015;
-    --amber: #fbbf24;
-    --amber-bg: #fbbf2415;
-    --red: #f87171;
-    --red-bg: #f8717115;
-    --blue: #60a5fa;
-    --blue-bg: #60a5fa15;
-    --purple: #c084fc;
-    --purple-bg: #c084fc15;
-    --cyan: #22d3ee;
-    --cyan-bg: #22d3ee15;
-    --slate: #94a3b8;
-    --slate-bg: #94a3b815;
-  }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix — Status Snapshot · 2026-06-17</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0c0e14;
+        --bg-elevated: #141821;
+        --bg-card: #1a1f2b;
+        --bg-card-hover: #20263419;
+        --border: #252b38;
+        --border-bright: #323a4a;
+        --text: #dfe3ec;
+        --text-dim: #8b93a7;
+        --text-faint: #5c6378;
+        --green: #4ade80;
+        --green-bg: #4ade8015;
+        --amber: #fbbf24;
+        --amber-bg: #fbbf2415;
+        --red: #f87171;
+        --red-bg: #f8717115;
+        --blue: #60a5fa;
+        --blue-bg: #60a5fa15;
+        --purple: #c084fc;
+        --purple-bg: #c084fc15;
+        --cyan: #22d3ee;
+        --cyan-bg: #22d3ee15;
+        --slate: #94a3b8;
+        --slate-bg: #94a3b815;
+      }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-  html { scroll-behavior: smooth; }
+      html {
+        scroll-behavior: smooth;
+      }
 
-  body {
-    font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    line-height: 1.55;
-    font-size: 15px;
-    -webkit-font-smoothing: antialiased;
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -10%, rgba(96,165,250,0.06), transparent),
-      radial-gradient(ellipse 60% 40% at 90% 100%, rgba(34,211,238,0.04), transparent);
-    background-attachment: fixed;
-  }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.55;
+        font-size: 15px;
+        -webkit-font-smoothing: antialiased;
+        background-image:
+          radial-gradient(ellipse 80% 50% at 50% -10%, rgba(96, 165, 250, 0.06), transparent),
+          radial-gradient(ellipse 60% 40% at 90% 100%, rgba(34, 211, 238, 0.04), transparent);
+        background-attachment: fixed;
+      }
 
-  .mono { font-family: 'JetBrains Mono', monospace; }
-  .display { font-family: 'Space Grotesk', sans-serif; }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      .display {
+        font-family: "Space Grotesk", sans-serif;
+      }
 
-  .container { max-width: 1280px; margin: 0 auto; padding: 0 24px; }
+      .container {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 24px;
+      }
 
-  /* ── HERO ────────────────────────────────────────────── */
-  header.hero {
-    border-bottom: 1px solid var(--border);
-    padding: 56px 0 48px;
-    background:
-      linear-gradient(180deg, rgba(34,211,238,0.03) 0%, transparent 100%);
-  }
-  .hero-grid {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 40px;
-    align-items: end;
-  }
-  .eyebrow {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--cyan);
-    margin-bottom: 14px;
-  }
-  h1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: clamp(2.2rem, 5vw, 3.4rem);
-    font-weight: 700;
-    line-height: 1.05;
-    letter-spacing: -0.02em;
-    margin-bottom: 16px;
-  }
-  h1 .accent { color: var(--cyan); }
-  .hero-sub {
-    color: var(--text-dim);
-    font-size: 17px;
-    max-width: 580px;
-    line-height: 1.6;
-  }
-  .hero-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    text-align: right;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    color: var(--text-faint);
-  }
-  .hero-meta strong { color: var(--text); font-weight: 600; }
+      /* ── HERO ────────────────────────────────────────────── */
+      header.hero {
+        border-bottom: 1px solid var(--border);
+        padding: 56px 0 48px;
+        background: linear-gradient(180deg, rgba(34, 211, 238, 0.03) 0%, transparent 100%);
+      }
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 40px;
+        align-items: end;
+      }
+      .eyebrow {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--cyan);
+        margin-bottom: 14px;
+      }
+      h1 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+        font-weight: 700;
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        margin-bottom: 16px;
+      }
+      h1 .accent {
+        color: var(--cyan);
+      }
+      .hero-sub {
+        color: var(--text-dim);
+        font-size: 17px;
+        max-width: 580px;
+        line-height: 1.6;
+      }
+      .hero-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        text-align: right;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        color: var(--text-faint);
+      }
+      .hero-meta strong {
+        color: var(--text);
+        font-weight: 600;
+      }
 
-  /* ── STAT CARDS ──────────────────────────────────────── */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin: -24px 0 64px;
-  }
-  .stat {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 22px 24px;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .stat:hover { border-color: var(--border-bright); }
-  .stat::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: var(--accent, var(--blue));
-  }
-  .stat-value {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2.6rem;
-    font-weight: 700;
-    line-height: 1;
-    margin-bottom: 6px;
-    color: var(--accent, var(--text));
-  }
-  .stat-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-  }
-  .stat-green { --accent: var(--green); }
-  .stat-amber { --accent: var(--amber); }
-  .stat-red   { --accent: var(--red); }
-  .stat-blue  { --accent: var(--blue); }
-  .stat-cyan  { --accent: var(--cyan); }
+      /* ── STAT CARDS ──────────────────────────────────────── */
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin: -24px 0 64px;
+      }
+      .stat {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 22px 24px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.2s;
+      }
+      .stat:hover {
+        border-color: var(--border-bright);
+      }
+      .stat::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--accent, var(--blue));
+      }
+      .stat-value {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 2.6rem;
+        font-weight: 700;
+        line-height: 1;
+        margin-bottom: 6px;
+        color: var(--accent, var(--text));
+      }
+      .stat-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+      .stat-green {
+        --accent: var(--green);
+      }
+      .stat-amber {
+        --accent: var(--amber);
+      }
+      .stat-red {
+        --accent: var(--red);
+      }
+      .stat-blue {
+        --accent: var(--blue);
+      }
+      .stat-cyan {
+        --accent: var(--cyan);
+      }
 
-  /* ── SECTION ─────────────────────────────────────────── */
-  section { margin-bottom: 72px; scroll-margin-top: 24px; }
-  .section-header {
-    display: flex;
-    align-items: baseline;
-    gap: 14px;
-    margin-bottom: 28px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 16px;
-  }
-  .section-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 4px;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    flex-shrink: 0;
-  }
-  .tag-green { background: var(--green-bg); color: var(--green); }
-  .tag-amber { background: var(--amber-bg); color: var(--amber); }
-  .tag-slate { background: var(--slate-bg); color: var(--slate); }
-  .tag-red   { background: var(--red-bg); color: var(--red); }
-  .tag-purple { background: var(--purple-bg); color: var(--purple); }
-  .tag-cyan  { background: var(--cyan-bg); color: var(--cyan); }
-  h2 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-  }
+      /* ── SECTION ─────────────────────────────────────────── */
+      section {
+        margin-bottom: 72px;
+        scroll-margin-top: 24px;
+      }
+      .section-header {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        margin-bottom: 28px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 16px;
+      }
+      .section-tag {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 4px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        flex-shrink: 0;
+      }
+      .tag-green {
+        background: var(--green-bg);
+        color: var(--green);
+      }
+      .tag-amber {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+      .tag-slate {
+        background: var(--slate-bg);
+        color: var(--slate);
+      }
+      .tag-red {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .tag-purple {
+        background: var(--purple-bg);
+        color: var(--purple);
+      }
+      .tag-cyan {
+        background: var(--cyan-bg);
+        color: var(--cyan);
+      }
+      h2 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
 
-  /* ── CARD GRID ───────────────────────────────────────── */
-  .card-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 16px;
-  }
-  .card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 20px;
-    transition: transform 0.15s, border-color 0.2s, background 0.2s;
-  }
-  .card:hover {
-    border-color: var(--border-bright);
-    background: #1d2330;
-  }
-  .card-solution { border-left: 3px solid var(--green); }
-  .card-warning  { border-left: 3px solid var(--amber); }
-  .card-problem  { border-left: 3px solid var(--red); }
-  .card-neutral  { border-left: 3px solid var(--slate); }
-  .card-title {
-    font-weight: 600;
-    font-size: 15px;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-body {
-    color: var(--text-dim);
-    font-size: 13.5px;
-    line-height: 1.6;
-  }
-  .card-body code {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    background: #0f1219;
-    padding: 1px 5px;
-    border-radius: 3px;
-    color: var(--cyan);
-  }
-  .card-ref {
-    margin-top: 10px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    color: var(--text-faint);
-  }
+      /* ── CARD GRID ───────────────────────────────────────── */
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+        gap: 16px;
+      }
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+        transition:
+          transform 0.15s,
+          border-color 0.2s,
+          background 0.2s;
+      }
+      .card:hover {
+        border-color: var(--border-bright);
+        background: #1d2330;
+      }
+      .card-solution {
+        border-left: 3px solid var(--green);
+      }
+      .card-warning {
+        border-left: 3px solid var(--amber);
+      }
+      .card-problem {
+        border-left: 3px solid var(--red);
+      }
+      .card-neutral {
+        border-left: 3px solid var(--slate);
+      }
+      .card-title {
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .card-body {
+        color: var(--text-dim);
+        font-size: 13.5px;
+        line-height: 1.6;
+      }
+      .card-body code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        background: #0f1219;
+        padding: 1px 5px;
+        border-radius: 3px;
+        color: var(--cyan);
+      }
+      .card-ref {
+        margin-top: 10px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: var(--text-faint);
+      }
 
-  /* ── TASK TABLE ──────────────────────────────────────── */
-  .task-table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--bg-elevated);
-  }
-  table.task-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13.5px;
-  }
-  .task-table th {
-    text-align: left;
-    padding: 14px 18px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    border-bottom: 1px solid var(--border);
-    background: #11151d;
-    position: sticky;
-    top: 0;
-  }
-  .task-table td {
-    padding: 12px 18px;
-    border-bottom: 1px solid #1e2330;
-    vertical-align: top;
-  }
-  .task-table tr:last-child td { border-bottom: none; }
-  .task-table tr:hover td { background: #181d28; }
-  .task-num {
-    font-family: 'JetBrains Mono', monospace;
-    font-weight: 700;
-    color: var(--text-faint);
-    width: 36px;
-  }
-  .task-impact {
-    display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 4px;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-  .impact-critical { background: var(--red-bg); color: var(--red); }
-  .impact-high     { background: var(--amber-bg); color: var(--amber); }
-  .impact-medium   { background: var(--blue-bg); color: var(--blue); }
-  .impact-low      { background: var(--slate-bg); color: var(--slate); }
-  .task-title-cell { font-weight: 600; }
-  .task-why { color: var(--text-dim); font-size: 12.5px; margin-top: 3px; }
+      /* ── TASK TABLE ──────────────────────────────────────── */
+      .task-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--bg-elevated);
+      }
+      table.task-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+      }
+      .task-table th {
+        text-align: left;
+        padding: 14px 18px;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-dim);
+        border-bottom: 1px solid var(--border);
+        background: #11151d;
+        position: sticky;
+        top: 0;
+      }
+      .task-table td {
+        padding: 12px 18px;
+        border-bottom: 1px solid #1e2330;
+        vertical-align: top;
+      }
+      .task-table tr:last-child td {
+        border-bottom: none;
+      }
+      .task-table tr:hover td {
+        background: #181d28;
+      }
+      .task-num {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 700;
+        color: var(--text-faint);
+        width: 36px;
+      }
+      .task-impact {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 4px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .impact-critical {
+        background: var(--red-bg);
+        color: var(--red);
+      }
+      .impact-high {
+        background: var(--amber-bg);
+        color: var(--amber);
+      }
+      .impact-medium {
+        background: var(--blue-bg);
+        color: var(--blue);
+      }
+      .impact-low {
+        background: var(--slate-bg);
+        color: var(--slate);
+      }
+      .task-title-cell {
+        font-weight: 600;
+      }
+      .task-why {
+        color: var(--text-dim);
+        font-size: 12.5px;
+        margin-top: 3px;
+      }
 
-  /* ── QUESTION CALLOUT ────────────────────────────────── */
-  .question {
-    background: linear-gradient(135deg, var(--purple-bg), var(--cyan-bg));
-    border: 1px solid var(--border-bright);
-    border-radius: 16px;
-    padding: 36px 40px;
-  }
-  .question .label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--purple);
-    margin-bottom: 14px;
-  }
-  .question h3 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 600;
-    line-height: 1.35;
-    margin-bottom: 14px;
-  }
-  .question p { color: var(--text-dim); font-size: 15px; max-width: 780px; }
+      /* ── QUESTION CALLOUT ────────────────────────────────── */
+      .question {
+        background: linear-gradient(135deg, var(--purple-bg), var(--cyan-bg));
+        border: 1px solid var(--border-bright);
+        border-radius: 16px;
+        padding: 36px 40px;
+      }
+      .question .label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--purple);
+        margin-bottom: 14px;
+      }
+      .question h3 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+        line-height: 1.35;
+        margin-bottom: 14px;
+      }
+      .question p {
+        color: var(--text-dim);
+        font-size: 15px;
+        max-width: 780px;
+      }
 
-  /* ── TOC / FOOTER ────────────────────────────────────── */
-  .toc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-top: 18px;
-  }
-  .toc a {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--text-faint);
-    text-decoration: none;
-    padding: 4px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    transition: all 0.15s;
-  }
-  .toc a:hover { color: var(--cyan); border-color: var(--cyan); }
+      /* ── TOC / FOOTER ────────────────────────────────────── */
+      .toc {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .toc a {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text-faint);
+        text-decoration: none;
+        padding: 4px 10px;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        transition: all 0.15s;
+      }
+      .toc a:hover {
+        color: var(--cyan);
+        border-color: var(--cyan);
+      }
 
-  footer {
-    border-top: 1px solid var(--border);
-    padding: 40px 0;
-    text-align: center;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    color: var(--text-faint);
-  }
-  footer .heartbeat {
-    display: inline-block;
-    width: 8px; height: 8px;
-    background: var(--green);
-    border-radius: 50%;
-    margin-right: 8px;
-    vertical-align: middle;
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.8); }
-  }
+      footer {
+        border-top: 1px solid var(--border);
+        padding: 40px 0;
+        text-align: center;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 12px;
+        color: var(--text-faint);
+      }
+      footer .heartbeat {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--green);
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.4;
+          transform: scale(0.8);
+        }
+      }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { animation: none !important; transition: none !important; }
-    html { scroll-behavior: auto; }
-  }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          animation: none !important;
+          transition: none !important;
+        }
+        html {
+          scroll-behavior: auto;
+        }
+      }
 
-  @media (max-width: 768px) {
-    .hero-grid { grid-template-columns: 1fr; }
-    .hero-meta { text-align: left; }
-    .stats { grid-template-columns: repeat(2, 1fr); }
-    .card-grid { grid-template-columns: 1fr; }
-  }
-</style>
-</head>
-<body>
+      @media (max-width: 768px) {
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+        .hero-meta {
+          text-align: left;
+        }
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- ═══════════════════════════ HERO ═══════════════════════════ -->
+    <header class="hero">
+      <div class="container">
+        <div class="hero-grid">
+          <div>
+            <div class="eyebrow">▎ Point-in-Time Snapshot · Nix Infrastructure</div>
+            <h1>SystemNix <span class="accent">Status</span><br />Snapshot</h1>
+            <p class="hero-sub">
+              A brutally honest audit of a cross-platform Nix configuration managing two machines —
+              a disk-constrained macOS laptop and a Ryzen AI Max+ NixOS desktop running 30+
+              services. What works, what limps, what's broken, and what comes next.
+            </p>
+            <nav class="toc">
+              <a href="#done">a) Fully Done</a>
+              <a href="#partial">b) Partially Done</a>
+              <a href="#not-started">c) Not Started</a>
+              <a href="#fucked">d) Fucked Up</a>
+              <a href="#improve">e) Improvements</a>
+              <a href="#next">f) Top 25 Next</a>
+              <a href="#question">g) Top Question</a>
+            </nav>
+          </div>
+          <div class="hero-meta">
+            <div><strong>2026-06-17</strong> 22:22 CET</div>
+            <div>Branch: <strong>master</strong></div>
+            <div>Commit: <strong>4cffb612</strong></div>
+            <div>16,823 lines of Nix</div>
+            <div>83 flake inputs</div>
+            <div>40 service modules</div>
+            <div>3 machines configured</div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-<!-- ═══════════════════════════ HERO ═══════════════════════════ -->
-<header class="hero">
-  <div class="container">
-    <div class="hero-grid">
-      <div>
-        <div class="eyebrow">▎ Point-in-Time Snapshot · Nix Infrastructure</div>
-        <h1>SystemNix <span class="accent">Status</span><br>Snapshot</h1>
-        <p class="hero-sub">
-          A brutally honest audit of a cross-platform Nix configuration managing two machines —
-          a disk-constrained macOS laptop and a Ryzen AI Max+ NixOS desktop running 30+ services.
-          What works, what limps, what's broken, and what comes next.
+    <div class="container">
+      <!-- ═══════════════════════════ STAT CARDS ═══════════════════════════ -->
+      <div class="stats">
+        <div class="stat stat-green">
+          <div class="stat-value">28</div>
+          <div class="stat-label">Services Running</div>
+        </div>
+        <div class="stat stat-green">
+          <div class="stat-value">38</div>
+          <div class="stat-label">TODOs Open</div>
+        </div>
+        <div class="stat stat-amber">
+          <div class="stat-value">12</div>
+          <div class="stat-label">Partially Done</div>
+        </div>
+        <div class="stat stat-red">
+          <div class="stat-value">8</div>
+          <div class="stat-label">Fucked Up</div>
+        </div>
+        <div class="stat stat-cyan">
+          <div class="stat-value">197</div>
+          <div class="stat-label">Status Reports Filed</div>
+        </div>
+        <div class="stat stat-blue">
+          <div class="stat-value">2</div>
+          <div class="stat-label">Machines Online</div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════ A) FULLY DONE ═══════════════════════════ -->
+      <section id="done">
+        <div class="section-header">
+          <span class="section-tag tag-green">a · Shipped</span>
+          <h2>Fully Done</h2>
+        </div>
+        <p style="color: var(--text-dim); margin-bottom: 24px; max-width: 760px">
+          Working, verified, deployed features. These are the load-bearing pillars of the system.
         </p>
-        <nav class="toc">
-          <a href="#done">a) Fully Done</a>
-          <a href="#partial">b) Partially Done</a>
-          <a href="#not-started">c) Not Started</a>
-          <a href="#fucked">d) Fucked Up</a>
-          <a href="#improve">e) Improvements</a>
-          <a href="#next">f) Top 25 Next</a>
-          <a href="#question">g) Top Question</a>
-        </nav>
-      </div>
-      <div class="hero-meta">
-        <div><strong>2026-06-17</strong> 22:22 CET</div>
-        <div>Branch: <strong>master</strong></div>
-        <div>Commit: <strong>4cffb612</strong></div>
-        <div>16,823 lines of Nix</div>
-        <div>83 flake inputs</div>
-        <div>40 service modules</div>
-        <div>3 machines configured</div>
-      </div>
+        <div class="card-grid">
+          <div class="card card-solution">
+            <div class="card-title">flake-parts Modular Architecture</div>
+            <div class="card-body">
+              83 flake inputs, 40 auto-discovered service modules, 3 machine configurations
+              (<code>evo-x2</code>, <code>Lars-MacBook-Air</code>, <code>rpi3-dns</code>). Single
+              source of truth via <code>mkLarsPackages</code>.
+            </div>
+            <div class="card-ref">flake.nix:480 · modules/nixos/services/*.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">md-go-validator — Just Added</div>
+            <div class="card-body">
+              Added this session. Validates code blocks in Markdown/MDX docs. Wired into both NixOS
+              and macOS via <code>mkLarsPackages</code> → <code>base.nix</code>. Build verified,
+              linters clean.
+            </div>
+            <div class="card-ref">flake.nix:520</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">SigNoz Observability Stack</div>
+            <div class="card-body">
+              Full SigNoz + ClickHouse + OTel Collector built from source (Go 1.25). Custom
+              <code>signoz.target</code> avoids blocking graphical session. JWT secret
+              auto-generated and persisted.
+            </div>
+            <div class="card-ref">modules/nixos/services/signoz.nix (716L)</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Pocket ID + OAuth2 Proxy Auth Chain</div>
+            <div class="card-body">
+              Declarative OIDC provider provisioning — admin user, clients, avatars created
+              automatically.
+              <code>protectedVHost</code> helper applies forward-auth to any service behind Caddy.
+              Only manual step: register passkey.
+            </div>
+            <div class="card-ref">modules/nixos/services/pocket-id.nix · caddy.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">DNS Blocker (Unbound + Blocklist)</div>
+            <div class="card-body">
+              Replaced Technitium. Unbound with <code>do-ip6=false</code> (no global IPv6 on
+              evo-x2). Block-page CA trusted via <code>security.pki.certificates</code>. Stats API
+              on port 9090.
+            </div>
+            <div class="card-ref">modules/nixos/services/dns-blocker.nix · lib/ports.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">BTRFS Snapshot System</div>
+            <div class="card-body">
+              Daily snapshots of root (<code>@</code> subvolume) via btrbk with auto-pruning (14d +
+              4w). Pre-deploy snapshot automation. <code>btrfs-verify-snapshots</code> timer alerts
+              if &gt;3 days stale.
+            </div>
+            <div class="card-ref">platforms/nixos/system/snapshots.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Forgejo + Declarative Repo Mirroring</div>
+            <div class="card-body">
+              Self-hosted Forgejo with auto-mirroring of LarsArtmann repos. Federation-ready. Admin
+              setup uses non-duplicated password generation.
+            </div>
+            <div class="card-ref">
+              modules/nixos/services/forgejo.nix (582L) · forgejo-repos.nix
+            </div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">AI Inference Stack</div>
+            <div class="card-body">
+              Ollama with ROCm GPU support, llama.cpp with HIP, gpu-python.
+              <code>OLLAMA_GPU_OVERHEAD=8GiB</code> reserves compositor headroom. Centralized model
+              storage at <code>/data/ai/</code>.
+            </div>
+            <div class="card-ref">modules/nixos/services/ai-stack.nix · lib/rocm.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Sops + Age Secrets Management</div>
+            <div class="card-body">
+              SSH host keys → age identity. <code>svcEnabled</code> helper for cross-module safety
+              on rpi3. Template-based secrets for services like crush-daily. Guarded with
+              <code>lib.optionalAttrs</code> to prevent atomic failures.
+            </div>
+            <div class="card-ref">modules/nixos/services/sops.nix · .sops.yaml</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Centralized Port & Image Registries</div>
+            <div class="card-body">
+              Collision-protected port registry in <code>lib/ports.nix</code>. All container images
+              pinned via <code>lib/images.nix</code> with <code>mkRef</code>. No hardcoded ports or
+              <code>image@sha256</code> in service modules.
+            </div>
+            <div class="card-ref">lib/ports.nix · lib/images.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Systemd Hardening Library</div>
+            <div class="card-body">
+              <code>harden {}</code> and <code>hardenUser {}</code> for service/user security.
+              <code>serviceDefaults {}</code> with <code>startLimitBurst</code>,
+              <code>onFailure</code> notification. <code>mkDockerServiceFactory</code> for Docker
+              Compose services.
+            </div>
+            <div class="card-ref">lib/systemd.nix · lib/systemd/service-defaults.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Dual-WAN + MPTCP</div>
+            <div class="card-body">
+              Route health monitoring with automatic failover.
+              <code>mptcp-endpoint-manager.sh</code> and
+              <code>route-health-monitor.sh</code> scripts.
+            </div>
+            <div class="card-ref">modules/nixos/services/dual-wan.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Homepage Dashboard + Gatus Health</div>
+            <div class="card-body">
+              All tiles centralized in <code>homepage.nix</code> with <code>when</code> guards.
+              Gatus endpoints with <code>mkHttpCheck</code>. Categories: Infrastructure, Media,
+              Development, AI, Monitoring, Productivity.
+            </div>
+            <div class="card-ref">modules/nixos/services/homepage.nix · gatus-config.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Cross-Platform Home Manager</div>
+            <div class="card-body">
+              Shared <code>home-base.nix</code> imported by both platforms. Programs: fish, git,
+              yazi, zellij, tmux, fzf, starship, keepassxc, zed, taskwarrior. Platform differences
+              handled via <code>stdenv.isLinux/isDarwin</code>.
+            </div>
+            <div class="card-ref">platforms/common/home-base.nix</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Monitor365 Device Monitoring</div>
+            <div class="card-body">
+              Agent + server single-machine deployment. Expensive collectors disabled. Cloud sync to
+              localhost. SQLX_OFFLINE fix applied this session cycle.
+            </div>
+            <div class="card-ref">modules/nixos/services/monitor365.nix (716L)</div>
+          </div>
+
+          <div class="card card-solution">
+            <div class="card-title">Service Fleet (14 more)</div>
+            <div class="card-body">
+              Immich (photos), Twenty (CRM), DiscordSync (continuous backup), Hermes (AI agent
+              gateway), Crush Daily (dev insights), Overview (project dashboard), OpenSEO (SEO
+              suite), File-and-image-renamer, Projects-management-automation, EMEET PIXY webcam
+              daemon, Disk/NVMe monitors, Taskchampion, Steam, Dozzle.
+            </div>
+            <div class="card-ref">platforms/nixos/system/configuration.nix</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ B) PARTIALLY DONE ═══════════════════════════ -->
+      <section id="partial">
+        <div class="section-header">
+          <span class="section-tag tag-amber">b · Limping</span>
+          <h2>Partially Done</h2>
+        </div>
+        <p style="color: var(--text-dim); margin-bottom: 24px; max-width: 760px">
+          Functional but with known gaps, unverified states, or workarounds in place.
+        </p>
+        <div class="card-grid">
+          <div class="card card-warning">
+            <div class="card-title">Twenty CRM — Intermittent 502s</div>
+            <div class="card-body">
+              Caddy logs show <code>connection refused</code>/<code>connection reset</code> on port
+              3200. Likely container OOM or PG connection exhaustion. Not investigated yet.
+            </div>
+            <div class="card-ref">TODO_LIST.md:17</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">Gatus Health Checks — 6 Services DOWN</div>
+            <div class="card-body">
+              SigNoz, Immich, Crush Daily, Ollama, Monitor365 may have wrong check URLs. Needs
+              endpoint URL audit against actual service configurations.
+            </div>
+            <div class="card-ref">TODO_LIST.md:18</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">Darwin Home Manager Parity</div>
+            <div class="card-body">
+              macOS HM has minimal config (7 lines) — no terminal, editor, or theme parity with
+              NixOS. Blocked by 256GB SSD (90%+ full). Can't add heavy packages.
+            </div>
+            <div class="card-ref">platforms/darwin/home.nix · TODO_LIST.md:86</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">Pocket ID Email — SMTP Wired, Untested</div>
+            <div class="card-body">
+              Fully configurable SMTP (<code>cfg.smtp.*</code>) and sops secret added. Login
+              notification / email verification never tested in production.
+            </div>
+            <div class="card-ref">TODO_LIST.md:12</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">BTRFS /data — Not Snapshotted</div>
+            <div class="card-body">
+              <code>/data</code> is BTRFS toplevel (subvolid=5), mounted without
+              <code>subvol=</code>. Docker, Immich, and AI data have no snapshot protection.
+              Migration script exists: <code>just snapshot-migrate-data</code>.
+            </div>
+            <div class="card-ref">TODO_LIST.md:28</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">Boot Performance — Fix Applied, Unverified</div>
+            <div class="card-body">
+              NVMe APST fix + Caddy sops ordering fix deployed. Target: ~35s boot (was 6m17s).
+              Reboot required to verify.
+            </div>
+            <div class="card-ref">TODO_LIST.md:11</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">ActivityWatch — Wayland Gaps</div>
+            <div class="card-body">
+              Wayland watcher needs <code>graphical-session.target</code> dependency. No HM option
+              for theme (workaround via curl oneshot). <code>aw-watcher-utilization</code> needs
+              custom overlay (poetry-core migration).
+            </div>
+            <div class="card-ref">TODO_LIST.md:41,51,52</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">library-policy & mr-sync — Workaround Builds</div>
+            <div class="card-body">
+              Both require <code>mkTidy</code> override (go mod tidy + proxyVendor +
+              overrideModAttrs) because upstream <code>go.sum</code> is stale. Fix: commit correct
+              go.sum upstream.
+            </div>
+            <div class="card-ref">flake.nix:509,510 · TODO_LIST.md:59,60</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">Swap Usage Investigation</div>
+            <div class="card-body">
+              8 GiB swap used on 128 GiB RAM. Stale LSP processes mitigated by
+              <code>stale-lsp-cleanup</code> timer, but root cause unclear.
+            </div>
+            <div class="card-ref">TODO_LIST.md:29</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">FEATURES.md — Nearly Empty</div>
+            <div class="card-body">
+              Feature inventory file exists but has almost no populated status entries. Needs a full
+              features-audit pass against actual code.
+            </div>
+            <div class="card-ref">FEATURES.md</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">Monitor365 — Failed State After Deploy</div>
+            <div class="card-body">
+              Needs <code>systemctl --user reset-failed monitor365-server</code> after each deploy.
+              SQLX_OFFLINE fix applied, but operational friction remains.
+            </div>
+            <div class="card-ref">TODO_LIST.md:13</div>
+          </div>
+
+          <div class="card card-warning">
+            <div class="card-title">KeePassXC — Chromium Manifests Missing</div>
+            <div class="card-body">
+              nixpkgs ships Firefox-format native messaging manifests only. Chromium manifest is
+              trivially generated but not yet done.
+            </div>
+            <div class="card-ref">platforms/common/programs/keepassxc.nix · TODO_LIST.md:45</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ C) NOT STARTED ═══════════════════════════ -->
+      <section id="not-started">
+        <div class="section-header">
+          <span class="section-tag tag-slate">c · Backlog</span>
+          <h2>Not Started</h2>
+        </div>
+        <div class="card-grid">
+          <div class="card card-neutral">
+            <div class="card-title">ROADMAP.md</div>
+            <div class="card-body">
+              No long-term direction doc. <code>docs/planning/</code> has 37 files of historical
+              plans that should be consolidated into a single living roadmap.
+            </div>
+            <div class="card-ref">TODO_LIST.md:34</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">CHANGELOG.md</div>
+            <div class="card-body">
+              185+ commits with no changelog. No way to see what changed between sessions without
+              reading git log.
+            </div>
+            <div class="card-ref">TODO_LIST.md:35</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">rpi3-dns DNS Failover Cluster</div>
+            <div class="card-body">
+              Entire failover cluster is planned-only. Hardware not provisioned. rpi3 age key not
+              yet in <code>.sops.yaml</code>.
+            </div>
+            <div class="card-ref">TODO_LIST.md:83 · .sops.yaml</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Auditd Enablement</div>
+            <div class="card-body">
+              Blocked on NixOS 26.05 bug #483085. Cannot enable until upstream fix.
+            </div>
+            <div class="card-ref">TODO_LIST.md:84</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">AppArmor Enablement</div>
+            <div class="card-body">
+              Commented out in <code>security-hardening.nix</code>. Never enabled or tested.
+            </div>
+            <div class="card-ref">TODO_LIST.md:85 · security-hardening.nix</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Monitor365 Agent→Server Auth</div>
+            <div class="card-body">
+              No authentication. Anyone on LAN can POST monitoring data to the server API.
+            </div>
+            <div class="card-ref">TODO_LIST.md:87</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">nixpkgs PRs (4 packages + 3 upstream)</div>
+            <div class="card-body">
+              <code>netwatch</code>, <code>govalid</code>, <code>openaudible</code> — custom
+              packages not in nixpkgs.
+              <code>valkey</code>/<code>aiocache</code>/<code>timm</code>/<code>xformers</code> have
+              disabled tests. <code>aw-watcher-utilization</code> and <code>jscpd</code> need
+              upstream PRs.
+            </div>
+            <div class="card-ref">TODO_LIST.md:42,47,77,78</div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Disabled Service Triage</div>
+            <div class="card-body">
+              <code>voice-agents</code>, <code>minecraft</code>, <code>photomap</code> — all
+              disabled. Decision needed: enable or remove the modules.
+            </div>
+            <div class="card-ref">TODO_LIST.md:88 · configuration.nix:183,266,289</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ D) TOTALLY FUCKED UP ═══════════════════════════ -->
+      <section id="fucked">
+        <div class="section-header">
+          <span class="section-tag tag-red">d · Critical</span>
+          <h2>Totally Fucked Up</h2>
+        </div>
+        <p style="color: var(--text-dim); margin-bottom: 24px; max-width: 760px">
+          Things that are broken, have caused incidents, or represent accumulated technical debt
+          that actively harms the project.
+        </p>
+        <div class="card-grid">
+          <div class="card card-problem">
+            <div class="card-title">DNS Mullvad Crisis (Resolved by Disable)</div>
+            <div class="card-body">
+              Mullvad VPN's <code>talpid_dns</code> overwrote <code>/etc/resolv.conf</code> every
+              ~90s even when disconnected, breaking unbound resolution. Required full DNS crisis
+              investigation across sessions 139. "Fixed" by disabling
+              <code>mullvad-vpn.enable = false</code> entirely — no VPN at all right now.
+            </div>
+            <div class="card-ref">configuration.nix:223 · docs/status/2026-06-15_*</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">197 Status Reports Cluttering docs/</div>
+            <div class="card-body">
+              <code>docs/status/</code> has 197 files. The entire <code>docs/</code> directory has
+              90+ files with redundant planning docs, session summaries, and one-off analyses. Needs
+              aggressive archival. Pre-session-100 reports should move to
+              <code>docs/status/archive/</code>.
+            </div>
+            <div class="card-ref">TODO_LIST.md:33</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">Hermes — 3 Missing Config Items</div>
+            <div class="card-body">
+              No OpenAI API key in sops (config already wired). No SSH deploy key installed. No
+              fallback model set. The service runs but can't actually do its job.
+            </div>
+            <div class="card-ref">TODO_LIST.md:22,23,24</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">OOM Crash Chain History</div>
+            <div class="card-body">
+              Helium (Electron browser) escaped cgroup limits → OOM killed journald → cascade crash.
+              GPU crash forensics impossible because WDT hard reset empties pstore. Jan's
+              llama-server respawns new processes every 1-3 min (~1.2GB each) with no cgroup limits.
+            </div>
+            <div class="card-ref">AGENTS.md — Non-Obvious Gotchas</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">4 nixpkgs Tests Disabled</div>
+            <div class="card-body">
+              <code>valkey</code>, <code>aiocache</code>, <code>timm</code>, <code>xformers</code> —
+              all have <code>doCheck = false</code> in <code>overlays/default.nix</code> due to test
+              failures. Silently masking real issues. No investigation or upstream PRs filed.
+            </div>
+            <div class="card-ref">overlays/default.nix:22-31 · TODO_LIST.md:42</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">3 Monster Modules Need Splitting</div>
+            <div class="card-body">
+              <code>monitor365.nix</code> (716L), <code>signoz.nix</code> (716L),
+              <code>forgejo.nix</code> (582L) — all exceed reasonable module size. Hard to navigate,
+              hard to test, hard to reason about.
+            </div>
+            <div class="card-ref">TODO_LIST.md:89</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">Mullvad VPN — Completely Disabled</div>
+            <div class="card-body">
+              As a consequence of the DNS crisis, the machine has NO VPN protection. This is a
+              privacy and security regression. The real fix (preventing talpid_dns from touching
+              resolv.conf) was never attempted.
+            </div>
+            <div class="card-ref">configuration.nix:219-223</div>
+          </div>
+
+          <div class="card card-problem">
+            <div class="card-title">GPU Udev Rule Near-Miss</div>
+            <div class="card-body">
+              <code>KERNEL=="card*"</code> would have matched DP/HDMI child devices. Fixed to
+              <code>card[0-9]</code>, but this was a production near-miss that could have caused
+              display issues. Indicates insufficient testing of hardware rules.
+            </div>
+            <div class="card-ref">AGENTS.md — GPU udev rule gotcha</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ E) IMPROVEMENTS ═══════════════════════════ -->
+      <section id="improve">
+        <div class="section-header">
+          <span class="section-tag tag-cyan">e · Sharpen</span>
+          <h2>What We Should Improve</h2>
+        </div>
+        <div class="card-grid">
+          <div class="card card-neutral">
+            <div class="card-title">Run a Full Features Audit</div>
+            <div class="card-body">
+              FEATURES.md is nearly empty. Run the features-audit skill to produce an honest
+              inventory of every feature with real status. This is the foundation for all planning.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Archive & Consolidate Documentation</div>
+            <div class="card-body">
+              197 status reports + 90+ docs files. Move historical reports to archive. Consolidate
+              37 planning docs into a single ROADMAP.md. Create CHANGELOG.md. The documentation
+              bloat actively obscures useful information.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Split the Three Monster Modules</div>
+            <div class="card-body">
+              716-line modules are unmaintainable. Extract sub-components (e.g., SignNoz's
+              ClickHouse config, Forgejo's admin setup, Monitor365's server vs agent) into separate
+              files. Follow existing pattern: helper files prefixed with <code>_</code>.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Fix Upstream go.sum Issues</div>
+            <div class="card-body">
+              <code>library-policy</code> and <code>mr-sync</code> both need
+              <code>mkTidy</code> workarounds. Committing correct <code>go.sum</code> upstream
+              eliminates 2 overrideAttrs blocks and makes builds deterministic without proxyVendor
+              hacks.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Replace Disabled Tests with Real Fixes</div>
+            <div class="card-body">
+              <code>disableTests</code> overlay masks 4 package failures. Investigate root causes,
+              file upstream PRs. This is silent technical debt that will surface as runtime bugs.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Add Integration Tests for Critical Paths</div>
+            <div class="card-body">
+              Only 3 test files exist (<code>tests/</code>). The flake builds and evaluates, but
+              there are no assertions that services actually start, ports don't conflict, or secrets
+              decrypt correctly. The <code>exec-start-paths.nix</code> test is a good start.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Properly Fix Mullvad DNS Conflict</div>
+            <div class="card-body">
+              Instead of disabling VPN entirely, configure <code>mullvad dns set custom</code>
+              or use systemd unit ordering to prevent talpid_dns from touching resolv.conf. The
+              machine needs VPN protection back.
+            </div>
+          </div>
+
+          <div class="card card-neutral">
+            <div class="card-title">Add BTRFS Snapshot for /data</div>
+            <div class="card-body">
+              Docker volumes, Immich photos, and AI models on <code>/data</code> have zero snapshot
+              protection. Run <code>just snapshot-migrate-data</code> to convert from toplevel to
+              subvolume. High-value data at risk.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ F) TOP 25 NEXT ═══════════════════════════ -->
+      <section id="next">
+        <div class="section-header">
+          <span class="section-tag tag-purple">f · Execute</span>
+          <h2>Top 25 — What to Do Next</h2>
+        </div>
+        <p style="color: var(--text-dim); margin-bottom: 24px; max-width: 760px">
+          Sorted by impact. Critical items affect data safety or security. High items unblock
+          existing services or remove significant debt.
+        </p>
+        <div class="task-table-wrap">
+          <table class="task-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Impact</th>
+                <th>Task</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="task-num">01</td>
+                <td><span class="task-impact impact-critical">Critical</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Migrate /data to BTRFS subvolume + enable snapshots
+                  </div>
+                  <div class="task-why">
+                    Docker, Immich, AI data have zero snapshot protection.
+                    <code>just snapshot-migrate-data</code>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">02</td>
+                <td><span class="task-impact impact-critical">Critical</span></td>
+                <td>
+                  <div class="task-title-cell">Properly fix Mullvad VPN DNS conflict</div>
+                  <div class="task-why">
+                    Machine has NO VPN. Configure talpid_dns coexistence instead of disabling
+                    entirely
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">03</td>
+                <td><span class="task-impact impact-critical">Critical</span></td>
+                <td>
+                  <div class="task-title-cell">Add Monitor365 agent→server authentication</div>
+                  <div class="task-why">Anyone on LAN can POST monitoring data. Security hole</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">04</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Add Hermes OpenAI key + SSH deploy key + fallback model
+                  </div>
+                  <div class="task-why">
+                    Service runs but can't do its job — 3 config items missing
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">05</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">Fix Twenty CRM intermittent 502s</div>
+                  <div class="task-why">
+                    Connection refused on port 3200. Check container OOM / PG pool
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">06</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">Audit Gatus health check URLs (6 services DOWN)</div>
+                  <div class="task-why">
+                    SigNoz, Immich, Crush Daily, Ollama, Monitor365 — wrong check URLs?
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">07</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Reboot evo-x2 — verify boot time after NVMe APST fix
+                  </div>
+                  <div class="task-why">
+                    Target ~35s (was 6m17s). Fix applied but never verified
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">08</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">Test Pocket ID email sending</div>
+                  <div class="task-why">
+                    SMTP fully wired + sops secret added, never verified end-to-end
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">09</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">Run full features-audit on FEATURES.md</div>
+                  <div class="task-why">
+                    Feature inventory is nearly empty — no reliable view of what exists
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">10</td>
+                <td><span class="task-impact impact-high">High</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Commit correct go.sum for library-policy + mr-sync upstream
+                  </div>
+                  <div class="task-why">
+                    Eliminates 2 mkTidy workaround blocks, makes builds deterministic
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">11</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Archive 197 status reports (pre-session-100 → archive/)
+                  </div>
+                  <div class="task-why">
+                    docs/ is unnavigable. Move 178 old reports to docs/status/archive/
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">12</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Create ROADMAP.md from docs/planning/ consolidation
+                  </div>
+                  <div class="task-why">
+                    37 planning docs with no single source of long-term direction
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">13</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">Create CHANGELOG.md</div>
+                  <div class="task-why">
+                    185+ commits, no changelog. Can't see what changed between sessions
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">14</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Split monitor365.nix (716L) into agent + server components
+                  </div>
+                  <div class="task-why">Largest module in the repo — unmaintainable</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">15</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Split signoz.nix (716L) into collector + queryService + ClickHouse
+                  </div>
+                  <div class="task-why">
+                    Second-largest module — build-from-source logic + 3 sub-services in one file
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">16</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">Investigate swap usage (8 GiB on 128 GiB RAM)</div>
+                  <div class="task-why">
+                    stale-lsp-cleanup mitigates but root cause unknown. Run <code>smem -t -k</code>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">17</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Investigate 4 disabled nixpkgs tests (valkey, aiocache, timm, xformers)
+                  </div>
+                  <div class="task-why">Silently masking real failures. File upstream PRs</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">18</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Generate KeePassXC Chromium native messaging manifest
+                  </div>
+                  <div class="task-why">Trivial fix — nixpkgs only ships Firefox format</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">19</td>
+                <td><span class="task-impact impact-medium">Medium</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Triage disabled services: voice-agents, minecraft, photomap
+                  </div>
+                  <div class="task-why">Dead modules add maintenance burden. Enable or remove</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">20</td>
+                <td><span class="task-impact impact-low">Low</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    PR: aw-watcher-utilization poetry-core migration upstream
+                  </div>
+                  <div class="task-why">Eliminates custom overlay postPatch</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">21</td>
+                <td><span class="task-impact impact-low">Low</span></td>
+                <td>
+                  <div class="task-title-cell">PR: netwatch, govalid, openaudible → nixpkgs</div>
+                  <div class="task-why">
+                    Custom packages maintained locally — should be upstreamed
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">22</td>
+                <td><span class="task-impact impact-low">Low</span></td>
+                <td>
+                  <div class="task-title-cell">PR: XRT boost 1.87+ compat to nix-amd-npu</div>
+                  <div class="task-why">NPU driver build compat for newer Boost</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">23</td>
+                <td><span class="task-impact impact-low">Low</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    Add ActivityWatch Wayland watcher compositor dependency
+                  </div>
+                  <div class="task-why">Watcher may fail without graphical-session.target</div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">24</td>
+                <td><span class="task-impact impact-low">Low</span></td>
+                <td>
+                  <div class="task-title-cell">
+                    llama-cpp ROCm MMFMA flag → nixpkgs package option
+                  </div>
+                  <div class="task-why">
+                    <code>-DGGML_HIP_MMQ_MFMA=ON</code> hardcoded, should be upstream option
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td class="task-num">25</td>
+                <td><span class="task-impact impact-low">Low</span></td>
+                <td>
+                  <div class="task-title-cell">Add AppArmor enablement (when NixOS bug fixed)</div>
+                  <div class="task-why">
+                    Currently commented out. Track NixOS #483085 for auditd too
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ G) TOP QUESTION ═══════════════════════════ -->
+      <section id="question">
+        <div class="section-header">
+          <span class="section-tag tag-purple">g · Blocked</span>
+          <h2>Top Question I Can't Answer Myself</h2>
+        </div>
+        <div class="question">
+          <div class="label">▎ Needs Human Decision</div>
+          <h3>
+            Should the disabled services (voice-agents, minecraft, photomap) be enabled, removed, or
+            kept as dormant scaffolding?
+          </h3>
+          <p>
+            Three service modules exist with full implementations (451, 361, and 350+ lines
+            respectively) but are disabled in <code>configuration.nix</code>. I cannot determine
+            whether these represent: <br /><br />
+            <strong>(a)</strong> Features you actively want but haven't gotten working yet → I
+            should debug and enable them.<br />
+            <strong>(b)</strong> Experiments you've abandoned → I should remove the modules and
+            their dependencies to reduce maintenance surface.<br />
+            <strong>(c)</strong> Intentional dormant scaffolding for future use → I should document
+            them as "planned" in FEATURES.md and stop flagging them. <br /><br />
+            The answer changes what I do next: <strong>debugging effort</strong> vs
+            <strong>code deletion</strong> vs <strong>documentation</strong>. Each path has very
+            different implications for the 38 open TODOs and the module-splitting work.
+          </p>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════ APPENDIX: USER FEEDBACK ═══════════════════════════ -->
+      <section id="appendix">
+        <div class="section-header">
+          <span class="section-tag tag-cyan">Appendix</span>
+          <h2>User Feedback — Decisions Resolved</h2>
+        </div>
+        <div class="card card-neutral" style="border-left: 3px solid var(--cyan)">
+          <div class="card-title">Disabled Service Triage — Resolved</div>
+          <div class="card-body">
+            <strong>Decision:</strong> Keep <code>voice-agents</code>, <code>minecraft</code>, and
+            <code>photomap</code> dormant for now.<br /><br />
+            <strong>Action taken:</strong> Documented as "dormant scaffolding for future use" — not
+            debugged, not removed. These modules should be marked as <em>PLANNED</em> in FEATURES.md
+            and excluded from future "remove dead code" passes. TODO_LIST item #88 (disabled service
+            triage) is now resolved.
+          </div>
+          <div class="card-ref">
+            configuration.nix:266 (voice-agents) · 289 (minecraft) · 183 (photomap)
+          </div>
+        </div>
+      </section>
     </div>
-  </div>
-</header>
 
-<div class="container">
-
-<!-- ═══════════════════════════ STAT CARDS ═══════════════════════════ -->
-<div class="stats">
-  <div class="stat stat-green">
-    <div class="stat-value">28</div>
-    <div class="stat-label">Services Running</div>
-  </div>
-  <div class="stat stat-green">
-    <div class="stat-value">38</div>
-    <div class="stat-label">TODOs Open</div>
-  </div>
-  <div class="stat stat-amber">
-    <div class="stat-value">12</div>
-    <div class="stat-label">Partially Done</div>
-  </div>
-  <div class="stat stat-red">
-    <div class="stat-value">8</div>
-    <div class="stat-label">Fucked Up</div>
-  </div>
-  <div class="stat stat-cyan">
-    <div class="stat-value">197</div>
-    <div class="stat-label">Status Reports Filed</div>
-  </div>
-  <div class="stat stat-blue">
-    <div class="stat-value">2</div>
-    <div class="stat-label">Machines Online</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════ A) FULLY DONE ═══════════════════════════ -->
-<section id="done">
-  <div class="section-header">
-    <span class="section-tag tag-green">a · Shipped</span>
-    <h2>Fully Done</h2>
-  </div>
-  <p style="color:var(--text-dim);margin-bottom:24px;max-width:760px;">
-    Working, verified, deployed features. These are the load-bearing pillars of the system.
-  </p>
-  <div class="card-grid">
-
-    <div class="card card-solution">
-      <div class="card-title">flake-parts Modular Architecture</div>
-      <div class="card-body">
-        83 flake inputs, 40 auto-discovered service modules, 3 machine configurations
-        (<code>evo-x2</code>, <code>Lars-MacBook-Air</code>, <code>rpi3-dns</code>).
-        Single source of truth via <code>mkLarsPackages</code>.
+    <!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
+    <footer>
+      <div class="container">
+        <span class="heartbeat"></span>
+        Generated 2026-06-17 22:22 CET · SystemNix @ <span class="mono">4cffb612</span> · 16,823 LOC
+        Nix · <span class="mono">just test-fast</span> passing
       </div>
-      <div class="card-ref">flake.nix:480 · modules/nixos/services/*.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">md-go-validator — Just Added</div>
-      <div class="card-body">
-        Added this session. Validates code blocks in Markdown/MDX docs.
-        Wired into both NixOS and macOS via <code>mkLarsPackages</code> → <code>base.nix</code>.
-        Build verified, linters clean.
-      </div>
-      <div class="card-ref">flake.nix:520</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">SigNoz Observability Stack</div>
-      <div class="card-body">
-        Full SigNoz + ClickHouse + OTel Collector built from source (Go 1.25).
-        Custom <code>signoz.target</code> avoids blocking graphical session.
-        JWT secret auto-generated and persisted.
-      </div>
-      <div class="card-ref">modules/nixos/services/signoz.nix (716L)</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Pocket ID + OAuth2 Proxy Auth Chain</div>
-      <div class="card-body">
-        Declarative OIDC provider provisioning — admin user, clients, avatars created automatically.
-        <code>protectedVHost</code> helper applies forward-auth to any service behind Caddy.
-        Only manual step: register passkey.
-      </div>
-      <div class="card-ref">modules/nixos/services/pocket-id.nix · caddy.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">DNS Blocker (Unbound + Blocklist)</div>
-      <div class="card-body">
-        Replaced Technitium. Unbound with <code>do-ip6=false</code> (no global IPv6 on evo-x2).
-        Block-page CA trusted via <code>security.pki.certificates</code>.
-        Stats API on port 9090.
-      </div>
-      <div class="card-ref">modules/nixos/services/dns-blocker.nix · lib/ports.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">BTRFS Snapshot System</div>
-      <div class="card-body">
-        Daily snapshots of root (<code>@</code> subvolume) via btrbk with auto-pruning (14d + 4w).
-        Pre-deploy snapshot automation. <code>btrfs-verify-snapshots</code> timer alerts if &gt;3 days stale.
-      </div>
-      <div class="card-ref">platforms/nixos/system/snapshots.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Forgejo + Declarative Repo Mirroring</div>
-      <div class="card-body">
-        Self-hosted Forgejo with auto-mirroring of LarsArtmann repos.
-        Federation-ready. Admin setup uses non-duplicated password generation.
-      </div>
-      <div class="card-ref">modules/nixos/services/forgejo.nix (582L) · forgejo-repos.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">AI Inference Stack</div>
-      <div class="card-body">
-        Ollama with ROCm GPU support, llama.cpp with HIP, gpu-python.
-        <code>OLLAMA_GPU_OVERHEAD=8GiB</code> reserves compositor headroom.
-        Centralized model storage at <code>/data/ai/</code>.
-      </div>
-      <div class="card-ref">modules/nixos/services/ai-stack.nix · lib/rocm.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Sops + Age Secrets Management</div>
-      <div class="card-body">
-        SSH host keys → age identity. <code>svcEnabled</code> helper for cross-module safety
-        on rpi3. Template-based secrets for services like crush-daily.
-        Guarded with <code>lib.optionalAttrs</code> to prevent atomic failures.
-      </div>
-      <div class="card-ref">modules/nixos/services/sops.nix · .sops.yaml</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Centralized Port & Image Registries</div>
-      <div class="card-body">
-        Collision-protected port registry in <code>lib/ports.nix</code>.
-        All container images pinned via <code>lib/images.nix</code> with <code>mkRef</code>.
-        No hardcoded ports or <code>image@sha256</code> in service modules.
-      </div>
-      <div class="card-ref">lib/ports.nix · lib/images.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Systemd Hardening Library</div>
-      <div class="card-body">
-        <code>harden {}</code> and <code>hardenUser {}</code> for service/user security.
-        <code>serviceDefaults {}</code> with <code>startLimitBurst</code>, <code>onFailure</code> notification.
-        <code>mkDockerServiceFactory</code> for Docker Compose services.
-      </div>
-      <div class="card-ref">lib/systemd.nix · lib/systemd/service-defaults.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Dual-WAN + MPTCP</div>
-      <div class="card-body">
-        Route health monitoring with automatic failover.
-        <code>mptcp-endpoint-manager.sh</code> and <code>route-health-monitor.sh</code> scripts.
-      </div>
-      <div class="card-ref">modules/nixos/services/dual-wan.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Homepage Dashboard + Gatus Health</div>
-      <div class="card-body">
-        All tiles centralized in <code>homepage.nix</code> with <code>when</code> guards.
-        Gatus endpoints with <code>mkHttpCheck</code>. Categories: Infrastructure, Media,
-        Development, AI, Monitoring, Productivity.
-      </div>
-      <div class="card-ref">modules/nixos/services/homepage.nix · gatus-config.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Cross-Platform Home Manager</div>
-      <div class="card-body">
-        Shared <code>home-base.nix</code> imported by both platforms.
-        Programs: fish, git, yazi, zellij, tmux, fzf, starship, keepassxc, zed, taskwarrior.
-        Platform differences handled via <code>stdenv.isLinux/isDarwin</code>.
-      </div>
-      <div class="card-ref">platforms/common/home-base.nix</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Monitor365 Device Monitoring</div>
-      <div class="card-body">
-        Agent + server single-machine deployment. Expensive collectors disabled.
-        Cloud sync to localhost. SQLX_OFFLINE fix applied this session cycle.
-      </div>
-      <div class="card-ref">modules/nixos/services/monitor365.nix (716L)</div>
-    </div>
-
-    <div class="card card-solution">
-      <div class="card-title">Service Fleet (14 more)</div>
-      <div class="card-body">
-        Immich (photos), Twenty (CRM), DiscordSync (continuous backup),
-        Hermes (AI agent gateway), Crush Daily (dev insights), Overview (project dashboard),
-        OpenSEO (SEO suite), File-and-image-renamer, Projects-management-automation,
-        EMEET PIXY webcam daemon, Disk/NVMe monitors, Taskchampion, Steam, Dozzle.
-      </div>
-      <div class="card-ref">platforms/nixos/system/configuration.nix</div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════════════════════════ B) PARTIALLY DONE ═══════════════════════════ -->
-<section id="partial">
-  <div class="section-header">
-    <span class="section-tag tag-amber">b · Limping</span>
-    <h2>Partially Done</h2>
-  </div>
-  <p style="color:var(--text-dim);margin-bottom:24px;max-width:760px;">
-    Functional but with known gaps, unverified states, or workarounds in place.
-  </p>
-  <div class="card-grid">
-
-    <div class="card card-warning">
-      <div class="card-title">Twenty CRM — Intermittent 502s</div>
-      <div class="card-body">
-        Caddy logs show <code>connection refused</code>/<code>connection reset</code> on port 3200.
-        Likely container OOM or PG connection exhaustion. Not investigated yet.
-      </div>
-      <div class="card-ref">TODO_LIST.md:17</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">Gatus Health Checks — 6 Services DOWN</div>
-      <div class="card-body">
-        SigNoz, Immich, Crush Daily, Ollama, Monitor365 may have wrong check URLs.
-        Needs endpoint URL audit against actual service configurations.
-      </div>
-      <div class="card-ref">TODO_LIST.md:18</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">Darwin Home Manager Parity</div>
-      <div class="card-body">
-        macOS HM has minimal config (7 lines) — no terminal, editor, or theme parity with NixOS.
-        Blocked by 256GB SSD (90%+ full). Can't add heavy packages.
-      </div>
-      <div class="card-ref">platforms/darwin/home.nix · TODO_LIST.md:86</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">Pocket ID Email — SMTP Wired, Untested</div>
-      <div class="card-body">
-        Fully configurable SMTP (<code>cfg.smtp.*</code>) and sops secret added.
-        Login notification / email verification never tested in production.
-      </div>
-      <div class="card-ref">TODO_LIST.md:12</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">BTRFS /data — Not Snapshotted</div>
-      <div class="card-body">
-        <code>/data</code> is BTRFS toplevel (subvolid=5), mounted without <code>subvol=</code>.
-        Docker, Immich, and AI data have no snapshot protection.
-        Migration script exists: <code>just snapshot-migrate-data</code>.
-      </div>
-      <div class="card-ref">TODO_LIST.md:28</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">Boot Performance — Fix Applied, Unverified</div>
-      <div class="card-body">
-        NVMe APST fix + Caddy sops ordering fix deployed.
-        Target: ~35s boot (was 6m17s). Reboot required to verify.
-      </div>
-      <div class="card-ref">TODO_LIST.md:11</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">ActivityWatch — Wayland Gaps</div>
-      <div class="card-body">
-        Wayland watcher needs <code>graphical-session.target</code> dependency.
-        No HM option for theme (workaround via curl oneshot).
-        <code>aw-watcher-utilization</code> needs custom overlay (poetry-core migration).
-      </div>
-      <div class="card-ref">TODO_LIST.md:41,51,52</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">library-policy & mr-sync — Workaround Builds</div>
-      <div class="card-body">
-        Both require <code>mkTidy</code> override (go mod tidy + proxyVendor + overrideModAttrs)
-        because upstream <code>go.sum</code> is stale. Fix: commit correct go.sum upstream.
-      </div>
-      <div class="card-ref">flake.nix:509,510 · TODO_LIST.md:59,60</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">Swap Usage Investigation</div>
-      <div class="card-body">
-        8 GiB swap used on 128 GiB RAM. Stale LSP processes mitigated by
-        <code>stale-lsp-cleanup</code> timer, but root cause unclear.
-      </div>
-      <div class="card-ref">TODO_LIST.md:29</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">FEATURES.md — Nearly Empty</div>
-      <div class="card-body">
-        Feature inventory file exists but has almost no populated status entries.
-        Needs a full features-audit pass against actual code.
-      </div>
-      <div class="card-ref">FEATURES.md</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">Monitor365 — Failed State After Deploy</div>
-      <div class="card-body">
-        Needs <code>systemctl --user reset-failed monitor365-server</code> after each deploy.
-        SQLX_OFFLINE fix applied, but operational friction remains.
-      </div>
-      <div class="card-ref">TODO_LIST.md:13</div>
-    </div>
-
-    <div class="card card-warning">
-      <div class="card-title">KeePassXC — Chromium Manifests Missing</div>
-      <div class="card-body">
-        nixpkgs ships Firefox-format native messaging manifests only.
-        Chromium manifest is trivially generated but not yet done.
-      </div>
-      <div class="card-ref">platforms/common/programs/keepassxc.nix · TODO_LIST.md:45</div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════════════════════════ C) NOT STARTED ═══════════════════════════ -->
-<section id="not-started">
-  <div class="section-header">
-    <span class="section-tag tag-slate">c · Backlog</span>
-    <h2>Not Started</h2>
-  </div>
-  <div class="card-grid">
-
-    <div class="card card-neutral">
-      <div class="card-title">ROADMAP.md</div>
-      <div class="card-body">
-        No long-term direction doc. <code>docs/planning/</code> has 37 files of historical plans
-        that should be consolidated into a single living roadmap.
-      </div>
-      <div class="card-ref">TODO_LIST.md:34</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">CHANGELOG.md</div>
-      <div class="card-body">
-        185+ commits with no changelog. No way to see what changed between sessions
-        without reading git log.
-      </div>
-      <div class="card-ref">TODO_LIST.md:35</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">rpi3-dns DNS Failover Cluster</div>
-      <div class="card-body">
-        Entire failover cluster is planned-only. Hardware not provisioned.
-        rpi3 age key not yet in <code>.sops.yaml</code>.
-      </div>
-      <div class="card-ref">TODO_LIST.md:83 · .sops.yaml</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Auditd Enablement</div>
-      <div class="card-body">
-        Blocked on NixOS 26.05 bug #483085. Cannot enable until upstream fix.
-      </div>
-      <div class="card-ref">TODO_LIST.md:84</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">AppArmor Enablement</div>
-      <div class="card-body">
-        Commented out in <code>security-hardening.nix</code>. Never enabled or tested.
-      </div>
-      <div class="card-ref">TODO_LIST.md:85 · security-hardening.nix</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Monitor365 Agent→Server Auth</div>
-      <div class="card-body">
-        No authentication. Anyone on LAN can POST monitoring data to the server API.
-      </div>
-      <div class="card-ref">TODO_LIST.md:87</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">nixpkgs PRs (4 packages + 3 upstream)</div>
-      <div class="card-body">
-        <code>netwatch</code>, <code>govalid</code>, <code>openaudible</code> — custom packages
-        not in nixpkgs. <code>valkey</code>/<code>aiocache</code>/<code>timm</code>/<code>xformers</code>
-        have disabled tests. <code>aw-watcher-utilization</code> and <code>jscpd</code> need upstream PRs.
-      </div>
-      <div class="card-ref">TODO_LIST.md:42,47,77,78</div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Disabled Service Triage</div>
-      <div class="card-body">
-        <code>voice-agents</code>, <code>minecraft</code>, <code>photomap</code> —
-        all disabled. Decision needed: enable or remove the modules.
-      </div>
-      <div class="card-ref">TODO_LIST.md:88 · configuration.nix:183,266,289</div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════════════════════════ D) TOTALLY FUCKED UP ═══════════════════════════ -->
-<section id="fucked">
-  <div class="section-header">
-    <span class="section-tag tag-red">d · Critical</span>
-    <h2>Totally Fucked Up</h2>
-  </div>
-  <p style="color:var(--text-dim);margin-bottom:24px;max-width:760px;">
-    Things that are broken, have caused incidents, or represent accumulated technical debt
-    that actively harms the project.
-  </p>
-  <div class="card-grid">
-
-    <div class="card card-problem">
-      <div class="card-title">DNS Mullvad Crisis (Resolved by Disable)</div>
-      <div class="card-body">
-        Mullvad VPN's <code>talpid_dns</code> overwrote <code>/etc/resolv.conf</code> every ~90s
-        even when disconnected, breaking unbound resolution. Required full DNS crisis investigation
-        across sessions 139. "Fixed" by disabling <code>mullvad-vpn.enable = false</code> entirely —
-        no VPN at all right now.
-      </div>
-      <div class="card-ref">configuration.nix:223 · docs/status/2026-06-15_*</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">197 Status Reports Cluttering docs/</div>
-      <div class="card-body">
-        <code>docs/status/</code> has 197 files. The entire <code>docs/</code> directory has 90+ files
-        with redundant planning docs, session summaries, and one-off analyses.
-        Needs aggressive archival. Pre-session-100 reports should move to <code>docs/status/archive/</code>.
-      </div>
-      <div class="card-ref">TODO_LIST.md:33</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">Hermes — 3 Missing Config Items</div>
-      <div class="card-body">
-        No OpenAI API key in sops (config already wired). No SSH deploy key installed.
-        No fallback model set. The service runs but can't actually do its job.
-      </div>
-      <div class="card-ref">TODO_LIST.md:22,23,24</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">OOM Crash Chain History</div>
-      <div class="card-body">
-        Helium (Electron browser) escaped cgroup limits → OOM killed journald → cascade crash.
-        GPU crash forensics impossible because WDT hard reset empties pstore.
-        Jan's llama-server respawns new processes every 1-3 min (~1.2GB each) with no cgroup limits.
-      </div>
-      <div class="card-ref">AGENTS.md — Non-Obvious Gotchas</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">4 nixpkgs Tests Disabled</div>
-      <div class="card-body">
-        <code>valkey</code>, <code>aiocache</code>, <code>timm</code>, <code>xformers</code> —
-        all have <code>doCheck = false</code> in <code>overlays/default.nix</code> due to test failures.
-        Silently masking real issues. No investigation or upstream PRs filed.
-      </div>
-      <div class="card-ref">overlays/default.nix:22-31 · TODO_LIST.md:42</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">3 Monster Modules Need Splitting</div>
-      <div class="card-body">
-        <code>monitor365.nix</code> (716L), <code>signoz.nix</code> (716L),
-        <code>forgejo.nix</code> (582L) — all exceed reasonable module size.
-        Hard to navigate, hard to test, hard to reason about.
-      </div>
-      <div class="card-ref">TODO_LIST.md:89</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">Mullvad VPN — Completely Disabled</div>
-      <div class="card-body">
-        As a consequence of the DNS crisis, the machine has NO VPN protection.
-        This is a privacy and security regression. The real fix (preventing talpid_dns
-        from touching resolv.conf) was never attempted.
-      </div>
-      <div class="card-ref">configuration.nix:219-223</div>
-    </div>
-
-    <div class="card card-problem">
-      <div class="card-title">GPU Udev Rule Near-Miss</div>
-      <div class="card-body">
-        <code>KERNEL=="card*"</code> would have matched DP/HDMI child devices.
-        Fixed to <code>card[0-9]</code>, but this was a production near-miss that
-        could have caused display issues. Indicates insufficient testing of hardware rules.
-      </div>
-      <div class="card-ref">AGENTS.md — GPU udev rule gotcha</div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════════════════════════ E) IMPROVEMENTS ═══════════════════════════ -->
-<section id="improve">
-  <div class="section-header">
-    <span class="section-tag tag-cyan">e · Sharpen</span>
-    <h2>What We Should Improve</h2>
-  </div>
-  <div class="card-grid">
-
-    <div class="card card-neutral">
-      <div class="card-title">Run a Full Features Audit</div>
-      <div class="card-body">
-        FEATURES.md is nearly empty. Run the features-audit skill to produce an honest
-        inventory of every feature with real status. This is the foundation for all planning.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Archive & Consolidate Documentation</div>
-      <div class="card-body">
-        197 status reports + 90+ docs files. Move historical reports to archive.
-        Consolidate 37 planning docs into a single ROADMAP.md. Create CHANGELOG.md.
-        The documentation bloat actively obscures useful information.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Split the Three Monster Modules</div>
-      <div class="card-body">
-        716-line modules are unmaintainable. Extract sub-components (e.g., SignNoz's ClickHouse config,
-        Forgejo's admin setup, Monitor365's server vs agent) into separate files.
-        Follow existing pattern: helper files prefixed with <code>_</code>.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Fix Upstream go.sum Issues</div>
-      <div class="card-body">
-        <code>library-policy</code> and <code>mr-sync</code> both need <code>mkTidy</code> workarounds.
-        Committing correct <code>go.sum</code> upstream eliminates 2 overrideAttrs blocks and
-        makes builds deterministic without proxyVendor hacks.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Replace Disabled Tests with Real Fixes</div>
-      <div class="card-body">
-        <code>disableTests</code> overlay masks 4 package failures. Investigate root causes,
-        file upstream PRs. This is silent technical debt that will surface as runtime bugs.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Add Integration Tests for Critical Paths</div>
-      <div class="card-body">
-        Only 3 test files exist (<code>tests/</code>). The flake builds and evaluates,
-        but there are no assertions that services actually start, ports don't conflict,
-        or secrets decrypt correctly. The <code>exec-start-paths.nix</code> test is a good start.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Properly Fix Mullvad DNS Conflict</div>
-      <div class="card-body">
-        Instead of disabling VPN entirely, configure <code>mullvad dns set custom</code>
-        or use systemd unit ordering to prevent talpid_dns from touching resolv.conf.
-        The machine needs VPN protection back.
-      </div>
-    </div>
-
-    <div class="card card-neutral">
-      <div class="card-title">Add BTRFS Snapshot for /data</div>
-      <div class="card-body">
-        Docker volumes, Immich photos, and AI models on <code>/data</code> have zero snapshot
-        protection. Run <code>just snapshot-migrate-data</code> to convert from toplevel to subvolume.
-        High-value data at risk.
-      </div>
-    </div>
-
-  </div>
-</section>
-
-<!-- ═══════════════════════════ F) TOP 25 NEXT ═══════════════════════════ -->
-<section id="next">
-  <div class="section-header">
-    <span class="section-tag tag-purple">f · Execute</span>
-    <h2>Top 25 — What to Do Next</h2>
-  </div>
-  <p style="color:var(--text-dim);margin-bottom:24px;max-width:760px;">
-    Sorted by impact. Critical items affect data safety or security.
-    High items unblock existing services or remove significant debt.
-  </p>
-  <div class="task-table-wrap">
-    <table class="task-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Impact</th>
-          <th>Task</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td class="task-num">01</td>
-          <td><span class="task-impact impact-critical">Critical</span></td>
-          <td>
-            <div class="task-title-cell">Migrate /data to BTRFS subvolume + enable snapshots</div>
-            <div class="task-why">Docker, Immich, AI data have zero snapshot protection. <code>just snapshot-migrate-data</code></div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">02</td>
-          <td><span class="task-impact impact-critical">Critical</span></td>
-          <td>
-            <div class="task-title-cell">Properly fix Mullvad VPN DNS conflict</div>
-            <div class="task-why">Machine has NO VPN. Configure talpid_dns coexistence instead of disabling entirely</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">03</td>
-          <td><span class="task-impact impact-critical">Critical</span></td>
-          <td>
-            <div class="task-title-cell">Add Monitor365 agent→server authentication</div>
-            <div class="task-why">Anyone on LAN can POST monitoring data. Security hole</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">04</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Add Hermes OpenAI key + SSH deploy key + fallback model</div>
-            <div class="task-why">Service runs but can't do its job — 3 config items missing</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">05</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Fix Twenty CRM intermittent 502s</div>
-            <div class="task-why">Connection refused on port 3200. Check container OOM / PG pool</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">06</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Audit Gatus health check URLs (6 services DOWN)</div>
-            <div class="task-why">SigNoz, Immich, Crush Daily, Ollama, Monitor365 — wrong check URLs?</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">07</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Reboot evo-x2 — verify boot time after NVMe APST fix</div>
-            <div class="task-why">Target ~35s (was 6m17s). Fix applied but never verified</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">08</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Test Pocket ID email sending</div>
-            <div class="task-why">SMTP fully wired + sops secret added, never verified end-to-end</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">09</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Run full features-audit on FEATURES.md</div>
-            <div class="task-why">Feature inventory is nearly empty — no reliable view of what exists</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">10</td>
-          <td><span class="task-impact impact-high">High</span></td>
-          <td>
-            <div class="task-title-cell">Commit correct go.sum for library-policy + mr-sync upstream</div>
-            <div class="task-why">Eliminates 2 mkTidy workaround blocks, makes builds deterministic</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">11</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Archive 197 status reports (pre-session-100 → archive/)</div>
-            <div class="task-why">docs/ is unnavigable. Move 178 old reports to docs/status/archive/</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">12</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Create ROADMAP.md from docs/planning/ consolidation</div>
-            <div class="task-why">37 planning docs with no single source of long-term direction</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">13</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Create CHANGELOG.md</div>
-            <div class="task-why">185+ commits, no changelog. Can't see what changed between sessions</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">14</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Split monitor365.nix (716L) into agent + server components</div>
-            <div class="task-why">Largest module in the repo — unmaintainable</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">15</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Split signoz.nix (716L) into collector + queryService + ClickHouse</div>
-            <div class="task-why">Second-largest module — build-from-source logic + 3 sub-services in one file</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">16</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Investigate swap usage (8 GiB on 128 GiB RAM)</div>
-            <div class="task-why">stale-lsp-cleanup mitigates but root cause unknown. Run <code>smem -t -k</code></div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">17</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Investigate 4 disabled nixpkgs tests (valkey, aiocache, timm, xformers)</div>
-            <div class="task-why">Silently masking real failures. File upstream PRs</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">18</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Generate KeePassXC Chromium native messaging manifest</div>
-            <div class="task-why">Trivial fix — nixpkgs only ships Firefox format</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">19</td>
-          <td><span class="task-impact impact-medium">Medium</span></td>
-          <td>
-            <div class="task-title-cell">Triage disabled services: voice-agents, minecraft, photomap</div>
-            <div class="task-why">Dead modules add maintenance burden. Enable or remove</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">20</td>
-          <td><span class="task-impact impact-low">Low</span></td>
-          <td>
-            <div class="task-title-cell">PR: aw-watcher-utilization poetry-core migration upstream</div>
-            <div class="task-why">Eliminates custom overlay postPatch</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">21</td>
-          <td><span class="task-impact impact-low">Low</span></td>
-          <td>
-            <div class="task-title-cell">PR: netwatch, govalid, openaudible → nixpkgs</div>
-            <div class="task-why">Custom packages maintained locally — should be upstreamed</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">22</td>
-          <td><span class="task-impact impact-low">Low</span></td>
-          <td>
-            <div class="task-title-cell">PR: XRT boost 1.87+ compat to nix-amd-npu</div>
-            <div class="task-why">NPU driver build compat for newer Boost</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">23</td>
-          <td><span class="task-impact impact-low">Low</span></td>
-          <td>
-            <div class="task-title-cell">Add ActivityWatch Wayland watcher compositor dependency</div>
-            <div class="task-why">Watcher may fail without graphical-session.target</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">24</td>
-          <td><span class="task-impact impact-low">Low</span></td>
-          <td>
-            <div class="task-title-cell">llama-cpp ROCm MMFMA flag → nixpkgs package option</div>
-            <div class="task-why"><code>-DGGML_HIP_MMQ_MFMA=ON</code> hardcoded, should be upstream option</div>
-          </td>
-        </tr>
-        <tr>
-          <td class="task-num">25</td>
-          <td><span class="task-impact impact-low">Low</span></td>
-          <td>
-            <div class="task-title-cell">Add AppArmor enablement (when NixOS bug fixed)</div>
-            <div class="task-why">Currently commented out. Track NixOS #483085 for auditd too</div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<!-- ═══════════════════════════ G) TOP QUESTION ═══════════════════════════ -->
-<section id="question">
-  <div class="section-header">
-    <span class="section-tag tag-purple">g · Blocked</span>
-    <h2>Top Question I Can't Answer Myself</h2>
-  </div>
-  <div class="question">
-    <div class="label">▎ Needs Human Decision</div>
-    <h3>Should the disabled services (voice-agents, minecraft, photomap) be enabled, removed, or kept as dormant scaffolding?</h3>
-    <p>
-      Three service modules exist with full implementations (451, 361, and 350+ lines respectively)
-      but are disabled in <code>configuration.nix</code>. I cannot determine whether these represent:
-      <br><br>
-      <strong>(a)</strong> Features you actively want but haven't gotten working yet → I should debug and enable them.<br>
-      <strong>(b)</strong> Experiments you've abandoned → I should remove the modules and their dependencies to reduce maintenance surface.<br>
-      <strong>(c)</strong> Intentional dormant scaffolding for future use → I should document them as "planned" in FEATURES.md and stop flagging them.
-      <br><br>
-      The answer changes what I do next: <strong>debugging effort</strong> vs <strong>code deletion</strong> vs <strong>documentation</strong>.
-      Each path has very different implications for the 38 open TODOs and the module-splitting work.
-    </p>
-  </div>
-</section>
-
-</div>
-
-<!-- ═══════════════════════════ FOOTER ═══════════════════════════ -->
-<footer>
-  <div class="container">
-    <span class="heartbeat"></span>
-    Generated 2026-06-17 22:22 CET · SystemNix @ <span class="mono">4cffb612</span> ·
-    16,823 LOC Nix · <span class="mono">just test-fast</span> passing
-  </div>
-</footer>
-
-</body>
+    </footer>
+  </body>
 </html>
