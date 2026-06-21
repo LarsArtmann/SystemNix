@@ -949,9 +949,10 @@
           </div>
           <div class="callout callout-teal">
             <strong>One action that unlocks the most value</strong>
-            Add the <code>quickshell</code> flake input and stand up a minimal bar that reads Niri
-            workspaces via the <code>qml-niri</code> plugin. Prove the hot-reload loop before
-            building anything ambitious.
+            Add the <code>dankMaterialShell</code> flake input (it brings Quickshell transitively),
+            import its HM module, and enable it on the niri desktop. See
+            <a href="quickshell-nix-implementations.md">the companion research</a> for the exact
+            code patterns studied across GitHub.
           </div>
         </section>
 
@@ -1220,11 +1221,22 @@
             <span class="arrow">+</span>
             <span class="node">polkit_gnome<br /><small>none</small></span>
           </div>
-          <p style="text-align:center; font-family: var(--font-mono); font-size:0.8rem; color:var(--text-faint);">&darr; what Quickshell collapses this into</p>
+          <p
+            style="
+              text-align: center;
+              font-family: var(--font-mono);
+              font-size: 0.8rem;
+              color: var(--text-faint);
+            "
+          >
+            &darr; what Quickshell collapses this into
+          </p>
           <div class="diagram">
             <span class="node node-core">Niri</span>
             <span class="arrow">&rarr;</span>
-            <span class="node node-core" style="background:var(--solution); color:var(--surface);">Quickshell<br /><small>one QML brain</small></span>
+            <span class="node node-core" style="background: var(--solution); color: var(--surface)"
+              >Quickshell<br /><small>one QML brain</small></span
+            >
             <span class="arrow">&rarr;</span>
             <span class="node">Pipewire</span>
             <span class="arrow">+</span>
@@ -1238,7 +1250,17 @@
             <span class="arrow">+</span>
             <span class="node">SystemNix<br /><small>services</small></span>
           </div>
-          <p style="text-align:center; font-family: var(--font-mono); font-size:0.8rem; color:var(--text-faint);">One shell. One language. One theme. One source of reactive state &mdash; wired to everything.</p>
+          <p
+            style="
+              text-align: center;
+              font-family: var(--font-mono);
+              font-size: 0.8rem;
+              color: var(--text-faint);
+            "
+          >
+            One shell. One language. One theme. One source of reactive state &mdash; wired to
+            everything.
+          </p>
         </section>
 
         <!-- ============================ 03 REPLACE ============================ -->
@@ -1413,12 +1435,31 @@
 
           <h3>The bar, visualised</h3>
           <p>What a SystemNix-tuned Quickshell bar could look like at a glance:</p>
-          <pre style="background:var(--surface-sunken); border:2px solid var(--text); padding:0.8rem 1rem; overflow-x:auto; font-size:0.78rem; line-height:1.5; margin:1rem 0;"><code>┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+          <pre
+            style="
+              background: var(--surface-sunken);
+              border: 2px solid var(--text);
+              padding: 0.8rem 1rem;
+              overflow-x: auto;
+              font-size: 0.78rem;
+              line-height: 1.5;
+              margin: 1rem 0;
+            "
+          ><code>┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
 │ <span style="color:var(--accent);">▮ 3 ▯ 4 ▯ 5</span> │ <span style="color:var(--solution);">Ghostty — quickshell-nixos-vision.html</span>          │ <span style="color:var(--warning);">◑ llamactl: llama3.1:8b  6.2G/16G</span> │ <span style="color:var(--accent);">♪ Spotify — Pink Floyd</span> │  🔒 ▮ ▮ │ <span style="color:var(--text-faint);">42°C</span> │ <span style="color:var(--accent);">Mon 21:47</span> │
 │            │ <span style="color:var(--text-faint);">DNS: 1,247 blocked today (94%)</span>  <span style="color:var(--solution);">●●● WAN1</span>  <span style="color:var(--problem);">●○○ SigNoz</span>  │                         │         │           │           │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘</code></pre>
-          <p style="font-family:var(--font-mono); font-size:0.75rem; color:var(--text-faint); text-align:center; margin-top:-0.5rem;">
-            Workspaces &middot; focused window &middot; AI model + VRAM &middot; DNS/WAN/SigNoz health &middot; media &middot; tray &middot; GPU temp &middot; clock
+          <p
+            style="
+              font-family: var(--font-mono);
+              font-size: 0.75rem;
+              color: var(--text-faint);
+              text-align: center;
+              margin-top: -0.5rem;
+            "
+          >
+            Workspaces &middot; focused window &middot; AI model + VRAM &middot; DNS/WAN/SigNoz
+            health &middot; media &middot; tray &middot; GPU temp &middot; clock
           </p>
 
           <h3>Pillar B &mdash; Mission Control (the OSD / quick-settings)</h3>
@@ -1574,17 +1615,17 @@
             <div class="card card-solution">
               <strong>Task Radar &mdash; Taskchampion :10222</strong>
               <p>
-                Sync with the Taskwarrior server and show pending task count by priority in the
-                bar. Overdue items pulse red. Click to expand a prioritised list with project tags
+                Sync with the Taskwarrior server and show pending task count by priority in the bar.
+                Overdue items pulse red. Click to expand a prioritised list with project tags
                 &mdash; your to-do is always one glance away.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Photo Memory &mdash; Immich :2283</strong>
               <p>
-                The lock screen and a bar widget pull "on this day" memories from Immich's API.
-                A fresh photo every time you unlock &mdash; your own personal ambient display,
-                powered by the photo library already running on this machine.
+                The lock screen and a bar widget pull "on this day" memories from Immich's API. A
+                fresh photo every time you unlock &mdash; your own personal ambient display, powered
+                by the photo library already running on this machine.
               </p>
             </div>
             <div class="card card-solution">
@@ -1660,25 +1701,25 @@
           </div>
 
           <h3>A day in the life</h3>
-          <div class="card" style="border-left:4px solid var(--accent);">
-            <p style="font-style:italic; color:var(--text-muted);">
+          <div class="card" style="border-left: 4px solid var(--accent)">
+            <p style="font-style: italic; color: var(--text-muted)">
               You unlock the screen. Immich has loaded <em>your</em> "on this day" photo behind the
               clock &mdash; not a stock wallpaper. The bar shows 3 pending high-priority tasks from
               Taskchampion, pulsing gently. Your Ollama model is warm at 6.2&nbsp;G VRAM; the bar
               knows before you do.
             </p>
-            <p style="font-style:italic; color:var(--text-muted);">
+            <p style="font-style: italic; color: var(--text-muted)">
               Mid-morning, the DNS-blocker count ticks past 2,000 ads blocked today &mdash; a tiny
               green badge. A SigNoz dot turns amber: a service is degraded. You click it, and a
               popup shows the failing endpoint without opening a browser. You fix it, the dot goes
               green, the bar settles.
             </p>
-            <p style="font-style:italic; color:var(--text-muted);">
+            <p style="font-style: italic; color: var(--text-muted)">
               You start a voice agent session. The bar lights up with a live waveform and real-time
-              transcription from Whisper. Minecraft players tick up to 4/20 in a subtle counter.
-              You press a key, the Mission Control OSD slides down &mdash; you switch to
-              power-saver, mute notifications (focus mode), and inhibit idle. The whole shell
-              dims slightly to acknowledge the change. One brain. One theme. No tools out of sync.
+              transcription from Whisper. Minecraft players tick up to 4/20 in a subtle counter. You
+              press a key, the Mission Control OSD slides down &mdash; you switch to power-saver,
+              mute notifications (focus mode), and inhibit idle. The whole shell dims slightly to
+              acknowledge the change. One brain. One theme. No tools out of sync.
             </p>
           </div>
         </section>
@@ -1863,11 +1904,11 @@
                 </td>
               </tr>
               <tr>
-                <td>DankMaterialShell</td>
+                <td>DankMaterialShell (AvengeMedia)</td>
                 <td>Med</td>
                 <td class="yes">Niri + Hyprland</td>
                 <td>High</td>
-                <td>Strong if you want modular + cross-compositor</td>
+                <td>Own Nix HM module + Go core + plugins (v1.4.4)</td>
               </tr>
               <tr>
                 <td>Custom from scratch</td>
@@ -1934,11 +1975,17 @@
         <!-- ============================ 09 ROADMAP ============================ -->
         <section id="roadmap">
           <h2><span class="num">09</span>Phased Roadmap</h2>
-          <p>A staged path that de-risks at every step and never leaves the desktop broken. Effort estimates assume one developer comfortable with Nix but new to QML.</p>
+          <p>
+            A staged path that de-risks at every step and never leaves the desktop broken. Effort
+            estimates assume one developer comfortable with Nix but new to QML.
+          </p>
           <div class="migration-step">
             <div class="migration-num">P0</div>
             <div class="migration-content">
-              <h4>Spike &mdash; prove the loop <span style="color:var(--text-faint); font-weight:400;">&middot; ~2h</span></h4>
+              <h4>
+                Spike &mdash; prove the loop
+                <span style="color: var(--text-faint); font-weight: 400">&middot; ~2h</span>
+              </h4>
               <p>
                 Add the flake input, run Quickshell with a 30-line bar that prints the clock and a
                 Niri workspace read via <code>niri msg</code>. Confirm hot-reload. Decide go/no-go
@@ -1949,7 +1996,12 @@
           <div class="migration-step">
             <div class="migration-num">P1</div>
             <div class="migration-content">
-              <h4>Adopt a base shell <span style="color:var(--text-faint); font-weight:400;">&middot; ~1 weekend (8&ndash;12h)</span></h4>
+              <h4>
+                Adopt a base shell
+                <span style="color: var(--text-faint); font-weight: 400"
+                  >&middot; ~1 weekend (8&ndash;12h)</span
+                >
+              </h4>
               <p>
                 Fork iNiR or DankMaterialShell into the repo, theme to Catppuccin Mocha, wire it as
                 an HM module. Run it <em>alongside</em> the existing Waybar/Dunst to compare. Keep
@@ -1960,7 +2012,12 @@
           <div class="migration-step">
             <div class="migration-num">P2</div>
             <div class="migration-content">
-              <h4>Cut over the easy wins <span style="color:var(--text-faint); font-weight:400;">&middot; ~1 week (5&ndash;10h)</span></h4>
+              <h4>
+                Cut over the easy wins
+                <span style="color: var(--text-faint); font-weight: 400"
+                  >&middot; ~1 week (5&ndash;10h)</span
+                >
+              </h4>
               <p>
                 Replace Dunst &rarr; NotificationServer, Wlogout &rarr; power overlay, polkit_gnome
                 &rarr; PolkitAgent, add the SystemTray. Remove the now-dead shell scripts from
@@ -1971,7 +2028,12 @@
           <div class="migration-step">
             <div class="migration-num">P3</div>
             <div class="migration-content">
-              <h4>The SystemNix-native layer <span style="color:var(--accent); font-weight:400;">&middot; the differentiator &middot; ~10&ndash;20h</span></h4>
+              <h4>
+                The SystemNix-native layer
+                <span style="color: var(--accent); font-weight: 400"
+                  >&middot; the differentiator &middot; ~10&ndash;20h</span
+                >
+              </h4>
               <p>
                 Build the Pillar D + Pillar E widgets: DNS stats, dual-WAN/failover, Gatus/SigNoz
                 health dots, BTRFS freshness, GPU/NPU, Ollama model status, Taskchampion radar,
@@ -1983,7 +2045,12 @@
           <div class="migration-step">
             <div class="migration-num">P4</div>
             <div class="migration-content">
-              <h4>Lock screen &amp; polish <span style="color:var(--text-faint); font-weight:400;">&middot; ~5&ndash;10h</span></h4>
+              <h4>
+                Lock screen &amp; polish
+                <span style="color: var(--text-faint); font-weight: 400"
+                  >&middot; ~5&ndash;10h</span
+                >
+              </h4>
               <p>
                 Build the <code>WlSessionLock</code>+PAM lock screen and Mission Control OSD. Add
                 dynamic wallpaper theming via <code>ColorQuantizer</code>. Retire Waybar entirely.
@@ -1993,7 +2060,12 @@
           <div class="migration-step">
             <div class="migration-num">P5</div>
             <div class="migration-content">
-              <h4>Optional: a greetd greeter <span style="color:var(--text-faint); font-weight:400;">&middot; stretch &middot; ~20h+</span></h4>
+              <h4>
+                Optional: a greetd greeter
+                <span style="color: var(--text-faint); font-weight: 400"
+                  >&middot; stretch &middot; ~20h+</span
+                >
+              </h4>
               <p>
                 Only once the in-session shell is proven &mdash; a custom display manager on greetd.
                 High effort, security-sensitive; treat as a stretch goal.
@@ -2004,22 +2076,57 @@
           <h3>Total estimated investment</h3>
           <table class="compare">
             <thead>
-              <tr><th>Phase</th><th>Delivers</th><th>Effort</th><th>Risk</th></tr>
+              <tr>
+                <th>Phase</th>
+                <th>Delivers</th>
+                <th>Effort</th>
+                <th>Risk</th>
+              </tr>
             </thead>
             <tbody>
-              <tr><td>P0 Spike</td><td>Go/no-go decision</td><td>~2h</td><td class="yes">Negligible</td></tr>
-              <tr><td>P1 Base shell</td><td>Working themed bar alongside old stack</td><td>~1 weekend</td><td class="yes">Low (parallel)</td></tr>
-              <tr><td>P2 Easy wins</td><td>Dunst, Wlogout, polkit, tray replaced</td><td>~1 week</td><td class="yes">Low</td></tr>
-              <tr><td class="yes">P3 Differentiator</td><td class="yes">SystemNix-native widgets &mdash; the unique part</td><td>~2 weekends</td><td>Medium</td></tr>
-              <tr><td>P4 Polish</td><td>Lock screen, OSD, dynamic theming, Waybar retired</td><td>~1 weekend</td><td>Medium</td></tr>
-              <tr><td class="no">P5 Greeter</td><td>Custom display manager</td><td>~20h+</td><td class="no">High (security)</td></tr>
+              <tr>
+                <td>P0 Spike</td>
+                <td>Go/no-go decision</td>
+                <td>~2h</td>
+                <td class="yes">Negligible</td>
+              </tr>
+              <tr>
+                <td>P1 Base shell</td>
+                <td>Working themed bar alongside old stack</td>
+                <td>~1 weekend</td>
+                <td class="yes">Low (parallel)</td>
+              </tr>
+              <tr>
+                <td>P2 Easy wins</td>
+                <td>Dunst, Wlogout, polkit, tray replaced</td>
+                <td>~1 week</td>
+                <td class="yes">Low</td>
+              </tr>
+              <tr>
+                <td class="yes">P3 Differentiator</td>
+                <td class="yes">SystemNix-native widgets &mdash; the unique part</td>
+                <td>~2 weekends</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td>P4 Polish</td>
+                <td>Lock screen, OSD, dynamic theming, Waybar retired</td>
+                <td>~1 weekend</td>
+                <td>Medium</td>
+              </tr>
+              <tr>
+                <td class="no">P5 Greeter</td>
+                <td>Custom display manager</td>
+                <td>~20h+</td>
+                <td class="no">High (security)</td>
+              </tr>
             </tbody>
           </table>
           <div class="callout callout-teal">
             <strong>The realistic minimum</strong>
-            P0&ndash;P2 (~2 weeks of evenings) delivers a better-than-Waybar experience with
-            proper notifications, tray, and auth. P3 is what makes it exceptional. Everything
-            after is optional polish.
+            P0&ndash;P2 (~2 weeks of evenings) delivers a better-than-Waybar experience with proper
+            notifications, tray, and auth. P3 is what makes it exceptional. Everything after is
+            optional polish.
           </div>
         </section>
         <section id="appendix">
@@ -2129,27 +2236,30 @@
           </table>
 
           <h3>Key references</h3>
-          <div class="dep-tree"><span class="root">quickshell.org</span>
-├── docs <span class="ok">/docs/v0.3.0/guide</span>
-├── types <span class="ok">/docs/v0.3.0/types</span>
-└── examples <span class="ok">git.outfoxxed.me/outfoxxed/quickshell-examples</span>
-<span class="root">niri integration</span>
-├── plugin <span class="ok">github.com/imiric/qml-niri</span>
-├── example configs <span class="ok">github.com/imiric/quickshell-niri</span>
-├── full shell <span class="ok">github.com/snowarch/iNiR</span>
-└── modular shell <span class="ok">github.com/DankModOS/DankMaterialShell</span>
-<span class="root">design references</span>
-├── caelestia <span class="ok">github.com/caelestia-dots/shell</span>
-└── illogical-impulse <span class="ok">github.com/end-4/dots-hyprland</span>
-<span class="root">SystemNix service surfaces</span>
-├── ollama <span class="ok">:11434/api/ps</span> &mdash; loaded models + VRAM
-├── taskchampion <span class="ok">:10222</span> &mdash; task counts
-├── immich <span class="ok">:2283</span> &mdash; photo memories
-├── minecraft <span class="ok">:25565</span> &mdash; player count
-├── twenty crm <span class="ok">:3200</span> &mdash; pipeline
-├── dnsblockd <span class="ok">:9090</span> &mdash; blocked-query stats
-├── gatus <span class="ok">:9110</span> &mdash; health endpoints
-└── whisper <span class="ok">:7860</span> + livekit <span class="ok">:7880</span> &mdash; voice agents</div>
+          <div class="dep-tree">
+            <span class="root">quickshell.org</span> ├── docs
+            <span class="ok">/docs/v0.3.0/guide</span> ├── types
+            <span class="ok">/docs/v0.3.0/types</span> └── examples
+            <span class="ok">git.outfoxxed.me/outfoxxed/quickshell-examples</span>
+            <span class="root">niri integration</span>
+            ├── plugin <span class="ok">github.com/imiric/qml-niri</span> ├── example configs
+            <span class="ok">github.com/imiric/quickshell-niri</span> ├── full shell
+            <span class="ok">github.com/snowarch/iNiR</span> └── modular shell
+            <span class="ok">github:AvengeMedia/DankMaterialShell</span>
+            <span class="root">design references</span>
+            ├── caelestia <span class="ok">github.com/caelestia-dots/shell</span> └──
+            illogical-impulse <span class="ok">github.com/end-4/dots-hyprland</span>
+            <span class="root">SystemNix service surfaces</span>
+            ├── ollama <span class="ok">:11434/api/ps</span> &mdash; loaded models + VRAM ├──
+            taskchampion <span class="ok">:10222</span> &mdash; task counts ├── immich
+            <span class="ok">:2283</span> &mdash; photo memories ├── minecraft
+            <span class="ok">:25565</span> &mdash; player count ├── twenty crm
+            <span class="ok">:3200</span> &mdash; pipeline ├── dnsblockd
+            <span class="ok">:9090</span> &mdash; blocked-query stats ├── gatus
+            <span class="ok">:9110</span> &mdash; health endpoints └── whisper
+            <span class="ok">:7860</span> + livekit <span class="ok">:7880</span> &mdash; voice
+            agents
+          </div>
 
           <h3>What this report deliberately did <em>not</em> do</h3>
           <p>
