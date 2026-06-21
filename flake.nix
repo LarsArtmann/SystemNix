@@ -488,37 +488,19 @@
     # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
     # via specialArgs (for environment.systemPackages).
     mkLarsPackages = system: let
-      mkTidy = vendorHash: old: {
-        inherit vendorHash;
-        proxyVendor = true;
-        preBuild = ''export HOME=$TMPDIR; go mod tidy'';
-        passthru =
-          (old.passthru or {})
-          // {
-            overrideModAttrs = _: {preBuild = ''export HOME=$TMPDIR; go mod tidy'';};
-          };
-      };
       flakePkg = input: (input.packages.${system} or {}).default or null;
-      withOverride = input: f: let
-        p = flakePkg input;
-      in
-        if p == null
-        then null
-        else p.overrideAttrs f;
     in
       lib.filterAttrs (_: v: v != null) {
-        art-dupl = withOverride inputs.art-dupl (_: {
-          vendorHash = "sha256-IcR8IPln7ZBB+QJP2MZKFMdr0204pgdH9IA/lIbrpjA=";
-        });
+        art-dupl = flakePkg inputs.art-dupl;
         branching-flow = flakePkg inputs.branching-flow;
         buildflow = flakePkg inputs.buildflow;
         go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
         go-structure-linter = flakePkg inputs.go-structure-linter;
         golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
         hierarchical-errors = flakePkg inputs.hierarchical-errors;
-        library-policy = withOverride inputs.library-policy (mkTidy "sha256-v0Ia3pkXJugfXzfP4UUzBBMKWn61LuUjsLq6xZHjog8=");
+        library-policy = flakePkg inputs.library-policy;
         md-go-validator = flakePkg inputs.md-go-validator;
-        mr-sync = withOverride inputs.mr-sync (mkTidy "sha256-IqE04potoexKr2LVAq643hjZs1Z5HOknY8giWOaxpoQ=");
+        mr-sync = flakePkg inputs.mr-sync;
         project-meta = flakePkg inputs.project-meta;
         projects-management-automation = flakePkg inputs.projects-management-automation;
         todo-list-ai = flakePkg inputs.todo-list-ai;

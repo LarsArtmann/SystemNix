@@ -1,0 +1,1992 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quickshell on NixOS — A SystemNix Vision &amp; Brainstorm</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+      /* Bauhaus color blocks */
+      .score-card:nth-child(1),
+      .stat-card:nth-child(1) {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .score-card:nth-child(2),
+      .stat-card:nth-child(2) {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-card:nth-child(3),
+      .stat-card:nth-child(3) {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-card:nth-child(4),
+      .stat-card:nth-child(4) {
+        background: var(--text);
+        color: var(--surface);
+      }
+      .score-card:nth-child(5),
+      .stat-card:nth-child(5) {
+        background: var(--surface-raised);
+      }
+      .score-card:nth-child(6),
+      .stat-card:nth-child(6) {
+        background: var(--surface-raised);
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* State classes override the nth-child coloring */
+      .score-good,
+      .stat-good {
+        background: var(--solution) !important;
+        color: var(--surface) !important;
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning) !important;
+        color: var(--text) !important;
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem) !important;
+        color: var(--surface) !important;
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, var(--surface-raised));
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 18%, var(--surface-raised));
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>Brainstorm &middot; Vision</span>
+      <span>2026-06-21</span>
+      <span>SystemNix &middot; evo-x2 (NixOS)</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#scorecard">At a Glance</a>
+          <a href="#summary">Summary &amp; Verdict</a>
+          <a href="#what-is">01 &middot; What Quickshell Is</a>
+          <a href="#current-state">02 &middot; Current State</a>
+          <a href="#replace">03 &middot; Replacement Matrix</a>
+          <a href="#build">04 &middot; What We Could Build</a>
+          <a href="#niri">05 &middot; The Niri Reality</a>
+          <a href="#nixos">06 &middot; NixOS Integration</a>
+          <a href="#build-vs-buy">07 &middot; Build vs Buy</a>
+          <a href="#risks">08 &middot; Risks &amp; Tradeoffs</a>
+          <a href="#roadmap">09 &middot; Phased Roadmap</a>
+          <a href="#appendix">Appendix</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- ============================ HERO ============================ -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">BRAINSTORM &middot; DESKTOP SHELL VISION &middot; 2026-06-21</div>
+          <h1>Quickshell on NixOS</h1>
+          <p class="subtitle">
+            What a QtQuick-native desktop shell could replace, what it could let us build, and how
+            it slots into the SystemNix flake. A grounded, opinionated look at collapsing ~9
+            separate shell tools into one hot-reloadable QML brain.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Target: evo-x2 / Niri</span>
+            <span class="tag">Quickshell v0.3.0</span>
+            <span class="tag teal">Status: proposal</span>
+          </div>
+        </header>
+
+        <!-- ============================ AT A GLANCE ============================ -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">9</div>
+            <div class="label">Shell tools Quickshell could fold in</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">18</div>
+            <div class="label">Built-in integrations to draw on</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">1</div>
+            <div class="label">Compositor gap (no native Niri module)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">&lt;1.0</div>
+            <div class="label">Maturity (breaking changes expected)</div>
+          </div>
+        </section>
+
+        <!-- ============================ SUMMARY ============================ -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary &amp; Verdict</h2>
+          <p>
+            Quickshell is a QtQuick toolkit for building the entire desktop shell &mdash; bars,
+            launchers, notifications, lock screens, OSD, even a display manager &mdash; in one
+            declarative QML configuration that hot-reloads on save. evo-x2 currently stitches
+            together <strong>nine separate tools</strong> (Waybar, Rofi, Dunst, Swaylock, Wlogout,
+            Swayidle, wl-clipboard/cliphist, SDDM, polkit_gnome) across
+            <strong>five different config languages</strong> (CSS+JSON, Rasi, libnotify KDL, KDL,
+            shell scripts). Quickshell could collapse most of that into a single, themable, reactive
+            QML codebase wired directly to SystemNix's own services.
+          </p>
+          <p>
+            The opportunity is large, the tooling is real, and the Nix story is clean. The honest
+            catch: Niri has no first-class Quickshell module, Quickshell is pre-1.0, and QML is a
+            real programming language &mdash; not a config format.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Worth pursuing &mdash; but via a hybrid path. Adopt an existing Niri-native Quickshell
+            shell (iNiR or DankMaterialShell) to validate the stack, then carve out a custom shell
+            that draws live data from <em>this</em> system's services (Gatus, SigNoz, DNS-blocker,
+            dual-WAN, GPU/NPU, BTRFS). That's what makes it exceptional rather than another dotfiles
+            clone.
+          </div>
+          <div class="callout callout-teal">
+            <strong>One action that unlocks the most value</strong>
+            Add the <code>quickshell</code> flake input and stand up a minimal bar that reads Niri
+            workspaces via the <code>qml-niri</code> plugin. Prove the hot-reload loop before
+            building anything ambitious.
+          </div>
+        </section>
+
+        <!-- ============================ 01 WHAT IS ============================ -->
+        <section id="what-is">
+          <h2><span class="num">01</span>What Quickshell Actually Is</h2>
+          <p>
+            Quickshell is <strong>not a status bar</strong>. It's a toolkit <em>for building</em>
+            status bars &mdash; and launchers, lockers, notifications, and greeters. It's based on
+            QtQuick and configured in QML. Crucially, configuring it is closer to writing an
+            application than editing a config file. That is both its power and its cost.
+          </p>
+
+          <h3>The superpowers</h3>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Hot reload on save</strong>
+                <span
+                  >Save a QML file and the shell updates instantly &mdash; no restart, no logout.
+                  Iterate as fast as you can type.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>One language, one brain</strong>
+                <span
+                  >The entire shell &mdash; bar, notifications, locker, launcher &mdash; lives in
+                  one reactive QML tree sharing state, theme, and IPC.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>An LSP for QML</strong>
+                <span
+                  ><code>qmlls</code> gives autocompletion, go-to-definition, and hover docs &mdash;
+                  including Quickshell's own types.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Wayland-native, not a hack</strong>
+                <span
+                  >First-class <code>wlr-layer-shell</code>, session lock, foreign-toplevel, and
+                  idle protocol support &mdash; not screensaver-window tricks.</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <h3>The integration surface</h3>
+          <p>
+            These ship in the box &mdash; no shell scripts, no polling daemons, no third-party glue
+            required to reach them from QML:
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Domain</th>
+                <th>Quickshell module</th>
+                <th>What it gives you</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Windows / layer-shell</td>
+                <td><code>Quickshell.Wayland</code></td>
+                <td>
+                  PanelWindow, session lock, idle inhibit/monitor, blur effects, toplevel list
+                </td>
+              </tr>
+              <tr>
+                <td>Audio</td>
+                <td><code>...Services.Pipewire</code></td>
+                <td>
+                  Node graphs, links, and <strong>per-node peak monitors</strong> (live VU meters)
+                </td>
+              </tr>
+              <tr>
+                <td>Media</td>
+                <td><code>...Services.Mpris</code></td>
+                <td>All MPRIS players &mdash; title, art, playback state, controls</td>
+              </tr>
+              <tr>
+                <td>Notifications</td>
+                <td><code>...Services.Notifications</code></td>
+                <td>
+                  A full notification <em>server</em> (replaces Dunst) with actions &amp; images
+                </td>
+              </tr>
+              <tr>
+                <td>System tray</td>
+                <td><code>...Services.SystemTray</code></td>
+                <td>StatusNotifierItem host (the thing Waybar can't reliably do)</td>
+              </tr>
+              <tr>
+                <td>Authentication</td>
+                <td><code>...Services.Pam</code></td>
+                <td>PAM auth flows &mdash; build your own lock screen that actually validates</td>
+              </tr>
+              <tr>
+                <td>Privilege</td>
+                <td><code>...Services.Polkit</code></td>
+                <td>A polkit agent (replaces polkit_gnome)</td>
+              </tr>
+              <tr>
+                <td>Power</td>
+                <td><code>...Services.UPower</code></td>
+                <td>Battery, charging, and <strong>power-profiles-daemon</strong> toggles</td>
+              </tr>
+              <tr>
+                <td>Networking</td>
+                <td><code>Quickshell.Networking</code></td>
+                <td>NetworkManager: Wi-Fi scan, wired, connectivity</td>
+              </tr>
+              <tr>
+                <td>Bluetooth</td>
+                <td><code>Quickshell.Bluetooth</code></td>
+                <td>BlueZ adapters &amp; devices</td>
+              </tr>
+              <tr>
+                <td>Login</td>
+                <td><code>...Services.Greetd</code></td>
+                <td>Build a display manager UI on top of greetd</td>
+              </tr>
+              <tr>
+                <td>Compositors</td>
+                <td><code>.Hyprland</code> / <code>.I3</code></td>
+                <td>
+                  Native IPC for workspaces &amp; windows (Hyprland, i3, Sway &mdash;
+                  <strong>not Niri</strong>)
+                </td>
+              </tr>
+              <tr>
+                <td>Processes &amp; IPC</td>
+                <td><code>Quickshell.Io</code></td>
+                <td>
+                  Spawn processes, read files, open sockets, serve IPC &mdash; the bridge to
+                  anything external
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            The single most important row is <code>Quickshell.Io</code>. It's the escape hatch that
+            lets a QML shell talk to <em>anything</em> &mdash; including Niri's IPC and every
+            SystemNix service. That is what makes a custom shell viable here.
+          </p>
+        </section>
+
+        <!-- ============================ 02 CURRENT STATE ============================ -->
+        <section id="current-state">
+          <h2><span class="num">02</span>Current State &mdash; What evo-x2 Runs Today</h2>
+          <p>
+            The desktop is Niri (scrollable-tiling Wayland compositor) wrapped in a chain of
+            specialist shell tools. Each has its own config language, its own theme, and its own way
+            of reaching system state. Today this works &mdash; but it's nine sources of truth and a
+            lot of shell-script glue in <code>waybar.nix</code>.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Role</th>
+                <th>Current tool</th>
+                <th>Configured via</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Compositor</td>
+                <td>Niri (niri-flake)</td>
+                <td>KDL in HM</td>
+                <td>Scrollable tiling; <code>niri msg</code> IPC + event stream</td>
+              </tr>
+              <tr>
+                <td>Status bar</td>
+                <td>Waybar</td>
+                <td>JSON + CSS</td>
+                <td>5 custom shell modules: camera, DNS stats, media, clipboard, weather</td>
+              </tr>
+              <tr>
+                <td>Launcher</td>
+                <td>Rofi</td>
+                <td>Rasi</td>
+                <td>drun + cliphist + emoji + calc + keybinds + notif history</td>
+              </tr>
+              <tr>
+                <td>Notifications</td>
+                <td>Dunst</td>
+                <td>libnotify config</td>
+                <td>History surfaced back through Rofi via <code>dunstctl</code></td>
+              </tr>
+              <tr>
+                <td>Screen lock</td>
+                <td>Swaylock</td>
+                <td>flags</td>
+                <td>Blur + Catppuccin; integrated with swayidle suspend</td>
+              </tr>
+              <tr>
+                <td>Idle / suspend</td>
+                <td>Swayidle</td>
+                <td>systemd user svc</td>
+                <td>12h timeout &rarr; suspend; before-sleep lock</td>
+              </tr>
+              <tr>
+                <td>Power menu</td>
+                <td>Wlogout</td>
+                <td>CSS</td>
+                <td>Catppuccin theme</td>
+              </tr>
+              <tr>
+                <td>Clipboard</td>
+                <td>wl-clipboard + cliphist + wl-clip-persist</td>
+                <td>systemd + Rofi menu</td>
+                <td>Three pieces to get persistent history + a picker</td>
+              </tr>
+              <tr>
+                <td>Display manager</td>
+                <td>SDDM (silentSDDM)</td>
+                <td>QML theme</td>
+                <td>Catppuccin-mocha; default session niri</td>
+              </tr>
+              <tr>
+                <td>Polkit agent</td>
+                <td>polkit_gnome</td>
+                <td>none</td>
+                <td>Only auth prompt; visually inconsistent with the rest</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>The hidden cost</strong>
+            Five config dialects, theme values duplicated across all of them, and the bar's "live
+            data" (camera, DNS, weather) is reimplemented as bespoke shell scripts. Every new widget
+            means another script and another JSON-shape to parse.
+          </div>
+        </section>
+
+        <!-- ============================ 03 REPLACE ============================ -->
+        <section id="replace">
+          <h2><span class="num">03</span>The Replacement Matrix</h2>
+          <p>
+            For each current tool: can Quickshell take over? Some are direct drops-in, some are
+            better <em>augmented</em> than replaced, and a few should stay as-is.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Current tool</th>
+                <th>Quickshell equivalent</th>
+                <th>Verdict</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Waybar</td>
+                <td><code>PanelWindow</code> + services</td>
+                <td class="yes">Replace</td>
+                <td>
+                  One reactive bar; live widgets instead of polled shell scripts; shared theme
+                </td>
+              </tr>
+              <tr>
+                <td>Dunst</td>
+                <td><code>NotificationServer</code></td>
+                <td class="yes">Replace</td>
+                <td>Built-in daemon with images, actions, inline replies, and a unified history</td>
+              </tr>
+              <tr>
+                <td>Wlogout</td>
+                <td><code>FloatingWindow</code> menu</td>
+                <td class="yes">Replace</td>
+                <td>A themed power overlay reusing the shell's theme &amp; animations</td>
+              </tr>
+              <tr>
+                <td>Swaylock</td>
+                <td><code>WlSessionLock</code> + <code>Pam</code></td>
+                <td class="yes">Replace</td>
+                <td>Wayland session lock with real PAM validation, media/clock widgets, blur</td>
+              </tr>
+              <tr>
+                <td>polkit_gnome</td>
+                <td><code>PolkitAgent</code></td>
+                <td class="yes">Replace</td>
+                <td>First-class, in-shell, consistently themed auth prompts</td>
+              </tr>
+              <tr>
+                <td>(no tray host)</td>
+                <td><code>SystemTray</code></td>
+                <td class="yes">Add</td>
+                <td>
+                  Waybar's SNI is unreliable; Quickshell ships a proper StatusNotifierItem host
+                </td>
+              </tr>
+              <tr>
+                <td>Rofi (drun)</td>
+                <td>Custom <code>FloatingWindow</code></td>
+                <td class="no">Augment</td>
+                <td>
+                  Buildable, but Rofi is fast, mature, and already integrated &mdash; keep until a
+                  custom launcher is clearly better
+                </td>
+              </tr>
+              <tr>
+                <td>Rofi (calc/emoji)</td>
+                <td>Custom runners</td>
+                <td class="no">Keep</td>
+                <td>rofi-calc / rofi-emoji are excellent and focused; low payoff to rebuild</td>
+              </tr>
+              <tr>
+                <td>cliphist + Rofi picker</td>
+                <td>Custom clipboard manager</td>
+                <td class="no">Augment</td>
+                <td>
+                  Keep cliphist as the store; build a richer QML picker with image previews on top
+                </td>
+              </tr>
+              <tr>
+                <td>Swayidle</td>
+                <td><code>IdleMonitor</code> + <code>IdleInhibitor</code></td>
+                <td class="no">Keep (mostly)</td>
+                <td>
+                  Swayidle owns system-level suspend/lock reliably; use Quickshell only for the UX
+                  (caffeine toggle, dim)
+                </td>
+              </tr>
+              <tr>
+                <td>SDDM (silentSDDM)</td>
+                <td>greetd + <code>Greetd</code> service</td>
+                <td class="no">Later / optional</td>
+                <td>
+                  A custom greeter is a big, security-sensitive project; only after the in-session
+                  shell is proven
+                </td>
+              </tr>
+              <tr>
+                <td>Niri</td>
+                <td>&mdash;</td>
+                <td class="no">Keep</td>
+                <td>Quickshell is a shell, not a compositor. Niri stays.</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Headline</strong>
+            Six clean replacements, one valuable addition (system tray), and a few tools to
+            <em>keep and integrate</em> rather than rebuild. That's a real consolidation &mdash; not
+            a rewrite-for-its-own-sake.
+          </div>
+        </section>
+
+        <!-- ============================ 04 BUILD ============================ -->
+        <section id="build">
+          <h2><span class="num">04</span>Everything Cool We Could Build</h2>
+          <p>
+            This is the creative core. The differentiator isn't "another pretty bar" &mdash; it's a
+            shell that reads live state from <em>this</em> system's own services and composes them
+            into one reactive surface. Grouped into five pillars.
+          </p>
+
+          <h3>Pillar A &mdash; A unified reactive bar</h3>
+          <p>
+            One <code>PanelWindow</code> that replaces Waybar and its five hand-rolled scripts.
+            Because Quickshell binds reactively, modules update the instant state changes &mdash; no
+            polling, no JSON parsing, no <code>exec</code> scripts.
+          </p>
+          <div class="grid-3">
+            <div class="card card-solution">
+              <strong>Niri workspaces &amp; columns</strong>
+              <p>
+                Live workspace strip + focused window title, fed by the qml-niri plugin or
+                <code>niri msg</code> event stream.
+              </p>
+            </div>
+            <div class="card card-solution">
+              <strong>Media with art</strong>
+              <p>
+                Now-playing title, cover art, and controls from the MPRIS service &mdash; replaces
+                <code>waybar-media</code>.
+              </p>
+            </div>
+            <div class="card card-solution">
+              <strong>Audio with live meters</strong>
+              <p>
+                Per-sink/source VU meters from Pipewire peak monitors &mdash; something Waybar
+                simply cannot do.
+              </p>
+            </div>
+            <div class="card card-solution">
+              <strong>Network &amp; connectivity</strong>
+              <p>
+                Wi-Fi SSID, signal, wired link state, and connectivity from NetworkManager &mdash;
+                plus a scan picker.
+              </p>
+            </div>
+            <div class="card card-solution">
+              <strong>Power &amp; profiles</strong>
+              <p>
+                Battery + a one-click power-profile switcher (performance / balanced / power-saver).
+              </p>
+            </div>
+            <div class="card card-solution">
+              <strong>System tray done right</strong>
+              <p>A real StatusNotifierItem host &mdash; the feature Waybar struggles with most.</p>
+            </div>
+          </div>
+
+          <h3>Pillar B &mdash; Mission Control (the OSD / quick-settings)</h3>
+          <p>
+            A <code>PopupWindow</code> &mdash; think GNOME's quick settings or a phone's control
+            center &mdash; that aggregates every toggle and slider in one animated panel: volume +
+            brightness sliders with live meters, Wi-Fi/Bluetooth pickers, power-profile radios, a
+            Do-Not-Disturb switch, a Caffeine (idle-inhibit) toggle, night-light, and the
+            now-playing widget with scrubbing. This is the surface that makes the shell feel like a
+            <em>desktop environment</em>, not a pile of tools.
+          </p>
+
+          <h3>Pillar C &mdash; Notifications, lock, and power &mdash; unified</h3>
+          <p>Replace three disjoint tools (Dunst, Swaylock, Wlogout) with one themed family:</p>
+          <div class="grid-2">
+            <div class="card">
+              <strong>Rich notification daemon</strong>
+              <p>
+                Banners with images, app icons, action buttons, and inline reply. A swipe-down
+                center shows grouped history &mdash; no more piping <code>dunstctl</code> through
+                Rofi.
+              </p>
+            </div>
+            <div class="card">
+              <strong>Session lock with a soul</strong>
+              <p>
+                <code>WlSessionLock</code> + PAM: a clock, the now-playing track, blur backdrop, and
+                proper authentication &mdash; themed identically to the bar.
+              </p>
+            </div>
+            <div class="card">
+              <strong>Power overlay</strong>
+              <p>
+                A <code>FloatingWindow</code> replacing Wlogout: lock / logout / reboot / shutdown /
+                suspend, with the same visual language everywhere.
+              </p>
+            </div>
+            <div class="card">
+              <strong>In-shell polkit</strong>
+              <p>
+                <code>PolkitAgent</code> prompts that match the desktop instead of a GTK island.
+              </p>
+            </div>
+          </div>
+
+          <h3>Pillar D &mdash; A SystemNix-native status layer</h3>
+          <p>
+            <em>This is the part that makes it exceptional, not generic.</em> SystemNix already runs
+            a fleet of services with HTTP/JSON surfaces. Quickshell's <code>Quickshell.Io</code>
+            can poll or stream them straight into widgets &mdash; turning the bar into a live ops
+            dashboard for the machine you're sitting at.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>SystemNix service</th>
+                <th>Surface</th>
+                <th>What the widget shows</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>DNS blocker (dnsblockd)</td>
+                <td>stats API :9090</td>
+                <td>
+                  Queries blocked today, % blocked &mdash; replaces
+                  <code>waybar-dns-stats</code> natively
+                </td>
+              </tr>
+              <tr>
+                <td>Dual-WAN / dns-failover</td>
+                <td>VRRP state</td>
+                <td>Active uplink + failover indicator so you see a link flip in real time</td>
+              </tr>
+              <tr>
+                <td>Gatus / SigNoz</td>
+                <td>HTTP endpoints</td>
+                <td>Service-health dots in the bar &mdash; red the moment something goes down</td>
+              </tr>
+              <tr>
+                <td>BTRFS snapshots</td>
+                <td><code>btrfs-verify</code> timer</td>
+                <td>Snapshot freshness badge &mdash; warn if snapshots are &gt;3 days stale</td>
+              </tr>
+              <tr>
+                <td>GPU / NPU (amdgpu, amd-npu)</td>
+                <td>sysfs / rocm</td>
+                <td>VRAM + NPU utilisation for AI workloads, next to CPU/RAM</td>
+              </tr>
+              <tr>
+                <td>emeet-pixyd camera</td>
+                <td>IPC</td>
+                <td>
+                  Camera status &amp; tracking state &mdash; replaces <code>waybar-camera</code>
+                </td>
+              </tr>
+              <tr>
+                <td>sops secrets</td>
+                <td>file presence</td>
+                <td>A subtle indicator if a guarded secret is missing for an enabled service</td>
+              </tr>
+              <tr>
+                <td>Homepage / Ollama / Forgejo</td>
+                <td>HTTP</td>
+                <td>Quick-launch tiles driven by the same config as the Homepage dashboard</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>The vision</strong>
+            A bar that doesn't just show the time and volume &mdash; it shows whether your failover
+            DNS is up, how many ads were blocked today, and if your last BTRFS snapshot is fresh. A
+            desktop shell that knows its own machine.
+          </div>
+
+          <h3>Pillar E &mdash; Delight &amp; polish</h3>
+          <div class="grid-3">
+            <div class="card card-warning">
+              <strong>Dynamic theming</strong>
+              <p>
+                <code>ColorQuantizer</code> extracts a palette from the current wallpaper and
+                recolours the whole shell &mdash; one source of truth tied to
+                <code>colorScheme.slug</code>.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Niri tile previews</strong>
+              <p>
+                Niri exposes column/tile geometry &mdash; render live mini-previews of windows in an
+                overview, a feature unique to scrollable tiling.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Blurred popup backdrops</strong>
+              <p>
+                <code>BackgroundEffect</code> gaussian blur behind launchers/menus &mdash; the
+                frosted-glass look without a separate compositor plugin.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Caffeine &amp; focus modes</strong>
+              <p>
+                <code>IdleInhibitor</code> as a one-tap toggle; a "focus" mode that mutes
+                notifications and pins a workspace.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Clipboard with previews</strong>
+              <p>
+                A QML picker over cliphist that renders image thumbnails &mdash; not just text
+                lines.
+              </p>
+            </div>
+            <div class="card card-warning">
+              <strong>Multi-monitor aware</strong>
+              <p>
+                <code>Variants</code> per-screen bars &mdash; different modules on the laptop panel
+                vs an external display.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================ 05 NIRI REALITY ============================ -->
+        <section id="niri">
+          <h2><span class="num">05</span>The Niri Reality &mdash; Be Honest About the Gap</h2>
+          <p>
+            Quickshell has native compositor modules for <strong>Hyprland</strong> and
+            <strong>i3/Sway</strong>. It does <strong>not</strong> have one for Niri, and Niri does
+            not implement the i3 IPC. This is the single most important technical constraint. But it
+            is <em>solved</em> &mdash; there are three viable paths.
+          </p>
+          <div class="issue issue-nice" id="path-plugin">
+            <span class="severity severity-nice">Recommended</span>
+            <h3>The qml-niri plugin</h3>
+            <div class="where">
+              github.com/imiric/qml-niri &middot; needs Quickshell &ge;0.3.0, Niri &ge;26.04
+            </div>
+            <p>
+              A QML plugin wrapping Niri's IPC into native Qt types: <code>WorkspaceModel</code>,
+              <code>WindowModel</code>, and <code>focusedWindow</code>. Its flake even ships a
+              Quickshell build with the plugin pre-loaded. The cleanest path to a native feel.
+            </p>
+          </div>
+          <div class="issue issue-important" id="path-socket">
+            <span class="severity severity-important">Most control</span>
+            <h3>Direct socket to <code>$NIRI_SOCKET</code></h3>
+            <div class="where">
+              github.com/snowarch/iNiR &middot; the approach full Niri shells use
+            </div>
+            <p>
+              Open a persistent connection to Niri's socket, send <code>"EventStream"</code>, and
+              parse newline-delimited JSON for workspace/window state. More code, but full access to
+              Niri-specific data like tile geometry (enables live previews).
+            </p>
+          </div>
+          <div class="issue issue-important" id="path-process">
+            <span class="severity severity-important">Fallback</span>
+            <h3><code>Quickshell.Io.Process</code> + <code>niri msg</code></h3>
+            <div class="where">e.g. <code>niri msg -j workspaces</code></div>
+            <p>
+              Spawn <code>niri msg</code> and parse JSON. Simple, but one-shot &mdash; you'd have to
+              poll or combine with the event stream for live updates. Fine for occasional queries,
+              not for a reactive bar.
+            </p>
+          </div>
+          <div class="callout callout-teal">
+            <strong>Good news</strong>
+            Window titles work out of the box via
+            <code>Quickshell.Wayland.ToplevelManager</code> (Niri supports
+            <code>wlr_foreign_toplevel</code>). And there are already complete Niri+Quickshell
+            shells to learn from &mdash; <strong>iNiR</strong> (bar, dock, overview, notifications,
+            lock, settings) and <strong>DankMaterialShell</strong>
+            (modular, supports Niri + Hyprland).
+          </div>
+        </section>
+
+        <!-- ============================ 06 NIXOS INTEGRATION ============================ -->
+        <section id="nixos">
+          <h2><span class="num">06</span>How It Slots Into the SystemNix Flake</h2>
+          <p>
+            The Nix story is clean and fits the existing flake-parts conventions almost exactly. No
+            new patterns required &mdash; just the standard "add an input, add a service module"
+            flow this repo already uses.
+          </p>
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>Add the flake input (with <code>follows</code>)</h4>
+              <p>
+                Track the upstream flake, and <strong>must</strong> follow nixpkgs so Qt versions
+                stay in lockstep &mdash; mismatched Qt causes crashes.
+              </p>
+              <pre><code><span class="tok-attr">quickshell</span> = {
+  <span class="tok-attr">url</span> = <span class="tok-string">"git+https://git.outfoxxed.me/outfoxxed/quickshell"</span>;
+  <span class="tok-comment"># MUST follow nixpkgs — mismatched Qt deps crash at runtime</span>
+  <span class="tok-attr">inputs</span>.<span class="tok-attr">nixpkgs</span>.<span class="tok-attr">follows</span> = <span class="tok-string">"nixpkgs"</span>;
+};</code></pre>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>Build the package, optional extra modules</h4>
+              <p>
+                Use <code>.withModules [&hellip;]</code> if the config needs the qml-niri plugin or
+                Qt5Compat (for gaussian blur); plain <code>.default</code> otherwise.
+              </p>
+              <pre><code><span class="tok-attr">qsPkg</span> = <span class="tok-attr">quickshell</span>.<span class="tok-attr">packages</span>.<span class="tok-builtin">${system}</span>.<span class="tok-attr">default</span>;<span class="tok-comment"># .withModules [ qml-niri ]</span></code></pre>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>Ship the QML config declaratively</h4>
+              <p>
+                Either vendor the QML under <code>modules/nixos/services/quickshell/</code> and
+                symlink, or write it into the store and launch via a systemd user service (the
+                established pattern for the existing HM tools).
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>Tie into existing single sources of truth</h4>
+              <p>
+                Theme from <code>theme.font.mono</code> / <code>colorScheme.slug</code> (Catppuccin
+                Mocha already declared). Derive any ports from <code>ports.*</code>. This keeps
+                AGENTS.md's "never hardcode" rules intact.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>Launch from Niri, not from the shell</h4>
+              <p>
+                Start via <code>spawn-at-startup "quickshell" "--config" &hellip;</code> in niri
+                config &mdash; keeping the compositor as the session owner, consistent with how
+                Waybar is started today.
+              </p>
+            </div>
+          </div>
+          <div class="callout callout-amber">
+            <strong>Where it lives</strong>
+            Most cleanly as a Home-Manager module under
+            <code>platforms/nixos/desktop/quickshell.nix</code> (next to <code>waybar.nix</code>),
+            enabled in <code>home.nix</code>. A flake-parts service module would only be needed if
+            it ever exposes system-level options or ports.
+          </div>
+          <div class="callout callout-teal">
+            <strong>Hot-reload dev loop &mdash; the killer workflow</strong>
+            During development, run <code>quickshell</code> against a config path outside the Nix
+            store (e.g. a git-tracked checkout). Edit QML &rarr; save &rarr; the shell updates
+            instantly. No <code>just switch</code>, no rebuild, no logout. This is the fastest UI
+            iteration loop this desktop has ever had.
+          </div>
+        </section>
+
+        <!-- ============================ 07 BUILD VS BUY ============================ -->
+        <section id="build-vs-buy">
+          <h2><span class="num">07</span>Build vs Buy &mdash; Don't Reinvent the Wheel First</h2>
+          <p>
+            The Quickshell community already ships complete, beautiful shells. Before writing
+            thousands of lines of QML, weigh the options. The recommendation is not "build from
+            zero" &mdash; it's "stand on a proven shell, then diverge where it matters."
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Option</th>
+                <th>Effort</th>
+                <th>Fit for Niri</th>
+                <th>Customisability</th>
+                <th>Verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Caelestia (soramane)</td>
+                <td>Low</td>
+                <td class="no">Hyprland-first</td>
+                <td>Medium</td>
+                <td>Reference for design, not a drop-in for Niri</td>
+              </tr>
+              <tr>
+                <td>Illogical-Impulse (end_4)</td>
+                <td>Low</td>
+                <td class="no">Hyprland-only</td>
+                <td>Medium</td>
+                <td>Same &mdash; the gold standard for visuals to learn from</td>
+              </tr>
+              <tr>
+                <td><strong>iNiR</strong> (snowarch)</td>
+                <td>Low&ndash;Med</td>
+                <td class="yes">Niri-native</td>
+                <td>High</td>
+                <td class="yes">
+                  <strong>Best starting point</strong> &mdash; full Niri shell on Quickshell
+                </td>
+              </tr>
+              <tr>
+                <td>DankMaterialShell</td>
+                <td>Med</td>
+                <td class="yes">Niri + Hyprland</td>
+                <td>High</td>
+                <td>Strong if you want modular + cross-compositor</td>
+              </tr>
+              <tr>
+                <td>Custom from scratch</td>
+                <td class="no">High</td>
+                <td class="yes">Full control</td>
+                <td class="yes">Max</td>
+                <td>Only after one of the above proves the stack</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Recommended path</strong>
+            Fork iNiR (or DankMaterialShell) as the base, theme it to Catppuccin Mocha, then add the
+            SystemNix-native status widgets (Pillar D) that no upstream shell has. You get a
+            polished shell on day one and the unique ops-dashboard features on top.
+          </div>
+        </section>
+
+        <!-- ============================ 08 RISKS ============================ -->
+        <section id="risks">
+          <h2><span class="num">08</span>Risks, Costs &amp; Tradeoffs</h2>
+          <div class="issue issue-critical" id="risk-pre10">
+            <span class="severity severity-critical">Real &middot; Must accept</span>
+            <h3>Pre-1.0 with promised breaking changes</h3>
+            <div class="where">Quickshell v0.3.0 &middot; migration guides promised before 1.0</div>
+            <p>
+              The toolkit explicitly states there will be breaking changes before 1.0. Pin a tag
+              (<code>?ref=</code>) rather than tracking master, and budget for occasional
+              migrations. Mitigate by keeping the old stack working in parallel during rollout.
+            </p>
+          </div>
+          <div class="issue issue-important" id="risk-qml">
+            <span class="severity severity-important">Real &middot; Skill cost</span>
+            <h3>QML is programming, not config</h3>
+            <div class="where">affects maintenance burden</div>
+            <p>
+              A custom shell is an application with state, bindings, and async IO. It's far more
+              powerful than Waybar's JSON, but also a real codebase to maintain. This is the core
+              tradeoff: capability vs surface area. Mitigate by starting from a community shell.
+            </p>
+          </div>
+          <div class="issue issue-important" id="risk-niri">
+            <span class="severity severity-important">Managed &middot; External dependency</span>
+            <h3>Niri integration depends on a third-party plugin</h3>
+            <div class="where">qml-niri &middot; not part of Quickshell core</div>
+            <p>
+              The cleanest Niri path rides on <code>qml-niri</code>, an independent project. If it
+              stalls, you fall back to the socket approach (which iNiR already proves works). Not a
+              blocker &mdash; but a dependency to track.
+            </p>
+          </div>
+          <div class="issue issue-nice" id="risk-darwin">
+            <span class="severity severity-nice">Non-issue &middot; NixOS-only</span>
+            <h3>Not relevant to Darwin</h3>
+            <div class="where">macOS is unaffected</div>
+            <p>
+              Quickshell is a Wayland/X11 shell tool. It belongs only on evo-x2. Darwin
+              (Lars-MacBook-Air) keeps its minimal HM setup untouched &mdash; no disk/perf impact on
+              the constrained laptop.
+            </p>
+          </div>
+        </section>
+
+        <!-- ============================ 09 ROADMAP ============================ -->
+        <section id="roadmap">
+          <h2><span class="num">09</span>Phased Roadmap</h2>
+          <p>A staged path that de-risks at every step and never leaves the desktop broken.</p>
+          <div class="migration-step">
+            <div class="migration-num">P0</div>
+            <div class="migration-content">
+              <h4>Spike &mdash; prove the loop (an evening)</h4>
+              <p>
+                Add the flake input, run Quickshell with a 30-line bar that prints the clock and a
+                Niri workspace read via <code>niri msg</code>. Confirm hot-reload. Decide go/no-go
+                based on the dev experience.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">P1</div>
+            <div class="migration-content">
+              <h4>Adopt a base shell (a weekend)</h4>
+              <p>
+                Fork iNiR or DankMaterialShell into the repo, theme to Catppuccin Mocha, wire it as
+                an HM module. Run it <em>alongside</em> the existing Waybar/Dunst to compare. Keep
+                Swaylock/Swayidle for now.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">P2</div>
+            <div class="migration-content">
+              <h4>Cut over the easy wins (a week)</h4>
+              <p>
+                Replace Dunst &rarr; NotificationServer, Wlogout &rarr; power overlay, polkit_gnome
+                &rarr; PolkitAgent, add the SystemTray. Remove the now-dead shell scripts from
+                <code>waybar.nix</code>.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">P3</div>
+            <div class="migration-content">
+              <h4>The SystemNix-native layer (the differentiator)</h4>
+              <p>
+                Build the Pillar D widgets: DNS stats, dual-WAN/failover, Gatus/SigNoz health dots,
+                BTRFS freshness, GPU/NPU. This is where the shell becomes unique to this machine.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">P4</div>
+            <div class="migration-content">
+              <h4>Lock screen &amp; polish</h4>
+              <p>
+                Build the <code>WlSessionLock</code>+PAM lock screen and Mission Control OSD. Add
+                dynamic wallpaper theming via <code>ColorQuantizer</code>. Retire Waybar entirely.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">P5</div>
+            <div class="migration-content">
+              <h4>Optional: a greetd greeter</h4>
+              <p>
+                Only once the in-session shell is proven &mdash; a custom display manager on greetd.
+                High effort, security-sensitive; treat as a stretch goal.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ============================ APPENDIX ============================ -->
+        <section id="appendix">
+          <h2><span class="num">&diams;</span>Appendix &mdash; References &amp; Priority Matrix</h2>
+          <h3>Priority matrix</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Effort</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Replace Waybar with reactive bar</td>
+                <td class="yes">High</td>
+                <td>Medium</td>
+                <td class="yes">P2&ndash;P3</td>
+              </tr>
+              <tr>
+                <td>Replace Dunst (notifications)</td>
+                <td class="yes">High</td>
+                <td>Low</td>
+                <td class="yes">P2</td>
+              </tr>
+              <tr>
+                <td>System tray (new capability)</td>
+                <td class="yes">High</td>
+                <td>Low</td>
+                <td class="yes">P2</td>
+              </tr>
+              <tr>
+                <td>SystemNix service widgets</td>
+                <td class="yes">High</td>
+                <td>Medium</td>
+                <td class="yes">P3</td>
+              </tr>
+              <tr>
+                <td>Mission Control OSD</td>
+                <td>Medium</td>
+                <td>Medium</td>
+                <td>P4</td>
+              </tr>
+              <tr>
+                <td>Lock screen + polkit</td>
+                <td>Medium</td>
+                <td>Medium</td>
+                <td>P4</td>
+              </tr>
+              <tr>
+                <td>Dynamic wallpaper theming</td>
+                <td>Low</td>
+                <td>Low</td>
+                <td>P4</td>
+              </tr>
+              <tr>
+                <td>Custom app launcher</td>
+                <td>Low</td>
+                <td>High</td>
+                <td class="no">Keep Rofi</td>
+              </tr>
+              <tr>
+                <td>greetd greeter (DM)</td>
+                <td>Low</td>
+                <td class="no">High</td>
+                <td class="no">P5/stretch</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Key references</h3>
+          <div class="dep-tree">
+            <span class="root">quickshell.org</span> ├── docs
+            <span class="ok">/docs/v0.3.0/guide</span> ├── types
+            <span class="ok">/docs/v0.3.0/types</span> └── examples
+            <span class="ok">git.outfoxxed.me/outfoxxed/quickshell-examples</span>
+            <span class="root">niri integration</span>
+            ├── plugin <span class="ok">github.com/imiric/qml-niri</span> ├── example configs
+            <span class="ok">github.com/imiric/quickshell-niri</span> ├── full shell
+            <span class="ok">github.com/snowarch/iNiR</span> └── modular shell
+            <span class="ok">github.com/DankModOS/DankMaterialShell</span>
+            <span class="root">design references</span>
+            ├── caelestia <span class="ok">github.com/caelestia-dots/shell</span> └──
+            illogical-impulse <span class="ok">github.com/end-4/dots-hyprland</span>
+          </div>
+
+          <h3>What this report deliberately did <em>not</em> do</h3>
+          <p>
+            It does not implement anything, change the flake, or touch live config. It is a grounded
+            vision to decide from. The P0 spike is the cheapest possible way to validate or
+            invalidate everything above.
+          </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Brainstorm &middot; 2026-06-21 &middot; SystemNix evo-x2 &middot; Verified against
+            Quickshell v0.3.0 docs, the qml-niri / iNiR / DankMaterialShell projects, and the
+            current SystemNix desktop configuration
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
