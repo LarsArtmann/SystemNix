@@ -356,7 +356,6 @@
         go-branded-id.follows = "go-branded-id";
         go-error-family.follows = "go-error-family";
         go-filewatcher.follows = "go-filewatcher";
-        cmdguard.follows = "cmdguard";
         gogenfilter.follows = "gogenfilter";
         branching-flow.follows = "branching-flow";
         project-meta.follows = "project-meta";
