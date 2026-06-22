@@ -51,7 +51,7 @@ nix flake check --no-build  # Validate configuration syntax
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── modules/nixos/services/     # 39 NixOS service modules (auto-discovered, ~37 enabled)
+├── modules/nixos/services/     # 39 NixOS service modules (auto-discovered, ~34 enabled)
 ├── pkgs/                        # 5 custom packages (jscpd, govalid, netwatch, openaudible, aw-watcher-utilization)
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
 ├── lib/                         # 8 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
@@ -174,7 +174,7 @@ Shared across macOS and NixOS via `platforms/common/programs/`:
 
 ## Flake Inputs
 
-52 inputs — key ones below:
+53 inputs — key ones below:
 
 | Input | Purpose |
 |-------|---------|

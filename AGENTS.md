@@ -157,13 +157,13 @@ Unconditional tiles (Pocket ID, Caddy, PostgreSQL, Redis, etc.) are always shown
 
 ### Hermes `extraDependencyGroups`
 
-Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, declare all needed extras in the overlay. Currently: `messaging`, `anthropic`, `firecrawl`, `edge-tts`, `fal`, `exa`. **Do NOT add blindly** — `voice` has complex native deps; `matrix` requires python-olm (Linux-only).
+Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, declare all needed extras in the overlay. Active extras: `messaging`, `anthropic`, `firecrawl`, `edge-tts`, `fal`, `exa`. **Do NOT add blindly** — `voice` has complex native deps; `matrix` requires python-olm (Linux-only).
 
 ### BTRFS Snapshots (evo-x2)
 
 - Root (`@` subvolume): daily via `btrbk`, auto-pruning (14d + 4w)
 - `/data`: NOT snapshotted — BTRFS toplevel (subvolid=5). To convert: create a subvolume, update fstab, reboot, rsync data
-- Pre-deploy snapshots: manual (`btrfs subvolume snapshot`) — no longer automated since justfile removal
+- Pre-deploy snapshots: manual only (`btrfs subvolume snapshot`) — there is no automated pre-deploy snapshot hook
 - Toplevel mount: `/mnt/btrfs-root` — automounts on access, idle 10min
 - Verify: daily timer `btrfs-verify-snapshots` alerts if snapshots >3 days stale
 
@@ -196,24 +196,23 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | awww-wallpaper ordering | `After=awww-daemon` creates cycle; use `graphical-session.target` |
 | Unbound `do-ip6 = false` | evo-x2 has no global IPv6; any new unbound instance needs this |
 | otel-tui Darwin | Never add — 40+ min builds + disk exhaustion |
-| Darwin disk | 229 GB, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
+| Darwin disk | 256 GB SSD, 90-95% full. `nix-collect-garbage` hangs; clear caches before builds |
 | `_module.args.<pkg> = null` | Linux-only packages: platform config sets null, module args use `pkg ? null` |
 | `mkLarsPackages` platform safety | Returns `null` for unavailable packages on a given system, `filterAttrs` removes them — Darwin eval won't break if a Go tool lacks `aarch64-darwin` |
 | `mkPreparedSource` auto-features | Auto-strips local `=> /home/...` replaces, auto-normalizes pseudo-versions, auto-generates `replace` directives |
 | `serviceModules` auto-discovery | flake.nix auto-discovers all `.nix` files in `modules/nixos/services/`. Helper files must use `_` prefix |
 | rpi3-dns overlays | Only `[NUR] ++ linuxOnlyOverlays` — no shared overlays |
-| SigNoz build time | Built from source (Go 1.25); takes significant time |
+| SigNoz build time | Built from source (Go 1.25) — takes significant build time |
 | `/data` BTRFS toplevel | Mounted without `subvol=` (subvolid=5) — cannot be snapshotted |
 | Docker services target | All Docker/container services use `multi-user.target` (NOT `graphical.target`) |
 | sops GPG key import | `gnupg.sshKeyPaths = []` prevents RSA key GPG import causing 2min+ initrd hang |
 | GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices |
-| OOM crash chain | Helium/Electron renderers grow unbounded in `user-1000.slice` → reclaim thrash → journald starved → sp5100-tco hardware WDT fires hard reset (60s). Journal cuts off abruptly mid-line with NO shutdown sequence. Fixed by `MemoryHigh=56G; MemoryMax=64G` on user slice + tightened oomd thresholds (50%/20s) + PSI early-warning Gatus alert |
+| OOM crash chain | Helium/Electron renderers grow unbounded in `user-1000.slice` → reclaim thrash → journald starved → sp5100-tco hardware WDT fires hard reset (60s). Journal cuts off abruptly mid-line with NO shutdown sequence. This is WHY `user-1000.slice` has `MemoryHigh=56G; MemoryMax=64G`, oomd is tuned to 50%/20s, and PSI early-warning alerts exist |
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
 | Pocket ID bootstrap | Declarative: `pocket-id-config.provision.enable = true` creates admin user + OIDC clients + avatar automatically. Only manual step: register passkey at `/setup`. Client secrets auto-generated and stored in `/var/lib/pocket-id/client-secrets/` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
 | Swap exhaustion | Stale LSP processes (gopls/vtsls/rust-analyzer) eating gigabytes of swap. Mitigated by `stale-lsp-cleanup` timer running every 5min, killing processes older than 5min |
-| Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |
-| Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3. `ai-stack.nix` restored in session 120 |
+| Orphan modules | `default-services.nix` is NOT orphaned — `default = true` auto-enables Docker. `dns-failover.nix` only used by rpi3 |
 | Dozzle module eval issue | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Use inline `virtualisation.oci-containers` in configuration.nix instead |
 | `onFailure` centralization | Always use `onFailure` from `lib/default.nix` — never hardcode `["notify-failure@%n.service"]`. Exported by `service-defaults.nix`, passed through `docker.nix` factory |
 | `dns-blocker-stats` port | Port 9090 (dnsblockd stats API), NOT 8083. 8083 is the Gatus web port. Both are in `lib/ports.nix` |
@@ -223,7 +222,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Port centralization | All ports must be in `lib/ports.nix`. If a service exposes a port option, its default should reference `ports.*` — never hardcode |
 | `art-dupl` vendorHash | Local override in `mkLarsPackages` (flake.nix) — upstream `fork` branch has stale `vendorHash`. When it breaks: set `vendorHash = ""`, build, paste `got:` hash |
 | `rocm` via lib | ROCm helper accessed via `libHelpers.rocm {inherit pkgs;}` — not direct file import |
-| `colorSchemeName` removed | Dead code — use `colorScheme.slug` instead |
+| `colorSchemeName` | Dead — use `colorScheme.slug` instead |
 | Boot GPU params | `amdgpuGttSize` / `ttmPagesLimit` in boot.nix are shared between `kernelParams` and `extraModprobeConfig` |
 | `auto-optimise-store` | In `common/nix-settings.nix`, NOT `networking.nix` |
 | `mkPreparedSource` v2 sub-modules | `subModules` handles `/v2` suffixes — include version in list entry (e.g. `"codec/v2"`), it's kept in module path but stripped from local dir |
@@ -233,23 +232,21 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `svcEnabled` helper | In `sops.nix`, use `svcEnabled "service-name"` instead of `config.services.X.enable` for cross-module safety (rpi3 doesn't import all modules). Defined as `name: (config.services.${name} or {}).enable or false` |
 | `locale.nix` | Shared timezone + locale in `platforms/common/locale.nix`. Never hardcode `time.timeZone` or `i18n.defaultLocale` in platform configs — import this instead |
 | `dns-failover.yaml` | Sops secret for VRRP auth password. Encrypted for evo-x2 only — rpi3 needs its age key added to `.sops.yaml` before deployment |
-| Pocket-ID SMTP | Now fully configurable via `cfg.smtp.host`, `cfg.smtp.port`, `cfg.smtp.user`, `cfg.smtp.from`, `cfg.smtp.skipSslVerify`. Never hardcode SMTP values |
+| Pocket-ID SMTP | Configurable via `cfg.smtp.host`, `cfg.smtp.port`, `cfg.smtp.user`, `cfg.smtp.from`, `cfg.smtp.skipSslVerify`. Never hardcode SMTP values |
 | Image registry | ALL container image references must go through `lib/images.nix` — never hardcode `image@sha256:...` in service modules. Add new images to the `images` attrset with `mkRef` |
 | `notify-failure@%n` wrapper | `%i` in `writeShellApplication` is NOT expanded — must pass `%i` as script argument from `ExecStart`. Template: `"${scriptBin}/bin/script %i"` |
 | `startLimitBurst` | Every service using `serviceDefaults {}` MUST set `startLimitBurst = 5; startLimitIntervalSec = 300;` to prevent infinite crash loops |
 | `amdgpu.gttsize` deprecated | Kernel 7.0+ uses `ttm.pages_limit` only. Remove from both `kernelParams` and `extraModprobeConfig` |
 | SigNoz JWT secret | Auto-generated at `${cfg.settings.queryService.dataDir}/jwt-secret` via wrapper script. Never store in sops — just needs to be persistent and random |
-| GPU crash forensics | WDT hard reset empties pstore. Journal corruption is expected. The `initrd-nixos-activation` 2m50s hang was caused by sops owner validation failure, not initrd itself |
 | SDK discovery daemon | PMA auto-commit service starts a project-discovery daemon at `/run/project-discovery/daemon.sock`. Overview probes for it via `sdk.WithDaemonProbe(daemon.ProbeDaemon)` — falls back to embedded pipeline if daemon not running. Socket mode `0o666` for cross-service access. PMA NixOS module sets `PROJECT_DISCOVERY_DAEMON_ADDR=unix:///run/project-discovery/daemon.sock` and needs `AF_UNIX` in `RestrictAddressFamilies` |
-| `enrichment/meta` | Sub-module in project-discovery-sdk — must be in `subModules` list in flake.nix when daemon/preset is imported. Was untracked in git causing Nix build failures |
+| `enrichment/meta` | Sub-module in project-discovery-sdk — must be in `subModules` list in flake.nix when daemon/preset is imported. Missing it causes Nix build failures |
 | `crush-daily` module `pkgs` | `pkgs` must be in the inner NixOS module scope (`{ config, lib, pkgs, ... }: `), NOT the outer flake-parts scope (`{ pkgs, ... }: `). The outer scope doesn't receive `pkgs` from NixOS |
-| `cmdguard` MustNewCommand | Restored in cmdguard v2.6+ as thin wrapper around `NewCommand` (which returns `(Command, error)`). Consumers using `MustNewCommand` compile fine |
+| `cmdguard` MustNewCommand | In cmdguard v2.6+, `MustNewCommand` is a thin wrapper around `NewCommand` (which returns `(Command, error)`). Consumers using `MustNewCommand` compile fine |
 | swayidle SSH gap | swayidle only tracks Wayland input events — SSH sessions are invisible to idle tracking. `ssh-suspend-guard.service` holds a `sleep` block inhibitor via `systemd-inhibit` while any SSH session (`sshd: user@...`) is active, preventing `systemctl suspend` from succeeding |
 | `user-1000.slice` MemoryMax | User-session processes (Helium/Electron, desktop AI tools) run OUTSIDE per-service MemoryMax limits. MUST set `MemoryHigh` + `MemoryMax` on `user-${uid}.slice` in `boot.nix`. Without this, runaway user processes exhaust all RAM → journald starved → WDT hard reset. Per-service MemoryMax only covers systemd services |
 | oomd `settings.OOM` tuning | NixOS defaults (60% pressure sustained 30s) are too lenient — by 60% PSI pressure the system is in deep thrash. Tuned to 50%/20s. Per-slice `ManagedOOMMemoryPressureLimit` defaults to 80% via `mkDefault` — override with plain values in `systemd.slices` |
 | `psi-metrics` collector | Textfile oneshot in `signoz.nix` that exports `/proc/pressure/memory` avg10 values + derived `node_psi_memory_alert` boolean. Gatus alerts via Discord when alert=1 (some>50% or full>10%). node-exporter's built-in `pressure` collector also exports cumulative PSI to SigNoz for dashboards |
 | WDT forensics | Journal ending abruptly mid-line with NO shutdown/poweroff sequence = hardware watchdog reset, NOT clean shutdown or kernel panic (panic would log + auto-reboot via `kernel.panic=30`). sp5100-tco fires after 60s of unresponsiveness. Empty pstore confirms WDT (panic/oops would populate pstore) |
-| Build commands (no justfile) | justfile was REMOVED — use `nix flake check --no-build` (validate), `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (quick eval), `nix run .#deploy` (deploy), `nix fmt` (format) |
 
 ---
 
@@ -288,6 +285,6 @@ Darwin IS actively used but heavily resource-constrained:
 |-----------|--------|
 | 256GB SSD, ~90%+ full | Must `nix-collect-garbage` before large builds, never add heavy packages |
 | 24GB RAM | Avoid memory-intensive builds (otel-tui takes 40+ min) |
-| No desktop config | Home Manager has 7 lines — no terminal, editor, theme parity with NixOS |
+| No desktop config | Home Manager is minimal — no terminal, editor, or theme parity with NixOS |
 
 **When adding packages for Darwin:** always check disk impact first. Prefer lightweight alternatives. Never add anything that builds from source for >10min.

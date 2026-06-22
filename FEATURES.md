@@ -33,7 +33,7 @@ _A brutally honest audit of every feature the project actually has._
 | Formatter (treefmt + alejandra) | ✅ | Via `treefmt-full-flake` |
 | Flake checks (statix, deadnix, eval) | ✅ | Per-system + Linux-specific |
 | Raspberry Pi 3 SD image build | 📋 | `nixosConfigurations.rpi3-dns` defined, hardware not provisioned |
-| Go overlay (perSystem) | ✅ | Removed — using nixpkgs Go 1.26.1 directly to preserve binary cache |
+| Go toolchain | ✅ | Uses nixpkgs Go directly (no custom overlay) — preserves binary cache |
 
 ### Three System Targets
 
@@ -76,7 +76,7 @@ _A brutally honest audit of every feature the project actually has._
 | Overview (project dashboard) | ✅ | `overview` flake input | Local project dashboard, git repo discovery, stats, activity, port 8083 |
 | Crush Daily (AI insights) | ✅ | `crush-daily.nix` | AI-powered development insights from Crush databases, port 8081, `daily.home.lan` |
 | OpenSEO (SEO suite) | ✅ | `openseo.nix` | Self-hosted SEO: rank tracking, keyword research, backlinks, port 3002, `seo.home.lan` |
-| Monitor365 (device monitoring) | ⚠️ | `monitor365.nix` | Agent + server dashboard, ActivityWatch integration — server was crash-looping, DB path fixed |
+| Monitor365 (device monitoring) | ⚠️ | `monitor365.nix` | Agent + server dashboard, ActivityWatch integration — server stability uncertain after DB path fix, needs `systemctl reset-failed` |
 | PMA (auto-commit daemon) | ✅ | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval |
 | Gatus (health checks) | ✅ | `gatus-config.nix` | 38 health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |
 | Disk Monitor | ✅ | `disk-monitor.nix` | Desktop notifications at disk usage thresholds |
@@ -337,7 +337,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | iTerm2 | ✅ | Default terminal (`TERMINAL=iTerm2`) |
 | Google Chrome | ✅ | Secondary browser with enterprise policies |
 | JetBrains IDEA | ✅ | Full IDE |
-| Go toolchain | ✅ | Uses nixpkgs default Go (1.26.1) — overlay removed to preserve binary cache |
+| Go toolchain | ✅ | Uses nixpkgs Go (1.26.x) directly — no custom overlay, preserves binary cache |
 
 ---
 
@@ -405,7 +405,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Area | Issue | Severity |
 |------|-------|----------|
 | Raspberry Pi 3 | Hardware not provisioned — entire DNS failover cluster is planned-only | High |
-| PhotoMap AI | Disabled in configuration, port 8051 (was 8050 conflict) | Medium |
+| PhotoMap AI | Disabled in configuration, port 8051 | Medium |
 | Multi-WM (Sway) | Enabled as backup compositor at SDDM login — may have minor bitrot | Low |
 | Twenty CRM | Module exists, enabled in configuration, Caddy at crm.home.lan | Low |
 | Voice agents | Disabled in configuration, Whisper Docker + ROCm pipeline | Medium |
@@ -414,9 +414,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Auditd | Disabled due to NixOS 26.05 bug #483085 | Medium |
 | AppArmor | Explicitly disabled (`mkDefault false`) in security-hardening | Medium |
 | DNS-over-QUIC | Overlay disabled — breaks binary cache (40+ min builds) | Low |
-| go-overlay (perSystem) | Removed to preserve binary cache — correct tradeoff | N/A |
-
----
+| Go toolchain | Uses nixpkgs Go directly (no custom overlay) — preserves binary cache | N/A |
 
 ---
 
@@ -468,7 +466,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 |---------|---------|-----------------|
 | flake-parts | Modular flake architecture | Standard pattern for complex Nix flakes, enables dendritic modules |
 | sops-nix | Secrets management | Battle-tested, age/GPG/SSH key support, systemd integration |
-| nix-colors (migrated to local) | Declarative color schemes | Was Base16 via flake input, now defined locally in `platforms/common/theme.nix` — drives all apps from single source of truth |
+| nix-colors (local) | Declarative color schemes | Defined locally in `platforms/common/theme.nix` — drives all apps from single source of truth |
 | home-manager | User-level config | Cross-platform, NixOS module integration, declarative dotfiles |
 | nix-homebrew | Homebrew management | Declarative taps/casks, auto-migrate, pinned inputs |
 | niri-flake | Wayland compositor | Wraps niri for NixOS, overlay + module + wrapper-modules pattern |

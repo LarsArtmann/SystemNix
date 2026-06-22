@@ -2,7 +2,7 @@
 
 All notable changes to SystemNix are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/).
 
-Given the project's history (2900+ commits), this changelog focuses on significant user-facing and architectural changes. For exhaustive detail, see `git log` and `docs/status/`.
+Given the project's history (2,927 commits), this changelog focuses on significant user-facing and architectural changes. For exhaustive detail, see `git log` and `docs/status/`.
 
 ---
 
@@ -12,10 +12,12 @@ Given the project's history (2900+ commits), this changelog focuses on significa
 - **ssh-suspend-guard** — holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active, preventing idle suspend during remote work
 - **PSI memory pressure metrics** — textfile collector in SigNoz exports `/proc/pressure/memory` avg10 values + derived alert boolean, with Gatus Discord alerting
 - **md-go-validator** — added to both NixOS and macOS desktops
+- **USB printing support** — added to NixOS hardware configuration
 
 ### Changed
-- **OOM strategy overhaul** — replaced earlyoom with systemd-oomd (PSI-based), tuned thresholds (50%/20s), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to prevent runaway user processes from starving journald → WDT hard reset
+- **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
+- **goreleaser** added to Linux base packages
 
 ### Removed
 - **justfile** — removed in favor of direct Nix flake commands (`nix run .#deploy`, `nix flake check --no-build`, `nix fmt`). All recipes replaced by flake apps and `scripts/` shell scripts
