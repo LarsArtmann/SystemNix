@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   lib,
   ...
@@ -162,6 +163,38 @@ in {
       enableRootSlice = true;
       enableSystemSlice = true;
       enableUserSlices = true;
+      # Tighter than NixOS defaults (60% pressure sustained 30s) but tuned for AI/ML:
+      # model loads (Ollama 32G) and nix builds cause transient pressure spikes that
+      # resolve in seconds. 50% sustained 20s catches the slow-leak thrash scenario
+      # (2026-06-19: Helium grew unbounded for 66h) without killing model loads.
+      settings.OOM = {
+        SwapUsedLimit = "90%";
+        DefaultMemoryPressureLimit = "50%";
+        DefaultMemoryPressureDurationSec = "20s";
+      };
+    };
+
+    # ── Per-slice pressure limits: override NixOS module's mkDefault 80% ──
+    # The oomd module defaults ManagedOOMMemoryPressureLimit to 80% on each enabled
+    # slice. Tighten to 50% to match the global DefaultMemoryPressureLimit above.
+    slices = {
+      "-".sliceConfig.ManagedOOMMemoryPressureLimit = "50%";
+      "system".sliceConfig.ManagedOOMMemoryPressureLimit = "50%";
+      "user".sliceConfig.ManagedOOMMemoryPressureLimit = "50%";
+
+      # Hard ceiling on the primary user session — catches runaway allocations from
+      # non-systemd processes (Helium/Electron renderers, desktop AI tools) that run
+      # outside per-service MemoryMax limits.
+      # MemoryHigh=56G throttles gradually (kernel increases reclaim pressure);
+      # MemoryMax=64G is the hard kill. Leaves ~29G for system services + kernel.
+      # Root cause of the 2026-06-19 crash: Helium renderers grew unbounded for 66h
+      # → reclaim thrash → journald starved → sp5100-tco WDT hard reset.
+      "user-${toString config.users.users.lars.uid}" = {
+        sliceConfig = {
+          MemoryHigh = "56G";
+          MemoryMax = "64G";
+        };
+      };
     };
   };
 

@@ -141,6 +141,7 @@ _: {
                 in "${healthMetricsScript}/bin/niri-health-metrics";
               }
               // harden {
+                MemoryMax = "1G";
                 ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
               };
           };

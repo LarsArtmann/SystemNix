@@ -286,6 +286,17 @@ _: {
                 alerts = discordAlert "Swap metrics not being collected — swap alerting disabled";
               })
               (mkHttpCheck {
+                name = "Memory Pressure";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "30s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_psi_memory_alert 0*)"
+                ];
+                alerts = discordAlert "Memory pressure CRITICAL — PSI some>50% or full>10%. Risk of OOM cascade. Check Helium/Electron processes.";
+              })
+              (mkHttpCheck {
                 name = "Crush Daily";
                 group = "AI";
                 url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
