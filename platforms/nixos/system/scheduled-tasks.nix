@@ -80,6 +80,16 @@ in {
         };
         wantedBy = ["timers.target"];
       };
+
+      nix-build-cleanup = {
+        description = "Daily cleanup of orphaned Nix build sandboxes in /nix/var/nix/builds";
+        timerConfig = {
+          OnCalendar = "daily";
+          Persistent = true;
+          RandomizedDelaySec = "30m";
+        };
+        wantedBy = ["timers.target"];
+      };
     };
 
     services = {
@@ -401,6 +411,44 @@ in {
                 '';
               };
             in "${lspCleanup}/bin/stale-lsp-cleanup";
+            StandardOutput = "journal";
+            StandardError = "journal";
+          };
+      };
+
+      nix-build-cleanup = {
+        description = "Remove orphaned Nix build sandboxes older than 1 hour";
+        inherit onFailure;
+        serviceConfig =
+          harden {
+            MemoryMax = "128M";
+            ProtectHome = true;
+            ReadWritePaths = ["/nix/var/nix/builds"];
+          }
+          // {
+            Type = "oneshot";
+            ExecStart = let
+              buildCleanup = pkgs.writeShellApplication {
+                name = "nix-build-cleanup";
+                runtimeInputs = [pkgs.findutils pkgs.coreutils];
+                text = ''
+                  BUILD_DIR="/nix/var/nix/builds"
+                  [ -d "$BUILD_DIR" ] || exit 0
+
+                  before_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || echo 0)
+
+                  # Remove sandboxes untouched for >1h (active builds constantly write)
+                  find "$BUILD_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 -exec rm -rf {} +
+
+                  after_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || echo 0)
+                  freed_kb=$((before_kb - after_kb))
+                  freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
+
+                  orphan_count=$(find "$BUILD_DIR" -maxdepth 1 -type d -name 'nix-*' 2>/dev/null | wc -l)
+                  echo "Cleaned orphaned build sandboxes — freed $freed_human, $orphan_count remaining"
+                '';
+              };
+            in "${buildCleanup}/bin/nix-build-cleanup";
             StandardOutput = "journal";
             StandardError = "journal";
           };

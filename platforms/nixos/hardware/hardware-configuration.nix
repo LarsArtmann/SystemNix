@@ -40,11 +40,15 @@
       fsType = "vfat";
       options = ["fmask=0077" "dmask=0077"];
     };
+    "/rust-cache" = {
+      device = "/dev/disk/by-partlabel/rust-cache";
+      fsType = "ext4";
+      options = ["noatime" "discard=async"];
+    };
   };
 
-  swapDevices = [
-    {device = "/dev/disk/by-uuid/4fe73a15-9f7b-4406-b133-756bb0b11037";}
-  ];
+  # Disk swap dropped — zramSwap (10% of 64G = ~6.4G compressed) is sufficient.
+  # Freed 10G from p2. See boot.nix for zramSwap config.
 
   # Enables DHCP on each ethernet and wireless interface. In case of scripted networking
   # (the default) this is the recommended approach. When using systemd-networkd it's

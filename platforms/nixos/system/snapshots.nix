@@ -32,6 +32,19 @@
       };
     })
     cacheSubvolumes;
+
+  # Rust projects whose target/ dirs should live on ext4 (/rust-cache)
+  # instead of BTRFS — avoids COW fragmentation from 85K+ small files
+  # and keeps them out of btrbk snapshots.
+  rustCacheProjects = ["monitor365"];
+
+  rustCacheDirs = builtins.map
+    (p: "d /rust-cache/${p} 0755 ${primaryUser} users -")
+    rustCacheProjects;
+
+  rustCacheLinks = builtins.map
+    (p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}")
+    rustCacheProjects;
 in {
   fileSystems =
     {
@@ -42,6 +55,8 @@ in {
       };
     }
     // cacheFileSystems;
+
+  systemd.tmpfiles.rules = rustCacheDirs ++ rustCacheLinks;
 
   services.btrbk.instances."root" = {
     onCalendar = "daily";
