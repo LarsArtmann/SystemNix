@@ -193,7 +193,7 @@ in {
       multi-wm.enable = true;
       browser-policies.enable = true;
       steam-config.enable = true;
-      discordsync.enable = true;
+      discordsync.enable = false; # TODO: migrate from deleted projection/v2 to watermill.CatchUpSubscriber + stack.Materialize (ADR-0030)
 
       # Manifest — Smart LLM router for AI agents (cost optimization)
       manifest = {
