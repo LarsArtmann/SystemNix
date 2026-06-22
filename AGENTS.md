@@ -11,7 +11,6 @@
 ```
 SystemNix/
 ├── flake.nix                    # Entry point (flake-parts)
-├── justfile                     # Task runner
 ├── overlays/                    # Shared + Linux-only overlays
 │   ├── default.nix              # Aggregator (sharedOverlays, linuxOnlyOverlays, disableTests)
 │   ├── shared.nix               # Darwin + NixOS overlays
@@ -163,8 +162,8 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 ### BTRFS Snapshots (evo-x2)
 
 - Root (`@` subvolume): daily via `btrbk`, auto-pruning (14d + 4w)
-- `/data`: NOT snapshotted — BTRFS toplevel (subvolid=5). Run `just snapshot-migrate-data` to convert
-- Pre-deploy: `nix run .#deploy` auto-calls BTRFS snapshot
+- `/data`: NOT snapshotted — BTRFS toplevel (subvolid=5). To convert: create a subvolume, update fstab, reboot, rsync data
+- Pre-deploy snapshots: manual (`btrfs subvolume snapshot`) — no longer automated since justfile removal
 - Toplevel mount: `/mnt/btrfs-root` — automounts on access, idle 10min
 - Verify: daily timer `btrfs-verify-snapshots` alerts if snapshots >3 days stale
 
@@ -210,7 +209,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices |
 | OOM crash chain | Helium/Electron renderers grow unbounded in `user-1000.slice` → reclaim thrash → journald starved → sp5100-tco hardware WDT fires hard reset (60s). Journal cuts off abruptly mid-line with NO shutdown sequence. Fixed by `MemoryHigh=56G; MemoryMax=64G` on user slice + tightened oomd thresholds (50%/20s) + PSI early-warning Gatus alert |
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
-| Pocket ID bootstrap | Declarative: `pocket-id-config.provision.enable = true` creates admin user + OIDC clients + avatar automatically. Only manual step: register passkey at `/setup`. Client secrets auto-generated and stored in `/var/lib/pocket-id/client-secrets/`. See `just auth-bootstrap` |
+| Pocket ID bootstrap | Declarative: `pocket-id-config.provision.enable = true` creates admin user + OIDC clients + avatar automatically. Only manual step: register passkey at `/setup`. Client secrets auto-generated and stored in `/var/lib/pocket-id/client-secrets/` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
 | Swap exhaustion | Stale LSP processes (gopls/vtsls/rust-analyzer) eating gigabytes of swap. Mitigated by `stale-lsp-cleanup` timer running every 5min, killing processes older than 5min |
 | Port 8050 resolved | Photomap reassigned to 8051. Port 8050 no longer conflicted with dns-blocker-block |
@@ -263,8 +262,6 @@ nix run .#deploy            # Deploy to evo-x2 via nh
 nix fmt                     # treefmt + alejandra
 nix flake update            # Update flake inputs
 ```
-
-Run `just` for the complete recipe list.
 
 ---
 

@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-15 (session 139)
+**Updated:** 2026-06-22 (session 144)
 
 ---
 
@@ -25,14 +25,14 @@
 
 ### Priority 3: Infrastructure
 
-- [ ] **BTRFS `/data` subvolume migration** — `just snapshot-migrate-data`. Currently toplevel (subvolid=5), no snapshot protection for Docker/Immich/AI data
+- [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), no snapshot protection for Docker/Immich/AI data. Manual: create subvolume, update fstab, reboot, rsync data
 - [ ] **Swap investigation** — 8 GiB swap used on 128 GiB RAM. Run `smem -t -k | tail -20` and `swapoff -a && swapon -a`
 
 ### Priority 4: Documentation
 
 - [ ] **Archive old status reports** — move pre-session-100 from `docs/status/` to `docs/status/archive/` (178 → ~30 files)
-- [ ] **Create ROADMAP.md** — consolidate `docs/planning/` into single living doc
-- [ ] **Create CHANGELOG.md** — 185+ commits with no changelog
+- [x] **Create ROADMAP.md** — created with 6 themes: Reliability, Security, Desktop, Architecture, Upstream, AI/ML + deferred ideas
+- [x] **Create CHANGELOG.md** — created from git history, covers 2025-07 through 2026-06 with Keep a Changelog format
 
 ### Priority 5: Upstream Contributions
 

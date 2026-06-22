@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-06-15 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-06-22 | **Scope:** Full codebase scan
 
 ---
 
@@ -67,7 +67,7 @@ _A brutally honest audit of every feature the project actually has._
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha, programmatic `mkGroup`/`mkService` tiles, 5 categories, `ALLOWED_HOSTS`, cache dir, conditional tiles per service |
 | Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
 | PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, port 8051, disabled in config |
-| SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 18 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning |
+| SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 19 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |
 | Twenty CRM | ✅ | `twenty.nix` | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan |
 | Dozzle (Docker log viewer) | ✅ | inline `configuration.nix` | OCI container, `logs.home.lan`, Docker socket mount, 300-line tail, running-only filter |
@@ -78,10 +78,10 @@ _A brutally honest audit of every feature the project actually has._
 | OpenSEO (SEO suite) | ✅ | `openseo.nix` | Self-hosted SEO: rank tracking, keyword research, backlinks, port 3002, `seo.home.lan` |
 | Monitor365 (device monitoring) | ⚠️ | `monitor365.nix` | Agent + server dashboard, ActivityWatch integration — server was crash-looping, DB path fixed |
 | PMA (auto-commit daemon) | ✅ | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval |
-| Gatus (health checks) | ✅ | `gatus-config.nix` | 33 health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |
+| Gatus (health checks) | ✅ | `gatus-config.nix` | 38 health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |
 | Disk Monitor | ✅ | `disk-monitor.nix` | Desktop notifications at disk usage thresholds |
 | NVMe Health Monitor | ✅ | `nvme-health-monitor.nix` | Desktop notifications for critical NVMe SMART events |
-| DiscordSync | ✅ | `discordsync.nix` | Continuous Discord channel backup bot, sops-managed token |
+| DiscordSync | 🔧 | `discordsync.nix` | Continuous Discord channel backup bot — **disabled** (needs migration from deleted projection/v2 to watermill.CatchUpSubscriber + stack.Materialize) |
 
 ### AI / ML Stack
 
@@ -107,7 +107,6 @@ _A brutally honest audit of every feature the project actually has._
 | Steam gaming | ✅ | `steam.nix` | extest, protontricks, gamemode (renice=10, GPU temp 80°C), gamescope, mangohud |
 | Multi-WM (Sway backup) | ✅ | `multi-wm.nix` | Sway as backup at SDDM login — enabled in config |
 | File & Image Renamer (AI) | ⚠️ | `file-and-image-renamer.nix` | AI screenshot renaming via charm.land/fantasy — re-enabled in config (Go 1.26.3 now available), pending deploy |
-| Monitor365 | ⚠️ | `monitor365.nix` | Device monitoring agent + server dashboard, ActivityWatch integration — server DB path broken, crash-looping |
 
 ### Monitoring
 
@@ -200,6 +199,7 @@ _A brutally honest audit of every feature the project actually has._
 | Kitty (terminal) | ✅ | Font size 16 (TV-friendly), 85% opacity, Catppuccin Mocha, Nix GC resilience patch |
 | Foot (terminal) | ✅ | Lightweight Wayland alt, JetBrainsMono size 12, 95% opacity |
 | Swayidle | ✅ | 12hr idle → suspend, lock before sleep |
+| SSH suspend guard | ✅ | Holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active — prevents suspend during remote work |
 | Cliphist (clipboard) | ✅ | Wayland clipboard history via wl-paste watcher, rofi integration (Alt+C) |
 | Awww (wallpaper daemon) | ✅ | Random wallpaper on startup (Mod+W), systemd user service |
 
@@ -217,7 +217,7 @@ _A brutally honest audit of every feature the project actually has._
 | BTRFS root (`/`) | ✅ | zstd compression, noatime |
 | BTRFS data (`/data`) | ✅ | zstd:3 compression, SSD optimizations, async discard, space_cache=v2 — Docker lives here |
 | FAT32 boot (`/boot`) | ✅ | Restrictive masks (fmask=0077, dmask=0077) |
-| BTRFS snapshots | ✅ | btrbk: daily snapshots of root (@), 14d + 4w retention, pre-deploy snapshots via `just switch`, monthly scrub, verify timer alerts stale snapshots |
+| BTRFS snapshots | ✅ | btrbk: daily snapshots of root (@), 14d + 4w retention, monthly scrub, verify timer alerts stale snapshots |
 | ZRAM swap | ✅ | 50% of RAM (64GB compressed) |
 | AMD virtualization | ✅ | KVM-AMD + AMD microcode updates |
 
@@ -251,7 +251,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Firewall | ✅ | TCP 22,53,80,443; UDP 53,853 |
 | Centralized network config | ✅ | `local-network.nix` module options — lanIP, gateway, subnet, blockIP, virtualIP, piIP |
 | Local DNS records | ✅ | auth/immich/forgejo/dash/signoz/tasks/crm/manifest/status/seo/daily/logs/monitor → `*.home.lan` |
-| Mullvad VPN | ✅ | WireGuard daemon, LAN bypass, route-based split tunneling, DNS stays on local unbound |
+| Mullvad VPN | 🔧 | WireGuard VPN — **disabled** (talpid_dns corrupted `/etc/resolv.conf`). Config kept for future re-enablement |
 | Dual-WAN (MPTCP) | ✅ | MPTCP dual-WAN with route health monitoring, automatic failover |
 | SSH banner | ✅ | Legal warning banner on SSH login |
 | Private cloud cluster | ✅ | 4 Hetzner servers (`private-cloud-hetzner-0` through `-3`) defined in SSH config |
@@ -260,7 +260,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| earlyoom | ✅ | Kills at 10% free, protects sshd/journald/niri/waybar/pipewire, prefers ollama/python/chrome/node |
+| systemd-oomd | ✅ | PSI-based OOM killer (replaces earlyoom). Tuned: 50%/20s pressure threshold, per-slice limits, `user-1000.slice` MemoryHigh=56G/MemoryMax=64G |
 | OOM protection | ✅ | sshd (-1000), journald (-500), waybar (-500), pipewire (-500) |
 | Systemd watchdog (sd_notify only) | ✅ | Caddy, Forgejo — correctly limited to Type=notify services |
 | Service failure notifications | ✅ | `notify-failure@` template — desktop + syslog fallback |
@@ -387,28 +387,16 @@ The DNS blocker is one of the largest custom features in the project — a full 
 
 ---
 
-## 9. Task Runner (Justfile)
+## 9. Nix Flake Commands
+
+The justfile was **removed** in favor of direct Nix flake commands. Scripts are run directly from `scripts/`.
 
 | Category | Commands | Status |
 |----------|----------|--------|
-| Core | `setup`, `switch`, `update`, `update-nix`, `test`, `test-fast`, `format`, `validate`, `rollback`, `health`, `check`, `status` | ✅ |
-| Quality | `hash-check`, `test-hashes`, `test-aliases`, `test-exec-paths`, `test-hm`, `test-upstream-builds`, `validate-scripts`, `versions`, `verify`, `pre-commit-install`, `pre-commit-run` | ✅ |
-| DNS | `dns-status`, `dns-logs`, `dns-restart`, `dns-test`, `dns-diagnostics`, `dns-update` | ✅ |
-| Immich | `immich-status`, `immich-logs`, `immich-backup`, `immich-restart` | ✅ |
-| Forgejo | `forgejo-update-token`, `forgejo-sync-repos` | ✅ |
-| Taskwarrior | `task-list`, `task-add`, `task-agent`, `task-sync`, `task-status`, `task-setup`, `task-backup` | ✅ |
-| Niri session | `session-status`, `session-restore` | ✅ |
-| Camera | `cam-status`, `cam-privacy`, `cam-track`, `cam-reset`, `cam-audio`, `cam-sync`, `cam-restart`, `cam-logs` | ✅ |
-| Hermes | `hermes-status`, `hermes-restart`, `hermes-logs` | ✅ |
-| Manifest | `manifest-status`, `manifest-logs`, `manifest-restart`, `manifest-backup` | ✅ |
-| OpenSEO | `openseo-status`, `openseo-restart` | ✅ |
-| Gatus | `gatus-status` | ✅ |
-| Auth/Pocket ID | `auth-bootstrap`, `auth-status`, `pocket-id-export`, `pocket-id-add-static-key` | ✅ |
-| Wallpaper | `wallpaper-status`, `wallpaper-random`, `wallpaper-restore`, `wallpaper-restart`, `wallpaper-logs` | ✅ |
-| Disk/Snapshots | `snapshot`, `snapshot-list`, `snapshot-migrate-data`, `disk-status`, `disk-check`, `disk-reset` | ✅ |
-| WAN/Internet | `wan-status`, `internet-diagnostic` | ✅ |
-| AI models | `ai-migrate`, `ai-status` | ✅ |
-| Cleanup | `clean`, `rust-clean` | ✅ |
+| Core | `nix flake check --no-build` (validate), `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (quick eval), `nix run .#deploy` (deploy), `nix fmt` (format) | ✅ |
+| Maintenance | `nix flake update` (update inputs), `nix-collect-garbage -d` (clean generations) | ✅ |
+| Flake apps | `nix run .#deploy`, `nix run .#validate`, `nix run .#dns-diagnostics` | ✅ |
+| Diagnostics | `scripts/dns-diagnostics.sh`, `scripts/health-check.sh`, `scripts/verify-deployment.sh`, `scripts/status-report.sh` | ✅ |
 
 ---
 
@@ -422,7 +410,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Twenty CRM | Module exists, enabled in configuration, Caddy at crm.home.lan | Low |
 | Voice agents | Disabled in configuration, Whisper Docker + ROCm pipeline | Medium |
 | Minecraft | Disabled in configuration | Low |
-| Benchmark scripts | Removed from justfile — scripts never created | Low |
+| Benchmark scripts | Planned but never created | Low |
 | Auditd | Disabled due to NixOS 26.05 bug #483085 | Medium |
 | AppArmor | Explicitly disabled (`mkDefault false`) in security-hardening | Medium |
 | DNS-over-QUIC | Overlay disabled — breaks binary cache (40+ min builds) | Low |
@@ -452,7 +440,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 |-----|-------|----------|
 | ADR-001 | Go Workspace Sub-Module Nix Pattern | `mkPreparedSource` pattern for private Go repos with replace directives |
 | ADR-002 | GPU Memory Headroom for Niri | Reserve GPU memory for compositor (`OLLAMA_GPU_OVERHEAD`) |
-| ADR-003 | BindsTo vs Wants for Niri | `BindsTo` kills niri on `just switch` — use `Wants=` instead |
+| ADR-003 | BindsTo vs Wants for Niri | `BindsTo` kills niri on deploy — use `Wants=` instead |
 | ADR-004 | PartOf vs BindsTo for Wallpaper | `BindsTo` creates cycle with awww-daemon — use `graphical-session.target` |
 | ADR-005 | Discord Notification Channel for SigNoz | Dedicated Discord channel for critical alert routing |
 | ADR-005b | `_local_deps` Pattern for Private Go Repos | Local replace directives for private Go module builds |
@@ -498,7 +486,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | macOS features | 25+ |
 | DNS stack components | 12 |
 | Validation scripts | 7 |
-| Justfile commands | 79 |
+| Flake apps + shell scripts | 29 |
 | Architecture patterns | 7 |
 | ADRs | 8 |
 | GitHub Actions | 2 |

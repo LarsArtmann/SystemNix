@@ -15,9 +15,9 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI |
 | **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
-| **Monitoring** | SigNoz (18 alert rules, 5 dashboards), Gatus (30 health checks), ActivityWatch |
+| **Monitoring** | SigNoz (19 alert rules, 6 dashboards), Gatus (38 health checks), ActivityWatch |
 | **Networking** | Caddy reverse proxy (TLS), Unbound DNS with 2.5M+ blocked domains, DNSSEC |
-| **Storage** | BTRFS with btrbk snapshots (daily + pre-deploy), ZRAM swap, monthly scrub |
+| **Storage** | BTRFS with btrbk snapshots (daily), ZRAM swap, monthly scrub |
 
 ## Quick Start
 
@@ -35,33 +35,32 @@ curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix 
 # Clone and apply configuration
 git clone https://github.com/LarsArtmann/SystemNix.git ~/projects/SystemNix
 cd ~/projects/SystemNix
-just setup              # Complete setup
-just switch             # Apply configuration
+nix run .#deploy         # Build and deploy to current system
+nix flake check --no-build  # Validate configuration syntax
 ```
 
 ### Target Systems
 
 | System | Hardware | Configuration | Command |
 |--------|----------|--------------|---------|
-| macOS (Lars-MacBook-Air) | Apple Silicon, 24GB RAM, 256GB SSD | `flake.nix#Lars-MacBook-Air` | `just switch` |
-| NixOS (evo-x2) | AMD Ryzen AI Max+ 395, 128GB RAM | `flake.nix#evo-x2` | `just switch` |
+| macOS (Lars-MacBook-Air) | Apple Silicon, 24GB RAM, 256GB SSD | `flake.nix#Lars-MacBook-Air` | `nix run .#deploy` |
+| NixOS (evo-x2) | AMD Ryzen AI Max+ 395, 128GB RAM | `flake.nix#evo-x2` | `nix run .#deploy` |
 
 ## Architecture
 
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── justfile                     # Task runner for all operations
 ├── modules/nixos/services/     # 39 NixOS service modules (auto-discovered, ~37 enabled)
 ├── pkgs/                        # 5 custom packages (jscpd, govalid, netwatch, openaudible, aw-watcher-utilization)
-├── overlays/                    # 25 overlay packages (17 shared + 8 Linux-only) via mkPackageOverlay
+├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
 ├── lib/                         # 8 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
 │   ├── common/                  # Shared across platforms (~80% of config)
 │   │   ├── home-base.nix        # Home Manager base (13 program modules)
 │   │   ├── programs/            # Fish, Zsh, Bash, Starship, Git, tmux, ...
 │   │   ├── packages/            # Cross-platform packages & fonts
-│   │   └── core/                # Nix daemon settings
+│   │   └── environment/         # Nix daemon settings
 │   ├── darwin/                  # macOS-specific (nix-darwin)
 │   │   ├── default.nix          # System config
 │   │   ├── home.nix             # User config
@@ -69,17 +68,17 @@ SystemNix/
 │   │   └── programs/            # Chrome policies, shell aliases
 │   └── nixos/                   # NixOS-specific
 │       ├── system/              # Boot, networking, BTRFS snapshots, DNS blocker
-│       ├── desktop/             # Niri, Waybar, SDDM, AI stack, security hardening
+│       ├── desktop/             # Niri, Waybar config, ssh-suspend-guard
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
 │       ├── programs/            # Rofi, swaylock, wlogout, Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
 ├── scripts/                     # 29 operational scripts (26 shell + 3 Python)
-└── docs/                        # Architecture decisions (8 ADRs), status reports, troubleshooting
+└── docs/                        # Architecture decisions (ADRs), status reports, troubleshooting
 ```
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (33 health checks) + SigNoz (18 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (38 health checks) + SigNoz (19 alert rules, 6 dashboards):
 
 | Service | Port | URL | Description |
 |---------|------|-----|-------------|
@@ -103,7 +102,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **Dual-WAN** | — | — | MPTCP dual-WAN with route health monitoring |
 | **Gatus** | 9110 | `status.home.lan` | Health check monitoring with Discord alerts |
 | **DNS Blocker** | 53, 8050 | — | Unbound + dnsblockd, 23 blocklists, 2.5M+ domains blocked, DoT upstream |
-| **Mullvad VPN** | — | — | WireGuard VPN with LAN bypass, route-based split tunneling |
+| **Mullvad VPN** | — | — | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf) |
 | **DiscordSync** | — | — | Continuous Discord channel backup bot |
 
 ### DNS Blocking
@@ -132,7 +131,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **GPU** | AMD integrated (amdgpu), Mesa latest, ROCm compute stack |
 | **NPU** | AMD XDNA via nix-amd-npu, XRT runtime |
 | **Memory** | 128GB unified, ZRAM swap (32GB), tuned for AI/ML workloads |
-| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily + pre-deploy) |
+| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily) |
 | **Boot** | systemd-boot (50 generations), latest Linux kernel |
 | **Network** | Realtek 2.5G Ethernet, MediaTek WiFi |
 
@@ -140,38 +139,22 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 
 ```bash
 # Core workflow
-just setup              # Initial setup (run once after clone)
-just switch             # Apply configuration changes
-just update             # Update flake inputs and packages
-just update-nix         # Self-update Nix to latest version
-just test               # Validate configuration (full build)
-just test-fast          # Syntax-only validation (fast)
-just check              # System status, git, disk usage
-
-# Quality
-just format             # Format code with treefmt + alejandra
-just health             # System health check
-just pre-commit-install # Install pre-commit hooks
-just pre-commit-run     # Run all hooks on all files
+nix flake check --no-build  # Validate configuration syntax (fast)
+nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel  # Quick eval
+nix run .#deploy            # Build and deploy via nh
+nix fmt                     # Format code with treefmt + alejandra
+nix flake update            # Update flake inputs
 
 # Maintenance
-just clean              # Comprehensive cleanup (Nix, caches, temp, Docker)
-just rollback           # Revert to previous generation
+nix-collect-garbage -d      # Clean old generations
+scripts/health-check.sh     # System health check
+scripts/verify-deployment.sh # Pre-deployment validator
 
-# NixOS services
-just dns-diagnostics    # Full DNS diagnostics
-just immich-status       # Check Immich service status
-just immich-backup       # Run database backup
-just forgejo-sync-repos  # Sync GitHub repos to Forgejo
-just hermes-status       # Check Hermes gateway status
-just manifest-status     # Check Manifest LLM router status
-just session-status      # Check niri session save state
-just cam-status          # Check EMEET PIXY webcam state
+# DNS diagnostics
+scripts/dns-diagnostics.sh   # Full DNS diagnostics
 
-# Taskwarrior
-just task-list           # Show pending tasks
-just task-sync           # Sync with TaskChampion server
-just task-backup         # Export all tasks as JSON
+# Service status checks
+scripts/status-report.sh     # Comprehensive system status
 ```
 
 ## Cross-Platform Programs
@@ -255,8 +238,9 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/P
 ### Build Errors
 
 ```bash
-just test-fast          # Quick syntax validation
-just clean && just switch  # Clean and rebuild
+nix flake check --no-build  # Quick syntax validation
+nix-collect-garbage -d      # Clean and rebuild
+nix run .#deploy            # Rebuild and deploy
 ```
 
 ### GPG Not Working
@@ -275,16 +259,14 @@ nix search nixpkgs <package-name>
 ### DNS Issues (NixOS)
 
 ```bash
-just dns-diagnostics    # Full DNS diagnostics
-just dns-restart        # Restart DNS services
-just dns-test           # Test resolution and blocking
+scripts/dns-diagnostics.sh  # Full DNS diagnostics
 ```
 
 ## Contributing
 
 1. Make changes in `platforms/common/` for cross-platform config
 2. Use platform-specific directories for platform differences
-3. Run `just test` before committing
+3. Run `nix flake check --no-build` before committing
 4. Follow existing code style (2-space indentation for Nix)
 
 ## License
