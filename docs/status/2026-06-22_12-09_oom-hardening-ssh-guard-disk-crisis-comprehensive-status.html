@@ -1,0 +1,1640 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Status — 2026-06-22 12:09 CEST</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        --radius: 0px;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .sidebar {
+        width: 200px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      @media (min-width: 1100px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      code {
+        font-family: var(--font-mono);
+        font-size: 0.85em;
+        background: var(--surface-sunken);
+        padding: 0.1em 0.35em;
+        border-radius: 2px;
+      }
+      strong {
+        font-weight: 700;
+      }
+
+      .hero {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.2rem 1rem;
+        text-align: center;
+        border-top: 3px solid var(--border-strong);
+      }
+      .stat-good {
+        border-top-color: var(--solution);
+      }
+      .stat-warn {
+        border-top-color: var(--warning);
+      }
+      .stat-bad {
+        border-top-color: var(--problem);
+      }
+      .stat-value {
+        font-family: var(--font-mono);
+        font-size: 2.2rem;
+        font-weight: 900;
+        line-height: 1;
+      }
+      .stat-label {
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-top: 0.4rem;
+        font-weight: 600;
+      }
+
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+      @media (max-width: 768px) {
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 0.15rem 0.5rem;
+        border-radius: 2px;
+        margin-right: 0.3rem;
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: color-mix(
+          in srgb,
+          var(--problem) 50%,
+          var(--surface-raised)
+        );
+        color: var(--text);
+      }
+      .badge-medium {
+        background: color-mix(
+          in srgb,
+          var(--warning) 50%,
+          var(--surface-raised)
+        );
+        color: var(--text);
+      }
+      .badge-low {
+        background: color-mix(
+          in srgb,
+          var(--solution) 40%,
+          var(--surface-raised)
+        );
+        color: var(--text);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.88rem;
+        margin-bottom: 1rem;
+      }
+      th {
+        text-align: left;
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        font-weight: 700;
+        padding: 0.6rem 0.8rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      td {
+        padding: 0.55rem 0.8rem;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      tr:hover {
+        background: color-mix(in srgb, var(--accent) 4%, transparent);
+      }
+      td code {
+        font-size: 0.82em;
+      }
+
+      .callout {
+        padding: 1rem 1.2rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-raised);
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+      }
+      .callout-problem {
+        border-left-color: var(--problem);
+      }
+
+      .strengths {
+        margin: 1rem 0;
+      }
+      .strength {
+        display: flex;
+        gap: 0.8rem;
+        align-items: flex-start;
+        margin-bottom: 0.6rem;
+        padding: 0.7rem 1rem;
+        background: color-mix(
+          in srgb,
+          var(--solution) 6%,
+          var(--surface-raised)
+        );
+        border-left: 3px solid var(--solution);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.1rem;
+        flex-shrink: 0;
+      }
+      .strength .text {
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        font-size: 0.88rem;
+        color: var(--text-muted);
+      }
+
+      .footer {
+        margin-top: 3rem;
+        padding: 1.5rem 0;
+        border-top: 2px solid var(--border-strong);
+        text-align: center;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        color: var(--text-faint);
+      }
+
+      .task-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .task-num {
+        font-family: var(--font-mono);
+        font-size: 1rem;
+        font-weight: 900;
+        color: var(--accent);
+        min-width: 2.5rem;
+        flex-shrink: 0;
+      }
+      .task-content {
+        flex: 1;
+      }
+      .task-content strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .task-content span {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      .question-box {
+        background: color-mix(
+          in srgb,
+          var(--accent) 10%,
+          var(--surface-raised)
+        );
+        border: 2px solid var(--accent);
+        padding: 1.5rem 1.8rem;
+        margin-top: 2rem;
+      }
+      .question-box h3 {
+        font-family: var(--font-mono);
+        color: var(--accent);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-bottom: 0.8rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>SystemNix &middot; evo-x2 + Lars-MacBook-Air</span>
+      <span>Session 143 &middot; 2026-06-22 12:09 CEST</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#stats">Vitals</a>
+          <a href="#done">Fully Done</a>
+          <a href="#partial">Partially Done</a>
+          <a href="#not-started">Not Started</a>
+          <a href="#broken">Fucked Up</a>
+          <a href="#improve">Improve</a>
+          <a href="#next">Top 25 Next</a>
+          <a href="#question">The Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Status Report &middot; Session 143</div>
+          <h1>SystemNix — Full Status Snapshot</h1>
+          <p class="hero-subtitle">
+            2026-06-22 12:09 CEST. Booted 54 minutes ago after a swayidle
+            12h-idle suspend at 11:13 (triggered by invisible SSH sessions).
+            Today's work: added
+            <code>ssh-suspend-guard</code> service, OOM cascade hardening, PSI
+            pressure metrics + Gatus alert. Three services crash-looping, root
+            disk at <strong>97%</strong>.
+          </p>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+
+          <div class="stat-grid">
+            <div class="stat-card stat-good">
+              <div class="stat-value">32</div>
+              <div class="stat-label">Services Healthy</div>
+            </div>
+            <div class="stat-card stat-warn">
+              <div class="stat-value">4</div>
+              <div class="stat-label">Partially Working</div>
+            </div>
+            <div class="stat-card stat-bad">
+              <div class="stat-value">3</div>
+              <div class="stat-label">Crash-Looping</div>
+            </div>
+            <div class="stat-card stat-bad">
+              <div class="stat-value">97%</div>
+              <div class="stat-label">Root Disk Full</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">53</div>
+              <div class="stat-label">Flake Inputs</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">40</div>
+              <div class="stat-label">Service Modules</div>
+            </div>
+          </div>
+
+          <div class="callout callout-problem">
+            <strong>CRITICAL: Root disk 97% full (18G free of 512G).</strong>
+            <code>/nix/store</code> = 84G, <code>/nix/var/nix</code> = 146G,
+            <code>/home/lars</code> = 171G (all on root partition). System
+            survived a 2026-06-15 disk-exhaustion crash but no structural fix
+            has been applied. <code>/data</code> (1TB BTRFS) is only 77% full
+            but Docker volumes are empty (Docker data-root moved but volumes not
+            migrated). Garbage collection is needed urgently.
+          </div>
+
+          <div class="callout callout-warning">
+            <strong>Three services crash-looping since last boot:</strong>
+            <code>discordsync</code> (Turso SQL migration parse error),
+            <code>monitor365</code> (user service, start-limit-hit),
+            <code>niri-flake-polkit</code> (user service, start-limit-hit —
+            polkit auth agent broken). All three hit systemd start limits and
+            gave up. None are blocking the desktop.
+          </div>
+
+          <div class="callout callout-solution">
+            <strong>What's working well:</strong> Niri compositor, Caddy (15
+            vhosts), Forgejo, Immich, SigNoz, Gatus, Pocket ID OIDC, Ollama
+            ROCm, Homepage, all Docker-based services, BTRFS root snapshots
+            (daily via btrbk). 30+ SSH sessions currently active. PSI memory
+            pressure is <code>0.00</code> across all windows.
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="stats">
+          <h2><span class="num">01</span>System Vitals (Live)</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Uptime</td>
+                <td>54 min (booted 11:16 after suspend-resume)</td>
+                <td><span class="badge badge-fixed">OK</span></td>
+              </tr>
+              <tr>
+                <td>Load average</td>
+                <td>10.79 / 10.88 / 11.59 (1/5/15 min)</td>
+                <td><span class="badge badge-medium">High</span></td>
+              </tr>
+              <tr>
+                <td>Memory</td>
+                <td>26 GiB used / 93 GiB total (67 GiB available)</td>
+                <td><span class="badge badge-fixed">OK</span></td>
+              </tr>
+              <tr>
+                <td>Swap</td>
+                <td>12 MiB / 19 GiB</td>
+                <td><span class="badge badge-fixed">OK</span></td>
+              </tr>
+              <tr>
+                <td>PSI memory pressure</td>
+                <td>some=0.00 / full=0.00 (avg10)</td>
+                <td><span class="badge badge-fixed">OK</span></td>
+              </tr>
+              <tr>
+                <td>Root disk (/)</td>
+                <td>484G / 512G — <strong>97% full, 18G free</strong></td>
+                <td><span class="badge badge-critical">Critical</span></td>
+              </tr>
+              <tr>
+                <td>Data disk (/data)</td>
+                <td>788G / 1.0T — 77% full</td>
+                <td><span class="badge badge-medium">OK</span></td>
+              </tr>
+              <tr>
+                <td>SSH sessions</td>
+                <td>30 active from 192.168.1.62</td>
+                <td><span class="badge badge-medium">Note</span></td>
+              </tr>
+              <tr>
+                <td>PostgreSQL</td>
+                <td>
+                  Collation version warnings every 5s (postgres + twenty DBs)
+                </td>
+                <td><span class="badge badge-medium">Annoying</span></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="grid-2">
+            <div class="card">
+              <h4>Root Disk Breakdown</h4>
+              <table style="margin: 0">
+                <tbody>
+                  <tr>
+                    <td><code>/home/lars</code></td>
+                    <td>171G</td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td style="padding-left: 1.5rem">&nbsp;&nbsp;projects</td>
+                    <td>91G</td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td style="padding-left: 1.5rem">&nbsp;&nbsp;.cache</td>
+                    <td>43G</td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td style="padding-left: 1.5rem">&nbsp;&nbsp;.local</td>
+                    <td>19G</td>
+                  </tr>
+                  <tr>
+                    <td><code>/nix/store</code></td>
+                    <td>84G</td>
+                  </tr>
+                  <tr>
+                    <td><code>/nix/var/nix</code></td>
+                    <td>146G</td>
+                  </tr>
+                  <tr>
+                    <td><code>/var/log</code></td>
+                    <td>6.1G</td>
+                  </tr>
+                  <tr>
+                    <td><code>/var/lib</code></td>
+                    <td>1.5G</td>
+                  </tr>
+                  <tr>
+                    <td><code>/tmp</code></td>
+                    <td>689M</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card">
+              <h4>System Architecture</h4>
+              <table style="margin: 0">
+                <tbody>
+                  <tr>
+                    <td>Machine</td>
+                    <td>evo-x2 (AMD Ryzen AI Max+ 395)</td>
+                  </tr>
+                  <tr>
+                    <td>RAM</td>
+                    <td>128 GiB</td>
+                  </tr>
+                  <tr>
+                    <td>GPU</td>
+                    <td>AMD Radeon 8060S (ROCm)</td>
+                  </tr>
+                  <tr>
+                    <td>Compositor</td>
+                    <td>Niri (Wayland)</td>
+                  </tr>
+                  <tr>
+                    <td>Tracked files</td>
+                    <td>1,156</td>
+                  </tr>
+                  <tr>
+                    <td>Flake inputs</td>
+                    <td>53</td>
+                  </tr>
+                  <tr>
+                    <td>Service modules</td>
+                    <td>40 (auto-discovered)</td>
+                  </tr>
+                  <tr>
+                    <td>Custom packages</td>
+                    <td>24+ (Go, Rust, Python, Node)</td>
+                  </tr>
+                  <tr>
+                    <td>Git commits</td>
+                    <td>~200+ on master</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="done">
+          <h2><span class="num">02</span>a) Fully Done</h2>
+
+          <p>
+            Services and features that are complete, wired, and working right
+            now.
+          </p>
+
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Caddy reverse proxy (15 vhosts)</strong>
+                <span
+                  >TLS via sops certs, oauth2-proxy + Pocket ID forward-auth,
+                  metrics enabled, boot-ordering fix prevents 14h outage.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Pocket ID (OIDC provider)</strong>
+                <span
+                  >Passkey-only auth, declarative provisioning (<code
+                    >provision.enable = true</code
+                  >), auto-creates admin + OIDC clients. SMTP wired via
+                  Resend.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>SOPS secrets management</strong>
+                <span
+                  >Age-encrypted via SSH host key, 4 secret files, atomic
+                  guarding with <code>lib.optionalAttrs</code> per
+                  service.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Forgejo (Git forge)</strong>
+                <span
+                  >SQLite + LFS, Actions runner (Docker + native), declarative
+                  repo mirroring to GitHub, weekly dumps, federation
+                  enabled.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Immich (photo/video)</strong>
+                <span
+                  >PostgreSQL + Redis + ML, OAuth via Pocket ID, VA-API hardware
+                  transcoding (H.264/HEVC/AV1), daily DB backup.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>SigNoz observability</strong>
+                <span
+                  >Full-stack traces/metrics/logs, ClickHouse, OTel Collector,
+                  node_exporter, cadvisor, 18 alert rules, custom
+                  <code>signoz.target</code> (decoupled from boot), JWT
+                  auto-gen, dashboard provisioning.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Gatus health checks</strong>
+                <span
+                  >33+ endpoints, Discord alerting, SQLite storage. Today added
+                  PSI memory pressure early-warning check.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Niri compositor + desktop</strong>
+                <span
+                  >niri-unstable, XWayland satellite, patched
+                  BindsTo&rarr;PartOf, swayidle 12h idle suspend, SDDM
+                  Catppuccin theme.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Ollama (ROCm GPU inference)</strong>
+                <span
+                  >Flash attention, q8_0 KV, 32G MemoryMax, ROCWMMA+MFMA custom
+                  llama.cpp build.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>BTRFS root snapshots</strong>
+                <span
+                  >Daily via btrbk, auto-pruning (14d + 4w), verify timer alerts
+                  if snapshots &gt;3 days stale.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Flake architecture</strong>
+                <span
+                  >Cross-platform (Darwin + NixOS), flake-parts, 40
+                  auto-discovered service modules, 53 inputs,
+                  <code>mkLarsPackages</code> single-source-of-truth.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong
+                  >Also running: Homepage, TaskChampion, Twenty CRM, Dozzle,
+                  Manifest, Overview, Crush Daily, OpenSEO, PMA, Hermes,
+                  Disk/NVMe monitors</strong
+                >
+                <span>All deployed and functional.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="partial">
+          <h2><span class="num">03</span>b) Partially Done</h2>
+
+          <p>
+            Things that mostly work but have known gaps, are written but not
+            deployed, or need follow-up.
+          </p>
+
+          <div class="card card-warning">
+            <h3>
+              <span class="badge badge-medium">Uncommitted</span> OOM cascade
+              hardening
+            </h3>
+            <p>
+              <strong>What:</strong> <code>user-1000.slice</code>
+              <code>MemoryHigh=56G; MemoryMax=64G</code> in
+              <code>boot.nix</code>. Tightened oomd thresholds (50%/20s from
+              NixOS default 60%/30s). PSI metrics collector + Gatus alert for
+              early warning.
+            </p>
+            <p>
+              <strong>Status:</strong> Written, evaluated successfully (<code
+                >nix eval</code
+              >
+              passes), but <strong>NOT DEPLOYED</strong>. All changes are
+              uncommitted in working tree. Root cause of the 2026-06-19 WDT hard
+              reset: Helium renderers grew unbounded 66h &rarr; reclaim thrash
+              &rarr; journald starved &rarr; sp5100-tco WDT fired.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <h3>
+              <span class="badge badge-medium">Uncommitted</span>
+              ssh-suspend-guard service
+            </h3>
+            <p>
+              <strong>What:</strong> New
+              <code>ssh-suspend-guard.service</code> holds a
+              <code>systemd-inhibit --what=sleep --mode=block</code> lock while
+              any SSH session is active. Prevents swayidle's 12h idle timer from
+              suspending the machine when you're connected remotely.
+            </p>
+            <p>
+              <strong>Status:</strong> Written, evaluates cleanly, but
+              <strong>NOT DEPLOYED</strong>. This was the root cause of today's
+              11:13 suspend — 30 SSH sessions but swayidle only tracks Wayland
+              input events.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <h3>
+              <span class="badge badge-medium">Justfile removed</span> Build
+              system migration
+            </h3>
+            <p>
+              <strong>What:</strong> justfile deleted (commit
+              <code>4077b1ff</code>). AGENTS.md updated to reference
+              <code>nix flake check --no-build</code>, <code>nix eval</code>,
+              <code>nix run .#deploy</code>, <code>nix fmt</code>.
+            </p>
+            <p>
+              <strong>Status:</strong> Partially done — AGENTS.md still has a
+              stale <code>Run 'just' for the complete recipe list</code> at the
+              end of the Build &amp; Test section. No <code>deploy</code> app
+              defined in flake.nix yet — <code>nix run .#deploy</code> may not
+              work. The <code>just snapshot-migrate-data</code> command was
+              lost.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <h3><span class="badge badge-medium">Partial</span> Monitor365</h3>
+            <p>
+              <strong>What:</strong> Device monitoring agent + server dashboard
+              with ActivityWatch integration.
+            </p>
+            <p>
+              <strong>Status:</strong> Server was crash-looping (DB path fixed
+              session 131c, then SQLX_OFFLINE fix session 140). Now
+              <strong>crash-looping again</strong> (user service start-limit-hit
+              since boot). Needs
+              <code>systemctl --user reset-failed monitor365</code>
+              and investigation.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <h3>
+              <span class="badge badge-medium">Partial</span> Hermes AI gateway
+            </h3>
+            <p>
+              <strong>What:</strong> Discord bot + AI messaging gateway with
+              OpenAI/OpenRouter fallback.
+            </p>
+            <p>
+              <strong>Status:</strong> Service runs but OpenAI API key not yet
+              in sops. SSH deploy key not installed. Fallback model not
+              configured. Three manual steps blocked on human action.
+            </p>
+          </div>
+
+          <div class="card card-warning">
+            <h3>
+              <span class="badge badge-medium">Partial</span> QuickShell desktop
+              shell vision
+            </h3>
+            <p>
+              <strong>What:</strong> Research completed (extensive HTML
+              brainstorm doc + companion implementation patterns doc). Vision:
+              collapse 9 separate shell tools (Waybar, Rofi, Dunst, Swaylock,
+              etc.) into one hot-reloadable QML shell.
+            </p>
+            <p>
+              <strong>Status:</strong> Research done. Zero implementation
+              started. Decision point: adopt <code>dankMaterialShell</code> or
+              <code>iNiR</code> as a starting point.
+            </p>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="not-started">
+          <h2><span class="num">04</span>c) Not Started</h2>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Why It Matters</th>
+                <th>Blocker</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>BTRFS <code>/data</code> subvolume migration</td>
+                <td>
+                  Docker/Immich/AI data has NO snapshot protection (toplevel
+                  subvolid=5)
+                </td>
+                <td>
+                  Requires brief service downtime +
+                  <code>snapshot-migrate-data</code> (command lost with justfile
+                  removal)
+                </td>
+              </tr>
+              <tr>
+                <td>ROADMAP.md</td>
+                <td>
+                  Long-term direction scattered across 20+ HTML status docs +
+                  planning docs
+                </td>
+                <td>None — just hasn't been written</td>
+              </tr>
+              <tr>
+                <td>CHANGELOG.md</td>
+                <td>
+                  200+ commits, no changelog. Hard to see what changed between
+                  sessions
+                </td>
+                <td>None</td>
+              </tr>
+              <tr>
+                <td>QuickShell implementation</td>
+                <td>Could collapse 9 shell tools into 1 QML codebase</td>
+                <td>Decision required: which base shell to adopt</td>
+              </tr>
+              <tr>
+                <td>Pi 3 provisioning (DNS failover)</td>
+                <td>
+                  VRRP cluster defined in config but hardware not provisioned
+                </td>
+                <td>Physical Pi 3 hardware</td>
+              </tr>
+              <tr>
+                <td>Darwin Home Manager parity</td>
+                <td>
+                  macOS HM has 7 lines — no terminal, editor, theme parity with
+                  NixOS
+                </td>
+                <td>256GB SSD 90%+ full — disk constrained</td>
+              </tr>
+              <tr>
+                <td>Auditd enablement</td>
+                <td>Security auditing disabled</td>
+                <td>NixOS 26.05 bug #483085</td>
+              </tr>
+              <tr>
+                <td>AppArmor enablement</td>
+                <td>Commented out in security-hardening.nix</td>
+                <td>Needs testing</td>
+              </tr>
+              <tr>
+                <td>Nix GC automation</td>
+                <td>
+                  Manual GC only. Root disk at 97% — automation would prevent
+                  recurrence
+                </td>
+                <td>None</td>
+              </tr>
+              <tr>
+                <td>PostgreSQL collation fix</td>
+                <td>
+                  Warnings spam journal every 5 seconds for postgres + twenty
+                  databases
+                </td>
+                <td>
+                  <code>ALTER DATABASE ... REFRESH COLLATION VERSION</code> or
+                  reindex
+                </td>
+              </tr>
+              <tr>
+                <td>Docker volumes migration to /data</td>
+                <td>
+                  Docker data-root moved but <code>/data/docker</code> shows 0
+                  bytes — volumes not migrated
+                </td>
+                <td>Needs <code>docker volume</code> migration script</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="broken">
+          <h2><span class="num">05</span>d) Totally Fucked Up</h2>
+
+          <div class="card card-problem">
+            <h3>
+              <span class="badge badge-critical">Critical</span> DiscordSync —
+              Turso DB migration broken
+            </h3>
+            <div class="where">
+              modules/nixos/services/discordsync.nix &middot; exit code
+              69/UNAVAILABLE
+            </div>
+            <p>
+              <strong>Error:</strong>
+              <code
+                >failed to run migrations: turso: error: Parse error: Error:
+                invalid expression in CREATE INDEX: guild_id</code
+              >
+            </p>
+            <p>
+              The Turso (libSQL) database doesn't support the SQL expression in
+              the migration's
+              <code>CREATE INDEX</code> statement. The service hits start-limit
+              after 5 retries and gives up. This is an
+              <strong>upstream migration bug</strong> — either the migration SQL
+              needs to be rewritten for Turso compatibility, or the Turso client
+              is parsing it differently than expected. Needs investigation in
+              the DiscordSync repo.
+            </p>
+          </div>
+
+          <div class="card card-problem">
+            <h3>
+              <span class="badge badge-critical">Critical</span>
+              niri-flake-polkit — crash-looping
+            </h3>
+            <div class="where">
+              User service &middot; start-limit-hit (5 retries in ~5s)
+            </div>
+            <p>
+              The polkit authentication agent provided by the niri flake is
+              crash-looping on every boot. This means GUI password prompts
+              (polkit dialogs) may not appear for privileged operations. The
+              niri compositor itself works fine, but the polkit integration is
+              broken. Needs
+              <code>journalctl --user -u niri-flake-polkit</code> investigation
+              — likely a Wayland display socket issue or a missing runtime
+              dependency.
+            </p>
+          </div>
+
+          <div class="card card-problem">
+            <h3>
+              <span class="badge badge-critical">Critical</span> Monitor365 —
+              crash-looping (again)
+            </h3>
+            <div class="where">User service &middot; start-limit-hit</div>
+            <p>
+              Monitor365 was "fixed" twice before (session 131c: DB path,
+              session 140: SQLX_OFFLINE) but is crash-looping again since boot.
+              The <code>--config</code> flag and <code>sqlite:///</code> path
+              fix may not be persistent, or a new failure mode emerged. Needs
+              <code>journalctl --user -u monitor365</code> +
+              <code>reset-failed</code>.
+            </p>
+          </div>
+
+          <div class="card card-problem">
+            <h3>
+              <span class="badge badge-critical">Critical</span> Root disk 97%
+              full
+            </h3>
+            <div class="where">/dev/nvme0n1p6 &middot; 18G free of 512G</div>
+            <p>
+              <code>/nix/var/nix</code> alone is 146G — the Nix store + GC roots
+              are consuming most of the disk. <code>/home/lars/.cache</code> is
+              43G. This already caused a crash on 2026-06-15 (disk exhaustion).
+              System is 1-2 large builds away from another outage. No automated
+              GC exists. <code>/data</code> (1TB) is available but
+              underutilized.
+            </p>
+            <p>
+              <strong>Immediate action:</strong>
+              <code>nix-collect-garbage --delete-older-than 7d</code> +
+              <code>rm -rf ~/.cache/*</code> could reclaim 40-80G. Long-term:
+              move <code>/home</code> to <code>/data</code> subvolume, or add a
+              second NVMe.
+            </p>
+          </div>
+
+          <div class="card card-problem">
+            <h3>
+              <span class="badge badge-high">High</span> PostgreSQL collation
+              warnings (every 5s)
+            </h3>
+            <div class="where">postgres + twenty databases</div>
+            <p>
+              Every 5 seconds, both PostgreSQL instances log
+              <code
+                >WARNING: database "postgres" has no actual collation version,
+                but a version was recorded</code
+              >. This is a known NixOS issue where glibc collation version
+              changes but the DB doesn't update. Fix:
+              <code>ALTER DATABASE postgres REFRESH COLLATION VERSION;</code>
+              (repeat for all DBs). Currently generating ~17K log lines per day
+              of pure noise.
+            </p>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="improve">
+          <h2><span class="num">06</span>e) What We Should Improve</h2>
+
+          <div class="grid-2">
+            <div class="card">
+              <h4>1. Disk Architecture</h4>
+              <p>
+                Root partition holds everything: <code>/nix</code>,
+                <code>/home</code>, <code>/var</code>. This is structural
+                fragility. <code>/data</code> (1TB BTRFS) sits mostly empty.
+                Either move <code>/home/lars</code> to a
+                <code>/data/@home</code> subvolume, or add <code>/nix</code> as
+                a separate subvolume with its own size management. Automated nix
+                GC (<code>nix.gc.automatic = true</code>) is not configured.
+              </p>
+            </div>
+            <div class="card">
+              <h4>2. Deploy Workflow</h4>
+              <p>
+                justfile was removed but <code>nix run .#deploy</code> may not
+                work — no <code>deploy</code> app is defined in flake.nix. The
+                <code>snapshot-migrate-data</code>
+                command was lost. Need either a flake app, a shell script, or
+                documented manual commands. This is a developer-experience
+                regression.
+              </p>
+            </div>
+            <div class="card">
+              <h4>3. Service Health Visibility</h4>
+              <p>
+                Three services have been crash-looping since boot and there's no
+                desktop notification. The
+                <code>notify-failure@%n.service</code> template exists and is
+                wired to <code>onFailure</code>, but it may not be working for
+                user services (monitor365, niri-flake-polkit). Consider a
+                boot-time health check that surfaces all failed units.
+              </p>
+            </div>
+            <div class="card">
+              <h4>4. Log Noise Reduction</h4>
+              <p>
+                PostgreSQL collation warnings every 5s = 17K lines/day. swaylock
+                dumps its full
+                <code>--help</code> output to the journal when invoked by
+                swayidle's before-sleep hook (bad flag). These drown out real
+                signal in the journal.
+              </p>
+            </div>
+            <div class="card">
+              <h4>5. Uncommitted Work Pile-Up</h4>
+              <p>
+                9 files with uncommitted changes spanning OOM hardening, PSI
+                metrics, ssh-suspend-guard, Gatus alert, AGENTS.md updates. Some
+                of these are from a previous session (the formatting changes
+                from <code>nix fmt</code>). These should be committed in logical
+                groups: (1) OOM hardening, (2) ssh-suspend-guard, (3) AGENTS.md
+                docs.
+              </p>
+            </div>
+            <div class="card">
+              <h4>6. Missing Living Docs</h4>
+              <p>
+                FEATURES.md last updated 2026-06-15. TODO_LIST.md last updated
+                session 139. Neither reflects today's work (OOM hardening, PSI
+                metrics, ssh-suspend-guard, justfile removal). ROADMAP.md and
+                CHANGELOG.md don't exist. The project relies on HTML status
+                snapshots rather than living markdown docs for project state.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="next">
+          <h2><span class="num">07</span>f) Top 25 Things to Do Next</h2>
+
+          <p>
+            Sorted by impact &times; urgency. Pareto-ordered: the first 5
+            deliver 80% of the value.
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 2.5rem">#</th>
+                <th>Task</th>
+                <th>Impact</th>
+                <th>Effort</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1</strong></td>
+                <td>
+                  <strong>Run nix GC + clear caches</strong> —
+                  <code>nix-collect-garbage --delete-older-than 7d</code>,
+                  <code>rm -rf ~/.cache/*</code>. Reclaim 40-80G on 97%-full
+                  root disk.
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td><strong>2</strong></td>
+                <td>
+                  <strong>Deploy pending OOM hardening</strong> — commit +
+                  <code>nix run .#deploy</code> to activate user-slice
+                  MemoryMax, tightened oomd, PSI metrics + Gatus alert. Prevents
+                  next WDT crash.
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>20 min</td>
+              </tr>
+              <tr>
+                <td><strong>3</strong></td>
+                <td>
+                  <strong>Deploy ssh-suspend-guard</strong> — prevents unwanted
+                  suspend during SSH sessions. Already written, just needs
+                  deploy.
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td><strong>4</strong></td>
+                <td>
+                  <strong>Fix DiscordSync migration</strong> — Turso/libSQL
+                  can't parse <code>CREATE INDEX</code> with
+                  <code>guild_id</code> expression. Investigate upstream
+                  migration SQL.
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>1-2h</td>
+              </tr>
+              <tr>
+                <td><strong>5</strong></td>
+                <td>
+                  <strong>Fix niri-flake-polkit crash</strong> — GUI auth dialog
+                  agent broken since boot. Investigate
+                  <code>journalctl --user -u niri-flake-polkit</code>.
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>30 min</td>
+              </tr>
+              <tr>
+                <td><strong>6</strong></td>
+                <td>
+                  <strong>Fix PostgreSQL collation warnings</strong> —
+                  <code>ALTER DATABASE ... REFRESH COLLATION VERSION</code> for
+                  postgres + twenty. Stops 17K log lines/day.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>5 min</td>
+              </tr>
+              <tr>
+                <td><strong>7</strong></td>
+                <td>
+                  <strong>Investigate Monitor365 crash</strong> — reset-failed,
+                  check logs, determine if it's a new failure mode or
+                  regression.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>30 min</td>
+              </tr>
+              <tr>
+                <td><strong>8</strong></td>
+                <td>
+                  <strong>Enable nix.gc.automatic</strong> — daily GC keeping
+                  last 7d. Structural fix for disk pressure. Prevents future
+                  97%-full scenarios.
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td><strong>9</strong></td>
+                <td>
+                  <strong>Restore deploy workflow</strong> — define
+                  <code>apps.deploy</code> in flake.nix (nh os switch), or
+                  document manual
+                  <code>nixos-rebuild switch --flake .#evo-x2</code>.
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>20 min</td>
+              </tr>
+              <tr>
+                <td><strong>10</strong></td>
+                <td>
+                  <strong>Restore snapshot-migrate-data command</strong> — lost
+                  with justfile. Needed for BTRFS /data conversion. Write as
+                  flake app or script.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td><strong>11</strong></td>
+                <td>
+                  <strong>BTRFS /data subvolume migration</strong> — convert
+                  from toplevel (subvolid=5) to named subvolume. Enables
+                  snapshot protection for Docker/Immich/AI data.
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>1h (downtime)</td>
+              </tr>
+              <tr>
+                <td><strong>12</strong></td>
+                <td>
+                  <strong>Fix swaylock before-sleep hook</strong> — dumps
+                  <code>--help</code> to journal (bad flag). Review the swayidle
+                  command line in niri-wrapped.nix.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td><strong>13</strong></td>
+                <td>
+                  <strong>Update FEATURES.md</strong> — add OOM hardening, PSI
+                  metrics, ssh-suspend-guard, Gatus pressure check. Remove stale
+                  entries.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>30 min</td>
+              </tr>
+              <tr>
+                <td><strong>14</strong></td>
+                <td>
+                  <strong>Update TODO_LIST.md</strong> — mark completed items,
+                  add new ones from this session.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>20 min</td>
+              </tr>
+              <tr>
+                <td><strong>15</strong></td>
+                <td>
+                  <strong>Create ROADMAP.md</strong> — consolidate long-term
+                  direction from 20+ status/planning docs into one living file.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td><strong>16</strong></td>
+                <td>
+                  <strong>Complete Hermes setup</strong> — add OpenAI API key to
+                  sops, install SSH deploy key, set fallback model. Three manual
+                  steps.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td><strong>17</strong></td>
+                <td>
+                  <strong>Twenty CRM intermittent 502s</strong> — investigate
+                  <code>docker logs twenty-server-1</code>. Likely container OOM
+                  or PG connection exhaustion.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td><strong>18</strong></td>
+                <td>
+                  <strong>Docker volumes to /data</strong> —
+                  <code>/data/docker</code> shows 0 bytes. Docker data-root
+                  moved but volumes not migrated. Wasting root disk space.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td><strong>19</strong></td>
+                <td>
+                  <strong>QuickShell: decide base shell</strong> — review
+                  dankMaterialShell vs iNiR, pick one, add as flake input,
+                  enable on niri. Proof-of-concept.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>2-4h</td>
+              </tr>
+              <tr>
+                <td><strong>20</strong></td>
+                <td>
+                  <strong>Boot-time health check service</strong> — systemd
+                  oneshot that lists all failed units and sends desktop
+                  notification. Catches crash-loops invisible from SSH.
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>30 min</td>
+              </tr>
+              <tr>
+                <td><strong>21</strong></td>
+                <td>
+                  <strong>Disable service triage</strong> — decide: enable or
+                  remove voice-agents, minecraft, photomap. Dead config rots.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td><strong>22</strong></td>
+                <td>
+                  <strong>Move /home to /data subvolume</strong> — 171G of home
+                  data on root partition. Move to <code>/data/@home</code> BTRFS
+                  subvolume. Structural fix for disk pressure.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>2h (downtime)</td>
+              </tr>
+              <tr>
+                <td><strong>23</strong></td>
+                <td>
+                  <strong>Log rotation audit</strong> — <code>/var/log</code> is
+                  6.1G. Check journald <code>SystemMaxUse</code> and other log
+                  retention settings.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>20 min</td>
+              </tr>
+              <tr>
+                <td><strong>24</strong></td>
+                <td>
+                  <strong>Upstream PRs</strong> — 10+ upstream contribution
+                  candidates in TODO_LIST (nixpkgs packages, HM modules,
+                  LarsArtmann repos with stale go.sum).
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>Ongoing</td>
+              </tr>
+              <tr>
+                <td><strong>25</strong></td>
+                <td>
+                  <strong>Split large modules</strong> — monitor365 (716L),
+                  signoz (705L+), forgejo (583L). Hard to maintain. Extract
+                  sub-modules.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>2h</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <section id="question">
+          <h2>
+            <span class="num">08</span>g) The #1 Question I Cannot Answer Myself
+          </h2>
+
+          <div class="question-box">
+            <h3>&#9888; Needs Human Decision</h3>
+            <h3 style="margin-top: 0">
+              Should we commit the 9 uncommitted files as one batch or split
+              them into logical commits — and should the deploy happen before or
+              after committing?
+            </h3>
+            <p style="margin-top: 1rem">
+              The working tree has changes from
+              <strong>two different sessions</strong> mixed together:
+            </p>
+            <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
+              <li>
+                <strong>Previous session (uncommitted):</strong> OOM hardening
+                (<code>boot.nix</code>), PSI metrics (<code>signoz.nix</code>),
+                Gatus pressure check (<code>gatus-config.nix</code>), niri
+                MemoryMax (<code>niri-config.nix</code>), AGENTS.md doc updates,
+                HTML formatting changes
+              </li>
+              <li>
+                <strong>This session:</strong> ssh-suspend-guard
+                (<code>niri-wrapped.nix</code>), AGENTS.md gotcha entry
+              </li>
+            </ul>
+            <p>
+              These changes are all syntactically valid and
+              <code>nix eval</code> passes, but
+              <strong>none are deployed</strong>. I can commit and deploy them,
+              but I can't determine: (a) whether the previous session intended
+              to deploy before being interrupted, (b) whether you want to review
+              the OOM hardening changes before they go live (they change
+              kernel-level oomd behavior and add cgroup memory limits), or (c)
+              whether the HTML formatting changes should be committed at all or
+              discarded. These are reversible (all tracked in git), but
+              kernel-level changes deserve a human review.
+            </p>
+          </div>
+        </section>
+
+        <footer class="footer">
+          Generated 2026-06-22 12:09 CEST &middot; SystemNix master branch
+          &middot; 1,156 tracked files &middot; 53 flake inputs
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>
