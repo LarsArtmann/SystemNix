@@ -16,6 +16,45 @@
   };
   sd = import ../../../lib/default.nix lib;
 
+  ssh-suspend-guard = pkgs.writeShellApplication {
+    name = "ssh-suspend-guard";
+    runtimeInputs = [pkgs.systemd pkgs.procps];
+    text = ''
+      POLL_INTERVAL=30
+      inhibit_pid=""
+
+      cleanup() {
+        [ -n "$inhibit_pid" ] && kill "$inhibit_pid" 2>/dev/null || true
+      }
+      trap cleanup EXIT
+
+      has_ssh() {
+        pgrep -a sshd 2>/dev/null | grep -q '@'
+      }
+
+      while true; do
+        if has_ssh; then
+          if [ -z "$inhibit_pid" ] || ! kill -0 "$inhibit_pid" 2>/dev/null; then
+            systemd-inhibit --what=sleep --mode=block \
+              --who="ssh-suspend-guard" \
+              --why="Active SSH session prevents suspend" \
+              sleep infinity &
+            inhibit_pid=$!
+            echo "SSH session active — holding sleep inhibitor (pid=$inhibit_pid)"
+          fi
+        else
+          if [ -n "$inhibit_pid" ]; then
+            kill "$inhibit_pid" 2>/dev/null || true
+            wait "$inhibit_pid" 2>/dev/null || true
+            inhibit_pid=""
+            echo "No SSH sessions — released sleep inhibitor"
+          fi
+        fi
+        sleep "$POLL_INTERVAL"
+      done
+    '';
+  };
+
   wallpaper-set = pkgs.writeShellApplication {
     name = "wallpaper-set";
     runtimeInputs = with pkgs; [awww coreutils];
@@ -494,6 +533,24 @@ in {
                 '';
               };
             in "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe' pkgs.swaylock "swaylock"}";
+            TimeoutStartSec = "10s";
+          };
+        Install.WantedBy = ["graphical-session.target"];
+      };
+
+      ssh-suspend-guard = {
+        Unit = {
+          Description = "Prevents suspend while SSH sessions are active";
+          After = ["graphical-session.target"];
+          PartOf = ["graphical-session.target"];
+          StartLimitBurst = 3;
+          StartLimitIntervalSec = 120;
+        };
+        Service =
+          sd.hardenUser {}
+          // sd.serviceDefaultsUser {}
+          // {
+            ExecStart = lib.getExe ssh-suspend-guard;
             TimeoutStartSec = "10s";
           };
         Install.WantedBy = ["graphical-session.target"];
