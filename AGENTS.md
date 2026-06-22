@@ -2,7 +2,7 @@
 
 **Project Type:** Cross-Platform Nix Configuration (macOS + NixOS)
 **Repo:** `github:LarsArtmann/SystemNix`
-**Current Build:** ✅ All checks passed (`just test-fast`)
+**Current Build:** ✅ All checks passed (`nix flake check --no-build`)
 
 ---
 
@@ -164,7 +164,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 
 - Root (`@` subvolume): daily via `btrbk`, auto-pruning (14d + 4w)
 - `/data`: NOT snapshotted — BTRFS toplevel (subvolid=5). Run `just snapshot-migrate-data` to convert
-- Pre-deploy: `just switch` auto-calls `just snapshot`
+- Pre-deploy: `nix run .#deploy` auto-calls BTRFS snapshot
 - Toplevel mount: `/mnt/btrfs-root` — automounts on access, idle 10min
 - Verify: daily timer `btrfs-verify-snapshots` alerts if snapshots >3 days stale
 
@@ -174,12 +174,12 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 
 ### Must Follow
 
-- **Use `just` commands** — never raw `nixos-rebuild`/`darwin-rebuild`
-- **Test before applying** — `just test-fast` (syntax) or `just test` (full build)
+- **Use `nix`/flake commands** — never raw `nixos-rebuild`/`darwin-rebuild`. Use `nix run .#deploy` to apply
+- **Test before applying** — `nix flake check --no-build` (syntax) or `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (eval)
 - **Use `trash` not `rm`** for file deletion
 - **Use `git mv` not `mv`** in this repo
 - **2-space indentation** for Nix files
-- **Open new terminal** after `just switch` (shell changes need new session)
+- **Open new terminal** after `nix run .#deploy` (shell changes need new session)
 - **`config.allowBroken = false`** — must stay false in flake.nix
 - **No OpenZFS on macOS** — causes kernel panics (ADR-003)
 
@@ -193,7 +193,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Relative paths | Darwin: `../common/`, NixOS: `../../common/` |
 | `lib.mkMerge` + flake-parts | Does not work — use inline config or imports |
 | d2 Darwin overlay | Re-instantiates d2 with stubs; removing it breaks Darwin eval |
-| Niri `BindsTo` → `Wants=` | `BindsTo` kills niri on `just switch` |
+| Niri `BindsTo` → `Wants=` | `BindsTo` kills niri on deploy |
 | awww-wallpaper ordering | `After=awww-daemon` creates cycle; use `graphical-session.target` |
 | Unbound `do-ip6 = false` | evo-x2 has no global IPv6; any new unbound instance needs this |
 | otel-tui Darwin | Never add — 40+ min builds + disk exhaustion |
@@ -208,7 +208,7 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | Docker services target | All Docker/container services use `multi-user.target` (NOT `graphical.target`) |
 | sops GPG key import | `gnupg.sshKeyPaths = []` prevents RSA key GPG import causing 2min+ initrd hang |
 | GPU udev rule | `KERNEL=="card[0-9]"` (not `card*`) — `card*` matches DP/HDMI child devices |
-| OOM crash chain | Helium (Electron) escaped cgroup limits → OOM killed journald → cascade. Mitigated by `MemoryHigh`, per-service `MemoryMax`, `systemd-oomd` |
+| OOM crash chain | Helium/Electron renderers grow unbounded in `user-1000.slice` → reclaim thrash → journald starved → sp5100-tco hardware WDT fires hard reset (60s). Journal cuts off abruptly mid-line with NO shutdown sequence. Fixed by `MemoryHigh=56G; MemoryMax=64G` on user slice + tightened oomd thresholds (50%/20s) + PSI early-warning Gatus alert |
 | Jan llama-server respawn | Spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service — no cgroup limits |
 | Pocket ID bootstrap | Declarative: `pocket-id-config.provision.enable = true` creates admin user + OIDC clients + avatar automatically. Only manual step: register passkey at `/setup`. Client secrets auto-generated and stored in `/var/lib/pocket-id/client-secrets/`. See `just auth-bootstrap` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
@@ -245,17 +245,23 @@ Upstream excludes most adapters from `[all]` extra (lazy pip install). In Nix, d
 | `enrichment/meta` | Sub-module in project-discovery-sdk — must be in `subModules` list in flake.nix when daemon/preset is imported. Was untracked in git causing Nix build failures |
 | `crush-daily` module `pkgs` | `pkgs` must be in the inner NixOS module scope (`{ config, lib, pkgs, ... }: `), NOT the outer flake-parts scope (`{ pkgs, ... }: `). The outer scope doesn't receive `pkgs` from NixOS |
 | `cmdguard` MustNewCommand | Restored in cmdguard v2.6+ as thin wrapper around `NewCommand` (which returns `(Command, error)`). Consumers using `MustNewCommand` compile fine |
+| swayidle SSH gap | swayidle only tracks Wayland input events — SSH sessions are invisible to idle tracking. `ssh-suspend-guard.service` holds a `sleep` block inhibitor via `systemd-inhibit` while any SSH session (`sshd: user@...`) is active, preventing `systemctl suspend` from succeeding |
+| `user-1000.slice` MemoryMax | User-session processes (Helium/Electron, desktop AI tools) run OUTSIDE per-service MemoryMax limits. MUST set `MemoryHigh` + `MemoryMax` on `user-${uid}.slice` in `boot.nix`. Without this, runaway user processes exhaust all RAM → journald starved → WDT hard reset. Per-service MemoryMax only covers systemd services |
+| oomd `settings.OOM` tuning | NixOS defaults (60% pressure sustained 30s) are too lenient — by 60% PSI pressure the system is in deep thrash. Tuned to 50%/20s. Per-slice `ManagedOOMMemoryPressureLimit` defaults to 80% via `mkDefault` — override with plain values in `systemd.slices` |
+| `psi-metrics` collector | Textfile oneshot in `signoz.nix` that exports `/proc/pressure/memory` avg10 values + derived `node_psi_memory_alert` boolean. Gatus alerts via Discord when alert=1 (some>50% or full>10%). node-exporter's built-in `pressure` collector also exports cumulative PSI to SigNoz for dashboards |
+| WDT forensics | Journal ending abruptly mid-line with NO shutdown/poweroff sequence = hardware watchdog reset, NOT clean shutdown or kernel panic (panic would log + auto-reboot via `kernel.panic=30`). sp5100-tco fires after 60s of unresponsiveness. Empty pstore confirms WDT (panic/oops would populate pstore) |
+| Build commands (no justfile) | justfile was REMOVED — use `nix flake check --no-build` (validate), `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (quick eval), `nix run .#deploy` (deploy), `nix fmt` (format) |
 
 ---
 
 ## Build & Test
 
 ```bash
-just test-fast          # Syntax-only validation (fast)
-just test               # Full build validation (slow)
-just format             # treefmt + alejandra
-just switch             # Apply config (auto-snapshots BTRFS on NixOS, auto-detects platform)
-just update             # Update flake inputs
+nix flake check --no-build  # Syntax-only validation (fast)
+nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel  # Quick eval
+nix run .#deploy            # Deploy to evo-x2 via nh
+nix fmt                     # treefmt + alejandra
+nix flake update            # Update flake inputs
 ```
 
 Run `just` for the complete recipe list.
