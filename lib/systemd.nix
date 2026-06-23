@@ -1,4 +1,4 @@
-{lib}: {
+{lib}: args @ {
   mode ? "system",
   MemoryMax ? "512M",
   MemoryHigh ? "80%", # Throttle at 80% of MemoryMax before hard kill
@@ -35,6 +35,20 @@
     ReadWritePaths = mkDefault' ReadWritePaths;
     CapabilityBoundingSet = mkDefault' CapabilityBoundingSet;
   };
+
+  namedKeys = [
+    "mode"
+    "MemoryMax"
+    "MemoryHigh"
+    "ProtectSystem"
+    "ProtectHome"
+    "ReadWritePaths"
+    "RestrictNamespaces"
+    "NoNewPrivileges"
+    "CapabilityBoundingSet"
+  ];
+  passthrough = builtins.removeAttrs args namedKeys;
 in
   shared
   // lib.optionalAttrs (mode == "system") systemOnly
+  // passthrough

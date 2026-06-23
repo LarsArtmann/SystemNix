@@ -43,7 +43,7 @@
     "/rust-cache" = {
       device = "/dev/disk/by-partlabel/rust-cache";
       fsType = "ext4";
-      options = ["noatime" "discard=async"];
+      options = ["noatime" "discard" "nofail" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
     };
   };
 

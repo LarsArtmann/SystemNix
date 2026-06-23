@@ -98,6 +98,9 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | OOM crash chain | Helium/Electron renderers grow unbounded in `user-1000.slice` → journald starved → sp5100-tco WDT hard reset (60s). This is WHY `user-${uid}.slice` has `MemoryHigh=56G; MemoryMax=64G` in `boot.nix`, oomd is tuned to 50%/20s, and per-service MemoryMax alone is insufficient (user processes run outside it) |
 | MGLRU thrashing prevention | `min_ttl_ms=1000` set via `mglru-thrash-protection.service` in `boot.nix`. Protects youngest page generation from eviction for 1s under pressure — prevents the thrash spiral that starves journald. Sysfs-only (`/sys/kernel/mm/lru_gen/`), cannot use `boot.kernel.sysctl`. Compiled in (`0x0007`) but defaults to 0 (disabled) |
 | Docker services target | All Docker/container services use `multi-user.target` (NOT `graphical.target`) |
+| `harden` ExecStart trap | `harden {}` now passes through extra args, but NEVER put `ExecStart`/`Type`/`RemainAfterExit` inside it — merge with `//` outside instead. The `harden` function only processes named hardening params; extras go to `passthrough` |
+| ext4 `discard=async` | **BTRFS-only mount option.** ext4 uses bare `discard` (boolean). `discard=async` on ext4 → `fsconfig() failed` → mount fails → `local-fs.target` fails → **emergency shell**. Caused the 2026-06-23 boot emergency |
+| Non-`nofail` mounts = boot hazard | Any `fileSystems` entry without `nofail` that fails to mount brings down `local-fs.target` → emergency shell. ALWAYS add `nofail` for non-root mounts (cache, data, etc.) |
 
 ---
 

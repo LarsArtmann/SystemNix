@@ -167,12 +167,13 @@ _: {
               wants = ["twenty.service"];
               wantedBy = ["multi-user.target"];
               path = [pkgs.docker];
-              serviceConfig = harden {
-                MemoryMax = "512M";
-                Type = "oneshot";
-                ExecStart = lib.getExe fixCollation;
-                RemainAfterExit = true;
-              };
+              serviceConfig =
+                harden {MemoryMax = "512M";}
+                // {
+                  Type = "oneshot";
+                  ExecStart = lib.getExe fixCollation;
+                  RemainAfterExit = true;
+                };
             };
           };
         timers = docker.timers;
