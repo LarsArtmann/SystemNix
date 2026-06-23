@@ -1,17 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== Deploying NixOS config to evo-x2 ==="
-nh os switch . 2>&1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo ""
-echo "=== Waiting 5s for services to settle ==="
-sleep 5
+echo "=== Pre-Deploy Validation ==="
+if bash "$SCRIPT_DIR/pre-deploy-check.sh"; then
+  echo ""
+  echo "=== Deploying NixOS config to evo-x2 ==="
+  nh os switch . 2>&1
 
-echo ""
-echo "=== dnsblockd status ==="
-systemctl status dnsblockd --no-pager 2>/dev/null || true
+  echo ""
+  echo "=== Waiting 10s for services to settle ==="
+  sleep 10
 
-echo ""
-echo "=== Failed units ==="
-systemctl --failed --no-pager 2>/dev/null || true
+  echo ""
+  echo "=== Failed units ==="
+  systemctl --failed --no-pager 2>/dev/null || true
+else
+  echo ""
+  echo "❌ Deploy aborted — fix pre-deploy failures first"
+  exit 1
+fi

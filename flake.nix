@@ -582,6 +582,10 @@
               mkApp "validate" "Validate flake without building"
               [pkgs.nix]
               ./scripts/validate.sh;
+            pre-deploy-check =
+              mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
+              [pkgs.nix pkgs.jq pkgs.systemd]
+              ./scripts/pre-deploy-check.sh;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
             dns-diagnostics =
