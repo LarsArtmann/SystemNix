@@ -3,6 +3,7 @@ _: {
   flake.nixosModules.default-services = {
     config,
     lib,
+    pkgs,
     ...
   }: let
     cfg = config.services.default-services;
@@ -22,6 +23,11 @@ _: {
         storageDriver = "overlay2";
         daemon.settings = {
           data-root = "/data/docker";
+          # Docker 29.x moved docker-proxy to the internal moby derivation,
+          # which nixpkgs doesn't expose. Disable userland proxy — Docker
+          # falls back to iptables rules for port forwarding, which is
+          # the recommended production approach.
+          userland-proxy = false;
         };
       };
 
