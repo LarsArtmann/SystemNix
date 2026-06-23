@@ -64,7 +64,7 @@ During recovery, **four additional cascading failures** were discovered and fixe
 | Twenty CRM PostgreSQL recovery | `twenty-db-1` has corrupted checkpoint record from OOM crash. Needs `pg_resetwal` or full re-init |
 | OpenSEO container recovery | Same restart-loop pattern, likely same cause |
 | Automated container health monitoring | `service-health-check` exists but doesn't alert on Docker container restart loops |
-| BTRFS scrub after corruption | Should run `btrfs scrub start /data` to verify filesystem integrity after the OOM crash |
+| BTRFS scrub after corruption | ✅ Done — `/data` scrubbed after OOM crash, no errors reported |
 | flake.lock commit | `flake.lock` is dirty (42 insertions/deletions) — pre-existing from session start, not committed |
 
 ---
