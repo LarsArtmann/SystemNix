@@ -109,4 +109,6 @@ in {
   images = import ./images.nix;
 
   rocm = import ./rocm.nix;
+
+  mkFilesystem = import ./filesystems.nix lib;
 }

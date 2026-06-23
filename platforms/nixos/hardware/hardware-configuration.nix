@@ -6,7 +6,9 @@
   lib,
   modulesPath,
   ...
-}: {
+}: let
+  mkFilesystem = import ../../../lib/filesystems.nix lib;
+in {
   imports = [
     (modulesPath + "/installer/scan/not-detected.nix")
   ];
@@ -25,22 +27,22 @@
   hardware.enableRedistributableFirmware = true;
 
   fileSystems = {
-    "/" = {
+    "/" = mkFilesystem {
       device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
       fsType = "btrfs";
       options = ["subvol=@" "compress=zstd" "noatime"];
     };
-    "/data" = {
+    "/data" = mkFilesystem {
       device = "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710";
       fsType = "btrfs";
       options = ["compress=zstd:3" "noatime" "ssd" "discard=async" "space_cache=v2" "nofail"];
     };
-    "/boot" = {
+    "/boot" = mkFilesystem {
       device = "/dev/disk/by-uuid/80A3-73A9";
       fsType = "vfat";
       options = ["fmask=0077" "dmask=0077"];
     };
-    "/rust-cache" = {
+    "/rust-cache" = mkFilesystem {
       device = "/dev/disk/by-partlabel/rust-cache";
       fsType = "ext4";
       options = ["noatime" "discard" "nofail" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
