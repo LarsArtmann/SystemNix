@@ -366,9 +366,6 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
-        go-filewatcher.follows = "go-filewatcher";
       };
     };
 
