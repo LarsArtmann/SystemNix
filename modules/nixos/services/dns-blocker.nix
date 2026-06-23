@@ -331,6 +331,7 @@ _: {
               ExecStartPre = "+-${lib.getExe initScript}";
               ExecStart = "${lib.getExe dnsblockdWrapper}";
               StateDirectory = "dnsblockd";
+              WorkingDirectory = "/var/lib/dnsblockd";
               SupplementaryGroups = ["unbound"];
               RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];
             };
