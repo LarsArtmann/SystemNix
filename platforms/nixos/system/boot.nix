@@ -133,6 +133,29 @@ in {
       "dbus-broker".serviceConfig.OOMScoreAdjust = -500;
       "systemd-logind".serviceConfig.OOMScoreAdjust = -500;
       "systemd-udevd".serviceConfig.OOMScoreAdjust = -500;
+
+      # ── MGLRU thrashing prevention ──────────────────────────────────────
+      # min_ttl_ms protects the youngest page generation from eviction for N ms.
+      # Under memory pressure, this prevents the thrash spiral (evict hot page →
+      # fault it back → evict another) that starves journald and freezes the
+      # desktop. 1000ms is the documented sweet spot (~human-detectable lag).
+      # The OOM killer fires if the working set still can't fit — but cleanly,
+      # instead of locking up the entire system.
+      # MGLRU is compiled in (CONFIG_LRU_GEN=y, enabled=0x0007) but min_ttl_ms
+      # defaults to 0 (disabled). This is sysfs-only (/sys/kernel/mm/lru_gen/),
+      # not a /proc/sys/ sysctl, so it can't go in boot.kernel.sysctl.
+      mglru-thrash-protection = {
+        description = "Enable MGLRU thrashing prevention (min_ttl_ms=1000)";
+        wantedBy = ["multi-user.target"];
+        after = ["systemd-modules-load.service"];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
+        '';
+      };
     };
 
     user.services = {
