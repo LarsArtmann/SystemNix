@@ -119,6 +119,8 @@ in {
 
     # Dozzle — Docker container log tailing at logs.home.lan
     # Inline config (not module) to avoid nix flake check eval issue
+    # Backend set to docker to avoid running Podman alongside Docker
+    virtualisation.oci-containers.backend = "docker";
     virtualisation.oci-containers.containers.dozzle = {
       autoStart = true;
       image = "amir20/dozzle:latest";
