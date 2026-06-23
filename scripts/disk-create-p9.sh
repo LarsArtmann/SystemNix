@@ -14,32 +14,44 @@ BTRFS_SIZE_SECTORS=2147483648
 BTRFS_END_SECTOR=$((P8_START_SECTOR + BTRFS_SIZE_SECTORS))
 TARGET_P8_END_GIB=1560
 
-RED='\033[0;31m'; GRN='\033[0;32m'; YLW='\033[0;33m'; BLU='\033[0;34m'; BLD='\033[1m'; NC='\033[0m'
-log()  { echo -e "${BLU}[$(date +%H:%M:%S)]${NC} $*"; }
-ok()   { echo -e "${GRN}[$(date +%H:%M:%S)] ✓${NC} $*"; }
+RED='\033[0;31m'
+GRN='\033[0;32m'
+YLW='\033[0;33m'
+BLU='\033[0;34m'
+BLD='\033[1m'
+NC='\033[0m'
+log() { echo -e "${BLU}[$(date +%H:%M:%S)]${NC} $*"; }
+ok() { echo -e "${GRN}[$(date +%H:%M:%S)] ✓${NC} $*"; }
 warn() { echo -e "${YLW}[$(date +%H:%M:%S)] ⚠${NC} $*"; }
-err()  { echo -e "${RED}[$(date +%H:%M:%S)] ✗${NC} $*" >&2; }
-die()  { err "ABORTED: $*"; exit 1; }
-
-confirm() {
-    local msg="$1"
-    echo -en "${YLW}[$(date +%H:%M:%S)]${NC} ${msg} [yes/NO] "
-    read -r ans
-    [ "$ans" = "yes" ] || die "User declined: $msg"
+err() { echo -e "${RED}[$(date +%H:%M:%S)] ✗${NC} $*" >&2; }
+die() {
+  err "ABORTED: $*"
+  exit 1
 }
 
-sgdisk()    { sudo nix shell nixpkgs#gptfdisk -c sgdisk "$@"; }
-parted()    { sudo nix shell nixpkgs#parted -c parted -s "$@"; }
+confirm() {
+  local msg="$1"
+  echo -en "${YLW}[$(date +%H:%M:%S)]${NC} ${msg} [yes/NO] "
+  read -r ans
+  [ "$ans" = "yes" ] || die "User declined: $msg"
+}
+
+sgdisk() { sudo nix shell nixpkgs#gptfdisk -c sgdisk "$@"; }
+parted() { sudo nix shell nixpkgs#parted -c parted -s "$@"; }
 mkfs_ext4() { sudo nix shell nixpkgs#e2fsprogs -c mkfs.ext4 "$@"; }
 partprobe() { sudo nix shell nixpkgs#parted -c partprobe "$DISK" 2>/dev/null || true; }
 
 part_exists() { [ -b "${DISK}p$1" ]; }
-part_start()  { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo 0; }
-part_size()   { cat "/sys/block/nvme0n1/nvme0n1p$1/size" 2>/dev/null || echo 0; }
-part_end()    { echo $(($(part_start "$1") + $(part_size "$1"))); }
+part_start() { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo 0; }
+part_size() { cat "/sys/block/nvme0n1/nvme0n1p$1/size" 2>/dev/null || echo 0; }
+part_end() { echo $(($(part_start "$1") + $(part_size "$1"))); }
 sectors_to_gib() { awk "BEGIN { printf \"%.1f\", $1 * 512 / 1073741824 }"; }
 
-assert() { local desc="$1"; shift; if "$@"; then ok "$desc"; else die "ASSERT FAILED: $desc"; fi; }
+assert() {
+  local desc="$1"
+  shift
+  if "$@"; then ok "$desc"; else die "ASSERT FAILED: $desc"; fi
+}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PHASE 0: VERIFY FIX IS IN PLACE
@@ -61,12 +73,12 @@ echo ""
 
 SCRUB_STATUS=$(sudo btrfs scrub status /data 2>/dev/null)
 if echo "$SCRUB_STATUS" | grep -q "running"; then
-    die "Scrub still running. Wait for it to finish before creating p9."
+  die "Scrub still running. Wait for it to finish before creating p9."
 fi
 
 if echo "$SCRUB_STATUS" | grep -qi "uncorrectable" && ! echo "$SCRUB_STATUS" | grep -qP "uncorrectable.*0"; then
-    warn "Scrub found uncorrectable errors. Review before proceeding."
-    confirm "Proceed anyway despite scrub errors?"
+  warn "Scrub found uncorrectable errors. Review before proceeding."
+  confirm "Proceed anyway despite scrub errors?"
 fi
 
 ok "Scrub complete — safe to create p9"
@@ -79,9 +91,9 @@ log "══════ PHASE 1: Create p9 ══════"
 echo ""
 
 if part_exists 9; then
-    warn "p9 already exists — deleting first"
-    sgdisk -d 9 "$DISK"
-    partprobe
+  warn "p9 already exists — deleting first"
+  sgdisk -d 9 "$DISK"
+  partprobe
 fi
 
 log "Creating p9 (100 GiB, label=rust-cache)..."

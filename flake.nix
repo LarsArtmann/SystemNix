@@ -193,6 +193,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/library-policy?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         go-finding.follows = "go-finding";
@@ -211,6 +212,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/crush-daily?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -248,6 +250,10 @@
       url = "git+ssh://git@github.com/LarsArtmann/cmdguard?ref=master";
       flake = false;
     };
+    go-nix-helpers = {
+      url = "git+ssh://git@github.com/LarsArtmann/go-nix-helpers?ref=master";
+      flake = false;
+    };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
     golangci-lint-auto-configure = {
@@ -263,6 +269,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         go-output.follows = "go-output";
         go-branded-id.follows = "go-branded-id";
         cmdguard.follows = "cmdguard";
@@ -288,6 +295,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/BuildFlow?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         cmdguard.follows = "cmdguard";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
@@ -313,6 +321,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/go-structure-linter?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
         gogenfilter.follows = "gogenfilter";
@@ -326,6 +335,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/branching-flow?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         go-finding.follows = "go-finding";
         go-output.follows = "go-output";
         go-branded-id.follows = "go-branded-id";
@@ -348,6 +358,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/projects-management-automation?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -367,6 +378,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/project-meta?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -382,6 +394,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/overview?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -396,6 +409,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/DiscordSync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";

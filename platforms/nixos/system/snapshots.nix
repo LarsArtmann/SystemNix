@@ -38,11 +38,13 @@
   # and keeps them out of btrbk snapshots.
   rustCacheProjects = ["monitor365"];
 
-  rustCacheDirs = builtins.map
+  rustCacheDirs =
+    builtins.map
     (p: "d /rust-cache/${p} 0755 ${primaryUser} users -")
     rustCacheProjects;
 
-  rustCacheLinks = builtins.map
+  rustCacheLinks =
+    builtins.map
     (p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}")
     rustCacheProjects;
 in {
@@ -55,8 +57,6 @@ in {
       };
     }
     // cacheFileSystems;
-
-  systemd.tmpfiles.rules = rustCacheDirs ++ rustCacheLinks;
 
   services.btrbk.instances."root" = {
     onCalendar = "daily";
@@ -71,54 +71,58 @@ in {
     };
   };
 
-  systemd.services."btrfs-verify-snapshots" = {
-    description = "Verify BTRFS snapshot freshness";
-    inherit onFailure;
-    path = [pkgs.coreutils];
-    serviceConfig =
-      harden {}
-      // {
-        Type = "oneshot";
-        ProtectSystem = "true";
-        ReadWritePaths = [];
-      };
-    script = ''
-      set -euo pipefail
-      MAX_AGE_DAYS=3
+  systemd = {
+    tmpfiles.rules = rustCacheDirs ++ rustCacheLinks;
 
-      SNAP_DIR="/mnt/btrfs-root/.snapshots"
-      if [ ! -d "$SNAP_DIR" ]; then
-        echo "WARNING: No snapshots directory ($SNAP_DIR)"
-        exit 1
-      fi
+    services."btrfs-verify-snapshots" = {
+      description = "Verify BTRFS snapshot freshness";
+      inherit onFailure;
+      path = [pkgs.coreutils];
+      serviceConfig =
+        harden {}
+        // {
+          Type = "oneshot";
+          ProtectSystem = "true";
+          ReadWritePaths = [];
+        };
+      script = ''
+        set -euo pipefail
+        MAX_AGE_DAYS=3
 
-      LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.*' | sort | tail -1)
-      if [ -z "$LATEST" ]; then
-        echo "WARNING: No root snapshots found"
-        exit 1
-      fi
+        SNAP_DIR="/mnt/btrfs-root/.snapshots"
+        if [ ! -d "$SNAP_DIR" ]; then
+          echo "WARNING: No snapshots directory ($SNAP_DIR)"
+          exit 1
+        fi
 
-      SNAP_EPOCH=$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)
-      NOW_EPOCH=$(date +%s)
-      AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
+        LATEST=$(find "$SNAP_DIR" -maxdepth 1 -mindepth 1 -type d -name '@.*' | sort | tail -1)
+        if [ -z "$LATEST" ]; then
+          echo "WARNING: No root snapshots found"
+          exit 1
+        fi
 
-      if [ "$AGE_DAYS" -gt "$MAX_AGE_DAYS" ]; then
-        echo "WARNING: Root snapshot is $AGE_DAYS days old (threshold: $MAX_AGE_DAYS)"
-        exit 1
-      fi
+        SNAP_EPOCH=$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)
+        NOW_EPOCH=$(date +%s)
+        AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
 
-      echo "OK: Root snapshot is $AGE_DAYS day(s) old"
-    '';
-  };
+        if [ "$AGE_DAYS" -gt "$MAX_AGE_DAYS" ]; then
+          echo "WARNING: Root snapshot is $AGE_DAYS days old (threshold: $MAX_AGE_DAYS)"
+          exit 1
+        fi
 
-  systemd.timers."btrfs-verify-snapshots" = {
-    description = "Verify BTRFS snapshot freshness daily";
-    timerConfig = {
-      OnCalendar = "daily";
-      Persistent = true;
-      RandomizedDelaySec = "1h";
+        echo "OK: Root snapshot is $AGE_DAYS day(s) old"
+      '';
     };
-    wantedBy = ["timers.target"];
+
+    timers."btrfs-verify-snapshots" = {
+      description = "Verify BTRFS snapshot freshness daily";
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+        RandomizedDelaySec = "1h";
+      };
+      wantedBy = ["timers.target"];
+    };
   };
 
   services.btrfs.autoScrub = {

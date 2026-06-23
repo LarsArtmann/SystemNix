@@ -14,48 +14,60 @@
 set -euo pipefail
 
 DISK="/dev/nvme0n1"
-P8_START_SECTOR=1097861120       # p8 start — hardcoded, never changes
-BTRFS_SIZE_SECTORS=2147483648    # 1.00 TiB
+P8_START_SECTOR=1097861120    # p8 start — hardcoded, never changes
+BTRFS_SIZE_SECTORS=2147483648 # 1.00 TiB
 BTRFS_END_SECTOR=$((P8_START_SECTOR + BTRFS_SIZE_SECTORS))
-TARGET_P8_END_GIB=1560           # gives ~12.5 GiB margin past BTRFS
+TARGET_P8_END_GIB=1560 # gives ~12.5 GiB margin past BTRFS
 TARGET_P8_END_SECTOR=$((TARGET_P8_END_GIB * 1024 * 1024 * 1024 / 512))
 
-RED='\033[0;31m'; GRN='\033[0;32m'; YLW='\033[0;33m'; BLU='\033[0;34m'; BLD='\033[1m'; NC='\033[0m'
-log()  { echo -e "${BLU}[$(date +%H:%M:%S)]${NC} $*"; }
-ok()   { echo -e "${GRN}[$(date +%H:%M:%S)] ✓${NC} $*"; }
+RED='\033[0;31m'
+GRN='\033[0;32m'
+YLW='\033[0;33m'
+BLU='\033[0;34m'
+BLD='\033[1m'
+NC='\033[0m'
+log() { echo -e "${BLU}[$(date +%H:%M:%S)]${NC} $*"; }
+ok() { echo -e "${GRN}[$(date +%H:%M:%S)] ✓${NC} $*"; }
 warn() { echo -e "${YLW}[$(date +%H:%M:%S)] ⚠${NC} $*"; }
-err()  { echo -e "${RED}[$(date +%H:%M:%S)] ✗${NC} $*" >&2; }
-die()  { err "ABORTED: $*"; exit 1; }
-
-confirm() {
-    local msg="$1"
-    echo -en "${YLW}[$(date +%H:%M:%S)]${NC} ${msg} [yes/NO] "
-    read -r ans
-    [ "$ans" = "yes" ] || die "User declined: $msg"
+err() { echo -e "${RED}[$(date +%H:%M:%S)] ✗${NC} $*" >&2; }
+die() {
+  err "ABORTED: $*"
+  exit 1
 }
 
-sgdisk()    { sudo nix shell nixpkgs#gptfdisk -c sgdisk "$@"; }
+confirm() {
+  local msg="$1"
+  echo -en "${YLW}[$(date +%H:%M:%S)]${NC} ${msg} [yes/NO] "
+  read -r ans
+  [ "$ans" = "yes" ] || die "User declined: $msg"
+}
+
+sgdisk() { sudo nix shell nixpkgs#gptfdisk -c sgdisk "$@"; }
 partprobe() { sudo nix shell nixpkgs#parted -c partprobe "$DISK" 2>/dev/null || true; }
 
 # Resize partition using sgdisk (non-interactive, unlike parted which prompts on busy devices)
 # Preserves start sector, changes end sector. BTRFS identifies by its own UUID, not partition GUID.
 resize_p8() {
-    local new_end_sector=$1
-    sgdisk -d 8 "$DISK"
-    partprobe
-    sgdisk -n "8:${P8_START_SECTOR}:${new_end_sector}" "$DISK"
-    sgdisk -t 8:8300 "$DISK"
-    partprobe
+  local new_end_sector=$1
+  sgdisk -d 8 "$DISK"
+  partprobe
+  sgdisk -n "8:${P8_START_SECTOR}:${new_end_sector}" "$DISK"
+  sgdisk -t 8:8300 "$DISK"
+  partprobe
 }
 partprobe() { sudo nix shell nixpkgs#parted -c partprobe "$DISK" 2>/dev/null || true; }
 
 part_exists() { [ -b "${DISK}p$1" ]; }
-part_start()  { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo 0; }
-part_size()   { cat "/sys/block/nvme0n1/nvme0n1p$1/size" 2>/dev/null || echo 0; }
-part_end()    { echo $(($(part_start "$1") + $(part_size "$1"))); }
+part_start() { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo 0; }
+part_size() { cat "/sys/block/nvme0n1/nvme0n1p$1/size" 2>/dev/null || echo 0; }
+part_end() { echo $(($(part_start "$1") + $(part_size "$1"))); }
 sectors_to_gib() { awk "BEGIN { printf \"%.1f\", $1 * 512 / 1073741824 }"; }
 
-assert() { local desc="$1"; shift; if "$@"; then ok "$desc"; else die "ASSERT FAILED: $desc"; fi; }
+assert() {
+  local desc="$1"
+  shift
+  if "$@"; then ok "$desc"; else die "ASSERT FAILED: $desc"; fi
+}
 
 # ═══════════════════════════════════════════════════════════════════════════
 # PHASE 0: RE-VERIFY
@@ -97,13 +109,13 @@ log ""
 log "══════ PHASE 1: Delete p9 (stop ext4 overwrite) ══════"
 
 if part_exists 9; then
-    log "Unmounting and deleting p9..."
-    findmnt --source "${DISK}p9" >/dev/null 2>&1 && sudo umount "${DISK}p9" || true
-    sgdisk -d 9 "$DISK"
-    partprobe
-    assert "p9 deleted" bash -c '! part_exists 9'
+  log "Unmounting and deleting p9..."
+  findmnt --source "${DISK}p9" >/dev/null 2>&1 && sudo umount "${DISK}p9" || true
+  sgdisk -d 9 "$DISK"
+  partprobe
+  assert "p9 deleted" bash -c '! part_exists 9'
 else
-    ok "p9 does not exist"
+  ok "p9 does not exist"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -122,15 +134,15 @@ assert "FINAL MATH CHECK: target end > BTRFS end" test "$TARGET_P8_END_SECTOR" -
 
 CURRENT_END_GIB=$(sectors_to_gib "$(part_end 8)")
 if [ "$(awk "BEGIN { print ($CURRENT_END_GIB <= $TARGET_P8_END_GIB + 1) && ($CURRENT_END_GIB >= $TARGET_P8_END_GIB - 1) }")" = "1" ]; then
-    ok "p8 already at target — skip resize"
+  ok "p8 already at target — skip resize"
 else
-    confirm "Resize p8 from ${CURRENT_END_GIB} to ${TARGET_P8_END_GIB} GiB?"
-    log "Resizing via sgdisk (delete + recreate boundary)..."
-    resize_p8 "$TARGET_P8_END_SECTOR"
+  confirm "Resize p8 from ${CURRENT_END_GIB} to ${TARGET_P8_END_GIB} GiB?"
+  log "Resizing via sgdisk (delete + recreate boundary)..."
+  resize_p8 "$TARGET_P8_END_SECTOR"
 
-    POST_END=$(part_end 8)
-    assert "p8 covers BTRFS after resize" test "$POST_END" -ge "$BTRFS_END_SECTOR"
-    ok "p8 resized to $(sectors_to_gib "$(part_size 8)") GiB — BTRFS safe"
+  POST_END=$(part_end 8)
+  assert "p8 covers BTRFS after resize" test "$POST_END" -ge "$BTRFS_END_SECTOR"
+  ok "p8 resized to $(sectors_to_gib "$(part_size 8)") GiB — BTRFS safe"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -141,23 +153,23 @@ log "══════ PHASE 3: Delete dead partitions ══════"
 
 # Turn off disk swap first if still active
 if part_exists 2 && swapon --show 2>/dev/null | grep -q "nvme0n1p2"; then
-    log "Turning off disk swap (p2)..."
-    sudo swapoff "${DISK}p2"
-    ok "Disk swap off"
+  log "Turning off disk swap (p2)..."
+  sudo swapoff "${DISK}p2"
+  ok "Disk swap off"
 else
-    ok "Disk swap already off or p2 gone"
+  ok "Disk swap already off or p2 gone"
 fi
 
 # Delete highest first (sgdisk renumbers after each deletion)
 for p in 5 3 2 1; do
-    if part_exists "$p"; then
-        log "  Deleting p${p}..."
-        sgdisk -d "$p" "$DISK"
-        partprobe
-        assert "p${p} deleted" bash -c '! part_exists '"$p"
-    else
-        warn "  p${p} already gone"
-    fi
+  if part_exists "$p"; then
+    log "  Deleting p${p}..."
+    sgdisk -d "$p" "$DISK"
+    partprobe
+    assert "p${p} deleted" bash -c '! part_exists '"$p"
+  else
+    warn "  p${p} already gone"
+  fi
 done
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -172,10 +184,10 @@ echo "Device stats:"
 sudo btrfs device stats /data 2>/dev/null | sed 's/^/  /' || true
 
 if sudo btrfs scrub status /data 2>/dev/null | grep -q "running"; then
-    warn "Scrub already running"
+  warn "Scrub already running"
 else
-    log "Starting scrub..."
-    sudo btrfs scrub start /data >/dev/null 2>&1 && ok "Scrub started" || warn "Scrub failed to start"
+  log "Starting scrub..."
+  sudo btrfs scrub start /data >/dev/null 2>&1 && ok "Scrub started" || warn "Scrub failed to start"
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -192,10 +204,10 @@ echo ""
 echo "BTRFS boundary check:"
 P8_END=$(part_end 8)
 if [ "$P8_END" -ge "$BTRFS_END_SECTOR" ]; then
-    MARGIN=$(sectors_to_gib "$((P8_END - BTRFS_END_SECTOR))")
-    echo -e "${GRN}  ✓ p8 covers BTRFS with ${MARGIN} GiB margin${NC}"
+  MARGIN=$(sectors_to_gib "$((P8_END - BTRFS_END_SECTOR))")
+  echo -e "${GRN}  ✓ p8 covers BTRFS with ${MARGIN} GiB margin${NC}"
 else
-    echo -e "${RED}  ✗ p8 still too small!${NC}"
+  echo -e "${RED}  ✗ p8 still too small!${NC}"
 fi
 echo ""
 
