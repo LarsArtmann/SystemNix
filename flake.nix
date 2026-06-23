@@ -196,7 +196,6 @@
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
-        go-finding.follows = "go-finding";
       };
     };
 
@@ -216,12 +215,15 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
       };
     };
 
-    # Shared Go libraries — single source of truth for all Go tool repos
+    # Shared Go libraries — single source of truth for all Go tool repos.
+    # IMPORTANT: These are `flake = false` tarballs. They must NOT be
+    # `follows`-overridden into Go tool flakes — the override changes vendored
+    # Go module content, breaking vendorHash (fixed-output hash mismatch).
+    # Only build-infra inputs (nixpkgs, go-nix-helpers, flake-parts,
+    # treefmt-nix, systems) may be followed into Go tool flakes.
     go-finding = {
       url = "git+ssh://git@github.com/LarsArtmann/go-finding?ref=master";
       flake = false;
@@ -260,19 +262,18 @@
       url = "git+ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        goFindingSrc.follows = "go-finding";
       };
     };
 
     # mr-sync — CLI to keep ~/.mrconfig in sync with GitHub repos
+    # NOTE: Go-module replace deps (go-output, go-branded-id, cmdguard) are NOT
+    # followed — overriding them changes vendored content and breaks vendorHash.
+    # Only build-infra inputs are followed.
     mr-sync = {
       url = "git+ssh://git@github.com/LarsArtmann/mr-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
-        go-output.follows = "go-output";
-        go-branded-id.follows = "go-branded-id";
-        cmdguard.follows = "cmdguard";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -285,8 +286,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         # go-finding: NOT followed — hierarchical-errors hasn't been updated for the new Confidence type API
-        go-filewatcher.follows = "go-filewatcher";
-        gogenfilter.follows = "gogenfilter";
       };
     };
 
@@ -296,10 +295,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
-        cmdguard.follows = "cmdguard";
-        go-finding.follows = "go-finding";
-        go-output.follows = "go-output";
-        go-branded-id.follows = "go-branded-id";
       };
     };
 
@@ -308,11 +303,6 @@
       url = "git+ssh://git@github.com/LarsArtmann/go-auto-upgrade?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        cmdguard.follows = "cmdguard";
-        go-finding.follows = "go-finding";
-        go-output.follows = "go-output";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
       };
     };
 
@@ -322,11 +312,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
-        go-finding.follows = "go-finding";
-        go-output.follows = "go-output";
-        gogenfilter.follows = "gogenfilter";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
       };
     };
 
@@ -336,10 +321,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
-        go-finding.follows = "go-finding";
-        go-output.follows = "go-output";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -350,7 +331,6 @@
     art-dupl = {
       url = "git+ssh://git@github.com/LarsArtmann/art-dupl?ref=fork";
       inputs.nixpkgs.follows = "nixpkgs";
-      inputs.gogenfilter.follows = "gogenfilter";
     };
 
     # projects-management-automation — CLI for managing multiple projects with workflow automation
@@ -362,14 +342,6 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        go-finding.follows = "go-finding";
-        go-output.follows = "go-output";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
-        go-filewatcher.follows = "go-filewatcher";
-        gogenfilter.follows = "gogenfilter";
-        branching-flow.follows = "branching-flow";
-        project-meta.follows = "project-meta";
       };
     };
 
@@ -382,10 +354,6 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
-        go-filewatcher.follows = "go-filewatcher";
-        gogenfilter.follows = "gogenfilter";
       };
     };
 
@@ -413,8 +381,6 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        go-branded-id.follows = "go-branded-id";
-        go-error-family.follows = "go-error-family";
       };
     };
     # md-go-validator — Validate code blocks embedded in Markdown/MDX docs
