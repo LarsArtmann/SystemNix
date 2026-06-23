@@ -101,6 +101,12 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `harden` ExecStart trap | `harden {}` now passes through extra args, but NEVER put `ExecStart`/`Type`/`RemainAfterExit` inside it — merge with `//` outside instead. The `harden` function only processes named hardening params; extras go to `passthrough` |
 | ext4 `discard=async` | **BTRFS-only mount option.** ext4 uses bare `discard` (boolean). `discard=async` on ext4 → `fsconfig() failed` → mount fails → `local-fs.target` fails → **emergency shell**. Caused the 2026-06-23 boot emergency |
 | Non-`nofail` mounts = boot hazard | Any `fileSystems` entry without `nofail` that fails to mount brings down `local-fs.target` → emergency shell. ALWAYS add `nofail` for non-root mounts (cache, data, etc.) |
+| `oci-containers` backend defaults to Podman | `virtualisation.oci-containers.backend` defaults to `"podman"`, silently pulling in a full Podman daemon alongside Docker. Set `backend = "docker"` when Docker is already enabled |
+| Docker 29.x `userland-proxy-path` | Docker 29.x moved `docker-proxy` to the internal moby derivation, which nixpkgs doesn't expose. Daemon fails with "invalid userland-proxy-path". Fix: `daemon.settings.userland-proxy = false` |
+| Docker containerd bbolt corruption | OOM/hard reset corrupts `/data/docker/containerd/daemon/io.containerd.metadata.v1.bolt/meta.db`. Recovery: stop docker → `mv meta.db meta.db.bak` → remove `containers/`, `containerd/`, `network/` dirs → restart. Preserves volumes/images |
+| dnsblockd + `ProtectSystem=strict` | SQLite needs a writable CWD. Set `WorkingDirectory = "/var/lib/dnsblockd"` alongside `StateDirectory` or SQLite CANTOPEN errors |
+| `mkFilesystem` helper | `lib/filesystems.nix` validates mount options at eval time. Use it instead of raw `fileSystems` attrsets to catch cross-fs contamination (e.g. `discard=async` on ext4) |
+| Pre-deploy validation | `nix run .#pre-deploy-check` catches boot-breaking issues before switch. Runs automatically as part of `nix run .#deploy` |
 
 ---
 
