@@ -20,8 +20,12 @@ in {
     ../../common/programs/yazi.nix # Terminal file manager with Catppuccin theme
     ../../common/programs/zed.nix # Zed editor — shared cross-platform config
     ../desktop/niri-wrapped.nix # Niri scrollable-tiling compositor via niri-flake HM module
-    ../desktop/waybar.nix # Status bar for niri
+    ../desktop/waybar.nix # Status bar for niri (kept in parallel during Quickshell migration)
+    ../desktop/quickshell.nix # Quickshell desktop shell via DankMaterialShell
   ];
+
+  # Quickshell desktop shell — replaces Waybar, Dunst, Wlogout, polkit_gnome
+  programs.systemnix-quickshell.enable = true;
 
   # SSH hosts defined in common/programs/ssh-config.nix
 

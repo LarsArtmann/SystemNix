@@ -389,6 +389,13 @@
         treefmt-nix.follows = "treefmt-nix";
       };
     };
+
+    # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
+    # Brings quickshell transitively — no separate quickshell input needed
+    dankMaterialShell = {
+      url = "github:AvengeMedia/DankMaterialShell/stable";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
@@ -699,6 +706,7 @@
                       sharedHomeManagerSpecialArgs
                       // {
                         wallpapers = inputs.wallpapers-src;
+                        dankMaterialShell = inputs.dankMaterialShell;
                       };
                   };
               }
