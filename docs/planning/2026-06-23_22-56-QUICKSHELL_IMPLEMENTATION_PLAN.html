@@ -1,0 +1,2030 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quickshell Implementation Plan — SystemNix</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>PARETO PLAN</span>
+      <span>2026-06-23</span>
+      <span>SystemNix &middot; Quickshell on Niri</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#pareto">Pareto Breakdown</a>
+          <a href="#p0">P0 &middot; Critical Path</a>
+          <a href="#p1">P1 &middot; Quick Wins</a>
+          <a href="#p2">P2 &middot; Core Value</a>
+          <a href="#p3">P3 &middot; Polish</a>
+          <a href="#p4">P4 &middot; Stretch</a>
+          <a href="#graph">Execution Graph</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">PARETO PLAN &middot; 80 TASKS &middot; MAX 12 MIN EACH</div>
+          <h1>Quickshell Implementation Plan</h1>
+          <p class="hero-subtitle">
+            Every task to collapse 9 shell tools into one Quickshell brain on SystemNix &mdash;
+            sorted by impact, effort, and customer value.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-bad">
+            <div class="stat-value">6</div>
+            <div class="stat-label">P0 Critical Path</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">12</div>
+            <div class="stat-label">P1 Quick Wins</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">30</div>
+            <div class="stat-label">P2 Core Value</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">22</div>
+            <div class="stat-label">P3 Polish</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">10</div>
+            <div class="stat-label">P4 Stretch</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">80</div>
+            <div class="stat-label">Total Tasks</div>
+          </div>
+        </div>
+
+        <div class="callout callout-solution">
+          <strong>The 1% that delivers 51%</strong>
+          Tasks P0-01 through P0-06: add the flake input, enable DankMaterialShell's upstream HM
+          module, and spawn it from niri. That alone replaces Waybar, Dunst, Wlogout, and
+          polkit_gnome &mdash; four of nine tools gone in one evening.
+        </div>
+
+        <!-- ============================ PARETO BREAKDOWN ============================ -->
+        <h2 id="pareto"><span class="num">&#9670;</span>Pareto Breakdown</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Principle</th>
+              <th>Tasks</th>
+              <th>Time</th>
+              <th>What it delivers</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td>1% &rarr; 51%</td>
+              <td>6</td>
+              <td>~1h</td>
+              <td>Quickshell running on evo-x2 with a real bar</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-high">P1</span></td>
+              <td>4% &rarr; 64%</td>
+              <td>12</td>
+              <td>~2.5h</td>
+              <td>4 tools killed, DMS themed, Ollama widget live</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td>20% &rarr; 80%</td>
+              <td>30</td>
+              <td>~6h</td>
+              <td>All SystemNix-native widgets, Waybar fully retired</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-low">P3</span></td>
+              <td>Polish</td>
+              <td>22</td>
+              <td>~4h</td>
+              <td>Lock screen, Mission Control OSD, dynamic theming</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-fixed">P4</span></td>
+              <td>Stretch</td>
+              <td>10</td>
+              <td>~3h</td>
+              <td>greetd greeter, documentation, tests</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================ P0 ============================ -->
+        <h2 id="p0"><span class="num">01</span>P0 &mdash; Critical Path (1% &rarr; 51%)</h2>
+        <p>Must be done first. Unlocks everything. No dependencies on any other tier.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>File</th>
+              <th>Effort</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P0-01</strong></td>
+              <td>
+                Add <code>dankMaterialShell</code> flake input with
+                <code>inputs.nixpkgs.follows</code>
+              </td>
+              <td><code>flake.nix</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td><strong>P0-02</strong></td>
+              <td>
+                Run <code>nix flake lock --update-input dankMaterialShell</code> and verify it
+                resolves
+              </td>
+              <td><code>flake.lock</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td><strong>P0-03</strong></td>
+              <td>
+                Create <code>platforms/nixos/desktop/quickshell.nix</code> &mdash; HM module
+                skeleton with options skeleton
+              </td>
+              <td><code>desktop/quickshell.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td><strong>P0-04</strong></td>
+              <td>
+                Import <code>inputs.dankMaterialShell.homeModules.dank-material-shell</code> in the
+                HM module
+              </td>
+              <td><code>desktop/quickshell.nix</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td><strong>P0-05</strong></td>
+              <td>
+                Set <code>programs.dank-material-shell.enable = true</code> with feature toggles
+                (monitoring, theming, audio)
+              </td>
+              <td><code>desktop/quickshell.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+            <tr>
+              <td><strong>P0-06</strong></td>
+              <td>
+                Add <code>quickshell.nix</code> import to <code>home.nix</code> alongside existing
+                <code>waybar.nix</code>
+              </td>
+              <td><code>users/home.nix</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-critical">Critical</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================ P1 ============================ -->
+        <h2 id="p1"><span class="num">02</span>P1 &mdash; Quick Wins (4% &rarr; 64%)</h2>
+        <p>High impact, low effort. Kill dead tools and wire the first SystemNix-native widget.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>File</th>
+              <th>Effort</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P1-01</strong></td>
+              <td>Apply Catppuccin Mocha theme to DMS via <code>registryThemeVariants</code></td>
+              <td><code>quickshell.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-02</strong></td>
+              <td>
+                Disable <code>services.dunst.enable</code> in <code>home.nix</code> (DMS
+                notification daemon takes over)
+              </td>
+              <td><code>users/home.nix:382</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-03</strong></td>
+              <td>Remove <code>polkit_gnome</code> from security-hardening.nix packages</td>
+              <td><code>services/security-hardening.nix:65</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-04</strong></td>
+              <td>Disable <code>programs.wlogout</code> and remove its import from home.nix</td>
+              <td><code>home.nix:17</code>, <code>programs/wlogout.nix</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-05</strong></td>
+              <td>Verify DMS system tray works (StatusNotifierItem host)</td>
+              <td>runtime test</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-06</strong></td>
+              <td>Remove <code>wlogout</code> package from <code>home.packages</code></td>
+              <td><code>home.nix:203</code></td>
+              <td><span class="badge badge-low">3m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-07</strong></td>
+              <td>
+                Remove all 7 <code>waybar*</code> shell scripts from
+                <code>waybar.nix</code> (camera, dns, media, clipboard, weather, menu, clear)
+              </td>
+              <td><code>desktop/waybar.nix:10-90</code></td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-08</strong></td>
+              <td>
+                Test DMS notifications: send test via <code>notify-send</code>, verify images +
+                actions work
+              </td>
+              <td>runtime test</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-09</strong></td>
+              <td>Test polkit: trigger <code>pkexec</code> and verify DMS prompt appears</td>
+              <td>runtime test</td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-10</strong></td>
+              <td>Write Ollama status QML widget (poll <code>/api/ps</code> for model + VRAM)</td>
+              <td><code>quickshell/widgets/ollama.qml</code></td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-11</strong></td>
+              <td>
+                Add <code>devShell</code> with <code>qmlls</code> + <code>quickshell</code> for
+                hot-reload dev loop
+              </td>
+              <td><code>flake.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P1-12</strong></td>
+              <td>
+                Keep Waybar running in parallel via existing systemd service (fallback during
+                migration)
+              </td>
+              <td>verify only</td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================ P2 ============================ -->
+        <h2 id="p2">
+          <span class="num">03</span>P2 &mdash; Core Value: SystemNix-Native Layer (20% &rarr; 80%)
+        </h2>
+        <p>
+          The differentiator. Wire every SystemNix service into reactive Quickshell widgets. Sorted
+          by impact/effort within the tier.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Source</th>
+              <th>Effort</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P2-01</strong></td>
+              <td>DNS stats widget: poll <code>dnsblockd :9090/stats</code> for blocked count</td>
+              <td>:9090</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-02</strong></td>
+              <td>Gatus health dots: poll Gatus endpoints for service up/down</td>
+              <td>:9110</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-03</strong></td>
+              <td>Dual-WAN failover indicator: check VRRP/link state</td>
+              <td>dual-wan module</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-04</strong></td>
+              <td>GPU monitor: read amdgpu VRAM + temp from <code>/sys/class/drm</code></td>
+              <td>sysfs</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-05</strong></td>
+              <td>BTRFS snapshot freshness: check <code>btrfs-verify</code> timer last-run</td>
+              <td>systemd timer</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-06</strong></td>
+              <td>Camera status widget (replaces <code>waybar-camera</code>)</td>
+              <td>emeet-pixyd :8090</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-07</strong></td>
+              <td>
+                Taskchampion task radar: poll <code>:10222</code> for pending + overdue counts
+              </td>
+              <td>:10222</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-08</strong></td>
+              <td>Overdue task pulse animation (red when overdue &gt;0)</td>
+              <td>QML</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-09</strong></td>
+              <td>Task detail popup: click task count &rarr; expand prioritised list</td>
+              <td>QML popup</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-10</strong></td>
+              <td>Minecraft player count: poll <code>:25565</code> via protocol query</td>
+              <td>:25565</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-11</strong></td>
+              <td>Forgejo CI/PR status: poll <code>:3000/api</code> for pending reviews</td>
+              <td>:3000</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-12</strong></td>
+              <td>Twenty CRM pipeline: poll <code>:3200</code> for active opportunity count</td>
+              <td>:3200</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-13</strong></td>
+              <td>Voice agent state: check Whisper :7860 + LiveKit :7880 for active session</td>
+              <td>:7860 + :7880</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-14</strong></td>
+              <td>Voice agent waveform animation (animated bar when listening)</td>
+              <td>QML</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-15</strong></td>
+              <td>NPU utilization: read amd-npu metrics from sysfs</td>
+              <td>sysfs</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-16</strong></td>
+              <td>sops secret health: check file presence for enabled services</td>
+              <td>/run/secrets</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-17</strong></td>
+              <td>
+                Create shared <code>SystemNixService</code> QML base class (common polling + error
+                handling)
+              </td>
+              <td><code>quickshell/services/base.qml</code></td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-18</strong></td>
+              <td>Add graceful fallback for all widgets when services are offline</td>
+              <td>QML</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-19</strong></td>
+              <td>Wire all widgets into DMS bar layout (left/center/right positioning)</td>
+              <td>DMS config</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-20</strong></td>
+              <td>Tune polling intervals to avoid overload (stagger: 5s/10s/30s/60s)</td>
+              <td>QML</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-21</strong></td>
+              <td>Disable Waybar systemd service (<code>systemd.user.services.waybar</code>)</td>
+              <td><code>waybar.nix:464</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-22</strong></td>
+              <td>Remove <code>waybar.nix</code> import from <code>home.nix</code></td>
+              <td><code>home.nix:23</code></td>
+              <td><span class="badge badge-low">3m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-23</strong></td>
+              <td>Remove <code>waybar</code> from <code>home.packages</code></td>
+              <td><code>home.nix</code></td>
+              <td><span class="badge badge-low">3m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-24</strong></td>
+              <td>Remove <code>dunst</code> from <code>home.packages</code></td>
+              <td><code>home.nix:201</code></td>
+              <td><span class="badge badge-low">3m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-25</strong></td>
+              <td>Remove <code>wl-clip-persist</code> (DMS handles clipboard persistence)</td>
+              <td><code>home.nix:210</code></td>
+              <td><span class="badge badge-low">3m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-26</strong></td>
+              <td>Update niri <code>spawn-at-startup</code> to ensure quickshell launches</td>
+              <td><code>niri-wrapped.nix:106</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-27</strong></td>
+              <td>
+                Update niri keybinds: remove <code>Mod+Shift+N</code> (Dunst history via Rofi)
+              </td>
+              <td><code>niri-wrapped.nix</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-28</strong></td>
+              <td>Wire DMS ports from <code>lib/ports.nix</code> &mdash; never hardcode</td>
+              <td><code>quickshell.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-29</strong></td>
+              <td>Wire theme tokens from <code>colorScheme.palette</code> into DMS config</td>
+              <td><code>quickshell.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P2-30</strong></td>
+              <td>Run <code>nix flake check --no-build</code> to verify eval passes</td>
+              <td>repo-wide</td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================ P3 ============================ -->
+        <h2 id="p3"><span class="num">04</span>P3 &mdash; Polish &amp; Enhancement</h2>
+        <p>
+          Lock screen, Mission Control OSD, dynamic theming, clipboard with previews. The features
+          that make it feel like a desktop environment.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Component</th>
+              <th>Effort</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P3-01</strong></td>
+              <td>Build <code>WlSessionLock</code> QML component skeleton</td>
+              <td>lock screen</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-02</strong></td>
+              <td>Integrate PAM authentication into lock screen</td>
+              <td>lock screen</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-03</strong></td>
+              <td>Add clock widget to lock screen</td>
+              <td>lock screen</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-04</strong></td>
+              <td>Add now-playing (MPRIS) to lock screen</td>
+              <td>lock screen</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-05</strong></td>
+              <td>Add blur backdrop via <code>BackgroundEffect</code></td>
+              <td>lock screen</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-06</strong></td>
+              <td>Replace <code>Mod+Shift+Escape</code> &rarr; swaylock with new lock screen</td>
+              <td><code>niri-wrapped.nix:294</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-07</strong></td>
+              <td>Update <code>swayidle</code> before-sleep to call new lock screen</td>
+              <td><code>niri-wrapped.nix:535</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-08</strong></td>
+              <td>
+                Remove <code>programs.swaylock</code> from HM (keep swayidle for suspend only)
+              </td>
+              <td><code>programs/swaylock.nix</code></td>
+              <td><span class="badge badge-low">5m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-09</strong></td>
+              <td>Build Mission Control <code>PopupWindow</code> skeleton</td>
+              <td>OSD</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-10</strong></td>
+              <td>Add Pipewire volume slider with live VU meter to OSD</td>
+              <td>OSD</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-11</strong></td>
+              <td>Add brightness slider (<code>brightnessctl</code>/<code>ddcutil</code>)</td>
+              <td>OSD</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-12</strong></td>
+              <td>Add Wi-Fi picker (NetworkManager scan)</td>
+              <td>OSD</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-13</strong></td>
+              <td>Add Bluetooth picker (BlueZ)</td>
+              <td>OSD</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-14</strong></td>
+              <td>Add power-profile radio (performance/balanced/saver)</td>
+              <td>OSD</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-high">High</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-15</strong></td>
+              <td>Add Do-Not-Disturb toggle</td>
+              <td>OSD</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-16</strong></td>
+              <td>Add Caffeine (<code>IdleInhibitor</code>) toggle</td>
+              <td>OSD</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-17</strong></td>
+              <td>Add night-light toggle (<code>wlsunset</code> or gamma)</td>
+              <td>OSD</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-18</strong></td>
+              <td>Build clipboard manager with image previews (over cliphist)</td>
+              <td>clipboard</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-19</strong></td>
+              <td>Wire <code>ColorQuantizer</code> dynamic theming from wallpaper</td>
+              <td>theme</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-20</strong></td>
+              <td>Wire wallpaper change &rarr; shell recolor pipeline</td>
+              <td>theme</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-21</strong></td>
+              <td>Add Immich "on this day" memory to lock screen</td>
+              <td>:2283</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P3-22</strong></td>
+              <td>Multi-monitor aware bars via <code>Variants</code></td>
+              <td>QML</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================ P4 ============================ -->
+        <h2 id="p4"><span class="num">05</span>P4 &mdash; Stretch Goals &amp; Documentation</h2>
+        <p>Optional, long-term, or cross-cutting tasks. Do last or skip entirely.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Area</th>
+              <th>Effort</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>P4-01</strong></td>
+              <td>Install <code>greetd</code> and configure as display manager</td>
+              <td>greeter</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-02</strong></td>
+              <td>Build greetd greeter QML UI with user + session selection</td>
+              <td>greeter</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-03</strong></td>
+              <td>Integrate PAM auth into greeter</td>
+              <td>greeter</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-04</strong></td>
+              <td>Disable SDDM (silentSDDM) and switch to greetd</td>
+              <td><code>display-manager.nix</code></td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-05</strong></td>
+              <td>Write custom HM module (caelestia pattern) with systemd user service</td>
+              <td>packaging</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-06</strong></td>
+              <td>
+                Add <code>X-Restart-Triggers</code> for config hot-reload on <code>switch</code>
+              </td>
+              <td>HM module</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-07</strong></td>
+              <td>Package custom QML via <code>stdenvNoCC</code> (noctalia pattern)</td>
+              <td>packaging</td>
+              <td><span class="badge badge-medium">12m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-08</strong></td>
+              <td>Update <code>AGENTS.md</code> with Quickshell procedures and gotchas</td>
+              <td>docs</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-09</strong></td>
+              <td>Update <code>FEATURES.md</code> with Quickshell features</td>
+              <td>docs</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+            </tr>
+            <tr>
+              <td><strong>P4-10</strong></td>
+              <td>Write NixOS evaluation test: <code>nix eval</code> quickshell module config</td>
+              <td>testing</td>
+              <td><span class="badge badge-low">10m</span></td>
+              <td><span class="badge badge-medium">Med</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ============================ EXECUTION GRAPH ============================ -->
+        <h2 id="graph"><span class="num">&#9670;</span>Execution Graph</h2>
+        <div
+          style="
+            background: var(--surface-raised);
+            border: 1px solid var(--border);
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+          "
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            data-d2-version="v0.7.1"
+            preserveAspectRatio="xMinYMin meet"
+            viewBox="0 0 1570 300"
+          >
+            <svg
+              class="d2-2387733957 d2-svg"
+              width="1570"
+              height="300"
+              viewBox="-101 -101 1570 300"
+            >
+              <rect
+                x="-101.000000"
+                y="-101.000000"
+                width="1570.000000"
+                height="300.000000"
+                rx="0.000000"
+                fill="#FFFFFF"
+                class="fill-N7"
+                stroke-width="0"
+              />
+              <style type="text/css">
+                <![CDATA[
+                .d2-2387733957 .text-bold {
+                	font-family: "d2-2387733957-font-bold";
+                }
+                @font-face {
+                	font-family: d2-2387733957-font-bold;
+                	src: url("data:application/font-woff;base64,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");
+                }
+                .d2-2387733957 .text-italic {
+                	font-family: "d2-2387733957-font-italic";
+                }
+                @font-face {
+                	font-family: d2-2387733957-font-italic;
+                	src: url("data:application/font-woff;base64,d09GRgABAAAAABEMAAoAAAAAGegAARhRAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgW1SVeGNtYXAAAAFUAAAAwwAAARwFrSaVZ2x5ZgAAAhgAAAolAAAN5Klqv8BoZWFkAAAMQAAAADYAAAA2G7Ur2mhoZWEAAAx4AAAAJAAAACQLeAjQaG10eAAADJwAAACrAAAAsE9TBNFsb2NhAAANSAAAAFoAAABaU1ZP5G1heHAAAA2kAAAAIAAAACAARAD2bmFtZQAADcQAAAMmAAAIMgntVzNwb3N0AAAQ7AAAACAAAAAg/8YAMgADAeEBkAAFAAACigJY//EASwKKAlgARAFeADIBIwAAAgsFAwMEAwkCBCAAAHcAAAADAAAAAAAAAABBREJPAAEAIP//Au7/BgAAA9gBESAAAZMAAAAAAeYClAAAACAAA3icjM67K0UBHMDxz3GP98HB9X4dj8uCTDJZZDPQLWZJkkXK6q/xOqsoE/8KG2ZZfwrJ6Dt/hi8SFQkyaZJjXiGVKdQsWLRsxao16zZsqduxa8++Q8dOnRXVCH710h+9qW77Rx84cvKt45n4iPd4i9d4icd4iPu4i9u4iTKu4you4yLOo3zKv77+X6Jm2pRhI0aNGTehMGlWg4pUoybNWrRq0y7ToVOXXLcevar69BswaMicGT4BAAD//wEAAP//EV42RQB4nFxXaWwb17U+9w7FsSRKFsVNpLmIHHKGy3BIzkqJm7hooyhL1mLJiyTLjvy8JsriLJCdFUgMv/f8lMBA8AIDdZEWbZD+CBz0R9oUBdIUcNO4KNC0TZvCQNrEbeIGSQUiG2pOMaQkS/5zNYDuPd853/3Ody6hCfwA+F58CQhohp3QCRYAweQlCEFRKBshMAxFkgpjMpH+p9G1p1/SFfd/HLzyDevRDT71ysg/D72KL90+hZ6ce+KJ2oHzS0szt27VwugPtwAAEPSoVRzFl8ED0OSjaUnMYoG32kiapnzt2GK2WgVeVmx6PfKNHJPj+89Vknu6ZJNM9y4U/L5yKljspvxzhuKju0cvPTKohEPdTOaeR9OpOal7F++J1jEoANyBV6G1njfpJQWSIr0k9Qw60Vb7W/hf7Z8LiG7Hq/nfF74sNPajF/AqNGn7BULbufthZG7Dq7evFgDX40Xr8cz1HbzVYtbrKYowCbwsiTRFUc+8cfCB8lNTx8X8wtKJytASXi3vHf+vRO1rNDg+1iNotWNIq/N4Hl+GncACBPgs1s42qrb5aGaTDavF3I7JDSYQJc1kfeXd2jr81eRj9skZbu+ZgfKSGNl9umCcFnfuamvySqkjD/cunkkdPtN7+OE/VsZN/3dyZPVMf2llcuh/HhjWRyI6ItMKCAxqFdXwZQgDaJhKHUUSaaYOL8ubl6HXa2nZrPVa/15cDva4ppX0nmigEk5JB1OpQx7BPsAFJFfCX4mJqaOG3t5IhC8l/byVcwwr/AQvBjl3yBPfRcesUeeg0ntABAQTADiPV6ENQCAEk9VqE2RZMQnof1Nju5p2EDq75PjxVO0VvFq7JJ2WpftEdOr2ckM7CwAEi1fB27gnvZ5snDVZzZb1KBQhygql15PEQvN4C0HodLa49XuDzUhnjpgvjtbWjpAY6dq9xtfxau1F8ZQknRLR8dqL4klZPimi47eX0fP+MYapMLX76nfGqFX0NVoDs6YCm29TsIIiEJSGxPCyomyq9/W+ClueF5iMUWfKLuZ26KjZTnrMz1p4p78oeRKGA9MDjx0Ugt5MzTEUiPVxsT/RvvDwHJ/LNGoMqFV0Fa2BcxvanRtZ7473x+5hRxclNm2NmmhXfK/c09stW32OUcPRudKD0zGfPW6zlJaLhQGHkTcHGvrTYv8crYEDAlujazdMevWbnUcIsqYIDfGjvcejIwfjSt5taKq93dxdDLt6bG7Xnv9XMdEZoqR5w4nF/uUJlhvnnUJ7bjxgNwoWDwq0drU5E55pwIBUP1pDa+ABbqviFEWvp7azqdcT26h8NbGX8jv7g9lyu52eimXGI8MHE3TWSJhyR00P9lB7fBFrwknlBXfsL7RLsvkqfcdodu908aF9vMYvsXAUeSPh39K+0MBsPJVq8OsBQO/ja2Cva4jUFFTvZ5KgTFrZlE9PEp6Lo/EOXWiCzUo7spW0TjfkHOL68bVbGSqWT3r8tXcQa+5qGwlztR+qqhYTvsVXMQ1BANBDaOgO1mf4GhgaetXwTBRDkp6Lo4fwN7Nvndk9t+zA12ouhH5d+/izB1YAAatW4Vt8DTo1tiRRqevcYl6/mtN5/croOYSMhJ5ELVZDzmjHJ28/TzYTnQindLpNXPwpWtN6XMNslGhbL1S/rdKtRS/mSB09SfcmmmKzgYys02VHMzrdoGWI7dc4GLAORfrRzWF/QgmyQj5pdJu38nDn6w7PaA26tuZwN80aYmiC28ZyHeFukmGzFz9Aa7ATXFv1q7klw9c1u94k743Ns+V5fmyBHZkPR/cIMq8thmMH+h+c5hprX2G5VBgsLpcKA1ps9UtVQF+gNbBo04/cknE7pny0NvFMG4atJ0mrteVCTk8Eprl6v/N02oQ7Pd/3FyV3POTbQ3Fm4Tp+vc8TbbQ74zn2HYTCw3NCNhOm/xHw3tHHWbQGHVs4spH0BjetOlclarfs6nD4K54MujnHZppLO3Kp2nVA6r/VKjqH1oC528fvtnHNxRsm/nJizh639dHhTCjJ9bDDLFd2cibBSyfk7qwYnzCIQdoT5CgH43FkQ5F8wO8Omh1Rj5vu9KXZaCmg5ZxWq2gWn9r0J1kxUTksaCOW2OJPb/SJOtQz2Frx53etGM71EE5fu6PV2BEz5KI7HW2os6fp2WeztU87O93uliaF3KnFTqpV9Dm6qfXmRuw76jet++2rm8occg2y/RXNZINThoJi9JiQXHvPZNckg2ZrjjK1PnfDahX9Bl8AozY5bL7tc5bZNoev8YOB8PAhiR/wh4YXEkxRdLFcfTUkj2T3fffsYO+R7P4rKwOZ0v3nS8WZ/vvPlwozgMABgJ7Ej9ffHIpgohRZEQiBdLT996H7W6aV1ENPG/rQDd7gu/1WHwBSvwRAb+ML2jlKyRLrwmI2RUd6yZYdhy7OxwSpO+9j2Jn4xGx44uwkMhu4PSuH93Fs2uuJ06F9JWn+0PJQQYv5lVpFv8IXNBfapglK2ewOktlwAUtDFD/NL7kFWzlRmplaMowdYHjBVXQxk3PjMyNlKZU5bshHgz5xpEco9IYy7rDstAm58ULmoEVnHOIz+xIav9rlXcePQ4v2PvJSildBWu1UQFDkxjRGI0NU7ZNmND81PmmYrKm/pPWdpM4cNL8mopdqy9nsz1x5r1PsavQFaH2OH4furXVsFmDykhS5YWb6N/PzLt6aT4aH2JzoYbu94yjS9oloDNuHFor3GnLRkFcMjwrZdIfRgaKFN3cYpicr92XquhDUKrqFLzTeY4p5K4rebNv2OtWM5Q7oSoqn05TA28f86Lg8HomOn+6T+s2iL83P5Nq9U97BaWXhnf7pWDmo5H2xVttfk4u5wy8/Ukh0h3qLK1O0f3Z39kQfAAFetYr+jC+AByLQs6FOWVakzT5u3JYba8CmjQQtZivRyJZm6pZ3g5tJRkqM0y3O8KFhbkAxB53pRVcgnQyzA1m3vy8YKjJ8YdjgH04mypJR50wxymi4O8/37fXo2kJJX+9kFC11lfmYmJL4VO0nrmQwIIQszpGksv42salVOA+nNI03+rNBx4DVzjitXQGD0+pgXVY723iD30AtyA4EgKIIJGX4oO3Gxgym4EN8A9ka//OSVCt+rfVDWQZQVcioVfwFvgIMhIFD7cBABO0HABLC6DVonI/Dc+hd3A7NAIqkKBLDSE2W+Ltnz76LLj9XGEvo4uP5H/Q29kaRDv0CvQA2AOTj8GaTufHG74zKLo6hzVbKGLHnPI1vf0fEnkM6h8/h6nbGwo2/XGTds+E6uqnlrs10z+LoYXSz5qhjDeIRuIqvavyYtvDzqMlN2cwuCo/YrHZvl9XerfWMWkV96AXYqUW8e5ZtdaQLvfmuWCmirUXGybo7ugP11TCTjx0c5Wby3Nwoxweyw34u3Vi1XNSoWkX9+IqWJ4kE9Dv0kVhzGvCPbk8BwH8AAAD//wEAAP//pEbJmgAAAAABAAAAARhR6SNWZ18PPPUAAQPoAAAAANhdoMwAAAAA3WYvN/69/t0IHQPJAAIAAwACAAAAAAAAAAEAAAPY/u8AAAhA/r39vAgdA+gAwv/RAAAAAAAAAAAAAAAseJwUzTFKw1Acx/Hv7/9GlQgOQZeHPJOAGhBcFOIo7iKunXqDLr1Gr9JLdOoJOvx7gEIpJSml8EpP8LEJTyzAaj41kLQkWU2yKZ2OXGvLr+0Z2T2N5lRaU9kdsisiG6JWRA68hki0G6IFGitzr3+iZvmkbzq75UPOs5wHee7leZBTyEHOu5xHdpR6IQWRQsmXnDc57cUAfjSm4C+3ZwAAAP//AQAA///wQSdSAAAAAC4ALgBgAHgAiACsAO4BLgFMAYYBvgHsAiYCbgKYAqQCvgLgAyIDTAN6A7QD0gQOBDwEaASaBLIE3AUYBUAFdAW2BgwGIgYwBj4GUAZmBo4GnAayBuIG8gAAAAEAAAAsAIwADABmAAcAAQAAAAAAAAAAAAAAAAAEAAN4nJyU204bVxSGPwfbbXq6qFBEbtC+TKVkTKMQJeHKlKCMinDqcXqQqkqDPT6I8czIM5iSJ+h136Jvkas+Rp+i6nW1fy+DHUVBIAT8e/Y6/Gutf21gk//YoFa/C/zdnBuusd382fAdvmgeGd5gv/mZ4ToPG/8YbjBovDXc5EGja/gT3tX/NPwpT+q/Gb7LVv3Q8Oc8rm8a/nLD8a/hr3jCuwWuwTP+MFxji8LwHTb51fAG97CYtTr32DHc4Gu2DTfZBnpMqEiZkDHCMWTCiDNmJJREJMyYMCRhgCOkTUqlrxmxkGP0wa8xERUzYkUcU+FIiUiJKRlbxLfyynmtjEOdZnbXpmJMzIk8TonJcOSMyMlIOFWcioqCF7RoUdIX34KKkoCSCSkBOTNGtOhwyBE9xkwocRwqkmcWkTOk4pxY+Z1Z+M70ScgojdUZGQPxdOKXyDvkCEeHQrarkY/WIjzE8aO8Pbdctt8S6NetMFvPu2QTM1c/U3Ul1c25JjjWrc/b5gfhihe4W/Vnncn1PRrof6XIJ5xp/gNNKhOTDOe2aBNJQZG7j2Nf55BIHfmJkB6v6PCGns5tunRpc0yPkJfy7dDF8R0djjmQRyi8uDuUYo75Bcf3hLLxsRPrz2JiCb9TmLpLcZypjimFeu6ZB6o1UYU3n7DfoXxNHaV8+tojb+k0v0x7FjMyVRRiOFUvl9oorX8DU8RUtfjZXt37bZjb7i23+IJcO+zVuuDkJ7dgdN1Ug/c0c66fgJgBOSey6JMzpUXFhXi/JuaMFMeBuvdKW1LRvvTxeS6kkoSpGIRkijOj0N/YdBMZ9/6a7p29JQP5e6anl1XdJotTr65m9EbdW95F1uVkZQItm2q+oqa+uGam/UQ7tco/km+p1y3nEaHiLnb7Q6/ADs/ZZY+xsvR1M7+886+Et9hTB05JZDWUpn0NjwnYJeApu+zynKfv9XLJxhkft8ZnNX+bA/bpsHdtNQvbDvu8XIv28cx/ie2O6nE8ujw9u/U0H9xAtd9o367eza4m56cxt2hX23FMzNRzcVurNbn7BP8DAAD//wEAAP//cqFRQAAAAAMAAP/1AAD/zgAyAAAAAAAAAAAAAAAAAAAAAAAAAAA=");
+                }]]>
+              </style>
+              <style type="text/css">
+                <![CDATA[.shape {
+                  shape-rendering: geometricPrecision;
+                  stroke-linejoin: round;
+                }
+                .connection {
+                  stroke-linecap: round;
+                  stroke-linejoin: round;
+                }
+                .blend {
+                  mix-blend-mode: multiply;
+                  opacity: 0.5;
+                }
+
+                		.d2-2387733957 .fill-N1{fill:#0A0F25;}
+                		.d2-2387733957 .fill-N2{fill:#676C7E;}
+                		.d2-2387733957 .fill-N3{fill:#9499AB;}
+                		.d2-2387733957 .fill-N4{fill:#CFD2DD;}
+                		.d2-2387733957 .fill-N5{fill:#DEE1EB;}
+                		.d2-2387733957 .fill-N6{fill:#EEF1F8;}
+                		.d2-2387733957 .fill-N7{fill:#FFFFFF;}
+                		.d2-2387733957 .fill-B1{fill:#0D32B2;}
+                		.d2-2387733957 .fill-B2{fill:#0D32B2;}
+                		.d2-2387733957 .fill-B3{fill:#E3E9FD;}
+                		.d2-2387733957 .fill-B4{fill:#E3E9FD;}
+                		.d2-2387733957 .fill-B5{fill:#EDF0FD;}
+                		.d2-2387733957 .fill-B6{fill:#F7F8FE;}
+                		.d2-2387733957 .fill-AA2{fill:#4A6FF3;}
+                		.d2-2387733957 .fill-AA4{fill:#EDF0FD;}
+                		.d2-2387733957 .fill-AA5{fill:#F7F8FE;}
+                		.d2-2387733957 .fill-AB4{fill:#EDF0FD;}
+                		.d2-2387733957 .fill-AB5{fill:#F7F8FE;}
+                		.d2-2387733957 .stroke-N1{stroke:#0A0F25;}
+                		.d2-2387733957 .stroke-N2{stroke:#676C7E;}
+                		.d2-2387733957 .stroke-N3{stroke:#9499AB;}
+                		.d2-2387733957 .stroke-N4{stroke:#CFD2DD;}
+                		.d2-2387733957 .stroke-N5{stroke:#DEE1EB;}
+                		.d2-2387733957 .stroke-N6{stroke:#EEF1F8;}
+                		.d2-2387733957 .stroke-N7{stroke:#FFFFFF;}
+                		.d2-2387733957 .stroke-B1{stroke:#0D32B2;}
+                		.d2-2387733957 .stroke-B2{stroke:#0D32B2;}
+                		.d2-2387733957 .stroke-B3{stroke:#E3E9FD;}
+                		.d2-2387733957 .stroke-B4{stroke:#E3E9FD;}
+                		.d2-2387733957 .stroke-B5{stroke:#EDF0FD;}
+                		.d2-2387733957 .stroke-B6{stroke:#F7F8FE;}
+                		.d2-2387733957 .stroke-AA2{stroke:#4A6FF3;}
+                		.d2-2387733957 .stroke-AA4{stroke:#EDF0FD;}
+                		.d2-2387733957 .stroke-AA5{stroke:#F7F8FE;}
+                		.d2-2387733957 .stroke-AB4{stroke:#EDF0FD;}
+                		.d2-2387733957 .stroke-AB5{stroke:#F7F8FE;}
+                		.d2-2387733957 .background-color-N1{background-color:#0A0F25;}
+                		.d2-2387733957 .background-color-N2{background-color:#676C7E;}
+                		.d2-2387733957 .background-color-N3{background-color:#9499AB;}
+                		.d2-2387733957 .background-color-N4{background-color:#CFD2DD;}
+                		.d2-2387733957 .background-color-N5{background-color:#DEE1EB;}
+                		.d2-2387733957 .background-color-N6{background-color:#EEF1F8;}
+                		.d2-2387733957 .background-color-N7{background-color:#FFFFFF;}
+                		.d2-2387733957 .background-color-B1{background-color:#0D32B2;}
+                		.d2-2387733957 .background-color-B2{background-color:#0D32B2;}
+                		.d2-2387733957 .background-color-B3{background-color:#E3E9FD;}
+                		.d2-2387733957 .background-color-B4{background-color:#E3E9FD;}
+                		.d2-2387733957 .background-color-B5{background-color:#EDF0FD;}
+                		.d2-2387733957 .background-color-B6{background-color:#F7F8FE;}
+                		.d2-2387733957 .background-color-AA2{background-color:#4A6FF3;}
+                		.d2-2387733957 .background-color-AA4{background-color:#EDF0FD;}
+                		.d2-2387733957 .background-color-AA5{background-color:#F7F8FE;}
+                		.d2-2387733957 .background-color-AB4{background-color:#EDF0FD;}
+                		.d2-2387733957 .background-color-AB5{background-color:#F7F8FE;}
+                		.d2-2387733957 .color-N1{color:#0A0F25;}
+                		.d2-2387733957 .color-N2{color:#676C7E;}
+                		.d2-2387733957 .color-N3{color:#9499AB;}
+                		.d2-2387733957 .color-N4{color:#CFD2DD;}
+                		.d2-2387733957 .color-N5{color:#DEE1EB;}
+                		.d2-2387733957 .color-N6{color:#EEF1F8;}
+                		.d2-2387733957 .color-N7{color:#FFFFFF;}
+                		.d2-2387733957 .color-B1{color:#0D32B2;}
+                		.d2-2387733957 .color-B2{color:#0D32B2;}
+                		.d2-2387733957 .color-B3{color:#E3E9FD;}
+                		.d2-2387733957 .color-B4{color:#E3E9FD;}
+                		.d2-2387733957 .color-B5{color:#EDF0FD;}
+                		.d2-2387733957 .color-B6{color:#F7F8FE;}
+                		.d2-2387733957 .color-AA2{color:#4A6FF3;}
+                		.d2-2387733957 .color-AA4{color:#EDF0FD;}
+                		.d2-2387733957 .color-AA5{color:#F7F8FE;}
+                		.d2-2387733957 .color-AB4{color:#EDF0FD;}
+                		.d2-2387733957 .color-AB5{color:#F7F8FE;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.sketch-overlay-B1{fill:url(#streaks-darker-d2-2387733957);mix-blend-mode:lighten}.sketch-overlay-B2{fill:url(#streaks-darker-d2-2387733957);mix-blend-mode:lighten}.sketch-overlay-B3{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-B4{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-B5{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-B6{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-AA2{fill:url(#streaks-dark-d2-2387733957);mix-blend-mode:overlay}.sketch-overlay-AA4{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-AA5{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-AB4{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-AB5{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-N1{fill:url(#streaks-darker-d2-2387733957);mix-blend-mode:lighten}.sketch-overlay-N2{fill:url(#streaks-dark-d2-2387733957);mix-blend-mode:overlay}.sketch-overlay-N3{fill:url(#streaks-normal-d2-2387733957);mix-blend-mode:color-burn}.sketch-overlay-N4{fill:url(#streaks-normal-d2-2387733957);mix-blend-mode:color-burn}.sketch-overlay-N5{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-N6{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.sketch-overlay-N7{fill:url(#streaks-bright-d2-2387733957);mix-blend-mode:darken}.light-code{display: block}.dark-code{display: none}]]>
+              </style>
+              <g class="UDA=">
+                <g class="shape">
+                  <rect
+                    x="0.000000"
+                    y="0.000000"
+                    width="149.000000"
+                    height="98.000000"
+                    stroke="#0D32B2"
+                    fill="#ff6b6b"
+                    class="stroke-B1"
+                    style="stroke-width: 2"
+                  />
+                </g>
+                <text
+                  x="74.500000"
+                  y="38.500000"
+                  fill="#ffffff"
+                  class="text-bold"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  <tspan x="74.500000" dy="0.000000">P0 — 1% &gt; 51%</tspan>
+                  <tspan x="74.500000" dy="17.666667">Critical Path</tspan>
+                  <tspan x="74.500000" dy="17.666667">6 tasks ~1h</tspan>
+                </text>
+              </g>
+              <g class="UDE=">
+                <g class="shape">
+                  <rect
+                    x="304.000000"
+                    y="0.000000"
+                    width="149.000000"
+                    height="98.000000"
+                    stroke="#0D32B2"
+                    fill="#f4d35e"
+                    class="stroke-B1"
+                    style="stroke-width: 2"
+                  />
+                </g>
+                <text
+                  x="378.500000"
+                  y="38.500000"
+                  fill="#111111"
+                  class="text-bold"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  <tspan x="378.500000" dy="0.000000">P1 — 4% &gt; 64%</tspan>
+                  <tspan x="378.500000" dy="17.666667">Quick Wins</tspan>
+                  <tspan x="378.500000" dy="17.666667">12 tasks ~2.5h</tspan>
+                </text>
+              </g>
+              <g class="UDI=">
+                <g class="shape">
+                  <rect
+                    x="608.000000"
+                    y="0.000000"
+                    width="157.000000"
+                    height="98.000000"
+                    stroke="#0D32B2"
+                    fill="#6eb5ff"
+                    class="stroke-B1"
+                    style="stroke-width: 2"
+                  />
+                </g>
+                <text
+                  x="686.500000"
+                  y="38.500000"
+                  fill="#111111"
+                  class="text-bold"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  <tspan x="686.500000" dy="0.000000">P2 — 20% &gt; 80%</tspan>
+                  <tspan x="686.500000" dy="17.666667">Core Value</tspan>
+                  <tspan x="686.500000" dy="17.666667">30 tasks ~6h</tspan>
+                </text>
+              </g>
+              <g class="UDM=">
+                <g class="shape">
+                  <rect
+                    x="933.000000"
+                    y="0.000000"
+                    width="143.000000"
+                    height="98.000000"
+                    stroke="#0D32B2"
+                    fill="#ffb347"
+                    class="stroke-B1"
+                    style="stroke-width: 2"
+                  />
+                </g>
+                <text
+                  x="1004.500000"
+                  y="38.500000"
+                  fill="#111111"
+                  class="text-bold"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  <tspan x="1004.500000" dy="0.000000">P3 — Polish</tspan>
+                  <tspan x="1004.500000" dy="17.666667">Enhancement</tspan>
+                  <tspan x="1004.500000" dy="17.666667">22 tasks ~4h</tspan>
+                </text>
+              </g>
+              <g class="UDQ=">
+                <g class="shape">
+                  <rect
+                    x="1236.000000"
+                    y="0.000000"
+                    width="132.000000"
+                    height="98.000000"
+                    stroke="#0D32B2"
+                    fill="#888888"
+                    class="stroke-B1"
+                    style="stroke-width: 2"
+                  />
+                </g>
+                <text
+                  x="1302.000000"
+                  y="38.500000"
+                  fill="#ffffff"
+                  class="text-bold"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  <tspan x="1302.000000" dy="0.000000">P4 — Stretch</tspan>
+                  <tspan x="1302.000000" dy="17.666667">Long-term</tspan>
+                  <tspan x="1302.000000" dy="17.666667">10 tasks ~3h</tspan>
+                </text>
+              </g>
+              <g class="KFAwIC0mZ3Q7IFAxKVswXQ==">
+                <marker
+                  id="mk-d2-2387733957-3488378134"
+                  markerWidth="10.000000"
+                  markerHeight="12.000000"
+                  refX="7.000000"
+                  refY="6.000000"
+                  viewBox="0.000000 0.000000 10.000000 12.000000"
+                  orient="auto"
+                  markerUnits="userSpaceOnUse"
+                >
+                  <polygon
+                    points="0.000000,0.000000 10.000000,6.000000 0.000000,12.000000"
+                    fill="#0D32B2"
+                    class="connection fill-B1"
+                    stroke-width="2"
+                  />
+                </marker>
+                <path
+                  d="M 150.500000 49.000000 C 210.899994 49.000000 242.100006 49.000000 300.500000 49.000000"
+                  stroke="#0D32B2"
+                  fill="none"
+                  class="connection stroke-B1"
+                  style="stroke-width: 2"
+                  marker-end="url(#mk-d2-2387733957-3488378134)"
+                  mask="url(#d2-2387733957)"
+                />
+                <text
+                  x="226.500000"
+                  y="55.000000"
+                  fill="#676C7E"
+                  class="text-italic fill-N2"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  unlocks
+                </text>
+              </g>
+              <g class="KFAxIC0mZ3Q7IFAyKVswXQ==">
+                <path
+                  d="M 454.500000 49.000000 C 514.900024 49.000000 546.099976 49.000000 604.500000 49.000000"
+                  stroke="#0D32B2"
+                  fill="none"
+                  class="connection stroke-B1"
+                  style="stroke-width: 2"
+                  marker-end="url(#mk-d2-2387733957-3488378134)"
+                  mask="url(#d2-2387733957)"
+                />
+                <text
+                  x="530.500000"
+                  y="55.000000"
+                  fill="#676C7E"
+                  class="text-italic fill-N2"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  unlocks
+                </text>
+              </g>
+              <g class="KFAyIC0mZ3Q7IFAzKVswXQ==">
+                <path
+                  d="M 767.000000 49.000000 C 832.200012 49.000000 865.799988 49.000000 929.000000 49.000000"
+                  stroke="#0D32B2"
+                  fill="none"
+                  class="connection stroke-B1"
+                  style="stroke-width: 2"
+                  marker-end="url(#mk-d2-2387733957-3488378134)"
+                  mask="url(#d2-2387733957)"
+                />
+                <text
+                  x="849.000000"
+                  y="55.000000"
+                  fill="#676C7E"
+                  class="text-italic fill-N2"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  enhances
+                </text>
+              </g>
+              <g class="KFAzIC0mZ3Q7IFA0KVswXQ==">
+                <path
+                  d="M 1078.000000 49.000000 C 1140.000000 49.000000 1172.000000 49.000000 1232.000000 49.000000"
+                  stroke="#0D32B2"
+                  fill="none"
+                  class="connection stroke-B1"
+                  style="stroke-width: 2"
+                  marker-end="url(#mk-d2-2387733957-3488378134)"
+                  mask="url(#d2-2387733957)"
+                />
+                <text
+                  x="1156.000000"
+                  y="55.000000"
+                  fill="#676C7E"
+                  class="text-italic fill-N2"
+                  style="text-anchor: middle; font-size: 16px"
+                >
+                  optional
+                </text>
+              </g>
+              <mask
+                id="d2-2387733957"
+                maskUnits="userSpaceOnUse"
+                x="-101"
+                y="-101"
+                width="1570"
+                height="300"
+              >
+                <rect x="-101" y="-101" width="1570" height="300" fill="white"></rect>
+                <rect x="199.000000" y="39.000000" width="55" height="21" fill="black"></rect>
+                <rect x="503.000000" y="39.000000" width="55" height="21" fill="black"></rect>
+                <rect x="815.000000" y="39.000000" width="68" height="21" fill="black"></rect>
+                <rect x="1126.000000" y="39.000000" width="60" height="21" fill="black"></rect>
+              </mask>
+            </svg>
+          </svg>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-06-23 &middot; 80 tasks &middot; sorted by impact/effort/customer-value
+          &middot; companion to docs/brainstorming/quickshell-nixos-vision.html
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

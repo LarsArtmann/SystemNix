@@ -1,0 +1,12 @@
+direction: right
+
+P0: "P0 — 1% > 51%\nCritical Path\n6 tasks ~1h" { style.fill: "#ff6b6b"; style.font-color: "#ffffff" }
+P1: "P1 — 4% > 64%\nQuick Wins\n12 tasks ~2.5h" { style.fill: "#f4d35e"; style.font-color: "#111111" }
+P2: "P2 — 20% > 80%\nCore Value\n30 tasks ~6h" { style.fill: "#6eb5ff"; style.font-color: "#111111" }
+P3: "P3 — Polish\nEnhancement\n22 tasks ~4h" { style.fill: "#ffb347"; style.font-color: "#111111" }
+P4: "P4 — Stretch\nLong-term\n10 tasks ~3h" { style.fill: "#888888"; style.font-color: "#ffffff" }
+
+P0 -> P1: "unlocks"
+P1 -> P2: "unlocks"
+P2 -> P3: "enhances"
+P3 -> P4: "optional"
