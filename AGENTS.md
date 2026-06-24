@@ -54,10 +54,11 @@ All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPack
 Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome. Configured via DankMaterialShell's upstream HM module.
 
 - **Input:** `dankMaterialShell` (github:AvengeMedia/DankMaterialShell/stable) — brings `quickshell` transitively, no separate quickshell input
-- **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`
-- **DMS plugins:** `pkgs/dms-plugins/` — 10 SystemNix-native widgets (Ollama, DNS stats, GPU, Task radar, Service health, Btrfs, Voice agent, Camera, Server resources, CRM) using `PluginComponent` + `plugin.json`
+- **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`, enables `systemd.enable = true` (defaults to false!)
+- **DMS plugins:** `pkgs/dms-plugins/` — 13 SystemNix-native widgets declaratively installed via DMS's `plugins` option with port-templated settings from `lib/ports.nix`. Each uses `PluginComponent` + `plugin.json`
 - **DevShell:** `nix develop .#quickshell` for hot-reload QML development with `qmlls` LSP
-- **Parallel run:** Waybar kept alongside DMS during migration. Disabled in P2 when DMS is proven
+- **Waybar RETIRED:** Completely removed (import, package, service, scripts). DMS is the sole shell
+- **Runtime verified:** DMS owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names
 - **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)
 - **`inputs.nixpkgs.follows`** on the DMS input is MANDATORY — mismatched Qt causes runtime crashes
 
@@ -125,6 +126,10 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | Quickshell pre-1.0 | Breaking changes expected before 1.0. Pin DMS to `stable` branch. Migration guides promised |
 | QML is programming | Quickshell configs are applications, not config files. Requires QML knowledge. Use `nix develop .#quickshell` for LSP + hot-reload |
 | `nixpkgs-unstable` vs `nixos-unstable` | **Use `nixos-unstable` in flake inputs.** Hydra only caches expensive builds (ROCm, CUDA) on the `nixos-unstable` jobset — `nixpkgs-unstable` produces different hashes with no binary cache for these. `ollama-rocm` was a 30+ min local build on `nixpkgs-unstable` but substitutes instantly from `nixos-unstable` |
+| DMS `systemd.enable` defaults false | DMS HM module's `systemd.enable` defaults to `false`. MUST explicitly set `programs.dank-material-shell.systemd.enable = true` or DMS won't auto-start |
+| DMS plugin system | DMS `plugins` option takes `attrsOf (submodule { enable, src, settings })`. `src` = path/package, `settings` = JSON written to `plugin_settings.json`. Plugins read settings via `pluginData.<key>` in QML |
+| deploy.sh `SCRIPT_DIR` | Deploy script in nix store can't find `pre-deploy-check.sh` via `SCRIPT_DIR`. Fixed to use `nix run .#pre-deploy-check` instead |
+| pre-deploy-check `((PASS++))` | Bash `((0++))` returns exit code 1, killing scripts under `set -e`. Fixed with `PASS=$((PASS + 1))` |
 
 ---
 
