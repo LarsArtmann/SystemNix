@@ -122,7 +122,7 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `mkFilesystem` helper | `lib/filesystems.nix` validates mount options at eval time. Use it instead of raw `fileSystems` attrsets to catch cross-fs contamination (e.g. `discard=async` on ext4) |
 | Pre-deploy validation | `nix run .#pre-deploy-check` catches boot-breaking issues before switch. Runs automatically as part of `nix run .#deploy` |
 | DMS `inputs.nixpkgs.follows` | MANDATORY — mismatched Qt versions between DMS/quickshell and system nixpkgs cause silent runtime crashes |
-| DMS notification conflict | Only one DBus notification daemon can run. Dunst must be disabled (`services.dunst.enable = lib.mkForce false`) when DMS is active |
+| DMS notification conflict | Only one DBus notification daemon can run. Dunst is disabled (`services.dunst.enable = lib.mkForce false`) — DMS owns `org.freedesktop.Notifications` |
 | Quickshell pre-1.0 | Breaking changes expected before 1.0. Pin DMS to `stable` branch. Migration guides promised |
 | QML is programming | Quickshell configs are applications, not config files. Requires QML knowledge. Use `nix develop .#quickshell` for LSP + hot-reload |
 | `nixpkgs-unstable` vs `nixos-unstable` | **Use `nixos-unstable` in flake inputs.** Hydra only caches expensive builds (ROCm, CUDA) on the `nixos-unstable` jobset — `nixpkgs-unstable` produces different hashes with no binary cache for these. `ollama-rocm` was a 30+ min local build on `nixpkgs-unstable` but substitutes instantly from `nixos-unstable` |
@@ -130,6 +130,10 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | DMS plugin system | DMS `plugins` option takes `attrsOf (submodule { enable, src, settings })`. `src` = path/package, `settings` = JSON written to `plugin_settings.json`. Plugins read settings via `pluginData.<key>` in QML |
 | deploy.sh `SCRIPT_DIR` | Deploy script in nix store can't find `pre-deploy-check.sh` via `SCRIPT_DIR`. Fixed to use `nix run .#pre-deploy-check` instead |
 | pre-deploy-check `((PASS++))` | Bash `((0++))` returns exit code 1, killing scripts under `set -e`. Fixed with `PASS=$((PASS + 1))` |
+| DMS Quickshell `Process.onFailed` | Quickshell's `Process` has NO `onFailed` signal. Use `onStreamFinished` with text-length check or try/catch for error handling |
+| Stale polkit-gnome after deploy | polkit-gnome process lingers from previous generation after removing it from packages. Self-resolves on reboot. DMS polkit agent warns "already exists" until then |
+| DMS `plugin_settings.json` read-only | HM symlinks this to Nix store — user can't change plugin settings via DMS UI. Settings are declarative from `programs.dank-material-shell.plugins.<name>.settings` |
+| cliphist + DMS clipboard coexistence | Both cliphist (wl-paste --watch) and DMS clipboard manager watch the Wayland clipboard. Intentional: cliphist provides rofi integration (Alt+C), DMS provides GUI history |
 
 ---
 
