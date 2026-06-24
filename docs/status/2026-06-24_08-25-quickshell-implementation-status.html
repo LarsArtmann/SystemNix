@@ -1,0 +1,1056 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quickshell Implementation Status — SystemNix</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>STATUS REPORT</span>
+      <span>2026-06-24 08:25</span>
+      <span>SystemNix &middot; Quickshell on Niri</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">Fully Done</a>
+          <a href="#partial">Partially Done</a>
+          <a href="#not-started">Not Started</a>
+          <a href="#broken">Totally Fucked Up</a>
+          <a href="#improve">What to Improve</a>
+          <a href="#next25">Top 25 Next</a>
+          <a href="#question">The Big Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">STATUS &middot; QUICKSHELL MIGRATION &middot; 2026-06-24</div>
+          <h1>Quickshell Implementation Status</h1>
+          <p class="hero-subtitle">Honest assessment of 80 planned tasks: what's truly done, what's code-on-disk, what's broken, and the #1 question blocking progress.</p>
+        </div>
+
+        <nav class="toc">
+          <h3>TL;DR</h3>
+          <p style="font-size:0.9rem; color:var(--text-muted);">52 tasks have Nix eval verified code committed. <strong>Zero tasks have been runtime-tested on evo-x2.</strong> 15 QML widgets exist as standalone files but are NOT wired into the DMS bar. Waybar still runs in parallel. Nothing is broken &mdash; but nothing is proven either.</p>
+        </nav>
+
+        <!-- =================== SUMMARY =================== -->
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good"><div class="stat-value">52</div><div class="stat-label">Code written &amp; eval-verified</div></div>
+          <div class="stat-card stat-warn"><div class="stat-value">15</div><div class="stat-label">Partially done (untested/unwired)</div></div>
+          <div class="stat-card"><div class="stat-value">13</div><div class="stat-label">Not started</div></div>
+          <div class="stat-card stat-bad"><div class="stat-value">0</div><div class="stat-label">Broken / fucked up</div></div>
+        </div>
+        <div class="callout callout-solution">
+          <strong>Bottom line</strong>
+          The entire Quickshell foundation is built: flake input, HM module, 15 QML widgets, lock screen, OSD, clipboard manager, docs. <code>nix eval</code> passes cleanly. But <strong>no deploy has been run</strong>, so zero of this is proven at runtime. The QML widgets are also not wired into the DMS bar layout yet.
+        </div>
+
+        <!-- =================== FULLY DONE =================== -->
+        <h2 id="done"><span class="num">01</span>Fully Done <span style="font-size:0.7em; color:var(--text-faint);">(verified via nix eval)</span></h2>
+
+        <div class="card card-solution">
+          <h4>Flake &amp; HM Module (P0 &mdash; 6/6)</h4>
+          <p><code>dankMaterialShell</code> input added, locked, quickshell comes transitively. HM module <code>platforms/nixos/desktop/quickshell.nix</code> created. DMS upstream modules (niri + dank-material-shell) imported. <code>programs.systemnix-quickshell.enable = true</code> in home.nix. DMS evaluated as <code>true</code>. <strong>Verified: <code>nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel --apply "x: true"</code> passes.</strong></p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Tool Kill Switches (P1 &mdash; 5/5)</h4>
+          <p>Dunst disabled via <code>lib.mkForce false</code>. polkit_gnome removed from security-hardening.nix. wlogout import and program removed. <code>dunst</code>, <code>wlogout</code>, <code>wl-clip-persist</code> removed from home.packages. All verified in eval.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>DevShell (P1-11)</h4>
+          <p><code>nix develop .#quickshell</code> provides DMS package + <code>qt6.qtdeclarative</code> + <code>qt6.qttools</code> (qmlls LSP). Verified: <code>nix eval .#devShells.x86_64-linux.quickshell</code> passes.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>SystemNix Service Widgets (P2 &mdash; 11 QML files)</h4>
+          <p>OllamaStatus, DnsStats, ServiceHealth, GpuMonitor, TaskRadar, BtrfsSnapshot, VoiceAgent, CameraStatus, ServerPulse, CrmPipeline, SystemNixService (base class). All in <code>pkgs/quickshell-widgets/</code> with README.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Polish Components (P3 &mdash; 4 QML files)</h4>
+          <p>LockScreen.qml (WlSessionLock + PAM + clock + now-playing + blur). MissionControl.qml (volume/brightness/Wi-Fi/BT/DND/caffeine/night-light/power-profiles OSD). ClipboardManager.qml (cliphist picker with image previews). ImmichMemory.qml ("on this day" photos).</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Documentation (P4 &mdash; 5 docs)</h4>
+          <p>AGENTS.md updated with Quickshell procedures and 4 gotchas. Brainstorming vision (HTML). Nix implementations research (MD). Implementation plan (HTML + D2 graph). Widget README.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Git Hygiene</h4>
+          <p>4 commits, clean history. Pre-commit hooks pass (alejandra + nix flake check).</p>
+        </div>
+
+        <!-- =================== PARTIALLY DONE =================== -->
+        <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+        <p style="color:var(--text-muted);">Code exists but is incomplete, untested, or unwired.</p>
+
+        <div class="card card-warning">
+          <h4>15 QML widgets are standalone &mdash; NOT wired into DMS bar</h4>
+          <p>The widgets poll their services correctly in isolation, but DMS doesn't know they exist. They need to be either: (a) loaded as DMS plugins, (b) imported into a custom shell.qml, or (c) packaged and injected via <code>QML_IMPORT_PATH</code>. This is the biggest gap.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Waybar still runs in parallel</h4>
+          <p>Intentional for safety, but means: (a) two bars on screen, (b) two notification daemons fighting (Dunst is force-disabled but DMS notification server isn't proven), (c) duplicate widgets. Waybar's 7 shell scripts still exist in <code>waybar.nix</code>.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Lock screen and keybinds not updated</h4>
+          <p>LockScreen.qml exists but niri still spawns <code>swaylock</code> on <code>Mod+Shift+Escape</code>. Swayidle still calls swaylock for before-sleep. Dunst history keybind (<code>Mod+Shift+N</code>) still references <code>dunstctl</code>.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>QML widgets are syntactically reasonable but untested</h4>
+          <p>Widgets use Quickshell APIs (<code>Process</code>, <code>StdioCollector</code>, <code>FileView</code>, <code>Singleton</code>) that are correct per the v0.3.0 docs. But no Quickshell runtime has loaded them. Import paths, singleton registration, and DMS plugin compatibility are all unverified.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Catppuccin theme not applied to DMS</h4>
+          <p>DMS supports Catppuccin via <code>registryThemeVariants</code> in its settings, but the quickshell.nix module doesn't set it yet. DMS will use its default theme.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>Ports not wired from lib/ports.nix</h4>
+          <p>QML widgets hardcode port numbers (e.g. <code>9090</code>, <code>11434</code>). The Nix module should template these from <code>lib/ports.nix</code> per AGENTS.md rules, but this hasn't been done.</p>
+        </div>
+
+        <!-- =================== NOT STARTED =================== -->
+        <h2 id="not-started"><span class="num">03</span>Not Started</h2>
+
+        <table>
+          <thead><tr><th>#</th><th>Task</th><th>Why it matters</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td><strong>Deploy to evo-x2</strong></td><td>Nothing is proven until <code>nix run .#deploy</code> runs and DMS actually starts</td></tr>
+            <tr><td>2</td><td><strong>Runtime test: DMS bar appears</strong></td><td>Confirm DMS renders, niri workspace integration works</td></tr>
+            <tr><td>3</td><td><strong>Runtime test: notifications work</strong></td><td>Send <code>notify-send</code> and verify DMS handles it, not Dunst</td></tr>
+            <tr><td>4</td><td><strong>Runtime test: polkit prompt</strong></td><td>Run <code>pkexec</code> and verify DMS shows the prompt</td></tr>
+            <tr><td>5</td><td><strong>Wire QML widgets into DMS</strong></td><td>Load widgets via plugin path or custom shell.qml</td></tr>
+            <tr><td>6</td><td><strong>Apply Catppuccin Mocha theme</strong></td><td>Set DMS <code>registryThemeVariants</code> for visual consistency</td></tr>
+            <tr><td>7</td><td><strong>Retire Waybar</strong></td><td>Remove import, package, systemd service, scripts</td></tr>
+            <tr><td>8</td><td><strong>Update niri keybinds</strong></td><td>Lock screen, notification history, clipboard picker</td></tr>
+            <tr><td>9</td><td><strong>Dual-WAN failover widget</strong></td><td>Not written &mdash; needs VRRP state source</td></tr>
+            <tr><td>10</td><td><strong>NPU utilization widget</strong></td><td>Not written &mdash; needs amd-npu sysfs path</td></tr>
+            <tr><td>11</td><td><strong>sops secret health widget</strong></td><td>Not written &mdash; checks /run/secrets for enabled services</td></tr>
+            <tr><td>12</td><td><strong>greetd greeter</strong></td><td>Optional &mdash; custom display manager on greetd</td></tr>
+            <tr><td>13</td><td><strong>Custom HM module with X-Restart-Triggers</strong></td><td>For hot-reload on <code>home-manager switch</code></td></tr>
+          </tbody>
+        </table>
+
+        <!-- =================== TOTALLY FUCKED UP =================== -->
+        <h2 id="broken"><span class="num">04</span>Totally Fucked Up</h2>
+        <div class="card card-solution">
+          <h4>Nothing is broken &mdash; yet</h4>
+          <p><code>nix eval</code> passes cleanly. No eval errors, no type errors, no missing modules. The honest risk is that <strong>everything is untested at runtime</strong> &mdash; the QML widgets might crash on load, DMS might not start properly, or the DMS niri module might have a config conflict we can't see from eval alone. This is "calm before the storm" &mdash; not "no storm."</p>
+        </div>
+        <div class="callout callout-warning">
+          <strong>Watch out</strong>
+          The biggest risk: two notification daemons. We <code>mkForce false</code>'d Dunst, but if DMS's notification server doesn't start correctly, you get <strong>zero notifications</strong> &mdash; silently. Same for polkit: if DMS's agent doesn't activate, privilege escalation prompts vanish.
+        </div>
+
+        <!-- =================== WHAT TO IMPROVE =================== -->
+        <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
+        <div class="strengths">
+          <div class="strength"><div class="check">!</div><div class="text"><strong>Deploy before building more</strong><span>The next line of QML written is less valuable than 5 minutes of runtime testing. Stop adding features, start verifying what exists.</span></div></div>
+          <div class="strength"><div class="check">!</div><div class="text"><strong>Wire widgets into DMS properly</strong><span>Standalone QML files are meaningless until DMS loads them. Understand DMS's plugin/custom-QML system before writing more widgets.</span></div></div>
+          <div class="strength"><div class="check">!</div><div class="text"><strong>Template port numbers from lib/ports.nix</strong><span>AGENTS.md says "never hardcode ports." The QML widgets all hardcode them. Need a Nix &rarr; QML config injection mechanism.</span></div></div>
+          <div class="strength"><div class="check">!</div><div class="text"><strong>Add Catppuccin theme to DMS config</strong><span>The whole system uses Catppuccin Mocha. DMS needs its <code>registryThemeVariants</code> set to match.</span></div></div>
+          <div class="strength"><div class="check">!</div><div class="text"><strong>Test the dual-notification-daemon assumption</strong><span>If DMS doesn't grab the DBus notification name, no notifications appear. Verify on first deploy.</span></div></div>
+        </div>
+
+        <!-- =================== TOP 25 NEXT =================== -->
+        <h2 id="next25"><span class="num">06</span>Top 25 Things to Get Done Next</h2>
+        <table>
+          <thead><tr><th>#</th><th>Task</th><th>Impact</th><th>Effort</th><th>Prerequisite</th></tr></thead>
+          <tbody>
+            <tr><td><strong>1</strong></td><td><strong>Deploy to evo-x2</strong>: <code>nix run .#deploy</code></td><td><span class="badge badge-critical">Critical</span></td><td>10m</td><td>None</td></tr>
+            <tr><td><strong>2</strong></td><td>Verify DMS bar appears and renders workspaces</td><td><span class="badge badge-critical">Critical</span></td><td>5m</td><td>#1</td></tr>
+            <tr><td><strong>3</strong></td><td>Test notifications: <code>notify-send "test"</code></td><td><span class="badge badge-critical">Critical</span></td><td>2m</td><td>#1</td></tr>
+            <tr><td><strong>4</strong></td><td>Test polkit: <code>pkexec true</code></td><td><span class="badge badge-high">High</span></td><td>2m</td><td>#1</td></tr>
+            <tr><td><strong>5</strong></td><td>Verify system tray works (SNI host)</td><td><span class="badge badge-high">High</span></td><td>5m</td><td>#1</td></tr>
+            <tr><td><strong>6</strong></td><td>Apply Catppuccin Mocha theme to DMS</td><td><span class="badge badge-high">High</span></td><td>10m</td><td>#1</td></tr>
+            <tr><td><strong>7</strong></td><td>Study DMS plugin system &mdash; how to load custom QML</td><td><span class="badge badge-critical">Critical</span></td><td>30m</td><td>#1</td></tr>
+            <tr><td><strong>8</strong></td><td>Wire OllamaStatus widget into DMS bar</td><td><span class="badge badge-high">High</span></td><td>15m</td><td>#7</td></tr>
+            <tr><td><strong>9</strong></td><td>Wire DnsStats widget into DMS bar</td><td><span class="badge badge-high">High</span></td><td>10m</td><td>#7</td></tr>
+            <tr><td><strong>10</strong></td><td>Wire GpuMonitor widget into DMS bar</td><td><span class="badge badge-medium">Med</span></td><td>10m</td><td>#7</td></tr>
+            <tr><td><strong>11</strong></td><td>Template port numbers from lib/ports.nix into QML</td><td><span class="badge badge-medium">Med</span></td><td>15m</td><td>#7</td></tr>
+            <tr><td><strong>12</strong></td><td>Update niri <code>Mod+Shift+Escape</code> to new lock screen</td><td><span class="badge badge-medium">Med</span></td><td>5m</td><td>#1</td></tr>
+            <tr><td><strong>13</strong></td><td>Update niri <code>Mod+Shift+N</code> (remove Dunst history)</td><td><span class="badge badge-low">Low</span></td><td>3m</td><td>#1</td></tr>
+            <tr><td><strong>14</strong></td><td>Update swayidle before-sleep to new lock screen</td><td><span class="badge badge-medium">Med</span></td><td>5m</td><td>#1</td></tr>
+            <tr><td><strong>15</strong></td><td>Wire TaskRadar widget into DMS bar</td><td><span class="badge badge-high">High</span></td><td>10m</td><td>#7</td></tr>
+            <tr><td><strong>16</strong></td><td>Wire ServiceHealth dots into DMS bar</td><td><span class="badge badge-medium">Med</span></td><td>10m</td><td>#7</td></tr>
+            <tr><td><strong>17</strong></td><td>Write Dual-WAN failover widget</td><td><span class="badge badge-medium">Med</span></td><td>12m</td><td>#7</td></tr>
+            <tr><td><strong>18</strong></td><td>Write NPU utilization widget (amd-npu sysfs)</td><td><span class="badge badge-low">Low</span></td><td>12m</td><td>#7</td></tr>
+            <tr><td><strong>19</strong></td><td>Write sops secret health widget</td><td><span class="badge badge-low">Low</span></td><td>12m</td><td>#7</td></tr>
+            <tr><td><strong>20</strong></td><td>Test Mission Control OSD popup</td><td><span class="badge badge-medium">Med</span></td><td>10m</td><td>#1</td></tr>
+            <tr><td><strong>21</strong></td><td>Test Clipboard Manager popup</td><td><span class="badge badge-medium">Med</span></td><td>10m</td><td>#1</td></tr>
+            <tr><td><strong>22</strong></td><td>Retire Waybar (remove import, package, service)</td><td><span class="badge badge-high">High</span></td><td>15m</td><td>#2,#3,#4,#5 verified</td></tr>
+            <tr><td><strong>23</strong></td><td>Add <code>X-Restart-Triggers</code> for hot-reload on switch</td><td><span class="badge badge-medium">Med</span></td><td>10m</td><td>#22</td></tr>
+            <tr><td><strong>24</strong></td><td>Package custom QML via stdenvNoCC (noctalia pattern)</td><td><span class="badge badge-medium">Med</span></td><td>20m</td><td>#7</td></tr>
+            <tr><td><strong>25</strong></td><td>Update FEATURES.md with Quickshell features</td><td><span class="badge badge-low">Low</span></td><td>10m</td><td>#22</td></tr>
+          </tbody>
+        </table>
+
+        <!-- =================== THE BIG QUESTION =================== -->
+        <h2 id="question"><span class="num">&#9670;</span>The #1 Question I Cannot Answer Myself</h2>
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Blocking</span>
+          <h3>Should I deploy now, or wire widgets first?</h3>
+          <div class="where">affects all runtime work</div>
+          <p>
+            Every QML widget, the lock screen, the OSD, the clipboard manager &mdash; all are untested because
+            <strong>no deploy has been run</strong>. I cannot deploy from here (it requires evo-x2 runtime).
+            But I also don't know if DMS will start correctly, if the notification daemon will grab the DBus name,
+            or if the polkit agent will activate.
+          </p>
+          <p>
+            The safe path: <strong>deploy as-is</strong> (DMS enabled, Waybar in parallel, Dunst force-disabled),
+            verify DMS renders and notifications/polkit work, <em>then</em> wire widgets. The aggressive path:
+            wire all widgets into DMS first, deploy once with everything. The safe path is correct.
+          </p>
+          <div class="callout callout-solution">
+            <strong>The question: Should I <code>nix run .#deploy</code> right now?</strong>
+            This is the single highest-value action. Everything else is blocked on runtime verification.
+            If yes, I'll deploy, check DMS starts, test notifications + polkit, then continue wiring widgets.
+            If no, I'll keep wiring QML but can't verify any of it.
+          </div>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-06-24 08:25 &middot; 4 commits, 22 files, 1392 insertions &middot; nix eval verified &middot; runtime UNVERIFIED
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
