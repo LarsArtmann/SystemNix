@@ -86,7 +86,7 @@ in {
     users.users.lars = {
       isNormalUser = true;
       description = "Lars";
-      extraGroups = ["networkmanager" "wheel" "docker" "input" "video" "audio" "i2c" "render"];
+      extraGroups = ["networkmanager" "wheel" "docker" "input" "video" "audio" "i2c" "render" "lp" "scanner"];
       # INFO: Set password manually with `passwd lars` after installation
       # NOTE: After SSH hardening, password auth will be disabled - you MUST set up SSH keys
       shell = pkgs.fish;

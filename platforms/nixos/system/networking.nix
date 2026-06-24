@@ -80,5 +80,9 @@
   services.printing.enable = true;
   services.printing.drivers = [pkgs.gutenprint];
 
+  # Enable SANE for scanning (Canon PIXMA MG2500 scanner)
+  hardware.sane.enable = true;
+  hardware.sane.extraBackends = [pkgs.sane-backends];
+
   # nix.gc is defined in platforms/common/nix-settings.nix (shared)
 }
