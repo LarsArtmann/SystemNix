@@ -7,14 +7,15 @@ Cross-Platform Nix Configuration (macOS + NixOS) — `github:LarsArtmann/SystemN
 ## Architecture
 
 ```
-flake.nix              # Entry point (flake-parts), mkLarsPackages, 53 inputs
+flake.nix              # Entry point (flake-parts), mkLarsPackages, ~55 inputs
 lib/                   # Helpers — import via lib/default.nix (single import point)
 modules/nixos/services/# flake-parts modules, auto-discovered by filename
-pkgs/                  # Custom packages (buildGoModule, etc.)
+pkgs/                  # Custom packages (buildGoModule, quickshell-widgets/)
 overlays/              # shared.nix (callPackage + activitywatch + d2 Darwin stub), linux.nix (flake-input overlays)
 platforms/common/      # Shared (~80%): home-base.nix, programs/, packages/, theme.nix, locale.nix
 platforms/darwin/      # macOS (nix-darwin) — user: larsartmann
 platforms/nixos/       # NixOS — user: lars
+  desktop/quickshell.nix # Quickshell HM module (DankMaterialShell)
 scripts/               # Shell + Python operational scripts
 ```
 
@@ -47,6 +48,18 @@ All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPack
 **Core dep cascade?** Update dep repo first → publish tags → each consumer: `vendorHash = ""` → `nix flake lock --update-input <repo>`
 **`proxyVendor = true`:** `go mod tidy` safe in both phases. **`proxyVendor = false`:** AVOID `overrideModAttrs` with `go mod tidy` — causes "inconsistent vendoring"
 **Versioning:** Published = hardcode semver. Internal = `self.rev or self.dirtyRev or "dev"`
+
+### Quickshell (DankMaterialShell)
+
+Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome. Configured via DankMaterialShell's upstream HM module.
+
+- **Input:** `dankMaterialShell` (github:AvengeMedia/DankMaterialShell/stable) — brings `quickshell` transitively, no separate quickshell input
+- **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`
+- **Custom widgets:** `pkgs/quickshell-widgets/` — SystemNix-native QML widgets (Ollama, DNS stats, GPU, Taskchampion, etc.)
+- **DevShell:** `nix develop .#quickshell` for hot-reload QML development with `qmlls` LSP
+- **Parallel run:** Waybar kept alongside DMS during migration. Disabled in P2 when DMS is proven
+- **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)
+- **`inputs.nixpkgs.follows`** on the DMS input is MANDATORY — mismatched Qt causes runtime crashes
 
 ### Sops + Age
 
@@ -107,6 +120,10 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | dnsblockd + `ProtectSystem=strict` | SQLite needs a writable CWD. Set `WorkingDirectory = "/var/lib/dnsblockd"` alongside `StateDirectory` or SQLite CANTOPEN errors |
 | `mkFilesystem` helper | `lib/filesystems.nix` validates mount options at eval time. Use it instead of raw `fileSystems` attrsets to catch cross-fs contamination (e.g. `discard=async` on ext4) |
 | Pre-deploy validation | `nix run .#pre-deploy-check` catches boot-breaking issues before switch. Runs automatically as part of `nix run .#deploy` |
+| DMS `inputs.nixpkgs.follows` | MANDATORY — mismatched Qt versions between DMS/quickshell and system nixpkgs cause silent runtime crashes |
+| DMS notification conflict | Only one DBus notification daemon can run. Dunst must be disabled (`services.dunst.enable = lib.mkForce false`) when DMS is active |
+| Quickshell pre-1.0 | Breaking changes expected before 1.0. Pin DMS to `stable` branch. Migration guides promised |
+| QML is programming | Quickshell configs are applications, not config files. Requires QML knowledge. Use `nix develop .#quickshell` for LSP + hot-reload |
 | `nixpkgs-unstable` vs `nixos-unstable` | **Use `nixos-unstable` in flake inputs.** Hydra only caches expensive builds (ROCm, CUDA) on the `nixos-unstable` jobset — `nixpkgs-unstable` produces different hashes with no binary cache for these. `ollama-rocm` was a 30+ min local build on `nixpkgs-unstable` but substitutes instantly from `nixos-unstable` |
 
 ---
