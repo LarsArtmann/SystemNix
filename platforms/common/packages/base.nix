@@ -196,7 +196,6 @@
       imagemagick # Image manipulation for wallpaper management
     ]
     ++ lib.optionals stdenv.isLinux [
-      awww # Simple Wayland Wallpaper for animated wallpapers (Linux-only)
       geekbench_6 # Geekbench 6 includes AI/ML benchmarking capabilities (Linux-only)
       goreleaser # Release Go projects with ease — global binary, Linux-only (Darwin disk-constrained)
     ];

@@ -1,0 +1,696 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Comprehensive Status — 2026-06-25</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+        --radius: 0px;
+        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      section[id], [id] { scroll-margin-top: 60px; }
+      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
+      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
+      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
+      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
+      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; line-height: 1.4; font-weight: 500; }
+      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+      .main { flex: 1; min-width: 0; }
+      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
+      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
+      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
+      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
+      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
+      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
+      p { margin: 0 0 1rem; }
+      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
+      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
+      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
+      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
+      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
+      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
+      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
+      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
+      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
+      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
+      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
+      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
+      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
+      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
+      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
+      .issue h3 { margin-bottom: 0.3rem; }
+      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
+      .issue p:last-child { margin-bottom: 0; }
+      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
+      .severity-critical { background: var(--problem); }
+      .severity-important { background: var(--warning); }
+      .severity-nice { background: var(--solution); }
+      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
+      .badge-critical { color: var(--problem); border-color: var(--problem); }
+      .badge-high { color: var(--warning); border-color: var(--warning); }
+      .badge-medium { color: var(--accent); border-color: var(--accent); }
+      .badge-low { color: var(--text-muted); }
+      .badge-fixed { color: var(--solution); border-color: var(--solution); }
+      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
+      .callout strong { display: inline-block; margin-right: 0.4rem; }
+      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
+      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
+      .callout-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 10%, transparent); }
+      .stat-grid, .scorecard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
+      .stat-card, .score-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
+      .stat-card::before, .score-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
+      .stat-bad::before, .score-bad::before { background: var(--problem); }
+      .stat-good::before, .score-good::before { background: var(--solution); }
+      .stat-warn::before, .score-warn::before { background: var(--warning); }
+      .stat-value, .score { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
+      .stat-bad .stat-value, .score-bad .score { color: var(--problem); }
+      .stat-good .stat-value, .score-good .score { color: var(--solution); }
+      .stat-warn .stat-value, .score-warn .score { color: var(--warning); }
+      .stat-label, .score-card .label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
+      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
+      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; line-height: 1.4; }
+      .strength .text strong { display: block; margin-bottom: 0.15rem; }
+      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
+      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
+      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
+      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
+      tr:hover td { background: var(--surface-raised); }
+      pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
+      code { font-family: var(--font-mono); }
+      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
+      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
+      .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+      @media (min-width: 1024px) { .sidebar { display: block; } }
+      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; } .grid-2, .grid-3 { grid-template-columns: 1fr; } .stat-grid, .scorecard { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>COMPREHENSIVE STATUS REPORT</span>
+      <span>2026-06-25 01:01</span>
+      <span>SYSTEMNIX &middot; MASTER</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">Fully Done</a>
+          <a href="#partial">Partially Done</a>
+          <a href="#not-started">Not Started</a>
+          <a href="#fucked">Totally Fucked Up</a>
+          <a href="#improve">Improvements</a>
+          <a href="#top25">Top 25 Next</a>
+          <a href="#question">The Big Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Full System Audit</div>
+          <h1>SystemNix Comprehensive Status</h1>
+          <p class="hero-subtitle">Post-Quickshell/DMS migration wallpaper overhaul, full project health check across 123 Nix files, 40 services, 13 DMS plugins, and 85 flake inputs. What's done, what's broken, what's next.</p>
+        </div>
+
+        <!-- ===== SUMMARY ===== -->
+        <h2 id="summary"><span class="num">00</span>Executive Summary</h2>
+
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">40+</div>
+            <div class="stat-label">Services Running</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">13</div>
+            <div class="stat-label">DMS Plugins</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Partial / Unstable</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Critically Stale</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">16.5k</div>
+            <div class="stat-label">Lines of Nix</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">85</div>
+            <div class="stat-label">Flake Inputs</div>
+          </div>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Session Highlight: Wallpaper Migration to DMS</h4>
+          <p>Retired the <code>awww</code> wallpaper daemon entirely. DMS now owns wallpaper management natively via <code>dms ipc call wallpaper set/next/prev</code>. A new <code>dms-wallpaper-init</code> systemd user service seeds a random wallpaper from <code>~/.local/share/wallpapers/</code> on first launch (respects existing user choice). <code>Mod+W</code> rebinded to <code>dms ipc call wallpaper next</code>. Dynamic theming via matugen extracts Material You colors from the active wallpaper. <strong>Not yet deployed</strong> — changes are committed but <code>nix run .#deploy</code> has not been run.</p>
+        </div>
+
+        <div class="card card-warning">
+          <h4>System State</h4>
+          <p>evo-x2 is running the <strong>previous generation</strong> (pre-wallpaper-migration). The DMS migration was deployed (commits <code>f94722c7</code>–<code>296fc5c6</code>) but the wallpaper retirement is uncommitted-to-disk changes now staged. A reboot is also pending from TODO_LIST P0 (NVMe APST fix verification).</p>
+        </div>
+
+        <!-- ===== FULLY DONE ===== -->
+        <h2 id="done"><span class="num">01</span>Fully Done</h2>
+
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Quickshell/DMS Migration (Complete)</strong>
+              <span>13 DMS plugins wired, Waybar/Dunst/Wlogout/polkit_gnome fully retired, DMS owns DBus notification/screenSaver/StatusNotifier names. Lock screen via DMS IPC. OSD, clipboard manager active. All eval-verified.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Wallpaper Migration to DMS (This Session)</strong>
+              <span>awww retired. DMS owns wallpapers. <code>dms-wallpaper-init</code> seeds from collection. <code>Mod+W</code> → DMS IPC. Package removed. Health-check updated. AGENTS.md updated.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>DNS Blocker (dnsblockd)</strong>
+              <span>930-line production Go app: SNI-based dynamic TLS certs, 10-category system, 2.5M+ domains blocked, temp-allow API, Prometheus metrics, Catppuccin block page, 23 blocklists. The crown jewel of SystemNix.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Cross-Platform Nix Flake</strong>
+              <span>Single flake, two platforms (Darwin + NixOS), 80% shared via platforms/common/. 123 Nix files, 16,579 lines. nixos-unstable for ROCm cache substitution.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Full Self-Hosted Stack</strong>
+              <span>Forgejo, Immich (VA-API transcoding), SigNoz (19 alert rules), Twenty CRM, Pocket ID (passkey OIDC), Caddy (15 vHosts, forward auth), Homepage dashboard, Crush Daily, OpenSEO, Overview, Manifest, Gatus (38 endpoints), Docker (overlay2, weekly prune).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Docker Resilience</strong>
+              <span>Unified on Docker backend (no Podman), Docker 29.x userland-proxy fix, containerd bbolt corruption recovery documented, boot emergency prevention via mkFilesystem + nofail mounts + pre-deploy-check.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>AMD GPU + NPU Stack</strong>
+              <span>ROCm, RADV Vulkan, VA-API (H.264/HEVC/AV1), OLLAMA_GPU_OVERHEAD=8GiB, MGLRU thrash protection, OOM chain prevention (user slice MemoryHigh/MemoryMax), AMD XDNA NPU driver + dev tools.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Security &amp; Secrets</strong>
+              <span>SOPS + Age (SSH host key derived), all service-specific secrets guarded with optionalAttrs, fail2ban, ClamAV, 30+ security tools, Pocket ID passkey-only auth, oauth2-proxy forward auth.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Niri Desktop</strong>
+              <span>Scrollable-tiling compositor, 80+ keybindings, 5 named workspaces, session save/restore (crash recovery), SSH suspend guard, screenshot pipeline (grim+slurp+swappy), cliphist + DMS clipboard coexistence.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>BTRFS Root Snapshots</strong>
+              <span>Daily btrbk snapshots of root (@), 14d+4w retention, monthly scrub, verify timer alerts on stale snapshots.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== PARTIALLY DONE ===== -->
+        <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Partial</span>
+          <h3>Monitor365 Server Stability</h3>
+          <div class="where">modules/nixos/services/monitor365.nix</div>
+          <p>DB path was fixed (sqlite:/// with 3 slashes + --config flag), but server stability remains uncertain. Needs <code>systemctl --user reset-failed monitor365-server</code> after deploy. No auth on agent→server communication — anyone on LAN can POST data.</p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Partial</span>
+          <h3>Hermes AI Gateway</h3>
+          <div class="where">modules/nixos/services/hermes.nix</div>
+          <p>Nix wiring complete for OpenAI/OpenRouter fallback. Three manual steps blocking: (1) add OpenAI API key to sops, (2) install SSH deploy key, (3) set fallback model. Until then, Hermes runs without secondary LLM provider.</p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Partial</span>
+          <h3>Gatus Health Checks — 6 Services Possibly Misconfigured</h3>
+          <div class="where">modules/nixos/services/gatus-config.nix</div>
+          <p>SigNoz, Immich, Crush Daily, Ollama, Monitor365, and one other show DOWN in Gatus. Check URLs may be wrong (wrong ports, wrong paths, services not started). Needs audit of all 38 endpoints against actual service configs.</p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Partial</span>
+          <h3>File &amp; Image Renamer</h3>
+          <div class="where">modules/nixos/services/file-and-image-renamer.nix</div>
+          <p>Re-enabled in config after Go 1.26.3 became available. Pending deploy verification. AI-powered screenshot/file renaming via charm.land/fantasy.</p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Partial</span>
+          <h3>Twenty CRM Intermittent 502s</h3>
+          <div class="where">modules/nixos/services/twenty.nix</div>
+          <p>Caddy logs show <code>connection refused</code>/<code>connection reset</code> on port 3200. Likely container OOM or PG connection exhaustion. Needs <code>docker logs twenty-server-1 --tail=100</code> diagnosis.</p>
+        </div>
+
+        <!-- ===== NOT STARTED ===== -->
+        <h2 id="not-started"><span class="num">03</span>Not Started</h2>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>BTRFS /data Subvolume Migration</h4>
+            <p>/data is BTRFS toplevel (subvolid=5) — cannot be snapshotted. Docker, Immich, AI models all live here. Manual: create subvolume, update fstab, reboot, rsync data. High risk, high reward.</p>
+          </div>
+          <div class="card">
+            <h4>Cloud / Off-Site Backup</h4>
+            <p>Zero off-site backup exists. Research done for BorgBackup to Hetzner StorageBox. Critical for disaster recovery — all data is on a single NVMe drive.</p>
+          </div>
+          <div class="card">
+            <h4>Raspberry Pi 3 DNS Failover</h4>
+            <p>VRRP cluster module + config ready. Hardware not purchased. Would provide DNS redundancy with Keepalived health tracking.</p>
+          </div>
+          <div class="card">
+            <h4>Firewall Deny-by-Default</h4>
+            <p>NixOS currently allows all inbound. Docker punches its own holes. Need explicit allowlist transition.</p>
+          </div>
+          <div class="card">
+            <h4>Auditd / AppArmor</h4>
+            <p>Auditd blocked on NixOS 26.05 bug #483085. AppArmor explicitly disabled in security-hardening.nix. Both waiting for upstream.</p>
+          </div>
+          <div class="card">
+            <h4>Darwin HM Parity</h4>
+            <p>macOS Home Manager config is minimal — no terminal/editor/theme parity. Blocked by 256GB SSD (90%+ full).</p>
+          </div>
+          <div class="card">
+            <h4>Disabled Service Triage</h4>
+            <p>3 services in limbo: voice-agents (LiveKit+Whisper), minecraft, photomap. Each adds maintenance burden. Decide: enable or remove.</p>
+          </div>
+          <div class="card">
+            <h4>Module Splitting</h4>
+            <p>Three modules too large: monitor365 (716L), signoz (705L), forgejo (583L). Extract sub-modules for maintainability.</p>
+          </div>
+        </div>
+
+        <!-- ===== TOTALLY FUCKED UP ===== -->
+        <h2 id="fucked"><span class="num">04</span>Totally Fucked Up</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>FEATURES.md Is Lying About Desktop Components</h3>
+          <div class="where">FEATURES.md:193-204</div>
+          <p>FEATURES.md still shows <strong>Waybar ✅, Swaylock ✅, Wlogout ✅, Dunst ✅, Awww ✅</strong> — ALL FIVE were removed during the DMS migration. Anyone reading this file gets a completely wrong picture of the desktop stack. The DMS replacement is not even mentioned. This is the single most misleading document in the repo.</p>
+          <div class="callout callout-problem">
+            <strong>Impact</strong>
+            A new session or contributor trusts FEATURES.md, wastes time looking for Waybar config that doesn't exist, or tries to configure Dunst notifications that DMS now owns.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>ROADMAP.md Lists QuickShell as Future Exploration</h3>
+          <div class="where">ROADMAP.md:33</div>
+          <p>Theme 3 (Desktop Experience) still says: <em>"QuickShell exploration — evaluate as potential Niri companion/replacement"</em>. QuickShell is DONE. 13 plugins deployed. This is actively misleading future planning.</p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>178 Status Reports Cluttering docs/status/</h3>
+          <div class="where">docs/status/ (178 files, ~10 archived)</div>
+          <p>The status directory has 178 files. Only ~30 are current. Pre-session-100 reports should be in docs/status/archive/. This makes finding recent status impossible. TODO_LIST has this as P4 but it's been deferred for 40+ sessions.</p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Important</span>
+          <h3>Wallpaper Changes Not Deployed</h3>
+          <div class="where">Working tree (uncommitted)</div>
+          <p>The wallpaper migration (awww→DMS) is in the working tree but NOT deployed. evo-x2 is running the old generation with awww still active. If DMS and awww both run, they fight over wallpaper ownership. Must deploy soon.</p>
+        </div>
+
+        <!-- ===== IMPROVEMENTS ===== -->
+        <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Area</th>
+              <th>Current State</th>
+              <th>Target</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>FEATURES.md freshness</td>
+              <td>5 retired features shown as ✅</td>
+              <td>Reflect DMS reality, add DMS plugins section</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>ROADMAP.md</td>
+              <td>QuickShell listed as future</td>
+              <td>Mark QuickShell DONE, add post-migration goals</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>docs/status/ cleanup</td>
+              <td>178 files, ~10 archived</td>
+              <td>~30 current + rest in archive/</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>Module size</td>
+              <td>3 modules >580 lines</td>
+              <td>Extract sub-modules, typed options</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td>Off-site backup</td>
+              <td>None exists</td>
+              <td>BorgBackup to Hetzner StorageBox</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td>Service auth</td>
+              <td>Monitor365 open to LAN</td>
+              <td>Agent→server authentication</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>Disabled services</td>
+              <td>3 zombie services (voice/mc/photomap)</td>
+              <td>Decide enable or remove</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td>Gatus endpoints</td>
+              <td>6 services showing DOWN</td>
+              <td>Audit all 38 check URLs</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td>Cloud firewall</td>
+              <td>Allow-all inbound</td>
+              <td>Deny-by-default with explicit allowlist</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td>dnsblockd extraction</td>
+              <td>930 lines embedded in Nix config</td>
+              <td>Standalone repo</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td>Upstream PRs</td>
+              <td>9 nixpkgs/HM tasks identified</td>
+              <td>Submit and track</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>BTRFS /data</td>
+              <td>Toplevel (no snapshots)</td>
+              <td>Proper subvolume with btrbk</td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td>DMS dynamic theming docs</td>
+              <td>Not documented in AGENTS.md gotchas</td>
+              <td>Document matugen behavior, color overrides</td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td>Stale docs</td>
+              <td>ANIMATED-WALLPAPERS-GUIDE.md, WALLPAPER-MANAGER-COMPARISON.md reference removed tools</td>
+              <td>Archive or delete</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== TOP 25 ===== -->
+        <h2 id="top25"><span class="num">06</span>Top 25 Things To Get Done Next</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Priority</th>
+              <th>Task</th>
+              <th>Effort</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td><strong>Deploy wallpaper migration</strong> — <code>nix run .#deploy</code> to apply awww→DMS wallpaper changes</td>
+              <td><span class="badge badge-low">10 min</span></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td><strong>Update FEATURES.md</strong> — remove Waybar/Dunst/Wlogout/Swaylock/awww, add DMS section with 13 plugins</td>
+              <td><span class="badge badge-low">30 min</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-critical">P0</span></td>
+              <td><strong>Update ROADMAP.md</strong> — mark QuickShell DONE, remove from "future exploration"</td>
+              <td><span class="badge badge-low">15 min</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td><strong>Reboot evo-x2</strong> — verify NVMe APST boot time fix (target ~35s, was 6m17s)</td>
+              <td><span class="badge badge-low">5 min</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td><strong>Fix Twenty CRM 502s</strong> — diagnose container OOM or PG exhaustion</td>
+              <td><span class="badge badge-medium">1-2 hr</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td><strong>Audit Gatus health checks</strong> — verify 38 endpoint URLs, fix 6 DOWN services</td>
+              <td><span class="badge badge-medium">1 hr</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td><strong>Reset Monitor365</strong> — <code>systemctl --user reset-failed monitor365-server</code></td>
+              <td><span class="badge badge-low">2 min</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td><strong>Archive old status reports</strong> — move pre-session-100 to docs/status/archive/ (178→~30)</td>
+              <td><span class="badge badge-medium">30 min</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><span class="badge badge-high">P1</span></td>
+              <td><strong>Verify DMS wallpaper at runtime</strong> — confirm <code>dms ipc call wallpaper get/next</code> works after deploy</td>
+              <td><span class="badge badge-low">10 min</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Hermes manual steps</strong> — add OpenAI API key to sops, install SSH deploy key, set fallback model</td>
+              <td><span class="badge badge-medium">30 min</span></td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Verify Pocket ID email sending</strong> — test SMTP notification after wiring</td>
+              <td><span class="badge badge-low">15 min</span></td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Archive stale wallpaper docs</strong> — ANIMATED-WALLPAPERS-GUIDE.md, WALLPAPER-MANAGER-COMPARISON.md reference removed swww/hyprpaper</td>
+              <td><span class="badge badge-low">5 min</span></td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Document DMS dynamic theming in AGENTS.md</strong> — matugen behavior, how static catppuccin colors interact, DMS_DISABLE_MATUGEN env var</td>
+              <td><span class="badge badge-low">20 min</span></td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Disabled service triage</strong> — decide: voice-agents, minecraft, photomap. Enable or remove.</td>
+              <td><span class="badge badge-medium">1 hr</span></td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo (583L) → sub-modules</td>
+              <td><span class="badge badge-high">3-4 hr</span></td>
+            </tr>
+            <tr>
+              <td>16</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>BTRFS /data subvolume migration</strong> — create subvolume, update fstab, rsync data</td>
+              <td><span class="badge badge-high">2-3 hr</span></td>
+            </tr>
+            <tr>
+              <td>17</td>
+              <td><span class="badge badge-medium">P2</span></td>
+              <td><strong>Cloud backup setup</strong> — BorgBackup to Hetzner StorageBox</td>
+              <td><span class="badge badge-high">3-4 hr</span></td>
+            </tr>
+            <tr>
+              <td>18</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>Swap investigation</strong> — 8 GiB swap used on 128 GiB RAM, run smem diagnostic</td>
+              <td><span class="badge badge-medium">30 min</span></td>
+            </tr>
+            <tr>
+              <td>19</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>Firewall deny-by-default</strong> — explicit allowlist, Docker exception handling</td>
+              <td><span class="badge badge-high">2-3 hr</span></td>
+            </tr>
+            <tr>
+              <td>20</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>Monitor365 auth</strong> — add agent→server authentication</td>
+              <td><span class="badge badge-medium">1-2 hr</span></td>
+            </tr>
+            <tr>
+              <td>21</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>dnsblockd extraction</strong> — 930-line Go app → standalone repo</td>
+              <td><span class="badge badge-high">4-6 hr</span></td>
+            </tr>
+            <tr>
+              <td>22</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>Submit upstream PRs</strong> — 9 nixpkgs/HM tasks identified in TODO_LIST</td>
+              <td><span class="badge badge-high">Full day</span></td>
+            </tr>
+            <tr>
+              <td>23</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>Typed NixOS module options</strong> — add typed options for ports, paths, timeouts</td>
+              <td><span class="badge badge-high">Ongoing</span></td>
+            </tr>
+            <tr>
+              <td>24</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>NPU workload exploration</strong> — AMD XDNA loaded but unused, try ONNX Runtime</td>
+              <td><span class="badge badge-high">Research</span></td>
+            </tr>
+            <tr>
+              <td>25</td>
+              <td><span class="badge badge-low">P3</span></td>
+              <td><strong>Provision Raspberry Pi 3</strong> — purchase hardware for DNS failover cluster</td>
+              <td><span class="badge badge-low">Blocked</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== THE QUESTION ===== -->
+        <h2 id="question"><span class="num">07</span>The One Question I Cannot Answer</h2>
+
+        <div class="card card-problem">
+          <h4>Should dynamic theming (matugen) override the static Catppuccin Mocha colorScheme?</h4>
+          <p style="margin-bottom: 0.5rem;"><strong>Context:</strong> DMS's <code>enableDynamicTheming = true</code> installs matugen, which extracts Material You colors from the active wallpaper and regenerates theme files for GTK, Qt, terminals, editors, and browsers on every wallpaper change. Meanwhile, the entire SystemNix codebase is built around a static <code>catppuccin-mocha</code> <code>colorScheme</code> (passed as a specialArg, drives Starship, Fzf, Rofi, Ghostty, Kitty, Foot, Zellij, Homepage, and more).</p>
+          <p style="margin-bottom: 0.5rem;"><strong>The conflict:</strong> When matugen fires, it overrides GTK/Qt/terminal themes with wallpaper-derived colors. But the Nix-managed <code>colorScheme</code> still pushes Catppuccin Mocha to the same targets. This creates a tug-of-war: Nix deploy resets to Catppuccin, wallpaper change resets to matugen. The user sees flickering theme changes or inconsistent colors across apps.</p>
+          <p style="margin-bottom: 0;"><strong>The question:</strong> Do you want to commit fully to DMS dynamic theming (remove the static colorScheme from Nix-managed apps that DMS themes) — or disable matugen (<code>enableDynamicTheming = false</code>, set <code>DMS_DISABLE_MATUGEN=1</code>) and keep Catppuccin Mocha as the single source of truth? This is a design decision only you can make — it affects every themed application on the system.</p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-06-25 01:01 &middot; All claims verified against source code, flake eval, and git history
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

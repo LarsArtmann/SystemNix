@@ -103,11 +103,11 @@ if is_linux; then
     warn "niri not running (graphical session may be inactive)"
   fi
 
-  # Graphical session target — critical for waybar, cliphist, swayidle, wallpaper
+  # Graphical session target — critical for DMS, cliphist, swayidle, wallpaper
   if systemctl --user is-active graphical-session.target >/dev/null 2>&1; then
     ok "graphical-session.target active"
   else
-    fail "graphical-session.target NOT active — waybar and other graphical services will not start"
+    fail "graphical-session.target NOT active — DMS and other graphical services will not start"
     info "  This usually means niri.service is missing Wants=graphical-session.target"
     info "  Check: systemctl --user status graphical-session.target"
   fi

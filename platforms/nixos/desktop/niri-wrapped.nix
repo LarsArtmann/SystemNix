@@ -4,6 +4,7 @@
   lib,
   wallpapers,
   colorScheme,
+  dankMaterialShell,
   ...
 }: let
   theme = import ../../common/theme.nix;
@@ -55,45 +56,33 @@
     '';
   };
 
-  wallpaper-set = pkgs.writeShellApplication {
-    name = "wallpaper-set";
-    runtimeInputs = with pkgs; [awww coreutils];
+  dmsPkg = dankMaterialShell.packages.${pkgs.system}.default;
+
+  dms-wallpaper-init = pkgs.writeShellApplication {
+    name = "dms-wallpaper-init";
+    runtimeInputs = [dmsPkg pkgs.coreutils];
     text = ''
-      mode="''${1:-random}"
-      wallpaper_dir="''${2:-$HOME/.local/share/wallpapers}"
+      wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
-      wait_for_daemon() {
-        for _ in $(seq 1 60); do
-          awww query >/dev/null 2>&1 && return 0
-          sleep 1
-        done
-        return 1
-      }
+      # Wait for DMS IPC to be ready
+      for _ in $(seq 1 60); do
+        dms ipc call wallpaper get >/dev/null 2>&1 && break
+        sleep 1
+      done
 
-      set_random() {
-        local img
-        img=$(find "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
-        if [[ -z $img ]]; then
-          echo "No wallpaper images found in $wallpaper_dir" >&2
-          return 1
-        fi
-        awww img "$img" --transition-type random --transition-duration 3
-      }
+      # Respect user choice — only seed if no wallpaper is set
+      current=$(dms ipc call wallpaper get 2>/dev/null | tr -d '[:space:]')
+      if [ -n "$current" ] && [ "$current" != "null" ]; then
+        exit 0
+      fi
 
-      wait_for_daemon || exit 1
-
-      case "$mode" in
-      restore)
-        awww restore 2>/dev/null || set_random
-        ;;
-      random)
-        set_random
-        ;;
-      *)
-        echo "Usage: $0 <random|restore> [wallpaper_dir]" >&2
+      img=$(find "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
+      if [ -z "$img" ]; then
+        echo "No wallpaper images found in $wallpaper_dir" >&2
         exit 1
-        ;;
-      esac
+      fi
+
+      dms ipc call wallpaper set "$img"
     '';
   };
 
@@ -303,7 +292,7 @@ in {
         "Mod+Shift+P".action.power-off-monitors = {};
         "Mod+Shift+S".action.suspend = {};
 
-        "Mod+W".action.spawn = sh "${lib.getExe wallpaper-set} random ${wallpaperDir}";
+        "Mod+W".action.spawn = sh "dms ipc call wallpaper next";
 
         "Mod+Shift+F11".action.spawn = sh (screenshot ''-g "$(slurp)"'');
         "Mod+F11".action.spawn = sh (screenshot "");
@@ -478,46 +467,20 @@ in {
     };
 
     systemd.user.services = {
-      awww-daemon = {
+      dms-wallpaper-init = {
         Unit = {
-          Description = "awww wallpaper daemon";
+          Description = "Seed DMS wallpaper from collection on first launch";
           After = ["graphical-session.target"];
           PartOf = ["graphical-session.target"];
-          StartLimitBurst = 3;
-          StartLimitIntervalSec = 300;
         };
         Service =
           sd.hardenUser {}
-          // sd.serviceDefaultsUser {RestartSec = "3s";}
+          // sd.serviceDefaultsUser {}
           // {
-            ExecStartPre = let
-              checkWayland = pkgs.writeShellApplication {
-                name = "awww-check-wayland";
-                text = ''
-                  if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
-                    echo "awww-daemon: WAYLAND_DISPLAY not set, compositor not ready"
-                    exit 1
-                  fi
-                '';
-              };
-            in
-              lib.getExe checkWayland;
-            ExecStart = "${lib.getExe' pkgs.awww "awww-daemon"}";
+            Type = "oneshot";
+            RemainAfterExit = true;
+            ExecStart = "${lib.getExe dms-wallpaper-init} ${wallpaperDir}";
           };
-        Install.WantedBy = ["graphical-session.target"];
-      };
-
-      awww-wallpaper = {
-        Unit = {
-          Description = "Set wallpaper (self-healing via PartOf)";
-          After = ["graphical-session.target"];
-          PartOf = ["awww-daemon.service" "graphical-session.target"];
-        };
-        Service = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          ExecStart = "${lib.getExe wallpaper-set} restore";
-        };
         Install.WantedBy = ["graphical-session.target"];
       };
 

@@ -57,6 +57,7 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`, enables `systemd.enable = true` (defaults to false!)
 - **DMS plugins:** `pkgs/dms-plugins/` — 13 SystemNix-native widgets declaratively installed via DMS's `plugins` option with port-templated settings from `lib/ports.nix`. Each uses `PluginComponent` + `plugin.json`
 - **DevShell:** `nix develop .#quickshell` for hot-reload QML development with `qmlls` LSP
+- **Wallpaper management:** DMS owns wallpapers natively. awww is RETIRED. `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` (installed from `wallpapers-src` flake input) on first launch. DMS derives cycling directory from current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next`. Dynamic theming (`enableDynamicTheming = true`) uses matugen to derive Material You colors from the current wallpaper
 - **Waybar RETIRED:** Completely removed (import, package, service, scripts). DMS is the sole shell
 - **Runtime verified:** DMS owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names
 - **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)
@@ -98,7 +99,7 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `lib.mkMerge` + flake-parts | Does not work — use inline config or imports |
 | d2 Darwin overlay | Re-instantiates d2 with stubs; removing it breaks Darwin eval |
 | Niri `BindsTo` → `Wants=` | `BindsTo` kills niri on deploy |
-| awww-wallpaper ordering | `After=awww-daemon` creates cycle; use `graphical-session.target` |
+| DMS owns wallpaper management | awww is RETIRED. DMS manages wallpapers natively (`dms ipc call wallpaper set/next/prev`). `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` on first launch. DMS derives cycling directory from the current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next` |
 | Unbound `do-ip6 = false` | evo-x2 has no global IPv6 — any new unbound instance needs this |
 | otel-tui on Darwin | Never add — 40+ min builds + disk exhaustion |
 | Darwin HM user | `users.users.larsartmann.home` required in `platforms/darwin/default.nix` |
