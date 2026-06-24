@@ -96,6 +96,14 @@
       esac
     '';
   };
+
+  dms-lock = pkgs.writeShellApplication {
+    name = "dms-lock";
+    runtimeInputs = [pkgs.swaylock-effects];
+    text = ''
+      dms ipc lock lock 2>/dev/null || exec swaylock
+    '';
+  };
 in {
   config = {
     home.file.".local/share/wallpapers".source = wallpapers;
@@ -291,7 +299,7 @@ in {
         "Mod+Shift+F".action.spawn = sh "ghostty --class floating -e yazi";
         "Mod+Shift+D".action.spawn = sh "zellij --layout dev";
 
-        "Mod+Shift+Escape".action.spawn = ["swaylock"];
+        "Mod+Shift+Escape".action.spawn = sh "${lib.getExe dms-lock}";
         "Mod+Shift+P".action.power-off-monitors = {};
         "Mod+Shift+S".action.suspend = {};
 
@@ -532,7 +540,7 @@ in {
                   systemctl suspend
                 '';
               };
-            in "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe' pkgs.swaylock "swaylock"}";
+            in "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
             TimeoutStartSec = "10s";
           };
         Install.WantedBy = ["graphical-session.target"];
