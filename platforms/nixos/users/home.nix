@@ -15,7 +15,8 @@ in {
     nix-ssh-config.homeManagerModules.ssh
     ../programs/rofi.nix # Rofi launcher with Catppuccin grid theme
     # wlogout removed — DankMaterialShell provides power menu
-    ../programs/swaylock.nix # Screen locker with blur + Catppuccin theme
+    # swaylock module removed — DMS provides lock screen via dms ipc lock lock
+    # swaylock-effects kept as package fallback in dms-lock wrapper
     ../../common/programs/zellij.nix # Zellij terminal multiplexer
     ../../common/programs/yazi.nix # Terminal file manager with Catppuccin theme
     ../../common/programs/zed.nix # Zed editor — shared cross-platform config
