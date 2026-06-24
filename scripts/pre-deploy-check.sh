@@ -85,7 +85,8 @@ fi
 echo ""
 echo "6. Current system health"
 if command -v systemctl &>/dev/null; then
-  FAILED=$(systemctl --failed --no-pager 2>/dev/null | grep -c "\.service" || echo "0")
+  FAILED=$(systemctl --failed --no-pager --plain 2>/dev/null | tail -n +2 | grep -c "\.service" || true)
+  FAILED=${FAILED:-0}
   if [ "$FAILED" -eq 0 ]; then
     pass "No failed units"
   else
