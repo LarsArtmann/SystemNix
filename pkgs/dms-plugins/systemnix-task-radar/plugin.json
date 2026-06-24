@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-task-radar",
+  "name": "Task Radar",
+  "description": "Shows pending and overdue tasks from Taskchampion",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "checklist",
+  "type": "widget",
+  "component": "./TaskRadarWidget.qml",
+  "settings": "./TaskRadarSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

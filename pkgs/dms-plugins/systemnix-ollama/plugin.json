@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-ollama",
+  "name": "Ollama AI Monitor",
+  "description": "Shows the currently loaded AI model and VRAM footprint from Ollama",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "memory",
+  "type": "widget",
+  "component": "./OllamaWidget.qml",
+  "settings": "./OllamaSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

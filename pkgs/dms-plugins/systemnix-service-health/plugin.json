@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-service-health",
+  "name": "Service Health",
+  "description": "Shows Gatus service health dots (green=up, red=down)",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "monitor_heart",
+  "type": "widget",
+  "component": "./ServiceHealthWidget.qml",
+  "settings": "./ServiceHealthSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-voice-agent",
+  "name": "Voice Agent",
+  "description": "Shows voice agent state (Whisper ASR + LiveKit)",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "mic",
+  "type": "widget",
+  "component": "./VoiceAgentWidget.qml",
+  "settings": "./VoiceAgentSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-dns-stats",
+  "name": "DNS Blocker Stats",
+  "description": "Shows DNS queries blocked today via dnsblockd",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "shield",
+  "type": "widget",
+  "component": "./DnsStatsWidget.qml",
+  "settings": "./DnsStatsSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

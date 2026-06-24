@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-gpu-monitor",
+  "name": "GPU Monitor",
+  "description": "Shows amdgpu VRAM usage and GPU temperature from sysfs",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "developer_board",
+  "type": "widget",
+  "component": "./GpuMonitorWidget.qml",
+  "settings": "./GpuMonitorSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

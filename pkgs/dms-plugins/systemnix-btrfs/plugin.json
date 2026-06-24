@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-btrfs",
+  "name": "BTRFS Snapshot",
+  "description": "Monitors BTRFS snapshot freshness, warns if stale",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "snapshot",
+  "type": "widget",
+  "component": "./BtrfsWidget.qml",
+  "settings": "./BtrfsSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}
