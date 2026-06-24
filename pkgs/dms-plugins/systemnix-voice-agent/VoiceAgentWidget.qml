@@ -18,18 +18,16 @@ PluginComponent {
 
     Process {
         id: whisperCheck
-        command: ["curl", "-sf", "--connect-timeout", "1", "-o", "/dev/null", root.whisperUrl]
+        command: ["curl", "-sf", "--connect-timeout", "1", root.whisperUrl]
         running: true
-        stdout: StdioCollector { onStreamFinished: root.whisperUp = true }
-        onFailed: root.whisperUp = false
+        stdout: StdioCollector { onStreamFinished: root.whisperUp = this.text.length > 0 }
     }
 
     Process {
         id: livekitCheck
-        command: ["curl", "-sf", "--connect-timeout", "1", "-o", "/dev/null", root.livekitUrl]
+        command: ["curl", "-sf", "--connect-timeout", "1", root.livekitUrl]
         running: true
-        stdout: StdioCollector { onStreamFinished: root.livekitUp = true }
-        onFailed: root.livekitUp = false
+        stdout: StdioCollector { onStreamFinished: root.livekitUp = this.text.length > 0 }
     }
 
     Timer {
