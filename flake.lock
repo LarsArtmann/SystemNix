@@ -49,11 +49,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782250222,
-        "narHash": "sha256-NcDf+rZzYZuB9OoxL00LD2vGYChZjJhf9f8aP/PEM28=",
+        "lastModified": 1782264054,
+        "narHash": "sha256-5pripWREZuI4loIjiWIeMSmWzVaHVz+iigcrlJobv0I=",
         "ref": "master",
-        "rev": "afedcb8ad62b6117fb8098052646d3c7c00cdacf",
-        "revCount": 2081,
+        "rev": "f925d709da0f636a9845307cbc18daf902bef637",
+        "revCount": 2084,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -930,11 +930,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1782249651,
-        "narHash": "sha256-wEaWX1tuIH0UTi/w/tcpdveNJ/NBmt/WdnKxgL0ZJBo=",
+        "lastModified": 1782264658,
+        "narHash": "sha256-GPTVDdN7FhL2/ezbvRzid+N+PAVICrTMMBjunL0ZeZs=",
         "ref": "master",
-        "rev": "f4c452c69eb7f1b333ea988dce292b5566140205",
-        "revCount": 551,
+        "rev": "4e2f656b338e430ea647a19a3fc9e8b32f76ba7f",
+        "revCount": 553,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
       },
@@ -1525,11 +1525,11 @@
     "go-finding": {
       "flake": false,
       "locked": {
-        "lastModified": 1782236027,
-        "narHash": "sha256-JinNFLpH9hZuqla8p4/FqriIyPmDs8WgXqMuJht3mSc=",
+        "lastModified": 1782262705,
+        "narHash": "sha256-vWd9zlwjTpVBnwJMA4wf4Q+7Dj+V4iwdU8fViFv3AeU=",
         "ref": "master",
-        "rev": "b565ce93bb7acc7be25c454dfe2e19b69b898a88",
-        "revCount": 825,
+        "rev": "64bada22e3664788a73c21d5b7f21faa0f3a5b7f",
+        "revCount": 827,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },
@@ -1559,11 +1559,11 @@
     "go-finding_3": {
       "flake": false,
       "locked": {
-        "lastModified": 1782236027,
-        "narHash": "sha256-JinNFLpH9hZuqla8p4/FqriIyPmDs8WgXqMuJht3mSc=",
+        "lastModified": 1782262705,
+        "narHash": "sha256-vWd9zlwjTpVBnwJMA4wf4Q+7Dj+V4iwdU8fViFv3AeU=",
         "ref": "master",
-        "rev": "b565ce93bb7acc7be25c454dfe2e19b69b898a88",
-        "revCount": 825,
+        "rev": "64bada22e3664788a73c21d5b7f21faa0f3a5b7f",
+        "revCount": 827,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       },

@@ -14,7 +14,7 @@ in {
     ../programs/shells.nix # NixOS shell configuration
     nix-ssh-config.homeManagerModules.ssh
     ../programs/rofi.nix # Rofi launcher with Catppuccin grid theme
-    ../programs/wlogout.nix # Power menu with Catppuccin theme
+    # wlogout removed — DankMaterialShell provides power menu
     ../programs/swaylock.nix # Screen locker with blur + Catppuccin theme
     ../../common/programs/zellij.nix # Zellij terminal multiplexer
     ../../common/programs/yazi.nix # Terminal file manager with Catppuccin theme
@@ -202,16 +202,13 @@ in {
       # Note: ghostty managed by programs.ghostty above — don't add to packages
       # Note: kitty managed by programs.kitty above — don't add to packages
       # Note: cliphist is installed via common/packages/base.nix (Linux-only)
-      dunst
       libnotify
-      wlogout
       grimblast
       swappy
       playerctl
       brightnessctl
       ddcutil
       wl-clipboard # Wayland clipboard utilities (wl-copy, wl-paste)
-      wl-clip-persist # Keeps clipboard content after programs close
       gawk # Text processing
     ];
   };
@@ -383,87 +380,6 @@ in {
     };
   };
 
-  services.dunst = {
-    enable = true;
-    settings = {
-      global = {
-        font = "${theme.font.mono} 13";
-        markup = "full";
-        format = "<b>%s</b>\n%b";
-        sort = "yes";
-        indicate_hidden = "yes";
-        alignment = "left";
-        vertical_alignment = "center";
-        show_age_threshold = 60;
-        word_wrap = "yes";
-        ignore_newline = "no";
-        stack_duplicates = true;
-        hide_duplicate_count = false;
-        show_indicators = "yes";
-        icon_position = "left";
-        max_icon_size = 64;
-        min_icon_size = 32;
-        sticky_history = "yes";
-        history_length = 20;
-        dmenu = "${pkgs.rofi}/bin/rofi -dmenu -p dunst:";
-        browser = "${pkgs.firefox}/bin/firefox --new-tab";
-        always_run_script = true;
-        title = "Dunst";
-        class = "Dunst";
-        corner_radius = 12;
-        ignore_dbusclose = false;
-        layer = "overlay";
-        force_xinerama = false;
-        mouse_left_click = "close_current";
-        mouse_middle_click = "do_action, close_current";
-        mouse_right_click = "close_all";
-        padding = 16;
-        horizontal_padding = 20;
-        text_icon_padding = 16;
-        frame_width = 0;
-        separator_height = 4;
-        separator_color = "frame";
-        progress_bar = true;
-        progress_bar_height = 8;
-        progress_bar_frame_width = 0;
-        progress_bar_min_width = 150;
-        progress_bar_max_width = 300;
-        progress_bar_corner_radius = 4;
-        transparency = 15;
-        idle_threshold = 120;
-        origin = "top-right";
-        offset = "24x48";
-        width = "(350, 500)";
-        height = "(0, 300)";
-        notification_limit = 5;
-      };
-      experimental = {
-        per_monitor_dpi = false;
-      };
-      urgency_low = {
-        background = "#${colors.base00}90";
-        foreground = "#${colors.base05}";
-        frame_color = "#${colors.base0D}";
-        timeout = 5;
-        highlight = "#${colors.base0D}";
-        default_icon = "dialog-information-symbolic";
-      };
-      urgency_normal = {
-        background = "#${colors.base00}90";
-        foreground = "#${colors.base05}";
-        frame_color = "#${colors.base0D}";
-        timeout = 8;
-        highlight = "#${colors.base0D}";
-        default_icon = "dialog-information-symbolic";
-      };
-      urgency_critical = {
-        background = "#${colors.base00}f0";
-        foreground = "#${colors.base08}";
-        frame_color = "#${colors.base08}";
-        timeout = 0;
-        highlight = "#${colors.base08}";
-        default_icon = "dialog-warning-symbolic";
-      };
-    };
-  };
+  # Dunst disabled — DankMaterialShell provides its own notification server
+  services.dunst.enable = lib.mkForce false;
 }

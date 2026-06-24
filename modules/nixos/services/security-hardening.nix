@@ -62,7 +62,7 @@ _: {
 
       # Defensive security tools only
       environment.systemPackages = with pkgs; [
-        polkit_gnome
+        # polkit_gnome removed — DankMaterialShell provides its own polkit agent
         gnome-keyring
 
         pamtester

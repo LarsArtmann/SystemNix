@@ -541,6 +541,14 @@
               sqlc
             ];
           };
+          # Quickshell development — hot-reload QML shell development
+          quickshell = pkgs.mkShell {
+            packages = [
+              inputs.dankMaterialShell.packages.${system}.default
+              pkgs.qt6.qtdeclarative
+              pkgs.qt6.qttools # provides qmlls (QML LSP)
+            ];
+          };
         };
 
         checks =
