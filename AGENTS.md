@@ -107,6 +107,7 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | dnsblockd + `ProtectSystem=strict` | SQLite needs a writable CWD. Set `WorkingDirectory = "/var/lib/dnsblockd"` alongside `StateDirectory` or SQLite CANTOPEN errors |
 | `mkFilesystem` helper | `lib/filesystems.nix` validates mount options at eval time. Use it instead of raw `fileSystems` attrsets to catch cross-fs contamination (e.g. `discard=async` on ext4) |
 | Pre-deploy validation | `nix run .#pre-deploy-check` catches boot-breaking issues before switch. Runs automatically as part of `nix run .#deploy` |
+| `nixpkgs-unstable` vs `nixos-unstable` | **Use `nixos-unstable` in flake inputs.** Hydra only caches expensive builds (ROCm, CUDA) on the `nixos-unstable` jobset — `nixpkgs-unstable` produces different hashes with no binary cache for these. `ollama-rocm` was a 30+ min local build on `nixpkgs-unstable` but substitutes instantly from `nixos-unstable` |
 
 ---
 
