@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-crm",
+  "name": "CRM Monitor",
+  "description": "Shows Twenty CRM connection status and recent activity",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "contact_mail",
+  "type": "widget",
+  "component": "./CrmWidget.qml",
+  "settings": "./CrmSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

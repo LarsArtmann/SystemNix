@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 echo "=== Pre-Deploy Validation ==="
-if bash "$SCRIPT_DIR/pre-deploy-check.sh"; then
+if nix run .#pre-deploy-check; then
   echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   nh os switch . 2>&1

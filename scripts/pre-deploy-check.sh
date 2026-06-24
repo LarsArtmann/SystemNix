@@ -9,15 +9,15 @@ WARN=0
 
 pass() {
   echo "  ✓ $1"
-  ((PASS++))
+  PASS=$((PASS + 1))
 }
 fail() {
   echo "  ✗ $1"
-  ((FAIL++))
+  FAIL=$((FAIL + 1))
 }
 warn() {
   echo "  ⚠ $1"
-  ((WARN++))
+  WARN=$((WARN + 1))
 }
 
 echo "=== Pre-Deploy Validation ==="

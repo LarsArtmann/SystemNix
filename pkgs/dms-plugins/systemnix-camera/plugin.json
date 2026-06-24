@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-camera",
+  "name": "Camera Monitor",
+  "description": "Shows eMeet Pixy camera daemon status and active stream state",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "camera",
+  "type": "widget",
+  "component": "./CameraWidget.qml",
+  "settings": "./CameraSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

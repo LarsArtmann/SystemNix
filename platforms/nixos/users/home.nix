@@ -20,7 +20,7 @@ in {
     ../../common/programs/yazi.nix # Terminal file manager with Catppuccin theme
     ../../common/programs/zed.nix # Zed editor — shared cross-platform config
     ../desktop/niri-wrapped.nix # Niri scrollable-tiling compositor via niri-flake HM module
-    ../desktop/waybar.nix # Status bar for niri (kept in parallel during Quickshell migration)
+    # waybar.nix retired — DankMaterialShell replaces it entirely
     ../desktop/quickshell.nix # Quickshell desktop shell via DankMaterialShell
   ];
 

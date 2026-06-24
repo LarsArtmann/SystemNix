@@ -118,11 +118,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1782281965,
-        "narHash": "sha256-Has4Cu28ey41sQ8eT31kcd77WJXw/4zwbWYiQErQqrA=",
+        "lastModified": 1782296363,
+        "narHash": "sha256-MAcHcBmbA3UDyS4UesxOhuQIQKcpFLJAW+K1fjcoZNs=",
         "ref": "master",
-        "rev": "4b5ea43932fc3c486c8ebed3da0d4996307ffc3e",
-        "revCount": 3891,
+        "rev": "1d4f5bf290b07e1fb071228707849c63abe32a5f",
+        "revCount": 3905,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -1729,16 +1729,16 @@
     "go-output_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1782235159,
-        "narHash": "sha256-XXEpybDo4y/O/kyZsXJi/7V36UrQDUEcljosJjqLTgA=",
-        "ref": "master",
-        "rev": "407b6c99a5af3f2a2dbeb70175681adf9a6bc764",
-        "revCount": 926,
+        "lastModified": 1782282831,
+        "narHash": "sha256-8HDeDfNGdF7xnJPoWAsKxaj+y5bG5kTy6qKUjz4fQoM=",
+        "ref": "refs/tags/v0.18.0",
+        "rev": "9d5d4ad5cb020f4df1471cca211f9c6405ddf9d0",
+        "revCount": 928,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       },
       "original": {
-        "ref": "master",
+        "ref": "refs/tags/v0.18.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       }

@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-sops",
+  "name": "Sops Secrets Monitor",
+  "description": "Monitors sops-encrypted secrets availability and decryption health",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "lock",
+  "type": "widget",
+  "component": "./SopsWidget.qml",
+  "settings": "./SopsSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

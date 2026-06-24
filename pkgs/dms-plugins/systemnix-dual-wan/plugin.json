@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-dual-wan",
+  "name": "Dual WAN Monitor",
+  "description": "Monitors two WAN interfaces and shows active links, failover state, and link quality",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "lan",
+  "type": "widget",
+  "component": "./DualWanWidget.qml",
+  "settings": "./DualWanSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

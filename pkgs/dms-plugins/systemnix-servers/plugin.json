@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-servers",
+  "name": "Server Resources",
+  "description": "Shows CPU load, memory usage, and disk utilization for the local server",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "server",
+  "type": "widget",
+  "component": "./ServersWidget.qml",
+  "settings": "./ServersSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}

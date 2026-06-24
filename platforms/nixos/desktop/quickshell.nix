@@ -7,6 +7,7 @@
   ...
 }: let
   cfg = config.programs.systemnix-quickshell;
+  inherit (import ../../../lib/default.nix lib) ports;
 in {
   imports = [
     dankMaterialShell.homeModules.niri
@@ -26,11 +27,82 @@ in {
   config = lib.mkIf cfg.enable {
     programs.dank-material-shell = {
       enable = true;
+      systemd.enable = true;
 
       enableSystemMonitoring = true;
       enableDynamicTheming = true;
       enableAudioWavelength = true;
       enableCalendarEvents = false;
+
+      # SystemNix DMS plugins — declaratively installed via DMS's plugin system.
+      # Each plugin's src points to its directory in pkgs/dms-plugins/.
+      # Port values are templated from lib/ports.nix — never hardcoded.
+      plugins = {
+        systemnix-ollama = {
+          src = ../../../pkgs/dms-plugins/systemnix-ollama;
+          settings = {
+            apiBase = "http://127.0.0.1:${toString ports.ollama}";
+            pollInterval = "5000";
+          };
+        };
+        systemnix-dns-stats = {
+          src = ../../../pkgs/dms-plugins/systemnix-dns-stats;
+          settings.statsUrl = "http://127.0.0.1:${toString ports.dns-blocker-stats}/stats";
+        };
+        systemnix-gpu-monitor = {
+          src = ../../../pkgs/dms-plugins/systemnix-gpu-monitor;
+          settings.cardPath = "/sys/class/drm/card0/device";
+        };
+        systemnix-task-radar = {
+          src = ../../../pkgs/dms-plugins/systemnix-task-radar;
+          settings.apiUrl = "http://127.0.0.1:${toString ports.taskchampion}";
+        };
+        systemnix-service-health = {
+          src = ../../../pkgs/dms-plugins/systemnix-service-health;
+          settings.gatusUrl = "http://127.0.0.1:${toString ports.gatus}/api/v1/endpoints/statuses";
+        };
+        systemnix-btrfs = {
+          src = ../../../pkgs/dms-plugins/systemnix-btrfs;
+          settings.timerName = "btrbk.timer";
+        };
+        systemnix-voice-agent = {
+          src = ../../../pkgs/dms-plugins/systemnix-voice-agent;
+          settings = {
+            whisperUrl = "http://127.0.0.1:${toString ports.whisper}";
+            livekitUrl = "http://127.0.0.1:${toString ports.livekit}";
+          };
+        };
+        systemnix-camera = {
+          src = ../../../pkgs/dms-plugins/systemnix-camera;
+          settings.daemonUrl = "http://127.0.0.1:${toString ports.emeet-pixyd}";
+        };
+        systemnix-servers = {
+          src = ../../../pkgs/dms-plugins/systemnix-servers;
+          settings.diskMount = "/";
+        };
+        systemnix-crm = {
+          src = ../../../pkgs/dms-plugins/systemnix-crm;
+          settings.crmUrl = "http://127.0.0.1:${toString ports.twenty}";
+        };
+        systemnix-dual-wan = {
+          src = ../../../pkgs/dms-plugins/systemnix-dual-wan;
+          settings = {
+            primaryIface = "enp2s0";
+            secondaryIface = "wlp1s0";
+          };
+        };
+        systemnix-npu = {
+          src = ../../../pkgs/dms-plugins/systemnix-npu;
+          settings.devfreqPath = "/sys/class/devfreq";
+        };
+        systemnix-sops = {
+          src = ../../../pkgs/dms-plugins/systemnix-sops;
+          settings = {
+            secretsDir = "/run/secrets";
+            sopsFile = "/run/secrets/sops-nix-age-key";
+          };
+        };
+      };
     };
 
     # DMS handles its own systemd service via the upstream HM module.

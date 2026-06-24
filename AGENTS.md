@@ -10,7 +10,7 @@ Cross-Platform Nix Configuration (macOS + NixOS) — `github:LarsArtmann/SystemN
 flake.nix              # Entry point (flake-parts), mkLarsPackages, ~55 inputs
 lib/                   # Helpers — import via lib/default.nix (single import point)
 modules/nixos/services/# flake-parts modules, auto-discovered by filename
-pkgs/                  # Custom packages (buildGoModule, quickshell-widgets/)
+pkgs/                  # Custom packages (buildGoModule, dms-plugins/)
 overlays/              # shared.nix (callPackage + activitywatch + d2 Darwin stub), linux.nix (flake-input overlays)
 platforms/common/      # Shared (~80%): home-base.nix, programs/, packages/, theme.nix, locale.nix
 platforms/darwin/      # macOS (nix-darwin) — user: larsartmann
@@ -55,7 +55,7 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 
 - **Input:** `dankMaterialShell` (github:AvengeMedia/DankMaterialShell/stable) — brings `quickshell` transitively, no separate quickshell input
 - **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`
-- **Custom widgets:** `pkgs/quickshell-widgets/` — SystemNix-native QML widgets (Ollama, DNS stats, GPU, Taskchampion, etc.)
+- **DMS plugins:** `pkgs/dms-plugins/` — 10 SystemNix-native widgets (Ollama, DNS stats, GPU, Task radar, Service health, Btrfs, Voice agent, Camera, Server resources, CRM) using `PluginComponent` + `plugin.json`
 - **DevShell:** `nix develop .#quickshell` for hot-reload QML development with `qmlls` LSP
 - **Parallel run:** Waybar kept alongside DMS during migration. Disabled in P2 when DMS is proven
 - **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)

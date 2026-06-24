@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-npu",
+  "name": "NPU Monitor",
+  "description": "Shows AMD Ryzen AI NPU utilization and frequency from sysfs devfreq",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "developer_board",
+  "type": "widget",
+  "component": "./NpuWidget.qml",
+  "settings": "./NpuSettings.qml",
+  "permissions": ["settings_read", "settings_write"]
+}
