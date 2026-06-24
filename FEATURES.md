@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-06-22 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-06-25 | **Scope:** Full codebase scan
 
 ---
 
@@ -184,16 +184,46 @@ _A brutally honest audit of every feature the project actually has._
 | Niri keybindings (80+) | ✅ | Rofi integrations (app, clipboard, emoji, calc, notifications), screenshots (grim+slurp+swappy), media keys, brightness (ddcutil), random wallpaper |
 | XWayland support | ✅ | xwayland-satellite installed |
 
-### Desktop Components
+### Desktop Shell (DankMaterialShell / Quickshell)
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| DankMaterialShell (DMS) | ✅ | v1.4.6 on Quickshell v0.2.1 — replaces Waybar, Dunst, Wlogout, Swaylock, polkit-gnome. Owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names |
+| DMS status bar (DankBar) | ✅ | System monitoring, media, clock, tray — replaces Waybar's 15+ modules |
+| DMS notifications | ✅ | Full notification daemon with popup history, replaces Dunst |
+| DMS lock screen | ✅ | `dms ipc lock lock` via Mod+Shift+Escape, swaylock-effects fallback |
+| DMS power menu | ✅ | Replaces wlogout — lock/hibernate/logout/shutdown/suspend/reboot |
+| DMS polkit agent | ✅ | Replaces polkit-gnome |
+| DMS OSD | ✅ | Volume/brightness/media overlay |
+| DMS clipboard manager | ✅ | Coexists with cliphist (Alt+C rofi integration) |
+| DMS wallpaper management | ✅ | Owns wallpapers natively. `dms-wallpaper-init` seeds from `~/.local/share/wallpapers/`. Mod+W = `dms ipc call wallpaper next`. Dynamic theming DISABLED (Catppuccin Mocha preserved) |
+| DMS calendar/events | ✅ | `enableCalendarEvents = false` (khal available, disabled) |
+| DMS audio wavelength | ✅ | cava-based visualizer (`enableAudioWavelength`) |
+
+### SystemNix DMS Plugins (13/13 verified loading)
+
+| Plugin | Service | Bar Pill |
+|--------|---------|----------|
+| systemnix-ollama | Ollama AI | Model + VRAM + temp |
+| systemnix-dns-stats | DNS Blocker | Queries/blocks |
+| systemnix-gpu-monitor | AMD GPU | Util % + temp |
+| systemnix-task-radar | Taskchampion | Pending/overdue |
+| systemnix-service-health | Gatus | Up/down dot |
+| systemnix-btrfs | btrbk timer | Days since snapshot + disk % |
+| systemnix-voice-agent | Whisper + LiveKit | Pulsing mic icon |
+| systemnix-camera | eMeet PixyD | Camera name/off |
+| systemnix-servers | CPU/RAM/Disk | Triple bar chart |
+| systemnix-crm | Twenty CRM | Latency ms |
+| systemnix-dual-wan | WAN failover | DUAL/PRI/SEC/DOWN (auto-detect interfaces) |
+| systemnix-npu | AMD NPU | MHz + load % |
+| systemnix-sops | Sops secrets | Secret count + key status |
+
+### Desktop Components (Remaining)
 
 | Component | Status | Notes |
 |-----------|--------|-------|
 | Rofi (app launcher) | ✅ | Grid layout (5×3), Catppuccin Mocha, Papirus icons, rounded corners, transparency |
 | Rofi plugins | ✅ | rofi-calc, rofi-emoji — calculator (Mod+Shift+C), emoji picker (Mod+.) |
-| Waybar (status bar) | ✅ | 15+ modules: workspaces, window, clock, media, camera, DNS stats, disk, weather, audio, network, CPU, memory, temp, clipboard, tray, power |
-| Swaylock (screen locker) | ✅ | swaylock-effects, Catppuccin Mocha colors, indicator radius 100px |
-| Wlogout (power menu) | ✅ | 6 actions (lock/hibernate/logout/shutdown/suspend/reboot), color-coded SVG icons |
-| Dunst (notifications) | ✅ | Catppuccin-colored, overlay layer, rofi as dmenu, progress bars, 5-notification limit |
 | Yazi (file manager) | ✅ | Catppuccin Mocha theme, file type associations, Ctrl-key keybindings, Zed integration, fd/rg search |
 | Zellij (terminal multiplexer) | ✅ | Catppuccin Mocha, tmux-compatible keybindings (Ctrl+A), 3 custom layouts (dev/monitoring/default) |
 | Kitty (terminal) | ✅ | Font size 16 (TV-friendly), 85% opacity, Catppuccin Mocha, Nix GC resilience patch |
@@ -201,7 +231,6 @@ _A brutally honest audit of every feature the project actually has._
 | Swayidle | ✅ | 12hr idle → suspend, lock before sleep |
 | SSH suspend guard | ✅ | Holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active — prevents suspend during remote work |
 | Cliphist (clipboard) | ✅ | Wayland clipboard history via wl-paste watcher, rofi integration (Alt+C) |
-| Awww (wallpaper daemon) | ✅ | Random wallpaper on startup (Mod+W), systemd user service |
 
 ### Hardware Support
 
@@ -211,7 +240,7 @@ _A brutally honest audit of every feature the project actually has._
 | AMD NPU (XDNA) | ✅ | XRT driver, Boost 1.87 fix, dev tools, unlimited memlock |
 | Realtek 2.5G Ethernet | ✅ | `r8125` extra module package (not in mainline kernel) |
 | MediaTek WiFi/BT | ✅ | `mt7925e` module |
-| EMEET PIXY webcam | ✅ | Full daemon: call detection, auto-tracking, noise cancellation, privacy mode, PipeWire source switch, Waybar indicator, hotplug recovery |
+| EMEET PIXY webcam | ✅ | Full daemon: call detection, auto-tracking, noise cancellation, privacy mode, PipeWire source switch, DMS camera plugin, hotplug recovery |
 | Bluetooth | ✅ | Power-on-boot, A2DP source/sink (Google Nest Audio), Blueman GUI |
 | DDC/CI brightness | ✅ | i2c-dev kernel module, ddcutil for external monitor brightness |
 | BTRFS root (`/`) | ✅ | zstd compression, noatime |
@@ -261,7 +290,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | systemd-oomd | ✅ | PSI-based OOM killer (replaces earlyoom). Tuned: 50%/20s pressure threshold, per-slice limits, `user-1000.slice` MemoryHigh=56G/MemoryMax=64G |
-| OOM protection | ✅ | sshd (-1000), journald (-500), waybar (-500), pipewire (-500) |
+| OOM protection | ✅ | sshd (-1000), journald (-500), dms/quickshell (-500), pipewire (-500) |
 | Systemd watchdog (sd_notify only) | ✅ | Caddy, Forgejo — correctly limited to Type=notify services |
 | Service failure notifications | ✅ | `notify-failure@` template — desktop + syslog fallback |
 | Service health check | ✅ | Every 15 min, critical services, desktop notification on failure |
@@ -439,7 +468,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | ADR-001 | Go Workspace Sub-Module Nix Pattern | `mkPreparedSource` pattern for private Go repos with replace directives |
 | ADR-002 | GPU Memory Headroom for Niri | Reserve GPU memory for compositor (`OLLAMA_GPU_OVERHEAD`) |
 | ADR-003 | BindsTo vs Wants for Niri | `BindsTo` kills niri on deploy — use `Wants=` instead |
-| ADR-004 | PartOf vs BindsTo for Wallpaper | `BindsTo` creates cycle with awww-daemon — use `graphical-session.target` |
+| ADR-004 | PartOf vs BindsTo for Wallpaper | Historical (awww retired). DMS owns wallpapers natively. Kept for reference |
 | ADR-005 | Discord Notification Channel for SigNoz | Dedicated Discord channel for critical alert routing |
 | ADR-005b | `_local_deps` Pattern for Private Go Repos | Local replace directives for private Go module builds |
 | ADR-006 | Gatus Secret Injection | Environment file pattern for Discord webhook URL |

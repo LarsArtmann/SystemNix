@@ -30,7 +30,7 @@ in {
       systemd.enable = true;
 
       enableSystemMonitoring = true;
-      enableDynamicTheming = true;
+      enableDynamicTheming = false; # Disabled: matugen overrides Catppuccin Mocha (our global theme)
       enableAudioWavelength = true;
       enableCalendarEvents = false;
 
@@ -63,7 +63,10 @@ in {
         };
         systemnix-btrfs = {
           src = ../../../pkgs/dms-plugins/systemnix-btrfs;
-          settings.timerName = "btrbk.timer";
+          settings = {
+            timerName = "btrbk.timer";
+            diskMount = "/";
+          };
         };
         systemnix-voice-agent = {
           src = ../../../pkgs/dms-plugins/systemnix-voice-agent;
@@ -86,10 +89,7 @@ in {
         };
         systemnix-dual-wan = {
           src = ../../../pkgs/dms-plugins/systemnix-dual-wan;
-          settings = {
-            primaryIface = "enp2s0";
-            secondaryIface = "wlp1s0";
-          };
+          settings = {};
         };
         systemnix-npu = {
           src = ../../../pkgs/dms-plugins/systemnix-npu;

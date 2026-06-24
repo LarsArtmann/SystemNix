@@ -8,8 +8,8 @@ import qs.Widgets
 PluginComponent {
     id: root
 
-    property string primaryIface: pluginData.primaryIface || "enp2s0"
-    property string secondaryIface: pluginData.secondaryIface || "wlp1s0"
+    property string primaryIface: pluginData.primaryIface || ""
+    property string secondaryIface: pluginData.secondaryIface || ""
     property bool primaryUp: false
     property bool secondaryUp: false
     readonly property bool dualActive: primaryUp && secondaryUp
@@ -20,15 +20,25 @@ PluginComponent {
     Process {
         id: linkProcess
         command: ["sh", "-c",
-            "ip -o link show 2>/dev/null | awk '{print $2, $9}' | while read iface state; do " +
-            "iface=$(echo $iface | tr -d ':'); " +
-            "if [ \"$iface\" = \"" + root.primaryIface + "\" ]; then " +
-            "  carrier=$(cat /sys/class/net/" + root.primaryIface + "/carrier 2>/dev/null || echo 0); " +
-            "  echo \"pri $carrier\"; " +
-            "elif [ \"$iface\" = \"" + root.secondaryIface + "\" ]; then " +
-            "  carrier=$(cat /sys/class/net/" + root.secondaryIface + "/carrier 2>/dev/null || echo 0); " +
-            "  echo \"sec $carrier\"; " +
-            "fi; done"]
+            "pri=\"" + root.primaryIface + "\"; sec=\"" + root.secondaryIface + "\"; " +
+            "# Auto-detect if configured interfaces don't exist " +
+            "if [ ! -d \"/sys/class/net/$pri\" ]; then " +
+            "  pri=$(ls /sys/class/net 2>/dev/null | grep -vE '^(lo|docker|br-|veth|virbr|tailscale)' | while read i; do " +
+            "    if [ -d \"/sys/class/net/$i/wireless\" ]; then continue; fi; " +
+            "    if [ -f \"/sys/class/net/$i/carrier\" ]; then echo \"$i\"; break; fi; " +
+            "  done); " +
+            "fi; " +
+            "if [ ! -d \"/sys/class/net/$sec\" ]; then " +
+            "  sec=$(ls /sys/class/net 2>/dev/null | while read i; do " +
+            "    if [ -d \"/sys/class/net/$i/wireless\" ]; then echo \"$i\"; break; fi; " +
+            "  done); " +
+            "fi; " +
+            "for iface in \"$pri\" \"$sec\"; do " +
+            "  if [ -z \"$iface\" ]; then continue; fi; " +
+            "  carrier=$(cat /sys/class/net/$iface/carrier 2>/dev/null || echo 0); " +
+            "  if [ \"$iface\" = \"$pri\" ]; then echo \"pri $carrier\"; " +
+            "  else echo \"sec $carrier\"; fi; " +
+            "done"]
         running: true
 
         stdout: StdioCollector {

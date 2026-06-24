@@ -10,7 +10,15 @@ For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current 
 
 The system has been hardened through multiple OOM/crash cycles. Remaining work:
 
-- **Automated BTRFS `/data` subvolume migration** — `/data` is BTRFS toplevel (subvolid=5), cannot be snapshotted. Needs subvolume creation + fstab update + data migration. Currently manual.
+- **Automated BTRFS `/data` subvolume migration** — `/data` is BTRFS toplevel (subvolid=5), cannot be snapshotted. Migration plan:
+  1. Boot from USB rescue (cannot modify mounted `/data`)
+  2. `btrfs subvolume create /data/@data` (under the toplevel)
+  3. `rsync -aHAX --info=progress2 /data/ /data/@data/` (excluding `@data` itself)
+  4. Update fstab: add `subvol=@data` to the `/data` mount entry
+  5. Reboot, verify `/data` mounts the new subvolume
+  6. Add `@data` to btrbk config for snapshot protection
+  7. Clean up old toplevel data (after verifying snapshots work)
+  Requires ~1h downtime window. Docker containers on `/data/docker` will be stopped.
 - **Cloud backup** — no off-site backup exists. Evaluate BorgBackup to Hetzner StorageBox (see `docs/research/hetzner-storagebox-borgbackup.md`). Critical for disaster recovery.
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP). Module and config ready, hardware not purchased.
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed upstream.
@@ -30,9 +38,13 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
 
 ## Theme 3: Desktop Experience
 
-- **QuickShell exploration** — evaluate as potential Niri companion/replacement for custom desktop shell (see `docs/brainstorming/quickshell-nixos-vision.html`). Provides declarative panels, widgets, notifications.
+- **QuickShell / DankMaterialShell** — DONE (v1.4.6 deployed). 13 SystemNix plugins verified. Remaining follow-ups: auto-detect WAN/NPU interfaces (done), declarative Catppuccin accent service, DMS launcher evaluation
 - **Darwin Home Manager parity** — macOS HM config is minimal (no terminal, editor, theme parity). Blocked by 256GB disk constraint.
-- **Disabled service triage** — voice-agents, minecraft, photomap: decide enable or remove. Each adds maintenance burden without clear use.
+- **Disabled service triage** (decided 2026-06-25):
+  - **voice-agents**: KEEP disabled — LiveKit + Whisper needs GPU resource planning, not ready for daily use
+  - **minecraft**: KEEP server disabled, client settings (Prism Launcher) stay enabled — server is seasonal
+  - **photomap**: REMOVE — podman config permission issue, niche feature, maintenance burden without clear use
+  - **DiscordSync**: Already disabled — needs migration from deleted projection/v2 to watermill.CatchUpSubscriber
 
 ---
 

@@ -606,6 +606,31 @@
               mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats)"
               [pkgs.systemd pkgs.dnsutils pkgs.curl]
               ./scripts/dns-diagnostics.sh;
+            dms-restart = {
+              type = "app";
+              program = "${pkgs.writeShellApplication {
+                name = "dms-restart";
+                runtimeInputs = [pkgs.systemd];
+                text = "systemctl --user restart dms.service && echo 'DMS restarted'";
+              }}/bin/dms-restart";
+              meta.description = "Restart DankMaterialShell desktop shell";
+            };
+            dms-locks = {
+              type = "app";
+              program = "${pkgs.writeShellApplication {
+                name = "dms-locks";
+                text = "dms ipc lock lock 2>/dev/null || exec swaylock";
+              }}/bin/dms-locks";
+              meta.description = "Lock screen via DMS IPC (fallback: swaylock)";
+            };
+            dms-wallpaper-next = {
+              type = "app";
+              program = "${pkgs.writeShellApplication {
+                name = "dms-wallpaper-next";
+                text = "dms ipc call wallpaper next";
+              }}/bin/dms-wallpaper-next";
+              meta.description = "Cycle to next wallpaper via DMS IPC";
+            };
           };
       };
 

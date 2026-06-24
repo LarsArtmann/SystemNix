@@ -1,0 +1,12 @@
+{
+  "id": "systemnix-template",
+  "name": "Template Plugin",
+  "description": "Skeleton plugin for creating new SystemNix DMS widgets — copy and rename",
+  "version": "1.0.0",
+  "author": "SystemNix",
+  "icon": "code",
+  "type": "widget",
+  "component": "./TemplateWidget.qml",
+  "settings": "./TemplateSettings.qml",
+  "permissions": ["settings_read"]
+}

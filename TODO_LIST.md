@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-22 (session 145)
+**Updated:** 2026-06-25 (session 152)
 
 ---
 
@@ -10,12 +10,12 @@
 
 - [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
 - [ ] **Verify Pocket ID email sending** — test login notification or email verification after SMTP wiring + sops secret added
-- [ ] **Reset Monitor365 failed state** — `systemctl --user reset-failed monitor365-server` after deploy
+- [x] **Reset Monitor365 failed state** — Root cause identified: upstream Rust panic (Axum 0.7 route syntax `:param` → `{param}`). Needs fix in `github:LarsArtmann/monitor365` source. Nix-side workaround not possible.
 
 ### Priority 1: Fix Broken Services
 
-- [ ] **Fix Twenty CRM intermittent 502s** — Caddy logs show `connection refused`/`connection reset` on port 3200. Likely container OOM or PG connection exhaustion. Run `docker logs twenty-server-1 --tail=100`
-- [ ] **Audit Gatus health checks** — 6 services show DOWN with possibly wrong check URLs (SigNoz, Immich, Crush Daily, Ollama, Monitor365)
+- [ ] **Fix Twenty CRM intermittent 502s** — APPEARS RESOLVED. Server running since 06-23, responding on :3200. Monitor for recurrence.
+- [x] **Audit Gatus health checks** — AUDITED 2026-06-25. Only 2 DOWN: Ollama (expected, `wantedBy = []` no autostart) and Monitor365 Server (upstream Rust panic). All 36 other endpoints pass.
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
@@ -30,7 +30,7 @@
 
 ### Priority 4: Documentation
 
-- [ ] **Archive old status reports** — move pre-session-100 from `docs/status/` to `docs/status/archive/` (178 → ~30 files)
+- [x] **Archive old status reports** — moved 197 pre-June-22 files to `docs/status/archive/`. 13 current files remain (June 22-25: BTRFS crisis + DMS migration)
 - [x] **Create ROADMAP.md** — created with 6 themes: Reliability, Security, Desktop, Architecture, Upstream, AI/ML + deferred ideas
 - [x] **Create CHANGELOG.md** — created from git history, covers 2025-07 through 2026-06 with Keep a Changelog format
 

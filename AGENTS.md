@@ -57,7 +57,7 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`, enables `systemd.enable = true` (defaults to false!)
 - **DMS plugins:** `pkgs/dms-plugins/` — 13 SystemNix-native widgets declaratively installed via DMS's `plugins` option with port-templated settings from `lib/ports.nix`. Each uses `PluginComponent` + `plugin.json`
 - **DevShell:** `nix develop .#quickshell` for hot-reload QML development with `qmlls` LSP
-- **Wallpaper management:** DMS owns wallpapers natively. awww is RETIRED. `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` (installed from `wallpapers-src` flake input) on first launch. DMS derives cycling directory from current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next`. Dynamic theming (`enableDynamicTheming = true`) uses matugen to derive Material You colors from the current wallpaper
+- **Wallpaper management:** DMS owns wallpapers natively. awww is RETIRED. `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` (installed from `wallpapers-src` flake input) on first launch. DMS derives cycling directory from current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next`. Dynamic theming (`enableDynamicTheming = false`) is DISABLED — matugen overrides Catppuccin Mocha (our global theme). Re-enable if committing to Material You dynamic colors
 - **Waybar RETIRED:** Completely removed (import, package, service, scripts). DMS is the sole shell
 - **Runtime verified:** DMS owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names
 - **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)
@@ -99,7 +99,7 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `lib.mkMerge` + flake-parts | Does not work — use inline config or imports |
 | d2 Darwin overlay | Re-instantiates d2 with stubs; removing it breaks Darwin eval |
 | Niri `BindsTo` → `Wants=` | `BindsTo` kills niri on deploy |
-| DMS owns wallpaper management | awww is RETIRED. DMS manages wallpapers natively (`dms ipc call wallpaper set/next/prev`). `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` on first launch. DMS derives cycling directory from the current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next` |
+| DMS owns wallpaper management | awww is RETIRED. DMS manages wallpapers natively (`dms ipc call wallpaper set/next/prev`). `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` on first launch. DMS derives cycling directory from the current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next`. `enableDynamicTheming = false` — matugen conflicts with Catppuccin Mocha |
 | Unbound `do-ip6 = false` | evo-x2 has no global IPv6 — any new unbound instance needs this |
 | otel-tui on Darwin | Never add — 40+ min builds + disk exhaustion |
 | Darwin HM user | `users.users.larsartmann.home` required in `platforms/darwin/default.nix` |
@@ -135,6 +135,10 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | Stale polkit-gnome after deploy | polkit-gnome process lingers from previous generation after removing it from packages. Self-resolves on reboot. DMS polkit agent warns "already exists" until then |
 | DMS `plugin_settings.json` read-only | HM symlinks this to Nix store — user can't change plugin settings via DMS UI. Settings are declarative from `programs.dank-material-shell.plugins.<name>.settings` |
 | cliphist + DMS clipboard coexistence | Both cliphist (wl-paste --watch) and DMS clipboard manager watch the Wayland clipboard. Intentional: cliphist provides rofi integration (Alt+C), DMS provides GUI history |
+| DMS `settings.json` vs `plugin_settings.json` | **Split-brain:** `settings.json` is user-owned/mutable (bar layout, theme, lock config). `plugin_settings.json` is Nix-managed/read-only symlink (plugin URLs, ports). DMS UI changes to plugin settings silently disappear on rebuild. Document this tradeoff |
+| `find -L` for Nix store symlinks | `find` does NOT follow starting-point symlinks by default. Wallpaper directories installed via HM symlinks need `find -L "$dir"` or trailing slash. Without `-L`, find silently returns nothing |
+| `serviceDefaultsUser` + `Type=oneshot` | `serviceDefaultsUser` sets `Restart=always` which is INVALID for oneshot services. systemd refuses to start. Use only `hardenUser {}` for oneshots, omit `serviceDefaultsUser` |
+| `%h` vs `$HOME` in ExecStart | systemd user services may NOT expand `$HOME` in ExecStart (especially hardened services). Use `%h` (systemd specifier) instead, which always resolves to the user's home directory |
 
 ---
 

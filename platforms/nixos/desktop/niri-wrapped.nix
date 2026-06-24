@@ -9,7 +9,7 @@
 }: let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
-  wallpaperDir = "$HOME/.local/share/wallpapers";
+  wallpaperDir = "%h/.local/share/wallpapers";
   spring = {
     damping-ratio = 0.8;
     stiffness = 1000;
@@ -60,7 +60,7 @@
 
   dms-wallpaper-init = pkgs.writeShellApplication {
     name = "dms-wallpaper-init";
-    runtimeInputs = [dmsPkg pkgs.coreutils];
+    runtimeInputs = [dmsPkg pkgs.coreutils pkgs.findutils];
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
@@ -76,7 +76,7 @@
         exit 0
       fi
 
-      img=$(find "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
+      img=$(find -L "$wallpaper_dir" -maxdepth 1 -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | shuf -n1)
       if [ -z "$img" ]; then
         echo "No wallpaper images found in $wallpaper_dir" >&2
         exit 1
@@ -475,7 +475,6 @@ in {
         };
         Service =
           sd.hardenUser {}
-          // sd.serviceDefaultsUser {}
           // {
             Type = "oneshot";
             RemainAfterExit = true;

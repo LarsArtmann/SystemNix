@@ -159,7 +159,7 @@ in {
     };
 
     user.services = {
-      "waybar".serviceConfig.OOMScoreAdjust = -500;
+      "dms".serviceConfig.OOMScoreAdjust = -500;
       "pipewire".serviceConfig.OOMScoreAdjust = -500;
     };
 

@@ -12,6 +12,8 @@ PluginComponent {
     property int totalBlocked: 0
     property int blockedToday: 0
     property bool online: false
+    property var blockHistory: []
+    readonly property int maxHistory: 12
 
     function formatCount(n) {
         if (n >= 1000000) return (n / 1000000).toFixed(1) + "M";
@@ -33,6 +35,10 @@ PluginComponent {
                     root.totalBlocked = data.totalBlocked || 0;
                     root.blockedToday = data.blockedToday || data.totalBlocked || 0;
                     root.online = true;
+                    var h = root.blockHistory;
+                    h.push(root.blockedToday);
+                    if (h.length > root.maxHistory) h.shift();
+                    root.blockHistory = h.slice();
                 } catch (e) {
                     root.online = false;
                 }
@@ -47,6 +53,14 @@ PluginComponent {
         onTriggered: dnsProcess.running = true
     }
 
+    readonly property int sparkMax: {
+        var m = 0;
+        for (var i = 0; i < blockHistory.length; i++) {
+            if (blockHistory[i] > m) m = blockHistory[i];
+        }
+        return m > 0 ? m : 1;
+    }
+
     horizontalBarPill: Component {
         Row {
             spacing: Theme.spacingS
@@ -59,6 +73,21 @@ PluginComponent {
                 text: root.displayText
                 color: Theme.surfaceText
                 font.pixelSize: Theme.fontSizeSmall
+            }
+            Row {
+                visible: root.blockHistory.length > 2
+                spacing: 1
+                anchors.verticalCenter: parent.verticalCenter
+                Repeater {
+                    model: root.blockHistory
+                    Rectangle {
+                        width: 2
+                        height: Math.max(1, (modelData / root.sparkMax) * 12)
+                        color: Theme.primary
+                        opacity: 0.4 + (modelData / root.sparkMax) * 0.6
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
             }
         }
     }

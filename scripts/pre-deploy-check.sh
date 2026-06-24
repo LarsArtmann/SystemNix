@@ -95,6 +95,19 @@ if command -v systemctl &>/dev/null; then
   fi
 fi
 
+# 7. DMS desktop shell health
+echo ""
+echo "7. DMS desktop shell health"
+if command -v dms &>/dev/null; then
+  if dms doctor &>/dev/null; then
+    pass "dms doctor passed"
+  else
+    warn "dms doctor reported issues — run 'dms doctor' for details"
+  fi
+else
+  pass "dms binary not in PATH (may not be deployed yet)"
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

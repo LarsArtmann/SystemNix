@@ -112,11 +112,11 @@ if is_linux; then
     info "  Check: systemctl --user status graphical-session.target"
   fi
 
-  # Waybar — the most visible service
-  if systemctl --user is-active waybar >/dev/null 2>&1; then
-    ok "waybar running"
+  # DMS (DankMaterialShell) — the desktop shell
+  if systemctl --user is-active dms.service >/dev/null 2>&1; then
+    ok "dms.service running"
   else
-    fail "waybar NOT running — system bar is down"
+    fail "dms.service NOT running — desktop shell is down"
   fi
 
   # Systemd failed units

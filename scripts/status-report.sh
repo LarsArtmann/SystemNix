@@ -90,7 +90,7 @@ if [[ "$(uname)" == "Linux" ]]; then
   echo "| Service | Status |" >>"$REPORT_FILE"
   echo "|---------|--------|" >>"$REPORT_FILE"
 
-  for svc in waybar emeet-pixyd; do
+  for svc in dms.service emeet-pixyd; do
     status=$(systemctl --user is-active "$svc" 2>/dev/null || echo "unknown")
     if [ "$status" = "active" ]; then
       echo "| $svc | ✅ $status |" >>"$REPORT_FILE"
