@@ -48,34 +48,33 @@ PluginComponent {
         onTriggered: loadProcess.running = true
     }
 
-    function bar(width, height, percent, color) {
-        return { width: width, height: height, percent: percent, color: color };
-    }
-
     horizontalBarPill: Component {
         Row {
             spacing: Theme.spacingS
             DankIcon { name: "server"; size: root.iconSize; color: root.loadColor }
-            Repeater {
-                model: [
-                    root.bar(20, 10, root.cpuPercent, Theme.primary),
-                    root.bar(20, 10, root.ramPercent, Theme.warning),
-                    root.bar(20, 10, root.diskPercent, Theme.outline)
-                ]
-                delegate: Rectangle {
-                    width: modelData.width
-                    height: modelData.height
-                    radius: 2
-                    color: Qt.rgba(0.2, 0.2, 0.2, 0.4)
-                    anchors.verticalCenter: parent.verticalCenter
-                    Rectangle {
-                        width: parent.width * (modelData.percent / 100)
-                        height: parent.height
-                        radius: 2
-                        color: modelData.color
-                    }
-                }
+
+            // CPU bar
+            Rectangle {
+                width: 20; height: 10; radius: 2
+                color: Qt.rgba(0.2, 0.2, 0.2, 0.4)
+                anchors.verticalCenter: parent.verticalCenter
+                Rectangle { width: parent.width * (root.cpuPercent / 100); height: parent.height; radius: 2; color: Theme.primary }
             }
+            // RAM bar
+            Rectangle {
+                width: 20; height: 10; radius: 2
+                color: Qt.rgba(0.2, 0.2, 0.2, 0.4)
+                anchors.verticalCenter: parent.verticalCenter
+                Rectangle { width: parent.width * (root.ramPercent / 100); height: parent.height; radius: 2; color: Theme.warning }
+            }
+            // Disk bar
+            Rectangle {
+                width: 20; height: 10; radius: 2
+                color: Qt.rgba(0.2, 0.2, 0.2, 0.4)
+                anchors.verticalCenter: parent.verticalCenter
+                Rectangle { width: parent.width * (root.diskPercent / 100); height: parent.height; radius: 2; color: Theme.outline }
+            }
+
             StyledText {
                 text: root.summary
                 color: Theme.surfaceText
