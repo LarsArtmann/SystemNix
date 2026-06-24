@@ -31,10 +31,6 @@ PluginComponent {
                 }
             }
         }
-        onFailed: {
-            root.daemonUp = false;
-            root.cameraName = "---";
-        }
     }
 
     Timer {
