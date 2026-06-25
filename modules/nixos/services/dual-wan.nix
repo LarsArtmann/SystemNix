@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.dual-wan;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceOneshotDefaults onFailure;
 
     inherit (config.networking.local) lanIP gateway;
 
@@ -153,7 +153,7 @@ _: {
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
               }
-              // serviceDefaults {Restart = "no";};
+              // serviceOneshotDefaults {};
           };
 
           route-health-monitor = {

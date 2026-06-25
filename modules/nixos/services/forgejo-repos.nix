@@ -8,7 +8,7 @@ _: {
   }: let
     cfg = config.services.forgejo-repos;
     inherit (config.users) primaryUser;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure;
+    inherit (import ../../../lib/default.nix lib) harden serviceOneshotDefaults onFailure;
     forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
     forgejoUrl = "http://localhost:${toString forgejoPort}";
 
@@ -284,7 +284,7 @@ _: {
               ExecStartPre = lib.getExe waitForForgejo;
               ExecStart = lib.getExe ensureReposScript;
             }
-            // serviceDefaults {Restart = "on-failure";}
+            // serviceOneshotDefaults {Restart = "on-failure";}
             // harden {
               ProtectSystem = "strict";
               MemoryMax = "512M";
