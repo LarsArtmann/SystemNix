@@ -108,6 +108,26 @@ else
   pass "dms binary not in PATH (may not be deployed yet)"
 fi
 
+# 8. Disk space on root filesystem
+echo ""
+echo "8. Disk space"
+ROOT_PCT=$(df -P / 2>/dev/null | awk 'NR==2{gsub(/%/,""); print $5}' || echo "0")
+BUILDS_DIR="/nix/var/nix/builds"
+STALE_BUILDS=0
+if [ -d "$BUILDS_DIR" ]; then
+  STALE_BUILDS=$(find "$BUILDS_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 2>/dev/null | wc -l)
+fi
+if [ "$ROOT_PCT" -ge 95 ]; then
+  fail "Root filesystem at ${ROOT_PCT}% — deploying risks emergency shell. Free space before deploying"
+elif [ "$ROOT_PCT" -ge 85 ]; then
+  warn "Root filesystem at ${ROOT_PCT}% — consider freeing space before deploying"
+else
+  pass "Root filesystem at ${ROOT_PCT}% usage"
+fi
+if [ "$STALE_BUILDS" -gt 0 ]; then
+  warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'nix-build-cleanup' or clean manually"
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
