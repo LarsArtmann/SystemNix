@@ -82,11 +82,12 @@ in {
       };
 
       nix-build-cleanup = {
-        description = "Daily cleanup of orphaned Nix build sandboxes in /nix/var/nix/builds";
+        description = "Cleanup of orphaned Nix build sandboxes in /nix/var/nix/builds";
         timerConfig = {
-          OnCalendar = "daily";
+          OnBootSec = "5min";
+          OnUnitActiveSec = "4h";
           Persistent = true;
-          RandomizedDelaySec = "30m";
+          RandomizedDelaySec = "5m";
         };
         wantedBy = ["timers.target"];
       };
