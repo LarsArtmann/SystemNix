@@ -39,7 +39,6 @@ _: {
         API_KEY_FILE="${config.sops.secrets.pocket_id_static_api_key.path}"
         API_KEY="$(cat "$API_KEY_FILE")"
         CLIENT_SECRETS_DIR="${clientSecretsDir}"
-        MIGRATION_MARKER="${dataDir}/.provision-migrated"
 
         mkdir -p "$CLIENT_SECRETS_DIR"
         chown pocket-id:pocket-id "$CLIENT_SECRETS_DIR"
@@ -69,30 +68,13 @@ _: {
             -d "$body" "$API_URL$path" 2>&1 || true
         }
 
-        # ── Migration: copy old sops secrets on first run ──
-        if [ ! -f "$MIGRATION_MARKER" ]; then
-          echo "First run: migrating existing sops secrets..."
-          ${lib.optionalString (config.sops.secrets ? oauth2_proxy_client_secret) ''
-          OLD_SECRET="${config.sops.secrets.oauth2_proxy_client_secret.path}"
-          if [ -f "$OLD_SECRET" ]; then
-            cp "$OLD_SECRET" "$CLIENT_SECRETS_DIR/oauth2-proxy"
-            chown pocket-id:pocket-id "$CLIENT_SECRETS_DIR/oauth2-proxy"
-            chmod 640 "$CLIENT_SECRETS_DIR/oauth2-proxy"
-            echo "  Migrated oauth2-proxy secret."
-          fi
-        ''}
-          ${lib.optionalString (config.sops.secrets ? immich_oauth_client_secret) ''
-          OLD_SECRET="${config.sops.secrets.immich_oauth_client_secret.path}"
-          if [ -f "$OLD_SECRET" ]; then
-            cp "$OLD_SECRET" "$CLIENT_SECRETS_DIR/immich"
-            chown pocket-id:pocket-id "$CLIENT_SECRETS_DIR/immich"
-            chmod 640 "$CLIENT_SECRETS_DIR/immich"
-            echo "  Migrated immich secret."
-          fi
-        ''}
-          touch "$MIGRATION_MARKER"
-          chown pocket-id:pocket-id "$MIGRATION_MARKER"
-        fi
+        # NOTE: POST /api/oidc/clients/{id}/secret ALWAYS generates a NEW secret
+        # (rotating the old one). POST /api/oidc/clients does NOT auto-generate one.
+        # The skip-if-exists check below prevents secret rotation on every provision run.
+        # To force regeneration: rm the file, then `systemctl RESTART pocket-id-provision`
+        # (NOT `start` — RemainAfterExit=true makes `start` a no-op on active service).
+        # The secret file is load-bearing for services using systemd LoadCredential
+        # (e.g. immich-server) — deleting it while the consumer runs causes crash-loops.
 
         # ── Step 1: Admin User ──
         ADMIN_USERNAME="${cfg.provision.adminUser.username}"
@@ -245,7 +227,7 @@ _: {
             # Upload logo if configured
             upload_logo "$CLIENT_ID" "${logoPath}"
 
-            # Generate/get client secret
+            # Generate client secret (POST /secret rotates — only when file missing)
             SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
             if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
               echo "  Secret file already exists."
