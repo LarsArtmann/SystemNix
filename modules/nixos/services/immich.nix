@@ -35,13 +35,14 @@ _: {
             accel = "vaapi";
             accelDecode = true;
           };
+          passwordLogin.enabled = false;
           oauth = {
             enabled = true;
             issuerUrl = "https://auth.${config.networking.domain}";
             clientId = "immich";
             clientSecret._secret = clientSecretPath;
             scope = "openid profile email";
-            autoLaunch = false;
+            autoLaunch = true;
             autoRegister = true;
             buttonText = "Login with Pocket ID";
           };
