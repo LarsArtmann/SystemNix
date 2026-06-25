@@ -375,11 +375,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782298634,
-        "narHash": "sha256-bpjKLk2Qn0ZSvdv4G4IE5zLxw/tiigFDwWOs0kUl7NY=",
+        "lastModified": 1782410581,
+        "narHash": "sha256-42i+p+YSXRz+3PmONKmZyBvCkcaVZmYFFz9LvdgPHRA=",
         "ref": "master",
-        "rev": "985b7d26438b7c001560cea90c79b08a856d79ec",
-        "revCount": 348,
+        "rev": "354a2f485bbc4342ce5ea8611100ab4337e84c84",
+        "revCount": 368,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -1983,11 +1983,11 @@
     "gogenfilter_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1782135217,
-        "narHash": "sha256-O33oLULol8lWIhN39iqZMVLqWRLRGY5BNAso/SlST/o=",
+        "lastModified": 1782408670,
+        "narHash": "sha256-MdiaBlKoiBGF9tV3xfnbkAtx157tVNyoK8sKNYNYN/4=",
         "ref": "master",
-        "rev": "3d10a98f049101ad97bc9a5c50ebbdd876393802",
-        "revCount": 686,
+        "rev": "42f401c9affb496c81fe8ff7fc0a2a8aae80b89b",
+        "revCount": 688,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       },
@@ -2208,11 +2208,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1782404634,
-        "narHash": "sha256-ltPgpQLUPa/eFWLz6lemEIjqY0JRc1Rbz3y/HrJkf1k=",
+        "lastModified": 1782410630,
+        "narHash": "sha256-1XvsWG/gRMiRbfDvAeZHHiD5d9qLANUp+algWC2qg78=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "960468420c5cfdfda8df9d3b3dc3f9bcf5a2d3b6",
+        "rev": "377e79c1bfe215712cc1881a01f2fff4dcb2b9a0",
         "type": "github"
       },
       "original": {
@@ -2287,11 +2287,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782158827,
-        "narHash": "sha256-6UH8ijm87oavI8m4A4+OD7gVBihdBORWN750O/NjC94=",
+        "lastModified": 1782408708,
+        "narHash": "sha256-Sd5SJ4hqIBWxJegAIOPdbxs30eEVfVGHIVVuaRUxUoo=",
         "ref": "master",
-        "rev": "2646abe0c26031fc2ac5132007d027b9f09c82e5",
-        "revCount": 224,
+        "rev": "a65f61211be891eab5fa3ce18e9471ecd052061f",
+        "revCount": 227,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/md-go-validator"
       },
@@ -2646,11 +2646,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782399448,
-        "narHash": "sha256-JQSZusLEKbT/1zJKnzt4ECUe5bXmdypbCpVOABEw2ek=",
+        "lastModified": 1782411905,
+        "narHash": "sha256-QJqVV4Nrqqsps+iylhYxZO/V6BoGw8XUMoNNGVLO5iA=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "547ed67951c989f091306705f63e6fb3a4a58dbc",
+        "rev": "68a68581b5dc57f0d3ae2007fa12082978166083",
         "type": "github"
       },
       "original": {
