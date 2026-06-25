@@ -139,6 +139,7 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `find -L` for Nix store symlinks | `find` does NOT follow starting-point symlinks by default. Wallpaper directories installed via HM symlinks need `find -L "$dir"` or trailing slash. Without `-L`, find silently returns nothing |
 | `serviceDefaultsUser` + `Type=oneshot` | `serviceDefaultsUser` sets `Restart=always` which is INVALID for oneshot services. systemd refuses to start. Use only `hardenUser {}` for oneshots, omit `serviceDefaultsUser` |
 | `%h` vs `$HOME` in ExecStart | systemd user services may NOT expand `$HOME` in ExecStart (especially hardened services). Use `%h` (systemd specifier) instead, which always resolves to the user's home directory |
+| PocketID client-secret file desync | `pocket-id-provision` seeds `client-secrets/<id>` from the OLD sops secret during migration, then SKIPS regeneration whenever the file exists (`if [ -f ] && [ -s ]`). PocketID's DB holds its OWN secret (generated at client creation), so the file can be permanently stale → downstream apps get `401 invalid client secret` at `/api/oidc/token`. Symptom: PocketID logs all-green (auth + code issuance succeed) but Immich/oauth2-proxy fail at token exchange. Recovery: `sudo rm /var/lib/pocket-id/client-secrets/<id> && sudo systemctl start pocket-id-provision && sudo systemctl restart immich-server`. There is no way to detect desync from the provision side (DB secret is hashed) — if PocketID's DB is ever reset, you MUST delete the client-secrets files so they regenerate |
 
 ---
 

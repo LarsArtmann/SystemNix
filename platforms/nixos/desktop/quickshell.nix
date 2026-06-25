@@ -108,5 +108,11 @@ in {
     # DMS handles its own systemd service via the upstream HM module.
     # The upstream module binds to config.wayland.systemd.target which
     # niri-flake sets to niri.service — so the shell starts with niri.
+    systemd.user.services.dms.Service.Environment = [
+      # matugen package is removed (enableDynamicTheming = false), but DMS still
+      # probes `which matugen` and logs warnings. This env var makes DMS skip the
+      # probe entirely (Theme.qml:143). Catppuccin Mocha is our global theme.
+      "DMS_DISABLE_MATUGEN=1"
+    ];
   };
 }
