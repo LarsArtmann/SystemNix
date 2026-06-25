@@ -1,10 +1,10 @@
 lib: let
   harden = import ./systemd.nix {inherit lib;};
-  inherit (import ./systemd/service-defaults.nix lib) serviceDefaults serviceDefaultsUser onFailure;
+  inherit (import ./systemd/service-defaults.nix lib) serviceDefaults serviceDefaultsUser serviceOneshotDefaults serviceOneshotDefaultsUser onFailure;
 in {
   inherit harden;
   hardenUser = args: harden (args // {mode = "user";});
-  inherit serviceDefaults serviceDefaultsUser onFailure;
+  inherit serviceDefaults serviceDefaultsUser serviceOneshotDefaults serviceOneshotDefaultsUser onFailure;
   serviceTypes = import ./types.nix lib;
   mkDockerServiceFactory = {pkgs}: import ./docker.nix {inherit pkgs lib harden serviceDefaults onFailure;};
 

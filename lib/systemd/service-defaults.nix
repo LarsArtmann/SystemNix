@@ -9,6 +9,11 @@
 # For Home Manager user services (where mkForce is invalid), use serviceDefaultsUser:
 #   serviceDefaultsUser {} // { RestartSec = "10s"; }
 #
+# For Type=oneshot services, use serviceOneshotDefaults instead of serviceDefaults.
+# serviceDefaults defaults to Restart=always which CRASHES oneshot services:
+#   BAD:  harden {} // serviceDefaults {} // {Type = "oneshot";}  ← systemd refuses to start
+#   GOOD: harden {} // serviceOneshotDefaults {} // {Type = "oneshot";}
+#
 # WatchdogSec is NOT included by default — it requires sd_notify() support
 # in the service binary. Verify the service sends periodic WATCHDOG=1 (not just READY=1)
 # before adding WatchdogSec.
@@ -21,8 +26,8 @@
 #     serviceConfig = harden {} // serviceDefaults {};
 #   };
 lib: let
-  mkDefaults = useMkForce: {
-    Restart ? "always",
+  mkDefaults = useMkForce: defaultRestart: {
+    Restart ? defaultRestart,
     RestartSec ? "5s",
   }: {
     Restart =
@@ -36,10 +41,16 @@ lib: let
   };
 in {
   # System services (valid with mkForce)
-  serviceDefaults = mkDefaults true;
+  serviceDefaults = mkDefaults true "always";
 
   # Home Manager user services (no mkForce — HM doesn't support it)
-  serviceDefaultsUser = mkDefaults false;
+  serviceDefaultsUser = mkDefaults false "always";
+
+  # Type=oneshot services — Restart=always is INVALID for oneshot.
+  # These default to Restart=no (the only universally safe value for oneshot).
+  # Override to "on-failure" if retry-on-error is desired (still valid for oneshot).
+  serviceOneshotDefaults = mkDefaults true "no";
+  serviceOneshotDefaultsUser = mkDefaults false "no";
 
   # onFailure handler — route service failures to the notify-failure template
   onFailure = ["notify-failure@%n.service"];
