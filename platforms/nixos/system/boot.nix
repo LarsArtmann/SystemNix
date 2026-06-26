@@ -19,6 +19,10 @@ in {
     # Use latest kernel for Ryzen AI Max+ support
     kernelPackages = pkgs.linuxPackages_latest;
 
+    # Verbose boot — surface activation/initrd errors on console instead of silent hang
+    initrd.verbose = true;
+    consoleLogLevel = 7;
+
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
     # Load bfq for responsive I/O scheduling under heavy disk pressure
@@ -66,6 +70,8 @@ in {
       # delay on GMKtec EVO-X2 (dev-nvme0n1.device waits ~170s for controller to respond).
       # Zero cost on desktop (no battery), could save ~2.5min boot time.
       "nvme_core.default_ps_max_latency_us=0"
+      "systemd.show_status=true"
+      "systemd.log_level=debug"
     ];
 
     binfmt.emulatedSystems = ["aarch64-linux"];
