@@ -23,6 +23,7 @@ in {
     ./primary-user.nix
     ./dns-blocker-config.nix # DNS blocker with unbound + block page (replaces Technitium)
     ./snapshots.nix # BTRFS snapshots with btrbk
+    ./btrfs-health.nix # BTRFS chunk allocation health monitor + GC guard (prevents 2026-06-26 crash)
     ./scheduled-tasks.nix # Daily scheduled tasks (crush update-providers, etc.)
     ./sudo.nix # Passwordless sudo for wheel group
     ../hardware/amd-gpu.nix
