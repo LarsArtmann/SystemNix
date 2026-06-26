@@ -230,6 +230,17 @@ in {
   # Hardware watchdog — last resort: hard-reboots the system if it becomes completely unresponsive.
   # SP5100 TCO timer (AMD chipset) will fire if watchdogd stops petting it within the timeout.
   # Catches GPU driver hangs, kernel deadlocks, and other scenarios where even SysRq fails.
+  #
+  # TRADEOFF (see docs/crash-analysis-2026-06-26.md Appendix D):
+  #   timeout=30s races against kernel.hung_task_timeout_secs=120s. The WDT
+  #   always wins, so hung_task_panic=1 never fires for runtime freezes → no
+  #   pstore dump. 30s prioritizes fast recovery over forensics. Raising to
+  #   120s would let hung_task capture a dump first, but means 120s of
+  #   unresponsiveness on genuine hangs. Kept at 30s because:
+  #     - The BTRFS metadata ENOSPC crash (the repeat failure) is now prevented
+  #       by the GC guard in btrfs-health.nix
+  #     - GPU driver hangs (the other scenario) benefit from fast recovery
+  #     - nowayout=0 means the WDT does NOT protect boot/activation hangs anyway
   services = {
     watchdogd = {
       enable = true;

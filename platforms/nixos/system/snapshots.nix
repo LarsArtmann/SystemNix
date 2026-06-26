@@ -59,7 +59,11 @@ in {
     // cacheFileSystems;
 
   services.btrbk.instances."root" = {
-    onCalendar = "daily";
+    # Stagger BEFORE nix-gc (which fires at 00:00) so expired snapshots are
+    # deleted first. This lets GC reclaim data extents freed by snapshot expiry.
+    # If btrbk and GC ran concurrently, GC couldn't free CoW-shared extents.
+    # See docs/crash-analysis-2026-06-26.md — the metadata ratchet section.
+    onCalendar = "23:00";
     snapshotOnly = true;
     settings = {
       snapshot_preserve_min = "7d";

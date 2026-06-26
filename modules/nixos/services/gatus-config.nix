@@ -228,6 +228,18 @@ _: {
                 ];
               })
               (mkHttpCheck {
+                name = "BTRFS Chunk Health";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*btrfs_device_unallocated_pct*)"
+                  "[BODY] == pat(*btrfs_metadata_utilization_pct*)"
+                ];
+                alerts = discordAlert "BTRFS chunk allocation critical — device-unallocated <10% or metadata >85%. Nightly GC has been auto-blocked to prevent metadata ENOSPC crash. Free space: grow partition or delete old snapshots.";
+              })
+              (mkHttpCheck {
                 name = "NVMe SMART Metrics";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
