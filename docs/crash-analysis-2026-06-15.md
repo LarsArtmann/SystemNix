@@ -111,10 +111,12 @@ The balance freed almost nothing — it rearranged blocks but couldn't reclaim m
 
 ### Immediate (prevent recurrence)
 
-1. **Docker cleanup** — remove unused images, containers, volumes:
+1. **Docker cleanup** — remove unused images, stopped containers, build cache:
    ```bash
-   docker system prune -a --volumes
+   docker system prune -a          # images + stopped containers + build cache (NOT volumes)
+   docker builder prune -a         # build cache only (often the biggest hidden hog)
    ```
+   **Do NOT pass `--volumes`** — named volumes hold persistent state (Postgres/ClickHouse/Forgejo/Pocket-ID). `--volumes` would destroy data, not reclaim junk.
 
 2. **Nix garbage collection** — run ALONE, never concurrent with balance or other heavy I/O:
    ```bash
