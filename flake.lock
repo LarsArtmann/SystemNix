@@ -457,11 +457,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1782181715,
-        "narHash": "sha256-Jmhbghll4lx+s1a3LcpfESJ0eWtZ4srZv2EIY3tNtVM=",
+        "lastModified": 1782526378,
+        "narHash": "sha256-DgWw+MeF9DqiJvNN8GbvL8Mne+B8p1mQ5iRcxQaZL8Q=",
         "ref": "master",
-        "rev": "7fad9a3018195657d5c500b5aeb990db609b64b6",
-        "revCount": 444,
+        "rev": "2088c3f9853b9dcf46b269300f404d29b09313d8",
+        "revCount": 450,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -1539,6 +1539,23 @@
         "url": "ssh://git@github.com/LarsArtmann/go-finding"
       }
     },
+    "go-finding-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782262705,
+        "narHash": "sha256-vWd9zlwjTpVBnwJMA4wf4Q+7Dj+V4iwdU8fViFv3AeU=",
+        "ref": "refs/tags/v1.0.0",
+        "rev": "64bada22e3664788a73c21d5b7f21faa0f3a5b7f",
+        "revCount": 827,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      },
+      "original": {
+        "ref": "refs/tags/v1.0.0",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+      }
+    },
     "go-finding_2": {
       "flake": false,
       "locked": {
@@ -2208,11 +2225,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1782519567,
-        "narHash": "sha256-MuyipWM34YiVkB3/hbRGPNIkiGICBLdLLigtBaRci48=",
+        "lastModified": 1782526200,
+        "narHash": "sha256-YrFi7TcXLoNsndDG/RDO/+rHJePVwDUlRdAPEjYhuCE=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "79f2e00adcf7d8d26bceb640990667b445f83c7b",
+        "rev": "37c5de910a0fb5c76bcf8c9092c047ee75a27543",
         "type": "github"
       },
       "original": {
@@ -2276,6 +2293,7 @@
         "flake-parts": [
           "flake-parts"
         ],
+        "go-finding-src": "go-finding-src",
         "nixpkgs": [
           "nixpkgs"
         ],
@@ -2287,11 +2305,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782464409,
-        "narHash": "sha256-YI2m9yOPa/4IaQskVvDCelDE2t3+IsPb+nVeDhF7Tx4=",
+        "lastModified": 1782527343,
+        "narHash": "sha256-+sidr1W6TSN27MsW9l6lANPtXKd41fImBTidnU4eiZw=",
         "ref": "master",
-        "rev": "c8e8ba8cd4a4ada9bfe710f68635724e7766c8ce",
-        "revCount": 253,
+        "rev": "7537d51aef7b62f6d88468a6662c14ad06298b6d",
+        "revCount": 255,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/md-go-validator"
       },
@@ -2646,11 +2664,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782519522,
-        "narHash": "sha256-+fSo6liae8ujDGG3K5CGY168QtdAZhZTmgTSNbAjwPQ=",
+        "lastModified": 1782523924,
+        "narHash": "sha256-hsIqbN6m94VAyrKv4kf6rO0Y1dTKRD8lNH2xQfbhPxE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "a94583039a0f54dd9a90139a15cb349820ff8753",
+        "rev": "4c6b9a4696908a74718af0c9af6b8a387888ae1b",
         "type": "github"
       },
       "original": {
@@ -3469,11 +3487,11 @@
         "treefmt-nix": "treefmt-nix_11"
       },
       "locked": {
-        "lastModified": 1781729258,
-        "narHash": "sha256-tOqEw9uUocrsRbeJzR2iZzoLPrQzI1LISFbMmehilpI=",
+        "lastModified": 1782526421,
+        "narHash": "sha256-BUYJdIIam+rNb3ZJmPRMOwfZpPANfcDSLy/dZfcck7c=",
         "ref": "master",
-        "rev": "d5f374147c9822ccb12620f8ae9844918a9fd418",
-        "revCount": 385,
+        "rev": "d53cace93adbd8f89bf0785323f61526f179d4f2",
+        "revCount": 387,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/todo-list-ai"
       },
@@ -3812,11 +3830,11 @@
     "vision-review-agent-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781969218,
-        "narHash": "sha256-PTwBTvK0xcgRF12xhyqonU7I4UZFgJ6HE2GN7c8KADc=",
+        "lastModified": 1782339882,
+        "narHash": "sha256-O4IOWbfuBg6Xv8aZPMjRaYIswNIC53/FHIirBKfEOLw=",
         "ref": "master",
-        "rev": "210a1f758ba0591de28ed931c00abcdb82ee552f",
-        "revCount": 75,
+        "rev": "442bdfaa035a326e6226ca51648f8ea9ba097a9e",
+        "revCount": 76,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/vision-review-agent"
       },
