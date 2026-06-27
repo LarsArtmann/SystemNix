@@ -9,7 +9,7 @@
     inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports;
     cfg = config.services.discordsync;
     inherit (lib) types;
-    discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.system}.default;
+    discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
     sopsEnvPath = config.sops.templates."discordsync-env".path;
   in {
     options.services.discordsync = {
@@ -32,7 +32,7 @@
       databasePath = lib.mkOption {
         type = types.str;
         default = "${cfg.stateDir}/discordsync.db";
-        description = "Path to the local Turso database file";
+        description = "Path to the local SQLite database file";
       };
 
       attachmentPath = lib.mkOption {
@@ -122,7 +122,6 @@
           }
           // harden {
             MemoryMax = "2G";
-            ProtectHome = false;
             ReadWritePaths = [cfg.stateDir];
           };
       };

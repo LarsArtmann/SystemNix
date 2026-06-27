@@ -326,6 +326,15 @@ _: {
                 url = "http://localhost:${toString cfg.port}";
                 interval = "5m";
               })
+            ]
+            ++ lib.optionals config.services.discordsync.enable [
+              (mkHttpCheck {
+                name = "DiscordSync";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.discordsync-api}/healthz";
+                interval = "60s";
+                alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
+              })
             ];
         };
       };

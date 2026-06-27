@@ -26,6 +26,7 @@ _: {
     monitor365Enabled = config.services.monitor365.enable;
     voiceAgentsEnabled = config.services.voice-agents.enable;
     photomapEnabled = config.services.photomap.enable;
+    discordsyncEnabled = config.services.discordsync.enable;
 
     theme = import ../../../platforms/common/theme.nix;
     colors = theme.colorScheme.palette;
@@ -137,6 +138,12 @@ _: {
             description = "AI Agent Gateway (Discord, Cron, Messaging)";
             icon = "hermes-icon.png";
             statusStyle = "dot";
+          })
+          ++ lib.optional discordsyncEnabled (mkService "DiscordSync" {
+            description = "Discord Backup Bot (Messages, Attachments, Reactions)";
+            icon = "discord.png";
+            statusStyle = "dot";
+            siteMonitor = "http://localhost:${toString ports.discordsync-api}/healthz";
           });
 
         mediaServices =
