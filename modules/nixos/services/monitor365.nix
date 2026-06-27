@@ -639,7 +639,7 @@ _: {
                     name = "monitor365-inject-auth";
                     runtimeInputs = [pkgs.coreutils pkgs.gnused pkgs.gnugrep];
                     text = ''
-                      CFG_DIR="$XDG_RUNTIME_DIR/monitor365"
+                      CFG_DIR="$1/monitor365"
                       mkdir -p "$CFG_DIR"
                       cp ${agentConfig} "$CFG_DIR/config.toml"
                       if [ -f "${authTokenFile}" ] && [ -s "${authTokenFile}" ]; then
@@ -652,8 +652,8 @@ _: {
                       fi
                     '';
                   };
-                in ["${lib.getExe injectAuth}"];
-                ExecStart = "${lib.getExe cfg.package} --config \$XDG_RUNTIME_DIR/monitor365/config.toml run";
+                in ["${lib.getExe injectAuth} %t"];
+                ExecStart = "${lib.getExe cfg.package} --config %t/monitor365/config.toml run";
                 WorkingDirectory = cfg.home;
                 KillMode = "mixed";
                 TimeoutStopSec = "30";
@@ -690,7 +690,7 @@ _: {
               // {
                 Type = "simple";
                 ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${serverStateDir}";
-                ExecStart = "${lib.getExe' cfg.server.package "monitor365-server"} --config ${serverConfig}";
+                ExecStart = "${lib.getExe' cfg.server.package "monitor365-server"}";
                 WorkingDirectory = serverStateDir;
                 KillMode = "mixed";
                 TimeoutStopSec = "30";

@@ -346,7 +346,7 @@ _: {
             Type = "oneshot";
             RemainAfterExit = true;
           };
-          path = [pkgs.nss];
+          path = [pkgs.nss.tools pkgs.coreutils];
           script = ''
             CA_CERT="${config.sops.secrets.dnsblockd_ca_cert.path}"
             while [ ! -s "$CA_CERT" ]; do sleep 1; done

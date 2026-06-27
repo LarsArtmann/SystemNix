@@ -48,6 +48,13 @@ in {
       };
     };
 
+    security.wrappers.fusermount3 = {
+      source = "${pkgs.fuse3}/bin/fusermount3";
+      owner = "root";
+      group = "root";
+      setuid = true;
+    };
+
     systemd = {
       # Portal services must wait for niri compositor to be ready, otherwise they race
       # during live activation (nh os test/switch) when both are restarted simultaneously

@@ -29,6 +29,10 @@ in {
         After = lib.mkAfter ["graphical-session.target"];
         PartOf = lib.mkAfter ["graphical-session.target"];
       };
+      Service = {
+        Restart = "on-failure";
+        RestartSec = "5s";
+      };
     };
 
     activitywatch-theme = {

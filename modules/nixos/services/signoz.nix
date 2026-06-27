@@ -281,6 +281,15 @@ in {
                 '';
               in "${lib.getExe wrapper}";
               ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version";
+              ExecStartPre = let
+                clearMigrationLock = pkgs.writeShellApplication {
+                  name = "signoz-clear-migration-lock";
+                  runtimeInputs = [pkgs.sqlite];
+                  text = ''
+                    sqlite3 '${cfg.settings.queryService.dataDir}/signoz.db' 'DELETE FROM migration_lock;' 2>/dev/null || true
+                  '';
+                };
+              in "${lib.getExe clearMigrationLock}";
             }
             // harden {
               MemoryMax = lib.mkForce "1G";
