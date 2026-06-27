@@ -145,6 +145,17 @@ in {
               restartUnits = ["discordsync.service"];
             } ["discordsync_discord_token" "discordsync_turso_url" "discordsync_turso_auth_token"]
           )
+          // lib.optionalAttrs (
+            svcEnabled "discordsync"
+            && (config.services.discordsync.gcsBucket or null) != null
+          ) {
+            discordsync_gcs_credentials = {
+              sopsFile = secretsDir + "/discordsync.yaml";
+              owner = "discordsync";
+              group = "discordsync";
+              restartUnits = ["discordsync.service"];
+            };
+          }
           // lib.optionalAttrs (svcEnabled "dns-failover") (
             mkSecrets "dns-failover.yaml" {} ["vrrp_auth_password"]
           );

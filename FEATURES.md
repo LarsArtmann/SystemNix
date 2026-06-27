@@ -81,7 +81,7 @@ _A brutally honest audit of every feature the project actually has._
 | Gatus (health checks) | ✅ | `gatus-config.nix` | 38 health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |
 | Disk Monitor | ✅ | `disk-monitor.nix` | Desktop notifications at disk usage thresholds |
 | NVMe Health Monitor | ✅ | `nvme-health-monitor.nix` | Desktop notifications for critical NVMe SMART events |
-| DiscordSync | 🔧 | `discordsync.nix` | Continuous Discord channel backup bot — **disabled** (needs migration from deleted projection/v2 to watermill.CatchUpSubscriber + stack.Materialize) |
+| DiscordSync | ✅ | `discordsync.nix` | Continuous Discord channel backup bot — real-time sync via Discord Gateway, turso-sync backend (local + cloud), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). GCS attachment backup opt-in via `gcsBucket`. |
 
 ### AI / ML Stack
 

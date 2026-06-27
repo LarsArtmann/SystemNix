@@ -6,7 +6,7 @@
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports;
     cfg = config.services.discordsync;
     inherit (lib) types;
     discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.system}.default;
@@ -52,6 +52,12 @@
         default = true;
         description = "Backfill all historical messages on startup";
       };
+
+      apiAddr = lib.mkOption {
+        type = types.str;
+        default = "127.0.0.1:${toString ports.discordsync-api}";
+        description = "Listen address for the HTTP API (/metrics, /api/events/stream, /api/export). Localhost-only by default for security.";
+      };
     };
 
     config = lib.mkIf cfg.enable {
@@ -91,6 +97,7 @@
               [
                 "DB_BACKEND=turso-sync"
                 "DATABASE_PATH=${cfg.databasePath}"
+                "API_ADDR=${cfg.apiAddr}"
                 "ATTACHMENT_STORAGE_PATH=${cfg.attachmentPath}"
                 "BACKFILL_ON_STARTUP=${
                   if cfg.backfillOnStartup
@@ -98,7 +105,9 @@
                   else "false"
                 }"
               ]
-              ++ lib.optional (cfg.gcsBucket != null) "GCS_BUCKET=${cfg.gcsBucket}";
+              ++ lib.optional (cfg.gcsBucket != null) "GCS_BUCKET=${cfg.gcsBucket}"
+              ++ lib.optional (cfg.gcsBucket != null)
+              "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets.discordsync_gcs_credentials.path}";
             EnvironmentFile = [sopsEnvPath];
             KillMode = "mixed";
             KillSignal = "SIGTERM";

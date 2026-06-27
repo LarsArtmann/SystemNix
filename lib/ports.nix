@@ -57,5 +57,7 @@
     overview = 8083;
 
     activitywatch = 5600;
+
+    discordsync-api = 8085;
   };
 }

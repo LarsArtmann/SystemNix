@@ -196,7 +196,10 @@ in {
       multi-wm.enable = true;
       browser-policies.enable = true;
       steam-config.enable = true;
-      discordsync.enable = false; # TODO: migrate from deleted projection/v2 to watermill.CatchUpSubscriber + stack.Materialize (ADR-0030)
+      discordsync = {
+        enable = true; # Reactivated — upstream migrated to go-cqrs-lite v3 (ADR-0030)
+        gcsBucket = "discordsync-backup";
+      };
 
       # Manifest — Smart LLM router for AI agents (cost optimization)
       manifest = {

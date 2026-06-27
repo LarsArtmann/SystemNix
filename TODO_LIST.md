@@ -70,7 +70,7 @@ All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in S
 
 - [ ] **`monitor365`**: Support reading secrets from env vars (e.g., `MONITOR365_CLOUD_AUTH_TOKEN`) instead of requiring config file mutation via `sed` at runtime. Also: bundle runtime deps natively or provide `--runtime-deps-path` flag; respect `$DISPLAY` / Wayland APIs instead of hardcoding
 - [ ] **`hermes`**: Auto-create directory structure on first run (currently Nix does it); handle own state migration from old paths; sane defaults for `OLLAMA_API_KEY`/`TERMINAL_ENV`; handle deprecated config keys internally instead of requiring sed cleanup; use PID file or socket-based single-instance locking instead of `--replace` flag
-- [ ] **`discordsync`**: Add `--config` flag support alongside env vars; accept boolean `true`/`false`/`1`/`0` for `BACKFILL_ON_STARTUP`
+- [x] **`discordsync`**: Config file support (YAML via `DISCORDSYNC_CONFIG`) + boolean `BACKFILL_ON_STARTUP` landed upstream. Reactivated in SystemNix with `apiAddr` on port 8085 (localhost). GCS attachment backup opt-in via `gcsBucket` (needs bucket name + service account JSON)
 
 #### Third-Party Upstream Projects
 
