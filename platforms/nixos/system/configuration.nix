@@ -220,7 +220,9 @@ in {
       openseo.enable = true;
 
       # Dual-WAN with MPTCP and route health monitoring
-      dual-wan.enable = true;
+      # DISABLED: route-health-monitor evicts the eno1 default route on transient
+      # ISP probe failures (2s timeout to 1.1.1.1), pinning traffic to WiFi-only.
+      dual-wan.enable = false;
 
       # Mullvad VPN daemon — DISABLED.
       # talpid_dns periodically overwrites /etc/resolv.conf even when disconnected,
