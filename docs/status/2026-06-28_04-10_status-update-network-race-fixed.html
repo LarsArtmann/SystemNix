@@ -68,9 +68,18 @@
           monospace;
       }
 
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
 
       body {
         background: var(--surface);
@@ -82,8 +91,13 @@
         -moz-osx-font-smoothing: grayscale;
       }
 
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      a:focus-visible { outline-offset: -1px; }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
 
       .top-bar {
         background: var(--text);
@@ -99,7 +113,11 @@
         align-items: center;
       }
 
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
       .sidebar {
         width: 220px;
         flex-shrink: 0;
@@ -110,7 +128,11 @@
         overflow-y: auto;
         display: none;
       }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
       .sidebar .label {
         font-family: var(--font-mono);
         font-size: 0.68rem;
@@ -132,22 +154,65 @@
         line-height: 1.4;
         font-weight: 500;
       }
-      .sidebar a:hover, .sidebar a.active {
+      .sidebar a:hover,
+      .sidebar a.active {
         color: var(--accent);
         border-left-color: var(--accent);
         background: color-mix(in srgb, var(--accent) 8%, transparent);
       }
-      .main { flex: 1; min-width: 0; }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
 
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
 
-      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
       .hero-badge {
         display: inline-block;
         font-family: var(--font-mono);
@@ -160,24 +225,96 @@
         padding: 0.3rem 0.7rem;
         margin-bottom: 0.9rem;
       }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
 
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
 
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
 
       .severity {
         display: inline-block;
@@ -190,9 +327,15 @@
         margin-bottom: 0.6rem;
         color: var(--surface);
       }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
 
       .badge {
         display: inline-block;
@@ -205,101 +348,416 @@
         border: 1px solid var(--border-strong);
         color: var(--text-muted);
       }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .badge-done { color: var(--solution); border-color: var(--solution); }
-      .badge-open { color: var(--problem); border-color: var(--problem); }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .badge-done {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .badge-open {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
 
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
 
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
 
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; line-height: 1.4; }
-      .strength .text strong { display: block; margin-bottom: 0.15rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
 
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
 
-      .compare-header { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin: 1rem 0 0.5rem; }
-      .compare-before, .compare-after { font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; padding: 0.4rem 0.7rem; color: var(--surface); }
-      .compare-before { background: var(--problem); }
-      .compare-after { background: var(--solution); }
-      .compare-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem; }
-      .compare-row pre { margin: 0; }
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
 
-      pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken); padding: 0.1rem 0.35rem; }
-      .tok-keyword { color: var(--accent); }
-      .tok-type { color: var(--warning); }
-      .tok-string { color: var(--solution); }
-      .tok-comment { color: var(--text-faint); font-style: italic; }
-      .tok-func { color: #74a9ff; }
-      .tok-number { color: var(--accent); }
-      .tok-generic { color: var(--problem); }
-      .tok-builtin { color: #4dd9ff; }
-      .tok-punct { color: var(--text-muted); }
-      .tok-attr { color: var(--accent); }
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: var(--solution);
+      }
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      }
+      .tok-number {
+        color: var(--accent);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #4dd9ff;
+      }
+      .tok-punct {
+        color: var(--text-muted);
+      }
+      .tok-attr {
+        color: var(--accent);
+      }
 
-      .dep-tree { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7; white-space: pre; overflow-x: auto; }
-      .dep-tree .root { color: var(--accent); font-weight: 700; }
-      .dep-tree .ok { color: var(--solution); }
-      .dep-tree .unwanted { color: var(--problem); }
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
 
-      .diagram { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; padding: 1rem; margin: 1rem 0; background: var(--surface-raised); border: 1px solid var(--border); }
-      .node { display: inline-block; padding: 0.35rem 0.7rem; font-family: var(--font-mono); font-size: 0.8rem; font-weight: 600; background: var(--surface-sunken); border: 1px solid var(--border-strong); }
-      .node-core { background: var(--accent); color: var(--surface); border-color: var(--accent); }
-      .node-problem { background: var(--problem); color: var(--surface); border-color: var(--problem); }
-      .node-good { background: var(--solution); color: var(--surface); border-color: var(--solution); }
-      .arrow { color: var(--text-faint); font-family: var(--font-mono); }
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
 
-      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
-      .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1rem 0; }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
 
-      .toc { background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 1rem 1.3rem; margin: 1rem 0 1.5rem; }
-      .toc h3 { margin-bottom: 0.5rem; }
-      .toc ul { list-style: none; padding: 0; }
-      .toc li { margin: 0.25rem 0; }
-      .toc a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
-      .toc a:hover { color: var(--accent); }
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
 
-      .migration-step { display: grid; grid-template-columns: 48px 1fr; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); }
-      .migration-num { font-family: var(--font-mono); font-weight: 800; font-size: 1.5rem; color: var(--accent); line-height: 1; }
-      .migration-content h4 { margin-bottom: 0.2rem; }
-      .migration-content p { margin-bottom: 0; color: var(--text-muted); font-size: 0.92rem; }
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
 
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
 
-      @media (min-width: 1024px) { .sidebar { display: block; } }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
       @media (max-width: 768px) {
-        .layout { flex-direction: column; padding: 1rem; }
-        .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; }
-        .grid-2, .grid-3 { grid-template-columns: 1fr; }
-        .compare-header, .compare-row { grid-template-columns: 1fr; }
-        .stat-grid { grid-template-columns: repeat(2, 1fr); }
-        .migration-step { grid-template-columns: 1fr; }
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -389,11 +847,16 @@
             </tr>
             <tr>
               <td>Flake eval</td>
-              <td><span class="badge badge-fixed">PASS</span> <code>nix flake check --no-build</code></td>
+              <td>
+                <span class="badge badge-fixed">PASS</span> <code>nix flake check --no-build</code>
+              </td>
             </tr>
             <tr>
               <td>evo-x2 toplevel eval</td>
-              <td><span class="badge badge-fixed">PASS</span> <code>nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel</code></td>
+              <td>
+                <span class="badge badge-fixed">PASS</span>
+                <code>nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel</code>
+              </td>
             </tr>
             <tr>
               <td>Disk root (<code>/</code>)</td>
@@ -418,42 +881,59 @@
             <div class="check">+</div>
             <div class="text">
               <strong>SigNoz stale migration lock</strong>
-              <span><code>ExecStartPre</code> clears <code>migration_lock</code> before every start. Self-healing after OOM/hard-reset.</span>
+              <span
+                ><code>ExecStartPre</code> clears <code>migration_lock</code> before every start.
+                Self-healing after OOM/hard-reset.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Monitor365 agent</strong>
-              <span>Switched from <code>$XDG_RUNTIME_DIR</code> to <code>%t</code> systemd specifier in ExecStart/ExecStartPre.</span>
+              <span
+                >Switched from <code>$XDG_RUNTIME_DIR</code> to <code>%t</code> systemd specifier in
+                ExecStart/ExecStartPre.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Monitor365 server</strong>
-              <span>Removed invalid <code>--config</code> flag; upstream CLI now uses env vars + XDG auto-load.</span>
+              <span
+                >Removed invalid <code>--config</code> flag; upstream CLI now uses env vars + XDG
+                auto-load.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>dnsblockd-cert-import</strong>
-              <span><code>path = [pkgs.nss.tools pkgs.coreutils]</code> — <code>certutil</code> is in the tools output, not libs.</span>
+              <span
+                ><code>path = [pkgs.nss.tools pkgs.coreutils]</code> — <code>certutil</code> is in
+                the tools output, not libs.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>xdg-document-portal</strong>
-              <span>Added setuid <code>fusermount3</code> wrapper so the portal can spawn FUSE mounts at login.</span>
+              <span
+                >Added setuid <code>fusermount3</code> wrapper so the portal can spawn FUSE mounts
+                at login.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>ActivityWatch wayland watcher</strong>
-              <span>Added <code>Restart=on-failure</code> so it recovers after compositor race.</span>
+              <span
+                >Added <code>Restart=on-failure</code> so it recovers after compositor race.</span
+              >
             </div>
           </div>
         </div>
@@ -464,7 +944,11 @@
             <div class="check">+</div>
             <div class="text">
               <strong>deploy.sh reset-failed</strong>
-              <span>Runs <code>systemctl reset-failed</code> (system + user) before <code>nh os switch</code>, clearing the exit-code-4 trap from changed units stuck in <code>start-limit-hit</code>.</span>
+              <span
+                >Runs <code>systemctl reset-failed</code> (system + user) before
+                <code>nh os switch</code>, clearing the exit-code-4 trap from changed units stuck in
+                <code>start-limit-hit</code>.</span
+              >
             </div>
           </div>
         </div>
@@ -475,28 +959,41 @@
             <div class="check">+</div>
             <div class="text">
               <strong>dnsblockd-attach-ip.service</strong>
-              <span>New CAP_NET_ADMIN oneshot ordered after <code>sys-subsystem-net-devices-eno1.device</code>. Replaces the broken <code>networking.localCommands</code> with <code>|| true</code>.</span>
+              <span
+                >New CAP_NET_ADMIN oneshot ordered after
+                <code>sys-subsystem-net-devices-eno1.device</code>. Replaces the broken
+                <code>networking.localCommands</code> with <code>|| true</code>.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>dnsblockd.service dependency</strong>
-              <span>Now <code>After/Wants</code> <code>dnsblockd-attach-ip.service</code> — never starts before the block IP exists.</span>
+              <span
+                >Now <code>After/Wants</code> <code>dnsblockd-attach-ip.service</code> — never
+                starts before the block IP exists.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>keepalived ordering</strong>
-              <span><code>dns-failover.nix</code> now orders keepalived after the interface <code>.device</code> unit.</span>
+              <span
+                ><code>dns-failover.nix</code> now orders keepalived after the interface
+                <code>.device</code> unit.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>dual-wan ordering</strong>
-              <span><code>mptcp-endpoint-manager</code> and <code>route-health-monitor</code> order after the eno1 <code>.device</code> unit when re-enabled.</span>
+              <span
+                ><code>mptcp-endpoint-manager</code> and <code>route-health-monitor</code> order
+                after the eno1 <code>.device</code> unit when re-enabled.</span
+              >
             </div>
           </div>
         </div>
@@ -507,7 +1004,11 @@
             <div class="check">+</div>
             <div class="text">
               <strong>Schema split for turso driver</strong>
-              <span>Replaced single multi-statement <code>ExecContext</code> with <code>splitSQLStatements()</code> + <code>execSchema()</code>. Handles <code>BEGIN...END</code> triggers and comments. 3 new tests; 54 tests pass.</span>
+              <span
+                >Replaced single multi-statement <code>ExecContext</code> with
+                <code>splitSQLStatements()</code> + <code>execSchema()</code>. Handles
+                <code>BEGIN...END</code> triggers and comments. 3 new tests; 54 tests pass.</span
+              >
             </div>
           </div>
         </div>
@@ -518,7 +1019,10 @@
             <div class="check">+</div>
             <div class="text">
               <strong>AGENTS.md</strong>
-              <span>All root-cause gotchas documented, including the new FIXED network interface boot race entry.</span>
+              <span
+                >All root-cause gotchas documented, including the new FIXED network interface boot
+                race entry.</span
+              >
             </div>
           </div>
         </div>
@@ -537,22 +1041,34 @@
             <tr>
               <td><strong>Deploy</strong></td>
               <td><span class="badge badge-high">Ready</span></td>
-              <td><code>nix run .#deploy</code> has not been executed. All fixes are inert until switch.</td>
+              <td>
+                <code>nix run .#deploy</code> has not been executed. All fixes are inert until
+                switch.
+              </td>
             </tr>
             <tr>
               <td><strong>DiscordSync in SystemNix</strong></td>
               <td><span class="badge badge-high">Code ready</span></td>
-              <td>DiscordSync commit <code>e6c7606</code> is not pushed; SystemNix flake input not updated.</td>
+              <td>
+                DiscordSync commit <code>e6c7606</code> is not pushed; SystemNix flake input not
+                updated.
+              </td>
             </tr>
             <tr>
               <td><strong>Verification</strong></td>
               <td><span class="badge badge-fixed">Eval OK</span></td>
-              <td>No live deploy verification. Services may still fail for reasons not visible in static eval.</td>
+              <td>
+                No live deploy verification. Services may still fail for reasons not visible in
+                static eval.
+              </td>
             </tr>
             <tr>
               <td><strong>DiscordSync repo hygiene</strong></td>
               <td><span class="badge badge-medium">Blocked</span></td>
-              <td>17 foreign uncommitted refactoring files in working tree. Cannot verify or commit them.</td>
+              <td>
+                17 foreign uncommitted refactoring files in working tree. Cannot verify or commit
+                them.
+              </td>
             </tr>
           </tbody>
         </table>
@@ -573,15 +1089,22 @@
             </tr>
             <tr>
               <td><strong>Push DiscordSync + update flake lock</strong></td>
-              <td>Push <code>e6c7606</code>, run <code>nix flake lock --update-input discordsync</code>, redeploy.</td>
+              <td>
+                Push <code>e6c7606</code>, run
+                <code>nix flake lock --update-input discordsync</code>, redeploy.
+              </td>
             </tr>
             <tr>
               <td><strong>Off-site backup</strong></td>
               <td>No BorgBackup to Hetzner StorageBox. Single point of failure.</td>
             </tr>
             <tr>
-              <td><strong>BTRFS <code>/data</code> subvolume migration</strong></td>
-              <td><code>/data</code> is toplevel (subvolid=5), no snapshot protection. ~1h downtime.</td>
+              <td>
+                <strong>BTRFS <code>/data</code> subvolume migration</strong>
+              </td>
+              <td>
+                <code>/data</code> is toplevel (subvolid=5), no snapshot protection. ~1h downtime.
+              </td>
             </tr>
             <tr>
               <td><strong>Firewall deny-by-default</strong></td>
@@ -601,15 +1124,15 @@
           <h3>1. Deploy has still not run</h3>
           <div class="where">Last report → now</div>
           <p>
-            All fixes exist in git and are eval-clean, but none are live on evo-x2. The four services
-            (signoz, monitor365, monitor365-server, discordsync) were likely still in
-            <code>start-limit-hit</code> at the time of this report. Every hour of delay increases the
-            chance the next boot hits the same chain.
+            All fixes exist in git and are eval-clean, but none are live on evo-x2. The four
+            services (signoz, monitor365, monitor365-server, discordsync) were likely still in
+            <code>start-limit-hit</code> at the time of this report. Every hour of delay increases
+            the chance the next boot hits the same chain.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            Run <code>nix run .#deploy</code> now. The deploy script now resets failed units first, so
-            it should succeed where previous attempts failed silently.
+            Run <code>nix run .#deploy</code> now. The deploy script now resets failed units first,
+            so it should succeed where previous attempts failed silently.
           </div>
         </div>
 
@@ -619,8 +1142,8 @@
           <div class="where">DiscordSync repo → SystemNix flake input</div>
           <p>
             The migration fix is committed in DiscordSync (<code>e6c7606</code>) but SystemNix still
-            pins an older commit. Three manual steps are required: push, lock update, rebuild. Any one
-            can fail.
+            pins an older commit. Three manual steps are required: push, lock update, rebuild. Any
+            one can fail.
           </p>
         </div>
 
@@ -629,9 +1152,9 @@
           <h3>3. DiscordSync working tree has foreign changes</h3>
           <div class="where">DiscordSync working tree</div>
           <p>
-            17 files of uncommitted refactoring (generics in config.go, test cleanup, formatting) that
-            I did not author. They complicate a clean push and I cannot verify their correctness or
-            intent.
+            17 files of uncommitted refactoring (generics in config.go, test cleanup, formatting)
+            that I did not author. They complicate a clean push and I cannot verify their
+            correctness or intent.
           </p>
         </div>
 
@@ -640,9 +1163,9 @@
           <h3>4. Boot is still slow (~4min 53s)</h3>
           <div class="where">signoz-provision.service</div>
           <p>
-            <code>signoz-provision</code> takes ~2 minutes waiting for signoz health checks. This will
-            improve once signoz starts cleanly (migration lock fix), but the provision timeout remains
-            the largest boot-time contributor.
+            <code>signoz-provision</code> takes ~2 minutes waiting for signoz health checks. This
+            will improve once signoz starts cleanly (migration lock fix), but the provision timeout
+            remains the largest boot-time contributor.
           </p>
         </div>
 
@@ -650,7 +1173,10 @@
 
         <div class="card card-warning">
           <h4>1. Deploy immediately</h4>
-          <p>Every fix is inert until <code>nix run .#deploy</code> runs. This is the highest-leverage action.</p>
+          <p>
+            Every fix is inert until <code>nix run .#deploy</code> runs. This is the
+            highest-leverage action.
+          </p>
         </div>
 
         <div class="card card-warning">
@@ -664,27 +1190,34 @@
         <div class="card card-warning">
           <h4>3. Post-deploy health assertion</h4>
           <p>
-            <code>deploy.sh</code> should verify that previously-failed services are now running, not
-            just list <code>systemctl --failed</code>.
+            <code>deploy.sh</code> should verify that previously-failed services are now running,
+            not just list <code>systemctl --failed</code>.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>4. Automatic reset-failed upstream</h4>
           <p>
-            NixOS's <code>switch-to-configuration</code> should handle <code>start-limit-hit</code>
-            gracefully. Consider an upstream PR or a <code>system.activationScripts</code> hook.
+            NixOS's <code>switch-to-configuration</code> should handle
+            <code>start-limit-hit</code> gracefully. Consider an upstream PR or a
+            <code>system.activationScripts</code> hook.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>5. Watchdog for stuck-failed services</h4>
-          <p>Four services were broken for the entire previous uptime. Add a timer that alerts on services stuck in failed state.</p>
+          <p>
+            Four services were broken for the entire previous uptime. Add a timer that alerts on
+            services stuck in failed state.
+          </p>
         </div>
 
         <div class="card card-warning">
           <h4>6. DiscordSync working tree hygiene</h4>
-          <p>Resolve the 17 uncommitted files: commit them if they are valid, or stash/revert if they are WIP.</p>
+          <p>
+            Resolve the 17 uncommitted files: commit them if they are valid, or stash/revert if they
+            are WIP.
+          </p>
         </div>
 
         <h2 id="top25"><span class="num">06</span>Top 25 Things to Get Done Next</h2>
@@ -708,7 +1241,10 @@
               </tr>
               <tr>
                 <td>2</td>
-                <td><strong>Push DiscordSync</strong> <code>e6c7606</code> → update flake lock → redeploy</td>
+                <td>
+                  <strong>Push DiscordSync</strong> <code>e6c7606</code> → update flake lock →
+                  redeploy
+                </td>
                 <td><span class="badge badge-critical">Critical</span></td>
                 <td><span class="badge badge-medium">S</span></td>
               </tr>
@@ -744,7 +1280,9 @@
               </tr>
               <tr>
                 <td>8</td>
-                <td><strong>BTRFS <code>/data</code> subvolume migration</strong></td>
+                <td>
+                  <strong>BTRFS <code>/data</code> subvolume migration</strong>
+                </td>
                 <td><span class="badge badge-critical">High</span></td>
                 <td><span class="badge badge-high">L</span></td>
               </tr>
@@ -798,7 +1336,10 @@
               </tr>
               <tr>
                 <td>17</td>
-                <td><strong>Audit <code>/nix</code> at 118G</strong> — run <code>nix-collect-garbage -d</code></td>
+                <td>
+                  <strong>Audit <code>/nix</code> at 118G</strong> — run
+                  <code>nix-collect-garbage -d</code>
+                </td>
                 <td><span class="badge badge-high">Medium</span></td>
                 <td><span class="badge badge-medium">S</span></td>
               </tr>
@@ -861,7 +1402,9 @@
           <h3>What should I do with the 17 uncommitted files in the DiscordSync working tree?</h3>
           <div class="where">DiscordSync repo</div>
           <p>
-            They contain real refactoring (not mine): <code>getEnvInt</code>/<code>getEnvDuration</code>
+            They contain real refactoring (not mine): <code>getEnvInt</code>/<code
+              >getEnvDuration</code
+            >
             collapsed into a generic <code>getEnvParsed[T]</code>, test deduplication, and gofumpt
             formatting across <code>internal/bot/</code>, <code>internal/db/</code>,
             <code>internal/projection/</code>, and <code>internal/config/</code>. They were present
@@ -869,15 +1412,21 @@
           </p>
           <div class="callout callout-warning">
             <strong>Options</strong>
-            <ul style="margin: 0.5rem 0 0 1.2rem;">
-              <li><strong>Commit them</strong> — they look like clean refactoring, but I didn't author them and can't verify intent</li>
+            <ul style="margin: 0.5rem 0 0 1.2rem">
+              <li>
+                <strong>Commit them</strong> — they look like clean refactoring, but I didn't author
+                them and can't verify intent
+              </li>
               <li><strong>Stash them</strong> — safe, but creates divergence and complexity</li>
-              <li><strong>Leave them</strong> — my commit <code>e6c7606</code> is already on top, so push works, but the tree stays dirty</li>
+              <li>
+                <strong>Leave them</strong> — my commit <code>e6c7606</code> is already on top, so
+                push works, but the tree stays dirty
+              </li>
             </ul>
           </div>
           <p>
-            I need to know: are these your changes? Should I commit them, or are they WIP from another
-            session that you'll handle?
+            I need to know: are these your changes? Should I commit them, or are they WIP from
+            another session that you'll handle?
           </p>
         </div>
 
@@ -893,7 +1442,10 @@
             <tbody>
               <tr>
                 <td><code>4b37a0a5</code></td>
-                <td>fix(network): resolve boot race for services binding to eno1 — CAP_NET_ADMIN oneshot adds block IP after interface is up</td>
+                <td>
+                  fix(network): resolve boot race for services binding to eno1 — CAP_NET_ADMIN
+                  oneshot adds block IP after interface is up
+                </td>
               </tr>
               <tr>
                 <td><code>1f32ed6d</code></td>
@@ -901,7 +1453,9 @@
               </tr>
               <tr>
                 <td><code>c012fe0b</code></td>
-                <td>docs(status): boot reliability complete, deploy pending — 7 fixes across 2 repos</td>
+                <td>
+                  docs(status): boot reliability complete, deploy pending — 7 fixes across 2 repos
+                </td>
               </tr>
               <tr>
                 <td><code>71081507</code></td>
@@ -916,7 +1470,8 @@
         </div>
 
         <footer class="footer">
-          Generated 2026-06-28 04:10 CEST &middot; Source: SystemNix master @ 4b37a0a5 &middot; Eval verified with <code>nix flake check --no-build</code>
+          Generated 2026-06-28 04:10 CEST &middot; Source: SystemNix master @ 4b37a0a5 &middot; Eval
+          verified with <code>nix flake check --no-build</code>
         </footer>
       </main>
     </div>
@@ -927,22 +1482,33 @@
         var nav = document.querySelector("[data-nav]");
         if (!nav) return;
         var links = nav.querySelectorAll('a[href^="#"]');
-        var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
-        var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
         if (!sections.length) return;
         var observer = new IntersectionObserver(
           function (entries) {
             entries.forEach(function (entry) {
               if (entry.isIntersecting) {
                 links.forEach(function (link) {
-                  link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
                 });
               }
             });
           },
           { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
         );
-        sections.forEach(function (s) { observer.observe(s); });
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
       })();
     </script>
   </body>
