@@ -237,11 +237,11 @@
     "cqrs-htmx": {
       "flake": false,
       "locked": {
-        "lastModified": 1782637123,
-        "narHash": "sha256-TCLIoiKAw4LsiLAeOEQoU9bvonkRRCAiZe2RB0fy+cw=",
+        "lastModified": 1782639002,
+        "narHash": "sha256-SXCMjWj+Xhs5kEYL5esxPGeAqZFNvcRiOyLHAiNayUw=",
         "ref": "master",
-        "rev": "f7db4279494842253e4a83863bb84b0b5cf11f0e",
-        "revCount": 807,
+        "rev": "3aa9cdccfaaa6596b0850a8a26de3ecf16b29824",
+        "revCount": 811,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       },
@@ -393,11 +393,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782639592,
-        "narHash": "sha256-Z0P3dEJQ7pVFU2XM4m3OiK/ZFg8aBc7bNPEk9YAL0UI=",
+        "lastModified": 1782671611,
+        "narHash": "sha256-jJD+gfoFB3nUpKFhZB2vRftcMHh9dou/oiHbcwn0FhI=",
         "ref": "master",
-        "rev": "76a8bf8619e2b2028a9a7138e429b8313c1b0346",
-        "revCount": 404,
+        "rev": "0d9665195f1c8061f2c5f43bef7124aabe311d46",
+        "revCount": 405,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
