@@ -53,6 +53,10 @@ _: {
         esac
       '';
     };
+
+    # Systemd device unit for the primary ethernet interface. Used to gate
+    # services that need the interface to exist before they start.
+    eno1Device = "sys-subsystem-net-devices-${cfg.ethernetInterface}.device";
   in {
     options.services.dual-wan = {
       enable = mkEnableOption "Dual-WAN ECMP failover with MPTCP packet-level redundancy";
@@ -132,8 +136,8 @@ _: {
           mptcp-endpoint-manager = {
             description = "MPTCP endpoint manager — adds static endpoints on boot";
             wantedBy = ["multi-user.target"];
-            after = ["network-online.target"];
-            wants = ["network-online.target"];
+            after = [eno1Device "network-online.target"];
+            wants = [eno1Device "network-online.target"];
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -159,8 +163,8 @@ _: {
           route-health-monitor = {
             description = "ECMP+MPTCP WAN failover — eno1 primary, WiFi fallback";
             wantedBy = ["multi-user.target"];
-            after = ["network-online.target"];
-            wants = ["network-online.target"];
+            after = [eno1Device "network-online.target"];
+            wants = [eno1Device "network-online.target"];
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;

@@ -8,6 +8,7 @@ _: {
   }: let
     cfg = config.services.dns-failover;
     inherit (lib) mkEnableOption mkOption types;
+    interfaceDevice = "sys-subsystem-net-devices-${cfg.interface}.device";
   in {
     options.services.dns-failover = {
       enable = mkEnableOption "DNS failover via Keepalived VRRP";
@@ -47,6 +48,11 @@ _: {
     };
 
     config = lib.mkIf cfg.enable {
+      systemd.services.keepalived = {
+        after = [interfaceDevice];
+        wants = [interfaceDevice];
+      };
+
       services.keepalived = {
         enable = true;
         openFirewall = true;

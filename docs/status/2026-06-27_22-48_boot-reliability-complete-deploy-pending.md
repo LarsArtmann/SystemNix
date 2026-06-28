@@ -69,7 +69,6 @@ All six boot-time service failures are **root-caused and fixed in Nix** (commit 
 | **BTRFS `/data` subvolume migration** | `/data` is toplevel (subvolid=5), no snapshot protection. ~1h downtime. |
 | **Firewall deny-by-default** | NixOS allows all inbound. |
 | **Monitor365 agent→server auth** | No authentication on LAN. |
-| **Network-dependent service ordering** | dual-wan disabled but the `.device` unit fix is not done if re-enabled. |
 
 ---
 
@@ -117,7 +116,7 @@ The migration fix is in the DiscordSync repo (`e6c7606`), but SystemNix consumes
 | 7 | **Set up BorgBackup** to Hetzner StorageBox | 🔴 Critical | M |
 | 8 | **BTRFS `/data` subvolume migration** | 🔴 High | L |
 | 9 | **Hermes manual steps** (OpenAI key, SSH key, fallback model) | 🟠 Medium | S |
-| 10 | **Fix network-dependent service ordering** (`.device` units) | 🟠 High | M |
+| ~~10~~ | ~~**Fix network-dependent service ordering** (`.device` units)~~ | ✅ Done | M |
 | 10 | **Reduce signoz-provision boot tail** | 🟠 Medium | M |
 | 12 | **Firewall deny-by-default** | 🟠 High | M |
 | 13 | **Bind Immich to localhost** | 🟡 Security | XS |

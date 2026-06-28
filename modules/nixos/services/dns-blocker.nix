@@ -8,9 +8,24 @@ _: {
   }: let
     cfg = config.services.dns-blocker;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure mkStateDir ports;
+    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceOneshotDefaults onFailure mkStateDir ports;
 
     categoriesJSON = pkgs.writeText "dnsblockd-categories.json" (builtins.toJSON cfg.categories);
+
+    # Idempotent helper to attach the block IP to the configured interface.
+    # Runs as a systemd oneshot ordered after the interface .device unit so
+    # dnsblockd never starts before its listen address exists.
+    attachIPScript = pkgs.writeShellApplication {
+      name = "dnsblockd-attach-ip";
+      runtimeInputs = [pkgs.iproute2 pkgs.gnugrep];
+      text = ''
+        if ip addr show "${cfg.blockInterface}" | grep -qF "${cfg.blockIP}/${toString cfg.blockIPPrefix}"; then
+          echo "IP ${cfg.blockIP} already attached to ${cfg.blockInterface}"
+          exit 0
+        fi
+        exec ip addr add "${cfg.blockIP}/${toString cfg.blockIPPrefix}" dev "${cfg.blockInterface}"
+      '';
+    };
 
     # Fetch each blocklist file at eval time (fast - just metadata lookup)
     fetchedBlocklists =
@@ -212,10 +227,6 @@ _: {
         };
       };
 
-      networking.localCommands = ''
-        ${pkgs.iproute2}/bin/ip addr add ${cfg.blockIP}/32 dev ${cfg.blockInterface} 2>/dev/null || true
-      '';
-
       programs.firefox.policies = {
         DNSOverHTTPS = {
           Enabled = false;
@@ -238,6 +249,34 @@ _: {
           '';
         };
 
+        services.dnsblockd-attach-ip = {
+          description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
+          wantedBy = ["multi-user.target"];
+          after = [
+            "sys-subsystem-net-devices-${cfg.blockInterface}.device"
+            "network-online.target"
+          ];
+          wants = [
+            "sys-subsystem-net-devices-${cfg.blockInterface}.device"
+            "network-online.target"
+          ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          serviceConfig =
+            {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ExecStart = lib.getExe attachIPScript;
+            }
+            // harden {
+              ProtectHome = false;
+              CapabilityBoundingSet = "CAP_NET_ADMIN";
+              NoNewPrivileges = false;
+            }
+            // serviceOneshotDefaults {};
+        };
+
         tmpfiles.rules =
           [
             (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
@@ -248,8 +287,8 @@ _: {
 
         services.dnsblockd = {
           description = "DNS Block Page Server";
-          after = ["network-online.target" "unbound.service" "sops-nix.service"];
-          wants = ["network-online.target" "sops-nix.service" "unbound.service"];
+          after = ["dnsblockd-attach-ip.service" "unbound.service" "sops-nix.service"];
+          wants = ["dnsblockd-attach-ip.service" "sops-nix.service" "unbound.service"];
           wantedBy = ["multi-user.target"];
           inherit onFailure;
           unitConfig = {
@@ -291,7 +330,7 @@ _: {
             );
             dnsblockdWrapper = pkgs.writeShellApplication {
               name = "dnsblockd-start";
-              runtimeInputs = [pkgs.coreutils pkgs.dnsblockd pkgs.iproute2];
+              runtimeInputs = [pkgs.coreutils pkgs.dnsblockd];
               text = ''
                 for i in $(seq 1 60); do
                   if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
@@ -299,17 +338,6 @@ _: {
                   fi
                   if [ "$i" -eq 60 ]; then
                     echo "ERROR: sops secrets not available after 60s" >&2
-                    exit 1
-                  fi
-                  sleep 1
-                done
-
-                for i in $(seq 1 30); do
-                  if ip addr show ${cfg.blockInterface} | grep -q "${cfg.blockIP}/"; then
-                    break
-                  fi
-                  if [ "$i" -eq 30 ]; then
-                    echo "ERROR: blockIP ${cfg.blockIP} not assigned to ${cfg.blockInterface} after 30s" >&2
                     exit 1
                   fi
                   sleep 1
