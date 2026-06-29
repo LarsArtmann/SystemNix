@@ -6,4 +6,4 @@ hash=$(git rev-parse --short HEAD)
 subject=$(git log -1 --pretty=%s)
 
 echo "[post-commit] $hash $subject"
-echo "  Deploy: just switch"
+echo "  Deploy: nix run .#deploy"
