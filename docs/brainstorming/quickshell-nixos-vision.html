@@ -65,14 +65,14 @@
 
         /* --- Type stacks (system only — zero external fonts) --- */
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
 
       * {
@@ -503,20 +503,12 @@
       .callout-teal,
       .callout-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 10%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 10%, var(--surface-raised));
       }
       .callout-amber,
       .callout-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 18%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 18%, var(--surface-raised));
       }
 
       /* --- Strengths --- */
@@ -895,15 +887,12 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">
-            BRAINSTORM &middot; DESKTOP SHELL VISION &middot; 2026-06-21
-          </div>
+          <div class="eyebrow">BRAINSTORM &middot; DESKTOP SHELL VISION &middot; 2026-06-21</div>
           <h1>Quickshell on NixOS</h1>
           <p class="subtitle">
-            What a QtQuick-native desktop shell could replace, what it could let
-            us build, and how it slots into the SystemNix flake. A grounded,
-            opinionated look at collapsing ~9 separate shell tools into one
-            hot-reloadable QML brain.
+            What a QtQuick-native desktop shell could replace, what it could let us build, and how
+            it slots into the SystemNix flake. A grounded, opinionated look at collapsing ~9
+            separate shell tools into one hot-reloadable QML brain.
           </p>
           <div class="meta">
             <span class="tag amber">Target: evo-x2 / Niri</span>
@@ -936,40 +925,34 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary &amp; Verdict</h2>
           <p>
-            Quickshell is a QtQuick toolkit for building the entire desktop
-            shell &mdash; bars, launchers, notifications, lock screens, OSD,
-            even a display manager &mdash; in one declarative QML configuration
-            that hot-reloads on save. evo-x2 currently stitches together
-            <strong>nine separate tools</strong> (Waybar, Rofi, Dunst, Swaylock,
-            Wlogout, Swayidle, wl-clipboard/cliphist, SDDM, polkit_gnome) across
-            <strong>five different config languages</strong> (CSS+JSON, Rasi,
-            libnotify KDL, KDL, shell scripts). Quickshell could collapse most
-            of that into a single, themable, reactive QML codebase wired
-            directly to SystemNix's own services.
+            Quickshell is a QtQuick toolkit for building the entire desktop shell &mdash; bars,
+            launchers, notifications, lock screens, OSD, even a display manager &mdash; in one
+            declarative QML configuration that hot-reloads on save. evo-x2 currently stitches
+            together
+            <strong>nine separate tools</strong> (Waybar, Rofi, Dunst, Swaylock, Wlogout, Swayidle,
+            wl-clipboard/cliphist, SDDM, polkit_gnome) across
+            <strong>five different config languages</strong> (CSS+JSON, Rasi, libnotify KDL, KDL,
+            shell scripts). Quickshell could collapse most of that into a single, themable, reactive
+            QML codebase wired directly to SystemNix's own services.
           </p>
           <p>
-            The opportunity is large, the tooling is real, and the Nix story is
-            clean. The honest catch: Niri has no first-class Quickshell module,
-            Quickshell is pre-1.0, and QML is a real programming language
-            &mdash; not a config format.
+            The opportunity is large, the tooling is real, and the Nix story is clean. The honest
+            catch: Niri has no first-class Quickshell module, Quickshell is pre-1.0, and QML is a
+            real programming language &mdash; not a config format.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            Worth pursuing &mdash; but via a hybrid path. Adopt an existing
-            Niri-native Quickshell shell (iNiR or DankMaterialShell) to validate
-            the stack, then carve out a custom shell that draws live data from
-            <em>this</em> system's services (Gatus, SigNoz, DNS-blocker,
-            dual-WAN, GPU/NPU, BTRFS). That's what makes it exceptional rather
-            than another dotfiles clone.
+            Worth pursuing &mdash; but via a hybrid path. Adopt an existing Niri-native Quickshell
+            shell (iNiR or DankMaterialShell) to validate the stack, then carve out a custom shell
+            that draws live data from
+            <em>this</em> system's services (Gatus, SigNoz, DNS-blocker, dual-WAN, GPU/NPU, BTRFS).
+            That's what makes it exceptional rather than another dotfiles clone.
           </div>
           <div class="callout callout-teal">
             <strong>One action that unlocks the most value</strong>
-            Add the <code>dankMaterialShell</code> flake input (it brings
-            Quickshell transitively), import its HM module, and enable it on the
-            niri desktop. See
-            <a href="quickshell-nix-implementations.md"
-              >the companion research</a
-            >
+            Add the <code>dankMaterialShell</code> flake input (it brings Quickshell transitively),
+            import its HM module, and enable it on the niri desktop. See
+            <a href="quickshell-nix-implementations.md">the companion research</a>
             for the exact code patterns studied across GitHub.
           </div>
         </section>
@@ -980,10 +963,9 @@
           <p>
             Quickshell is <strong>not a status bar</strong>. It's a toolkit
             <em>for building</em>
-            status bars &mdash; and launchers, lockers, notifications, and
-            greeters. It's based on QtQuick and configured in QML. Crucially,
-            configuring it is closer to writing an application than editing a
-            config file. That is both its power and its cost.
+            status bars &mdash; and launchers, lockers, notifications, and greeters. It's based on
+            QtQuick and configured in QML. Crucially, configuring it is closer to writing an
+            application than editing a config file. That is both its power and its cost.
           </p>
 
           <h3>The superpowers</h3>
@@ -993,8 +975,8 @@
               <div class="text">
                 <strong>Hot reload on save</strong>
                 <span
-                  >Save a QML file and the shell updates instantly &mdash; no
-                  restart, no logout. Iterate as fast as you can type.</span
+                  >Save a QML file and the shell updates instantly &mdash; no restart, no logout.
+                  Iterate as fast as you can type.</span
                 >
               </div>
             </div>
@@ -1003,9 +985,8 @@
               <div class="text">
                 <strong>One language, one brain</strong>
                 <span
-                  >The entire shell &mdash; bar, notifications, locker, launcher
-                  &mdash; lives in one reactive QML tree sharing state, theme,
-                  and IPC.</span
+                  >The entire shell &mdash; bar, notifications, locker, launcher &mdash; lives in
+                  one reactive QML tree sharing state, theme, and IPC.</span
                 >
               </div>
             </div>
@@ -1014,8 +995,8 @@
               <div class="text">
                 <strong>An LSP for QML</strong>
                 <span
-                  ><code>qmlls</code> gives autocompletion, go-to-definition,
-                  and hover docs &mdash; including Quickshell's own types.</span
+                  ><code>qmlls</code> gives autocompletion, go-to-definition, and hover docs &mdash;
+                  including Quickshell's own types.</span
                 >
               </div>
             </div>
@@ -1024,9 +1005,8 @@
               <div class="text">
                 <strong>Wayland-native, not a hack</strong>
                 <span
-                  >First-class <code>wlr-layer-shell</code>, session lock,
-                  foreign-toplevel, and idle protocol support &mdash; not
-                  screensaver-window tricks.</span
+                  >First-class <code>wlr-layer-shell</code>, session lock, foreign-toplevel, and
+                  idle protocol support &mdash; not screensaver-window tricks.</span
                 >
               </div>
             </div>
@@ -1034,8 +1014,8 @@
 
           <h3>The integration surface</h3>
           <p>
-            These ship in the box &mdash; no shell scripts, no polling daemons,
-            no third-party glue required to reach them from QML:
+            These ship in the box &mdash; no shell scripts, no polling daemons, no third-party glue
+            required to reach them from QML:
           </p>
           <table>
             <thead>
@@ -1050,8 +1030,7 @@
                 <td>Windows / layer-shell</td>
                 <td><code>Quickshell.Wayland</code></td>
                 <td>
-                  PanelWindow, session lock, idle inhibit/monitor, blur effects,
-                  toplevel list
+                  PanelWindow, session lock, idle inhibit/monitor, blur effects, toplevel list
                 </td>
               </tr>
               <tr>
@@ -1065,32 +1044,24 @@
               <tr>
                 <td>Media</td>
                 <td><code>...Services.Mpris</code></td>
-                <td>
-                  All MPRIS players &mdash; title, art, playback state, controls
-                </td>
+                <td>All MPRIS players &mdash; title, art, playback state, controls</td>
               </tr>
               <tr>
                 <td>Notifications</td>
                 <td><code>...Services.Notifications</code></td>
                 <td>
-                  A full notification <em>server</em> (replaces Dunst) with
-                  actions &amp; images
+                  A full notification <em>server</em> (replaces Dunst) with actions &amp; images
                 </td>
               </tr>
               <tr>
                 <td>System tray</td>
                 <td><code>...Services.SystemTray</code></td>
-                <td>
-                  StatusNotifierItem host (the thing Waybar can't reliably do)
-                </td>
+                <td>StatusNotifierItem host (the thing Waybar can't reliably do)</td>
               </tr>
               <tr>
                 <td>Authentication</td>
                 <td><code>...Services.Pam</code></td>
-                <td>
-                  PAM auth flows &mdash; build your own lock screen that
-                  actually validates
-                </td>
+                <td>PAM auth flows &mdash; build your own lock screen that actually validates</td>
               </tr>
               <tr>
                 <td>Privilege</td>
@@ -1124,8 +1095,7 @@
                 <td>Compositors</td>
                 <td><code>.Hyprland</code> / <code>.I3</code></td>
                 <td>
-                  Native IPC for workspaces &amp; windows (Hyprland, i3, Sway
-                  &mdash;
+                  Native IPC for workspaces &amp; windows (Hyprland, i3, Sway &mdash;
                   <strong>not Niri</strong>)
                 </td>
               </tr>
@@ -1133,32 +1103,27 @@
                 <td>Processes &amp; IPC</td>
                 <td><code>Quickshell.Io</code></td>
                 <td>
-                  Spawn processes, read files, open sockets, serve IPC &mdash;
-                  the bridge to anything external
+                  Spawn processes, read files, open sockets, serve IPC &mdash; the bridge to
+                  anything external
                 </td>
               </tr>
             </tbody>
           </table>
           <p>
-            The single most important row is <code>Quickshell.Io</code>. It's
-            the escape hatch that lets a QML shell talk to
-            <em>anything</em> &mdash; including Niri's IPC and every SystemNix
-            service. That is what makes a custom shell viable here.
+            The single most important row is <code>Quickshell.Io</code>. It's the escape hatch that
+            lets a QML shell talk to <em>anything</em> &mdash; including Niri's IPC and every
+            SystemNix service. That is what makes a custom shell viable here.
           </p>
         </section>
 
         <!-- ============================ 02 CURRENT STATE ============================ -->
         <section id="current-state">
-          <h2>
-            <span class="num">02</span>Current State &mdash; What evo-x2 Runs
-            Today
-          </h2>
+          <h2><span class="num">02</span>Current State &mdash; What evo-x2 Runs Today</h2>
           <p>
-            The desktop is Niri (scrollable-tiling Wayland compositor) wrapped
-            in a chain of specialist shell tools. Each has its own config
-            language, its own theme, and its own way of reaching system state.
-            Today this works &mdash; but it's nine sources of truth and a lot of
-            shell-script glue in <code>waybar.nix</code>.
+            The desktop is Niri (scrollable-tiling Wayland compositor) wrapped in a chain of
+            specialist shell tools. Each has its own config language, its own theme, and its own way
+            of reaching system state. Today this works &mdash; but it's nine sources of truth and a
+            lot of shell-script glue in <code>waybar.nix</code>.
           </p>
           <table class="compare">
             <thead>
@@ -1174,34 +1139,25 @@
                 <td>Compositor</td>
                 <td>Niri (niri-flake)</td>
                 <td>KDL in HM</td>
-                <td>
-                  Scrollable tiling; <code>niri msg</code> IPC + event stream
-                </td>
+                <td>Scrollable tiling; <code>niri msg</code> IPC + event stream</td>
               </tr>
               <tr>
                 <td>Status bar</td>
                 <td>Waybar</td>
                 <td>JSON + CSS</td>
-                <td>
-                  5 custom shell modules: camera, DNS stats, media, clipboard,
-                  weather
-                </td>
+                <td>5 custom shell modules: camera, DNS stats, media, clipboard, weather</td>
               </tr>
               <tr>
                 <td>Launcher</td>
                 <td>Rofi</td>
                 <td>Rasi</td>
-                <td>
-                  drun + cliphist + emoji + calc + keybinds + notif history
-                </td>
+                <td>drun + cliphist + emoji + calc + keybinds + notif history</td>
               </tr>
               <tr>
                 <td>Notifications</td>
                 <td>Dunst</td>
                 <td>libnotify config</td>
-                <td>
-                  History surfaced back through Rofi via <code>dunstctl</code>
-                </td>
+                <td>History surfaced back through Rofi via <code>dunstctl</code></td>
               </tr>
               <tr>
                 <td>Screen lock</td>
@@ -1243,10 +1199,9 @@
           </table>
           <div class="callout callout-amber">
             <strong>The hidden cost</strong>
-            Five config dialects, theme values duplicated across all of them,
-            and the bar's "live data" (camera, DNS, weather) is reimplemented as
-            bespoke shell scripts. Every new widget means another script and
-            another JSON-shape to parse.
+            Five config dialects, theme values duplicated across all of them, and the bar's "live
+            data" (camera, DNS, weather) is reimplemented as bespoke shell scripts. Every new widget
+            means another script and another JSON-shape to parse.
           </div>
 
           <h3>The sprawl, visualised</h3>
@@ -1285,9 +1240,7 @@
           <div class="diagram">
             <span class="node node-core">Niri</span>
             <span class="arrow">&rarr;</span>
-            <span
-              class="node node-core"
-              style="background: var(--solution); color: var(--surface)"
+            <span class="node node-core" style="background: var(--solution); color: var(--surface)"
               >Quickshell<br /><small>one QML brain</small></span
             >
             <span class="arrow">&rarr;</span>
@@ -1311,8 +1264,8 @@
               color: var(--text-faint);
             "
           >
-            One shell. One language. One theme. One source of reactive state
-            &mdash; wired to everything.
+            One shell. One language. One theme. One source of reactive state &mdash; wired to
+            everything.
           </p>
         </section>
 
@@ -1320,9 +1273,8 @@
         <section id="replace">
           <h2><span class="num">03</span>The Replacement Matrix</h2>
           <p>
-            For each current tool: can Quickshell take over? Some are direct
-            drops-in, some are better <em>augmented</em> than replaced, and a
-            few should stay as-is.
+            For each current tool: can Quickshell take over? Some are direct drops-in, some are
+            better <em>augmented</em> than replaced, and a few should stay as-is.
           </p>
           <table class="compare">
             <thead>
@@ -1339,36 +1291,26 @@
                 <td><code>PanelWindow</code> + services</td>
                 <td class="yes">Replace</td>
                 <td>
-                  One reactive bar; live widgets instead of polled shell
-                  scripts; shared theme
+                  One reactive bar; live widgets instead of polled shell scripts; shared theme
                 </td>
               </tr>
               <tr>
                 <td>Dunst</td>
                 <td><code>NotificationServer</code></td>
                 <td class="yes">Replace</td>
-                <td>
-                  Built-in daemon with images, actions, inline replies, and a
-                  unified history
-                </td>
+                <td>Built-in daemon with images, actions, inline replies, and a unified history</td>
               </tr>
               <tr>
                 <td>Wlogout</td>
                 <td><code>FloatingWindow</code> menu</td>
                 <td class="yes">Replace</td>
-                <td>
-                  A themed power overlay reusing the shell's theme &amp;
-                  animations
-                </td>
+                <td>A themed power overlay reusing the shell's theme &amp; animations</td>
               </tr>
               <tr>
                 <td>Swaylock</td>
                 <td><code>WlSessionLock</code> + <code>Pam</code></td>
                 <td class="yes">Replace</td>
-                <td>
-                  Wayland session lock with real PAM validation, media/clock
-                  widgets, blur
-                </td>
+                <td>Wayland session lock with real PAM validation, media/clock widgets, blur</td>
               </tr>
               <tr>
                 <td>polkit_gnome</td>
@@ -1381,8 +1323,7 @@
                 <td><code>SystemTray</code></td>
                 <td class="yes">Add</td>
                 <td>
-                  Waybar's SNI is unreliable; Quickshell ships a proper
-                  StatusNotifierItem host
+                  Waybar's SNI is unreliable; Quickshell ships a proper StatusNotifierItem host
                 </td>
               </tr>
               <tr>
@@ -1390,26 +1331,22 @@
                 <td>Custom <code>FloatingWindow</code></td>
                 <td class="no">Augment</td>
                 <td>
-                  Buildable, but Rofi is fast, mature, and already integrated
-                  &mdash; keep until a custom launcher is clearly better
+                  Buildable, but Rofi is fast, mature, and already integrated &mdash; keep until a
+                  custom launcher is clearly better
                 </td>
               </tr>
               <tr>
                 <td>Rofi (calc/emoji)</td>
                 <td>Custom runners</td>
                 <td class="no">Keep</td>
-                <td>
-                  rofi-calc / rofi-emoji are excellent and focused; low payoff
-                  to rebuild
-                </td>
+                <td>rofi-calc / rofi-emoji are excellent and focused; low payoff to rebuild</td>
               </tr>
               <tr>
                 <td>cliphist + Rofi picker</td>
                 <td>Custom clipboard manager</td>
                 <td class="no">Augment</td>
                 <td>
-                  Keep cliphist as the store; build a richer QML picker with
-                  image previews on top
+                  Keep cliphist as the store; build a richer QML picker with image previews on top
                 </td>
               </tr>
               <tr>
@@ -1417,8 +1354,8 @@
                 <td><code>IdleMonitor</code> + <code>IdleInhibitor</code></td>
                 <td class="no">Keep (mostly)</td>
                 <td>
-                  Swayidle owns system-level suspend/lock reliably; use
-                  Quickshell only for the UX (caffeine toggle, dim)
+                  Swayidle owns system-level suspend/lock reliably; use Quickshell only for the UX
+                  (caffeine toggle, dim)
                 </td>
               </tr>
               <tr>
@@ -1426,8 +1363,8 @@
                 <td>greetd + <code>Greetd</code> service</td>
                 <td class="no">Later / optional</td>
                 <td>
-                  A custom greeter is a big, security-sensitive project; only
-                  after the in-session shell is proven
+                  A custom greeter is a big, security-sensitive project; only after the in-session
+                  shell is proven
                 </td>
               </tr>
               <tr>
@@ -1440,10 +1377,9 @@
           </table>
           <div class="callout callout-teal">
             <strong>Headline</strong>
-            Six clean replacements, one valuable addition (system tray), and a
-            few tools to
-            <em>keep and integrate</em> rather than rebuild. That's a real
-            consolidation &mdash; not a rewrite-for-its-own-sake.
+            Six clean replacements, one valuable addition (system tray), and a few tools to
+            <em>keep and integrate</em> rather than rebuild. That's a real consolidation &mdash; not
+            a rewrite-for-its-own-sake.
           </div>
         </section>
 
@@ -1451,70 +1387,61 @@
         <section id="build">
           <h2><span class="num">04</span>Everything Cool We Could Build</h2>
           <p>
-            This is the creative core. The differentiator isn't "another pretty
-            bar" &mdash; it's a shell that reads live state from
-            <em>this</em> system's own services and composes them into one
-            reactive surface. Grouped into five pillars.
+            This is the creative core. The differentiator isn't "another pretty bar" &mdash; it's a
+            shell that reads live state from
+            <em>this</em> system's own services and composes them into one reactive surface. Grouped
+            into five pillars.
           </p>
 
           <h3>Pillar A &mdash; A unified reactive bar</h3>
           <p>
-            One <code>PanelWindow</code> that replaces Waybar and its five
-            hand-rolled scripts. Because Quickshell binds reactively, modules
-            update the instant state changes &mdash; no polling, no JSON
-            parsing, no <code>exec</code> scripts.
+            One <code>PanelWindow</code> that replaces Waybar and its five hand-rolled scripts.
+            Because Quickshell binds reactively, modules update the instant state changes &mdash; no
+            polling, no JSON parsing, no <code>exec</code> scripts.
           </p>
           <div class="grid-3">
             <div class="card card-solution">
               <strong>Niri workspaces &amp; columns</strong>
               <p>
-                Live workspace strip + focused window title, fed by the qml-niri
-                plugin or
+                Live workspace strip + focused window title, fed by the qml-niri plugin or
                 <code>niri msg</code> event stream.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Media with art</strong>
               <p>
-                Now-playing title, cover art, and controls from the MPRIS
-                service &mdash; replaces
+                Now-playing title, cover art, and controls from the MPRIS service &mdash; replaces
                 <code>waybar-media</code>.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Audio with live meters</strong>
               <p>
-                Per-sink/source VU meters from Pipewire peak monitors &mdash;
-                something Waybar simply cannot do.
+                Per-sink/source VU meters from Pipewire peak monitors &mdash; something Waybar
+                simply cannot do.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Network &amp; connectivity</strong>
               <p>
-                Wi-Fi SSID, signal, wired link state, and connectivity from
-                NetworkManager &mdash; plus a scan picker.
+                Wi-Fi SSID, signal, wired link state, and connectivity from NetworkManager &mdash;
+                plus a scan picker.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Power &amp; profiles</strong>
               <p>
-                Battery + a one-click power-profile switcher (performance /
-                balanced / power-saver).
+                Battery + a one-click power-profile switcher (performance / balanced / power-saver).
               </p>
             </div>
             <div class="card card-solution">
               <strong>System tray done right</strong>
-              <p>
-                A real StatusNotifierItem host &mdash; the feature Waybar
-                struggles with most.
-              </p>
+              <p>A real StatusNotifierItem host &mdash; the feature Waybar struggles with most.</p>
             </div>
           </div>
 
           <h3>The bar, visualised</h3>
-          <p>
-            What a SystemNix-tuned Quickshell bar could look like at a glance:
-          </p>
+          <p>What a SystemNix-tuned Quickshell bar could look like at a glance:</p>
           <pre
             style="
               background: var(--surface-sunken);
@@ -1538,60 +1465,49 @@
               margin-top: -0.5rem;
             "
           >
-            Workspaces &middot; focused window &middot; AI model + VRAM &middot;
-            DNS/WAN/SigNoz health &middot; media &middot; tray &middot; GPU temp
-            &middot; clock
+            Workspaces &middot; focused window &middot; AI model + VRAM &middot; DNS/WAN/SigNoz
+            health &middot; media &middot; tray &middot; GPU temp &middot; clock
           </p>
 
           <h3>Pillar B &mdash; Mission Control (the OSD / quick-settings)</h3>
           <p>
-            A <code>PopupWindow</code> &mdash; think GNOME's quick settings or a
-            phone's control center &mdash; that aggregates every toggle and
-            slider in one animated panel: volume + brightness sliders with live
-            meters, Wi-Fi/Bluetooth pickers, power-profile radios, a
-            Do-Not-Disturb switch, a Caffeine (idle-inhibit) toggle,
-            night-light, and the now-playing widget with scrubbing. This is the
-            surface that makes the shell feel like a
+            A <code>PopupWindow</code> &mdash; think GNOME's quick settings or a phone's control
+            center &mdash; that aggregates every toggle and slider in one animated panel: volume +
+            brightness sliders with live meters, Wi-Fi/Bluetooth pickers, power-profile radios, a
+            Do-Not-Disturb switch, a Caffeine (idle-inhibit) toggle, night-light, and the
+            now-playing widget with scrubbing. This is the surface that makes the shell feel like a
             <em>desktop environment</em>, not a pile of tools.
           </p>
 
-          <h3>
-            Pillar C &mdash; Notifications, lock, and power &mdash; unified
-          </h3>
-          <p>
-            Replace three disjoint tools (Dunst, Swaylock, Wlogout) with one
-            themed family:
-          </p>
+          <h3>Pillar C &mdash; Notifications, lock, and power &mdash; unified</h3>
+          <p>Replace three disjoint tools (Dunst, Swaylock, Wlogout) with one themed family:</p>
           <div class="grid-2">
             <div class="card">
               <strong>Rich notification daemon</strong>
               <p>
-                Banners with images, app icons, action buttons, and inline
-                reply. A swipe-down center shows grouped history &mdash; no more
-                piping <code>dunstctl</code> through Rofi.
+                Banners with images, app icons, action buttons, and inline reply. A swipe-down
+                center shows grouped history &mdash; no more piping <code>dunstctl</code> through
+                Rofi.
               </p>
             </div>
             <div class="card">
               <strong>Session lock with a soul</strong>
               <p>
-                <code>WlSessionLock</code> + PAM: a clock, the now-playing
-                track, blur backdrop, and proper authentication &mdash; themed
-                identically to the bar.
+                <code>WlSessionLock</code> + PAM: a clock, the now-playing track, blur backdrop, and
+                proper authentication &mdash; themed identically to the bar.
               </p>
             </div>
             <div class="card">
               <strong>Power overlay</strong>
               <p>
-                A <code>FloatingWindow</code> replacing Wlogout: lock / logout /
-                reboot / shutdown / suspend, with the same visual language
-                everywhere.
+                A <code>FloatingWindow</code> replacing Wlogout: lock / logout / reboot / shutdown /
+                suspend, with the same visual language everywhere.
               </p>
             </div>
             <div class="card">
               <strong>In-shell polkit</strong>
               <p>
-                <code>PolkitAgent</code> prompts that match the desktop instead
-                of a GTK island.
+                <code>PolkitAgent</code> prompts that match the desktop instead of a GTK island.
               </p>
             </div>
           </div>
@@ -1599,11 +1515,10 @@
           <h3>Pillar D &mdash; A SystemNix-native status layer</h3>
           <p>
             <em>This is the part that makes it exceptional, not generic.</em>
-            SystemNix already runs a fleet of services with HTTP/JSON surfaces.
-            Quickshell's
+            SystemNix already runs a fleet of services with HTTP/JSON surfaces. Quickshell's
             <code>Quickshell.Io</code>
-            can poll or stream them straight into widgets &mdash; turning the
-            bar into a live ops dashboard for the machine you're sitting at.
+            can poll or stream them straight into widgets &mdash; turning the bar into a live ops
+            dashboard for the machine you're sitting at.
           </p>
           <table>
             <thead>
@@ -1625,33 +1540,22 @@
               <tr>
                 <td>Dual-WAN / dns-failover</td>
                 <td>VRRP state</td>
-                <td>
-                  Active uplink + failover indicator so you see a link flip in
-                  real time
-                </td>
+                <td>Active uplink + failover indicator so you see a link flip in real time</td>
               </tr>
               <tr>
                 <td>Gatus / SigNoz</td>
                 <td>HTTP endpoints</td>
-                <td>
-                  Service-health dots in the bar &mdash; red the moment
-                  something goes down
-                </td>
+                <td>Service-health dots in the bar &mdash; red the moment something goes down</td>
               </tr>
               <tr>
                 <td>BTRFS snapshots</td>
                 <td><code>btrfs-verify</code> timer</td>
-                <td>
-                  Snapshot freshness badge &mdash; warn if snapshots are &gt;3
-                  days stale
-                </td>
+                <td>Snapshot freshness badge &mdash; warn if snapshots are &gt;3 days stale</td>
               </tr>
               <tr>
                 <td>GPU / NPU (amdgpu, amd-npu)</td>
                 <td>sysfs / rocm</td>
-                <td>
-                  VRAM + NPU utilisation for AI workloads, next to CPU/RAM
-                </td>
+                <td>VRAM + NPU utilisation for AI workloads, next to CPU/RAM</td>
               </tr>
               <tr>
                 <td>emeet-pixyd camera</td>
@@ -1664,49 +1568,37 @@
               <tr>
                 <td>sops secrets</td>
                 <td>file presence</td>
-                <td>
-                  A subtle indicator if a guarded secret is missing for an
-                  enabled service
-                </td>
+                <td>A subtle indicator if a guarded secret is missing for an enabled service</td>
               </tr>
               <tr>
                 <td>Homepage / Ollama / Forgejo</td>
                 <td>HTTP</td>
-                <td>
-                  Quick-launch tiles driven by the same config as the Homepage
-                  dashboard
-                </td>
+                <td>Quick-launch tiles driven by the same config as the Homepage dashboard</td>
               </tr>
             </tbody>
           </table>
           <div class="callout callout-teal">
             <strong>The vision</strong>
-            A bar that doesn't just show the time and volume &mdash; it shows
-            whether your failover DNS is up, how many ads were blocked today,
-            and if your last BTRFS snapshot is fresh. A desktop shell that knows
-            its own machine.
+            A bar that doesn't just show the time and volume &mdash; it shows whether your failover
+            DNS is up, how many ads were blocked today, and if your last BTRFS snapshot is fresh. A
+            desktop shell that knows its own machine.
           </div>
 
-          <h3>
-            Pillar E &mdash; Signature features (the things no upstream shell
-            has)
-          </h3>
+          <h3>Pillar E &mdash; Signature features (the things no upstream shell has)</h3>
           <p>
             These are the widgets that make this shell
-            <em>uniquely SystemNix</em>. Every service below already runs on
-            evo-x2 with an HTTP or IPC surface &mdash; Quickshell's
-            <code>Quickshell.Io</code> reads them directly into reactive
-            widgets. No other dotfiles shell can do this, because no other
-            dotfiles shell knows about <em>your</em> services.
+            <em>uniquely SystemNix</em>. Every service below already runs on evo-x2 with an HTTP or
+            IPC surface &mdash; Quickshell's <code>Quickshell.Io</code> reads them directly into
+            reactive widgets. No other dotfiles shell can do this, because no other dotfiles shell
+            knows about <em>your</em> services.
           </p>
           <div class="grid-2">
             <div class="card card-solution">
               <strong>AI Brain Monitor &mdash; Ollama :11434</strong>
               <p>
-                Poll <code>/api/ps</code> to show the
-                <em>currently loaded</em> model, its VRAM footprint, and
-                tokens/sec. Know at a glance whether <code>llama3.1:8b</code> is
-                hot or if the GPU is free. Click to swap models from a popup.
+                Poll <code>/api/ps</code> to show the <em>currently loaded</em> model, its VRAM
+                footprint, and tokens/sec. Know at a glance whether <code>llama3.1:8b</code> is hot
+                or if the GPU is free. Click to swap models from a popup.
               </p>
               <pre><code><span class="tok-comment">// Real QML &mdash; reads Ollama's live state</span>
 <span class="tok-keyword">Process</span> {
@@ -1722,60 +1614,52 @@
 }</code></pre>
             </div>
             <div class="card card-solution">
-              <strong
-                >Voice Agent State &mdash; LiveKit :7880 + Whisper :7860</strong
-              >
+              <strong>Voice Agent State &mdash; LiveKit :7880 + Whisper :7860</strong>
               <p>
-                When Hermes or a voice agent is listening, the bar shows a live
-                transcription indicator with an animated waveform. Know if the
-                Whisper ASR pipeline is transcribing, and whether LiveKit has an
-                active session &mdash; without switching windows.
+                When Hermes or a voice agent is listening, the bar shows a live transcription
+                indicator with an animated waveform. Know if the Whisper ASR pipeline is
+                transcribing, and whether LiveKit has an active session &mdash; without switching
+                windows.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Task Radar &mdash; Taskchampion :10222</strong>
               <p>
-                Sync with the Taskwarrior server and show pending task count by
-                priority in the bar. Overdue items pulse red. Click to expand a
-                prioritised list with project tags &mdash; your to-do is always
-                one glance away.
+                Sync with the Taskwarrior server and show pending task count by priority in the bar.
+                Overdue items pulse red. Click to expand a prioritised list with project tags
+                &mdash; your to-do is always one glance away.
               </p>
             </div>
             <div class="card card-solution">
               <strong>Photo Memory &mdash; Immich :2283</strong>
               <p>
-                The lock screen and a bar widget pull "on this day" memories
-                from Immich's API. A fresh photo every time you unlock &mdash;
-                your own personal ambient display, powered by the photo library
-                already running on this machine.
+                The lock screen and a bar widget pull "on this day" memories from Immich's API. A
+                fresh photo every time you unlock &mdash; your own personal ambient display, powered
+                by the photo library already running on this machine.
               </p>
             </div>
             <div class="card card-solution">
-              <strong
-                >Server Pulse &mdash; Minecraft :25565 + Forgejo :3000</strong
-              >
+              <strong>Server Pulse &mdash; Minecraft :25565 + Forgejo :3000</strong>
               <p>
-                Minecraft server player count ("3/20 online") and Forgejo CI/PR
-                status as unobtrusive dots. Click for a dropdown with player
-                names or pending reviews. The desktop that knows who's on your
-                server.
+                Minecraft server player count ("3/20 online") and Forgejo CI/PR status as
+                unobtrusive dots. Click for a dropdown with player names or pending reviews. The
+                desktop that knows who's on your server.
               </p>
             </div>
             <div class="card card-solution">
               <strong>CRM Pipeline &mdash; Twenty :3200</strong>
               <p>
-                Active opportunity count and total pipeline value from Twenty
-                CRM, shown when you hover the workspace clock. A glanceable
-                pulse on your freelance pipeline without opening a browser tab.
+                Active opportunity count and total pipeline value from Twenty CRM, shown when you
+                hover the workspace clock. A glanceable pulse on your freelance pipeline without
+                opening a browser tab.
               </p>
             </div>
           </div>
           <div class="callout callout-amber">
             <strong>Why this is the differentiator</strong>
-            Every Quickshell dotfile you'll find on the internet shows the same
-            things: workspaces, clock, volume, battery. This shell would be the
-            only one in the world that shows your AI model's VRAM, your
-            ad-blocker stats, your task radar, and your Minecraft server &mdash;
+            Every Quickshell dotfile you'll find on the internet shows the same things: workspaces,
+            clock, volume, battery. This shell would be the only one in the world that shows your AI
+            model's VRAM, your ad-blocker stats, your task radar, and your Minecraft server &mdash;
             because it's wired to <em>this</em> machine.
           </div>
 
@@ -1784,46 +1668,44 @@
             <div class="card card-warning">
               <strong>Dynamic theming</strong>
               <p>
-                <code>ColorQuantizer</code> extracts a palette from the current
-                wallpaper and recolours the whole shell &mdash; one source of
-                truth tied to <code>colorScheme.slug</code>.
+                <code>ColorQuantizer</code> extracts a palette from the current wallpaper and
+                recolours the whole shell &mdash; one source of truth tied to
+                <code>colorScheme.slug</code>.
               </p>
             </div>
             <div class="card card-warning">
               <strong>Niri tile previews</strong>
               <p>
-                Niri exposes column/tile geometry &mdash; render live
-                mini-previews of windows in an overview, a feature unique to
-                scrollable tiling.
+                Niri exposes column/tile geometry &mdash; render live mini-previews of windows in an
+                overview, a feature unique to scrollable tiling.
               </p>
             </div>
             <div class="card card-warning">
               <strong>Blurred popup backdrops</strong>
               <p>
-                <code>BackgroundEffect</code> gaussian blur behind
-                launchers/menus &mdash; the frosted-glass look without a
-                separate compositor plugin.
+                <code>BackgroundEffect</code> gaussian blur behind launchers/menus &mdash; the
+                frosted-glass look without a separate compositor plugin.
               </p>
             </div>
             <div class="card card-warning">
               <strong>Caffeine &amp; focus modes</strong>
               <p>
-                <code>IdleInhibitor</code> as a one-tap toggle; a "focus" mode
-                that mutes notifications and pins a workspace.
+                <code>IdleInhibitor</code> as a one-tap toggle; a "focus" mode that mutes
+                notifications and pins a workspace.
               </p>
             </div>
             <div class="card card-warning">
               <strong>Clipboard with previews</strong>
               <p>
-                A QML picker over cliphist that renders image thumbnails &mdash;
-                not just text lines.
+                A QML picker over cliphist that renders image thumbnails &mdash; not just text
+                lines.
               </p>
             </div>
             <div class="card card-warning">
               <strong>Multi-monitor aware</strong>
               <p>
-                <code>Variants</code> per-screen bars &mdash; different modules
-                on the laptop panel vs an external display.
+                <code>Variants</code> per-screen bars &mdash; different modules on the laptop panel
+                vs an external display.
               </p>
             </div>
           </div>
@@ -1831,71 +1713,61 @@
           <h3>A day in the life</h3>
           <div class="card" style="border-left: 4px solid var(--accent)">
             <p style="font-style: italic; color: var(--text-muted)">
-              You unlock the screen. Immich has loaded <em>your</em> "on this
-              day" photo behind the clock &mdash; not a stock wallpaper. The bar
-              shows 3 pending high-priority tasks from Taskchampion, pulsing
-              gently. Your Ollama model is warm at 6.2&nbsp;G VRAM; the bar
+              You unlock the screen. Immich has loaded <em>your</em> "on this day" photo behind the
+              clock &mdash; not a stock wallpaper. The bar shows 3 pending high-priority tasks from
+              Taskchampion, pulsing gently. Your Ollama model is warm at 6.2&nbsp;G VRAM; the bar
               knows before you do.
             </p>
             <p style="font-style: italic; color: var(--text-muted)">
-              Mid-morning, the DNS-blocker count ticks past 2,000 ads blocked
-              today &mdash; a tiny green badge. A SigNoz dot turns amber: a
-              service is degraded. You click it, and a popup shows the failing
-              endpoint without opening a browser. You fix it, the dot goes
+              Mid-morning, the DNS-blocker count ticks past 2,000 ads blocked today &mdash; a tiny
+              green badge. A SigNoz dot turns amber: a service is degraded. You click it, and a
+              popup shows the failing endpoint without opening a browser. You fix it, the dot goes
               green, the bar settles.
             </p>
             <p style="font-style: italic; color: var(--text-muted)">
-              You start a voice agent session. The bar lights up with a live
-              waveform and real-time transcription from Whisper. Minecraft
-              players tick up to 4/20 in a subtle counter. You press a key, the
-              Mission Control OSD slides down &mdash; you switch to power-saver,
-              mute notifications (focus mode), and inhibit idle. The whole shell
-              dims slightly to acknowledge the change. One brain. One theme. No
-              tools out of sync.
+              You start a voice agent session. The bar lights up with a live waveform and real-time
+              transcription from Whisper. Minecraft players tick up to 4/20 in a subtle counter. You
+              press a key, the Mission Control OSD slides down &mdash; you switch to power-saver,
+              mute notifications (focus mode), and inhibit idle. The whole shell dims slightly to
+              acknowledge the change. One brain. One theme. No tools out of sync.
             </p>
           </div>
         </section>
 
         <!-- ============================ 05 NIRI REALITY ============================ -->
         <section id="niri">
-          <h2>
-            <span class="num">05</span>The Niri Reality &mdash; Be Honest About
-            the Gap
-          </h2>
+          <h2><span class="num">05</span>The Niri Reality &mdash; Be Honest About the Gap</h2>
           <p>
             Quickshell has native compositor modules for
             <strong>Hyprland</strong> and <strong>i3/Sway</strong>. It does
-            <strong>not</strong> have one for Niri, and Niri does not implement
-            the i3 IPC. This is the single most important technical constraint.
-            But it is <em>solved</em> &mdash; there are three viable paths.
+            <strong>not</strong> have one for Niri, and Niri does not implement the i3 IPC. This is
+            the single most important technical constraint. But it is <em>solved</em> &mdash; there
+            are three viable paths.
           </p>
           <div class="issue issue-nice" id="path-plugin">
             <span class="severity severity-nice">Recommended</span>
             <h3>The qml-niri plugin</h3>
             <div class="where">
-              github.com/imiric/qml-niri &middot; needs Quickshell &ge;0.3.0,
-              Niri &ge;26.04
+              github.com/imiric/qml-niri &middot; needs Quickshell &ge;0.3.0, Niri &ge;26.04
             </div>
             <p>
               A QML plugin wrapping Niri's IPC into native Qt types:
-              <code>WorkspaceModel</code>, <code>WindowModel</code>, and
-              <code>focusedWindow</code>. Its flake even ships a Quickshell
-              build with the plugin pre-loaded. The cleanest path to a native
-              feel.
+              <code>WorkspaceModel</code>, <code>WindowModel</code>, and <code>focusedWindow</code>.
+              Its flake even ships a Quickshell build with the plugin pre-loaded. The cleanest path
+              to a native feel.
             </p>
           </div>
           <div class="issue issue-important" id="path-socket">
             <span class="severity severity-important">Most control</span>
             <h3>Direct socket to <code>$NIRI_SOCKET</code></h3>
             <div class="where">
-              github.com/snowarch/iNiR &middot; the approach full Niri shells
-              use
+              github.com/snowarch/iNiR &middot; the approach full Niri shells use
             </div>
             <p>
               Open a persistent connection to Niri's socket, send
-              <code>"EventStream"</code>, and parse newline-delimited JSON for
-              workspace/window state. More code, but full access to
-              Niri-specific data like tile geometry (enables live previews).
+              <code>"EventStream"</code>, and parse newline-delimited JSON for workspace/window
+              state. More code, but full access to Niri-specific data like tile geometry (enables
+              live previews).
             </p>
           </div>
           <div class="issue issue-important" id="path-process">
@@ -1903,41 +1775,37 @@
             <h3><code>Quickshell.Io.Process</code> + <code>niri msg</code></h3>
             <div class="where">e.g. <code>niri msg -j workspaces</code></div>
             <p>
-              Spawn <code>niri msg</code> and parse JSON. Simple, but one-shot
-              &mdash; you'd have to poll or combine with the event stream for
-              live updates. Fine for occasional queries, not for a reactive bar.
+              Spawn <code>niri msg</code> and parse JSON. Simple, but one-shot &mdash; you'd have to
+              poll or combine with the event stream for live updates. Fine for occasional queries,
+              not for a reactive bar.
             </p>
           </div>
           <div class="callout callout-teal">
             <strong>Good news</strong>
             Window titles work out of the box via
             <code>Quickshell.Wayland.ToplevelManager</code> (Niri supports
-            <code>wlr_foreign_toplevel</code>). And there are already complete
-            Niri+Quickshell shells to learn from &mdash;
-            <strong>iNiR</strong> (bar, dock, overview, notifications, lock,
-            settings) and <strong>DankMaterialShell</strong>
+            <code>wlr_foreign_toplevel</code>). And there are already complete Niri+Quickshell
+            shells to learn from &mdash; <strong>iNiR</strong> (bar, dock, overview, notifications,
+            lock, settings) and <strong>DankMaterialShell</strong>
             (modular, supports Niri + Hyprland).
           </div>
         </section>
 
         <!-- ============================ 06 NIXOS INTEGRATION ============================ -->
         <section id="nixos">
-          <h2>
-            <span class="num">06</span>How It Slots Into the SystemNix Flake
-          </h2>
+          <h2><span class="num">06</span>How It Slots Into the SystemNix Flake</h2>
           <p>
-            The Nix story is clean and fits the existing flake-parts conventions
-            almost exactly. No new patterns required &mdash; just the standard
-            "add an input, add a service module" flow this repo already uses.
+            The Nix story is clean and fits the existing flake-parts conventions almost exactly. No
+            new patterns required &mdash; just the standard "add an input, add a service module"
+            flow this repo already uses.
           </p>
           <div class="migration-step">
             <div class="migration-num">1</div>
             <div class="migration-content">
               <h4>Add the flake input (with <code>follows</code>)</h4>
               <p>
-                Track the upstream flake, and <strong>must</strong> follow
-                nixpkgs so Qt versions stay in lockstep &mdash; mismatched Qt
-                causes crashes.
+                Track the upstream flake, and <strong>must</strong> follow nixpkgs so Qt versions
+                stay in lockstep &mdash; mismatched Qt causes crashes.
               </p>
               <pre><code><span class="tok-attr">quickshell</span> = {
   <span class="tok-attr">url</span> = <span class="tok-string">"git+https://git.outfoxxed.me/outfoxxed/quickshell"</span>;
@@ -1951,9 +1819,8 @@
             <div class="migration-content">
               <h4>Build the package, optional extra modules</h4>
               <p>
-                Use <code>.withModules [&hellip;]</code> if the config needs the
-                qml-niri plugin or Qt5Compat (for gaussian blur); plain
-                <code>.default</code> otherwise.
+                Use <code>.withModules [&hellip;]</code> if the config needs the qml-niri plugin or
+                Qt5Compat (for gaussian blur); plain <code>.default</code> otherwise.
               </p>
               <pre><code><span class="tok-attr">qsPkg</span> = <span class="tok-attr">quickshell</span>.<span class="tok-attr">packages</span>.<span class="tok-builtin">${system}</span>.<span class="tok-attr">default</span>;<span class="tok-comment"># .withModules [ qml-niri ]</span></code></pre>
             </div>
@@ -1964,9 +1831,9 @@
               <h4>Ship the QML config declaratively</h4>
               <p>
                 Either vendor the QML under
-                <code>modules/nixos/services/quickshell/</code> and symlink, or
-                write it into the store and launch via a systemd user service
-                (the established pattern for the existing HM tools).
+                <code>modules/nixos/services/quickshell/</code> and symlink, or write it into the
+                store and launch via a systemd user service (the established pattern for the
+                existing HM tools).
               </p>
             </div>
           </div>
@@ -1975,10 +1842,9 @@
             <div class="migration-content">
               <h4>Tie into existing single sources of truth</h4>
               <p>
-                Theme from <code>theme.font.mono</code> /
-                <code>colorScheme.slug</code> (Catppuccin Mocha already
-                declared). Derive any ports from <code>ports.*</code>. This
-                keeps AGENTS.md's "never hardcode" rules intact.
+                Theme from <code>theme.font.mono</code> / <code>colorScheme.slug</code> (Catppuccin
+                Mocha already declared). Derive any ports from <code>ports.*</code>. This keeps
+                AGENTS.md's "never hardcode" rules intact.
               </p>
             </div>
           </div>
@@ -1989,40 +1855,34 @@
               <p>
                 Start via
                 <code>spawn-at-startup "quickshell" "--config" &hellip;</code>
-                in niri config &mdash; keeping the compositor as the session
-                owner, consistent with how Waybar is started today.
+                in niri config &mdash; keeping the compositor as the session owner, consistent with
+                how Waybar is started today.
               </p>
             </div>
           </div>
           <div class="callout callout-amber">
             <strong>Where it lives</strong>
             Most cleanly as a Home-Manager module under
-            <code>platforms/nixos/desktop/quickshell.nix</code> (next to
-            <code>waybar.nix</code>), enabled in <code>home.nix</code>. A
-            flake-parts service module would only be needed if it ever exposes
-            system-level options or ports.
+            <code>platforms/nixos/desktop/quickshell.nix</code> (next to <code>waybar.nix</code>),
+            enabled in <code>home.nix</code>. A flake-parts service module would only be needed if
+            it ever exposes system-level options or ports.
           </div>
           <div class="callout callout-teal">
             <strong>Hot-reload dev loop &mdash; the killer workflow</strong>
-            During development, run <code>quickshell</code> against a config
-            path outside the Nix store (e.g. a git-tracked checkout). Edit QML
-            &rarr; save &rarr; the shell updates instantly. No
-            <code>just switch</code>, no rebuild, no logout. This is the fastest
-            UI iteration loop this desktop has ever had.
+            During development, run <code>quickshell</code> against a config path outside the Nix
+            store (e.g. a git-tracked checkout). Edit QML &rarr; save &rarr; the shell updates
+            instantly. No <code>just switch</code>, no rebuild, no logout. This is the fastest UI
+            iteration loop this desktop has ever had.
           </div>
         </section>
 
         <!-- ============================ 07 BUILD VS BUY ============================ -->
         <section id="build-vs-buy">
-          <h2>
-            <span class="num">07</span>Build vs Buy &mdash; Don't Reinvent the
-            Wheel First
-          </h2>
+          <h2><span class="num">07</span>Build vs Buy &mdash; Don't Reinvent the Wheel First</h2>
           <p>
-            The Quickshell community already ships complete, beautiful shells.
-            Before writing thousands of lines of QML, weigh the options. The
-            recommendation is not "build from zero" &mdash; it's "stand on a
-            proven shell, then diverge where it matters."
+            The Quickshell community already ships complete, beautiful shells. Before writing
+            thousands of lines of QML, weigh the options. The recommendation is not "build from
+            zero" &mdash; it's "stand on a proven shell, then diverge where it matters."
           </p>
           <table class="compare">
             <thead>
@@ -2047,9 +1907,7 @@
                 <td>Low</td>
                 <td class="no">Hyprland-only</td>
                 <td>Medium</td>
-                <td>
-                  Same &mdash; the gold standard for visuals to learn from
-                </td>
+                <td>Same &mdash; the gold standard for visuals to learn from</td>
               </tr>
               <tr>
                 <td><strong>iNiR</strong> (snowarch)</td>
@@ -2057,8 +1915,7 @@
                 <td class="yes">Niri-native</td>
                 <td>High</td>
                 <td class="yes">
-                  <strong>Best starting point</strong> &mdash; full Niri shell
-                  on Quickshell
+                  <strong>Best starting point</strong> &mdash; full Niri shell on Quickshell
                 </td>
               </tr>
               <tr>
@@ -2079,10 +1936,9 @@
           </table>
           <div class="callout callout-teal">
             <strong>Recommended path</strong>
-            Fork iNiR (or DankMaterialShell) as the base, theme it to Catppuccin
-            Mocha, then add the SystemNix-native status widgets (Pillar D) that
-            no upstream shell has. You get a polished shell on day one and the
-            unique ops-dashboard features on top.
+            Fork iNiR (or DankMaterialShell) as the base, theme it to Catppuccin Mocha, then add the
+            SystemNix-native status widgets (Pillar D) that no upstream shell has. You get a
+            polished shell on day one and the unique ops-dashboard features on top.
           </div>
         </section>
 
@@ -2090,58 +1946,43 @@
         <section id="risks">
           <h2><span class="num">08</span>Risks, Costs &amp; Tradeoffs</h2>
           <div class="issue issue-critical" id="risk-pre10">
-            <span class="severity severity-critical"
-              >Real &middot; Must accept</span
-            >
+            <span class="severity severity-critical">Real &middot; Must accept</span>
             <h3>Pre-1.0 with promised breaking changes</h3>
-            <div class="where">
-              Quickshell v0.3.0 &middot; migration guides promised before 1.0
-            </div>
+            <div class="where">Quickshell v0.3.0 &middot; migration guides promised before 1.0</div>
             <p>
-              The toolkit explicitly states there will be breaking changes
-              before 1.0. Pin a tag (<code>?ref=</code>) rather than tracking
-              master, and budget for occasional migrations. Mitigate by keeping
-              the old stack working in parallel during rollout.
+              The toolkit explicitly states there will be breaking changes before 1.0. Pin a tag
+              (<code>?ref=</code>) rather than tracking master, and budget for occasional
+              migrations. Mitigate by keeping the old stack working in parallel during rollout.
             </p>
           </div>
           <div class="issue issue-important" id="risk-qml">
-            <span class="severity severity-important"
-              >Real &middot; Skill cost</span
-            >
+            <span class="severity severity-important">Real &middot; Skill cost</span>
             <h3>QML is programming, not config</h3>
             <div class="where">affects maintenance burden</div>
             <p>
-              A custom shell is an application with state, bindings, and async
-              IO. It's far more powerful than Waybar's JSON, but also a real
-              codebase to maintain. This is the core tradeoff: capability vs
-              surface area. Mitigate by starting from a community shell.
+              A custom shell is an application with state, bindings, and async IO. It's far more
+              powerful than Waybar's JSON, but also a real codebase to maintain. This is the core
+              tradeoff: capability vs surface area. Mitigate by starting from a community shell.
             </p>
           </div>
           <div class="issue issue-important" id="risk-niri">
-            <span class="severity severity-important"
-              >Managed &middot; External dependency</span
-            >
+            <span class="severity severity-important">Managed &middot; External dependency</span>
             <h3>Niri integration depends on a third-party plugin</h3>
-            <div class="where">
-              qml-niri &middot; not part of Quickshell core
-            </div>
+            <div class="where">qml-niri &middot; not part of Quickshell core</div>
             <p>
-              The cleanest Niri path rides on <code>qml-niri</code>, an
-              independent project. If it stalls, you fall back to the socket
-              approach (which iNiR already proves works). Not a blocker &mdash;
-              but a dependency to track.
+              The cleanest Niri path rides on <code>qml-niri</code>, an independent project. If it
+              stalls, you fall back to the socket approach (which iNiR already proves works). Not a
+              blocker &mdash; but a dependency to track.
             </p>
           </div>
           <div class="issue issue-nice" id="risk-darwin">
-            <span class="severity severity-nice"
-              >Non-issue &middot; NixOS-only</span
-            >
+            <span class="severity severity-nice">Non-issue &middot; NixOS-only</span>
             <h3>Not relevant to Darwin</h3>
             <div class="where">macOS is unaffected</div>
             <p>
-              Quickshell is a Wayland/X11 shell tool. It belongs only on evo-x2.
-              Darwin (Lars-MacBook-Air) keeps its minimal HM setup untouched
-              &mdash; no disk/perf impact on the constrained laptop.
+              Quickshell is a Wayland/X11 shell tool. It belongs only on evo-x2. Darwin
+              (Lars-MacBook-Air) keeps its minimal HM setup untouched &mdash; no disk/perf impact on
+              the constrained laptop.
             </p>
           </div>
         </section>
@@ -2150,24 +1991,21 @@
         <section id="roadmap">
           <h2><span class="num">09</span>Phased Roadmap</h2>
           <p>
-            A staged path that de-risks at every step and never leaves the
-            desktop broken. Effort estimates assume one developer comfortable
-            with Nix but new to QML.
+            A staged path that de-risks at every step and never leaves the desktop broken. Effort
+            estimates assume one developer comfortable with Nix but new to QML.
           </p>
           <div class="migration-step">
             <div class="migration-num">P0</div>
             <div class="migration-content">
               <h4>
                 Spike &mdash; prove the loop
-                <span style="color: var(--text-faint); font-weight: 400"
-                  >&middot; ~2h</span
-                >
+                <span style="color: var(--text-faint); font-weight: 400">&middot; ~2h</span>
               </h4>
               <p>
-                Add the flake input, run Quickshell with a 30-line bar that
-                prints the clock and a Niri workspace read via
-                <code>niri msg</code>. Confirm hot-reload. Decide go/no-go based
-                on the dev experience.
+                Add the flake input, run Quickshell with a 30-line bar that prints the clock and a
+                Niri workspace read via
+                <code>niri msg</code>. Confirm hot-reload. Decide go/no-go based on the dev
+                experience.
               </p>
             </div>
           </div>
@@ -2181,10 +2019,10 @@
                 >
               </h4>
               <p>
-                Fork iNiR or DankMaterialShell into the repo, theme to
-                Catppuccin Mocha, wire it as an HM module. Run it
-                <em>alongside</em> the existing Waybar/Dunst to compare. Keep
-                Swaylock/Swayidle for now.
+                Fork iNiR or DankMaterialShell into the repo, theme to Catppuccin Mocha, wire it as
+                an HM module. Run it
+                <em>alongside</em> the existing Waybar/Dunst to compare. Keep Swaylock/Swayidle for
+                now.
               </p>
             </div>
           </div>
@@ -2198,9 +2036,8 @@
                 >
               </h4>
               <p>
-                Replace Dunst &rarr; NotificationServer, Wlogout &rarr; power
-                overlay, polkit_gnome &rarr; PolkitAgent, add the SystemTray.
-                Remove the now-dead shell scripts from
+                Replace Dunst &rarr; NotificationServer, Wlogout &rarr; power overlay, polkit_gnome
+                &rarr; PolkitAgent, add the SystemTray. Remove the now-dead shell scripts from
                 <code>waybar.nix</code>.
               </p>
             </div>
@@ -2215,11 +2052,10 @@
                 >
               </h4>
               <p>
-                Build the Pillar D + Pillar E widgets: DNS stats,
-                dual-WAN/failover, Gatus/SigNoz health dots, BTRFS freshness,
-                GPU/NPU, Ollama model status, Taskchampion radar, voice agent
-                waveform, Immich memories. This is where the shell becomes
-                unique to this machine.
+                Build the Pillar D + Pillar E widgets: DNS stats, dual-WAN/failover, Gatus/SigNoz
+                health dots, BTRFS freshness, GPU/NPU, Ollama model status, Taskchampion radar,
+                voice agent waveform, Immich memories. This is where the shell becomes unique to
+                this machine.
               </p>
             </div>
           </div>
@@ -2233,9 +2069,8 @@
                 >
               </h4>
               <p>
-                Build the <code>WlSessionLock</code>+PAM lock screen and Mission
-                Control OSD. Add dynamic wallpaper theming via
-                <code>ColorQuantizer</code>. Retire Waybar entirely.
+                Build the <code>WlSessionLock</code>+PAM lock screen and Mission Control OSD. Add
+                dynamic wallpaper theming via <code>ColorQuantizer</code>. Retire Waybar entirely.
               </p>
             </div>
           </div>
@@ -2249,9 +2084,8 @@
                 >
               </h4>
               <p>
-                Only once the in-session shell is proven &mdash; a custom
-                display manager on greetd. High effort, security-sensitive;
-                treat as a stretch goal.
+                Only once the in-session shell is proven &mdash; a custom display manager on greetd.
+                High effort, security-sensitive; treat as a stretch goal.
               </p>
             </div>
           </div>
@@ -2287,9 +2121,7 @@
               </tr>
               <tr>
                 <td class="yes">P3 Differentiator</td>
-                <td class="yes">
-                  SystemNix-native widgets &mdash; the unique part
-                </td>
+                <td class="yes">SystemNix-native widgets &mdash; the unique part</td>
                 <td>~2 weekends</td>
                 <td>Medium</td>
               </tr>
@@ -2309,16 +2141,13 @@
           </table>
           <div class="callout callout-teal">
             <strong>The realistic minimum</strong>
-            P0&ndash;P2 (~2 weeks of evenings) delivers a better-than-Waybar
-            experience with proper notifications, tray, and auth. P3 is what
-            makes it exceptional. Everything after is optional polish.
+            P0&ndash;P2 (~2 weeks of evenings) delivers a better-than-Waybar experience with proper
+            notifications, tray, and auth. P3 is what makes it exceptional. Everything after is
+            optional polish.
           </div>
         </section>
         <section id="appendix">
-          <h2>
-            <span class="num">&diams;</span>Appendix &mdash; References &amp;
-            Priority Matrix
-          </h2>
+          <h2><span class="num">&diams;</span>Appendix &mdash; References &amp; Priority Matrix</h2>
           <h3>Priority matrix</h3>
           <table class="compare">
             <thead>
@@ -2428,49 +2257,42 @@
             <span class="root">quickshell.org</span> ├── docs
             <span class="ok">/docs/v0.3.0/guide</span> ├── types
             <span class="ok">/docs/v0.3.0/types</span> └── examples
-            <span class="ok"
-              >git.outfoxxed.me/outfoxxed/quickshell-examples</span
-            >
+            <span class="ok">git.outfoxxed.me/outfoxxed/quickshell-examples</span>
             <span class="root">niri integration</span>
-            ├── plugin <span class="ok">github.com/imiric/qml-niri</span> ├──
-            example configs
-            <span class="ok">github.com/imiric/quickshell-niri</span> ├── full
-            shell <span class="ok">github.com/snowarch/iNiR</span> └── modular
-            shell
+            ├── plugin <span class="ok">github.com/imiric/qml-niri</span> ├── example configs
+            <span class="ok">github.com/imiric/quickshell-niri</span> ├── full shell
+            <span class="ok">github.com/snowarch/iNiR</span> └── modular shell
             <span class="ok">github:AvengeMedia/DankMaterialShell</span>
             <span class="root">design references</span>
             ├── caelestia
-            <span class="ok">github.com/caelestia-dots/shell</span> └──
-            illogical-impulse
+            <span class="ok">github.com/caelestia-dots/shell</span> └── illogical-impulse
             <span class="ok">github.com/end-4/dots-hyprland</span>
             <span class="root">SystemNix service surfaces</span>
-            ├── ollama <span class="ok">:11434/api/ps</span> &mdash; loaded
-            models + VRAM ├── taskchampion
-            <span class="ok">:10222</span> &mdash; task counts ├── immich
+            ├── ollama <span class="ok">:11434/api/ps</span> &mdash; loaded models + VRAM ├──
+            taskchampion <span class="ok">:10222</span> &mdash; task counts ├── immich
             <span class="ok">:2283</span> &mdash; photo memories ├── minecraft
             <span class="ok">:25565</span> &mdash; player count ├── twenty crm
             <span class="ok">:3200</span> &mdash; pipeline ├── dnsblockd
             <span class="ok">:9090</span> &mdash; blocked-query stats ├── gatus
             <span class="ok">:9110</span> &mdash; health endpoints └── whisper
-            <span class="ok">:7860</span> + livekit
-            <span class="ok">:7880</span> &mdash; voice agents
+            <span class="ok">:7860</span> + livekit <span class="ok">:7880</span> &mdash; voice
+            agents
           </div>
 
           <h3>What this report deliberately did <em>not</em> do</h3>
           <p>
-            It does not implement anything, change the flake, or touch live
-            config. It is a grounded vision to decide from. The P0 spike is the
-            cheapest possible way to validate or invalidate everything above.
+            It does not implement anything, change the flake, or touch live config. It is a grounded
+            vision to decide from. The P0 spike is the cheapest possible way to validate or
+            invalidate everything above.
           </p>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Brainstorm &middot; 2026-06-21 &middot; SystemNix evo-x2 &middot;
-            Verified against Quickshell v0.3.0 docs, the qml-niri / iNiR /
-            DankMaterialShell projects, and the current SystemNix desktop
-            configuration
+            Brainstorm &middot; 2026-06-21 &middot; SystemNix evo-x2 &middot; Verified against
+            Quickshell v0.3.0 docs, the qml-niri / iNiR / DankMaterialShell projects, and the
+            current SystemNix desktop configuration
           </p>
         </footer>
       </main>

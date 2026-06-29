@@ -30,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -423,10 +423,9 @@
           <div class="hero-badge">Status Report &middot; 2026-06-26 12:10</div>
           <h1>BTRFS Crash Prevention System — Implemented &amp; Verified</h1>
           <p class="hero-subtitle">
-            SystemNix on evo-x2 (NixOS 26.11, Strix Halo). Recovery from the
-            2026-06-26 metadata ENOSPC crash is complete. Full prevention stack
-            implemented: GC guard, Prometheus metrics, Gatus alerts, DMS widget,
-            btrbk staggering, and recovery runbook.
+            SystemNix on evo-x2 (NixOS 26.11, Strix Halo). Recovery from the 2026-06-26 metadata
+            ENOSPC crash is complete. Full prevention stack implemented: GC guard, Prometheus
+            metrics, Gatus alerts, DMS widget, btrbk staggering, and recovery runbook.
           </p>
           <div class="hero-shapes">
             <span class="circle"></span>
@@ -440,25 +439,21 @@
           <h2><span class="num">01</span>Summary</h2>
           <div class="callout callout-solution">
             <strong>System status: RECOVERED &amp; HARDENED</strong>
-            The BTRFS metadata ENOSPC crash that occurred at 2026-06-26 00:02
-            CEST has been fully diagnosed, recovered from (partition grown
-            519→722 GiB), and a complete prevention stack has been implemented
-            and pushed (3 commits, 437 lines, all validation passing).
+            The BTRFS metadata ENOSPC crash that occurred at 2026-06-26 00:02 CEST has been fully
+            diagnosed, recovered from (partition grown 519→722 GiB), and a complete prevention stack
+            has been implemented and pushed (3 commits, 437 lines, all validation passing).
           </div>
           <p>
-            <strong>Current BTRFS state:</strong> Device 722.5 GiB, unallocated
-            202 GiB (27%), allocated 72%, metadata 92%. Root filesystem at 69%
-            df usage (224 GiB free). Memory: 23 GiB / 93 GiB used (70 GiB
-            available). Uptime: 4.8 hours (rebooted after crash recovery).
+            <strong>Current BTRFS state:</strong> Device 722.5 GiB, unallocated 202 GiB (27%),
+            allocated 72%, metadata 92%. Root filesystem at 69% df usage (224 GiB free). Memory: 23
+            GiB / 93 GiB used (70 GiB available). Uptime: 4.8 hours (rebooted after crash recovery).
             System is stable and all new prevention systems evaluate correctly.
           </p>
           <p>
-            <strong>3 commits pushed</strong> to <code>master</code>:
-            <code>4f580f5e</code> (core module),
-            <code>fbe6f672</code> (monitoring layer),
-            <code>6646fceb</code> (docs). All pass
-            <code>nix flake check --no-build</code>, statix, deadnix, alejandra,
-            and gitleaks pre-commit hooks.
+            <strong>3 commits pushed</strong> to <code>master</code>: <code>4f580f5e</code> (core
+            module), <code>fbe6f672</code> (monitoring layer), <code>6646fceb</code> (docs). All
+            pass <code>nix flake check --no-build</code>, statix, deadnix, alejandra, and gitleaks
+            pre-commit hooks.
           </p>
         </section>
 
@@ -496,131 +491,110 @@
           <h2><span class="num">03</span>Fully Done</h2>
           <div class="card card-solution">
             <h3>✅ P0: BTRFS GC Guard — Prevents the crash trigger</h3>
-            <div class="where">
-              platforms/nixos/system/btrfs-health.nix:116-138
-            </div>
+            <div class="where">platforms/nixos/system/btrfs-health.nix:116-138</div>
             <p>
               <code>ExecStartPre</code> guard on both <code>nix-gc</code> and
               <code>nix-build-cleanup</code>. Uses
               <code>btrfs filesystem usage --raw</code>
-              (integer bytes, zero IEC string parsing). Aborts reclamation when
-              device-unallocated &lt; 10%. OnFailure routes to desktop
-              notification.
+              (integer bytes, zero IEC string parsing). Aborts reclamation when device-unallocated
+              &lt; 10%. OnFailure routes to desktop notification.
               <strong>This is the fix that prevents crash recurrence.</strong>
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P1: Prometheus Metrics Collector</h3>
-            <div class="where">
-              platforms/nixos/system/btrfs-health.nix:141-187
-            </div>
+            <div class="where">platforms/nixos/system/btrfs-health.nix:141-187</div>
             <p>
-              <code>btrfs-health.service</code> runs every 5 min, writes
-              Prometheus textfile metrics to
-              <code
-                >/var/lib/prometheus-node-exporter/textfile_collectors/btrfs.prom</code
-              >. Exports: device_unallocated_pct, metadata_utilization_pct,
-              device_allocated_pct + raw byte values. Follows the exact pattern
-              of amdgpu-metrics, nvme-metrics, and psi-metrics services.
+              <code>btrfs-health.service</code> runs every 5 min, writes Prometheus textfile metrics
+              to <code>/var/lib/prometheus-node-exporter/textfile_collectors/btrfs.prom</code>.
+              Exports: device_unallocated_pct, metadata_utilization_pct, device_allocated_pct + raw
+              byte values. Follows the exact pattern of amdgpu-metrics, nvme-metrics, and
+              psi-metrics services.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P1: Gatus Discord Alerting</h3>
-            <div class="where">
-              modules/nixos/services/gatus-config.nix:230-241
-            </div>
+            <div class="where">modules/nixos/services/gatus-config.nix:230-241</div>
             <p>
-              "BTRFS Chunk Health" endpoint scrapes Prometheus metrics. Sends
-              Discord alert when device-unallocated &lt; 10% or metadata &gt;
-              85%. Alert message includes recovery instructions.
+              "BTRFS Chunk Health" endpoint scrapes Prometheus metrics. Sends Discord alert when
+              device-unallocated &lt; 10% or metadata &gt; 85%. Alert message includes recovery
+              instructions.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P1: DMS Widget Enhanced</h3>
-            <div class="where">
-              pkgs/dms-plugins/systemnix-btrfs/BtrfsWidget.qml
-            </div>
+            <div class="where">pkgs/dms-plugins/systemnix-btrfs/BtrfsWidget.qml</div>
             <p>
-              Widget now reads device-unallocated % from the Prometheus textfile
-              collector (single source of truth, no duplicate btrfs parsing).
-              Shows "CHK:N%" text that turns red when device-unallocated &lt;
-              10%. The widget that was green at 95% df usage while the system
-              was dying now shows the real danger metric.
+              Widget now reads device-unallocated % from the Prometheus textfile collector (single
+              source of truth, no duplicate btrfs parsing). Shows "CHK:N%" text that turns red when
+              device-unallocated &lt; 10%. The widget that was green at 95% df usage while the
+              system was dying now shows the real danger metric.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P0: nix-build-cleanup Also Guarded</h3>
-            <div class="where">
-              platforms/nixos/system/btrfs-health.nix:227-232
-            </div>
+            <div class="where">platforms/nixos/system/btrfs-health.nix:227-232</div>
             <p>
-              The <code>nix-build-cleanup</code> timer (every 4h, does
-              <code>rm -rf</code> on build sandboxes — also metadata-intensive)
-              has the same ExecStartPre guard.
+              The <code>nix-build-cleanup</code> timer (every 4h, does <code>rm -rf</code> on build
+              sandboxes — also metadata-intensive) has the same ExecStartPre guard.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P2: btrbk Staggered Before GC</h3>
             <div class="where">platforms/nixos/system/snapshots.nix:62-66</div>
             <p>
-              Snapshot schedule changed from <code>daily</code> (00:00) to
-              <code>23:00</code>. Expired snapshots now free CoW-shared extents
-              BEFORE nix-gc runs at 00:00. This breaks the metadata ratchet
-              where GC does refcount updates on extents still pinned by same-day
-              snapshots.
+              Snapshot schedule changed from <code>daily</code> (00:00) to <code>23:00</code>.
+              Expired snapshots now free CoW-shared extents BEFORE nix-gc runs at 00:00. This breaks
+              the metadata ratchet where GC does refcount updates on extents still pinned by
+              same-day snapshots.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P3: Watchdog Timeout Tradeoff Documented</h3>
             <div class="where">platforms/nixos/system/boot.nix:233-242</div>
             <p>
-              The 30s WDT vs 120s hung_task race is now documented. Kept at 30s
-              because the BTRFS crash is now prevented at the source (GC guard),
-              and GPU driver hangs benefit from fast recovery.
-              <code>nowayout=0</code> means WDT doesn't protect boot/activation
-              hangs — documented as a known gap.
+              The 30s WDT vs 120s hung_task race is now documented. Kept at 30s because the BTRFS
+              crash is now prevented at the source (GC guard), and GPU driver hangs benefit from
+              fast recovery.
+              <code>nowayout=0</code> means WDT doesn't protect boot/activation hangs — documented
+              as a known gap.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P4: Recovery Runbook</h3>
-            <div class="where">
-              docs/troubleshooting/btrfs-metadata-enospc-recovery.md
-            </div>
+            <div class="where">docs/troubleshooting/btrfs-metadata-enospc-recovery.md</div>
             <p>
-              Copy-pasteable runbook covering: diagnosis (why df lies), the
-              3-step partition grow procedure (sfdisk → partx → btrfs resize),
-              what NOT to do (balance, GC, rollback), why standard recovery
-              methods fail, and the prevention system.
+              Copy-pasteable runbook covering: diagnosis (why df lies), the 3-step partition grow
+              procedure (sfdisk → partx → btrfs resize), what NOT to do (balance, GC, rollback), why
+              standard recovery methods fail, and the prevention system.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ P5: 06-15 Crash Doc Fix Verified</h3>
             <p>
-              The dangerous <code>--volumes</code> flag in docker prune
-              recommendation was already fixed and committed in
-              <code>adaa7e84</code>. Verified clean.
+              The dangerous <code>--volumes</code> flag in docker prune recommendation was already
+              fixed and committed in <code>adaa7e84</code>. Verified clean.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ AGENTS.md Gotcha Added</h3>
             <div class="where">AGENTS.md:145</div>
             <p>
-              Full BTRFS metadata ENOSPC crash entry in the Non-Obvious Gotchas
-              table with concise fix summary and pointer to the recovery
-              runbook.
+              Full BTRFS metadata ENOSPC crash entry in the Non-Obvious Gotchas table with concise
+              fix summary and pointer to the recovery runbook.
             </p>
           </div>
           <div class="card card-solution">
             <h3>✅ Self-Review: Parser Bugs Caught &amp; Fixed</h3>
             <p>
-              During reflection, two bugs were found in the initial
-              implementation and fixed before pushing: (1) AWK
-              <code>iec_to_bytes</code> function used <code>{...}</code> instead
-              of <code>BEGIN {...}</code> — would have returned empty on all
-              values. (2) Eliminated entirely by switching to
+              During reflection, two bugs were found in the initial implementation and fixed before
+              pushing: (1) AWK
+              <code>iec_to_bytes</code> function used <code>{...}</code> instead of
+              <code>BEGIN {...}</code> — would have returned empty on all values. (2) Eliminated
+              entirely by switching to
               <code>btrfs filesystem usage --raw</code>
-              (pure integer bytes). The DMS widget's fragile embedded AWK was
-              also replaced with reading the prom metrics file.
+              (pure integer bytes). The DMS widget's fragile embedded AWK was also replaced with
+              reading the prom metrics file.
             </p>
           </div>
         </section>
@@ -630,32 +604,27 @@
           <div class="card card-warning">
             <h3>⚠️ BTRFS Health Metrics: Not Yet Deployed</h3>
             <p>
-              The <code>btrfs-health.nix</code> module evaluates correctly and
-              all checks pass, but it hasn't been deployed to the live system
-              yet (<code>nix run .#deploy</code>
-              not run). The prevention system exists in the flake but isn't
-              active on evo-x2 right now. The next GC timer at 00:00 would still
-              crash the system if device-unallocated drops again before
-              deployment.
+              The <code>btrfs-health.nix</code> module evaluates correctly and all checks pass, but
+              it hasn't been deployed to the live system yet (<code>nix run .#deploy</code>
+              not run). The prevention system exists in the flake but isn't active on evo-x2 right
+              now. The next GC timer at 00:00 would still crash the system if device-unallocated
+              drops again before deployment.
             </p>
           </div>
           <div class="card card-warning">
             <h3>⚠️ Metadata Balance: Recommended but Not Run</h3>
             <p>
-              Metadata is at 92% utilization. With 202 GiB unallocated, a
-              metadata-only balance (<code
-                >btrfs balance start -musage=50 /</code
-              >) would consolidate partially-filled metadata chunks and reduce
-              utilization. This is housekeeping, not urgent, but would bring
-              metadata below the 85% warning threshold.
+              Metadata is at 92% utilization. With 202 GiB unallocated, a metadata-only balance
+              (<code>btrfs balance start -musage=50 /</code>) would consolidate partially-filled
+              metadata chunks and reduce utilization. This is housekeeping, not urgent, but would
+              bring metadata below the 85% warning threshold.
             </p>
           </div>
           <div class="card card-warning">
             <h3>⚠️ Gatus BTRFS Alert: Config Committed but Not Deployed</h3>
             <p>
-              The "BTRFS Chunk Health" endpoint is in the config but Gatus
-              hasn't been restarted with the new config. Discord alerts won't
-              fire until the next deploy.
+              The "BTRFS Chunk Health" endpoint is in the config but Gatus hasn't been restarted
+              with the new config. Discord alerts won't fire until the next deploy.
             </p>
           </div>
         </section>
@@ -682,17 +651,14 @@
               <tr>
                 <td>Grafana BTRFS dashboard</td>
                 <td><span class="badge badge-medium">Medium</span></td>
-                <td>
-                  Metrics are collected but no Grafana dashboard visualizes them
-                  yet.
-                </td>
+                <td>Metrics are collected but no Grafana dashboard visualizes them yet.</td>
               </tr>
               <tr>
                 <td>Discord webhook for BTRFS alerts</td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td>
-                  Gatus endpoint exists but alert message doesn't include a
-                  direct link to the runbook.
+                  Gatus endpoint exists but alert message doesn't include a direct link to the
+                  runbook.
                 </td>
               </tr>
               <tr>
@@ -700,17 +666,14 @@
                 <td><span class="badge badge-low">Low</span></td>
                 <td>
                   Could automate
-                  <code>btrfs balance start -musage=50</code> when metadata &gt;
-                  85% and unallocated &gt; 15%.
+                  <code>btrfs balance start -musage=50</code> when metadata &gt; 85% and unallocated
+                  &gt; 15%.
                 </td>
               </tr>
               <tr>
                 <td>pre-deploy-check integration</td>
                 <td><span class="badge badge-medium">Medium</span></td>
-                <td>
-                  The pre-deploy-check script doesn't yet check BTRFS chunk
-                  allocation state.
-                </td>
+                <td>The pre-deploy-check script doesn't yet check BTRFS chunk allocation state.</td>
               </tr>
             </tbody>
           </table>
@@ -721,35 +684,30 @@
           <div class="card card-problem">
             <h3>🔴 The 2026-06-26 Crash Itself (Recovered)</h3>
             <div class="where">
-              Boot -1: 1cc421c712724ed5b23fa899ba55d577 — Jun 23 05:50 → Jun 26
-              00:02
+              Boot -1: 1cc421c712724ed5b23fa899ba55d577 — Jun 23 05:50 → Jun 26 00:02
             </div>
             <p>
-              The nightly <code>nix-gc</code> timer fired at 00:00 on a
-              filesystem with 1 MiB device-unallocated. GC's metadata
-              transactions deadlocked the filesystem. The kernel froze in
-              D-state I/O wait. The sp5100-tco hardware watchdog fired at
-              ~00:02:30 — destructive raw reset. No pstore dump (WDT bypassed
-              kernel panic handlers). System couldn't boot normally (activation
-              is also metadata-intensive). Required USB installer + partition
-              grow to recover.
+              The nightly <code>nix-gc</code> timer fired at 00:00 on a filesystem with 1 MiB
+              device-unallocated. GC's metadata transactions deadlocked the filesystem. The kernel
+              froze in D-state I/O wait. The sp5100-tco hardware watchdog fired at ~00:02:30 —
+              destructive raw reset. No pstore dump (WDT bypassed kernel panic handlers). System
+              couldn't boot normally (activation is also metadata-intensive). Required USB installer
+              + partition grow to recover.
             </p>
             <p>
-              <strong>This was the 2nd time.</strong> First: 2026-06-15 (manual
-              trigger). This time: fully automated, structural. Would have
-              recurred every night under the same conditions. Now prevented by
-              the GC guard.
+              <strong>This was the 2nd time.</strong> First: 2026-06-15 (manual trigger). This time:
+              fully automated, structural. Would have recurred every night under the same
+              conditions. Now prevented by the GC guard.
             </p>
           </div>
           <div class="card card-problem">
             <h3>🔴 The Original Parser Bug (Fixed Before Push)</h3>
             <p>
               Initial implementation had an AWK function that used
-              <code>{...}</code> block instead of <code>BEGIN {...}</code> —
-              meaning it would have returned empty strings for all byte values.
-              The GC guard would have seen <code>0</code> for device-unallocated
-              (triggering fail-open default of 100%), and the metrics would have
-              reported zeros. Caught during self-review, fixed by switching to
+              <code>{...}</code> block instead of <code>BEGIN {...}</code> — meaning it would have
+              returned empty strings for all byte values. The GC guard would have seen
+              <code>0</code> for device-unallocated (triggering fail-open default of 100%), and the
+              metrics would have reported zeros. Caught during self-review, fixed by switching to
               <code>--raw</code> flag entirely.
             </p>
           </div>
@@ -760,38 +718,33 @@
           <div class="card">
             <h3>1. Deploy the prevention stack</h3>
             <p>
-              The code is committed but not deployed. The system is currently
-              running without the GC guard. This is the single highest-priority
-              action.
+              The code is committed but not deployed. The system is currently running without the GC
+              guard. This is the single highest-priority action.
             </p>
           </div>
           <div class="card">
             <h3>2. Run a metadata balance</h3>
             <p>
-              Metadata at 92% is above the 85% warning threshold. A
-              metadata-only balance would consolidate chunks and bring
-              utilization down. Safe now that device-unallocated is at 27%.
+              Metadata at 92% is above the 85% warning threshold. A metadata-only balance would
+              consolidate chunks and bring utilization down. Safe now that device-unallocated is at
+              27%.
             </p>
           </div>
           <div class="card">
             <h3>3. Add BTRFS check to pre-deploy-check</h3>
             <p>
-              The <code>nix run .#pre-deploy-check</code> script currently
-              checks for boot-breaking mount options but not BTRFS chunk
-              allocation state. Adding a device-unallocated check would prevent
-              deploying to a system on the edge.
+              The <code>nix run .#pre-deploy-check</code> script currently checks for boot-breaking
+              mount options but not BTRFS chunk allocation state. Adding a device-unallocated check
+              would prevent deploying to a system on the edge.
             </p>
           </div>
           <div class="card">
-            <h3>
-              4. Consider <code>nowayout=1</code> for the hardware watchdog
-            </h3>
+            <h3>4. Consider <code>nowayout=1</code> for the hardware watchdog</h3>
             <p>
-              With <code>nowayout=0</code>, the WDT is disarmed when no process
-              holds <code>/dev/watchdog0</code> open. This means boot/activation
-              hangs have NO watchdog protection — the system hangs forever.
-              <code>nowayout=1</code> would keep the WDT armed during boot, but
-              risks resetting during slow BTRFS recovery. The tradeoff needs
+              With <code>nowayout=0</code>, the WDT is disarmed when no process holds
+              <code>/dev/watchdog0</code> open. This means boot/activation hangs have NO watchdog
+              protection — the system hangs forever. <code>nowayout=1</code> would keep the WDT
+              armed during boot, but risks resetting during slow BTRFS recovery. The tradeoff needs
               careful evaluation.
             </p>
           </div>
@@ -799,10 +752,9 @@
             <h3>5. Snapshot retention could be tighter</h3>
             <p>
               Current retention:
-              <code>snapshot_preserve_min = 7d; snapshot_preserve = 14d 4w</code
-              >. The crash analysis noted 8 daily snapshots pinning extents via
-              CoW. Consider reducing to 3-4 daily snapshots to reduce metadata
-              pressure.
+              <code>snapshot_preserve_min = 7d; snapshot_preserve = 14d 4w</code>. The crash
+              analysis noted 8 daily snapshots pinning extents via CoW. Consider reducing to 3-4
+              daily snapshots to reduce metadata pressure.
             </p>
           </div>
         </section>
@@ -821,30 +773,19 @@
             <tbody>
               <tr>
                 <td>1</td>
-                <td>
-                  <strong>Deploy to live system</strong> (<code
-                    >nix run .#deploy</code
-                  >)
-                </td>
+                <td><strong>Deploy to live system</strong> (<code>nix run .#deploy</code>)</td>
                 <td><span class="badge badge-critical">Critical</span></td>
                 <td><span class="badge badge-low">5 min</span></td>
               </tr>
               <tr>
                 <td>2</td>
-                <td>
-                  Run metadata balance (<code
-                    >btrfs balance start -musage=50 /</code
-                  >)
-                </td>
+                <td>Run metadata balance (<code>btrfs balance start -musage=50 /</code>)</td>
                 <td><span class="badge badge-high">High</span></td>
                 <td><span class="badge badge-low">10 min</span></td>
               </tr>
               <tr>
                 <td>3</td>
-                <td>
-                  Verify btrfs-health.service produces correct metrics on live
-                  system
-                </td>
+                <td>Verify btrfs-health.service produces correct metrics on live system</td>
                 <td><span class="badge badge-critical">Critical</span></td>
                 <td><span class="badge badge-low">5 min</span></td>
               </tr>
@@ -874,80 +815,62 @@
               </tr>
               <tr>
                 <td>8</td>
-                <td>
-                  Build Grafana dashboard for BTRFS metrics (device-unallocated
-                  graph)
-                </td>
+                <td>Build Grafana dashboard for BTRFS metrics (device-unallocated graph)</td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td><span class="badge badge-medium">45 min</span></td>
               </tr>
               <tr>
                 <td>9</td>
-                <td>
-                  Consider reducing btrbk retention (14d 4w → 7d 2w) to cut
-                  metadata pressure
-                </td>
+                <td>Consider reducing btrbk retention (14d 4w → 7d 2w) to cut metadata pressure</td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td><span class="badge badge-low">10 min</span></td>
               </tr>
               <tr>
                 <td>10</td>
                 <td>
-                  Add <code>btrfs device stats</code> to the health check
-                  (hardware error detection)
+                  Add <code>btrfs device stats</code> to the health check (hardware error detection)
                 </td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td><span class="badge badge-medium">30 min</span></td>
               </tr>
               <tr>
                 <td>11</td>
-                <td>
-                  Wire Gatus alert message to include direct link to recovery
-                  runbook URL
-                </td>
+                <td>Wire Gatus alert message to include direct link to recovery runbook URL</td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-low">10 min</span></td>
               </tr>
               <tr>
                 <td>12</td>
                 <td>
-                  Add <code>nowayout=1</code> evaluation — does boot WDT
-                  protection matter enough?
+                  Add <code>nowayout=1</code> evaluation — does boot WDT protection matter enough?
                 </td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td><span class="badge badge-medium">1 hour</span></td>
               </tr>
               <tr>
                 <td>13</td>
-                <td>
-                  Automated metadata balance when meta &gt; 85% and unalloc &gt;
-                  15%
-                </td>
+                <td>Automated metadata balance when meta &gt; 85% and unalloc &gt; 15%</td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">45 min</span></td>
               </tr>
               <tr>
                 <td>14</td>
                 <td>
-                  Review SigNoz health check (was failing pre-crash — unrelated
-                  but needs attention)
+                  Review SigNoz health check (was failing pre-crash — unrelated but needs attention)
                 </td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td><span class="badge badge-medium">1 hour</span></td>
               </tr>
               <tr>
                 <td>15</td>
-                <td>
-                  Review Ollama health check (was failing pre-crash — unrelated)
-                </td>
+                <td>Review Ollama health check (was failing pre-crash — unrelated)</td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td><span class="badge badge-medium">45 min</span></td>
               </tr>
               <tr>
                 <td>16</td>
                 <td>
-                  Consider <code>min-free</code> threshold increase (5GB → 20GB)
-                  for BTRFS headroom
+                  Consider <code>min-free</code> threshold increase (5GB → 20GB) for BTRFS headroom
                 </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-low">5 min</span></td>
@@ -955,8 +878,7 @@
               <tr>
                 <td>17</td>
                 <td>
-                  Add BTRFS scrub results to the health metrics (monthly scrub
-                  already configured)
+                  Add BTRFS scrub results to the health metrics (monthly scrub already configured)
                 </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">30 min</span></td>
@@ -964,18 +886,15 @@
               <tr>
                 <td>18</td>
                 <td>
-                  Document the partition layout in a recovery cheat-sheet (p6
-                  sizes, p8/p9 positions)
+                  Document the partition layout in a recovery cheat-sheet (p6 sizes, p8/p9
+                  positions)
                 </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-low">15 min</span></td>
               </tr>
               <tr>
                 <td>19</td>
-                <td>
-                  Consider adding a swap file on the data partition to reduce
-                  OOM risk
-                </td>
+                <td>Consider adding a swap file on the data partition to reduce OOM risk</td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">1 hour</span></td>
               </tr>
@@ -988,25 +907,20 @@
               <tr>
                 <td>21</td>
                 <td>
-                  Review all Docker container logs for excessive journald output
-                  (OOM cascade risk)
+                  Review all Docker container logs for excessive journald output (OOM cascade risk)
                 </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">45 min</span></td>
               </tr>
               <tr>
                 <td>22</td>
-                <td>
-                  Consider BTRFS quota groups for /nix/store and /var/lib/docker
-                </td>
+                <td>Consider BTRFS quota groups for /nix/store and /var/lib/docker</td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">1 hour</span></td>
               </tr>
               <tr>
                 <td>23</td>
-                <td>
-                  Add monitoring for BTRFS quota group usage if implemented
-                </td>
+                <td>Add monitoring for BTRFS quota group usage if implemented</td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">30 min</span></td>
               </tr>
@@ -1022,8 +936,7 @@
               <tr>
                 <td>25</td>
                 <td>
-                  Review and close the pre-crash SigNoz/Ollama failures
-                  (chronic, not crash-related)
+                  Review and close the pre-crash SigNoz/Ollama failures (chronic, not crash-related)
                 </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">2 hours</span></td>
@@ -1033,29 +946,24 @@
         </section>
 
         <section id="question">
-          <h2>
-            <span class="num">09</span>Top Question I Can't Figure Out Myself
-          </h2>
+          <h2><span class="num">09</span>Top Question I Can't Figure Out Myself</h2>
           <div class="callout callout-warning">
             <strong>When should we deploy this?</strong>
             <p>
-              The prevention stack is committed and pushed but NOT deployed to
-              the live system. Tonight at 00:00, the <code>nix-gc</code> timer
-              will fire again. With device-unallocated at 27% and metadata at
-              92%, the system will likely survive tonight's GC — but metadata
-              will keep climbing. The GC guard will NOT protect the system until
-              <code>nix run .#deploy</code> is run. Should I deploy now, or wait
-              for a planned maintenance window? Deploying requires a reboot-free
-              <code>switch-to-configuration</code>, but the system just
-              recovered from a crash.
+              The prevention stack is committed and pushed but NOT deployed to the live system.
+              Tonight at 00:00, the <code>nix-gc</code> timer will fire again. With
+              device-unallocated at 27% and metadata at 92%, the system will likely survive
+              tonight's GC — but metadata will keep climbing. The GC guard will NOT protect the
+              system until <code>nix run .#deploy</code> is run. Should I deploy now, or wait for a
+              planned maintenance window? Deploying requires a reboot-free
+              <code>switch-to-configuration</code>, but the system just recovered from a crash.
             </p>
           </div>
         </section>
 
         <footer class="footer">
           Generated 2026-06-26 12:10 CEST &middot; SystemNix
-          <code>6646fceb</code> on master &middot; evo-x2 (NixOS
-          26.11.20260616.567a49d, Strix Halo)
+          <code>6646fceb</code> on master &middot; evo-x2 (NixOS 26.11.20260616.567a49d, Strix Halo)
         </footer>
       </main>
     </div>

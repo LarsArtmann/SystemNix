@@ -31,14 +31,14 @@
         --radius: 0px;
         --radius-sm: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -206,27 +206,15 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue {
         background: var(--surface-raised);
@@ -237,27 +225,15 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -568,13 +544,11 @@
           <div class="hero-badge">COMPREHENSIVE STATUS</div>
           <h1>SystemNix — Active Infrastructure Crisis &amp; Recovery</h1>
           <p class="hero-subtitle">
-            Cross-platform Nix configuration (macOS + NixOS) with ~155 features,
-            39 service modules, 24 custom packages. Currently surviving a
-            cascading BTRFS corruption crisis, chronic disk exhaustion, and
-            undeployed OOM hardening. This session fixed a silent build-time
-            regression: <code>ollama-rocm</code> was building from source
-            because the flake used <code>nixpkgs-unstable</code> instead of
-            <code>nixos-unstable</code>.
+            Cross-platform Nix configuration (macOS + NixOS) with ~155 features, 39 service modules,
+            24 custom packages. Currently surviving a cascading BTRFS corruption crisis, chronic
+            disk exhaustion, and undeployed OOM hardening. This session fixed a silent build-time
+            regression: <code>ollama-rocm</code> was building from source because the flake used
+            <code>nixpkgs-unstable</code> instead of <code>nixos-unstable</code>.
           </p>
         </div>
 
@@ -626,45 +600,37 @@
           <p>
             The <code>/data</code> BTRFS filesystem has
             <strong>23.5 million uncorrectable checksum errors</strong>
-            and is actively degrading (94,210 new errors in 2 hours). Root disk
-            hit 99% full on June 23. OOM hardening (4+ commits) exists in git
-            but the running generation is 9+ days old. Zero off-site backups
-            exist — June 23 backups were all 0-byte files. Despite this, most
-            critical services remain operational thanks to database restores and
-            Docker rebuilds.
+            and is actively degrading (94,210 new errors in 2 hours). Root disk hit 99% full on June
+            23. OOM hardening (4+ commits) exists in git but the running generation is 9+ days old.
+            Zero off-site backups exist — June 23 backups were all 0-byte files. Despite this, most
+            critical services remain operational thanks to database restores and Docker rebuilds.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>This Session's Win: ollama-rocm Cache Fix</h4>
           <p>
-            Discovered that <code>ollama-0.30.7</code> was building from source
-            (30+ min) because the flake input was
-            <code>nixpkgs-unstable</code> instead of
+            Discovered that <code>ollama-0.30.7</code> was building from source (30+ min) because
+            the flake input was <code>nixpkgs-unstable</code> instead of
             <code>nixos-unstable</code>. Hydra only caches ROCm builds on the
-            <code>nixos-unstable</code> jobset. Switched the input, updated
-            flake.lock — now substitutes from cache.nixos.org instantly. This
-            was a silent regression affecting every deploy.
+            <code>nixos-unstable</code> jobset. Switched the input, updated flake.lock — now
+            substitutes from cache.nixos.org instantly. This was a silent regression affecting every
+            deploy.
           </p>
         </div>
 
         <!-- ================================================================ -->
         <h2 id="done"><span class="num">01</span>a) Fully Done</h2>
-        <p>
-          Features that are complete, wired, tested, and working as intended.
-        </p>
+        <p>Features that are complete, wired, tested, and working as intended.</p>
 
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong
-                >Cross-platform flake architecture (Darwin + NixOS)</strong
-              >
+              <strong>Cross-platform flake architecture (Darwin + NixOS)</strong>
               <span
-                >Single flake, two systems, 80% shared via
-                <code>platforms/common/</code>. flake-parts modular architecture
-                with 39 auto-discovered service modules.</span
+                >Single flake, two systems, 80% shared via <code>platforms/common/</code>.
+                flake-parts modular architecture with 39 auto-discovered service modules.</span
               >
             </div>
           </div>
@@ -674,8 +640,8 @@
               <strong>Docker infrastructure</strong>
               <span
                 >Unified on Docker backend (no Podman split-brain), overlay2,
-                <code>/data/docker</code>, weekly auto-prune, userland-proxy
-                disabled (Docker 29.x fix).</span
+                <code>/data/docker</code>, weekly auto-prune, userland-proxy disabled (Docker 29.x
+                fix).</span
               >
             </div>
           </div>
@@ -684,9 +650,8 @@
             <div class="text">
               <strong>Caddy reverse proxy (15 vHosts)</strong>
               <span
-                >TLS via sops certs, forward auth via oauth2-proxy + Pocket ID,
-                14 auth-protected virtual hosts, metrics enabled, sops-nix boot
-                ordering.</span
+                >TLS via sops certs, forward auth via oauth2-proxy + Pocket ID, 14 auth-protected
+                virtual hosts, metrics enabled, sops-nix boot ordering.</span
               >
             </div>
           </div>
@@ -695,9 +660,8 @@
             <div class="text">
               <strong>SOPS secrets management (age + SSH host key)</strong>
               <span
-                >4 sops files, auto-restart per secret, all service-specific
-                secrets guarded with <code>lib.optionalAttrs</code>.
-                SOPS_AGE_KEY in RAM only.</span
+                >4 sops files, auto-restart per secret, all service-specific secrets guarded with
+                <code>lib.optionalAttrs</code>. SOPS_AGE_KEY in RAM only.</span
               >
             </div>
           </div>
@@ -706,8 +670,7 @@
             <div class="text">
               <strong>Pocket ID (passkey-only OIDC)</strong>
               <span
-                >Go backend, SQLite, web UI for user/client management.
-                Auto-provisioning via
+                >Go backend, SQLite, web UI for user/client management. Auto-provisioning via
                 <code>provision.enable = true</code>.</span
               >
             </div>
@@ -717,9 +680,8 @@
             <div class="text">
               <strong>Forgejo (Git forge with federation)</strong>
               <span
-                >SQLite + LFS, weekly dumps, GitHub mirror + push mirrors,
-                Actions runner (Docker + native), admin auto-setup, declarative
-                repo mirroring.</span
+                >SQLite + LFS, weekly dumps, GitHub mirror + push mirrors, Actions runner (Docker +
+                native), admin auto-setup, declarative repo mirroring.</span
               >
             </div>
           </div>
@@ -728,9 +690,8 @@
             <div class="text">
               <strong>Immich (photo/video management)</strong>
               <span
-                >PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup,
-                VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU
-                access.</span
+                >PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware
+                transcoding (H.264/HEVC/AV1), ML GPU access.</span
               >
             </div>
           </div>
@@ -739,9 +700,9 @@
             <div class="text">
               <strong>SigNoz observability stack</strong>
               <span
-                >Full-stack traces/metrics/logs, ClickHouse, OTel Collector,
-                node_exporter, cadvisor, 19 alert rules, custom
-                <code>signoz.target</code>, PSI memory pressure metrics.</span
+                >Full-stack traces/metrics/logs, ClickHouse, OTel Collector, node_exporter,
+                cadvisor, 19 alert rules, custom <code>signoz.target</code>, PSI memory pressure
+                metrics.</span
               >
             </div>
           </div>
@@ -750,9 +711,8 @@
             <div class="text">
               <strong>AI/ML stack (Ollama ROCm + llama.cpp)</strong>
               <span
-                >Ollama with ROCm GPU acceleration, flash attention, q8_0 KV
-                cache, llama-cpp with MFMA flag, gpu-python wrapper script with
-                HSA_OVERRIDE_GFX_VERSION.</span
+                >Ollama with ROCm GPU acceleration, flash attention, q8_0 KV cache, llama-cpp with
+                MFMA flag, gpu-python wrapper script with HSA_OVERRIDE_GFX_VERSION.</span
               >
             </div>
           </div>
@@ -761,9 +721,8 @@
             <div class="text">
               <strong>DNS stack (dnsblockd + unbound)</strong>
               <span
-                >Custom Go-based DNS blocker (~930 lines), unbound with
-                <code>do-ip6 = false</code>, DoT, dual-WAN failover support, 12
-                DNS stack components.</span
+                >Custom Go-based DNS blocker (~930 lines), unbound with <code>do-ip6 = false</code>,
+                DoT, dual-WAN failover support, 12 DNS stack components.</span
               >
             </div>
           </div>
@@ -772,9 +731,8 @@
             <div class="text">
               <strong>Niri Wayland desktop</strong>
               <span
-                >Full compositor config, session manager, multi-WM support,
-                browser policies, Steam gaming, display manager, audio
-                config.</span
+                >Full compositor config, session manager, multi-WM support, browser policies, Steam
+                gaming, display manager, audio config.</span
               >
             </div>
           </div>
@@ -783,9 +741,9 @@
             <div class="text">
               <strong>Pre-deploy validation system</strong>
               <span
-                ><code>nix run .#pre-deploy-check</code> catches boot-breaking
-                issues (mount options, container backend, systemd units) before
-                switch. Wired into <code>nix run .#deploy</code>.</span
+                ><code>nix run .#pre-deploy-check</code> catches boot-breaking issues (mount
+                options, container backend, systemd units) before switch. Wired into
+                <code>nix run .#deploy</code>.</span
               >
             </div>
           </div>
@@ -794,10 +752,9 @@
             <div class="text">
               <strong>mkFilesystem mount validation</strong>
               <span
-                ><code>lib/filesystems.nix</code> validates mount options at
-                eval time. Catches cross-fs contamination (e.g.
-                <code>discard=async</code> on ext4) that caused the June 23
-                emergency shell.</span
+                ><code>lib/filesystems.nix</code> validates mount options at eval time. Catches
+                cross-fs contamination (e.g. <code>discard=async</code> on ext4) that caused the
+                June 23 emergency shell.</span
               >
             </div>
           </div>
@@ -806,9 +763,9 @@
             <div class="text">
               <strong>Self-hosted app suite</strong>
               <span
-                >Twenty CRM, TaskChampion, Homepage Dashboard, Manifest (LLM
-                router), Crush Daily (AI insights), OpenSEO, Overview dashboard,
-                Dozzle, Gatus monitoring — all wired and functional.</span
+                >Twenty CRM, TaskChampion, Homepage Dashboard, Manifest (LLM router), Crush Daily
+                (AI insights), OpenSEO, Overview dashboard, Dozzle, Gatus monitoring — all wired and
+                functional.</span
               >
             </div>
           </div>
@@ -817,9 +774,8 @@
             <div class="text">
               <strong>Hardware support (AMD GPU + NPU + BTRFS)</strong>
               <span
-                >AMD Ryzen AI Max+ 395 full support: ROCm compute, NPU (XRT),
-                VA-API transcoding, NVMe health monitoring, BTRFS snapshots
-                (root only), disk monitoring.</span
+                >AMD Ryzen AI Max+ 395 full support: ROCm compute, NPU (XRT), VA-API transcoding,
+                NVMe health monitoring, BTRFS snapshots (root only), disk monitoring.</span
               >
             </div>
           </div>
@@ -828,9 +784,8 @@
             <div class="text">
               <strong>24 custom packages + 8 ADRs</strong>
               <span
-                >5 in <code>pkgs/</code> (Go, Rust, Python, Node.js, AppImage) +
-                19 via flake-input overlays. 8 Architecture Decision Records
-                documenting key decisions.</span
+                >5 in <code>pkgs/</code> (Go, Rust, Python, Node.js, AppImage) + 19 via flake-input
+                overlays. 8 Architecture Decision Records documenting key decisions.</span
               >
             </div>
           </div>
@@ -839,9 +794,8 @@
             <div class="text">
               <strong>Ollama-rocm binary cache fix (this session)</strong>
               <span
-                >Switched <code>nixpkgs-unstable</code> →
-                <code>nixos-unstable</code> in flake input. ROCm builds now
-                substitute from cache instead of 30+ min local
+                >Switched <code>nixpkgs-unstable</code> → <code>nixos-unstable</code> in flake
+                input. ROCm builds now substitute from cache instead of 30+ min local
                 compilation.</span
               >
             </div>
@@ -850,21 +804,17 @@
 
         <!-- ================================================================ -->
         <h2 id="partial"><span class="num">02</span>b) Partially Done</h2>
-        <p>
-          Features that mostly work but have known gaps, edge cases, or
-          stability issues.
-        </p>
+        <p>Features that mostly work but have known gaps, edge cases, or stability issues.</p>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Partial</span>
           <h3>Monitor365 — server stability uncertain</h3>
           <div class="where">modules/nixos/services/monitor365.nix</div>
           <p>
-            Agent + server dashboard with ActivityWatch integration. Server is
-            in
+            Agent + server dashboard with ActivityWatch integration. Server is in
             <code>failed</code> state after DB path fix — needs
-            <code>systemctl --user reset-failed monitor365-server</code>. No
-            agent→server authentication (anyone on LAN can POST data).
+            <code>systemctl --user reset-failed monitor365-server</code>. No agent→server
+            authentication (anyone on LAN can POST data).
           </p>
         </div>
 
@@ -873,9 +823,9 @@
           <h3>Gatus health checks — 6 services showing DOWN</h3>
           <div class="where">modules/nixos/services/gatus-config.nix</div>
           <p>
-            Six monitored services show DOWN with possibly wrong check URLs:
-            SigNoz, Immich, Crush Daily, Ollama, Monitor365, and one more. Needs
-            URL audit to distinguish real outages from misconfigured probes.
+            Six monitored services show DOWN with possibly wrong check URLs: SigNoz, Immich, Crush
+            Daily, Ollama, Monitor365, and one more. Needs URL audit to distinguish real outages
+            from misconfigured probes.
           </p>
         </div>
 
@@ -884,11 +834,9 @@
           <h3>Twenty CRM — intermittent 502s</h3>
           <div class="where">modules/nixos/services/twenty.nix</div>
           <p>
-            Caddy logs show <code>connection refused</code>/<code
-              >connection reset</code
-            >
-            on port 3200. Likely container OOM or PG connection exhaustion. DB
-            was restored from backup but ~16h of data was lost.
+            Caddy logs show <code>connection refused</code>/<code>connection reset</code>
+            on port 3200. Likely container OOM or PG connection exhaustion. DB was restored from
+            backup but ~16h of data was lost.
           </p>
         </div>
 
@@ -897,9 +845,8 @@
           <h3>Hermes AI gateway — config wired, secrets missing</h3>
           <div class="where">modules/nixos/services/hermes.nix</div>
           <p>
-            Service is enabled and running, but OpenAI API key not in sops yet.
-            SSH deploy key not installed. Fallback model not set. Three manual
-            steps blocked on human action.
+            Service is enabled and running, but OpenAI API key not in sops yet. SSH deploy key not
+            installed. Fallback model not set. Three manual steps blocked on human action.
           </p>
         </div>
 
@@ -908,11 +855,9 @@
           <h3>BTRFS snapshots — root only, /data unprotected</h3>
           <div class="where">platforms/nixos/system/snapshots.nix</div>
           <p>
-            Root (<code>@</code>) has daily btrbk snapshots with 14d+4w
-            retention. But
-            <code>/data</code> is BTRFS toplevel (subvolid=5) — cannot be
-            snapshotted. All Docker volumes, Immich photos, AI models, and
-            databases have zero snapshot protection.
+            Root (<code>@</code>) has daily btrbk snapshots with 14d+4w retention. But
+            <code>/data</code> is BTRFS toplevel (subvolid=5) — cannot be snapshotted. All Docker
+            volumes, Immich photos, AI models, and databases have zero snapshot protection.
           </p>
         </div>
 
@@ -921,10 +866,9 @@
           <h3>Backup system — local only, design flaws</h3>
           <div class="where">various service modules</div>
           <p>
-            All backups are local <code>pg_dump</code> files on the same
-            machine. June 23 backups were all 0-byte files (timer fired while
-            DBs were crashed). No size validation. No off-site replication. No
-            backup integrity testing.
+            All backups are local <code>pg_dump</code> files on the same machine. June 23 backups
+            were all 0-byte files (timer fired while DBs were crashed). No size validation. No
+            off-site replication. No backup integrity testing.
           </p>
         </div>
 
@@ -933,9 +877,8 @@
           <h3>Darwin Home Manager — minimal parity</h3>
           <div class="where">platforms/darwin/home.nix</div>
           <p>
-            macOS HM config is functional but minimal — no terminal, editor, or
-            theme parity with NixOS. Blocked by 256GB SSD constraint (90%+
-            full).
+            macOS HM config is functional but minimal — no terminal, editor, or theme parity with
+            NixOS. Blocked by 256GB SSD constraint (90%+ full).
             <code>nix-collect-garbage</code> hangs on macOS.
           </p>
         </div>
@@ -945,11 +888,9 @@
           <h3>flake.lock — updated this session but stale upstream deps</h3>
           <div class="where">flake.lock</div>
           <p>
-            nixpkgs was 166 days stale (Jan 8 → Jun 23). This session updated it
-            to
-            <code>nixos-unstable</code> (Jun 16). But multiple LarsArtmann Go
-            repo inputs have stale <code>go.sum</code> /
-            <code>vendorHash</code> requiring
+            nixpkgs was 166 days stale (Jan 8 → Jun 23). This session updated it to
+            <code>nixos-unstable</code> (Jun 16). But multiple LarsArtmann Go repo inputs have stale
+            <code>go.sum</code> / <code>vendorHash</code> requiring
             <code>mkTidyOverride</code> workarounds in overlays.
           </p>
         </div>
@@ -957,26 +898,24 @@
         <!-- ================================================================ -->
         <h2 id="notstarted"><span class="num">03</span>c) Not Started</h2>
         <p>
-          Planned features, scaffolded modules, or documented aspirations with
-          zero implementation.
+          Planned features, scaffolded modules, or documented aspirations with zero implementation.
         </p>
 
         <div class="grid-2">
           <div class="card">
             <h4>Raspberry Pi 3 DNS failover cluster</h4>
             <p>
-              <code>nixosConfigurations.rpi3-dns</code> defined, VRRP module
-              ready, hardware not purchased. Would provide two-node Keepalived
-              VRRP cluster with unbound health tracking and GARP refresh.
+              <code>nixosConfigurations.rpi3-dns</code> defined, VRRP module ready, hardware not
+              purchased. Would provide two-node Keepalived VRRP cluster with unbound health tracking
+              and GARP refresh.
             </p>
           </div>
           <div class="card">
             <h4>Cloud / off-site backup</h4>
             <p>
               Researched BorgBackup to Hetzner StorageBox
-              (<code>docs/research/hetzner-storagebox-borgbackup.md</code>).
-              Zero implementation. This is the single highest-risk gap in the
-              entire system.
+              (<code>docs/research/hetzner-storagebox-borgbackup.md</code>). Zero implementation.
+              This is the single highest-risk gap in the entire system.
             </p>
           </div>
           <div class="card">
@@ -984,62 +923,59 @@
             <p>
               Detailed 80-task implementation plan created June 23
               (<code>docs/planning/2026-06-23_22-56-QUICKSHELL_IMPLEMENTATION_PLAN.html</code>).
-              Would replace Waybar, Dunst, Wlogout, polkit_gnome, swaylock with
-              QuickShell + DankMaterialShell. Zero lines implemented.
+              Would replace Waybar, Dunst, Wlogout, polkit_gnome, swaylock with QuickShell +
+              DankMaterialShell. Zero lines implemented.
             </p>
           </div>
           <div class="card">
             <h4>Firewall deny-by-default</h4>
             <p>
-              NixOS currently allows all inbound traffic. Docker punches its own
-              holes. No explicit allowlist exists. Transition planned but not
-              started.
+              NixOS currently allows all inbound traffic. Docker punches its own holes. No explicit
+              allowlist exists. Transition planned but not started.
             </p>
           </div>
           <div class="card">
             <h4>Auditd enablement</h4>
             <p>
-              Blocked on NixOS 26.05 bug #483085. Cannot be enabled until
-              upstream fix. Security audit gap.
+              Blocked on NixOS 26.05 bug #483085. Cannot be enabled until upstream fix. Security
+              audit gap.
             </p>
           </div>
           <div class="card">
             <h4>AppArmor enablement</h4>
             <p>
-              Currently <code>mkDefault false</code> in security-hardening.nix.
-              No MAC (Mandatory Access Control) system active.
+              Currently <code>mkDefault false</code> in security-hardening.nix. No MAC (Mandatory
+              Access Control) system active.
             </p>
           </div>
           <div class="card">
             <h4>Voice agents</h4>
             <p>
-              Module exists (<code>voice-agents.nix</code>), disabled. Decision
-              needed: enable or remove. Complex native deps (<code>voice</code>
+              Module exists (<code>voice-agents.nix</code>), disabled. Decision needed: enable or
+              remove. Complex native deps (<code>voice</code>
               pip extra has complex deps).
             </p>
           </div>
           <div class="card">
             <h4>PhotoMap AI</h4>
             <p>
-              CLIP embedding visualization module exists, disabled (podman
-              config permission issue). Decision needed: fix and enable, or
-              remove.
+              CLIP embedding visualization module exists, disabled (podman config permission issue).
+              Decision needed: fix and enable, or remove.
             </p>
           </div>
           <div class="card">
             <h4>BTRFS /data subvolume migration</h4>
             <p>
-              Currently toplevel (subvolid=5), cannot be snapshotted. Needs:
-              create subvolume → update fstab → reboot → rsync data. Documented
-              in TODO_LIST and ROADMAP. Manual, risky, not started.
+              Currently toplevel (subvolid=5), cannot be snapshotted. Needs: create subvolume →
+              update fstab → reboot → rsync data. Documented in TODO_LIST and ROADMAP. Manual,
+              risky, not started.
             </p>
           </div>
           <div class="card">
             <h4>20+ upstream contribution PRs</h4>
             <p>
-              nixpkgs (7 items), Home Manager (3 items), LarsArtmann Go repos (2
-              stale), LarsArtmann apps (3 missing features), third-party (3
-              items). All documented, none submitted.
+              nixpkgs (7 items), Home Manager (3 items), LarsArtmann Go repos (2 stale), LarsArtmann
+              apps (3 missing features), third-party (3 items). All documented, none submitted.
             </p>
           </div>
         </div>
@@ -1047,30 +983,26 @@
         <!-- ================================================================ -->
         <h2 id="fucked"><span class="num">04</span>d) Totally Fucked Up</h2>
         <p>
-          Critical failures, active emergencies, and things that are broken or
-          causing active damage.
+          Critical failures, active emergencies, and things that are broken or causing active
+          damage.
         </p>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
-          <h3>
-            /data BTRFS filesystem — 23.5M checksum errors, actively corrupting
-          </h3>
+          <h3>/data BTRFS filesystem — 23.5M checksum errors, actively corrupting</h3>
           <div class="where">/data (1 TB BTRFS, single-device, subvolid=5)</div>
           <p>
-            <strong>23,500,000+ uncorrectable checksum errors.</strong> 94,210
-            new errors in 2 hours. ~90 GB permanently lost. Single-device BTRFS
-            = detection without recovery. AI models (gemma-4-31b,
-            HiDream-O1-Image confirmed corrupted, possibly more silently),
-            Docker overlay2 layers, databases all affected. Docker overlay2 was
-            entirely rebuilt. Redis SSL symbol failure was caused by BTRFS
-            serving a corrupted <code>libssl.so.3</code>. NVMe SMART is clean —
-            root cause unknown.
+            <strong>23,500,000+ uncorrectable checksum errors.</strong> 94,210 new errors in 2
+            hours. ~90 GB permanently lost. Single-device BTRFS = detection without recovery. AI
+            models (gemma-4-31b, HiDream-O1-Image confirmed corrupted, possibly more silently),
+            Docker overlay2 layers, databases all affected. Docker overlay2 was entirely rebuilt.
+            Redis SSL symbol failure was caused by BTRFS serving a corrupted
+            <code>libssl.so.3</code>. NVMe SMART is clean — root cause unknown.
           </p>
           <div class="callout callout-problem">
-            <strong>Needs:</strong> Full <code>/data</code> reformat. This is a
-            data-loss event in progress. Every service on <code>/data</code> is
-            reading corrupted data at unknown times.
+            <strong>Needs:</strong> Full <code>/data</code> reformat. This is a data-loss event in
+            progress. Every service on <code>/data</code> is reading corrupted data at unknown
+            times.
           </div>
         </div>
 
@@ -1079,11 +1011,10 @@
           <h3>Root disk chronically at 94-99% full</h3>
           <div class="where">/ (BTRFS root, ~500 GB)</div>
           <p>
-            Hit 99% (5.8 GB free) on June 23 — deploy was physically impossible.
-            Has blocked operations 3+ times. 624 orphaned Docker volumes (37 GB
-            reclaimable).
-            <code>nix.gc</code> exists but Docker volume pruning doesn't work.
-            Swap was exhausted (632 KiB free). No automated cleanup exists.
+            Hit 99% (5.8 GB free) on June 23 — deploy was physically impossible. Has blocked
+            operations 3+ times. 624 orphaned Docker volumes (37 GB reclaimable).
+            <code>nix.gc</code> exists but Docker volume pruning doesn't work. Swap was exhausted
+            (632 KiB free). No automated cleanup exists.
           </p>
         </div>
 
@@ -1092,15 +1023,13 @@
           <h3>OOM hardening NOT DEPLOYED — 9+ day old generation</h3>
           <div class="where">Running system generation vs git commits</div>
           <p>
-            4+ commits of OOM defense work exist in git: user slice
-            MemoryHigh/MemoryMax, oomd tuning (50%/20s), MGLRU
-            <code>min_ttl_ms=1000</code> thrash protection. But the running
-            generation is 9+ days old. The system is
-            <strong>identically vulnerable</strong> to the June 19 OOM crash
-            that caused <strong>6.5 hours of downtime</strong> (Helium/Electron
-            renderers grew unbounded → reclaim thrash → journald starvation →
-            hardware watchdog reset → BIOS stayed off because AC Power Recovery
-            = "Off").
+            4+ commits of OOM defense work exist in git: user slice MemoryHigh/MemoryMax, oomd
+            tuning (50%/20s), MGLRU
+            <code>min_ttl_ms=1000</code> thrash protection. But the running generation is 9+ days
+            old. The system is <strong>identically vulnerable</strong> to the June 19 OOM crash that
+            caused <strong>6.5 hours of downtime</strong> (Helium/Electron renderers grew unbounded
+            → reclaim thrash → journald starvation → hardware watchdog reset → BIOS stayed off
+            because AC Power Recovery = "Off").
           </p>
         </div>
 
@@ -1110,11 +1039,10 @@
           <div class="where">All backup timers</div>
           <p>
             No off-site backup exists. All backups are local
-            <code>pg_dump</code> files on the same machine that's actively
-            corrupting. June 23 backups were all <strong>0-byte files</strong> —
-            the backup timer fired while databases were crashed, and the system
-            blindly piped <code>pg_dump</code> errors to a file with no size
-            validation. The backup system
+            <code>pg_dump</code> files on the same machine that's actively corrupting. June 23
+            backups were all <strong>0-byte files</strong> — the backup timer fired while databases
+            were crashed, and the system blindly piped <code>pg_dump</code> errors to a file with no
+            size validation. The backup system
             <strong>silently reported success while backing up nothing</strong>.
           </p>
         </div>
@@ -1125,8 +1053,7 @@
           <div class="where">modules/nixos/services/openseo.nix</div>
           <p>
             Container image corrupted by BTRFS errors. In
-            <code>failed</code> state. Data intact but service down. Needs image
-            rebuild.
+            <code>failed</code> state. Data intact but service down. Needs image rebuild.
           </p>
         </div>
 
@@ -1136,9 +1063,8 @@
           <div class="where">modules/nixos/services/discordsync.nix</div>
           <p>
             Disabled. Needs migration from deleted <code>projection/v2</code> to
-            <code>watermill.CatchUpSubscriber</code> +
-            <code>stack.Materialize</code> (ADR-0030). Upstream Go code doesn't
-            exist yet.
+            <code>watermill.CatchUpSubscriber</code> + <code>stack.Materialize</code> (ADR-0030).
+            Upstream Go code doesn't exist yet.
           </p>
         </div>
 
@@ -1147,9 +1073,8 @@
           <h3>Mullvad VPN — permanently disabled</h3>
           <div class="where">platforms/nixos/system/configuration.nix</div>
           <p>
-            <code>talpid_dns</code> corrupted <code>/etc/resolv.conf</code>,
-            breaking unbound resolution every ~90s. Permanently disabled. No VPN
-            solution active.
+            <code>talpid_dns</code> corrupted <code>/etc/resolv.conf</code>, breaking unbound
+            resolution every ~90s. Permanently disabled. No VPN solution active.
           </p>
         </div>
 
@@ -1158,28 +1083,24 @@
           <h3>Jan llama-server respawn leak</h3>
           <div class="where">ROADMAP.md — AI/ML theme</div>
           <p>
-            Jan spawns new <code>llama-server</code> process every 1-3 min (~1.2
-            GB each), no cgroup limits. Documented but unfixed. Contributes to
-            memory pressure.
+            Jan spawns new <code>llama-server</code> process every 1-3 min (~1.2 GB each), no cgroup
+            limits. Documented but unfixed. Contributes to memory pressure.
           </p>
         </div>
 
         <!-- ================================================================ -->
-        <h2 id="improve">
-          <span class="num">05</span>e) What We Should Improve
-        </h2>
+        <h2 id="improve"><span class="num">05</span>e) What We Should Improve</h2>
 
         <div class="card card-warning">
           <h4>1. Backup system is a lie</h4>
           <p>
-            The backup pipeline blindly pipes <code>pg_dump</code> to a file
-            with no size validation, no integrity checks, and no off-site
-            replication. It silently produces 0-byte files when databases are
-            down and reports success. This is worse than no backup because it
-            creates false confidence.
+            The backup pipeline blindly pipes <code>pg_dump</code> to a file with no size
+            validation, no integrity checks, and no off-site replication. It silently produces
+            0-byte files when databases are down and reports success. This is worse than no backup
+            because it creates false confidence.
             <strong
-              >Every backup script needs: size validation, error code checking,
-              off-site replication, and periodic restore testing.</strong
+              >Every backup script needs: size validation, error code checking, off-site
+              replication, and periodic restore testing.</strong
             >
           </p>
         </div>
@@ -1187,57 +1108,52 @@
         <div class="card card-warning">
           <h4>2. Single-device BTRFS is the worst of both worlds</h4>
           <p>
-            BTRFS on a single device gives you checksum verification (so you
-            know data is corrupt) but no recovery (because there's no mirror to
-            repair from). You get the overhead of CoW checksumming with none of
-            the resilience benefit. Either add a second device for BTRFS RAID1,
-            or switch <code>/data</code> to ext4 (simpler, no false sense of
-            security) and rely on proper backups instead.
+            BTRFS on a single device gives you checksum verification (so you know data is corrupt)
+            but no recovery (because there's no mirror to repair from). You get the overhead of CoW
+            checksumming with none of the resilience benefit. Either add a second device for BTRFS
+            RAID1, or switch <code>/data</code> to ext4 (simpler, no false sense of security) and
+            rely on proper backups instead.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>3. Deploy gap is dangerous</h4>
           <p>
-            The running generation is 9+ days behind git. OOM hardening, mount
-            validation, Docker fixes — all committed but not running. The system
-            that boots on next power cycle is not the system in git.
+            The running generation is 9+ days behind git. OOM hardening, mount validation, Docker
+            fixes — all committed but not running. The system that boots on next power cycle is not
+            the system in git.
             <strong>Deploy needs to be unblocked and run immediately.</strong>
-            The disk crisis that blocked it may be a chicken-and-egg: can't
-            deploy because disk is full, disk is full because old generations
-            aren't being cleaned.
+            The disk crisis that blocked it may be a chicken-and-egg: can't deploy because disk is
+            full, disk is full because old generations aren't being cleaned.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>4. Container health checks are lies</h4>
           <p>
-            <code>pg_isready</code> only checks if the port is open, not if the
-            database actually responds to queries. Docker reports containers as
-            "healthy" when the DB is functionally broken. Health checks need to
-            run actual queries (<code>SELECT 1</code>) or application-level
-            checks.
+            <code>pg_isready</code> only checks if the port is open, not if the database actually
+            responds to queries. Docker reports containers as "healthy" when the DB is functionally
+            broken. Health checks need to run actual queries (<code>SELECT 1</code>) or
+            application-level checks.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>5. Large modules need splitting</h4>
           <p>
-            monitor365.nix (716 lines), signoz.nix (705 lines), forgejo.nix (583
-            lines) — these are too large to maintain safely. Each contains
-            multiple concerns crammed together. Split by responsibility
-            (database, container, backup, monitoring).
+            monitor365.nix (716 lines), signoz.nix (705 lines), forgejo.nix (583 lines) — these are
+            too large to maintain safely. Each contains multiple concerns crammed together. Split by
+            responsibility (database, container, backup, monitoring).
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>6. 178 status reports need archiving</h4>
           <p>
-            <code>docs/status/</code> has 178 files. The useful signal-to-noise
-            ratio is dropping. Pre-session-100 reports should be archived to
-            <code>docs/status/archive/</code>. An
-            <code>archive/</code> subdirectory already exists but isn't being
-            used aggressively enough.
+            <code>docs/status/</code> has 178 files. The useful signal-to-noise ratio is dropping.
+            Pre-session-100 reports should be archived to <code>docs/status/archive/</code>. An
+            <code>archive/</code> subdirectory already exists but isn't being used aggressively
+            enough.
           </p>
         </div>
 
@@ -1246,29 +1162,24 @@
           <p>
             <code>library-policy</code> and <code>mr-sync</code> still need
             <code>mkTidyOverride</code> workarounds. 4 nixpkgs packages have
-            <code>doCheck = false</code> overrides due to test failures. These
-            are technical debt that should be fixed upstream.
+            <code>doCheck = false</code> overrides due to test failures. These are technical debt
+            that should be fixed upstream.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>8. No automated disk cleanup</h4>
           <p>
-            <code>nix.gc</code> runs but Docker volume pruning is broken. 624
-            orphaned Docker volumes (37 GB) accumulated. Need a systemd timer
-            that runs <code>docker volume prune -f</code> +
+            <code>nix.gc</code> runs but Docker volume pruning is broken. 624 orphaned Docker
+            volumes (37 GB) accumulated. Need a systemd timer that runs
+            <code>docker volume prune -f</code> +
             <code>nix-collect-garbage --delete-older-than 7d</code> weekly.
           </p>
         </div>
 
         <!-- ================================================================ -->
-        <h2 id="top25">
-          <span class="num">06</span>f) Top 25 Things to Get Done Next
-        </h2>
-        <p>
-          Sorted by impact. Pareto principle: the top 5 deliver 80% of the
-          value.
-        </p>
+        <h2 id="top25"><span class="num">06</span>f) Top 25 Things to Get Done Next</h2>
+        <p>Sorted by impact. Pareto principle: the top 5 deliver 80% of the value.</p>
 
         <table>
           <thead>
@@ -1284,15 +1195,11 @@
               <td>1</td>
               <td><span class="badge badge-critical">P0</span></td>
               <td>
-                <strong
-                  >Set up off-site backup (BorgBackup to Hetzner
-                  StorageBox)</strong
-                >
+                <strong>Set up off-site backup (BorgBackup to Hetzner StorageBox)</strong>
               </td>
               <td>
-                Zero off-site backups + actively corrupting filesystem =
-                guaranteed catastrophic data loss. This is the single
-                highest-risk gap.
+                Zero off-site backups + actively corrupting filesystem = guaranteed catastrophic
+                data loss. This is the single highest-risk gap.
               </td>
             </tr>
             <tr>
@@ -1300,8 +1207,8 @@
               <td><span class="badge badge-critical">P0</span></td>
               <td><strong>Reformat /data BTRFS filesystem</strong></td>
               <td>
-                23.5M checksum errors and growing. Every read from /data is a
-                gamble. Must back up what's salvageable, reformat, restore.
+                23.5M checksum errors and growing. Every read from /data is a gamble. Must back up
+                what's salvageable, reformat, restore.
               </td>
             </tr>
             <tr>
@@ -1309,51 +1216,40 @@
               <td><span class="badge badge-critical">P0</span></td>
               <td><strong>Deploy current git state to evo-x2</strong></td>
               <td>
-                9+ day old generation. OOM hardening, Docker fixes, mount
-                validation — all in git but not running. System is vulnerable to
-                repeat of June 19 crash.
+                9+ day old generation. OOM hardening, Docker fixes, mount validation — all in git
+                but not running. System is vulnerable to repeat of June 19 crash.
               </td>
             </tr>
             <tr>
               <td>4</td>
               <td><span class="badge badge-critical">P0</span></td>
               <td>
-                <strong
-                  >Fix backup pipeline: add size validation + error
-                  checking</strong
-                >
+                <strong>Fix backup pipeline: add size validation + error checking</strong>
               </td>
               <td>
-                Current backups silently produce 0-byte files. Every backup
-                script needs
-                <code>set -o pipefail</code>, size check, and error
-                notification.
+                Current backups silently produce 0-byte files. Every backup script needs
+                <code>set -o pipefail</code>, size check, and error notification.
               </td>
             </tr>
             <tr>
               <td>5</td>
               <td><span class="badge badge-critical">P0</span></td>
               <td>
-                <strong
-                  >Automated disk cleanup (Docker volumes + nix GC)</strong
-                >
+                <strong>Automated disk cleanup (Docker volumes + nix GC)</strong>
               </td>
               <td>
-                624 orphaned Docker volumes (37 GB). Root disk at 94-99%. Deploy
-                is blocked by disk pressure. Needs systemd timer.
+                624 orphaned Docker volumes (37 GB). Root disk at 94-99%. Deploy is blocked by disk
+                pressure. Needs systemd timer.
               </td>
             </tr>
             <tr>
               <td>6</td>
               <td><span class="badge badge-high">P1</span></td>
               <td>
-                <strong
-                  >Migrate /data to proper BTRFS subvolume (or ext4)</strong
-                >
+                <strong>Migrate /data to proper BTRFS subvolume (or ext4)</strong>
               </td>
               <td>
-                Toplevel subvolid=5 cannot be snapshotted. After reformat,
-                create
+                Toplevel subvolid=5 cannot be snapshotted. After reformat, create
                 <code>@data</code> subvolume so btrbk can protect it.
               </td>
             </tr>
@@ -1362,18 +1258,15 @@
               <td><span class="badge badge-high">P1</span></td>
               <td><strong>Audit &amp; fix Gatus health check URLs</strong></td>
               <td>
-                6 services showing DOWN — can't distinguish real outages from
-                misconfigured probes. Monitoring is only useful if it's
-                accurate.
+                6 services showing DOWN — can't distinguish real outages from misconfigured probes.
+                Monitoring is only useful if it's accurate.
               </td>
             </tr>
             <tr>
               <td>8</td>
               <td><span class="badge badge-high">P1</span></td>
               <td>
-                <strong
-                  >Fix Twenty CRM 502s (container OOM or PG exhaustion)</strong
-                >
+                <strong>Fix Twenty CRM 502s (container OOM or PG exhaustion)</strong>
               </td>
               <td>
                 Intermittent connection refused on port 3200. Need
@@ -1385,8 +1278,7 @@
               <td><span class="badge badge-high">P1</span></td>
               <td><strong>Rebuild OpenSEO container image</strong></td>
               <td>
-                Corrupted by BTRFS errors. Data intact but service is down.
-                Simple
+                Corrupted by BTRFS errors. Data intact but service is down. Simple
                 <code>docker compose pull</code> + restart.
               </td>
             </tr>
@@ -1394,27 +1286,22 @@
               <td>10</td>
               <td><span class="badge badge-high">P1</span></td>
               <td>
-                <strong
-                  >Reset Monitor365 failed state + verify stability</strong
-                >
+                <strong>Reset Monitor365 failed state + verify stability</strong>
               </td>
               <td>
-                <code>systemctl --user reset-failed monitor365-server</code>.
-                Then monitor for recurrence.
+                <code>systemctl --user reset-failed monitor365-server</code>. Then monitor for
+                recurrence.
               </td>
             </tr>
             <tr>
               <td>11</td>
               <td><span class="badge badge-high">P1</span></td>
               <td>
-                <strong
-                  >Verify boot time after deploy (target ~35s, was
-                  6m17s)</strong
-                >
+                <strong>Verify boot time after deploy (target ~35s, was 6m17s)</strong>
               </td>
               <td>
-                NVMe APST fix + Caddy sops ordering fix should dramatically
-                improve boot. Must verify after reboot.
+                NVMe APST fix + Caddy sops ordering fix should dramatically improve boot. Must
+                verify after reboot.
               </td>
             </tr>
             <tr>
@@ -1422,37 +1309,26 @@
               <td><span class="badge badge-medium">P2</span></td>
               <td><strong>Verify Pocket ID email sending (SMTP)</strong></td>
               <td>
-                SMTP wiring + sops secret added but untested. Login
-                notifications depend on it.
+                SMTP wiring + sops secret added but untested. Login notifications depend on it.
               </td>
             </tr>
             <tr>
               <td>13</td>
               <td><span class="badge badge-medium">P2</span></td>
               <td>
-                <strong
-                  >Add Hermes OpenAI API key + SSH deploy key + fallback
-                  model</strong
-                >
+                <strong>Add Hermes OpenAI API key + SSH deploy key + fallback model</strong>
               </td>
-              <td>
-                3 manual steps blocked on human. Config is wired, just needs
-                secrets.
-              </td>
+              <td>3 manual steps blocked on human. Config is wired, just needs secrets.</td>
             </tr>
             <tr>
               <td>14</td>
               <td><span class="badge badge-medium">P2</span></td>
               <td>
-                <strong
-                  >Fix container health checks (real query-based, not
-                  port-check)</strong
-                >
+                <strong>Fix container health checks (real query-based, not port-check)</strong>
               </td>
               <td>
-                Replace <code>pg_isready</code> with
-                <code>SELECT 1</code> checks. Docker reports healthy when DB is
-                broken.
+                Replace <code>pg_isready</code> with <code>SELECT 1</code> checks. Docker reports
+                healthy when DB is broken.
               </td>
             </tr>
             <tr>
@@ -1461,24 +1337,15 @@
               <td>
                 <strong>Firewall deny-by-default + explicit allowlist</strong>
               </td>
-              <td>
-                NixOS allows all inbound. Docker punches its own holes. Security
-                gap.
-              </td>
+              <td>NixOS allows all inbound. Docker punches its own holes. Security gap.</td>
             </tr>
             <tr>
               <td>16</td>
               <td><span class="badge badge-medium">P2</span></td>
               <td>
-                <strong
-                  >Bind Immich to localhost (remove 0.0.0.0 +
-                  openFirewall)</strong
-                >
+                <strong>Bind Immich to localhost (remove 0.0.0.0 + openFirewall)</strong>
               </td>
-              <td>
-                Caddy already reverse-proxies. Direct exposure is unnecessary
-                attack surface.
-              </td>
+              <td>Caddy already reverse-proxies. Direct exposure is unnecessary attack surface.</td>
             </tr>
             <tr>
               <td>17</td>
@@ -1487,31 +1354,24 @@
                 <strong>Archive old status reports (178 → ~30 active)</strong>
               </td>
               <td>
-                Signal-to-noise in docs/status/ is dropping. Move
-                pre-session-100 to archive/.
+                Signal-to-noise in docs/status/ is dropping. Move pre-session-100 to archive/.
               </td>
             </tr>
             <tr>
               <td>18</td>
               <td><span class="badge badge-medium">P2</span></td>
               <td>
-                <strong
-                  >Fix Jan llama-server respawn leak (cgroup limits)</strong
-                >
+                <strong>Fix Jan llama-server respawn leak (cgroup limits)</strong>
               </td>
               <td>
-                Spawns ~1.2 GB processes every 1-3 min with no limit. Memory
-                pressure contributor.
+                Spawns ~1.2 GB processes every 1-3 min with no limit. Memory pressure contributor.
               </td>
             </tr>
             <tr>
               <td>19</td>
               <td><span class="badge badge-low">P3</span></td>
               <td>
-                <strong
-                  >Split large modules (monitor365 716L, signoz 705L, forgejo
-                  583L)</strong
-                >
+                <strong>Split large modules (monitor365 716L, signoz 705L, forgejo 583L)</strong>
               </td>
               <td>Maintainability. Split by responsibility.</td>
             </tr>
@@ -1519,21 +1379,17 @@
               <td>20</td>
               <td><span class="badge badge-low">P3</span></td>
               <td>
-                <strong
-                  >Fix stale go.sum in library-policy + mr-sync upstream</strong
-                >
+                <strong>Fix stale go.sum in library-policy + mr-sync upstream</strong>
               </td>
-              <td>
-                Eliminates <code>mkTidyOverride</code> workarounds in overlays.
-              </td>
+              <td>Eliminates <code>mkTidyOverride</code> workarounds in overlays.</td>
             </tr>
             <tr>
               <td>21</td>
               <td><span class="badge badge-low">P3</span></td>
               <td><strong>Submit nixpkgs PRs (7 documented items)</strong></td>
               <td>
-                poetry-core migration, ROCm MMFMA flag, taskwarrior3 flags,
-                KeePassXC Chromium manifests, etc.
+                poetry-core migration, ROCm MMFMA flag, taskwarrior3 flags, KeePassXC Chromium
+                manifests, etc.
               </td>
             </tr>
             <tr>
@@ -1543,8 +1399,7 @@
                 <strong>Swap investigation (8 GiB used on 128 GiB RAM)</strong>
               </td>
               <td>
-                <code>smem -t -k | tail -20</code> to find swap consumers. May
-                indicate memory leak.
+                <code>smem -t -k | tail -20</code> to find swap consumers. May indicate memory leak.
               </td>
             </tr>
             <tr>
@@ -1552,8 +1407,7 @@
               <td><span class="badge badge-low">P3</span></td>
               <td>
                 <strong
-                  >Decide fate of disabled services (voice-agents, photomap,
-                  minecraft)</strong
+                  >Decide fate of disabled services (voice-agents, photomap, minecraft)</strong
                 >
               </td>
               <td>Each adds maintenance burden. Enable or remove.</td>
@@ -1562,13 +1416,11 @@
               <td>24</td>
               <td><span class="badge badge-low">P3</span></td>
               <td>
-                <strong
-                  >QuickShell desktop shell (P0-P1 tiers from plan)</strong
-                >
+                <strong>QuickShell desktop shell (P0-P1 tiers from plan)</strong>
               </td>
               <td>
-                80-task plan exists. P0 tier is ~1h for a real bar. Defer until
-                infrastructure crisis resolved.
+                80-task plan exists. P0 tier is ~1h for a real bar. Defer until infrastructure
+                crisis resolved.
               </td>
             </tr>
             <tr>
@@ -1578,83 +1430,69 @@
                 <strong>Provision Raspberry Pi 3 for DNS failover</strong>
               </td>
               <td>
-                Hardware purchase required. Module and config ready. Low urgency
-                while single-node DNS is stable.
+                Hardware purchase required. Module and config ready. Low urgency while single-node
+                DNS is stable.
               </td>
             </tr>
           </tbody>
         </table>
 
         <!-- ================================================================ -->
-        <h2 id="question">
-          <span class="num">07</span>g) The #1 Question I Cannot Answer
-        </h2>
+        <h2 id="question"><span class="num">07</span>g) The #1 Question I Cannot Answer</h2>
 
         <div class="card card-problem">
-          <h4>
-            What caused the BTRFS corruption — and is the NVMe drive itself
-            failing?
-          </h4>
+          <h4>What caused the BTRFS corruption — and is the NVMe drive itself failing?</h4>
           <p style="font-size: 1.05rem">
-            The <code>/data</code> filesystem has 23.5 million uncorrectable
-            checksum errors and is actively growing. But the NVMe SMART data is
-            <strong>clean</strong> — no media errors, no reallocated sectors, no
-            UNC errors at the hardware level. This is deeply unusual.
+            The <code>/data</code> filesystem has 23.5 million uncorrectable checksum errors and is
+            actively growing. But the NVMe SMART data is <strong>clean</strong> — no media errors,
+            no reallocated sectors, no UNC errors at the hardware level. This is deeply unusual.
           </p>
           <p>
-            If the drive hardware is healthy, the corruption must be coming from
-            one of:
-            <strong>(a)</strong> a BTRFS bug triggered by the June 19 OOM crash
-            / hard reset (BTRFS is known for CoW tree corruption on unclean
-            shutdowns), <strong>(b)</strong> memory corruption that was written
-            to disk (ECC would help but the Ryzen AI Max+ 395 doesn't have ECC),
-            or <strong>(c)</strong> a failing controller or cable (SMART
-            wouldn't necessarily catch this).
+            If the drive hardware is healthy, the corruption must be coming from one of:
+            <strong>(a)</strong> a BTRFS bug triggered by the June 19 OOM crash / hard reset (BTRFS
+            is known for CoW tree corruption on unclean shutdowns), <strong>(b)</strong> memory
+            corruption that was written to disk (ECC would help but the Ryzen AI Max+ 395 doesn't
+            have ECC), or <strong>(c)</strong> a failing controller or cable (SMART wouldn't
+            necessarily catch this).
           </p>
           <p>
-            <strong
-              >I cannot determine which of these is the root cause.</strong
-            >
-            Without knowing this, reformatting <code>/data</code> might just
-            result in the corruption returning. The decision tree branches
-            critically:
+            <strong>I cannot determine which of these is the root cause.</strong>
+            Without knowing this, reformatting <code>/data</code> might just result in the
+            corruption returning. The decision tree branches critically:
           </p>
           <ul>
             <li>
-              If <strong>(a) OOM-induced CoW corruption</strong> → reformat is
-              safe, deploy OOM hardening first, then reformat
+              If <strong>(a) OOM-induced CoW corruption</strong> → reformat is safe, deploy OOM
+              hardening first, then reformat
             </li>
             <li>
-              If <strong>(b) memory corruption</strong> → the drive is fine but
-              RAM needs replacing; reformat + memtest86
+              If <strong>(b) memory corruption</strong> → the drive is fine but RAM needs replacing;
+              reformat + memtest86
             </li>
             <li>
-              If <strong>(c) hardware failure</strong> → the
-              drive/controller/cable needs replacing before any data goes back
+              If <strong>(c) hardware failure</strong> → the drive/controller/cable needs replacing
+              before any data goes back
             </li>
           </ul>
           <p>
-            <strong>What I need from you:</strong> Have you run
-            <code>memtest86</code> since the corruption started? Do you have
-            <code>smartctl -a /dev/nvme0n1</code> output from
-            <em>before</em> the corruption? Was the system overclocked or
-            undervolted at any point? Is there a second NVMe slot to test with?
-            This determines whether reformatting is a fix or a waste of time.
+            <strong>What I need from you:</strong> Have you run <code>memtest86</code> since the
+            corruption started? Do you have <code>smartctl -a /dev/nvme0n1</code> output from
+            <em>before</em> the corruption? Was the system overclocked or undervolted at any point?
+            Is there a second NVMe slot to test with? This determines whether reformatting is a fix
+            or a waste of time.
           </p>
           <div class="callout callout-problem">
             <strong>Why this matters more than anything else:</strong>
-            You can fix backup systems, deploy OOM hardening, and reformat the
-            filesystem — but if the underlying hardware or memory is silently
-            corrupting data, none of it matters. Every new byte written to this
-            system may be corrupted. This is the one thing I cannot diagnose or
-            fix from the Nix configuration alone.
+            You can fix backup systems, deploy OOM hardening, and reformat the filesystem — but if
+            the underlying hardware or memory is silently corrupting data, none of it matters. Every
+            new byte written to this system may be corrupted. This is the one thing I cannot
+            diagnose or fix from the Nix configuration alone.
           </div>
         </div>
 
         <footer class="footer">
-          Generated 2026-06-24 02:06 CEST &middot; Session 149 &middot; All
-          claims verified against source code, git history, docs/status/,
-          TODO_LIST.md, FEATURES.md, and ROADMAP.md
+          Generated 2026-06-24 02:06 CEST &middot; Session 149 &middot; All claims verified against
+          source code, git history, docs/status/, TODO_LIST.md, FEATURES.md, and ROADMAP.md
         </footer>
       </main>
     </div>

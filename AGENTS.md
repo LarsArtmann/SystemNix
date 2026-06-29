@@ -106,6 +106,8 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - Twenty: SSO gated behind a billing entitlement
 - Custom LarsArtmann Go services: require upstream OIDC code in their repos
 
+**Single Logout (SLO) is partial, not coordinated.** Layer 2 apps share the oauth2-proxy session cookie (`.${domain}`) — logging out via oauth2-proxy's `/oauth2/sign_out` clears them together. Layer 1 apps (Forgejo, Immich, Gatus) each keep their **own** session cookie and do NOT participate in coordinated logout — visiting them after an IdP logout may still show the cached app session until it expires or the user explicitly logs out per-app. Pocket ID supports RP-initiated logout, but wiring it into every Layer 1 app's logout flow is per-app work and not currently done.
+
 ### BTRFS (evo-x2)
 
 Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRFS toplevel (subvolid=5). Pre-deploy snapshots: manual only.
