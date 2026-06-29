@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SSO / Native OIDC Expansion Plan — evo-x2</title>
+    <style>
+      :root {
+        --bg: #11111b;
+        --surface: #181825;
+        --surface2: #1e1e2e;
+        --text: #cdd6f4;
+        --muted: #a6adc8;
+        --accent: #cba6f7;
+        --green: #a6e3a1;
+        --yellow: #f9e2af;
+        --blue: #89b4fa;
+        --red: #f38ba8;
+        --gray: #6c7086;
+        --border: #313244;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font:
+          15px/1.55 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+      }
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+      }
+      h1 {
+        font-size: 2em;
+        margin: 0 0 4px;
+      }
+      h2 {
+        font-size: 1.45em;
+        margin: 2.2em 0 0.5em;
+        padding-bottom: 0.3em;
+        border-bottom: 1px solid var(--border);
+        color: var(--accent);
+      }
+      h3 {
+        font-size: 1.1em;
+        margin: 1.6em 0 0.4em;
+      }
+      .sub {
+        color: var(--muted);
+        margin: 0 0 24px;
+      }
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 28px;
+      }
+      .pill {
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.8em;
+        color: var(--muted);
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 14px;
+        margin: 18px 0;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+      }
+      .card .n {
+        font-size: 2.2em;
+        font-weight: 800;
+        line-height: 1;
+      }
+      .card .l {
+        color: var(--muted);
+        font-size: 0.85em;
+        margin-top: 6px;
+      }
+      .g1 {
+        border-left: 4px solid var(--green);
+      }
+      .g2 {
+        border-left: 4px solid var(--yellow);
+      }
+      .g3 {
+        border-left: 4px solid var(--blue);
+      }
+      .g4 {
+        border-left: 4px solid var(--gray);
+      }
+      .callout {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--red);
+        border-radius: 12px;
+        padding: 16px 20px;
+        margin: 18px 0;
+      }
+      .callout.ok {
+        border-left-color: var(--green);
+      }
+      .callout.warn {
+        border-left-color: var(--yellow);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 12px 0;
+        font-size: 0.9em;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      th,
+      td {
+        padding: 9px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        background: var(--surface2);
+        color: var(--accent);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tr:nth-child(even) td {
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .badge {
+        display: inline-block;
+        padding: 1px 8px;
+        border-radius: 999px;
+        font-size: 0.74em;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .b-imp-h {
+        background: #313248;
+        color: var(--green);
+      }
+      .b-imp-m {
+        background: #313248;
+        color: var(--yellow);
+      }
+      .b-eff-l {
+        background: #1e2b1e;
+        color: #a6e3a1;
+      }
+      .b-eff-m {
+        background: #2b2a1e;
+        color: #f9e2af;
+      }
+      .b-blocked {
+        background: #2b1e1e;
+        color: var(--red);
+      }
+      .b-do {
+        background: #1e2b1e;
+        color: var(--green);
+      }
+      .b-doc {
+        background: #1e2a2b;
+        color: var(--blue);
+      }
+      code {
+        background: var(--surface2);
+        padding: 1px 5px;
+        border-radius: 5px;
+        font-size: 0.86em;
+        color: var(--green);
+      }
+      .svgwrap {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+        margin: 18px 0;
+        overflow-x: auto;
+      }
+      .svgwrap svg {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .total {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .foot {
+        color: var(--muted);
+        font-size: 0.82em;
+        margin-top: 40px;
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>SSO / Native OIDC Expansion — Plan</h1>
+      <p class="sub">
+        evo-x2 · Pocket ID IdP + oauth2-proxy forward-auth bridge · generated 2026-06-29
+      </p>
+      <div class="meta">
+        <span class="pill">Pareto-ordered</span>
+        <span class="pill">Tasks ≤ 12 min each</span>
+        <span class="pill">18 actionable + 6 blocked</span>
+        <span class="pill">Effort: code ≈ 3.0 h</span>
+      </div>
+
+      <div class="callout">
+        <strong>Critical research finding that reshaped this plan:</strong> Of the 4 candidate
+        services, only <strong>Gatus</strong> can receive native OIDC for free.
+        <table style="margin: 10px 0 0; font-size: 0.86em">
+          <tr>
+            <th>Service</th>
+            <th>Native OIDC feasible?</th>
+            <th>Why</th>
+          </tr>
+          <tr>
+            <td><strong>Gatus</strong></td>
+            <td><span class="badge b-do">YES — free OSS</span></td>
+            <td>First-class <code>security.oidc</code> in config.yaml, env-var refs supported</td>
+          </tr>
+          <tr>
+            <td><strong>Homepage</strong></td>
+            <td><span class="badge b-blocked">NO</span></td>
+            <td>No built-in auth at all. <em>Already</em> protected by oauth2-proxy Layer 2</td>
+          </tr>
+          <tr>
+            <td><strong>SigNoz</strong></td>
+            <td><span class="badge b-blocked">NO — paid</span></td>
+            <td>OIDC is Enterprise-only (not in Community Edition). UI-config only</td>
+          </tr>
+          <tr>
+            <td><strong>Twenty CRM</strong></td>
+            <td><span class="badge b-blocked">NO — paid</span></td>
+            <td>SSO gated behind billing entitlement. GraphQL/UI config only</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="cards">
+        <div class="card g1">
+          <div class="n">6</div>
+          <div class="l">Tier 1 — the 1% → 51%<br />Gatus native OIDC</div>
+        </div>
+        <div class="card g2">
+          <div class="n">6</div>
+          <div class="l">Tier 2 — the 4% → 64%<br />Conflict + document</div>
+        </div>
+        <div class="card g3">
+          <div class="n">6</div>
+          <div class="l">Tier 3 — the 20% → 80%<br />Verify + harden + docs</div>
+        </div>
+        <div class="card g4">
+          <div class="n">6</div>
+          <div class="l">Beyond 80%<br />Blocked / business</div>
+        </div>
+      </div>
+
+      <h2>Execution Graph</h2>
+      <div class="svgwrap">
+        <?xml version="1.0" encoding="utf-8"?><svg
+          xmlns="http://www.w3.org/2000/svg"
+          xmlns:xlink="http://www.w3.org/1999/xlink"
+          data-d2-version="v0.7.1"
+          preserveAspectRatio="xMinYMin meet"
+          viewBox="0 0 3075 777"
+        >
+          <svg class="d2-3063765632 d2-svg" width="3075" height="777" viewBox="-101 -101 3075 777">
+            <rect
+              x="-101.000000"
+              y="-101.000000"
+              width="3075.000000"
+              height="777.000000"
+              rx="0.000000"
+              fill="#FFFFFF"
+              class="fill-N7"
+              stroke-width="0"
+            />
+            <style type="text/css">
+              <![CDATA[
+              .d2-3063765632 .text-bold {
+              	font-family: "d2-3063765632-font-bold";
+              }
+              @font-face {
+              	font-family: d2-3063765632-font-bold;
+              	src: url("data:application/font-woff;base64,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");
+              }
+              .d2-3063765632 .text-italic {
+              	font-family: "d2-3063765632-font-italic";
+              }
+              @font-face {
+              	font-family: d2-3063765632-font-italic;
+              	src: url("data:application/font-woff;base64,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");
+              }]]>
+            </style>
+            <style type="text/css">
+              <![CDATA[.shape {
+                shape-rendering: geometricPrecision;
+                stroke-linejoin: round;
+              }
+              .connection {
+                stroke-linecap: round;
+                stroke-linejoin: round;
+              }
+              .blend {
+                mix-blend-mode: multiply;
+                opacity: 0.5;
+              }
+
+              		.d2-3063765632 .fill-N1{fill:#0A0F25;}
+              		.d2-3063765632 .fill-N2{fill:#676C7E;}
+              		.d2-3063765632 .fill-N3{fill:#9499AB;}
+              		.d2-3063765632 .fill-N4{fill:#CFD2DD;}
+              		.d2-3063765632 .fill-N5{fill:#DEE1EB;}
+              		.d2-3063765632 .fill-N6{fill:#EEF1F8;}
+              		.d2-3063765632 .fill-N7{fill:#FFFFFF;}
+              		.d2-3063765632 .fill-B1{fill:#0D32B2;}
+              		.d2-3063765632 .fill-B2{fill:#0D32B2;}
+              		.d2-3063765632 .fill-B3{fill:#E3E9FD;}
+              		.d2-3063765632 .fill-B4{fill:#E3E9FD;}
+              		.d2-3063765632 .fill-B5{fill:#EDF0FD;}
+              		.d2-3063765632 .fill-B6{fill:#F7F8FE;}
+              		.d2-3063765632 .fill-AA2{fill:#4A6FF3;}
+              		.d2-3063765632 .fill-AA4{fill:#EDF0FD;}
+              		.d2-3063765632 .fill-AA5{fill:#F7F8FE;}
+              		.d2-3063765632 .fill-AB4{fill:#EDF0FD;}
+              		.d2-3063765632 .fill-AB5{fill:#F7F8FE;}
+              		.d2-3063765632 .stroke-N1{stroke:#0A0F25;}
+              		.d2-3063765632 .stroke-N2{stroke:#676C7E;}
+              		.d2-3063765632 .stroke-N3{stroke:#9499AB;}
+              		.d2-3063765632 .stroke-N4{stroke:#CFD2DD;}
+              		.d2-3063765632 .stroke-N5{stroke:#DEE1EB;}
+              		.d2-3063765632 .stroke-N6{stroke:#EEF1F8;}
+              		.d2-3063765632 .stroke-N7{stroke:#FFFFFF;}
+              		.d2-3063765632 .stroke-B1{stroke:#0D32B2;}
+              		.d2-3063765632 .stroke-B2{stroke:#0D32B2;}
+              		.d2-3063765632 .stroke-B3{stroke:#E3E9FD;}
+              		.d2-3063765632 .stroke-B4{stroke:#E3E9FD;}
+              		.d2-3063765632 .stroke-B5{stroke:#EDF0FD;}
+              		.d2-3063765632 .stroke-B6{stroke:#F7F8FE;}
+              		.d2-3063765632 .stroke-AA2{stroke:#4A6FF3;}
+              		.d2-3063765632 .stroke-AA4{stroke:#EDF0FD;}
+              		.d2-3063765632 .stroke-AA5{stroke:#F7F8FE;}
+              		.d2-3063765632 .stroke-AB4{stroke:#EDF0FD;}
+              		.d2-3063765632 .stroke-AB5{stroke:#F7F8FE;}
+              		.d2-3063765632 .background-color-N1{background-color:#0A0F25;}
+              		.d2-3063765632 .background-color-N2{background-color:#676C7E;}
+              		.d2-3063765632 .background-color-N3{background-color:#9499AB;}
+              		.d2-3063765632 .background-color-N4{background-color:#CFD2DD;}
+              		.d2-3063765632 .background-color-N5{background-color:#DEE1EB;}
+              		.d2-3063765632 .background-color-N6{background-color:#EEF1F8;}
+              		.d2-3063765632 .background-color-N7{background-color:#FFFFFF;}
+              		.d2-3063765632 .background-color-B1{background-color:#0D32B2;}
+              		.d2-3063765632 .background-color-B2{background-color:#0D32B2;}
+              		.d2-3063765632 .background-color-B3{background-color:#E3E9FD;}
+              		.d2-3063765632 .background-color-B4{background-color:#E3E9FD;}
+              		.d2-3063765632 .background-color-B5{background-color:#EDF0FD;}
+              		.d2-3063765632 .background-color-B6{background-color:#F7F8FE;}
+              		.d2-3063765632 .background-color-AA2{background-color:#4A6FF3;}
+              		.d2-3063765632 .background-color-AA4{background-color:#EDF0FD;}
+              		.d2-3063765632 .background-color-AA5{background-color:#F7F8FE;}
+              		.d2-3063765632 .background-color-AB4{background-color:#EDF0FD;}
+              		.d2-3063765632 .background-color-AB5{background-color:#F7F8FE;}
+              		.d2-3063765632 .color-N1{color:#0A0F25;}
+              		.d2-3063765632 .color-N2{color:#676C7E;}
+              		.d2-3063765632 .color-N3{color:#9499AB;}
+              		.d2-3063765632 .color-N4{color:#CFD2DD;}
+              		.d2-3063765632 .color-N5{color:#DEE1EB;}
+              		.d2-3063765632 .color-N6{color:#EEF1F8;}
+              		.d2-3063765632 .color-N7{color:#FFFFFF;}
+              		.d2-3063765632 .color-B1{color:#0D32B2;}
+              		.d2-3063765632 .color-B2{color:#0D32B2;}
+              		.d2-3063765632 .color-B3{color:#E3E9FD;}
+              		.d2-3063765632 .color-B4{color:#E3E9FD;}
+              		.d2-3063765632 .color-B5{color:#EDF0FD;}
+              		.d2-3063765632 .color-B6{color:#F7F8FE;}
+              		.d2-3063765632 .color-AA2{color:#4A6FF3;}
+              		.d2-3063765632 .color-AA4{color:#EDF0FD;}
+              		.d2-3063765632 .color-AA5{color:#F7F8FE;}
+              		.d2-3063765632 .color-AB4{color:#EDF0FD;}
+              		.d2-3063765632 .color-AB5{color:#F7F8FE;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.sketch-overlay-B1{fill:url(#streaks-darker-d2-3063765632);mix-blend-mode:lighten}.sketch-overlay-B2{fill:url(#streaks-darker-d2-3063765632);mix-blend-mode:lighten}.sketch-overlay-B3{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-B4{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-B5{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-B6{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-AA2{fill:url(#streaks-dark-d2-3063765632);mix-blend-mode:overlay}.sketch-overlay-AA4{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-AA5{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-AB4{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-AB5{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-N1{fill:url(#streaks-darker-d2-3063765632);mix-blend-mode:lighten}.sketch-overlay-N2{fill:url(#streaks-dark-d2-3063765632);mix-blend-mode:overlay}.sketch-overlay-N3{fill:url(#streaks-normal-d2-3063765632);mix-blend-mode:color-burn}.sketch-overlay-N4{fill:url(#streaks-normal-d2-3063765632);mix-blend-mode:color-burn}.sketch-overlay-N5{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-N6{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.sketch-overlay-N7{fill:url(#streaks-bright-d2-3063765632);mix-blend-mode:darken}.light-code{display: block}.dark-code{display: none}]]>
+            </style>
+            <g class="UGFyZXRv">
+              <g class="shape">
+                <path
+                  d="M 81 65 L 81 0 L 257 0 L 257 65 C 228 51 198 51 169 65 C 140 80 110 80 81 65 Z"
+                  stroke="#0D32B2"
+                  fill="#EDF0FD"
+                  class="stroke-B1 fill-AB4"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="169.000000"
+                y="33.610964"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                Pareto Breakdown
+              </text>
+            </g>
+            <g class="VGllcjE=">
+              <g class="shape">
+                <rect
+                  x="501.000000"
+                  y="5.000000"
+                  width="434.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#a6e3a1"
+                  class="stroke-B1"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="718.000000"
+                y="43.500000"
+                fill="#1e1e2e"
+                class="text-bold"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                TIER 1 (1% = 51%) Gatus Native OIDC - only feasible one
+              </text>
+            </g>
+            <g class="VGllcjI=">
+              <g class="shape">
+                <rect
+                  x="1037.000000"
+                  y="194.000000"
+                  width="417.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#f9e2af"
+                  class="stroke-B1"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="1245.500000"
+                y="232.500000"
+                fill="#1e1e2e"
+                class="text-bold"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                TIER 2 (4% = 64%) Resolve conflict + document gated
+              </text>
+            </g>
+            <g class="VGllcjM=">
+              <g class="shape">
+                <rect
+                  x="1556.000000"
+                  y="194.000000"
+                  width="363.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#89b4fa"
+                  class="stroke-B1"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="1737.500000"
+                y="232.500000"
+                fill="#1e1e2e"
+                class="text-bold"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                TIER 3 (20% = 80%) Verify, harden, document
+              </text>
+            </g>
+            <g class="VGllcjQ=">
+              <g class="shape">
+                <rect
+                  x="2054.000000"
+                  y="194.000000"
+                  width="348.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#6c7086"
+                  class="stroke-B1"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="2228.000000"
+                y="232.500000"
+                fill="#cdd6f4"
+                class="text-bold"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                BEYOND 80% - Blocked / business decisions
+              </text>
+            </g>
+            <g class="R2F0dXNDbGllbnQ=">
+              <g class="shape">
+                <rect
+                  x="0.000000"
+                  y="509.000000"
+                  width="337.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="168.500000"
+                y="547.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                Register Gatus OIDC client (pocket-id.nix)
+              </text>
+            </g>
+            <g class="R2F0dXNTZWNyZXQ=">
+              <g class="shape">
+                <rect
+                  x="570.000000"
+                  y="509.000000"
+                  width="296.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="718.000000"
+                y="547.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                sops fallback secret + encrypt value
+              </text>
+            </g>
+            <g class="R2F0dXNDb25maWc=">
+              <g class="shape">
+                <rect
+                  x="1092.000000"
+                  y="509.000000"
+                  width="308.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="1246.000000"
+                y="547.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                security.oidc block (gatus-config.nix)
+              </text>
+            </g>
+            <g class="R2F0dXNXaXJl">
+              <g class="shape">
+                <rect
+                  x="1589.000000"
+                  y="509.000000"
+                  width="297.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="1737.500000"
+                y="547.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                wire client secret + service ordering
+              </text>
+            </g>
+            <g class="R2F0dXNDYWRkeQ==">
+              <g class="shape">
+                <rect
+                  x="2080.000000"
+                  y="509.000000"
+                  width="296.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="2228.000000"
+                y="547.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                caddy status.domain to plain proxy
+              </text>
+            </g>
+            <g class="Q2FkZHlDb25mbGljdA==">
+              <g class="shape">
+                <rect
+                  x="2504.000000"
+                  y="509.000000"
+                  width="369.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="2688.500000"
+                y="547.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                Caddy remove double-auth (Gatus owns auth)
+              </text>
+            </g>
+            <g class="U2lnTm96RG9j">
+              <g class="shape">
+                <rect
+                  x="577.000000"
+                  y="131.000000"
+                  width="282.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="718.000000"
+                y="169.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                signoz.nix OIDC = Enterprise-only
+              </text>
+            </g>
+            <g class="VHdlbnR5RG9j">
+              <g class="shape">
+                <rect
+                  x="569.000000"
+                  y="257.000000"
+                  width="299.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="718.500000"
+                y="295.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                twenty.nix SSO = entitlement-gated
+              </text>
+            </g>
+            <g class="SG9tZURvYw==">
+              <g class="shape">
+                <rect
+                  x="561.000000"
+                  y="383.000000"
+                  width="314.000000"
+                  height="66.000000"
+                  stroke="#0D32B2"
+                  fill="#F7F8FE"
+                  class="stroke-B1 fill-B6"
+                  style="stroke-width: 2"
+                />
+              </g>
+              <text
+                x="718.000000"
+                y="421.500000"
+                fill="#0A0F25"
+                class="text-bold fill-N1"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                homepage.nix no native auth to proxy
+              </text>
+            </g>
+            <g class="KFBhcmV0byAtJmd0OyBUaWVyMSlbMF0=">
+              <marker
+                id="mk-d2-3063765632-3488378134"
+                markerWidth="10.000000"
+                markerHeight="12.000000"
+                refX="7.000000"
+                refY="6.000000"
+                viewBox="0.000000 0.000000 10.000000 12.000000"
+                orient="auto"
+                markerUnits="userSpaceOnUse"
+              >
+                <polygon
+                  points="0.000000,0.000000 10.000000,6.000000 0.000000,12.000000"
+                  fill="#0D32B2"
+                  class="connection fill-B1"
+                  stroke-width="2"
+                />
+              </marker>
+              <path
+                d="M 259.000000 38.000000 C 386.600006 38.000000 435.399994 38.000000 497.000000 38.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+              <text
+                x="379.000000"
+                y="44.000000"
+                fill="#676C7E"
+                class="text-italic fill-N2"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                DO FIRST
+              </text>
+            </g>
+            <g class="KFRpZXIxIC0mZ3Q7IFRpZXIyKVswXQ==">
+              <path
+                d="M 937.000000 38.000000 C 975.799988 38.000000 1028.800049 69.199997 1196.767671 191.643722"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KFRpZXIyIC0mZ3Q7IFRpZXIzKVswXQ==">
+              <path
+                d="M 1456.000000 227.000000 C 1494.800049 227.000000 1515.199951 227.000000 1552.000000 227.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KFRpZXIzIC0mZ3Q7IFRpZXI0KVswXQ==">
+              <path
+                d="M 1920.500000 227.000000 C 1972.900024 227.000000 2000.099976 227.000000 2050.500000 227.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+              <text
+                x="1986.500000"
+                y="233.000000"
+                fill="#676C7E"
+                class="text-italic fill-N2"
+                style="text-anchor: middle; font-size: 16px"
+              >
+                later
+              </text>
+            </g>
+            <g class="KEdhdHVzQ2xpZW50IC0mZ3Q7IEdhdHVzU2VjcmV0KVswXQ==">
+              <path
+                d="M 339.000000 542.000000 C 402.600006 542.000000 449.200012 542.000000 566.000000 542.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KEdhdHVzU2VjcmV0IC0mZ3Q7IEdhdHVzQ29uZmlnKVswXQ==">
+              <path
+                d="M 868.000000 542.000000 C 962.000000 542.000000 1007.099976 542.000000 1087.500000 542.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KEdhdHVzQ29uZmlnIC0mZ3Q7IEdhdHVzV2lyZSlbMF0=">
+              <path
+                d="M 1402.500000 542.000000 C 1484.099976 542.000000 1521.800049 542.000000 1585.000000 542.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KEdhdHVzV2lyZSAtJmd0OyBHYXR1c0NhZGR5KVswXQ==">
+              <path
+                d="M 1887.500000 542.000000 C 1966.300049 542.000000 2005.300049 542.000000 2076.500000 542.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KEdhdHVzQ2FkZHkgLSZndDsgQ2FkZHlDb25mbGljdClbMF0=">
+              <path
+                d="M 2378.000000 542.000000 C 2437.600098 542.000000 2463.199951 542.000000 2500.000000 542.000000"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KFNpZ05vekRvYyAtJmd0OyBUaWVyMilbMF0=">
+              <path
+                d="M 861.000000 164.000000 C 960.599976 164.000000 1010.799988 170.000000 1106.112165 193.059395"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KFR3ZW50eURvYyAtJmd0OyBUaWVyMilbMF0=">
+              <path
+                d="M 870.000000 290.000000 C 962.400024 290.000000 1010.799988 284.000000 1106.112165 260.940605"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <g class="KEhvbWVEb2MgLSZndDsgVGllcjIpWzBd">
+              <path
+                d="M 877.000000 416.000000 C 963.799988 416.000000 1028.800049 384.799988 1196.767671 262.356278"
+                stroke="#0D32B2"
+                fill="none"
+                class="connection stroke-B1"
+                style="stroke-width: 2"
+                marker-end="url(#mk-d2-3063765632-3488378134)"
+                mask="url(#d2-3063765632)"
+              />
+            </g>
+            <mask
+              id="d2-3063765632"
+              maskUnits="userSpaceOnUse"
+              x="-101"
+              y="-101"
+              width="3075"
+              height="777"
+            >
+              <rect x="-101" y="-101" width="3075" height="777" fill="white"></rect>
+              <rect x="346.000000" y="28.000000" width="66" height="21" fill="black"></rect>
+              <rect x="1968.000000" y="217.000000" width="37" height="21" fill="black"></rect>
+            </mask>
+          </svg>
+        </svg>
+      </div>
+
+      <h2>Tier 1 · The 1% that delivers 51% — Gatus Native OIDC</h2>
+      <p class="sub">
+        The only candidate that can get true native SSO. Free, low effort, security-sensitive
+        monitoring dashboard. Mirrors the Forgejo pattern (native OIDC → plain reverse_proxy in
+        Caddy).
+      </p>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Task</th>
+          <th>File</th>
+          <th>Impact</th>
+          <th>Effort</th>
+          <th>Min</th>
+        </tr>
+        <tr>
+          <td>T1.1</td>
+          <td>
+            Register Gatus as a Pocket ID OIDC client (<code>clientId "gatus"</code>, callback
+            <code>/authorization-code/callback</code>, launchURL, scopes)
+          </td>
+          <td><code>modules/nixos/services/pocket-id.nix</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>8</td>
+        </tr>
+        <tr>
+          <td>T1.2</td>
+          <td>
+            Add <code>gatus_oauth_client_secret</code> sops fallback (owner gatus, restartUnits
+            gatus.service)
+          </td>
+          <td><code>modules/nixos/services/sops.nix</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>T1.3</td>
+          <td>Generate + encrypt the gatus client secret value into pocket-id.yaml via sops CLI</td>
+          <td><code>platforms/nixos/secrets/pocket-id.yaml</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-m">MED</span></td>
+          <td>6</td>
+        </tr>
+        <tr>
+          <td>T1.4</td>
+          <td>
+            Add <code>security.oidc</code> block to settings (issuer-url, client-id, redirect-url,
+            scopes)
+          </td>
+          <td><code>modules/nixos/services/gatus-config.nix</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-m">MED</span></td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td>T1.5</td>
+          <td>
+            Wire client secret via dual-path (provisioned file / sops) +
+            <code>$GATUS_OIDC_CLIENT_SECRET</code> into gatus-env template
+          </td>
+          <td><code>gatus-config.nix</code> + <code>sops.nix</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-m">MED</span></td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td>T1.6</td>
+          <td>
+            Order <code>gatus.service</code> after
+            <code>pocket-id-provision.service</code> (wants/after conditional)
+          </td>
+          <td><code>modules/nixos/services/gatus-config.nix</code></td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>4</td>
+        </tr>
+      </table>
+
+      <h2>Tier 2 · The 4% that delivers 64% — Resolve conflict + document gated services</h2>
+      <p class="sub">
+        Gatus native OIDC creates a <strong>double-auth conflict</strong> with the existing
+        oauth2-proxy <code>protectedVHost</code> on <code>status.domain</code> — must be resolved.
+        The 3 blocked services get documented so future agents don't waste time.
+      </p>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Task</th>
+          <th>File</th>
+          <th>Impact</th>
+          <th>Effort</th>
+          <th>Min</th>
+        </tr>
+        <tr>
+          <td>T2.1</td>
+          <td>
+            Move <code>status.${domain}</code> from <code>protectedVHost</code> → plain
+            reverse_proxy (Gatus now owns auth; mirrors Forgejo). Removes double-auth.
+          </td>
+          <td><code>modules/nixos/services/caddy.nix</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>6</td>
+        </tr>
+        <tr>
+          <td>T2.2</td>
+          <td>
+            Add code comment in signoz.nix: OIDC is Enterprise-only (paid) — relies on oauth2-proxy
+            Layer 2
+          </td>
+          <td><code>modules/nixos/services/signoz.nix</code></td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>4</td>
+        </tr>
+        <tr>
+          <td>T2.3</td>
+          <td>
+            Add code comment in twenty.nix: SSO is entitlement-gated (paid) — relies on oauth2-proxy
+            Layer 2
+          </td>
+          <td><code>modules/nixos/services/twenty.nix</code></td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>4</td>
+        </tr>
+        <tr>
+          <td>T2.4</td>
+          <td>
+            Add code comment in homepage.nix: no native auth — intentionally behind oauth2-proxy
+            forward-auth
+          </td>
+          <td><code>modules/nixos/services/homepage.nix</code></td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>4</td>
+        </tr>
+        <tr>
+          <td>T2.5</td>
+          <td>
+            Decide Gatus <code>allowed-subjects</code>: empty (single-user IdP = safe) vs fetch lars
+            subject ID. Default empty + comment.
+          </td>
+          <td><code>modules/nixos/services/gatus-config.nix</code></td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>T2.6</td>
+          <td>
+            Verify no Gatus self-health-breakage: OIDC redirect vs the existing gatus endpoint
+            probes
+          </td>
+          <td>(manual verify)</td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>5</td>
+        </tr>
+      </table>
+
+      <h2>Tier 3 · The 20% that delivers 80% — Verify, harden, document</h2>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Task</th>
+          <th>File / Cmd</th>
+          <th>Impact</th>
+          <th>Effort</th>
+          <th>Min</th>
+        </tr>
+        <tr>
+          <td>T3.1</td>
+          <td>Run <code>nix flake check --no-build</code> — validate all syntax after edits</td>
+          <td>shell</td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>5</td>
+        </tr>
+        <tr>
+          <td>T3.2</td>
+          <td>Run <code>nix eval</code> on evo-x2 toplevel — full eval check</td>
+          <td>shell</td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-m">MED</span></td>
+          <td>8</td>
+        </tr>
+        <tr>
+          <td>T3.3</td>
+          <td>Run <code>nix fmt</code> — enforce formatting</td>
+          <td>shell</td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>3</td>
+        </tr>
+        <tr>
+          <td>T3.4</td>
+          <td>
+            Update AGENTS.md: SSO architecture (Layer 1 native vs Layer 2 forward-auth, per-service
+            reality)
+          </td>
+          <td><code>AGENTS.md</code></td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-m">MED</span></td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td>T3.5</td>
+          <td>
+            End-to-end test Gatus SSO from external origin (browser → status.domain → Pocket ID
+            passkey → callback → dashboard)
+          </td>
+          <td>(manual)</td>
+          <td><span class="badge b-imp-h">HIGH</span></td>
+          <td><span class="badge b-eff-m">MED</span></td>
+          <td>10</td>
+        </tr>
+        <tr>
+          <td>T3.6</td>
+          <td>
+            Document SLO (single-logout) feasibility: oauth2-proxy + Pocket ID coordinated logout
+          </td>
+          <td><code>AGENTS.md</code></td>
+          <td><span class="badge b-imp-m">MED</span></td>
+          <td><span class="badge b-eff-l">LOW</span></td>
+          <td>8</td>
+        </tr>
+      </table>
+
+      <h2>Beyond 80% — Blocked / business decisions (not code)</h2>
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Task</th>
+          <th>Blocker</th>
+          <th>Type</th>
+        </tr>
+        <tr>
+          <td>T4.1</td>
+          <td>
+            Native OIDC for custom LarsArtmann Go services (Manifest, OpenSEO, Crush Daily,
+            Monitor365)
+          </td>
+          <td>Requires upstream Go code in separate repos</td>
+          <td><span class="badge b-blocked">BLOCKED — large effort</span></td>
+        </tr>
+        <tr>
+          <td>T4.2</td>
+          <td>SigNoz native OIDC</td>
+          <td>Enterprise license required</td>
+          <td><span class="badge b-blocked">BLOCKED — paid</span></td>
+        </tr>
+        <tr>
+          <td>T4.3</td>
+          <td>Twenty native OIDC</td>
+          <td>SSO billing entitlement (contact twenty.com)</td>
+          <td><span class="badge b-blocked">BLOCKED — paid</span></td>
+        </tr>
+        <tr>
+          <td>T4.4</td>
+          <td>Homepage native auth</td>
+          <td>Not a feature — by design proxy-only</td>
+          <td><span class="badge b-blocked">BLOCKED — upstream design</span></td>
+        </tr>
+        <tr>
+          <td>T4.5</td>
+          <td>
+            Add OIDC clients for disabled-but-provisionable services (voice/whisper) when re-enabled
+          </td>
+          <td>Services currently disabled</td>
+          <td><span class="badge b-blocked">BLOCKED — waiting on enable</span></td>
+        </tr>
+        <tr>
+          <td>T4.6</td>
+          <td>
+            RBAC / group-based access in Gatus (not supported upstream — only allowed-subjects)
+          </td>
+          <td>Gatus has no groups feature</td>
+          <td><span class="badge b-blocked">BLOCKED — upstream design</span></td>
+        </tr>
+      </table>
+
+      <h2>Effort &amp; value roll-up</h2>
+      <table>
+        <tr>
+          <th>Tier</th>
+          <th>Tasks</th>
+          <th>Effort</th>
+          <th>Customer value</th>
+          <th>Done-for</th>
+        </tr>
+        <tr>
+          <td>Tier 1</td>
+          <td class="total">6</td>
+          <td>~43 min</td>
+          <td>1 new native-SSO service (Gatus)</td>
+          <td>51% of goal</td>
+        </tr>
+        <tr>
+          <td>Tier 2</td>
+          <td class="total">6</td>
+          <td>~28 min</td>
+          <td>Conflict fixed + 3 dead-ends documented</td>
+          <td>64% of goal</td>
+        </tr>
+        <tr>
+          <td>Tier 3</td>
+          <td class="total">6</td>
+          <td>~44 min</td>
+          <td>Verified, hardened, documented</td>
+          <td>80% of goal</td>
+        </tr>
+        <tr>
+          <td><strong>Total actionable</strong></td>
+          <td class="total">18</td>
+          <td><strong>~1h 55m</strong></td>
+          <td colspan="2">80% of the SSO goal in under 2 hours</td>
+        </tr>
+      </table>
+
+      <div class="foot">
+        Plan generated by the Pareto-planning skill · SystemNix · For execution approval, say
+        <em>"execute"</em>.
+      </div>
+    </div>
+  </body>
+</html>

@@ -65,14 +65,14 @@
 
         /* --- Type stacks (system only — zero external fonts) --- */
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
 
       * {
@@ -280,27 +280,15 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
 
       /* --- Issue cards --- */
@@ -313,27 +301,15 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -838,13 +814,11 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">
-            PARETO PLAN &middot; 80 TASKS &middot; MAX 12 MIN EACH
-          </div>
+          <div class="hero-badge">PARETO PLAN &middot; 80 TASKS &middot; MAX 12 MIN EACH</div>
           <h1>Quickshell Implementation Plan</h1>
           <p class="hero-subtitle">
-            Every task to collapse 9 shell tools into one Quickshell brain on
-            SystemNix &mdash; sorted by impact, effort, and customer value.
+            Every task to collapse 9 shell tools into one Quickshell brain on SystemNix &mdash;
+            sorted by impact, effort, and customer value.
           </p>
         </div>
 
@@ -878,10 +852,9 @@
 
         <div class="callout callout-solution">
           <strong>The 1% that delivers 51%</strong>
-          Tasks P0-01 through P0-06: add the flake input, enable
-          DankMaterialShell's upstream HM module, and spawn it from niri. That
-          alone replaces Waybar, Dunst, Wlogout, and polkit_gnome &mdash; four
-          of nine tools gone in one evening.
+          Tasks P0-01 through P0-06: add the flake input, enable DankMaterialShell's upstream HM
+          module, and spawn it from niri. That alone replaces Waybar, Dunst, Wlogout, and
+          polkit_gnome &mdash; four of nine tools gone in one evening.
         </div>
 
         <!-- ============================ PARETO BREAKDOWN ============================ -->
@@ -936,13 +909,8 @@
         </table>
 
         <!-- ============================ P0 ============================ -->
-        <h2 id="p0">
-          <span class="num">01</span>P0 &mdash; Critical Path (1% &rarr; 51%)
-        </h2>
-        <p>
-          Must be done first. Unlocks everything. No dependencies on any other
-          tier.
-        </p>
+        <h2 id="p0"><span class="num">01</span>P0 &mdash; Critical Path (1% &rarr; 51%)</h2>
+        <p>Must be done first. Unlocks everything. No dependencies on any other tier.</p>
         <table>
           <thead>
             <tr>
@@ -968,8 +936,7 @@
               <td><strong>P0-02</strong></td>
               <td>
                 Run
-                <code>nix flake lock --update-input dankMaterialShell</code> and
-                verify it resolves
+                <code>nix flake lock --update-input dankMaterialShell</code> and verify it resolves
               </td>
               <td><code>flake.lock</code></td>
               <td><span class="badge badge-low">5m</span></td>
@@ -979,8 +946,8 @@
               <td><strong>P0-03</strong></td>
               <td>
                 Create
-                <code>platforms/nixos/desktop/quickshell.nix</code> &mdash; HM
-                module skeleton with options skeleton
+                <code>platforms/nixos/desktop/quickshell.nix</code> &mdash; HM module skeleton with
+                options skeleton
               </td>
               <td><code>desktop/quickshell.nix</code></td>
               <td><span class="badge badge-low">10m</span></td>
@@ -990,9 +957,7 @@
               <td><strong>P0-04</strong></td>
               <td>
                 Import
-                <code
-                  >inputs.dankMaterialShell.homeModules.dank-material-shell</code
-                >
+                <code>inputs.dankMaterialShell.homeModules.dank-material-shell</code>
                 in the HM module
               </td>
               <td><code>desktop/quickshell.nix</code></td>
@@ -1002,8 +967,8 @@
             <tr>
               <td><strong>P0-05</strong></td>
               <td>
-                Set <code>programs.dank-material-shell.enable = true</code> with
-                feature toggles (monitoring, theming, audio)
+                Set <code>programs.dank-material-shell.enable = true</code> with feature toggles
+                (monitoring, theming, audio)
               </td>
               <td><code>desktop/quickshell.nix</code></td>
               <td><span class="badge badge-low">10m</span></td>
@@ -1012,8 +977,7 @@
             <tr>
               <td><strong>P0-06</strong></td>
               <td>
-                Add <code>quickshell.nix</code> import to
-                <code>home.nix</code> alongside existing
+                Add <code>quickshell.nix</code> import to <code>home.nix</code> alongside existing
                 <code>waybar.nix</code>
               </td>
               <td><code>users/home.nix</code></td>
@@ -1024,13 +988,8 @@
         </table>
 
         <!-- ============================ P1 ============================ -->
-        <h2 id="p1">
-          <span class="num">02</span>P1 &mdash; Quick Wins (4% &rarr; 64%)
-        </h2>
-        <p>
-          High impact, low effort. Kill dead tools and wire the first
-          SystemNix-native widget.
-        </p>
+        <h2 id="p1"><span class="num">02</span>P1 &mdash; Quick Wins (4% &rarr; 64%)</h2>
+        <p>High impact, low effort. Kill dead tools and wire the first SystemNix-native widget.</p>
         <table>
           <thead>
             <tr>
@@ -1055,8 +1014,8 @@
             <tr>
               <td><strong>P1-02</strong></td>
               <td>
-                Disable <code>services.dunst.enable</code> in
-                <code>home.nix</code> (DMS notification daemon takes over)
+                Disable <code>services.dunst.enable</code> in <code>home.nix</code> (DMS
+                notification daemon takes over)
               </td>
               <td><code>users/home.nix:382</code></td>
               <td><span class="badge badge-low">5m</span></td>
@@ -1064,23 +1023,15 @@
             </tr>
             <tr>
               <td><strong>P1-03</strong></td>
-              <td>
-                Remove <code>polkit_gnome</code> from security-hardening.nix
-                packages
-              </td>
+              <td>Remove <code>polkit_gnome</code> from security-hardening.nix packages</td>
               <td><code>services/security-hardening.nix:65</code></td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P1-04</strong></td>
-              <td>
-                Disable <code>programs.wlogout</code> and remove its import from
-                home.nix
-              </td>
-              <td>
-                <code>home.nix:17</code>, <code>programs/wlogout.nix</code>
-              </td>
+              <td>Disable <code>programs.wlogout</code> and remove its import from home.nix</td>
+              <td><code>home.nix:17</code>, <code>programs/wlogout.nix</code></td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
@@ -1105,8 +1056,7 @@
               <td><strong>P1-07</strong></td>
               <td>
                 Remove all 7 <code>waybar*</code> shell scripts from
-                <code>waybar.nix</code> (camera, dns, media, clipboard, weather,
-                menu, clear)
+                <code>waybar.nix</code> (camera, dns, media, clipboard, weather, menu, clear)
               </td>
               <td><code>desktop/waybar.nix:10-90</code></td>
               <td><span class="badge badge-medium">12m</span></td>
@@ -1115,8 +1065,8 @@
             <tr>
               <td><strong>P1-08</strong></td>
               <td>
-                Test DMS notifications: send test via <code>notify-send</code>,
-                verify images + actions work
+                Test DMS notifications: send test via <code>notify-send</code>, verify images +
+                actions work
               </td>
               <td>runtime test</td>
               <td><span class="badge badge-low">10m</span></td>
@@ -1124,20 +1074,14 @@
             </tr>
             <tr>
               <td><strong>P1-09</strong></td>
-              <td>
-                Test polkit: trigger <code>pkexec</code> and verify DMS prompt
-                appears
-              </td>
+              <td>Test polkit: trigger <code>pkexec</code> and verify DMS prompt appears</td>
               <td>runtime test</td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P1-10</strong></td>
-              <td>
-                Write Ollama status QML widget (poll <code>/api/ps</code> for
-                model + VRAM)
-              </td>
+              <td>Write Ollama status QML widget (poll <code>/api/ps</code> for model + VRAM)</td>
               <td><code>quickshell/widgets/ollama.qml</code></td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1145,8 +1089,8 @@
             <tr>
               <td><strong>P1-11</strong></td>
               <td>
-                Add <code>devShell</code> with <code>qmlls</code> +
-                <code>quickshell</code> for hot-reload dev loop
+                Add <code>devShell</code> with <code>qmlls</code> + <code>quickshell</code> for
+                hot-reload dev loop
               </td>
               <td><code>flake.nix</code></td>
               <td><span class="badge badge-low">10m</span></td>
@@ -1155,8 +1099,8 @@
             <tr>
               <td><strong>P1-12</strong></td>
               <td>
-                Keep Waybar running in parallel via existing systemd service
-                (fallback during migration)
+                Keep Waybar running in parallel via existing systemd service (fallback during
+                migration)
               </td>
               <td>verify only</td>
               <td><span class="badge badge-low">5m</span></td>
@@ -1167,12 +1111,11 @@
 
         <!-- ============================ P2 ============================ -->
         <h2 id="p2">
-          <span class="num">03</span>P2 &mdash; Core Value: SystemNix-Native
-          Layer (20% &rarr; 80%)
+          <span class="num">03</span>P2 &mdash; Core Value: SystemNix-Native Layer (20% &rarr; 80%)
         </h2>
         <p>
-          The differentiator. Wire every SystemNix service into reactive
-          Quickshell widgets. Sorted by impact/effort within the tier.
+          The differentiator. Wire every SystemNix service into reactive Quickshell widgets. Sorted
+          by impact/effort within the tier.
         </p>
         <table>
           <thead>
@@ -1187,19 +1130,14 @@
           <tbody>
             <tr>
               <td><strong>P2-01</strong></td>
-              <td>
-                DNS stats widget: poll <code>dnsblockd :9090/stats</code> for
-                blocked count
-              </td>
+              <td>DNS stats widget: poll <code>dnsblockd :9090/stats</code> for blocked count</td>
               <td>:9090</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P2-02</strong></td>
-              <td>
-                Gatus health dots: poll Gatus endpoints for service up/down
-              </td>
+              <td>Gatus health dots: poll Gatus endpoints for service up/down</td>
               <td>:9110</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1223,19 +1161,14 @@
             </tr>
             <tr>
               <td><strong>P2-05</strong></td>
-              <td>
-                BTRFS snapshot freshness: check <code>btrfs-verify</code> timer
-                last-run
-              </td>
+              <td>BTRFS snapshot freshness: check <code>btrfs-verify</code> timer last-run</td>
               <td>systemd timer</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P2-06</strong></td>
-              <td>
-                Camera status widget (replaces <code>waybar-camera</code>)
-              </td>
+              <td>Camera status widget (replaces <code>waybar-camera</code>)</td>
               <td>emeet-pixyd :8090</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1243,8 +1176,7 @@
             <tr>
               <td><strong>P2-07</strong></td>
               <td>
-                Taskchampion task radar: poll <code>:10222</code> for pending +
-                overdue counts
+                Taskchampion task radar: poll <code>:10222</code> for pending + overdue counts
               </td>
               <td>:10222</td>
               <td><span class="badge badge-medium">12m</span></td>
@@ -1259,59 +1191,42 @@
             </tr>
             <tr>
               <td><strong>P2-09</strong></td>
-              <td>
-                Task detail popup: click task count &rarr; expand prioritised
-                list
-              </td>
+              <td>Task detail popup: click task count &rarr; expand prioritised list</td>
               <td>QML popup</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P2-10</strong></td>
-              <td>
-                Minecraft player count: poll <code>:25565</code> via protocol
-                query
-              </td>
+              <td>Minecraft player count: poll <code>:25565</code> via protocol query</td>
               <td>:25565</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-low">Low</span></td>
             </tr>
             <tr>
               <td><strong>P2-11</strong></td>
-              <td>
-                Forgejo CI/PR status: poll <code>:3000/api</code> for pending
-                reviews
-              </td>
+              <td>Forgejo CI/PR status: poll <code>:3000/api</code> for pending reviews</td>
               <td>:3000</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-low">Low</span></td>
             </tr>
             <tr>
               <td><strong>P2-12</strong></td>
-              <td>
-                Twenty CRM pipeline: poll <code>:3200</code> for active
-                opportunity count
-              </td>
+              <td>Twenty CRM pipeline: poll <code>:3200</code> for active opportunity count</td>
               <td>:3200</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-low">Low</span></td>
             </tr>
             <tr>
               <td><strong>P2-13</strong></td>
-              <td>
-                Voice agent state: check Whisper :7860 + LiveKit :7880 for
-                active session
-              </td>
+              <td>Voice agent state: check Whisper :7860 + LiveKit :7880 for active session</td>
               <td>:7860 + :7880</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P2-14</strong></td>
-              <td>
-                Voice agent waveform animation (animated bar when listening)
-              </td>
+              <td>Voice agent waveform animation (animated bar when listening)</td>
               <td>QML</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1325,9 +1240,7 @@
             </tr>
             <tr>
               <td><strong>P2-16</strong></td>
-              <td>
-                sops secret health: check file presence for enabled services
-              </td>
+              <td>sops secret health: check file presence for enabled services</td>
               <td>/run/secrets</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1335,8 +1248,8 @@
             <tr>
               <td><strong>P2-17</strong></td>
               <td>
-                Create shared <code>SystemNixService</code> QML base class
-                (common polling + error handling)
+                Create shared <code>SystemNixService</code> QML base class (common polling + error
+                handling)
               </td>
               <td><code>quickshell/services/base.qml</code></td>
               <td><span class="badge badge-medium">12m</span></td>
@@ -1344,57 +1257,42 @@
             </tr>
             <tr>
               <td><strong>P2-18</strong></td>
-              <td>
-                Add graceful fallback for all widgets when services are offline
-              </td>
+              <td>Add graceful fallback for all widgets when services are offline</td>
               <td>QML</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P2-19</strong></td>
-              <td>
-                Wire all widgets into DMS bar layout (left/center/right
-                positioning)
-              </td>
+              <td>Wire all widgets into DMS bar layout (left/center/right positioning)</td>
               <td>DMS config</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P2-20</strong></td>
-              <td>
-                Tune polling intervals to avoid overload (stagger:
-                5s/10s/30s/60s)
-              </td>
+              <td>Tune polling intervals to avoid overload (stagger: 5s/10s/30s/60s)</td>
               <td>QML</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P2-21</strong></td>
-              <td>
-                Disable Waybar systemd service
-                (<code>systemd.user.services.waybar</code>)
-              </td>
+              <td>Disable Waybar systemd service (<code>systemd.user.services.waybar</code>)</td>
               <td><code>waybar.nix:464</code></td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P2-22</strong></td>
-              <td>
-                Remove <code>waybar.nix</code> import from <code>home.nix</code>
-              </td>
+              <td>Remove <code>waybar.nix</code> import from <code>home.nix</code></td>
               <td><code>home.nix:23</code></td>
               <td><span class="badge badge-low">3m</span></td>
               <td><span class="badge badge-high">High</span></td>
             </tr>
             <tr>
               <td><strong>P2-23</strong></td>
-              <td>
-                Remove <code>waybar</code> from <code>home.packages</code>
-              </td>
+              <td>Remove <code>waybar</code> from <code>home.packages</code></td>
               <td><code>home.nix</code></td>
               <td><span class="badge badge-low">3m</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1408,20 +1306,14 @@
             </tr>
             <tr>
               <td><strong>P2-25</strong></td>
-              <td>
-                Remove <code>wl-clip-persist</code> (DMS handles clipboard
-                persistence)
-              </td>
+              <td>Remove <code>wl-clip-persist</code> (DMS handles clipboard persistence)</td>
               <td><code>home.nix:210</code></td>
               <td><span class="badge badge-low">3m</span></td>
               <td><span class="badge badge-low">Low</span></td>
             </tr>
             <tr>
               <td><strong>P2-26</strong></td>
-              <td>
-                Update niri <code>spawn-at-startup</code> to ensure quickshell
-                launches
-              </td>
+              <td>Update niri <code>spawn-at-startup</code> to ensure quickshell launches</td>
               <td><code>niri-wrapped.nix:106</code></td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1429,8 +1321,7 @@
             <tr>
               <td><strong>P2-27</strong></td>
               <td>
-                Update niri keybinds: remove <code>Mod+Shift+N</code> (Dunst
-                history via Rofi)
+                Update niri keybinds: remove <code>Mod+Shift+N</code> (Dunst history via Rofi)
               </td>
               <td><code>niri-wrapped.nix</code></td>
               <td><span class="badge badge-low">5m</span></td>
@@ -1438,30 +1329,21 @@
             </tr>
             <tr>
               <td><strong>P2-28</strong></td>
-              <td>
-                Wire DMS ports from <code>lib/ports.nix</code> &mdash; never
-                hardcode
-              </td>
+              <td>Wire DMS ports from <code>lib/ports.nix</code> &mdash; never hardcode</td>
               <td><code>quickshell.nix</code></td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P2-29</strong></td>
-              <td>
-                Wire theme tokens from <code>colorScheme.palette</code> into DMS
-                config
-              </td>
+              <td>Wire theme tokens from <code>colorScheme.palette</code> into DMS config</td>
               <td><code>quickshell.nix</code></td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P2-30</strong></td>
-              <td>
-                Run <code>nix flake check --no-build</code> to verify eval
-                passes
-              </td>
+              <td>Run <code>nix flake check --no-build</code> to verify eval passes</td>
               <td>repo-wide</td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1470,12 +1352,10 @@
         </table>
 
         <!-- ============================ P3 ============================ -->
-        <h2 id="p3">
-          <span class="num">04</span>P3 &mdash; Polish &amp; Enhancement
-        </h2>
+        <h2 id="p3"><span class="num">04</span>P3 &mdash; Polish &amp; Enhancement</h2>
         <p>
-          Lock screen, Mission Control OSD, dynamic theming, clipboard with
-          previews. The features that make it feel like a desktop environment.
+          Lock screen, Mission Control OSD, dynamic theming, clipboard with previews. The features
+          that make it feel like a desktop environment.
         </p>
         <table>
           <thead>
@@ -1525,20 +1405,14 @@
             </tr>
             <tr>
               <td><strong>P3-06</strong></td>
-              <td>
-                Replace <code>Mod+Shift+Escape</code> &rarr; swaylock with new
-                lock screen
-              </td>
+              <td>Replace <code>Mod+Shift+Escape</code> &rarr; swaylock with new lock screen</td>
               <td><code>niri-wrapped.nix:294</code></td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P3-07</strong></td>
-              <td>
-                Update <code>swayidle</code> before-sleep to call new lock
-                screen
-              </td>
+              <td>Update <code>swayidle</code> before-sleep to call new lock screen</td>
               <td><code>niri-wrapped.nix:535</code></td>
               <td><span class="badge badge-low">5m</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1546,8 +1420,7 @@
             <tr>
               <td><strong>P3-08</strong></td>
               <td>
-                Remove <code>programs.swaylock</code> from HM (keep swayidle for
-                suspend only)
+                Remove <code>programs.swaylock</code> from HM (keep swayidle for suspend only)
               </td>
               <td><code>programs/swaylock.nix</code></td>
               <td><span class="badge badge-low">5m</span></td>
@@ -1569,10 +1442,7 @@
             </tr>
             <tr>
               <td><strong>P3-11</strong></td>
-              <td>
-                Add brightness slider
-                (<code>brightnessctl</code>/<code>ddcutil</code>)
-              </td>
+              <td>Add brightness slider (<code>brightnessctl</code>/<code>ddcutil</code>)</td>
               <td>OSD</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1621,18 +1491,14 @@
             </tr>
             <tr>
               <td><strong>P3-18</strong></td>
-              <td>
-                Build clipboard manager with image previews (over cliphist)
-              </td>
+              <td>Build clipboard manager with image previews (over cliphist)</td>
               <td>clipboard</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P3-19</strong></td>
-              <td>
-                Wire <code>ColorQuantizer</code> dynamic theming from wallpaper
-              </td>
+              <td>Wire <code>ColorQuantizer</code> dynamic theming from wallpaper</td>
               <td>theme</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1662,13 +1528,8 @@
         </table>
 
         <!-- ============================ P4 ============================ -->
-        <h2 id="p4">
-          <span class="num">05</span>P4 &mdash; Stretch Goals &amp;
-          Documentation
-        </h2>
-        <p>
-          Optional, long-term, or cross-cutting tasks. Do last or skip entirely.
-        </p>
+        <h2 id="p4"><span class="num">05</span>P4 &mdash; Stretch Goals &amp; Documentation</h2>
+        <p>Optional, long-term, or cross-cutting tasks. Do last or skip entirely.</p>
         <table>
           <thead>
             <tr>
@@ -1682,9 +1543,7 @@
           <tbody>
             <tr>
               <td><strong>P4-01</strong></td>
-              <td>
-                Install <code>greetd</code> and configure as display manager
-              </td>
+              <td>Install <code>greetd</code> and configure as display manager</td>
               <td>greeter</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -1712,10 +1571,7 @@
             </tr>
             <tr>
               <td><strong>P4-05</strong></td>
-              <td>
-                Write custom HM module (caelestia pattern) with systemd user
-                service
-              </td>
+              <td>Write custom HM module (caelestia pattern) with systemd user service</td>
               <td>packaging</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1732,20 +1588,14 @@
             </tr>
             <tr>
               <td><strong>P4-07</strong></td>
-              <td>
-                Package custom QML via <code>stdenvNoCC</code> (noctalia
-                pattern)
-              </td>
+              <td>Package custom QML via <code>stdenvNoCC</code> (noctalia pattern)</td>
               <td>packaging</td>
               <td><span class="badge badge-medium">12m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
             </tr>
             <tr>
               <td><strong>P4-08</strong></td>
-              <td>
-                Update <code>AGENTS.md</code> with Quickshell procedures and
-                gotchas
-              </td>
+              <td>Update <code>AGENTS.md</code> with Quickshell procedures and gotchas</td>
               <td>docs</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -1759,10 +1609,7 @@
             </tr>
             <tr>
               <td><strong>P4-10</strong></td>
-              <td>
-                Write NixOS evaluation test: <code>nix eval</code> quickshell
-                module config
-              </td>
+              <td>Write NixOS evaluation test: <code>nix eval</code> quickshell module config</td>
               <td>testing</td>
               <td><span class="badge badge-low">10m</span></td>
               <td><span class="badge badge-medium">Med</span></td>
@@ -2138,50 +1985,19 @@
                 width="1570"
                 height="300"
               >
-                <rect
-                  x="-101"
-                  y="-101"
-                  width="1570"
-                  height="300"
-                  fill="white"
-                ></rect>
-                <rect
-                  x="199.000000"
-                  y="39.000000"
-                  width="55"
-                  height="21"
-                  fill="black"
-                ></rect>
-                <rect
-                  x="503.000000"
-                  y="39.000000"
-                  width="55"
-                  height="21"
-                  fill="black"
-                ></rect>
-                <rect
-                  x="815.000000"
-                  y="39.000000"
-                  width="68"
-                  height="21"
-                  fill="black"
-                ></rect>
-                <rect
-                  x="1126.000000"
-                  y="39.000000"
-                  width="60"
-                  height="21"
-                  fill="black"
-                ></rect>
+                <rect x="-101" y="-101" width="1570" height="300" fill="white"></rect>
+                <rect x="199.000000" y="39.000000" width="55" height="21" fill="black"></rect>
+                <rect x="503.000000" y="39.000000" width="55" height="21" fill="black"></rect>
+                <rect x="815.000000" y="39.000000" width="68" height="21" fill="black"></rect>
+                <rect x="1126.000000" y="39.000000" width="60" height="21" fill="black"></rect>
               </mask>
             </svg>
           </svg>
         </div>
 
         <footer class="footer">
-          Generated 2026-06-23 &middot; 80 tasks &middot; sorted by
-          impact/effort/customer-value &middot; companion to
-          docs/brainstorming/quickshell-nixos-vision.html
+          Generated 2026-06-23 &middot; 80 tasks &middot; sorted by impact/effort/customer-value
+          &middot; companion to docs/brainstorming/quickshell-nixos-vision.html
         </footer>
       </main>
     </div>
