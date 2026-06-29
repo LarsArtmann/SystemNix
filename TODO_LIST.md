@@ -19,9 +19,8 @@
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
-- [ ] **Hermes: add OpenAI API key to sops** — `sops platforms/nixos/secrets/hermes.yaml`, add `openai_api_key`. Nix config already wired
 - [ ] **Hermes: install SSH deploy key** — private key from `scripts/hermes-setup/id_ed25519` to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
-- [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model openrouter/gpt-4o`
+- [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model` (choose a model from an active provider — GLM, MiniMax, etc.)
 
 ### Priority 3: Infrastructure
 

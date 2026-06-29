@@ -93,7 +93,7 @@ _A brutally honest audit of every feature the project actually has._
 | gpu-python wrapper | ✅ | `ai-stack.nix` | ROCm env vars + LD_LIBRARY_PATH for GPU-accelerated Python |
 | ComfyUI (image generation) | ❌ Removed | — | Disabled — prefer using AI models via code directly |
 | Voice agents (LiveKit + Whisper) | 🔧 | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — disabled in config |
-| Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload, OpenAI/OpenRouter fallback wiring (API key pending) |
+| Hermes AI gateway | ✅ | `hermes.nix` | Discord bot, cron, messaging — system service, sops secrets, 4G memory limit, USR1 reload, multi-provider LLM wiring (GLM, MiniMax, Xiaomi, FAL, Firecrawl) |
 
 ### Desktop & System Services
 

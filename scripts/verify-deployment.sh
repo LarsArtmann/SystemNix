@@ -62,11 +62,11 @@ else
   log_fail "hermes SSH key missing — run scripts/hermes-setup/"
 fi
 
-# Check OpenRouter env var
-if [ -f /home/hermes/.env ] && grep -q "OPENAI_API_KEY" /home/hermes/.env; then
-  log_pass "OPENAI_API_KEY present in hermes .env"
+# Check essential Hermes env vars (Discord token is required for the bot gateway)
+if [ -f /home/hermes/.env ] && grep -q "DISCORD_BOT_TOKEN" /home/hermes/.env; then
+  log_pass "DISCORD_BOT_TOKEN present in hermes .env"
 else
-  log_warn "OPENAI_API_KEY missing from hermes .env — add to sops secrets + redeploy"
+  log_warn "DISCORD_BOT_TOKEN missing from hermes .env — check sops template + redeploy"
 fi
 
 # Check fallback_model config
@@ -74,7 +74,7 @@ if [ -f /home/hermes/config.yaml ] && grep -q "fallback_model" /home/hermes/conf
   log_pass "fallback_model configured in hermes config.yaml"
   grep "fallback_model" /home/hermes/config.yaml | head -1
 else
-  log_warn "fallback_model not set in config.yaml — run: hermes config set fallback_model openrouter/gpt-4o"
+  log_warn "fallback_model not set in config.yaml — run: sudo -u hermes hermes config set fallback_model <model>"
 fi
 
 # --- Priority 1: Deploy & Verify ---------------------------------------------
