@@ -256,43 +256,140 @@ _: {
       };
 
       systemd = {
-        services.unbound = {
-          reloadIfChanged = true;
+        services = {
+          unbound = {
+            reloadIfChanged = true;
 
-          # Skip unbound-anchor network fetch on every boot — certs are cached in
-          # /var/lib/unbound/ and root key updates happen via RFC 5011 auto-trust.
-          # Saves ~4s per boot.
-          preStart = lib.mkForce ''
-            ${config.services.unbound.package}/bin/unbound-control-setup -d /var/lib/unbound
-          '';
-        };
+            # Skip unbound-anchor network fetch on every boot — certs are cached in
+            # /var/lib/unbound/ and root key updates happen via RFC 5011 auto-trust.
+            # Saves ~4s per boot.
+            preStart = lib.mkForce ''
+              ${config.services.unbound.package}/bin/unbound-control-setup -d /var/lib/unbound
+            '';
+          };
 
-        services.dnsblockd-attach-ip = {
-          description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
-          wantedBy = ["multi-user.target"];
-          after = [
-            "sys-subsystem-net-devices-${cfg.blockInterface}.device"
-            "network-online.target"
-          ];
-          wants = [
-            "sys-subsystem-net-devices-${cfg.blockInterface}.device"
-            "network-online.target"
-          ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig =
-            {
-              Type = "oneshot";
-              RemainAfterExit = true;
-              ExecStart = lib.getExe attachIPScript;
-            }
-            // harden {
-              ProtectHome = false;
-              CapabilityBoundingSet = "CAP_NET_ADMIN";
-              NoNewPrivileges = false;
-            }
-            // serviceOneshotDefaults {};
+          dnsblockd-attach-ip = {
+            description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
+            wantedBy = ["multi-user.target"];
+            after = [
+              "sys-subsystem-net-devices-${cfg.blockInterface}.device"
+              "network-online.target"
+            ];
+            wants = [
+              "sys-subsystem-net-devices-${cfg.blockInterface}.device"
+              "network-online.target"
+            ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            serviceConfig =
+              {
+                Type = "oneshot";
+                RemainAfterExit = true;
+                ExecStart = lib.getExe attachIPScript;
+              }
+              // harden {
+                ProtectHome = false;
+                CapabilityBoundingSet = "CAP_NET_ADMIN";
+                NoNewPrivileges = false;
+              }
+              // serviceOneshotDefaults {};
+          };
+
+          dnsblockd = {
+            description = "DNS Block Page Server";
+            after = [
+              "dnsblockd-attach-ip.service"
+              "unbound.service"
+              "sops-nix.service"
+            ];
+            wants = [
+              "dnsblockd-attach-ip.service"
+              "sops-nix.service"
+              "unbound.service"
+            ];
+            wantedBy = ["multi-user.target"];
+            inherit onFailure;
+            unitConfig = {
+              StartLimitBurst = 10;
+              StartLimitIntervalSec = 120;
+            };
+
+            serviceConfig = let
+              initScript = pkgs.writeShellApplication {
+                name = "dnsblockd-init";
+                runtimeInputs = [pkgs.coreutils];
+                text = ''
+                  install -d /var/lib/dnsblockd
+                  ${
+                    if cfg.tempAllowAll
+                    then ''printf 'local-zone: "." transparent\n' > /var/lib/dnsblockd/temp-allowlist.conf''
+                    else "[ -f /var/lib/dnsblockd/temp-allowlist.conf ] || printf '# dnsblockd temp allowlist\\n' > /var/lib/dnsblockd/temp-allowlist.conf"
+                  }
+                '';
+              };
+              caCert = config.sops.secrets.dnsblockd_ca_cert.path;
+              caKey = config.sops.secrets.dnsblockd_ca_key.path;
+              dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
+                lib.generators.toYAML {} {
+                  listen_addr = cfg.blockIP;
+                  port = cfg.blockPort;
+                  tls_port = cfg.blockTLSPort;
+                  stats_addr = "127.0.0.1";
+                  stats_port = cfg.statsPort;
+                  ca_cert_file = "${caCert}";
+                  ca_key_file = "${caKey}";
+                  blocklist_mapping_file = "${processedBlocklist}/mapping.json";
+                  unbound_control = "${config.services.unbound.package}/bin/unbound-control";
+                  temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
+                  tracking_mode = "METADATA_ONLY";
+                  tracking_db_path = "/var/lib/dnsblockd/tracking.db";
+                }
+                + lib.optionalString (cfg.categories != {}) "\ncategories_file: ${categoriesJSON}"
+              );
+              dnsblockdWrapper = pkgs.writeShellApplication {
+                name = "dnsblockd-start";
+                runtimeInputs = [
+                  pkgs.coreutils
+                  pkgs.dnsblockd
+                ];
+                text = ''
+                  for i in $(seq 1 60); do
+                    if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
+                      break
+                    fi
+                    if [ "$i" -eq 60 ]; then
+                      echo "ERROR: sops secrets not available after 60s" >&2
+                      exit 1
+                    fi
+                    sleep 1
+                  done
+
+                  exec dnsblockd serve -c ${dnsblockdConfigFile}
+                '';
+              };
+            in
+              harden {
+                MemoryMax = "1G";
+                ProtectSystem = "strict";
+                CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
+                AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
+              }
+              // serviceDefaults {RestartSec = "3s";}
+              // {
+                Type = "simple";
+                ExecStartPre = "+-${lib.getExe initScript}";
+                ExecStart = "${lib.getExe dnsblockdWrapper}";
+                StateDirectory = "dnsblockd";
+                WorkingDirectory = "/var/lib/dnsblockd";
+                SupplementaryGroups = ["unbound"];
+                RestrictAddressFamilies = [
+                  "AF_INET"
+                  "AF_INET6"
+                  "AF_NETLINK"
+                ];
+              };
+          };
         };
 
         tmpfiles.rules =
@@ -303,101 +400,6 @@ _: {
           ++ lib.optional cfg.tempAllowAll ''
             f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
           '';
-
-        services.dnsblockd = {
-          description = "DNS Block Page Server";
-          after = [
-            "dnsblockd-attach-ip.service"
-            "unbound.service"
-            "sops-nix.service"
-          ];
-          wants = [
-            "dnsblockd-attach-ip.service"
-            "sops-nix.service"
-            "unbound.service"
-          ];
-          wantedBy = ["multi-user.target"];
-          inherit onFailure;
-          unitConfig = {
-            StartLimitBurst = 10;
-            StartLimitIntervalSec = 120;
-          };
-
-          serviceConfig = let
-            initScript = pkgs.writeShellApplication {
-              name = "dnsblockd-init";
-              runtimeInputs = [pkgs.coreutils];
-              text = ''
-                install -d /var/lib/dnsblockd
-                ${
-                  if cfg.tempAllowAll
-                  then ''printf 'local-zone: "." transparent\n' > /var/lib/dnsblockd/temp-allowlist.conf''
-                  else "[ -f /var/lib/dnsblockd/temp-allowlist.conf ] || printf '# dnsblockd temp allowlist\\n' > /var/lib/dnsblockd/temp-allowlist.conf"
-                }
-              '';
-            };
-            caCert = config.sops.secrets.dnsblockd_ca_cert.path;
-            caKey = config.sops.secrets.dnsblockd_ca_key.path;
-            dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
-              lib.generators.toYAML {} {
-                listen_addr = cfg.blockIP;
-                port = cfg.blockPort;
-                tls_port = cfg.blockTLSPort;
-                stats_addr = "127.0.0.1";
-                stats_port = cfg.statsPort;
-                ca_cert_file = "${caCert}";
-                ca_key_file = "${caKey}";
-                blocklist_mapping_file = "${processedBlocklist}/mapping.json";
-                unbound_control = "${config.services.unbound.package}/bin/unbound-control";
-                temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
-                tracking_mode = "METADATA_ONLY";
-                tracking_db_path = "/var/lib/dnsblockd/tracking.db";
-              }
-              + lib.optionalString (cfg.categories != {}) "\ncategories_file: ${categoriesJSON}"
-            );
-            dnsblockdWrapper = pkgs.writeShellApplication {
-              name = "dnsblockd-start";
-              runtimeInputs = [
-                pkgs.coreutils
-                pkgs.dnsblockd
-              ];
-              text = ''
-                for i in $(seq 1 60); do
-                  if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
-                    break
-                  fi
-                  if [ "$i" -eq 60 ]; then
-                    echo "ERROR: sops secrets not available after 60s" >&2
-                    exit 1
-                  fi
-                  sleep 1
-                done
-
-                exec dnsblockd serve -c ${dnsblockdConfigFile}
-              '';
-            };
-          in
-            harden {
-              MemoryMax = "1G";
-              ProtectSystem = "strict";
-              CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
-              AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
-            }
-            // serviceDefaults {RestartSec = "3s";}
-            // {
-              Type = "simple";
-              ExecStartPre = "+-${lib.getExe initScript}";
-              ExecStart = "${lib.getExe dnsblockdWrapper}";
-              StateDirectory = "dnsblockd";
-              WorkingDirectory = "/var/lib/dnsblockd";
-              SupplementaryGroups = ["unbound"];
-              RestrictAddressFamilies = [
-                "AF_INET"
-                "AF_INET6"
-                "AF_NETLINK"
-              ];
-            };
-        };
 
         user.services.dnsblockd-cert-import = {
           description = "Import dnsblockd CA cert into NSS database";

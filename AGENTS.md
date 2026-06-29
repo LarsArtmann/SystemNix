@@ -7,9 +7,14 @@ Cross-Platform Nix Configuration (macOS + NixOS) — `github:LarsArtmann/SystemN
 ## Architecture
 
 ```
-flake.nix              # Entry point (flake-parts), mkLarsPackages, ~55 inputs
+flake.nix              # Thin entry point: inputs + flake-parts wiring (~680 lines)
+systems/               # Host assembly: evo-x2.nix, darwin.nix, rpi3-dns.nix
 lib/                   # Helpers — import via lib/default.nix (single import point)
-modules/nixos/services/# flake-parts modules, auto-discovered by filename
+  lars-packages.nix    # mkLarsPackages — single source of truth for LarsArtmann Go tools
+  systemd/             # harden / serviceDefaults / serviceOneshotDefaults
+modules/nixos/         # flake-parts NixOS modules, auto-discovered by filename
+  services/            # Server/networking/app daemons (Caddy, Immich, SigNoz, DNS, …)
+  desktop/             # Desktop-environment config (audio, display-manager, niri, steam, …)
 pkgs/                  # Custom packages (buildGoModule, dms-plugins/)
 overlays/              # shared.nix (callPackage + activitywatch + d2 Darwin stub), linux.nix (flake-input overlays)
 platforms/common/      # Shared (~80%): home-base.nix, programs/, packages/, theme.nix, locale.nix
@@ -18,6 +23,8 @@ platforms/nixos/       # NixOS — user: lars
   desktop/quickshell.nix # Quickshell HM module (DankMaterialShell)
 scripts/               # Shell + Python operational scripts
 ```
+
+**Module auto-discovery:** `flake.nix` scans `modules/nixos/{services,desktop}/` — filenames MUST be unique across both dirs (filename → `flake.nixosModules.<name>`). `_`-prefixed files are helpers (skipped). docs/patches live in `docs/services/`, not the module tree.
 
 | System | Hostname | Platform | Constraints |
 |--------|----------|----------|-------------|
@@ -30,7 +37,7 @@ scripts/               # Shell + Python operational scripts
 
 ### Adding a Service
 
-1. Create `modules/nixos/services/<name>.nix` — filename IS the module name, auto-discovered. Prefix `_` for non-module helpers
+1. Create `modules/nixos/services/<name>.nix` (or `modules/nixos/desktop/` for desktop config) — filename IS the module name, auto-discovered. Filenames must be unique across both dirs. Prefix `_` for non-module helpers
 2. Enable in `platforms/nixos/system/configuration.nix`
 3. Ports go in `lib/ports.nix` — never hardcode. Caddy vHosts go in `caddy.nix` via `protectedVHost "subdomain" port`
 4. Import `import ../../../lib/default.nix lib` for `harden`, `serviceDefaults`, `onFailure`, `serviceTypes`, `ports`, etc.
@@ -152,6 +159,8 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | xdg-document-portal needs fusermount3 | The portal fails at login (`posix_spawn for fusermount3 failed: No such file or directory`) unless a setuid `fusermount3` wrapper exists. Added via `security.wrappers.fusermount3` in `configuration.nix` (pulls `fuse3` into the closure). Removing it re-breaks the portal every login |
 | Network interface boot race | **FIXED** for dnsblockd/keepalived; pending deploy. dns-blocker now uses a dedicated `dnsblockd-attach-ip.service` (CAP_NET_ADMIN oneshot, ordered after `sys-subsystem-net-devices-eno1.device`) to add the block IP, and `dnsblockd.service` depends on it. `networking.localCommands` with `|| true` is removed. keepalived and the dual-wan services (when re-enabled) also order after the `.device` unit. The old race where the IP was never added and dnsblockd crash-looped is closed. |
 | SSH control-master socket stale-refuse | `ControlMaster auto` + `ControlPersist 600` (set by the `nix-ssh-config` module for `github.com`) leaves orphaned socket files in `~/.ssh/sockets/` when a master dies uncleanly (OOM, suspend, logout). SSH then prints `ControlSocket ... already exists, disabling multiplexing` on every `git push/fetch` (ops still succeed — SSH falls back to a direct connection). **Fixed** in `platforms/common/programs/ssh-config.nix`: `home.activation.ssh-sockets-dir` ensures the dir exists, and a `ssh-socket-cleanup` systemd **user** timer (every 5 min, Linux-only via `lib.optionalAttrs stdenv.isLinux`) probes each socket via AF_UNIX `connect()` and unlinks dead ones. Darwin has no systemd so it gets only the dir-creation activation. One-time manual clear: `rm ~/.ssh/sockets/*` |
+| `-config` option suffix is intentional | A module named `audio.nix` exposes `services.audio-config.enable` (not `services.audio`). The `-config` suffix avoids colliding with the **upstream** NixOS option the module configures (e.g. `services.displayManager`, `services.pipewire`). Modules wrapping a same-named upstream service (immich, caddy, forgejo) reuse the upstream `.enable` directly. This is a deliberate convention, not a naming bug — do NOT "fix" it |
+| `import ../../../lib/default.nix lib` boilerplate is required | Every module re-imports `lib/default.nix` rather than receiving helpers via `_module.args`. **This is correct:** `nix flake check` evaluates each `nixosModule` standalone (no injected args), so helpers MUST be self-imported. Injecting via `_module.args` would either break the standalone check or keep the import as a default (no win). Canonical form: `inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;` |
 
 ---
 

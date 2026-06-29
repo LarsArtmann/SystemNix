@@ -405,28 +405,8 @@
   outputs = inputs @ {
     flake-parts,
     nixpkgs,
-    home-manager,
-    nix-darwin,
-    nix-homebrew,
-    homebrew-bundle,
-    homebrew-cask,
-    niri,
-    otel-tui,
-    nix-amd-npu,
     nix-ssh-config,
-    nixos-hardware,
-    niri-session-manager,
-    sops-nix,
-    silent-sddm,
-    signoz-src,
-    signoz-collector-src,
-    crush-config,
-    helium,
-    hermes-agent,
-    nur,
     treefmt-full-flake,
-    wallpapers-src,
-    overview,
     ...
   }: let
     lib = nixpkgs.lib;
@@ -439,26 +419,31 @@
       pythonTest
       ;
 
-    # Auto-discover service modules from modules/nixos/services/
-    # Convention: filename (minus .nix) IS the module name.
+    # Auto-discover NixOS modules from modules/nixos/{services,desktop}/.
+    # Convention: filename (minus .nix) IS the module name and MUST be unique
+    # across all scanned directories (it becomes flake.nixosModules.<name>).
     # Non-module files must start with _ (e.g., _signoz-alerts.nix).
     # Non-.nix files and directories are ignored automatically.
-    serviceDir = ./modules/nixos/services;
-    serviceDirContents = builtins.readDir serviceDir;
-    serviceModules =
-      lib.mapAttrsToList
-      (file: _: {
-        path = serviceDir + "/${file}";
-        module = lib.removeSuffix ".nix" file;
-      })
-      (
-        lib.filterAttrs (
-          n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)
-        )
-        serviceDirContents
-      );
+    moduleDirs = [
+      ./modules/nixos/services
+      ./modules/nixos/desktop
+    ];
+    discoveredModules =
+      lib.concatMap (
+        dir: let
+          files = lib.filterAttrs (
+            n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)
+          ) (builtins.readDir dir);
+        in
+          lib.mapAttrsToList (file: _: {
+            path = dir + "/${file}";
+            module = lib.removeSuffix ".nix" file;
+          })
+          files
+      )
+      moduleDirs;
 
-    serviceModulePaths = map (sm: sm.path) serviceModules;
+    discoveredModulePaths = map (m: m.path) discoveredModules;
 
     # Shared Home Manager configuration — only user/home file path differs per system
     sharedHomeManagerConfig = {
@@ -477,27 +462,10 @@
       inherit (theme) colorScheme;
     };
 
-    # Single source of truth for all LarsArtmann Go tool packages.
+    # LarsArtmann Go tool packages — single source of truth in lib/lars-packages.nix.
     # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
     # via specialArgs (for environment.systemPackages).
-    mkLarsPackages = system: let
-      flakePkg = input: (input.packages.${system} or {}).default or null;
-    in
-      lib.filterAttrs (_: v: v != null) {
-        art-dupl = flakePkg inputs.art-dupl;
-        branching-flow = flakePkg inputs.branching-flow;
-        buildflow = flakePkg inputs.buildflow;
-        go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
-        go-structure-linter = flakePkg inputs.go-structure-linter;
-        golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
-        hierarchical-errors = flakePkg inputs.hierarchical-errors;
-        library-policy = flakePkg inputs.library-policy;
-        md-go-validator = flakePkg inputs.md-go-validator;
-        mr-sync = flakePkg inputs.mr-sync;
-        project-meta = flakePkg inputs.project-meta;
-        projects-management-automation = flakePkg inputs.projects-management-automation;
-        todo-list-ai = flakePkg inputs.todo-list-ai;
-      };
+    mkLarsPackages = import ./lib/lars-packages.nix {inherit lib inputs;};
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = [
@@ -506,7 +474,7 @@
       ];
 
       # Import service modules — registered as flake-parts modules (inputs.self.nixosModules.*)
-      imports = serviceModulePaths;
+      imports = discoveredModulePaths;
 
       # Per-system configuration (packages, devShells, etc.)
       perSystem = {
@@ -681,172 +649,40 @@
           };
       };
 
-      # System configurations (maintain backward compatibility)
+      # System configurations — assembled in systems/*.nix (thin host files)
       flake = {
         lib = import ./lib {inherit (nixpkgs) lib;};
 
-        darwinConfigurations."Lars-MacBook-Air" = nix-darwin.lib.darwinSystem {
-          specialArgs = {
-            inherit (inputs.self) inputs;
-            inherit nixpkgs;
-            inherit helium;
-            inherit nur;
-            larsPackages = mkLarsPackages "aarch64-darwin";
-          };
-          modules = [
-            {
-              nixpkgs = {
-                hostPlatform = "aarch64-darwin";
-                config.allowUnfree = true;
-                overlays = sharedOverlays;
-              };
-              # otel-tui is Linux-only (40+ min from-source build on macOS, disk-hungry)
-              _module.args.otel-tui = null;
-            }
-
-            # Import nix-homebrew for declarative Homebrew management
-            nix-homebrew.darwinModules.nix-homebrew
-            {
-              nix-homebrew = {
-                enable = true;
-                enableRosetta = true;
-                user = "larsartmann";
-                autoMigrate = true;
-                # Pin Homebrew taps to flake inputs for reproducibility
-                taps = {
-                  "homebrew/bundle" = homebrew-bundle;
-                  "homebrew/cask" = homebrew-cask;
-                };
-              };
-            }
-
-            # Import Home Manager module for Darwin
-            inputs.home-manager.darwinModules.home-manager
-
-            # Define Home Manager configuration inline for top-level visibility
-            {
-              home-manager =
-                sharedHomeManagerConfig
-                // {
-                  users.larsartmann = {...}: {
-                    imports = [
-                      ./platforms/darwin/home.nix
-                    ];
-                  };
-                  extraSpecialArgs = sharedHomeManagerSpecialArgs;
-                };
-            }
-
-            # Core Darwin configuration
-            ./platforms/darwin/default.nix
-          ];
+        darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
+          inherit
+            inputs
+            mkLarsPackages
+            sharedOverlays
+            sharedHomeManagerConfig
+            sharedHomeManagerSpecialArgs
+            ;
         };
 
-        # NixOS configuration
-        nixosConfigurations."evo-x2" = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit (inputs.self) inputs;
-            inherit helium;
-            inherit (inputs) nur;
-            inherit niri;
-            inherit otel-tui;
-            inherit nix-amd-npu;
-            inherit nix-ssh-config;
-            larsPackages = mkLarsPackages "x86_64-linux";
-          };
-          modules =
-            [
-              {
-                nixpkgs = {
-                  hostPlatform = "x86_64-linux";
-                  config.allowUnfree = true;
-                  overlays =
-                    sharedOverlays
-                    ++ [
-                      inputs.niri.overlays.niri
-                    ]
-                    ++ linuxOnlyOverlays
-                    ++ [pythonTest];
-                };
-                system.configurationRevision = inputs.self.rev or inputs.self.dirtyRev or null;
-              }
-              home-manager.nixosModules.home-manager
-              inputs.nur.modules.nixos.default
-
-              {
-                home-manager =
-                  sharedHomeManagerConfig
-                  // {
-                    users.lars = _: {
-                      imports = [
-                        ./platforms/nixos/users/home.nix
-                      ];
-                    };
-                    extraSpecialArgs =
-                      sharedHomeManagerSpecialArgs
-                      // {
-                        wallpapers = inputs.wallpapers-src;
-                        dankMaterialShell = inputs.dankMaterialShell;
-                      };
-                  };
-              }
-
-              # Import the existing NixOS configuration
-              inputs.niri.nixosModules.niri
-              inputs.nix-amd-npu.nixosModules.default
-              inputs.sops-nix.nixosModules.sops
-              inputs.silent-sddm.nixosModules.default
-            ]
-            ++ (map (sm: inputs.self.nixosModules.${sm.module}) serviceModules)
-            ++ [
-              inputs.nix-ssh-config.nixosModules.ssh
-              inputs.niri-session-manager.nixosModules.niri-session-manager
-              inputs.emeet-pixyd.nixosModules.default
-              inputs.crush-daily.nixosModules.crush-daily
-              inputs.overview.nixosModules.default
-              ./platforms/nixos/system/configuration.nix
-            ];
+        nixosConfigurations."evo-x2" = import ./systems/evo-x2.nix {
+          inherit
+            inputs
+            mkLarsPackages
+            sharedOverlays
+            linuxOnlyOverlays
+            pythonTest
+            discoveredModules
+            sharedHomeManagerConfig
+            sharedHomeManagerSpecialArgs
+            ;
         };
 
-        # Raspberry Pi 3 — DNS cluster backup node
-        nixosConfigurations."rpi3-dns" = nixpkgs.lib.nixosSystem {
-          specialArgs = {
-            inherit (inputs.self) inputs;
-            inherit nix-ssh-config;
-            inherit nixos-hardware;
-          };
-          modules = [
-            {
-              nixpkgs = {
-                hostPlatform = "aarch64-linux";
-                config.allowUnfree = true;
-                overlays = [inputs.nur.overlays.default] ++ linuxOnlyOverlays;
-              };
-            }
-            home-manager.nixosModules.home-manager
-            inputs.nur.modules.nixos.default
-            {
-              home-manager =
-                sharedHomeManagerConfig
-                // {
-                  users.root = _: {
-                    programs.home-manager.enable = true;
-                    home = {
-                      enableNixpkgsReleaseCheck = false;
-                      stateVersion = "25.11";
-                      file.".config/crush".source = inputs.crush-config;
-                    };
-                  };
-                  extraSpecialArgs = sharedHomeManagerSpecialArgs;
-                };
-            }
-            inputs.self.nixosModules.dns-failover
-            inputs.sops-nix.nixosModules.sops
-            inputs.self.nixosModules.sops
-            nixos-hardware.nixosModules.raspberry-pi-3
-            "${nixpkgs}/nixos/modules/installer/sd-card/sd-image-aarch64.nix"
-            ./platforms/nixos/rpi3/default.nix
-          ];
+        nixosConfigurations."rpi3-dns" = import ./systems/rpi3-dns.nix {
+          inherit
+            inputs
+            linuxOnlyOverlays
+            sharedHomeManagerConfig
+            sharedHomeManagerSpecialArgs
+            ;
         };
       };
     };

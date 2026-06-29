@@ -1,6 +1,9 @@
-# modules/nixos/services/
+# modules/nixos/{services,desktop}/
 
-Flake-parts NixOS service modules. Each file that declares `flake.nixosModules.<name>` is auto-discovered by the root `flake.nix` — no manual registry to update.
+Flake-parts NixOS modules. Each file that declares `flake.nixosModules.<name>` is auto-discovered by the root `flake.nix` across **both** `services/` and `desktop/` — no manual registry to update. Module **filenames must be unique across all scanned directories** (the name becomes `flake.nixosModules.<name>`).
+
+- **`services/`** — server/networking/app daemons (Caddy, Immich, SigNoz, DNS, …)
+- **`desktop/`** — desktop-environment config (audio, display-manager, niri, steam, …)
 
 ---
 
@@ -21,18 +24,19 @@ Flake-parts NixOS service modules. Each file that declares `flake.nixosModules.<
 
 ## Auto-Discovery
 
-The root `flake.nix` scans this directory at eval time:
+The root `flake.nix` scans `modules/nixos/{services,desktop}/` at eval time:
 
-- It reads every `*.nix` file.
-- It looks for a line containing `flake.nixosModules.<name>`.
-- The captured `<name>` must match the filename (without `.nix`).
-- Files without `flake.nixosModules.*` (e.g., `signoz-alerts.nix`, helper patches) are skipped automatically.
+- It reads every `*.nix` file in each scanned directory.
+- The filename (minus `.nix`) becomes `flake.nixosModules.<name>`.
+- **Filenames must be unique across all scanned directories.**
+- Files prefixed with `_` (e.g. `_signoz-alerts.nix`) are **helpers, not modules** — skipped by auto-discovery.
+- Non-`.nix` files and subdirectories are ignored automatically.
 
 **Therefore:**
 
-- `forgejo.nix` → must contain `flake.nixosModules.forgejo`
-- `gatus-config.nix` → must contain `flake.nixosModules.gatus-config`
-- `signoz-alerts.nix` → no `flake.nixosModules.*` line → ignored by auto-discovery
+- `services/forgejo.nix` → registers `flake.nixosModules.forgejo`
+- `desktop/audio.nix` → registers `flake.nixosModules.audio`
+- `services/_signoz-alerts.nix` → `_` prefix → ignored by auto-discovery (imported explicitly by `signoz.nix`)
 
 ---
 
@@ -119,7 +123,7 @@ _: {
    ```nix
    services.<name>.enable = true;
    ```
-7. **Run `just test-fast`** for syntax validation, then `just test` for full build.
+7. **Validate** with `nix flake check --no-build` (syntax/eval), then deploy with `nix run .#deploy`. **Never use `just`/Makefile** — flake commands only.
 
 ---
 
@@ -454,14 +458,15 @@ Use `serviceDefaultsUser {}` (not `serviceDefaults {}`) for Home Manager user se
 
 ## Non-Module Helpers
 
-Files that do **not** declare `flake.nixosModules.*` are ignored by auto-discovery. Use this for:
+Files prefixed with `_` are skipped by auto-discovery. Service documentation and patches now live in `docs/services/`. Remaining helpers in this directory:
 
-- Alert rule generators (`signoz-alerts.nix`)
-- Patch files (`immich-bull-board.patch`)
-- Dashboard JSON (`dashboards/*.json`)
-- Setup guides (`twenty-POST-SETUP.md`)
+- Alert rule generators (`_signoz-alerts.nix`) — imported explicitly by the module that needs them
+- Dashboard JSON (`dashboards/*.json`) — data referenced by `_signoz-alerts.nix` via path
 
-These can be imported by modules that need them.
+Moved out of this directory (no longer cluttering the module tree):
+
+- `docs/services/immich-bull-board.patch` + `IMMICH-BULL-BOARD-PATCH-GUIDE.md`
+- `docs/services/twenty-POST-SETUP.md`, `twenty-FREELANCE-PROJECTS.md`
 
 ---
 

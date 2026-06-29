@@ -8,7 +8,6 @@
   imports = [
     # Cross-platform preferences (dark mode, fonts, themes — single source of truth)
     ../common/preferences.nix
-    ../common/color-scheme.nix
     ./networking/default.nix
     ./nix/settings.nix
     ./security/pam.nix
