@@ -393,11 +393,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782747955,
-        "narHash": "sha256-lqbnp9ydX0El1+AvmIk4HtSbzvygCw8sOoV/2CjQw2c=",
+        "lastModified": 1782748580,
+        "narHash": "sha256-i39wqegr11C84N0NuklnPk830iIUD4wmkx3Me/w+dL0=",
         "ref": "master",
-        "rev": "7ad87836eaedf66686490d62b29fc4f0294c16b8",
-        "revCount": 424,
+        "rev": "18c2176dd919b55ebda9a0f0707bc38299e3aee6",
+        "revCount": 425,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
