@@ -34,6 +34,34 @@ _: {
         inherit desc;
       }
     ];
+
+    inherit (config.networking) domain;
+
+    # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
+    # runs pocket-id-config.provision, which writes the client secret to the
+    # file below. systemd LoadCredential reads it as root (DynamicUser means the
+    # gatus user does not exist to own files directly) and exposes the value to
+    # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
+    # into an env file that gatus consumes via config.yaml $VAR interpolation.
+    enableOidc =
+      (config.services.pocket-id-config.enable or false)
+      && (config.services.pocket-id-config.provision.enable or false);
+    clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
+
+    gatusOidcEnv = pkgs.writeShellApplication {
+      name = "gatus-oidc-env";
+      runtimeInputs = [pkgs.coreutils];
+      text = ''
+        set -eu
+        out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
+        if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
+          printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
+          chmod 600 "$out"
+        else
+          : > "$out"
+        fi
+      '';
+    };
   in {
     options.services.gatus-config = {
       enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
@@ -50,6 +78,22 @@ _: {
             type = "sqlite";
             path = "/var/lib/gatus/gatus.db";
             caching = true;
+          };
+          # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
+          # allowed-subjects omitted: single-admin IdP, so any authenticated user
+          # (= the admin) may view the dashboard.
+          security = lib.optionalAttrs enableOidc {
+            oidc = {
+              issuer-url = "https://auth.${domain}";
+              client-id = "gatus";
+              client-secret = "$GATUS_OIDC_CLIENT_SECRET";
+              redirect-url = "https://status.${domain}/authorization-code/callback";
+              scopes = [
+                "openid"
+                "profile"
+                "email"
+              ];
+            };
           };
           alerting.discord = {
             webhook-url = "$DISCORD_WEBHOOK_URL";
@@ -336,6 +380,13 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString cfg.port}";
                 interval = "5m";
+                # With native OIDC enabled, an unauthenticated probe is redirected
+                # to the IdP login (302/303) instead of 200. Accept any non-error
+                # status so the self-health check doesn't false-alarm.
+                conditions =
+                  if enableOidc
+                  then ["[STATUS] < 400"]
+                  else ["[STATUS] == 200"];
               })
             ]
             ++ lib.optionals config.services.discordsync.enable [
@@ -352,6 +403,9 @@ _: {
 
       systemd.services.gatus = {
         inherit onFailure;
+        # Gatus must not start before the OIDC client secret has been provisioned.
+        after = lib.optional enableOidc "pocket-id-provision.service";
+        wants = lib.optional enableOidc "pocket-id-provision.service";
         serviceConfig =
           harden {
             MemoryMax = "512M";
@@ -359,7 +413,19 @@ _: {
           }
           // serviceDefaults {Restart = "on-failure";}
           // {
-            ExecStartPre = "+${lib.getExe checkGatusEnv}";
+            ExecStartPre = [
+              "+${lib.getExe checkGatusEnv}"
+              "${lib.getExe gatusOidcEnv}"
+            ];
+            RuntimeDirectory = "gatus";
+            LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
+            # Compose the full EnvironmentFile list: the sops template
+            # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
+            # (the '-' prefix makes a missing file non-fatal when OIDC is off).
+            EnvironmentFile = lib.mkForce [
+              config.sops.templates."gatus-env".path
+              "-/run/gatus/oidc.env"
+            ];
           };
       };
     };

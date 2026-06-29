@@ -93,7 +93,14 @@ _: {
             "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
             "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
             "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
-            "status.${domain}" = protectedVHost "status" config.services.gatus-config.port;
+            # status uses NATIVE OIDC (Gatus security.oidc), not oauth2-proxy
+            # forward-auth — plain reverse_proxy like Forgejo to avoid double-auth.
+            "status.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                reverse_proxy localhost:${toString config.services.gatus-config.port}
+              '';
+            };
             "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
             "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
           }

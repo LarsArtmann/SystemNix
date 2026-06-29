@@ -9,7 +9,14 @@
   sharedHomeManagerConfig,
   sharedHomeManagerSpecialArgs,
 }: let
-  inherit (inputs) nix-darwin nix-homebrew homebrew-bundle homebrew-cask home-manager;
+  inherit
+    (inputs)
+    nix-darwin
+    nix-homebrew
+    homebrew-bundle
+    homebrew-cask
+    home-manager
+    ;
 in
   nix-darwin.lib.darwinSystem {
     specialArgs = {

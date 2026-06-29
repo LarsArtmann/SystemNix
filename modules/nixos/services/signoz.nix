@@ -1,4 +1,8 @@
 # SigNoz observability: ClickHouse, OTel collector, dashboards, alerts
+# SSO: native OIDC is Enterprise-only (NOT in the Community Edition we run).
+# Access is therefore gated by oauth2-proxy forward-auth (Layer 2 SSO) on the
+# signoz.<domain> Caddy vHost. No code-level OIDC wiring is possible without a
+# paid SigNoz Enterprise license.
 {
   inputs,
   lib,

@@ -1,0 +1,29 @@
+{
+  "savedAt": "2026-06-29T22:08:41.851926225+02:00",
+  "buildMode": "full",
+  "successSteps": [
+    "nixfmt-standalone",
+    "gitleaks",
+    "gitignore-upserter:repair",
+    "agents-md-exists-check",
+    "doc-files-age-check",
+    "detect-language",
+    "todo-check",
+    "d2-fmt",
+    "nix-hash-fix:detect",
+    "nix-checker",
+    "nix-flake-check",
+    "nix-hash-fix:repair",
+    "gitignore-upserter:detect",
+    "nix-fmt",
+    "deadnix",
+    "oxfmt",
+    "shellcheck",
+    "flake-lock-freshness",
+    "disk-space-check",
+    "flake-meta-checker",
+    "jscpd",
+    "statix",
+    "nix-flake-update"
+  ]
+}

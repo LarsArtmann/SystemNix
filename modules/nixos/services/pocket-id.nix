@@ -406,6 +406,14 @@ _: {
               launchURL = "https://forgejo.${domain}";
               callbackURLs = ["https://forgejo.${domain}/user/oauth2/PocketID/callback"];
             }
+            {
+              # Native OIDC (Gatus security.oidc block). Callback path is fixed
+              # upstream at /authorization-code/callback.
+              name = "Gatus";
+              clientId = "gatus";
+              launchURL = "https://status.${domain}";
+              callbackURLs = ["https://status.${domain}/authorization-code/callback"];
+            }
           ];
           description = "OIDC clients to create declaratively";
         };

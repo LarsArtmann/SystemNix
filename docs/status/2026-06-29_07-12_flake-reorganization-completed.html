@@ -30,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -239,15 +239,27 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue {
         background: var(--surface-raised);
@@ -258,15 +270,27 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .issue .where {
         font-family: var(--font-mono);
@@ -482,7 +506,11 @@
         padding: 0.15rem 0.35rem;
       }
       .question-box {
-        background: color-mix(in srgb, var(--accent) 12%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--accent) 12%,
+          var(--surface-raised)
+        );
         border: 1px solid var(--accent);
         padding: 1.5rem;
         margin: 1rem 0;
@@ -532,9 +560,10 @@
           <div class="hero-badge">Status Report</div>
           <h1>Flake Reorganization, OpenAI Cleanup, Post-Commit Fix</h1>
           <p class="hero-subtitle">
-            Three commits landed this session: a major flake.nix reorganization (module tree split,
-            host extraction, dead-code removal), removal of false Hermes OpenAI API key claims, and
-            a post-commit hook deploy-hint fix. All verified green. 4 commits undeployed.
+            Three commits landed this session: a major flake.nix reorganization
+            (module tree split, host extraction, dead-code removal), removal of
+            false Hermes OpenAI API key claims, and a post-commit hook
+            deploy-hint fix. All verified green. 4 commits undeployed.
           </p>
         </div>
 
@@ -569,15 +598,18 @@
           <h2><span class="num">00</span>Summary</h2>
           <p>
             This session's work centered on a user-requested
-            <strong>codebase organization review</strong> of all <code>127</code> Nix files. The
-            analysis identified five structural issues and produced a verified, committed
-            reorganization — splitting the module tree, extracting host configs, removing dead code,
-            and cleaning up false documentation.
+            <strong>codebase organization review</strong> of all
+            <code>127</code> Nix files. The analysis identified five structural
+            issues and produced a verified, committed reorganization — splitting
+            the module tree, extracting host configs, removing dead code, and
+            cleaning up false documentation.
           </p>
           <div class="callout callout-solution">
-            <strong>Verified:</strong> <code>nix flake check --no-build</code> passes (green). Both
-            NixOS hosts (<code>evo-x2</code>, <code>rpi3-dns</code>) eval correctly end-to-end.
-            Pre-commit hooks (gitleaks, deadnix, statix, alejandra, flake-check) all pass.
+            <strong>Verified:</strong>
+            <code>nix flake check --no-build</code> passes (green). Both NixOS
+            hosts (<code>evo-x2</code>, <code>rpi3-dns</code>) eval correctly
+            end-to-end. Pre-commit hooks (gitleaks, deadnix, statix, alejandra,
+            flake-check) all pass.
           </div>
         </section>
 
@@ -590,10 +622,11 @@
               <div class="text">
                 <strong>Flake module tree split (services/ + desktop/)</strong>
                 <span
-                  >Created <code>modules/nixos/desktop/</code> and moved 6 desktop-environment
-                  modules (audio, display-manager, multi-wm, niri-config, steam, browser-policies)
-                  out of <code>services/</code>. Generalized auto-discovery to scan both dirs with
-                  cross-directory uniqueness enforcement.</span
+                  >Created <code>modules/nixos/desktop/</code> and moved 6
+                  desktop-environment modules (audio, display-manager, multi-wm,
+                  niri-config, steam, browser-policies) out of
+                  <code>services/</code>. Generalized auto-discovery to scan
+                  both dirs with cross-directory uniqueness enforcement.</span
                 >
               </div>
             </div>
@@ -602,9 +635,11 @@
               <div class="text">
                 <strong>Host config extraction</strong>
                 <span
-                  >Extracted 3 monolithic host configs from <code>flake.nix</code> into
-                  <code>systems/{evo-x2,darwin,rpi3-dns}.nix</code>. Flake shrinks from 853→689
-                  lines and is now a thin entry point.</span
+                  >Extracted 3 monolithic host configs from
+                  <code>flake.nix</code> into
+                  <code>systems/{evo-x2,darwin,rpi3-dns}.nix</code>. Flake
+                  shrinks from 853→689 lines and is now a thin entry
+                  point.</span
                 >
               </div>
             </div>
@@ -613,8 +648,9 @@
               <div class="text">
                 <strong>mkLarsPackages extraction</strong>
                 <span
-                  >Moved the 13-entry Go tool package map into <code>lib/lars-packages.nix</code> as
-                  the single source of truth, out of the 853-line flake.</span
+                  >Moved the 13-entry Go tool package map into
+                  <code>lib/lars-packages.nix</code> as the single source of
+                  truth, out of the 853-line flake.</span
                 >
               </div>
             </div>
@@ -623,10 +659,11 @@
               <div class="text">
                 <strong>Dead split-brain removed</strong>
                 <span
-                  >Deleted <code>platforms/common/color-scheme.nix</code> — it defined
-                  <code>options.colorScheme</code> that nothing read. All consumers receive
-                  <code>colorScheme</code> via the <code>theme.nix</code> specialArg. Two orphan
-                  imports removed.</span
+                  >Deleted <code>platforms/common/color-scheme.nix</code> — it
+                  defined <code>options.colorScheme</code> that nothing read.
+                  All consumers receive <code>colorScheme</code> via the
+                  <code>theme.nix</code> specialArg. Two orphan imports
+                  removed.</span
                 >
               </div>
             </div>
@@ -636,8 +673,9 @@
                 <strong>Module tree decluttered</strong>
                 <span
                   >Moved 4 non-.nix files (<code>.patch</code>, setup guides) to
-                  <code>docs/services/</code>. Module directories now contain only
-                  <code>.nix</code> modules and their data (<code>dashboards/</code>).</span
+                  <code>docs/services/</code>. Module directories now contain
+                  only <code>.nix</code> modules and their data
+                  (<code>dashboards/</code>).</span
                 >
               </div>
             </div>
@@ -646,11 +684,13 @@
               <div class="text">
                 <strong>Hermes OpenAI lies removed</strong>
                 <span
-                  >Three files falsely claimed an OpenAI API key was needed/pending:
-                  <code>FEATURES.md</code>, <code>TODO_LIST.md</code>,
-                  <code>scripts/verify-deployment.sh</code>. Hermes actually uses GLM, MiniMax,
-                  Xiaomi, FAL, Firecrawl — no OpenAI. Verify script now checks
-                  <code>DISCORD_BOT_TOKEN</code> (the truly essential credential).</span
+                  >Three files falsely claimed an OpenAI API key was
+                  needed/pending: <code>FEATURES.md</code>,
+                  <code>TODO_LIST.md</code>,
+                  <code>scripts/verify-deployment.sh</code>. Hermes actually
+                  uses GLM, MiniMax, Xiaomi, FAL, Firecrawl — no OpenAI. Verify
+                  script now checks <code>DISCORD_BOT_TOKEN</code> (the truly
+                  essential credential).</span
                 >
               </div>
             </div>
@@ -659,8 +699,9 @@
               <div class="text">
                 <strong>Post-commit hook fixed</strong>
                 <span
-                  >Was printing <code>Deploy: just switch</code> — justfile is deprecated. Now
-                  prints <code>Deploy: nix run .#deploy</code>.</span
+                  >Was printing <code>Deploy: just switch</code> — justfile is
+                  deprecated. Now prints
+                  <code>Deploy: nix run .#deploy</code>.</span
                 >
               </div>
             </div>
@@ -669,9 +710,10 @@
               <div class="text">
                 <strong>Pre-existing statix debt fixed</strong>
                 <span
-                  >Consolidated 3 separate <code>systemd.services.*</code> assignments in
-                  <code>dns-blocker.nix</code> into one block — unblocked the repo-wide statix hook
-                  that was preventing all commits.</span
+                  >Consolidated 3 separate
+                  <code>systemd.services.*</code> assignments in
+                  <code>dns-blocker.nix</code> into one block — unblocked the
+                  repo-wide statix hook that was preventing all commits.</span
                 >
               </div>
             </div>
@@ -680,10 +722,12 @@
               <div class="text">
                 <strong>Documentation updated</strong>
                 <span
-                  >AGENTS.md architecture tree rewritten with new structure. Two non-obvious
-                  decisions documented (intentional <code>-config</code> suffix, required lib-import
-                  boilerplate). <code>services/README.md</code> updated for multi-dir discovery +
-                  corrected stale <code>just</code> references.</span
+                  >AGENTS.md architecture tree rewritten with new structure. Two
+                  non-obvious decisions documented (intentional
+                  <code>-config</code> suffix, required lib-import boilerplate).
+                  <code>services/README.md</code> updated for multi-dir
+                  discovery + corrected stale
+                  <code>just</code> references.</span
                 >
               </div>
             </div>
@@ -698,26 +742,33 @@
             <h3>Flake decomposition</h3>
             <div class="where">flake.nix:1-689 · systems/*.nix</div>
             <p>
-              Host configs and <code>mkLarsPackages</code> were extracted, but the flake still has
-              ~400 lines of inputs and ~130 lines of perSystem config (packages, devShells, checks,
-              apps). The <code>perSystem</code> block with inline <code>mkApp</code> definitions and
-              package lists could be further decomposed into <code>flake/</code> modules.
+              Host configs and <code>mkLarsPackages</code> were extracted, but
+              the flake still has ~400 lines of inputs and ~130 lines of
+              perSystem config (packages, devShells, checks, apps). The
+              <code>perSystem</code> block with inline
+              <code>mkApp</code> definitions and package lists could be further
+              decomposed into <code>flake/</code> modules.
             </p>
             <div class="callout callout-warning">
-              <strong>Not urgent:</strong> The current state is a massive improvement over 853
-              lines. Further extraction has diminishing returns unless the flake grows.
+              <strong>Not urgent:</strong> The current state is a massive
+              improvement over 853 lines. Further extraction has diminishing
+              returns unless the flake grows.
             </div>
           </div>
 
           <div class="card card-warning">
             <span class="severity severity-important">Partial</span>
             <h3>Deploy verification</h3>
-            <div class="where">4 commits ahead of origin · running system lags config</div>
+            <div class="where">
+              4 commits ahead of origin · running system lags config
+            </div>
             <p>
-              All changes pass <code>nix flake check</code> and <code>nix eval</code>, but
-              <strong>zero deploys have been run</strong>. The running system is 4+ commits behind
-              the config. The last status report noted root disk at 93% — deploying without
-              garbage-collecting first risks the BTRFS metadata ENOSPC crash.
+              All changes pass <code>nix flake check</code> and
+              <code>nix eval</code>, but
+              <strong>zero deploys have been run</strong>. The running system is
+              4+ commits behind the config. The last status report noted root
+              disk at 93% — deploying without garbage-collecting first risks the
+              BTRFS metadata ENOSPC crash.
             </p>
           </div>
 
@@ -725,14 +776,17 @@
             <span class="severity severity-important">Partial</span>
             <h3>lib/ helper boilerplate</h3>
             <div class="where">
-              30+ modules repeat <code>import ../../../lib/default.nix lib</code>
+              30+ modules repeat
+              <code>import ../../../lib/default.nix lib</code>
             </div>
             <p>
-              Investigated injecting helpers via <code>_module.args</code> to eliminate the
-              boilerplate. <strong>Rejected:</strong> <code>nix flake check</code> evaluates each
-              <code>nixosModule</code> standalone (no injected args), so the import is
-              <em>required</em> for the module to be independently valid. Documented the rationale
-              in AGENTS.md — the boilerplate is the correct pattern.
+              Investigated injecting helpers via <code>_module.args</code> to
+              eliminate the boilerplate. <strong>Rejected:</strong>
+              <code>nix flake check</code> evaluates each
+              <code>nixosModule</code> standalone (no injected args), so the
+              import is <em>required</em> for the module to be independently
+              valid. Documented the rationale in AGENTS.md — the boilerplate is
+              the correct pattern.
             </p>
           </div>
         </section>
@@ -743,18 +797,20 @@
           <div class="card">
             <h3>Services README module-pattern examples need updating</h3>
             <p>
-              The <code>services/README.md</code> module skeleton examples still reference
-              single-directory conventions in a few places. The core discovery docs are updated, but
-              the "Adding a New Service" checklist could mention the desktop/ alternative.
+              The <code>services/README.md</code> module skeleton examples still
+              reference single-directory conventions in a few places. The core
+              discovery docs are updated, but the "Adding a New Service"
+              checklist could mention the desktop/ alternative.
             </p>
           </div>
 
           <div class="card">
             <h3>Darwin host eval verification</h3>
             <p>
-              The Darwin host (<code>Lars-MacBook-Air</code>) was not end-to-end evaluated this
-              session (only NixOS hosts were <code>nix eval</code>'d). The flake check passes for
-              it, but a targeted eval wasn't run due to the aarch64-darwin omission in
+              The Darwin host (<code>Lars-MacBook-Air</code>) was not end-to-end
+              evaluated this session (only NixOS hosts were
+              <code>nix eval</code>'d). The flake check passes for it, but a
+              targeted eval wasn't run due to the aarch64-darwin omission in
               <code>--no-build</code> checks.
             </p>
           </div>
@@ -762,9 +818,10 @@
           <div class="card">
             <h3>Deep perSystem decomposition</h3>
             <p>
-              The <code>perSystem</code> block (packages, devShells, checks, apps) is still ~130
-              lines inline in flake.nix. Could be extracted to <code>flake/per-system.nix</code> or
-              similar, but this is a low-impact refactor.
+              The <code>perSystem</code> block (packages, devShells, checks,
+              apps) is still ~130 lines inline in flake.nix. Could be extracted
+              to <code>flake/per-system.nix</code> or similar, but this is a
+              low-impact refactor.
             </p>
           </div>
         </section>
@@ -776,48 +833,58 @@
             <span class="severity severity-critical">Self-inflicted</span>
             <h3>Left a garbage status report file in the repo</h3>
             <div class="where">
-              docs/status/2026-06-29_07-12_flake-reorganization-completed.html (trashed)
+              docs/status/2026-06-29_07-12_flake-reorganization-completed.html
+              (trashed)
             </div>
             <p>
-              When asked to produce a status report, I <code>cp</code>'d an existing report as a CSS
-              base — then got distracted and <strong>never wrote new content</strong>. The file
-              shipped with the old title (<code>2026-06-28 22:23</code>), the old Monitor365 body,
-              and zero mention of the actual work done. A stale duplicate is worse than no file.
-              Trashed before committing, but it was pure negligence.
+              When asked to produce a status report, I <code>cp</code>'d an
+              existing report as a CSS base — then got distracted and
+              <strong>never wrote new content</strong>. The file shipped with
+              the old title (<code>2026-06-28 22:23</code>), the old Monitor365
+              body, and zero mention of the actual work done. A stale duplicate
+              is worse than no file. Trashed before committing, but it was pure
+              negligence.
             </p>
             <div class="callout callout-solution">
-              <strong>Fixed:</strong> Garbage file trashed. This report replaces it.
+              <strong>Fixed:</strong> Garbage file trashed. This report replaces
+              it.
             </div>
           </div>
 
           <div class="issue issue-critical">
             <span class="severity severity-critical">Process failure</span>
             <h3>Didn't commit for the entire first phase</h3>
-            <div class="where">20 files of verified-green reorg work sat uncommitted</div>
+            <div class="where">
+              20 files of verified-green reorg work sat uncommitted
+            </div>
             <p>
-              The user explicitly said "git status &amp; git commit after each smallest
-              self-contained change." I completed 7 steps of the reorg and
-              <strong>never committed once</strong> until forced into a self-review. 20 files of
-              verified work sat at risk. This is the cardinal sin — verified work not secured is
-              work at risk.
+              The user explicitly said "git status &amp; git commit after each
+              smallest self-contained change." I completed 7 steps of the reorg
+              and
+              <strong>never committed once</strong> until forced into a
+              self-review. 20 files of verified work sat at risk. This is the
+              cardinal sin — verified work not secured is work at risk.
             </p>
             <div class="callout callout-solution">
-              <strong>Fixed:</strong> All work committed in 3 well-scoped commits with detailed
-              messages.
+              <strong>Fixed:</strong> All work committed in 3 well-scoped
+              commits with detailed messages.
             </div>
           </div>
 
           <div class="issue issue-important">
             <span class="severity severity-important">Pre-existing</span>
             <h3>Pre-commit hook blocked on pre-existing statix debt</h3>
-            <div class="where">.githooks/pre-commit:56 · dns-blocker.nix:259-307</div>
+            <div class="where">
+              .githooks/pre-commit:56 · dns-blocker.nix:259-307
+            </div>
             <p>
-              The <code>statix</code> check in the pre-commit hook runs repo-wide (<code
-                >statix check .</code
-              >), meaning pre-existing lint debt in files you didn't touch blocks
-              <strong>every</strong> commit. This is a design flaw — it should scope to staged
-              files. The dns-blocker.nix repeated-key warning was the blocker; I fixed the code to
-              unblock, but the hook design remains fragile.
+              The <code>statix</code> check in the pre-commit hook runs
+              repo-wide (<code>statix check .</code>), meaning pre-existing lint
+              debt in files you didn't touch blocks
+              <strong>every</strong> commit. This is a design flaw — it should
+              scope to staged files. The dns-blocker.nix repeated-key warning
+              was the blocker; I fixed the code to unblock, but the hook design
+              remains fragile.
             </p>
           </div>
         </section>
@@ -829,8 +896,8 @@
             <span class="severity severity-critical">Critical</span>
             <h3>Deploy the 4 undeployed commits</h3>
             <p>
-              The running system is behind config by 4+ commits including the BTRFS GC guard. Root
-              disk was at 93% per the last report.
+              The running system is behind config by 4+ commits including the
+              BTRFS GC guard. Root disk was at 93% per the last report.
               <strong>Garbage-collect the nix store first, then deploy.</strong>
             </p>
           </div>
@@ -839,9 +906,10 @@
             <span class="severity severity-important">High</span>
             <h3>Scope the statix pre-commit hook to staged files</h3>
             <p>
-              The hook runs <code>statix check .</code> on the entire repo. This means any
-              pre-existing lint debt blocks all commits until fixed — a terrible developer
-              experience. Should be <code>statix check &lt;staged .nix files&gt;</code> or use
+              The hook runs <code>statix check .</code> on the entire repo. This
+              means any pre-existing lint debt blocks all commits until fixed —
+              a terrible developer experience. Should be
+              <code>statix check &lt;staged .nix files&gt;</code> or use
               <code>--filter</code>.
             </p>
           </div>
@@ -850,9 +918,10 @@
             <span class="severity severity-important">High</span>
             <h3>Consolidate the 31 open TODOs into a prioritized backlog</h3>
             <p>
-              The TODO_LIST.md has 31 open items with no priority ordering or status tracking.
-              Several reference completed work (OpenAI key task was stale). Needs a triage pass:
-              mark done items, prioritize the rest, archive stale ones.
+              The TODO_LIST.md has 31 open items with no priority ordering or
+              status tracking. Several reference completed work (OpenAI key task
+              was stale). Needs a triage pass: mark done items, prioritize the
+              rest, archive stale ones.
             </p>
           </div>
 
@@ -860,9 +929,11 @@
             <span class="severity severity-nice">Medium</span>
             <h3>Consider extracting the perSystem block</h3>
             <p>
-              The ~130 lines of perSystem config (packages list, devShells, checks, apps with inline
-              <code>mkApp</code>) could move to a dedicated flake module. Low urgency but would make
-              flake.nix purely structural (inputs + host wiring).
+              The ~130 lines of perSystem config (packages list, devShells,
+              checks, apps with inline
+              <code>mkApp</code>) could move to a dedicated flake module. Low
+              urgency but would make flake.nix purely structural (inputs + host
+              wiring).
             </p>
           </div>
 
@@ -872,10 +943,11 @@
             <p>
               Only NixOS hosts were eval'd this session. Run
               <code
-                >nix eval .#darwinConfigurations.Lars-MacBook-Air.config.system.build.toplevel</code
+                >nix eval
+                .#darwinConfigurations.Lars-MacBook-Air.config.system.build.toplevel</code
               >
-              (or equivalent) to confirm the Darwin config still evaluates after the
-              color-scheme.nix removal.
+              (or equivalent) to confirm the Darwin config still evaluates after
+              the color-scheme.nix removal.
             </p>
           </div>
 
@@ -883,8 +955,9 @@
             <span class="severity severity-nice">Low</span>
             <h3>Consider a systems/ README</h3>
             <p>
-              The new <code>systems/</code> directory has no README explaining the host-assembly
-              pattern or what each arg (<code>sharedOverlays</code>, <code>discoveredModules</code>,
+              The new <code>systems/</code> directory has no README explaining
+              the host-assembly pattern or what each arg
+              (<code>sharedOverlays</code>, <code>discoveredModules</code>,
               etc.) means. A 10-line README would help future contributors.
             </p>
           </div>
@@ -893,7 +966,8 @@
         <section id="next-25">
           <h2><span class="num">06</span>Top 25 Things to Get Done Next</h2>
           <p>
-            Sorted by <strong>impact ÷ work</strong> (highest first). Badges indicate priority tier.
+            Sorted by <strong>impact ÷ work</strong> (highest first). Badges
+            indicate priority tier.
           </p>
 
           <div class="table-wrap">
@@ -911,7 +985,8 @@
                 <tr>
                   <td>1</td>
                   <td>
-                    <strong>Deploy the 4 undeployed commits</strong> — GC first, then
+                    <strong>Deploy the 4 undeployed commits</strong> — GC first,
+                    then
                     <code>nix run .#deploy</code>
                   </td>
                   <td>Critical</td>
@@ -921,8 +996,8 @@
                 <tr>
                   <td>2</td>
                   <td>
-                    <strong>Reboot evo-x2</strong> — verify boot time after NVMe APST fix (target
-                    ~35s, was 6m17s)
+                    <strong>Reboot evo-x2</strong> — verify boot time after NVMe
+                    APST fix (target ~35s, was 6m17s)
                   </td>
                   <td>Critical</td>
                   <td>10 min</td>
@@ -931,8 +1006,8 @@
                 <tr>
                   <td>3</td>
                   <td>
-                    <strong>Scope statix hook to staged files</strong> — stop pre-existing debt from
-                    blocking commits
+                    <strong>Scope statix hook to staged files</strong> — stop
+                    pre-existing debt from blocking commits
                   </td>
                   <td>High</td>
                   <td>15 min</td>
@@ -940,7 +1015,10 @@
                 </tr>
                 <tr>
                   <td>4</td>
-                  <td><strong>Verify Pocket ID email sending</strong> — test after SMTP wiring</td>
+                  <td>
+                    <strong>Verify Pocket ID email sending</strong> — test after
+                    SMTP wiring
+                  </td>
                   <td>High</td>
                   <td>10 min</td>
                   <td><span class="badge badge-high">P1</span></td>
@@ -948,8 +1026,8 @@
                 <tr>
                   <td>5</td>
                   <td>
-                    <strong>Verify Darwin host eval</strong> — confirm color-scheme.nix removal
-                    didn't break macOS config
+                    <strong>Verify Darwin host eval</strong> — confirm
+                    color-scheme.nix removal didn't break macOS config
                   </td>
                   <td>High</td>
                   <td>5 min</td>
@@ -958,8 +1036,8 @@
                 <tr>
                   <td>6</td>
                   <td>
-                    <strong>Fix Twenty CRM intermittent 502s</strong> — appears resolved, monitor
-                    for recurrence
+                    <strong>Fix Twenty CRM intermittent 502s</strong> — appears
+                    resolved, monitor for recurrence
                   </td>
                   <td>High</td>
                   <td>Ongoing</td>
@@ -968,8 +1046,8 @@
                 <tr>
                   <td>7</td>
                   <td>
-                    <strong>Hermes: set fallback model</strong> — choose from active provider (GLM,
-                    MiniMax, etc.)
+                    <strong>Hermes: set fallback model</strong> — choose from
+                    active provider (GLM, MiniMax, etc.)
                   </td>
                   <td>Medium</td>
                   <td>5 min</td>
@@ -977,7 +1055,10 @@
                 </tr>
                 <tr>
                   <td>8</td>
-                  <td><strong>Hermes: install SSH deploy key</strong> — for git operations</td>
+                  <td>
+                    <strong>Hermes: install SSH deploy key</strong> — for git
+                    operations
+                  </td>
                   <td>Medium</td>
                   <td>10 min</td>
                   <td><span class="badge badge-medium">P2</span></td>
@@ -985,8 +1066,11 @@
                 <tr>
                   <td>9</td>
                   <td>
-                    <strong>BTRFS <code>/data</code> subvolume migration</strong> — currently
-                    toplevel (no snapshot protection for Docker/Immich/AI data)
+                    <strong
+                      >BTRFS <code>/data</code> subvolume migration</strong
+                    >
+                    — currently toplevel (no snapshot protection for
+                    Docker/Immich/AI data)
                   </td>
                   <td>High</td>
                   <td>2 hrs</td>
@@ -995,7 +1079,8 @@
                 <tr>
                   <td>10</td>
                   <td>
-                    <strong>Swap investigation</strong> — 8 GiB swap used on 128 GiB RAM machine
+                    <strong>Swap investigation</strong> — 8 GiB swap used on 128
+                    GiB RAM machine
                   </td>
                   <td>Medium</td>
                   <td>30 min</td>
@@ -1004,8 +1089,10 @@
                 <tr>
                   <td>11</td>
                   <td>
-                    <strong>aw-watcher-utilization poetry-core migration</strong> — remove custom
-                    overlay dependency
+                    <strong
+                      >aw-watcher-utilization poetry-core migration</strong
+                    >
+                    — remove custom overlay dependency
                   </td>
                   <td>Low</td>
                   <td>1 hr</td>
@@ -1014,8 +1101,8 @@
                 <tr>
                   <td>12</td>
                   <td>
-                    <strong>KeePassXC Chromium manifests</strong> — nixpkgs only ships
-                    Firefox-format manifests
+                    <strong>KeePassXC Chromium manifests</strong> — nixpkgs only
+                    ships Firefox-format manifests
                   </td>
                   <td>Low</td>
                   <td>30 min</td>
@@ -1034,7 +1121,8 @@
                 <tr>
                   <td>14</td>
                   <td>
-                    <strong>valkey/aiocache/timm/xformers broken tests</strong> — 4 packages with
+                    <strong>valkey/aiocache/timm/xformers broken tests</strong>
+                    — 4 packages with
                     <code>doCheck = false</code>
                   </td>
                   <td>Low</td>
@@ -1043,7 +1131,10 @@
                 </tr>
                 <tr>
                   <td>15</td>
-                  <td><strong>taskwarrior3 build flags</strong> — should be nixpkgs defaults</td>
+                  <td>
+                    <strong>taskwarrior3 build flags</strong> — should be
+                    nixpkgs defaults
+                  </td>
                   <td>Low</td>
                   <td>1 hr</td>
                   <td><span class="badge badge-low">P3</span></td>
@@ -1051,8 +1142,8 @@
                 <tr>
                   <td>16</td>
                   <td>
-                    <strong>Kitty GC resilience patch</strong> — bundled binary lookup breaks after
-                    GC
+                    <strong>Kitty GC resilience patch</strong> — bundled binary
+                    lookup breaks after GC
                   </td>
                   <td>Low</td>
                   <td>1 hr</td>
@@ -1060,7 +1151,10 @@
                 </tr>
                 <tr>
                   <td>17</td>
-                  <td><strong>llama-cpp ROCm MMFMA flag</strong> — should be a package option</td>
+                  <td>
+                    <strong>llama-cpp ROCm MMFMA flag</strong> — should be a
+                    package option
+                  </td>
                   <td>Low</td>
                   <td>30 min</td>
                   <td><span class="badge badge-low">P3</span></td>
@@ -1068,8 +1162,10 @@
                 <tr>
                   <td>18</td>
                   <td>
-                    <strong>netwatch/govalid/openaudible upstream submission</strong> — candidates
-                    for nixpkgs
+                    <strong
+                      >netwatch/govalid/openaudible upstream submission</strong
+                    >
+                    — candidates for nixpkgs
                   </td>
                   <td>Low</td>
                   <td>3+ hrs</td>
@@ -1078,8 +1174,8 @@
                 <tr>
                   <td>19</td>
                   <td>
-                    <strong>Triage the 31 open TODOs</strong> — mark done items, prioritize, archive
-                    stale
+                    <strong>Triage the 31 open TODOs</strong> — mark done items,
+                    prioritize, archive stale
                   </td>
                   <td>Medium</td>
                   <td>45 min</td>
@@ -1088,7 +1184,8 @@
                 <tr>
                   <td>20</td>
                   <td>
-                    <strong>Extract perSystem block</strong> — make flake.nix purely structural
+                    <strong>Extract perSystem block</strong> — make flake.nix
+                    purely structural
                   </td>
                   <td>Low</td>
                   <td>1 hr</td>
@@ -1096,7 +1193,10 @@
                 </tr>
                 <tr>
                   <td>21</td>
-                  <td><strong>Add systems/ README</strong> — document the host-assembly pattern</td>
+                  <td>
+                    <strong>Add systems/ README</strong> — document the
+                    host-assembly pattern
+                  </td>
                   <td>Low</td>
                   <td>15 min</td>
                   <td><span class="badge badge-low">P3</span></td>
@@ -1104,8 +1204,8 @@
                 <tr>
                   <td>22</td>
                   <td>
-                    <strong>Update services/README.md checklist</strong> — mention desktop/
-                    alternative for new modules
+                    <strong>Update services/README.md checklist</strong> —
+                    mention desktop/ alternative for new modules
                   </td>
                   <td>Low</td>
                   <td>10 min</td>
@@ -1114,8 +1214,8 @@
                 <tr>
                   <td>23</td>
                   <td>
-                    <strong>Monitor Dual-WAN re-enablement</strong> — disabled due to route eviction
-                    bug, needs upstream fix
+                    <strong>Monitor Dual-WAN re-enablement</strong> — disabled
+                    due to route eviction bug, needs upstream fix
                   </td>
                   <td>Medium</td>
                   <td>Ongoing</td>
@@ -1124,8 +1224,8 @@
                 <tr>
                   <td>24</td>
                   <td>
-                    <strong>Mullvad VPN re-enablement investigation</strong> — disabled due to
-                    resolv.conf corruption
+                    <strong>Mullvad VPN re-enablement investigation</strong> —
+                    disabled due to resolv.conf corruption
                   </td>
                   <td>Low</td>
                   <td>2 hrs</td>
@@ -1134,8 +1234,8 @@
                 <tr>
                   <td>25</td>
                   <td>
-                    <strong>DiscordSync turso migration bug</strong> — upstream app bug, blocked on
-                    DiscordSync fix
+                    <strong>DiscordSync turso migration bug</strong> — upstream
+                    app bug, blocked on DiscordSync fix
                   </td>
                   <td>Low</td>
                   <td>Blocked</td>
@@ -1147,37 +1247,49 @@
         </section>
 
         <section id="question">
-          <h2><span class="num">07</span>The #1 Question I Cannot Figure Out</h2>
+          <h2>
+            <span class="num">07</span>The #1 Question I Cannot Figure Out
+          </h2>
 
           <div class="question-box">
-            <h3>Should the BTRFS /data subvolume migration happen before or after the deploy?</h3>
+            <h3>
+              Should the BTRFS /data subvolume migration happen before or after
+              the deploy?
+            </h3>
             <p>
-              The running system is 4+ commits behind config, including the BTRFS metadata-ENOSPC
-              crash guard (<code>btrfs-health.nix</code> GC gate). Root disk was at 93% per the last
-              report. Deploying writes ~2-4 GiB of new generations to the nix store — on a 93%-full
-              BTRFS root, that risks triggering the exact metadata allocation deadlock the guard
-              prevents.
+              The running system is 4+ commits behind config, including the
+              BTRFS metadata-ENOSPC crash guard (<code>btrfs-health.nix</code>
+              GC gate). Root disk was at 93% per the last report. Deploying
+              writes ~2-4 GiB of new generations to the nix store — on a
+              93%-full BTRFS root, that risks triggering the exact metadata
+              allocation deadlock the guard prevents.
             </p>
             <p>
               <strong>The dilemma:</strong> Garbage-collecting first (<code
                 >nix-collect-garbage -d</code
               >
-              or <code>nix-store --gc</code>) frees space, but GC itself writes metadata
-              transactions. The crash guard gates GC via <code>ExecStartPre</code>, but that guard
-              only exists in the <em>undeployed</em> config. The running system has no guard.
+              or <code>nix-store --gc</code>) frees space, but GC itself writes
+              metadata transactions. The crash guard gates GC via
+              <code>ExecStartPre</code>, but that guard only exists in the
+              <em>undeployed</em> config. The running system has no guard.
             </p>
             <p>
-              <strong>Should I:</strong> (a) grow the partition first (<code>btrfs resize</code>),
-              then deploy safely? (b) GC aggressively, then deploy and pray? (c) Reboot to clear
-              stale build sandboxes in <code>/nix/var/nix/builds/</code> first? Or (d) is the 93%
-              figure stale and disk space is actually fine now?
+              <strong>Should I:</strong> (a) grow the partition first (<code
+                >btrfs resize</code
+              >), then deploy safely? (b) GC aggressively, then deploy and pray?
+              (c) Reboot to clear stale build sandboxes in
+              <code>/nix/var/nix/builds/</code> first? Or (d) is the 93% figure
+              stale and disk space is actually fine now?
             </p>
             <div class="callout callout-warning">
-              <strong>I cannot answer this myself because:</strong> I don't have access to the live
-              system's current disk state (<code>btrfs filesystem df /</code>,
-              <code>btrfs filesystem usage /</code>) to determine actual chunk-level allocation. The
-              <code>df</code>-reported 93% may or may not reflect the metadata-ENOSPC risk — only
-              <code>btrfs filesystem usage</code> shows device-unallocated space.
+              <strong>I cannot answer this myself because:</strong> I don't have
+              access to the live system's current disk state (<code
+                >btrfs filesystem df /</code
+              >, <code>btrfs filesystem usage /</code>) to determine actual
+              chunk-level allocation. The <code>df</code>-reported 93% may or
+              may not reflect the metadata-ENOSPC risk — only
+              <code>btrfs filesystem usage</code> shows device-unallocated
+              space.
             </div>
           </div>
         </section>

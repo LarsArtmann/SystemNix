@@ -223,7 +223,8 @@
     <div class="wrap">
       <h1>SSO / Native OIDC Expansion — Plan</h1>
       <p class="sub">
-        evo-x2 · Pocket ID IdP + oauth2-proxy forward-auth bridge · generated 2026-06-29
+        evo-x2 · Pocket ID IdP + oauth2-proxy forward-auth bridge · generated
+        2026-06-29
       </p>
       <div class="meta">
         <span class="pill">Pareto-ordered</span>
@@ -233,8 +234,9 @@
       </div>
 
       <div class="callout">
-        <strong>Critical research finding that reshaped this plan:</strong> Of the 4 candidate
-        services, only <strong>Gatus</strong> can receive native OIDC for free.
+        <strong>Critical research finding that reshaped this plan:</strong> Of
+        the 4 candidate services, only <strong>Gatus</strong> can receive native
+        OIDC for free.
         <table style="margin: 10px 0 0; font-size: 0.86em">
           <tr>
             <th>Service</th>
@@ -244,22 +246,32 @@
           <tr>
             <td><strong>Gatus</strong></td>
             <td><span class="badge b-do">YES — free OSS</span></td>
-            <td>First-class <code>security.oidc</code> in config.yaml, env-var refs supported</td>
+            <td>
+              First-class <code>security.oidc</code> in config.yaml, env-var
+              refs supported
+            </td>
           </tr>
           <tr>
             <td><strong>Homepage</strong></td>
             <td><span class="badge b-blocked">NO</span></td>
-            <td>No built-in auth at all. <em>Already</em> protected by oauth2-proxy Layer 2</td>
+            <td>
+              No built-in auth at all. <em>Already</em> protected by
+              oauth2-proxy Layer 2
+            </td>
           </tr>
           <tr>
             <td><strong>SigNoz</strong></td>
             <td><span class="badge b-blocked">NO — paid</span></td>
-            <td>OIDC is Enterprise-only (not in Community Edition). UI-config only</td>
+            <td>
+              OIDC is Enterprise-only (not in Community Edition). UI-config only
+            </td>
           </tr>
           <tr>
             <td><strong>Twenty CRM</strong></td>
             <td><span class="badge b-blocked">NO — paid</span></td>
-            <td>SSO gated behind billing entitlement. GraphQL/UI config only</td>
+            <td>
+              SSO gated behind billing entitlement. GraphQL/UI config only
+            </td>
           </tr>
         </table>
       </div>
@@ -275,7 +287,9 @@
         </div>
         <div class="card g3">
           <div class="n">6</div>
-          <div class="l">Tier 3 — the 20% → 80%<br />Verify + harden + docs</div>
+          <div class="l">
+            Tier 3 — the 20% → 80%<br />Verify + harden + docs
+          </div>
         </div>
         <div class="card g4">
           <div class="n">6</div>
@@ -292,7 +306,12 @@
           preserveAspectRatio="xMinYMin meet"
           viewBox="0 0 3075 777"
         >
-          <svg class="d2-3063765632 d2-svg" width="3075" height="777" viewBox="-101 -101 3075 777">
+          <svg
+            class="d2-3063765632 d2-svg"
+            width="3075"
+            height="777"
+            viewBox="-101 -101 3075 777"
+          >
             <rect
               x="-101.000000"
               y="-101.000000"
@@ -901,9 +920,27 @@
               width="3075"
               height="777"
             >
-              <rect x="-101" y="-101" width="3075" height="777" fill="white"></rect>
-              <rect x="346.000000" y="28.000000" width="66" height="21" fill="black"></rect>
-              <rect x="1968.000000" y="217.000000" width="37" height="21" fill="black"></rect>
+              <rect
+                x="-101"
+                y="-101"
+                width="3075"
+                height="777"
+                fill="white"
+              ></rect>
+              <rect
+                x="346.000000"
+                y="28.000000"
+                width="66"
+                height="21"
+                fill="black"
+              ></rect>
+              <rect
+                x="1968.000000"
+                y="217.000000"
+                width="37"
+                height="21"
+                fill="black"
+              ></rect>
             </mask>
           </svg>
         </svg>
@@ -911,9 +948,9 @@
 
       <h2>Tier 1 · The 1% that delivers 51% — Gatus Native OIDC</h2>
       <p class="sub">
-        The only candidate that can get true native SSO. Free, low effort, security-sensitive
-        monitoring dashboard. Mirrors the Forgejo pattern (native OIDC → plain reverse_proxy in
-        Caddy).
+        The only candidate that can get true native SSO. Free, low effort,
+        security-sensitive monitoring dashboard. Mirrors the Forgejo pattern
+        (native OIDC → plain reverse_proxy in Caddy).
       </p>
       <table>
         <tr>
@@ -927,8 +964,10 @@
         <tr>
           <td>T1.1</td>
           <td>
-            Register Gatus as a Pocket ID OIDC client (<code>clientId "gatus"</code>, callback
-            <code>/authorization-code/callback</code>, launchURL, scopes)
+            Register Gatus as a Pocket ID OIDC client (<code
+              >clientId "gatus"</code
+            >, callback <code>/authorization-code/callback</code>, launchURL,
+            scopes)
           </td>
           <td><code>modules/nixos/services/pocket-id.nix</code></td>
           <td><span class="badge b-imp-h">HIGH</span></td>
@@ -938,8 +977,8 @@
         <tr>
           <td>T1.2</td>
           <td>
-            Add <code>gatus_oauth_client_secret</code> sops fallback (owner gatus, restartUnits
-            gatus.service)
+            Add <code>gatus_oauth_client_secret</code> sops fallback (owner
+            gatus, restartUnits gatus.service)
           </td>
           <td><code>modules/nixos/services/sops.nix</code></td>
           <td><span class="badge b-imp-h">HIGH</span></td>
@@ -948,7 +987,10 @@
         </tr>
         <tr>
           <td>T1.3</td>
-          <td>Generate + encrypt the gatus client secret value into pocket-id.yaml via sops CLI</td>
+          <td>
+            Generate + encrypt the gatus client secret value into pocket-id.yaml
+            via sops CLI
+          </td>
           <td><code>platforms/nixos/secrets/pocket-id.yaml</code></td>
           <td><span class="badge b-imp-h">HIGH</span></td>
           <td><span class="badge b-eff-m">MED</span></td>
@@ -957,8 +999,8 @@
         <tr>
           <td>T1.4</td>
           <td>
-            Add <code>security.oidc</code> block to settings (issuer-url, client-id, redirect-url,
-            scopes)
+            Add <code>security.oidc</code> block to settings (issuer-url,
+            client-id, redirect-url, scopes)
           </td>
           <td><code>modules/nixos/services/gatus-config.nix</code></td>
           <td><span class="badge b-imp-h">HIGH</span></td>
@@ -989,11 +1031,15 @@
         </tr>
       </table>
 
-      <h2>Tier 2 · The 4% that delivers 64% — Resolve conflict + document gated services</h2>
+      <h2>
+        Tier 2 · The 4% that delivers 64% — Resolve conflict + document gated
+        services
+      </h2>
       <p class="sub">
-        Gatus native OIDC creates a <strong>double-auth conflict</strong> with the existing
-        oauth2-proxy <code>protectedVHost</code> on <code>status.domain</code> — must be resolved.
-        The 3 blocked services get documented so future agents don't waste time.
+        Gatus native OIDC creates a <strong>double-auth conflict</strong> with
+        the existing oauth2-proxy <code>protectedVHost</code> on
+        <code>status.domain</code> — must be resolved. The 3 blocked services
+        get documented so future agents don't waste time.
       </p>
       <table>
         <tr>
@@ -1007,8 +1053,9 @@
         <tr>
           <td>T2.1</td>
           <td>
-            Move <code>status.${domain}</code> from <code>protectedVHost</code> → plain
-            reverse_proxy (Gatus now owns auth; mirrors Forgejo). Removes double-auth.
+            Move <code>status.${domain}</code> from
+            <code>protectedVHost</code> → plain reverse_proxy (Gatus now owns
+            auth; mirrors Forgejo). Removes double-auth.
           </td>
           <td><code>modules/nixos/services/caddy.nix</code></td>
           <td><span class="badge b-imp-h">HIGH</span></td>
@@ -1018,8 +1065,8 @@
         <tr>
           <td>T2.2</td>
           <td>
-            Add code comment in signoz.nix: OIDC is Enterprise-only (paid) — relies on oauth2-proxy
-            Layer 2
+            Add code comment in signoz.nix: OIDC is Enterprise-only (paid) —
+            relies on oauth2-proxy Layer 2
           </td>
           <td><code>modules/nixos/services/signoz.nix</code></td>
           <td><span class="badge b-imp-m">MED</span></td>
@@ -1029,8 +1076,8 @@
         <tr>
           <td>T2.3</td>
           <td>
-            Add code comment in twenty.nix: SSO is entitlement-gated (paid) — relies on oauth2-proxy
-            Layer 2
+            Add code comment in twenty.nix: SSO is entitlement-gated (paid) —
+            relies on oauth2-proxy Layer 2
           </td>
           <td><code>modules/nixos/services/twenty.nix</code></td>
           <td><span class="badge b-imp-m">MED</span></td>
@@ -1040,8 +1087,8 @@
         <tr>
           <td>T2.4</td>
           <td>
-            Add code comment in homepage.nix: no native auth — intentionally behind oauth2-proxy
-            forward-auth
+            Add code comment in homepage.nix: no native auth — intentionally
+            behind oauth2-proxy forward-auth
           </td>
           <td><code>modules/nixos/services/homepage.nix</code></td>
           <td><span class="badge b-imp-m">MED</span></td>
@@ -1051,8 +1098,8 @@
         <tr>
           <td>T2.5</td>
           <td>
-            Decide Gatus <code>allowed-subjects</code>: empty (single-user IdP = safe) vs fetch lars
-            subject ID. Default empty + comment.
+            Decide Gatus <code>allowed-subjects</code>: empty (single-user IdP =
+            safe) vs fetch lars subject ID. Default empty + comment.
           </td>
           <td><code>modules/nixos/services/gatus-config.nix</code></td>
           <td><span class="badge b-imp-m">MED</span></td>
@@ -1062,8 +1109,8 @@
         <tr>
           <td>T2.6</td>
           <td>
-            Verify no Gatus self-health-breakage: OIDC redirect vs the existing gatus endpoint
-            probes
+            Verify no Gatus self-health-breakage: OIDC redirect vs the existing
+            gatus endpoint probes
           </td>
           <td>(manual verify)</td>
           <td><span class="badge b-imp-m">MED</span></td>
@@ -1084,7 +1131,10 @@
         </tr>
         <tr>
           <td>T3.1</td>
-          <td>Run <code>nix flake check --no-build</code> — validate all syntax after edits</td>
+          <td>
+            Run <code>nix flake check --no-build</code> — validate all syntax
+            after edits
+          </td>
           <td>shell</td>
           <td><span class="badge b-imp-h">HIGH</span></td>
           <td><span class="badge b-eff-l">LOW</span></td>
@@ -1092,7 +1142,9 @@
         </tr>
         <tr>
           <td>T3.2</td>
-          <td>Run <code>nix eval</code> on evo-x2 toplevel — full eval check</td>
+          <td>
+            Run <code>nix eval</code> on evo-x2 toplevel — full eval check
+          </td>
           <td>shell</td>
           <td><span class="badge b-imp-h">HIGH</span></td>
           <td><span class="badge b-eff-m">MED</span></td>
@@ -1109,8 +1161,8 @@
         <tr>
           <td>T3.4</td>
           <td>
-            Update AGENTS.md: SSO architecture (Layer 1 native vs Layer 2 forward-auth, per-service
-            reality)
+            Update AGENTS.md: SSO architecture (Layer 1 native vs Layer 2
+            forward-auth, per-service reality)
           </td>
           <td><code>AGENTS.md</code></td>
           <td><span class="badge b-imp-h">HIGH</span></td>
@@ -1120,8 +1172,8 @@
         <tr>
           <td>T3.5</td>
           <td>
-            End-to-end test Gatus SSO from external origin (browser → status.domain → Pocket ID
-            passkey → callback → dashboard)
+            End-to-end test Gatus SSO from external origin (browser →
+            status.domain → Pocket ID passkey → callback → dashboard)
           </td>
           <td>(manual)</td>
           <td><span class="badge b-imp-h">HIGH</span></td>
@@ -1131,7 +1183,8 @@
         <tr>
           <td>T3.6</td>
           <td>
-            Document SLO (single-logout) feasibility: oauth2-proxy + Pocket ID coordinated logout
+            Document SLO (single-logout) feasibility: oauth2-proxy + Pocket ID
+            coordinated logout
           </td>
           <td><code>AGENTS.md</code></td>
           <td><span class="badge b-imp-m">MED</span></td>
@@ -1151,8 +1204,8 @@
         <tr>
           <td>T4.1</td>
           <td>
-            Native OIDC for custom LarsArtmann Go services (Manifest, OpenSEO, Crush Daily,
-            Monitor365)
+            Native OIDC for custom LarsArtmann Go services (Manifest, OpenSEO,
+            Crush Daily, Monitor365)
           </td>
           <td>Requires upstream Go code in separate repos</td>
           <td><span class="badge b-blocked">BLOCKED — large effort</span></td>
@@ -1173,23 +1226,31 @@
           <td>T4.4</td>
           <td>Homepage native auth</td>
           <td>Not a feature — by design proxy-only</td>
-          <td><span class="badge b-blocked">BLOCKED — upstream design</span></td>
+          <td>
+            <span class="badge b-blocked">BLOCKED — upstream design</span>
+          </td>
         </tr>
         <tr>
           <td>T4.5</td>
           <td>
-            Add OIDC clients for disabled-but-provisionable services (voice/whisper) when re-enabled
+            Add OIDC clients for disabled-but-provisionable services
+            (voice/whisper) when re-enabled
           </td>
           <td>Services currently disabled</td>
-          <td><span class="badge b-blocked">BLOCKED — waiting on enable</span></td>
+          <td>
+            <span class="badge b-blocked">BLOCKED — waiting on enable</span>
+          </td>
         </tr>
         <tr>
           <td>T4.6</td>
           <td>
-            RBAC / group-based access in Gatus (not supported upstream — only allowed-subjects)
+            RBAC / group-based access in Gatus (not supported upstream — only
+            allowed-subjects)
           </td>
           <td>Gatus has no groups feature</td>
-          <td><span class="badge b-blocked">BLOCKED — upstream design</span></td>
+          <td>
+            <span class="badge b-blocked">BLOCKED — upstream design</span>
+          </td>
         </tr>
       </table>
 
@@ -1232,7 +1293,8 @@
       </table>
 
       <div class="foot">
-        Plan generated by the Pareto-planning skill · SystemNix · For execution approval, say
+        Plan generated by the Pareto-planning skill · SystemNix · For execution
+        approval, say
         <em>"execute"</em>.
       </div>
     </div>

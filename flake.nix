@@ -431,9 +431,9 @@
     discoveredModules =
       lib.concatMap (
         dir: let
-          files = lib.filterAttrs (
-            n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)
-          ) (builtins.readDir dir);
+          files = lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)) (
+            builtins.readDir dir
+          );
         in
           lib.mapAttrsToList (file: _: {
             path = dir + "/${file}";

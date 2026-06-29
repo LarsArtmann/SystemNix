@@ -17,7 +17,15 @@ in
   nixpkgs.lib.nixosSystem {
     specialArgs = {
       inherit (inputs.self) inputs;
-      inherit (inputs) helium nur niri otel-tui nix-amd-npu nix-ssh-config;
+      inherit
+        (inputs)
+        helium
+        nur
+        niri
+        otel-tui
+        nix-amd-npu
+        nix-ssh-config
+        ;
       larsPackages = mkLarsPackages "x86_64-linux";
     };
     modules =

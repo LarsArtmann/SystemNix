@@ -1,4 +1,7 @@
 # Homepage Dashboard with Catppuccin theme and service status monitoring
+# SSO: Homepage has NO built-in authentication. By design it relies on an
+# external reverse proxy. Access is gated by oauth2-proxy forward-auth
+# (Layer 2 SSO) on dash.<domain> — this is intentional, not a gap.
 _: {
   flake.nixosModules.homepage = {
     config,

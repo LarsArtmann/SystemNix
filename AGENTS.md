@@ -84,6 +84,28 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 
 Active pip extras: `messaging`, `anthropic`, `firecrawl`, `edge-tts`, `fal`, `exa`. Do NOT add blindly — `voice` has complex native deps, `matrix` needs python-olm (Linux-only).
 
+### SSO / OIDC Architecture
+
+Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<domain>`):
+
+| Layer | How | Services |
+|-------|-----|----------|
+| **Layer 1 — Native OIDC** | App integrates directly with Pocket ID (in-app login button). Provisioned as OIDC clients in `pocket-id.nix`; Caddy uses **plain `reverse_proxy`** (NOT `protectedVHost`) | Forgejo, Immich, **Gatus** |
+| **Layer 2 — oauth2-proxy forward-auth** | App has no native auth; Caddy `protectedVHost` gates external access behind a Pocket ID login. LAN access is open | Homepage, SigNoz, Twenty, Taskchampion, Manifest, OpenSEO, Crush Daily, Dozzle, Monitor365 |
+
+**Adding Layer 1 (native OIDC) to a service** — follow the immich/gatus pattern:
+1. Register the OIDC client in `pocket-id.nix` `provision.oidcClients` (clientId, callbackURLs)
+2. The provisioner writes the client secret to `/var/lib/pocket-id/client-secrets/<clientId>` (owned `pocket-id:pocket-id`, 640)
+3. The service reads it: either via upstream `_secret` (immich), a runtime script `cat` (forgejo), or systemd `LoadCredential` (gatus — needed because gatus is a **DynamicUser** that can't own files)
+4. Order the service `after`/`wants` `pocket-id-provision.service`
+5. **In Caddy, use plain `reverse_proxy`** (like Forgejo/Gatus), NOT `protectedVHost` — a service with native OIDC behind `protectedVHost` causes a **double-auth** conflict
+
+**Native OIDC is NOT free for most services** — verify upstream support before assuming:
+- Homepage: no built-in auth at all (proxy-only by design)
+- SigNoz: OIDC is Enterprise-only (not Community Edition)
+- Twenty: SSO gated behind a billing entitlement
+- Custom LarsArtmann Go services: require upstream OIDC code in their repos
+
 ### BTRFS (evo-x2)
 
 Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRFS toplevel (subvolid=5). Pre-deploy snapshots: manual only.
@@ -163,6 +185,8 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `-config` option suffix is intentional | A module named `audio.nix` exposes `services.audio-config.enable` (not `services.audio`). The `-config` suffix avoids colliding with the **upstream** NixOS option the module configures (e.g. `services.displayManager`, `services.pipewire`). Modules wrapping a same-named upstream service (immich, caddy, forgejo) reuse the upstream `.enable` directly. This is a deliberate convention, not a naming bug — do NOT "fix" it |
 | `import ../../../lib/default.nix lib` boilerplate is required | Every module re-imports `lib/default.nix` rather than receiving helpers via `_module.args`. **This is correct:** `nix flake check` evaluates each `nixosModule` standalone (no injected args), so helpers MUST be self-imported. Injecting via `_module.args` would either break the standalone check or keep the import as a default (no win). Canonical form: `inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;` |
 | Forgejo OIDC SSO via Pocket ID | Forgejo uses **native OIDC** (not Caddy forward-auth). The `forgejo-oidc-setup` oneshot service (in `forgejo.nix`) reads the client secret from `/var/lib/pocket-id/client-secrets/forgejo` and creates the "PocketID" auth source in Forgejo's DB via `forgejo admin auth add-oauth`. The auth source name ("PocketID") IS the URL slug — callback URL is `https://forgejo.${domain}/user/oauth2/PocketID/callback`. **Do NOT use spaces in the auth source name** — the callback URL would need `%20` encoding. Caddy vHost for forgejo is a direct TLS proxy (no `protectedVHost`/forward-auth) because forward-auth + native OIDC causes a double-auth redirect loop. `oauth2_client.ENABLE_AUTO_REGISTRATION = true` auto-creates users on first OIDC login (bypasses `service.DISABLE_REGISTRATION`). `ACCOUNT_LINKING = "auto"` links OIDC users to existing accounts by email match |
+| Gatus native OIDC + DynamicUser | Gatus uses **native OIDC** (Layer 1) via `security.oidc` in `gatus-config.nix`. The NixOS gatus module sets `DynamicUser = true`, so the `gatus` user does NOT exist at sops-decrypt time and can't own files. Therefore the client secret is NOT a sops secret — it's the provisioned file `/var/lib/pocket-id/client-secrets/gatus`, loaded via systemd `LoadCredential` (read by root, exposed in `$CREDENTIALS_DIRECTORY`), then an `ExecStartPre` (`gatus-oidc-env`) copies it into `/run/gatus/oidc.env` which gatus reads via config.yaml `$GATUS_OIDC_CLIENT_SECRET` interpolation. Caddy `status.${domain}` is a plain `reverse_proxy` (NOT `protectedVHost`) — same double-auth rule as Forgejo. The Gatus self-health probe must use `[STATUS] < 400` (not `== 200`) when OIDC is on, because unauthenticated probes get a 302 redirect to the IdP login |
+| Native OIDC ≠ free for every service | Before adding Layer 1 OIDC to a service, verify upstream support. Homepage has **no** built-in auth (proxy-only). SigNoz OIDC is **Enterprise-only** (not Community Edition we run). Twenty SSO is **billing-entitlement-gated** (contact twenty.com). Custom LarsArtmann Go services need OIDC code in their repos. These stay on Layer 2 (oauth2-proxy forward-auth). Each blocked service has a header comment in its `.nix` documenting why |
 
 ---
 

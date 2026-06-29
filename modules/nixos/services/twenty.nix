@@ -1,4 +1,7 @@
 # Twenty CRM via Docker Compose with PostgreSQL and Redis
+# SSO: native OIDC/SAML is gated behind a billing entitlement (contact
+# twenty.com). Config is per-workspace via GraphQL/UI, not env vars. Access is
+# therefore gated by oauth2-proxy forward-auth (Layer 2 SSO) on crm.<domain>.
 _: {
   flake.nixosModules.twenty = {
     config,

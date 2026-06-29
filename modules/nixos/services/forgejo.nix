@@ -416,7 +416,13 @@ _: {
 
     oidcSetupScript = pkgs.writeShellApplication {
       name = "forgejo-oidc-setup";
-      runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.util-linux pkgs.curl];
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.gnugrep
+        pkgs.gawk
+        pkgs.util-linux
+        pkgs.curl
+      ];
       text = ''
         set -euo pipefail
 
@@ -654,8 +660,14 @@ _: {
 
       systemd.services.forgejo-oidc-setup = lib.mkIf config.services.pocket-id-config.enable {
         description = "Configure Forgejo OIDC authentication source (Pocket ID)";
-        after = ["forgejo.service" "pocket-id-provision.service"];
-        wants = ["forgejo.service" "pocket-id-provision.service"];
+        after = [
+          "forgejo.service"
+          "pocket-id-provision.service"
+        ];
+        wants = [
+          "forgejo.service"
+          "pocket-id-provision.service"
+        ];
         wantedBy = ["forgejo.service"];
         serviceConfig =
           {
