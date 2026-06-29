@@ -37,14 +37,24 @@ in {
     # dnsblockd CA is trusted via security.pki.certificates in the dns-blocker module
 
     # Fix for Home Manager + xdg.portal integration
-    environment.pathsToLink = ["/share/applications" "/share/xdg-desktop-portal"];
+    environment.pathsToLink = [
+      "/share/applications"
+      "/share/xdg-desktop-portal"
+    ];
 
     # XDG Desktop Portal for app integration and dark mode preference
     xdg.portal = {
       enable = true;
-      extraPortals = [pkgs.xdg-desktop-portal-gnome pkgs.xdg-desktop-portal-gtk];
+      extraPortals = [
+        pkgs.xdg-desktop-portal-gnome
+        pkgs.xdg-desktop-portal-gtk
+      ];
       config = {
-        common.default = ["niri" "gnome" "gtk"];
+        common.default = [
+          "niri"
+          "gnome"
+          "gtk"
+        ];
       };
     };
 
@@ -94,7 +104,18 @@ in {
     users.users.lars = {
       isNormalUser = true;
       description = "Lars";
-      extraGroups = ["networkmanager" "wheel" "docker" "input" "video" "audio" "i2c" "render" "lp" "scanner"];
+      extraGroups = [
+        "networkmanager"
+        "wheel"
+        "docker"
+        "input"
+        "video"
+        "audio"
+        "i2c"
+        "render"
+        "lp"
+        "scanner"
+      ];
       # INFO: Set password manually with `passwd lars` after installation
       # NOTE: After SSH hardening, password auth will be disabled - you MUST set up SSH keys
       shell = pkgs.fish;
@@ -159,9 +180,18 @@ in {
     ];
 
     fonts.fontconfig.defaultFonts = {
-      monospace = [theme.font.mono "Noto Sans Mono"];
-      sansSerif = ["DejaVu Sans" "Noto Sans"];
-      serif = ["DejaVu Serif" "Noto Serif"];
+      monospace = [
+        theme.font.mono
+        "Noto Sans Mono"
+      ];
+      sansSerif = [
+        "DejaVu Sans"
+        "Noto Sans"
+      ];
+      serif = [
+        "DejaVu Serif"
+        "Noto Serif"
+      ];
       emoji = ["Noto Color Emoji"];
     };
 
@@ -326,15 +356,21 @@ in {
       # Monitor365 device monitoring agent + server (single-machine deployment)
       monitor365 = {
         enable = true;
-        # Disable expensive collectors (screenshot, camera, photo, keystroke logging)
+        # All collectors enabled — full telemetry mode
         collectors = {
-          screenshot = lib.mkDefault false;
-          camera = lib.mkDefault false;
-          keystroke = lib.mkDefault false;
-          mouse = lib.mkDefault false;
-          clipboard = lib.mkDefault false;
-          notifications = lib.mkDefault false;
+          screenshot = lib.mkDefault true;
+          camera = lib.mkDefault true;
+          keystroke = lib.mkDefault true;
+          mouse = lib.mkDefault true;
+          clipboard = lib.mkDefault true;
+          notifications = lib.mkDefault true;
+          location = lib.mkDefault true;
+          fsEvent = lib.mkDefault true;
         };
+        # Not using ActivityWatch integration
+        activityWatch.enable = lib.mkDefault false;
+        # 30 GiB ring buffer — protects against unbounded growth on BTRFS root
+        storage.maxSizeMb = lib.mkDefault (30 * 1024);
         logging.level = lib.mkDefault "warn";
         # Agent syncs to local server
         cloud.endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";

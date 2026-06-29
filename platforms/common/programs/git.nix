@@ -216,8 +216,8 @@
       "logs/"
 
       # Generated files
-      "*_templ.go" ## https://templ.guide/
-      "*.sql.go" ## https://sqlc.dev
+      "*_templ.go" # # https://templ.guide/
+      "*.sql.go" # # https://sqlc.dev
 
       # AI tools
       ".crush"

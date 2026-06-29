@@ -60,12 +60,19 @@ lib: {
     }
     {
       prefix = "reflink";
-      validFsTypes = ["btrfs" "xfs"];
+      validFsTypes = [
+        "btrfs"
+        "xfs"
+      ];
       desc = "Copy-on-write reflink support.";
     }
     {
       prefix = "nodiscard";
-      validFsTypes = ["ext4" "btrfs" "xfs"];
+      validFsTypes = [
+        "ext4"
+        "btrfs"
+        "xfs"
+      ];
       desc = "Disable TRIM.";
     }
   ];
@@ -77,15 +84,16 @@ lib: {
         validFsTypes,
         desc,
       }:
-        !builtins.elem fsType validFsTypes
-        && builtins.any (opt: lib.hasPrefix prefix opt) options
+        !builtins.elem fsType validFsTypes && builtins.any (opt: lib.hasPrefix prefix opt) options
     )
     dangerousOptions;
 
-  violationMsg = builtins.concatStringsSep "\n  " (map (
+  violationMsg = builtins.concatStringsSep "\n  " (
+    map (
       v: "option '${v.prefix}' is only valid on [${builtins.concatStringsSep ", " v.validFsTypes}] but used on ${fsType}: ${v.desc}"
     )
-    violations);
+    violations
+  );
 in
   if violations != []
   then

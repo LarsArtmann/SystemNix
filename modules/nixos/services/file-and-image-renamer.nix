@@ -83,7 +83,10 @@ _: {
         systemd.user.services.file-and-image-renamer = {
           Unit = {
             Description = "File and Image Renamer Watcher";
-            After = ["network.target" "graphical-session.target"];
+            After = [
+              "network.target"
+              "graphical-session.target"
+            ];
             Wants = ["network.target"];
             PartOf = ["graphical-session.target"];
             StartLimitIntervalSec = 600;
@@ -107,7 +110,9 @@ _: {
                   "DESKTOP_PATH=${cfg.watchDirectory}"
                   "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
                 ]
-                ++ lib.optional (cfg.syntheticApiKeyFile != null) "SYNTHETIC_API_KEY_FILE=${cfg.syntheticApiKeyFile}"
+                ++ lib.optional (
+                  cfg.syntheticApiKeyFile != null
+                ) "SYNTHETIC_API_KEY_FILE=${cfg.syntheticApiKeyFile}"
                 ++ lib.optional (cfg.model != null) "GLM_MODEL=${cfg.model}"
                 ++ lib.optional (cfg.syntheticModel != null) "SYNTHETIC_MODEL=${cfg.syntheticModel}"
                 ++ lib.optional (cfg.watchPaths != []) "WATCH_PATHS=${lib.concatStringsSep ":" cfg.watchPaths}";

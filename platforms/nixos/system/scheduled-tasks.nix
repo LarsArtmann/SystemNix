@@ -108,7 +108,10 @@ in {
           ExecStart = let
             notifyFailure = pkgs.writeShellApplication {
               name = "notify-failure";
-              runtimeInputs = [pkgs.libnotify pkgs.util-linux];
+              runtimeInputs = [
+                pkgs.libnotify
+                pkgs.util-linux
+              ];
               text = ''
                 UNIT="''${1:-unknown}"
                 notify-send -u critical "Scheduled task failed" "$UNIT — check journalctl -u $UNIT" 2>/dev/null || \
@@ -135,13 +138,24 @@ in {
       blocklist-auto-update = {
         description = "Download blocklists and update hashes in config";
         inherit onFailure;
-        path = [pkgs.git pkgs.nix pkgs.gawk pkgs.gnused pkgs.python3];
+        path = [
+          pkgs.git
+          pkgs.nix
+          pkgs.gawk
+          pkgs.gnused
+          pkgs.python3
+        ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = let
             dnsUpdate = pkgs.writeShellApplication {
               name = "dns-update";
-              runtimeInputs = [pkgs.git pkgs.nix pkgs.gawk pkgs.gnused];
+              runtimeInputs = [
+                pkgs.git
+                pkgs.nix
+                pkgs.gawk
+                pkgs.gnused
+              ];
               text = builtins.readFile ../../../scripts/dns-update.sh;
             };
           in "${dnsUpdate}/bin/dns-update";
@@ -155,7 +169,10 @@ in {
       service-health-check = {
         description = "Check critical services and notify on failure";
         inherit onFailure;
-        path = [pkgs.systemd pkgs.libnotify];
+        path = [
+          pkgs.systemd
+          pkgs.libnotify
+        ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = let
@@ -174,7 +191,12 @@ in {
             ignorePattern = builtins.concatStringsSep " | " ignoredFailedServices;
             healthCheck = pkgs.writeShellApplication {
               name = "service-health-check";
-              runtimeInputs = [pkgs.systemd pkgs.libnotify pkgs.coreutils pkgs.gnugrep];
+              runtimeInputs = [
+                pkgs.systemd
+                pkgs.libnotify
+                pkgs.coreutils
+                pkgs.gnugrep
+              ];
               text = ''
                 export DISPLAY=:0
                 export WAYLAND_DISPLAY=wayland-1
@@ -297,7 +319,12 @@ in {
             ExecStart = let
               rustCleanup = pkgs.writeShellApplication {
                 name = "rust-target-cleanup";
-                runtimeInputs = [pkgs.cargo-sweep pkgs.findutils pkgs.coreutils pkgs.libnotify];
+                runtimeInputs = [
+                  pkgs.cargo-sweep
+                  pkgs.findutils
+                  pkgs.coreutils
+                  pkgs.libnotify
+                ];
                 text = ''
                   SIZE_THRESHOLD_KB=$((2 * 1024 * 1024))
                   SEARCH_ROOTS=("/home/${primaryUser}/projects")
@@ -387,7 +414,10 @@ in {
             ExecStart = let
               lspCleanup = pkgs.writeShellApplication {
                 name = "stale-lsp-cleanup";
-                runtimeInputs = [pkgs.procps pkgs.coreutils];
+                runtimeInputs = [
+                  pkgs.procps
+                  pkgs.coreutils
+                ];
                 text = ''
                   MAX_AGE_SECONDS=$((5 * 60))
                   LSP_PROCESS_NAMES=("gopls" "typescript-language-server" "vtsls" "rust-analyzer" "lua-language-server")
@@ -431,7 +461,10 @@ in {
             ExecStart = let
               buildCleanup = pkgs.writeShellApplication {
                 name = "nix-build-cleanup";
-                runtimeInputs = [pkgs.findutils pkgs.coreutils];
+                runtimeInputs = [
+                  pkgs.findutils
+                  pkgs.coreutils
+                ];
                 text = ''
                   BUILD_DIR="/nix/var/nix/builds"
                   [ -d "$BUILD_DIR" ] || exit 0
@@ -469,7 +502,10 @@ in {
             ExecStart = let
               diskGrowth = pkgs.writeShellApplication {
                 name = "disk-growth-check";
-                runtimeInputs = [pkgs.coreutils pkgs.util-linux];
+                runtimeInputs = [
+                  pkgs.coreutils
+                  pkgs.util-linux
+                ];
                 text = ''
                   STATE_DIR="/var/lib/disk-growth"
                   STATE_FILE="$STATE_DIR/last_usage_bytes"

@@ -9,7 +9,15 @@ _: {
   }: let
     cfg = config.services.pocket-id-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports mkSecretCheck;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      ports
+      mkSecretCheck
+      ;
     pocketIdPort = cfg.port;
     metricsPort = cfg.metricsPort;
 
@@ -31,7 +39,11 @@ _: {
 
     provisionScript = pkgs.writeShellApplication {
       name = "pocket-id-provision";
-      runtimeInputs = [pkgs.curl pkgs.jq pkgs.coreutils];
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.jq
+        pkgs.coreutils
+      ];
       text = ''
         set -euo pipefail
 
@@ -171,83 +183,89 @@ _: {
         }
 
         # ── Step 3: OIDC Clients ──
-        ${lib.concatMapStringsSep "\n" (client: let
-            logoPath =
-              if client.logoFile != null
-              then toString client.logoFile
-              else "";
-            clientAttrs =
-              {
-                name = client.name;
-                callbackURLs = client.callbackURLs;
-                logoutCallbackURLs = client.logoutCallbackURLs or [];
-                isPublic = client.isPublic;
-                pkceEnabled = client.pkceEnabled;
-                requiresReauthentication = client.requiresReauthentication or false;
-              }
-              // lib.optionalAttrs (client.launchURL or null != null) {
-                launchURL = client.launchURL;
-              };
-            createAttrs = clientAttrs // {id = client.clientId;};
-          in ''
-            echo "Checking OIDC client: ${client.name}..."
-            ALL_CLIENTS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
-            echo "  Clients API response: $(echo "$ALL_CLIENTS" | head -c 200)"
-            EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
+        ${lib.concatMapStringsSep "\n" (
+            client: let
+              logoPath =
+                if client.logoFile != null
+                then toString client.logoFile
+                else "";
+              clientAttrs =
+                {
+                  name = client.name;
+                  callbackURLs = client.callbackURLs;
+                  logoutCallbackURLs = client.logoutCallbackURLs or [];
+                  isPublic = client.isPublic;
+                  pkceEnabled = client.pkceEnabled;
+                  requiresReauthentication = client.requiresReauthentication or false;
+                }
+                // lib.optionalAttrs (client.launchURL or null != null) {
+                  launchURL = client.launchURL;
+                };
+              createAttrs =
+                clientAttrs
+                // {
+                  id = client.clientId;
+                };
+            in ''
+              echo "Checking OIDC client: ${client.name}..."
+              ALL_CLIENTS=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
+              echo "  Clients API response: $(echo "$ALL_CLIENTS" | head -c 200)"
+              EXISTING_CLIENT=$(echo "$ALL_CLIENTS" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
 
-            if [ -n "$EXISTING_CLIENT" ]; then
-              echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT). Updating..."
-              UPDATE_RESPONSE=$(api_put "/api/oidc/clients/$EXISTING_CLIENT" '${builtins.toJSON clientAttrs}')
-              HTTP_CODE=$(echo "$UPDATE_RESPONSE" | tail -1)
-              RESPONSE_BODY=$(echo "$UPDATE_RESPONSE" | sed '$d')
-              if [ "$HTTP_CODE" = "200" ]; then
-                echo "  Client '${client.name}' updated successfully."
+              if [ -n "$EXISTING_CLIENT" ]; then
+                echo "  Client '${client.name}' already exists (ID: $EXISTING_CLIENT). Updating..."
+                UPDATE_RESPONSE=$(api_put "/api/oidc/clients/$EXISTING_CLIENT" '${builtins.toJSON clientAttrs}')
+                HTTP_CODE=$(echo "$UPDATE_RESPONSE" | tail -1)
+                RESPONSE_BODY=$(echo "$UPDATE_RESPONSE" | sed '$d')
+                if [ "$HTTP_CODE" = "200" ]; then
+                  echo "  Client '${client.name}' updated successfully."
+                else
+                  echo "  WARNING: Update failed (HTTP $HTTP_CODE): $RESPONSE_BODY" >&2
+                fi
+                CLIENT_ID="$EXISTING_CLIENT"
               else
-                echo "  WARNING: Update failed (HTTP $HTTP_CODE): $RESPONSE_BODY" >&2
-              fi
-              CLIENT_ID="$EXISTING_CLIENT"
-            else
-              echo "  Creating OIDC client: ${client.name}"
-              CREATE_RESPONSE=$(api_post "/api/oidc/clients" '${builtins.toJSON createAttrs}')
-              echo "  Client create response: $CREATE_RESPONSE"
-              RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
-              CLIENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)
+                echo "  Creating OIDC client: ${client.name}"
+                CREATE_RESPONSE=$(api_post "/api/oidc/clients" '${builtins.toJSON createAttrs}')
+                echo "  Client create response: $CREATE_RESPONSE"
+                RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
+                CLIENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)
 
-              if echo "$RESPONSE_BODY" | grep -qi "already exists"; then
-                echo "  Client '${client.name}' created in race, re-fetching..."
-                ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
-                CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
-              elif [ -z "$CLIENT_ID" ]; then
-                echo "  ERROR: Failed to create client '${client.name}'. Response: $RESPONSE_BODY" >&2
+                if echo "$RESPONSE_BODY" | grep -qi "already exists"; then
+                  echo "  Client '${client.name}' created in race, re-fetching..."
+                  ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
+                  CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
+                elif [ -z "$CLIENT_ID" ]; then
+                  echo "  ERROR: Failed to create client '${client.name}'. Response: $RESPONSE_BODY" >&2
+                else
+                  echo "  Created client '${client.name}' with ID: $CLIENT_ID"
+                fi
+              fi
+
+              # Upload logo if configured
+              upload_logo "$CLIENT_ID" "${logoPath}"
+
+              # Generate client secret (POST /secret rotates — only when file missing)
+              SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
+              if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
+                echo "  Secret file already exists."
               else
-                echo "  Created client '${client.name}' with ID: $CLIENT_ID"
+                echo "  Generating client secret..."
+                SECRET_RESPONSE=$(curl -s -X POST \
+                  -H "X-API-Key: $API_KEY" \
+                  "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
+                CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
+
+                if [ -n "$CLIENT_SECRET" ]; then
+                  echo "$CLIENT_SECRET" > "$SECRET_FILE"
+                  chmod 640 "$SECRET_FILE"
+                  chown pocket-id:pocket-id "$SECRET_FILE"
+                  echo "  Secret written to $SECRET_FILE"
+                else
+                  echo "  WARNING: Failed to generate secret for '${client.name}'" >&2
+                fi
               fi
-            fi
-
-            # Upload logo if configured
-            upload_logo "$CLIENT_ID" "${logoPath}"
-
-            # Generate client secret (POST /secret rotates — only when file missing)
-            SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
-            if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
-              echo "  Secret file already exists."
-            else
-              echo "  Generating client secret..."
-              SECRET_RESPONSE=$(curl -s -X POST \
-                -H "X-API-Key: $API_KEY" \
-                "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
-              CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
-
-              if [ -n "$CLIENT_SECRET" ]; then
-                echo "$CLIENT_SECRET" > "$SECRET_FILE"
-                chmod 640 "$SECRET_FILE"
-                chown pocket-id:pocket-id "$SECRET_FILE"
-                echo "  Secret written to $SECRET_FILE"
-              else
-                echo "  WARNING: Failed to generate secret for '${client.name}'" >&2
-              fi
-            fi
-          '')
+            ''
+          )
           cfg.provision.oidcClients}
 
         echo "=== Pocket ID Provisioning Complete ==="
@@ -314,53 +332,55 @@ _: {
         };
 
         oidcClients = lib.mkOption {
-          type = lib.types.listOf (lib.types.submodule {
-            options = {
-              name = lib.mkOption {
-                type = lib.types.str;
-                description = "Display name for the OIDC client";
+          type = lib.types.listOf (
+            lib.types.submodule {
+              options = {
+                name = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Display name for the OIDC client";
+                };
+                clientId = lib.mkOption {
+                  type = lib.types.str;
+                  description = "Client ID (must be unique)";
+                };
+                callbackURLs = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [];
+                  description = "Allowed callback URLs";
+                };
+                logoutCallbackURLs = lib.mkOption {
+                  type = lib.types.listOf lib.types.str;
+                  default = [];
+                  description = "Allowed logout callback URLs";
+                };
+                launchURL = lib.mkOption {
+                  type = lib.types.nullOr lib.types.str;
+                  default = null;
+                  description = "Launch URL shown in Pocket ID UI (clicking the app redirects here)";
+                };
+                pkceEnabled = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = "Whether PKCE is enabled for this client";
+                };
+                isPublic = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = "Whether this is a public client (no client secret)";
+                };
+                requiresReauthentication = lib.mkOption {
+                  type = lib.types.bool;
+                  default = false;
+                  description = "Whether to force passkey re-authentication on each login";
+                };
+                logoFile = lib.mkOption {
+                  type = lib.types.nullOr lib.types.path;
+                  default = null;
+                  description = "Path to logo image for the client (PNG or SVG)";
+                };
               };
-              clientId = lib.mkOption {
-                type = lib.types.str;
-                description = "Client ID (must be unique)";
-              };
-              callbackURLs = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [];
-                description = "Allowed callback URLs";
-              };
-              logoutCallbackURLs = lib.mkOption {
-                type = lib.types.listOf lib.types.str;
-                default = [];
-                description = "Allowed logout callback URLs";
-              };
-              launchURL = lib.mkOption {
-                type = lib.types.nullOr lib.types.str;
-                default = null;
-                description = "Launch URL shown in Pocket ID UI (clicking the app redirects here)";
-              };
-              pkceEnabled = lib.mkOption {
-                type = lib.types.bool;
-                default = false;
-                description = "Whether PKCE is enabled for this client";
-              };
-              isPublic = lib.mkOption {
-                type = lib.types.bool;
-                default = false;
-                description = "Whether this is a public client (no client secret)";
-              };
-              requiresReauthentication = lib.mkOption {
-                type = lib.types.bool;
-                default = false;
-                description = "Whether to force passkey re-authentication on each login";
-              };
-              logoFile = lib.mkOption {
-                type = lib.types.nullOr lib.types.path;
-                default = null;
-                description = "Path to logo image for the client (PNG or SVG)";
-              };
-            };
-          });
+            }
+          );
           default = [
             {
               name = "oauth2-proxy";
@@ -465,7 +485,11 @@ _: {
           wants = ["pocket-id.service"];
           wantedBy = ["pocket-id.service"];
           inherit onFailure;
-          path = [pkgs.curl pkgs.jq pkgs.coreutils];
+          path = [
+            pkgs.curl
+            pkgs.jq
+            pkgs.coreutils
+          ];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;

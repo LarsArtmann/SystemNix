@@ -16,7 +16,8 @@ _: {
     llama-cpp-rocwmma =
       (pkgs.llama-cpp.override {
         rocmSupport = true;
-      }).overrideAttrs (finalAttrs: {
+      }).overrideAttrs
+      (finalAttrs: {
         cmakeFlags =
           finalAttrs.cmakeFlags
           ++ [
@@ -30,7 +31,9 @@ _: {
     options.services.ai-stack = {
       enable =
         lib.mkEnableOption "AI inference stack — Ollama ROCm, llama.cpp, gpu-python, AI tooling"
-        // {default = false;};
+        // {
+          default = false;
+        };
     };
 
     config = lib.mkIf cfg.enable {

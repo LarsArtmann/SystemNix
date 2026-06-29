@@ -15,11 +15,21 @@ in {
 
   boot = {
     initrd = {
-      availableKernelModules = ["nvme" "xhci_pci" "thunderbolt" "usbhid" "sdhci_pci"];
+      availableKernelModules = [
+        "nvme"
+        "xhci_pci"
+        "thunderbolt"
+        "usbhid"
+        "sdhci_pci"
+      ];
       kernelModules = ["amdgpu"];
     };
     # Restore critical network drivers (Realtek 2.5G Ethernet + MediaTek WiFi)
-    kernelModules = ["kvm-amd" "mt7925e" "r8125"];
+    kernelModules = [
+      "kvm-amd"
+      "mt7925e"
+      "r8125"
+    ];
     extraModulePackages = with config.boot.kernelPackages; [r8125];
   };
 
@@ -30,22 +40,42 @@ in {
     "/" = mkFilesystem {
       device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
       fsType = "btrfs";
-      options = ["subvol=@" "compress=zstd" "noatime"];
+      options = [
+        "subvol=@"
+        "compress=zstd"
+        "noatime"
+      ];
     };
     "/data" = mkFilesystem {
       device = "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710";
       fsType = "btrfs";
-      options = ["compress=zstd:3" "noatime" "ssd" "discard=async" "space_cache=v2" "nofail"];
+      options = [
+        "compress=zstd:3"
+        "noatime"
+        "ssd"
+        "discard=async"
+        "space_cache=v2"
+        "nofail"
+      ];
     };
     "/boot" = mkFilesystem {
       device = "/dev/disk/by-uuid/80A3-73A9";
       fsType = "vfat";
-      options = ["fmask=0077" "dmask=0077"];
+      options = [
+        "fmask=0077"
+        "dmask=0077"
+      ];
     };
     "/rust-cache" = mkFilesystem {
       device = "/dev/disk/by-partlabel/rust-cache";
       fsType = "ext4";
-      options = ["noatime" "discard" "nofail" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
+      options = [
+        "noatime"
+        "discard"
+        "nofail"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=10min"
+      ];
     };
   };
 

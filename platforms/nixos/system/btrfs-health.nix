@@ -16,7 +16,13 @@
   lib,
   ...
 }: let
-  inherit (import ../../../lib/default.nix lib) harden serviceOneshotDefaults onFailure mkStateDir;
+  inherit
+    (import ../../../lib/default.nix lib)
+    harden
+    serviceOneshotDefaults
+    onFailure
+    mkStateDir
+    ;
 
   textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
   stateDir = "/var/lib/btrfs-health";
@@ -29,7 +35,11 @@
   # Always exits 0 (fail-open on errors). Diagnostics go to stderr.
   btrfsChunkCheck = pkgs.writeShellApplication {
     name = "btrfs-chunk-check";
-    runtimeInputs = [pkgs.btrfs-progs pkgs.gawk pkgs.coreutils];
+    runtimeInputs = [
+      pkgs.btrfs-progs
+      pkgs.gawk
+      pkgs.coreutils
+    ];
     text = ''
       set -uo pipefail
       MOUNT="''${1:-/}"
@@ -201,7 +211,10 @@ in {
           serviceOneshotDefaults {}
           // harden {
             MemoryMax = "128M";
-            ReadWritePaths = [textfileDir stateDir];
+            ReadWritePaths = [
+              textfileDir
+              stateDir
+            ];
           }
           // {
             Type = "oneshot";

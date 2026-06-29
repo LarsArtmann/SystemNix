@@ -253,5 +253,11 @@
   aiPackages = [pkgs.nur.repos.charmbracelet.crush];
 in {
   # System packages list
-  environment.systemPackages = essentialPackages ++ developmentPackages ++ (builtins.attrValues larsPackages) ++ guiPackages ++ aiPackages ++ linuxUtilities;
+  environment.systemPackages =
+    essentialPackages
+    ++ developmentPackages
+    ++ (builtins.attrValues larsPackages)
+    ++ guiPackages
+    ++ aiPackages
+    ++ linuxUtilities;
 }

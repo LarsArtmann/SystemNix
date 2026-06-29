@@ -6,7 +6,13 @@
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      ;
     cfg = config.services.hermes;
     hermesPkg = let
       # Upstream (v2026.6.5+) uses fetcherVersion=2 in nix/lib.nix, no hash patching needed.
@@ -17,14 +23,24 @@
         base
         // {
           hermes-agent = base.hermes-agent.override {
-            extraDependencyGroups = ["messaging" "anthropic" "firecrawl" "edge-tts" "fal" "exa"];
+            extraDependencyGroups = [
+              "messaging"
+              "anthropic"
+              "firecrawl"
+              "edge-tts"
+              "fal"
+              "exa"
+            ];
           };
         };
       pkgs' = pkgs.extend patchedOverlay;
     in
       pkgs'.hermes-agent;
     sopsEnvPath = config.sops.templates."hermes-env".path;
-    oldStateDirs = ["/home/${cfg.user}/.hermes" "/var/lib/hermes"];
+    oldStateDirs = [
+      "/home/${cfg.user}/.hermes"
+      "/var/lib/hermes"
+    ];
 
     mergeEnvScript = pkgs.writeShellApplication {
       name = "hermes-merge-env";
@@ -59,7 +75,10 @@
 
     fixPermissionsScript = pkgs.writeShellApplication {
       name = "hermes-fix-permissions";
-      runtimeInputs = [pkgs.coreutils pkgs.findutils];
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.findutils
+      ];
       text = ''
         if [ "$(stat -c '%U:%G' ${cfg.stateDir} 2>/dev/null)" = "${cfg.user}:${cfg.group}" ] \
            && [ "$(stat -c '%a' ${cfg.stateDir} 2>/dev/null)" = "2770" ]; then
@@ -75,7 +94,11 @@
 
     migrateScript = pkgs.writeShellApplication {
       name = "hermes-migrate-state";
-      runtimeInputs = [pkgs.coreutils pkgs.sqlite pkgs.rsync];
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.sqlite
+        pkgs.rsync
+      ];
       text = ''
         NEW="${cfg.stateDir}"
 
@@ -139,7 +162,10 @@
       users.users.${cfg.user} = {
         isSystemUser = true;
         inherit (cfg) group;
-        extraGroups = ["users" "render"];
+        extraGroups = [
+          "users"
+          "render"
+        ];
         home = cfg.stateDir;
         createHome = true;
         description = "Hermes AI Agent Gateway service user";
@@ -147,36 +173,47 @@
 
       environment.systemPackages = [hermesPkg];
 
-      system.activationScripts."hermes-setup" = lib.stringAfter (["users"] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets") ''
-        mkdir -p ${cfg.stateDir}/{sessions,skills,memories,cron,cache,logs/curator,workspace}
-        chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
-        chmod 2770 ${cfg.stateDir} ${cfg.stateDir}/{sessions,skills,memories,cron,cache,logs,logs/curator,workspace}
+      system.activationScripts."hermes-setup" =
+        lib.stringAfter
+        (["users"] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets")
+        ''
+          mkdir -p ${cfg.stateDir}/{sessions,skills,memories,cron,cache,logs/curator,workspace}
+          chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
+          chmod 2770 ${cfg.stateDir} ${cfg.stateDir}/{sessions,skills,memories,cron,cache,logs,logs/curator,workspace}
 
-        # Grant hermes (via 'users' group) read+execute access to the primary user's home
-        # so it can navigate to shared project directories.
-        # NOTE: This uses ACLs instead of broad chmod to avoid making the entire
-        # home directory writable. Only read+execute (r-x) is granted, not write.
-        primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
-        if [ -n "$primaryHome" ] && [ -d "$primaryHome" ]; then
-          setfacl -m "g:${cfg.group}:r-x" "$primaryHome" 2>/dev/null || chmod g+rx "$primaryHome"
-        fi
+          # Grant hermes (via 'users' group) read+execute access to the primary user's home
+          # so it can navigate to shared project directories.
+          # NOTE: This uses ACLs instead of broad chmod to avoid making the entire
+          # home directory writable. Only read+execute (r-x) is granted, not write.
+          primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
+          if [ -n "$primaryHome" ] && [ -d "$primaryHome" ]; then
+            setfacl -m "g:${cfg.group}:r-x" "$primaryHome" 2>/dev/null || chmod g+rx "$primaryHome"
+          fi
 
-        find ${cfg.stateDir} -maxdepth 1 \( -name "*.db" -o -name "*.db-wal" -o -name "*.db-shm" -o -name "SOUL.md" \) \
-          -exec chmod g+rw {} + 2>/dev/null || true
-        for _subdir in sessions skills memories cron cache logs; do
-          find "${cfg.stateDir}/$_subdir" -type f -exec chmod g+rw {} + 2>/dev/null || true
-        done
+          find ${cfg.stateDir} -maxdepth 1 \( -name "*.db" -o -name "*.db-wal" -o -name "*.db-shm" -o -name "SOUL.md" \) \
+            -exec chmod g+rw {} + 2>/dev/null || true
+          for _subdir in sessions skills memories cron cache logs; do
+            find "${cfg.stateDir}/$_subdir" -type f -exec chmod g+rw {} + 2>/dev/null || true
+          done
 
-        touch ${cfg.stateDir}/.managed
-        chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/.managed
-        chmod 0644 ${cfg.stateDir}/.managed
-      '';
+          touch ${cfg.stateDir}/.managed
+          chown ${cfg.user}:${cfg.group} ${cfg.stateDir}/.managed
+          chmod 0644 ${cfg.stateDir}/.managed
+        '';
 
       systemd.services.hermes = {
         description = "Hermes Agent Gateway - Messaging Platform Integration";
         wantedBy = ["multi-user.target"];
-        after = ["network-online.target" "sops-nix.service" "unbound.service"];
-        wants = ["network-online.target" "sops-nix.service" "unbound.service"];
+        after = [
+          "network-online.target"
+          "sops-nix.service"
+          "unbound.service"
+        ];
+        wants = [
+          "network-online.target"
+          "sops-nix.service"
+          "unbound.service"
+        ];
         inherit onFailure;
         startLimitIntervalSec = 600;
         startLimitBurst = 5;
@@ -194,7 +231,11 @@
             Type = "simple";
             User = cfg.user;
             Group = cfg.group;
-            ExecStartPre = ["+${lib.getExe fixPermissionsScript}" "+${lib.getExe migrateScript}" "${lib.getExe mergeEnvScript}"];
+            ExecStartPre = [
+              "+${lib.getExe fixPermissionsScript}"
+              "+${lib.getExe migrateScript}"
+              "${lib.getExe mergeEnvScript}"
+            ];
             ExecStart = "${lib.getExe' hermesPkg "hermes"} gateway run --replace";
             WorkingDirectory = cfg.stateDir;
             Environment = [

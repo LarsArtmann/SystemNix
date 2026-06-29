@@ -12,7 +12,9 @@ _: {
     options.services.ai-models = {
       enable =
         lib.mkEnableOption "Centralized AI model storage — unified directory structure, env vars, and permissions"
-        // {default = false;};
+        // {
+          default = false;
+        };
 
       baseDir = lib.mkOption {
         type = lib.types.str;

@@ -14,7 +14,11 @@ in {
 
     settings = {
       manager = {
-        ratio = [1 2 3];
+        ratio = [
+          1
+          2
+          3
+        ];
         sort_by = "modified";
         sort_sensitive = false;
         sort_reverse = true;
@@ -106,7 +110,10 @@ in {
         macro_workers = 10;
         bizarre_retry = 5;
         image_alloc = 536870912;
-        image_bound = [0 0];
+        image_bound = [
+          0
+          0
+        ];
         suppress_prejudice = false;
       };
 
@@ -123,7 +130,12 @@ in {
 
       select = {
         open_origin = "hovered";
-        open_offset = [0 0 50 7];
+        open_offset = [
+          0
+          0
+          50
+          7
+        ];
       };
 
       which = {
@@ -139,13 +151,17 @@ in {
 
     theme = {
       manager = {
-        cwd = {fg = "#${colors.base0D}";}; # Blue
+        cwd = {
+          fg = "#${colors.base0D}";
+        }; # Blue
         hovered = {
           fg = "#${colors.base00}";
           bg = "#${colors.base0D}";
           bold = true;
         };
-        preview_hovered = {underline = true;};
+        preview_hovered = {
+          underline = true;
+        };
         find_keyword = {
           fg = "#${colors.base0A}";
           bold = true;
@@ -177,7 +193,9 @@ in {
           fg = "#${colors.base05}";
           bg = "#${colors.base02}";
         }; # Surface1
-        border_style = {fg = "#${colors.base04}";}; # Surface2
+        border_style = {
+          fg = "#${colors.base04}";
+        }; # Surface2
       };
 
       mode = {
@@ -227,28 +245,48 @@ in {
           fg = "#${colors.base08}";
           bg = "#${colors.base02}";
         }; # Red on Surface1
-        permissions_t = {fg = "#${colors.base0D}";}; # Blue
-        permissions_r = {fg = "#${colors.base0A}";}; # Yellow
-        permissions_w = {fg = "#${colors.base08}";}; # Red
-        permissions_x = {fg = "#${colors.base0B}";}; # Green
-        permissions_s = {fg = "#${colors.overlay0}";}; # Overlay0
+        permissions_t = {
+          fg = "#${colors.base0D}";
+        }; # Blue
+        permissions_r = {
+          fg = "#${colors.base0A}";
+        }; # Yellow
+        permissions_w = {
+          fg = "#${colors.base08}";
+        }; # Red
+        permissions_x = {
+          fg = "#${colors.base0B}";
+        }; # Green
+        permissions_s = {
+          fg = "#${colors.overlay0}";
+        }; # Overlay0
       };
 
       input = {
-        border = {fg = "#${colors.base0D}";}; # Blue
+        border = {
+          fg = "#${colors.base0D}";
+        }; # Blue
         title = {};
         value = {};
-        selected = {reversed = true;};
+        selected = {
+          reversed = true;
+        };
       };
 
       select = {
-        border = {fg = "#${colors.base0D}";}; # Blue
-        active = {fg = "#${colors.base0F}";}; # Pink
+        border = {
+          fg = "#${colors.base0D}";
+        }; # Blue
+        active = {
+          fg = "#${colors.base0F}";
+        }; # Pink
         inactive = {};
       };
 
       tasks = {
-        border = {fg = "#${colors.base0D}";}; # Blue
+        border = {
+          fg = "#${colors.base0D}";
+        }; # Blue
         title = {};
         hovered = {
           fg = "#${colors.base0F}";
@@ -257,17 +295,33 @@ in {
       };
 
       which = {
-        mask = {bg = "#${colors.base00}";}; # Base
-        cand = {fg = "#${colors.base0C}";}; # Teal
-        rest = {fg = "#${colors.overlay2}";}; # Overlay2
-        desc = {fg = "#${colors.base0F}";}; # Pink
-        separator_style = {fg = "#${colors.base04}";}; # Surface2
+        mask = {
+          bg = "#${colors.base00}";
+        }; # Base
+        cand = {
+          fg = "#${colors.base0C}";
+        }; # Teal
+        rest = {
+          fg = "#${colors.overlay2}";
+        }; # Overlay2
+        desc = {
+          fg = "#${colors.base0F}";
+        }; # Pink
+        separator_style = {
+          fg = "#${colors.base04}";
+        }; # Surface2
       };
 
       help = {
-        on = {fg = "#${colors.base0F}";}; # Pink
-        exec = {fg = "#${colors.base0C}";}; # Teal
-        desc = {fg = "#${colors.overlay2}";}; # Overlay2
+        on = {
+          fg = "#${colors.base0F}";
+        }; # Pink
+        exec = {
+          fg = "#${colors.base0C}";
+        }; # Teal
+        desc = {
+          fg = "#${colors.overlay2}";
+        }; # Overlay2
         hovered = {
           fg = "#${colors.base0F}";
           bg = "#${colors.base02}";
@@ -408,22 +462,34 @@ in {
             desc = "Search content";
           }
           {
-            on = ["g" "h"];
+            on = [
+              "g"
+              "h"
+            ];
             run = "cd ~";
             desc = "Go to home";
           }
           {
-            on = ["g" "d"];
+            on = [
+              "g"
+              "d"
+            ];
             run = "cd ~/Downloads";
             desc = "Go to Downloads";
           }
           {
-            on = ["g" "p"];
+            on = [
+              "g"
+              "p"
+            ];
             run = "cd ~/projects";
             desc = "Go to projects";
           }
           {
-            on = ["g" "c"];
+            on = [
+              "g"
+              "c"
+            ];
             run = "cd ~/.config";
             desc = "Go to config";
           }

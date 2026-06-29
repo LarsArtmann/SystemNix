@@ -7,14 +7,25 @@ _: {
     ...
   }: let
     cfg = config.services.gatus-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkHttpCheck mkSecretCheck ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      mkHttpCheck
+      mkSecretCheck
+      ports
+      ;
 
     nodePort = config.services.prometheus.exporters.node.port;
 
     checkGatusEnv = mkSecretCheck pkgs {
       name = "gatus-env";
       secretPath = config.sops.templates."gatus-env".path;
-      message = "gatus: environment file is missing or empty (${config.sops.templates."gatus-env".path}) — Discord alerting will fail";
+      message = "gatus: environment file is missing or empty (${
+        config.sops.templates."gatus-env".path
+      }) — Discord alerting will fail";
     };
 
     discordAlert = desc: [

@@ -8,7 +8,15 @@ _: {
   }: let
     cfg = config.services.dns-blocker;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceOneshotDefaults onFailure mkStateDir ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      serviceOneshotDefaults
+      onFailure
+      mkStateDir
+      ports
+      ;
 
     categoriesJSON = pkgs.writeText "dnsblockd-categories.json" (builtins.toJSON cfg.categories);
 
@@ -17,7 +25,10 @@ _: {
     # dnsblockd never starts before its listen address exists.
     attachIPScript = pkgs.writeShellApplication {
       name = "dnsblockd-attach-ip";
-      runtimeInputs = [pkgs.iproute2 pkgs.gnugrep];
+      runtimeInputs = [
+        pkgs.iproute2
+        pkgs.gnugrep
+      ];
       text = ''
         if ip addr show "${cfg.blockInterface}" | grep -qF "${cfg.blockIP}/${toString cfg.blockIPPrefix}"; then
           echo "IP ${cfg.blockIP} already attached to ${cfg.blockInterface}"
@@ -55,9 +66,11 @@ _: {
 
     # Run processor at build time — dnsblockd process subcommand
     processedBlocklist =
-      pkgs.runCommand "dns-blocker-processed" {
+      pkgs.runCommand "dns-blocker-processed"
+      {
         nativeBuildInputs = [pkgs.dnsblockd];
-      } ''
+      }
+      ''
         mkdir -p $out
         dnsblockd process \
           ${cfg.blockIP} \
@@ -113,22 +126,24 @@ _: {
       };
 
       blocklists = mkOption {
-        type = types.listOf (types.submodule {
-          options = {
-            name = mkOption {
-              type = types.str;
-              description = "Blocklist name";
+        type = types.listOf (
+          types.submodule {
+            options = {
+              name = mkOption {
+                type = types.str;
+                description = "Blocklist name";
+              };
+              url = mkOption {
+                type = types.str;
+                description = "URL to fetch hosts file";
+              };
+              hash = mkOption {
+                type = types.str;
+                description = "SHA256 hash of fetched file";
+              };
             };
-            url = mkOption {
-              type = types.str;
-              description = "URL to fetch hosts file";
-            };
-            hash = mkOption {
-              type = types.str;
-              description = "SHA256 hash of fetched file";
-            };
-          };
-        });
+          }
+        );
         default = [];
         description = "Blocklists to fetch (hosts format)";
       };
@@ -178,7 +193,10 @@ _: {
 
         settings = {
           server = {
-            interface = ["0.0.0.0" "::0"];
+            interface = [
+              "0.0.0.0"
+              "::0"
+            ];
             do-ip6 = false;
             access-control = [
               "127.0.0.0/8 allow"
@@ -281,14 +299,23 @@ _: {
           [
             (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
           ]
-          ++ lib.optional (!cfg.tempAllowAll) ''f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - # dnsblockd temp allowlist placeholder''
-          ++ lib.optional cfg.tempAllowAll ''            f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
+          ++ lib.optional (!cfg.tempAllowAll) "f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - # dnsblockd temp allowlist placeholder"
+          ++ lib.optional cfg.tempAllowAll ''
+            f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
           '';
 
         services.dnsblockd = {
           description = "DNS Block Page Server";
-          after = ["dnsblockd-attach-ip.service" "unbound.service" "sops-nix.service"];
-          wants = ["dnsblockd-attach-ip.service" "sops-nix.service" "unbound.service"];
+          after = [
+            "dnsblockd-attach-ip.service"
+            "unbound.service"
+            "sops-nix.service"
+          ];
+          wants = [
+            "dnsblockd-attach-ip.service"
+            "sops-nix.service"
+            "unbound.service"
+          ];
           wantedBy = ["multi-user.target"];
           inherit onFailure;
           unitConfig = {
@@ -330,7 +357,10 @@ _: {
             );
             dnsblockdWrapper = pkgs.writeShellApplication {
               name = "dnsblockd-start";
-              runtimeInputs = [pkgs.coreutils pkgs.dnsblockd];
+              runtimeInputs = [
+                pkgs.coreutils
+                pkgs.dnsblockd
+              ];
               text = ''
                 for i in $(seq 1 60); do
                   if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
@@ -361,20 +391,30 @@ _: {
               StateDirectory = "dnsblockd";
               WorkingDirectory = "/var/lib/dnsblockd";
               SupplementaryGroups = ["unbound"];
-              RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"];
+              RestrictAddressFamilies = [
+                "AF_INET"
+                "AF_INET6"
+                "AF_NETLINK"
+              ];
             };
         };
 
         user.services.dnsblockd-cert-import = {
           description = "Import dnsblockd CA cert into NSS database";
           wantedBy = ["graphical-session.target"];
-          after = ["sops-nix.service" "graphical-session.target"];
+          after = [
+            "sops-nix.service"
+            "graphical-session.target"
+          ];
           partOf = ["graphical-session.target"];
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
           };
-          path = [pkgs.nss.tools pkgs.coreutils];
+          path = [
+            pkgs.nss.tools
+            pkgs.coreutils
+          ];
           script = ''
             CA_CERT="${config.sops.secrets.dnsblockd_ca_cert.path}"
             while [ ! -s "$CA_CERT" ]; do sleep 1; done

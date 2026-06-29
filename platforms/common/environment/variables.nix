@@ -34,7 +34,11 @@
   };
 in {
   # Shell configuration (platform-agnostic)
-  environment.shells = with pkgs; [fish zsh bash];
+  environment.shells = with pkgs; [
+    fish
+    zsh
+    bash
+  ];
 
   # Environment variables
   environment.variables = commonEnvVars;

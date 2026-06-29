@@ -8,15 +8,28 @@ _: {
   }: let
     cfg = config.services.niri-desktop;
     niriPkg = pkgs.niri-unstable;
-    inherit (import ../../../lib/default.nix lib) harden hardenUser onFailure mkStateDir;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      hardenUser
+      onFailure
+      mkStateDir
+      ;
     drmHealthcheck = pkgs.writeShellApplication {
       name = "niri-drm-healthcheck";
-      runtimeInputs = with pkgs; [procps systemd];
+      runtimeInputs = with pkgs; [
+        procps
+        systemd
+      ];
       text = builtins.readFile ../../../scripts/niri-drm-healthcheck.sh;
     };
     displayWatchdog = pkgs.writeShellApplication {
       name = "display-watchdog";
-      runtimeInputs = with pkgs; [procps systemd kbd];
+      runtimeInputs = with pkgs; [
+        procps
+        systemd
+        kbd
+      ];
       text = builtins.readFile ../../../scripts/display-watchdog.sh;
     };
   in {
@@ -45,15 +58,14 @@ _: {
                 if name == "niri.service"
                 then let
                   noBindsTo =
-                    builtins.replaceStrings
-                    ["BindsTo=graphical-session.target"]
-                    ["Wants=graphical-session.target"]
+                    builtins.replaceStrings ["BindsTo=graphical-session.target"] ["Wants=graphical-session.target"]
                     baseText;
                   unitLimits =
                     builtins.replaceStrings
                     ["[Unit]"]
                     [
-                      ''                          [Unit]
+                      ''
+                          [Unit]
                         StartLimitBurst=3
                         StartLimitIntervalSec=60''
                     ]
@@ -63,13 +75,22 @@ _: {
                   + "\nRestart=always\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\n"
                   + "\n[Install]\nWantedBy=graphical-session.target\n"
                 else baseText;
-            in {inherit text;};
+            in {
+              inherit text;
+            };
           in
-            lib.listToAttrs (map (name: {
+            lib.listToAttrs (
+              map
+              (name: {
                 inherit name;
                 value = mkUnit name;
-              }) (lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name)
-                (builtins.attrNames unitFiles)));
+              })
+              (
+                lib.filter (name: lib.hasSuffix ".service" name || lib.hasSuffix ".target" name) (
+                  builtins.attrNames unitFiles
+                )
+              )
+            );
 
           services.niri-drm-healthcheck = {
             description = "Detect niri DRM zombie state and restart niri";
@@ -106,7 +127,10 @@ _: {
               }
               // harden {
                 MemoryMax = "512M";
-                ReadWritePaths = ["/sys/class/drm" "/var/lib/display-watchdog"];
+                ReadWritePaths = [
+                  "/sys/class/drm"
+                  "/var/lib/display-watchdog"
+                ];
               };
           };
 
@@ -118,7 +142,11 @@ _: {
                 ExecStart = let
                   healthMetricsScript = pkgs.writeShellApplication {
                     name = "niri-health-metrics";
-                    runtimeInputs = [pkgs.procps pkgs.systemd pkgs.gawk];
+                    runtimeInputs = [
+                      pkgs.procps
+                      pkgs.systemd
+                      pkgs.gawk
+                    ];
                     text = ''
                       OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
                       TMP="''${OUT}.tmp"

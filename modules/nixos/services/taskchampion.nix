@@ -6,7 +6,14 @@ _: {
     ...
   }: let
     cfg = config.services.taskchampion-config;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      ports
+      ;
   in {
     options.services.taskchampion-config = {
       enable = lib.mkEnableOption "TaskChampion sync server with SystemNix configuration";
@@ -29,9 +36,7 @@ _: {
         inherit onFailure;
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
-        serviceConfig =
-          harden {}
-          // serviceDefaults {};
+        serviceConfig = harden {} // serviceDefaults {};
       };
     };
   };

@@ -6,13 +6,15 @@
   keepassxcPkg = pkgs.keepassxc;
 
   # Chromium manifest as a separate file to avoid eval-time cycles
-  chromiumManifest = pkgs.writeText "keepassxc-chromium-manifest" (builtins.toJSON {
-    name = "org.keepassxc.keepassxc_browser";
-    description = "KeePassXC integration with native messaging support";
-    path = "${keepassxcPkg}/bin/keepassxc-proxy";
-    type = "stdio";
-    allowed_origins = ["chrome-extension://oboonakemofpalcgghocfoadofidjkkk/"];
-  });
+  chromiumManifest = pkgs.writeText "keepassxc-chromium-manifest" (
+    builtins.toJSON {
+      name = "org.keepassxc.keepassxc_browser";
+      description = "KeePassXC integration with native messaging support";
+      path = "${keepassxcPkg}/bin/keepassxc-proxy";
+      type = "stdio";
+      allowed_origins = ["chrome-extension://oboonakemofpalcgghocfoadofidjkkk/"];
+    }
+  );
 
   # Wrapper that provides Chromium native messaging manifests.
   # nixpkgs keepassxc only ships $out/lib/mozilla/ (Firefox format).

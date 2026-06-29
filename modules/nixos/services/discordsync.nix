@@ -6,7 +6,14 @@
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      ports
+      ;
     cfg = config.services.discordsync;
     inherit (lib) types;
     discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -71,17 +78,28 @@
         description = "DiscordSync backup service";
       };
 
-      system.activationScripts."discordsync-setup" = lib.stringAfter (["users"] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets") ''
-        mkdir -p ${cfg.stateDir}/attachments
-        chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
-        chmod 2770 ${cfg.stateDir} ${cfg.stateDir}/attachments
-      '';
+      system.activationScripts."discordsync-setup" =
+        lib.stringAfter
+        (["users"] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets")
+        ''
+          mkdir -p ${cfg.stateDir}/attachments
+          chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
+          chmod 2770 ${cfg.stateDir} ${cfg.stateDir}/attachments
+        '';
 
       systemd.services.discordsync = {
         description = "DiscordSync — Continuous Discord Backup";
         wantedBy = ["multi-user.target"];
-        after = ["network-online.target" "sops-nix.service" "unbound.service"];
-        wants = ["network-online.target" "sops-nix.service" "unbound.service"];
+        after = [
+          "network-online.target"
+          "sops-nix.service"
+          "unbound.service"
+        ];
+        wants = [
+          "network-online.target"
+          "sops-nix.service"
+          "unbound.service"
+        ];
         inherit onFailure;
         startLimitIntervalSec = 300;
         startLimitBurst = 5;
@@ -106,8 +124,9 @@
                 }"
               ]
               ++ lib.optional (cfg.gcsBucket != null) "GCS_BUCKET=${cfg.gcsBucket}"
-              ++ lib.optional (cfg.gcsBucket != null)
-              "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets.discordsync_gcs_credentials.path}";
+              ++ lib.optional (
+                cfg.gcsBucket != null
+              ) "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets.discordsync_gcs_credentials.path}";
             EnvironmentFile = [sopsEnvPath];
             KillMode = "mixed";
             KillSignal = "SIGTERM";

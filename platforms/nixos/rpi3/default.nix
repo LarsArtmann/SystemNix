@@ -6,7 +6,14 @@
   ...
 }: let
   blocklists = import ../../common/dns-blocklists.nix;
-  inherit (config.networking.local) lanIP piIP virtualIP gateway subnet;
+  inherit
+    (config.networking.local)
+    lanIP
+    piIP
+    virtualIP
+    gateway
+    subnet
+    ;
   interface = "eth0";
   domain = "home.lan";
 
@@ -34,9 +41,11 @@
   );
 
   processedBlocklist =
-    pkgs.runCommand "dns-blocker-processed" {
+    pkgs.runCommand "dns-blocker-processed"
+    {
       nativeBuildInputs = [pkgs.dnsblockd];
-    } ''
+    }
+    ''
       mkdir -p $out
       dnsblockd process \
         "0.0.0.0" \
@@ -62,7 +71,11 @@ in {
 
   boot = {
     tmp.cleanOnBoot = true;
-    initrd.availableKernelModules = ["usbhid" "usb_storage" "vc4"];
+    initrd.availableKernelModules = [
+      "usbhid"
+      "usb_storage"
+      "vc4"
+    ];
     zfs.forceImportRoot = false;
   };
 
@@ -86,7 +99,10 @@ in {
     defaultGateway = gateway;
     firewall = {
       enable = true;
-      allowedTCPPorts = [22 53];
+      allowedTCPPorts = [
+        22
+        53
+      ];
       allowedUDPPorts = [53];
     };
   };
@@ -107,7 +123,10 @@ in {
 
       settings = {
         server = {
-          interface = ["0.0.0.0" "::0"];
+          interface = [
+            "0.0.0.0"
+            "::0"
+          ];
           access-control = [
             "127.0.0.0/8 allow"
             "::1/128 allow"
@@ -127,8 +146,9 @@ in {
             ++ map (d: ''"${d}" always_nxdomain'') blocklists.extraDomains
             ++ [''"${domain}." static''];
           local-data =
-            map
-            (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'')
+            map (
+              subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"''
+            )
             blocklists.localSubdomains;
         };
       };

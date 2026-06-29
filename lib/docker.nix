@@ -14,9 +14,16 @@
     extraHarden ? {},
     extraServiceConfig ? {},
     preStartCommands ? "",
-    after ? ["docker.service" "sops-nix.service" "unbound.service"],
+    after ? [
+      "docker.service"
+      "sops-nix.service"
+      "unbound.service"
+    ],
     requires ? ["docker.service"],
-    wants ? ["sops-nix.service" "unbound.service"],
+    wants ? [
+      "sops-nix.service"
+      "unbound.service"
+    ],
     extraTmpfiles ? [],
     backup ? null,
     imagePull ? null,
@@ -32,7 +39,9 @@
     composeCmd = lib.getExe pkgs.docker-compose;
   in {
     tmpfiles =
-      ["d ${stateDir} 0755 root root -"]
+      [
+        "d ${stateDir} 0755 root root -"
+      ]
       ++ lib.optional (backup != null) "d ${stateDir}/backup 0755 root root -"
       ++ extraTmpfiles;
 
@@ -40,16 +49,15 @@
       {
         ${name} = {
           description = name;
-          after =
-            after
-            ++ lib.optional (imagePull != null) "${name}-pull.service";
+          after = after ++ lib.optional (imagePull != null) "${name}-pull.service";
           inherit requires;
-          wants =
-            wants
-            ++ lib.optional (imagePull != null) "${name}-pull.service";
+          wants = wants ++ lib.optional (imagePull != null) "${name}-pull.service";
           wantedBy = ["multi-user.target"];
           inherit onFailure;
-          path = [pkgs.docker pkgs.docker-compose];
+          path = [
+            pkgs.docker
+            pkgs.docker-compose
+          ];
 
           preStart = ''
             ${composeCmd} -f ${composeFile} down --remove-orphans || true
@@ -82,9 +90,16 @@
             name = "${name}-pull";
             value = {
               description = "Pull ${name} Docker Image";
-              after = ["docker.service" "network-online.target" "unbound.service"];
+              after = [
+                "docker.service"
+                "network-online.target"
+                "unbound.service"
+              ];
               requires = ["docker.service"];
-              wants = ["network-online.target" "unbound.service"];
+              wants = [
+                "network-online.target"
+                "unbound.service"
+              ];
               wantedBy = ["${name}.service"];
               path = [pkgs.docker];
               serviceConfig = {

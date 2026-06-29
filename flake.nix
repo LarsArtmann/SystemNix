@@ -2,7 +2,11 @@
   description = "Lars nix-darwin + NixOS system flake - Modular Architecture with flake-parts";
 
   nixConfig = {
-    extra-experimental-features = ["nix-command" "flakes" "pipe-operators"];
+    extra-experimental-features = [
+      "nix-command"
+      "flakes"
+      "pipe-operators"
+    ];
     warn-dirty = false;
   };
 
@@ -427,7 +431,13 @@
   }: let
     lib = nixpkgs.lib;
     overlays = import ./overlays inputs;
-    inherit (overlays) sharedOverlays linuxOnlyOverlays disableTests pythonTest;
+    inherit
+      (overlays)
+      sharedOverlays
+      linuxOnlyOverlays
+      disableTests
+      pythonTest
+      ;
 
     # Auto-discover service modules from modules/nixos/services/
     # Convention: filename (minus .nix) IS the module name.
@@ -442,8 +452,9 @@
         module = lib.removeSuffix ".nix" file;
       })
       (
-        lib.filterAttrs
-        (n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n))
+        lib.filterAttrs (
+          n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)
+        )
         serviceDirContents
       );
 
@@ -489,7 +500,10 @@
       };
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = ["aarch64-darwin" "x86_64-linux"];
+      systems = [
+        "aarch64-darwin"
+        "x86_64-linux"
+      ];
 
       # Import service modules — registered as flake-parts modules (inputs.self.nixosModules.*)
       imports = serviceModulePaths;
@@ -505,7 +519,7 @@
         _module.args.pkgs = import nixpkgs {
           inherit system;
           config.allowUnfree = true;
-          config.allowBroken = false; ## <-- THIS MUST ALWAYS BE FALSE!
+          config.allowBroken = false; # # <-- THIS MUST ALWAYS BE FALSE!
           overlays =
             sharedOverlays
             ++ [disableTests]
@@ -518,10 +532,25 @@
         packages =
           (mkLarsPackages system)
           // {
-            inherit (pkgs) aw-watcher-utilization govalid jscpd sqlc;
+            inherit
+              (pkgs)
+              aw-watcher-utilization
+              govalid
+              jscpd
+              sqlc
+              ;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
-            inherit (pkgs) openaudible dnsblockd monitor365 netwatch emeet-pixyd file-and-image-renamer crush-daily;
+            inherit
+              (pkgs)
+              openaudible
+              dnsblockd
+              monitor365
+              netwatch
+              emeet-pixyd
+              file-and-image-renamer
+              crush-daily
+              ;
           };
 
         # Development shells for different program categories
@@ -554,9 +583,11 @@
         checks =
           {
             statix =
-              pkgs.runCommand "statix-check" {
+              pkgs.runCommand "statix-check"
+              {
                 nativeBuildInputs = [pkgs.statix];
-              } ''
+              }
+              ''
                 cd ${./.}
                 statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
                 if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
@@ -566,36 +597,46 @@
               '';
 
             deadnix =
-              pkgs.runCommand "deadnix-check" {
+              pkgs.runCommand "deadnix-check"
+              {
                 nativeBuildInputs = [pkgs.deadnix];
-              } ''
+              }
+              ''
                 cd ${./.}
                 deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
               '';
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux (
-            import ./tests {inherit pkgs lib nixpkgs system;}
+            import ./tests {
+              inherit
+                pkgs
+                lib
+                nixpkgs
+                system
+                ;
+            }
           );
 
         apps = let
           mkApp = name: description: runtimeInputs: scriptPath: {
             type = "app";
-            program = "${pkgs.writeShellApplication {
-              inherit name runtimeInputs;
-              text = builtins.readFile scriptPath;
-            }}/bin/${name}";
+            program = "${
+              pkgs.writeShellApplication {
+                inherit name runtimeInputs;
+                text = builtins.readFile scriptPath;
+              }
+            }/bin/${name}";
             meta.description = description;
           };
         in
           {
             deploy =
-              mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks"
-              [pkgs.nh pkgs.systemd]
+              mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
+                pkgs.nh
+                pkgs.systemd
+              ]
               ./scripts/deploy.sh;
-            validate =
-              mkApp "validate" "Validate flake without building"
-              [pkgs.nix]
-              ./scripts/validate.sh;
+            validate = mkApp "validate" "Validate flake without building" [pkgs.nix] ./scripts/validate.sh;
             pre-deploy-check =
               mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
               [pkgs.nix pkgs.jq pkgs.systemd]
@@ -608,27 +649,33 @@
               ./scripts/dns-diagnostics.sh;
             dms-restart = {
               type = "app";
-              program = "${pkgs.writeShellApplication {
-                name = "dms-restart";
-                runtimeInputs = [pkgs.systemd];
-                text = "systemctl --user restart dms.service && echo 'DMS restarted'";
-              }}/bin/dms-restart";
+              program = "${
+                pkgs.writeShellApplication {
+                  name = "dms-restart";
+                  runtimeInputs = [pkgs.systemd];
+                  text = "systemctl --user restart dms.service && echo 'DMS restarted'";
+                }
+              }/bin/dms-restart";
               meta.description = "Restart DankMaterialShell desktop shell";
             };
             dms-locks = {
               type = "app";
-              program = "${pkgs.writeShellApplication {
-                name = "dms-locks";
-                text = "dms ipc lock lock 2>/dev/null || exec swaylock";
-              }}/bin/dms-locks";
+              program = "${
+                pkgs.writeShellApplication {
+                  name = "dms-locks";
+                  text = "dms ipc lock lock 2>/dev/null || exec swaylock";
+                }
+              }/bin/dms-locks";
               meta.description = "Lock screen via DMS IPC (fallback: swaylock)";
             };
             dms-wallpaper-next = {
               type = "app";
-              program = "${pkgs.writeShellApplication {
-                name = "dms-wallpaper-next";
-                text = "dms ipc call wallpaper next";
-              }}/bin/dms-wallpaper-next";
+              program = "${
+                pkgs.writeShellApplication {
+                  name = "dms-wallpaper-next";
+                  text = "dms ipc call wallpaper next";
+                }
+              }/bin/dms-wallpaper-next";
               meta.description = "Cycle to next wallpaper via DMS IPC";
             };
           };
@@ -773,9 +820,7 @@
               nixpkgs = {
                 hostPlatform = "aarch64-linux";
                 config.allowUnfree = true;
-                overlays =
-                  [inputs.nur.overlays.default]
-                  ++ linuxOnlyOverlays;
+                overlays = [inputs.nur.overlays.default] ++ linuxOnlyOverlays;
               };
             }
             home-manager.nixosModules.home-manager

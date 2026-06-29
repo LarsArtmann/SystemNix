@@ -14,7 +14,10 @@
     networkmanager = {
       enable = true;
       wifi.backend = "iwd";
-      unmanaged = ["eno1" "interface-name:eno1"];
+      unmanaged = [
+        "eno1"
+        "interface-name:eno1"
+      ];
       dns = "none"; # Keep unbound as the sole resolver
     };
     enableIPv6 = true;
@@ -23,8 +26,16 @@
     firewall = {
       enable = true;
       trustedInterfaces = ["eno1"];
-      allowedTCPPorts = [22 53 80 443];
-      allowedUDPPorts = [53 853]; # 53=plain DNS + DoQ, 853=DoQ-over-QUIC
+      allowedTCPPorts = [
+        22
+        53
+        80
+        443
+      ];
+      allowedUDPPorts = [
+        53
+        853
+      ]; # 53=plain DNS + DoQ, 853=DoQ-over-QUIC
     };
 
     # Static IP configuration

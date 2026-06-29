@@ -11,7 +11,13 @@ _: {
     serverKey = config.sops.secrets.dnsblockd_server_key.path;
     authPort = config.services.pocket-id-config.port;
     proxyPort = config.services.oauth2-proxy-config.port;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      ports
+      ;
 
     bindAddress =
       if config.services.dns-blocker.enable && config.services.dns-blocker.blockInterface != "lo"
@@ -98,11 +104,22 @@ _: {
           };
       };
 
-      networking.firewall.allowedTCPPorts = [80 443];
+      networking.firewall.allowedTCPPorts = [
+        80
+        443
+      ];
 
       systemd.services.caddy = {
-        after = ["pocket-id.service" "oauth2-proxy.service" "sops-nix.service"];
-        wants = ["pocket-id.service" "oauth2-proxy.service" "sops-nix.service"];
+        after = [
+          "pocket-id.service"
+          "oauth2-proxy.service"
+          "sops-nix.service"
+        ];
+        wants = [
+          "pocket-id.service"
+          "oauth2-proxy.service"
+          "sops-nix.service"
+        ];
         inherit onFailure;
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
@@ -115,7 +132,10 @@ _: {
           }
           // serviceDefaults {}
           // {
-            ReadWritePaths = lib.mkForce ["/var/lib/caddy" "/var/log/caddy"];
+            ReadWritePaths = lib.mkForce [
+              "/var/lib/caddy"
+              "/var/log/caddy"
+            ];
             OOMScoreAdjust = lib.mkForce (-500);
             AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
           };

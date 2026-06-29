@@ -155,7 +155,11 @@ in {
           ExecStart = let
             taskwarriorBackup = pkgs.writeShellApplication {
               name = "taskwarrior-backup";
-              runtimeInputs = [pkgs.taskwarrior3 pkgs.coreutils pkgs.findutils];
+              runtimeInputs = [
+                pkgs.taskwarrior3
+                pkgs.coreutils
+                pkgs.findutils
+              ];
               text = ''
                 BACKUP_DIR="$HOME/backups/taskwarrior"
                 mkdir -p "$BACKUP_DIR"

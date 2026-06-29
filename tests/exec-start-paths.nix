@@ -20,10 +20,17 @@
     then null
     else builtins.head m;
 
-  execFields = ["ExecStart" "ExecStartPre" "ExecStartPost" "ExecStop" "ExecReload"];
+  execFields = [
+    "ExecStart"
+    "ExecStartPre"
+    "ExecStartPost"
+    "ExecStop"
+    "ExecReload"
+  ];
 
   getExecValues = svc:
-    lib.concatLists (map (
+    lib.concatLists (
+      map (
         field: let
           raw = svc.serviceConfig.${field} or null;
         in
@@ -35,26 +42,25 @@
               then lib.filter (x: x != null && builtins.isString x) raw
               else lib.filter builtins.isString [raw];
           in
-            lib.filter (x: x.path != null)
-            (map (item: {
+            lib.filter (x: x.path != null) (
+              map (item: {
                 inherit field;
                 path = extractBinPath item;
               })
-              items)
+              items
+            )
       )
-      execFields);
+      execFields
+    );
 
   entries = lib.concatLists (
     lib.mapAttrsToList (
-      name: svc:
-        map (entry: entry // {inherit name;}) (getExecValues svc)
+      name: svc: map (entry: entry // {inherit name;}) (getExecValues svc)
     )
     nixosConfig.systemd.services
   );
 
-  storePaths =
-    lib.filter (p: lib.hasPrefix "/nix/store/" p)
-    (map (e: e.path) entries);
+  storePaths = lib.filter (p: lib.hasPrefix "/nix/store/" p) (map (e: e.path) entries);
 in
   builtins.toJSON {
     total = builtins.length storePaths;

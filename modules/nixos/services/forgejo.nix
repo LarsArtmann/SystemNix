@@ -9,7 +9,13 @@ _: {
   }: let
     inherit (config.users) primaryUser;
     forgejoPkg = config.services.forgejo.package;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      ports
+      ;
     forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
     forgejoUrl = "http://localhost:${toString forgejoPort}";
     stateDir = config.services.forgejo.stateDir;
@@ -28,7 +34,11 @@ _: {
 
     mirrorGithubScript = pkgs.writeShellApplication {
       name = "forgejo-mirror-github";
-      runtimeInputs = [pkgs.curl pkgs.jq pkgs.gh];
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.jq
+        pkgs.gh
+      ];
       text = ''
         REPOS_FILE=$(mktemp)
         trap 'rm -f "$REPOS_FILE"' EXIT
@@ -129,7 +139,11 @@ _: {
 
     mirrorStarredScript = pkgs.writeShellApplication {
       name = "forgejo-mirror-starred";
-      runtimeInputs = [pkgs.curl pkgs.jq pkgs.gh];
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.jq
+        pkgs.gh
+      ];
       text = ''
         STARRED_FILE=$(mktemp)
         trap 'rm -f "$STARRED_FILE"' EXIT
@@ -257,7 +271,10 @@ _: {
 
     adminSetup = pkgs.writeShellApplication {
       name = "forgejo-admin-setup";
-      runtimeInputs = [pkgs.coreutils pkgs.gnugrep];
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.gnugrep
+      ];
       text = ''
         ADMIN_USER="${primaryUser}"
         ADMIN_EMAIL="${primaryUser}@local"
@@ -286,7 +303,11 @@ _: {
 
     tokenGen = pkgs.writeShellApplication {
       name = "forgejo-token-gen";
-      runtimeInputs = [pkgs.curl pkgs.gnugrep pkgs.coreutils];
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.gnugrep
+        pkgs.coreutils
+      ];
       text = ''
         ADMIN_USER="${primaryUser}"
         TOKEN_FILE="${stateDir}/.admin-token.env"
@@ -328,7 +349,10 @@ _: {
 
     genRunnerToken = pkgs.writeShellApplication {
       name = "forgejo-gen-runner-token";
-      runtimeInputs = [pkgs.curl pkgs.util-linux];
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.util-linux
+      ];
       text = ''
         TOKEN_FILE="/run/forgejo-runner/token"
         mkdir -p "$(dirname "$TOKEN_FILE")"
@@ -352,7 +376,10 @@ _: {
 
     registerRunner = pkgs.writeShellApplication {
       name = "forgejo-register-runner";
-      runtimeInputs = [pkgs.coreutils pkgs.forgejo-runner];
+      runtimeInputs = [
+        pkgs.coreutils
+        pkgs.forgejo-runner
+      ];
       text = ''
         export INSTANCE_DIR="$STATE_DIRECTORY/${hostName}"
         mkdir -vp "$INSTANCE_DIR"
@@ -491,11 +518,19 @@ _: {
 
         services.forgejo-github-sync = {
           description = "Sync all GitHub repos to Forgejo";
-          after = ["forgejo.service" "forgejo-generate-token.service" "network-online.target"];
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+            "network-online.target"
+          ];
           wants = ["network-online.target"];
           requires = ["forgejo.service"];
           inherit onFailure;
-          path = [pkgs.curl pkgs.jq pkgs.gh];
+          path = [
+            pkgs.curl
+            pkgs.jq
+            pkgs.gh
+          ];
           serviceConfig =
             {
               Type = "oneshot";

@@ -19,7 +19,10 @@
 
   ssh-suspend-guard = pkgs.writeShellApplication {
     name = "ssh-suspend-guard";
-    runtimeInputs = [pkgs.systemd pkgs.procps];
+    runtimeInputs = [
+      pkgs.systemd
+      pkgs.procps
+    ];
     text = ''
       POLL_INTERVAL=30
       inhibit_pid=""
@@ -60,7 +63,11 @@
 
   dms-wallpaper-init = pkgs.writeShellApplication {
     name = "dms-wallpaper-init";
-    runtimeInputs = [dmsPkg pkgs.coreutils pkgs.findutils];
+    runtimeInputs = [
+      dmsPkg
+      pkgs.coreutils
+      pkgs.findutils
+    ];
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
@@ -101,8 +108,21 @@ in {
       prefer-no-csd = true;
 
       spawn-at-startup = [
-        {command = ["ghostty" "-e" "sudo" "btop"];}
-        {command = ["ghostty" "-e" "nvtop"];}
+        {
+          command = [
+            "ghostty"
+            "-e"
+            "sudo"
+            "btop"
+          ];
+        }
+        {
+          command = [
+            "ghostty"
+            "-e"
+            "nvtop"
+          ];
+        }
       ];
 
       screenshot-path = "~/Pictures/screenshots/%Y-%m-%d %H-%M-%S.png";
@@ -170,7 +190,9 @@ in {
           {proportion = 0.66667;}
         ];
 
-        default-column-width = {proportion = 0.5;};
+        default-column-width = {
+          proportion = 0.5;
+        };
 
         focus-ring = {
           width = 2;
@@ -210,7 +232,11 @@ in {
       };
 
       binds = let
-        sh = cmd: ["sh" "-c" cmd];
+        sh = cmd: [
+          "sh"
+          "-c"
+          cmd
+        ];
         screenshot = grimArgs: "mkdir -p ~/Pictures/screenshots && grim ${grimArgs} /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
       in {
         "Mod+Return".action.spawn = ["ghostty"];
@@ -275,12 +301,23 @@ in {
         "Mod+Shift+Page_Up".action.move-column-to-workspace-up = {};
         "Mod+Shift+Page_Down".action.move-column-to-workspace-down = {};
 
-        "Mod+D".action.spawn = ["rofi" "-show" "drun"];
-        "Mod+Space".action.spawn = ["rofi" "-show" "drun"];
-        "Mod+Shift+Slash".action.spawn = sh "niri msg binds | rofi -dmenu -p 'Keybindings:' -theme-str 'window {width: 80%; height: 80%;}'";
-        "Alt+C".action.spawn = sh "cliphist list | rofi -dmenu -p 'Clipboard:' -kb-delete-entry 'Ctrl+Delete' -theme-str 'window {width: 50%;} listview {columns: 1; lines: 12; scrollbar: true; } element {orientation: horizontal; padding: 8px; spacing: 8px; } element-text {horizontal-align: 0.0; vertical-align: 0.5; } scrollbar {enabled: true; width: 4px; padding: 0; } scrollbar-handle {background-color: @selected; border-radius: 2px; }' | cliphist decode | wl-copy";
+        "Mod+D".action.spawn = [
+          "rofi"
+          "-show"
+          "drun"
+        ];
+        "Mod+Space".action.spawn = [
+          "rofi"
+          "-show"
+          "drun"
+        ];
+        "Mod+Shift+Slash".action.spawn =
+          sh "niri msg binds | rofi -dmenu -p 'Keybindings:' -theme-str 'window {width: 80%; height: 80%;}'";
+        "Alt+C".action.spawn =
+          sh "cliphist list | rofi -dmenu -p 'Clipboard:' -kb-delete-entry 'Ctrl+Delete' -theme-str 'window {width: 50%;} listview {columns: 1; lines: 12; scrollbar: true; } element {orientation: horizontal; padding: 8px; spacing: 8px; } element-text {horizontal-align: 0.0; vertical-align: 0.5; } scrollbar {enabled: true; width: 4px; padding: 0; } scrollbar-handle {background-color: @selected; border-radius: 2px; }' | cliphist decode | wl-copy";
         "Mod+period".action.spawn = sh "rofi -modi emoji -show emoji -theme-str 'window {width: 40%;}'";
-        "Mod+Shift+C".action.spawn = sh "rofi -show calc -modi calc -no-show-match -no-sort -theme-str 'window {width: 30%;}'";
+        "Mod+Shift+C".action.spawn =
+          sh "rofi -show calc -modi calc -no-show-match -no-sort -theme-str 'window {width: 30%;}'";
         # dunstctl keybind removed — DankMaterialShell provides notification center
         "Mod+Shift+E".action.spawn = ["emacs"];
         "Mod+Shift+B".action.spawn = ["firefox"];
@@ -374,8 +411,12 @@ in {
             y = 0.15;
             relative-to = "top-left";
           };
-          default-column-width = {proportion = 0.5;};
-          default-window-height = {proportion = 0.7;};
+          default-column-width = {
+            proportion = 0.5;
+          };
+          default-window-height = {
+            proportion = 0.7;
+          };
         }
         {
           matches = [
@@ -412,7 +453,9 @@ in {
             {app-id = "^Firefox$";}
           ];
           open-on-workspace = "browser";
-          default-column-width = {proportion = 0.75;};
+          default-column-width = {
+            proportion = 0.75;
+          };
         }
         {
           matches = [
@@ -422,12 +465,16 @@ in {
             {app-id = "^helium$";}
           ];
           open-on-workspace = "main";
-          default-column-width = {proportion = 0.75;};
+          default-column-width = {
+            proportion = 0.75;
+          };
         }
         {
           matches = [{app-id = "^emacs$";}];
           open-on-workspace = "dev";
-          default-column-width = {proportion = 0.66667;};
+          default-column-width = {
+            proportion = 0.66667;
+          };
         }
         {
           matches = [

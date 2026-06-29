@@ -7,7 +7,16 @@ _: {
     ...
   }: let
     cfg = config.services.photomap;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkStateDir ports images;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      mkStateDir
+      ports
+      images
+      ;
     immichMediaDir = config.services.immich.mediaLocation;
     immichUploadDir = "${immichMediaDir}/upload";
     immichLibraryDir = "${immichMediaDir}/library";
@@ -55,9 +64,15 @@ _: {
 
       systemd.services.podman-photomap = {
         inherit onFailure;
-        after = ["immich-server.service" "postgresql.service"];
+        after = [
+          "immich-server.service"
+          "postgresql.service"
+        ];
         wants = ["immich-server.service"];
-        requires = ["immich-server.service" "postgresql.service"];
+        requires = [
+          "immich-server.service"
+          "postgresql.service"
+        ];
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
         preStart = ''
@@ -66,12 +81,17 @@ _: {
             chmod 644 ${photomapDataDir}/config/config.yaml
           fi
         '';
-        serviceConfig =
-          harden {MemoryMax = "512M";}
-          // serviceDefaults {RestartSec = "10s";};
+        serviceConfig = harden {MemoryMax = "512M";} // serviceDefaults {RestartSec = "10s";};
       };
 
-      systemd.tmpfiles.rules = map (sub: mkStateDir "${photomapDataDir}${sub}" "0755" "root" "root") ["" "/config" "/data" "/index" "/index/upload" "/index/library"];
+      systemd.tmpfiles.rules = map (sub: mkStateDir "${photomapDataDir}${sub}" "0755" "root" "root") [
+        ""
+        "/config"
+        "/data"
+        "/index"
+        "/index/upload"
+        "/index/library"
+      ];
     };
   };
 }

@@ -9,7 +9,11 @@ _: {
     cfg = config.services.default-services;
   in {
     options.services.default-services = {
-      enable = lib.mkEnableOption "Default system services (Docker + Nix GC timer)" // {default = true;};
+      enable =
+        lib.mkEnableOption "Default system services (Docker + Nix GC timer)"
+        // {
+          default = true;
+        };
     };
 
     config = lib.mkIf cfg.enable {

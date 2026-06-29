@@ -9,7 +9,13 @@ _: {
     cfg = config.services.monitor365;
     inherit (config.users) primaryUser;
     sd = import ../../../lib/default.nix lib;
-    inherit (sd) serviceDefaultsUser hardenUser mkStateDir ports;
+    inherit
+      (sd)
+      serviceDefaultsUser
+      hardenUser
+      mkStateDir
+      ports
+      ;
 
     runtimeDeps = with pkgs; [
       xdotool
@@ -223,7 +229,13 @@ _: {
               description = "Human-readable device name";
             };
             type = lib.mkOption {
-              type = lib.types.enum ["laptop" "desktop" "server" "phone" "tablet"];
+              type = lib.types.enum [
+                "laptop"
+                "desktop"
+                "server"
+                "phone"
+                "tablet"
+              ];
               default = "desktop";
               description = "Device type";
             };
@@ -242,23 +254,91 @@ _: {
         type = lib.types.submodule {
           freeformType = with lib.types; attrsOf anything;
           options = {
-            battery = lib.mkEnableOption "battery monitoring" // {default = true;};
-            network = lib.mkEnableOption "network monitoring" // {default = true;};
-            wifi = lib.mkEnableOption "WiFi scanning" // {default = true;};
-            bluetooth = lib.mkEnableOption "Bluetooth monitoring" // {default = true;};
-            window = lib.mkEnableOption "window/app usage tracking" // {default = true;};
-            process = lib.mkEnableOption "process monitoring" // {default = true;};
-            afk = lib.mkEnableOption "AFK/idle detection" // {default = true;};
-            sensor = lib.mkEnableOption "hardware sensor monitoring" // {default = true;};
-            location = lib.mkEnableOption "location tracking" // {default = false;};
-            screenshot = lib.mkEnableOption "screenshot capture" // {default = false;};
-            keystroke = lib.mkEnableOption "keystroke logging" // {default = false;};
-            mouse = lib.mkEnableOption "mouse activity tracking" // {default = false;};
-            camera = lib.mkEnableOption "camera capture" // {default = false;};
-            clipboard = lib.mkEnableOption "clipboard monitoring" // {default = false;};
-            notifications = lib.mkEnableOption "notification tracking" // {default = false;};
-            fsEvent = lib.mkEnableOption "filesystem event watching" // {default = false;};
-            systemInfo = lib.mkEnableOption "system info collection" // {default = true;};
+            battery =
+              lib.mkEnableOption "battery monitoring"
+              // {
+                default = true;
+              };
+            network =
+              lib.mkEnableOption "network monitoring"
+              // {
+                default = true;
+              };
+            wifi =
+              lib.mkEnableOption "WiFi scanning"
+              // {
+                default = true;
+              };
+            bluetooth =
+              lib.mkEnableOption "Bluetooth monitoring"
+              // {
+                default = true;
+              };
+            window =
+              lib.mkEnableOption "window/app usage tracking"
+              // {
+                default = true;
+              };
+            process =
+              lib.mkEnableOption "process monitoring"
+              // {
+                default = true;
+              };
+            afk =
+              lib.mkEnableOption "AFK/idle detection"
+              // {
+                default = true;
+              };
+            sensor =
+              lib.mkEnableOption "hardware sensor monitoring"
+              // {
+                default = true;
+              };
+            location =
+              lib.mkEnableOption "location tracking"
+              // {
+                default = false;
+              };
+            screenshot =
+              lib.mkEnableOption "screenshot capture"
+              // {
+                default = false;
+              };
+            keystroke =
+              lib.mkEnableOption "keystroke logging"
+              // {
+                default = false;
+              };
+            mouse =
+              lib.mkEnableOption "mouse activity tracking"
+              // {
+                default = false;
+              };
+            camera =
+              lib.mkEnableOption "camera capture"
+              // {
+                default = false;
+              };
+            clipboard =
+              lib.mkEnableOption "clipboard monitoring"
+              // {
+                default = false;
+              };
+            notifications =
+              lib.mkEnableOption "notification tracking"
+              // {
+                default = false;
+              };
+            fsEvent =
+              lib.mkEnableOption "filesystem event watching"
+              // {
+                default = false;
+              };
+            systemInfo =
+              lib.mkEnableOption "system info collection"
+              // {
+                default = true;
+              };
 
             locationInterval = lib.mkOption {
               type = lib.types.ints.positive;
@@ -286,7 +366,11 @@ _: {
               description = "Camera capture interval (seconds)";
             };
             cameraSelection = lib.mkOption {
-              type = lib.types.enum ["auto" "front" "back"];
+              type = lib.types.enum [
+                "auto"
+                "front"
+                "back"
+              ];
               default = "auto";
               description = "Camera selection";
             };
@@ -354,7 +438,11 @@ _: {
       activityWatch = lib.mkOption {
         type = lib.types.submodule {
           options = {
-            enable = lib.mkEnableOption "ActivityWatch integration" // {default = true;};
+            enable =
+              lib.mkEnableOption "ActivityWatch integration"
+              // {
+                default = true;
+              };
             host = lib.mkOption {
               type = lib.types.str;
               default = "localhost";
@@ -443,12 +531,22 @@ _: {
         type = lib.types.submodule {
           options = {
             level = lib.mkOption {
-              type = lib.types.enum ["trace" "debug" "info" "warn" "error"];
+              type = lib.types.enum [
+                "trace"
+                "debug"
+                "info"
+                "warn"
+                "error"
+              ];
               default = "info";
               description = "Log verbosity level";
             };
             format = lib.mkOption {
-              type = lib.types.enum ["pretty" "json" "compact"];
+              type = lib.types.enum [
+                "pretty"
+                "json"
+                "compact"
+              ];
               default = "pretty";
               description = "Log output format";
             };
@@ -466,7 +564,11 @@ _: {
       metrics = lib.mkOption {
         type = lib.types.submodule {
           options = {
-            enable = lib.mkEnableOption "Prometheus metrics endpoint" // {default = false;};
+            enable =
+              lib.mkEnableOption "Prometheus metrics endpoint"
+              // {
+                default = false;
+              };
             bindAddress = lib.mkOption {
               type = lib.types.str;
               default = "127.0.0.1:${toString ports.monitor365-metrics}";
@@ -522,7 +624,11 @@ _: {
       server = lib.mkOption {
         type = lib.types.submodule {
           options = {
-            enable = lib.mkEnableOption "Monitor365 server (dashboard + API)" // {default = false;};
+            enable =
+              lib.mkEnableOption "Monitor365 server (dashboard + API)"
+              // {
+                default = false;
+              };
 
             package = lib.mkOption {
               type = lib.types.package;
@@ -622,7 +728,11 @@ _: {
           systemd.user.services.monitor365 = {
             Unit = {
               Description = "Monitor365 Device Monitoring Agent";
-              After = ["network.target" "graphical-session.target" "sops-nix.service"];
+              After = [
+                "network.target"
+                "graphical-session.target"
+                "sops-nix.service"
+              ];
               Wants = ["network.target"];
               PartOf = ["graphical-session.target"];
               StartLimitIntervalSec = 600;
@@ -637,7 +747,11 @@ _: {
                 ExecStartPre = let
                   injectAuth = pkgs.writeShellApplication {
                     name = "monitor365-inject-auth";
-                    runtimeInputs = [pkgs.coreutils pkgs.gnused pkgs.gnugrep];
+                    runtimeInputs = [
+                      pkgs.coreutils
+                      pkgs.gnused
+                      pkgs.gnugrep
+                    ];
                     text = ''
                       CFG_DIR="$1/monitor365"
                       mkdir -p "$CFG_DIR"

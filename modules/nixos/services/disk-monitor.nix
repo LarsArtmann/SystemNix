@@ -88,7 +88,12 @@ _: {
       name = "disk-monitor";
       description = "Check disk usage and notify on threshold breaches";
       inherit checkScript;
-      runtimeInputs = [pkgs.libnotify pkgs.util-linux pkgs.coreutils pkgs.systemd];
+      runtimeInputs = [
+        pkgs.libnotify
+        pkgs.util-linux
+        pkgs.coreutils
+        pkgs.systemd
+      ];
       user = cfg.user;
       inherit uid;
       interval = cfg.interval;
@@ -101,13 +106,24 @@ _: {
 
       fileSystems = lib.mkOption {
         type = lib.types.listOf lib.types.str;
-        default = ["/" "/data"];
+        default = [
+          "/"
+          "/data"
+        ];
         description = "List of mount points to monitor";
       };
 
       thresholds = lib.mkOption {
         type = lib.types.listOf lib.types.ints.unsigned;
-        default = [80 85 90 95 97 98 99];
+        default = [
+          80
+          85
+          90
+          95
+          97
+          98
+          99
+        ];
         description = "Percentage thresholds that trigger notifications";
       };
 

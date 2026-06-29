@@ -4,10 +4,7 @@
   nixpkgs,
   system,
 }: let
-  makeTest = testSpec:
-    import "${nixpkgs}/nixos/tests/make-test-python.nix"
-    testSpec
-    {inherit system;};
+  makeTest = testSpec: import "${nixpkgs}/nixos/tests/make-test-python.nix" testSpec {inherit system;};
 in {
   boot = makeTest {
     name = "boot";

@@ -7,7 +7,13 @@ _: {
     ...
   }: let
     cfg = config.services.crush-daily;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      ports
+      ;
   in {
     config = lib.mkIf cfg.enable {
       services.crush-daily.port = lib.mkDefault ports.crush-daily;

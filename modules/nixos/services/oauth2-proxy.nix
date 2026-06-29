@@ -8,7 +8,15 @@ _: {
   }: let
     cfg = config.services.oauth2-proxy-config;
     inherit (config.networking) domain;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure serviceTypes mkSecretCheck ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      mkSecretCheck
+      ports
+      ;
     proxyPort = cfg.port;
 
     provisionEnabled = config.services.pocket-id-config.provision.enable;
@@ -61,8 +69,20 @@ _: {
 
       systemd.services.oauth2-proxy = {
         inherit onFailure;
-        after = ["network-online.target" "pocket-id.service" "unbound.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
-        wants = ["network-online.target" "pocket-id.service" "unbound.service"] ++ lib.optional provisionEnabled "pocket-id-provision.service";
+        after =
+          [
+            "network-online.target"
+            "pocket-id.service"
+            "unbound.service"
+          ]
+          ++ lib.optional provisionEnabled "pocket-id-provision.service";
+        wants =
+          [
+            "network-online.target"
+            "pocket-id.service"
+            "unbound.service"
+          ]
+          ++ lib.optional provisionEnabled "pocket-id-provision.service";
         unitConfig = {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;

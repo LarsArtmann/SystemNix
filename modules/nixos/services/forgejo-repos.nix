@@ -14,7 +14,11 @@ _: {
 
     ensureReposScript = pkgs.writeShellApplication {
       name = "forgejo-ensure-repos";
-      runtimeInputs = [pkgs.curl pkgs.jq pkgs.gh];
+      runtimeInputs = [
+        pkgs.curl
+        pkgs.jq
+        pkgs.gh
+      ];
       text = ''
         FORGEJO_URL="${forgejoUrl}"
         REPOS=(${lib.concatStringsSep " " (map (r: "\"${r}\"") cfg.repos)})
@@ -124,7 +128,12 @@ _: {
 
     updateGithubTokenScript = pkgs.writeShellApplication {
       name = "forgejo-update-github-token";
-      runtimeInputs = [pkgs.sops pkgs.gh pkgs.gnugrep pkgs.coreutils];
+      runtimeInputs = [
+        pkgs.sops
+        pkgs.gh
+        pkgs.gnugrep
+        pkgs.coreutils
+      ];
       text = ''
         AGE_KEY_FILE="/run/secrets.d/age-keys.txt"
 
@@ -269,13 +278,23 @@ _: {
       systemd = lib.mkIf cfg.autoSync {
         services.forgejo-ensure-repos = {
           description = "Ensure GitHub repos are mirrored to Forgejo";
-          after = ["forgejo.service" "forgejo-generate-token.service" "network-online.target"];
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+            "network-online.target"
+          ];
           wants = ["network-online.target"];
           requires = ["forgejo.service"];
           inherit onFailure;
           startLimitIntervalSec = 300;
           startLimitBurst = 3;
-          path = [pkgs.curl pkgs.jq pkgs.gh pkgs.sops pkgs.bash];
+          path = [
+            pkgs.curl
+            pkgs.jq
+            pkgs.gh
+            pkgs.sops
+            pkgs.bash
+          ];
           serviceConfig =
             {
               Type = "oneshot";

@@ -13,7 +13,11 @@ in {
     shellAliases = commonAliases;
 
     # Bash-specific configuration
-    historyControl = ["erasedups" "ignoredups" "ignorespace"];
+    historyControl = [
+      "erasedups"
+      "ignoredups"
+      "ignorespace"
+    ];
     historyFileSize = 10000;
     historySize = 5000;
 

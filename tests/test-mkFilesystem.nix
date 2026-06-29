@@ -20,21 +20,33 @@ let
     (assertThrows "reject_discard_async_on_ext4" (mkFilesystem {
       device = "/dev/test";
       fsType = "ext4";
-      options = ["noatime" "discard=async"];
+      options = [
+        "noatime"
+        "discard=async"
+      ];
     }))
 
     # Bare discard on ext4 MUST pass
     (assertPass "accept_discard_on_ext4" (mkFilesystem {
       device = "/dev/test";
       fsType = "ext4";
-      options = ["noatime" "discard" "nofail"];
+      options = [
+        "noatime"
+        "discard"
+        "nofail"
+      ];
     }))
 
     # discard=async on btrfs MUST pass
     (assertPass "accept_discard_async_on_btrfs" (mkFilesystem {
       device = "/dev/test";
       fsType = "btrfs";
-      options = ["discard=async" "compress=zstd" "subvol=@" "noatime"];
+      options = [
+        "discard=async"
+        "compress=zstd"
+        "subvol=@"
+        "noatime"
+      ];
     }))
 
     # subvol on ext4 MUST throw

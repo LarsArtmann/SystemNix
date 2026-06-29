@@ -11,13 +11,17 @@
 in {
   options.sops = {
     secrets = mkOption {
-      type = types.attrsOf (types.submodule ({name, ...}: {
-        freeformType = types.anything;
-        options.path = mkOption {
-          type = types.str;
-          default = "/run/secrets/${name}";
-        };
-      }));
+      type = types.attrsOf (
+        types.submodule (
+          {name, ...}: {
+            freeformType = types.anything;
+            options.path = mkOption {
+              type = types.str;
+              default = "/run/secrets/${name}";
+            };
+          }
+        )
+      );
       default = {};
     };
     age = {
@@ -57,13 +61,17 @@ in {
       default = {};
     };
     templates = mkOption {
-      type = types.attrsOf (types.submodule ({name, ...}: {
-        freeformType = types.anything;
-        options.path = mkOption {
-          type = types.str;
-          default = "/run/secrets-rendered/${name}";
-        };
-      }));
+      type = types.attrsOf (
+        types.submodule (
+          {name, ...}: {
+            freeformType = types.anything;
+            options.path = mkOption {
+              type = types.str;
+              default = "/run/secrets-rendered/${name}";
+            };
+          }
+        )
+      );
       default = {};
     };
     validateSopsFiles = mkOption {
@@ -73,7 +81,8 @@ in {
   };
 
   config.systemd.tmpfiles.rules =
-    lib.mapAttrsToList
-    (_name: secret: "f ${secret.path} 0400 root root -")
+    lib.mapAttrsToList (
+      _name: secret: "f ${secret.path} 0400 root root -"
+    )
     config.sops.secrets;
 }

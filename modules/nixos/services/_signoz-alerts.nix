@@ -13,34 +13,36 @@
     interval ? "5m",
     severity ? "critical",
   }:
-    pkgs.writeText "${lib.strings.sanitizeDerivationName name}-rule.json" (builtins.toJSON {
-      data = {
-        rule = {
-          alertType = "METRIC_BASED_ALERT";
-          inherit description;
-          enabled = true;
-          condition = {
-            compositeMetricQuery = {
-              promQueries = [
-                {
-                  name = "A";
-                  inherit query step;
-                  statsAggExpr = "last";
-                }
-              ];
+    pkgs.writeText "${lib.strings.sanitizeDerivationName name}-rule.json" (
+      builtins.toJSON {
+        data = {
+          rule = {
+            alertType = "METRIC_BASED_ALERT";
+            inherit description;
+            enabled = true;
+            condition = {
+              compositeMetricQuery = {
+                promQueries = [
+                  {
+                    name = "A";
+                    inherit query step;
+                    statsAggExpr = "last";
+                  }
+                ];
+              };
+              inherit op target;
             };
-            inherit op target;
-          };
-          evaluationInterval = interval;
-          inherit name;
-          preferredChannels = lib.optional (severity == "critical") "Discord Alerts";
-          source = "RULE";
-          labels = {
-            inherit severity;
+            evaluationInterval = interval;
+            inherit name;
+            preferredChannels = lib.optional (severity == "critical") "Discord Alerts";
+            source = "RULE";
+            labels = {
+              inherit severity;
+            };
           };
         };
-      };
-    });
+      }
+    );
 in {
   rules = {
     "signoz/rules/disk-full.json".source = mkRule {

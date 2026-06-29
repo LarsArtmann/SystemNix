@@ -4,19 +4,40 @@ in {
   options.preferences = {
     appearance = {
       variant = lib.mkOption {
-        type = lib.types.enum ["dark" "light"];
+        type = lib.types.enum [
+          "dark"
+          "light"
+        ];
         default = "dark";
         description = "System-wide color variant — affects GTK, Qt, portals, browsers, and macOS";
       };
 
       accent = lib.mkOption {
-        type = lib.types.enum ["rosewater" "flamingo" "pink" "mauve" "red" "maroon" "peach" "yellow" "green" "teal" "sky" "sapphire" "blue" "lavender"];
+        type = lib.types.enum [
+          "rosewater"
+          "flamingo"
+          "pink"
+          "mauve"
+          "red"
+          "maroon"
+          "peach"
+          "yellow"
+          "green"
+          "teal"
+          "sky"
+          "sapphire"
+          "blue"
+          "lavender"
+        ];
         default = theme.accent;
         description = "Accent color for theme variants";
       };
 
       density = lib.mkOption {
-        type = lib.types.enum ["standard" "compact"];
+        type = lib.types.enum [
+          "standard"
+          "compact"
+        ];
         default = theme.density;
         description = "UI density — standard or compact";
       };

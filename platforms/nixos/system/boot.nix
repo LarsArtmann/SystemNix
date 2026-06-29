@@ -26,7 +26,11 @@ in {
     # Load I2C module for DDC/CI monitor brightness control
     # Load pstore for kernel panic/oops log capture in UEFI NVRAM
     # Load bfq for responsive I/O scheduling under heavy disk pressure
-    kernelModules = ["i2c-dev" "bfq" "usblp"];
+    kernelModules = [
+      "i2c-dev"
+      "bfq"
+      "usblp"
+    ];
 
     # AMD GPU + NPU optimization kernel parameters for Strix Halo (128GB unified memory)
     kernelParams = [

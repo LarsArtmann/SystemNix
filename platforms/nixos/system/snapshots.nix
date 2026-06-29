@@ -39,13 +39,15 @@
   rustCacheProjects = ["monitor365"];
 
   rustCacheDirs =
-    builtins.map
-    (p: "d /rust-cache/${p} 0755 ${primaryUser} users -")
+    builtins.map (
+      p: "d /rust-cache/${p} 0755 ${primaryUser} users -"
+    )
     rustCacheProjects;
 
   rustCacheLinks =
-    builtins.map
-    (p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}")
+    builtins.map (
+      p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}"
+    )
     rustCacheProjects;
 in {
   fileSystems =
@@ -53,7 +55,13 @@ in {
       "/mnt/btrfs-root" = {
         device = rootDevice;
         fsType = "btrfs";
-        options = ["noatime" "compress=zstd" "noauto" "x-systemd.automount" "x-systemd.idle-timeout=10min"];
+        options = [
+          "noatime"
+          "compress=zstd"
+          "noauto"
+          "x-systemd.automount"
+          "x-systemd.idle-timeout=10min"
+        ];
       };
     }
     // cacheFileSystems;
@@ -132,6 +140,9 @@ in {
   services.btrfs.autoScrub = {
     enable = true;
     interval = "monthly";
-    fileSystems = ["/" "/data"];
+    fileSystems = [
+      "/"
+      "/data"
+    ];
   };
 }

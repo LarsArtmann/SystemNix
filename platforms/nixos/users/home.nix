@@ -220,8 +220,17 @@ in {
     exec = "env -u QT_STYLE_OVERRIDE helium %U";
     icon = "helium";
     terminal = false;
-    categories = ["Network" "WebBrowser"];
-    mimeType = ["text/html" "text/xml" "application/xhtml+xml" "x-scheme-handler/http" "x-scheme-handler/https"];
+    categories = [
+      "Network"
+      "WebBrowser"
+    ];
+    mimeType = [
+      "text/html"
+      "text/xml"
+      "application/xhtml+xml"
+      "x-scheme-handler/http"
+      "x-scheme-handler/https"
+    ];
   };
 
   # XDG configuration (Linux specific)

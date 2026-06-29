@@ -140,7 +140,13 @@ _: {
       name = "nvme-health-monitor";
       description = "Check NVMe SSD health and notify on critical events";
       inherit checkScript;
-      runtimeInputs = [pkgs.nvme-cli pkgs.coreutils pkgs.gnugrep pkgs.libnotify pkgs.util-linux];
+      runtimeInputs = [
+        pkgs.nvme-cli
+        pkgs.coreutils
+        pkgs.gnugrep
+        pkgs.libnotify
+        pkgs.util-linux
+      ];
       user = cfg.user;
       inherit uid;
       interval = cfg.interval;

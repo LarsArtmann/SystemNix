@@ -6,18 +6,24 @@ _: let
     names
     |> map (name: {
       inherit name;
-      value = defaults // {sopsFile = secretsDir + "/${file}";};
+      value =
+        defaults
+        // {
+          sopsFile = secretsDir + "/${file}";
+        };
     })
     |> builtins.listToAttrs;
 
   mkKeyedSecrets = file: defaults: keyMap:
     keyMap
-    |> builtins.mapAttrs (_name: key:
-      defaults
-      // {
-        sopsFile = secretsDir + "/${file}";
-        inherit key;
-      });
+    |> builtins.mapAttrs (
+      _name: key:
+        defaults
+        // {
+          sopsFile = secretsDir + "/${file}";
+          inherit key;
+        }
+    );
 in {
   flake.nixosModules.sops = {
     config,
@@ -41,16 +47,31 @@ in {
 
         secrets =
           {}
-          // mkSecrets "secrets.yaml" {
+          // mkSecrets "secrets.yaml"
+          {
             owner = primaryUser;
             group = "users";
-            restartUnits = ["forgejo-github-sync.service" "forgejo-ensure-repos.service"];
-          } ["forgejo_token" "github_token" "github_user"]
-          // mkSecrets "pocket-id.yaml" {
+            restartUnits = [
+              "forgejo-github-sync.service"
+              "forgejo-ensure-repos.service"
+            ];
+          }
+          [
+            "forgejo_token"
+            "github_token"
+            "github_user"
+          ]
+          // mkSecrets "pocket-id.yaml"
+          {
             owner = "pocket-id";
             group = "pocket-id";
             restartUnits = ["pocket-id.service"];
-          } ["pocket_id_encryption_key" "pocket_id_static_api_key" "pocket_id_smtp_password"]
+          }
+          [
+            "pocket_id_encryption_key"
+            "pocket_id_static_api_key"
+            "pocket_id_smtp_password"
+          ]
           // {
             oauth2_proxy_client_secret = {
               sopsFile = secretsDir + "/pocket-id.yaml";
@@ -97,11 +118,13 @@ in {
             } ["livekit_keys"]
           )
           // lib.optionalAttrs (svcEnabled "hermes") (
-            mkKeyedSecrets "hermes.yaml" {
+            mkKeyedSecrets "hermes.yaml"
+            {
               owner = "hermes";
               group = "hermes";
               restartUnits = ["hermes.service"];
-            } {
+            }
+            {
               hermes_discord_bot_token = "discord_bot_token";
               hermes_glm_api_key = "glm_api_key";
               hermes_minimax_api_key = "minimax_api_key";
@@ -125,30 +148,46 @@ in {
             } ["dataforseo_api_key"]
           )
           // lib.optionalAttrs (svcEnabled "monitor365") (
-            mkSecrets "monitor365.yaml" {
+            mkSecrets "monitor365.yaml"
+            {
               owner = primaryUser;
               group = "users";
-              restartUnits = ["monitor365.service" "monitor365-server.service"];
-            } ["cloud_auth_token" "server_jwt_secret"]
+              restartUnits = [
+                "monitor365.service"
+                "monitor365-server.service"
+              ];
+            }
+            [
+              "cloud_auth_token"
+              "server_jwt_secret"
+            ]
           )
           // lib.optionalAttrs (svcEnabled "signoz" || svcEnabled "gatus-config") (
             mkSecrets "signoz.yaml" {
               owner = "root";
               group = "root";
-              restartUnits = ["signoz-provision.service" "gatus.service"];
+              restartUnits = [
+                "signoz-provision.service"
+                "gatus.service"
+              ];
             } ["discord_alert_webhook_url"]
           )
           // lib.optionalAttrs (svcEnabled "discordsync") (
-            mkSecrets "discordsync.yaml" {
+            mkSecrets "discordsync.yaml"
+            {
               owner = "discordsync";
               group = "discordsync";
               restartUnits = ["discordsync.service"];
-            } ["discordsync_discord_token" "discordsync_turso_url" "discordsync_turso_auth_token"]
+            }
+            [
+              "discordsync_discord_token"
+              "discordsync_turso_url"
+              "discordsync_turso_auth_token"
+            ]
           )
-          // lib.optionalAttrs (
-            svcEnabled "discordsync"
-            && (config.services.discordsync.gcsBucket or null) != null
-          ) {
+          // lib.optionalAttrs
+          (svcEnabled "discordsync" && (config.services.discordsync.gcsBucket or null) != null)
+          {
             discordsync_gcs_credentials = {
               sopsFile = secretsDir + "/discordsync.yaml";
               owner = "discordsync";
@@ -202,7 +241,10 @@ in {
             "monitor365-env" = {
               owner = primaryUser;
               group = "users";
-              restartUnits = ["monitor365.service" "monitor365-server.service"];
+              restartUnits = [
+                "monitor365.service"
+                "monitor365-server.service"
+              ];
               content = ''
                 MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
               '';

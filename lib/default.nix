@@ -1,12 +1,34 @@
 lib: let
   harden = import ./systemd.nix {inherit lib;};
-  inherit (import ./systemd/service-defaults.nix lib) serviceDefaults serviceDefaultsUser serviceOneshotDefaults serviceOneshotDefaultsUser onFailure;
+  inherit
+    (import ./systemd/service-defaults.nix lib)
+    serviceDefaults
+    serviceDefaultsUser
+    serviceOneshotDefaults
+    serviceOneshotDefaultsUser
+    onFailure
+    ;
 in {
   inherit harden;
   hardenUser = args: harden (args // {mode = "user";});
-  inherit serviceDefaults serviceDefaultsUser serviceOneshotDefaults serviceOneshotDefaultsUser onFailure;
+  inherit
+    serviceDefaults
+    serviceDefaultsUser
+    serviceOneshotDefaults
+    serviceOneshotDefaultsUser
+    onFailure
+    ;
   serviceTypes = import ./types.nix lib;
-  mkDockerServiceFactory = {pkgs}: import ./docker.nix {inherit pkgs lib harden serviceDefaults onFailure;};
+  mkDockerServiceFactory = {pkgs}:
+    import ./docker.nix {
+      inherit
+        pkgs
+        lib
+        harden
+        serviceDefaults
+        onFailure
+        ;
+    };
 
   mkStateDir = path: mode: user: group: "d ${path} ${mode} ${user} ${group} -";
 
@@ -73,11 +95,13 @@ in {
           StandardOutput = "journal";
           StandardError = "journal";
         }
-        // hardenFn ({
+        // hardenFn (
+          {
             ProtectHome = false;
             NoNewPrivileges = false;
           }
-          // extraHarden)
+          // extraHarden
+        )
         // extraServiceConfig;
     };
   };
@@ -90,17 +114,23 @@ in {
     conditions ? ["[STATUS] == 200"],
     alerts ? [],
   }: {
-    inherit name group url interval conditions alerts;
+    inherit
+      name
+      group
+      url
+      interval
+      conditions
+      alerts
+      ;
   };
 
   ports = let
     raw = (import ./ports.nix).ports;
     byValue = builtins.groupBy (name: toString raw.${name}) (builtins.attrNames raw);
     dupes = builtins.filter (v: builtins.length byValue.${v} > 1) (builtins.attrNames byValue);
-    dupeMsg = builtins.concatStringsSep "; " (map (
-        v: "port ${v} used by: ${builtins.concatStringsSep ", " byValue.${v}}"
-      )
-      dupes);
+    dupeMsg = builtins.concatStringsSep "; " (
+      map (v: "port ${v} used by: ${builtins.concatStringsSep ", " byValue.${v}}") dupes
+    );
   in
     if dupes == []
     then raw

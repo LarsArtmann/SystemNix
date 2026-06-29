@@ -47,10 +47,18 @@ in {
 
       # Plugins
       plugins = {
-        tab-bar = {path = "tab-bar";};
-        status-bar = {path = "status-bar";};
-        strider = {path = "strider";};
-        compact-bar = {path = "compact-bar";};
+        tab-bar = {
+          path = "tab-bar";
+        };
+        status-bar = {
+          path = "status-bar";
+        };
+        strider = {
+          path = "strider";
+        };
+        compact-bar = {
+          path = "compact-bar";
+        };
       };
     };
 

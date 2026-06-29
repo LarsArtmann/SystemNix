@@ -5,7 +5,13 @@ _: {
     lib,
     ...
   }: let
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults onFailure ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      onFailure
+      ports
+      ;
     provisionEnabled = config.services.pocket-id-config.provision.enable or false;
     clientSecretPath =
       if provisionEnabled
@@ -49,7 +55,10 @@ _: {
         };
       };
 
-      users.users.immich.extraGroups = ["video" "render"];
+      users.users.immich.extraGroups = [
+        "video"
+        "render"
+      ];
 
       # PostgreSQL tuning for Immich workload
       services.postgresql.settings = {
@@ -97,7 +106,10 @@ _: {
             description = "Immich PostgreSQL database backup";
             inherit onFailure;
             path = [config.services.postgresql.package];
-            after = ["postgresql.service" "immich-server.service"];
+            after = [
+              "postgresql.service"
+              "immich-server.service"
+            ];
             requires = ["postgresql.service"];
             serviceConfig = {
               Type = "oneshot";

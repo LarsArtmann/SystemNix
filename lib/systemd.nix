@@ -49,6 +49,4 @@
   ];
   passthrough = builtins.removeAttrs args namedKeys;
 in
-  shared
-  // lib.optionalAttrs (mode == "system") systemOnly
-  // passthrough
+  shared // lib.optionalAttrs (mode == "system") systemOnly // passthrough

@@ -8,19 +8,34 @@ _: {
   }: let
     cfg = config.services.dual-wan;
     inherit (lib) mkEnableOption mkOption types;
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceOneshotDefaults onFailure;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      serviceOneshotDefaults
+      onFailure
+      ;
 
     inherit (config.networking.local) lanIP gateway;
 
     routeHealthScript = pkgs.writeShellApplication {
       name = "route-health-monitor";
-      runtimeInputs = [pkgs.iproute2 pkgs.networkmanager pkgs.curl pkgs.util-linux];
+      runtimeInputs = [
+        pkgs.iproute2
+        pkgs.networkmanager
+        pkgs.curl
+        pkgs.util-linux
+      ];
       text = builtins.readFile ../../../scripts/route-health-monitor.sh;
     };
 
     mptcpEndpointScript = pkgs.writeShellApplication {
       name = "mptcp-endpoint-manager";
-      runtimeInputs = [pkgs.iproute2 pkgs.networkmanager pkgs.util-linux];
+      runtimeInputs = [
+        pkgs.iproute2
+        pkgs.networkmanager
+        pkgs.util-linux
+      ];
       text = builtins.readFile ../../../scripts/mptcp-endpoint-manager.sh;
     };
 
@@ -34,7 +49,11 @@ _: {
 
     mptcpDispatcher = pkgs.writeShellApplication {
       name = "mptcp-nm-dispatcher";
-      runtimeInputs = [pkgs.iproute2 pkgs.networkmanager pkgs.gnugrep];
+      runtimeInputs = [
+        pkgs.iproute2
+        pkgs.networkmanager
+        pkgs.gnugrep
+      ];
       text = ''
         IFACE="$1"
         ACTION="$2"
@@ -113,7 +132,10 @@ _: {
         metric = 100;
       };
 
-      environment.systemPackages = [pkgs.mptcpd mptcpizeWrapper];
+      environment.systemPackages = [
+        pkgs.mptcpd
+        mptcpizeWrapper
+      ];
 
       security.polkit.extraConfig = ''
         polkit.addRule(function(action, subject) {
@@ -136,8 +158,14 @@ _: {
           mptcp-endpoint-manager = {
             description = "MPTCP endpoint manager — adds static endpoints on boot";
             wantedBy = ["multi-user.target"];
-            after = [eno1Device "network-online.target"];
-            wants = [eno1Device "network-online.target"];
+            after = [
+              eno1Device
+              "network-online.target"
+            ];
+            wants = [
+              eno1Device
+              "network-online.target"
+            ];
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
@@ -163,8 +191,14 @@ _: {
           route-health-monitor = {
             description = "ECMP+MPTCP WAN failover — eno1 primary, WiFi fallback";
             wantedBy = ["multi-user.target"];
-            after = [eno1Device "network-online.target"];
-            wants = [eno1Device "network-online.target"];
+            after = [
+              eno1Device
+              "network-online.target"
+            ];
+            wants = [
+              eno1Device
+              "network-online.target"
+            ];
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;

@@ -10,7 +10,13 @@ _: {
     inherit (config.users) primaryUser;
     mcJarSha1 = "97ccd4c0ed3f81bbb7bfacddd1090b0c56f9bc51";
     mcJarUrl = "https://piston-data.mojang.com/v1/objects/${mcJarSha1}/server.jar";
-    inherit (import ../../../lib/default.nix lib) harden serviceDefaults serviceTypes ports;
+    inherit
+      (import ../../../lib/default.nix lib)
+      harden
+      serviceDefaults
+      serviceTypes
+      ports
+      ;
 
     minecraft-server-26 = pkgs.stdenv.mkDerivation {
       pname = "minecraft-server";
@@ -30,7 +36,9 @@ _: {
 
         makeWrapper ${lib.getExe pkgs.jdk25.headless} $out/bin/minecraft-server \
           --append-flags "-jar $out/lib/minecraft/server.jar nogui" \
-          ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "--prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [pkgs.udev]}"}
+          ${lib.optionalString pkgs.stdenv.hostPlatform.isLinux "--prefix LD_LIBRARY_PATH : ${
+          lib.makeLibraryPath [pkgs.udev]
+        }"}
 
         runHook postInstall
       '';
@@ -259,7 +267,12 @@ _: {
       };
 
       difficulty = lib.mkOption {
-        type = lib.types.enum ["peaceful" "easy" "normal" "hard"];
+        type = lib.types.enum [
+          "peaceful"
+          "easy"
+          "normal"
+          "hard"
+        ];
         default = "normal";
         description = "Game difficulty";
       };
@@ -292,7 +305,9 @@ _: {
         type = lib.types.attrsOf lib.types.str;
         default = {};
         description = "Whitelist entries (username → UUID)";
-        example = {"Player" = "uuid-here";};
+        example = {
+          "Player" = "uuid-here";
+        };
       };
 
       client = {
@@ -442,10 +457,14 @@ _: {
 
       clientConfig = lib.mkIf ccfg.enable {
         home-manager.users.${ccfg.user} = {
-          home.file.".local/share/PrismLauncher/instances/${ccfg.instanceName}/minecraft/options.txt".source = clientOptionsFile;
+          home.file.".local/share/PrismLauncher/instances/${ccfg.instanceName}/minecraft/options.txt".source =
+            clientOptionsFile;
         };
       };
     in
-      lib.mkMerge [serverConfig clientConfig];
+      lib.mkMerge [
+        serverConfig
+        clientConfig
+      ];
   };
 }

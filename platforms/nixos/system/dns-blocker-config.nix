@@ -15,9 +15,7 @@
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
-  lanIP =
-    builtins.head
-    config.networking.interfaces.eno1.ipv4.addresses;
+  lanIP = builtins.head config.networking.interfaces.eno1.ipv4.addresses;
   serverIP = lanIP.address;
 in {
   services = {
@@ -31,7 +29,13 @@ in {
       blockIPPrefix = 24;
       statsPort = 9090;
 
-      inherit (blocklists) blocklists whitelist extraDomains categories;
+      inherit
+        (blocklists)
+        blocklists
+        whitelist
+        extraDomains
+        categories
+        ;
 
       enableDNSSEC = true;
 
@@ -50,8 +54,9 @@ in {
       verbosity = 1;
       local-zone = [''"${domain}." static''];
       local-data =
-        map
-        (subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"'')
+        map (
+          subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"''
+        )
         blocklists.localSubdomains;
     };
 
