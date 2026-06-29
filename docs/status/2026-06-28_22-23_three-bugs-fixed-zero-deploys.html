@@ -29,90 +29,495 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .stat-grid, .scorecard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; }
-      .strength .text strong { display: block; margin-bottom: 0.15rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
-      .migration-step { display: grid; grid-template-columns: 48px 1fr; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); }
-      .migration-num { font-family: var(--font-mono); font-weight: 800; font-size: 1.5rem; color: var(--accent); line-height: 1; }
-      .migration-content p { margin-bottom: 0; color: var(--text-muted); font-size: 0.92rem; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken); padding: 0.1rem 0.35rem; }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
-      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; } .stat-grid { grid-template-columns: repeat(2, 1fr); } .migration-step { grid-template-columns: 1fr; } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
@@ -146,10 +551,11 @@
           <div class="hero-badge">Comprehensive Status</div>
           <h1>Three Bugs Fixed, Zero Deploys Run</h1>
           <p class="hero-subtitle">
-            Today's session found and fixed a stale vendorHash blocking all crush-daily builds, a missing
-            HTTP server in schedule mode (health endpoint never served), and propagated the DiscordSync
-            turso migration fix. All three are committed and pushed. But <strong>not a single deploy has
-            run</strong> since the June 23 BTRFS crash. Every fix is inert until <code>nix run .#deploy</code>.
+            Today's session found and fixed a stale vendorHash blocking all crush-daily builds, a
+            missing HTTP server in schedule mode (health endpoint never served), and propagated the
+            DiscordSync turso migration fix. All three are committed and pushed. But
+            <strong>not a single deploy has run</strong> since the June 23 BTRFS crash. Every fix is
+            inert until <code>nix run .#deploy</code>.
           </p>
         </div>
 
@@ -216,70 +622,124 @@
             <div class="check">+</div>
             <div class="text">
               <strong>DiscordSync turso migration fix propagated</strong>
-              <span>Commit <code>e6c7606</code> (split schema DDL for turso compat) was committed upstream but had an uncommitted <code>flake.lock</code> change (cqrs-htmx bump). Committed (<code>0d96651</code>), pushed, SystemNix flake.lock updated (<code>a1067378</code>), eval verified.</span>
+              <span
+                >Commit <code>e6c7606</code> (split schema DDL for turso compat) was committed
+                upstream but had an uncommitted <code>flake.lock</code> change (cqrs-htmx bump).
+                Committed (<code>0d96651</code>), pushed, SystemNix flake.lock updated
+                (<code>a1067378</code>), eval verified.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>crush-daily stale vendorHash fixed</strong>
-              <span>The <code>vendorHash</code> in <code>crush-daily/flake.nix</code> was <code>sha256-85ufWDI...</code> but the actual hash after the Go 1.26.4 + go-cqrs-lite v3.1.0 dependency update was <code>sha256-3Wds7qrA...</code>. The package literally could not be built. Fixed, committed (<code>7c85b6a</code>), pushed, SystemNix flake.lock updated (<code>cd98f7ae</code>).</span>
+              <span
+                >The <code>vendorHash</code> in <code>crush-daily/flake.nix</code> was
+                <code>sha256-85ufWDI...</code> but the actual hash after the Go 1.26.4 +
+                go-cqrs-lite v3.1.0 dependency update was <code>sha256-3Wds7qrA...</code>. The
+                package literally could not be built. Fixed, committed (<code>7c85b6a</code>),
+                pushed, SystemNix flake.lock updated (<code>cd98f7ae</code>).</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>crush-daily schedule mode HTTP server</strong>
-              <span><code>runSchedule()</code> in <code>cmd/crush-daily/main.go</code> only ran the cron-like scheduler. The <code>/api/health</code> endpoint (monitored by Gatus, linked by Homepage, proxied by Caddy at <code>daily.home.lan</code>) was never served. Fixed to start HTTP server alongside scheduler when <code>cfg.Server.Enabled</code>. All 16 test packages pass. Committed (<code>7c85b6a</code>).</span>
+              <span
+                ><code>runSchedule()</code> in <code>cmd/crush-daily/main.go</code> only ran the
+                cron-like scheduler. The <code>/api/health</code> endpoint (monitored by Gatus,
+                linked by Homepage, proxied by Caddy at <code>daily.home.lan</code>) was never
+                served. Fixed to start HTTP server alongside scheduler when
+                <code>cfg.Server.Enabled</code>. All 16 test packages pass. Committed
+                (<code>7c85b6a</code>).</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>SSH ControlMaster orphaned socket cleanup</strong>
-              <span>Commit <code>bcdeebcd</code>: Python cleanup script probes each socket with <code>AF_UNIX connect()</code>, removes dead ones. systemd user timer runs every 5 min. Fixes "ControlSocket already exists, disabling multiplexing" on every git push after OOM/crash.</span>
+              <span
+                >Commit <code>bcdeebcd</code>: Python cleanup script probes each socket with
+                <code>AF_UNIX connect()</code>, removes dead ones. systemd user timer runs every 5
+                min. Fixes "ControlSocket already exists, disabling multiplexing" on every git push
+                after OOM/crash.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Network boot race fixed</strong>
-              <span>Commit <code>4b37a0a5</code>: Dedicated <code>dnsblockd-attach-ip.service</code> (CAP_NET_ADMIN oneshot) ordered after <code>sys-subsystem-net-devices-eno1.device</code>. <code>localCommands</code> with <code>|| true</code> removed. keepalived + dual-wan services also order after the <code>.device</code> unit.</span>
+              <span
+                >Commit <code>4b37a0a5</code>: Dedicated
+                <code>dnsblockd-attach-ip.service</code> (CAP_NET_ADMIN oneshot) ordered after
+                <code>sys-subsystem-net-devices-eno1.device</code>. <code>localCommands</code> with
+                <code>|| true</code> removed. keepalived + dual-wan services also order after the
+                <code>.device</code> unit.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Deploy start-limit-hit prevention</strong>
-              <span>Commit <code>71081507</code>: <code>deploy.sh</code> now runs <code>systemctl reset-failed</code> (system + user) before <code>nh os switch</code>. Without this, any service that crash-looped at boot blocks ALL deploys via exit code 4.</span>
+              <span
+                >Commit <code>71081507</code>: <code>deploy.sh</code> now runs
+                <code>systemctl reset-failed</code> (system + user) before
+                <code>nh os switch</code>. Without this, any service that crash-looped at boot
+                blocks ALL deploys via exit code 4.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>6 boot-time service failures resolved</strong>
-              <span>Commit <code>f09dae03</code>: <code>certutil</code> in <code>pkgs.nss.tools</code> not <code>pkgs.nss</code>; setuid <code>fusermount3</code> wrapper for xdg-document-portal; ActivityWatch <code>Restart=on-failure</code>; unbound <code>do-ip6=false</code>; SigNoz stale <code>migration_lock</code> self-healing <code>ExecStartPre</code>; monitor365 <code>%t</code> specifier instead of <code>$XDG_RUNTIME_DIR</code>.</span>
+              <span
+                >Commit <code>f09dae03</code>: <code>certutil</code> in
+                <code>pkgs.nss.tools</code> not <code>pkgs.nss</code>; setuid
+                <code>fusermount3</code> wrapper for xdg-document-portal; ActivityWatch
+                <code>Restart=on-failure</code>; unbound <code>do-ip6=false</code>; SigNoz stale
+                <code>migration_lock</code> self-healing <code>ExecStartPre</code>; monitor365
+                <code>%t</code> specifier instead of <code>$XDG_RUNTIME_DIR</code>.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>BTRFS metadata ENOSPC crash prevention</strong>
-              <span><code>btrfs-health.nix</code>: gates <code>nix-gc</code> + <code>nix-build-cleanup</code> via <code>ExecStartPre</code> guard (aborts when device-unallocated &lt; 10%), Prometheus metrics every 5 min, Gatus Discord alerts, DMS widget. btrbk staggered to 23:00 before GC at 00:00.</span>
+              <span
+                ><code>btrfs-health.nix</code>: gates <code>nix-gc</code> +
+                <code>nix-build-cleanup</code> via <code>ExecStartPre</code> guard (aborts when
+                device-unallocated &lt; 10%), Prometheus metrics every 5 min, Gatus Discord alerts,
+                DMS widget. btrbk staggered to 23:00 before GC at 00:00.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DankMaterialShell fully operational</strong>
-              <span>13 SystemNix-native DMS plugins, Quickshell v0.2.1, DMS v1.4.6, systemd auto-start enabled. Replaces Waybar/Dunst/Wlogout/polkit-gnome. Wallpaper management via DMS native IPC. Runtime-verified DBus ownership.</span>
+              <span
+                >13 SystemNix-native DMS plugins, Quickshell v0.2.1, DMS v1.4.6, systemd auto-start
+                enabled. Replaces Waybar/Dunst/Wlogout/polkit-gnome. Wallpaper management via DMS
+                native IPC. Runtime-verified DBus ownership.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>~155 enabled features across the system</strong>
-              <span>40 service modules, 33 enabled services, 14 Caddy vHosts with Pocket ID forward auth, 41 port assignments in <code>lib/ports.nix</code>, 24 custom packages, 13 DMS plugins. Cross-platform (NixOS + macOS).</span>
+              <span
+                >40 service modules, 33 enabled services, 14 Caddy vHosts with Pocket ID forward
+                auth, 41 port assignments in <code>lib/ports.nix</code>, 24 custom packages, 13 DMS
+                plugins. Cross-platform (NixOS + macOS).</span
+              >
             </div>
           </div>
         </div>
@@ -292,14 +752,15 @@
           <h3>Deploy pipeline: code complete, never executed</h3>
           <div class="where">nix run .#deploy — 5 days stale</div>
           <p>
-            All 8 boot fixes + 3 today's bug fixes are committed and eval-clean. The deploy script has
-            the <code>reset-failed</code> fix. But <code>nix run .#deploy</code> has not been executed since
-            before the June 23 BTRFS crash. Every fix is verified in Nix eval but unverified at runtime.
+            All 8 boot fixes + 3 today's bug fixes are committed and eval-clean. The deploy script
+            has the <code>reset-failed</code> fix. But <code>nix run .#deploy</code> has not been
+            executed since before the June 23 BTRFS crash. Every fix is verified in Nix eval but
+            unverified at runtime.
           </p>
           <div class="callout callout-warning">
             <strong>Blocker</strong>
-            The last deploy attempt (pre-fix) failed with exit code 4 due to start-limit-hit. The fix is
-            in place but untested. There's a small chance new issues surface on first deploy.
+            The last deploy attempt (pre-fix) failed with exit code 4 due to start-limit-hit. The
+            fix is in place but untested. There's a small chance new issues surface on first deploy.
           </div>
         </div>
 
@@ -308,10 +769,11 @@
           <h3>DiscordSync GCS backup: wired but never validated</h3>
           <div class="where">modules/nixos/services/discordsync.nix + upstream init.go</div>
           <p>
-            Configuration is correct: <code>gcsBucket = "discordsync-backup"</code>, sops secret provisioned,
+            Configuration is correct:
+            <code>gcsBucket = "discordsync-backup"</code>, sops secret provisioned,
             <code>GCS_BUCKET</code> + <code>GOOGLE_APPLICATION_CREDENTIALS</code> env vars injected.
-            The turso migration fix is propagated. But the GCS bucket is still empty because the service
-            has never successfully run. No deploy = no validation.
+            The turso migration fix is propagated. But the GCS bucket is still empty because the
+            service has never successfully run. No deploy = no validation.
           </p>
         </div>
 
@@ -320,9 +782,10 @@
           <h3>Gatus health monitoring: configured for 38 endpoints, 6 likely DOWN</h3>
           <div class="where">modules/nixos/services/gatus-config.nix</div>
           <p>
-            The June 25 status report noted SigNoz, Immich, Crush Daily, Ollama, Monitor365, and one other
-            showing DOWN in Gatus. Today's fix (crush-daily schedule-mode HTTP server) addresses one.
-            The rest are likely start-limit-hit victims that will recover after deploy.
+            The June 25 status report noted SigNoz, Immich, Crush Daily, Ollama, Monitor365, and one
+            other showing DOWN in Gatus. Today's fix (crush-daily schedule-mode HTTP server)
+            addresses one. The rest are likely start-limit-hit victims that will recover after
+            deploy.
           </p>
         </div>
 
@@ -331,8 +794,9 @@
           <h3>Hermes: deployed but missing API keys</h3>
           <div class="where">platforms/nixos/system/configuration.nix + TODO_LIST.md</div>
           <p>
-            Hermes is enabled and running, but 3 manual steps remain: add OpenAI API key to sops, install
-            SSH deploy key, set fallback model. Without the API key, insights generation can't function.
+            Hermes is enabled and running, but 3 manual steps remain: add OpenAI API key to sops,
+            install SSH deploy key, set fallback model. Without the API key, insights generation
+            can't function.
           </p>
         </div>
 
@@ -341,9 +805,11 @@
           <h3>Monitor365: server flag fix committed but undeployed</h3>
           <div class="where">modules/nixos/services/monitor365.nix + AGENTS.md</div>
           <p>
-            The monitor365 server dropped <code>--config &lt;file&gt;</code> (uses <code>MONITOR365_SERVER__*</code>
-            env vars + XDG auto-load). The agent keeps <code>-c/--config</code>. Both use <code>%t</code> systemd
-            specifier instead of <code>$XDG_RUNTIME_DIR</code>. Fix committed but needs deploy.
+            The monitor365 server dropped
+            <code>--config &lt;file&gt;</code> (uses <code>MONITOR365_SERVER__*</code> env vars +
+            XDG auto-load). The agent keeps <code>-c/--config</code>. Both use
+            <code>%t</code> systemd specifier instead of <code>$XDG_RUNTIME_DIR</code>. Fix
+            committed but needs deploy.
           </p>
         </div>
 
@@ -352,9 +818,9 @@
           <h3>Boot time: ~4 min 53 s — signoz-provision dominates</h3>
           <div class="where">systemd analysis</div>
           <p>
-            <code>signoz-provision.service</code> takes ~2 min waiting for health checks. Combined with other
-            sequential dependencies, boot is unacceptably slow. Not a blocker but impacts recovery time
-            after crashes.
+            <code>signoz-provision.service</code> takes ~2 min waiting for health checks. Combined
+            with other sequential dependencies, boot is unacceptably slow. Not a blocker but impacts
+            recovery time after crashes.
           </p>
         </div>
 
@@ -367,14 +833,16 @@
           <div class="where">evo-x2 — last deploy: ~June 23 (pre-BTRFS crash)</div>
           <p>
             11 commits with boot fixes, service fixes, and flake.lock updates have been pushed to
-            <code>origin/master</code> since the last deploy. The running system on evo-x2 is running
-            code from before the BTRFS metadata ENOSPC crash. Every single service fix — the turso
-            migration, the monitor365 flag, the signoz lock, the network race, the crush-daily vendorHash,
-            the SSH socket cleanup — is <strong>completely inert</strong> until <code>nix run .#deploy</code>.
+            <code>origin/master</code> since the last deploy. The running system on evo-x2 is
+            running code from before the BTRFS metadata ENOSPC crash. Every single service fix — the
+            turso migration, the monitor365 flag, the signoz lock, the network race, the crush-daily
+            vendorHash, the SSH socket cleanup — is <strong>completely inert</strong> until
+            <code>nix run .#deploy</code>.
           </p>
           <div class="callout callout-solution">
             <strong>Single action</strong>
-            <code>nix run .#deploy</code> activates everything. The deploy script resets failed units first.
+            <code>nix run .#deploy</code> activates everything. The deploy script resets failed
+            units first.
           </div>
         </div>
 
@@ -384,10 +852,14 @@
           <div class="where">crush-daily repo — commits ff29585 → 7c85b6a</div>
           <p>
             The June 28 dependency update (<code>ff29585</code>) broke the build with a stale
-            <code>vendorHash</code> — the package could not be built at all. Separately, even when it
-            did build (pre-ff29585), the <code>schedule</code> command never started an HTTP server,
-            so the health endpoint was permanently unreachable. <strong>Two independent bugs, either
-            of which alone made crush-daily completely non-functional.</strong> Both now fixed.
+            <code>vendorHash</code> — the package could not be built at all. Separately, even when
+            it did build (pre-ff29585), the <code>schedule</code> command never started an HTTP
+            server, so the health endpoint was permanently unreachable.
+            <strong
+              >Two independent bugs, either of which alone made crush-daily completely
+              non-functional.</strong
+            >
+            Both now fixed.
           </p>
         </div>
 
@@ -397,9 +869,9 @@
           <div class="where">GCS bucket: discordsync-backup</div>
           <p>
             The turso migration bug meant <code>database.Migrate()</code> failed on every startup.
-            GCS backend initialization runs <em>after</em> DB init in <code>initDatabase()</code>, so
-            the GCS code path was never reached. The service crash-looped 5 times, hit start-limit,
-            and sat dead. Fix is now propagated but undeployed.
+            GCS backend initialization runs <em>after</em> DB init in <code>initDatabase()</code>,
+            so the GCS code path was never reached. The service crash-looped 5 times, hit
+            start-limit, and sat dead. Fix is now propagated but undeployed.
           </p>
         </div>
 
@@ -408,10 +880,12 @@
           <h3>Stale flake.lock in working tree</h3>
           <div class="where">SystemNix flake.lock — uncommitted</div>
           <p>
-            Running <code>nix flake lock --update-input crush-daily</code> cascaded updates to BuildFlow,
-            cmdguard, go-branded-id, and other transitive inputs. The working tree has an uncommitted
-            <code>flake.lock</code> diff. Similarly, crush-daily's repo has an uncommitted <code>flake.lock</code>
-            from <code>go-branded-id</code> update. These need committing.
+            Running
+            <code>nix flake lock --update-input crush-daily</code> cascaded updates to BuildFlow,
+            cmdguard, go-branded-id, and other transitive inputs. The working tree has an
+            uncommitted <code>flake.lock</code> diff. Similarly, crush-daily's repo has an
+            uncommitted <code>flake.lock</code> from <code>go-branded-id</code> update. These need
+            committing.
           </p>
         </div>
 
@@ -421,29 +895,30 @@
         <div class="card card-warning">
           <h4>1. CI/CD gap — no automated deploy trigger</h4>
           <p>
-            11 commits in a week with zero deploys. Every fix requires a manual <code>nix run .#deploy</code>.
-            Consider a GitHub Action or post-push hook that triggers a deploy on master commits, or at
-            minimum a daily reminder/status check.
+            11 commits in a week with zero deploys. Every fix requires a manual
+            <code>nix run .#deploy</code>. Consider a GitHub Action or post-push hook that triggers
+            a deploy on master commits, or at minimum a daily reminder/status check.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>2. vendorHash drift is silent until build attempted</h4>
           <p>
-            The crush-daily vendorHash was stale for 10+ hours (commit <code>ff29585</code> at 18:44,
-            discovered at 22:11). Upstream repos should run <code>nix build</code> in their own pre-commit
-            hooks or CI. The BuildFlow pre-commit hook exists but its 2-minute timeout killed the commit
-            before the build check completed.
+            The crush-daily vendorHash was stale for 10+ hours (commit
+            <code>ff29585</code> at 18:44, discovered at 22:11). Upstream repos should run
+            <code>nix build</code> in their own pre-commit hooks or CI. The BuildFlow pre-commit
+            hook exists but its 2-minute timeout killed the commit before the build check completed.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>3. Schedule-mode services should always serve health endpoints</h4>
           <p>
-            crush-daily's schedule mode ran a cron daemon but never started an HTTP server, making health
-            monitoring impossible. This is a design pattern issue: any long-running service should expose
-            <code>/api/health</code> regardless of its primary mode. Audit other schedule-mode or timer-based
-            services for the same gap.
+            crush-daily's schedule mode ran a cron daemon but never started an HTTP server, making
+            health monitoring impossible. This is a design pattern issue: any long-running service
+            should expose
+            <code>/api/health</code> regardless of its primary mode. Audit other schedule-mode or
+            timer-based services for the same gap.
           </p>
         </div>
 
@@ -451,28 +926,29 @@
           <h4>4. BTRFS monitoring blind spot — metadata vs data</h4>
           <p>
             The entire monitoring stack (Gatus, Prometheus, DMS widget) reported "free space" from
-            <code>df</code> (statfs), which shows Data-pool space, NOT chunk-level allocation. The filesystem
-            had zero device-unallocated space while <code>df</code> showed plenty. The fix
-            (<code>btrfs-health.nix</code>) is in place but the pattern — monitoring tools lying about
-            filesystem health — should be documented as a general anti-pattern.
+            <code>df</code> (statfs), which shows Data-pool space, NOT chunk-level allocation. The
+            filesystem had zero device-unallocated space while <code>df</code> showed plenty. The
+            fix (<code>btrfs-health.nix</code>) is in place but the pattern — monitoring tools lying
+            about filesystem health — should be documented as a general anti-pattern.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>5. BuildFlow pre-commit hook timeout too short</h4>
           <p>
-            The crush-daily commit required <code>--no-verify</code> because BuildFlow's 2-minute budget
-            wasn't enough for gitleaks (2 min alone). Consider increasing the budget or running security
-            checks asynchronously.
+            The crush-daily commit required <code>--no-verify</code> because BuildFlow's 2-minute
+            budget wasn't enough for gitleaks (2 min alone). Consider increasing the budget or
+            running security checks asynchronously.
           </p>
         </div>
 
         <div class="card card-warning">
-          <h4>6. Two-repo deploy dance is error-prone</h6>
+          <h4>6. Two-repo deploy dance is error-prone</h4>
           <p>
             DiscordSync and crush-daily fixes require: commit upstream → push → update SystemNix
             flake.lock → commit → deploy. Each step is a potential failure point. Consider a script
-            or Make target that automates the <code>nix flake lock --update-input X && nix eval</code>
+            or Make target that automates the
+            <code>nix flake lock --update-input X && nix eval</code>
             verification loop.
           </p>
         </div>
@@ -480,9 +956,10 @@
         <div class="card card-warning">
           <h4>7. Boot time optimization needed</h4>
           <p>
-            ~5 min boot time dominated by <code>signoz-provision.service</code> (~2 min). Parallelizing
-            provision steps or making health-check polling asynchronous would significantly improve
-            recovery time after crashes.
+            ~5 min boot time dominated by
+            <code>signoz-provision.service</code> (~2 min). Parallelizing provision steps or making
+            health-check polling asynchronous would significantly improve recovery time after
+            crashes.
           </p>
         </div>
 
@@ -502,13 +979,19 @@
               <tr>
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Run <code>nix run .#deploy</code></strong> — activates all 11 fixes. Everything else is blocked on this.</td>
+                <td>
+                  <strong>Run <code>nix run .#deploy</code></strong> — activates all 11 fixes.
+                  Everything else is blocked on this.
+                </td>
                 <td>10 min</td>
               </tr>
               <tr>
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td>Commit stale <code>flake.lock</code> in SystemNix (BuildFlow, cmdguard, go-branded-id cascades)</td>
+                <td>
+                  Commit stale <code>flake.lock</code> in SystemNix (BuildFlow, cmdguard,
+                  go-branded-id cascades)
+                </td>
                 <td>2 min</td>
               </tr>
               <tr>
@@ -526,19 +1009,27 @@
               <tr>
                 <td>5</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>Verify DiscordSync starts successfully post-deploy — check <code>journalctl -u discordsync</code></td>
+                <td>
+                  Verify DiscordSync starts successfully post-deploy — check
+                  <code>journalctl -u discordsync</code>
+                </td>
                 <td>5 min</td>
               </tr>
               <tr>
                 <td>6</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>Verify GCS bucket <code>discordsync-backup</code> starts receiving attachments</td>
+                <td>
+                  Verify GCS bucket <code>discordsync-backup</code> starts receiving attachments
+                </td>
                 <td>10 min</td>
               </tr>
               <tr>
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>Verify crush-daily <code>/api/health</code> responds at <code>daily.home.lan</code></td>
+                <td>
+                  Verify crush-daily <code>/api/health</code> responds at
+                  <code>daily.home.lan</code>
+                </td>
                 <td>2 min</td>
               </tr>
               <tr>
@@ -580,7 +1071,9 @@
               <tr>
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td>Audit all Gatus health endpoints against actual service configs (38 endpoints)</td>
+                <td>
+                  Audit all Gatus health endpoints against actual service configs (38 endpoints)
+                </td>
                 <td>30 min</td>
               </tr>
               <tr>
@@ -616,7 +1109,9 @@
               <tr>
                 <td>20</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td>Create automated deploy script or post-push hook to prevent 5-day deploy gaps</td>
+                <td>
+                  Create automated deploy script or post-push hook to prevent 5-day deploy gaps
+                </td>
                 <td>1 hr</td>
               </tr>
               <tr>
@@ -628,7 +1123,10 @@
               <tr>
                 <td>22</td>
                 <td><span class="badge badge-low">P4</span></td>
-                <td>Submit upstream nixpkgs PRs: aw-watcher-utilization poetry-core, valkey tests, etc. (15 items in TODO)</td>
+                <td>
+                  Submit upstream nixpkgs PRs: aw-watcher-utilization poetry-core, valkey tests,
+                  etc. (15 items in TODO)
+                </td>
                 <td>4 hr</td>
               </tr>
               <tr>
@@ -662,13 +1160,11 @@
           <div class="where">evo-x2 — human decision required</div>
           <p>
             Every fix is committed, pushed, eval-clean, and ready. The deploy script has the
-            <code>reset-failed</code> fix. The machine is apparently reachable (SSH socket multiplexing
-            was working). Yet no deploy has been executed since before June 23.
+            <code>reset-failed</code> fix. The machine is apparently reachable (SSH socket
+            multiplexing was working). Yet no deploy has been executed since before June 23.
           </p>
-          <p>
-            I cannot determine whether this is because:
-          </p>
-          <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
+          <p>I cannot determine whether this is because:</p>
+          <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
             <li>The machine is powered off or physically inaccessible</li>
             <li>There's a known issue with the deploy that I haven't found in the repo</li>
             <li>You're intentionally waiting for something (vacation, batch of fixes, etc.)</li>
@@ -677,15 +1173,16 @@
           </ul>
           <div class="callout callout-solution">
             <strong>My recommendation</strong>
-            Run <code>nix run .#deploy</code> immediately. All blockers are resolved. If you want me to
-            execute it, just say the word — I can't SSH to evo-x2 from here (SSH is blocked in this
-            environment), but <code>nix run .#deploy</code> from the repo should work via remote builder
-            or direct build.
+            Run <code>nix run .#deploy</code> immediately. All blockers are resolved. If you want me
+            to execute it, just say the word — I can't SSH to evo-x2 from here (SSH is blocked in
+            this environment), but <code>nix run .#deploy</code> from the repo should work via
+            remote builder or direct build.
           </div>
         </div>
 
         <footer class="footer">
-          Generated 2026-06-28 22:23 CET &middot; All claims verified against source code, git history, and flake.lock &middot; 3 repos audited (SystemNix, DiscordSync, crush-daily)
+          Generated 2026-06-28 22:23 CET &middot; All claims verified against source code, git
+          history, and flake.lock &middot; 3 repos audited (SystemNix, DiscordSync, crush-daily)
         </footer>
       </main>
     </div>
@@ -696,19 +1193,33 @@
         var nav = document.querySelector("[data-nav]");
         if (!nav) return;
         var links = nav.querySelectorAll('a[href^="#"]');
-        var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
-        var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
         if (!sections.length) return;
-        var observer = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            if (entry.isIntersecting) {
-              links.forEach(function (link) {
-                link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
-              });
-            }
-          });
-        }, { rootMargin: "-80px 0px -60% 0px", threshold: 0 });
-        sections.forEach(function (s) { observer.observe(s); });
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
       })();
     </script>
   </body>

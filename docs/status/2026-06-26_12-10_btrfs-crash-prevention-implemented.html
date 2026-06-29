@@ -494,7 +494,8 @@
             <div class="where">platforms/nixos/system/btrfs-health.nix:116-138</div>
             <p>
               <code>ExecStartPre</code> guard on both <code>nix-gc</code> and
-              <code>nix-build-cleanup</code>. Uses <code>btrfs filesystem usage --raw</code>
+              <code>nix-build-cleanup</code>. Uses
+              <code>btrfs filesystem usage --raw</code>
               (integer bytes, zero IEC string parsing). Aborts reclamation when device-unallocated
               &lt; 10%. OnFailure routes to desktop notification.
               <strong>This is the fix that prevents crash recurrence.</strong>
@@ -554,8 +555,9 @@
             <p>
               The 30s WDT vs 120s hung_task race is now documented. Kept at 30s because the BTRFS
               crash is now prevented at the source (GC guard), and GPU driver hangs benefit from
-              fast recovery. <code>nowayout=0</code> means WDT doesn't protect boot/activation hangs
-              — documented as a known gap.
+              fast recovery.
+              <code>nowayout=0</code> means WDT doesn't protect boot/activation hangs — documented
+              as a known gap.
             </p>
           </div>
           <div class="card card-solution">
@@ -586,9 +588,11 @@
             <h3>✅ Self-Review: Parser Bugs Caught &amp; Fixed</h3>
             <p>
               During reflection, two bugs were found in the initial implementation and fixed before
-              pushing: (1) AWK <code>iec_to_bytes</code> function used <code>{...}</code> instead of
+              pushing: (1) AWK
+              <code>iec_to_bytes</code> function used <code>{...}</code> instead of
               <code>BEGIN {...}</code> — would have returned empty on all values. (2) Eliminated
-              entirely by switching to <code>btrfs filesystem usage --raw</code>
+              entirely by switching to
+              <code>btrfs filesystem usage --raw</code>
               (pure integer bytes). The DMS widget's fragile embedded AWK was also replaced with
               reading the prom metrics file.
             </p>
@@ -661,8 +665,9 @@
                 <td>Automated metadata balance</td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td>
-                  Could automate <code>btrfs balance start -musage=50</code> when metadata &gt; 85%
-                  and unallocated &gt; 15%.
+                  Could automate
+                  <code>btrfs balance start -musage=50</code> when metadata &gt; 85% and unallocated
+                  &gt; 15%.
                 </td>
               </tr>
               <tr>
@@ -698,11 +703,12 @@
           <div class="card card-problem">
             <h3>🔴 The Original Parser Bug (Fixed Before Push)</h3>
             <p>
-              Initial implementation had an AWK function that used <code>{...}</code> block instead
-              of <code>BEGIN {...}</code> — meaning it would have returned empty strings for all
-              byte values. The GC guard would have seen <code>0</code> for device-unallocated
-              (triggering fail-open default of 100%), and the metrics would have reported zeros.
-              Caught during self-review, fixed by switching to <code>--raw</code> flag entirely.
+              Initial implementation had an AWK function that used
+              <code>{...}</code> block instead of <code>BEGIN {...}</code> — meaning it would have
+              returned empty strings for all byte values. The GC guard would have seen
+              <code>0</code> for device-unallocated (triggering fail-open default of 100%), and the
+              metrics would have reported zeros. Caught during self-review, fixed by switching to
+              <code>--raw</code> flag entirely.
             </p>
           </div>
         </section>
@@ -956,8 +962,8 @@
         </section>
 
         <footer class="footer">
-          Generated 2026-06-26 12:10 CEST &middot; SystemNix <code>6646fceb</code> on master
-          &middot; evo-x2 (NixOS 26.11.20260616.567a49d, Strix Halo)
+          Generated 2026-06-26 12:10 CEST &middot; SystemNix
+          <code>6646fceb</code> on master &middot; evo-x2 (NixOS 26.11.20260616.567a49d, Strix Halo)
         </footer>
       </main>
     </div>

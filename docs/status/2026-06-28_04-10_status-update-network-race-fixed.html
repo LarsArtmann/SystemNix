@@ -848,7 +848,8 @@
             <tr>
               <td>Flake eval</td>
               <td>
-                <span class="badge badge-fixed">PASS</span> <code>nix flake check --no-build</code>
+                <span class="badge badge-fixed">PASS</span>
+                <code>nix flake check --no-build</code>
               </td>
             </tr>
             <tr>
@@ -1183,7 +1184,8 @@
           <h4>2. Two-repo deploy automation</h4>
           <p>
             The update-push-relock-rebuild flow for private LarsArtmann dependencies is manual and
-            fragile. Add a <code>nix run .#update-dep &lt;name&gt;</code> script.
+            fragile. Add a
+            <code>nix run .#update-dep &lt;name&gt;</code> script.
           </p>
         </div>
 
@@ -1250,13 +1252,17 @@
               </tr>
               <tr>
                 <td>3</td>
-                <td><strong>Commit/stash DiscordSync's 17 uncommitted files</strong></td>
+                <td>
+                  <strong>Commit/stash DiscordSync's 17 uncommitted files</strong>
+                </td>
                 <td><span class="badge badge-critical">Blocker</span></td>
                 <td><span class="badge badge-low">XS</span></td>
               </tr>
               <tr>
                 <td>4</td>
-                <td><strong>Verify all 7 services start post-deploy</strong></td>
+                <td>
+                  <strong>Verify all 7 services start post-deploy</strong>
+                </td>
                 <td><span class="badge badge-critical">High</span></td>
                 <td><span class="badge badge-low">XS</span></td>
               </tr>
@@ -1387,7 +1393,9 @@
               </tr>
               <tr>
                 <td>25</td>
-                <td><strong>Review DMS Quickshell pre-1.0 migration path</strong></td>
+                <td>
+                  <strong>Review DMS Quickshell pre-1.0 migration path</strong>
+                </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">M</span></td>
               </tr>
@@ -1402,11 +1410,10 @@
           <h3>What should I do with the 17 uncommitted files in the DiscordSync working tree?</h3>
           <div class="where">DiscordSync repo</div>
           <p>
-            They contain real refactoring (not mine): <code>getEnvInt</code>/<code
-              >getEnvDuration</code
-            >
-            collapsed into a generic <code>getEnvParsed[T]</code>, test deduplication, and gofumpt
-            formatting across <code>internal/bot/</code>, <code>internal/db/</code>,
+            They contain real refactoring (not mine):
+            <code>getEnvInt</code>/<code>getEnvDuration</code> collapsed into a generic
+            <code>getEnvParsed[T]</code>, test deduplication, and gofumpt formatting across
+            <code>internal/bot/</code>, <code>internal/db/</code>,
             <code>internal/projection/</code>, and <code>internal/config/</code>. They were present
             when I started working on the migration fix.
           </p>
@@ -1471,7 +1478,8 @@
 
         <footer class="footer">
           Generated 2026-06-28 04:10 CEST &middot; Source: SystemNix master @ 4b37a0a5 &middot; Eval
-          verified with <code>nix flake check --no-build</code>
+          verified with
+          <code>nix flake check --no-build</code>
         </footer>
       </main>
     </div>
