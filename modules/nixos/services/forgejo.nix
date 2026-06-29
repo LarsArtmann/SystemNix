@@ -13,6 +13,7 @@ _: {
       (import ../../../lib/default.nix lib)
       harden
       serviceDefaults
+      serviceOneshotDefaults
       onFailure
       ports
       ;
@@ -412,6 +413,75 @@ _: {
         fi
       '';
     };
+
+    oidcSetupScript = pkgs.writeShellApplication {
+      name = "forgejo-oidc-setup";
+      runtimeInputs = [pkgs.coreutils pkgs.gnugrep pkgs.gawk pkgs.util-linux pkgs.curl];
+      text = ''
+        set -euo pipefail
+
+        FORGEJO=${lib.getExe forgejoPkg}
+        WORK_DIR=${stateDir}
+        CLIENT_ID="forgejo"
+        AUTH_NAME="PocketID"
+        DISCOVERY_URL="https://auth.${config.networking.domain}/.well-known/openid-configuration"
+        SECRET_FILE="${config.services.pocket-id.dataDir}/client-secrets/$CLIENT_ID"
+
+        echo "=== Forgejo OIDC Setup ==="
+
+        for _ in $(seq 1 30); do
+          curl -sf -o /dev/null "${forgejoUrl}/" && break
+          sleep 2
+        done
+
+        for _ in $(seq 1 60); do
+          [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ] && break
+          sleep 2
+        done
+
+        if [ ! -f "$SECRET_FILE" ] || [ ! -s "$SECRET_FILE" ]; then
+          echo "ERROR: Pocket ID client secret not found at $SECRET_FILE"
+          echo "Ensure pocket-id-provision has run and created the '$CLIENT_ID' OIDC client."
+          exit 1
+        fi
+
+        CLIENT_SECRET="$(cat "$SECRET_FILE")"
+
+        EXISTING_ID=$(runuser -u forgejo -- \
+          env FORGEJO_WORK_DIR="$WORK_DIR" \
+          "$FORGEJO" admin auth list 2>/dev/null \
+          | grep "$AUTH_NAME" | awk '{print $1}' || true)
+
+        if [ -n "$EXISTING_ID" ]; then
+          echo "Updating OAuth2 auth source '$AUTH_NAME' (id=$EXISTING_ID)..."
+          runuser -u forgejo -- \
+            env FORGEJO_WORK_DIR="$WORK_DIR" \
+            "$FORGEJO" admin auth update-oauth \
+              --id "$EXISTING_ID" \
+              --name "$AUTH_NAME" \
+              --provider "openidConnect" \
+              --key "$CLIENT_ID" \
+              --secret "$CLIENT_SECRET" \
+              --auto-discover-url "$DISCOVERY_URL" \
+              --scopes "openid profile email" \
+              --skip-local-2fa
+        else
+          echo "Creating OAuth2 auth source '$AUTH_NAME'..."
+          runuser -u forgejo -- \
+            env FORGEJO_WORK_DIR="$WORK_DIR" \
+            "$FORGEJO" admin auth add-oauth \
+              --name "$AUTH_NAME" \
+              --provider "openidConnect" \
+              --key "$CLIENT_ID" \
+              --secret "$CLIENT_SECRET" \
+              --auto-discover-url "$DISCOVERY_URL" \
+              --scopes "openid profile email" \
+              --skip-local-2fa
+        fi
+
+        echo "✓ OIDC auth source '$AUTH_NAME' configured."
+      '';
+    };
   in {
     config = lib.mkIf config.services.forgejo.enable {
       services.forgejo = {
@@ -465,6 +535,13 @@ _: {
           service = {
             DISABLE_REGISTRATION = true;
             REQUIRE_SIGNIN_VIEW = false;
+          };
+
+          oauth2_client = {
+            ENABLE_AUTO_REGISTRATION = true;
+            USERNAME = "email";
+            UPDATE_AVATAR = true;
+            ACCOUNT_LINKING = "auto";
           };
 
           session = {
@@ -573,6 +650,24 @@ _: {
           }
           // harden {};
         script = lib.getExe tokenGen;
+      };
+
+      systemd.services.forgejo-oidc-setup = lib.mkIf config.services.pocket-id-config.enable {
+        description = "Configure Forgejo OIDC authentication source (Pocket ID)";
+        after = ["forgejo.service" "pocket-id-provision.service"];
+        wants = ["forgejo.service" "pocket-id-provision.service"];
+        wantedBy = ["forgejo.service"];
+        serviceConfig =
+          {
+            Type = "oneshot";
+            User = "root";
+            RemainAfterExit = true;
+          }
+          // harden {
+            NoNewPrivileges = false;
+          }
+          // serviceOneshotDefaults {};
+        script = lib.getExe oidcSetupScript;
       };
 
       services.gitea-actions-runner = {

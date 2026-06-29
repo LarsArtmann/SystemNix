@@ -400,6 +400,12 @@ _: {
               pkceEnabled = true;
               logoFile = ../../../assets/immich-logo.svg;
             }
+            {
+              name = "Forgejo";
+              clientId = "forgejo";
+              launchURL = "https://forgejo.${domain}";
+              callbackURLs = ["https://forgejo.${domain}/user/oauth2/PocketID/callback"];
+            }
           ];
           description = "OIDC clients to create declaratively";
         };
