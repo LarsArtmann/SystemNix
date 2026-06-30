@@ -181,7 +181,7 @@ _A brutally honest audit of every feature the project actually has._
 |---------|--------|-------|
 | Niri (scrolling-tiling Wayland) | ✅ | Extensive config: 5 named workspaces, window rules, vim-style keybindings, preset column widths |
 | Niri session save/restore | ✅ | Crash recovery: 60s timer, workspace-aware restore, floating state, column widths, focus order, kitty CWD/child proc capture |
-| Niri keybindings (80+) | ✅ | Rofi integrations (app, clipboard, emoji, calc, notifications), screenshots (grim+slurp+swappy), media keys, brightness (ddcutil), random wallpaper |
+| Niri keybindings (80+) | ✅ | DMS spotlight/clipboard/keybinds IPC (app, clipboard, emoji, calc, cheatsheet), screenshots (grim+slurp+swappy), media keys, brightness (ddcutil), random wallpaper |
 | XWayland support | ✅ | xwayland-satellite installed |
 
 ### Desktop Shell (DankMaterialShell / Quickshell)
@@ -195,12 +195,12 @@ _A brutally honest audit of every feature the project actually has._
 | DMS power menu | ✅ | Replaces wlogout — lock/hibernate/logout/shutdown/suspend/reboot |
 | DMS polkit agent | ✅ | Replaces polkit-gnome |
 | DMS OSD | ✅ | Volume/brightness/media overlay |
-| DMS clipboard manager | ✅ | Coexists with cliphist (Alt+C rofi integration) |
+| DMS clipboard manager | ✅ | Owns clipboard history exclusively (cliphist service retired 2026-06-30) |
 | DMS wallpaper management | ✅ | Owns wallpapers natively. `dms-wallpaper-init` seeds from `~/.local/share/wallpapers/`. Mod+W = `dms ipc call wallpaper next`. Dynamic theming DISABLED (Catppuccin Mocha preserved) |
 | DMS calendar/events | ✅ | `enableCalendarEvents = false` (khal available, disabled) |
 | DMS audio wavelength | ✅ | cava-based visualizer (`enableAudioWavelength`) |
 
-### SystemNix DMS Plugins (13/13 verified loading)
+### DMS Plugins (13 SystemNix + 2 community)
 
 | Plugin | Service | Bar Pill |
 |--------|---------|----------|
@@ -222,15 +222,19 @@ _A brutally honest audit of every feature the project actually has._
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Rofi (app launcher) | ✅ | Grid layout (5×3), Catppuccin Mocha, Papirus icons, rounded corners, transparency |
-| Rofi plugins | ✅ | rofi-calc, rofi-emoji — calculator (Mod+Shift+C), emoji picker (Mod+.) |
+| DMS spotlight (launcher) | ✅ | Replaces rofi — `dms ipc call spotlight toggle` (Mod+D/Mod+Space). App, file, window search |
+| DMS clipboard modal | ✅ | Replaces rofi cliphist — `dms ipc call clipboard toggle` (Alt+C) |
+| DMS keybinds modal | ✅ | Replaces `niri msg binds | rofi -dmenu` — `dms ipc call keybinds toggle niri` (Mod+Shift+/) |
+| DMS emoji launcher | ✅ | Community plugin dms-emoji-launcher — `dms ipc call spotlight toggleQuery ":e"` (Mod+.) |
+| DMS calculator | ✅ | Community plugin DankCalculator — `dms ipc call spotlight toggleQuery "="` (Mod+Shift+C) |
+| Rofi (Sway fallback) | ✅ | Sway backup WM only — grid layout (5×3), Catppuccin Mocha, Papirus icons. Niri uses DMS spotlight |
 | Yazi (file manager) | ✅ | Catppuccin Mocha theme, file type associations, Ctrl-key keybindings, Zed integration, fd/rg search |
 | Zellij (terminal multiplexer) | ✅ | Catppuccin Mocha, tmux-compatible keybindings (Ctrl+A), 3 custom layouts (dev/monitoring/default) |
 | Kitty (terminal) | ✅ | Font size 16 (TV-friendly), 85% opacity, Catppuccin Mocha, Nix GC resilience patch |
 | Foot (terminal) | ✅ | Lightweight Wayland alt, JetBrainsMono size 12, 95% opacity |
 | Swayidle | ✅ | 12hr idle → suspend, lock before sleep |
 | SSH suspend guard | ✅ | Holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active — prevents suspend during remote work |
-| Cliphist (clipboard) | ✅ | Wayland clipboard history via wl-paste watcher, rofi integration (Alt+C) |
+| Cliphist CLI | ✅ | Package kept for manual use; always-on service retired (DMS owns clipboard history) |
 
 ### Hardware Support
 

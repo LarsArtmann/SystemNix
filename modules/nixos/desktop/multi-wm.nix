@@ -39,7 +39,7 @@ _: {
 
       # Additional packages needed for Sway backup WM
       environment.systemPackages = with pkgs; [
-        # Application launcher for all WMs
+        # Application launcher for Sway (niri uses DMS spotlight)
         rofi
 
         # File manager

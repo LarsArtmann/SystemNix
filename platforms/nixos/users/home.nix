@@ -13,7 +13,7 @@ in {
     ../../common/home-base.nix
     ../programs/shells.nix # NixOS shell configuration
     nix-ssh-config.homeManagerModules.ssh
-    ../programs/rofi.nix # Rofi launcher with Catppuccin grid theme
+    ../programs/rofi.nix # Rofi launcher — Sway backup WM only (niri uses DMS spotlight)
     # wlogout removed — DankMaterialShell provides power menu
     # swaylock module removed — DMS provides lock screen via dms ipc lock lock
     # swaylock-effects kept as package fallback in dms-lock wrapper
@@ -196,13 +196,12 @@ in {
       qt6.qtbase
 
       # System Tools
-      # Note: rofi moved to multi-wm.nix for system-wide availability
       # Note: xdg-utils moved to base.nix for cross-platform consistency
 
       # Desktop packages
       # Note: ghostty managed by programs.ghostty above — don't add to packages
       # Note: kitty managed by programs.kitty above — don't add to packages
-      # Note: cliphist is installed via common/packages/base.nix (Linux-only)
+      # Note: cliphist CLI in base.nix (manual use only, service retired — DMS manages clipboard)
       libnotify
       grimblast
       swappy

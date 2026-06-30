@@ -149,3 +149,11 @@ All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in S
 - [x] Per-threshold SigNoz channel routing
 - [x] Flake inputs audit (45 inputs, all used)
 - [x] Darwin home.nix parity (terminal, editor, theme, xdg)
+
+## Completed (session 153)
+
+- [x] **Rofi → DMS migration** — All 5 niri rofi keybindings rewired to DMS IPC (spotlight toggle, clipboard toggle, keybinds toggle niri, spotlight toggleQuery ":e" for emoji, spotlight toggleQuery "=" for calc). Root cause: rofi leaked 7 GB → global OOM killed niri + 8 other processes. Rofi config kept for Sway backup WM only.
+- [x] **Community DMS plugins added** — dms-emoji-launcher (trigger `:e`) and DankCalculator (trigger `=`) via `fetchFromGitHub` in quickshell.nix
+- [x] **cliphist service retired** — `wl-paste --watch cliphist store` removed; DMS owns clipboard history exclusively. CLI tool kept in base.nix for manual use.
+- [x] **DMS MemoryMax=4G** — defense-in-depth against future launcher leaks
+- [x] **AGENTS.md + FEATURES.md updated** — rofi migration, cliphist retirement, plugin inventory documented

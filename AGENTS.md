@@ -59,14 +59,15 @@ All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPack
 
 ### Quickshell (DankMaterialShell)
 
-Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome. Configured via DankMaterialShell's upstream HM module.
+Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_gnome, **and rofi** (launcher, clipboard, keybinds, emoji, calc). Configured via DankMaterialShell's upstream HM module.
 
 - **Input:** `dankMaterialShell` (github:AvengeMedia/DankMaterialShell/stable) — brings `quickshell` transitively, no separate quickshell input
 - **HM module:** `platforms/nixos/desktop/quickshell.nix` — imports DMS upstream, sets `programs.systemnix-quickshell.enable = true`, enables `systemd.enable = true` (defaults to false!)
-- **DMS plugins:** `pkgs/dms-plugins/` — 13 SystemNix-native widgets declaratively installed via DMS's `plugins` option with port-templated settings from `lib/ports.nix`. Each uses `PluginComponent` + `plugin.json`
+- **DMS plugins:** `pkgs/dms-plugins/` — 13 SystemNix-native widgets + 2 community launcher plugins (dms-emoji-launcher, DankCalculator) declaratively installed via DMS's `plugins` option with port-templated settings from `lib/ports.nix`. Community plugins use `fetchFromGitHub`. Each uses `PluginComponent` + `plugin.json`
 - **DevShell:** `nix develop .#quickshell` for hot-reload QML development with `qmlls` LSP
 - **Wallpaper management:** DMS owns wallpapers natively. awww is RETIRED. `dms-wallpaper-init` service seeds a random wallpaper from `~/.local/share/wallpapers/` (installed from `wallpapers-src` flake input) on first launch. DMS derives cycling directory from current wallpaper's parent dir. `Mod+W` = `dms ipc call wallpaper next`. Dynamic theming (`enableDynamicTheming = false`) is DISABLED — matugen overrides Catppuccin Mocha (our global theme). Re-enable if committing to Material You dynamic colors
 - **Waybar RETIRED:** Completely removed (import, package, service, scripts). DMS is the sole shell
+- **Rofi migrated to DMS (2026-06-30):** niri's 5 rofi keybindings rewired to DMS IPC (`spotlight toggle`, `clipboard toggle`, `keybinds toggle niri`, `spotlight toggleQuery ":e"`, `spotlight toggleQuery "="`). Rofi leaked 7 GB and OOM-killed niri. Rofi config (`rofi.nix`) remains for Sway backup WM only. DMS service has `MemoryMax=4G` as defense-in-depth. Emoji via dms-emoji-launcher plugin (trigger `:e`), calculator via DankCalculator plugin (trigger `=`)
 - **Runtime verified:** DMS owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names
 - **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)
 - **`inputs.nixpkgs.follows`** on the DMS input is MANDATORY — mismatched Qt causes runtime crashes
@@ -167,7 +168,8 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | DMS Quickshell `Process.onFailed` | Quickshell's `Process` has NO `onFailed` signal. Use `onStreamFinished` with text-length check or try/catch for error handling |
 | Stale polkit-gnome after deploy | polkit-gnome process lingers from previous generation after removing it from packages. Self-resolves on reboot. DMS polkit agent warns "already exists" until then |
 | DMS `plugin_settings.json` read-only | HM symlinks this to Nix store — user can't change plugin settings via DMS UI. Settings are declarative from `programs.dank-material-shell.plugins.<name>.settings` |
-| cliphist + DMS clipboard coexistence | Both cliphist (wl-paste --watch) and DMS clipboard manager watch the Wayland clipboard. Intentional: cliphist provides rofi integration (Alt+C), DMS provides GUI history |
+| cliphist service RETIRED | cliphist (wl-paste --watch) was retired when Alt+C migrated to DMS clipboard modal. DMS owns clipboard history exclusively. cliphist CLI remains in base.nix for manual use |
+| Rofi OOM crash (2026-06-30) | Rofi leaked to 7 GB + 2.3 GB swap over 5h22m, triggering global OOM that killed niri, ghostty, signal, pipewire, unbound, clickhouse, immich. Root cause: long-lived `-dmenu`/`-drun` instances leaking. Fix: all 5 niri rofi bindings migrated to DMS spotlight/clipboard/keybinds IPC. DMS has MemoryMax=4G. Rofi remains for Sway backup WM only |
 | DMS `settings.json` vs `plugin_settings.json` | **Split-brain:** `settings.json` is user-owned/mutable (bar layout, theme, lock config). `plugin_settings.json` is Nix-managed/read-only symlink (plugin URLs, ports). DMS UI changes to plugin settings silently disappear on rebuild. Document this tradeoff |
 | `find -L` for Nix store symlinks | `find` does NOT follow starting-point symlinks by default. Wallpaper directories installed via HM symlinks need `find -L "$dir"` or trailing slash. Without `-L`, find silently returns nothing |
 | `serviceOneshotDefaults` for oneshot services | `serviceDefaults`/`serviceDefaultsUser` default to `Restart=always` which is INVALID for `Type=oneshot` — systemd refuses to start. Use `serviceOneshotDefaults` (system) or `serviceOneshotDefaultsUser` (HM user) which default to `Restart=no`. Override to `on-failure` if retry-on-error is desired |

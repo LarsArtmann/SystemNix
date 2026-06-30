@@ -102,17 +102,42 @@ in {
             sopsFile = "/run/secrets/sops-nix-age-key";
           };
         };
+        # Community plugins — launcher-type plugins integrated into DMS spotlight
+        dms-emoji-launcher = {
+          src = pkgs.fetchFromGitHub {
+            owner = "devnullvoid";
+            repo = "dms-emoji-launcher";
+            rev = "1c0a7d337a52b48f9499060076703a35e8dd4f4f";
+            hash = "sha256-NQ14YenDiNK2VqXQ3z7jAkatbSRtYJHhOhvv7AJlUD8=";
+          };
+          settings = {};
+        };
+        dms-calculator = {
+          src = pkgs.fetchFromGitHub {
+            owner = "rochacbruno";
+            repo = "DankCalculator";
+            rev = "1db5865419a40a33171a475855a59e0b8bf7187f";
+            hash = "sha256-j8C62+sevr6b+akzVSAqUVysIhb6Vbr8jnWcTXeOtE8=";
+          };
+          settings.calcEngine = "js";
+        };
       };
     };
 
     # DMS handles its own systemd service via the upstream HM module.
     # The upstream module binds to config.wayland.systemd.target which
     # niri-flake sets to niri.service — so the shell starts with niri.
-    systemd.user.services.dms.Service.Environment = [
-      # matugen package is removed (enableDynamicTheming = false), but DMS still
-      # probes `which matugen` and logs warnings. This env var makes DMS skip the
-      # probe entirely (Theme.qml:143). Catppuccin Mocha is our global theme.
-      "DMS_DISABLE_MATUGEN=1"
-    ];
+    systemd.user.services.dms.Service = {
+      Environment = [
+        # matugen package is removed (enableDynamicTheming = false), but DMS still
+        # probes `which matugen` and logs warnings. This env var makes DMS skip the
+        # probe entirely (Theme.qml:143). Catppuccin Mocha is our global theme.
+        "DMS_DISABLE_MATUGEN=1"
+      ];
+      # Defense-in-depth: DMS is now the launcher, clipboard, and all modals.
+      # Prevent a repeat of the 2026-06-30 rofi OOM (7 GB leak → compositor killed).
+      # 4G is generous for a Qt/QML shell but stops runaway leaks before global OOM.
+      MemoryMax = "4G";
+    };
   };
 }

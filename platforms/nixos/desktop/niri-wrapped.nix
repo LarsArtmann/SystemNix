@@ -301,23 +301,17 @@ in {
         "Mod+Shift+Page_Up".action.move-column-to-workspace-up = {};
         "Mod+Shift+Page_Down".action.move-column-to-workspace-down = {};
 
-        "Mod+D".action.spawn = [
-          "rofi"
-          "-show"
-          "drun"
-        ];
-        "Mod+Space".action.spawn = [
-          "rofi"
-          "-show"
-          "drun"
-        ];
-        "Mod+Shift+Slash".action.spawn =
-          sh "niri msg binds | rofi -dmenu -p 'Keybindings:' -theme-str 'window {width: 80%; height: 80%;}'";
-        "Alt+C".action.spawn =
-          sh "cliphist list | rofi -dmenu -p 'Clipboard:' -kb-delete-entry 'Ctrl+Delete' -theme-str 'window {width: 50%;} listview {columns: 1; lines: 12; scrollbar: true; } element {orientation: horizontal; padding: 8px; spacing: 8px; } element-text {horizontal-align: 0.0; vertical-align: 0.5; } scrollbar {enabled: true; width: 4px; padding: 0; } scrollbar-handle {background-color: @selected; border-radius: 2px; }' | cliphist decode | wl-copy";
-        "Mod+period".action.spawn = sh "rofi -modi emoji -show emoji -theme-str 'window {width: 40%;}'";
-        "Mod+Shift+C".action.spawn =
-          sh "rofi -show calc -modi calc -no-show-match -no-sort -theme-str 'window {width: 30%;}'";
+        # App launcher — DMS spotlight (replaces rofi drun, which OOM-killed niri)
+        "Mod+D".action.spawn = ["dms" "ipc" "call" "spotlight" "toggle"];
+        "Mod+Space".action.spawn = ["dms" "ipc" "call" "spotlight" "toggle"];
+        # Keybinds cheatsheet — DMS keybinds modal (replaces niri msg binds | rofi -dmenu)
+        "Mod+Shift+Slash".action.spawn = ["dms" "ipc" "call" "keybinds" "toggle" "niri"];
+        # Clipboard history — DMS clipboard modal (replaces cliphist | rofi -dmenu)
+        "Alt+C".action.spawn = ["dms" "ipc" "call" "clipboard" "toggle"];
+        # Emoji picker — DMS spotlight via emoji plugin trigger :e (replaces rofi-emoji)
+        "Mod+period".action.spawn = ["dms" "ipc" "call" "spotlight" "toggleQuery" ":e"];
+        # Calculator — DMS spotlight via calculator plugin trigger = (replaces rofi-calc)
+        "Mod+Shift+C".action.spawn = ["dms" "ipc" "call" "spotlight" "toggleQuery" "="];
         # dunstctl keybind removed — DankMaterialShell provides notification center
         "Mod+Shift+E".action.spawn = ["emacs"];
         "Mod+Shift+B".action.spawn = ["firefox"];
@@ -568,23 +562,6 @@ in {
           // sd.serviceDefaultsUser {}
           // {
             ExecStart = lib.getExe ssh-suspend-guard;
-            TimeoutStartSec = "10s";
-          };
-        Install.WantedBy = ["graphical-session.target"];
-      };
-
-      cliphist = {
-        Unit = {
-          Description = "Clipboard history watcher";
-          After = ["graphical-session.target"];
-          PartOf = ["graphical-session.target"];
-          StartLimitBurst = 3;
-          StartLimitIntervalSec = 120;
-        };
-        Service =
-          sd.serviceDefaultsUser {}
-          // {
-            ExecStart = "${lib.getExe' pkgs.wl-clipboard "wl-paste"} --watch ${lib.getExe pkgs.cliphist} store";
             TimeoutStartSec = "10s";
           };
         Install.WantedBy = ["graphical-session.target"];
