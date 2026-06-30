@@ -141,7 +141,7 @@ _: {
               (mkHttpCheck {
                 name = "SigNoz";
                 group = "Monitoring";
-                url = "http://localhost:${toString config.services.signoz.settings.queryService.port}";
+                url = "http://localhost:${toString config.services.signoz.settings.queryService.port}/api/v1/health";
                 alerts = discordAlert "SigNoz observability platform down — no metrics/alerts";
               })
               (mkHttpCheck {
@@ -252,7 +252,7 @@ _: {
               (mkHttpCheck {
                 name = "Monitor365 Server";
                 group = "Monitoring";
-                url = "http://localhost:${toString ports.monitor365-server}";
+                url = "http://localhost:${toString ports.monitor365-server}/health";
                 interval = "60s";
               })
               (mkHttpCheck {
