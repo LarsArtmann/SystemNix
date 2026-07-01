@@ -76,6 +76,11 @@ in {
       "nvme_core.default_ps_max_latency_us=0"
       "systemd.show_status=true"
       "systemd.log_level=debug"
+      # Enable task delay accounting — kernel has CONFIG_TASK_DELAY_ACCT=y compiled in
+      # but it's inert without this boot param. iotop shows "CONFIG_TASK_DELAY_ACCT not
+      # enabled" without it. Near-zero overhead. eBPF tools (bcc/bpftrace) don't need it
+      # but iotop does for SWAPIN%/IO% columns.
+      "delayacct"
     ];
 
     binfmt.emulatedSystems = ["aarch64-linux"];

@@ -52,6 +52,12 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
 
 - **Split large modules** — `monitor365.nix` (716L), `signoz.nix` (705L), `forgejo.nix` (583L) are too large. Extract sub-modules.
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`).
+- **Replace unbound with dnsblockd's embedded resolver** — dnsblockd now has a full recursive DNS resolver (sdns, DNSSEC, DoT, DoH, caching). SystemNix still runs unbound on :53 with dnsblockd as a block-page HTTP server only. Three gaps must close before migration:
+  1. **Local zones** (~4-6h in dnsblockd) — unbound serves `home.lan.` static A records for `auth`, `immich`, `forgejo`, etc. dnsblockd's DNS handler has no arbitrary local-data injection. Without it, internal service DNS breaks.
+  2. **Upstream DoT forwarding** (~2h in dnsblockd) — unbound forwards to Mullvad/Quad9 via DoT (:853), hiding queries from the ISP. dnsblockd's sdns does direct root recursion — the ISP sees every DNS lookup in cleartext. A privacy regression unless evo-x2 is always behind a VPN.
+  3. **LAN access control** (~1-2h in dnsblockd) — unbound restricts resolution to `192.168.1.0/24`. dnsblockd's DNS server has no ACLs — anyone who can reach :53 can use it as an open resolver.
+
+  The embedded resolver is feature-flagged (`dns_enabled: false` in config), so it can be tested without touching the existing unbound setup. Total estimated effort: ~15h across both repos.
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing.
 - **dnsblockd category enum** — categories are stringly-typed (10 hardcoded strings). Define Go enum type.
 

@@ -81,6 +81,9 @@ _: {
         lsof
         inotify-tools
         iotop
+        sysstat # iostat -dx 1 — per-device I/O stats
+        bcc # biotop, biosnoop, biolatency — eBPF per-process block I/O tools (work without CONFIG_TASK_DELAY_ACCT)
+        bpftrace # eBPF tracing language for custom I/O one-liners
         perf
 
         goaccess
