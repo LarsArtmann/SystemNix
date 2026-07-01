@@ -541,6 +541,10 @@ _: {
           service = {
             DISABLE_REGISTRATION = true;
             REQUIRE_SIGNIN_VIEW = false;
+            # SSO-only: hide password form, block password auth entirely.
+            # Git HTTPS still works via access tokens (not affected).
+            ENABLE_INTERNAL_SIGNIN = false;
+            ENABLE_BASIC_AUTHENTICATION = false;
           };
 
           oauth2_client = {
