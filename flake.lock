@@ -440,11 +440,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782894940,
-        "narHash": "sha256-CynAjvwR7ZVthXYQh0s4Dv2gJ+Ha2qr0YkBvPQKt6Lc=",
+        "lastModified": 1782897630,
+        "narHash": "sha256-mb3FRoTJJ/KpjaZ6/l35px4kncN9olFTXCWtIgupEeM=",
         "ref": "master",
-        "rev": "9f94d7f19b3aedb0d01e3f02f82eb842172ac1b4",
-        "revCount": 421,
+        "rev": "53f4cd48528635bd4677f81f801425509fa6a4a8",
+        "revCount": 423,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -2334,11 +2334,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1782896411,
-        "narHash": "sha256-RiRZta2BHYclgfV9Yl0vUUOY6FvXIeCc1tgqtU3jTTo=",
+        "lastModified": 1782896905,
+        "narHash": "sha256-pojpDp4BN4JXAhgesVAGn0PBcWxKGDwHYxDbXfBTp2M=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "d51d69d22f2534312a3db5085b9aedf0c2fc588a",
+        "rev": "9f501c0320cc03fb4092027fa07bcf4e1dd04048",
         "type": "github"
       },
       "original": {
@@ -2790,11 +2790,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782896405,
-        "narHash": "sha256-1rfbwbom+6xSv+oCXvOloBVZJ4ZxAP4mLkEVuH0vSkA=",
+        "lastModified": 1782896975,
+        "narHash": "sha256-5s9YvA4OaRkJD1JC8jZXma6iWHUQIxRQremdwj6zlCE=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "c90b96e201bdf79aed2f657a5abe8ca24c1e15a6",
+        "rev": "116eb16ddb86fcd25edbc7dca91f83a23515abb2",
         "type": "github"
       },
       "original": {
@@ -3028,11 +3028,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782896860,
-        "narHash": "sha256-vUvY64x8/C/EzuMY8ZHlI6B12gHNjU+/tJ7whHFbC2c=",
+        "lastModified": 1782896942,
+        "narHash": "sha256-DrcuNoI2A2QqkSSpCU58KBI3Z+e/sASw7lmwIfvIbGw=",
         "ref": "master",
-        "rev": "2e8d62fb31a0c216260600357423f1aa1f933b56",
-        "revCount": 3305,
+        "rev": "77021e74ed0b888ebeb523b70c76bb818aa8ea40",
+        "revCount": 3306,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
