@@ -609,6 +609,10 @@
               mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
               [pkgs.nix pkgs.jq pkgs.systemd]
               ./scripts/pre-deploy-check.sh;
+            pocket-id-login-code =
+              mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
+              [pkgs.curl pkgs.jq]
+              ./scripts/pocket-id-login-code.sh;
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux {
             dns-diagnostics =
