@@ -209,7 +209,7 @@ _: {
             rrset-cache-size = "128m";
             key-cache-size = "16m"; # DNSSEC key cache — unbounded by default
             neg-cache-size = "16m"; # NXDOMAIN cache — unbounded by default
-            infra-cache-numhost = 10000; # Limit RTT cache entries (default 10000, explicit for documentation)
+            infra-cache-numhosts = 10000; # Limit RTT cache entries (default 10000, explicit for documentation)
             prefetch = true;
             prefetch-key = true;
 
