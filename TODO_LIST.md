@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-06-25 (session 152)
+**Updated:** 2026-07-02 (DNS migration plan added)
 
 ---
 
@@ -11,6 +11,51 @@
 - [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
 - [ ] **Verify Pocket ID email sending** — test login notification or email verification after SMTP wiring + sops secret added
 - [x] **Reset Monitor365 failed state** — Root cause identified: upstream Rust panic (Axum 0.7 route syntax `:param` → `{param}`). Needs fix in `github:LarsArtmann/monitor365` source. Nix-side workaround not possible.
+
+### Priority 0: DNS Migration — dnsblockd → Primary Resolver (2026-07-02)
+
+**Strategy:** dnsblockd becomes the DEFAULT resolver on `:53` (`dns_enabled: true`). Unbound stays as IMMEDIATE FALLBACK on `:5353` with identical config (same local zones, forwarders, ACLs, blocklists). After 24h of stable dnsblockd operation, remove unbound entirely.
+
+**Phase 2a — Module rework (`modules/nixos/services/dns-blocker.nix`)**
+- [ ] Add new NixOS options: `dnsEnable`, `dnsForwarders`, `localRecords`, `localZones`, `allowedNetworks`, `dnsIPv6Enabled`, `dnsReloadInterval`
+- [ ] Generate dnsblockd YAML with `dns_enabled: true` + all DNS config fields (local records, zones, forwarders, ACLs, blocklists, IPv6 disabled)
+- [ ] Move unbound to `:5353` as backup resolver (keep all current config: local-zone, forwarders, access-control, blocklists, remote-control)
+- [ ] Remove `unbound_control` / `SupplementaryGroups = ["unbound"]` from dnsblockd service — dnsblockd is self-contained now
+- [ ] Remove `dnsblockd process` build step — dnsblockd loads blocklists natively (`dns_blocklists` config key)
+- [ ] Add assertion: `dnsEnable = true` requires `allowedNetworks` (prevent open resolver)
+- [ ] Add assertion: `dnsEnable = true` requires `localZones` if `localRecords` has entries (prevent upstream leak)
+
+**Phase 2b — Config updates**
+- [ ] `platforms/nixos/system/dns-blocker-config.nix` — set `dnsEnable = true`, migrate 13 local-data → `localRecords`, set forwarders/ACLs/zones/IPv6
+- [ ] `platforms/nixos/system/dns-blocker-config.nix` — move unbound to `:5353` (backup)
+- [ ] `platforms/common/dns-resolver.nix` — keep `nameservers = ["127.0.0.1"]` (points at dnsblockd on :53)
+- [ ] `platforms/nixos/rpi3/default.nix` — same migration (dnsblockd primary on :53, unbound backup on :5353)
+
+**Phase 2c — Dependencies & failover**
+- [ ] Update 6+ services that depend on `unbound.service` — they should depend on dnsblockd now (or a generic DNS target)
+- [ ] Rewrite VRRP health check in `dns-failover.nix` — `chk_unbound` → DNS query to dnsblockd on :53
+- [ ] Pin dnsblockd flake input to `v0.2.0` tag (currently `ref=master`)
+
+**Phase 3 — Deploy & validate (24h observation period)**
+- [ ] `nix flake check --no-build` + `nix eval` — syntax + eval
+- [ ] Deploy to evo-x2
+- [ ] `dig @127.0.0.1 forgejo.home.lan.` → 192.168.1.150 (local records)
+- [ ] `dig @127.0.0.1 unknown.home.lan.` → NXDOMAIN (zone boundary)
+- [ ] `dig @127.0.0.1 google.com.` → resolves (via DoT forwarder)
+- [ ] Query blocked domain → returns block IP (192.168.1.200)
+- [ ] Temp-allow a blocked domain → resolves to real IP (cache flushed)
+- [ ] Wait for expiry → blocked again (cache flushed)
+- [ ] `dig @127.0.0.1 -t AAAA google.com.` → no IPv6 upstream (dns_ipv6_enabled: false)
+- [ ] Verify from LAN client: `dig @192.168.1.150 google.com.` → resolves (ACL)
+- [ ] **24h observation** — monitor dnsblockd stats API, query logs, error rates. If dnsblockd breaks: switch resolv.conf back to `127.0.0.1` port 5353 (unbound backup), debug, redeploy
+- [ ] After 24h stable: remove unbound entirely from all configs
+
+**Phase 4 — Cleanup**
+- [ ] Remove unbound from system packages + all config files
+- [ ] Remove `:5353` backup listener
+- [ ] Update AGENTS.md — change "dnsblockd embedded resolver ≠ unbound replacement (yet)" to reflect completion
+- [ ] Update ROADMAP.md — mark Theme 4 DNS migration items done
+- [ ] Remove unbound-related gotchas from AGENTS.md
 
 ### Priority 1: Fix Broken Services
 
