@@ -88,19 +88,26 @@ in {
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
     tmp.cleanOnBoot = true;
-    # NOTE: useTmpfs = false — we define /tmp manually below with an explicit size cap.
-    # The default tmpfs size is 50% of RAM (~47 GiB), which lets go-build caches and
-    # dev tool temp files silently eat 16+ GiB of RAM. 8 GiB is sufficient for typical
-    # builds; nix builds use /nix/var/nix/temp.
+    # NOTE: useTmpfs = false — we define /tmp as a static systemd.mount below.
+    # boot.tmp.useTmpfs generates a mount with no size limit (50% RAM = ~47 GiB).
+    # systemd.mounts creates a static tmp.mount unit that switch-to-configuration
+    # can diff/update atomically. fileSystems."/tmp" generates a runtime fstab
+    # entry instead — switch-to-configuration sees the unit disappear and tries
+    # to unmount /tmp, which fails (busy) → activation exit code 1.
     tmp.useTmpfs = false;
   };
 
-  fileSystems."/tmp" = {
-    fsType = "tmpfs";
-    mountPoint = "/tmp";
-    options = ["mode=1777" "size=8G" "nofail"];
-    neededForBoot = true;
-  };
+  # Static /tmp tmpfs mount with explicit 16 GiB size cap.
+  # MUST use systemd.mounts (NOT fileSystems) so the unit is in the Nix store
+  # closure and switch-to-configuration can track it across generations.
+  systemd.mounts = [
+    {
+      what = "tmpfs";
+      where = "/tmp";
+      type = "tmpfs";
+      options = "mode=1777,size=16G";
+    }
+  ];
 
   # TTM memory pool configuration for GPU workloads
   # System has 128 GiB physical RAM but only ~94 GiB visible to Linux (34 GiB BIOS VRAM carveout).
@@ -306,13 +313,14 @@ in {
   powerManagement.cpuFreqGovernor = "performance";
 
   # ZRAM: compressed swap emergency buffer on unified memory APU.
-  # 10% = ~6.4 GB virtual device on 64 GB unified DDR5. GPU and CPU share this RAM,
-  # so AI workloads compete directly with system processes for the same pool.
+  # ~17% = ~16 GiB virtual device. zstd compresses ~2.7x, so 16 GiB of swap
+  # costs ~6 GiB of physical RAM for the compressed data. GPU and CPU share
+  # this RAM, so AI workloads compete directly with system processes.
   # swappiness=10 ensures the kernel uses swap before OOM kills.
   # swappiness=1 caused the 2026-05-25 OOM crash (kernel killed user@1000 processes
   # instead of swapping out nix-daemon build memory).
   zramSwap = {
     enable = true;
-    memoryPercent = 10;
+    memoryPercent = 17;
   };
 }
