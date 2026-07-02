@@ -49,11 +49,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782974243,
-        "narHash": "sha256-qFgRAWjeIPcFwfTVyso7pW/mWSw/lrKID6LQgz8QfB0=",
+        "lastModified": 1782980184,
+        "narHash": "sha256-Uo/5Id3wVR5A7bReq/aI38kHchQTPsbDW6J5IP/iVCs=",
         "ref": "master",
-        "rev": "16cd45a8aa023af373bb3c008b1937762a3f0810",
-        "revCount": 2158,
+        "rev": "e5ad07b310504a15121a776ec5806ad7ca2aa8b3",
+        "revCount": 2160,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       },
@@ -413,11 +413,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782973353,
-        "narHash": "sha256-MOW9WAG+ejfBJqqhu8V5LIumAOGv5ioICPVnUOZJ0bk=",
+        "lastModified": 1782980746,
+        "narHash": "sha256-SuAoi43DjlChvf5OdshzdTf7bjpibj+VVlovP5nYCpY=",
         "ref": "master",
-        "rev": "65ca05cf6974caf05957e05736c7956ea0f48b1f",
-        "revCount": 504,
+        "rev": "e1ad7c1e7ba73d4c43f9e3adb94e3b24e9e9a65a",
+        "revCount": 507,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -1989,11 +1989,11 @@
         "treefmt-nix": "treefmt-nix_7"
       },
       "locked": {
-        "lastModified": 1782973241,
-        "narHash": "sha256-M5qX6HB+729ngQvzjVgyYZgR+x7x352T8awwRaDKSrQ=",
+        "lastModified": 1782980581,
+        "narHash": "sha256-RvIiB8Gxrnin6vsCBJeliUHl9PyOsXykCIvkSBI2uzA=",
         "ref": "master",
-        "rev": "0d7fb88ecf66a5ba8a9b0ec379f74d88c6481313",
-        "revCount": 1404,
+        "rev": "051e874d4f1763e8828490c70156e903dabc6155",
+        "revCount": 1406,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
       },
@@ -2282,11 +2282,11 @@
         "treefmt-nix": "treefmt-nix_9"
       },
       "locked": {
-        "lastModified": 1782973294,
-        "narHash": "sha256-/MfV1Ji40R4nATHuTgs15T/9QKh/RhnfwgJYCPBbQMo=",
+        "lastModified": 1782980023,
+        "narHash": "sha256-t0DLdAjH+QqSCAuNlpWixHtFJJilCg2q3U2huH7SVac=",
         "ref": "master",
-        "rev": "d575991ab9d1430a99e64818e59bfaf0975c502b",
-        "revCount": 743,
+        "rev": "b2129cfef7b3212423dd8f863591a80b1b7ff7d1",
+        "revCount": 744,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -2497,11 +2497,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782972968,
-        "narHash": "sha256-ctr4bZUEo2zmScM2xUuqgYrN2rERn4oeo3iFaFVotp4=",
+        "lastModified": 1782979973,
+        "narHash": "sha256-UgiB8eimdjAAPEUAdaAta2LBSzsDDxkvpAOwx3GqSWg=",
         "ref": "master",
-        "rev": "e9e16cc7f85959f4a715b65983cdec5b527f9149",
-        "revCount": 293,
+        "rev": "2d29b9bcd401f285123e0e0bee348920bcc2c0ba",
+        "revCount": 294,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/mr-sync"
       },
