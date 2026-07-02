@@ -88,16 +88,37 @@ in {
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
     tmp.cleanOnBoot = true;
-    tmp.useTmpfs = true;
+    # NOTE: useTmpfs = false — we define /tmp manually below with an explicit size cap.
+    # The default tmpfs size is 50% of RAM (~47 GiB), which lets go-build caches and
+    # dev tool temp files silently eat 16+ GiB of RAM. 8 GiB is sufficient for typical
+    # builds; nix builds use /nix/var/nix/temp.
+    tmp.useTmpfs = false;
   };
 
-  # TTM memory pool configuration for GPU workloads (112GB flexible limit, 16GB reserved for CPU)
+  fileSystems."/tmp" = {
+    fsType = "tmpfs";
+    mountPoint = "/tmp";
+    options = ["mode=1777" "size=8G" "nofail"];
+    neededForBoot = true;
+  };
+
+  # TTM memory pool configuration for GPU workloads
+  # System has 128 GiB physical RAM but only ~94 GiB visible to Linux (34 GiB BIOS VRAM carveout).
+  # pages_limit = max pages TTM allocator can grab (ceiling, not reservation)
+  # page_pool_size = max pages TTM pool caches for reuse after BO free (freed pages retained, not returned to kernel)
+  # WARNING: both set to 112 GiB — this exceeds the 94 GiB visible to Linux. The GPU driver
+  # can consume virtually ALL system RAM for GPU buffer objects (GTT), starving CPU processes.
+  # Observed: GPUActive=51.4 GiB (55% of RAM) with only desktop workloads (Helium, Quickshell, niri).
+  # GPUReclaim=0 means none of those pages can be reclaimed under memory pressure.
+  # TODO: consider reducing page_pool_size to ~32 GiB so freed BO pages return to kernel faster,
+  # while keeping pages_limit high for ML model loading. Needs testing with Ollama.
   boot.extraModprobeConfig = ''
     options ttm pages_limit=${toString ttmPagesLimit}
     options ttm page_pool_size=${toString ttmPagesLimit}
   '';
 
-  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 64 GB unified DDR5, GPU/CPU share same RAM via GTT)
+  # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~94 GiB visible
+  # to Linux after 34 GiB BIOS VRAM carveout. GPU/CPU share same RAM via GTT on this unified-memory APU)
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = lib.mkForce 0; # Heuristic overcommit — prevents wild allocation beyond capacity (overrides Redis's "1")
     "vm.swappiness" = 10; # Use swap before OOM — prevents Rust/nix build crashes (was 1, caused OOM kills on 2026-05-25)
