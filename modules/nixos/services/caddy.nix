@@ -55,6 +55,9 @@ _: {
         Referrer-Policy "strict-origin-when-cross-origin"
         Permissions-Policy "geolocation=(), microphone=(), camera=()"
         -Server
+        # Always revalidate HTML documents to prevent stale cached pages
+        # referencing chunk hashes from a previous deploy
+        Cache-Control "no-cache"
       }
       encode zstd gzip
     '';
