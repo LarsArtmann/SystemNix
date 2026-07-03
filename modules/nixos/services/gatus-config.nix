@@ -287,6 +287,14 @@ _: {
                 conditions = ["[BODY] == ${config.services.dns-blocker.blockIP}"];
                 alerts = discordAlert "DNS blocking not active — ads.google.com resolved without block";
               }
+              (mkHttpCheck {
+                name = "External HTTPS";
+                group = "Infrastructure";
+                url = "https://api.github.com/zen";
+                interval = "5m";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 3000"];
+                alerts = discordAlert "External HTTPS connectivity lost — server cannot reach the internet";
+              })
             ]
             ++ lib.optionals config.services.voice-agents.enable [
               (mkHttpCheck {
