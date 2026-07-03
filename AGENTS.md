@@ -45,6 +45,7 @@ scripts/               # Shell + Python operational scripts
 6. All vHosts in `caddy.nix`, all Homepage tiles in `homepage.nix` (guard conditional tiles with `lib.optionalString`)
 7. `WatchdogSec` ONLY on services that send `WATCHDOG=1` via `sd_notify()` — Type=notify alone is NOT sufficient
 8. For native OIDC SSO: add the client to `pocket-id.nix` `oidcClients` default, add a provisioning oneshot that reads the secret from `/var/lib/pocket-id/client-secrets/<clientId>` and configures the service via its CLI/API. Use a direct TLS Caddy vHost (NOT `protectedVHost`) — forward-auth + native OIDC causes double-auth loops. See Forgejo (`forgejo-oidc-setup`) as the reference pattern
+9. **Add a Gatus health check** in `gatus-config.nix`. Use `mkHttpCheck` for HTTP endpoints, raw attrset for TCP/DNS checks. Add `alerts = discordAlert "..."` for any service whose failure should notify. Add `[RESPONSE_TIME] < N` conditions for user-facing services (500ms-2s depending on service). Every new service MUST be monitored — silent failures are unacceptable
 
 ### Private Go Repos (LarsArtmann)
 
@@ -138,6 +139,10 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | Darwin HM user | `users.users.larsartmann.home` required in `platforms/darwin/default.nix` |
 | Pocket ID bootstrap | `pocket-id-config.provision.enable = true` — creates admin + clients automatically. Only manual step: register passkey at `/setup` |
 | Caddy `handle_path` | STRIPS prefix before proxying. Use `handle` when backend expects full path |
+| Caddy `commonConfig` snippet | All vhosts MUST include `${commonConfig}` — provides security headers (HSTS, nosniff, frame-options), compression (zstd/gzip), and `-Server` header suppression. Applied via `protectedVHost` automatically; manual vhosts (auth, forgejo, status) must include it explicitly |
+| Caddy `auto_https off` + HTTP redirect | `auto_https off` means Caddy won't auto-redirect HTTP→HTTPS. The `:80` catch-all vhost handles this. TLS certs are sops-managed (`dnsblockd_server_cert`/`dnsblockd_server_key`), not ACME |
+| Caddy TLS protocols | `tlsConfig` enforces TLS 1.2+ (drops 1.0/1.1). `strict_sni_host on` in `servers` block prevents serving certs for unrecognized hostnames |
+| Gatus endpoint convention | Every application endpoint MUST have: (1) a Discord alert, (2) `[RESPONSE_TIME] < N` condition for HTTP services. Metrics-scrape endpoints (node exporter, cAdvisor) are exempt from response-time checks |
 | Dozzle module eval | `modules/nixos/services/dozzle.nix` with options breaks `nix flake check`. Use inline `virtualisation.oci-containers` |
 | `signoz.target` | SigNoz/ClickHouse use custom `signoz.target` (NOT `multi-user.target`) — all SigNoz components use `wantedBy = ["signoz.target"]` |
 | `svcEnabled` helper | In `sops.nix`, use `svcEnabled "name"` — safer than `config.services.X.enable` (rpi3 doesn't import all modules) |
