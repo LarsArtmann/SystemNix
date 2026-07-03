@@ -472,7 +472,7 @@
               <tr><td>6</td><td><strong>Add unbound-checkconf ExecStartPre</strong> to dns-blocker.nix unbound config</td><td><span class="badge badge-high">High</span></td><td>10 min</td></tr>
               <tr><td>7</td><td><strong>Add logind health check to pre-deploy-check.sh</strong> &mdash; test <code>loginctl list-users</code></td><td><span class="badge badge-high">High</span></td><td>15 min</td></tr>
               <tr><td>8</td><td><strong>Lower disk threshold in pre-deploy-check</strong> from 95% to 90%</td><td><span class="badge badge-high">High</span></td><td>5 min</td></tr>
-              <tr><td>9</td><td><strong>BTRFS: add <code>metadata_ratio=1</code> mount option</code></strong> to root filesystem</td><td><span class="badge badge-high">High</span></td><td>10 min</td></tr>
+              <tr><td>9</td><td><strong>BTRFS: add <code>metadata_ratio=1</code> mount option</strong> to root filesystem</td><td><span class="badge badge-high">High</span></td><td>10 min</td></tr>
               <tr><td>10</td><td><strong>Schedule weekly BTRFS data balance</strong> &mdash; systemd timer with <code>btrfs balance start -dusage=50 /</code></td><td><span class="badge badge-high">High</span></td><td>20 min</td></tr>
               <tr><td>11</td><td><strong>Start DNS migration Phase 2a</strong> &mdash; add NixOS options for dnsblockd primary resolver</td><td><span class="badge badge-medium">Medium</span></td><td>2h</td></tr>
               <tr><td>12</td><td><strong>Pin dnsblockd flake input to v0.2.0 tag</strong> (currently <code>ref=master</code>)</td><td><span class="badge badge-medium">Medium</span></td><td>5 min</td></tr>

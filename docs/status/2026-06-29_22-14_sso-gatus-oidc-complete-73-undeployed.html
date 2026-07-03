@@ -377,7 +377,8 @@
               >Critical: 73+ commits — including all SSO work, BTRFS crash prevention, and the
               network boot-race fix — are undeployed.</strong
             >
-            Every change this week is theoretical until <code>nix run .#deploy</code> runs.
+            Every change this week is theoretical until
+            <code>nix run .#deploy</code> runs.
           </p>
           <div class="meta">
             <span class="tag amber">Scope: full system</span>
@@ -623,7 +624,9 @@
             <td>
               Manifest, OpenSEO, Crush Daily, Monitor365 — need OIDC code in their upstream repos.
             </td>
-            <td><span class="badge badge-blocked">Large (separate repos)</span></td>
+            <td>
+              <span class="badge badge-blocked">Large (separate repos)</span>
+            </td>
           </tr>
           <tr>
             <td>Coordinated SLO across Layer 1 apps</td>
@@ -646,10 +649,10 @@
         <div class="card card-problem">
           <h3>1. 73+ commits undeployed — the machine is 2 weeks stale</h3>
           <p>
-            <strong>This is the #1 risk in the entire system right now.</strong> The last deploy was
-            around commit <code>ea151191</code> (~2 weeks ago). Since then: BTRFS metadata-ENOSPC
-            crash prevention, the DNS network boot-race fix, Forgejo OIDC, Gatus OIDC, DiscordSync
-            recovery, flake reorg, SSH socket cleanup —
+            <strong>This is the #1 risk in the entire system right now.</strong>
+            The last deploy was around commit <code>ea151191</code> (~2 weeks ago). Since then:
+            BTRFS metadata-ENOSPC crash prevention, the DNS network boot-race fix, Forgejo OIDC,
+            Gatus OIDC, DiscordSync recovery, flake reorg, SSH socket cleanup —
             <strong>none of it is running on the actual hardware.</strong>
           </p>
           <p>
@@ -778,8 +781,8 @@
           <tr>
             <td>7</td>
             <td>
-              Guard immich/oauth2-proxy sops secrets with <code>svcEnabled</code> (latent
-              atomic-fail debt)
+              Guard immich/oauth2-proxy sops secrets with
+              <code>svcEnabled</code> (latent atomic-fail debt)
             </td>
             <td><span class="badge badge-high">HIGH</span></td>
             <td>10 min</td>
@@ -921,8 +924,8 @@
             >
             The machine is running a ~2-week-old configuration. I can build and verify, but I cannot
             deploy without a reboot window — kernel/systemd changes (BTRFS guard,
-            dnsblockd-attach-ip) require <code>nh os switch</code> which may need a reboot if the
-            running kernel diverges.
+            dnsblockd-attach-ip) require
+            <code>nh os switch</code> which may need a reboot if the running kernel diverges.
           </p>
           <p style="color: var(--text-muted)">
             <strong>Should I run <code>nix run .#deploy</code> now?</strong> If yes, I'll run
