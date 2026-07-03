@@ -27,7 +27,8 @@
           chmod -R u+w $out/opt
           ln -s ${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm $out/opt/helium/WidevineCdm
 
-          # Wrap binary with VAAPI hardware video acceleration flags
+          # Wrap binary: VAAPI accel + --disable-gpu-watchdog (prevents GPU process kill
+          # during slow display pipeline reconfiguration on Strix Halo DCN 3.5.1 hotplug)
           rm -rf $out/bin
           cp -a ${heliumPackage}/bin $out/bin
           chmod -R u+w $out/bin
@@ -35,6 +36,7 @@
             --add-flags "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,AcceleratedVideoDecoder,AcceleratedVideoEncoder,WebAuthenticationHybridTransport" \
             --add-flags "--ignore-gpu-blocklist" \
             --add-flags "--enable-zero-copy" \
+            --add-flags "--disable-gpu-watchdog" \
             --add-flags "--restore-last-session" \
             --add-flags "--disable-session-crashed-bubble" \
             --add-flags "--disable-backgrounding-occluded-windows" \
