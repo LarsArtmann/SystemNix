@@ -183,12 +183,14 @@ _: {
                 name = "SigNoz";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.signoz.settings.queryService.port}/api/v1/health";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
                 alerts = discordAlert "SigNoz observability platform down — no metrics/alerts";
               })
               (mkHttpCheck {
                 name = "Manifest";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
                 alerts = discordAlert "Manifest LLM router down — AI cost optimization unavailable";
               })
               {
@@ -203,6 +205,7 @@ _: {
                 name = "Twenty CRM";
                 group = "Productivity";
                 url = "http://localhost:${toString config.services.twenty.port}/healthz";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
                 alerts = discordAlert "Twenty CRM down — customer data unavailable";
               })
               (mkHttpCheck {
@@ -210,6 +213,7 @@ _: {
                 group = "AI";
                 url = "http://localhost:${toString config.services.ollama.port}/api/tags";
                 interval = "60s";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 2000"];
                 alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
               })
               (mkHttpCheck {
@@ -249,6 +253,7 @@ _: {
                 name = "DNS Blocker";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
                 alerts = discordAlert "DNS blocker down — no ad/malware blocking";
               })
               {
@@ -304,6 +309,7 @@ _: {
                 group = "Productivity";
                 url = "http://localhost:${toString config.services.openseo.port}";
                 interval = "5m";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 2000"];
                 alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
               })
               (mkHttpCheck {
@@ -311,6 +317,7 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-server}/health";
                 interval = "60s";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
                 alerts = discordAlert "Monitor365 server down — device telemetry unavailable";
               })
               (mkHttpCheck {
@@ -428,6 +435,7 @@ _: {
                 group = "AI";
                 url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
                 interval = "5m";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
                 alerts = discordAlert "Crush Daily down — AI development insights unavailable";
               })
               (mkHttpCheck {
@@ -435,6 +443,7 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.dozzle}";
                 interval = "5m";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
                 alerts = discordAlert "Dozzle down — container log viewing unavailable";
               })
               (mkHttpCheck {
@@ -442,6 +451,7 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.overview}";
                 interval = "5m";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
               })
               (mkHttpCheck {
                 name = "Gatus";
