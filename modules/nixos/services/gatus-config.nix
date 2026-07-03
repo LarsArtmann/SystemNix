@@ -481,6 +481,7 @@ _: {
                 group = "Infrastructure";
                 url = "http://localhost:${toString ports.discordsync-api}/healthz";
                 interval = "60s";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
                 alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
               })
             ];
