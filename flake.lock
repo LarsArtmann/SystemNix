@@ -11,11 +11,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1783040548,
-        "narHash": "sha256-eRjA5U+FSuBjjHNLf1eGw9gV95hNgSqN9gJR/oE2Yjo=",
+        "lastModified": 1783042265,
+        "narHash": "sha256-CFtGtpDFYCkIGyuxP6DpPm0VWcV9q1HiRDnT5gy5LiI=",
         "ref": "fork",
-        "rev": "a3303f06fbc09d64e681457d35b7aa8143b2d6d8",
-        "revCount": 1597,
+        "rev": "12c2a60e6d2f91e0e4692eb256e0fca610ce1a67",
+        "revCount": 1598,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/art-dupl"
       },
@@ -413,11 +413,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783040431,
-        "narHash": "sha256-txMbFqwalGKBzNDZKYHfqg1RjW1mkaAJhxOrVgJBMtw=",
+        "lastModified": 1783042765,
+        "narHash": "sha256-LV5Dtxl1cYvsj0Iz66pBMPfAP9GSBhHRaNnrbFre1yI=",
         "ref": "master",
-        "rev": "38f1361591797d09636e17c24ce49d997b2cf3b7",
-        "revCount": 546,
+        "rev": "da4da78ca64f40cf286c14b951d13c92a17b6a9a",
+        "revCount": 547,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -566,11 +566,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1778716662,
-        "narHash": "sha256-m1Yf0wZ8j1OHjTc2UwHwyQRSnNeSgLJOd7q5Y45hzi4=",
+        "lastModified": 1782949081,
+        "narHash": "sha256-vp6Y/Grm98ESt6ceOkWiHWyZRDV3J1RID4w+6NWK9yA=",
         "owner": "hercules-ci",
         "repo": "flake-parts",
-        "rev": "f7c1a2d347e4c52d5fb8d10cb4d94b5884e546fb",
+        "rev": "17c9d6cdfc60c64f4ee8d306f9bc0b4ccb51481e",
         "type": "github"
       },
       "original": {
@@ -2312,11 +2312,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783037844,
-        "narHash": "sha256-CT8bsXHBJ5+WKSFqiSK23qCWJ0XkvWBIC6fwJjxd62Q=",
+        "lastModified": 1783043192,
+        "narHash": "sha256-+q8rPJ4tgaRtCLi2ewNNZkFQErrXKfp+oMDgBI95jCk=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "1ffb9c4f194432383f7e9e3f762f065786cbbcb0",
+        "rev": "6eea461f8112edbb2710ab4d8bf7d243fe0bbc9c",
         "type": "github"
       },
       "original": {
@@ -2434,11 +2434,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1783039523,
-        "narHash": "sha256-i+4KMkSprO8xlcuugDEeqvNaqe2zRL/mbkBI+31fANI=",
+        "lastModified": 1783043041,
+        "narHash": "sha256-yqRSVYFvptt0GNbHXYlBW0GMBCAWsYMiGWTtqCAk8gY=",
         "ref": "master",
-        "rev": "3968058e682c33973fff2cb1cf8bebb718a77c1b",
-        "revCount": 2064,
+        "rev": "220755544086450e07d8749c716c70d85c0fe85a",
+        "revCount": 2065,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -2834,11 +2834,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783041773,
-        "narHash": "sha256-SJGLFTZCGndOzUP1brpn1QXAEaf3bZmcErks0awE5jM=",
+        "lastModified": 1783042331,
+        "narHash": "sha256-PLp0ORogAP1ADeeyI40L9d38rvZgOUzMAnP4QiqAALo=",
         "ref": "master",
-        "rev": "037c5ac4f5ccfa0adaf6a3d60053a71970945901",
-        "revCount": 1165,
+        "rev": "0b0ed2a3ec87dadc475ae0c3979fd3888ac5e891",
+        "revCount": 1166,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/overview"
       },
@@ -3550,11 +3550,11 @@
     "templ-components_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1783039274,
-        "narHash": "sha256-46r8Ar4KEivZJ+guoMdq7UgbHwkD1FJkvGuKFfEPPnc=",
+        "lastModified": 1783042168,
+        "narHash": "sha256-ZEDzn1gmghastlUd/07cfxPuhfQa/fpPyQi7+QCh3CA=",
         "ref": "master",
-        "rev": "176ce37b760e8decaef1cbf3eed6e52d197d771c",
-        "revCount": 451,
+        "rev": "4cd95290097db52bd95c76da47bb6d8162b8623a",
+        "revCount": 452,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
