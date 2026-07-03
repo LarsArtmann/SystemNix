@@ -78,6 +78,14 @@ _: {
           auto_https off
           ${lib.optionalString (bindAddress != null) "default_bind ${bindAddress}"}
           metrics
+          log {
+            output file /var/log/caddy/access.log {
+              roll_size 100MB
+              roll_keep 3
+              roll_keep_for 168h
+            }
+            format json
+          }
         '';
 
         virtualHosts =
