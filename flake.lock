@@ -2526,15 +2526,15 @@
         ]
       },
       "locked": {
-        "lastModified": 1753450115,
-        "narHash": "sha256-5itrK5V9ZHGKIjKODTcneAanvs021Bk0CBJxBYRPaMs=",
-        "owner": "MTeaHead",
+        "lastModified": 1783052037,
+        "narHash": "sha256-4NTNJnkkmj0rkZb68CSEOLgZLEeCBknYSvmz/N7aSyY=",
+        "owner": "LarsArtmann",
         "repo": "niri-session-manager",
-        "rev": "2d9ae35bb654ad0cdc5f646e5fee446bf3af083c",
+        "rev": "3e6ef09639326db39ca453cd7e8f2cf7f6e7c629",
         "type": "github"
       },
       "original": {
-        "owner": "MTeaHead",
+        "owner": "LarsArtmann",
         "repo": "niri-session-manager",
         "type": "github"
       }

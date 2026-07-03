@@ -95,6 +95,32 @@ _: {
               ];
             };
           };
+          ui = {
+            title = "evo-x2 Status";
+            header = "System Status";
+            logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
+            link = "https://dash.${domain}";
+            dark-mode = true;
+            default-sort-by = "group";
+            buttons = [
+              {
+                name = "Dashboard";
+                link = "https://dash.${domain}";
+              }
+              {
+                name = "Forgejo";
+                link = "https://forgejo.${domain}";
+              }
+              {
+                name = "SigNoz";
+                link = "https://signoz.${domain}";
+              }
+              {
+                name = "Dozzle";
+                link = "https://logs.${domain}";
+              }
+            ];
+          };
           alerting.discord = {
             webhook-url = "$DISCORD_WEBHOOK_URL";
             default-alert = {
@@ -115,28 +141,35 @@ _: {
                 name = "Pocket ID";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.pocket-id-config.port}/healthz";
-                conditions = ["[STATUS] == 204"];
+                conditions = ["[STATUS] == 204" "[RESPONSE_TIME] < 500"];
+                alerts = discordAlert "Pocket ID down — SSO broken, no service login works";
               })
               (mkHttpCheck {
                 name = "oauth2-proxy";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.oauth2-proxy-config.port}/ping";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                alerts = discordAlert "oauth2-proxy down — all external service access broken";
               })
               (mkHttpCheck {
                 name = "Forgejo";
                 group = "Development";
                 url = "http://localhost:${toString config.services.forgejo.settings.server.HTTP_PORT}/api/v1/version";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                alerts = discordAlert "Forgejo down — git forge unavailable";
               })
               (mkHttpCheck {
                 name = "Homepage";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.homepage.port}";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                alerts = discordAlert "Homepage dashboard down";
               })
               (mkHttpCheck {
                 name = "Immich";
                 group = "Media";
                 url = "http://localhost:${toString config.services.immich.port}/api/system-config";
-                conditions = ["[STATUS] == 401"];
+                conditions = ["[STATUS] == 401" "[RESPONSE_TIME] < 1000"];
               })
               (mkHttpCheck {
                 name = "SigNoz";
@@ -172,12 +205,14 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
                 interval = "60s";
+                alerts = discordAlert "Node exporter down — system metrics monitoring blind";
               })
               (mkHttpCheck {
                 name = "cAdvisor";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics";
                 interval = "60s";
+                alerts = discordAlert "cAdvisor down — container metrics monitoring blind";
               })
               {
                 name = "DNS Resolver";
@@ -189,6 +224,7 @@ _: {
                 };
                 interval = "60s";
                 conditions = ["[DNS_RCODE] == NOERROR"];
+                alerts = discordAlert "Local DNS resolver down — name resolution failing";
               }
               {
                 name = "DNS Resolver TCP";
@@ -213,6 +249,14 @@ _: {
                 };
                 interval = "5m";
                 conditions = ["[DNS_RCODE] == NOERROR"];
+              }
+              {
+                name = "Upstream DNS DoT (Mullvad)";
+                group = "Infrastructure";
+                url = "tcp://dot.mullvad.net:853";
+                interval = "5m";
+                conditions = ["[CONNECTED] == true"];
+                alerts = discordAlert "Mullvad DoT upstream unreachable — DNS-over-TLS path broken";
               }
               {
                 name = "DNS Blocking Active";

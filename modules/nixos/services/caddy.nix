@@ -45,9 +45,22 @@ _: {
       }
     '';
 
+    commonConfig = ''
+      header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "geolocation=(), microphone=(), camera=()"
+        -Server
+      }
+      encode zstd gzip
+    '';
+
     protectedVHost = _subdomain: port: {
       extraConfig = ''
         ${tlsConfig}
+        ${commonConfig}
         @external not remote_ip 127.0.0.1/8 ${lanSubnet}
         handle @external {
           ${forwardAuth}
@@ -69,9 +82,15 @@ _: {
 
         virtualHosts =
           {
+            ":80" = {
+              extraConfig = ''
+                redir https://{host}{uri} permanent
+              '';
+            };
             "auth.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
+                ${commonConfig}
                 handle /oauth2/* {
                   reverse_proxy localhost:${toString proxyPort}
                 }
@@ -85,6 +104,7 @@ _: {
             "forgejo.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
+                ${commonConfig}
                 reverse_proxy localhost:${toString config.services.forgejo.settings.server.HTTP_PORT}
               '';
             };
@@ -98,6 +118,7 @@ _: {
             "status.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
+                ${commonConfig}
                 reverse_proxy localhost:${toString config.services.gatus-config.port}
               '';
             };
