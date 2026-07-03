@@ -171,6 +171,14 @@ _: {
                 url = "http://localhost:${toString config.services.immich.port}/api/system-config";
                 conditions = ["[STATUS] == 401" "[RESPONSE_TIME] < 1000"];
               })
+              {
+                name = "Redis";
+                group = "Infrastructure";
+                url = "tcp://127.0.0.1:6379";
+                interval = "60s";
+                conditions = ["[CONNECTED] == true"];
+                alerts = discordAlert "Redis down — Immich ML pipeline and caching broken";
+              }
               (mkHttpCheck {
                 name = "SigNoz";
                 group = "Monitoring";
@@ -417,6 +425,12 @@ _: {
                 name = "Dozzle";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.dozzle}";
+                interval = "5m";
+              })
+              (mkHttpCheck {
+                name = "Overview";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.overview}";
                 interval = "5m";
               })
               (mkHttpCheck {
