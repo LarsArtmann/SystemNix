@@ -189,6 +189,7 @@ _: {
                 name = "Manifest";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";
+                alerts = discordAlert "Manifest LLM router down — AI cost optimization unavailable";
               })
               {
                 name = "TaskChampion";
@@ -196,17 +197,20 @@ _: {
                 url = "tcp://127.0.0.1:${toString config.services.taskchampion-sync-server.port}";
                 interval = "60s";
                 conditions = ["[CONNECTED] == true"];
+                alerts = discordAlert "TaskChampion sync server down — task syncing broken";
               }
               (mkHttpCheck {
                 name = "Twenty CRM";
                 group = "Productivity";
                 url = "http://localhost:${toString config.services.twenty.port}/healthz";
+                alerts = discordAlert "Twenty CRM down — customer data unavailable";
               })
               (mkHttpCheck {
                 name = "Ollama";
                 group = "AI";
                 url = "http://localhost:${toString config.services.ollama.port}/api/tags";
                 interval = "60s";
+                alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
               })
               (mkHttpCheck {
                 name = "Node Exporter";
@@ -300,18 +304,21 @@ _: {
                 group = "Productivity";
                 url = "http://localhost:${toString config.services.openseo.port}";
                 interval = "5m";
+                alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
               })
               (mkHttpCheck {
                 name = "Monitor365 Server";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-server}/health";
                 interval = "60s";
+                alerts = discordAlert "Monitor365 server down — device telemetry unavailable";
               })
               (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.emeet-pixyd}/metrics";
                 interval = "60s";
+                alerts = discordAlert "EMEET PIXY daemon down — webcam auto-management broken";
               })
               (mkHttpCheck {
                 name = "GPU VRAM Metrics";
@@ -368,6 +375,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*niri_running*)"
                 ];
+                alerts = discordAlert "Niri compositor not running — desktop may be unresponsive";
               })
               (mkHttpCheck {
                 name = "TLS Certificate Expiry";
@@ -420,12 +428,14 @@ _: {
                 group = "AI";
                 url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
                 interval = "5m";
+                alerts = discordAlert "Crush Daily down — AI development insights unavailable";
               })
               (mkHttpCheck {
                 name = "Dozzle";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.dozzle}";
                 interval = "5m";
+                alerts = discordAlert "Dozzle down — container log viewing unavailable";
               })
               (mkHttpCheck {
                 name = "Overview";
