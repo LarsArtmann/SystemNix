@@ -284,6 +284,14 @@ in {
         "signal" = ["signal-desktop"]
         "telegramdesktop" = ["telegram-desktop"]
         "org.keepassxc.KeePassXC" = ["keepassxc"]
+        "com.mitchellh.ghostty" = ["ghostty"]
+
+        [terminal_state]
+        enabled = true
+        terminal_app_ids = ["kitty", "foot", "org.wezfurlong.wezterm", "com.mitchellh.ghostty", "alacritty"]
+        shell_names = ["fish", "bash", "zsh", "sh", "dash", "-fish", "-bash", "-zsh", "-sh", "sudo", "doas"]
+        helper_names = ["kitten"]
+        max_walk_depth = 20
       '';
 
       "swappy/config".text = ''

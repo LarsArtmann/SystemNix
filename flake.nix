@@ -167,7 +167,7 @@
 
     # Niri session manager — automatic window save/restore
     niri-session-manager = {
-      url = "github:MTeaHead/niri-session-manager";
+      url = "github:LarsArtmann/niri-session-manager";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         systems.follows = "systems";
