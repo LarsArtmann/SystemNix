@@ -52,6 +52,7 @@
       git-town # High-level Git workflow management
       git-filter-repo # Rewrite git history
       jj # Git-compatible version control system
+      mr # myrepos — manage multiple repositories via a single command
 
       # Essential editors
       micro

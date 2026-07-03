@@ -17,6 +17,7 @@ in {
     ./programs/tmux.nix
     ./programs/git.nix
     ./programs/fzf.nix
+    ./programs/direnv.nix
     ./programs/pre-commit.nix
     ./programs/keepassxc.nix
     ./programs/taskwarrior.nix
