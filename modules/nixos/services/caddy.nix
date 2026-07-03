@@ -97,7 +97,9 @@ _: {
           {
             ":80" = {
               extraConfig = ''
-                redir https://{host}{uri} permanent
+                @subdomains host *.${domain}
+                redir @subdomains https://{host}{uri} permanent
+                redir https://dash.${domain} permanent
               '';
             };
             "auth.${domain}" = {
