@@ -30,7 +30,9 @@ _: {
       else null;
 
     tlsConfig = ''
-      tls ${serverCert} ${serverKey}
+      tls ${serverCert} ${serverKey} {
+        protocols tls1.2 tls1.3
+      }
     '';
 
     forwardAuth = ''
@@ -77,6 +79,9 @@ _: {
         globalConfig = ''
           auto_https off
           ${lib.optionalString (bindAddress != null) "default_bind ${bindAddress}"}
+          servers {
+            strict_sni_host on
+          }
           metrics
           log {
             output file /var/log/caddy/access.log {
