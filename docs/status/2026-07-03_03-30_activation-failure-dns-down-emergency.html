@@ -29,84 +29,442 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; max-width: 900px; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--problem); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
-      pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken); padding: 0.1rem 0.35rem; }
-      .callout-question { border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 1.2rem 1.4rem; margin: 1.5rem 0; font-size: 1rem; }
-      .callout-question strong { display: block; margin-bottom: 0.4rem; color: var(--accent); font-size: 1.1rem; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
-      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+        max-width: 900px;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--problem);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .callout-question {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        padding: 1.2rem 1.4rem;
+        margin: 1.5rem 0;
+        font-size: 1rem;
+      }
+      .callout-question strong {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: var(--accent);
+        font-size: 1.1rem;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
     </style>
   </head>
   <body>
@@ -136,9 +494,10 @@
           <div class="hero-badge">&#9888; CRITICAL &mdash; SYSTEM DEGRADED</div>
           <h1>Activation Failure, DNS Down, Emergency Deploy State</h1>
           <p class="hero-subtitle">
-            evo-x2 is stuck: unbound crash-looping (typo), systemd-logind degraded (blocks all NixOS deploys),
-            swap 100% full, disk at 97%. Build succeeds but activation fails with exit code 11 (EAGAIN from logind dbus timeout).
-            Three fixes committed but undeployable until logind is restarted or system is rebooted.
+            evo-x2 is stuck: unbound crash-looping (typo), systemd-logind degraded (blocks all NixOS
+            deploys), swap 100% full, disk at 97%. Build succeeds but activation fails with exit
+            code 11 (EAGAIN from logind dbus timeout). Three fixes committed but undeployable until
+            logind is restarted or system is rebooted.
           </p>
         </div>
 
@@ -173,19 +532,23 @@
         <div class="card card-problem">
           <h4>Current Situation</h4>
           <p>
-            <strong>DNS is DOWN.</strong> Unbound has been crash-looping for hours (93+ restarts) due to a typo
-            (<code>infra-cache-numhost</code> &rarr; <code>infra-cache-numhosts</code>) introduced in commit
-            <code>d9dc7d30</code>. Fixed in commit <code>95d93008</code> but the fix cannot be activated because
-            <strong>NixOS activation itself is broken</strong> &mdash; <code>switch-to-configuration-ng</code> calls
-            <code>logind.list_users()</code> via dbus, which times out after 25s because systemd-logind is degraded
-            (can't create session scopes, userdb multiplexer socket missing). The activation aborts with
+            <strong>DNS is DOWN.</strong> Unbound has been crash-looping for hours (93+ restarts)
+            due to a typo (<code>infra-cache-numhost</code> &rarr;
+            <code>infra-cache-numhosts</code>) introduced in commit <code>d9dc7d30</code>. Fixed in
+            commit <code>95d93008</code> but the fix cannot be activated because
+            <strong>NixOS activation itself is broken</strong> &mdash;
+            <code>switch-to-configuration-ng</code> calls <code>logind.list_users()</code> via dbus,
+            which times out after 25s because systemd-logind is degraded (can't create session
+            scopes, userdb multiplexer socket missing). The activation aborts with
             <code>die()</code> &rarr; errno 11 (EAGAIN).
           </p>
           <p>
-            The <strong>build succeeds</strong> and the <strong>profile is updated</strong>
-            (<code>/run/current-system</code> points to the new generation), but the activation step
-            (reload units, restart changed services) <strong>never runs</strong>. The system is running
-            old service definitions while the nix profile says new ones.
+            The <strong>build succeeds</strong> and the <strong>profile is updated</strong> (<code
+              >/run/current-system</code
+            >
+            points to the new generation), but the activation step (reload units, restart changed
+            services) <strong>never runs</strong>. The system is running old service definitions
+            while the nix profile says new ones.
           </p>
         </div>
 
@@ -204,27 +567,29 @@
           <h4>/tmp mount activation failure fixed</h4>
           <p>
             Changed <code>fileSystems."/tmp"</code> to <code>systemd.mounts</code> so
-            <code>switch-to-configuration</code> can diff the <code>tmp.mount</code> unit atomically.
-            Bumped <code>/tmp</code> from 8 GiB to 16 GiB. Bumped zramSwap from 10% to 17% (~16 GiB).
-            Commit <code>2223c036</code>.
+            <code>switch-to-configuration</code> can diff the <code>tmp.mount</code> unit
+            atomically. Bumped <code>/tmp</code> from 8 GiB to 16 GiB. Bumped zramSwap from 10% to
+            17% (~16 GiB). Commit <code>2223c036</code>.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>dnsblockd v0.2.0 released (in dnsblockd repo)</h4>
           <p>
-            Tagged v0.2.0 with comprehensive CHANGELOG. Wrote 3 feedback docs (gap analysis, SystemNix
-            integration plan, migration checklist). All 3 original ROADMAP gaps (local zones, DoT forwarding,
-            LAN ACLs) closed plus 3 newly-discovered gaps (zone-level NXDOMAIN, DNS cache flush, IPv6 disable).
-            Tag is pushed (<code>git push origin master v0.2.0</code>).
+            Tagged v0.2.0 with comprehensive CHANGELOG. Wrote 3 feedback docs (gap analysis,
+            SystemNix integration plan, migration checklist). All 3 original ROADMAP gaps (local
+            zones, DoT forwarding, LAN ACLs) closed plus 3 newly-discovered gaps (zone-level
+            NXDOMAIN, DNS cache flush, IPv6 disable). Tag is pushed (<code
+              >git push origin master v0.2.0</code
+            >).
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>DNS migration plan added to TODO_LIST.md</h4>
           <p>
-            Phase 2a-2d (module rework, config updates), Phase 3 (deploy + validate), Phase 4 (cleanup).
-            Strategy: dnsblockd primary on :53, unbound backup on :5353, 24h observation.
+            Phase 2a-2d (module rework, config updates), Phase 3 (deploy + validate), Phase 4
+            (cleanup). Strategy: dnsblockd primary on :53, unbound backup on :5353, 24h observation.
             Commit <code>f9601a5f</code>.
           </p>
         </div>
@@ -240,8 +605,8 @@
         <div class="card card-solution">
           <h4>Cache cleanup freed ~12 GiB</h4>
           <p>
-            Go build cache (6.7 GiB), Go mod cache (3.5 GiB), nix-collect-garbage (2.4 GiB).
-            BTRFS snapshots block full reclamation until they expire (14 day retention).
+            Go build cache (6.7 GiB), Go mod cache (3.5 GiB), nix-collect-garbage (2.4 GiB). BTRFS
+            snapshots block full reclamation until they expire (14 day retention).
           </p>
         </div>
 
@@ -249,8 +614,8 @@
           <h4>Pre-existing completed work (prior sessions)</h4>
           <p>
             DMS/Rofi migration, Forgejo OIDC SSO, Gatus native OIDC, BTRFS health monitoring,
-            pre-deploy validation pipeline, SSO architecture documented, DiscordSync schema-drift fix,
-            SigNoz migration-lock self-healing, keepalived/dnsblockd network race fix.
+            pre-deploy validation pipeline, SSO architecture documented, DiscordSync schema-drift
+            fix, SigNoz migration-lock self-healing, keepalived/dnsblockd network race fix.
           </p>
         </div>
 
@@ -259,18 +624,21 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Blocking</span>
           <h3>NixOS deploy pipeline broken</h3>
-          <div class="where">switch-to-configuration-ng &middot; systemd-logind &middot; exit code 11</div>
+          <div class="where">
+            switch-to-configuration-ng &middot; systemd-logind &middot; exit code 11
+          </div>
           <p>
-            Build succeeds (233 derivations, 2m9s). Profile updates. But <code>switch-to-configuration test</code>
-            fails with exit code 11 (EAGAIN). Root cause: <code>logind.list_users()</code> dbus call fails because
-            systemd-logind is degraded ("Transport endpoint is not connected" on session scope creation).
-            The <code>die()</code> function in switch-to-configuration-ng uses errno as exit code (Perl compat),
-            so EAGAIN = 11.
+            Build succeeds (233 derivations, 2m9s). Profile updates. But
+            <code>switch-to-configuration test</code> fails with exit code 11 (EAGAIN). Root cause:
+            <code>logind.list_users()</code> dbus call fails because systemd-logind is degraded
+            ("Transport endpoint is not connected" on session scope creation). The
+            <code>die()</code> function in switch-to-configuration-ng uses errno as exit code (Perl
+            compat), so EAGAIN = 11.
           </p>
           <div class="callout callout-solution">
             <strong>Fix:</strong>
-            <code>sudo systemctl restart systemd-logind</code> then retry activation. If that fails, <code>sudo reboot</code>.
-            The new generation is already the boot default.
+            <code>sudo systemctl restart systemd-logind</code> then retry activation. If that fails,
+            <code>sudo reboot</code>. The new generation is already the boot default.
           </div>
         </div>
 
@@ -279,10 +647,11 @@
           <h3>BTRFS disk space crisis</h3>
           <div class="where">/dev/nvme0n1p6 &middot; 97% full &middot; 4 GiB unallocated</div>
           <p>
-            Freed ~12 GiB (Go caches + nix GC), ran <code>btrfs balance start -dusage=10</code> (freed 4 data chunks).
-            Still at 97%. Metadata 78% used (54.79/70.21 GiB). Device-unallocated only 4 GiB &mdash; dangerously
-            close to ENOSPC deadlock. BTRFS snapshots (14-day retention) hold references to deleted data, blocking
-            reclamation. Permanent fix: grow the partition.
+            Freed ~12 GiB (Go caches + nix GC), ran
+            <code>btrfs balance start -dusage=10</code> (freed 4 data chunks). Still at 97%.
+            Metadata 78% used (54.79/70.21 GiB). Device-unallocated only 4 GiB &mdash; dangerously
+            close to ENOSPC deadlock. BTRFS snapshots (14-day retention) hold references to deleted
+            data, blocking reclamation. Permanent fix: grow the partition.
           </p>
         </div>
 
@@ -291,8 +660,9 @@
           <h3>DNS migration (dnsblockd &rarr; primary resolver)</h3>
           <div class="where">Phase 1 done &middot; Phase 2-4 not started</div>
           <p>
-            Gap analysis complete (v0.2.0 has all features). Migration plan in TODO_LIST.md. Module rework,
-            config changes, deploy validation, and cleanup all pending. Blocked by current deploy failure.
+            Gap analysis complete (v0.2.0 has all features). Migration plan in TODO_LIST.md. Module
+            rework, config changes, deploy validation, and cleanup all pending. Blocked by current
+            deploy failure.
           </p>
         </div>
 
@@ -301,9 +671,9 @@
           <h3>Swap 100% full</h3>
           <div class="where">9.4 GiB / 9.4 GiB &middot; chronic memory pressure</div>
           <p>
-            zramSwap bumped from 10% to 17% (~16 GiB) in commit <code>2223c036</code> but undeployed.
-            GPUActive consuming 38.7 GiB. System has been in memory pressure since the OOM chain killed
-            niri/ghostty/signal/pipewire/unbound/clickhouse/immich earlier.
+            zramSwap bumped from 10% to 17% (~16 GiB) in commit <code>2223c036</code> but
+            undeployed. GPUActive consuming 38.7 GiB. System has been in memory pressure since the
+            OOM chain killed niri/ghostty/signal/pipewire/unbound/clickhouse/immich earlier.
           </p>
         </div>
 
@@ -316,7 +686,10 @@
 
         <div class="card card-warning">
           <h4>Monitor365 upstream Rust panic fix</h4>
-          <p>Axum 0.7 route syntax (<code>:param</code> &rarr; <code>{param}</code>). Needs fix in LarsArtmann/monitor365 source.</p>
+          <p>
+            Axum 0.7 route syntax (<code>:param</code> &rarr; <code>{param}</code>). Needs fix in
+            LarsArtmann/monitor365 source.
+          </p>
         </div>
 
         <div class="card card-warning">
@@ -326,12 +699,18 @@
 
         <div class="card card-warning">
           <h4>DNS migration Phase 2-4</h4>
-          <p>Module rework, config updates, deploy validation, cleanup &mdash; 4 phases, ~15 subtasks.</p>
+          <p>
+            Module rework, config updates, deploy validation, cleanup &mdash; 4 phases, ~15
+            subtasks.
+          </p>
         </div>
 
         <div class="card card-warning">
           <h4>Upstream nixpkgs/HM contributions</h4>
-          <p>10+ items identified in TODO_LIST.md (aw-watcher-utilization, valkey tests, taskwarrior3 flags, etc.)</p>
+          <p>
+            10+ items identified in TODO_LIST.md (aw-watcher-utilization, valkey tests, taskwarrior3
+            flags, etc.)
+          </p>
         </div>
 
         <div class="card card-warning">
@@ -344,17 +723,24 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>Unbound was crash-looping for hours from a one-character typo</h3>
-          <div class="where">modules/nixos/services/dns-blocker.nix:212 &middot; introduced in d9dc7d30</div>
+          <div class="where">
+            modules/nixos/services/dns-blocker.nix:212 &middot; introduced in d9dc7d30
+          </div>
           <p>
-            <code>infra-cache-numhost</code> (missing trailing 's'). Unbound treats unknown directives as fatal
-            errors, so it rejected the entire config and crash-looped 93+ times. DNS was completely down.
-            This was introduced by a "fix memory" commit that was supposed to <em>bound</em> caches &mdash;
-            instead it broke the entire DNS stack. The typo passed <code>nix flake check --no-build</code>
+            <code>infra-cache-numhost</code> (missing trailing 's'). Unbound treats unknown
+            directives as fatal errors, so it rejected the entire config and crash-looped 93+ times.
+            DNS was completely down. This was introduced by a "fix memory" commit that was supposed
+            to <em>bound</em> caches &mdash; instead it broke the entire DNS stack. The typo passed
+            <code>nix flake check --no-build</code>
             because Nix doesn't validate unbound config syntax.
           </p>
           <div class="callout callout-warning">
             <strong>Lesson:</strong>
-            NixOS should add a <code>systemd.services.unbound.serviceConfig.ExecStartPre = "${pkgs.unbound}/bin/unbound-checkconf /etc/unbound/unbound.conf"</code>
+            NixOS should add a
+            <code
+              >systemd.services.unbound.serviceConfig.ExecStartPre =
+              "${pkgs.unbound}/bin/unbound-checkconf /etc/unbound/unbound.conf"</code
+            >
             to catch config errors at service start instead of crash-looping.
           </div>
         </div>
@@ -362,26 +748,35 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>systemd-logind is degraded with no clear recovery short of reboot</h3>
-          <div class="where">systemd-logind &middot; session scope creation fails &middot; userdb socket missing</div>
+          <div class="where">
+            systemd-logind &middot; session scope creation fails &middot; userdb socket missing
+          </div>
           <p>
-            Every SSH session shows "Failed to start session scope: Transport endpoint is not connected".
-            The <code>/run/systemd/userdb/io.systemd.Multiplexer</code> socket doesn't exist.
-            <code>switch-to-configuration-ng</code> calls <code>logind.list_users()</code> which times out,
-            causing <strong>every deploy attempt to fail with exit code 11</strong>. The system has been
-            in this state since at least the OOM events ~13 hours ago. A simple <code>systemctl restart systemd-logind</code>
+            Every SSH session shows "Failed to start session scope: Transport endpoint is not
+            connected". The <code>/run/systemd/userdb/io.systemd.Multiplexer</code> socket doesn't
+            exist. <code>switch-to-configuration-ng</code> calls
+            <code>logind.list_users()</code> which times out, causing
+            <strong>every deploy attempt to fail with exit code 11</strong>. The system has been in
+            this state since at least the OOM events ~13 hours ago. A simple
+            <code>systemctl restart systemd-logind</code>
             might fix it, but if the dbus connection is deeply broken, only a reboot will do.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
-          <h3>BTRFS device-unallocated at 4 GiB &mdash; one bad transaction from ENOSPC deadlock</h3>
-          <div class="where">BTRFS filesystem &middot; 722 GiB device &middot; 718.5 GiB allocated</div>
+          <h3>
+            BTRFS device-unallocated at 4 GiB &mdash; one bad transaction from ENOSPC deadlock
+          </h3>
+          <div class="where">
+            BTRFS filesystem &middot; 722 GiB device &middot; 718.5 GiB allocated
+          </div>
           <p>
-            Any metadata-heavy operation (nix deploy, Docker pull, BTRFS snapshot) could exhaust the last
-            4 GiB of unallocated space and trigger the same I/O deadlock that crashed the system on 2026-06-26.
-            The monitoring stack (btrfs-health.nix) is configured to gate nix-gc when unallocated &lt; 10%,
-            but the deploy itself needs space for the new generation's store paths.
+            Any metadata-heavy operation (nix deploy, Docker pull, BTRFS snapshot) could exhaust the
+            last 4 GiB of unallocated space and trigger the same I/O deadlock that crashed the
+            system on 2026-06-26. The monitoring stack (btrfs-health.nix) is configured to gate
+            nix-gc when unallocated &lt; 10%, but the deploy itself needs space for the new
+            generation's store paths.
           </p>
         </div>
 
@@ -390,10 +785,11 @@
           <h3>The "fix memory" commit (d9dc7d30) broke more than it fixed</h3>
           <div class="where">commit d9dc7d30 &middot; introduced 3 bugs</div>
           <p>
-            That single commit: (1) introduced the unbound typo that took down DNS, (2) changed <code>/tmp</code>
-            to <code>fileSystems</code> which broke activation (fixed in 2223c036), and (3) didn't actually solve
-            the memory pressure (swap is still 100% full). Three bugs from one commit that was supposed to be
-            a defensive improvement. The zramSwap bump (10% &rarr; 17%) in the follow-up is also undeployed.
+            That single commit: (1) introduced the unbound typo that took down DNS, (2) changed
+            <code>/tmp</code> to <code>fileSystems</code> which broke activation (fixed in
+            2223c036), and (3) didn't actually solve the memory pressure (swap is still 100% full).
+            Three bugs from one commit that was supposed to be a defensive improvement. The zramSwap
+            bump (10% &rarr; 17%) in the follow-up is also undeployed.
           </p>
         </div>
 
@@ -404,14 +800,20 @@
             <div class="check">!</div>
             <div class="text">
               <strong>Add unbound-checkconf ExecStartPre</strong>
-              <span>Prevents crash-loops from config typos. Should be in the NixOS unbound module upstream.</span>
+              <span
+                >Prevents crash-loops from config typos. Should be in the NixOS unbound module
+                upstream.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">!</div>
             <div class="text">
               <strong>Add logind health check to pre-deploy-check</strong>
-              <span>Test <code>loginctl list-users</code> before attempting activation. If it fails, warn that a reboot may be needed.</span>
+              <span
+                >Test <code>loginctl list-users</code> before attempting activation. If it fails,
+                warn that a reboot may be needed.</span
+              >
             </div>
           </div>
           <div class="strength">
@@ -424,29 +826,43 @@
           <div class="strength">
             <div class="check">!</div>
             <div class="text">
-              <strong>Always use <code>nix run .#deploy</code> not <code>nh os switch</code></strong>
-              <span>The deploy script runs <code>systemctl reset-failed</code> first. Direct nh skips this, causing exit code 4/11 from start-limit-hit units.</span>
+              <strong
+                >Always use <code>nix run .#deploy</code> not <code>nh os switch</code></strong
+              >
+              <span
+                >The deploy script runs <code>systemctl reset-failed</code> first. Direct nh skips
+                this, causing exit code 4/11 from start-limit-hit units.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">!</div>
             <div class="text">
               <strong>Schedule periodic BTRFS data balance</strong>
-              <span>Weekly <code>btrfs balance start -dusage=50</code> prevents the slow space exhaustion that leads to ENOSPC.</span>
+              <span
+                >Weekly <code>btrfs balance start -dusage=50</code> prevents the slow space
+                exhaustion that leads to ENOSPC.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">!</div>
             <div class="text">
               <strong>Add <code>metadata_ratio=1</code> to BTRFS mount options</strong>
-              <span>Forces allocator to give more chunks to metadata, preventing the data/metadata imbalance that causes ENOSPC.</span>
+              <span
+                >Forces allocator to give more chunks to metadata, preventing the data/metadata
+                imbalance that causes ENOSPC.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">!</div>
             <div class="text">
               <strong>Consider growing the root partition</strong>
-              <span>722 GiB is full at 97%. The permanent fix for the recurring BTRFS crisis is more space. <code>/data</code> has 349 GiB free &mdash; consider rebalancing.</span>
+              <span
+                >722 GiB is full at 97%. The permanent fix for the recurring BTRFS crisis is more
+                space. <code>/data</code> has 349 GiB free &mdash; consider rebalancing.</span
+              >
             </div>
           </div>
         </div>
@@ -464,31 +880,221 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td>1</td><td><strong>Reboot evo-x2</strong> &mdash; clears logind degradation, activates new generation with all fixes, restarts all services clean</td><td><span class="badge badge-critical">Critical</span></td><td>5 min</td></tr>
-              <tr><td>2</td><td><strong>Verify DNS works after reboot</strong> &mdash; <code>dig @127.0.0.1 google.com</code>, check unbound + dnsblockd running</td><td><span class="badge badge-critical">Critical</span></td><td>2 min</td></tr>
-              <tr><td>3</td><td><strong>Verify activation succeeded</strong> &mdash; <code>systemctl --failed</code>, check <code>tmp.mount</code> size, check zramSwap size</td><td><span class="badge badge-critical">Critical</span></td><td>2 min</td></tr>
-              <tr><td>4</td><td><strong>Alternatively: restart logind without reboot</strong> &mdash; <code>sudo systemctl restart systemd-logind</code> then <code>sudo /run/current-system/bin/switch-to-configuration test</code></td><td><span class="badge badge-critical">Critical</span></td><td>5 min</td></tr>
-              <tr><td>5</td><td><strong>Free more disk space</strong> &mdash; <code>nix-collect-garbage --delete-older-than 1d</code> after reboot (snapshots may have expired)</td><td><span class="badge badge-critical">Critical</span></td><td>10 min</td></tr>
-              <tr><td>6</td><td><strong>Add unbound-checkconf ExecStartPre</strong> to dns-blocker.nix unbound config</td><td><span class="badge badge-high">High</span></td><td>10 min</td></tr>
-              <tr><td>7</td><td><strong>Add logind health check to pre-deploy-check.sh</strong> &mdash; test <code>loginctl list-users</code></td><td><span class="badge badge-high">High</span></td><td>15 min</td></tr>
-              <tr><td>8</td><td><strong>Lower disk threshold in pre-deploy-check</strong> from 95% to 90%</td><td><span class="badge badge-high">High</span></td><td>5 min</td></tr>
-              <tr><td>9</td><td><strong>BTRFS: add <code>metadata_ratio=1</code> mount option</strong> to root filesystem</td><td><span class="badge badge-high">High</span></td><td>10 min</td></tr>
-              <tr><td>10</td><td><strong>Schedule weekly BTRFS data balance</strong> &mdash; systemd timer with <code>btrfs balance start -dusage=50 /</code></td><td><span class="badge badge-high">High</span></td><td>20 min</td></tr>
-              <tr><td>11</td><td><strong>Start DNS migration Phase 2a</strong> &mdash; add NixOS options for dnsblockd primary resolver</td><td><span class="badge badge-medium">Medium</span></td><td>2h</td></tr>
-              <tr><td>12</td><td><strong>Pin dnsblockd flake input to v0.2.0 tag</strong> (currently <code>ref=master</code>)</td><td><span class="badge badge-medium">Medium</span></td><td>5 min</td></tr>
-              <tr><td>13</td><td><strong>Test Pocket ID email sending</strong> &mdash; SMTP wired but untested</td><td><span class="badge badge-medium">Medium</span></td><td>10 min</td></tr>
-              <tr><td>14</td><td><strong>Investigate swap pressure</strong> &mdash; <code>smem -t -k | tail -20</code>, identify top swap consumers</td><td><span class="badge badge-medium">Medium</span></td><td>30 min</td></tr>
-              <tr><td>15</td><td><strong>Monitor365 upstream fix</strong> &mdash; Axum 0.7 route syntax in LarsArtmann/monitor365</td><td><span class="badge badge-medium">Medium</span></td><td>1h</td></tr>
-              <tr><td>16</td><td><strong>BTRFS /data subvolume migration</strong> &mdash; create subvolume, update fstab, rsync data</td><td><span class="badge badge-medium">Medium</span></td><td>2h</td></tr>
-              <tr><td>17</td><td><strong>Consider growing root partition</strong> &mdash; shrink /data, grow / (permanent fix for BTRFS crisis)</td><td><span class="badge badge-medium">Medium</span></td><td>1h</td></tr>
-              <tr><td>18</td><td><strong>TTM pool: reduce page_pool_size from 112 GiB</strong> &mdash; test with ~32 GiB so freed BO pages return to kernel</td><td><span class="badge badge-medium">Medium</span></td><td>30 min</td></tr>
-              <tr><td>19</td><td><strong>Hermes: install SSH deploy key + set fallback model</strong></td><td><span class="badge badge-low">Low</span></td><td>15 min</td></tr>
-              <tr><td>20</td><td><strong>DNS migration Phase 2b</strong> &mdash; update config files for dnsblockd primary</td><td><span class="badge badge-low">Low</span></td><td>1h</td></tr>
-              <tr><td>21</td><td><strong>DNS migration Phase 2c</strong> &mdash; update service dependencies from unbound to dnsblockd</td><td><span class="badge badge-low">Low</span></td><td>1h</td></tr>
-              <tr><td>22</td><td><strong>DNS migration Phase 3</strong> &mdash; deploy + 24h observation</td><td><span class="badge badge-low">Low</span></td><td>24h</td></tr>
-              <tr><td>23</td><td><strong>DNS migration Phase 4</strong> &mdash; remove unbound entirely</td><td><span class="badge badge-low">Low</span></td><td>1h</td></tr>
-              <tr><td>24</td><td><strong>Update AGENTS.md</strong> &mdash; document exit code 11 = logind dbus timeout, add unbound-checkconf lesson</td><td><span class="badge badge-low">Low</span></td><td>15 min</td></tr>
-              <tr><td>25</td><td><strong>Upstream nixpkgs PRs</strong> &mdash; unbound-checkconf ExecStartPre, aw-watcher-utilization fix, etc.</td><td><span class="badge badge-low">Low</span></td><td>4h+</td></tr>
+              <tr>
+                <td>1</td>
+                <td>
+                  <strong>Reboot evo-x2</strong> &mdash; clears logind degradation, activates new
+                  generation with all fixes, restarts all services clean
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>5 min</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>
+                  <strong>Verify DNS works after reboot</strong> &mdash;
+                  <code>dig @127.0.0.1 google.com</code>, check unbound + dnsblockd running
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>2 min</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>
+                  <strong>Verify activation succeeded</strong> &mdash;
+                  <code>systemctl --failed</code>, check <code>tmp.mount</code> size, check zramSwap
+                  size
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>2 min</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>
+                  <strong>Alternatively: restart logind without reboot</strong> &mdash;
+                  <code>sudo systemctl restart systemd-logind</code> then
+                  <code>sudo /run/current-system/bin/switch-to-configuration test</code>
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>5 min</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>
+                  <strong>Free more disk space</strong> &mdash;
+                  <code>nix-collect-garbage --delete-older-than 1d</code> after reboot (snapshots
+                  may have expired)
+                </td>
+                <td><span class="badge badge-critical">Critical</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>
+                  <strong>Add unbound-checkconf ExecStartPre</strong> to dns-blocker.nix unbound
+                  config
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>
+                  <strong>Add logind health check to pre-deploy-check.sh</strong> &mdash; test
+                  <code>loginctl list-users</code>
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><strong>Lower disk threshold in pre-deploy-check</strong> from 95% to 90%</td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>5 min</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>
+                  <strong>BTRFS: add <code>metadata_ratio=1</code> mount option</strong> to root
+                  filesystem
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>
+                  <strong>Schedule weekly BTRFS data balance</strong> &mdash; systemd timer with
+                  <code>btrfs balance start -dusage=50 /</code>
+                </td>
+                <td><span class="badge badge-high">High</span></td>
+                <td>20 min</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>
+                  <strong>Start DNS migration Phase 2a</strong> &mdash; add NixOS options for
+                  dnsblockd primary resolver
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>2h</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>
+                  <strong>Pin dnsblockd flake input to v0.2.0 tag</strong> (currently
+                  <code>ref=master</code>)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>5 min</td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td>
+                  <strong>Test Pocket ID email sending</strong> &mdash; SMTP wired but untested
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>10 min</td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td>
+                  <strong>Investigate swap pressure</strong> &mdash;
+                  <code>smem -t -k | tail -20</code>, identify top swap consumers
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>30 min</td>
+              </tr>
+              <tr>
+                <td>15</td>
+                <td>
+                  <strong>Monitor365 upstream fix</strong> &mdash; Axum 0.7 route syntax in
+                  LarsArtmann/monitor365
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td>
+                  <strong>BTRFS /data subvolume migration</strong> &mdash; create subvolume, update
+                  fstab, rsync data
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>2h</td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td>
+                  <strong>Consider growing root partition</strong> &mdash; shrink /data, grow /
+                  (permanent fix for BTRFS crisis)
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td>
+                  <strong>TTM pool: reduce page_pool_size from 112 GiB</strong> &mdash; test with
+                  ~32 GiB so freed BO pages return to kernel
+                </td>
+                <td><span class="badge badge-medium">Medium</span></td>
+                <td>30 min</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td><strong>Hermes: install SSH deploy key + set fallback model</strong></td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td>
+                  <strong>DNS migration Phase 2b</strong> &mdash; update config files for dnsblockd
+                  primary
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td>
+                  <strong>DNS migration Phase 2c</strong> &mdash; update service dependencies from
+                  unbound to dnsblockd
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td><strong>DNS migration Phase 3</strong> &mdash; deploy + 24h observation</td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>24h</td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td><strong>DNS migration Phase 4</strong> &mdash; remove unbound entirely</td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>1h</td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td>
+                  <strong>Update AGENTS.md</strong> &mdash; document exit code 11 = logind dbus
+                  timeout, add unbound-checkconf lesson
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>15 min</td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td>
+                  <strong>Upstream nixpkgs PRs</strong> &mdash; unbound-checkconf ExecStartPre,
+                  aw-watcher-utilization fix, etc.
+                </td>
+                <td><span class="badge badge-low">Low</span></td>
+                <td>4h+</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -498,20 +1104,21 @@
         <div class="callout callout-question">
           <strong>&#987; Should we reboot now or attempt the logind restart?</strong>
           <p>
-            A reboot is the safest path &mdash; it clears the logind degradation, activates the new generation
-            cleanly, restarts all services fresh, and applies the zramSwap + /tmp fixes. But the system has
-            22 active SSH sessions and running Docker containers (Twenty, Immich, SigNoz, etc.) that will
-            experience downtime.
+            A reboot is the safest path &mdash; it clears the logind degradation, activates the new
+            generation cleanly, restarts all services fresh, and applies the zramSwap + /tmp fixes.
+            But the system has 22 active SSH sessions and running Docker containers (Twenty, Immich,
+            SigNoz, etc.) that will experience downtime.
           </p>
           <p>
-            The alternative &mdash; <code>sudo systemctl restart systemd-logind</code> + retry activation &mdash;
-            avoids downtime but may not fully fix the dbus degradation if the problem is deeper than a stale
-            logind process. We'd also need to manually <code>kill</code> the stuck dnsblockd-cert-import process
-            and <code>systemctl reset-failed</code> before activation.
+            The alternative &mdash; <code>sudo systemctl restart systemd-logind</code> + retry
+            activation &mdash; avoids downtime but may not fully fix the dbus degradation if the
+            problem is deeper than a stale logind process. We'd also need to manually
+            <code>kill</code> the stuck dnsblockd-cert-import process and
+            <code>systemctl reset-failed</code> before activation.
           </p>
           <p>
-            <strong>Which path do you want?</strong> Reboot (safe, 5-10 min downtime) or logind restart (risky,
-            zero downtime but may fail)?
+            <strong>Which path do you want?</strong> Reboot (safe, 5-10 min downtime) or logind
+            restart (risky, zero downtime but may fail)?
           </p>
         </div>
 
@@ -525,17 +1132,36 @@
               </tr>
             </thead>
             <tbody>
-              <tr><td><code>95d93008</code></td><td>fix(dns): correct unbound option name infra-cache-numhost &rarr; infra-cache-numhosts</td></tr>
-              <tr><td><code>2223c036</code></td><td>fix(boot): use systemd.mounts for /tmp + bump to 16G + zramSwap 17%</td></tr>
-              <tr><td><code>53a092ee</code></td><td>chore(flake.lock): update all LarsArtmann Go tool inputs</td></tr>
-              <tr><td><code>f9601a5f</code></td><td>docs(todo): add DNS migration plan</td></tr>
-              <tr><td><code>b958b893</code></td><td>docs(status): dnsblockd v0.2.0 release and migration readiness</td></tr>
+              <tr>
+                <td><code>95d93008</code></td>
+                <td>
+                  fix(dns): correct unbound option name infra-cache-numhost &rarr;
+                  infra-cache-numhosts
+                </td>
+              </tr>
+              <tr>
+                <td><code>2223c036</code></td>
+                <td>fix(boot): use systemd.mounts for /tmp + bump to 16G + zramSwap 17%</td>
+              </tr>
+              <tr>
+                <td><code>53a092ee</code></td>
+                <td>chore(flake.lock): update all LarsArtmann Go tool inputs</td>
+              </tr>
+              <tr>
+                <td><code>f9601a5f</code></td>
+                <td>docs(todo): add DNS migration plan</td>
+              </tr>
+              <tr>
+                <td><code>b958b893</code></td>
+                <td>docs(status): dnsblockd v0.2.0 release and migration readiness</td>
+              </tr>
             </tbody>
           </table>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-03 03:30 CEST &middot; SystemNix master @ 95d93008 &middot; evo-x2 uptime 1d16h52m &middot; load 10.32
+          Generated 2026-07-03 03:30 CEST &middot; SystemNix master @ 95d93008 &middot; evo-x2
+          uptime 1d16h52m &middot; load 10.32
         </footer>
       </main>
     </div>
