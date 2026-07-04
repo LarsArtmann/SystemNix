@@ -153,6 +153,7 @@ _: {
           )
           ++ lib.optional discordsyncEnabled (
             mkService "DiscordSync" {
+              href = svcUrl "discordsync";
               description = "Discord Backup Bot (Messages, Attachments, Reactions)";
               icon = "discord.png";
               statusStyle = "dot";

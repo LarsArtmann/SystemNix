@@ -79,6 +79,16 @@ _: {
   in {
     config = lib.mkIf config.services.caddy.enable {
       services.caddy = {
+        # logFormat is wrapped by the NixOS module as `log { ${logFormat} }`
+        # in globalConfig — do NOT add a separate `log {}` block there (collision)
+        logFormat = ''
+          output file /var/log/caddy/access.log {
+            roll_size 100MB
+            roll_keep 3
+            roll_keep_for 168h
+          }
+          format json
+        '';
         globalConfig = ''
           auto_https off
           ${lib.optionalString (bindAddress != null) "default_bind ${bindAddress}"}
@@ -86,14 +96,6 @@ _: {
             strict_sni_host on
           }
           metrics
-          log {
-            output file /var/log/caddy/access.log {
-              roll_size 100MB
-              roll_keep 3
-              roll_keep_for 168h
-            }
-            format json
-          }
         '';
 
         virtualHosts =
@@ -152,6 +154,9 @@ _: {
           }
           // lib.optionalAttrs config.services.monitor365.enable {
             "monitor.${domain}" = protectedVHost "monitor" ports.monitor365-server;
+          }
+          // lib.optionalAttrs config.services.discordsync.enable {
+            "discordsync.${domain}" = protectedVHost "discordsync" ports.discordsync-api;
           };
       };
 

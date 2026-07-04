@@ -217,5 +217,6 @@ in {
     "daily"
     "logs"
     "monitor"
+    "discordsync"
   ];
 }
