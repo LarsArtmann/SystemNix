@@ -337,6 +337,14 @@ _: {
                 alerts = discordAlert "Monitor365 UI not serving — WASM dashboard missing";
               })
               (mkHttpCheck {
+                name = "Monitor365 Agent";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
+                interval = "60s";
+                conditions = ["[STATUS] == 200" "[BODY] == pat(*monitor365*)"];
+                alerts = discordAlert "Monitor365 agent down — local device telemetry collector not running";
+              })
+              (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.emeet-pixyd}/metrics";

@@ -370,6 +370,8 @@ in {
         # 30 GiB ring buffer — protects against unbounded growth on BTRFS root
         storage.maxSizeMb = lib.mkDefault (30 * 1024);
         logging.level = lib.mkDefault "warn";
+        # Expose Prometheus metrics for Gatus health checks
+        metrics.enable = lib.mkDefault true;
         # Agent syncs to local server
         cloud.endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
         # Server (dashboard + API) runs on the same machine
