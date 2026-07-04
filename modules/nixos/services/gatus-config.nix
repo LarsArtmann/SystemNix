@@ -329,6 +329,14 @@ _: {
                 alerts = discordAlert "Monitor365 server down — device telemetry unavailable";
               })
               (mkHttpCheck {
+                name = "Monitor365 Bootstrap";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.monitor365-server}/health/bootstrap";
+                interval = "5m";
+                conditions = ["[STATUS] == 200" "[BODY].bootstrapped == true"];
+                alerts = discordAlert "Monitor365 bootstrap incomplete — tenant/SSO provisioning may have failed on first boot";
+              })
+              (mkHttpCheck {
                 name = "Monitor365 UI";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-server}/ui/";
