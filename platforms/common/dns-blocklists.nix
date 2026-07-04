@@ -219,5 +219,6 @@ in {
     "monitor"
     "discordsync"
     "overview"
+    "renamer"
   ];
 }
