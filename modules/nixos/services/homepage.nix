@@ -36,8 +36,8 @@ _: {
     hermesEnabled = config.services.hermes.enable;
     monitor365Enabled = config.services.monitor365.enable;
     voiceAgentsEnabled = config.services.voice-agents.enable;
-    photomapEnabled = config.services.photomap.enable;
     discordsyncEnabled = config.services.discordsync.enable;
+    overviewEnabled = config.services.overview.enable;
 
     theme = import ../../../platforms/common/theme.nix;
     colors = theme.colorScheme.palette;
@@ -161,42 +161,42 @@ _: {
             }
           );
 
-        mediaServices =
-          [
-            (mkService "Immich" {
-              href = svcUrl "immich";
-              description = "Photo & Video Management";
-              icon = "immich.png";
-              statusStyle = "dot";
-              siteMonitor = "${svcUrl "immich"}/api/server-info/ping";
-            })
-            (mkService "DNS Blocker" {
-              href = "http://localhost:${toString config.services.dns-blocker.statsPort}/stats";
-              description = "DNS Block Stats";
-              icon = "shield.png";
-              statusStyle = "dot";
-              siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
-            })
-          ]
-          ++ lib.optional photomapEnabled (
-            mkService "PhotoMap" {
-              href = "http://localhost:${toString config.services.photomap.port}";
-              description = "AI Photo Visualization";
-              icon = "photomap.png";
-              statusStyle = "dot";
-              siteMonitor = "http://localhost:${toString config.services.photomap.port}";
-            }
-          );
-
-        devServices = [
-          (mkService "Forgejo" {
-            href = svcUrl "forgejo";
-            description = "Git Forge (GitHub Sync)";
-            icon = "forgejo.png";
+        mediaServices = [
+          (mkService "Immich" {
+            href = svcUrl "immich";
+            description = "Photo & Video Management";
+            icon = "immich.png";
             statusStyle = "dot";
-            siteMonitor = "${svcUrl "forgejo"}/api/v1/nodeinfo";
+            siteMonitor = "${svcUrl "immich"}/api/server-info/ping";
+          })
+          (mkService "DNS Blocker" {
+            href = "http://localhost:${toString config.services.dns-blocker.statsPort}/stats";
+            description = "DNS Block Stats";
+            icon = "shield.png";
+            statusStyle = "dot";
+            siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
           })
         ];
+
+        devServices =
+          [
+            (mkService "Forgejo" {
+              href = svcUrl "forgejo";
+              description = "Git Forge (GitHub Sync)";
+              icon = "forgejo.png";
+              statusStyle = "dot";
+              siteMonitor = "${svcUrl "forgejo"}/api/v1/nodeinfo";
+            })
+          ]
+          ++ lib.optional overviewEnabled (
+            mkService "Overview" {
+              href = svcUrl "overview";
+              description = "Project Dashboard (Git Repos, Stats, Activity)";
+              icon = "code.png";
+              statusStyle = "dot";
+              siteMonitor = "http://localhost:${toString ports.overview}";
+            }
+          );
 
         aiServices =
           lib.optional crushDailyEnabled (

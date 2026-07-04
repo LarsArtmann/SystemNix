@@ -162,7 +162,7 @@ _: {
                 name = "Homepage";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.homepage.port}";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500" "[BODY] == pat(*<html*)"];
                 alerts = discordAlert "Homepage dashboard down";
               })
               (mkHttpCheck {
@@ -329,6 +329,14 @@ _: {
                 alerts = discordAlert "Monitor365 server down — device telemetry unavailable";
               })
               (mkHttpCheck {
+                name = "Monitor365 UI";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.monitor365-server}/ui/";
+                interval = "5m";
+                conditions = ["[STATUS] == 200" "[BODY] == pat(*<html*)"];
+                alerts = discordAlert "Monitor365 UI not serving — WASM dashboard missing";
+              })
+              (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.emeet-pixyd}/metrics";
@@ -456,10 +464,11 @@ _: {
               })
               (mkHttpCheck {
                 name = "Overview";
-                group = "Monitoring";
+                group = "Productivity";
                 url = "http://localhost:${toString ports.overview}";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500" "[BODY] == pat(*<html*)"];
+                alerts = discordAlert "Overview dashboard down — project stats unavailable";
               })
               (mkHttpCheck {
                 name = "Gatus";

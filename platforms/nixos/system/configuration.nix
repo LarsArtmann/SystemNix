@@ -219,8 +219,6 @@ in {
         };
       };
       oauth2-proxy-config.enable = true;
-      # photomap — disabled: podman config permission issue
-      # photomap.enable = true;
       homepage.enable = true;
       taskchampion-config.enable = true;
       display-manager-config.enable = true;

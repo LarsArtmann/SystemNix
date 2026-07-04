@@ -100,6 +100,21 @@ repos:
         language: system
         pass_filenames: false
 
+      # Systemd hardening audit: warn when harden{} (defaults ProtectHome=true)
+      # is used alongside /home paths without an explicit ProtectHome override.
+      # Catches the crush-daily class of silent data-access failure.
+      - id: protect-home-audit
+        name: ProtectHome audit (harden + /home pattern)
+        entry: bash
+        args:
+          [
+            -c,
+            'exitcode=0; for f in $(find modules/ -name "*.nix" | sort); do if grep -q "harden {" "$f" && ! grep -q "hardenUser {" "$f" && grep -qE "/home/" "$f"; then if ! grep -q "ProtectHome = false" "$f"; then echo "WARNING: $f uses harden {} (defaults ProtectHome=true) and references /home — verify ProtectHome override needed"; exitcode=1; fi; fi; done; exit $exitcode',
+          ]
+        language: system
+        files: \.nix$
+        pass_filenames: false
+
 # Hook Execution Order:
 # 1. gitleaks             - Security check
 # 2. trailing-whitespace  - Cleanup formatting

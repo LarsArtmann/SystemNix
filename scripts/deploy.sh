@@ -21,6 +21,10 @@ if nix run .#pre-deploy-check; then
   echo ""
   echo "=== Failed units ==="
   systemctl --failed --no-pager 2>/dev/null || true
+
+  echo ""
+  echo "=== Post-Deploy Smoke Test ==="
+  bash "$(dirname "$0")/post-deploy-check.sh" || echo "⚠ Some smoke checks failed — review above"
 else
   echo ""
   echo "❌ Deploy aborted — fix pre-deploy failures first"

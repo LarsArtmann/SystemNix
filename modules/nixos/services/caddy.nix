@@ -60,6 +60,9 @@ _: {
         Cache-Control "no-cache"
       }
       encode zstd gzip
+      request_body {
+        max_size 10GB
+      }
     '';
 
     protectedVHost = _subdomain: port: {
@@ -157,6 +160,9 @@ _: {
           }
           // lib.optionalAttrs config.services.discordsync.enable {
             "discordsync.${domain}" = protectedVHost "discordsync" ports.discordsync-api;
+          }
+          // lib.optionalAttrs config.services.overview.enable {
+            "overview.${domain}" = protectedVHost "overview" ports.overview;
           };
       };
 

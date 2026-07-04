@@ -218,5 +218,6 @@ in {
     "logs"
     "monitor"
     "discordsync"
+    "overview"
   ];
 }

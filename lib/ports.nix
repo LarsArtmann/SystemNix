@@ -9,8 +9,6 @@
     dns-blocker-stats = 9090;
     dns-blocker-block = 8050;
 
-    photomap = 8051;
-
     forgejo = 3000;
 
     homepage = 8082;
