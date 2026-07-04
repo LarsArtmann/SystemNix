@@ -741,8 +741,9 @@
           <h4>SSO / OIDC &mdash; Two-Layer Architecture (Pocket ID)</h4>
           <p>
             Passkey-only OIDC IdP (<code>auth.home.lan</code>) with two SSO layers fully
-            operational: <strong>Layer 1 (Native OIDC):</strong> Forgejo, Immich, Gatus &mdash;
-            direct OIDC integration, provisioned clients, no forward-auth.
+            operational:
+            <strong>Layer 1 (Native OIDC):</strong> Forgejo, Immich, Gatus &mdash; direct OIDC
+            integration, provisioned clients, no forward-auth.
             <strong>Layer 2 (oauth2-proxy):</strong> Homepage, SigNoz, Twenty, Taskchampion,
             Manifest, OpenSEO, Crush Daily, Dozzle, Monitor365 &mdash; forward-auth gated behind
             Pocket ID login.
@@ -771,7 +772,8 @@
             Full QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit-gnome, and Rofi. 13
             SystemNix-native DMS plugins + 2 community plugins (emoji launcher, calculator).
             Wallpaper management owned by DMS (awww retired). Niri keybindings migrated from rofi to
-            DMS IPC. MemoryMax=4G as OOM defense. <code>systemd.enable = true</code> explicitly set.
+            DMS IPC. MemoryMax=4G as OOM defense.
+            <code>systemd.enable = true</code> explicitly set.
           </p>
         </div>
 
@@ -821,8 +823,9 @@
           <p>
             Root cause identified: Chromium GPU watchdog kills the GPU process during slow display
             pipeline reconfiguration on Strix Halo DCN 3.5.1 (under chronic GPUActive memory
-            pressure). Fix: <code>--disable-gpu-watchdog</code> flag added to Helium wrapper. Flake
-            check passes. Commit pending.
+            pressure). Fix:
+            <code>--disable-gpu-watchdog</code> flag added to Helium wrapper. Flake check passes.
+            Commit pending.
           </p>
         </div>
 
@@ -898,8 +901,9 @@
           <div class="where">modules/nixos/services/hermes.nix</div>
           <p>
             Two manual steps remaining: (1) install SSH deploy key for private repos, (2) set
-            fallback model via <code>sudo -u hermes hermes config set fallback_model</code>. Service
-            is running but cannot deploy code or failover LLM providers.
+            fallback model via
+            <code>sudo -u hermes hermes config set fallback_model</code>. Service is running but
+            cannot deploy code or failover LLM providers.
           </p>
         </div>
 
@@ -1015,12 +1019,13 @@
           <h3>Strix Halo GPUActive Memory Crisis</h3>
           <div class="where">/proc/meminfo &mdash; GPUActive field &mdash; boot.nix TTM config</div>
           <p>
-            evo-x2 has <strong>128 GiB physical RAM but only ~94 GiB visible to Linux</strong> (34
-            GiB BIOS VRAM carveout). Of that 94 GiB,
-            <strong>GPUActive (GTT buffer objects) consumes 51+ GiB (55%)</strong> with only desktop
-            workloads (Helium browser, Quickshell, niri). <code>GPUReclaim=0</code> means these
-            pages CANNOT be reclaimed under pressure. The TTM pool is configured with
-            <code>pages_limit = page_pool_size = 112 GiB</code> &mdash;
+            evo-x2 has
+            <strong>128 GiB physical RAM but only ~94 GiB visible to Linux</strong>
+            (34 GiB BIOS VRAM carveout). Of that 94 GiB,
+            <strong>GPUActive (GTT buffer objects) consumes 51+ GiB (55%)</strong>
+            with only desktop workloads (Helium browser, Quickshell, niri).
+            <code>GPUReclaim=0</code> means these pages CANNOT be reclaimed under pressure. The TTM
+            pool is configured with <code>pages_limit = page_pool_size = 112 GiB</code> &mdash;
             <strong>exceeds the 94 GiB visible!</strong>
             Combined with zram swap at 100% full, the system runs in chronic memory pressure.
           </p>
@@ -1055,8 +1060,9 @@
             Vulkan swapchain recreation).
           </p>
           <div class="callout callout-solution">
-            <strong>Fix Applied:</strong> <code>--disable-gpu-watchdog</code> added to Helium
-            wrapper. Flake check passes. <strong>Pending deploy.</strong> Secondary risk:
+            <strong>Fix Applied:</strong>
+            <code>--disable-gpu-watchdog</code> added to Helium wrapper. Flake check passes.
+            <strong>Pending deploy.</strong> Secondary risk:
             <code>MESA_VK_WSI_PRESENT_MODE=immediate</code> remains in
             <code>amd-gpu.nix</code> &mdash; consider removing if other apps stutter during hotplug.
           </div>
@@ -1206,8 +1212,8 @@
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Investigate and fix Jan llama-server respawner</strong> &mdash; wrap in
-                  cgroup or fix Jan config
+                  <strong>Investigate and fix Jan llama-server respawner</strong>
+                  &mdash; wrap in cgroup or fix Jan config
                 </td>
                 <td>1-2h</td>
                 <td>Continuous memory leak that compounds the TTM crisis</td>
@@ -1263,7 +1269,8 @@
                 <td>10</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Remove <code>MESA_VK_WSI_PRESENT_MODE=immediate</code></strong> from
+                  <strong>Remove <code>MESA_VK_WSI_PRESENT_MODE=immediate</code></strong>
+                  from
                   <code>amd-gpu.nix</code>
                 </td>
                 <td>5 min + deploy</td>
@@ -1376,7 +1383,8 @@
                 <td>22</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Enable AppArmor</strong> &mdash; currently <code>mkDefault false</code>
+                  <strong>Enable AppArmor</strong> &mdash; currently
+                  <code>mkDefault false</code>
                 </td>
                 <td>2-4h + testing</td>
                 <span>Full MAC hardening. High regression risk &mdash; test carefully.</span>
@@ -1422,7 +1430,8 @@
             carves out <strong>34 GiB</strong> for VRAM on this Strix Halo APU, leaving only ~94 GiB
             visible to Linux. Then the TTM pool config (<code
               >pages_limit = page_pool_size = 112 GiB</code
-            >) allows the GPU driver to consume <em>more than all visible RAM</em>
+            >) allows the GPU driver to consume
+            <em>more than all visible RAM</em>
             via GPUActive (GTT buffer objects), currently eating 51+ GiB.
           </p>
           <p>

@@ -590,7 +590,8 @@
           <p>
             Phase 2a-2d (module rework, config updates), Phase 3 (deploy + validate), Phase 4
             (cleanup). Strategy: dnsblockd primary on :53, unbound backup on :5353, 24h observation.
-            Commit <code>f9601a5f</code>.
+            Commit
+            <code>f9601a5f</code>.
           </p>
         </div>
 
@@ -671,9 +672,10 @@
           <h3>Swap 100% full</h3>
           <div class="where">9.4 GiB / 9.4 GiB &middot; chronic memory pressure</div>
           <p>
-            zramSwap bumped from 10% to 17% (~16 GiB) in commit <code>2223c036</code> but
-            undeployed. GPUActive consuming 38.7 GiB. System has been in memory pressure since the
-            OOM chain killed niri/ghostty/signal/pipewire/unbound/clickhouse/immich earlier.
+            zramSwap bumped from 10% to 17% (~16 GiB) in commit
+            <code>2223c036</code> but undeployed. GPUActive consuming 38.7 GiB. System has been in
+            memory pressure since the OOM chain killed
+            niri/ghostty/signal/pipewire/unbound/clickhouse/immich earlier.
           </p>
         </div>
 
@@ -753,11 +755,11 @@
           </div>
           <p>
             Every SSH session shows "Failed to start session scope: Transport endpoint is not
-            connected". The <code>/run/systemd/userdb/io.systemd.Multiplexer</code> socket doesn't
-            exist. <code>switch-to-configuration-ng</code> calls
-            <code>logind.list_users()</code> which times out, causing
-            <strong>every deploy attempt to fail with exit code 11</strong>. The system has been in
-            this state since at least the OOM events ~13 hours ago. A simple
+            connected". The
+            <code>/run/systemd/userdb/io.systemd.Multiplexer</code> socket doesn't exist.
+            <code>switch-to-configuration-ng</code> calls <code>logind.list_users()</code> which
+            times out, causing <strong>every deploy attempt to fail with exit code 11</strong>. The
+            system has been in this state since at least the OOM events ~13 hours ago. A simple
             <code>systemctl restart systemd-logind</code>
             might fix it, but if the dbus connection is deeply broken, only a reboot will do.
           </p>
@@ -911,7 +913,8 @@
               <tr>
                 <td>4</td>
                 <td>
-                  <strong>Alternatively: restart logind without reboot</strong> &mdash;
+                  <strong>Alternatively: restart logind without reboot</strong>
+                  &mdash;
                   <code>sudo systemctl restart systemd-logind</code> then
                   <code>sudo /run/current-system/bin/switch-to-configuration test</code>
                 </td>
@@ -940,7 +943,8 @@
               <tr>
                 <td>7</td>
                 <td>
-                  <strong>Add logind health check to pre-deploy-check.sh</strong> &mdash; test
+                  <strong>Add logind health check to pre-deploy-check.sh</strong>
+                  &mdash; test
                   <code>loginctl list-users</code>
                 </td>
                 <td><span class="badge badge-high">High</span></td>
@@ -955,8 +959,8 @@
               <tr>
                 <td>9</td>
                 <td>
-                  <strong>BTRFS: add <code>metadata_ratio=1</code> mount option</strong> to root
-                  filesystem
+                  <strong>BTRFS: add <code>metadata_ratio=1</code> mount option</strong>
+                  to root filesystem
                 </td>
                 <td><span class="badge badge-high">High</span></td>
                 <td>10 min</td>
@@ -982,8 +986,8 @@
               <tr>
                 <td>12</td>
                 <td>
-                  <strong>Pin dnsblockd flake input to v0.2.0 tag</strong> (currently
-                  <code>ref=master</code>)
+                  <strong>Pin dnsblockd flake input to v0.2.0 tag</strong>
+                  (currently <code>ref=master</code>)
                 </td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td>5 min</td>
@@ -1035,15 +1039,17 @@
               <tr>
                 <td>18</td>
                 <td>
-                  <strong>TTM pool: reduce page_pool_size from 112 GiB</strong> &mdash; test with
-                  ~32 GiB so freed BO pages return to kernel
+                  <strong>TTM pool: reduce page_pool_size from 112 GiB</strong>
+                  &mdash; test with ~32 GiB so freed BO pages return to kernel
                 </td>
                 <td><span class="badge badge-medium">Medium</span></td>
                 <td>30 min</td>
               </tr>
               <tr>
                 <td>19</td>
-                <td><strong>Hermes: install SSH deploy key + set fallback model</strong></td>
+                <td>
+                  <strong>Hermes: install SSH deploy key + set fallback model</strong>
+                </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td>15 min</td>
               </tr>
@@ -1110,11 +1116,11 @@
             SigNoz, etc.) that will experience downtime.
           </p>
           <p>
-            The alternative &mdash; <code>sudo systemctl restart systemd-logind</code> + retry
-            activation &mdash; avoids downtime but may not fully fix the dbus degradation if the
-            problem is deeper than a stale logind process. We'd also need to manually
-            <code>kill</code> the stuck dnsblockd-cert-import process and
-            <code>systemctl reset-failed</code> before activation.
+            The alternative &mdash;
+            <code>sudo systemctl restart systemd-logind</code> + retry activation &mdash; avoids
+            downtime but may not fully fix the dbus degradation if the problem is deeper than a
+            stale logind process. We'd also need to manually <code>kill</code> the stuck
+            dnsblockd-cert-import process and <code>systemctl reset-failed</code> before activation.
           </p>
           <p>
             <strong>Which path do you want?</strong> Reboot (safe, 5-10 min downtime) or logind
