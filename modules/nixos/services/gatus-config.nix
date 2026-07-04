@@ -493,6 +493,16 @@ _: {
                 conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
                 alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
               })
+            ]
+            ++ lib.optionals (config.services.file-and-image-renamer.enable or false) [
+              (mkHttpCheck {
+                name = "File Renamer Health";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
+                interval = "60s";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                alerts = discordAlert "File and Image Renamer health dashboard down — screenshot renaming may be stuck";
+              })
             ];
         };
       };

@@ -163,6 +163,9 @@ _: {
           }
           // lib.optionalAttrs config.services.overview.enable {
             "overview.${domain}" = protectedVHost "overview" ports.overview;
+          }
+          // lib.optionalAttrs config.services.file-and-image-renamer.enable {
+            "renamer.${domain}" = protectedVHost "renamer" ports.file-and-image-renamer-health;
           };
       };
 

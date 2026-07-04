@@ -1,4 +1,4 @@
-# AI-powered file and screenshot renaming watcher daemon
+# AI-powered file and screenshot renaming watcher daemon + health dashboard
 _: {
   flake.nixosModules.file-and-image-renamer = {
     config,
@@ -9,16 +9,12 @@ _: {
     cfg = config.services.file-and-image-renamer;
     inherit (config.users) primaryUser;
     sd = import ../../../lib/default.nix lib;
-    inherit (sd) hardenUser mkStateDir;
+    inherit (sd) hardenUser mkStateDir ports;
   in {
     options.services.file-and-image-renamer = {
       enable = lib.mkEnableOption "File and Image Renamer — AI-powered screenshot renaming watcher";
 
-      package = lib.mkOption {
-        type = lib.types.package;
-        default = pkgs.file-and-image-renamer;
-        description = "The file-and-image-renamer package to use";
-      };
+      package = lib.mkPackageOption pkgs "file-and-image-renamer" {};
 
       user = lib.mkOption {
         type = lib.types.str;
@@ -64,11 +60,31 @@ _: {
         description = "Override Synthetic model ID (env: SYNTHETIC_MODEL)";
       };
 
+      dataDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/home/${cfg.user}/.file-renamer";
+        defaultText = "/home/<user>/.file-renamer";
+        description = "Base directory for file-renamer state (dead-letter, hashdb, history)";
+      };
+
       logDirectory = lib.mkOption {
         type = lib.types.str;
-        default = "/home/${cfg.user}/.file-renamer/logs";
-        defaultText = "/home/<user>/.file-renamer/logs";
+        default = "${cfg.dataDir}/logs";
+        defaultText = "<dataDir>/logs";
         description = "Directory for watcher log files";
+      };
+
+      healthAddr = lib.mkOption {
+        type = lib.types.str;
+        default = "127.0.0.1:${toString ports.file-and-image-renamer-health}";
+        defaultText = "127.0.0.1:<port>";
+        description = "Listen address for the health dashboard web server";
+      };
+
+      enableHealthDashboard = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Start the health dashboard web server alongside the watcher";
       };
     };
 
@@ -76,50 +92,91 @@ _: {
       environment.systemPackages = [cfg.package];
 
       systemd.tmpfiles.rules = [
+        (mkStateDir cfg.dataDir "0750" cfg.user "users")
         (mkStateDir cfg.logDirectory "0750" cfg.user "users")
       ];
 
       home-manager.users.${cfg.user} = {
-        systemd.user.services.file-and-image-renamer = {
-          Unit = {
-            Description = "File and Image Renamer Watcher";
-            After = [
-              "network.target"
-              "graphical-session.target"
-            ];
-            Wants = ["network.target"];
-            PartOf = ["graphical-session.target"];
-            StartLimitIntervalSec = 600;
-            StartLimitBurst = 5;
-          };
-
-          Service =
-            sd.serviceDefaultsUser {RestartSec = "10";}
-            // hardenUser {MemoryMax = "512M";}
-            // {
-              Type = "simple";
-              ExecStart = "${lib.getExe' cfg.package "file-renamer"} watch";
-              WorkingDirectory = cfg.watchDirectory;
-              KillMode = "mixed";
-              TimeoutStopSec = "30";
-              StandardOutput = "journal";
-              StandardError = "journal";
-
-              Environment =
-                [
-                  "DESKTOP_PATH=${cfg.watchDirectory}"
-                  "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
-                ]
-                ++ lib.optional (
-                  cfg.syntheticApiKeyFile != null
-                ) "SYNTHETIC_API_KEY_FILE=${cfg.syntheticApiKeyFile}"
-                ++ lib.optional (cfg.model != null) "GLM_MODEL=${cfg.model}"
-                ++ lib.optional (cfg.syntheticModel != null) "SYNTHETIC_MODEL=${cfg.syntheticModel}"
-                ++ lib.optional (cfg.watchPaths != []) "WATCH_PATHS=${lib.concatStringsSep ":" cfg.watchPaths}";
+        systemd.user.services = {
+          # Core watcher — monitors directories and renames new screenshots via AI vision
+          file-and-image-renamer = {
+            Unit = {
+              Description = "File and Image Renamer Watcher";
+              After = [
+                "network.target"
+                "graphical-session.target"
+              ];
+              Wants = ["network.target"];
+              PartOf = ["graphical-session.target"];
+              StartLimitIntervalSec = 600;
+              StartLimitBurst = 5;
             };
 
-          Install = {
-            WantedBy = ["graphical-session.target"];
+            Service =
+              sd.serviceDefaultsUser {RestartSec = "10";}
+              // hardenUser {MemoryMax = "512M";}
+              // {
+                Type = "simple";
+                ExecStart = "${lib.getExe' cfg.package "file-renamer"} watch";
+                WorkingDirectory = cfg.watchDirectory;
+                KillMode = "mixed";
+                TimeoutStopSec = "30";
+                StandardOutput = "journal";
+                StandardError = "journal";
+
+                Environment =
+                  [
+                    "DESKTOP_PATH=${cfg.watchDirectory}"
+                    "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
+                    "DEAD_LETTER_PATH=${cfg.dataDir}/dead-letter.json"
+                  ]
+                  ++ lib.optional (
+                    cfg.syntheticApiKeyFile != null
+                  ) "SYNTHETIC_API_KEY_FILE=${cfg.syntheticApiKeyFile}"
+                  ++ lib.optional (cfg.model != null) "GLM_MODEL=${cfg.model}"
+                  ++ lib.optional (cfg.syntheticModel != null) "SYNTHETIC_MODEL=${cfg.syntheticModel}"
+                  ++ lib.optional (cfg.watchPaths != []) "WATCH_PATHS=${lib.concatStringsSep ":" cfg.watchPaths}";
+              };
+
+            Install = {
+              WantedBy = ["graphical-session.target"];
+            };
+          };
+
+          # Health dashboard — web UI + Prometheus metrics at /metrics
+          file-and-image-renamer-health = lib.mkIf cfg.enableHealthDashboard {
+            Unit = {
+              Description = "File and Image Renamer Health Dashboard";
+              After = [
+                "network.target"
+                "file-and-image-renamer.service"
+              ];
+              Wants = ["network.target"];
+              PartOf = ["graphical-session.target"];
+              StartLimitIntervalSec = 600;
+              StartLimitBurst = 5;
+            };
+
+            Service =
+              sd.serviceDefaultsUser {RestartSec = "15";}
+              // hardenUser {MemoryMax = "256M";}
+              // {
+                Type = "simple";
+                ExecStart = "${lib.getExe' cfg.package "file-renamer"} health --addr ${cfg.healthAddr}";
+                WorkingDirectory = cfg.dataDir;
+                KillMode = "mixed";
+                TimeoutStopSec = "15";
+                StandardOutput = "journal";
+                StandardError = "journal";
+
+                Environment = [
+                  "DEAD_LETTER_PATH=${cfg.dataDir}/dead-letter.json"
+                ];
+              };
+
+            Install = {
+              WantedBy = ["graphical-session.target"];
+            };
           };
         };
       };

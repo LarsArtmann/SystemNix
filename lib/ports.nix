@@ -57,5 +57,7 @@
     activitywatch = 5600;
 
     discordsync-api = 8085;
+
+    file-and-image-renamer-health = 8086;
   };
 }
