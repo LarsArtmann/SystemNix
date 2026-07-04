@@ -6,95 +6,481 @@
     <title>SystemNix Status — 2026-07-04 Monitor365 OOM Root Cause &amp; Nix-Side Mitigation</title>
     <style>
       :root {
-        --color-graphite: #0e0e10; --color-graphite-2: #18181d; --color-graphite-3: #16161a;
-        --color-bone: #f4f4f0; --color-red: #ff6b6b; --color-blue: #6eb5ff; --color-yellow: #f4d35e; --color-amber: #ffb347;
-        --color-hairline: rgba(244,244,240,0.12); --color-hairline-strong: rgba(244,244,240,0.25);
-        --surface: var(--color-graphite); --surface-raised: var(--color-graphite-2); --surface-sunken: var(--color-graphite-3);
-        --text: var(--color-bone); --text-muted: rgba(244,244,240,0.72); --text-faint: rgba(244,244,240,0.45);
-        --border: var(--color-hairline); --border-strong: var(--color-hairline-strong);
-        --accent: var(--color-amber); --problem: var(--color-red); --solution: var(--color-blue); --warning: var(--color-yellow);
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      .hero { padding: 1.5rem 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; }
-      .strength .text strong { display: block; margin-bottom: 0.15rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
-      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
-      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .grid-2 { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
     </style>
   </head>
   <body>
@@ -127,16 +513,18 @@
           <div class="hero-badge">MONITOR365 OOM ROOT CAUSE</div>
           <h1>Monitor365 OOM Diagnosis — Not a Panic, a systemd-oomd Kill</h1>
           <p class="hero-subtitle">
-            The TODO_LIST.md diagnosis was wrong: Monitor365 is NOT crashing from an Axum
-            route syntax panic (routes are already Axum 0.8 <code>{param}</code> syntax). The
-            SIGABRT coredumps are OOM kills — systemd-oomd targets the agent because
+            The TODO_LIST.md diagnosis was wrong: Monitor365 is NOT crashing from an Axum route
+            syntax panic (routes are already Axum 0.8 <code>{param}</code> syntax). The SIGABRT
+            coredumps are OOM kills — systemd-oomd targets the agent because
             <code>oom_score_adj=200</code> (systemd default for user services) + 12 GB virtual
-            memory = <code>oom_score=827</code>, the highest on the system. Nix-side fix
-            applied: MemoryMax 256M → 512M, OOMScoreAdjust -100. Pending deploy.
+            memory = <code>oom_score=827</code>, the highest on the system. Nix-side fix applied:
+            MemoryMax 256M → 512M, OOMScoreAdjust -100. Pending deploy.
           </p>
         </div>
 
-        <h2 id="summary"><span class="num">00</span>System Snapshot — Delta Since Last Report (14:30)</h2>
+        <h2 id="summary">
+          <span class="num">00</span>System Snapshot — Delta Since Last Report (14:30)
+        </h2>
         <div class="stat-grid">
           <div class="stat-card stat-good">
             <div class="stat-value">140 MB</div>
@@ -176,25 +564,24 @@
             <h4>Monitor365 root cause FOUND</h4>
             <p>
               The TODO_LIST.md diagnosis ("upstream Rust panic, Axum 0.7
-              <code>:param</code> → <code>{param}</code>") was <strong>WRONG</strong>. The
-              Axum routes are already migrated to 0.8 <code>{param}</code> syntax. The
-              coredumps show normal tokio thread parking (epoll_wait, Condvar) — no panic
-              frames. The agent is being <strong>killed by systemd-oomd</strong>, not
-              crashing from a Rust panic. <code>oom_score_adj=200</code> (systemd default for
-              user services, no override in the module) + 12 GB virtual memory =
-              <code>oom_score=827</code>. Under memory pressure (zram 100%, swap 84%), the
-              agent is always the #1 kill target. Fix applied: <code>MemoryMax=512M</code> +
-              <code>OOMScoreAdjust=-100</code>. Pending deploy.
+              <code>:param</code> → <code>{param}</code>") was <strong>WRONG</strong>. The Axum
+              routes are already migrated to 0.8 <code>{param}</code> syntax. The coredumps show
+              normal tokio thread parking (epoll_wait, Condvar) — no panic frames. The agent is
+              being <strong>killed by systemd-oomd</strong>, not crashing from a Rust panic.
+              <code>oom_score_adj=200</code> (systemd default for user services, no override in the
+              module) + 12 GB virtual memory = <code>oom_score=827</code>. Under memory pressure
+              (zram 100%, swap 84%), the agent is always the #1 kill target. Fix applied:
+              <code>MemoryMax=512M</code> + <code>OOMScoreAdjust=-100</code>. Pending deploy.
             </p>
           </div>
           <div class="card card-problem">
             <h4>Load average spiked back to 31</h4>
             <p>
               Load was 10.6 at 14:30 — now 31.1. Causes: (1) BDD test binary PID 2747185 still
-              running at 105% CPU (29 min CPU time), (2) nix builds compiling monitor365 WASM
-              UI (multiple <code>rustc</code> + <code>cc1</code> at 90-100% CPU each), (3)
-              <code>jscpd</code> copy-paste detector at 109% CPU, (4) agent PID 3014572 at 45%
-              CPU. 13 Crush instances consuming ~2.5 GB. Root disk grew to 86%.
+              running at 105% CPU (29 min CPU time), (2) nix builds compiling monitor365 WASM UI
+              (multiple <code>rustc</code> + <code>cc1</code> at 90-100% CPU each), (3)
+              <code>jscpd</code> copy-paste detector at 109% CPU, (4) agent PID 3014572 at 45% CPU.
+              13 Crush instances consuming ~2.5 GB. Root disk grew to 86%.
             </p>
           </div>
         </div>
@@ -207,42 +594,67 @@
             <div class="check">+</div>
             <div class="text">
               <strong>Monitor365 OOM root cause — correctly diagnosed</strong>
-              <span>NOT an Axum route panic (routes already fixed). NOT a Rust panic. It's systemd-oomd killing the agent because <code>oom_score_adj=200</code> + 12 GB virtual memory = highest kill priority. Coredump stack traces confirm: normal tokio threads (epoll_wait, parking_lot::Condvar, mpsc::Channel::recv). The TODO_LIST.md diagnosis was wrong for weeks.</span>
+              <span
+                >NOT an Axum route panic (routes already fixed). NOT a Rust panic. It's systemd-oomd
+                killing the agent because <code>oom_score_adj=200</code> + 12 GB virtual memory =
+                highest kill priority. Coredump stack traces confirm: normal tokio threads
+                (epoll_wait, parking_lot::Condvar, mpsc::Channel::recv). The TODO_LIST.md diagnosis
+                was wrong for weeks.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Nix-side OOM mitigation — applied, pending deploy</strong>
-              <span><code>MemoryMax</code>: 256M → 512M (both agent + server). <code>OOMScoreAdjust = -100</code> (both). This drops the agent from #1 kill target to protected. Eval passes. Not yet deployed.</span>
+              <span
+                ><code>MemoryMax</code>: 256M → 512M (both agent + server).
+                <code>OOMScoreAdjust = -100</code> (both). This drops the agent from #1 kill target
+                to protected. Eval passes. Not yet deployed.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Systemic bug audit — 4 bugs fixed</strong>
-              <span>certutil infinite loop (guarded with <code>if [ ! -f cert9.db ]</code>), unbounded while-loop on secret file (30-iteration timeout), 12 curl calls with no <code>--max-time</code> (Pocket-ID + SigNoz provisioners). All committed at <code>0f91d129</code>.</span>
+              <span
+                >certutil infinite loop (guarded with <code>if [ ! -f cert9.db ]</code>), unbounded
+                while-loop on secret file (30-iteration timeout), 12 curl calls with no
+                <code>--max-time</code> (Pocket-ID + SigNoz provisioners). All committed at
+                <code>0f91d129</code>.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Renamer 502 fixed + architectural improvement</strong>
-              <span>Health dashboard moved to system service. Global <code>sd-switch</code> added. Deployed and verified.</span>
+              <span
+                >Health dashboard moved to system service. Global <code>sd-switch</code> added.
+                Deployed and verified.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>certutil GPUActive crisis resolved</strong>
-              <span>Killing the 33-hour certutil spin freed 24 GB GPUActive instantly (24 GB → 140 MB). Root cause: <code>certutil -N</code> on existing DB enters infinite userspace CPU spin.</span>
+              <span
+                >Killing the 33-hour certutil spin freed 24 GB GPUActive instantly (24 GB → 140 MB).
+                Root cause: <code>certutil -N</code> on existing DB enters infinite userspace CPU
+                spin.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>3 runaway processes killed</strong>
-              <span>certutil (33h, 99% CPU), llama-server (8h, 8.1 GB RAM), BDD test binary (6h, 98.6% CPU). Note: a NEW BDD test binary respawned (PID 2747185, still running).</span>
+              <span
+                >certutil (33h, 99% CPU), llama-server (8h, 8.1 GB RAM), BDD test binary (6h, 98.6%
+                CPU). Note: a NEW BDD test binary respawned (PID 2747185, still running).</span
+              >
             </div>
           </div>
         </div>
@@ -256,11 +668,10 @@
           <h3>Monitor365 OOM fix — applied but not deployed</h3>
           <div class="where">modules/nixos/services/monitor365.nix · uncommitted</div>
           <p>
-            MemoryMax raised from 256M → 512M, OOMScoreAdjust set to -100 for both agent and
-            server. Eval passes. The agent is still being OOM-killed every ~10 min until this
-            deploys. The fix won't stop the virtual memory bloat (12 GB VMS from Rust
-            allocator) but it will prevent systemd-oomd from targeting the agent as its #1
-            kill.
+            MemoryMax raised from 256M → 512M, OOMScoreAdjust set to -100 for both agent and server.
+            Eval passes. The agent is still being OOM-killed every ~10 min until this deploys. The
+            fix won't stop the virtual memory bloat (12 GB VMS from Rust allocator) but it will
+            prevent systemd-oomd from targeting the agent as its #1 kill.
           </p>
         </div>
 
@@ -278,9 +689,7 @@
           <span class="severity severity-important">No Off-Site Backup</span>
           <h3>Cloud backup — zero off-site copies</h3>
           <div class="where">ROADMAP.md Theme 1</div>
-          <p>
-            Root disk at 86%, grew 5% in 6 hours. 114 GB Nix store. Zero off-site backup.
-          </p>
+          <p>Root disk at 86%, grew 5% in 6 hours. 114 GB Nix store. Zero off-site backup.</p>
         </div>
 
         <div class="issue issue-important">
@@ -288,8 +697,8 @@
           <h3>DNS Migration: dnsblockd → Primary Resolver</h3>
           <div class="where">TODO_LIST.md Priority 0</div>
           <p>
-            Full 4-phase plan exists. Three gaps: local zones, upstream DoT forwarding, LAN
-            ACLs. ~15h estimated.
+            Full 4-phase plan exists. Three gaps: local zones, upstream DoT forwarding, LAN ACLs.
+            ~15h estimated.
           </p>
         </div>
 
@@ -304,12 +713,30 @@
 
         <h2 id="not-started"><span class="num">03</span>Not Started</h2>
         <div class="grid-2">
-          <div class="card card-warning"><h4>Pi 3 DNS Failover Cluster</h4><p>Module ready, hardware needed.</p></div>
-          <div class="card card-warning"><h4>Firewall Deny-by-Default</h4><p>All inbound allowed currently.</p></div>
-          <div class="card card-warning"><h4>BTRFS /data Subvolume Migration</h4><p>No snapshot protection for 686 GB data.</p></div>
-          <div class="card card-warning"><h4>AppArmor / Auditd</h4><p>Blocked on NixOS bug #483085.</p></div>
-          <div class="card card-warning"><h4>Monitor365 Agent→Server Auth</h4><p>No auth, anyone on LAN can POST.</p></div>
-          <div class="card card-warning"><h4>Typed NixOS Module Options</h4><p>No typed ports/paths/timeouts.</p></div>
+          <div class="card card-warning">
+            <h4>Pi 3 DNS Failover Cluster</h4>
+            <p>Module ready, hardware needed.</p>
+          </div>
+          <div class="card card-warning">
+            <h4>Firewall Deny-by-Default</h4>
+            <p>All inbound allowed currently.</p>
+          </div>
+          <div class="card card-warning">
+            <h4>BTRFS /data Subvolume Migration</h4>
+            <p>No snapshot protection for 686 GB data.</p>
+          </div>
+          <div class="card card-warning">
+            <h4>AppArmor / Auditd</h4>
+            <p>Blocked on NixOS bug #483085.</p>
+          </div>
+          <div class="card card-warning">
+            <h4>Monitor365 Agent→Server Auth</h4>
+            <p>No auth, anyone on LAN can POST.</p>
+          </div>
+          <div class="card card-warning">
+            <h4>Typed NixOS Module Options</h4>
+            <p>No typed ports/paths/timeouts.</p>
+          </div>
         </div>
 
         <!-- ==================== TOTALLY FUCKED UP ==================== -->
@@ -322,21 +749,23 @@
           <div class="where">12 kills in 3h · last two: 14:33 and 14:43</div>
           <p>
             The agent is STILL being killed. The fix is written but not deployed. Each kill
-            generates a coredump. 44 coredumps total in 24h. The agent allocates 12 GB
-            virtual memory with <code>oom_score_adj=200</code>, making it the #1 system kill
-            target. Until the deploy lands with <code>OOMScoreAdjust=-100</code>, this
-            continues.
+            generates a coredump. 44 coredumps total in 24h. The agent allocates 12 GB virtual
+            memory with <code>oom_score_adj=200</code>, making it the #1 system kill target. Until
+            the deploy lands with <code>OOMScoreAdjust=-100</code>, this continues.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>BDD test binary STILL running — 105% CPU for 29 min</h3>
-          <div class="where">PID 2747185 · bdd_server-9e81757c885d1cd1 · parent: cargo test → crush -y</div>
+          <div class="where">
+            PID 2747185 · bdd_server-9e81757c885d1cd1 · parent: cargo test → crush -y
+          </div>
           <p>
-            The BDD test binary we identified at 14:30 is STILL running (29 min CPU time now,
-            was 7.5 min). It's launched by <code>cargo test -p monitor365-bdd-tests --test
-            bdd-server</code>, parent is a Crush instance. It won't terminate on its own.
+            The BDD test binary we identified at 14:30 is STILL running (29 min CPU time now, was
+            7.5 min). It's launched by
+            <code>cargo test -p monitor365-bdd-tests --test bdd-server</code>, parent is a Crush
+            instance. It won't terminate on its own.
           </p>
         </div>
 
@@ -345,9 +774,9 @@
           <h3>Root disk at 86% — grew 5% in 6 hours</h3>
           <div class="where">/dev/nvme0n1p6 · 561 GB used · 95 GB free</div>
           <p>
-            ~35 GB consumed in 6 hours. Sources: nix builds (multiple monitor365 deploys with
-            WASM compilation), 44 coredumps, BTRFS snapshot overhead, jscpd reports. Nix store
-            at 114 GB. At this rate: disk full in ~4 days. Weekly nix-gc won't catch up.
+            ~35 GB consumed in 6 hours. Sources: nix builds (multiple monitor365 deploys with WASM
+            compilation), 44 coredumps, BTRFS snapshot overhead, jscpd reports. Nix store at 114 GB.
+            At this rate: disk full in ~4 days. Weekly nix-gc won't catch up.
           </p>
         </div>
 
@@ -356,10 +785,10 @@
           <h3>Load average 31.1 on a 32-thread system</h3>
           <div class="where">uptime · 1 day 10h uptime · 24 users</div>
           <p>
-            Load average spiked from 10.6 (14:30) to 31.1 (14:52). The system is at saturation:
-            BDD test (105% CPU), jscpd (109% CPU), 2× cc1 SQLite compilation (90-100% each),
-            2× rustc (67-93% each), monitor365 agent (45% CPU). Plus 13 Crush instances. The
-            system is running at the edge of stability.
+            Load average spiked from 10.6 (14:30) to 31.1 (14:52). The system is at saturation: BDD
+            test (105% CPU), jscpd (109% CPU), 2× cc1 SQLite compilation (90-100% each), 2× rustc
+            (67-93% each), monitor365 agent (45% CPU). Plus 13 Crush instances. The system is
+            running at the edge of stability.
           </p>
         </div>
 
@@ -369,8 +798,8 @@
           <div class="where">systemd-coredump · "No space left on device"</div>
           <p>
             44 total: ~20 Monitor365 OOM kills, ~8 Monitor365 SIGABRT, ~14 Quickshell
-            SIGABRT/SIGSEGV, ~2 unstoreable (disk full). The coredump partition is
-            permanently full. Need <code>Storage=none</code> or size cap.
+            SIGABRT/SIGSEGV, ~2 unstoreable (disk full). The coredump partition is permanently full.
+            Need <code>Storage=none</code> or size cap.
           </p>
         </div>
 
@@ -390,17 +819,17 @@
         <div class="card card-problem">
           <h4>Fix deploy.sh post-deploy-check — 3 reports and counting</h4>
           <p>
-            This has been flagged in every status report since 09:52. It's a one-line fix. The
-            smoke test exists and works standalone. The deploy script just references the
-            wrong path. Fix it.
+            This has been flagged in every status report since 09:52. It's a one-line fix. The smoke
+            test exists and works standalone. The deploy script just references the wrong path. Fix
+            it.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>Run nix-collect-garbage — disk 86%</h4>
           <p>
-            35 GB consumed in 6 hours. Weekly GC won't catch up. Run it manually before the
-            disk fills.
+            35 GB consumed in 6 hours. Weekly GC won't catch up. Run it manually before the disk
+            fills.
           </p>
         </div>
 
@@ -408,17 +837,16 @@
           <h4>Stop the BDD test spawn cycle</h4>
           <p>
             A Crush instance in <code>~/projects/monitor365/</code> keeps running
-            <code>cargo test</code> and the test binary never terminates. Kill PID 2747185 +
-            PID 2747166 (cargo test parent). Then tell that Crush instance to stop running
-            tests.
+            <code>cargo test</code> and the test binary never terminates. Kill PID 2747185 + PID
+            2747166 (cargo test parent). Then tell that Crush instance to stop running tests.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>Disable coredump storage</h4>
           <p>
-            44 coredumps in 24h, partition permanently full. SigNoz + journald already capture
-            crash data. Set <code>Storage=none</code> in systemd-coredump config.
+            44 coredumps in 24h, partition permanently full. SigNoz + journald already capture crash
+            data. Set <code>Storage=none</code> in systemd-coredump config.
           </p>
         </div>
 
@@ -427,33 +855,202 @@
         <h2 id="next25"><span class="num">06</span>Top 25 Things To Do Next</h2>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Priority</th><th>Task</th><th>Effort</th><th>Impact</th></tr></thead>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Priority</th>
+                <th>Task</th>
+                <th>Effort</th>
+                <th>Impact</th>
+              </tr>
+            </thead>
             <tbody>
-              <tr><td>1</td><td><span class="badge badge-critical">P0</span></td><td><strong>Deploy monitor365 OOM fix</strong> — MemoryMax 512M + OOMScoreAdjust -100 (uncommitted)</td><td>5 min</td><td>Stop 10-min OOM kill cycle</td></tr>
-              <tr><td>2</td><td><span class="badge badge-critical">P0</span></td><td><strong>Kill BDD test PID 2747185 + cargo test PID 2747166</strong></td><td>1 min</td><td>Recover 105% CPU</td></tr>
-              <tr><td>3</td><td><span class="badge badge-critical">P0</span></td><td><strong>Run nix-collect-garbage</strong> — disk 86%, grew 5% in 6h</td><td>10 min</td><td>Prevent disk full</td></tr>
-              <tr><td>4</td><td><span class="badge badge-critical">P0</span></td><td><strong>Fix deploy.sh post-deploy-check path</strong> — 3 reports, still broken</td><td>10 min</td><td>Catch silent failures</td></tr>
-              <tr><td>5</td><td><span class="badge badge-critical">P0</span></td><td><strong>Disable coredump storage</strong> — 44 dumps, partition full</td><td>10 min</td><td>Stop disk fill</td></tr>
-              <tr><td>6</td><td><span class="badge badge-high">P1</span></td><td><strong>Reboot evo-x2</strong> — clear all orphans, verify boot fixes</td><td>5 min</td><td>Clean slate</td></tr>
-              <tr><td>7</td><td><span class="badge badge-high">P1</span></td><td><strong>Cloud backup</strong> — BorgBackup to Hetzner StorageBox</td><td>4h</td><td>Disaster recovery</td></tr>
-              <tr><td>8</td><td><span class="badge badge-high">P1</span></td><td><strong>BTRFS /data subvolume migration</strong></td><td>1h</td><td>Snapshot protection</td></tr>
-              <tr><td>9</td><td><span class="badge badge-high">P1</span></td><td><strong>Investigate Quickshell SIGSEGV</strong> — 78 MB coredump</td><td>2h</td><td>Desktop stability</td></tr>
-              <tr><td>10</td><td><span class="badge badge-high">P1</span></td><td><strong>DNS migration Phase 2a</strong> — dnsblockd → primary :53</td><td>15h</td><td>Eliminate unbound</td></tr>
-              <tr><td>11</td><td><span class="badge badge-medium">P2</span></td><td><strong>Fix Monitor365 package alias</strong> — wrong package for server UI</td><td>30 min</td><td>Working dashboard</td></tr>
-              <tr><td>12</td><td><span class="badge badge-medium">P2</span></td><td><strong>Verify Pocket ID email sending</strong></td><td>10 min</td><td>SSO notifications</td></tr>
-              <tr><td>13</td><td><span class="badge badge-medium">P2</span></td><td><strong>Hermes: SSH deploy key + fallback model</strong></td><td>15 min</td><td>Hermes git access</td></tr>
-              <tr><td>14</td><td><span class="badge badge-medium">P2</span></td><td><strong>Firewall deny-by-default</strong></td><td>2h</td><td>Network hardening</td></tr>
-              <tr><td>15</td><td><span class="badge badge-medium">P2</span></td><td><strong>Bind Immich to localhost</strong></td><td>15 min</td><td>Attack surface</td></tr>
-              <tr><td>16</td><td><span class="badge badge-medium">P2</span></td><td><strong>Split large modules</strong> — monitor365, signoz, forgejo</td><td>3h</td><td>Maintainability</td></tr>
-              <tr><td>17</td><td><span class="badge badge-medium">P2</span></td><td><strong>Monitor365 agent→server auth</strong></td><td>2h</td><td>Security</td></tr>
-              <tr><td>18</td><td><span class="badge badge-medium">P2</span></td><td><strong>Investigate fs_event collector spam</strong> — 1s interval, never produces events, log floods journal</td><td>1h</td><td>Reduce log noise + CPU</td></tr>
-              <tr><td>19</td><td><span class="badge badge-low">P3</span></td><td><strong>Investigate swap/zram pressure</strong></td><td>1h</td><td>Memory stability</td></tr>
-              <tr><td>20</td><td><span class="badge badge-low">P3</span></td><td><strong>Provision Pi 3</strong></td><td>$$ + 2h</td><td>DNS HA</td></tr>
-              <tr><td>21</td><td><span class="badge badge-low">P3</span></td><td><strong>Upstream nixpkgs PRs</strong> — 7 packages</td><td>5h</td><td>Ecosystem</td></tr>
-              <tr><td>22</td><td><span class="badge badge-low">P3</span></td><td><strong>TTM pool pages_limit fix</strong></td><td>30 min</td><td>GPU pressure</td></tr>
-              <tr><td>23</td><td><span class="badge badge-low">P3</span></td><td><strong>Disabled service triage</strong></td><td>30 min</td><td>Clean config</td></tr>
-              <tr><td>24</td><td><span class="badge badge-low">P3</span></td><td><strong>Darwin HM parity</strong></td><td>Ongoing</td><td>Cross-platform</td></tr>
-              <tr><td>25</td><td><span class="badge badge-low">P3</span></td><td><strong>Update TODO_LIST.md</strong> — Monitor365 diagnosis was WRONG (not Axum panic, it's OOM)</td><td>5 min</td><td>Correct documentation</td></tr>
+              <tr>
+                <td>1</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Deploy monitor365 OOM fix</strong> — MemoryMax 512M + OOMScoreAdjust -100
+                  (uncommitted)
+                </td>
+                <td>5 min</td>
+                <td>Stop 10-min OOM kill cycle</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td><strong>Kill BDD test PID 2747185 + cargo test PID 2747166</strong></td>
+                <td>1 min</td>
+                <td>Recover 105% CPU</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td><strong>Run nix-collect-garbage</strong> — disk 86%, grew 5% in 6h</td>
+                <td>10 min</td>
+                <td>Prevent disk full</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>
+                  <strong>Fix deploy.sh post-deploy-check path</strong> — 3 reports, still broken
+                </td>
+                <td>10 min</td>
+                <td>Catch silent failures</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td><strong>Disable coredump storage</strong> — 44 dumps, partition full</td>
+                <td>10 min</td>
+                <td>Stop disk fill</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><strong>Reboot evo-x2</strong> — clear all orphans, verify boot fixes</td>
+                <td>5 min</td>
+                <td>Clean slate</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><strong>Cloud backup</strong> — BorgBackup to Hetzner StorageBox</td>
+                <td>4h</td>
+                <td>Disaster recovery</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><strong>BTRFS /data subvolume migration</strong></td>
+                <td>1h</td>
+                <td>Snapshot protection</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><strong>Investigate Quickshell SIGSEGV</strong> — 78 MB coredump</td>
+                <td>2h</td>
+                <td>Desktop stability</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td><strong>DNS migration Phase 2a</strong> — dnsblockd → primary :53</td>
+                <td>15h</td>
+                <td>Eliminate unbound</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Fix Monitor365 package alias</strong> — wrong package for server UI</td>
+                <td>30 min</td>
+                <td>Working dashboard</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Verify Pocket ID email sending</strong></td>
+                <td>10 min</td>
+                <td>SSO notifications</td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Hermes: SSH deploy key + fallback model</strong></td>
+                <td>15 min</td>
+                <td>Hermes git access</td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Firewall deny-by-default</strong></td>
+                <td>2h</td>
+                <td>Network hardening</td>
+              </tr>
+              <tr>
+                <td>15</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Bind Immich to localhost</strong></td>
+                <td>15 min</td>
+                <td>Attack surface</td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Split large modules</strong> — monitor365, signoz, forgejo</td>
+                <td>3h</td>
+                <td>Maintainability</td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td><strong>Monitor365 agent→server auth</strong></td>
+                <td>2h</td>
+                <td>Security</td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>
+                  <strong>Investigate fs_event collector spam</strong> — 1s interval, never produces
+                  events, log floods journal
+                </td>
+                <td>1h</td>
+                <td>Reduce log noise + CPU</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><strong>Investigate swap/zram pressure</strong></td>
+                <td>1h</td>
+                <td>Memory stability</td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><strong>Provision Pi 3</strong></td>
+                <td>$$ + 2h</td>
+                <td>DNS HA</td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><strong>Upstream nixpkgs PRs</strong> — 7 packages</td>
+                <td>5h</td>
+                <td>Ecosystem</td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><strong>TTM pool pages_limit fix</strong></td>
+                <td>30 min</td>
+                <td>GPU pressure</td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><strong>Disabled service triage</strong></td>
+                <td>30 min</td>
+                <td>Clean config</td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td><strong>Darwin HM parity</strong></td>
+                <td>Ongoing</td>
+                <td>Cross-platform</td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>
+                  <strong>Update TODO_LIST.md</strong> — Monitor365 diagnosis was WRONG (not Axum
+                  panic, it's OOM)
+                </td>
+                <td>5 min</td>
+                <td>Correct documentation</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -465,35 +1062,38 @@
         <div class="card card-problem">
           <h4>Why does the Monitor365 agent allocate 12 GB of virtual memory?</h4>
           <p>
-            The agent's RSS is only ~217 MB, but its <code>total-vm</code> is consistently
-            10-12 GB. This is what makes <code>oom_score</code> so high (827) — the kernel
-            sees 12 GB virtual and ranks it as the most memory-reclaimable process on the
-            system, even though it's only touching 217 MB.
+            The agent's RSS is only ~217 MB, but its <code>total-vm</code> is consistently 10-12 GB.
+            This is what makes <code>oom_score</code> so high (827) — the kernel sees 12 GB virtual
+            and ranks it as the most memory-reclaimable process on the system, even though it's only
+            touching 217 MB.
           </p>
-          <p>
-            Possible causes:
-          </p>
-          <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
-            <li>Rust/tokio default thread stack reservations (each thread reserves a large virtual stack guard)</li>
-            <li><code>mmap</code> with <code>MAP_ANONYMOUS</code> for arena allocators that never touch most pages</li>
+          <p>Possible causes:</p>
+          <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
+            <li>
+              Rust/tokio default thread stack reservations (each thread reserves a large virtual
+              stack guard)
+            </li>
+            <li>
+              <code>mmap</code> with <code>MAP_ANONYMOUS</code> for arena allocators that never
+              touch most pages
+            </li>
             <li>SQLite WAL mode pre-allocating large virtual address ranges</li>
             <li>Something in the collector pipeline (fs_event watcher?) mapping large buffers</li>
           </ul>
           <p>
             I can see <code>total-vm:12,604,256kB</code> in the OOM kill log, and
-            <code>VSZ: 6,899,628</code> (6.6 GB) in <code>ps aux</code> for the current agent
-            PID. The discrepancy suggests the virtual size grows over time. Understanding this
-            would tell us whether 512M MemoryMax is sufficient or whether the agent needs
-            upstream memory profiling. Without being able to run <code>valgrind
-            --tool=massif</code> or <code>strace -e mmap</code> (blocked by security policy),
-            I can only hypothesize.
+            <code>VSZ: 6,899,628</code> (6.6 GB) in <code>ps aux</code> for the current agent PID.
+            The discrepancy suggests the virtual size grows over time. Understanding this would tell
+            us whether 512M MemoryMax is sufficient or whether the agent needs upstream memory
+            profiling. Without being able to run <code>valgrind --tool=massif</code> or
+            <code>strace -e mmap</code> (blocked by security policy), I can only hypothesize.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-04 14:52 CEST &middot; Runtime data verified live on evo-x2 via
-          /proc, journalctl, coredumpctl, ps &middot; Delta comparison against 09:52 + 14:30 reports &middot;
-          Written by Crush (status-report skill)
+          Generated 2026-07-04 14:52 CEST &middot; Runtime data verified live on evo-x2 via /proc,
+          journalctl, coredumpctl, ps &middot; Delta comparison against 09:52 + 14:30 reports
+          &middot; Written by Crush (status-report skill)
         </footer>
       </main>
     </div>
@@ -504,22 +1104,33 @@
         var nav = document.querySelector("[data-nav]");
         if (!nav) return;
         var links = nav.querySelectorAll('a[href^="#"]');
-        var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
-        var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
         if (!sections.length) return;
         var observer = new IntersectionObserver(
           function (entries) {
             entries.forEach(function (entry) {
               if (entry.isIntersecting) {
                 links.forEach(function (link) {
-                  link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
                 });
               }
             });
           },
           { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
         );
-        sections.forEach(function (s) { observer.observe(s); });
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
       })();
     </script>
   </body>

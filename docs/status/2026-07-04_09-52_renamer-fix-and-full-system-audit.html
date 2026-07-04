@@ -29,87 +29,458 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      .hero { padding: 1.5rem 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before { background: var(--problem); }
-      .stat-good::before { background: var(--solution); }
-      .stat-warn::before { background: var(--warning); }
-      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; }
-      .stat-bad .stat-value { color: var(--problem); }
-      .stat-good .stat-value { color: var(--solution); }
-      .stat-warn .stat-value { color: var(--warning); }
-      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; }
-      .strength .text strong { display: block; margin-bottom: 0.15rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
-      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
-      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .grid-2 { grid-template-columns: 1fr; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
     </style>
   </head>
   <body>
@@ -145,10 +516,10 @@
           <div class="hero-badge">FULL SYSTEM AUDIT</div>
           <h1>Renamer 502 Fix &amp; Comprehensive System Audit</h1>
           <p class="hero-subtitle">
-            Triggered by renamer.home.lan HTTP 502. Root cause: health dashboard was a user
-            service tied to graphical-session.target. Fixed by moving to system service +
-            global sd-switch. Full audit reveals 3 runaway processes, 10 coredumps in 24h,
-            and a deploy script with a broken post-deploy check path.
+            Triggered by renamer.home.lan HTTP 502. Root cause: health dashboard was a user service
+            tied to graphical-session.target. Fixed by moving to system service + global sd-switch.
+            Full audit reveals 3 runaway processes, 10 coredumps in 24h, and a deploy script with a
+            broken post-deploy check path.
           </p>
         </div>
 
@@ -192,18 +563,18 @@
           <div class="card">
             <h4>evo-x2 (NixOS Desktop)</h4>
             <p>
-              AMD Ryzen AI Max+ 395 (16C/32T) · 128 GB RAM (94 GB visible after 34 GB VRAM
-              carveout) · 723 GB root (81% full) · 1.1 TB /data (67% full) · uptime 1d 5h ·
-              9 Docker containers · BTRFS Data 78% used, Metadata 52% used · Nix store 128 GB
+              AMD Ryzen AI Max+ 395 (16C/32T) · 128 GB RAM (94 GB visible after 34 GB VRAM carveout)
+              · 723 GB root (81% full) · 1.1 TB /data (67% full) · uptime 1d 5h · 9 Docker
+              containers · BTRFS Data 78% used, Metadata 52% used · Nix store 128 GB
             </p>
           </div>
           <div class="card">
             <h4>Memory Pressure</h4>
             <p>
-              GPUActive: 24.1 GB · Available: 34.9 GB · Swap: 11.3 GB used of 16.7 GB (68%) ·
-              zram at 100% capacity · Chronic overcommitment — Strix Halo unified memory
-              architecture means GPU buffer objects consume system RAM invisibly to
-              standard tools (<code>free</code>/<code>htop</code>).
+              GPUActive: 24.1 GB · Available: 34.9 GB · Swap: 11.3 GB used of 16.7 GB (68%) · zram
+              at 100% capacity · Chronic overcommitment — Strix Halo unified memory architecture
+              means GPU buffer objects consume system RAM invisibly to standard tools
+              (<code>free</code>/<code>htop</code>).
             </p>
           </div>
         </div>
@@ -215,39 +586,42 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Reported Bug</span>
           <h3>renamer.home.lan — HTTP ERROR 502</h3>
-          <div class="where">modules/nixos/services/file-and-image-renamer.nix · platforms/common/home-base.nix</div>
+          <div class="where">
+            modules/nixos/services/file-and-image-renamer.nix · platforms/common/home-base.nix
+          </div>
           <p>
-            <strong>Root cause:</strong> The health dashboard was a <code>home-manager</code>
-            user service with <code>WantedBy = ["graphical-session.target"]</code>. It was
-            deployed at 08:33 but <strong>never started</strong> — zero journal entries.
-            Deploying a new user service mid-session does not auto-start it; it only pulls in
-            when the target boots (next login). The watcher was running fine, but port 8086
-            was dead → Caddy returned 502.
+            <strong>Root cause:</strong> The health dashboard was a <code>home-manager</code> user
+            service with <code>WantedBy = ["graphical-session.target"]</code>. It was deployed at
+            08:33 but <strong>never started</strong> — zero journal entries. Deploying a new user
+            service mid-session does not auto-start it; it only pulls in when the target boots (next
+            login). The watcher was running fine, but port 8086 was dead → Caddy returned 502.
           </p>
           <div class="callout callout-solution">
             <strong>Fix 1:</strong> Moved health dashboard from
-            <code>systemd.user.services</code> to <code>systemd.services</code> (system
-            service) with <code>wantedBy = ["multi-user.target"]</code>. Now starts at boot
-            regardless of login state. Runs as user <code>lars</code> with
+            <code>systemd.user.services</code> to <code>systemd.services</code> (system service)
+            with <code>wantedBy = ["multi-user.target"]</code>. Now starts at boot regardless of
+            login state. Runs as user <code>lars</code> with
             <code>ProtectHome = "read-only"</code> + scoped <code>ReadWritePaths</code>.
           </div>
           <div class="callout callout-solution">
-            <strong>Fix 2:</strong> Added <code>systemd.user.startServices =
-            "sd-switch"</code> to <code>platforms/common/home-base.nix</code>. Home-manager
-            now auto-starts/restarts ALL user services after every activation. Prevents any
-            future user service from landing inactive after deploy.
+            <strong>Fix 2:</strong> Added <code>systemd.user.startServices = "sd-switch"</code> to
+            <code>platforms/common/home-base.nix</code>. Home-manager now auto-starts/restarts ALL
+            user services after every activation. Prevents any future user service from landing
+            inactive after deploy.
           </div>
           <div class="callout callout-warning">
-            <strong>Deploy hiccup:</strong> First deploy left the old user health service
-            running on port 8086 (I'd started it manually for diagnosis). The new system
-            service hit <code>start-limit-hit</code> from port-conflict crash-loop. Second
-            deploy cleared it via <code>systemctl reset-failed</code> (built into deploy.sh).
+            <strong>Deploy hiccup:</strong> First deploy left the old user health service running on
+            port 8086 (I'd started it manually for diagnosis). The new system service hit
+            <code>start-limit-hit</code> from port-conflict crash-loop. Second deploy cleared it via
+            <code>systemctl reset-failed</code> (built into deploy.sh).
           </div>
         </div>
 
-        <p><strong>Verified:</strong> <code>renamer.home.lan/status</code> returns HTTP 200
-        through Caddy with correct security headers. System service is
-        <code>active/running</code>, PID on port 8086.</p>
+        <p>
+          <strong>Verified:</strong> <code>renamer.home.lan/status</code> returns HTTP 200 through
+          Caddy with correct security headers. System service is <code>active/running</code>, PID on
+          port 8086.
+        </p>
 
         <!-- ==================== FULLY DONE ==================== -->
 
@@ -258,70 +632,108 @@
             <div class="check">+</div>
             <div class="text">
               <strong>Renamer 502 fixed + architectural improvement</strong>
-              <span>Health dashboard moved from user service to system service. Global sd-switch prevents recurrence for all user services.</span>
+              <span
+                >Health dashboard moved from user service to system service. Global sd-switch
+                prevents recurrence for all user services.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DMS migration complete (Waybar + Rofi + Dunst + cliphist retired)</strong>
-              <span>DankMaterialShell v1.4.6 on Quickshell v0.2.1 is the sole desktop shell. 13 SystemNix plugins + 2 community plugins. Rofi OOM crisis (7 GB leak) resolved by migrating all 5 niri keybindings to DMS IPC.</span>
+              <span
+                >DankMaterialShell v1.4.6 on Quickshell v0.2.1 is the sole desktop shell. 13
+                SystemNix plugins + 2 community plugins. Rofi OOM crisis (7 GB leak) resolved by
+                migrating all 5 niri keybindings to DMS IPC.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>BTRFS metadata ENOSPC crisis resolved</strong>
-              <span>btrfs-health.nix gates nix-gc + nix-build-cleanup via ExecStartPre guard (aborts when device-unallocated &lt; 10%). Gatus Discord alerts. btrbk staggered before GC. Prevented recurrence since 2026-06-26.</span>
+              <span
+                >btrfs-health.nix gates nix-gc + nix-build-cleanup via ExecStartPre guard (aborts
+                when device-unallocated &lt; 10%). Gatus Discord alerts. btrbk staggered before GC.
+                Prevented recurrence since 2026-06-26.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>SSO architecture — two-layer Pocket ID</strong>
-              <span>Layer 1: native OIDC (Forgejo, Immich, Gatus). Layer 2: oauth2-proxy forward-auth (Homepage, SigNoz, Twenty, Dozzle, Monitor365, +6 more). Passkey-only auth. All documented with per-service headers.</span>
+              <span
+                >Layer 1: native OIDC (Forgejo, Immich, Gatus). Layer 2: oauth2-proxy forward-auth
+                (Homepage, SigNoz, Twenty, Dozzle, Monitor365, +6 more). Passkey-only auth. All
+                documented with per-service headers.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DNS stack — 2.5M+ domains blocked, 10 categories</strong>
-              <span>dnsblockd (~930 lines Go) + unbound (DoT upstream to Mullvad/Quad9). Dynamic TLS cert generation. Temp-allow API. Firefox policy integration. NSS CA cert import. 23 blocklists.</span>
+              <span
+                >dnsblockd (~930 lines Go) + unbound (DoT upstream to Mullvad/Quad9). Dynamic TLS
+                cert generation. Temp-allow API. Firefox policy integration. NSS CA cert import. 23
+                blocklists.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>SigNoz full-stack observability</strong>
-              <span>Traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 19 alert rules, custom signoz.target (decoupled from boot), JWT auto-generation, PSI memory pressure metrics, self-healing SQLite migration lock.</span>
+              <span
+                >Traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 19 alert
+                rules, custom signoz.target (decoupled from boot), JWT auto-generation, PSI memory
+                pressure metrics, self-healing SQLite migration lock.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Gatus monitoring — 38 health endpoints</strong>
-              <span>Discord alerting, SQLite storage, native OIDC (Layer 1), response-time conditions for all user-facing services. Every new service is monitored.</span>
+              <span
+                >Discord alerting, SQLite storage, native OIDC (Layer 1), response-time conditions
+                for all user-facing services. Every new service is monitored.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DiscordSync reactivated</strong>
-              <span>Upstream go-cqrs-lite v3 migration. API server on localhost:8085 (avoids SigNoz conflict). GCS attachment backup opt-in. Schema-drift migration fixed upstream.</span>
+              <span
+                >Upstream go-cqrs-lite v3 migration. API server on localhost:8085 (avoids SigNoz
+                conflict). GCS attachment backup opt-in. Schema-drift migration fixed
+                upstream.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Post-deploy smoke test + ProtectHome audit</strong>
-              <span><code>nix run .#post-deploy-check</code> verifies functional outcomes (vHost HTML, API JSON, specific bug patterns). Pre-commit hook catches <code>ProtectHome=true</code> on services that need user data.</span>
+              <span
+                ><code>nix run .#post-deploy-check</code> verifies functional outcomes (vHost HTML,
+                API JSON, specific bug patterns). Pre-commit hook catches
+                <code>ProtectHome=true</code> on services that need user data.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Flake hygiene — 204 lock nodes, follows consolidation</strong>
-              <span>nixos-unstable (not nixpkgs-unstable) for binary cache. 7 missing follows added (38 duplicate lock nodes eliminated). treefmt + alejandra formatting. statix + deadnix linting.</span>
+              <span
+                >nixos-unstable (not nixpkgs-unstable) for binary cache. 7 missing follows added (38
+                duplicate lock nodes eliminated). treefmt + alejandra formatting. statix + deadnix
+                linting.</span
+              >
             </div>
           </div>
         </div>
@@ -335,11 +747,10 @@
           <h3>DNS Migration: dnsblockd → Primary Resolver</h3>
           <div class="where">TODO_LIST.md Priority 0 — modules/nixos/services/dns-blocker.nix</div>
           <p>
-            Full 4-phase plan exists. dnsblockd has a full recursive resolver (sdns,
-            DNSSEC, DoT, DoH, caching) but three gaps block migration: (1) no local zone
-            support, (2) no upstream DoT forwarding (ISP sees queries), (3) no LAN ACLs.
-            Currently dnsblockd runs as block-page HTTP server only, unbound handles :53.
-            Estimated ~15h across both repos.
+            Full 4-phase plan exists. dnsblockd has a full recursive resolver (sdns, DNSSEC, DoT,
+            DoH, caching) but three gaps block migration: (1) no local zone support, (2) no upstream
+            DoT forwarding (ISP sees queries), (3) no LAN ACLs. Currently dnsblockd runs as
+            block-page HTTP server only, unbound handles :53. Estimated ~15h across both repos.
           </p>
         </div>
 
@@ -348,13 +759,12 @@
           <h3>Monitor365 — Agent Crash-Looping + Server UI Broken</h3>
           <div class="where">modules/nixos/services/monitor365.nix · upstream Rust panic</div>
           <p>
-            <strong>Agent:</strong> 4 SIGABRT coredumps in 38 seconds (09:19:09–09:19:47
-            today). Upstream Rust panic — needs fix in <code>github:LarsArtmann/monitor365</code>.
-            <strong>Server:</strong> Package alias trap — <code>pkgs.monitor365</code>
-            resolves to the agent CLI, not the server with bundled WASM UI. Dashboard
-            returns 404 on <code>/ui/</code>. Also: a BDD test binary
-            (<code>bdd_server-200e06e192be5448</code>) is running at 98.6% CPU for 6+ hours
-            (PID 1108948) — runaway dev process.
+            <strong>Agent:</strong> 4 SIGABRT coredumps in 38 seconds (09:19:09–09:19:47 today).
+            Upstream Rust panic — needs fix in <code>github:LarsArtmann/monitor365</code>.
+            <strong>Server:</strong> Package alias trap — <code>pkgs.monitor365</code> resolves to
+            the agent CLI, not the server with bundled WASM UI. Dashboard returns 404 on
+            <code>/ui/</code>. Also: a BDD test binary (<code>bdd_server-200e06e192be5448</code>) is
+            running at 98.6% CPU for 6+ hours (PID 1108948) — runaway dev process.
           </p>
         </div>
 
@@ -363,23 +773,25 @@
           <h3>Post-Deploy Smoke Test Path Mismatch</h3>
           <div class="where">scripts/deploy.sh — references missing post-deploy-check.sh</div>
           <p>
-            Every deploy prints: <code>bash: post-deploy-check.sh: No such file or
-            directory</code>. The deploy script references a Nix store path that doesn't
-            contain the script. The smoke test exists (<code>nix run .#post-deploy-check</code>
-            works standalone) but the deploy integration is broken. Silent failures go
-            undetected after deploy.
+            Every deploy prints: <code>bash: post-deploy-check.sh: No such file or directory</code>.
+            The deploy script references a Nix store path that doesn't contain the script. The smoke
+            test exists (<code>nix run .#post-deploy-check</code>
+            works standalone) but the deploy integration is broken. Silent failures go undetected
+            after deploy.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">No Off-Site Backup</span>
           <h3>Cloud Backup — Zero Off-Site Copies</h3>
-          <div class="where">ROADMAP.md Theme 1 · docs/research/hetzner-storagebox-borgbackup.md</div>
+          <div class="where">
+            ROADMAP.md Theme 1 · docs/research/hetzner-storagebox-borgbackup.md
+          </div>
           <p>
-            BTRFS snapshots protect against local data corruption, but there is no off-site
-            backup. If evo-x2's NVMe fails or the house burns, everything is lost. Hetzner
-            StorageBox + BorgBackup research doc exists but no implementation started.
-            Docker volumes, Immich photos, Forgejo repos, ClickHouse data — all at risk.
+            BTRFS snapshots protect against local data corruption, but there is no off-site backup.
+            If evo-x2's NVMe fails or the house burns, everything is lost. Hetzner StorageBox +
+            BorgBackup research doc exists but no implementation started. Docker volumes, Immich
+            photos, Forgejo repos, ClickHouse data — all at risk.
           </p>
         </div>
 
@@ -388,9 +800,9 @@
           <h3>Darwin Home Manager Parity</h3>
           <div class="where">platforms/darwin/</div>
           <p>
-            macOS HM config is minimal — no terminal/editor/theme parity with NixOS. Blocked
-            by 256 GB SSD (90%+ full). No ActivityWatch watchers beyond utilization, no
-            taskwarrior integration, no Quickshell equivalent.
+            macOS HM config is minimal — no terminal/editor/theme parity with NixOS. Blocked by 256
+            GB SSD (90%+ full). No ActivityWatch watchers beyond utilization, no taskwarrior
+            integration, no Quickshell equivalent.
           </p>
         </div>
 
@@ -401,23 +813,31 @@
         <div class="grid-2">
           <div class="card card-warning">
             <h4>Pi 3 DNS Failover Cluster</h4>
-            <p>Module + config ready (<code>rpi3-dns.nix</code>), hardware not purchased. VRRP
-            two-node cluster, unbound health tracking, GARP refresh.</p>
+            <p>
+              Module + config ready (<code>rpi3-dns.nix</code>), hardware not purchased. VRRP
+              two-node cluster, unbound health tracking, GARP refresh.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>Firewall Deny-by-Default</h4>
-            <p>NixOS currently allows all inbound. Docker punches its own holes. Need explicit
-            allowlist transition.</p>
+            <p>
+              NixOS currently allows all inbound. Docker punches its own holes. Need explicit
+              allowlist transition.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>BTRFS /data Subvolume Migration</h4>
-            <p>/data is BTRFS toplevel (subvolid=5) — cannot be snapshotted. Docker/Immich/AI
-            data has zero snapshot protection. Requires ~1h downtime + USB rescue boot.</p>
+            <p>
+              /data is BTRFS toplevel (subvolid=5) — cannot be snapshotted. Docker/Immich/AI data
+              has zero snapshot protection. Requires ~1h downtime + USB rescue boot.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>AppArmor / Auditd</h4>
-            <p>AppArmor: <code>mkDefault false</code> in security-hardening.nix. Auditd:
-            blocked on NixOS 26.05 bug #483085.</p>
+            <p>
+              AppArmor: <code>mkDefault false</code> in security-hardening.nix. Auditd: blocked on
+              NixOS 26.05 bug #483085.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>Monitor365 Agent→Server Auth</h4>
@@ -425,8 +845,10 @@
           </div>
           <div class="card card-warning">
             <h4>Typed NixOS Module Options</h4>
-            <p>Many modules use <code>mkEnableOption</code> only. No typed options for ports,
-            paths, timeouts → no eval-time validation or testing.</p>
+            <p>
+              Many modules use <code>mkEnableOption</code> only. No typed options for ports, paths,
+              timeouts → no eval-time validation or testing.
+            </p>
           </div>
         </div>
 
@@ -439,11 +861,11 @@
           <h3>certutil stuck at 99.3% CPU for 33+ hours</h3>
           <div class="where">PID 12253 · started Jul 03 · 2013 minutes CPU time</div>
           <p>
-            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code> — the NSS
-            CA cert import from the DNS blocker module is stuck in an infinite loop. It has
-            consumed <strong>33+ hours of CPU time</strong> at near-100% utilization. This is
-            a significant contributor to the load average of 22+. The process is a zombie
-            spin that should have completed in milliseconds.
+            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code> — the NSS CA cert
+            import from the DNS blocker module is stuck in an infinite loop. It has consumed
+            <strong>33+ hours of CPU time</strong> at near-100% utilization. This is a significant
+            contributor to the load average of 22+. The process is a zombie spin that should have
+            completed in milliseconds.
           </p>
           <div class="callout callout-solution">
             <strong>Kill it:</strong> <code>kill -9 12253</code>. Then investigate why the NSS
@@ -456,23 +878,25 @@
           <h3>llama-server runaway — 90% CPU, 8.1 GB RSS</h3>
           <div class="where">PID 4174062 · started 01:11 · 685 min CPU time</div>
           <p>
-            A <code>llama-server</code> instance (gemma-4-31B Q4_K_M, 49K ctx) is running at
-            90% CPU consuming 8.1 GB RAM. This is the Jan llama-server respawn issue from
-            ROADMAP.md — it spawns new instances every 1-3 min. Not a systemd service, no
-            cgroup limits. Running for 8+ hours. Combined with certutil, these two processes
-            alone account for ~190% CPU.
+            A <code>llama-server</code> instance (gemma-4-31B Q4_K_M, 49K ctx) is running at 90% CPU
+            consuming 8.1 GB RAM. This is the Jan llama-server respawn issue from ROADMAP.md — it
+            spawns new instances every 1-3 min. Not a systemd service, no cgroup limits. Running for
+            8+ hours. Combined with certutil, these two processes alone account for ~190% CPU.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>Monitor365 BDD test binary running wild — 98.6% CPU</h3>
-          <div class="where">PID 1108948 · /home/lars/projects/monitor365/target/debug/deps/bdd_server-200e06e192be5448</div>
+          <div class="where">
+            PID 1108948 ·
+            /home/lars/projects/monitor365/target/debug/deps/bdd_server-200e06e192be5448
+          </div>
           <p>
-            A development BDD test binary (<code>bdd_server</code>) is running at 98.6% CPU
-            for 6+ hours (373 min CPU time). This is NOT a production service — it's a Rust
-            test binary that was never terminated. It's the root cause of the Monitor365
-            agent coredumps (port conflict / resource starvation).
+            A development BDD test binary (<code>bdd_server</code>) is running at 98.6% CPU for 6+
+            hours (373 min CPU time). This is NOT a production service — it's a Rust test binary
+            that was never terminated. It's the root cause of the Monitor365 agent coredumps (port
+            conflict / resource starvation).
           </p>
         </div>
 
@@ -482,10 +906,10 @@
           <div class="where">systemd-coredump · "No space left on device"</div>
           <p>
             <strong>4× Monitor365 agent SIGABRT</strong> (09:19:09–09:19:47)<br />
-            <strong>6× Quickshell/DMS SIGABRT</strong> (09:23, 09:36, 09:46 — paired, likely
-            deploy restart cycles)<br />
-            Additionally: clickhouse, helium, and nix coredumps could NOT be stored —
-            "No space left on device". The coredump partition is full.
+            <strong>6× Quickshell/DMS SIGABRT</strong> (09:23, 09:36, 09:46 — paired, likely deploy
+            restart cycles)<br />
+            Additionally: clickhouse, helium, and nix coredumps could NOT be stored — "No space left
+            on device". The coredump partition is full.
           </p>
         </div>
 
@@ -495,9 +919,9 @@
           <div class="where">03:33, 06:59, 08:11, 08:20</div>
           <p>
             Four deploy attempts failed with exit code 4 (start-limit-hit). The deploy script's
-            <code>systemctl reset-failed</code> step is supposed to prevent this, but it
-            appears to not cover all cases — particularly when services crash-loop DURING the
-            deploy window (between reset-failed and switch-to-configuration).
+            <code>systemctl reset-failed</code> step is supposed to prevent this, but it appears to
+            not cover all cases — particularly when services crash-loop DURING the deploy window
+            (between reset-failed and switch-to-configuration).
           </p>
         </div>
 
@@ -506,9 +930,9 @@
           <h3>Pocket ID Provisioning failed at 06:59</h3>
           <div class="where">systemd · pocket-id-provision.service</div>
           <p>
-            The OIDC client provisioning oneshot failed during a deploy. Likely transient
-            (Pocket ID not yet ready), but worth monitoring — if it fails persistently, all
-            OIDC client secrets are stale.
+            The OIDC client provisioning oneshot failed during a deploy. Likely transient (Pocket ID
+            not yet ready), but worth monitoring — if it fails persistently, all OIDC client secrets
+            are stale.
           </p>
         </div>
 
@@ -517,9 +941,9 @@
           <h3>nix-build-cleanup timer failed 2× (04:27, 08:27)</h3>
           <div class="where">nix-build-cleanup.service</div>
           <p>
-            The orphaned build sandbox cleaner failed twice. The BTRFS-health gate
-            (ExecStartPre) may be aborting it if device-unallocated space is low, which is
-            correct behavior — but the failures still generate noise.
+            The orphaned build sandbox cleaner failed twice. The BTRFS-health gate (ExecStartPre)
+            may be aborting it if device-unallocated space is low, which is correct behavior — but
+            the failures still generate noise.
           </p>
         </div>
 
@@ -531,8 +955,8 @@
           <h4>Kill orphaned processes automatically</h4>
           <p>
             certutil (33h), llama-server (8h), BDD test binary (6h) — three runaway processes
-            consuming ~290% CPU combined. Need either a watchdog for orphaned dev processes,
-            or per-process CPU-time limits (e.g., <code>cpulimit</code> or systemd
+            consuming ~290% CPU combined. Need either a watchdog for orphaned dev processes, or
+            per-process CPU-time limits (e.g., <code>cpulimit</code> or systemd
             <code>CPUQuota=</code> on non-service processes).
           </p>
         </div>
@@ -540,9 +964,9 @@
         <div class="card card-problem">
           <h4>Fix deploy.sh post-deploy-check integration</h4>
           <p>
-            The smoke test works standalone (<code>nix run .#post-deploy-check</code>) but
-            the deploy script references a wrong Nix store path. Every deploy silently skips
-            the smoke test. This is a one-line fix in the deploy script.
+            The smoke test works standalone (<code>nix run .#post-deploy-check</code>) but the
+            deploy script references a wrong Nix store path. Every deploy silently skips the smoke
+            test. This is a one-line fix in the deploy script.
           </p>
         </div>
 
@@ -550,8 +974,8 @@
           <h4>Coredump storage needs its own tmpfs or size limit</h4>
           <p>
             Coredumps are filling up and can't be stored. Either set
-            <code>Storage=none</code> in <code>systemd-coredump</code> config (we have
-            journald + SigNoz for crash info), or allocate a dedicated tmpfs with a size cap.
+            <code>Storage=none</code> in <code>systemd-coredump</code> config (we have journald +
+            SigNoz for crash info), or allocate a dedicated tmpfs with a size cap.
           </p>
         </div>
 
@@ -568,20 +992,20 @@
         <div class="card card-warning">
           <h4>Load average baseline is too high</h4>
           <p>
-            Load average 22.5 on a 32-thread system means the run queue is permanently
-            backed up. Even after killing the 3 runaway processes, the baseline includes
-            ClickHouse (13.8%), Helium renderers, Docker containers, and nix builds. Consider
-            whether all 9 Docker containers need to be always-on.
+            Load average 22.5 on a 32-thread system means the run queue is permanently backed up.
+            Even after killing the 3 runaway processes, the baseline includes ClickHouse (13.8%),
+            Helium renderers, Docker containers, and nix builds. Consider whether all 9 Docker
+            containers need to be always-on.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>Swap is chronically exhausted</h4>
           <p>
-            11.3 GB of 16.7 GB swap used (68%). zram is at 100% capacity. GPUActive consumes
-            24 GB of RAM that <code>free</code>/<code>htop</code> can't see. The system is in
-            chronic memory overcommitment. The TTM pool <code>pages_limit</code> is set to
-            112 GB — exceeding the 94 GB visible to Linux.
+            11.3 GB of 16.7 GB swap used (68%). zram is at 100% capacity. GPUActive consumes 24 GB
+            of RAM that <code>free</code>/<code>htop</code> can't see. The system is in chronic
+            memory overcommitment. The TTM pool <code>pages_limit</code> is set to 112 GB —
+            exceeding the 94 GB visible to Linux.
           </p>
         </div>
 
@@ -603,84 +1027,120 @@
               <tr>
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Kill certutil PID 12253</strong> — 33h at 99% CPU, infinite loop in NSS DB init</td>
+                <td>
+                  <strong>Kill certutil PID 12253</strong> — 33h at 99% CPU, infinite loop in NSS DB
+                  init
+                </td>
                 <td>1 min</td>
                 <td>Recover ~100% CPU</td>
               </tr>
               <tr>
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Kill llama-server PID 4174062</strong> — 8.1 GB RAM, 90% CPU, Jan respawn issue</td>
+                <td>
+                  <strong>Kill llama-server PID 4174062</strong> — 8.1 GB RAM, 90% CPU, Jan respawn
+                  issue
+                </td>
                 <td>1 min</td>
                 <td>Recover 8 GB RAM + 90% CPU</td>
               </tr>
               <tr>
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Kill BDD test PID 1108948</strong> — runaway dev binary at 98.6% CPU for 6h</td>
+                <td>
+                  <strong>Kill BDD test PID 1108948</strong> — runaway dev binary at 98.6% CPU for
+                  6h
+                </td>
                 <td>1 min</td>
                 <td>Recover ~100% CPU</td>
               </tr>
               <tr>
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Fix deploy.sh post-deploy-check path</strong> — smoke test silently skipped every deploy</td>
+                <td>
+                  <strong>Fix deploy.sh post-deploy-check path</strong> — smoke test silently
+                  skipped every deploy
+                </td>
                 <td>10 min</td>
                 <td>Catch silent failures post-deploy</td>
               </tr>
               <tr>
                 <td>5</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Fix Monitor365 agent crash-loop</strong> — upstream Rust panic (Axum 0.7 route syntax), 4 SIGABRT/day</td>
+                <td>
+                  <strong>Fix Monitor365 agent crash-loop</strong> — upstream Rust panic (Axum 0.7
+                  route syntax), 4 SIGABRT/day
+                </td>
                 <td>2h (upstream)</td>
                 <td>Stop coredump spam, restore monitoring</td>
               </tr>
               <tr>
                 <td>6</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Disable or limit coredump storage</strong> — "No space left on device" for clickhouse/helium/nix dumps</td>
+                <td>
+                  <strong>Disable or limit coredump storage</strong> — "No space left on device" for
+                  clickhouse/helium/nix dumps
+                </td>
                 <td>10 min</td>
                 <td>Stop silent disk fill</td>
               </tr>
               <tr>
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>Cloud backup</strong> — BorgBackup to Hetzner StorageBox, zero off-site copies currently</td>
+                <td>
+                  <strong>Cloud backup</strong> — BorgBackup to Hetzner StorageBox, zero off-site
+                  copies currently
+                </td>
                 <td>4h</td>
                 <td>Disaster recovery</td>
               </tr>
               <tr>
                 <td>8</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>BTRFS /data subvolume migration</strong> — Docker/Immich data has no snapshot protection</td>
+                <td>
+                  <strong>BTRFS /data subvolume migration</strong> — Docker/Immich data has no
+                  snapshot protection
+                </td>
                 <td>1h downtime</td>
                 <td>Snapshot protection for 686 GB data</td>
               </tr>
               <tr>
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>Reboot evo-x2</strong> — verify boot time after NVMe APST fix, clear all orphaned processes</td>
+                <td>
+                  <strong>Reboot evo-x2</strong> — verify boot time after NVMe APST fix, clear all
+                  orphaned processes
+                </td>
                 <td>5 min</td>
                 <td>Clean slate, verify boot fixes</td>
               </tr>
               <tr>
                 <td>10</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>DNS migration Phase 2a</strong> — dnsblockd → primary resolver on :53, unbound → backup :5353</td>
+                <td>
+                  <strong>DNS migration Phase 2a</strong> — dnsblockd → primary resolver on :53,
+                  unbound → backup :5353
+                </td>
                 <td>15h</td>
                 <td>Eliminate unbound, simplify DNS stack</td>
               </tr>
               <tr>
                 <td>11</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>Investigate DMS crash on deploy</strong> — 6 SIGABRT coredumps, may worsen with sd-switch</td>
+                <td>
+                  <strong>Investigate DMS crash on deploy</strong> — 6 SIGABRT coredumps, may worsen
+                  with sd-switch
+                </td>
                 <td>2h</td>
                 <td>Stable desktop shell across deploys</td>
               </tr>
               <tr>
                 <td>12</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Fix Monitor365 package alias</strong> — <code>pkgs.monitor365</code> resolves to agent, not server+UI</td>
+                <td>
+                  <strong>Fix Monitor365 package alias</strong> —
+                  <code>pkgs.monitor365</code> resolves to agent, not server+UI
+                </td>
                 <td>30 min</td>
                 <td>Working monitoring dashboard</td>
               </tr>
@@ -694,7 +1154,10 @@
               <tr>
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Hermes: install SSH deploy key + set fallback model</strong> — blocked on human action</td>
+                <td>
+                  <strong>Hermes: install SSH deploy key + set fallback model</strong> — blocked on
+                  human action
+                </td>
                 <td>15 min</td>
                 <td>Hermes git access + AI fallback</td>
               </tr>
@@ -708,28 +1171,37 @@
               <tr>
                 <td>16</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Bind Immich to localhost</strong> — currently on 0.0.0.0 with openFirewall</td>
+                <td>
+                  <strong>Bind Immich to localhost</strong> — currently on 0.0.0.0 with openFirewall
+                </td>
                 <td>15 min</td>
                 <td>Reduce attack surface</td>
               </tr>
               <tr>
                 <td>17</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo (583L)</td>
+                <td>
+                  <strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo
+                  (583L)
+                </td>
                 <td>3h</td>
                 <td>Maintainability</td>
               </tr>
               <tr>
                 <td>18</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Monitor365 agent→server auth</strong> — no auth, anyone on LAN can POST</td>
+                <td>
+                  <strong>Monitor365 agent→server auth</strong> — no auth, anyone on LAN can POST
+                </td>
                 <td>2h (upstream)</td>
                 <td>Security</td>
               </tr>
               <tr>
                 <td>19</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Investigate swap/zram pressure</strong> — 68% swap used, zram at 100%</td>
+                <td>
+                  <strong>Investigate swap/zram pressure</strong> — 68% swap used, zram at 100%
+                </td>
                 <td>1h</td>
                 <td>Memory stability</td>
               </tr>
@@ -743,35 +1215,50 @@
               <tr>
                 <td>21</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Upstream nixpkgs PRs</strong> — aw-watcher-utilization poetry-core, taskwarrior3 flags, 5 more</td>
+                <td>
+                  <strong>Upstream nixpkgs PRs</strong> — aw-watcher-utilization poetry-core,
+                  taskwarrior3 flags, 5 more
+                </td>
                 <td>5h total</td>
                 <td>Ecosystem contribution</td>
               </tr>
               <tr>
                 <td>22</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Typed NixOS module options</strong> — ports, paths, timeouts with validation</td>
+                <td>
+                  <strong>Typed NixOS module options</strong> — ports, paths, timeouts with
+                  validation
+                </td>
                 <td>4h</td>
                 <td>Eval-time safety</td>
               </tr>
               <tr>
                 <td>23</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Disabled service triage</strong> — voice-agents, minecraft, photomap: decide or remove</td>
+                <td>
+                  <strong>Disabled service triage</strong> — voice-agents, minecraft, photomap:
+                  decide or remove
+                </td>
                 <td>30 min</td>
                 <span>Clean config</span>
               </tr>
               <tr>
                 <td>24</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>TTM pool pages_limit fix</strong> — set to &lt;90 GB instead of 112 GB (exceeds visible RAM)</td>
+                <td>
+                  <strong>TTM pool pages_limit fix</strong> — set to &lt;90 GB instead of 112 GB
+                  (exceeds visible RAM)
+                </td>
                 <td>30 min</td>
                 <td>Reduce GPU memory pressure</td>
               </tr>
               <tr>
                 <td>25</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Darwin HM parity</strong> — blocked by 256 GB disk, but incremental improvements possible</td>
+                <td>
+                  <strong>Darwin HM parity</strong> — blocked by 256 GB disk, but incremental
+                  improvements possible
+                </td>
                 <td>Ongoing</td>
                 <td>Cross-platform consistency</td>
               </tr>
@@ -786,36 +1273,46 @@
         <div class="card card-problem">
           <h4>Why is <code>certutil -N --empty-password</code> stuck in an infinite loop?</h4>
           <p>
-            PID 12253 has been running <code>certutil -d sql:/home/lars/.pki/nssdb -N
-            --empty-password</code> at 99.3% CPU for <strong>33+ hours</strong> (2013 minutes
-            CPU time). This command should complete in milliseconds — it initializes an empty
-            NSS database. The only explanations I can think of:
+            PID 12253 has been running
+            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code> at 99.3% CPU for
+            <strong>33+ hours</strong> (2013 minutes CPU time). This command should complete in
+            milliseconds — it initializes an empty NSS database. The only explanations I can think
+            of:
           </p>
-          <ul style="margin-left: 1.5rem; margin-bottom: 1rem;">
-            <li>SQLite lock contention on <code>~/.pki/nssdb</code> (another process holding the DB)</li>
-            <li>Corrupt NSS database (<code>key4.db</code> / <code>cert9.db</code> in inconsistent state)</li>
+          <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
+            <li>
+              SQLite lock contention on <code>~/.pki/nssdb</code> (another process holding the DB)
+            </li>
+            <li>
+              Corrupt NSS database (<code>key4.db</code> / <code>cert9.db</code> in inconsistent
+              state)
+            </li>
             <li>An NSS bug triggered by a specific DB schema version</li>
-            <li>The process is actually doing something else (strace would tell, but strace is blocked)</li>
+            <li>
+              The process is actually doing something else (strace would tell, but strace is
+              blocked)
+            </li>
           </ul>
           <p>
             I cannot determine which without being able to <code>strace</code> or
-            <code>gdb</code> the process, which is blocked by the security policy. Killing it
-            is safe (the NSS DB either initialized successfully long ago, or never will).
-            But understanding <strong>why</strong> it hung would prevent recurrence — this
-            service runs on every deploy.
+            <code>gdb</code> the process, which is blocked by the security policy. Killing it is
+            safe (the NSS DB either initialized successfully long ago, or never will). But
+            understanding <strong>why</strong> it hung would prevent recurrence — this service runs
+            on every deploy.
           </p>
           <div class="callout callout-warning">
-            <strong>Context:</strong> This is the <code>nss-ca-cert-import</code> user service
-            from the DNS blocker module, which imports the dnsblockd CA cert into the user's
-            NSS database for Firefox/Helium trust. It's a oneshot that should take &lt;1s.
-            The fact that it's been spinning for 33h means either the oneshot type isn't
-            being respected, or certutil itself has a bug with this specific NSS DB state.
+            <strong>Context:</strong> This is the <code>nss-ca-cert-import</code> user service from
+            the DNS blocker module, which imports the dnsblockd CA cert into the user's NSS database
+            for Firefox/Helium trust. It's a oneshot that should take &lt;1s. The fact that it's
+            been spinning for 33h means either the oneshot type isn't being respected, or certutil
+            itself has a bug with this specific NSS DB state.
           </div>
         </div>
 
         <footer class="footer">
           Generated 2026-07-04 09:52 CEST &middot; All runtime data verified live on evo-x2 via
-          /proc, D-Bus, journalctl, coredumpctl, and ss &middot; Written by Crush (status-report skill)
+          /proc, D-Bus, journalctl, coredumpctl, and ss &middot; Written by Crush (status-report
+          skill)
         </footer>
       </main>
     </div>
@@ -830,7 +1327,9 @@
           return l.getAttribute("href").slice(1);
         });
         var sections = ids
-          .map(function (id) { return document.getElementById(id); })
+          .map(function (id) {
+            return document.getElementById(id);
+          })
           .filter(Boolean);
         if (!sections.length) return;
         var observer = new IntersectionObserver(
@@ -848,7 +1347,9 @@
           },
           { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
         );
-        sections.forEach(function (s) { observer.observe(s); });
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
       })();
     </script>
   </body>
