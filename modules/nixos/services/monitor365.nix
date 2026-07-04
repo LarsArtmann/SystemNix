@@ -632,8 +632,8 @@ _: {
 
             package = lib.mkOption {
               type = lib.types.package;
-              default = pkgs.monitor365;
-              description = "Monitor365 server package";
+              default = pkgs.monitor365-server;
+              description = "Monitor365 server package (includes WASM UI)";
             };
 
             listenAddr = lib.mkOption {
