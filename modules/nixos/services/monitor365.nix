@@ -815,6 +815,7 @@ _: {
                   "MONITOR365_SERVER__DATABASE_URL=${cfg.server.databaseUrl}"
                   "MONITOR365_SERVER__LISTEN_ADDR=${cfg.server.listenAddr}"
                   "MONITOR365_SERVER__POOL_SIZE=${toString cfg.server.poolSize}"
+                  "UI_DIST_PATH=${cfg.server.package}/share/monitor365/ui"
                 ];
                 EnvironmentFile = [sopsEnvPath];
               };
