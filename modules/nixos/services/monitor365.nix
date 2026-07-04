@@ -755,7 +755,8 @@ _: {
                     text = ''
                       CFG_DIR="$1/monitor365"
                       mkdir -p "$CFG_DIR"
-                      cp ${agentConfig} "$CFG_DIR/config.toml"
+                      cp -f ${agentConfig} "$CFG_DIR/config.toml"
+                      chmod u+w "$CFG_DIR/config.toml"
                       if [ -f "${authTokenFile}" ] && [ -s "${authTokenFile}" ]; then
                         TOKEN=$(cat "${authTokenFile}")
                         if grep -q '^\[cloud\]' "$CFG_DIR/config.toml"; then
