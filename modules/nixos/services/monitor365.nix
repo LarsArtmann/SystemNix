@@ -741,7 +741,10 @@ _: {
 
             Service =
               serviceDefaultsUser {RestartSec = "10";}
-              // hardenUser {MemoryMax = "256M";}
+              // hardenUser {
+                MemoryMax = "512M";
+                OOMScoreAdjust = -100;
+              }
               // {
                 Type = "simple";
                 ExecStartPre = let
@@ -801,7 +804,10 @@ _: {
 
             Service =
               serviceDefaultsUser {RestartSec = "10";}
-              // hardenUser {MemoryMax = "256M";}
+              // hardenUser {
+                MemoryMax = "512M";
+                OOMScoreAdjust = -100;
+              }
               // {
                 Type = "simple";
                 ExecStartPre = "${pkgs.coreutils}/bin/mkdir -p ${serverStateDir}";
