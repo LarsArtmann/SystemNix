@@ -14,7 +14,6 @@ _: {
       serviceDefaultsUser
       hardenUser
       mkStateDir
-      onFailure
       ports
       ;
 
@@ -192,13 +191,16 @@ _: {
 
     # Derive PocketId OIDC endpoint URLs from issuer if not explicitly set.
     ssoIssuer = cfg.server.sso.issuer;
-    ssoAuthorizeUrl = if cfg.server.sso.authorizeUrl != ""
+    ssoAuthorizeUrl =
+      if cfg.server.sso.authorizeUrl != ""
       then cfg.server.sso.authorizeUrl
       else "${ssoIssuer}/authorize";
-    ssoTokenUrl = if cfg.server.sso.tokenUrl != ""
+    ssoTokenUrl =
+      if cfg.server.sso.tokenUrl != ""
       then cfg.server.sso.tokenUrl
       else "${ssoIssuer}/api/oidc/token";
-    ssoUserinfoUrl = if cfg.server.sso.userinfoUrl != ""
+    ssoUserinfoUrl =
+      if cfg.server.sso.userinfoUrl != ""
       then cfg.server.sso.userinfoUrl
       else "${ssoIssuer}/api/oidc/userinfo";
 
@@ -209,7 +211,7 @@ _: {
         "MONITOR365_SERVER__BOOTSTRAP__ADMIN_EMAIL=${cfg.server.bootstrap.adminEmail}"
       ]
       ++ lib.optional (cfg.server.bootstrap.apiKeyFile != null)
-        "MONITOR365_SERVER__BOOTSTRAP__API_KEY_FILE=${cfg.server.bootstrap.apiKeyFile}"
+      "MONITOR365_SERVER__BOOTSTRAP__API_KEY_FILE=${cfg.server.bootstrap.apiKeyFile}"
     );
 
     ssoEnv = lib.optionals (cfg.server.enable && cfg.server.sso.enable) [
@@ -933,7 +935,12 @@ _: {
               # The Wants/After here are kept for ordering with network only.
               After = ["network.target"];
               Wants = ["network.target"];
-              StartLimitIntervalSec = 600;
+              # The server retries reading secret files (e.g. PocketId client
+              # secret) for up to 150 seconds per start cycle.  With a 10s
+              # RestartSec each cycle takes ~160s.  A 1200s window allows ~7
+              # cycles before systemd gives up — enough time for an operator to
+              # notice the logs and fix the underlying provisioning issue.
+              StartLimitIntervalSec = 1200;
               StartLimitBurst = 5;
             };
 

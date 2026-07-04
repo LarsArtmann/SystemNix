@@ -337,6 +337,14 @@ _: {
                 alerts = discordAlert "Monitor365 UI not serving — WASM dashboard missing";
               })
               (mkHttpCheck {
+                name = "Monitor365 External";
+                group = "Monitoring";
+                url = "https://monitor.${domain}/health";
+                interval = "2m";
+                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                alerts = discordAlert "Monitor365 external endpoint down — reverse proxy or TLS issue";
+              })
+              (mkHttpCheck {
                 name = "Monitor365 Agent";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
