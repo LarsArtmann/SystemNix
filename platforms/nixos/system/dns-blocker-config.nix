@@ -10,11 +10,13 @@
 # - Dynamic DNS, badware hosters, safesearch enforcement
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
+# Local DNS records are in platforms/common/dns-local.nix
 # DNS resolution: DoT forwarding to Mullvad/Quad9 (port 853 — VPN-firewall-safe)
 {config, ...}: let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
+  dnsLocal = import ../../common/dns-local.nix;
   lanIP = builtins.head config.networking.interfaces.eno1.ipv4.addresses;
   serverIP = lanIP.address;
 in {
@@ -57,7 +59,7 @@ in {
         map (
           subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"''
         )
-        blocklists.localSubdomains;
+        dnsLocal.localSubdomains;
     };
 
     dns-failover = {

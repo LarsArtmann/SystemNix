@@ -6,6 +6,7 @@
   ...
 }: let
   blocklists = import ../../common/dns-blocklists.nix;
+  dnsLocal = import ../../common/dns-local.nix;
   inherit
     (config.networking.local)
     lanIP
@@ -149,7 +150,7 @@ in {
             map (
               subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"''
             )
-            blocklists.localSubdomains;
+            dnsLocal.localSubdomains;
         };
       };
     };

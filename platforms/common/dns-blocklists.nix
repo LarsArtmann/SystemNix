@@ -202,23 +202,4 @@ in {
     ".redditmedia.com" = "Social Media";
     ".redditstatic.com" = "Social Media";
   };
-
-  localSubdomains = [
-    "auth"
-    "immich"
-    "forgejo"
-    "dash"
-    "signoz"
-    "tasks"
-    "crm"
-    "manifest"
-    "status"
-    "seo"
-    "daily"
-    "logs"
-    "monitor"
-    "discordsync"
-    "overview"
-    "renamer"
-  ];
 }
