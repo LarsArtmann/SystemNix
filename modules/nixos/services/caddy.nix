@@ -156,7 +156,19 @@ _: {
             "logs.${domain}" = protectedVHost "logs" ports.dozzle;
           }
           // lib.optionalAttrs config.services.monitor365.enable {
-            "monitor.${domain}" = protectedVHost "monitor" ports.monitor365-server;
+            # When SSO is enabled, Monitor365 uses native OIDC via Pocket ID.
+            # Plain reverse_proxy (like Forgejo/Gatus) avoids oauth2-proxy
+            # forward-auth interfering with the SSO callback flow.
+            "monitor.${domain}" =
+              if (config.services.monitor365.server.sso.enable or false)
+              then {
+                extraConfig = ''
+                  ${tlsConfig}
+                  ${commonConfig}
+                  reverse_proxy localhost:${toString ports.monitor365-server}
+                '';
+              }
+              else protectedVHost "monitor" ports.monitor365-server;
           }
           // lib.optionalAttrs config.services.discordsync.enable {
             "discordsync.${domain}" = protectedVHost "discordsync" ports.discordsync-api;

@@ -414,6 +414,15 @@ _: {
               launchURL = "https://status.${domain}";
               callbackURLs = ["https://status.${domain}/authorization-code/callback"];
             }
+            {
+              # Native OIDC via Monitor365's built-in SSO support.
+              # PKCE (S256) is required by Monitor365's authorize flow.
+              name = "Monitor365";
+              clientId = "monitor365";
+              launchURL = "https://monitor.${domain}";
+              callbackURLs = ["https://monitor.${domain}/v1/auth/sso/callback"];
+              pkceEnabled = true;
+            }
           ];
           description = "OIDC clients to create declaratively";
         };

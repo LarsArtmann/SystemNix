@@ -378,7 +378,16 @@ in {
         server = {
           enable = lib.mkDefault true;
           listenAddr = lib.mkDefault "0.0.0.0:${toString ports.monitor365-server}";
-          corsOrigins = lib.mkDefault ["http://localhost:${toString ports.monitor365-server}"];
+          corsOrigins = lib.mkDefault [
+            "http://localhost:${toString ports.monitor365-server}"
+            "https://monitor.${config.networking.domain}"
+          ];
+          sso.enable = lib.mkDefault true;
+          bootstrap = {
+            enable = lib.mkDefault true;
+            tenantName = lib.mkDefault "LarsArtmann";
+            adminEmail = lib.mkDefault "lars@larsartmann.cloud";
+          };
         };
       };
 
