@@ -209,7 +209,9 @@
   </head>
   <body>
     <h1>BTRFS Snapshot Bloat Fix</h1>
-    <p class="subtitle">evo-x2 — /dev/nvme0n1p6 — 512GB NVMe — Execution Plan</p>
+    <p class="subtitle">
+      evo-x2 — /dev/nvme0n1p6 — 512GB NVMe — Execution Plan
+    </p>
 
     <h2>Current State</h2>
 
@@ -237,10 +239,11 @@
     </div>
 
     <div class="card">
-      <strong>Root cause:</strong> Every <code>just switch</code> churns ~84GB Nix store. Daily
-      btrbk snapshots pin old derivations as "exclusive" data. 14d + 4w retention = up to 18
-      snapshots of accumulated bloat. Cache dirs (<code>.cache</code>, <code>go</code>,
-      <code>.npm</code>, <code>.cargo</code>) are inside the <code>@</code> subvolume — snapshotted
+      <strong>Root cause:</strong> Every <code>just switch</code> churns ~84GB
+      Nix store. Daily btrbk snapshots pin old derivations as "exclusive" data.
+      14d + 4w retention = up to 18 snapshots of accumulated bloat. Cache dirs
+      (<code>.cache</code>, <code>go</code>, <code>.npm</code>,
+      <code>.cargo</code>) are inside the <code>@</code> subvolume — snapshotted
       daily for no reason.
     </div>
 
@@ -276,17 +279,22 @@
       <div class="phase-header">
         <div class="phase-number done">1</div>
         <div>
-          <div class="phase-title">Emergency Cleanup <span class="status done">Done</span></div>
+          <div class="phase-title">
+            Emergency Cleanup <span class="status done">Done</span>
+          </div>
           <div class="phase-subtitle">Free enough space to work</div>
         </div>
       </div>
 
       <div class="card">
         <p>
-          Deleted snapshot <code>@.20260527T0000</code> → freed <strong>69 GB</strong> exclusive
-          data.
+          Deleted snapshot <code>@.20260527T0000</code> → freed
+          <strong>69 GB</strong> exclusive data.
         </p>
-        <p>Disk went from <code>507G/512G (100%)</code> → <code>476G/512G (95%)</code>.</p>
+        <p>
+          Disk went from <code>507G/512G (100%)</code> →
+          <code>476G/512G (95%)</code>.
+        </p>
       </div>
     </div>
 
@@ -295,7 +303,9 @@
       <div class="phase-header">
         <div class="phase-number done">2</div>
         <div>
-          <div class="phase-title">Nix Config Changes <span class="status done">Done</span></div>
+          <div class="phase-title">
+            Nix Config Changes <span class="status done">Done</span>
+          </div>
           <div class="phase-subtitle">
             All changes committed to SystemNix, syntax-checked, build-tested
           </div>
@@ -353,10 +363,13 @@
       </h3>
       <div class="card">
         <p>
-          <code>ensure-btrfs-cache-subvolumes.service</code> — oneshot, runs before mount units.
+          <code>ensure-btrfs-cache-subvolumes.service</code> — oneshot, runs
+          before mount units.
         </p>
         <ul>
-          <li>Checks if subvolume exists via <code>btrfs subvolume show</code></li>
+          <li>
+            Checks if subvolume exists via <code>btrfs subvolume show</code>
+          </li>
           <li>
             Creates if missing, migrates data from existing dir or
             <code>.pre-subvol</code> backup
@@ -365,7 +378,9 @@
         </ul>
       </div>
 
-      <h3>C. Reduced btrbk Retention <span class="file-ref">snapshots.nix</span></h3>
+      <h3>
+        C. Reduced btrbk Retention <span class="file-ref">snapshots.nix</span>
+      </h3>
       <div class="card">
         <table>
           <tr>
@@ -392,8 +407,8 @@
       </h3>
       <div class="card">
         <p>
-          Added <code>clickhouse-system-ttl.service</code> — applies 7-day TTL to all system log
-          tables:
+          Added <code>clickhouse-system-ttl.service</code> — applies 7-day TTL
+          to all system log tables:
         </p>
         <pre>
 trace_log*, query_log*, metric_log*, part_log*,
@@ -412,15 +427,18 @@ asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre
             Fix Stale Directories &amp; Apply
             <span class="status blocked">Blocked — Needs sudo</span>
           </div>
-          <div class="phase-subtitle">One-time manual step, then just switch</div>
+          <div class="phase-subtitle">
+            One-time manual step, then just switch
+          </div>
         </div>
       </div>
 
       <div class="card">
         <p class="risk">
-          The activation script from Phase 1 created regular directories (not subvolumes) for
-          <code>@go</code>, <code>@npm</code>, <code>@cargo</code>. These must be replaced before
-          mounts will work.
+          The activation script from Phase 1 created regular directories (not
+          subvolumes) for
+          <code>@go</code>, <code>@npm</code>, <code>@cargo</code>. These must
+          be replaced before mounts will work.
         </p>
 
         <h3>Step 1: Fix stale directories</h3>
@@ -436,8 +454,9 @@ asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre
         <h3>Step 2: Apply config</h3>
         <pre>just switch</pre>
         <p>
-          The new systemd service (<code>ensure-btrfs-cache-subvolumes.service</code>) will run,
-          verify subvolumes, and mounts will activate via automount on first access.
+          The new systemd service
+          (<code>ensure-btrfs-cache-subvolumes.service</code>) will run, verify
+          subvolumes, and mounts will activate via automount on first access.
         </p>
 
         <h3>Step 3: Verify</h3>
@@ -455,8 +474,12 @@ mountpoint /home/lars/.cargo   # should say "is a mountpoint"</pre
       <div class="phase-header">
         <div class="phase-number">4</div>
         <div>
-          <div class="phase-title">Cleanup <span class="status todo">After Phase 3</span></div>
-          <div class="phase-subtitle">Free space from old snapshots, backups, and ClickHouse</div>
+          <div class="phase-title">
+            Cleanup <span class="status todo">After Phase 3</span>
+          </div>
+          <div class="phase-subtitle">
+            Free space from old snapshots, backups, and ClickHouse
+          </div>
         </div>
       </div>
 
@@ -497,10 +520,12 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
       <div class="phase-header">
         <div class="phase-number">5</div>
         <div>
-          <div class="phase-title">Migrate to Disko <span class="status todo">Future</span></div>
+          <div class="phase-title">
+            Migrate to Disko <span class="status todo">Future</span>
+          </div>
           <div class="phase-subtitle">
-            Declarative disk management — replaces hardware-configuration.nix + manual subvolume
-            creation
+            Declarative disk management — replaces hardware-configuration.nix +
+            manual subvolume creation
           </div>
         </div>
       </div>
@@ -508,8 +533,13 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
       <div class="card">
         <h3>Why Disko?</h3>
         <ul>
-          <li>Replaces the <code>ensure-btrfs-cache-subvolumes</code> systemd hack entirely</li>
-          <li>Subvolumes created declaratively during <code>disko install</code></li>
+          <li>
+            Replaces the <code>ensure-btrfs-cache-subvolumes</code> systemd hack
+            entirely
+          </li>
+          <li>
+            Subvolumes created declaratively during <code>disko install</code>
+          </li>
           <li>Single source of truth for entire disk layout</li>
           <li>No more manual scripts, no ordering issues</li>
         </ul>
@@ -518,7 +548,8 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
         <ol>
           <li>Add <code>disko</code> flake input to <code>flake.nix</code></li>
           <li>
-            Create <code>platforms/nixos/hardware/disko.nix</code> declaring the full disk layout:
+            Create <code>platforms/nixos/hardware/disko.nix</code> declaring the
+            full disk layout:
             <pre>
 {
   disko.devices = {
@@ -559,14 +590,17 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
 }</pre
             >
           </li>
-          <li><code>disko --dry-run --mode format,mount</code> to verify (no changes)</li>
+          <li>
+            <code>disko --dry-run --mode format,mount</code> to verify (no
+            changes)
+          </li>
           <li>
             Remove <code>hardware-configuration.nix</code> fileSystems, remove
             <code>ensure-btrfs-cache-subvolumes</code> service
           </li>
           <li>
-            Remove manual <code>fileSystems</code> entries in <code>snapshots.nix</code> (disko
-            manages them)
+            Remove manual <code>fileSystems</code> entries in
+            <code>snapshots.nix</code> (disko manages them)
           </li>
           <li><code>just switch</code></li>
         </ol>
@@ -579,7 +613,10 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
           </li>
           <li>Test with <code>--dry-run</code> first</li>
           <li>Have a rollback plan: BTRFS snapshot before running</li>
-          <li>Consider doing this during a fresh install or when you have a full backup</li>
+          <li>
+            Consider doing this during a fresh install or when you have a full
+            backup
+          </li>
         </ul>
       </div>
     </div>
@@ -633,21 +670,36 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
     <div class="card">
       <ul>
         <li>☐ <code>df -h /</code> shows &lt;80% usage</li>
-        <li>☐ <code>mountpoint /home/lars/.cache</code> says "is a mountpoint"</li>
+        <li>
+          ☐ <code>mountpoint /home/lars/.cache</code> says "is a mountpoint"
+        </li>
         <li>☐ <code>mountpoint /home/lars/go</code> says "is a mountpoint"</li>
-        <li>☐ <code>mountpoint /home/lars/.npm</code> says "is a mountpoint"</li>
-        <li>☐ <code>mountpoint /home/lars/.cargo</code> says "is a mountpoint"</li>
-        <li>☐ <code>systemctl status ensure-btrfs-cache-subvolumes</code> shows active/exited</li>
-        <li>☐ <code>systemctl status clickhouse-system-ttl</code> shows active/exited</li>
+        <li>
+          ☐ <code>mountpoint /home/lars/.npm</code> says "is a mountpoint"
+        </li>
+        <li>
+          ☐ <code>mountpoint /home/lars/.cargo</code> says "is a mountpoint"
+        </li>
+        <li>
+          ☐ <code>systemctl status ensure-btrfs-cache-subvolumes</code> shows
+          active/exited
+        </li>
+        <li>
+          ☐ <code>systemctl status clickhouse-system-ttl</code> shows
+          active/exited
+        </li>
         <li>
           ☐
-          <code>btrfs filesystem du -s /mnt/btrfs-root/.snapshots/*</code> shows &lt;20 GB exclusive
-          per snapshot
+          <code>btrfs filesystem du -s /mnt/btrfs-root/.snapshots/*</code> shows
+          &lt;20 GB exclusive per snapshot
         </li>
         <li>☐ <code>just switch</code> completes without mount failures</li>
         <li>☐ <code>go build</code> works (go module cache accessible)</li>
         <li>☐ <code>npm install</code> works (npm cache accessible)</li>
-        <li>☐ Next day: <code>btrfs filesystem du</code> shows reduced exclusive growth</li>
+        <li>
+          ☐ Next day: <code>btrfs filesystem du</code> shows reduced exclusive
+          growth
+        </li>
       </ul>
     </div>
   </body>
