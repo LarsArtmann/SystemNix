@@ -20,6 +20,7 @@ in
       inherit
         (inputs)
         helium
+        herdr
         nur
         niri
         otel-tui

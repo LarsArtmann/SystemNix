@@ -2,6 +2,7 @@
   pkgs,
   lib,
   helium,
+  herdr ? null,
   otel-tui ? null,
   larsPackages,
   ...
@@ -184,6 +185,9 @@
     ]
     ++ lib.optionals (otel-tui != null) [
       otel-tui.packages.${system}.otel-tui # OpenTelemetry terminal viewer
+    ]
+    ++ lib.optionals (herdr != null) [
+      herdr.packages.${system}.default # Agent multiplexer for the terminal
     ]
     ++ [
       # Nix helper tools

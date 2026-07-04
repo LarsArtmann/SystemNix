@@ -33,6 +33,9 @@ in
         };
         # otel-tui is Linux-only (40+ min from-source build on macOS, disk-hungry)
         _module.args.otel-tui = null;
+        # herdr builds Rust + vendored Ghostty VT (Zig) from source — too expensive
+        # for disk-constrained macOS. Install via `brew install herdr` instead.
+        _module.args.herdr = null;
       }
 
       # Import nix-homebrew for declarative Homebrew management
