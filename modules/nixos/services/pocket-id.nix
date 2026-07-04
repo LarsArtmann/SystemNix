@@ -62,21 +62,21 @@ _: {
         api_get() {
           local path="$1"
           local resp
-          resp=$(curl -s -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
+          resp=$(curl -s --max-time 10 -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
           echo "$resp"
         }
 
         api_put() {
           local path="$1"
           local body="$2"
-          curl -s -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+          curl -s --max-time 10 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
             -d "$body" "$API_URL$path" 2>&1 || true
         }
 
         api_post() {
           local path="$1"
           local body="$2"
-          curl -s -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+          curl -s --max-time 10 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
             -d "$body" "$API_URL$path" 2>&1 || true
         }
 
@@ -143,7 +143,7 @@ _: {
         AVATAR_FILE="${cfg.provision.avatarFile}"
         if [ -f "$AVATAR_FILE" ] && [ -n "$ADMIN_USER_ID" ]; then
           echo "Checking avatar..."
-          AVATAR_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
+          AVATAR_RESPONSE=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X PUT \
             -H "X-API-Key: $API_KEY" \
             -F "file=@$AVATAR_FILE" \
             "$API_URL/api/users/$ADMIN_USER_ID/profile-picture" 2>&1 || true)
@@ -170,7 +170,7 @@ _: {
           fi
 
           echo "  Uploading logo for client $client_id..."
-          LOGO_RESPONSE=$(curl -s -o /dev/null -w '%{http_code}' -X POST \
+          LOGO_RESPONSE=$(curl -s --max-time 10 -o /dev/null -w '%{http_code}' -X POST \
             -H "X-API-Key: $API_KEY" \
             -F "file=@$logo_file" \
             "$API_URL/api/oidc/clients/$client_id/logo" 2>&1 || true)
@@ -250,7 +250,7 @@ _: {
                 echo "  Secret file already exists."
               else
                 echo "  Generating client secret..."
-                SECRET_RESPONSE=$(curl -s -X POST \
+                SECRET_RESPONSE=$(curl -s --max-time 10 -X POST \
                   -H "X-API-Key: $API_KEY" \
                   "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
                 CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)

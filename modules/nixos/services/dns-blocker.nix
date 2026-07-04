@@ -422,9 +422,18 @@ _: {
           ];
           script = ''
             CA_CERT="${config.sops.secrets.dnsblockd_ca_cert.path}"
-            while [ ! -s "$CA_CERT" ]; do sleep 1; done
+            for i in $(seq 1 30); do
+              [ -s "$CA_CERT" ] && break
+              sleep 1
+            done
+            if [ ! -s "$CA_CERT" ]; then
+              echo "CA cert not available after 30s: $CA_CERT" >&2
+              exit 1
+            fi
             mkdir -p $HOME/.pki/nssdb
-            certutil -d sql:$HOME/.pki/nssdb -N --empty-password 2>/dev/null || true
+            if [ ! -f "$HOME/.pki/nssdb/cert9.db" ]; then
+              certutil -d sql:$HOME/.pki/nssdb -N --empty-password
+            fi
             certutil -d sql:$HOME/.pki/nssdb -D -n dnsblockd-ca 2>/dev/null || true
             certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n dnsblockd-ca -i "$CA_CERT"
           '';

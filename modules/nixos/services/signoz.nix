@@ -377,7 +377,7 @@ in {
                 EXISTING_CHANNEL_ID=$(echo "$EXISTING_CHANNELS" | ${pkgs.jq}/bin/jq -r --arg n "$CHANNEL_NAME" '.[] | select(.name == $n) | .id // empty' | head -1)
                 if [ -n "$EXISTING_CHANNEL_ID" ]; then
                   ${pkgs.coreutils}/bin/echo "  Deleting existing channel: $CHANNEL_NAME ($EXISTING_CHANNEL_ID)"
-                  ${pkgs.curl}/bin/curl -sf -X DELETE "$SIGNOZ_URL/api/v1/channels/$EXISTING_CHANNEL_ID" 2>/dev/null || true
+                  ${pkgs.curl}/bin/curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/channels/$EXISTING_CHANNEL_ID" 2>/dev/null || true
                 fi
 
                 CHANNEL_JSON=$(${pkgs.jq}/bin/jq -n --arg url "$WEBHOOK_URL" '{
@@ -388,7 +388,7 @@ in {
                   }]
                 }')
                 ${pkgs.coreutils}/bin/echo "  Creating channel: $CHANNEL_NAME"
-                ${pkgs.curl}/bin/curl -sf -X POST \
+                ${pkgs.curl}/bin/curl -sf --max-time 10 -X POST \
                   -H "Content-Type: application/json" \
                   -d "$CHANNEL_JSON" \
                   "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || true
@@ -398,7 +398,7 @@ in {
 
               # Deploy alert rules (idempotent: delete existing by name, then create fresh)
               ${pkgs.coreutils}/bin/echo "Deploying alert rules..."
-              EXISTING_RULES=$(${pkgs.curl}/bin/curl -sf "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || echo '{"data":[]}')
+              EXISTING_RULES=$(${pkgs.curl}/bin/curl -sf --max-time 10 "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || echo '{"data":[]}')
 
               for rule_file in /etc/signoz/rules/*.json; do
                 if [ -f "$rule_file" ]; then
@@ -407,11 +407,11 @@ in {
                     EXISTING_ID=$(echo "$EXISTING_RULES" | ${pkgs.jq}/bin/jq -r --arg n "$RULE_NAME" '.data[] | select(.rule.name == $n) | .id // empty' | head -1)
                     if [ -n "$EXISTING_ID" ]; then
                       ${pkgs.coreutils}/bin/echo "  Deleting existing: $RULE_NAME ($EXISTING_ID)"
-                      ${pkgs.curl}/bin/curl -sf -X DELETE "$SIGNOZ_URL/api/v1/rules/$EXISTING_ID" 2>/dev/null || true
+                      ${pkgs.curl}/bin/curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/rules/$EXISTING_ID" 2>/dev/null || true
                     fi
                   fi
                   ${pkgs.coreutils}/bin/echo "  Creating: $(basename $rule_file)"
-                  ${pkgs.curl}/bin/curl -sf -X POST \
+                  ${pkgs.curl}/bin/curl -sf --max-time 10 -X POST \
                     -H "Content-Type: application/json" \
                     -d @"$rule_file" \
                     "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || true
@@ -423,7 +423,7 @@ in {
               for dash_file in /etc/signoz/dashboards/*.json; do
                 if [ -f "$dash_file" ]; then
                   ${pkgs.coreutils}/bin/echo "  Applying: $(basename $dash_file)"
-                  ${pkgs.curl}/bin/curl -sf -X POST \
+                  ${pkgs.curl}/bin/curl -sf --max-time 10 -X POST \
                     -H "Content-Type: application/json" \
                     -d @"$dash_file" \
                     "$SIGNOZ_URL/api/v1/dashboards" 2>/dev/null || true
