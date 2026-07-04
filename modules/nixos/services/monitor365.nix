@@ -926,8 +926,13 @@ _: {
           systemd.user.services.monitor365-server = {
             Unit = {
               Description = "Monitor365 Dashboard Server";
-              After = ["network.target"] ++ lib.optionals cfg.server.sso.enable ["pocket-id-provision.service"];
-              Wants = ["network.target"] ++ lib.optionals cfg.server.sso.enable ["pocket-id-provision.service"];
+              # NOTE: pocket-id-provision.service is a system service and cannot
+              # be an After/Wants dependency of a systemd.user service — the
+              # directive is silently ignored.  Instead, the server's bootstrap
+              # code retries reading the secret file for up to 150 seconds.
+              # The Wants/After here are kept for ordering with network only.
+              After = ["network.target"];
+              Wants = ["network.target"];
               StartLimitIntervalSec = 600;
               StartLimitBurst = 5;
             };
@@ -954,6 +959,7 @@ _: {
                     "MONITOR365_SERVER__DATABASE_URL=${cfg.server.databaseUrl}"
                     "MONITOR365_SERVER__LISTEN_ADDR=${cfg.server.listenAddr}"
                     "MONITOR365_SERVER__POOL_SIZE=${toString cfg.server.poolSize}"
+                    "MONITOR365_SERVER__DASHBOARD_URL=https://monitor.${domain}/ui/"
                     "UI_DIST_PATH=${cfg.server.package}/share/monitor365/ui"
                   ]
                   ++ bootstrapEnv
