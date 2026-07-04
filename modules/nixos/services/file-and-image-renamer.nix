@@ -96,6 +96,36 @@ _: {
         (mkStateDir cfg.logDirectory "0750" cfg.user "users")
       ];
 
+      # Health dashboard — system service (Caddy-proxied web endpoint, must not depend on graphical session)
+      systemd.services.file-and-image-renamer-health = lib.mkIf cfg.enableHealthDashboard {
+        description = "File and Image Renamer Health Dashboard";
+        after = ["network.target"];
+        wants = ["network.target"];
+        startLimitIntervalSec = 600;
+        startLimitBurst = 5;
+        serviceConfig =
+          sd.serviceDefaults {RestartSec = "15";}
+          // sd.harden {
+            MemoryMax = "256M";
+            ProtectHome = "read-only";
+            ReadWritePaths = [cfg.dataDir];
+          }
+          // {
+            Type = "simple";
+            User = cfg.user;
+            ExecStart = "${lib.getExe' cfg.package "file-renamer"} health --addr ${cfg.healthAddr}";
+            WorkingDirectory = cfg.dataDir;
+            KillMode = "mixed";
+            TimeoutStopSec = "15";
+            StandardOutput = "journal";
+            StandardError = "journal";
+            Environment = [
+              "DEAD_LETTER_PATH=${cfg.dataDir}/dead-letter.json"
+            ];
+          };
+        wantedBy = ["multi-user.target"];
+      };
+
       home-manager.users.${cfg.user} = {
         systemd.user.services = {
           # Core watcher — monitors directories and renames new screenshots via AI vision
@@ -136,42 +166,6 @@ _: {
                   ++ lib.optional (cfg.model != null) "GLM_MODEL=${cfg.model}"
                   ++ lib.optional (cfg.syntheticModel != null) "SYNTHETIC_MODEL=${cfg.syntheticModel}"
                   ++ lib.optional (cfg.watchPaths != []) "WATCH_PATHS=${lib.concatStringsSep ":" cfg.watchPaths}";
-              };
-
-            Install = {
-              WantedBy = ["graphical-session.target"];
-            };
-          };
-
-          # Health dashboard — web UI + Prometheus metrics at /metrics
-          file-and-image-renamer-health = lib.mkIf cfg.enableHealthDashboard {
-            Unit = {
-              Description = "File and Image Renamer Health Dashboard";
-              After = [
-                "network.target"
-                "file-and-image-renamer.service"
-              ];
-              Wants = ["network.target"];
-              PartOf = ["graphical-session.target"];
-              StartLimitIntervalSec = 600;
-              StartLimitBurst = 5;
-            };
-
-            Service =
-              sd.serviceDefaultsUser {RestartSec = "15";}
-              // hardenUser {MemoryMax = "256M";}
-              // {
-                Type = "simple";
-                ExecStart = "${lib.getExe' cfg.package "file-renamer"} health --addr ${cfg.healthAddr}";
-                WorkingDirectory = cfg.dataDir;
-                KillMode = "mixed";
-                TimeoutStopSec = "15";
-                StandardOutput = "journal";
-                StandardError = "journal";
-
-                Environment = [
-                  "DEAD_LETTER_PATH=${cfg.dataDir}/dead-letter.json"
-                ];
               };
 
             Install = {

@@ -353,7 +353,7 @@ in {
       # Monitor365 device monitoring agent + server (single-machine deployment)
       monitor365 = {
         enable = true;
-        # All collectors enabled — full telemetry mode
+        # Collectors — bluetooth disabled (zbus::blocking panics inside tokio)
         collectors = {
           screenshot = lib.mkDefault true;
           camera = lib.mkDefault true;
@@ -363,6 +363,7 @@ in {
           notifications = lib.mkDefault true;
           location = lib.mkDefault true;
           fsEvent = lib.mkDefault true;
+          bluetooth = lib.mkDefault false;
         };
         # Not using ActivityWatch integration
         activityWatch.enable = lib.mkDefault false;

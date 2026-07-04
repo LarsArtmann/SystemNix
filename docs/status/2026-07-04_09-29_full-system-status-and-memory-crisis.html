@@ -30,109 +30,572 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --radius-sm: 0px;
-        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      html { scroll-behavior: smooth; }
-      section[id], [id] { scroll-margin-top: 60px; }
-      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
-      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
-      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
-      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
-      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
-      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
-      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; line-height: 1.4; font-weight: 500; }
-      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-      .main { flex: 1; min-width: 0; }
-      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
-      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
-      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
-      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
-      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
-      h4 { font-size: 0.98rem; margin: 0 0 0.3rem; font-weight: 700; }
-      p { margin: 0 0 1rem; }
-      .hero { padding: 1.5rem 0 1.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
-      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
-      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
-      .hero-shapes { position: relative; height: 80px; margin-bottom: 1rem; }
-      .hero-shapes .circle { position: absolute; top: 0; left: 0; width: 56px; height: 56px; background: var(--problem); border-radius: 50%; }
-      .hero-shapes .square { position: absolute; top: 24px; left: 72px; width: 48px; height: 48px; background: var(--solution); }
-      .hero-shapes .tri { position: absolute; top: 8px; left: 140px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 48px solid var(--warning); }
-      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
-      .issue-critical { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
-      .issue-important { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
-      .issue-nice { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
-      .issue h3 { margin-bottom: 0.3rem; }
-      .issue .where { font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-faint); margin: 0.2rem 0 0.6rem; }
-      .issue p:last-child { margin-bottom: 0; }
-      .severity { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.2rem 0.55rem; margin-bottom: 0.6rem; color: var(--surface); }
-      .severity-critical { background: var(--problem); }
-      .severity-important { background: var(--warning); }
-      .severity-nice { background: var(--solution); }
-      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
-      .badge-critical { color: var(--problem); border-color: var(--problem); }
-      .badge-high { color: var(--warning); border-color: var(--warning); }
-      .badge-medium { color: var(--accent); border-color: var(--accent); }
-      .badge-low { color: var(--text-muted); }
-      .badge-fixed { color: var(--solution); border-color: var(--solution); }
-      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
-      .callout strong { display: inline-block; margin-right: 0.4rem; }
-      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
-      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
-      .stat-grid, .scorecard { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
-      .stat-card, .score-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
-      .stat-card::before, .score-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
-      .stat-bad::before, .score-bad::before { background: var(--problem); }
-      .stat-good::before, .score-good::before { background: var(--solution); }
-      .stat-warn::before, .score-warn::before { background: var(--warning); }
-      .stat-value, .score { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
-      .stat-bad .stat-value, .score-bad .score { color: var(--problem); }
-      .stat-good .stat-value, .score-good .score { color: var(--solution); }
-      .stat-warn .stat-value, .score-warn .score { color: var(--warning); }
-      .stat-label, .score-card .label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
-      .strengths { display: grid; gap: 0.5rem; margin: 1rem 0 1.5rem; }
-      .strength { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
-      .strength .check { font-family: var(--font-mono); font-weight: 700; color: var(--solution); font-size: 1.1rem; line-height: 1.4; }
-      .strength .text strong { display: block; margin-bottom: 0.15rem; }
-      .strength .text span { color: var(--text-muted); font-size: 0.9rem; }
-      .table-wrap { overflow-x: auto; }
-      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
-      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
-      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
-      tr:hover td { background: var(--surface-raised); }
-      pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
-      code { font-family: var(--font-mono); }
-      p code, li code, td code { font-size: 0.88em; background: var(--surface-sunken); padding: 0.1rem 0.35rem; }
-      .dep-tree { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.7; white-space: pre; overflow-x: auto; }
-      .dep-tree .root { color: var(--accent); font-weight: 700; }
-      .dep-tree .ok { color: var(--solution); }
-      .dep-tree .unwanted { color: var(--problem); }
-      .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0; }
-      .toc { background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 1rem 1.3rem; margin: 1rem 0 1.5rem; }
-      .toc h3 { margin-bottom: 0.5rem; }
-      .toc ul { list-style: none; padding: 0; }
-      .toc li { margin: 0.25rem 0; }
-      .toc a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
-      .toc a:hover { color: var(--accent); }
-      .migration-step { display: grid; grid-template-columns: 48px 1fr; gap: 1rem; margin: 1rem 0; padding: 1rem; background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); }
-      .migration-num { font-family: var(--font-mono); font-weight: 800; font-size: 1.5rem; color: var(--accent); line-height: 1; }
-      .migration-content h4 { margin-bottom: 0.2rem; }
-      .migration-content p { margin-bottom: 0; color: var(--text-muted); font-size: 0.92rem; }
-      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
-      @media (min-width: 1024px) { .sidebar { display: block; } }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
       @media (max-width: 768px) {
-        .layout { flex-direction: column; padding: 1rem; }
-        .top-bar { padding: 0.6rem 1rem; flex-wrap: wrap; gap: 0.3rem; }
-        .grid-2 { grid-template-columns: 1fr; }
-        .stat-grid, .scorecard { grid-template-columns: repeat(2, 1fr); }
-        .migration-step { grid-template-columns: 1fr; }
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2 {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
@@ -168,9 +631,10 @@
           <div class="hero-badge">Full System Audit</div>
           <h1>SystemNix — Comprehensive Status</h1>
           <p class="hero-subtitle">
-            Cross-platform Nix configuration (macOS + NixOS) running on evo-x2 (128 GiB, AMD Ryzen AI Max+ 395)
-            and Lars-MacBook-Air (24 GiB, aarch64-darwin). 39 service modules, 155+ features, 8 ADRs — but the
-            memory arithmetic is fundamentally broken on the Strix Halo platform.
+            Cross-platform Nix configuration (macOS + NixOS) running on evo-x2 (128 GiB, AMD Ryzen
+            AI Max+ 395) and Lars-MacBook-Air (24 GiB, aarch64-darwin). 39 service modules, 155+
+            features, 8 ADRs — but the memory arithmetic is fundamentally broken on the Strix Halo
+            platform.
           </p>
         </div>
 
@@ -221,10 +685,10 @@
         <div class="card card-problem">
           <h4>Immediate trigger for this report</h4>
           <p>
-            Deploy failed with <code>ExitStatus(Exited(4))</code> — systemd start-limit-hit.
-            User ran <code>nh os switch</code> directly instead of <code>nix run .#deploy</code>,
-            which runs <code>systemctl reset-failed</code> first. This is a symptom of deeper
-            memory pressure problems (see section D).
+            Deploy failed with <code>ExitStatus(Exited(4))</code> — systemd start-limit-hit. User
+            ran <code>nh os switch</code> directly instead of <code>nix run .#deploy</code>, which
+            runs <code>systemctl reset-failed</code> first. This is a symptom of deeper memory
+            pressure problems (see section D).
           </p>
         </div>
 
@@ -249,112 +713,172 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="check">+</div>
             <div class="text">
               <strong>SSO / OIDC two-layer architecture</strong>
-              <span>Pocket ID (passkey-only IdP) + oauth2-proxy forward-auth. Layer 1 native OIDC: Forgejo, Immich, Gatus. Layer 2 proxy auth: Homepage, SigNoz, Twenty, Taskchampion, Manifest, OpenSEO, Crush Daily, Dozzle, Monitor365.</span>
+              <span
+                >Pocket ID (passkey-only IdP) + oauth2-proxy forward-auth. Layer 1 native OIDC:
+                Forgejo, Immich, Gatus. Layer 2 proxy auth: Homepage, SigNoz, Twenty, Taskchampion,
+                Manifest, OpenSEO, Crush Daily, Dozzle, Monitor365.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DNS resolution stack</strong>
-              <span>Unbound on :53 (local zones, DoT upstream to Mullvad/Quad9, LAN ACLs, DNSSEC) + dnsblockd block-page HTTP server with 13 local A records. Shared blocklists across evo-x2 + rpi3-dns.</span>
+              <span
+                >Unbound on :53 (local zones, DoT upstream to Mullvad/Quad9, LAN ACLs, DNSSEC) +
+                dnsblockd block-page HTTP server with 13 local A records. Shared blocklists across
+                evo-x2 + rpi3-dns.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Caddy reverse proxy with TLS</strong>
-              <span>Automated vHost management via <code>protectedVHost</code> + <code>commonConfig</code>. TLS 1.2+ enforced, strict SNI, security headers (HSTS, nosniff, frame-options), zstd/gzip, access logging with rotation. Sops-managed certs.</span>
+              <span
+                >Automated vHost management via <code>protectedVHost</code> +
+                <code>commonConfig</code>. TLS 1.2+ enforced, strict SNI, security headers (HSTS,
+                nosniff, frame-options), zstd/gzip, access logging with rotation. Sops-managed
+                certs.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>SigNoz observability stack</strong>
-              <span>ClickHouse + SigNoz + OTEL Collector + cAdvisor. Custom <code>signoz.target</code> decoupled from boot (2m faster). JWT auto-generation. SQLite migration-lock self-healing. Discord channel routing per threshold.</span>
+              <span
+                >ClickHouse + SigNoz + OTEL Collector + cAdvisor. Custom
+                <code>signoz.target</code> decoupled from boot (2m faster). JWT auto-generation.
+                SQLite migration-lock self-healing. Discord channel routing per threshold.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Gatus health monitoring</strong>
-              <span>36+ endpoints with Discord alerts + response-time thresholds. Every user-facing service monitored. Native OIDC for Gatus itself (Layer 1).</span>
+              <span
+                >36+ endpoints with Discord alerts + response-time thresholds. Every user-facing
+                service monitored. Native OIDC for Gatus itself (Layer 1).</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Sops + Age secret management</strong>
-              <span>All secrets in sops-encrypted YAML. Age keys derived from SSH host keys. All secrets guarded with <code>lib.optionalAttrs</code> to prevent atomic blocking. Project-local skill for workflow.</span>
+              <span
+                >All secrets in sops-encrypted YAML. Age keys derived from SSH host keys. All
+                secrets guarded with <code>lib.optionalAttrs</code> to prevent atomic blocking.
+                Project-local skill for workflow.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Deploy pipeline</strong>
-              <span><code>nix run .#deploy</code> = pre-deploy-check → reset-failed → <code>nh os switch</code> → post-deploy smoke test. Catches boot-breaking issues, functional verification, silent failure detection.</span>
+              <span
+                ><code>nix run .#deploy</code> = pre-deploy-check → reset-failed →
+                <code>nh os switch</code> → post-deploy smoke test. Catches boot-breaking issues,
+                functional verification, silent failure detection.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DMS / Quickshell desktop shell</strong>
-              <span>DankMaterialShell replaces Waybar, Dunst, Wlogout, polkit_gnome, and Rofi. 13 SystemNix-native plugins + 2 community plugins (emoji launcher, calculator). MemoryMax=4G defense-in-depth. Niri scrollable tiling compositor.</span>
+              <span
+                >DankMaterialShell replaces Waybar, Dunst, Wlogout, polkit_gnome, and Rofi. 13
+                SystemNix-native plugins + 2 community plugins (emoji launcher, calculator).
+                MemoryMax=4G defense-in-depth. Niri scrollable tiling compositor.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>BTRFS snapshots on root</strong>
-              <span>Daily btrbk snapshots with 14d+4w retention. BTRFS health monitoring (btrfs-health.nix) gates <code>nix-gc</code> via ExecStartPre guard. Gatus alerts on metadata ENOSPC. Staggered before GC.</span>
+              <span
+                >Daily btrbk snapshots with 14d+4w retention. BTRFS health monitoring
+                (btrfs-health.nix) gates <code>nix-gc</code> via ExecStartPre guard. Gatus alerts on
+                metadata ENOSPC. Staggered before GC.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>GitHub Actions CI</strong>
-              <span>Weekly flake-update PR + on-push nix-check (builds local packages, statix + deadnix linting, <code>nix fmt --check</code>). 9 pre-commit hooks including gitleaks.</span>
+              <span
+                >Weekly flake-update PR + on-push nix-check (builds local packages, statix + deadnix
+                linting, <code>nix fmt --check</code>). 9 pre-commit hooks including gitleaks.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Home Manager cross-platform</strong>
-              <span>Shared ~80% config in <code>platforms/common/</code> — base packages, programs, theme (Catppuccin Mocha), locale. NixOS gets full parity; Darwin is minimal (disk constrained).</span>
+              <span
+                >Shared ~80% config in <code>platforms/common/</code> — base packages, programs,
+                theme (Catppuccin Mocha), locale. NixOS gets full parity; Darwin is minimal (disk
+                constrained).</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Forgejo + OIDC + CI runners</strong>
-              <span>Native OIDC via Pocket ID (forgejo-oidc-setup oneshot). Auto-registration + account linking. Gitea runners with 4G MemoryMax each.</span>
+              <span
+                >Native OIDC via Pocket ID (forgejo-oidc-setup oneshot). Auto-registration + account
+                linking. Gitea runners with 4G MemoryMax each.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Immich photo stack</strong>
-              <span>Server + machine-learning (4G) + PostgreSQL. Native OIDC via Pocket ID. Database backup oneshot. Caddy reverse proxy.</span>
+              <span
+                >Server + machine-learning (4G) + PostgreSQL. Native OIDC via Pocket ID. Database
+                backup oneshot. Caddy reverse proxy.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>DiscordSync reactivated</strong>
-              <span>Upstream go-cqrs-lite v3 migration complete. API server on localhost:8085 (avoids SigNoz conflict). Schema-drift migration fixed. GCS backup opt-in.</span>
+              <span
+                >Upstream go-cqrs-lite v3 migration complete. API server on localhost:8085 (avoids
+                SigNoz conflict). Schema-drift migration fixed. GCS backup opt-in.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>OOM hardening layers</strong>
-              <span>systemd-oomd at 50%/20s. MGLRU thrash protection (min_ttl_ms=1000). User slice MemoryHigh=56G/MemoryMax=64G. Hardware watchdog (30s). Protected journald (OOMScoreAdj=-500). Helium <code>--disable-gpu-watchdog</code>.</span>
+              <span
+                >systemd-oomd at 50%/20s. MGLRU thrash protection (min_ttl_ms=1000). User slice
+                MemoryHigh=56G/MemoryMax=64G. Hardware watchdog (30s). Protected journald
+                (OOMScoreAdj=-500). Helium <code>--disable-gpu-watchdog</code>.</span
+              >
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>8 Architecture Decision Records</strong>
-              <span>Go workspace sub-module pattern, GPU memory headroom, BindsTo→Wants, PartOf→DMS, Discord routing, local deps pattern, Gatus secret injection, Authelia→Pocket ID migration.</span>
+              <span
+                >Go workspace sub-module pattern, GPU memory headroom, BindsTo→Wants, PartOf→DMS,
+                Discord routing, local deps pattern, Gatus secret injection, Authelia→Pocket ID
+                migration.</span
+              >
             </div>
           </div>
         </div>
@@ -368,11 +892,13 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <div class="where">modules/nixos/services/dns-blocker.nix · TODO_LIST.md Priority 0</div>
           <p>
             Plan complete (4 phases), Phase 2 module rework defined. dnsblockd has a full recursive
-            resolver (sdns, DNSSEC, DoT, DoH) but is feature-flagged <code>dns_enabled: false</code>.
-            Three gaps block migration: no local zones, no upstream DoT forwarding, no LAN ACLs.
+            resolver (sdns, DNSSEC, DoT, DoH) but is feature-flagged
+            <code>dns_enabled: false</code>. Three gaps block migration: no local zones, no upstream
+            DoT forwarding, no LAN ACLs.
           </p>
           <div class="callout callout-warning">
-            <strong>Blocking on:</strong> dnsblockd upstream work (~15h). Then Nix-side migration + 24h observation.
+            <strong>Blocking on:</strong> dnsblockd upstream work (~15h). Then Nix-side migration +
+            24h observation.
           </div>
         </div>
 
@@ -403,9 +929,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>BTRFS /data subvolume migration</h3>
           <div class="where">ROADMAP.md Theme 1</div>
           <p>
-            <code>/data</code> is BTRFS toplevel (subvolid=5) — cannot be snapshotted. Docker/Immich/AI
-            data has zero snapshot protection. Migration plan exists (7 steps, ~1h downtime, USB rescue boot).
-            Requires manual execution window.
+            <code>/data</code> is BTRFS toplevel (subvolid=5) — cannot be snapshotted.
+            Docker/Immich/AI data has zero snapshot protection. Migration plan exists (7 steps, ~1h
+            downtime, USB rescue boot). Requires manual execution window.
           </p>
         </div>
 
@@ -414,8 +940,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Twenty CRM 502s</h3>
           <div class="where">modules/nixos/services/twenty.nix</div>
           <p>
-            APPEARS RESOLVED (running since 06-23, responding on :3200). SSO is billing-entitlement-gated
-            (stays on Layer 2 proxy auth). Monitoring for recurrence.
+            APPEARS RESOLVED (running since 06-23, responding on :3200). SSO is
+            billing-entitlement-gated (stays on Layer 2 proxy auth). Monitoring for recurrence.
           </p>
         </div>
 
@@ -424,9 +950,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Monitor365 agent</h3>
           <div class="where">modules/nixos/services/monitor365.nix</div>
           <p>
-            Root cause: upstream Rust panic (Axum 0.7 route syntax <code>:param</code> → <code>{param}</code>).
-            Needs fix in <code>github:LarsArtmann/monitor365</code>. Nix-side workaround not possible.
-            Server works; agent crashes.
+            Root cause: upstream Rust panic (Axum 0.7 route syntax <code>:param</code> →
+            <code>{param}</code>). Needs fix in <code>github:LarsArtmann/monitor365</code>. Nix-side
+            workaround not possible. Server works; agent crashes.
           </p>
         </div>
 
@@ -435,8 +961,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Hermes configuration</h3>
           <div class="where">modules/nixos/services/hermes.nix</div>
           <p>
-            Nix wiring complete. Blocked on human: (1) install SSH deploy key, (2) set fallback model.
-            Active pip extras: messaging, anthropic, firecrawl, edge-tts, fal, exa.
+            Nix wiring complete. Blocked on human: (1) install SSH deploy key, (2) set fallback
+            model. Active pip extras: messaging, anthropic, firecrawl, edge-tts, fal, exa.
           </p>
         </div>
 
@@ -445,8 +971,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Darwin Home Manager parity</h3>
           <div class="where">platforms/darwin/default.nix</div>
           <p>
-            256GB SSD 90%+ full, 24GB RAM. HM config is minimal — no terminal/editor/theme parity with NixOS.
-            Blocked by disk constraint. <code>nix-collect-garbage</code> hangs.
+            256GB SSD 90%+ full, 24GB RAM. HM config is minimal — no terminal/editor/theme parity
+            with NixOS. Blocked by disk constraint. <code>nix-collect-garbage</code> hangs.
           </p>
         </div>
 
@@ -539,24 +1065,22 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <p>
             The sum of all per-service <code>MemoryMax</code> quotas is <strong>~94 GiB+</strong>:
           </p>
-          <div class="dep-tree"><span class="root">MemoryMax quotas</span>
-├── ollama: <span class="unwanted">32G</span>
-├── hermes: <span class="unwanted">24G</span>
-├── whisper-asr: <span class="unwanted">8G</span>
-├── clickhouse: 4G
-├── immich-ml: 4G
-├── minecraft: 4G
-├── gitea-runner: 4G
-├── 20+ services @ 256M-2G: ~14G
-└── <span class="unwanted">TOTAL: ~94G+ (but only ~43G actually available)</span></div>
+          <div class="dep-tree">
+            <span class="root">MemoryMax quotas</span> ├── ollama:
+            <span class="unwanted">32G</span> ├── hermes: <span class="unwanted">24G</span> ├──
+            whisper-asr: <span class="unwanted">8G</span> ├── clickhouse: 4G ├── immich-ml: 4G ├──
+            minecraft: 4G ├── gitea-runner: 4G ├── 20+ services @ 256M-2G: ~14G └──
+            <span class="unwanted">TOTAL: ~94G+ (but only ~43G actually available)</span>
+          </div>
           <p>
             oomd kills at 50% pressure / 20s. Services die → restart → 5 restarts in 300s →
-            start-limit-hit → <code>reset-failed</code> needed on every deploy. This is the
-            engine that generates the problem, and it's baked into the architecture.
+            start-limit-hit → <code>reset-failed</code> needed on every deploy. This is the engine
+            that generates the problem, and it's baked into the architecture.
           </p>
           <div class="callout callout-solution">
             <strong>Fix:</strong> Right-size quotas to actual usage, disable unused heavy services
-            (ollama 32G + whisper 8G = 40G freed), or constrain GPUActive via amdgpu.gtt_size kernel param.
+            (ollama 32G + whisper 8G = 40G freed), or constrain GPUActive via amdgpu.gtt_size kernel
+            param.
           </div>
         </div>
 
@@ -567,12 +1091,13 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <p>
             <code>systemctl reset-failed</code> runs before every deploy — not as defense-in-depth,
             but as a <strong>load-bearing crutch</strong>. It clears the start-limit-hit state that
-            accumulates because services keep crash-looping between deploys. The band-aid hides
-            the underlying failures instead of fixing them. A healthy NixOS box never needs
+            accumulates because services keep crash-looping between deploys. The band-aid hides the
+            underlying failures instead of fixing them. A healthy NixOS box never needs
             <code>reset-failed</code>.
           </p>
           <div class="callout callout-warning">
-            <strong>Trap:</strong> Removing it now would block every deploy until root causes are fixed. Must fix the crash sources first.
+            <strong>Trap:</strong> Removing it now would block every deploy until root causes are
+            fixed. Must fix the crash sources first.
           </div>
         </div>
 
@@ -581,14 +1106,18 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Strix Halo GPU memory management is uncontrollable</h3>
           <div class="where">/proc/meminfo → GPUActive · boot.nix</div>
           <p>
-            GPUActive consumes <strong>51+ GiB (55%)</strong> of visible RAM with <code>GPUReclaim=0</code>.
-            The TTM pool is configured with <code>pages_limit = page_pool_size = 112 GiB</code> — which
-            <strong>exceeds the 94 GiB visible</strong>. The GPU driver can consume virtually all system RAM.
-            <code>/proc/meminfo</code> has a <code>GPUActive</code> counter but standard tools
-            (<code>free</code>, <code>htop</code>) don't show it — making the "missing" RAM invisible.
+            GPUActive consumes <strong>51+ GiB (55%)</strong> of visible RAM with
+            <code>GPUReclaim=0</code>. The TTM pool is configured with
+            <code>pages_limit = page_pool_size = 112 GiB</code> — which
+            <strong>exceeds the 94 GiB visible</strong>. The GPU driver can consume virtually all
+            system RAM. <code>/proc/meminfo</code> has a <code>GPUActive</code> counter but standard
+            tools (<code>free</code>, <code>htop</code>) don't show it — making the "missing" RAM
+            invisible.
           </p>
           <div class="callout callout-solution">
-            <strong>Known mitigations deployed:</strong> User slice MemoryMax=64G, oomd at 50%, MGLRU min_ttl_ms=1000, Helium --disable-gpu-watchdog. But the pool size (112 GiB) and GPUReclaim=0 mean the fundamental problem persists.
+            <strong>Known mitigations deployed:</strong> User slice MemoryMax=64G, oomd at 50%,
+            MGLRU min_ttl_ms=1000, Helium --disable-gpu-watchdog. But the pool size (112 GiB) and
+            GPUReclaim=0 mean the fundamental problem persists.
           </div>
         </div>
 
@@ -600,8 +1129,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             Pocket ID is a single point of failure for the entire OIDC chain. If pocket-id is slow
             to start (30 retries × 120s window), 4 downstream services (gatus, forgejo-oidc-setup,
             oauth2-proxy, immich-server) all wait, then start simultaneously, spiking memory.
-            Historical desync: client-secret file had old sops value while DB had null/stale →
-            401 at token exchange. Migration block now removed, but the boot-time cascade remains.
+            Historical desync: client-secret file had old sops value while DB had null/stale → 401
+            at token exchange. Migration block now removed, but the boot-time cascade remains.
           </p>
         </div>
 
@@ -611,43 +1140,77 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
         <div class="grid-2">
           <div class="card card-warning">
             <h4>1. Memory budget reconciliation</h4>
-            <p>Create a centralized <code>lib/memory-budget.nix</code> that sums all MemoryMax values and validates against available RAM (visible − GPUActive headroom). Fail eval if overcommitted.</p>
+            <p>
+              Create a centralized <code>lib/memory-budget.nix</code> that sums all MemoryMax values
+              and validates against available RAM (visible − GPUActive headroom). Fail eval if
+              overcommitted.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>2. Boot ordering: stagger downstream starts</h4>
-            <p>Add <code>RestartSec=10</code> + <code>StartupIntervalSec=10</code> to services after pocket-id-provision so they don't all hit simultaneously.</p>
+            <p>
+              Add <code>RestartSec=10</code> + <code>StartupIntervalSec=10</code> to services after
+              pocket-id-provision so they don't all hit simultaneously.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>3. Service defaults: add RestartSec + RestartSteps</h4>
-            <p>Add <code>RestartSec=5</code> and <code>RestartSteps=3</code> to <code>serviceDefaults</code> to space out restarts (5s → 10s → 15s) and avoid hitting the 5-in-300s limit.</p>
+            <p>
+              Add <code>RestartSec=5</code> and <code>RestartSteps=3</code> to
+              <code>serviceDefaults</code> to space out restarts (5s → 10s → 15s) and avoid hitting
+              the 5-in-300s limit.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>4. Disable unused heavy services</h4>
-            <p>ollama (32G), whisper-asr (8G), minecraft (4G) — disabling frees 44G. Start ollama on-demand via socket activation.</p>
+            <p>
+              ollama (32G), whisper-asr (8G), minecraft (4G) — disabling frees 44G. Start ollama
+              on-demand via socket activation.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>5. Cloud backup — zero off-site recovery</h4>
-            <p>No off-site backup exists. BorgBackup to Hetzner StorageBox is researched but not started. This is the single highest-risk gap.</p>
+            <p>
+              No off-site backup exists. BorgBackup to Hetzner StorageBox is researched but not
+              started. This is the single highest-risk gap.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>6. Firewall hardening</h4>
-            <p>NixOS allows all inbound. Docker punches its own holes. Transition to explicit allowlist with deny-by-default.</p>
+            <p>
+              NixOS allows all inbound. Docker punches its own holes. Transition to explicit
+              allowlist with deny-by-default.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>7. Typed NixOS module options</h4>
-            <p>Most modules use <code>mkEnableOption</code> only. Add typed options for ports, paths, timeouts → enables validation, testing, and self-documenting config.</p>
+            <p>
+              Most modules use <code>mkEnableOption</code> only. Add typed options for ports, paths,
+              timeouts → enables validation, testing, and self-documenting config.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>8. Module splitting</h4>
-            <p>monitor365 (716L), signoz (705L), forgejo (583L) are too large. Extract sub-modules for testability and readability.</p>
+            <p>
+              monitor365 (716L), signoz (705L), forgejo (583L) are too large. Extract sub-modules
+              for testability and readability.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>9. GPUActive visibility</h4>
-            <p>The <code>GPUActive</code> field in <code>/proc/meminfo</code> is the ONLY way to see the memory drain. Add it to the DMS widget + Gatus monitoring + SigNoz metrics. Make it impossible to miss.</p>
+            <p>
+              The <code>GPUActive</code> field in <code>/proc/meminfo</code> is the ONLY way to see
+              the memory drain. Add it to the DMS widget + Gatus monitoring + SigNoz metrics. Make
+              it impossible to miss.
+            </p>
           </div>
           <div class="card card-warning">
             <h4>10. Comprehensive memory diagnostic script</h4>
-            <p>Write a <code>scripts/memory-audit.sh</code> that shows: visible RAM, GPUActive, per-service MemoryMax vs actual RSS, overcommit ratio, failed units, OOM history. Run it before every deploy.</p>
+            <p>
+              Write a <code>scripts/memory-audit.sh</code> that shows: visible RAM, GPUActive,
+              per-service MemoryMax vs actual RSS, overcommit ratio, failed units, OOM history. Run
+              it before every deploy.
+            </p>
           </div>
         </div>
 
@@ -671,175 +1234,252 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
               <tr>
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Right-size MemoryMax quotas</strong> — sum must fit ~43 GiB available. Disable unused services first (ollama 32G + whisper 8G = 40G freed).</td>
+                <td>
+                  <strong>Right-size MemoryMax quotas</strong> — sum must fit ~43 GiB available.
+                  Disable unused services first (ollama 32G + whisper 8G = 40G freed).
+                </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">10/10</span></td>
               </tr>
               <tr>
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Add RestartSec=5 + RestartSteps=3 to serviceDefaults</strong> — spaces out crash-loop restarts, prevents start-limit-hit cascade.</td>
+                <td>
+                  <strong>Add RestartSec=5 + RestartSteps=3 to serviceDefaults</strong> — spaces out
+                  crash-loop restarts, prevents start-limit-hit cascade.
+                </td>
                 <td>30m</td>
                 <td><span class="badge badge-fixed">9/10</span></td>
               </tr>
               <tr>
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Write memory-audit diagnostic script</strong> — visible RAM, GPUActive, per-service RSS, overcommit ratio, failed units, OOM history.</td>
+                <td>
+                  <strong>Write memory-audit diagnostic script</strong> — visible RAM, GPUActive,
+                  per-service RSS, overcommit ratio, failed units, OOM history.
+                </td>
                 <td>1h</td>
                 <td><span class="badge badge-fixed">9/10</span></td>
               </tr>
               <tr>
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Set up BorgBackup to Hetzner StorageBox</strong> — zero off-site backup is the single highest-risk gap. Research doc already exists.</td>
+                <td>
+                  <strong>Set up BorgBackup to Hetzner StorageBox</strong> — zero off-site backup is
+                  the single highest-risk gap. Research doc already exists.
+                </td>
                 <td>4h</td>
                 <td><span class="badge badge-fixed">10/10</span></td>
               </tr>
               <tr>
                 <td>5</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>GPUActive monitoring</strong> — add to DMS widget, Gatus endpoint, SigNoz metrics. Make the invisible 51G visible.</td>
+                <td>
+                  <strong>GPUActive monitoring</strong> — add to DMS widget, Gatus endpoint, SigNoz
+                  metrics. Make the invisible 51G visible.
+                </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">8/10</span></td>
               </tr>
               <tr>
                 <td>6</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>BTRFS /data subvolume migration</strong> — Docker/Immich/AI data has zero snapshot protection. 7-step plan ready, needs ~1h downtime window.</td>
+                <td>
+                  <strong>BTRFS /data subvolume migration</strong> — Docker/Immich/AI data has zero
+                  snapshot protection. 7-step plan ready, needs ~1h downtime window.
+                </td>
                 <td>1h + downtime</td>
                 <td><span class="badge badge-fixed">8/10</span></td>
               </tr>
               <tr>
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>Firewall deny-by-default</strong> — NixOS allows all inbound. Transition to explicit allowlist.</td>
+                <td>
+                  <strong>Firewall deny-by-default</strong> — NixOS allows all inbound. Transition
+                  to explicit allowlist.
+                </td>
                 <td>3h</td>
                 <td><span class="badge badge-fixed">7/10</span></td>
               </tr>
               <tr>
                 <td>8</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>Monitor365 agent auth</strong> — no auth, anyone on LAN can POST data. Add shared secret or mTLS.</td>
+                <td>
+                  <strong>Monitor365 agent auth</strong> — no auth, anyone on LAN can POST data. Add
+                  shared secret or mTLS.
+                </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">7/10</span></td>
               </tr>
               <tr>
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td><strong>Fix Jan llama-server respawn</strong> — spawns new llama-server every 1-3 min (~1.2GB each). Not a systemd service, no cgroup limits.</td>
+                <td>
+                  <strong>Fix Jan llama-server respawn</strong> — spawns new llama-server every 1-3
+                  min (~1.2GB each). Not a systemd service, no cgroup limits.
+                </td>
                 <td>3h</td>
                 <td><span class="badge badge-fixed">7/10</span></td>
               </tr>
               <tr>
                 <td>10</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>DNS migration Phase 2</strong> — dnsblockd → primary resolver. Plan complete, blocked on upstream dnsblockd work (~15h across both repos).</td>
+                <td>
+                  <strong>DNS migration Phase 2</strong> — dnsblockd → primary resolver. Plan
+                  complete, blocked on upstream dnsblockd work (~15h across both repos).
+                </td>
                 <td>15h</td>
                 <td><span class="badge badge-fixed">6/10</span></td>
               </tr>
               <tr>
                 <td>11</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Fix Monitor365 agent upstream</strong> — Axum 0.7 route syntax panic. Needs fix in github:LarsArtmann/monitor365.</td>
+                <td>
+                  <strong>Fix Monitor365 agent upstream</strong> — Axum 0.7 route syntax panic.
+                  Needs fix in github:LarsArtmann/monitor365.
+                </td>
                 <td>2h upstream</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
               </tr>
               <tr>
                 <td>12</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Bind Immich to localhost</strong> — on 0.0.0.0 with openFirewall. Caddy already proxies. Remove openFirewall.</td>
+                <td>
+                  <strong>Bind Immich to localhost</strong> — on 0.0.0.0 with openFirewall. Caddy
+                  already proxies. Remove openFirewall.
+                </td>
                 <td>15m</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
               </tr>
               <tr>
                 <td>13</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Hermes: install SSH deploy key + set fallback model</strong> — manual steps blocking Hermes from being fully operational.</td>
+                <td>
+                  <strong>Hermes: install SSH deploy key + set fallback model</strong> — manual
+                  steps blocking Hermes from being fully operational.
+                </td>
                 <td>15m</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
               </tr>
               <tr>
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Stagger downstream pocket-id starts</strong> — add RestartSec to gatus, forgejo-oidc-setup, oauth2-proxy, immich-server so they don't spike memory simultaneously.</td>
+                <td>
+                  <strong>Stagger downstream pocket-id starts</strong> — add RestartSec to gatus,
+                  forgejo-oidc-setup, oauth2-proxy, immich-server so they don't spike memory
+                  simultaneously.
+                </td>
                 <td>30m</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
               </tr>
               <tr>
                 <td>15</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Create lib/memory-budget.nix</strong> — sums all MemoryMax values, validates against available RAM at eval time. Fail eval if overcommitted.</td>
+                <td>
+                  <strong>Create lib/memory-budget.nix</strong> — sums all MemoryMax values,
+                  validates against available RAM at eval time. Fail eval if overcommitted.
+                </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">6/10</span></td>
               </tr>
               <tr>
                 <td>16</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Swap investigation</strong> — 8 GiB swap used on 128 GiB RAM. Run smem + swapoff/swapon to identify swap hogs.</td>
+                <td>
+                  <strong>Swap investigation</strong> — 8 GiB swap used on 128 GiB RAM. Run smem +
+                  swapoff/swapon to identify swap hogs.
+                </td>
                 <td>1h</td>
                 <td><span class="badge badge-fixed">4/10</span></td>
               </tr>
               <tr>
                 <td>17</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Provision Pi 3 for DNS failover</strong> — hardware purchase required. Module and config ready.</td>
+                <td>
+                  <strong>Provision Pi 3 for DNS failover</strong> — hardware purchase required.
+                  Module and config ready.
+                </td>
                 <td>$$$</td>
                 <td><span class="badge badge-fixed">4/10</span></td>
               </tr>
               <tr>
                 <td>18</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo (583L) into sub-modules.</td>
+                <td>
+                  <strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo
+                  (583L) into sub-modules.
+                </td>
                 <td>4h</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
               </tr>
               <tr>
                 <td>19</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Typed NixOS module options</strong> — ports, paths, timeouts for all custom modules → validation + testing.</td>
+                <td>
+                  <strong>Typed NixOS module options</strong> — ports, paths, timeouts for all
+                  custom modules → validation + testing.
+                </td>
                 <td>8h</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
               </tr>
               <tr>
                 <td>20</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>AppArmor enablement</strong> — currently mkDefault false. Re-evaluate with kernel 6.x.</td>
+                <td>
+                  <strong>AppArmor enablement</strong> — currently mkDefault false. Re-evaluate with
+                  kernel 6.x.
+                </td>
                 <td>4h</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
               </tr>
               <tr>
                 <td>21</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Auditd enablement</strong> — blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed.</td>
+                <td>
+                  <strong>Auditd enablement</strong> — blocked on NixOS 26.05 bug #483085.
+                  Re-evaluate when fixed.
+                </td>
                 <td>blocked</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
               </tr>
               <tr>
                 <td>22</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Upstream nixpkgs PRs</strong> — aw-watcher-utilization poetry-core, valkey/aiocache test fixes, taskwarrior3 flags, Kitty GC patch, KeePassXC Chromium manifests.</td>
+                <td>
+                  <strong>Upstream nixpkgs PRs</strong> — aw-watcher-utilization poetry-core,
+                  valkey/aiocache test fixes, taskwarrior3 flags, Kitty GC patch, KeePassXC Chromium
+                  manifests.
+                </td>
                 <td>varies</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
               </tr>
               <tr>
                 <td>23</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Upstream HM PRs</strong> — ActivityWatch Wayland watcher deps, theme option, Darwin user definition (#6036).</td>
+                <td>
+                  <strong>Upstream HM PRs</strong> — ActivityWatch Wayland watcher deps, theme
+                  option, Darwin user definition (#6036).
+                </td>
                 <td>varies</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
               </tr>
               <tr>
                 <td>24</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>NPU exploration</strong> — AMD XDNA driver loaded, no workloads. Explore ONNX Runtime / Ryzen AI SDK.</td>
+                <td>
+                  <strong>NPU exploration</strong> — AMD XDNA driver loaded, no workloads. Explore
+                  ONNX Runtime / Ryzen AI SDK.
+                </td>
                 <td>research</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
               </tr>
               <tr>
                 <td>25</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Darwin HM parity</strong> — blocked by 256GB disk. Consider cleanup + selective parity for terminal/editor.</td>
+                <td>
+                  <strong>Darwin HM parity</strong> — blocked by 256GB disk. Consider cleanup +
+                  selective parity for terminal/editor.
+                </td>
                 <td>blocked</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
               </tr>
@@ -855,29 +1495,39 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Are ollama (32G), whisper-asr (8G), and hermes (24G) actually used daily?</h3>
           <div class="where">64G of MemoryMax quota — 67% of all available RAM</div>
           <p>
-            These three services alone reserve <strong>64 GiB of MemoryMax quota</strong> — more than
-            the <strong>43 GiB actually available</strong> after GPUActive takes its 51 GiB cut. They
-            are the single biggest lever in the memory budget. But I don't know:
+            These three services alone reserve <strong>64 GiB of MemoryMax quota</strong> — more
+            than the <strong>43 GiB actually available</strong> after GPUActive takes its 51 GiB
+            cut. They are the single biggest lever in the memory budget. But I don't know:
           </p>
-          <ul style="margin: 0.5rem 0 1rem 1.5rem;">
-            <li>Are you actively using ollama for inference daily, or could it be socket-activated on-demand?</li>
-            <li>Is whisper-asr (8G, disabled in config but quota-allocated) still needed at all?</li>
-            <li>Is hermes (24G, 6 pip extras) running production workloads, or is it experimental?</li>
+          <ul style="margin: 0.5rem 0 1rem 1.5rem">
+            <li>
+              Are you actively using ollama for inference daily, or could it be socket-activated
+              on-demand?
+            </li>
+            <li>
+              Is whisper-asr (8G, disabled in config but quota-allocated) still needed at all?
+            </li>
+            <li>
+              Is hermes (24G, 6 pip extras) running production workloads, or is it experimental?
+            </li>
           </ul>
           <p>
             The answer determines the entire memory strategy. If these three can be disabled or
             on-demand, the memory crisis <strong>resolves overnight</strong> — we go from chronic
-            overcommitment to comfortable headroom. If they must all run simultaneously, we need
-            a fundamentally different approach (GPU memory partitioning, kernel param tuning,
-            or accepting the OOM chain as permanent).
+            overcommitment to comfortable headroom. If they must all run simultaneously, we need a
+            fundamentally different approach (GPU memory partitioning, kernel param tuning, or
+            accepting the OOM chain as permanent).
           </p>
           <div class="callout callout-solution">
-            <strong>Why I can't figure this out:</strong> Only you know your daily workflow. The config shows them enabled, but I can't tell the difference between "running because I use it" and "running because I forgot to disable it."
+            <strong>Why I can't figure this out:</strong> Only you know your daily workflow. The
+            config shows them enabled, but I can't tell the difference between "running because I
+            use it" and "running because I forgot to disable it."
           </div>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-04 09:29 CET &middot; Reviewed against master @ f28167e1 &middot; Data sources: TODO_LIST.md, FEATURES.md, ROADMAP.md, AGENTS.md, git log, live service analysis
+          Generated 2026-07-04 09:29 CET &middot; Reviewed against master @ f28167e1 &middot; Data
+          sources: TODO_LIST.md, FEATURES.md, ROADMAP.md, AGENTS.md, git log, live service analysis
         </footer>
       </main>
     </div>

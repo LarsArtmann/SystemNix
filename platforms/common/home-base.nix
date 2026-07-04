@@ -64,4 +64,7 @@ in {
     # Home Manager version for compatibility
     stateVersion = "24.05";
   };
+
+  # Auto-start/restart user services after activation (fixes new services landing inactive)
+  systemd.user.startServices = "sd-switch";
 }
