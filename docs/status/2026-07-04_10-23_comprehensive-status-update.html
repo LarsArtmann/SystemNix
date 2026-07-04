@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Status — 2026-07-04 10:23 CEST</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+        --radius: 0px;
+        --radius-sm: 0px;
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a {
+        color: var(--solution);
+      }
+      a:hover {
+        color: var(--accent);
+      }
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before {
+        background: var(--warning);
+      }
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value {
+        color: var(--problem);
+      }
+      .stat-good .stat-value {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value {
+        color: var(--warning);
+      }
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+      .question-box {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 4px solid var(--accent);
+        padding: 1.1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .question-box h3 {
+        color: var(--accent);
+        margin-bottom: 0.6rem;
+      }
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>SystemNix Status</span>
+      <span>2026-07-04 10:23 CEST</span>
+      <span>evo-x2 + Lars-MacBook-Air</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">Fully Done</a>
+          <a href="#partial">Partially Done</a>
+          <a href="#not-started">Not Started</a>
+          <a href="#fucked">Totally Fucked Up</a>
+          <a href="#improve">What To Improve</a>
+          <a href="#top25">Top 25 Next Tasks</a>
+          <a href="#question">Top Question</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Comprehensive Status Update</div>
+          <h1>SystemNix — Post-Memory-Crisis, Pre-Deploy Lock</h1>
+          <p class="hero-subtitle">
+            Snapshot after the Monitor365 Agent visibility fix, with the evo-x2 memory crisis,
+            ~2+ undeployed commits, and a long tail of reliability work still ahead.
+          </p>
+        </div>
+
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#summary">Summary</a></li>
+            <li><a href="#done">Fully Done</a></li>
+            <li><a href="#partial">Partially Done</a></li>
+            <li><a href="#not-started">Not Started</a></li>
+            <li><a href="#fucked">Totally Fucked Up</a></li>
+            <li><a href="#improve">What To Improve</a></li>
+            <li><a href="#top25">Top 25 Next Tasks</a></li>
+            <li><a href="#question">Top Question</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">14</div>
+            <div class="stat-label">Fully Done</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">8</div>
+            <div class="stat-label">Partially Done</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">11</div>
+            <div class="stat-label">Not Started</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Totally Fucked Up</div>
+          </div>
+        </div>
+
+        <div class="card card-problem">
+          <h4>Critical Context</h4>
+          <p>
+            evo-x2 is running in chronic memory pressure. GPUActive consumes 51+ GiB of the ~94 GiB visible to Linux,
+            and the sum of service <code>MemoryMax</code> quotas overcommits available RAM by ~2×. The last deploy
+            failed with <code>ExitStatus(Exited(4))</code> because a service was in <code>start-limit-hit</code>; the
+            fix (<code>systemctl reset-failed</code>) is now load-bearing. A reboot and careful deploy are required before
+            stability can be trusted.
+          </p>
+        </div>
+
+        <h2 id="done"><span class="num">01</span>Fully Done</h2>
+
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Monitor365 Agent visibility restored</strong>
+              <span>Enabled agent metrics endpoint and added a Gatus "Monitor365 Agent" check so status.home.lan no longer silently ignores the local collector.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>DiscordSync exposed and protected</strong>
+              <span>Wired behind Caddy with OIDC via oauth2-proxy, added Gatus + Homepage tiles, and moved the always-on API to localhost-only port 8085.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Crush-daily data collection fixed</strong>
+              <span>Removed the silent data-access failure caused by <code>ProtectHome=true</code>; now uses <code>ProtectHome=false</code> with scoped <code>ReadOnlyPaths</code>.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Monitor365 server + UI repaired</strong>
+              <span>Fixed package alias trap (<code>monitor365-server</code> with bundled UI), made agent config writable after copy, and updated cloud auth token injection.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Post-deploy smoke test</strong>
+              <span>Added <code>nix run .#post-deploy-check</code> that verifies functional outcomes (HTML bodies, JSON responses) rather than just process liveness.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Caddy hardening</strong>
+              <span>Bare-IP redirect to Homepage, no-cache headers to prevent stale HTML, structured access logging, TLS 1.2+, strict SNI, and 10 GiB body limit.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>BTRFS crash prevention</strong>
+              <span><code>btrfs-health.nix</code> gates <code>nix-gc</code> and <code>nix-build-cleanup</code> when device-unallocated &lt; 10%, with Gatus + Prometheus alerts.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Network interface boot race closed</strong>
+              <span><code>dnsblockd-attach-ip.service</code> now orders after the <code>eno1</code> device unit, replacing the fragile <code>networking.localCommands</code> approach.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Helium hotplug crash mitigated</strong>
+              <span>Added <code>--disable-gpu-watchdog</code> wrapper to prevent Chromium from killing the GPU process during slow display reconfiguration.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>SSH control-master socket cleanup</strong>
+              <span>Systemd user timer probes stale sockets and unlinks dead ones, fixing multiplexing warnings after OOM/suspend.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong><code>/tmp</code> tmpfs capped at 16 GiB</strong>
+              <span>Prevents runaway Go/dev temp files from consuming the whole RAM pool via a static systemd mount unit.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>DNS local zones extracted</strong>
+              <span>Refactored local subdomain configuration into <code>dns-local.nix</code> for clarity and maintainability.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>File-and-image-renamer wired</strong>
+              <span>New health dashboard exposed behind Caddy/Gatus with Pocket ID SSO.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Overview service exposed</strong>
+              <span>Added Caddy vHost and Homepage tile for the new overview console.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>DNS migration to dnsblockd</h3>
+          <div class="where">modules/nixos/services/dns-blocker.nix, ROADMAP.md</div>
+          <p>
+            dnsblockd v2.0.0 has a recursive resolver (DoT/DoH/DNSSEC), but SystemNix still runs the split architecture
+            (unbound on :53 + dnsblockd as block-page HTTP only). Gaps remain: local zone support, upstream DoT forwarding,
+            and LAN ACLs. Phase 1 (allowlist/extraction) is done; Phases 2a–4 are pending upstream work or config changes.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>Monitor365 agent</h3>
+          <div class="where">modules/nixos/services/monitor365.nix</div>
+          <p>
+            Server and UI are healthy; agent was crashing due to an upstream Rust panic/Axum 0.7 route issue. Visibility
+            is now restored, but the underlying agent panic may still need an upstream fix or dependency bump before the
+            collector is fully reliable.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>Deploy pipeline</h3>
+          <div class="where">deploy.sh, modules/nixos/system</div>
+          <p>
+            <code>deploy.sh</code> now runs <code>systemctl reset-failed</code> before <code>nh os switch</code> to avoid
+            <code>start-limit-hit</code> activation failures. This is a mitigation, not a root-cause fix. The pre-deploy
+            check and post-deploy smoke test are in place but need real-deploy validation.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>Memory accounting</h3>
+          <div class="where">boot.nix, modules/nixos/services/*.nix</div>
+          <p>
+            <code>user-1000.slice</code> now has <code>MemoryHigh=56G; MemoryMax=64G</code>, oomd is tuned, and MGLRU thrash
+            protection is enabled. However, individual service quotas still sum to more than available RAM, and GPUActive
+            is not counted in standard tools.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>GPUActive visibility</h3>
+          <div class="where">monitoring stack, DMS widget</div>
+          <p>
+            The <code>GPUActive</code> counter in <code>/proc/meminfo</code> is the only reliable signal. Some dashboards
+            may show it, but it is not integrated into Gatus/SigNoz as a first-class metric with alerts.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>OIDC SSO</h3>
+          <div class="where">pocket-id.nix, forgejo.nix, immich.nix, gatus-config.nix</div>
+          <p>
+            Layer 1 native OIDC works for Forgejo, Immich, and Gatus. Layer 2 oauth2-proxy protects the rest. Single
+            Logout (SLO) is only partial — Layer 1 apps keep their own sessions and do not participate in coordinated logout.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>Hermes</h3>
+          <div class="where">modules/nixos/services/hermes.nix</div>
+          <p>
+            Service is configured with the active pip extras. Manual steps remain: SSH deploy key and fallback model setup.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">In Progress</span>
+          <h3>File & Image Renamer</h3>
+          <div class="where">modules/nixos/services/file-and-image-renamer.nix</div>
+          <p>
+            Caddy/Gatus/Pocket ID wiring is complete. Deployment and real-world validation are pending the next switch.
+          </p>
+        </div>
+
+        <h2 id="not-started"><span class="num">03</span>Not Started</h2>
+
+        <div class="card">
+          <h4>BTRFS <code>/data</code> subvolume migration</h4>
+          <p><code>/data</code> is currently BTRFS toplevel (subvolid=5) and is NOT snapshotted. Need to migrate to a <code>@data</code> subvolume with retention policy.</p>
+        </div>
+        <div class="card">
+          <h4>Off-site backup</h4>
+          <p>No BorgBackup or other off-site DR exists. Existential risk for the whole homelab.</p>
+        </div>
+        <div class="card">
+          <h4>Firewall deny-by-default</h4>
+          <p>All inbound is currently allowed. Need a deny-by-default firewall with explicit service holes.</p>
+        </div>
+        <div class="card">
+          <h4>Pi 3 DNS failover</h4>
+          <p>Hardware not purchased. Plan is to run a secondary resolver on rpi3-dns for LAN redundancy.</p>
+        </div>
+        <div class="card">
+          <h4>Jan llama-server respawn fix</h4>
+          <p>Spawns 1.2 GB processes every 1–3 minutes. Needs root-cause fix in the Jan module or service config.</p>
+        </div>
+        <div class="card">
+          <h4>Memory quota right-sizing</h4>
+          <p>Audit every <code>MemoryMax</code> and <code>MemoryHigh</code> against the real ~43 GiB available after GPUActive.</p>
+        </div>
+        <div class="card">
+          <h4>GPU driver/firmware triage</h4>
+          <p>Determine whether the 51+ GiB GPUActive is a driver bug or an inherent Strix Halo unified-memory behavior.</p>
+        </div>
+        <div class="card">
+          <h4>AppArmor / sandboxing</h4>
+          <p>Security hardening beyond systemd <code>harden</code> is not yet implemented.</p>
+        </div>
+        <div class="card">
+          <h4>Darwin Home Manager parity</h4>
+          <p>Blocked by 256 GB SSD at 90%+ full. Minimal HM config; no desktop/editor/theme parity with NixOS.</p>
+        </div>
+        <div class="card">
+          <h4>SigNoz module split</h4>
+          <p><code>modules/nixos/services/signoz.nix</code> is 705 lines and <code>forgejo.nix</code> is 583 lines. Should split into smaller modules.</p>
+        </div>
+        <div class="card">
+          <h4>Community upstream contributions</h4>
+          <p>ROADMAP.md lists nixpkgs/Home Manager PRs that should be opened/pursued.</p>
+        </div>
+
+        <h2 id="fucked"><span class="num">04</span>Totally Fucked Up</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>GPUActive memory crisis</h3>
+          <div class="where">evo-x2, amdgpu, /proc/meminfo GPUActive</div>
+          <p>
+            128 GiB physical RAM → ~94 GiB visible → 51+ GiB consumed by GPUActive (unreclaimable, GPUReclaim=0).
+            Standard tools (<code>free</code>, <code>htop</code>) do not show this breakdown, so the system appears to have
+            "mysterious" usage. The TTM pool is configured with a 112 GiB limit, exceeding visible RAM.
+          </p>
+          <div class="callout callout-warning">
+            <strong>Why it matters</strong>
+            This is the root cause of the chronic OOM pressure, oomd kills, service crash-loops, and deploy failures.
+            Until GPUActive is understood and bounded, every other mitigation is a band-aid.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>MemoryMax overcommit</h3>
+          <div class="where">systemd service definitions</div>
+          <p>
+            Sum of service <code>MemoryMax</code> quotas exceeds the ~43 GiB actually available after GPUActive.
+            The quotas were designed for a system with ~94 GiB free, not one where the GPU already owns half.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Mitigation</strong>
+            Right-size every quota. Start with a <code>scripts/memory-audit.sh</code> that sums quotas against
+            <code>MemTotal - GPUActive</code> and flags overcommit.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3><code>reset-failed</code> is load-bearing</h3>
+          <div class="where">deploy.sh</div>
+          <p>
+            The deploy script now runs <code>systemctl reset-failed</code> (system + user) before every switch because
+            services chronically crash-loop into <code>start-limit-hit</code>. This masks the real instability.
+          </p>
+          <div class="callout callout-warning">
+            <strong>Risk</strong>
+            If a service is legitimately broken, reset-failed allows the deploy to proceed anyway, potentially leaving
+            the system in a worse state.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>No off-site backup</h3>
+          <div class="where">BTRFS /data, source code, secrets</div>
+          <p>
+            A single disk failure, ransomware event, or catastrophic BTRFS corruption would wipe the homelab. No
+            BorgBackup, rsync.net, or cloud DR exists.
+          </p>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>Pocket ID provisioning cascade</h3>
+          <div class="where">pocket-id-provision.service</div>
+          <p>
+            Slow Pocket ID startup causes many downstream services to start simultaneously, spiking memory during boot
+            and contributing to the OOM chain. Ordering and resource constraints need review.
+          </p>
+        </div>
+
+        <h2 id="improve"><span class="num">05</span>What We Should Improve</h2>
+
+        <div class="card card-solution">
+          <h4>1. Make GPUActive impossible to ignore</h4>
+          <p>
+            Add a DMS widget, a Gatus check, and a SigNoz metric that surfaces <code>GPUActive</code> from
+            <code>/proc/meminfo</code> with a clear alert when it crosses a threshold (e.g., 40 GiB).
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>2. Right-size memory quotas</h4>
+          <p>
+            Write a memory-audit script and adjust every <code>MemoryMax</code>/<code>MemoryHigh</code> to fit the
+            real available pool. Add <code>RestartSec=5</code> and <code>RestartSteps=3</code> to
+            <code>serviceDefaults</code> to reduce crash-loop thundering herds.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>3. Replace <code>reset-failed</code> with health-gated deploy</h4>
+          <p>
+            Instead of blindly resetting failed units, only reset specific units that the pre-deploy check has verified
+            are safe to reset. Log any unexpected failures and abort the deploy.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>4. Stagger service startup</h4>
+          <p>
+            Add <code>After=</code> / <code>RequiresMountsFor=</code> and memory-ordered targets so heavy services
+            (SigNoz, Immich, ClickHouse) do not all start at once after Pocket ID.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>5. Off-site backup now</h4>
+          <p>
+            Provision a Hetzner StorageBox (or similar), set up BorgBackup via sops-managed SSH key, and back up
+            <code>/data</code>, <code>~</code>, and critical state dirs nightly. This is higher priority than most
+            feature work.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>6. Fix the real agent crash</h4>
+          <p>
+            Restoring visibility is good, but the Monitor365 agent still has an upstream Rust panic. Either fix the
+            Axum 0.7 route issue, downgrade the dependency, or replace the agent's metrics path with a simpler health
+            check until upstream is stable.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>7. Stop building from source on Darwin</h4>
+          <p>
+            The 256 GB SSD is 90%+ full. Audit every Darwin package and avoid any source build. Cache heavy packages
+            on the NixOS host where possible.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>8. Split the largest modules</h4>
+          <p>
+            <code>signoz.nix</code> and <code>forgejo.nix</code> are too large. Extract helpers, OIDC setup scripts, and
+            service definitions into separate files to reduce merge conflict risk and review burden.
+          </p>
+        </div>
+
+        <h2 id="top25"><span class="num">06</span>Top #25 Things We Should Get Done Next</h2>
+        <p class="hero-subtitle">Sorted by impact. P0 = blocking operational stability.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Priority</th>
+                <th>Task</th>
+                <th>Why It Matters</th>
+                <th>Owner</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>Reboot evo-x2 and verify clean boot</td>
+                <td>Validates all recent boot-race fixes and gives a known-good starting point.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>Deploy current master with <code>nix run .#deploy</code></td>
+                <td>~2+ commits undeployed; must verify reset-failed + pre-deploy checks work in production.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>Write <code>scripts/memory-audit.sh</code></td>
+                <td>Quantifies MemoryMax overcommit against real available RAM.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>Right-size all service memory quotas</td>
+                <td>Prevents the chronic OOM chain that kills services and blocks deploys.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><span class="badge badge-critical">P0</span></td>
+                <td>Set up BorgBackup to Hetzner StorageBox</td>
+                <td>Off-site DR is missing; single disk failure = total loss.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Surface GPUActive in Gatus / DMS / SigNoz</td>
+                <td>Makes the #1 resource consumer visible to monitoring and alerting.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Investigate amdgpu GPUActive root cause</td>
+                <td>Determine if driver/firmware update helps or if this is inherent Strix Halo behavior.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Fix Monitor365 upstream agent panic</td>
+                <td>Visibility is restored but the collector may still crash.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Add <code>RestartSec</code> / <code>RestartSteps</code> to serviceDefaults</td>
+                <td>Reduces thundering-herd restarts after transient failures.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Stagger heavy service startup</td>
+                <td>Prevents simultaneous memory spikes after Pocket ID provisioning.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Replace blind reset-failed with health-gated reset</td>
+                <td>Stops masking real failures while still allowing deploys.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td><span class="badge badge-high">P1</span></td>
+                <td>Implement firewall deny-by-default</td>
+                <td>Current all-inbound-allowed posture is a security risk.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Migrate BTRFS <code>/data</code> to <code>@data</code> subvolume</td>
+                <td>Enables snapshots and retention for the data partition.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>DNS migration Phase 2a: upstream DoT forwarding</td>
+                <td>Needed before dnsblockd can replace unbound.</td>
+                <td>upstream</td>
+              </tr>
+              <tr>
+                <td>15</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Pi 3 DNS failover hardware + config</td>
+                <td>LAN DNS redundancy for when evo-x2 is down.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>16</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Fix Jan llama-server respawn</td>
+                <td>1.2 GB respawns every 1–3 min waste RAM and pressure.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>17</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Complete Hermes SSH deploy key + fallback model</td>
+                <td>Unblocks autonomous deploys for Hermes.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>18</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Verify Pocket ID email sending</td>
+                <td>SMTP is wired but untested; needed for passkey recovery and notifications.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>19</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Split signoz.nix into focused modules</td>
+                <td>705 lines is too large; reduces review risk.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>20</td>
+                <td><span class="badge badge-medium">P2</span></td>
+                <td>Split forgejo.nix into focused modules</td>
+                <td>583 lines; OIDC setup and service config can be separate.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>21</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>Darwin HM parity audit</td>
+                <td>Blocked by disk space, but a gap analysis should be done.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>22</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>AppArmor / sandboxing for key services</td>
+                <td>Defense in depth beyond systemd harden.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>23</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>NPU utilization monitoring</td>
+                <td>Strix Halo has an NPU that is currently unmonitored.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>24</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>Voice agents re-enable</td>
+                <td>Currently disabled due to complex native deps.</td>
+                <td>lars</td>
+              </tr>
+              <tr>
+                <td>25</td>
+                <td><span class="badge badge-low">P3</span></td>
+                <td>Open upstream nixpkgs/Home Manager PRs</td>
+                <td>Contribute fixes back upstream per ROADMAP.md.</td>
+                <td>lars</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="question"><span class="num">07</span>Top #1 Question I Cannot Figure Out Myself</h2>
+        <div class="question-box">
+          <h3>Is the 51+ GiB GPUActive on Strix Halo a driver/firmware bug we can fix with a kernel or amdgpu update, or is it an inherent architectural behavior of unified-memory APUs that we must design around forever?</h3>
+          <p>
+            Everything in the codebase treats GPUActive as an observed fact: we read it from <code>/proc/meminfo</code>, we
+            cap other services around it, and we warn about it. But the codebase cannot answer whether this memory is
+            actually in use by the GPU, leaked by the driver, or reserved by firmware. A definitive answer requires:
+          </p>
+          <ul>
+            <li>Testing on a newer kernel (<code>linuxPackages_latest</code>) or amdgpu firmware,</li>
+            <li>Comparing with Windows behavior on the same hardware,</li>
+            <li>Reading TTM/TTM pool debugfs counters, and</li>
+            <li>Possibly checking AMD errata or Mesa bug trackers.</li>
+          </ul>
+          <p>
+            Until this is known, every memory decision is a bet. If it is a bug, we patch or upgrade. If it is
+            architecture, we must permanently reserve ~50 GiB from service planning and document it as non-negotiable.
+          </p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-07-04 10:23 CEST &middot; Working tree: master @ 38d3f965 + uncommitted Monitor365 Agent visibility fix
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
