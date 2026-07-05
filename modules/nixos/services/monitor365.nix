@@ -171,9 +171,6 @@ _: {
     '';
 
     serverConfig = pkgs.writeText "monitor365-server.toml" ''
-      database_url = "${cfg.server.databaseUrl}"
-      listen_addr = "${cfg.server.listenAddr}"
-      pool_size = ${toString cfg.server.poolSize}
       request_timeout_secs = ${toString cfg.server.requestTimeoutSecs}
       rate_limit_max_requests = ${toString cfg.server.rateLimitMaxRequests}
       rate_limit_window_secs = ${toString cfg.server.rateLimitWindowSecs}
