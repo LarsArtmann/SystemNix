@@ -693,10 +693,11 @@
           <h3>Deploy smoke test still broken</h3>
           <div class="where">scripts/deploy.sh · post-deploy-check.sh path mismatch</div>
           <p>
-            Every deploy prints: <code>bash: post-deploy-check.sh: No such file or directory</code>.
-            The smoke test works standalone (<code>nix run .#post-deploy-check</code>) but the
-            deploy script references a wrong Nix store path. Silent failures go undetected after
-            every deploy. One-line fix in the deploy script.
+            Every deploy prints:
+            <code>bash: post-deploy-check.sh: No such file or directory</code>. The smoke test works
+            standalone (<code>nix run .#post-deploy-check</code>) but the deploy script references a
+            wrong Nix store path. Silent failures go undetected after every deploy. One-line fix in
+            the deploy script.
           </p>
         </div>
 
@@ -789,8 +790,9 @@
           <p>
             After we killed the first BDD test binary (PID 1108948, 6h at 98.6% CPU), a NEW one
             spawned (PID 2747185, 129% CPU for 7.5 min). This is not a production service — it's a
-            Rust integration test binary from <code>~/projects/monitor365/</code>. Something keeps
-            launching these. Likely a watch/build tool or editor integration.
+            Rust integration test binary from
+            <code>~/projects/monitor365/</code>. Something keeps launching these. Likely a
+            watch/build tool or editor integration.
           </p>
         </div>
 
@@ -868,8 +870,8 @@
           <h4>Run nix-gc manually — disk grew 4% in 5 hours</h4>
           <p>
             At 85% root disk with 114 GB Nix store and weekly GC, the disk will fill before the next
-            scheduled cleanup. Run <code>nix-collect-garbage -d</code> or trigger the nix-gc timer
-            manually.
+            scheduled cleanup. Run
+            <code>nix-collect-garbage -d</code> or trigger the nix-gc timer manually.
           </p>
         </div>
 
@@ -885,9 +887,9 @@
         <div class="card card-warning">
           <h4>Disable or limit coredump storage</h4>
           <p>
-            15 coredumps in 24h, storage full. Either <code>Storage=none</code> or
-            <code>Storage=external</code> with a size cap. SigNoz + journald already capture crash
-            info.
+            15 coredumps in 24h, storage full. Either
+            <code>Storage=none</code> or <code>Storage=external</code> with a size cap. SigNoz +
+            journald already capture crash info.
           </p>
         </div>
 
@@ -1039,7 +1041,9 @@
               <tr>
                 <td>15</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Hermes: SSH deploy key + fallback model</strong></td>
+                <td>
+                  <strong>Hermes: SSH deploy key + fallback model</strong>
+                </td>
                 <td>15 min</td>
                 <td>Hermes git access + AI fallback</td>
               </tr>

@@ -514,11 +514,11 @@
           <h1>Monitor365 OOM Diagnosis — Not a Panic, a systemd-oomd Kill</h1>
           <p class="hero-subtitle">
             The TODO_LIST.md diagnosis was wrong: Monitor365 is NOT crashing from an Axum route
-            syntax panic (routes are already Axum 0.8 <code>{param}</code> syntax). The SIGABRT
-            coredumps are OOM kills — systemd-oomd targets the agent because
-            <code>oom_score_adj=200</code> (systemd default for user services) + 12 GB virtual
-            memory = <code>oom_score=827</code>, the highest on the system. Nix-side fix applied:
-            MemoryMax 256M → 512M, OOMScoreAdjust -100. Pending deploy.
+            syntax panic (routes are already Axum 0.8
+            <code>{param}</code> syntax). The SIGABRT coredumps are OOM kills — systemd-oomd targets
+            the agent because <code>oom_score_adj=200</code> (systemd default for user services) +
+            12 GB virtual memory = <code>oom_score=827</code>, the highest on the system. Nix-side
+            fix applied: MemoryMax 256M → 512M, OOMScoreAdjust -100. Pending deploy.
           </p>
         </div>
 
@@ -750,8 +750,9 @@
           <p>
             The agent is STILL being killed. The fix is written but not deployed. Each kill
             generates a coredump. 44 coredumps total in 24h. The agent allocates 12 GB virtual
-            memory with <code>oom_score_adj=200</code>, making it the #1 system kill target. Until
-            the deploy lands with <code>OOMScoreAdjust=-100</code>, this continues.
+            memory with
+            <code>oom_score_adj=200</code>, making it the #1 system kill target. Until the deploy
+            lands with <code>OOMScoreAdjust=-100</code>, this continues.
           </p>
         </div>
 
@@ -878,7 +879,9 @@
               <tr>
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td><strong>Kill BDD test PID 2747185 + cargo test PID 2747166</strong></td>
+                <td>
+                  <strong>Kill BDD test PID 2747185 + cargo test PID 2747166</strong>
+                </td>
                 <td>1 min</td>
                 <td>Recover 105% CPU</td>
               </tr>
@@ -957,7 +960,9 @@
               <tr>
                 <td>13</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td><strong>Hermes: SSH deploy key + fallback model</strong></td>
+                <td>
+                  <strong>Hermes: SSH deploy key + fallback model</strong>
+                </td>
                 <td>15 min</td>
                 <td>Hermes git access</td>
               </tr>

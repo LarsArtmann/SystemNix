@@ -908,9 +908,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <div class="where">platforms/nixos/system/boot.nix · All service MemoryMax values</div>
           <p>
             Extensive mitigations deployed (oomd, MGLRU, user slice limits, per-service MemoryMax,
-            watchdog, GPUActive monitoring) but the <strong>root cause persists</strong>: GPUActive
-            consumes 51+ GiB (55%) of visible RAM with GPUReclaim=0. The TTM pool is configured at
-            112 GiB — exceeds the 94 GiB visible. Every heavy workload triggers the OOM chain.
+            watchdog, GPUActive monitoring) but the
+            <strong>root cause persists</strong>: GPUActive consumes 51+ GiB (55%) of visible RAM
+            with GPUReclaim=0. The TTM pool is configured at 112 GiB — exceeds the 94 GiB visible.
+            Every heavy workload triggers the OOM chain.
           </p>
         </div>
 
@@ -950,9 +951,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Monitor365 agent</h3>
           <div class="where">modules/nixos/services/monitor365.nix</div>
           <p>
-            Root cause: upstream Rust panic (Axum 0.7 route syntax <code>:param</code> →
-            <code>{param}</code>). Needs fix in <code>github:LarsArtmann/monitor365</code>. Nix-side
-            workaround not possible. Server works; agent crashes.
+            Root cause: upstream Rust panic (Axum 0.7 route syntax
+            <code>:param</code> → <code>{param}</code>). Needs fix in
+            <code>github:LarsArtmann/monitor365</code>. Nix-side workaround not possible. Server
+            works; agent crashes.
           </p>
         </div>
 
@@ -972,7 +974,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <div class="where">platforms/darwin/default.nix</div>
           <p>
             256GB SSD 90%+ full, 24GB RAM. HM config is minimal — no terminal/editor/theme parity
-            with NixOS. Blocked by disk constraint. <code>nix-collect-garbage</code> hangs.
+            with NixOS. Blocked by disk constraint.
+            <code>nix-collect-garbage</code> hangs.
           </p>
         </div>
 
@@ -1074,8 +1077,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           </div>
           <p>
             oomd kills at 50% pressure / 20s. Services die → restart → 5 restarts in 300s →
-            start-limit-hit → <code>reset-failed</code> needed on every deploy. This is the engine
-            that generates the problem, and it's baked into the architecture.
+            start-limit-hit →
+            <code>reset-failed</code> needed on every deploy. This is the engine that generates the
+            problem, and it's baked into the architecture.
           </p>
           <div class="callout callout-solution">
             <strong>Fix:</strong> Right-size quotas to actual usage, disable unused heavy services
@@ -1245,8 +1249,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Add RestartSec=5 + RestartSteps=3 to serviceDefaults</strong> — spaces out
-                  crash-loop restarts, prevents start-limit-hit cascade.
+                  <strong>Add RestartSec=5 + RestartSteps=3 to serviceDefaults</strong>
+                  — spaces out crash-loop restarts, prevents start-limit-hit cascade.
                 </td>
                 <td>30m</td>
                 <td><span class="badge badge-fixed">9/10</span></td>
@@ -1355,8 +1359,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>13</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Hermes: install SSH deploy key + set fallback model</strong> — manual
-                  steps blocking Hermes from being fully operational.
+                  <strong>Hermes: install SSH deploy key + set fallback model</strong>
+                  — manual steps blocking Hermes from being fully operational.
                 </td>
                 <td>15m</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
@@ -1495,9 +1499,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Are ollama (32G), whisper-asr (8G), and hermes (24G) actually used daily?</h3>
           <div class="where">64G of MemoryMax quota — 67% of all available RAM</div>
           <p>
-            These three services alone reserve <strong>64 GiB of MemoryMax quota</strong> — more
-            than the <strong>43 GiB actually available</strong> after GPUActive takes its 51 GiB
-            cut. They are the single biggest lever in the memory budget. But I don't know:
+            These three services alone reserve
+            <strong>64 GiB of MemoryMax quota</strong> — more than the
+            <strong>43 GiB actually available</strong> after GPUActive takes its 51 GiB cut. They
+            are the single biggest lever in the memory budget. But I don't know:
           </p>
           <ul style="margin: 0.5rem 0 1rem 1.5rem">
             <li>
@@ -1513,10 +1518,11 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           </ul>
           <p>
             The answer determines the entire memory strategy. If these three can be disabled or
-            on-demand, the memory crisis <strong>resolves overnight</strong> — we go from chronic
-            overcommitment to comfortable headroom. If they must all run simultaneously, we need a
-            fundamentally different approach (GPU memory partitioning, kernel param tuning, or
-            accepting the OOM chain as permanent).
+            on-demand, the memory crisis
+            <strong>resolves overnight</strong> — we go from chronic overcommitment to comfortable
+            headroom. If they must all run simultaneously, we need a fundamentally different
+            approach (GPU memory partitioning, kernel param tuning, or accepting the OOM chain as
+            permanent).
           </p>
           <div class="callout callout-solution">
             <strong>Why I can't figure this out:</strong> Only you know your daily workflow. The

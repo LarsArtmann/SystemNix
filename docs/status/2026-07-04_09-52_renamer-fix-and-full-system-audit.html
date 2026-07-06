@@ -618,9 +618,9 @@
         </div>
 
         <p>
-          <strong>Verified:</strong> <code>renamer.home.lan/status</code> returns HTTP 200 through
-          Caddy with correct security headers. System service is <code>active/running</code>, PID on
-          port 8086.
+          <strong>Verified:</strong>
+          <code>renamer.home.lan/status</code> returns HTTP 200 through Caddy with correct security
+          headers. System service is <code>active/running</code>, PID on port 8086.
         </p>
 
         <!-- ==================== FULLY DONE ==================== -->
@@ -773,9 +773,10 @@
           <h3>Post-Deploy Smoke Test Path Mismatch</h3>
           <div class="where">scripts/deploy.sh — references missing post-deploy-check.sh</div>
           <p>
-            Every deploy prints: <code>bash: post-deploy-check.sh: No such file or directory</code>.
-            The deploy script references a Nix store path that doesn't contain the script. The smoke
-            test exists (<code>nix run .#post-deploy-check</code>
+            Every deploy prints:
+            <code>bash: post-deploy-check.sh: No such file or directory</code>. The deploy script
+            references a Nix store path that doesn't contain the script. The smoke test exists
+            (<code>nix run .#post-deploy-check</code>
             works standalone) but the deploy integration is broken. Silent failures go undetected
             after deploy.
           </p>
@@ -861,8 +862,9 @@
           <h3>certutil stuck at 99.3% CPU for 33+ hours</h3>
           <div class="where">PID 12253 · started Jul 03 · 2013 minutes CPU time</div>
           <p>
-            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code> — the NSS CA cert
-            import from the DNS blocker module is stuck in an infinite loop. It has consumed
+            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code>
+            — the NSS CA cert import from the DNS blocker module is stuck in an infinite loop. It
+            has consumed
             <strong>33+ hours of CPU time</strong> at near-100% utilization. This is a significant
             contributor to the load average of 22+. The process is a zombie spin that should have
             completed in milliseconds.
@@ -905,7 +907,8 @@
           <h3>10 coredumps in 24 hours — coredump storage full</h3>
           <div class="where">systemd-coredump · "No space left on device"</div>
           <p>
-            <strong>4× Monitor365 agent SIGABRT</strong> (09:19:09–09:19:47)<br />
+            <strong>4× Monitor365 agent SIGABRT</strong>
+            (09:19:09–09:19:47)<br />
             <strong>6× Quickshell/DMS SIGABRT</strong> (09:23, 09:36, 09:46 — paired, likely deploy
             restart cycles)<br />
             Additionally: clickhouse, helium, and nix coredumps could NOT be stored — "No space left
@@ -1155,8 +1158,8 @@
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Hermes: install SSH deploy key + set fallback model</strong> — blocked on
-                  human action
+                  <strong>Hermes: install SSH deploy key + set fallback model</strong>
+                  — blocked on human action
                 </td>
                 <td>15 min</td>
                 <td>Hermes git access + AI fallback</td>
@@ -1274,10 +1277,10 @@
           <h4>Why is <code>certutil -N --empty-password</code> stuck in an infinite loop?</h4>
           <p>
             PID 12253 has been running
-            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code> at 99.3% CPU for
-            <strong>33+ hours</strong> (2013 minutes CPU time). This command should complete in
-            milliseconds — it initializes an empty NSS database. The only explanations I can think
-            of:
+            <code>certutil -d sql:/home/lars/.pki/nssdb -N --empty-password</code>
+            at 99.3% CPU for <strong>33+ hours</strong> (2013 minutes CPU time). This command should
+            complete in milliseconds — it initializes an empty NSS database. The only explanations I
+            can think of:
           </p>
           <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
             <li>
@@ -1294,11 +1297,11 @@
             </li>
           </ul>
           <p>
-            I cannot determine which without being able to <code>strace</code> or
-            <code>gdb</code> the process, which is blocked by the security policy. Killing it is
-            safe (the NSS DB either initialized successfully long ago, or never will). But
-            understanding <strong>why</strong> it hung would prevent recurrence — this service runs
-            on every deploy.
+            I cannot determine which without being able to
+            <code>strace</code> or <code>gdb</code> the process, which is blocked by the security
+            policy. Killing it is safe (the NSS DB either initialized successfully long ago, or
+            never will). But understanding <strong>why</strong> it hung would prevent recurrence —
+            this service runs on every deploy.
           </p>
           <div class="callout callout-warning">
             <strong>Context:</strong> This is the <code>nss-ca-cert-import</code> user service from

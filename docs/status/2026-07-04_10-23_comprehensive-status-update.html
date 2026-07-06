@@ -601,9 +601,9 @@
           <h4>Critical Context</h4>
           <p>
             evo-x2 is running in chronic memory pressure. GPUActive consumes 51+ GiB of the ~94 GiB
-            visible to Linux, and the sum of service <code>MemoryMax</code> quotas overcommits
-            available RAM by ~2×. The last deploy failed with
-            <code>ExitStatus(Exited(4))</code> because a service was in
+            visible to Linux, and the sum of service
+            <code>MemoryMax</code> quotas overcommits available RAM by ~2×. The last deploy failed
+            with <code>ExitStatus(Exited(4))</code> because a service was in
             <code>start-limit-hit</code>; the fix (<code>systemctl reset-failed</code>) is now
             load-bearing. A reboot and careful deploy are required before stability can be trusted.
           </p>
@@ -942,8 +942,9 @@
           </p>
           <div class="callout callout-solution">
             <strong>Mitigation</strong>
-            Right-size every quota. Start with a <code>scripts/memory-audit.sh</code> that sums
-            quotas against <code>MemTotal - GPUActive</code> and flags overcommit.
+            Right-size every quota. Start with a
+            <code>scripts/memory-audit.sh</code> that sums quotas against
+            <code>MemTotal - GPUActive</code> and flags overcommit.
           </div>
         </div>
 
@@ -952,9 +953,10 @@
           <h3><code>reset-failed</code> is load-bearing</h3>
           <div class="where">deploy.sh</div>
           <p>
-            The deploy script now runs <code>systemctl reset-failed</code> (system + user) before
-            every switch because services chronically crash-loop into <code>start-limit-hit</code>.
-            This masks the real instability.
+            The deploy script now runs
+            <code>systemctl reset-failed</code> (system + user) before every switch because services
+            chronically crash-loop into <code>start-limit-hit</code>. This masks the real
+            instability.
           </p>
           <div class="callout callout-warning">
             <strong>Risk</strong>
@@ -997,12 +999,10 @@
         <div class="card card-solution">
           <h4>2. Right-size memory quotas</h4>
           <p>
-            Write a memory-audit script and adjust every <code>MemoryMax</code>/<code
-              >MemoryHigh</code
-            >
-            to fit the real available pool. Add <code>RestartSec=5</code> and
-            <code>RestartSteps=3</code> to <code>serviceDefaults</code> to reduce crash-loop
-            thundering herds.
+            Write a memory-audit script and adjust every
+            <code>MemoryMax</code>/<code>MemoryHigh</code> to fit the real available pool. Add
+            <code>RestartSec=5</code> and <code>RestartSteps=3</code> to
+            <code>serviceDefaults</code> to reduce crash-loop thundering herds.
           </p>
         </div>
         <div class="card card-solution">
