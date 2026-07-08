@@ -66,6 +66,23 @@
     "branching-flow_2": {
       "flake": false,
       "locked": {
+        "lastModified": 1783488394,
+        "narHash": "sha256-3tzKLHs1Hl9QU96nc5+pOb+TpNtz/k/slz0CyPIxrAE=",
+        "ref": "master",
+        "rev": "82b0b263c7875f84570d6c4924828e09953e4c71",
+        "revCount": 2166,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
+      }
+    },
+    "branching-flow_3": {
+      "flake": false,
+      "locked": {
         "lastModified": 1783386192,
         "narHash": "sha256-lesawMm2HGYhiY6lDQsNeo4NPgfZ5I9lF2Vcp8u7Sh8=",
         "ref": "master",
@@ -99,8 +116,10 @@
     },
     "buildflow": {
       "inputs": {
+        "branching-flow": "branching-flow_2",
         "cmdguard": "cmdguard",
         "flake-parts": "flake-parts_2",
+        "go-auto-upgrade": "go-auto-upgrade",
         "go-branded-id": "go-branded-id_2",
         "go-finding": "go-finding_2",
         "go-nix-helpers": [
@@ -109,20 +128,23 @@
         "go-output": "go-output_2",
         "go-structure-linter": "go-structure-linter",
         "go-workflow-auditlog": "go-workflow-auditlog",
+        "golangci-lint-auto-configure": "golangci-lint-auto-configure",
+        "hierarchical-errors": "hierarchical-errors",
         "nixpkgs": [
           "nixpkgs"
         ],
+        "oxlint-auto-configure": "oxlint-auto-configure",
         "samber-do-auditlog": "samber-do-auditlog",
         "systems": "systems_2",
         "template-LICENSE": "template-LICENSE",
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1783485464,
-        "narHash": "sha256-OgBbaUkANPRGpAVSqNY/KsZwNUQgua7e9sG8v3i1/PY=",
+        "lastModified": 1783491389,
+        "narHash": "sha256-czgIlVfTvxdhk/9uX80wWlpeGG48Jj5FJNagihzDLWs=",
         "ref": "master",
-        "rev": "e65118bb6b29052b2b8838e143496ef5637fa8f2",
-        "revCount": 4310,
+        "rev": "0c3db8a4bf7cca079b73f1624a1e4940abdc135e",
+        "revCount": 4311,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -889,6 +911,23 @@
       }
     },
     "go-auto-upgrade": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783484799,
+        "narHash": "sha256-zkhX9mk5eqjwL/kn1FuFnWNtbBz1iSfhBYpvGgImXeg=",
+        "ref": "master",
+        "rev": "2a15ce15b73ecb6306b74d8d1c8eb4c164ed2ea7",
+        "revCount": 575,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
+      }
+    },
+    "go-auto-upgrade_2": {
       "inputs": {
         "cmdguard": "cmdguard_3",
         "flake-parts": "flake-parts_5",
@@ -2211,6 +2250,23 @@
       }
     },
     "golangci-lint-auto-configure": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783485485,
+        "narHash": "sha256-r0InW5b/5ptNIvvqcG31XTf3VCdVEZ0bv4FmGaLpJd0=",
+        "ref": "master",
+        "rev": "a8ff465da4247bf92d2c4a15424670bb0ee95e53",
+        "revCount": 716,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
+      }
+    },
+    "golangci-lint-auto-configure_2": {
       "inputs": {
         "flake-parts": "flake-parts_7",
         "go-nix-helpers": "go-nix-helpers_4",
@@ -2309,6 +2365,23 @@
       }
     },
     "hierarchical-errors": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783386196,
+        "narHash": "sha256-bLnlOBYBmECuCVsXJ6l+zdKfI4Ng+ZQufQUO2Xe/Xic=",
+        "ref": "master",
+        "rev": "52add473a58711aa8b6024044c237e2d4fb49b8b",
+        "revCount": 770,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
+      }
+    },
+    "hierarchical-errors_2": {
       "inputs": {
         "flake-parts": "flake-parts_8",
         "go-branded-id": "go-branded-id_8",
@@ -2950,6 +3023,23 @@
         "url": "ssh://git@github.com/LarsArtmann/overview"
       }
     },
+    "oxlint-auto-configure": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1783458327,
+        "narHash": "sha256-AYs5prc0xBsLWRe4LmIrShgYKcLLzCSupZnAIwvz67c=",
+        "ref": "master",
+        "rev": "cdf852168741159a3b3deb48ff55724b4dd6a89e",
+        "revCount": 156,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/oxlint-auto-configure"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/oxlint-auto-configure"
+      }
+    },
     "project-discovery-sdk": {
       "flake": false,
       "locked": {
@@ -3078,7 +3168,7 @@
     },
     "projects-management-automation": {
       "inputs": {
-        "branching-flow": "branching-flow_2",
+        "branching-flow": "branching-flow_3",
         "cmdguard": "cmdguard_5",
         "flake-parts": [
           "flake-parts"
@@ -3247,7 +3337,7 @@
         "file-and-image-renamer": "file-and-image-renamer",
         "flake-parts": "flake-parts_4",
         "flake-utils": "flake-utils",
-        "go-auto-upgrade": "go-auto-upgrade",
+        "go-auto-upgrade": "go-auto-upgrade_2",
         "go-branded-id": "go-branded-id_6",
         "go-error-family": "go-error-family_5",
         "go-filewatcher": "go-filewatcher",
@@ -3256,11 +3346,11 @@
         "go-output": "go-output_4",
         "go-structure-linter": "go-structure-linter_2",
         "gogenfilter": "gogenfilter_4",
-        "golangci-lint-auto-configure": "golangci-lint-auto-configure",
+        "golangci-lint-auto-configure": "golangci-lint-auto-configure_2",
         "helium": "helium",
         "herdr": "herdr",
         "hermes-agent": "hermes-agent",
-        "hierarchical-errors": "hierarchical-errors",
+        "hierarchical-errors": "hierarchical-errors_2",
         "home-manager": "home-manager",
         "homebrew-bundle": "homebrew-bundle",
         "homebrew-cask": "homebrew-cask",
