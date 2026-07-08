@@ -46,6 +46,11 @@ in {
         "noatime"
       ];
     };
+    # TRIM via mount option removed — continuous discard=async causes severe I/O latency on
+    # QLC NAND (Lexar NQ790: 253ms per TRIM op, 86 ops/sec, 17.7s BTRFS commit stalls).
+    # Periodic fstrim (enabled in configuration.nix) handles TRIM weekly without competing
+    # with host I/O. Root filesystem has never had discard=async and has been fine.
+    # See docs/status/2026-07-08_08-38_NVME-DISCARD-ASYNC-IO-CHOKE-INVESTIGATION.md
     "/data" = mkFilesystem {
       device = "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710";
       fsType = "btrfs";
@@ -53,7 +58,6 @@ in {
         "compress=zstd:3"
         "noatime"
         "ssd"
-        "discard=async"
         "space_cache=v2"
         "nofail"
       ];
@@ -66,12 +70,13 @@ in {
         "dmask=0077"
       ];
     };
+    # TRIM via mount option removed — same QLC discard issue as /data above.
+    # Periodic fstrim (configuration.nix) covers this filesystem.
     "/rust-cache" = mkFilesystem {
       device = "/dev/disk/by-partlabel/rust-cache";
       fsType = "ext4";
       options = [
         "noatime"
-        "discard"
         "nofail"
         "x-systemd.automount"
         "x-systemd.idle-timeout=10min"
