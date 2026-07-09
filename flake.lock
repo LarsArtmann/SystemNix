@@ -465,11 +465,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783533349,
-        "narHash": "sha256-yOVK0W05ZRwoeJlCA24qi0H4pA3wchCChGo8hoXbDbY=",
+        "lastModified": 1783534416,
+        "narHash": "sha256-1UhwU5Y3jihB4sYsy7/uUEGVIbzRGQsqX4x9L2HJI6Y=",
         "ref": "master",
-        "rev": "b1380f6474f2798b5893e3c9c9d292d8e123d95c",
-        "revCount": 462,
+        "rev": "d188000de09f42afda24bdb159cf27d9bbf87a0c",
+        "revCount": 463,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
@@ -2356,11 +2356,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783223803,
-        "narHash": "sha256-tm6T+BmxX03IV5m5YLR9RixTATCs/FXbJMjZa4kzsA8=",
+        "lastModified": 1783534908,
+        "narHash": "sha256-9izK5ouOSYUaHaK6uG/L5iDenLfR60ALqfhar3mrydQ=",
         "owner": "vikingnope",
         "repo": "helium-browser-nix-flake",
-        "rev": "a4d5eb6e4b8a44d84fd66fe6771c49b51369bf51",
+        "rev": "6e66fc2ba581315b714582deffd9489d3da04d78",
         "type": "github"
       },
       "original": {
@@ -2376,11 +2376,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783513377,
-        "narHash": "sha256-Ek7rsMb5VvWrHSQumAProAiiJYoveqTDQ4vWqO+X9YI=",
+        "lastModified": 1783557335,
+        "narHash": "sha256-Mv0kHI1VwK6IQorTkCeLML3zCzh5KqZyvfsizIN30YU=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "552aa8ca223908a2ee3b1058587d4b5a84828e71",
+        "rev": "36b2e2f5463139a284483732131ce44977881239",
         "type": "github"
       },
       "original": {
@@ -2451,11 +2451,11 @@
         "treefmt-nix": "treefmt-nix_9"
       },
       "locked": {
-        "lastModified": 1783526729,
-        "narHash": "sha256-Ar4mD0TuUqk/rvx3Vcc/+66F8evUT6aIhjhCNWkg9ms=",
+        "lastModified": 1783565643,
+        "narHash": "sha256-DdnzSx4/EQvUe6IIB/NcCifYqNc0UW1bkKgJD8ahhtE=",
         "ref": "master",
-        "rev": "d3976cfe110c31c3c0898af9872e56df40b90627",
-        "revCount": 775,
+        "rev": "8d418e910927387859368682747572c29d8ee2cd",
+        "revCount": 776,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/hierarchical-errors"
       },
@@ -2472,11 +2472,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783525612,
-        "narHash": "sha256-OEFYdbtG6Qy04KGteknnrx15Uo2XXkYVuUvBvFNEn+Q=",
+        "lastModified": 1783550008,
+        "narHash": "sha256-qbbZUk9IG9dLNwCPwdPBs6I5clxwugRpP+1YU+GPK20=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "1aac8895fea6fcabc6a0184c63a80fb2f99fd208",
+        "rev": "f4d01c1d87c7c2ec909549165d5a8338f1bd3315",
         "type": "github"
       },
       "original": {
@@ -2504,11 +2504,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783531459,
-        "narHash": "sha256-62lMeRPoZo8i01jkM1SluwlirI6KhpWWf0nbxspuX5I=",
+        "lastModified": 1783563614,
+        "narHash": "sha256-Tu3yoEaFnlOsQVIdSlVjUiqKhGAIaL2VJK1F25DlaUs=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "6563137647bcfa529ba3d1cc700722ef2fb8849e",
+        "rev": "417b156d4adc10fa3c16b6d66ec339831604102c",
         "type": "github"
       },
       "original": {
@@ -2996,11 +2996,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783521490,
-        "narHash": "sha256-lkqSc6UuBp77PRLDGbQjbv2COtqhxa9Pyc0hgiGBDAY=",
+        "lastModified": 1783565893,
+        "narHash": "sha256-gOVJwbFB502LzOC0pBJA96XHF1bPZimp+5Wdxo8erv8=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "fb2b62050a9ea226bfb7d209303d12e78d4298b6",
+        "rev": "a0a7c1b7d9ecda9469a2489e4637c44561e33957",
         "type": "github"
       },
       "original": {
