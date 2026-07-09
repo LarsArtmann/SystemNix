@@ -24,7 +24,11 @@ if nix run .#pre-deploy-check; then
 
   echo ""
   echo "=== Post-Deploy Smoke Test ==="
-  bash "$(dirname "$0")/post-deploy-check.sh" || echo "⚠ Some smoke checks failed — review above"
+  if nix run .#post-deploy-check; then
+    echo "✅ Post-deploy smoke test passed"
+  else
+    echo "⚠ Some smoke checks failed — review above"
+  fi
 else
   echo ""
   echo "❌ Deploy aborted — fix pre-deploy failures first"
