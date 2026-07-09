@@ -299,6 +299,10 @@ in {
         enable = true;
       };
 
+      gpu-active = {
+        enable = true;
+      };
+
       twenty = {
         enable = true;
       };
