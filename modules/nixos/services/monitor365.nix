@@ -163,10 +163,14 @@
           listenAddr = lib.mkDefault "0.0.0.0:${toString ports.monitor365-server}";
           port = lib.mkDefault ports.monitor365-server;
           dashboardUrl = lib.mkDefault "https://monitor.${domain}/ui/";
-          corsOrigins = lib.mkDefault [
-            "http://localhost:${toString ports.monitor365-server}"
-            "https://monitor.${domain}"
-          ];
+
+          # NOTE: corsOrigins intentionally NOT set here.  The upstream module
+          # emits it as MONITOR365_SERVER__CORS_ORIGINS (comma-separated string),
+          # but the server's Rust config parser expects a TOML sequence, not a
+          # string — causing a fatal parse error on startup.  CORS is unnecessary
+          # anyway: the WASM dashboard and API are served from the same origin
+          # behind Caddy (monitor.<domain>).  Fix the upstream module to use a
+          # config file for sequence types if CORS is ever needed.
 
           jwtSecretFile = lib.mkDefault config.sops.secrets.server_jwt_secret.path;
           environmentFile = lib.mkDefault config.sops.templates."monitor365-server-env".path;

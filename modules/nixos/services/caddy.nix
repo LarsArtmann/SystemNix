@@ -165,6 +165,14 @@ _: {
                 extraConfig = ''
                   ${tlsConfig}
                   ${commonConfig}
+
+                  # Prevent browser from caching entry-point files that reference
+                  # content-hashed assets. Without this, a stale cached
+                  # bootstrap.js references old hashes → SPA fallback returns
+                  # index.html (text/html) for missing .js files → MIME error.
+                  @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
+                  header @noCache Cache-Control "no-cache, no-store, must-revalidate"
+
                   reverse_proxy localhost:${toString ports.monitor365-server}
                 '';
               }

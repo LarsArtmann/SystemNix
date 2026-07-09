@@ -372,7 +372,15 @@ in {
               name = "signoz-wait-ready";
               runtimeInputs = [pkgs.curl pkgs.coreutils];
               text = ''
-                timeout 120 bash -c 'until curl -sf http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version > /dev/null 2>&1; do sleep 2; done'
+                end=$((SECONDS + 120))
+                while [ $SECONDS -lt $end ]; do
+                  if curl -sf http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version >/dev/null 2>&1; then
+                    exit 0
+                  fi
+                  sleep 2
+                done
+                echo "SigNoz did not become ready within 120s" >&2
+                exit 1
               '';
             });
             script = lib.getExe (pkgs.writeShellApplication {

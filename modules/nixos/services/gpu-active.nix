@@ -27,7 +27,7 @@ _: {
 
     gpuActiveMetrics = pkgs.writeShellApplication {
       name = "gpu-active-metrics";
-      runtimeInputs = [pkgs.gnugrep pkgs.coreutils];
+      runtimeInputs = [pkgs.gnugrep pkgs.gawk pkgs.coreutils];
       text = ''
         OUT="${textfileDir}/gpu_active.prom"
         TMP="''${OUT}.tmp"
