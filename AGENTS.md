@@ -206,6 +206,9 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `harden {}` + `/home` = silent data-access failure | `harden {}` defaults to `ProtectHome = true`, making `/home` an empty tmpfs. Services that read user data (e.g., crush-daily reading `~/.local/share/crush/.crush/crush.db`) silently find nothing — no crash, no error, just empty output for weeks. **Always** set `ProtectHome = false` + scoped `ReadOnlyPaths` for services that need user data. A pre-commit hook (`protect-home-audit`) now catches this pattern. The post-deploy smoke test (`nix run .#post-deploy-check`) verifies functional outcomes after deploy |
 | Package alias traps (monitor365) | `pkgs.monitor365` resolves to `monitor365-cli` (the **agent**), NOT `monitor365-server` (the symlinkJoin with bundled WASM UI + `UI_DIST_PATH` wrapper). Using the wrong package → server runs as API-only, `/ui/` returns 404, health check passes (API is alive), but dashboard is broken. Always verify which package attribute contains the runtime artifacts you need. The upstream overlay exposes all three: `monitor365`, `monitor365-server`, `monitor365-ui` |
 | Post-deploy smoke test | `nix run .#post-deploy-check` (or automatic in `deploy.sh`) verifies services are **functional**, not just alive: checks vHosts return expected HTML, API endpoints return expected JSON, and specific bug patterns (monitor365 UI body, crush-daily reports non-empty). Always run after deploy to catch silent failures early |
+| `discard=async` on QLC NAND = I/O latency death spiral | On the Lexar NQ790 (QLC NVMe), `discard=async` caused 253 ms discard latencies → 17.7 s BTRFS commit freezes → WDT hard reset. `df` reports free data space, but the drive can be choked by asynchronous TRIM. **Fix:** remove `discard=async` from BTRFS mounts; rely on `fstrim.timer` instead. See `docs/status/2026-07-08_*` reports and TODO_LIST.md Priority 0 |
+| `buildGoModule` silently drops unknown `env` attrs | nixpkgs' `buildGoModule` only forwards a whitelist of `env` attributes (`CGO_ENABLED`, `GOWORK`, `GOFLAGS`, `GOTOOLCHAIN`, `GO111MODULE`, `GOARCH`, `GOOS`). Arbitrary attrs like `GOEXPERIMENT`, `GOPROXY`, `GOPRIVATE` are **silently dropped**. Use `export VAR=value` in `preBuild` for anything else. This caused the `buildflow` silent empty binary bug |
+| `buildGoDir` swallows "build constraints exclude all Go files" | nixpkgs' `buildGoDir` catches build-constraint errors and returns 0, producing a silent empty output instead of failing. Defense: add a post-build assertion that `$out/bin/` is non-empty, especially when experimenting with `GOEXPERIMENT` |
 
 ---
 
@@ -216,6 +219,8 @@ nix flake check --no-build  # Validate syntax (fast)
 nix run .#deploy            # Build + deploy via nh
 nix fmt                     # treefmt + alejandra
 ```
+
+For contributor style, module templates, and verification commands, see [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md).
 
 ---
 

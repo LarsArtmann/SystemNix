@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-06-25 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-07-09 | **Scope:** Full codebase scan
 
 ---
 
@@ -67,7 +67,7 @@ _A brutally honest audit of every feature the project actually has._
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha, programmatic `mkGroup`/`mkService` tiles, 5 categories, `ALLOWED_HOSTS`, cache dir, conditional tiles per service |
 | Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
 | PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, port 8051, disabled in config |
-| SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 19 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics |
+| SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 18 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |
 | Twenty CRM | ✅ | `twenty.nix` | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan |
 | Dozzle (Docker log viewer) | ✅ | inline `configuration.nix` | OCI container, `logs.home.lan`, Docker socket mount, 300-line tail, running-only filter |
@@ -136,7 +136,7 @@ _A brutally honest audit of every feature the project actually has._
 | Git | ✅ | GPG signing, max compression, SSH multiplexing, HTTPS→SSH rewrite, Git Town aliases, LFS, `.crush` in global ignores |
 | Tmux | ✅ | Resurrect + yank plugins, custom SystemNix dev session, vi copy-mode, Catppuccin-themed status bar |
 | Fzf | ✅ | Fish/Zsh/Bash integration, reverse layout, rg-powered, colorScheme-driven colors |
-| Pre-commit hooks | ✅ | 9 hooks: gitleaks, trailing-whitespace, deadnix, statix, alejandra, nix-check, flake-lock-validate, shellcheck, check-merge-conflicts |
+| Pre-commit hooks | ✅ | 10 hooks: gitleaks, trailing-whitespace, deadnix, statix, alejandra, nix-check, flake-lock-validate, shellcheck, check-merge-conflicts, protect-home-audit |
 | Go environment | ✅ | GOPATH/GOPRIVATE/GONOSUMDB, `~/go/bin` in PATH, gopls without modernize |
 | Node.js/Bun/pnpm | ✅ | Via base.nix packages |
 
@@ -398,7 +398,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 |---------|--------|-------|
 | GitHub Actions: flake-update | ✅ | Weekly Mon 06:00 UTC, runs `nix flake update --commit-lock-file`, opens PR via `peter-evans/create-pull-request` |
 | GitHub Actions: nix-check | ✅ | On push/PR to master (Ubuntu) — `nix flake check --no-build --all-systems`, builds local packages, statix + deadnix linting, `nix fmt --check` |
-| Pre-commit hooks | ✅ | 9 hooks via `.pre-commit-config.yaml`: gitleaks, trailing-whitespace, deadnix, statix, alejandra, nix-check, flake-lock-validate, shellcheck, check-merge-conflicts |
+| Pre-commit hooks | ✅ | 10 hooks via `.pre-commit-config.yaml`: gitleaks, trailing-whitespace, deadnix, statix, alejandra, nix-check, flake-lock-validate, shellcheck, check-merge-conflicts, protect-home-audit |
 | Gitleaks | ✅ | Secret detection via `.gitleaks.toml` |
 | Statix checks | ✅ | Nix lint in flake checks |
 | Deadnix checks | ✅ | Dead code detection in flake checks |
@@ -467,16 +467,30 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 
 ### Architecture Decision Records (ADRs)
 
+SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and the earlier `docs/architecture/` set (5 records). The numbers overlap because the two directories evolved separately; treat them as separate namespaces.
+
+**Canonical ADRs (`docs/adr/`):**
+
 | ADR | Title | Decision |
 |-----|-------|----------|
-| ADR-001 | Go Workspace Sub-Module Nix Pattern | `mkPreparedSource` pattern for private Go repos with replace directives |
-| ADR-002 | GPU Memory Headroom for Niri | Reserve GPU memory for compositor (`OLLAMA_GPU_OVERHEAD`) |
-| ADR-003 | BindsTo vs Wants for Niri | `BindsTo` kills niri on deploy — use `Wants=` instead |
-| ADR-004 | PartOf vs BindsTo for Wallpaper | Historical (awww retired). DMS owns wallpapers natively. Kept for reference |
-| ADR-005 | Discord Notification Channel for SigNoz | Dedicated Discord channel for critical alert routing |
-| ADR-005b | `_local_deps` Pattern for Private Go Repos | Local replace directives for private Go module builds |
-| ADR-006 | Gatus Secret Injection | Environment file pattern for Discord webhook URL |
-| ADR-007 | Authelia → Pocket ID Migration | Migrated from Authelia to Pocket ID for passkey-based OIDC |
+| [ADR-001](./docs/adr/001-go-workspace-submodule-nix-pattern.md) | Go Workspace Sub-Module Nix Pattern | `mkPreparedSource` pattern for private Go repos with replace directives |
+| [ADR-002](./docs/adr/002-gpu-headroom-for-niri.md) | GPU Memory Headroom for Niri | Reserve GPU memory for compositor (`OLLAMA_GPU_OVERHEAD`) |
+| [ADR-003](./docs/adr/003-binds-to-vs-wants-niri.md) | BindsTo vs Wants for Niri | `BindsTo` kills niri on deploy — use `Wants=` instead |
+| [ADR-004](./docs/adr/004-partof-vs-bindsto-wallpaper.md) | PartOf vs BindsTo for Wallpaper | Historical (awww retired). DMS owns wallpapers natively. Kept for reference |
+| [ADR-005](./docs/adr/005-discord-notification-channel.md) | Discord Notification Channel for SigNoz | Dedicated Discord channel for critical alert routing |
+| [ADR-005b](./docs/adr/ADR-005-local-deps-pattern.md) | `_local_deps` Pattern for Private Go Repos | Local replace directives for private Go module builds |
+| [ADR-006](./docs/adr/006-gatus-secret-injection.md) | Gatus Secret Injection | Environment file pattern for Discord webhook URL |
+| [ADR-007](./docs/adr/007-authelia-to-pocket-id-migration.md) | Authelia → Pocket ID Migration | Migrated from Authelia to Pocket ID for passkey-based OIDC |
+
+**Platform / architecture ADRs (`docs/architecture/`):**
+
+| ADR | Title | Decision |
+|-----|-------|----------|
+| [ADR-001](./docs/architecture/adr-001-home-manager-for-darwin.md) | Home Manager for Darwin | Use Home Manager on macOS via nix-darwin integration |
+| [ADR-002](./docs/architecture/adr-002-cross-shell-alias-architecture.md) | Cross-Shell Alias Architecture | Single source of truth for aliases across Fish/Zsh/Bash |
+| [ADR-003](./docs/architecture/adr-003-ban-openzfs-on-macos.md) | Ban OpenZFS on macOS | OpenZFS causes kernel panics on macOS (rejected) |
+| [ADR-004](./docs/architecture/adr-004-secrets-management-sops-nix.md) | Secrets Management with sops-nix | Use age + SSH host keys for secret decryption |
+| [ADR-005](./docs/architecture/adr-005-niri-session-restore.md) | Niri Session Restore | Save and restore niri workspace/window state across crashes |
 
 ---
 
@@ -510,18 +524,18 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 
 | Category | Count |
 |----------|-------|
-| NixOS service modules | 39 |
+| NixOS service modules | 41 |
 | Custom packages | 24 |
 | Cross-platform programs | 20+ |
 | NixOS desktop components | 15+ |
 | macOS features | 25+ |
 | DNS stack components | 12 |
 | Validation scripts | 7 |
-| Flake apps + shell scripts | 29 |
+| Flake apps + shell scripts | 45 |
 | Architecture patterns | 7 |
-| ADRs | 8 |
+| ADRs | 13 |
 | GitHub Actions | 2 |
-| **Total enabled features** | **~155** |
+| **Total enabled features** | **~175** |
 | Planned/disabled | ~8 |
 | Known gaps | 11 |
 

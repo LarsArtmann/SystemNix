@@ -17,7 +17,8 @@ Documentation for the SystemNix cross-platform Nix configuration (macOS + NixOS)
 ## Key Documents
 
 - **AGENTS.md** (repo root) — AI agent guide with architecture, patterns, and commands
-- **README.md** (repo root) — Project overview, services table, and `just` command reference
+- **README.md** (repo root) — Project overview, services table, and Nix flake command reference
+- **docs/CONTRIBUTING.md** — Contributor setup, style rules, and verification commands
 - **architecture/** — ADRs (Architecture Decision Records), DNS guide, monitoring plans
 - **operations/manual-steps-after-deployment.md** — Post-deployment checklist
 

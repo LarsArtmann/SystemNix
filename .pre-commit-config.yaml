@@ -65,7 +65,7 @@ repos:
       - id: nix-check
         name: nix check (flake validation)
         entry: bash
-        args: [-c, "cd . && just validate"]
+        args: [-c, "nix flake check --no-build"]
         language: system
         files: \.nix$
         pass_filenames: false
@@ -132,7 +132,7 @@ repos:
 # - statix     (linter, 20+ rules)
 # - alejandra  (code formatter)
 # - shellcheck (shell script analysis)
-# - just       (task runner)
+# - nix flake check (validation)
 #
 # All hooks use `--check` mode to enforce standards.
 # To auto-fix issues manually, run:

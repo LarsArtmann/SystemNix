@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-08 (Sessions 154–158 consolidated after NVMe crash + buildflow silent-build investigation)
+**Updated:** 2026-07-09 (Documentation freshness pass: README, FEATURES, CONTRIBUTING, AGENTS gotchas, pre-commit justfile cleanup)
 **Last deploy:** 2026-07-05 (`26.11.20260705.d407951`)
 **Last commit:** 2026-07-08 (`4d75e83b` — NVMe discard=async status doc)
 
@@ -80,9 +80,9 @@
 
 ### Priority 1: Documentation Gaps (Discovered in Jul 8 Session)
 
-- [ ] **Document `discard=async` QLC gotcha in AGENTS.md** — The Jul 8 NVMe report identified `discard=async` as the root cause of severe I/O latency on QLC NAND (253ms discard latency → 17.7s BTRFS commit → system freeze). The existing `discard=async` gotcha entry only covers ext4 (boot emergency), not the QLC I/O choke. New gotcha needed.
-- [ ] **Document `buildGoModule` env attr filtering gotcha** — nixpkgs' `buildGoModule` silently drops unknown `env` attrs. Only `CGO_ENABLED`, `GOWORK`, `GOFLAGS`, `GOTOOLCHAIN`, `GO111MODULE`, `GOARCH`, `GOOS` are forwarded to the build sandbox. Arbitrary attrs like `GOEXPERIMENT`, `GOPROXY`, `GOPRIVATE` are silently dropped. Use `export VAR=value` in `preBuild` for anything else. **This caused the buildflow silent empty binary bug.** Not in AGENTS.md.
-- [ ] **Document `buildGoDir` silent-swallow behavior** — nixpkgs' `buildGoDir` catches "build constraints exclude all Go files" errors and treats them as non-fatal (returns 0). Designed for packages with optional build tags, but means a misconfigured `GOEXPERIMENT` produces a silent empty output instead of a build failure. Defense-in-depth: add post-build assertion that `$out/bin/` is non-empty.
+- [x] **Document `discard=async` QLC gotcha in AGENTS.md** — Added to AGENTS.md Non-Obvious Gotchas table on 2026-07-09.
+- [x] **Document `buildGoModule` env attr filtering gotcha** — Added to AGENTS.md Non-Obvious Gotchas table on 2026-07-09.
+- [x] **Document `buildGoDir` silent-swallow behavior** — Added to AGENTS.md Non-Obvious Gotchas table on 2026-07-09.
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
@@ -102,6 +102,7 @@
 - [x] **Archive old status reports** — moved 197 pre-June-22 files to `docs/status/archive/`. 13 current files remain (June 22-25: BTRFS crisis + DMS migration)
 - [x] **Create ROADMAP.md** — created with 6 themes: Reliability, Security, Desktop, Architecture, Upstream, AI/ML + deferred ideas
 - [x] **Create CHANGELOG.md** — created from git history, covers 2025-07 through 2026-06 with Keep a Changelog format
+- [x] **Documentation freshness pass** — README, FEATURES, docs/README, docs/CONTRIBUTING updated: retired Waybar/Dunst/Rofi for DMS, corrected counts (modules, packages, inputs, scripts, checks, alerts), replaced all `just` references with Nix flake commands, consolidated ADR directory references, fixed `.pre-commit-config.yaml` stale `just validate` hook
 
 ### Priority 5: Upstream Contributions
 

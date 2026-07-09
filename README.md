@@ -10,12 +10,12 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 |----------|-----------------|
 | **Languages** | Go 1.26, Node.js, Bun, Python 3.13, Rust |
 | **Cloud & Infra** | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker |
-| **Development** | Git, GitHub CLI, Git Town, JetBrains Toolbox, (editor of choice - NOT VS Code), Fish shell, tmux, Zellij |
-| **Desktop (NixOS)** | Niri (Wayland tiling), Waybar, SDDM, Rofi, Ghostty, Kitty, Dunst, swaylock |
+| **Development** | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij |
+| **Desktop (NixOS)** | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Sway (backup WM), Rofi (Sway fallback only) |
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI |
 | **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
-| **Monitoring** | SigNoz (19 alert rules, 6 dashboards), Gatus (38 health checks), ActivityWatch |
+| **Monitoring** | SigNoz (18 alert rules, 6 dashboards), Gatus (41+ health checks), ActivityWatch |
 | **Networking** | Caddy reverse proxy (TLS), Unbound DNS with 2.5M+ blocked domains, DNSSEC |
 | **Storage** | BTRFS with btrbk snapshots (daily), ZRAM swap, monthly scrub |
 
@@ -51,13 +51,13 @@ nix flake check --no-build  # Validate configuration syntax
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── modules/nixos/services/     # 39 NixOS service modules (auto-discovered, ~34 enabled)
-├── pkgs/                        # 5 custom packages (jscpd, govalid, netwatch, openaudible, aw-watcher-utilization)
+├── modules/nixos/services/     # 35 NixOS service modules + 6 desktop modules (auto-discovered, ~34 enabled)
+├── pkgs/                        # 7 custom package derivations (Go, Rust, Python, Node.js, AppImage) + dms-plugins/
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
-├── lib/                         # 8 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
+├── lib/                         # 10 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
 │   ├── common/                  # Shared across platforms (~80% of config)
-│   │   ├── home-base.nix        # Home Manager base (13 program modules)
+│   │   ├── home-base.nix        # Home Manager base (19 program modules)
 │   │   ├── programs/            # Fish, Zsh, Bash, Starship, Git, tmux, ...
 │   │   ├── packages/            # Cross-platform packages & fonts
 │   │   └── environment/         # Nix daemon settings
@@ -68,17 +68,17 @@ SystemNix/
 │   │   └── programs/            # Chrome policies, shell aliases
 │   └── nixos/                   # NixOS-specific
 │       ├── system/              # Boot, networking, BTRFS snapshots, DNS blocker
-│       ├── desktop/             # Niri, Waybar config, ssh-suspend-guard
+│       ├── desktop/             # Niri, DankMaterialShell (Quickshell), ssh-suspend-guard
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
-│       ├── programs/            # Rofi, swaylock, wlogout, Yazi, Zellij, Chromium
+│       ├── programs/            # Rofi (Sway backup), Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
-├── scripts/                     # 29 operational scripts (26 shell + 3 Python)
+├── scripts/                     # 36 operational scripts (shell + Python)
 └── docs/                        # Architecture decisions (ADRs), status reports, troubleshooting
 ```
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (38 health checks) + SigNoz (19 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (41+ health checks) + SigNoz (18 alert rules, 6 dashboards):
 
 | Service | Port | URL | Description |
 |---------|------|-----|-------------|
@@ -115,13 +115,12 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 
 ## NixOS Desktop
 
-- **Niri**: Scrollable-tiling Wayland compositor with 5 named workspaces, session save/restore
+- **DankMaterialShell (DMS / Quickshell)**: Desktop shell replacing Waybar, Dunst, wlogout, swaylock, and rofi — status bar, notifications, launcher, lock screen, power menu, clipboard, wallpaper
 - **Ghostty**: Primary terminal (GPU-accelerated, native Wayland)
 - **Kitty**: Backup terminal (GPU-accelerated, image display)
-- **Waybar**: Custom status bar with workspaces, media, weather, DNS stats, power menu
 - **SDDM**: Login manager with Catppuccin Mocha theme
 - **Theme**: Catppuccin Mocha across all applications (GTK, Qt, terminal, browser)
-- **Backup WM**: Sway configured as fallback
+- **Backup WM**: Sway configured as fallback (uses Rofi, not DMS)
 
 ## NixOS Hardware (evo-x2)
 
@@ -142,16 +141,19 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 nix flake check --no-build  # Validate configuration syntax (fast)
 nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel  # Quick eval
 nix run .#deploy            # Build and deploy via nh
+nix run .#pre-deploy-check  # Catch boot-breaking issues before switch
+nix run .#post-deploy-check # Verify services are functional after deploy
 nix fmt                     # Format code with treefmt + alejandra
 nix flake update            # Update flake inputs
 
 # Maintenance
 nix-collect-garbage -d      # Clean old generations
 scripts/health-check.sh     # System health check
-scripts/verify-deployment.sh # Pre-deployment validator
+scripts/verify-deployment.sh # Deployment readiness validator
 
 # DNS diagnostics
-scripts/dns-diagnostics.sh   # Full DNS diagnostics
+nix run .#dns-diagnostics   # Full DNS diagnostics (Linux)
+scripts/dns-diagnostics.sh   # Direct DNS diagnostics script
 
 # Service status checks
 scripts/status-report.sh     # Comprehensive system status
@@ -174,7 +176,7 @@ Shared across macOS and NixOS via `platforms/common/programs/`:
 
 ## Flake Inputs
 
-53 inputs — key ones below:
+56 inputs — key ones below:
 
 | Input | Purpose |
 |-------|---------|
@@ -212,7 +214,7 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/P
 
 ### Pre-commit Hooks
 
-9 hooks configured via `.pre-commit-config.yaml`:
+10 hooks configured via `.pre-commit-config.yaml`:
 - **gitleaks** — secret detection
 - **alejandra** — Nix formatting
 - **deadnix** — dead code detection
@@ -222,12 +224,14 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/P
 - **flake-lock-validate** — lock file integrity
 - **shellcheck** — shell script linting
 - **check-merge-conflicts** — conflict marker detection
+- **protect-home-audit** — catches `harden {}` services that silently lose access to `/home`
 
 ## Documentation
 
 | Guide | Description |
 |-------|-------------|
 | [AGENTS.md](./AGENTS.md) | AI assistant guide and project conventions |
+| [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md) | Contributor setup, style, and verification commands |
 | [Architecture Decisions](./docs/architecture/) | ADRs for key design choices |
 | [Project Status](./docs/status/) | Development status reports |
 | [Troubleshooting](./docs/troubleshooting/) | Common issues and solutions |
@@ -264,10 +268,14 @@ scripts/dns-diagnostics.sh  # Full DNS diagnostics
 
 ## Contributing
 
+See [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md) for the full contributor guide, style rules, and verification commands.
+
+Quick checklist:
 1. Make changes in `platforms/common/` for cross-platform config
 2. Use platform-specific directories for platform differences
 3. Run `nix flake check --no-build` before committing
 4. Follow existing code style (2-space indentation for Nix)
+5. Install pre-commit hooks: `pre-commit install`
 
 ## License
 
