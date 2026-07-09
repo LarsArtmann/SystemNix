@@ -148,30 +148,30 @@ in {
             } ["dataforseo_api_key"]
           )
           # Server secrets — owned by dedicated system user
-          # monitor365_api_key: tenant API key used by both server (bootstrap)
-          # and agent (cloud sync).  The agent reads it via a sops template
-          # (monitor365-agent-env) owned by the desktop user.
+          # monitor365_api_key: tenant API key used by server (bootstrap),
+          # system agent (LoadCredential), and desktop agent (sops template).
           # In a multi-machine setup, each machine has its own sops file
           # but with the same tenant key value.
-          # cloud_auth_token: kept as separate sops secret for the agent's
+          # cloud_auth_token: separate sops secret for the desktop agent's
           # user service so it can read the value independently.
-          # Agent secret — owned by desktop user (user service)
-          // lib.optionalAttrs (svcEnabled "monitor365") (
+          # Desktop agent secret — owned by desktop user (user service)
+          // lib.optionalAttrs (svcEnabled "monitor365-desktop") (
             mkSecrets "monitor365.yaml"
             {
               owner = primaryUser;
               group = "users";
-              restartUnits = ["monitor365.service"];
+              restartUnits = ["monitor365-desktop.service"];
             }
             ["cloud_auth_token"]
           )
           # Server secrets — owned by dedicated system user
+          # Also restarts system agent when the API key changes.
           // lib.optionalAttrs (svcEnabled "monitor365-server") (
             mkSecrets "monitor365.yaml"
             {
               owner = "monitor365-server";
               group = "monitor365-server";
-              restartUnits = ["monitor365-server.service"];
+              restartUnits = ["monitor365-server.service" "monitor365.service"];
             }
             ["server_jwt_secret" "monitor365_api_key"]
           )
@@ -250,12 +250,12 @@ in {
               };
             };
           }
-          // lib.optionalAttrs (svcEnabled "monitor365") {
-            # Agent env: injects the tenant API key as MONITOR365__CLOUD__AUTH_TOKEN
-            "monitor365-agent-env" = {
+          // lib.optionalAttrs (svcEnabled "monitor365-desktop") {
+            # Desktop agent env: injects the tenant API key as MONITOR365__CLOUD__AUTH_TOKEN
+            "monitor365-desktop-agent-env" = {
               owner = primaryUser;
               group = "users";
-              restartUnits = ["monitor365.service"];
+              restartUnits = ["monitor365-desktop.service"];
               content = lib.generators.toKeyValue {} {
                 MONITOR365__CLOUD__AUTH_TOKEN = config.sops.placeholder.cloud_auth_token;
               };

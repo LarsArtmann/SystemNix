@@ -19,6 +19,7 @@
 
     monitor365-server = 3001;
     monitor365-metrics = 9191;
+    monitor365-desktop-metrics = 9192;
 
     openseo = 3002;
 

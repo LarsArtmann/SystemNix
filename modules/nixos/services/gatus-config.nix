@@ -321,7 +321,7 @@ _: {
                 alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
               })
             ]
-            ++ lib.optionals (config.services.monitor365-server.enable or false || config.services.monitor365.enable or false) [
+            ++ lib.optionals (config.services.monitor365-server.enable or false) [
               (mkHttpCheck {
                 name = "Monitor365 Server";
                 group = "Monitoring";
@@ -354,13 +354,25 @@ _: {
                 conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
                 alerts = discordAlert "Monitor365 external endpoint down — reverse proxy or TLS issue";
               })
+            ]
+            ++ lib.optionals (config.services.monitor365.enable or false) [
               (mkHttpCheck {
-                name = "Monitor365 Agent";
+                name = "Monitor365 System Agent";
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
                 interval = "60s";
                 conditions = ["[STATUS] == 200" "[BODY] == pat(*monitor365*)"];
-                alerts = discordAlert "Monitor365 agent down — local device telemetry collector not running";
+                alerts = discordAlert "Monitor365 system agent down — headless device telemetry collector not running";
+              })
+            ]
+            ++ lib.optionals (config.services.monitor365-desktop.enable or false) [
+              (mkHttpCheck {
+                name = "Monitor365 Desktop Agent";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.monitor365-desktop-metrics}/metrics";
+                interval = "60s";
+                conditions = ["[STATUS] == 200" "[BODY] == pat(*monitor365*)"];
+                alerts = discordAlert "Monitor365 desktop agent down — desktop telemetry collector not running (may be expected if user is logged out)";
               })
             ]
             ++ [

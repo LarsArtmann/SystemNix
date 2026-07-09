@@ -389,11 +389,25 @@ in {
         };
       };
 
-      # Monitor365 device monitoring agent (desktop collectors)
+      # Monitor365 system agent — headless collectors (survives logout)
       monitor365 = {
         enable = true;
         settings.collectors = {
-          # Privacy-sensitive collectors enabled
+          network.enabled = lib.mkDefault true;
+          battery.enabled = lib.mkDefault true;
+          system_info.enabled = lib.mkDefault true;
+          process.enabled = lib.mkDefault true;
+          location.enabled = lib.mkDefault true;
+          fs_event.enabled = lib.mkDefault true;
+          # bluetooth disabled (zbus::blocking panics inside tokio)
+          bluetooth.enabled = lib.mkDefault false;
+        };
+      };
+
+      # Monitor365 desktop agent — graphical session collectors
+      monitor365-desktop = {
+        enable = true;
+        settings.collectors = {
           screenshots.enabled = lib.mkDefault true;
           camera = {
             enabled = lib.mkDefault true;
@@ -403,19 +417,8 @@ in {
           mouse.enabled = lib.mkDefault true;
           clipboard.enabled = lib.mkDefault true;
           notifications.enabled = lib.mkDefault true;
-          location.enabled = lib.mkDefault true;
-          fs_event.enabled = lib.mkDefault true;
-          # bluetooth disabled (zbus::blocking panics inside tokio)
-          bluetooth = {
-            enabled = lib.mkDefault false;
-          };
-          # Standard collectors on by default
           app_usage.enabled = lib.mkDefault true;
-          network.enabled = lib.mkDefault true;
-          battery.enabled = lib.mkDefault true;
           afk_status.enabled = lib.mkDefault true;
-          system_info.enabled = lib.mkDefault true;
-          process.enabled = lib.mkDefault true;
         };
       };
 

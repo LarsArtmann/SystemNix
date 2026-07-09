@@ -2,11 +2,29 @@
 #
 # Heavy lifting (TOML generation, systemd services, hardening, collector
 # schema, bootstrap/SSO) is in the monitor365 flake:
-#   nix/module.nix       → services.monitor365 (agent)
-#   nix/server-module.nix → services.monitor365-server (control plane)
+#   nix/module.nix         → services.monitor365 (system/headless agent)
+#   nix/desktop-module.nix → services.monitor365-desktop (desktop/user agent)
+#   nix/server-module.nix  → services.monitor365-server (control plane)
 #
 # This file only adds SystemNix-specific defaults: port wiring, sops
-# secret wiring, desktop runtime deps, and pocket-id SSO integration.
+# secret wiring, runtime deps, and pocket-id SSO integration.
+#
+# ── Dual-Instance Architecture ──────────────────────────────
+# Two agent instances run simultaneously on each monitored machine:
+#
+#   1. System instance (services.monitor365)
+#      - systemd system service (multi-user.target, survives logout)
+#      - Dedicated 'monitor365' system user
+#      - Headless collectors: network, process, system_info, battery, etc.
+#      - Auth via LoadCredential (reads sops secret as root)
+#
+#   2. Desktop instance (services.monitor365-desktop)
+#      - systemd user service (graphical-session.target, stops at logout)
+#      - Runs as primaryUser via home-manager
+#      - Desktop collectors: screenshots, camera, keystrokes, etc.
+#      - Auth via environmentFile (sops template owned by primaryUser)
+#
+# Both sync to the local server as separate devices under the same tenant.
 #
 # ── Auth Model ──────────────────────────────────────────────
 # The server bootstrap generates (or reads from sops) ONE tenant-level
@@ -15,10 +33,10 @@
 # established via hardware fingerprint headers (x-device-fingerprint,
 # x-hardware-fingerprint, x-host-id) sent alongside the API key.
 #
-# The same sops secret value (monitor365_api_key) is materialised as
-# two separate sops entries with different owners:
-#   1. monitor365_api_key → owned by monitor365-server (bootstrap.apiKeyFile)
-#   2. cloud_auth_token   → owned by primaryUser (agent environmentFile)
+# The same sops secret value is materialised with different owners:
+#   1. monitor365_api_key → server (bootstrap.apiKeyFile)
+#                           + system agent (LoadCredential via authTokenFile)
+#   2. cloud_auth_token   → desktop agent (sops template env file)
 #
 # In a multi-machine deployment each machine would have its own sops
 # file but with the same tenant key value.  If a machine is compromised
@@ -34,51 +52,50 @@
     ports = (import ../../../lib/default.nix lib).ports;
     domain = config.networking.domain;
 
-    agentCfg = config.services.monitor365;
+    systemAgentCfg = config.services.monitor365;
+    desktopAgentCfg = config.services.monitor365-desktop;
     serverCfg = config.services.monitor365-server;
 
-    # Desktop monitoring deps — CLI tools the agent shells out to.
+    # Headless monitoring deps — CLI tools for system collectors.
+    systemDeps = with pkgs; [
+      procps
+      util-linux
+      coreutils
+      lm_sensors
+      networkmanager
+      bluez
+    ];
+
+    # Desktop monitoring deps — GUI tools for desktop collectors.
     desktopDeps = with pkgs; [
       xdotool
       xprintidle
       scrot
-      networkmanager
-      lm_sensors
-      bluez
-      util-linux
       coreutils
       procps
     ];
   in {
     imports = [
       inputs.monitor365.nixosModules.monitor365
+      inputs.monitor365.nixosModules.monitor365-desktop
       inputs.monitor365.nixosModules.monitor365-server
     ];
 
     config = lib.mkMerge [
-      # ── Agent defaults (desktop monitoring) ───────────────────
-      (lib.mkIf agentCfg.enable {
+      # ── System agent defaults (headless, survives logout) ──────
+      (lib.mkIf systemAgentCfg.enable {
         services.monitor365 = {
-          user = lib.mkDefault primaryUser;
-          group = lib.mkDefault "users";
-          serviceType = lib.mkDefault "user";
-          runtimeDeps = lib.mkDefault desktopDeps;
-
-          # Agent reads the tenant API key from a sops-managed env file.
-          # The env file sets MONITOR365__CLOUD__AUTH_TOKEN which the
-          # config crate picks up via env-var layering.
-          environmentFile = lib.mkDefault config.sops.templates."monitor365-agent-env".path;
+          runtimeDeps = lib.mkDefault systemDeps;
 
           settings = {
             device = {
-              name = lib.mkDefault config.networking.hostName;
-              type = lib.mkDefault "desktop";
+              name = lib.mkDefault "${config.networking.hostName} (system)";
+              type = lib.mkDefault "server";
             };
 
             storage = {
-              path = lib.mkDefault "${config.users.users.${primaryUser}.home}/.local/share/monitor365";
               encryption = lib.mkDefault true;
-              encryption_key_file = lib.mkDefault "${config.users.users.${primaryUser}.home}/.config/monitor365/storage_key";
+              encryption_key_file = lib.mkDefault "/var/lib/monitor365/storage_key";
               max_size_mb = lib.mkDefault (30 * 1024);
             };
 
@@ -89,8 +106,51 @@
             };
             activitywatch = lib.mkDefault null;
 
-            # Agent syncs to local server — endpoint only, no authTokenFile.
-            # The token is injected via environmentFile (sops template).
+            # System agent authenticates via LoadCredential — systemd reads
+            # the sops secret as root and provisions it to the service.
+            cloud = lib.mkIf serverCfg.enable {
+              endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
+              sync_interval_seconds = lib.mkDefault 60;
+              authTokenFile = lib.mkDefault config.sops.secrets.monitor365_api_key.path;
+            };
+          };
+        };
+      })
+
+      # ── Desktop agent defaults (graphical session) ────────────
+      (lib.mkIf desktopAgentCfg.enable {
+        services.monitor365-desktop = {
+          user = lib.mkDefault primaryUser;
+          group = lib.mkDefault "users";
+          runtimeDeps = lib.mkDefault desktopDeps;
+
+          # Desktop agent reads the tenant API key from a sops-managed
+          # env file owned by the desktop user.
+          environmentFile = lib.mkDefault config.sops.templates."monitor365-desktop-agent-env".path;
+
+          settings = {
+            device = {
+              id = lib.mkDefault "${config.networking.hostName}-desktop";
+              name = lib.mkDefault "${config.networking.hostName} (desktop)";
+              type = lib.mkDefault "desktop";
+            };
+
+            storage = {
+              path = lib.mkDefault "${config.users.users.${primaryUser}.home}/.local/share/monitor365-desktop";
+              encryption = lib.mkDefault true;
+              encryption_key_file = lib.mkDefault "${config.users.users.${primaryUser}.home}/.config/monitor365-desktop/storage_key";
+              max_size_mb = lib.mkDefault (30 * 1024);
+            };
+
+            logging.level = lib.mkDefault "warn";
+            metrics = {
+              enabled = lib.mkDefault true;
+              bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-desktop-metrics}";
+            };
+            activitywatch = lib.mkDefault null;
+
+            # Desktop agent syncs to local server — token injected via
+            # environmentFile (sops template).
             cloud = lib.mkIf serverCfg.enable {
               endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
               sync_interval_seconds = lib.mkDefault 60;
@@ -115,8 +175,8 @@
 
           bootstrap = {
             enable = lib.mkDefault true;
-            # Pre-provisioned tenant API key from sops — both server and
-            # agent read the same underlying value.
+            # Pre-provisioned tenant API key from sops — server, system agent,
+            # and desktop agent all read the same underlying value.
             apiKeyFile = lib.mkDefault config.sops.secrets.monitor365_api_key.path;
           };
 
@@ -127,9 +187,7 @@
           };
         };
 
-        # Grant pocket-id group to both agent user and server user when SSO is enabled
-        users.users.${primaryUser}.extraGroups =
-          lib.optional (serverCfg.sso.enable && (config.services.pocket-id.enable or false)) "pocket-id";
+        # Grant pocket-id group to server user for SSO secret access
         users.users.monitor365-server.extraGroups =
           lib.optional (serverCfg.sso.enable && (config.services.pocket-id.enable or false)) "pocket-id";
       })
