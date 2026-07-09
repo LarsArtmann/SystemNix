@@ -465,16 +465,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1783534416,
-        "narHash": "sha256-1UhwU5Y3jihB4sYsy7/uUEGVIbzRGQsqX4x9L2HJI6Y=",
-        "ref": "master",
-        "rev": "d188000de09f42afda24bdb159cf27d9bbf87a0c",
-        "revCount": 463,
+        "lastModified": 1782962600,
+        "narHash": "sha256-wzOr8IOHc+JLWJ/TnWI/XsJWG3GNnoGpL46xy4KkPTM=",
+        "ref": "refs/tags/v0.2.0",
+        "rev": "ad14663e3496d31b37a04c9c2b816038f2ca44e6",
+        "revCount": 438,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       },
       "original": {
-        "ref": "master",
+        "ref": "refs/tags/v0.2.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/dnsblockd"
       }
