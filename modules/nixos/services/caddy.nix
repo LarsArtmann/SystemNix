@@ -155,12 +155,12 @@ _: {
           // lib.optionalAttrs (config.virtualisation.oci-containers.containers ? dozzle) {
             "logs.${domain}" = protectedVHost "logs" ports.dozzle;
           }
-          // lib.optionalAttrs config.services.monitor365.enable {
+          // lib.optionalAttrs (config.services.monitor365.enable || config.services.monitor365-server.enable or false) {
             # When SSO is enabled, Monitor365 uses native OIDC via Pocket ID.
             # Plain reverse_proxy (like Forgejo/Gatus) avoids oauth2-proxy
             # forward-auth interfering with the SSO callback flow.
             "monitor.${domain}" =
-              if (config.services.monitor365.server.sso.enable or false)
+              if (config.services.monitor365-server.sso.enable or false)
               then {
                 extraConfig = ''
                   ${tlsConfig}

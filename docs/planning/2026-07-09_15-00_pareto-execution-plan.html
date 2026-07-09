@@ -1,479 +1,851 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>SystemNix Pareto Execution Plan — 2026-07-09</title>
-<style>
-:root {
-  --color-graphite: #0e0e10;
-  --color-graphite-2: #18181d;
-  --color-graphite-3: #16161a;
-  --color-bone: #f4f4f0;
-  --color-red: #ff6b6b;
-  --color-blue: #6eb5ff;
-  --color-yellow: #f4d35e;
-  --color-amber: #ffb347;
-  --surface: var(--color-graphite);
-  --surface-raised: var(--color-graphite-2);
-  --surface-sunken: var(--color-graphite-3);
-  --text: var(--color-bone);
-  --text-muted: rgba(244,244,240,0.72);
-  --text-faint: rgba(244,244,240,0.45);
-  --border: rgba(244,244,240,0.12);
-  --accent: var(--color-amber);
-  --problem: var(--color-red);
-  --solution: var(--color-blue);
-  --warning: var(--color-yellow);
-  --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; padding: 40px; }
-h1, h2, h3 { font-family: var(--font-heading); letter-spacing: -0.02em; }
-h1 { font-size: 2.2rem; margin-bottom: 0.2em; }
-h2 { font-size: 1.4rem; margin: 2em 0 0.8em; color: var(--accent); border-bottom: 1px solid var(--border); padding-bottom: 0.3em; }
-h3 { font-size: 1.1rem; margin: 1.5em 0 0.5em; }
-p { margin-bottom: 1em; color: var(--text-muted); }
-.hero { margin-bottom: 2em; }
-.hero-badge { display: inline-block; background: var(--accent); color: var(--color-graphite); padding: 4px 10px; font-weight: 800; font-size: 0.75rem; text-transform: uppercase; margin-bottom: 0.8em; }
-.hero-subtitle { font-size: 1.1rem; color: var(--text-muted); }
-.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin: 1.5em 0; }
-.stat-card { background: var(--surface-raised); padding: 20px; border-left: 4px solid var(--border); }
-.stat-card.stat-good { border-left-color: var(--solution); }
-.stat-card.stat-warn { border-left-color: var(--warning); }
-.stat-card.stat-bad { border-left-color: var(--problem); }
-.stat-value { font-size: 2rem; font-weight: 800; }
-.stat-label { color: var(--text-faint); font-size: 0.85rem; text-transform: uppercase; }
-table { width: 100%; border-collapse: collapse; margin: 1em 0; font-size: 0.9rem; }
-th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); vertical-align: top; }
-th { color: var(--text-faint); text-transform: uppercase; font-size: 0.75rem; font-weight: 700; }
-tr:hover td { background: var(--surface-sunken); }
-.badge { display: inline-block; padding: 2px 8px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
-.badge-critical { background: var(--problem); color: #000; }
-.badge-high { background: var(--accent); color: #000; }
-.badge-medium { background: var(--warning); color: #000; }
-.badge-low { background: var(--surface-sunken); color: var(--text); border: 1px solid var(--border); }
-.badge-fixed { background: var(--solution); color: #000; }
-.badge-feasible { background: var(--solution); color: #000; }
-.badge-blocked { background: var(--problem); color: #000; }
-.card { background: var(--surface-raised); padding: 16px; margin: 1em 0; border-left: 4px solid var(--border); }
-.card-problem { border-left-color: var(--problem); }
-.card-solution { border-left-color: var(--solution); }
-.card-warning { border-left-color: var(--warning); }
-.pareto { margin: 1em 0; }
-.pareto-row { display: flex; align-items: stretch; margin-bottom: 8px; }
-.pareto-pct { width: 80px; font-weight: 800; color: var(--accent); }
-.pareto-bar { flex: 1; background: var(--surface-raised); margin: 0 12px; position: relative; }
-.pareto-fill { height: 100%; background: var(--solution); }
-.pareto-label { padding: 6px 10px; color: var(--text-muted); font-size: 0.85rem; }
-.graph { margin: 2em 0; background: var(--surface-raised); padding: 16px; }
-.graph img { width: 100%; height: auto; }
-.toc { margin: 1em 0; }
-.toc a { color: var(--accent); text-decoration: none; margin-right: 16px; }
-.toc a:hover { text-decoration: underline; }
-</style>
-</head>
-<body>
-<div class="hero">
-  <div class="hero-badge">Pareto Execution Plan</div>
-  <h1>SystemNix — All TODOs Ranked by Impact / Effort</h1>
-  <p class="hero-subtitle">Generated 2026-07-09 06:36 &middot; 27 medium tasks &middot; 9 feasible in this session</p>
-</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SystemNix Pareto Execution Plan — 2026-07-09</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: rgba(244, 244, 240, 0.12);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        padding: 40px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--font-heading);
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: 2.2rem;
+        margin-bottom: 0.2em;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2em 0 0.8em;
+        color: var(--accent);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0.3em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 1.5em 0 0.5em;
+      }
+      p {
+        margin-bottom: 1em;
+        color: var(--text-muted);
+      }
+      .hero {
+        margin-bottom: 2em;
+      }
+      .hero-badge {
+        display: inline-block;
+        background: var(--accent);
+        color: var(--color-graphite);
+        padding: 4px 10px;
+        font-weight: 800;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        margin-bottom: 0.8em;
+      }
+      .hero-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+      }
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 16px;
+        margin: 1.5em 0;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        padding: 20px;
+        border-left: 4px solid var(--border);
+      }
+      .stat-card.stat-good {
+        border-left-color: var(--solution);
+      }
+      .stat-card.stat-warn {
+        border-left-color: var(--warning);
+      }
+      .stat-card.stat-bad {
+        border-left-color: var(--problem);
+      }
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+      }
+      .stat-label {
+        color: var(--text-faint);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1em 0;
+        font-size: 0.9rem;
+      }
+      th,
+      td {
+        padding: 10px 12px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+        vertical-align: top;
+      }
+      th {
+        color: var(--text-faint);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      tr:hover td {
+        background: var(--surface-sunken);
+      }
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: #000;
+      }
+      .badge-high {
+        background: var(--accent);
+        color: #000;
+      }
+      .badge-medium {
+        background: var(--warning);
+        color: #000;
+      }
+      .badge-low {
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: #000;
+      }
+      .badge-feasible {
+        background: var(--solution);
+        color: #000;
+      }
+      .badge-blocked {
+        background: var(--problem);
+        color: #000;
+      }
+      .card {
+        background: var(--surface-raised);
+        padding: 16px;
+        margin: 1em 0;
+        border-left: 4px solid var(--border);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+      .pareto {
+        margin: 1em 0;
+      }
+      .pareto-row {
+        display: flex;
+        align-items: stretch;
+        margin-bottom: 8px;
+      }
+      .pareto-pct {
+        width: 80px;
+        font-weight: 800;
+        color: var(--accent);
+      }
+      .pareto-bar {
+        flex: 1;
+        background: var(--surface-raised);
+        margin: 0 12px;
+        position: relative;
+      }
+      .pareto-fill {
+        height: 100%;
+        background: var(--solution);
+      }
+      .pareto-label {
+        padding: 6px 10px;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+      }
+      .graph {
+        margin: 2em 0;
+        background: var(--surface-raised);
+        padding: 16px;
+      }
+      .graph img {
+        width: 100%;
+        height: auto;
+      }
+      .toc {
+        margin: 1em 0;
+      }
+      .toc a {
+        color: var(--accent);
+        text-decoration: none;
+        margin-right: 16px;
+      }
+      .toc a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="hero">
+      <div class="hero-badge">Pareto Execution Plan</div>
+      <h1>SystemNix — All TODOs Ranked by Impact / Effort</h1>
+      <p class="hero-subtitle">
+        Generated 2026-07-09 06:36 &middot; 27 medium tasks &middot; 9 feasible in this session
+      </p>
+    </div>
 
-<div class="toc">
-  <a href="#summary">Summary</a>
-  <a href="#pareto">Pareto Breakdown</a>
-  <a href="#medium">Medium Plan</a>
-  <a href="#fine">Fine Plan (12-min)</a>
-  <a href="#graph">Execution Graph</a>
-  <a href="#blockers">Blockers</a>
-</div>
+    <div class="toc">
+      <a href="#summary">Summary</a>
+      <a href="#pareto">Pareto Breakdown</a>
+      <a href="#medium">Medium Plan</a>
+      <a href="#fine">Fine Plan (12-min)</a>
+      <a href="#graph">Execution Graph</a>
+      <a href="#blockers">Blockers</a>
+    </div>
 
-<section id="summary">
-<h2>Executive Summary</h2>
-<p>
-  The previous documentation pass fixed stale README/FEATURES/CONTRIBUTING counts and removed justfile ghosts, but
-  left the active engineering TODOs untouched. This plan ranks every open TODO by customer value, impact, and effort.
-  The 1% highest-leverage tasks are code-only fixes that prevent silent failures or expose invisible resource hogs.
-  The 75% tail is blocked on deploy, hardware, or human steps and is documented separately.
-</p>
-<div class="stat-grid">
-  <div class="stat-card stat-bad">
-    <div class="stat-value">5</div>
-    <div class="stat-label">P0 Critical blocked</div>
-  </div>
-  <div class="stat-card stat-warn">
-    <div class="stat-value">6</div>
-    <div class="stat-label">P0 deploy/verify blocked</div>
-  </div>
-  <div class="stat-card stat-good">
-    <div class="stat-value">9</div>
-    <div class="stat-label">Feasible now (code/config)</div>
-  </div>
-  <div class="stat-card stat-good">
-    <div class="stat-value">3</div>
-    <div class="stat-label">Doc gaps done</div>
-  </div>
-</div>
-</section>
+    <section id="summary">
+      <h2>Executive Summary</h2>
+      <p>
+        The previous documentation pass fixed stale README/FEATURES/CONTRIBUTING counts and removed
+        justfile ghosts, but left the active engineering TODOs untouched. This plan ranks every open
+        TODO by customer value, impact, and effort. The 1% highest-leverage tasks are code-only
+        fixes that prevent silent failures or expose invisible resource hogs. The 75% tail is
+        blocked on deploy, hardware, or human steps and is documented separately.
+      </p>
+      <div class="stat-grid">
+        <div class="stat-card stat-bad">
+          <div class="stat-value">5</div>
+          <div class="stat-label">P0 Critical blocked</div>
+        </div>
+        <div class="stat-card stat-warn">
+          <div class="stat-value">6</div>
+          <div class="stat-label">P0 deploy/verify blocked</div>
+        </div>
+        <div class="stat-card stat-good">
+          <div class="stat-value">9</div>
+          <div class="stat-label">Feasible now (code/config)</div>
+        </div>
+        <div class="stat-card stat-good">
+          <div class="stat-value">3</div>
+          <div class="stat-label">Doc gaps done</div>
+        </div>
+      </div>
+    </section>
 
-<section id="pareto">
-<h2>Pareto Breakdown</h2>
-<div class="pareto">
-  <div class="pareto-row">
-    <div class="pareto-pct">1%</div>
-    <div class="pareto-bar"><div class="pareto-fill" style="width: 85%;"></div></div>
-    <div class="pareto-label">post-deploy-check path, GPUActive monitoring, TTM pool reduction, dnsblockd pin</div>
-  </div>
-  <div class="pareto-row">
-    <div class="pareto-pct">4%</div>
-    <div class="pareto-bar"><div class="pareto-fill" style="width: 60%;"></div></div>
-    <div class="pareto-label">DNS migration code (assertions, YAML, unbound backup), typed NixOS options, remove photomap</div>
-  </div>
-  <div class="pareto-row">
-    <div class="pareto-pct">20%</div>
-    <div class="pareto-bar"><div class="pareto-fill" style="width: 35%;"></div></div>
-    <div class="pareto-label">Full DNS migration, Monitor365 auth, large module splits, upstream contributions</div>
-  </div>
-  <div class="pareto-row">
-    <div class="pareto-pct">75%</div>
-    <div class="pareto-bar"><div class="pareto-fill" style="width: 10%;"></div></div>
-    <div class="pareto-label">Deploy/reboot, manual steps, hardware provisioning, external upstream PRs</div>
-  </div>
-</div>
-</section>
+    <section id="pareto">
+      <h2>Pareto Breakdown</h2>
+      <div class="pareto">
+        <div class="pareto-row">
+          <div class="pareto-pct">1%</div>
+          <div class="pareto-bar"><div class="pareto-fill" style="width: 85%"></div></div>
+          <div class="pareto-label">
+            post-deploy-check path, GPUActive monitoring, TTM pool reduction, dnsblockd pin
+          </div>
+        </div>
+        <div class="pareto-row">
+          <div class="pareto-pct">4%</div>
+          <div class="pareto-bar"><div class="pareto-fill" style="width: 60%"></div></div>
+          <div class="pareto-label">
+            DNS migration code (assertions, YAML, unbound backup), typed NixOS options, remove
+            photomap
+          </div>
+        </div>
+        <div class="pareto-row">
+          <div class="pareto-pct">20%</div>
+          <div class="pareto-bar"><div class="pareto-fill" style="width: 35%"></div></div>
+          <div class="pareto-label">
+            Full DNS migration, Monitor365 auth, large module splits, upstream contributions
+          </div>
+        </div>
+        <div class="pareto-row">
+          <div class="pareto-pct">75%</div>
+          <div class="pareto-bar"><div class="pareto-fill" style="width: 10%"></div></div>
+          <div class="pareto-label">
+            Deploy/reboot, manual steps, hardware provisioning, external upstream PRs
+          </div>
+        </div>
+      </div>
+    </section>
 
-<section id="medium">
-<h2>Medium Plan (all TODOs, sorted)</h2>
-<table>
-  <thead>
-    <tr><th>ID</th><th>Task</th><th>Prio</th><th>Impact</th><th>Effort</th><th>Min</th><th>Status</th></tr>
-  </thead>
-  <tbody>
+    <section id="medium">
+      <h2>Medium Plan (all TODOs, sorted)</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Task</th>
+            <th>Prio</th>
+            <th>Impact</th>
+            <th>Effort</th>
+            <th>Min</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>T01</td>
+            <td>
+              <strong>Fix post-deploy-check.sh path in deploy.sh</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Use nix run .#post-deploy-check instead of $(dirname $0)/post-deploy-check.sh</span
+              >
+            </td>
+            <td>P1</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>10</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T01</td>
-      <td><strong>Fix post-deploy-check.sh path in deploy.sh</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Use nix run .#post-deploy-check instead of $(dirname $0)/post-deploy-check.sh</span></td>
-      <td>P1</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>10</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T02</td>
+            <td>
+              <strong>Add GPUActive textfile collector</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Expose /proc/meminfo GPUActive/GPUReclaim via node_exporter textfile</span
+              >
+            </td>
+            <td>P3</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T02</td>
-      <td><strong>Add GPUActive textfile collector</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Expose /proc/meminfo GPUActive/GPUReclaim via node_exporter textfile</span></td>
-      <td>P3</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T03</td>
+            <td>
+              <strong>Reduce TTM page_pool_size in boot.nix</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Drop from 112 GiB to ~32 GiB; requires reboot</span
+              >
+            </td>
+            <td>P3</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>20</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T03</td>
-      <td><strong>Reduce TTM page_pool_size in boot.nix</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Drop from 112 GiB to ~32 GiB; requires reboot</span></td>
-      <td>P3</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>20</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T04</td>
+            <td>
+              <strong>Pin dnsblockd flake input to v0.2.0</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Stop tracking master, prevent drift</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>10</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T04</td>
-      <td><strong>Pin dnsblockd flake input to v0.2.0</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Stop tracking master, prevent drift</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>10</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T05</td>
+            <td>
+              <strong>Investigate project-meta silent build failure</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Check if binary is empty or missing from systemPackages</span
+              >
+            </td>
+            <td>P0</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T05</td>
-      <td><strong>Investigate project-meta silent build failure</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Check if binary is empty or missing from systemPackages</span></td>
-      <td>P0</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T06</td>
+            <td>
+              <strong>Remove photomap disabled service from config</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Podman permission issues, niche feature</span
+              >
+            </td>
+            <td>P6</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>15</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T06</td>
-      <td><strong>Remove photomap disabled service from config</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Podman permission issues, niche feature</span></td>
-      <td>P6</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>15</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T07</td>
+            <td>
+              <strong>Add DNS migration assertions to dns-blocker.nix</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >require allowedNetworks and localZones</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T07</td>
-      <td><strong>Add DNS migration assertions to dns-blocker.nix</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">require allowedNetworks and localZones</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T08</td>
+            <td>
+              <strong>Add typed NixOS options for one service</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Improve type safety, e.g. disk-monitor or nvme-health-monitor</span
+              >
+            </td>
+            <td>P6</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>45</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T08</td>
-      <td><strong>Add typed NixOS options for one service</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Improve type safety, e.g. disk-monitor or nvme-health-monitor</span></td>
-      <td>P6</td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>45</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T09</td>
+            <td>
+              <strong>Generate dnsblockd YAML with dns_enabled</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Local records, zones, forwarders, ACLs, IPv6</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>60</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T09</td>
-      <td><strong>Generate dnsblockd YAML with dns_enabled</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Local records, zones, forwarders, ACLs, IPv6</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-high">High</span></td>
-      <td>60</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T10</td>
+            <td>
+              <strong>Move unbound to :5353 backup</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Keep identical config on backup port</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>45</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T10</td>
-      <td><strong>Move unbound to :5353 backup</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Keep identical config on backup port</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>45</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T11</td>
+            <td>
+              <strong>Update dns-blocker-config.nix for dnsblockd primary</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Migrate 13 local-data entries</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>45</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T11</td>
-      <td><strong>Update dns-blocker-config.nix for dnsblockd primary</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Migrate 13 local-data entries</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>45</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T12</td>
+            <td>
+              <strong>Update service dependencies from unbound to dnsblockd</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >6+ services + generic DNS target</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T12</td>
-      <td><strong>Update service dependencies from unbound to dnsblockd</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">6+ services + generic DNS target</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T13</td>
+            <td>
+              <strong>Rewrite VRRP health check for dnsblockd</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >chk_unbound -> DNS query on :53</span
+              >
+            </td>
+            <td>P0-DNS</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T13</td>
-      <td><strong>Rewrite VRRP health check for dnsblockd</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">chk_unbound -> DNS query on :53</span></td>
-      <td>P0-DNS</td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T14</td>
+            <td>
+              <strong>Add Monitor365 agent→server auth</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Prevent LAN POST spam</span
+              >
+            </td>
+            <td>P6</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>60</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T14</td>
-      <td><strong>Add Monitor365 agent→server auth</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Prevent LAN POST spam</span></td>
-      <td>P6</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-high">High</span></td>
-      <td>60</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T15</td>
+            <td>
+              <strong>Split signoz.nix into sub-modules</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >705L -> collector, clickhouse, query, alerts</span
+              >
+            </td>
+            <td>P6</td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>90</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T15</td>
-      <td><strong>Split signoz.nix into sub-modules</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">705L -> collector, clickhouse, query, alerts</span></td>
-      <td>P6</td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td><span class="badge badge-high">High</span></td>
-      <td>90</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T16</td>
+            <td>
+              <strong>Fix aw-watcher-utilization postPatch</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >poetry -> poetry-core</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T16</td>
-      <td><strong>Fix aw-watcher-utilization postPatch</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">poetry -> poetry-core</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T17</td>
+            <td>
+              <strong>Add library-policy / mr-sync go.sum fixes</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Upstream go.sum corrections</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T17</td>
-      <td><strong>Add library-policy / mr-sync go.sum fixes</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Upstream go.sum corrections</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T18</td>
+            <td>
+              <strong>Fix taskwarrior3 build flags</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >SYSTEM_CORROSION + ENABLE_TLS_NATIVE_ROOT defaults</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T18</td>
-      <td><strong>Fix taskwarrior3 build flags</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">SYSTEM_CORROSION + ENABLE_TLS_NATIVE_ROOT defaults</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T19</td>
+            <td>
+              <strong>Add Kitty GC resilience patch</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >nixpkgs wrapper fix</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T19</td>
-      <td><strong>Add Kitty GC resilience patch</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">nixpkgs wrapper fix</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T20</td>
+            <td>
+              <strong>Add KeePassXC Chromium manifests</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Trivial manifest generation</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T20</td>
-      <td><strong>Add KeePassXC Chromium manifests</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Trivial manifest generation</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T21</td>
+            <td>
+              <strong>Fix ActivityWatch Wayland watcher deps</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >graphical-session.target</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T21</td>
-      <td><strong>Fix ActivityWatch Wayland watcher deps</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">graphical-session.target</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T22</td>
+            <td>
+              <strong>Add ActivityWatch theme HM option</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Remove curl oneshot workaround</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T22</td>
-      <td><strong>Add ActivityWatch theme HM option</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Remove curl oneshot workaround</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T23</td>
+            <td>
+              <strong>Fix Darwin user definition requirement</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Track HM issue #6036</span
+              >
+            </td>
+            <td>P5</td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-feasible">Feasible</span></td>
+          </tr>
 
-    <tr>
-      <td>T23</td>
-      <td><strong>Fix Darwin user definition requirement</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Track HM issue #6036</span></td>
-      <td>P5</td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-feasible">Feasible</span></td>
-    </tr>
+          <tr>
+            <td>T24</td>
+            <td>
+              <strong>BTRFS /data subvolume migration config</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Requires USB rescue + downtime</span
+              >
+            </td>
+            <td>P3</td>
+            <td><span class="badge badge-high">High</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>60</td>
+            <td><span class="badge badge-blocked">Blocked</span></td>
+          </tr>
 
-    <tr>
-      <td>T24</td>
-      <td><strong>BTRFS /data subvolume migration config</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Requires USB rescue + downtime</span></td>
-      <td>P3</td>
-      <td><span class="badge badge-high">High</span></td>
-      <td><span class="badge badge-high">High</span></td>
-      <td>60</td>
-      <td><span class="badge badge-blocked">Blocked</span></td>
-    </tr>
+          <tr>
+            <td>T25</td>
+            <td>
+              <strong>Deploy discard=async fix + reboot</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Requires nix run .#deploy + reboot</span
+              >
+            </td>
+            <td>P0</td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td><span class="badge badge-low">Low</span></td>
+            <td>30</td>
+            <td><span class="badge badge-blocked">Blocked</span></td>
+          </tr>
 
-    <tr>
-      <td>T25</td>
-      <td><strong>Deploy discard=async fix + reboot</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Requires nix run .#deploy + reboot</span></td>
-      <td>P0</td>
-      <td><span class="badge badge-critical">Critical</span></td>
-      <td><span class="badge badge-low">Low</span></td>
-      <td>30</td>
-      <td><span class="badge badge-blocked">Blocked</span></td>
-    </tr>
+          <tr>
+            <td>T26</td>
+            <td>
+              <strong>Off-site backup setup</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Requires Hetzner StorageBox + BorgBackup</span
+              >
+            </td>
+            <td>P0</td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td><span class="badge badge-high">High</span></td>
+            <td>120</td>
+            <td><span class="badge badge-blocked">Blocked</span></td>
+          </tr>
 
-    <tr>
-      <td>T26</td>
-      <td><strong>Off-site backup setup</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Requires Hetzner StorageBox + BorgBackup</span></td>
-      <td>P0</td>
-      <td><span class="badge badge-critical">Critical</span></td>
-      <td><span class="badge badge-high">High</span></td>
-      <td>120</td>
-      <td><span class="badge badge-blocked">Blocked</span></td>
-    </tr>
+          <tr>
+            <td>T27</td>
+            <td>
+              <strong>BTRFS scrub + SMART check</strong><br /><span
+                style="color: var(--text-faint); font-size: 0.85rem"
+                >Requires sudo + long-running</span
+              >
+            </td>
+            <td>P0</td>
+            <td><span class="badge badge-critical">Critical</span></td>
+            <td><span class="badge badge-medium">Medium</span></td>
+            <td>60</td>
+            <td><span class="badge badge-blocked">Blocked</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
-    <tr>
-      <td>T27</td>
-      <td><strong>BTRFS scrub + SMART check</strong><br><span style="color:var(--text-faint);font-size:0.85rem;">Requires sudo + long-running</span></td>
-      <td>P0</td>
-      <td><span class="badge badge-critical">Critical</span></td>
-      <td><span class="badge badge-medium">Medium</span></td>
-      <td>60</td>
-      <td><span class="badge badge-blocked">Blocked</span></td>
-    </tr>
+    <section id="fine">
+      <h2>Fine Plan — 12-Minute Tasks to Execute Now</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>Task</th>
+            <th>Why</th>
+            <th>Verify</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Fix post-deploy-check.sh path in deploy.sh</td>
+            <td>Silent smoke-test failure</td>
+            <td>grep for nix run .#post-deploy-check</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Pin dnsblockd flake input to v0.2.0</td>
+            <td>Prevent master drift</td>
+            <td>nix flake metadata</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Investigate project-meta silent build</td>
+            <td>Missing binary</td>
+            <td>nix build .#project-meta</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>Add GPUActive textfile collector</td>
+            <td>#1 invisible RAM consumer</td>
+            <td>nix flake check + eval</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>Reduce TTM page_pool_size</td>
+            <td>Chronic memory pressure</td>
+            <td>nix flake check</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Remove photomap from configuration</td>
+            <td>Reduce dead config</td>
+            <td>nix flake check</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Add DNS migration assertions</td>
+            <td>Prevent open resolver</td>
+            <td>nix flake check</td>
+          </tr>
+          <tr>
+            <td>8</td>
+            <td>Fix aw-watcher-utilization postPatch</td>
+            <td>Upstream contribution</td>
+            <td>nix build .#aw-watcher-utilization</td>
+          </tr>
+          <tr>
+            <td>9</td>
+            <td>Add typed NixOS options for disk-monitor</td>
+            <td>Type safety</td>
+            <td>nix flake check</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
 
-  </tbody>
-</table>
-</section>
+    <section id="graph">
+      <h2>Execution Graph</h2>
+      <div class="graph">
+        <img src="2026-07-09_pareto-execution-plan.svg" alt="Pareto execution graph" />
+      </div>
+    </section>
 
-<section id="fine">
-<h2>Fine Plan — 12-Minute Tasks to Execute Now</h2>
-<table>
-  <thead>
-    <tr><th>Step</th><th>Task</th><th>Why</th><th>Verify</th></tr>
-  </thead>
-  <tbody>
-    <tr><td>1</td><td>Fix post-deploy-check.sh path in deploy.sh</td><td>Silent smoke-test failure</td><td>grep for nix run .#post-deploy-check</td></tr>
-    <tr><td>2</td><td>Pin dnsblockd flake input to v0.2.0</td><td>Prevent master drift</td><td>nix flake metadata</td></tr>
-    <tr><td>3</td><td>Investigate project-meta silent build</td><td>Missing binary</td><td>nix build .#project-meta</td></tr>
-    <tr><td>4</td><td>Add GPUActive textfile collector</td><td>#1 invisible RAM consumer</td><td>nix flake check + eval</td></tr>
-    <tr><td>5</td><td>Reduce TTM page_pool_size</td><td>Chronic memory pressure</td><td>nix flake check</td></tr>
-    <tr><td>6</td><td>Remove photomap from configuration</td><td>Reduce dead config</td><td>nix flake check</td></tr>
-    <tr><td>7</td><td>Add DNS migration assertions</td><td>Prevent open resolver</td><td>nix flake check</td></tr>
-    <tr><td>8</td><td>Fix aw-watcher-utilization postPatch</td><td>Upstream contribution</td><td>nix build .#aw-watcher-utilization</td></tr>
-    <tr><td>9</td><td>Add typed NixOS options for disk-monitor</td><td>Type safety</td><td>nix flake check</td></tr>
-  </tbody>
-</table>
-</section>
-
-<section id="graph">
-<h2>Execution Graph</h2>
-<div class="graph">
-  <img src="2026-07-09_pareto-execution-plan.svg" alt="Pareto execution graph" />
-</div>
-</section>
-
-<section id="blockers">
-<h2>Blockers</h2>
-<div class="card card-problem">
-  <strong>Deploy / Reboot Required</strong><br>
-  discard=async fix, boot time verification, crush-daily/Monitor365/DiscordSync/Overview verification.
-</div>
-<div class="card card-problem">
-  <strong>Human / Vendor Required</strong><br>
-  Off-site backup (Hetzner StorageBox), Hermes SSH key + fallback model, dnsblockd-CA on Mac.
-</div>
-<div class="card card-problem">
-  <strong>Long-Running / Hardware</strong><br>
-  BTRFS scrub, SMART check, Pi 3 provisioning, BTRFS /data subvolume migration.
-</div>
-<div class="card card-warning">
-  <strong>Upstream / External</strong><br>
-  nixpkgs PRs, Home Manager PRs, LarsArtmann Go repo go.sum fixes, monitor365/hermes features.
-</div>
-</section>
-
-</body>
+    <section id="blockers">
+      <h2>Blockers</h2>
+      <div class="card card-problem">
+        <strong>Deploy / Reboot Required</strong><br />
+        discard=async fix, boot time verification, crush-daily/Monitor365/DiscordSync/Overview
+        verification.
+      </div>
+      <div class="card card-problem">
+        <strong>Human / Vendor Required</strong><br />
+        Off-site backup (Hetzner StorageBox), Hermes SSH key + fallback model, dnsblockd-CA on Mac.
+      </div>
+      <div class="card card-problem">
+        <strong>Long-Running / Hardware</strong><br />
+        BTRFS scrub, SMART check, Pi 3 provisioning, BTRFS /data subvolume migration.
+      </div>
+      <div class="card card-warning">
+        <strong>Upstream / External</strong><br />
+        nixpkgs PRs, Home Manager PRs, LarsArtmann Go repo go.sum fixes, monitor365/hermes features.
+      </div>
+    </section>
+  </body>
 </html>

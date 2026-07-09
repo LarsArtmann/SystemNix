@@ -34,7 +34,7 @@ _: {
     gatusEnabled = config.services.gatus-config.enable;
     dozzleEnabled = hasContainer "dozzle";
     hermesEnabled = config.services.hermes.enable;
-    monitor365Enabled = config.services.monitor365.enable;
+    monitor365Enabled = config.services.monitor365-server.enable or false;
     voiceAgentsEnabled = config.services.voice-agents.enable;
     discordsyncEnabled = config.services.discordsync.enable;
     overviewEnabled = config.services.overview.enable;

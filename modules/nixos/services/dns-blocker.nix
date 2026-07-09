@@ -1,4 +1,15 @@
 # DNS blocker: Unbound + blocklists + dnsblockd block page + stats API
+#
+# Blocklist fetch + process pipeline mirrors dnsblockd's own NixOS module
+# (nix/modules/nixos/default.nix). The duplication exists because this module
+# predates dnsblockd's module and adds SystemNix-specific integration
+# (sops secrets, IP attach, Unbound tuning, Firefox cert trust).
+#
+# Migration path: When ready, import dnsblockd's module via
+#   inputs.dnsblockd.nixosModules.default
+# and compose only the SystemNix-specific extras here. The shared
+# blocklist processing (fetchedBlocklists → processorArgs → processedBlocklist)
+# can then be removed from this module.
 _: {
   flake.nixosModules.dns-blocker = {
     config,
@@ -178,10 +189,22 @@ _: {
         description = "Temporarily allow all DNS queries (disable blocking). Write 'local-zone: \".\" transparent' to temp-allowlist.conf";
       };
 
-      doqPort = mkOption {
-        type = types.port;
-        default = 853;
-        description = "Port for DNS-over-QUIC (DoQ) server. QUIC transport handles encryption natively — no TLS certificates needed.";
+      upstreamDns = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = ''
+          Upstream DNS servers for forwarding (DoT format: IP@PORT#HOSTNAME).
+          When empty (default), Unbound performs full root recursion using
+          the IANA root hints and DNSSEC root trust anchor — no third-party
+          dependency, maximum privacy.
+
+          Set to forward through a trusted resolver when:
+          - Behind a VPN/firewall that blocks port 53
+          - ISP injects fake DNS responses
+          - You want the speed of a caching forwarder
+
+          Example: ["194.242.2.2@853#dns.mullvad.net" "9.9.9.9@853#dns.quad9.net"]
+        '';
       };
     };
 
@@ -229,32 +252,19 @@ _: {
               ++ map (d: ''"${d}." always_nxdomain'') cfg.extraDomains;
           };
 
-          # DNS-over-TLS forwarding — works through VPN firewalls (port 853, not 53)
-          forward-zone = [
-            {
-              name = ".";
-              forward-tls-upstream = "yes";
-              forward-addr = [
-                "194.242.2.2@853#dns.mullvad.net"
-                "9.9.9.9@853#dns.quad9.net"
-              ];
-            }
-          ];
+          # When upstreamDns is set, forward all queries via DoT.
+          # When empty (default), Unbound uses native root recursion —
+          # no third-party dependency, maximum privacy and resilience.
+          forward-zone = lib.optional (cfg.upstreamDns != []) {
+            name = ".";
+            forward-tls-upstream = "yes";
+            forward-addr = cfg.upstreamDns;
+          };
 
           remote-control = {
             control-enable = true;
             control-interface = "/run/unbound/unbound.ctl";
           };
-        };
-      };
-
-      programs.firefox.policies = {
-        DNSOverHTTPS = {
-          Enabled = false;
-          Locked = true;
-        };
-        Certificates = {
-          Install = [config.sops.secrets.dnsblockd_ca_cert.path];
         };
       };
 
@@ -292,9 +302,9 @@ _: {
                 ExecStart = lib.getExe attachIPScript;
               }
               // harden {
-                ProtectHome = false;
+                ProtectHome = false; # Oneshot — ip addr add needs no /home access; false overrides harden default
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
-                NoNewPrivileges = false;
+                NoNewPrivileges = false; # CAP_NET_ADMIN requires relaxed NoNewPrivileges for network config
               }
               // serviceOneshotDefaults {};
           };
@@ -350,25 +360,18 @@ _: {
                 }
                 + lib.optionalString (cfg.categories != {}) "\ncategories_file: ${categoriesJSON}"
               );
-              dnsblockdWrapper = pkgs.writeShellApplication {
-                name = "dnsblockd-start";
-                runtimeInputs = [
-                  pkgs.coreutils
-                  pkgs.dnsblockd
-                ];
+              secretCheck = pkgs.writeShellApplication {
+                name = "dnsblockd-wait-secrets";
+                runtimeInputs = [pkgs.coreutils];
                 text = ''
-                  for i in $(seq 1 60); do
+                  for i in $(seq 1 30); do
                     if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
-                      break
-                    fi
-                    if [ "$i" -eq 60 ]; then
-                      echo "ERROR: sops secrets not available after 60s" >&2
-                      exit 1
+                      exit 0
                     fi
                     sleep 1
                   done
-
-                  exec dnsblockd serve -c ${dnsblockdConfigFile}
+                  echo "ERROR: sops secrets not available after 30s: ${caCert}, ${caKey}" >&2
+                  exit 1
                 '';
               };
             in
@@ -381,8 +384,11 @@ _: {
               // serviceDefaults {RestartSec = "3s";}
               // {
                 Type = "simple";
-                ExecStartPre = "+-${lib.getExe initScript}";
-                ExecStart = "${lib.getExe dnsblockdWrapper}";
+                ExecStartPre = [
+                  "+-${lib.getExe initScript}"
+                  "${lib.getExe secretCheck}"
+                ];
+                ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
                 StateDirectory = "dnsblockd";
                 WorkingDirectory = "/var/lib/dnsblockd";
                 SupplementaryGroups = ["unbound"];
@@ -403,41 +409,6 @@ _: {
           ++ lib.optional cfg.tempAllowAll ''
             f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
           '';
-
-        user.services.dnsblockd-cert-import = {
-          description = "Import dnsblockd CA cert into NSS database";
-          wantedBy = ["graphical-session.target"];
-          after = [
-            "sops-nix.service"
-            "graphical-session.target"
-          ];
-          partOf = ["graphical-session.target"];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-          };
-          path = [
-            pkgs.nss.tools
-            pkgs.coreutils
-          ];
-          script = ''
-            CA_CERT="${config.sops.secrets.dnsblockd_ca_cert.path}"
-            for i in $(seq 1 30); do
-              [ -s "$CA_CERT" ] && break
-              sleep 1
-            done
-            if [ ! -s "$CA_CERT" ]; then
-              echo "CA cert not available after 30s: $CA_CERT" >&2
-              exit 1
-            fi
-            mkdir -p $HOME/.pki/nssdb
-            if [ ! -f "$HOME/.pki/nssdb/cert9.db" ]; then
-              certutil -d sql:$HOME/.pki/nssdb -N --empty-password
-            fi
-            certutil -d sql:$HOME/.pki/nssdb -D -n dnsblockd-ca 2>/dev/null || true
-            certutil -d sql:$HOME/.pki/nssdb -A -t "C,," -n dnsblockd-ca -i "$CA_CERT"
-          '';
-        };
       };
     };
   };

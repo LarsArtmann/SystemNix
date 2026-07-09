@@ -147,20 +147,25 @@ in {
               restartUnits = ["openseo.service"];
             } ["dataforseo_api_key"]
           )
+          # Agent secret — owned by desktop user (user service)
           // lib.optionalAttrs (svcEnabled "monitor365") (
             mkSecrets "monitor365.yaml"
             {
               owner = primaryUser;
               group = "users";
-              restartUnits = [
-                "monitor365.service"
-                "monitor365-server.service"
-              ];
+              restartUnits = ["monitor365.service"];
             }
-            [
-              "cloud_auth_token"
-              "server_jwt_secret"
-            ]
+            ["cloud_auth_token"]
+          )
+          # Server secret — owned by dedicated system user
+          // lib.optionalAttrs (svcEnabled "monitor365-server") (
+            mkSecrets "monitor365.yaml"
+            {
+              owner = "monitor365-server";
+              group = "monitor365-server";
+              restartUnits = ["monitor365-server.service"];
+            }
+            ["server_jwt_secret"]
           )
           // lib.optionalAttrs (svcEnabled "signoz" || svcEnabled "gatus-config") (
             mkSecrets "signoz.yaml" {
@@ -237,14 +242,11 @@ in {
               '';
             };
           }
-          // lib.optionalAttrs (svcEnabled "monitor365") {
+          // lib.optionalAttrs (svcEnabled "monitor365-server") {
             "monitor365-env" = {
-              owner = primaryUser;
-              group = "users";
-              restartUnits = [
-                "monitor365.service"
-                "monitor365-server.service"
-              ];
+              owner = "monitor365-server";
+              group = "monitor365-server";
+              restartUnits = ["monitor365-server.service"];
               content = ''
                 MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
               '';

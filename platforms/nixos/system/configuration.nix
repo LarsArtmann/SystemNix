@@ -354,45 +354,44 @@ in {
         };
       };
 
-      # Monitor365 device monitoring agent + server (single-machine deployment)
+      # Monitor365 device monitoring agent (desktop collectors)
       monitor365 = {
         enable = true;
-        # Collectors — bluetooth disabled (zbus::blocking panics inside tokio)
-        collectors = {
-          screenshot = lib.mkDefault true;
-          camera = lib.mkDefault true;
-          keystroke = lib.mkDefault true;
-          mouse = lib.mkDefault true;
-          clipboard = lib.mkDefault true;
-          notifications = lib.mkDefault true;
-          location = lib.mkDefault true;
-          fsEvent = lib.mkDefault true;
-          bluetooth = lib.mkDefault false;
-        };
-        # Not using ActivityWatch integration
-        activityWatch.enable = lib.mkDefault false;
-        # 30 GiB ring buffer — protects against unbounded growth on BTRFS root
-        storage.maxSizeMb = lib.mkDefault (30 * 1024);
-        logging.level = lib.mkDefault "warn";
-        # Expose Prometheus metrics for Gatus health checks
-        metrics.enable = lib.mkDefault true;
-        # Agent syncs to local server
-        cloud.endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
-        # Server (dashboard + API) runs on the same machine
-        server = {
-          enable = lib.mkDefault true;
-          listenAddr = lib.mkDefault "0.0.0.0:${toString ports.monitor365-server}";
-          corsOrigins = lib.mkDefault [
-            "http://localhost:${toString ports.monitor365-server}"
-            "https://monitor.${config.networking.domain}"
-          ];
-          sso.enable = lib.mkDefault true;
-          bootstrap = {
-            enable = lib.mkDefault true;
-            tenantName = lib.mkDefault "LarsArtmann";
-            adminEmail = lib.mkDefault "lars@larsartmann.cloud";
+        settings.collectors = {
+          # Privacy-sensitive collectors enabled
+          screenshots.enabled = lib.mkDefault true;
+          camera = {
+            enabled = lib.mkDefault true;
+            interval_seconds = lib.mkDefault 3600; # 1h minimum enforced by validation
           };
+          keystrokes.enabled = lib.mkDefault true;
+          mouse.enabled = lib.mkDefault true;
+          clipboard.enabled = lib.mkDefault true;
+          notifications.enabled = lib.mkDefault true;
+          location.enabled = lib.mkDefault true;
+          fs_event.enabled = lib.mkDefault true;
+          # bluetooth disabled (zbus::blocking panics inside tokio)
+          bluetooth = {
+            enabled = lib.mkDefault false;
+          };
+          # Standard collectors on by default
+          app_usage.enabled = lib.mkDefault true;
+          network.enabled = lib.mkDefault true;
+          battery.enabled = lib.mkDefault true;
+          afk_status.enabled = lib.mkDefault true;
+          system_info.enabled = lib.mkDefault true;
+          process.enabled = lib.mkDefault true;
         };
+      };
+
+      # Monitor365 server (dashboard + API) runs on the same machine
+      monitor365-server = {
+        enable = lib.mkDefault true;
+        bootstrap = {
+          tenantName = lib.mkDefault "LarsArtmann";
+          adminEmail = lib.mkDefault "lars@larsartmann.cloud";
+        };
+        sso.enable = lib.mkDefault true;
       };
 
       smartd = {
