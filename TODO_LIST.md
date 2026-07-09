@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-09 (Documentation freshness pass: README, FEATURES, CONTRIBUTING, AGENTS gotchas, pre-commit justfile cleanup)
+**Updated:** 2026-07-09 (Pareto plan created + project-meta investigation: package is actually healthy)
 **Last deploy:** 2026-07-05 (`26.11.20260705.d407951`)
 **Last commit:** 2026-07-08 (`4d75e83b` — NVMe discard=async status doc)
 
@@ -12,7 +12,7 @@
 
 - [ ] **Deploy the `discard=async` → `fstrim.timer` fix** — Fix is in `hardware-configuration.nix` (TRIM via mount option removed). Running system still has `discard=async` on 8 BTRFS mounts. Root cause of the 2026-07-08 watchdog hard-reset (253ms discard latency → 17.7s BTRFS commit → freeze → 30s watchdog → reset). Every nix build risks recurrence until deployed. Requires `nix run .#deploy` + reboot.
 - [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
-- [ ] **Investigate `project-meta` silent build failure** — `project-meta` is in `lars-packages.nix` and `flake.lock` but NOT in the evaluated systemPackages (`nix eval .#nixosConfigurations.evo-x2.config.environment.systemPackages` returns 0 matches) and NOT in `/run/current-system/sw/bin/`. Same class of bug as the buildflow `GOEXPERIMENT` silent empty binary. 10/12 larsPackages tools produce binaries; `project-meta` is the exception.
+- [x] **Investigate `project-meta` silent build failure** — Re-investigated 2026-07-09: `project-meta` builds successfully, is present in the evaluated `environment.systemPackages` (store path `meta-0.2.0`), and provides the `meta` binary. The original TODO was based on an outdated evaluation/grep. No code change needed; will be deployed with next `nix run .#deploy`.
 - [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum (controller returning garbage under I/O pressure). No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /` to map all bad blocks and assess corruption extent.
 - [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation, available spare below threshold) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know. If media errors are climbing, drive replacement is needed urgently.
 
