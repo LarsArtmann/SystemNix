@@ -104,7 +104,6 @@
               enabled = lib.mkDefault true;
               bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-metrics}";
             };
-            activitywatch = lib.mkDefault null;
 
             # System agent authenticates via LoadCredential — systemd reads
             # the sops secret as root and provisions it to the service.
@@ -147,7 +146,6 @@
               enabled = lib.mkDefault true;
               bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-desktop-metrics}";
             };
-            activitywatch = lib.mkDefault null;
 
             # Desktop agent syncs to local server — token injected via
             # environmentFile (sops template).

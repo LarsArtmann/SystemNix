@@ -56,7 +56,7 @@ _: {
         enable = true;
         package = pkgs.ollama-rocm;
         home = aiPaths.ollama;
-        models = aiPaths.ollama-models;
+        modelsDir = aiPaths.ollama-models;
         host = "127.0.0.1";
         port = ports.ollama;
         environmentVariables =

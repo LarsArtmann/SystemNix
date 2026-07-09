@@ -50,7 +50,6 @@ _: {
       AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.available_spare // 0')
       PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percentage_used // 0')
       MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // 0')
-      NUM_ERR_LOG=$(echo "$SMART" | jq -r '.num_err_log_entries // 0')
       TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
       TEMP_CELSIUS=$((TEMP_KELVIN - 273))
 

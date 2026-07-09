@@ -173,7 +173,18 @@ in {
               group = "monitor365-server";
               restartUnits = ["monitor365-server.service" "monitor365.service"];
             }
-            ["server_jwt_secret" "monitor365_api_key"]
+            ["server_jwt_secret"]
+          )
+          # monitor365_api_key maps to cloud_auth_token — same tenant key value,
+          # different owner (system user needs its own file handle)
+          // lib.optionalAttrs (svcEnabled "monitor365-server") (
+            mkKeyedSecrets "monitor365.yaml"
+            {
+              owner = "monitor365-server";
+              group = "monitor365-server";
+              restartUnits = ["monitor365-server.service" "monitor365.service"];
+            }
+            {monitor365_api_key = "cloud_auth_token";}
           )
           // lib.optionalAttrs (svcEnabled "signoz" || svcEnabled "gatus-config") (
             mkSecrets "signoz.yaml" {

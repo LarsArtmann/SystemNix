@@ -322,7 +322,8 @@ in {
                         openssl rand -base64 48 > '${jwtFile}'
                         chmod 400 '${jwtFile}'
                       fi
-                      export SIGNOZ_TOKENIZER_JWT_SECRET="$(cat '${jwtFile}')"
+                      SIGNOZ_TOKENIZER_JWT_SECRET="$(cat '${jwtFile}')"
+                      export SIGNOZ_TOKENIZER_JWT_SECRET
                       exec ${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml
                     '';
                   };
@@ -424,7 +425,7 @@ in {
                         curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/rules/$EXISTING_ID" 2>/dev/null || true
                       fi
                     fi
-                    echo "  Creating: $(basename $rule_file)"
+                    echo "  Creating: $(basename "$rule_file")"
                     curl -sf --max-time 10 -X POST \
                       -H "Content-Type: application/json" \
                       -d @"$rule_file" \
@@ -436,7 +437,7 @@ in {
                 echo "Deploying dashboards..."
                 for dash_file in /etc/signoz/dashboards/*.json; do
                   if [ -f "$dash_file" ]; then
-                    echo "  Applying: $(basename $dash_file)"
+                    echo "  Applying: $(basename "$dash_file")"
                     curl -sf --max-time 10 -X POST \
                       -H "Content-Type: application/json" \
                       -d @"$dash_file" \
