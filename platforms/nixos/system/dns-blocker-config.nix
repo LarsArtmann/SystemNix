@@ -41,15 +41,14 @@ in {
 
       enableDNSSEC = true;
 
-      # DoQ (DNS-over-QUIC) port — RFC 9250, uses QUIC transport encryption
-      # No TLS certificates needed — QUIC handles encryption natively
-      # DISABLED: the unboundDoQOverlay that patches unbound for DoQ support
-      # kills binary cache hits (cascades to ffmpeg, linux, pipewire, etc.)
-      # doqPort = 853;
-
       # Temporarily allow all DNS queries (disable blocking)
       # Set to true to bypass all DNS blocking
       tempAllowAll = false;
+    };
+
+    dnsblockd-cert-trust = {
+      enable = true;
+      caCertPath = config.sops.secrets.dnsblockd_ca_cert.path;
     };
 
     unbound.settings.server = {
