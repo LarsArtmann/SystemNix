@@ -36,7 +36,7 @@ _: {
         inherit onFailure;
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
-        serviceConfig = harden {} // serviceDefaults {};
+        serviceConfig = lib.mkMerge [(harden {}) (serviceDefaults {})];
       };
     };
   };

@@ -39,16 +39,17 @@ _: {
         path = [pkgs.crush];
         startLimitBurst = 3;
         startLimitIntervalSec = 60;
-        serviceConfig =
-          harden {
+        serviceConfig = lib.mkMerge [
+          (harden {
             # Must read the primary user's Crush database from /home.
             # Scoped via ReadOnlyPaths — only the .crush dir is readable.
             ProtectHome = false;
             ReadOnlyPaths = [crushDbDir];
             ReadWritePaths = [cfg.dataDir];
             SupplementaryGroups = "users";
-          }
-          // serviceDefaults {};
+          })
+          (serviceDefaults {})
+        ];
       };
     };
   };

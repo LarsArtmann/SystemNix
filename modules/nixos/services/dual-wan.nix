@@ -169,7 +169,7 @@ _: {
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
-            serviceConfig =
+            serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";
                 RemainAfterExit = true;
@@ -180,12 +180,13 @@ _: {
                 ];
                 ExecStart = "${lib.getExe mptcpEndpointScript} startup";
               }
-              // harden {
+              (harden {
                 ProtectHome = false;
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
-              }
-              // serviceOneshotDefaults {};
+              })
+              (serviceOneshotDefaults {})
+            ];
           };
 
           route-health-monitor = {
@@ -202,7 +203,7 @@ _: {
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
-            serviceConfig =
+            serviceConfig = lib.mkMerge [
               {
                 Type = "simple";
                 Environment = [
@@ -215,12 +216,13 @@ _: {
                 ];
                 ExecStart = lib.getExe routeHealthScript;
               }
-              // harden {
+              (harden {
                 ProtectHome = false;
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false;
-              }
-              // serviceDefaults {};
+              })
+              (serviceDefaults {})
+            ];
           };
         };
       };

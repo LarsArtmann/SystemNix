@@ -591,15 +591,16 @@ _: {
             StartLimitBurst = lib.mkForce 3;
             StartLimitIntervalSec = lib.mkForce 300;
           };
-          serviceConfig =
-            harden {
+          serviceConfig = lib.mkMerge [
+            (harden {
               ProtectHome = lib.mkForce false;
               NoNewPrivileges = false;
-            }
-            // serviceDefaults {}
-            // {
+            })
+            (serviceDefaults {})
+            {
               ExecStartPre = lib.mkBefore [("+" + lib.getExe ensurePasswordFile)];
-            };
+            }
+          ];
           preStart = lib.getExe adminSetup;
         };
 
@@ -618,7 +619,7 @@ _: {
             pkgs.jq
             pkgs.gh
           ];
-          serviceConfig =
+          serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
               User = primaryUser;
@@ -628,10 +629,11 @@ _: {
               ];
               ExecStart = lib.getExe mirrorGithubScript;
             }
-            // harden {
+            (harden {
               ProtectHome = false;
               ProtectSystem = false;
-            };
+            })
+          ];
         };
 
         timers.forgejo-github-sync = {
@@ -651,14 +653,15 @@ _: {
         after = ["forgejo.service"];
         wants = ["forgejo.service"];
         wantedBy = ["forgejo.service"];
-        serviceConfig =
+        serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";
             User = "forgejo";
             Group = "forgejo";
             RemainAfterExit = true;
           }
-          // harden {};
+          (harden {})
+        ];
         script = lib.getExe tokenGen;
       };
 
@@ -673,16 +676,17 @@ _: {
           "pocket-id-provision.service"
         ];
         wantedBy = ["forgejo.service"];
-        serviceConfig =
+        serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";
             User = "root";
             RemainAfterExit = true;
           }
-          // harden {
+          (harden {
             NoNewPrivileges = false;
-          }
-          // serviceOneshotDefaults {};
+          })
+          (serviceOneshotDefaults {})
+        ];
         script = lib.getExe oidcSetupScript;
       };
 

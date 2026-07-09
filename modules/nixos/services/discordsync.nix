@@ -104,7 +104,7 @@
         startLimitIntervalSec = 300;
         startLimitBurst = 5;
 
-        serviceConfig =
+        serviceConfig = lib.mkMerge [
           {
             Type = "simple";
             User = cfg.user;
@@ -117,11 +117,7 @@
                 "DATABASE_PATH=${cfg.databasePath}"
                 "API_ADDR=${cfg.apiAddr}"
                 "ATTACHMENT_STORAGE_PATH=${cfg.attachmentPath}"
-                "BACKFILL_ON_STARTUP=${
-                  if cfg.backfillOnStartup
-                  then "true"
-                  else "false"
-                }"
+                "BACKFILL_ON_STARTUP=${lib.boolToString cfg.backfillOnStartup}"
               ]
               ++ lib.optional (cfg.gcsBucket != null) "GCS_BUCKET=${cfg.gcsBucket}"
               ++ lib.optional (
@@ -135,14 +131,15 @@
             StandardError = "journal";
             UMask = "0026";
           }
-          // serviceDefaults {
+          (serviceDefaults {
             Restart = "on-failure";
             RestartSec = cfg.restartSec;
-          }
-          // harden {
+          })
+          (harden {
             MemoryMax = "2G";
             ReadWritePaths = [cfg.stateDir];
-          };
+          })
+        ];
       };
     };
   };

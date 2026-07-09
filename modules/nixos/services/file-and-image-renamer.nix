@@ -24,7 +24,7 @@ _: {
 
       watchDirectory = lib.mkOption {
         type = lib.types.str;
-        default = "/home/${cfg.user}/Desktop";
+        default = "${config.users.users.${cfg.user}.home}/Desktop";
         defaultText = "/home/<user>/Desktop";
         description = "Directory to watch for new screenshots (legacy, prefer watchPaths)";
       };
@@ -37,7 +37,7 @@ _: {
 
       apiKeyFile = lib.mkOption {
         type = lib.types.str;
-        default = "/home/${cfg.user}/.zai_api_key";
+        default = "${config.users.users.${cfg.user}.home}/.zai_api_key";
         defaultText = "/home/<user>/.zai_api_key";
         description = "Path to the ZAI API key file";
       };
@@ -62,7 +62,7 @@ _: {
 
       dataDir = lib.mkOption {
         type = lib.types.str;
-        default = "/home/${cfg.user}/.file-renamer";
+        default = "${config.users.users.${cfg.user}.home}/.file-renamer";
         defaultText = "/home/<user>/.file-renamer";
         description = "Base directory for file-renamer state (dead-letter, hashdb, history)";
       };
@@ -142,10 +142,10 @@ _: {
               StartLimitBurst = 5;
             };
 
-            Service =
-              sd.serviceDefaultsUser {RestartSec = "10";}
-              // hardenUser {MemoryMax = "512M";}
-              // {
+            Service = lib.mkMerge [
+              (sd.serviceDefaultsUser {RestartSec = "10";})
+              (hardenUser {MemoryMax = "512M";})
+              {
                 Type = "simple";
                 ExecStart = "${lib.getExe' cfg.package "file-renamer"} watch";
                 WorkingDirectory = cfg.watchDirectory;
@@ -166,7 +166,8 @@ _: {
                   ++ lib.optional (cfg.model != null) "GLM_MODEL=${cfg.model}"
                   ++ lib.optional (cfg.syntheticModel != null) "SYNTHETIC_MODEL=${cfg.syntheticModel}"
                   ++ lib.optional (cfg.watchPaths != []) "WATCH_PATHS=${lib.concatStringsSep ":" cfg.watchPaths}";
-              };
+              }
+            ];
 
             Install = {
               WantedBy = ["graphical-session.target"];

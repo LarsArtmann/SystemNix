@@ -59,7 +59,7 @@ _: {
         ];
         script = ''
           CA_CERT="${cfg.caCertPath}"
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             [ -s "$CA_CERT" ] && break
             sleep 1
           done

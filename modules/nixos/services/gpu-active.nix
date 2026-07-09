@@ -94,16 +94,17 @@ _: {
         services.gpu-active = {
           description = "GPUActive / GPUReclaim textfile collector for node_exporter";
           inherit onFailure;
-          serviceConfig =
-            harden {
+          serviceConfig = lib.mkMerge [
+            (harden {
               MemoryMax = "64M";
-            }
-            // serviceOneshotDefaults {}
-            // {
+            })
+            (serviceOneshotDefaults {})
+            {
               Type = "oneshot";
               ExecStart = lib.getExe gpuActiveMetrics;
               ReadWritePaths = [textfileDir];
-            };
+            }
+          ];
         };
 
         timers.gpu-active = {

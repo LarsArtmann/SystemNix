@@ -15,8 +15,8 @@ _: {
       STATE_DIR="$HOME/.local/state/disk-monitor"
       mkdir -p "$STATE_DIR"
 
-      THRESHOLDS=(${lib.concatStringsSep " " (map toString cfg.thresholds)})
-      MOUNT_POINTS=(${lib.concatStringsSep " " cfg.fileSystems})
+      THRESHOLDS=(${lib.escapeShellArgs (map toString cfg.thresholds)})
+      MOUNT_POINTS=(${lib.escapeShellArgs cfg.fileSystems})
 
       notify() {
         local urgency="$1" mount="$2" pct="$3" size_info="$4"

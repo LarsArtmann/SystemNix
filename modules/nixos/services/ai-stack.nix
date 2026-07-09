@@ -76,7 +76,7 @@ _: {
         wantedBy = lib.mkForce [];
         startLimitBurst = 5;
         startLimitIntervalSec = 300;
-        serviceConfig =
+        serviceConfig = lib.mkMerge [
           {
             DynamicUser = lib.mkForce false;
             User = primaryUser;
@@ -85,20 +85,21 @@ _: {
             UMask = lib.mkForce "0007";
             OOMScoreAdjust = 500;
           }
-          // serviceDefaults {}
-          // harden {
+          (serviceDefaults {})
+          (harden {
             MemoryMax = "32G";
             ProtectHome = false;
             NoNewPrivileges = false;
-          };
+          })
+        ];
       };
 
-      environment.systemPackages = with pkgs; [
+      environment.systemPackages = [
         llama-cpp-rocwmma
-        tesseract5
-        poppler-utils
-        jupyter
-        python313
+        pkgs.tesseract5
+        pkgs.poppler-utils
+        pkgs.jupyter
+        pkgs.python313
         (pkgs.writeShellApplication {
           name = "gpu-python";
           text = ''

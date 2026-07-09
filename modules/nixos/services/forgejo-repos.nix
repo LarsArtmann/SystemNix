@@ -295,7 +295,7 @@ _: {
             pkgs.sops
             pkgs.bash
           ];
-          serviceConfig =
+          serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
               User = cfg.user;
@@ -303,11 +303,12 @@ _: {
               ExecStartPre = lib.getExe waitForForgejo;
               ExecStart = lib.getExe ensureReposScript;
             }
-            // serviceOneshotDefaults {Restart = "on-failure";}
-            // harden {
+            (serviceOneshotDefaults {Restart = "on-failure";})
+            (harden {
               ProtectSystem = "strict";
               MemoryMax = "512M";
-            };
+            })
+          ];
         };
 
         tmpfiles.rules = [

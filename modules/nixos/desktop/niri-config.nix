@@ -118,25 +118,26 @@ _: {
             description = "Detect dead display (connected but no signal) and recover";
             path = with pkgs; [kbd];
             inherit onFailure;
-            serviceConfig =
+            serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";
                 ExecStart = lib.getExe displayWatchdog;
                 OOMScoreAdjust = -500;
                 Environment = "PRIMARY_USER=${config.users.primaryUser}";
               }
-              // harden {
+              (harden {
                 MemoryMax = "512M";
                 ReadWritePaths = [
                   "/sys/class/drm"
                   "/var/lib/display-watchdog"
                 ];
-              };
+              })
+            ];
           };
 
           niri-health-metrics = {
             description = "Niri compositor health metrics for node_exporter textfile";
-            serviceConfig =
+            serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";
                 ExecStart = let
@@ -168,10 +169,11 @@ _: {
                   };
                 in "${healthMetricsScript}/bin/niri-health-metrics";
               }
-              // harden {
+              (harden {
                 MemoryMax = "1G";
                 ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
-              };
+              })
+            ];
           };
         };
 

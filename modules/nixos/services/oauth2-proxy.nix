@@ -87,13 +87,14 @@ _: {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;
         };
-        serviceConfig =
-          harden {}
-          // serviceDefaults {}
-          // {
+        serviceConfig = lib.mkMerge [
+          (harden {})
+          (serviceDefaults {})
+          {
             ExecStartPre = "+${lib.getExe checkCookieSecret}";
             ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
-          };
+          }
+        ];
       };
     };
   };

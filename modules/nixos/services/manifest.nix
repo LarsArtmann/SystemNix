@@ -16,94 +16,91 @@ _: {
 
     secretsDir = ./../../../platforms/nixos/secrets;
 
-    composeFile = pkgs.writeText "manifest-docker-compose.yml" ''
-      name: mnfst
-
-      services:
-        manifest:
-          image: ${images.manifest.ref}
-          ports:
-            - "127.0.0.1:${toString manifestPort}:${toString manifestPort}"
-          extra_hosts:
-            - "host.docker.internal:host-gateway"
-          environment:
-            PORT: "${toString manifestPort}"
-            DATABASE_URL: postgresql://manifest:''${DB_PASSWORD}@postgres:5432/manifest
-            BETTER_AUTH_SECRET: ''${AUTH_SECRET}
-            MANIFEST_ENCRYPTION_KEY: ''${ENCRYPTION_KEY}
-            BETTER_AUTH_URL: https://manifest.${domain}
-            OLLAMA_HOST: http://host.docker.internal:${toString ports.ollama}
-            SEED_DATA: "false"
-            NODE_ENV: production
-            MANIFEST_MODE: selfhosted
-            MANIFEST_TELEMETRY_DISABLED: "1"
-            CORS_ORIGIN: "https://manifest.${domain}"
-          depends_on:
-            postgres:
-              condition: service_healthy
-          healthcheck:
-            test:
-              - "CMD"
-              - "node"
-              - "-e"
-              - "const p=process.env.PORT||'${toString manifestPort}';fetch(`http://127.0.0.1:$${p}/api/v1/health`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-            interval: 30s
-            timeout: 5s
-            start_period: 90s
-            retries: 3
-          logging:
-            driver: json-file
-            options:
-              max-size: "10m"
-              max-file: "5"
-          read_only: true
-          tmpfs:
-            - /tmp:size=64m
-          security_opt:
-            - no-new-privileges:true
-          cap_drop:
-            - ALL
-          mem_limit: 1g
-          pids_limit: 512
-          networks:
-            - internal
-            - frontend
-          restart: always
-
-        postgres:
-          image: ${images.manifest-postgres.ref}
-          environment:
-            POSTGRES_USER: manifest
-            POSTGRES_PASSWORD: ''${DB_PASSWORD}
-            POSTGRES_DB: manifest
-          volumes:
-            - pgdata:/var/lib/postgresql/data
-          healthcheck:
-            test: pg_isready -U manifest
-            interval: 5s
-            timeout: 3s
-            retries: 5
-          logging:
-            driver: json-file
-            options:
-              max-size: "10m"
-              max-file: "5"
-          security_opt:
-            - no-new-privileges:true
-          networks:
-            - internal
-
-      networks:
-        internal:
-          driver: bridge
-          internal: true
-        frontend:
-          driver: bridge
-
-      volumes:
-        pgdata:
-          name: manifest_pgdata
-    '';
+    composeFile = pkgs.writeText "manifest-docker-compose.yml" (
+      builtins.toJSON {
+        name = "mnfst";
+        services = {
+          manifest = {
+            image = images.manifest.ref;
+            ports = ["127.0.0.1:${toString manifestPort}:${toString manifestPort}"];
+            extra_hosts = ["host.docker.internal:host-gateway"];
+            environment = {
+              PORT = toString manifestPort;
+              DATABASE_URL = "postgresql://manifest:\${DB_PASSWORD}@postgres:5432/manifest";
+              BETTER_AUTH_SECRET = "\${AUTH_SECRET}";
+              MANIFEST_ENCRYPTION_KEY = "\${ENCRYPTION_KEY}";
+              BETTER_AUTH_URL = "https://manifest.${domain}";
+              OLLAMA_HOST = "http://host.docker.internal:${toString ports.ollama}";
+              SEED_DATA = "false";
+              NODE_ENV = "production";
+              MANIFEST_MODE = "selfhosted";
+              MANIFEST_TELEMETRY_DISABLED = "1";
+              CORS_ORIGIN = "https://manifest.${domain}";
+            };
+            depends_on.postgres.condition = "service_healthy";
+            healthcheck = {
+              test = [
+                "CMD"
+                "node"
+                "-e"
+                "const p=process.env.PORT||'${toString manifestPort}';fetch(`http://127.0.0.1:\${p}/api/v1/health`).then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+              ];
+              interval = "30s";
+              timeout = "5s";
+              start_period = "90s";
+              retries = 3;
+            };
+            logging = {
+              driver = "json-file";
+              options = {
+                max-size = "10m";
+                max-file = "5";
+              };
+            };
+            read_only = true;
+            tmpfs = ["/tmp:size=64m"];
+            security_opt = ["no-new-privileges:true"];
+            cap_drop = ["ALL"];
+            mem_limit = "1g";
+            pids_limit = 512;
+            networks = ["internal" "frontend"];
+            restart = "always";
+          };
+          postgres = {
+            image = images.manifest-postgres.ref;
+            environment = {
+              POSTGRES_USER = "manifest";
+              POSTGRES_PASSWORD = "\${DB_PASSWORD}";
+              POSTGRES_DB = "manifest";
+            };
+            volumes = ["pgdata:/var/lib/postgresql/data"];
+            healthcheck = {
+              test = "pg_isready -U manifest";
+              interval = "5s";
+              timeout = "3s";
+              retries = 5;
+            };
+            logging = {
+              driver = "json-file";
+              options = {
+                max-size = "10m";
+                max-file = "5";
+              };
+            };
+            security_opt = ["no-new-privileges:true"];
+            networks = ["internal"];
+          };
+        };
+        networks = {
+          internal = {
+            driver = "bridge";
+            internal = true;
+          };
+          frontend.driver = "bridge";
+        };
+        volumes.pgdata.name = "manifest_pgdata";
+      }
+    );
 
     docker = mkDockerService {
       name = "manifest";
@@ -125,29 +122,23 @@ _: {
 
     config = lib.mkIf cfg.enable {
       sops = {
-        secrets = builtins.listToAttrs (
-          map
-          (name: {
-            inherit name;
-            value = {
-              sopsFile = secretsDir + "/manifest.yaml";
-              owner = "root";
-              group = "root";
-              restartUnits = ["manifest.service"];
-            };
-          })
-          [
+        secrets =
+          lib.genAttrs [
             "manifest_auth_secret"
             "manifest_encryption_key"
             "manifest_db_password"
-          ]
-        );
+          ] (_: {
+            sopsFile = lib.path.append secretsDir "manifest.yaml";
+            owner = "root";
+            group = "root";
+            restartUnits = ["manifest.service"];
+          });
         templates."manifest-env" = {
-          content = ''
-            AUTH_SECRET=${config.sops.placeholder.manifest_auth_secret}
-            ENCRYPTION_KEY=${config.sops.placeholder.manifest_encryption_key}
-            DB_PASSWORD=${config.sops.placeholder.manifest_db_password}
-          '';
+          content = lib.generators.toKeyValue {} {
+            AUTH_SECRET = config.sops.placeholder.manifest_auth_secret;
+            ENCRYPTION_KEY = config.sops.placeholder.manifest_encryption_key;
+            DB_PASSWORD = config.sops.placeholder.manifest_db_password;
+          };
         };
       };
 

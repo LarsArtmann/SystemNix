@@ -46,18 +46,12 @@ _: {
 
       SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || exit 0
 
-      extract() {
-        local key="$1"
-        echo "$SMART" | grep -oP "\"''${key}\"\s*:\s*\K[0-9]+"
-      }
-
-      CRITICAL_WARNING=$(extract "critical_warning")
-      AVAILABLE_SPARE=$(extract "available_spare")
-      PERCENTAGE_USED=$(extract "percentage_used")
-      MEDIA_ERRORS=$(extract "media_errors")
-      # shellcheck disable=SC2034
-      NUM_ERR_LOG=$(extract "num_err_log_entries")
-      TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
+      CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // 0')
+      AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.available_spare // 0')
+      PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percentage_used // 0')
+      MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // 0')
+      NUM_ERR_LOG=$(echo "$SMART" | jq -r '.num_err_log_entries // 0')
+      TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
       TEMP_CELSIUS=$((TEMP_KELVIN - 273))
 
       # Critical warning — any non-zero value is urgent
@@ -143,7 +137,7 @@ _: {
       runtimeInputs = [
         pkgs.nvme-cli
         pkgs.coreutils
-        pkgs.gnugrep
+        pkgs.jq
         pkgs.libnotify
         pkgs.util-linux
       ];

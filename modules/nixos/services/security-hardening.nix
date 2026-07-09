@@ -9,6 +9,7 @@ _: {
   }: let
     cfg = config.services.security-hardening;
     inherit (import ../../../lib/default.nix lib) onFailure;
+    ignoreIpList = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
   in {
     options.services.security-hardening = {
       enable = lib.mkEnableOption "Comprehensive security hardening (polkit, PAM, fail2ban, ClamAV, security tools)";
@@ -34,7 +35,7 @@ _: {
           enable = true;
           daemonSettings = {
             Definition.loglevel = "INFO";
-            DEFAULT.ignoreip = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
+            DEFAULT.ignoreip = ignoreIpList;
           };
           jails = {
             sshd.settings = {
@@ -45,7 +46,7 @@ _: {
               maxretry = 3;
               findtime = 600;
               bantime = 3600;
-              ignoreip = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
+              ignoreip = ignoreIpList;
             };
           };
         };
@@ -61,39 +62,39 @@ _: {
       };
 
       # Defensive security tools only
-      environment.systemPackages = with pkgs; [
+      environment.systemPackages = [
         # polkit_gnome removed — DankMaterialShell provides its own polkit agent
-        gnome-keyring
+        pkgs.gnome-keyring
 
-        pamtester
-        openssl
-        gnupg
-        pass
+        pkgs.pamtester
+        pkgs.openssl
+        pkgs.gnupg
+        pkgs.pass
 
-        iptraf-ng
-        bmon
-        netsniff-ng
-        wireshark
+        pkgs.iptraf-ng
+        pkgs.bmon
+        pkgs.netsniff-ng
+        pkgs.wireshark
 
-        aide
-        osquery
+        pkgs.aide
+        pkgs.osquery
 
-        lsof
-        inotify-tools
-        iotop
-        sysstat # iostat -dx 1 — per-device I/O stats
-        bcc # biotop, biosnoop, biolatency — eBPF per-process block I/O tools (work without CONFIG_TASK_DELAY_ACCT)
-        bpftrace # eBPF tracing language for custom I/O one-liners
-        perf
+        pkgs.lsof
+        pkgs.inotify-tools
+        pkgs.iotop
+        pkgs.sysstat # iostat -dx 1 — per-device I/O stats
+        pkgs.bcc # biotop, biosnoop, biolatency — eBPF per-process block I/O tools (work without CONFIG_TASK_DELAY_ACCT)
+        pkgs.bpftrace # eBPF tracing language for custom I/O one-liners
+        pkgs.perf
 
-        goaccess
-        ccze
+        pkgs.goaccess
+        pkgs.ccze
 
-        wireguard-tools
+        pkgs.wireguard-tools
 
-        tcpdump
-        nmap
-        lynis
+        pkgs.tcpdump
+        pkgs.nmap
+        pkgs.lynis
       ];
     };
   };

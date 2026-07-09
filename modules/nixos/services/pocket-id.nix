@@ -295,7 +295,7 @@ _: {
         };
         from = lib.mkOption {
           type = lib.types.str;
-          default = "noreply@cloud.larsartmann.com";
+          default = "noreply@${domain}";
           description = "From email address for outgoing emails";
         };
         skipSslVerify = lib.mkOption {
@@ -487,19 +487,20 @@ _: {
             StartLimitBurst = lib.mkForce 3;
             StartLimitIntervalSec = lib.mkForce 300;
           };
-          serviceConfig =
-            serviceDefaults {}
-            // harden {MemoryMax = "512M";}
-            // {
+          serviceConfig = lib.mkMerge [
+            (serviceDefaults {})
+            (harden {MemoryMax = "512M";})
+            {
               ExecStartPre = "+${lib.getExe checkEncryptionKey}";
               ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
             }
-            // lib.optionalAttrs cfg.provision.enable {
+            (lib.optionalAttrs cfg.provision.enable {
               ExecStartPre = lib.mkForce [
                 "+${lib.getExe checkEncryptionKey}"
                 "+${lib.getExe checkStaticApiKey}"
               ];
-            };
+            })
+          ];
         };
 
         services.pocket-id-provision = lib.mkIf cfg.provision.enable {

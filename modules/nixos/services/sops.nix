@@ -41,7 +41,7 @@ in {
 
     config = lib.mkIf cfg.enable {
       sops = {
-        defaultSopsFile = secretsDir + "/secrets.yaml";
+        defaultSopsFile = lib.path.append secretsDir "secrets.yaml";
         age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"];
         gnupg.sshKeyPaths = [];
 
@@ -74,13 +74,13 @@ in {
           ]
           // {
             oauth2_proxy_client_secret = {
-              sopsFile = secretsDir + "/pocket-id.yaml";
+              sopsFile = lib.path.append secretsDir "pocket-id.yaml";
               owner = "oauth2-proxy";
               group = "oauth2-proxy";
               restartUnits = ["oauth2-proxy.service"];
             };
             oauth2_proxy_cookie_secret = {
-              sopsFile = secretsDir + "/pocket-id.yaml";
+              sopsFile = lib.path.append secretsDir "pocket-id.yaml";
               owner = "oauth2-proxy";
               group = "oauth2-proxy";
               restartUnits = ["oauth2-proxy.service"];
@@ -88,7 +88,7 @@ in {
           }
           // {
             immich_oauth_client_secret = {
-              sopsFile = secretsDir + "/pocket-id.yaml";
+              sopsFile = lib.path.append secretsDir "pocket-id.yaml";
               owner = "immich";
               group = "immich";
               restartUnits = ["immich-server.service"];
@@ -97,16 +97,16 @@ in {
           // mkSecrets "dnsblockd-certs.yaml" {} ["dnsblockd_ca_cert"]
           // {
             dnsblockd_ca_key = {
-              sopsFile = secretsDir + "/dnsblockd-certs.yaml";
+              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
               mode = "0400";
             };
             dnsblockd_server_cert = {
-              sopsFile = secretsDir + "/dnsblockd-certs.yaml";
+              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
               owner = "caddy";
               group = "caddy";
             };
             dnsblockd_server_key = {
-              sopsFile = secretsDir + "/dnsblockd-certs.yaml";
+              sopsFile = lib.path.append secretsDir "dnsblockd-certs.yaml";
               owner = "caddy";
               group = "caddy";
               mode = "0400";
@@ -202,7 +202,7 @@ in {
           (svcEnabled "discordsync" && (config.services.discordsync.gcsBucket or null) != null)
           {
             discordsync_gcs_credentials = {
-              sopsFile = secretsDir + "/discordsync.yaml";
+              sopsFile = lib.path.append secretsDir "discordsync.yaml";
               owner = "discordsync";
               group = "discordsync";
               restartUnits = ["discordsync.service"];

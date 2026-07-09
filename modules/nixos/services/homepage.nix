@@ -55,7 +55,7 @@ _: {
         after = ["network.target"];
         startLimitBurst = 5;
         startLimitIntervalSec = 300;
-        serviceConfig =
+        serviceConfig = lib.mkMerge [
           {
             ExecStart = lib.getExe pkgs.homepage-dashboard;
             WorkingDirectory = stateDir;
@@ -69,8 +69,9 @@ _: {
             Group = "homepage";
             StateDirectory = "homepage-dashboard";
           }
-          // harden {MemoryMax = "384M";}
-          // serviceDefaults {};
+          (harden {MemoryMax = "384M";})
+          (serviceDefaults {})
+        ];
       };
 
       users.users.homepage = {
@@ -80,39 +81,42 @@ _: {
       };
       users.groups.homepage = {};
 
-      environment.etc."homepage/settings.yaml".source = pkgs.writeText "homepage-settings.yaml" ''
-        title: evo-x2
-        favicon: https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/nixos.png
-        theme: dark
-        color: slate
-        headerStyle: boxed
-        layout:
-          Infrastructure:
-            style: row
-            columns: 4
-          Media:
-            style: row
-            columns: 4
-          Development:
-            style: row
-            columns: 4
-          AI:
-            style: row
-            columns: 4
-          Monitoring:
-            style: row
-            columns: 4
-          Productivity:
-            style: row
-            columns: 4
-      '';
+      environment.etc."homepage/settings.yaml".source = (pkgs.formats.yaml {}).generate "homepage-settings.yaml" {
+        title = "evo-x2";
+        favicon = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/nixos.png";
+        theme = "dark";
+        color = "slate";
+        headerStyle = "boxed";
+        layout = {
+          Infrastructure = {
+            style = "row";
+            columns = 4;
+          };
+          Media = {
+            style = "row";
+            columns = 4;
+          };
+          Development = {
+            style = "row";
+            columns = 4;
+          };
+          AI = {
+            style = "row";
+            columns = 4;
+          };
+          Monitoring = {
+            style = "row";
+            columns = 4;
+          };
+          Productivity = {
+            style = "row";
+            columns = 4;
+          };
+        };
+      };
 
       environment.etc."homepage/services.yaml".source = let
-        mkGroup = name: services: "- ${name}:\n" + lib.concatStringsSep "" services;
-
-        mkService = name: props:
-          "    - ${name}:\n"
-          + lib.concatStringsSep "" (lib.mapAttrsToList (k: v: "        ${k}: ${v}\n") props);
+        mkService = name: props: {${name} = props;};
 
         infraServices =
           [
@@ -345,17 +349,17 @@ _: {
 
         groups =
           [
-            (mkGroup "Infrastructure" infraServices)
-            (mkGroup "Media" mediaServices)
-            (mkGroup "Development" devServices)
+            {Infrastructure = infraServices;}
+            {Media = mediaServices;}
+            {Development = devServices;}
           ]
-          ++ lib.optional (aiServices != []) (mkGroup "AI" aiServices)
+          ++ lib.optional (aiServices != []) {AI = aiServices;}
           ++ [
-            (mkGroup "Monitoring" monitoringServices)
-            (mkGroup "Productivity" productivityServices)
+            {Monitoring = monitoringServices;}
+            {Productivity = productivityServices;}
           ];
       in
-        pkgs.writeText "homepage-services.yaml" (lib.concatStringsSep "\n" groups);
+        (pkgs.formats.yaml {}).generate "homepage-services.yaml" groups;
 
       systemd.tmpfiles.rules = [
         (mkStateDir stateDir "0755" "homepage" "homepage")
@@ -363,15 +367,17 @@ _: {
         "L+ ${stateDir}/services.yaml - - - - /etc/homepage/services.yaml"
         "L+ ${stateDir}/settings.yaml - - - - /etc/homepage/settings.yaml"
         "L+ ${stateDir}/bookmarks.yaml - - - - ${pkgs.writeText "bookmarks.yaml" ""}"
-        "L+ ${stateDir}/widgets.yaml - - - - ${pkgs.writeText "widgets.yaml" ''
-          - greeting:
-              text: evo-x2 Dashboard
-          - resources:
-              cpu: true
-              memory: true
-              disk: /
-              uptime: true
-        ''}"
+        "L+ ${stateDir}/widgets.yaml - - - - ${(pkgs.formats.yaml {}).generate "widgets.yaml" [
+          {greeting.text = "evo-x2 Dashboard";}
+          {
+            resources = {
+              cpu = true;
+              memory = true;
+              disk = "/";
+              uptime = true;
+            };
+          }
+        ]}"
         "L+ ${stateDir}/docker.yaml - - - - ${pkgs.writeText "docker.yaml" ""}"
         "L+ ${stateDir}/custom.css - - - - ${pkgs.writeText "custom.css" ''
           :root {

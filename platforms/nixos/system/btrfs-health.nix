@@ -207,19 +207,20 @@ in {
       btrfs-health = {
         description = "BTRFS chunk allocation health monitor";
         inherit onFailure;
-        serviceConfig =
-          serviceOneshotDefaults {}
-          // harden {
+        serviceConfig = lib.mkMerge [
+          (serviceOneshotDefaults {})
+          (harden {
             MemoryMax = "128M";
             ReadWritePaths = [
               textfileDir
               stateDir
             ];
-          }
-          // {
+          })
+          {
             Type = "oneshot";
             ExecStart = lib.getExe btrfsHealthMetrics;
-          };
+          }
+        ];
       };
 
       # ── GC guard: ExecStartPre on nix-gc ────────────────────────────────────

@@ -226,7 +226,7 @@
           pkgs.git
         ];
 
-        serviceConfig =
+        serviceConfig = lib.mkMerge [
           {
             Type = "simple";
             User = cfg.user;
@@ -255,12 +255,13 @@
             StandardError = "journal";
             UMask = "0026";
           }
-          // serviceDefaults {RestartSec = cfg.restartSec;}
-          // harden {
+          (serviceDefaults {RestartSec = cfg.restartSec;})
+          (harden {
             MemoryMax = "24G"; # PyTorch + ROCm + HIP libraries require significant GPU memory mapping
             ProtectHome = false;
             ReadWritePaths = [cfg.stateDir];
-          };
+          })
+        ];
       };
     };
   };

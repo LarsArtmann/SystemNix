@@ -18,26 +18,24 @@ _: {
 
     whisperImage = images.whisper-rocm.ref;
 
-    whisperComposeFile = pkgs.writeText "docker-compose.whisper-asr.yml" ''
-      name: voice-agents
-
-      services:
-        whisper-rocm:
-          image: ${whisperImage}
-          container_name: whisper-asr
-          restart: unless-stopped
-          command: app.py
-          ports:
-            - '${toString cfg.whisperPort}:7860'
-          environment:
-            - MODEL=${cfg.whisperModel}
-            - HSA_OVERRIDE_GFX_VERSION=${rocm.env.HSA_OVERRIDE_GFX_VERSION}
-          volumes:
-            - ${whisperModelsDir}:/root/.cache/huggingface
-          devices:
-            - /dev/dri:/dev/dri
-            - /dev/kfd:/dev/kfd
-    '';
+    whisperComposeFile = pkgs.writeText "docker-compose.whisper-asr.yml" (
+      builtins.toJSON {
+        name = "voice-agents";
+        services.whisper-rocm = {
+          image = whisperImage;
+          container_name = "whisper-asr";
+          restart = "unless-stopped";
+          command = "app.py";
+          ports = ["${toString cfg.whisperPort}:7860"];
+          environment = {
+            MODEL = cfg.whisperModel;
+            HSA_OVERRIDE_GFX_VERSION = rocm.env.HSA_OVERRIDE_GFX_VERSION;
+          };
+          volumes = ["${whisperModelsDir}:/root/.cache/huggingface"];
+          devices = ["/dev/dri:/dev/dri" "/dev/kfd:/dev/kfd"];
+        };
+      }
+    );
 
     docker = mkDockerService {
       name = "whisper-asr";

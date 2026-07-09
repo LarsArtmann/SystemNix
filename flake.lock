@@ -2220,11 +2220,11 @@
     "gogenfilter_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1783585034,
-        "narHash": "sha256-aORXHD2UMajReFlxhos3gqUQvjGQ3vB3RGFBaGDSqy8=",
+        "lastModified": 1783585704,
+        "narHash": "sha256-oFrf9Fsj7eXhT6T+kqaEeLfq1af2945OOblvaj9vSVI=",
         "ref": "master",
-        "rev": "ae61c916c4a106414e8e61e2ec45826478d51f31",
-        "revCount": 705,
+        "rev": "8d82571c22b247c6f8b3132e83a421f528b82e5f",
+        "revCount": 706,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       },
@@ -2504,11 +2504,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783582715,
-        "narHash": "sha256-syVOtRzqtc3+DXh+pl/8t7/pPkhgWp+w8NVFQmNOPhE=",
+        "lastModified": 1783599455,
+        "narHash": "sha256-nnBiAb7u8seBtzJ+aJ/Bmt7JgDVkissB1ZcyEfF1HAU=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "a2768e0588a9aaf33dede9357f5b7baba8ec25c5",
+        "rev": "39f61879cd30b1397d02ce3e63ef31d656ba0ccb",
         "type": "github"
       },
       "original": {
@@ -2662,11 +2662,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1783586209,
-        "narHash": "sha256-q6Z3AaWerOtIMdS3H+3FRbifXH2nLUI3od+79dPQF9g=",
+        "lastModified": 1783586666,
+        "narHash": "sha256-Evsy5HoISInMcI0O3KJT2zXf00CgAArnNoeQ47o5SUo=",
         "ref": "master",
-        "rev": "bad0c0f9a06ba2a4fe8236da62db8f389f77ec0a",
-        "revCount": 2131,
+        "rev": "85061ac49623bb4fdda87f50550be5e7f8313528",
+        "revCount": 2132,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -2996,11 +2996,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783584131,
-        "narHash": "sha256-lLeT4Gu4vb42b2QP0GHQrORroRY4csWFR0sFZ0pM+8w=",
+        "lastModified": 1783598597,
+        "narHash": "sha256-mBSgmslyTzZIFTB+ksRcOBbFplojZ+f4PPKwrKXHSnU=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "5e0aab2b6d1a41d768036df85468e39b3c3b0b59",
+        "rev": "e88078c4c25a9adf3da12085c3ef071211a45aad",
         "type": "github"
       },
       "original": {
@@ -3251,11 +3251,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783583368,
-        "narHash": "sha256-9UkLAj0FAfDCaLR1aOfYe4oamm54BPo9TzqatVNgDec=",
+        "lastModified": 1783586544,
+        "narHash": "sha256-bZEAb0WZefJsXge2RQQPZ+oP5H4jWbVxkuxYiJi4cjI=",
         "ref": "master",
-        "rev": "3cca9eb9e55ed983c599abd1064e5230203b196c",
-        "revCount": 3361,
+        "rev": "0d248982e803b2cbd8d957923390ed80d8dba42b",
+        "revCount": 3362,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },

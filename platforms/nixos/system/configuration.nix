@@ -121,9 +121,9 @@ in {
       openssh.authorizedKeys.keys = [
         nix-ssh-config.sshKeys.lars
       ];
-      packages = with pkgs; [
-        firefox
-        obs-studio
+      packages = [
+        pkgs.firefox
+        pkgs.obs-studio
       ];
     };
 
@@ -174,8 +174,8 @@ in {
     # Note: Font packages are now imported from common/packages/fonts.nix
     # to avoid duplication across platforms
     # System packages for audio/video codec support
-    environment.systemPackages = with pkgs; [
-      libopus # Opus audio codec for Discord voice support
+    environment.systemPackages = [
+      pkgs.libopus # Opus audio codec for Discord voice support
     ];
 
     fonts.fontconfig.defaultFonts = {
@@ -228,7 +228,19 @@ in {
       security-hardening.enable = true;
       gatus-config.enable = true;
       multi-wm.enable = true;
-      browser-policies.enable = true;
+      browser-policies = {
+        enable = true;
+        chromiumExtensions = [
+          {
+            id = "ckagfhpboagdopichicnebandlofghbc";
+            name = "YouTube Shorts Blocker";
+          }
+          {
+            id = "chphlpgkkbolifaimnlloiipkdnihall";
+            name = "OneTab";
+          }
+        ];
+      };
       steam-config.enable = true;
       discordsync = {
         enable = true; # Reactivated — upstream migrated to go-cqrs-lite v3 (ADR-0030)

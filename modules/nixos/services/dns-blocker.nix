@@ -63,7 +63,7 @@ _: {
 
     # Whitelist file
     whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (
-      lib.concatStringsSep "\n" cfg.whitelist
+      lib.concatLines cfg.whitelist
     );
 
     # Build processor arguments: blocklist-file name pairs
@@ -295,18 +295,19 @@ _: {
             inherit onFailure;
             startLimitBurst = 5;
             startLimitIntervalSec = 300;
-            serviceConfig =
+            serviceConfig = lib.mkMerge [
               {
                 Type = "oneshot";
                 RemainAfterExit = true;
                 ExecStart = lib.getExe attachIPScript;
               }
-              // harden {
+              (harden {
                 ProtectHome = false; # Oneshot — ip addr add needs no /home access; false overrides harden default
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
                 NoNewPrivileges = false; # CAP_NET_ADMIN requires relaxed NoNewPrivileges for network config
-              }
-              // serviceOneshotDefaults {};
+              })
+              (serviceOneshotDefaults {})
+            ];
           };
 
           dnsblockd = {
@@ -344,27 +345,29 @@ _: {
               caCert = config.sops.secrets.dnsblockd_ca_cert.path;
               caKey = config.sops.secrets.dnsblockd_ca_key.path;
               dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
-                lib.generators.toYAML {} {
-                  listen_addr = cfg.blockIP;
-                  port = cfg.blockPort;
-                  tls_port = cfg.blockTLSPort;
-                  stats_addr = "127.0.0.1";
-                  stats_port = cfg.statsPort;
-                  ca_cert_file = "${caCert}";
-                  ca_key_file = "${caKey}";
-                  blocklist_mapping_file = "${processedBlocklist}/mapping.json";
-                  unbound_control = "${config.services.unbound.package}/bin/unbound-control";
-                  temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
-                  tracking_mode = "METADATA_ONLY";
-                  tracking_db_path = "/var/lib/dnsblockd/tracking.db";
-                }
-                + lib.optionalString (cfg.categories != {}) "\ncategories_file: ${categoriesJSON}"
+                lib.generators.toYAML {} ({
+                    listen_addr = cfg.blockIP;
+                    port = cfg.blockPort;
+                    tls_port = cfg.blockTLSPort;
+                    stats_addr = "127.0.0.1";
+                    stats_port = cfg.statsPort;
+                    ca_cert_file = "${caCert}";
+                    ca_key_file = "${caKey}";
+                    blocklist_mapping_file = "${processedBlocklist}/mapping.json";
+                    unbound_control = "${config.services.unbound.package}/bin/unbound-control";
+                    temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
+                    tracking_mode = "METADATA_ONLY";
+                    tracking_db_path = "/var/lib/dnsblockd/tracking.db";
+                  }
+                  // lib.optionalAttrs (cfg.categories != {}) {
+                    categories_file = "${categoriesJSON}";
+                  })
               );
               secretCheck = pkgs.writeShellApplication {
                 name = "dnsblockd-wait-secrets";
                 runtimeInputs = [pkgs.coreutils];
                 text = ''
-                  for i in $(seq 1 30); do
+                  for _ in $(seq 1 30); do
                     if [ -s "${caCert}" ] && [ -s "${caKey}" ]; then
                       exit 0
                     fi
@@ -375,29 +378,31 @@ _: {
                 '';
               };
             in
-              harden {
-                MemoryMax = "1G";
-                ProtectSystem = "strict";
-                CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
-                AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
-              }
-              // serviceDefaults {RestartSec = "3s";}
-              // {
-                Type = "simple";
-                ExecStartPre = [
-                  "+-${lib.getExe initScript}"
-                  "${lib.getExe secretCheck}"
-                ];
-                ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
-                StateDirectory = "dnsblockd";
-                WorkingDirectory = "/var/lib/dnsblockd";
-                SupplementaryGroups = ["unbound"];
-                RestrictAddressFamilies = [
-                  "AF_INET"
-                  "AF_INET6"
-                  "AF_NETLINK"
-                ];
-              };
+              lib.mkMerge [
+                (harden {
+                  MemoryMax = "1G";
+                  ProtectSystem = "strict";
+                  CapabilityBoundingSet = ["CAP_NET_BIND_SERVICE"];
+                  AmbientCapabilities = ["CAP_NET_BIND_SERVICE"];
+                })
+                (serviceDefaults {RestartSec = "3s";})
+                {
+                  Type = "simple";
+                  ExecStartPre = [
+                    "+-${lib.getExe initScript}"
+                    "${lib.getExe secretCheck}"
+                  ];
+                  ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
+                  StateDirectory = "dnsblockd";
+                  WorkingDirectory = "/var/lib/dnsblockd";
+                  SupplementaryGroups = ["unbound"];
+                  RestrictAddressFamilies = [
+                    "AF_INET"
+                    "AF_INET6"
+                    "AF_NETLINK"
+                  ];
+                }
+              ];
           };
         };
 

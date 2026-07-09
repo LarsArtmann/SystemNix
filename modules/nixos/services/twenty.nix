@@ -26,84 +26,87 @@ _: {
     pgDb = "twenty";
     serverUrl = "https://crm.${domain}";
 
-    composeFile = pkgs.writeText "twenty-docker-compose.yml" ''
-      name: twenty
-
-      services:
-        server:
-          image: ${images.twenty.ref}
-          ports:
-            - "127.0.0.1:${toString serverPort}:3000"
-          environment:
-            NODE_PORT: 3000
-            PG_DATABASE_URL: postgres://${pgUser}:''${PG_DATABASE_PASSWORD}@db:5432/${pgDb}
-            SERVER_URL: ${serverUrl}
-            REDIS_URL: redis://redis:6379
-            STORAGE_TYPE: local
-            APP_SECRET: ''${APP_SECRET}
-          volumes:
-            - server-local-data:/app/packages/twenty-server/.local-storage
-          depends_on:
-            db:
-              condition: service_healthy
-            redis:
-              condition: service_healthy
-          healthcheck:
-            test: curl --fail http://localhost:3000/healthz
-            interval: 5s
-            timeout: 5s
-            retries: 30
-          restart: always
-
-        worker:
-          image: ${images.twenty.ref}
-          command: ["yarn", "worker:prod"]
-          environment:
-            PG_DATABASE_URL: postgres://${pgUser}:''${PG_DATABASE_PASSWORD}@db:5432/${pgDb}
-            SERVER_URL: ${serverUrl}
-            REDIS_URL: redis://redis:6379
-            STORAGE_TYPE: local
-            APP_SECRET: ''${APP_SECRET}
-            DISABLE_DB_MIGRATIONS: "true"
-            DISABLE_CRON_JOBS_REGISTRATION: "true"
-          volumes:
-            - server-local-data:/app/packages/twenty-server/.local-storage
-          depends_on:
-            db:
-              condition: service_healthy
-            server:
-              condition: service_healthy
-          restart: always
-
-        db:
-          image: ${images.twenty-postgres.ref}
-          environment:
-            POSTGRES_DB: ${pgDb}
-            POSTGRES_PASSWORD: ''${PG_DATABASE_PASSWORD}
-            POSTGRES_USER: ${pgUser}
-          volumes:
-            - db-data:/var/lib/postgresql/data
-          healthcheck:
-            test: pg_isready -U ${pgUser} -h localhost -d postgres
-            interval: 5s
-            timeout: 5s
-            retries: 10
-          restart: always
-
-        redis:
-          image: ${images.twenty-redis.ref}
-          command: ["--maxmemory-policy", "noeviction"]
-          healthcheck:
-            test: ["CMD", "redis-cli", "ping"]
-            interval: 5s
-            timeout: 5s
-            retries: 10
-          restart: always
-
-      volumes:
-        db-data:
-        server-local-data:
-    '';
+    composeFile = pkgs.writeText "twenty-docker-compose.yml" (
+      builtins.toJSON {
+        name = "twenty";
+        services = {
+          server = {
+            image = images.twenty.ref;
+            ports = ["127.0.0.1:${toString serverPort}:3000"];
+            environment = {
+              NODE_PORT = 3000;
+              PG_DATABASE_URL = "postgres://${pgUser}:\${PG_DATABASE_PASSWORD}@db:5432/${pgDb}";
+              SERVER_URL = serverUrl;
+              REDIS_URL = "redis://redis:6379";
+              STORAGE_TYPE = "local";
+              APP_SECRET = "\${APP_SECRET}";
+            };
+            volumes = ["server-local-data:/app/packages/twenty-server/.local-storage"];
+            depends_on = {
+              db.condition = "service_healthy";
+              redis.condition = "service_healthy";
+            };
+            healthcheck = {
+              test = "curl --fail http://localhost:3000/healthz";
+              interval = "5s";
+              timeout = "5s";
+              retries = 30;
+            };
+            restart = "always";
+          };
+          worker = {
+            image = images.twenty.ref;
+            command = ["yarn" "worker:prod"];
+            environment = {
+              PG_DATABASE_URL = "postgres://${pgUser}:\${PG_DATABASE_PASSWORD}@db:5432/${pgDb}";
+              SERVER_URL = serverUrl;
+              REDIS_URL = "redis://redis:6379";
+              STORAGE_TYPE = "local";
+              APP_SECRET = "\${APP_SECRET}";
+              DISABLE_DB_MIGRATIONS = "true";
+              DISABLE_CRON_JOBS_REGISTRATION = "true";
+            };
+            volumes = ["server-local-data:/app/packages/twenty-server/.local-storage"];
+            depends_on = {
+              db.condition = "service_healthy";
+              server.condition = "service_healthy";
+            };
+            restart = "always";
+          };
+          db = {
+            image = images.twenty-postgres.ref;
+            environment = {
+              POSTGRES_DB = pgDb;
+              POSTGRES_PASSWORD = "\${PG_DATABASE_PASSWORD}";
+              POSTGRES_USER = pgUser;
+            };
+            volumes = ["db-data:/var/lib/postgresql/data"];
+            healthcheck = {
+              test = "pg_isready -U ${pgUser} -h localhost -d postgres";
+              interval = "5s";
+              timeout = "5s";
+              retries = 10;
+            };
+            restart = "always";
+          };
+          redis = {
+            image = images.twenty-redis.ref;
+            command = ["--maxmemory-policy" "noeviction"];
+            healthcheck = {
+              test = ["CMD" "redis-cli" "ping"];
+              interval = "5s";
+              timeout = "5s";
+              retries = 10;
+            };
+            restart = "always";
+          };
+        };
+        volumes = {
+          db-data = null;
+          server-local-data = null;
+        };
+      }
+    );
 
     fixCollation = pkgs.writeShellApplication {
       name = "twenty-fix-collation";
@@ -157,10 +160,10 @@ _: {
           restartUnits = ["twenty.service"];
         };
         templates."twenty-env" = {
-          content = ''
-            PG_DATABASE_PASSWORD=${config.sops.placeholder.twenty_db_password}
-            APP_SECRET=${config.sops.placeholder.twenty_app_secret}
-          '';
+          content = lib.generators.toKeyValue {} {
+            PG_DATABASE_PASSWORD = config.sops.placeholder.twenty_db_password;
+            APP_SECRET = config.sops.placeholder.twenty_app_secret;
+          };
         };
       };
 
@@ -176,13 +179,14 @@ _: {
               wants = ["twenty.service"];
               wantedBy = ["multi-user.target"];
               path = [pkgs.docker];
-              serviceConfig =
-                harden {MemoryMax = "512M";}
-                // {
+              serviceConfig = lib.mkMerge [
+                (harden {MemoryMax = "512M";})
+                {
                   Type = "oneshot";
                   ExecStart = lib.getExe fixCollation;
                   RemainAfterExit = true;
-                };
+                }
+              ];
             };
           };
         timers = docker.timers;

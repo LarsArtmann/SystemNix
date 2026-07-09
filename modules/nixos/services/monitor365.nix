@@ -76,9 +76,9 @@
             };
 
             storage = {
-              path = lib.mkDefault "/home/${primaryUser}/.local/share/monitor365";
+              path = lib.mkDefault "${config.users.users.${primaryUser}.home}/.local/share/monitor365";
               encryption = lib.mkDefault true;
-              encryption_key_file = lib.mkDefault "/home/${primaryUser}/.config/monitor365/storage_key";
+              encryption_key_file = lib.mkDefault "${config.users.users.${primaryUser}.home}/.config/monitor365/storage_key";
               max_size_mb = lib.mkDefault (30 * 1024);
             };
 

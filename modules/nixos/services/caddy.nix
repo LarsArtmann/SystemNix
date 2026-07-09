@@ -202,20 +202,21 @@ _: {
           StartLimitBurst = lib.mkForce 3;
           StartLimitIntervalSec = lib.mkForce 300;
         };
-        serviceConfig =
-          harden {
+        serviceConfig = lib.mkMerge [
+          (harden {
             NoNewPrivileges = lib.mkForce false;
             CapabilityBoundingSet = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
-          }
-          // serviceDefaults {}
-          // {
+          })
+          (serviceDefaults {})
+          {
             ReadWritePaths = lib.mkForce [
               "/var/lib/caddy"
               "/var/log/caddy"
             ];
             OOMScoreAdjust = lib.mkForce (-500);
             AmbientCapabilities = "CAP_NET_ADMIN CAP_NET_BIND_SERVICE";
-          };
+          }
+        ];
       };
     };
   };

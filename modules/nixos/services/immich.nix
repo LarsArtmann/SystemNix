@@ -73,23 +73,25 @@ _: {
 
       systemd = {
         services = {
-          immich-server.serviceConfig =
-            harden {
+          immich-server.serviceConfig = lib.mkMerge [
+            (harden {
               MemoryMax = "2G";
               ProtectHome = lib.mkForce false;
               ProtectSystem = lib.mkForce false;
-            }
-            // serviceDefaults {};
-          immich-machine-learning.serviceConfig =
-            harden {
+            })
+            (serviceDefaults {})
+          ];
+          immich-machine-learning.serviceConfig = lib.mkMerge [
+            (harden {
               MemoryMax = "4G";
               ProtectHome = lib.mkForce false;
               ProtectSystem = lib.mkForce false;
-            }
-            // serviceDefaults {RestartSec = "10s";}
-            // {
+            })
+            (serviceDefaults {RestartSec = "10s";})
+            {
               Environment = lib.mkForce "HOME=/var/lib/immich";
-            };
+            }
+          ];
           immich-server = {
             after = lib.optional provisionEnabled "pocket-id-provision.service";
             wants = lib.optional provisionEnabled "pocket-id-provision.service";

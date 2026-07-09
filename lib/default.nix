@@ -82,7 +82,7 @@ in {
 
     service = {
       inherit description onFailure;
-      serviceConfig =
+      serviceConfig = lib.mkMerge [
         {
           Type = "oneshot";
           User = user;
@@ -95,14 +95,15 @@ in {
           StandardOutput = "journal";
           StandardError = "journal";
         }
-        // hardenFn (
+        (hardenFn (lib.mkMerge [
           {
             ProtectHome = false;
             NoNewPrivileges = false;
           }
-          // extraHarden
-        )
-        // extraServiceConfig;
+          extraHarden
+        ]))
+        extraServiceConfig
+      ];
     };
   };
 
