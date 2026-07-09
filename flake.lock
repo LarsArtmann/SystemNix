@@ -437,11 +437,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783602352,
-        "narHash": "sha256-jRdMGgt1liGPh4eqQFCXMSp4ce9+e8wUHHW5bsd3wmk=",
+        "lastModified": 1783626996,
+        "narHash": "sha256-OXbA/pnopydsVOYsWsDkH+j2JsyPXK88cY8X/+6UC+Y=",
         "ref": "master",
-        "rev": "cf614aa35a23d09402e49242d8eef28a802cbae8",
-        "revCount": 750,
+        "rev": "eeef979fa5684186a22d1dcb660295591086398b",
+        "revCount": 755,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -2373,14 +2373,15 @@
       "inputs": {
         "nixpkgs": [
           "nixpkgs"
-        ]
+        ],
+        "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1783603946,
-        "narHash": "sha256-HqJ7dLb9UnBWk/ZTC6oVc3N1+mupbjafKbVLjkZu358=",
+        "lastModified": 1783626205,
+        "narHash": "sha256-eZ+gx+moF24/Utz+16DAu6o/ozrEuoTY3S4LXy7biOw=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "9c4534276614653e51cfcff1fb4f9040129e8a11",
+        "rev": "b137c7b5ea551aec2a186fea51a0959461c032d9",
         "type": "github"
       },
       "original": {
@@ -2504,11 +2505,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783620786,
-        "narHash": "sha256-Mm9RWan8bf7dysvNEYSII5ClyLmv0pkfH8ezEk4m7Rk=",
+        "lastModified": 1783626356,
+        "narHash": "sha256-EIty4zxN6Erhx0ZOgHgCD7xgF+uo1ypv7x8DphLLALg=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "3c4f940d71f54d0c85c83326dcd3ca139c656d77",
+        "rev": "bf4477c426d3ec139a843525961126c25fcbd372",
         "type": "github"
       },
       "original": {
@@ -2657,16 +2658,16 @@
         "nixpkgs": [
           "nixpkgs"
         ],
-        "rust-overlay": "rust-overlay",
+        "rust-overlay": "rust-overlay_2",
         "systems": "systems_11",
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1783617120,
-        "narHash": "sha256-9uXPUihLamGD9lyX5ACOFgo/AIL8II5MLdh9gzWs8lU=",
+        "lastModified": 1783627254,
+        "narHash": "sha256-xaFPNI0OuMk83Sd93eM2P0dJrTCLgWRULX8INQO/n7I=",
         "ref": "master",
-        "rev": "d42665a9342e51f6db1d40d56ab2520c8e209046",
-        "revCount": 2135,
+        "rev": "385442a8ed9e9215496de4f09402a2033d4e955d",
+        "revCount": 2136,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -2996,11 +2997,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783618767,
-        "narHash": "sha256-BjgkzH6SZagSoMdRQZczXLOm+UfA2gAfPpQxcfMZfPE=",
+        "lastModified": 1783626112,
+        "narHash": "sha256-e0IZh0hKexRn0JoeoSeI/MypY3PA1vF62UYyUTRogR8=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "8e647da4c346ee795ce84aa3c79825440fc4aedc",
+        "rev": "b94e514d3b5fac46b9d9867f0b47d74b81daa3f0",
         "type": "github"
       },
       "original": {
@@ -3251,11 +3252,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783616391,
-        "narHash": "sha256-Il95uYNh3xGJip4RFrM790B+wZInrWrBKVa/M/OqkVg=",
+        "lastModified": 1783625533,
+        "narHash": "sha256-iKqrXld/c2tSvqSPNxhsPOOni3Xd0z1RdgqH9onR+Cs=",
         "ref": "master",
-        "rev": "2dd2e003afe043870878d1ddc5f6c84b4d73dad4",
-        "revCount": 3363,
+        "rev": "342ebe82cfb51117d82e5a99fc6691a406eec477",
+        "revCount": 3364,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/projects-management-automation"
       },
@@ -3414,6 +3415,27 @@
       }
     },
     "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "herdr",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783577481,
+        "narHash": "sha256-EWMxOWrJ031f8f/lrcEmhTRs4npw1/5N3Hcjin846c8=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "4cdea398dc491b082dccdce0fad1ed0b75fa3394",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "rust-overlay_2": {
       "inputs": {
         "nixpkgs": [
           "monitor365",
@@ -3774,16 +3796,16 @@
     "templ-components": {
       "flake": false,
       "locked": {
-        "lastModified": 1783299965,
-        "narHash": "sha256-pn1OVDuNQ09ZHogvyrjzh/bDEFERUkXlRuW6wcT+iVc=",
+        "lastModified": 1783625522,
+        "narHash": "sha256-DAP3x9SyaDlNuJWJV29AAOLS5rhrAGMwadNNc2+v2Nw=",
         "ref": "refs/heads/master",
-        "rev": "461af3e9b66e000c37a8eb4817afb5cbeb91404c",
-        "revCount": 537,
+        "rev": "d8ad0ba117019e8e85fedeb0fc871c01a0eb553d",
+        "revCount": 574,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
-        "rev": "461af3e9b66e000c37a8eb4817afb5cbeb91404c",
+        "rev": "d8ad0ba117019e8e85fedeb0fc871c01a0eb553d",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
