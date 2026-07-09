@@ -9,6 +9,7 @@ _: {
       (import ../../../lib/default.nix lib)
       harden
       serviceDefaults
+      serviceOneshotDefaults
       onFailure
       ports
       ;
@@ -113,11 +114,19 @@ _: {
               "immich-server.service"
             ];
             requires = ["postgresql.service"];
-            serviceConfig = {
-              Type = "oneshot";
-              User = "immich";
-              Group = "immich";
-            };
+            serviceConfig = lib.mkMerge [
+              (harden {
+                MemoryMax = "256M";
+                ProtectHome = false;
+                ReadWritePaths = ["${config.services.immich.mediaLocation}/database-backup"];
+              })
+              (serviceOneshotDefaults {})
+              {
+                Type = "oneshot";
+                User = "immich";
+                Group = "immich";
+              }
+            ];
             script = ''
               set -euo pipefail
               backupDir="${config.services.immich.mediaLocation}/database-backup"

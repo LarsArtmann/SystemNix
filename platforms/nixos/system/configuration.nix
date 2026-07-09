@@ -230,15 +230,38 @@ in {
       multi-wm.enable = true;
       browser-policies = {
         enable = true;
-        chromiumExtensions = [
-          {
-            id = "ckagfhpboagdopichicnebandlofghbc";
-            name = "YouTube Shorts Blocker";
-          }
-          {
-            id = "chphlpgkkbolifaimnlloiipkdnihall";
-            name = "OneTab";
-          }
+        chromiumExtensions = let
+          ext = id: name: {inherit id name;};
+        in [
+          # Privacy / Content Blocking
+          (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
+          # Productivity
+          (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
+          # Time Tracking
+          (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
+          # Email
+          (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
+          # YouTube
+          (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
+          (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
+          (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
+          (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
+          (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
+          (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
+          # GitHub
+          (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
+          (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
+          (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
+          (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
+          (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
+          # Development Tools
+          (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
+          (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
+          # Translation
+          (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
+          # Social / Content
+          (ext "ajkipkkhchaaccpbpkclolpebkgbmodl" "9gag Post Filter")
+          (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
         ];
       };
       steam-config.enable = true;

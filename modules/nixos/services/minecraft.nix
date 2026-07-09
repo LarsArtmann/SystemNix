@@ -454,11 +454,7 @@ _: {
           (serviceDefaults {})
         ];
 
-        networking.firewall.extraCommands = ''
-          iptables -A nixos-fw -p tcp --dport ${toString cfg.port} -s ${config.networking.local.subnet} -j nixos-fw-accept
-          iptables -A nixos-fw -p tcp --dport ${toString cfg.port} -s 127.0.0.1 -j nixos-fw-accept
-          ip6tables -A nixos-fw -p tcp --dport ${toString cfg.port} -s ::1 -j nixos-fw-accept
-        '';
+        networking.firewall.allowedTCPPorts = [cfg.port];
       };
 
       clientConfig = lib.mkIf ccfg.enable {
