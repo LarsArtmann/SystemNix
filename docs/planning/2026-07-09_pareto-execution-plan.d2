@@ -1,0 +1,143 @@
+direction: right
+
+title: SystemNix Pareto Execution Plan — 2026-07-09
+
+P0_Critical: {
+  shape: rectangle
+  style.fill: "#ff6b6b"
+  style.stroke: "#ff6b6b"
+  label: |md
+    **P0 Critical**
+    - Deploy discard=async fix (blocked: reboot)
+    - Off-site backup (blocked: human/vendor)
+    - BTRFS scrub (blocked: sudo/long-running)
+    - SMART check (blocked: sudo/hardware)
+    - project-meta silent build
+  |
+}
+
+P0_Deploy: {
+  shape: rectangle
+  style.fill: "#ffb347"
+  style.stroke: "#ffb347"
+  label: |md
+    **P0 Deploy & Verify**
+    - Reboot evo-x2
+    - Pocket ID email
+    - crush-daily/Monitor365/DiscordSync/Overview verification
+    - post-deploy-check.sh path fix
+  |
+}
+
+P0_DNS: {
+  shape: rectangle
+  style.fill: "#f4d35e"
+  style.stroke: "#f4d35e"
+  label: |md
+    **P0 DNS Migration**
+    - Module options + assertions
+    - dnsblockd YAML config
+    - unbound backup on :5353
+    - Service deps + VRRP check
+    - Pin dnsblockd v0.2.0
+  |
+}
+
+P1_Fixes: {
+  shape: rectangle
+  style.fill: "#6eb5ff"
+  style.stroke: "#6eb5ff"
+  label: |md
+    **P1 Fixes**
+    - Twenty CRM 502s
+    - post-deploy-check path
+    - GPUActive monitoring
+    - TTM pool reduction
+  |
+}
+
+P1_Docs: {
+  shape: rectangle
+  style.fill: "#6eb5ff"
+  style.stroke: "#6eb5ff"
+  label: |md
+    **P1 Docs (DONE)**
+    - discard=async QLC gotcha
+    - buildGoModule env gotcha
+    - buildGoDir silent gotcha
+  |
+}
+
+P2_Manual: {
+  shape: rectangle
+  style.fill: "#a0a0a0"
+  style.stroke: "#a0a0a0"
+  label: |md
+    **P2 Manual (human blocked)**
+    - Hermes SSH key
+    - Hermes fallback model
+    - dnsblockd-CA on Mac
+  |
+}
+
+P3_Infra: {
+  shape: rectangle
+  style.fill: "#a0a0a0"
+  style.stroke: "#a0a0a0"
+  label: |md
+    **P3 Infrastructure**
+    - BTRFS /data subvol migration
+    - Swap investigation
+    - GPUActive monitoring
+    - TTM page pool reduction
+  |
+}
+
+P5_Upstream: {
+  shape: rectangle
+  style.fill: "#a0a0a0"
+  style.stroke: "#a0a0a0"
+  label: |md
+    **P5 Upstream Contributions**
+    - nixpkgs PRs
+    - Home Manager PRs
+    - LarsArtmann Go repo go.sum fixes
+    - Third-party upstream PRs
+  |
+}
+
+P6_LongTerm: {
+  shape: rectangle
+  style.fill: "#a0a0a0"
+  style.stroke: "#a0a0a0"
+  label: |md
+    **P6 Long-Term**
+    - Pi 3 provisioning
+    - Auditd/AppArmor
+    - Darwin parity
+    - Monitor365 auth
+    - Disabled service triage
+    - Large module splits
+  |
+}
+
+FeasibleNow: {
+  shape: oval
+  style.fill: "#6eb5ff"
+  style.stroke: "#6eb5ff"
+  label: |md
+    **Feasible in this session**
+    Code/config only
+  |
+}
+
+P0_Critical -> P0_Deploy -> P0_DNS: blocked on deploy
+P1_Fixes -> P0_Deploy: needs deploy
+P1_Fixes -> P3_Infra: code now
+P0_DNS -> P3_Infra: DNS migration
+P2_Manual -> P0_Deploy: after deploy
+P5_Upstream -> P6_LongTerm: ecosystem
+
+FeasibleNow -> P1_Fixes
+FeasibleNow -> P3_Infra
+FeasibleNow -> P0_DNS
