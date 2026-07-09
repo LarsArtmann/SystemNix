@@ -28,20 +28,36 @@
           chmod -R u+w $out/opt
           ln -s ${pkgs.widevine-cdm}/share/google/chrome/WidevineCdm $out/opt/helium/WidevineCdm
 
-          # Wrap binary: VAAPI accel + --disable-gpu-watchdog (prevents GPU process kill
-          # during slow display pipeline reconfiguration on Strix Halo DCN 3.5.1 hotplug)
+          # Wrap the REAL binary directly — NOT the upstream wrapper.
+          # Double-wrapping (wrapping the upstream makeWrapper script) caused a
+          # silent --enable-features collision: Chromium's GetSwitchValueASCII
+          # returns the LAST value for duplicate switches, so one layer's
+          # features silently overwrote the other. Single-wrapping ensures all
+          # flags reach the binary exactly once.
+          #
+          # Note: WaylandWindowDecorations (from upstream) is intentionally EXCLUDED —
+          # niri is a scrollable tiling compositor that strips all decorations.
+          # CSD would add conflicting title bars/buttons useless in a tiling layout.
+          #
+          # Note: --enable-gpu-rasterization is intentionally EXCLUDED —
+          # Strix Halo has 51+ GiB GPUActive (55% of visible RAM) with GPUReclaim=0.
+          # GPU rasterization moves more work to the GPU, increasing GTT buffer objects
+          # and worsening the unified memory pressure crisis.
           rm -rf $out/bin
-          cp -a ${heliumPackage}/bin $out/bin
-          chmod -R u+w $out/bin
-          wrapProgram $out/bin/helium \
-            --add-flags "--enable-features=VaapiVideoDecoder,VaapiVideoEncoder,AcceleratedVideoDecoder,AcceleratedVideoEncoder,WebAuthenticationHybridTransport" \
+          mkdir -p $out/bin
+          makeWrapper $out/opt/helium/helium $out/bin/helium \
+            --prefix LD_LIBRARY_PATH : "${pkgs.lib.makeLibraryPath (with pkgs; [libGL libvdpau libva pipewire alsa-lib libpulseaudio])}" \
+            --add-flags "--ozone-platform-hint=auto" \
+            --add-flags "--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,WebAuthenticationHybridTransport" \
             --add-flags "--ignore-gpu-blocklist" \
             --add-flags "--enable-zero-copy" \
             --add-flags "--disable-gpu-watchdog" \
             --add-flags "--restore-last-session" \
             --add-flags "--disable-session-crashed-bubble" \
-            --add-flags "--disable-backgrounding-occluded-windows" \
-            --add-flags "--disable-renderer-backgrounding"
+            --add-flags "--disable-component-update" \
+            --add-flags "--simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'" \
+            --add-flags "--check-for-update-interval=0" \
+            --add-flags "--disable-background-networking"
         '';
       }
     else heliumPackage;

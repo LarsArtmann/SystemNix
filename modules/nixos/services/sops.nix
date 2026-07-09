@@ -147,6 +147,14 @@ in {
               restartUnits = ["openseo.service"];
             } ["dataforseo_api_key"]
           )
+          # Server secrets — owned by dedicated system user
+          # monitor365_api_key: tenant API key used by both server (bootstrap)
+          # and agent (cloud sync).  The agent reads it via a sops template
+          # (monitor365-agent-env) owned by the desktop user.
+          # In a multi-machine setup, each machine has its own sops file
+          # but with the same tenant key value.
+          # cloud_auth_token: kept as separate sops secret for the agent's
+          # user service so it can read the value independently.
           # Agent secret — owned by desktop user (user service)
           // lib.optionalAttrs (svcEnabled "monitor365") (
             mkSecrets "monitor365.yaml"
@@ -157,7 +165,7 @@ in {
             }
             ["cloud_auth_token"]
           )
-          # Server secret — owned by dedicated system user
+          # Server secrets — owned by dedicated system user
           // lib.optionalAttrs (svcEnabled "monitor365-server") (
             mkSecrets "monitor365.yaml"
             {
@@ -165,7 +173,7 @@ in {
               group = "monitor365-server";
               restartUnits = ["monitor365-server.service"];
             }
-            ["server_jwt_secret"]
+            ["server_jwt_secret" "monitor365_api_key"]
           )
           // lib.optionalAttrs (svcEnabled "signoz" || svcEnabled "gatus-config") (
             mkSecrets "signoz.yaml" {
@@ -242,8 +250,19 @@ in {
               '';
             };
           }
+          // lib.optionalAttrs (svcEnabled "monitor365") {
+            # Agent env: injects the tenant API key as MONITOR365__CLOUD__AUTH_TOKEN
+            "monitor365-agent-env" = {
+              owner = primaryUser;
+              group = "users";
+              restartUnits = ["monitor365.service"];
+              content = ''
+                MONITOR365__CLOUD__AUTH_TOKEN=${config.sops.placeholder.cloud_auth_token}
+              '';
+            };
+          }
           // lib.optionalAttrs (svcEnabled "monitor365-server") {
-            "monitor365-env" = {
+            "monitor365-server-env" = {
               owner = "monitor365-server";
               group = "monitor365-server";
               restartUnits = ["monitor365-server.service"];

@@ -6,7 +6,23 @@
 #   nix/server-module.nix → services.monitor365-server (control plane)
 #
 # This file only adds SystemNix-specific defaults: port wiring, sops
-# secret paths, desktop runtime deps, and pocket-id SSO integration.
+# secret wiring, desktop runtime deps, and pocket-id SSO integration.
+#
+# ── Auth Model ──────────────────────────────────────────────
+# The server bootstrap generates (or reads from sops) ONE tenant-level
+# API key.  This key is shared by all agents in the tenant — it proves
+# tenant membership, not device identity.  Per-device identity is
+# established via hardware fingerprint headers (x-device-fingerprint,
+# x-hardware-fingerprint, x-host-id) sent alongside the API key.
+#
+# The same sops secret value (monitor365_api_key) is materialised as
+# two separate sops entries with different owners:
+#   1. monitor365_api_key → owned by monitor365-server (bootstrap.apiKeyFile)
+#   2. cloud_auth_token   → owned by primaryUser (agent environmentFile)
+#
+# In a multi-machine deployment each machine would have its own sops
+# file but with the same tenant key value.  If a machine is compromised
+# the admin rotates the key in sops and redeploys.
 {inputs, ...}: {
   flake.nixosModules.monitor365 = {
     config,
@@ -20,6 +36,19 @@
 
     agentCfg = config.services.monitor365;
     serverCfg = config.services.monitor365-server;
+
+    # Desktop monitoring deps — CLI tools the agent shells out to.
+    desktopDeps = with pkgs; [
+      xdotool
+      xprintidle
+      scrot
+      networkmanager
+      lm_sensors
+      bluez
+      util-linux
+      coreutils
+      procps
+    ];
   in {
     imports = [
       inputs.monitor365.nixosModules.monitor365
@@ -33,6 +62,12 @@
           user = lib.mkDefault primaryUser;
           group = lib.mkDefault "users";
           serviceType = lib.mkDefault "user";
+          runtimeDeps = lib.mkDefault desktopDeps;
+
+          # Agent reads the tenant API key from a sops-managed env file.
+          # The env file sets MONITOR365__CLOUD__AUTH_TOKEN which the
+          # config crate picks up via env-var layering.
+          environmentFile = lib.mkDefault config.sops.templates."monitor365-agent-env".path;
 
           settings = {
             device = {
@@ -53,10 +88,10 @@
             };
             activitywatch = lib.mkDefault null;
 
-            # Agent syncs to local server
+            # Agent syncs to local server — endpoint only, no authTokenFile.
+            # The token is injected via environmentFile (sops template).
             cloud = lib.mkIf serverCfg.enable {
               endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
-              authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
               sync_interval_seconds = lib.mkDefault 60;
             };
           };
@@ -74,17 +109,16 @@
             "https://monitor.${domain}"
           ];
 
-          # JWT secret from sops
           jwtSecretFile = lib.mkDefault config.sops.secrets.server_jwt_secret.path;
-
-          # Sops env file (for any extra MONITOR365_SERVER__* vars)
-          environmentFile = lib.mkDefault config.sops.templates."monitor365-env".path;
+          environmentFile = lib.mkDefault config.sops.templates."monitor365-server-env".path;
 
           bootstrap = {
             enable = lib.mkDefault true;
+            # Pre-provisioned tenant API key from sops — both server and
+            # agent read the same underlying value.
+            apiKeyFile = lib.mkDefault config.sops.secrets.monitor365_api_key.path;
           };
 
-          # SSO via Pocket ID — defaults set unconditionally; user opts in via sso.enable
           sso = {
             issuer = lib.mkDefault "https://auth.${domain}";
             clientSecretFile = lib.mkDefault "${config.services.pocket-id.dataDir or "/var/lib/pocket-id"}/client-secrets/monitor365";
