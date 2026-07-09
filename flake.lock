@@ -2662,11 +2662,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1783586666,
-        "narHash": "sha256-Evsy5HoISInMcI0O3KJT2zXf00CgAArnNoeQ47o5SUo=",
+        "lastModified": 1783605372,
+        "narHash": "sha256-kJEq+oyh88WCAs/LiDaqDbMejBauH34nTN+fdQ3mHTU=",
         "ref": "master",
-        "rev": "85061ac49623bb4fdda87f50550be5e7f8313528",
-        "revCount": 2132,
+        "rev": "230cdab4bc6260df3cc5106877e9e20668c7a192",
+        "revCount": 2133,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
