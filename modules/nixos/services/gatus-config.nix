@@ -320,6 +320,8 @@ _: {
                 conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 2000"];
                 alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
               })
+            ]
+            ++ lib.optionals (config.services.monitor365-server.enable or false || config.services.monitor365.enable or false) [
               (mkHttpCheck {
                 name = "Monitor365 Server";
                 group = "Monitoring";
@@ -360,6 +362,8 @@ _: {
                 conditions = ["[STATUS] == 200" "[BODY] == pat(*monitor365*)"];
                 alerts = discordAlert "Monitor365 agent down — local device telemetry collector not running";
               })
+            ]
+            ++ [
               (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
@@ -536,13 +540,13 @@ _: {
         # Gatus must not start before the OIDC client secret has been provisioned.
         after = lib.optional enableOidc "pocket-id-provision.service";
         wants = lib.optional enableOidc "pocket-id-provision.service";
-        serviceConfig =
-          harden {
+        serviceConfig = lib.mkMerge [
+          (harden {
             MemoryMax = "512M";
             ReadWritePaths = ["/var/lib/gatus"];
-          }
-          // serviceDefaults {Restart = "on-failure";}
-          // {
+          })
+          (serviceDefaults {Restart = "on-failure";})
+          {
             ExecStartPre = [
               "+${lib.getExe checkGatusEnv}"
               "${lib.getExe gatusOidcEnv}"
@@ -556,7 +560,8 @@ _: {
               config.sops.templates."gatus-env".path
               "-/run/gatus/oidc.env"
             ];
-          };
+          }
+        ];
       };
     };
   };

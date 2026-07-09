@@ -217,11 +217,11 @@ in {
             "forgejo-sync.env" = {
               owner = primaryUser;
               group = "users";
-              content = ''
-                FORGEJO_TOKEN=${config.sops.placeholder.forgejo_token}
-                GITHUB_TOKEN=${config.sops.placeholder.github_token}
-                GITHUB_USER=${config.sops.placeholder.github_user}
-              '';
+              content = lib.generators.toKeyValue {} {
+                FORGEJO_TOKEN = config.sops.placeholder.forgejo_token;
+                GITHUB_TOKEN = config.sops.placeholder.github_token;
+                GITHUB_USER = config.sops.placeholder.github_user;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "hermes") {
@@ -230,14 +230,14 @@ in {
               group = "hermes";
               mode = "0400";
               restartUnits = ["hermes.service"];
-              content = ''
-                DISCORD_BOT_TOKEN=${config.sops.placeholder.hermes_discord_bot_token}
-                GLM_API_KEY=${config.sops.placeholder.hermes_glm_api_key}
-                MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
-                XIAOMI_API_KEY=${config.sops.placeholder.hermes_xiaomi_api_key}
-                FAL_KEY=${config.sops.placeholder.hermes_fal_key}
-                FIRECRAWL_API_KEY=${config.sops.placeholder.hermes_firecrawl_api_key}
-              '';
+              content = lib.generators.toKeyValue {} {
+                DISCORD_BOT_TOKEN = config.sops.placeholder.hermes_discord_bot_token;
+                GLM_API_KEY = config.sops.placeholder.hermes_glm_api_key;
+                MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
+                XIAOMI_API_KEY = config.sops.placeholder.hermes_xiaomi_api_key;
+                FAL_KEY = config.sops.placeholder.hermes_fal_key;
+                FIRECRAWL_API_KEY = config.sops.placeholder.hermes_firecrawl_api_key;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "hermes" && svcEnabled "projects-management-automation") {
@@ -245,9 +245,9 @@ in {
               owner = primaryUser;
               group = "users";
               restartUnits = ["projects-management-automation.service"];
-              content = ''
-                MINIMAX_API_KEY=${config.sops.placeholder.hermes_minimax_api_key}
-              '';
+              content = lib.generators.toKeyValue {} {
+                MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "monitor365") {
@@ -256,9 +256,9 @@ in {
               owner = primaryUser;
               group = "users";
               restartUnits = ["monitor365.service"];
-              content = ''
-                MONITOR365__CLOUD__AUTH_TOKEN=${config.sops.placeholder.cloud_auth_token}
-              '';
+              content = lib.generators.toKeyValue {} {
+                MONITOR365__CLOUD__AUTH_TOKEN = config.sops.placeholder.cloud_auth_token;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "monitor365-server") {
@@ -266,9 +266,9 @@ in {
               owner = "monitor365-server";
               group = "monitor365-server";
               restartUnits = ["monitor365-server.service"];
-              content = ''
-                MONITOR365_SERVER__JWT_SECRET=${config.sops.placeholder.server_jwt_secret}
-              '';
+              content = lib.generators.toKeyValue {} {
+                MONITOR365_SERVER__JWT_SECRET = config.sops.placeholder.server_jwt_secret;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "openseo") {
@@ -277,9 +277,9 @@ in {
               group = "root";
               mode = "0400";
               restartUnits = ["openseo.service"];
-              content = ''
-                DATAFORSEO_API_KEY=${config.sops.placeholder.dataforseo_api_key}
-              '';
+              content = lib.generators.toKeyValue {} {
+                DATAFORSEO_API_KEY = config.sops.placeholder.dataforseo_api_key;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "crush-daily") {
@@ -288,9 +288,9 @@ in {
               group = "crush-daily";
               mode = "0400";
               restartUnits = ["crush-daily.service"];
-              content = ''
-                CRUSH_DAILY_LLM_API_KEY=${config.sops.placeholder.synthetic_api_key}
-              '';
+              content = lib.generators.toKeyValue {} {
+                CRUSH_DAILY_LLM_API_KEY = config.sops.placeholder.synthetic_api_key;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "gatus-config") {
@@ -298,9 +298,9 @@ in {
               owner = "root";
               group = "root";
               restartUnits = ["gatus.service"];
-              content = ''
-                DISCORD_WEBHOOK_URL=${config.sops.placeholder.discord_alert_webhook_url}
-              '';
+              content = lib.generators.toKeyValue {} {
+                DISCORD_WEBHOOK_URL = config.sops.placeholder.discord_alert_webhook_url;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "discordsync") {
@@ -309,18 +309,18 @@ in {
               group = "discordsync";
               mode = "0400";
               restartUnits = ["discordsync.service"];
-              content = ''
-                DISCORD_TOKEN=${config.sops.placeholder.discordsync_discord_token}
-                TURSO_URL=${config.sops.placeholder.discordsync_turso_url}
-                TURSO_AUTH_TOKEN=${config.sops.placeholder.discordsync_turso_auth_token}
-              '';
+              content = lib.generators.toKeyValue {} {
+                DISCORD_TOKEN = config.sops.placeholder.discordsync_discord_token;
+                TURSO_URL = config.sops.placeholder.discordsync_turso_url;
+                TURSO_AUTH_TOKEN = config.sops.placeholder.discordsync_turso_auth_token;
+              };
             };
           }
           // lib.optionalAttrs (svcEnabled "dns-failover") {
             "dns-failover-env" = {
-              content = ''
-                VRRP_AUTH_PASSWORD=${config.sops.placeholder.vrrp_auth_password}
-              '';
+              content = lib.generators.toKeyValue {} {
+                VRRP_AUTH_PASSWORD = config.sops.placeholder.vrrp_auth_password;
+              };
             };
           };
       };

@@ -31,7 +31,7 @@
     ...
   }: let
     inherit (config.users) primaryUser;
-    ports = (import ../../../lib/ports.nix).ports;
+    ports = (import ../../../lib/default.nix lib).ports;
     domain = config.networking.domain;
 
     agentCfg = config.services.monitor365;
@@ -78,6 +78,7 @@
             storage = {
               path = lib.mkDefault "/home/${primaryUser}/.local/share/monitor365";
               encryption = lib.mkDefault true;
+              encryption_key_file = lib.mkDefault "/home/${primaryUser}/.config/monitor365/storage_key";
               max_size_mb = lib.mkDefault (30 * 1024);
             };
 
@@ -119,16 +120,18 @@
             apiKeyFile = lib.mkDefault config.sops.secrets.monitor365_api_key.path;
           };
 
-          sso = {
+          sso = lib.mkIf (config.services.pocket-id.enable or false) {
             issuer = lib.mkDefault "https://auth.${domain}";
             clientSecretFile = lib.mkDefault "${config.services.pocket-id.dataDir or "/var/lib/pocket-id"}/client-secrets/monitor365";
             redirectUri = lib.mkDefault "https://monitor.${domain}/v1/auth/sso/callback";
           };
         };
 
-        # Allow the agent user to read Pocket ID client secrets when SSO is enabled
+        # Grant pocket-id group to both agent user and server user when SSO is enabled
         users.users.${primaryUser}.extraGroups =
-          lib.optional serverCfg.sso.enable "pocket-id";
+          lib.optional (serverCfg.sso.enable && (config.services.pocket-id.enable or false)) "pocket-id";
+        users.users.monitor365-server.extraGroups =
+          lib.optional (serverCfg.sso.enable && (config.services.pocket-id.enable or false)) "pocket-id";
       })
     ];
   };
