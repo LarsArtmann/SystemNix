@@ -437,11 +437,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783626996,
-        "narHash": "sha256-OXbA/pnopydsVOYsWsDkH+j2JsyPXK88cY8X/+6UC+Y=",
+        "lastModified": 1783627966,
+        "narHash": "sha256-/SU7yJJbW34olxNpP4zgOPZ3t6GCpbnSBokK2lye3B0=",
         "ref": "master",
-        "rev": "eeef979fa5684186a22d1dcb660295591086398b",
-        "revCount": 755,
+        "rev": "1895f9dc1eb6bcf37c2126073dab1baf549483cd",
+        "revCount": 757,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -2505,11 +2505,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783626356,
-        "narHash": "sha256-EIty4zxN6Erhx0ZOgHgCD7xgF+uo1ypv7x8DphLLALg=",
+        "lastModified": 1783628709,
+        "narHash": "sha256-ox+bEPPjwZukc+nXbAc6Pxbt4A1STus7FNAgnNlqERo=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "bf4477c426d3ec139a843525961126c25fcbd372",
+        "rev": "8215fe044dc7b66357e304401a64e3f52b4c1306",
         "type": "github"
       },
       "original": {
@@ -2997,11 +2997,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783626112,
-        "narHash": "sha256-e0IZh0hKexRn0JoeoSeI/MypY3PA1vF62UYyUTRogR8=",
+        "lastModified": 1783630781,
+        "narHash": "sha256-S9L1XTLUPp+ZCzeaRYNyUi0NTKqSByftlUbHP1WK2v0=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "b94e514d3b5fac46b9d9867f0b47d74b81daa3f0",
+        "rev": "fbb8b0b0d7dc7bcc92fc8a9feb07f90c891f342b",
         "type": "github"
       },
       "original": {
