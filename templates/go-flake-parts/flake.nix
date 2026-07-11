@@ -107,7 +107,7 @@
                 description = "REPLACE_ME — short description";
                 homepage = "https://github.com/LarsArtmann/REPLACE_ME";
                 license = licenses.mit;
-                maintainers = [maintainers.larsartmann];
+                maintainers = [{ name = "Lars Artmann"; github = "LarsArtmann"; }];
                 mainProgram = "REPLACE_ME";
               };
             }
