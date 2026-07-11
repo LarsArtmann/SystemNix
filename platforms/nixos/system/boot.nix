@@ -80,6 +80,16 @@ in {
       # journal, which takes seconds when metadata allocation is near-full.
       # Result: 3.5min initrd activation (13s CPU, rest pure I/O wait on logging).
       # Keep pstore for crash diagnosis — it writes to NVRAM, not the filesystem.
+      # Redirect boot logs to tty2 — SDDM takes over tty1's VT in graphics mode at
+      # graphical.target, so the kernel text console on tty1 has no scanout buffer to
+      # render to (DRM/KMS exclusive access). tty2 is a plain text VT with getty that
+      # SDDM never claims, so all kernel/systemd/activation output is visible there.
+      # Ctrl+Alt+F2 = boot log, Ctrl+Alt+F1 = SDDM.
+      # console=tty1 is listed last so /dev/console still resolves to tty1 (NixOS default
+      # — some services write to /dev/console expecting the primary VT). Once SDDM starts
+      # tty1 output is invisible, but tty2 retains the full log.
+      "console=tty2"
+      "console=tty1"
       # Enable task delay accounting — kernel has CONFIG_TASK_DELAY_ACCT=y compiled in
       # but it's inert without this boot param. iotop shows "CONFIG_TASK_DELAY_ACCT not
       # enabled" without it. Near-zero overhead. eBPF tools (bcc/bpftrace) don't need it
