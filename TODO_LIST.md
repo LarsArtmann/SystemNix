@@ -74,6 +74,7 @@
 
 ### Priority 1: Fix Broken Services
 
+- [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist` because the PG container only has a `postgres` role. Data is NOT lost: 1 user, 1 workspace, 66 companies, 144 contacts across 90 tables (schemas `core` + `workspace_e9cj8i2yyuv46o8h43y8adli`, 17 MB total in `twenty_db-data` volume). The `twenty-server-local-data` volume (1.1 MB) has 2 workspace dirs from May 3 with generated SDK zips and custom function stubs. Needs: (1) fix the PG role mismatch so the app can connect, (2) decide whether to keep Twenty on Docker (it's 4 containers ~1.5 GB RAM for an idle CRM) or nixify it natively like SigNoz/Forgejo/Homepage. Twenty is the single biggest Docker consumer and a major contributor to BTRFS overlay2 metadata fragmentation.
 - [ ] **Fix Twenty CRM intermittent 502s** — APPEARS RESOLVED. Server running since 06-23, responding on :3200. Monitor for recurrence.
 - [x] **Audit Gatus health checks** — AUDITED 2026-06-25. Only 2 DOWN: Ollama (expected, `wantedBy = []` no autostart) and Monitor365 Server (upstream Rust panic). All 36 other endpoints pass. *Superseded by session 154 expansion: 38→41 endpoints with 31 Discord alerts and 17 response-time thresholds.*
 - [ ] **Fix `post-deploy-check.sh` path in deploy.sh** — `$(dirname "$0")/post-deploy-check.sh` works from source but fails when run from nix store (script isn't in the store path). Should use `nix run .#post-deploy-check` pattern, same as `pre-deploy-check` at `deploy.sh:5`.
