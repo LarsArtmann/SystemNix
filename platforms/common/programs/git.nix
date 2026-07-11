@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   programs.git = {
     enable = true;
     lfs.enable = true;
@@ -80,9 +80,7 @@
 
       credential = {
         helper =
-          if pkgs.stdenv.isDarwin
-          then "osxkeychain"
-          else "${pkgs.gitFull}/bin/git-credential-libsecret";
+          if pkgs.stdenv.isDarwin then "osxkeychain" else "${pkgs.gitFull}/bin/git-credential-libsecret";
       };
 
       "coderabbit" = {

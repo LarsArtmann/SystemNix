@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   # Import Darwin-specific system configurations
   imports = [
     # Cross-platform preferences (dark mode, fonts, themes — single source of truth)

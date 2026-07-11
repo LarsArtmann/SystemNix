@@ -3,7 +3,8 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   sd = import ../../../lib/default.nix lib;
   socketsDir = "${config.home.homeDirectory}/.ssh/sockets";
 
@@ -15,7 +16,7 @@
   # refused the master is gone and the file is unlinked.
   ssh-socket-cleanup = pkgs.writeShellApplication {
     name = "ssh-socket-cleanup";
-    runtimeInputs = [pkgs.python3];
+    runtimeInputs = [ pkgs.python3 ];
     text = ''
       python3 - "$1" <<'PYEOF'
       import os, socket, stat, sys
@@ -51,7 +52,8 @@
       PYEOF
     '';
   };
-in {
+in
+{
   ssh-config = {
     enable = true;
     user = "lars";
@@ -89,7 +91,7 @@ in {
   };
 
   # Ensure the ControlPath target exists before SSH tries to spawn a master.
-  home.activation.ssh-sockets-dir = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.ssh-sockets-dir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     $DRY_RUN_CMD mkdir -p "${socketsDir}"
     $DRY_RUN_CMD chmod 700 "${socketsDir}"
   '';
@@ -99,8 +101,8 @@ in {
     services.ssh-socket-cleanup = {
       Unit.Description = "Remove stale SSH control-master sockets";
       Service =
-        sd.hardenUser {}
-        // sd.serviceOneshotDefaultsUser {}
+        sd.hardenUser { }
+        // sd.serviceOneshotDefaultsUser { }
         // {
           Type = "oneshot";
           ExecStart = "${lib.getExe ssh-socket-cleanup} ${socketsDir}";
@@ -114,7 +116,7 @@ in {
         OnUnitActiveSec = "5min";
         Persistent = lib.mkForce true;
       };
-      Install.WantedBy = ["timers.target"];
+      Install.WantedBy = [ "timers.target" ];
     };
   };
 }

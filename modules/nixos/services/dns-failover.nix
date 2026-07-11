@@ -1,99 +1,99 @@
 # DNS failover via Keepalived VRRP with Unbound health tracking
 _: {
-  flake.nixosModules.dns-failover = {
-    config,
-    lib,
-    pkgs,
-    ...
-  }: let
-    cfg = config.services.dns-failover;
-    inherit (lib) mkEnableOption mkOption types;
-    interfaceDevice = "sys-subsystem-net-devices-${cfg.interface}.device";
-  in {
-    options.services.dns-failover = {
-      enable = mkEnableOption "DNS failover via Keepalived VRRP";
+  flake.nixosModules.dns-failover =
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
+    let
+      cfg = config.services.dns-failover;
+      inherit (lib) mkEnableOption mkOption types;
+      interfaceDevice = "sys-subsystem-net-devices-${cfg.interface}.device";
+    in
+    {
+      options.services.dns-failover = {
+        enable = mkEnableOption "DNS failover via Keepalived VRRP";
 
-      virtualIP = mkOption {
-        type = types.nonEmptyStr;
-        description = "Virtual IP address shared between DNS nodes (clients point to this)";
-      };
-
-      interface = mkOption {
-        type = types.nonEmptyStr;
-        description = "Network interface for VRRP advertisements and virtual IP";
-      };
-
-      priority = mkOption {
-        type = types.ints.between 0 255;
-        default = 100;
-        description = "VRRP priority (higher = preferred master). Use 100 for primary, 50 for backup.";
-      };
-
-      routerID = mkOption {
-        type = types.ints.between 0 255;
-        default = 53;
-        description = "VRRP router ID (must match on all nodes in the cluster)";
-      };
-
-      subnetPrefix = mkOption {
-        type = types.ints.between 0 32;
-        default = 24;
-        description = "Subnet prefix length for the virtual IP";
-      };
-
-      passwordFile = mkOption {
-        type = types.path;
-        description = "Environment file containing VRRP_AUTH_PASSWORD=<password>. Use sops.templates to generate this.";
-      };
-    };
-
-    config = lib.mkIf cfg.enable {
-      systemd.services.keepalived = {
-        after = [interfaceDevice];
-        wants = [interfaceDevice];
-      };
-
-      services.keepalived = {
-        enable = true;
-        openFirewall = true;
-
-        vrrpScripts.chk_unbound = {
-          script = "${lib.getExe' pkgs.bind.dnsutils "host"} google.com 127.0.0.1 > /dev/null 2>&1";
-          interval = 5;
-          fall = 3;
-          rise = 2;
+        virtualIP = mkOption {
+          type = types.nonEmptyStr;
+          description = "Virtual IP address shared between DNS nodes (clients point to this)";
         };
 
-        vrrpInstances.VI_DNS = {
-          state =
-            if cfg.priority >= 100
-            then "MASTER"
-            else "BACKUP";
-          inherit (cfg) interface priority;
-          virtualRouterId = cfg.routerID;
-          noPreempt = cfg.priority < 100;
+        interface = mkOption {
+          type = types.nonEmptyStr;
+          description = "Network interface for VRRP advertisements and virtual IP";
+        };
 
-          virtualIps = [
-            {addr = "${cfg.virtualIP}/${toString cfg.subnetPrefix}";}
-          ];
+        priority = mkOption {
+          type = types.ints.between 0 255;
+          default = 100;
+          description = "VRRP priority (higher = preferred master). Use 100 for primary, 50 for backup.";
+        };
 
-          trackScripts = ["chk_unbound"];
+        routerID = mkOption {
+          type = types.ints.between 0 255;
+          default = 53;
+          description = "VRRP router ID (must match on all nodes in the cluster)";
+        };
 
-          extraConfig = ''
-            authentication {
-              auth_type PASS
-              auth_pass ''${VRRP_AUTH_PASSWORD}
-            }
+        subnetPrefix = mkOption {
+          type = types.ints.between 0 32;
+          default = 24;
+          description = "Subnet prefix length for the virtual IP";
+        };
+
+        passwordFile = mkOption {
+          type = types.path;
+          description = "Environment file containing VRRP_AUTH_PASSWORD=<password>. Use sops.templates to generate this.";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        systemd.services.keepalived = {
+          after = [ interfaceDevice ];
+          wants = [ interfaceDevice ];
+        };
+
+        services.keepalived = {
+          enable = true;
+          openFirewall = true;
+
+          vrrpScripts.chk_unbound = {
+            script = "${lib.getExe' pkgs.bind.dnsutils "host"} google.com 127.0.0.1 > /dev/null 2>&1";
+            interval = 5;
+            fall = 3;
+            rise = 2;
+          };
+
+          vrrpInstances.VI_DNS = {
+            state = if cfg.priority >= 100 then "MASTER" else "BACKUP";
+            inherit (cfg) interface priority;
+            virtualRouterId = cfg.routerID;
+            noPreempt = cfg.priority < 100;
+
+            virtualIps = [
+              { addr = "${cfg.virtualIP}/${toString cfg.subnetPrefix}"; }
+            ];
+
+            trackScripts = [ "chk_unbound" ];
+
+            extraConfig = ''
+              authentication {
+                auth_type PASS
+                auth_pass ''${VRRP_AUTH_PASSWORD}
+              }
+            '';
+          };
+
+          extraGlobalDefs = ''
+            vrrp_garp_master_refresh 30
+            vrrp_garp_master_refresh_repeat 2
           '';
+
+          secretFile = cfg.passwordFile;
         };
-
-        extraGlobalDefs = ''
-          vrrp_garp_master_refresh 30
-          vrrp_garp_master_refresh_repeat 2
-        '';
-
-        secretFile = cfg.passwordFile;
       };
     };
-  };
 }

@@ -4,11 +4,11 @@
   lib,
   nix-ssh-config,
   ...
-}: let
+}:
+let
   blocklists = import ../../common/dns-blocklists.nix;
   dnsLocal = import ../../common/dns-local.nix;
-  inherit
-    (config.networking.local)
+  inherit (config.networking.local)
     lanIP
     piIP
     virtualIP
@@ -18,16 +18,14 @@
   interface = "eth0";
   domain = "home.lan";
 
-  fetchedBlocklists =
-    map (bl: {
-      inherit (bl) name;
-      file = pkgs.fetchurl {
-        inherit (bl) url;
-        inherit (bl) hash;
-        name = "${bl.name}-raw";
-      };
-    })
-    blocklists.blocklists;
+  fetchedBlocklists = map (bl: {
+    inherit (bl) name;
+    file = pkgs.fetchurl {
+      inherit (bl) url;
+      inherit (bl) hash;
+      name = "${bl.name}-raw";
+    };
+  }) blocklists.blocklists;
 
   whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (
     lib.concatStringsSep "\n" blocklists.whitelist
@@ -37,29 +35,29 @@
     lib.concatMap (bl: [
       (toString bl.file)
       bl.name
-    ])
-    fetchedBlocklists
+    ]) fetchedBlocklists
   );
 
   processedBlocklist =
     pkgs.runCommand "dns-blocker-processed"
-    {
-      nativeBuildInputs = [pkgs.dnsblockd];
-    }
-    ''
-      mkdir -p $out
-      dnsblockd process \
-        "0.0.0.0" \
-        ${whitelistFile} \
-        $out/unbound.conf \
-        $out/mapping.json \
-        ${processorArgs}
-    '';
+      {
+        nativeBuildInputs = [ pkgs.dnsblockd ];
+      }
+      ''
+        mkdir -p $out
+        dnsblockd process \
+          "0.0.0.0" \
+          ${whitelistFile} \
+          $out/unbound.conf \
+          $out/mapping.json \
+          ${processorArgs}
+      '';
 
   unboundIncludeFile = pkgs.writeText "dns-blocker-unbound.conf" ''
     include: ${processedBlocklist}/unbound.conf
   '';
-in {
+in
+{
   imports = [
     ../../common/nix-settings.nix
     ../../common/dns-resolver.nix
@@ -104,7 +102,7 @@ in {
         22
         53
       ];
-      allowedUDPPorts = [53];
+      allowedUDPPorts = [ 53 ];
     };
   };
 
@@ -145,12 +143,8 @@ in {
           local-zone =
             map (d: ''"${d}" transparent'') blocklists.whitelist
             ++ map (d: ''"${d}" always_nxdomain'') blocklists.extraDomains
-            ++ [''"${domain}." static''];
-          local-data =
-            map (
-              subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"''
-            )
-            dnsLocal.localSubdomains;
+            ++ [ ''"${domain}." static'' ];
+          local-data = map (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'') dnsLocal.localSubdomains;
         };
       };
     };
@@ -190,13 +184,13 @@ in {
         Persistent = true;
         RandomizedDelaySec = "30m";
       };
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
     };
     services = {
       unbound.reloadIfChanged = true;
       crush-update-providers = {
         description = "Update Crush AI providers";
-        onFailure = ["crush-update-failure.service"];
+        onFailure = [ "crush-update-failure.service" ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = "${lib.getExe' pkgs.nur.repos.charmbracelet.crush "crush"} update-providers";

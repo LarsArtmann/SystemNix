@@ -2,7 +2,8 @@
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   # Common Nix settings (platform-agnostic)
   nix = {
     enable = true;
@@ -35,20 +36,19 @@
     };
 
     # Automatic garbage collection
-    gc =
-      {
-        automatic = true;
-        options = "--delete-older-than 3d";
-      }
-      // lib.optionalAttrs pkgs.stdenv.isDarwin {
-        interval = {
-          Hour = 3;
-        };
-      }
-      // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
-        persistent = true;
-        dates = "daily";
+    gc = {
+      automatic = true;
+      options = "--delete-older-than 3d";
+    }
+    // lib.optionalAttrs pkgs.stdenv.isDarwin {
+      interval = {
+        Hour = 3;
       };
+    }
+    // lib.optionalAttrs (!pkgs.stdenv.isDarwin) {
+      persistent = true;
+      dates = "daily";
+    };
 
     optimise.automatic = true;
 

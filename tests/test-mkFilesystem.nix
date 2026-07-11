@@ -53,21 +53,21 @@ let
     (assertThrows "reject_subvol_on_ext4" (mkFilesystem {
       device = "/dev/test";
       fsType = "ext4";
-      options = ["subvol=@cache"];
+      options = [ "subvol=@cache" ];
     }))
 
     # compress on xfs MUST throw
     (assertThrows "reject_compress_on_xfs" (mkFilesystem {
       device = "/dev/test";
       fsType = "xfs";
-      options = ["compress=zstd"];
+      options = [ "compress=zstd" ];
     }))
 
     # space_cache=v2 on ext4 MUST throw
     (assertThrows "reject_space_cache_on_ext4" (mkFilesystem {
       device = "/dev/test";
       fsType = "ext4";
-      options = ["space_cache=v2"];
+      options = [ "space_cache=v2" ];
     }))
 
     # No options at all MUST pass
@@ -79,9 +79,9 @@ let
 
   failures = builtins.filter (r: !r.passed) results;
 in
-  if failures == []
-  then "All ${toString (builtins.length results)} tests passed ✓"
-  else
-    builtins.throw "${toString (builtins.length failures)} test(s) failed: ${
-      builtins.concatStringsSep ", " (map (r: r.name) failures)
-    }"
+if failures == [ ] then
+  "All ${toString (builtins.length results)} tests passed ✓"
+else
+  builtins.throw "${toString (builtins.length failures)} test(s) failed: ${
+    builtins.concatStringsSep ", " (map (r: r.name) failures)
+  }"

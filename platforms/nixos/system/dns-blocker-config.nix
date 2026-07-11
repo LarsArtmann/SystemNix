@@ -12,14 +12,16 @@
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # Local DNS records are in platforms/common/dns-local.nix
 # DNS resolution: DoT forwarding to Mullvad/Quad9 (port 853 — VPN-firewall-safe)
-{config, ...}: let
+{ config, ... }:
+let
   inherit (config.networking) domain;
   inherit (config.networking.local) blockIP virtualIP;
   blocklists = import ../../common/dns-blocklists.nix;
   dnsLocal = import ../../common/dns-local.nix;
   lanIP = builtins.head config.networking.interfaces.eno1.ipv4.addresses;
   serverIP = lanIP.address;
-in {
+in
+{
   services = {
     dns-blocker = {
       enable = true;
@@ -31,8 +33,7 @@ in {
       blockIPPrefix = 24;
       statsPort = 9090;
 
-      inherit
-        (blocklists)
+      inherit (blocklists)
         blocklists
         whitelist
         extraDomains
@@ -53,12 +54,10 @@ in {
 
     unbound.settings.server = {
       verbosity = 1;
-      local-zone = [''"${domain}." static''];
-      local-data =
-        map (
-          subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"''
-        )
-        dnsLocal.localSubdomains;
+      local-zone = [ ''"${domain}." static'' ];
+      local-data = map (
+        subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"''
+      ) dnsLocal.localSubdomains;
     };
 
     dns-failover = {

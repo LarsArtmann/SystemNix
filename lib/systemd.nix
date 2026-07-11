@@ -1,20 +1,19 @@
-{lib}: args @ {
+{ lib }:
+args@{
   mode ? "system",
   MemoryMax ? "512M",
   MemoryHigh ? "80%", # Throttle at 80% of MemoryMax before hard kill
   ProtectSystem ? "full",
   ProtectHome ? true,
-  ReadWritePaths ? [],
+  ReadWritePaths ? [ ],
   RestrictNamespaces ? true,
   NoNewPrivileges ? true,
   CapabilityBoundingSet ? "",
   ...
-}: let
+}:
+let
   isOverride = v: builtins.isAttrs v && v ? _type && v._type == "override";
-  mkDefault' = v:
-    if isOverride v
-    then v
-    else lib.mkDefault v;
+  mkDefault' = v: if isOverride v then v else lib.mkDefault v;
 
   shared = {
     PrivateTmp = lib.mkDefault true;
@@ -49,4 +48,4 @@
   ];
   passthrough = builtins.removeAttrs args namedKeys;
 in
-  shared // lib.optionalAttrs (mode == "system") systemOnly // passthrough
+shared // lib.optionalAttrs (mode == "system") systemOnly // passthrough

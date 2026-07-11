@@ -3,13 +3,16 @@
   lib,
   nixpkgs,
   system,
-}: let
-  makeTest = testSpec: import "${nixpkgs}/nixos/tests/make-test-python.nix" testSpec {inherit system;};
-in {
+}:
+let
+  makeTest =
+    testSpec: import "${nixpkgs}/nixos/tests/make-test-python.nix" testSpec { inherit system; };
+in
+{
   boot = makeTest {
     name = "boot";
 
-    nodes.machine = {pkgs, ...}: {
+    nodes.machine = { pkgs, ... }: {
       system.stateVersion = "25.11";
     };
 
@@ -23,15 +26,15 @@ in {
   dns-blocking = makeTest {
     name = "dns-blocking";
 
-    nodes.machine = {pkgs, ...}: {
+    nodes.machine = { pkgs, ... }: {
       services.unbound = {
         enable = true;
         resolveLocalQueries = true;
         settings = {
           server = {
-            interface = ["0.0.0.0"];
+            interface = [ "0.0.0.0" ];
             do-ip6 = false;
-            access-control = ["0.0.0.0/0 allow"];
+            access-control = [ "0.0.0.0/0 allow" ];
             local-zone = [
               ''"ads.example.com." always_nxdomain''
               ''"tracker.example.com." always_nxdomain''
@@ -46,7 +49,7 @@ in {
           ];
         };
       };
-      environment.systemPackages = [pkgs.dnsutils];
+      environment.systemPackages = [ pkgs.dnsutils ];
       system.stateVersion = "25.11";
     };
 

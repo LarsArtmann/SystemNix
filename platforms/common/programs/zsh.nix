@@ -1,11 +1,13 @@
 # Zsh shell configuration (Cross-Platform)
 # Performance-optimized config migrated from dotfiles/.zshrc
-{config, ...}: let
+{ config, ... }:
+let
   # Import shared aliases from shell-aliases.nix
-  commonAliases = (import ./shell-aliases.nix {}).commonShellAliases;
+  commonAliases = (import ./shell-aliases.nix { }).commonShellAliases;
   # Expected common aliases
   # Type assertions
-in {
+in
+{
   # Common Zsh shell configuration
   programs.zsh = {
     enable = true;

@@ -19,8 +19,8 @@ for fs in / /data /mnt/btrfs-root; do
   echo "Snapshots:"
   snapshot_dir=""
   case "$fs" in
-    /|/mnt/btrfs-root) snapshot_dir="/mnt/btrfs-root/.snapshots" ;;
-    /data) snapshot_dir="/data/.snapshots" ;;
+  / | /mnt/btrfs-root) snapshot_dir="/mnt/btrfs-root/.snapshots" ;;
+  /data) snapshot_dir="/data/.snapshots" ;;
   esac
 
   if [ -n "$snapshot_dir" ] && [ -d "$snapshot_dir" ]; then

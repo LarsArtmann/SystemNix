@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: {
+}:
+{
   fonts = lib.mkIf pkgs.stdenv.isLinux {
     packages = [
       pkgs.nerd-fonts.jetbrains-mono

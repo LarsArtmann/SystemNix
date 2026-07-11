@@ -1,9 +1,11 @@
 # FZF configuration (Cross-Platform)
 # Migrated from dotfiles/.fzf.zsh
 # Home Manager manages completion and keybindings automatically
-{colorScheme, ...}: let
+{ colorScheme, ... }:
+let
   colors = colorScheme.palette;
-in {
+in
+{
   programs.fzf = {
     enable = true;
     enableZshIntegration = true;

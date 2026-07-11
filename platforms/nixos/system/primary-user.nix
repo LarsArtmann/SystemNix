@@ -1,4 +1,4 @@
-{lib, ...}: {
+{ lib, ... }: {
   options.users.primaryUser = lib.mkOption {
     type = lib.types.str;
     default = "lars";

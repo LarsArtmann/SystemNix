@@ -6,14 +6,16 @@
   lib,
   config,
   ...
-}: let
+}:
+let
   inherit (lib) mkOption types;
-in {
+in
+{
   options.sops = {
     secrets = mkOption {
       type = types.attrsOf (
         types.submodule (
-          {name, ...}: {
+          { name, ... }: {
             freeformType = types.anything;
             options.path = mkOption {
               type = types.str;
@@ -22,7 +24,7 @@ in {
           }
         )
       );
-      default = {};
+      default = { };
     };
     age = {
       keyFile = mkOption {
@@ -35,7 +37,7 @@ in {
       };
       sshKeyPaths = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ ];
       };
     };
     gnupg = {
@@ -45,7 +47,7 @@ in {
       };
       sshKeyPaths = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ ];
       };
     };
     defaultSopsFile = mkOption {
@@ -58,12 +60,12 @@ in {
     };
     environment = mkOption {
       type = types.attrs;
-      default = {};
+      default = { };
     };
     templates = mkOption {
       type = types.attrsOf (
         types.submodule (
-          {name, ...}: {
+          { name, ... }: {
             freeformType = types.anything;
             options.path = mkOption {
               type = types.str;
@@ -72,7 +74,7 @@ in {
           }
         )
       );
-      default = {};
+      default = { };
     };
     validateSopsFiles = mkOption {
       type = types.bool;
@@ -80,9 +82,7 @@ in {
     };
   };
 
-  config.systemd.tmpfiles.rules =
-    lib.mapAttrsToList (
-      _name: secret: "f ${secret.path} 0400 root root -"
-    )
-    config.sops.secrets;
+  config.systemd.tmpfiles.rules = lib.mapAttrsToList (
+    _name: secret: "f ${secret.path} 0400 root root -"
+  ) config.sops.secrets;
 }

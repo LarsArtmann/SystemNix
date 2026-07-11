@@ -1,10 +1,12 @@
 # Bash shell configuration
-_: let
+_:
+let
   # Import shared aliases from shell-aliases.nix
-  commonAliases = (import ./shell-aliases.nix {}).commonShellAliases;
+  commonAliases = (import ./shell-aliases.nix { }).commonShellAliases;
   # Expected common aliases
   # Type assertions
-in {
+in
+{
   # Common Bash shell configuration
   programs.bash = {
     enable = true;

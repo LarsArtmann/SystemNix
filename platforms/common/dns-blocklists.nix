@@ -1,7 +1,8 @@
 let
   hageziRev = "489ce87162a4824080b8ab3fb4db7c8ea65fd38c";
   hagezi = subpath: "https://raw.githubusercontent.com/hagezi/dns-blocklists/${hageziRev}/${subpath}";
-in {
+in
+{
   blocklists = [
     {
       name = "StevenBlack-everything";

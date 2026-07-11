@@ -18,9 +18,9 @@ rustPlatform.buildRustPackage rec {
 
   cargoHash = "sha256-GYjtERr+M5lY8/Y77hedizJcNsyRh8XOaCAMBiz/Dk0=";
 
-  nativeBuildInputs = [pkg-config];
+  nativeBuildInputs = [ pkg-config ];
 
-  buildInputs = [libpcap];
+  buildInputs = [ libpcap ];
 
   meta = with lib; {
     description = "Real-time network diagnostics TUI — interfaces, connections, packets, health probes, and AI insights";

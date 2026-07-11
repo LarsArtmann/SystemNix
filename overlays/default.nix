@@ -1,7 +1,9 @@
-inputs @ {nur, ...}: let
+inputs@{ nur, ... }:
+let
   shared = import ./shared.nix;
   linux = import ./linux.nix inputs;
-in {
+in
+{
   disableTests = _final: prev: {
     valkey = prev.valkey.overrideAttrs (_old: {
       doCheck = false;
@@ -24,7 +26,7 @@ in {
     );
   };
 
-  sharedOverlays = [nur.overlays.default] ++ shared;
+  sharedOverlays = [ nur.overlays.default ] ++ shared;
 
   linuxOnlyOverlays = linux;
 }

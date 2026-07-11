@@ -1,8 +1,10 @@
 # Fish shell configuration
-_: let
+_:
+let
   # Import shared aliases from shell-aliases.nix
-  commonAliases = (import ./shell-aliases.nix {}).commonShellAliases;
-in {
+  commonAliases = (import ./shell-aliases.nix { }).commonShellAliases;
+in
+{
   # Common Fish shell configuration
   programs.fish = {
     enable = true;

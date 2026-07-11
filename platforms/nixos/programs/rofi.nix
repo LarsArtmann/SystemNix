@@ -2,10 +2,12 @@
   pkgs,
   colorScheme,
   ...
-}: let
+}:
+let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
-in {
+in
+{
   programs.rofi = {
     enable = true;
     package = pkgs.rofi.override {

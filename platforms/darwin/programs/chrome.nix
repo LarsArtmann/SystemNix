@@ -1,9 +1,11 @@
 # macOS Chrome/Chromium policy configuration for extension management
 # This configures system-wide Chrome policies via nix-darwin
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   inherit (import ../../common/browser-extensions.nix) ytShortsBlocker;
   chromeWebStoreUpdateUrl = ytShortsBlocker.updateUrl;
-in {
+in
+{
   # Note: nix-darwin has limited Chrome policy support compared to NixOS
   # For full enterprise policy management on macOS, you typically need:
   # 1. A Mobile Device Management (MDM) solution

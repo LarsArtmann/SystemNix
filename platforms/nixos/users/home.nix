@@ -5,10 +5,12 @@
   nix-ssh-config,
   colorScheme,
   ...
-}: let
+}:
+let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
-in {
+in
+{
   imports = [
     ../../common/home-base.nix
     ../programs/shells.nix # NixOS shell configuration
@@ -61,12 +63,10 @@ in {
     kitty = {
       enable = true;
       package = pkgs.kitty.overrideAttrs (old: {
-        postInstall =
-          (old.postInstall or "")
-          + ''
-            substituteInPlace $out/lib/kitty/kitty/constants.py \
-              --replace "kitty_run_data.get('bundle_exe_dir')" "None  # Nix: use PATH lookup for GC resilience"
-          '';
+        postInstall = (old.postInstall or "") + ''
+          substituteInPlace $out/lib/kitty/kitty/constants.py \
+            --replace "kitty_run_data.get('bundle_exe_dir')" "None  # Nix: use PATH lookup for GC resilience"
+        '';
       });
       font = {
         name = theme.font.mono;
@@ -133,7 +133,7 @@ in {
   home = {
     enableNixpkgsReleaseCheck = false;
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
-    activation.jan-data-link = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       JAN_DATA="$HOME/.config/Jan/data"
       JAN_TARGET="/data/ai/models/jan"
       if [ -d "$JAN_TARGET" ]; then
@@ -312,44 +312,44 @@ in {
       enable = true;
       defaultApplications = {
         # Web browsing
-        "text/html" = ["helium.desktop"];
-        "application/xhtml+xml" = ["helium.desktop"];
-        "x-scheme-handler/http" = ["helium.desktop"];
-        "x-scheme-handler/https" = ["helium.desktop"];
+        "text/html" = [ "helium.desktop" ];
+        "application/xhtml+xml" = [ "helium.desktop" ];
+        "x-scheme-handler/http" = [ "helium.desktop" ];
+        "x-scheme-handler/https" = [ "helium.desktop" ];
 
         # Terminal
-        "x-scheme-handler/terminal" = ["com.mitchellh.ghostty.desktop"];
-        "application/x-terminal-emulator" = ["com.mitchellh.ghostty.desktop"];
+        "x-scheme-handler/terminal" = [ "com.mitchellh.ghostty.desktop" ];
+        "application/x-terminal-emulator" = [ "com.mitchellh.ghostty.desktop" ];
 
         # File manager
-        "inode/directory" = ["org.gnome.Nautilus.desktop"];
+        "inode/directory" = [ "org.gnome.Nautilus.desktop" ];
 
         # Text / code files
-        "text/plain" = ["zed.desktop"];
-        "text/markdown" = ["zed.desktop"];
-        "text/x-yaml" = ["zed.desktop"];
-        "application/json" = ["zed.desktop"];
-        "application/x-yaml" = ["zed.desktop"];
+        "text/plain" = [ "zed.desktop" ];
+        "text/markdown" = [ "zed.desktop" ];
+        "text/x-yaml" = [ "zed.desktop" ];
+        "application/json" = [ "zed.desktop" ];
+        "application/x-yaml" = [ "zed.desktop" ];
 
         # Images
-        "image/avif" = ["helium.desktop"];
-        "image/bmp" = ["helium.desktop"];
-        "image/gif" = ["helium.desktop"];
-        "image/heif" = ["helium.desktop"];
-        "image/jpeg" = ["helium.desktop"];
-        "image/png" = ["helium.desktop"];
-        "image/svg+xml" = ["helium.desktop"];
-        "image/tiff" = ["helium.desktop"];
-        "image/webp" = ["helium.desktop"];
-        "image/x-icon" = ["helium.desktop"];
+        "image/avif" = [ "helium.desktop" ];
+        "image/bmp" = [ "helium.desktop" ];
+        "image/gif" = [ "helium.desktop" ];
+        "image/heif" = [ "helium.desktop" ];
+        "image/jpeg" = [ "helium.desktop" ];
+        "image/png" = [ "helium.desktop" ];
+        "image/svg+xml" = [ "helium.desktop" ];
+        "image/tiff" = [ "helium.desktop" ];
+        "image/webp" = [ "helium.desktop" ];
+        "image/x-icon" = [ "helium.desktop" ];
 
         # Videos
-        "video/mp4" = ["helium.desktop"];
-        "video/ogg" = ["helium.desktop"];
-        "video/quicktime" = ["helium.desktop"];
-        "video/webm" = ["helium.desktop"];
-        "video/x-matroska" = ["helium.desktop"];
-        "video/x-msvideo" = ["helium.desktop"];
+        "video/mp4" = [ "helium.desktop" ];
+        "video/ogg" = [ "helium.desktop" ];
+        "video/quicktime" = [ "helium.desktop" ];
+        "video/webm" = [ "helium.desktop" ];
+        "video/x-matroska" = [ "helium.desktop" ];
+        "video/x-msvideo" = [ "helium.desktop" ];
       };
     };
   };
@@ -364,7 +364,7 @@ in {
     theme = {
       name = theme.gtkThemeName;
       package = pkgs.catppuccin-gtk.override {
-        accents = [theme.accent];
+        accents = [ theme.accent ];
         size = lib.strings.toLower theme.density;
         inherit (theme) variant;
       };

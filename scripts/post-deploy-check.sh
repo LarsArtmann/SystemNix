@@ -138,6 +138,25 @@ else
   SKIP=$((SKIP + 1))
 fi
 
+# SigNoz: impersonation mode must be active (auth delegated to Caddy + Pocket ID)
+if signoz_config=$(curl -s --max-time 5 "http://localhost:8080/api/v1/global/config" 2>/dev/null); then
+  if echo "$signoz_config" | grep -q '"impersonation"'; then
+    if echo "$signoz_config" | grep -q '"enabled": *true'; then
+      echo -e "${GREEN}PASS${NC} SigNoz impersonation mode active (Pocket ID is sole auth boundary)"
+      PASS=$((PASS + 1))
+    else
+      echo -e "${RED}FAIL${NC} SigNoz impersonation mode NOT enabled — service is exposed without auth"
+      FAIL=$((FAIL + 1))
+    fi
+  else
+    echo -e "${YELLOW}WARN${NC} SigNoz config endpoint reachable but impersonation key missing"
+    SKIP=$((SKIP + 1))
+  fi
+else
+  echo -e "${YELLOW}SKIP${NC} SigNoz not reachable on localhost:8080"
+  SKIP=$((SKIP + 1))
+fi
+
 # --- External vHost checks (from LAN) ---
 echo ""
 echo "=== External vHost Checks ==="

@@ -6,15 +6,17 @@
   crush-daily,
   overview,
   ...
-}: let
+}:
+let
   openaudibleOverlay = _final: prev: {
-    openaudible = prev.callPackage ../pkgs/openaudible.nix {};
+    openaudible = prev.callPackage ../pkgs/openaudible.nix { };
   };
 
   netwatchOverlay = _final: prev: {
-    netwatch = prev.callPackage ../pkgs/netwatch.nix {};
+    netwatch = prev.callPackage ../pkgs/netwatch.nix { };
   };
-in [
+in
+[
   openaudibleOverlay
   dnsblockd.overlays.default
   emeet-pixyd.overlays.default

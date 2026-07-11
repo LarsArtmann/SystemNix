@@ -2,9 +2,11 @@
   pkgs,
   colorScheme,
   ...
-}: let
+}:
+let
   colors = colorScheme.palette;
-in {
+in
+{
   programs.yazi = {
     enable = true;
     shellWrapperName = "y";
@@ -118,10 +120,10 @@ in {
       };
 
       plugin = {
-        prepend_preloaders = [];
-        append_preloaders = [];
-        prepend_previewers = [];
-        append_previewers = [];
+        prepend_preloaders = [ ];
+        append_preloaders = [ ];
+        prepend_previewers = [ ];
+        append_previewers = [ ];
       };
 
       input = {
@@ -266,8 +268,8 @@ in {
         border = {
           fg = "#${colors.base0D}";
         }; # Blue
-        title = {};
-        value = {};
+        title = { };
+        value = { };
         selected = {
           reversed = true;
         };
@@ -280,14 +282,14 @@ in {
         active = {
           fg = "#${colors.base0F}";
         }; # Pink
-        inactive = {};
+        inactive = { };
       };
 
       tasks = {
         border = {
           fg = "#${colors.base0D}";
         }; # Blue
-        title = {};
+        title = { };
         hovered = {
           fg = "#${colors.base0F}";
           underline = true;
@@ -427,37 +429,37 @@ in {
       manager = {
         prepend_keymap = [
           {
-            on = ["<C-c>"];
+            on = [ "<C-c>" ];
             run = "yank";
             desc = "Copy";
           }
           {
-            on = ["<C-x>"];
+            on = [ "<C-x>" ];
             run = "cut";
             desc = "Cut";
           }
           {
-            on = ["<C-v>"];
+            on = [ "<C-v>" ];
             run = "paste";
             desc = "Paste";
           }
           {
-            on = ["<C-d>"];
+            on = [ "<C-d>" ];
             run = "remove";
             desc = "Trash";
           }
           {
-            on = ["<C-r>"];
+            on = [ "<C-r>" ];
             run = "rename --cursor=before_ext";
             desc = "Rename";
           }
           {
-            on = ["<C-s>"];
+            on = [ "<C-s>" ];
             run = "search fd";
             desc = "Search files";
           }
           {
-            on = ["<C-g>"];
+            on = [ "<C-g>" ];
             run = "search rg";
             desc = "Search content";
           }
@@ -494,7 +496,7 @@ in {
             desc = "Go to config";
           }
           {
-            on = ["?"];
+            on = [ "?" ];
             run = "help";
             desc = "Open help";
           }

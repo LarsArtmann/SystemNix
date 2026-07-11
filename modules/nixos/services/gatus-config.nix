@@ -1,136 +1,137 @@
 # Gatus health check monitoring with Discord alerts and endpoints
 _: {
-  flake.nixosModules.gatus-config = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
-    cfg = config.services.gatus-config;
-    inherit
-      (import ../../../lib/default.nix lib)
-      harden
-      serviceDefaults
-      onFailure
-      serviceTypes
-      mkHttpCheck
-      mkSecretCheck
-      ports
-      ;
+  flake.nixosModules.gatus-config =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      cfg = config.services.gatus-config;
+      inherit (import ../../../lib/default.nix lib)
+        harden
+        serviceDefaults
+        onFailure
+        serviceTypes
+        mkHttpCheck
+        mkSecretCheck
+        ports
+        ;
 
-    nodePort = config.services.prometheus.exporters.node.port;
+      nodePort = config.services.prometheus.exporters.node.port;
 
-    checkGatusEnv = mkSecretCheck pkgs {
-      name = "gatus-env";
-      secretPath = config.sops.templates."gatus-env".path;
-      message = "gatus: environment file is missing or empty (${
-        config.sops.templates."gatus-env".path
-      }) — Discord alerting will fail";
-    };
+      checkGatusEnv = mkSecretCheck pkgs {
+        name = "gatus-env";
+        secretPath = config.sops.templates."gatus-env".path;
+        message = "gatus: environment file is missing or empty (${
+          config.sops.templates."gatus-env".path
+        }) — Discord alerting will fail";
+      };
 
-    discordAlert = desc: [
-      {
-        type = "discord";
-        inherit desc;
-      }
-    ];
+      discordAlert = desc: [
+        {
+          type = "discord";
+          inherit desc;
+        }
+      ];
 
-    inherit (config.networking) domain;
+      inherit (config.networking) domain;
 
-    # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
-    # runs pocket-id-config.provision, which writes the client secret to the
-    # file below. systemd LoadCredential reads it as root (DynamicUser means the
-    # gatus user does not exist to own files directly) and exposes the value to
-    # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
-    # into an env file that gatus consumes via config.yaml $VAR interpolation.
-    enableOidc =
-      (config.services.pocket-id-config.enable or false)
-      && (config.services.pocket-id-config.provision.enable or false);
-    clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
+      # Native OIDC via Pocket ID (Layer 1 SSO). Provision-only: evo-x2 always
+      # runs pocket-id-config.provision, which writes the client secret to the
+      # file below. systemd LoadCredential reads it as root (DynamicUser means the
+      # gatus user does not exist to own files directly) and exposes the value to
+      # the service via $CREDENTIALS_DIRECTORY, where the oidc env writer copies it
+      # into an env file that gatus consumes via config.yaml $VAR interpolation.
+      enableOidc =
+        (config.services.pocket-id-config.enable or false)
+        && (config.services.pocket-id-config.provision.enable or false);
+      clientSecretPath = "${config.services.pocket-id.dataDir}/client-secrets/gatus";
 
-    gatusOidcEnv = pkgs.writeShellApplication {
-      name = "gatus-oidc-env";
-      runtimeInputs = [pkgs.coreutils];
-      text = ''
-        set -eu
-        out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
-        if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
-          printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
-          chmod 600 "$out"
-        else
-          : > "$out"
-        fi
-      '';
-    };
-  in {
-    options.services.gatus-config = {
-      enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
-      port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
-    };
+      gatusOidcEnv = pkgs.writeShellApplication {
+        name = "gatus-oidc-env";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = ''
+          set -eu
+          out="''${RUNTIME_DIRECTORY:-/run/gatus}/oidc.env"
+          if [ -n "''${CREDENTIALS_DIRECTORY:-}" ] && [ -f "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret" ]; then
+            printf 'GATUS_OIDC_CLIENT_SECRET=%s\n' "$(cat "''${CREDENTIALS_DIRECTORY}/gatus-oidc-secret")" > "$out"
+            chmod 600 "$out"
+          else
+            : > "$out"
+          fi
+        '';
+      };
+    in
+    {
+      options.services.gatus-config = {
+        enable = lib.mkEnableOption "Gatus health check monitoring with pre-configured endpoints";
+        port = serviceTypes.servicePort ports.gatus "HTTP port for Gatus web interface";
+      };
 
-    config = lib.mkIf cfg.enable {
-      services.gatus = {
-        enable = true;
-        environmentFile = config.sops.templates."gatus-env".path;
-        settings = {
-          web.port = cfg.port;
-          storage = {
-            type = "sqlite";
-            path = "/var/lib/gatus/gatus.db";
-            caching = true;
-          };
-          # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
-          # allowed-subjects omitted: single-admin IdP, so any authenticated user
-          # (= the admin) may view the dashboard.
-          security = lib.optionalAttrs enableOidc {
-            oidc = {
-              issuer-url = "https://auth.${domain}";
-              client-id = "gatus";
-              client-secret = "$GATUS_OIDC_CLIENT_SECRET";
-              redirect-url = "https://status.${domain}/authorization-code/callback";
-              scopes = [
-                "openid"
-                "profile"
-                "email"
+      config = lib.mkIf cfg.enable {
+        services.gatus = {
+          enable = true;
+          environmentFile = config.sops.templates."gatus-env".path;
+          settings = {
+            web.port = cfg.port;
+            storage = {
+              type = "sqlite";
+              path = "/var/lib/gatus/gatus.db";
+              caching = true;
+            };
+            # Native OIDC (Layer 1 SSO) via Pocket ID. Empty when OIDC is off.
+            # allowed-subjects omitted: single-admin IdP, so any authenticated user
+            # (= the admin) may view the dashboard.
+            security = lib.optionalAttrs enableOidc {
+              oidc = {
+                issuer-url = "https://auth.${domain}";
+                client-id = "gatus";
+                client-secret = "$GATUS_OIDC_CLIENT_SECRET";
+                redirect-url = "https://status.${domain}/authorization-code/callback";
+                scopes = [
+                  "openid"
+                  "profile"
+                  "email"
+                ];
+              };
+            };
+            ui = {
+              title = "evo-x2 Status";
+              header = "System Status";
+              logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
+              link = "https://dash.${domain}";
+              dark-mode = true;
+              default-sort-by = "group";
+              buttons = [
+                {
+                  name = "Dashboard";
+                  link = "https://dash.${domain}";
+                }
+                {
+                  name = "Forgejo";
+                  link = "https://forgejo.${domain}";
+                }
+                {
+                  name = "SigNoz";
+                  link = "https://signoz.${domain}";
+                }
+                {
+                  name = "Dozzle";
+                  link = "https://logs.${domain}";
+                }
               ];
             };
-          };
-          ui = {
-            title = "evo-x2 Status";
-            header = "System Status";
-            logo = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/gatus.png";
-            link = "https://dash.${domain}";
-            dark-mode = true;
-            default-sort-by = "group";
-            buttons = [
-              {
-                name = "Dashboard";
-                link = "https://dash.${domain}";
-              }
-              {
-                name = "Forgejo";
-                link = "https://forgejo.${domain}";
-              }
-              {
-                name = "SigNoz";
-                link = "https://signoz.${domain}";
-              }
-              {
-                name = "Dozzle";
-                link = "https://logs.${domain}";
-              }
-            ];
-          };
-          alerting.discord = {
-            webhook-url = "$DISCORD_WEBHOOK_URL";
-            default-alert = {
-              failure-threshold = 3;
-              success-threshold = 2;
-              send-on-resolved = true;
+            alerting.discord = {
+              webhook-url = "$DISCORD_WEBHOOK_URL";
+              default-alert = {
+                failure-threshold = 3;
+                success-threshold = 2;
+                send-on-resolved = true;
+              };
             };
-          };
-          endpoints =
-            [
+            endpoints = [
               (mkHttpCheck {
                 name = "Caddy";
                 group = "Infrastructure";
@@ -141,56 +142,78 @@ _: {
                 name = "Pocket ID";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.pocket-id-config.port}/healthz";
-                conditions = ["[STATUS] == 204" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 204"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "Pocket ID down — SSO broken, no service login works";
               })
               (mkHttpCheck {
                 name = "oauth2-proxy";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.oauth2-proxy-config.port}/ping";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "oauth2-proxy down — all external service access broken";
               })
               (mkHttpCheck {
                 name = "Forgejo";
                 group = "Development";
                 url = "http://localhost:${toString config.services.forgejo.settings.server.HTTP_PORT}/api/v1/version";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
                 alerts = discordAlert "Forgejo down — git forge unavailable";
               })
               (mkHttpCheck {
                 name = "Homepage";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.homepage.port}";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500" "[BODY] == pat(*<html*)"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                  "[BODY] == pat(*<html*)"
+                ];
                 alerts = discordAlert "Homepage dashboard down";
               })
               (mkHttpCheck {
                 name = "Immich";
                 group = "Media";
                 url = "http://localhost:${toString config.services.immich.port}/api/system-config";
-                conditions = ["[STATUS] == 401" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 401"
+                  "[RESPONSE_TIME] < 1000"
+                ];
               })
               {
                 name = "Redis";
                 group = "Infrastructure";
                 url = "tcp://127.0.0.1:6379";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "Redis down — Immich ML pipeline and caching broken";
               }
               (mkHttpCheck {
                 name = "SigNoz";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.signoz.settings.queryService.port}/api/v1/health";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
                 alerts = discordAlert "SigNoz observability platform down — no metrics/alerts";
               })
               (mkHttpCheck {
                 name = "Manifest";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
                 alerts = discordAlert "Manifest LLM router down — AI cost optimization unavailable";
               })
               {
@@ -198,14 +221,17 @@ _: {
                 group = "Productivity";
                 url = "tcp://127.0.0.1:${toString config.services.taskchampion-sync-server.port}";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "TaskChampion sync server down — task syncing broken";
               }
               (mkHttpCheck {
                 name = "Twenty CRM";
                 group = "Productivity";
                 url = "http://localhost:${toString config.services.twenty.port}/healthz";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
                 alerts = discordAlert "Twenty CRM down — customer data unavailable";
               })
               (mkHttpCheck {
@@ -213,7 +239,10 @@ _: {
                 group = "AI";
                 url = "http://localhost:${toString config.services.ollama.port}/api/tags";
                 interval = "60s";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 2000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
                 alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
               })
               (mkHttpCheck {
@@ -239,7 +268,7 @@ _: {
                   query-type = "A";
                 };
                 interval = "60s";
-                conditions = ["[DNS_RCODE] == NOERROR"];
+                conditions = [ "[DNS_RCODE] == NOERROR" ];
                 alerts = discordAlert "Local DNS resolver down — name resolution failing";
               }
               {
@@ -247,13 +276,16 @@ _: {
                 group = "Infrastructure";
                 url = "tcp://127.0.0.1:53";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
               }
               (mkHttpCheck {
                 name = "DNS Blocker";
                 group = "Infrastructure";
                 url = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "DNS blocker down — no ad/malware blocking";
               })
               {
@@ -265,14 +297,14 @@ _: {
                   query-type = "A";
                 };
                 interval = "5m";
-                conditions = ["[DNS_RCODE] == NOERROR"];
+                conditions = [ "[DNS_RCODE] == NOERROR" ];
               }
               {
                 name = "Upstream DNS DoT (Mullvad)";
                 group = "Infrastructure";
                 url = "tcp://dot.mullvad.net:853";
                 interval = "5m";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "Mullvad DoT upstream unreachable — DNS-over-TLS path broken";
               }
               {
@@ -284,7 +316,7 @@ _: {
                   query-type = "A";
                 };
                 interval = "5m";
-                conditions = ["[BODY] == ${config.services.dns-blocker.blockIP}"];
+                conditions = [ "[BODY] == ${config.services.dns-blocker.blockIP}" ];
                 alerts = discordAlert "DNS blocking not active — ads.google.com resolved without block";
               }
               (mkHttpCheck {
@@ -292,7 +324,10 @@ _: {
                 group = "Infrastructure";
                 url = "https://api.github.com/zen";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 3000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 3000"
+                ];
                 alerts = discordAlert "External HTTPS connectivity lost — server cannot reach the internet";
               })
             ]
@@ -308,7 +343,7 @@ _: {
                 group = "AI";
                 url = "tcp://127.0.0.1:${toString config.services.livekit.settings.port}";
                 interval = "60s";
-                conditions = ["[CONNECTED] == true"];
+                conditions = [ "[CONNECTED] == true" ];
               }
             ]
             ++ [
@@ -317,7 +352,10 @@ _: {
                 group = "Productivity";
                 url = "http://localhost:${toString config.services.openseo.port}";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 2000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
                 alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
               })
             ]
@@ -327,7 +365,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-server}/health";
                 interval = "60s";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "Monitor365 server down — device telemetry unavailable";
               })
               (mkHttpCheck {
@@ -335,7 +376,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-server}/health/bootstrap";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[BODY].bootstrapped == true"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY].bootstrapped == true"
+                ];
                 alerts = discordAlert "Monitor365 bootstrap incomplete — tenant/SSO provisioning may have failed on first boot";
               })
               (mkHttpCheck {
@@ -343,7 +387,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-server}/ui/";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[BODY] == pat(*<html*)"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*<html*)"
+                ];
                 alerts = discordAlert "Monitor365 UI not serving — WASM dashboard missing";
               })
               (mkHttpCheck {
@@ -351,7 +398,10 @@ _: {
                 group = "Monitoring";
                 url = "https://monitor.${domain}/health";
                 interval = "2m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
                 alerts = discordAlert "Monitor365 external endpoint down — reverse proxy or TLS issue";
               })
             ]
@@ -361,7 +411,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-metrics}/metrics";
                 interval = "60s";
-                conditions = ["[STATUS] == 200" "[BODY] == pat(*monitor365*)"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*monitor365*)"
+                ];
                 alerts = discordAlert "Monitor365 system agent down — headless device telemetry collector not running";
               })
             ]
@@ -371,7 +424,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.monitor365-desktop-metrics}/metrics";
                 interval = "60s";
-                conditions = ["[STATUS] == 200" "[BODY] == pat(*monitor365*)"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*monitor365*)"
+                ];
                 alerts = discordAlert "Monitor365 desktop agent down — desktop telemetry collector not running (may be expected if user is logged out)";
               })
             ]
@@ -503,7 +559,10 @@ _: {
                 group = "AI";
                 url = "http://localhost:${toString config.services.crush-daily.port}/api/health";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 1000"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
                 alerts = discordAlert "Crush Daily down — AI development insights unavailable";
               })
               (mkHttpCheck {
@@ -511,7 +570,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.dozzle}";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "Dozzle down — container log viewing unavailable";
               })
               (mkHttpCheck {
@@ -519,7 +581,11 @@ _: {
                 group = "Productivity";
                 url = "http://localhost:${toString ports.overview}";
                 interval = "5m";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500" "[BODY] == pat(*<html*)"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                  "[BODY] == pat(*<html*)"
+                ];
                 alerts = discordAlert "Overview dashboard down — project stats unavailable";
               })
               (mkHttpCheck {
@@ -530,10 +596,7 @@ _: {
                 # With native OIDC enabled, an unauthenticated probe is redirected
                 # to the IdP login (302/303) instead of 200. Accept any non-error
                 # status so the self-health check doesn't false-alarm.
-                conditions =
-                  if enableOidc
-                  then ["[STATUS] < 400"]
-                  else ["[STATUS] == 200"];
+                conditions = if enableOidc then [ "[STATUS] < 400" ] else [ "[STATUS] == 200" ];
               })
             ]
             ++ lib.optionals config.services.discordsync.enable [
@@ -542,7 +605,10 @@ _: {
                 group = "Infrastructure";
                 url = "http://localhost:${toString ports.discordsync-api}/healthz";
                 interval = "60s";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";
               })
             ]
@@ -552,41 +618,44 @@ _: {
                 group = "Productivity";
                 url = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
                 interval = "60s";
-                conditions = ["[STATUS] == 200" "[RESPONSE_TIME] < 500"];
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
                 alerts = discordAlert "File and Image Renamer health dashboard down — screenshot renaming may be stuck";
               })
             ];
+          };
+        };
+
+        systemd.services.gatus = {
+          inherit onFailure;
+          # Gatus must not start before the OIDC client secret has been provisioned.
+          after = lib.optional enableOidc "pocket-id-provision.service";
+          wants = lib.optional enableOidc "pocket-id-provision.service";
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "512M";
+              ReadWritePaths = [ "/var/lib/gatus" ];
+            })
+            (serviceDefaults { Restart = "on-failure"; })
+            {
+              ExecStartPre = [
+                "+${lib.getExe checkGatusEnv}"
+                "${lib.getExe gatusOidcEnv}"
+              ];
+              RuntimeDirectory = "gatus";
+              LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
+              # Compose the full EnvironmentFile list: the sops template
+              # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
+              # (the '-' prefix makes a missing file non-fatal when OIDC is off).
+              EnvironmentFile = lib.mkForce [
+                config.sops.templates."gatus-env".path
+                "-/run/gatus/oidc.env"
+              ];
+            }
+          ];
         };
       };
-
-      systemd.services.gatus = {
-        inherit onFailure;
-        # Gatus must not start before the OIDC client secret has been provisioned.
-        after = lib.optional enableOidc "pocket-id-provision.service";
-        wants = lib.optional enableOidc "pocket-id-provision.service";
-        serviceConfig = lib.mkMerge [
-          (harden {
-            MemoryMax = "512M";
-            ReadWritePaths = ["/var/lib/gatus"];
-          })
-          (serviceDefaults {Restart = "on-failure";})
-          {
-            ExecStartPre = [
-              "+${lib.getExe checkGatusEnv}"
-              "${lib.getExe gatusOidcEnv}"
-            ];
-            RuntimeDirectory = "gatus";
-            LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
-            # Compose the full EnvironmentFile list: the sops template
-            # (DISCORD_WEBHOOK_URL) plus the runtime-generated OIDC secret file
-            # (the '-' prefix makes a missing file non-fatal when OIDC is off).
-            EnvironmentFile = lib.mkForce [
-              config.sops.templates."gatus-env".path
-              "-/run/gatus/oidc.env"
-            ];
-          }
-        ];
-      };
     };
-  };
 }

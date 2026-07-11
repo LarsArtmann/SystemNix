@@ -41,7 +41,9 @@ stdenv.mkDerivation (finalAttrs: {
   # Provide native libraries at build time so vite/wrangler/workerd can load native addons.
   # autoPatchelfHook handles final patching in postFixup (no /build/ references).
   preBuild = ''
-    export LD_LIBRARY_PATH="${lib.makeLibraryPath [stdenv.cc.cc.lib]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+    export LD_LIBRARY_PATH="${
+      lib.makeLibraryPath [ stdenv.cc.cc.lib ]
+    }''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
   '';
 
   buildPhase = ''

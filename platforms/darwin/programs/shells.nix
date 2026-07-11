@@ -1,11 +1,13 @@
 # Import common shell configurations with platform-specific overrides
-{lib, ...}: let
+{ lib, ... }:
+let
   nixAliases = {
     nixup = "darwin-rebuild switch --flake .";
     nixbuild = "darwin-rebuild build --flake .";
     nixcheck = "darwin-rebuild check --flake .";
   };
-in {
+in
+{
   programs = {
     fish.shellAliases = lib.mkAfter nixAliases;
     zsh.shellAliases = lib.mkAfter nixAliases;

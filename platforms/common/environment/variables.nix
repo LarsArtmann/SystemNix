@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   # Common development environment variables (platform-agnostic)
   commonEnvVars = {
     # Core system settings
@@ -32,7 +33,8 @@
     # Crush AI assistant
     CRUSH_SHORT_TOOL_DESCRIPTIONS = "1";
   };
-in {
+in
+{
   # Shell configuration (platform-agnostic)
   environment.shells = with pkgs; [
     fish

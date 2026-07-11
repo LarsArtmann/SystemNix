@@ -3,9 +3,11 @@
   pkgs,
   colorScheme,
   ...
-}: let
+}:
+let
   colors = colorScheme.palette;
-in {
+in
+{
   programs.tmux = {
     enable = true;
     clock24 = true;

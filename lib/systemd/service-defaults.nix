@@ -25,21 +25,20 @@
 #     startLimitIntervalSec = 60;
 #     serviceConfig = harden {} // serviceDefaults {};
 #   };
-lib: let
-  mkDefaults = useMkForce: defaultRestart: {
-    Restart ? defaultRestart,
-    RestartSec ? "5s",
-  }: {
-    Restart =
-      if useMkForce
-      then lib.mkForce Restart
-      else Restart;
-    RestartSec =
-      if useMkForce
-      then lib.mkForce RestartSec
-      else RestartSec;
-  };
-in {
+lib:
+let
+  mkDefaults =
+    useMkForce: defaultRestart:
+    {
+      Restart ? defaultRestart,
+      RestartSec ? "5s",
+    }:
+    {
+      Restart = if useMkForce then lib.mkForce Restart else Restart;
+      RestartSec = if useMkForce then lib.mkForce RestartSec else RestartSec;
+    };
+in
+{
   # System services (valid with mkForce)
   serviceDefaults = mkDefaults true "always";
 
@@ -53,5 +52,5 @@ in {
   serviceOneshotDefaultsUser = mkDefaults false "no";
 
   # onFailure handler — route service failures to the notify-failure template
-  onFailure = ["notify-failure@%n.service"];
+  onFailure = [ "notify-failure@%n.service" ];
 }

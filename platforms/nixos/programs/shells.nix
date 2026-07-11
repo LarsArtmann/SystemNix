@@ -1,11 +1,13 @@
 # NixOS shell configurations with platform-specific overrides
-{lib, ...}: let
+{ lib, ... }:
+let
   nixAliases = {
     nixup = "sudo nixos-rebuild switch --flake .";
     nixbuild = "sudo nixos-rebuild build --flake .";
     nixcheck = "sudo nixos-rebuild test --flake .";
   };
-in {
+in
+{
   programs = {
     fish.shellAliases = lib.mkAfter nixAliases;
     zsh.shellAliases = lib.mkAfter nixAliases;

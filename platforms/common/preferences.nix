@@ -1,6 +1,8 @@
-{lib, ...}: let
+{ lib, ... }:
+let
   theme = import ./theme.nix;
-in {
+in
+{
   options.preferences = {
     appearance = {
       variant = lib.mkOption {

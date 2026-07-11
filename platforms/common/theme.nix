@@ -51,25 +51,23 @@ rec {
     name = "Catppuccin Mocha";
     author = "Catppuccin Org";
     inherit colors;
-    palette =
-      colors
-      // {
-        base00 = colors.base;
-        base01 = colors.mantle;
-        base02 = colors.surface0;
-        base03 = colors.surface1;
-        base04 = colors.surface2;
-        base05 = colors.text;
-        base06 = colors.rosewater;
-        base07 = colors.lavender;
-        base08 = colors.red;
-        base09 = colors.peach;
-        base0A = colors.yellow;
-        base0B = colors.green;
-        base0C = colors.teal;
-        base0D = colors.blue;
-        base0E = colors.mauve;
-        base0F = colors.pink;
-      };
+    palette = colors // {
+      base00 = colors.base;
+      base01 = colors.mantle;
+      base02 = colors.surface0;
+      base03 = colors.surface1;
+      base04 = colors.surface2;
+      base05 = colors.text;
+      base06 = colors.rosewater;
+      base07 = colors.lavender;
+      base08 = colors.red;
+      base09 = colors.peach;
+      base0A = colors.yellow;
+      base0B = colors.green;
+      base0C = colors.teal;
+      base0D = colors.blue;
+      base0E = colors.mauve;
+      base0F = colors.pink;
+    };
   };
 }

@@ -2,17 +2,19 @@
   pkgs,
   lib,
   inputs,
-}: let
-  mkRule = {
-    name,
-    description,
-    query,
-    step ? 300,
-    op ? "AND",
-    target,
-    interval ? "5m",
-    severity ? "critical",
-  }:
+}:
+let
+  mkRule =
+    {
+      name,
+      description,
+      query,
+      step ? 300,
+      op ? "AND",
+      target,
+      interval ? "5m",
+      severity ? "critical",
+    }:
     pkgs.writeText "${lib.strings.sanitizeDerivationName name}-rule.json" (
       builtins.toJSON {
         data = {
@@ -43,7 +45,8 @@
         };
       }
     );
-in {
+in
+{
   rules = {
     "signoz/rules/disk-full.json".source = mkRule {
       name = "Disk Space Critical (>90%)";
@@ -185,10 +188,13 @@ in {
   };
 
   dashboards = {
-    "signoz/dashboards/overview.json".source = "${inputs.self}/modules/nixos/services/dashboards/signoz-overview.json";
+    "signoz/dashboards/overview.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/signoz-overview.json";
     "signoz/dashboards/gpu.json".source = "${inputs.self}/modules/nixos/services/dashboards/gpu.json";
     "signoz/dashboards/dns.json".source = "${inputs.self}/modules/nixos/services/dashboards/dns.json";
-    "signoz/dashboards/docker.json".source = "${inputs.self}/modules/nixos/services/dashboards/docker.json";
-    "signoz/dashboards/caddy.json".source = "${inputs.self}/modules/nixos/services/dashboards/caddy.json";
+    "signoz/dashboards/docker.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/docker.json";
+    "signoz/dashboards/caddy.json".source =
+      "${inputs.self}/modules/nixos/services/dashboards/caddy.json";
   };
 }

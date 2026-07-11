@@ -8,9 +8,9 @@
   sharedOverlays,
   sharedHomeManagerConfig,
   sharedHomeManagerSpecialArgs,
-}: let
-  inherit
-    (inputs)
+}:
+let
+  inherit (inputs)
     nix-darwin
     nix-homebrew
     homebrew-bundle
@@ -18,60 +18,58 @@
     home-manager
     ;
 in
-  nix-darwin.lib.darwinSystem {
-    specialArgs = {
-      inherit (inputs.self) inputs;
-      inherit (inputs) nixpkgs helium nur;
-      larsPackages = mkLarsPackages "aarch64-darwin";
-    };
-    modules = [
-      {
-        nixpkgs = {
-          hostPlatform = "aarch64-darwin";
-          config.allowUnfree = true;
-          overlays = sharedOverlays;
+nix-darwin.lib.darwinSystem {
+  specialArgs = {
+    inherit (inputs.self) inputs;
+    inherit (inputs) nixpkgs helium nur;
+    larsPackages = mkLarsPackages "aarch64-darwin";
+  };
+  modules = [
+    {
+      nixpkgs = {
+        hostPlatform = "aarch64-darwin";
+        config.allowUnfree = true;
+        overlays = sharedOverlays;
+      };
+      # otel-tui is Linux-only (40+ min from-source build on macOS, disk-hungry)
+      _module.args.otel-tui = null;
+      # herdr builds Rust + vendored Ghostty VT (Zig) from source — too expensive
+      # for disk-constrained macOS. Install via `brew install herdr` instead.
+      _module.args.herdr = null;
+    }
+
+    # Import nix-homebrew for declarative Homebrew management
+    nix-homebrew.darwinModules.nix-homebrew
+    {
+      nix-homebrew = {
+        enable = true;
+        enableRosetta = true;
+        user = "larsartmann";
+        autoMigrate = true;
+        # Pin Homebrew taps to flake inputs for reproducibility
+        taps = {
+          "homebrew/bundle" = homebrew-bundle;
+          "homebrew/cask" = homebrew-cask;
         };
-        # otel-tui is Linux-only (40+ min from-source build on macOS, disk-hungry)
-        _module.args.otel-tui = null;
-        # herdr builds Rust + vendored Ghostty VT (Zig) from source — too expensive
-        # for disk-constrained macOS. Install via `brew install herdr` instead.
-        _module.args.herdr = null;
-      }
+      };
+    }
 
-      # Import nix-homebrew for declarative Homebrew management
-      nix-homebrew.darwinModules.nix-homebrew
-      {
-        nix-homebrew = {
-          enable = true;
-          enableRosetta = true;
-          user = "larsartmann";
-          autoMigrate = true;
-          # Pin Homebrew taps to flake inputs for reproducibility
-          taps = {
-            "homebrew/bundle" = homebrew-bundle;
-            "homebrew/cask" = homebrew-cask;
-          };
+    # Import Home Manager module for Darwin
+    home-manager.darwinModules.home-manager
+
+    # Define Home Manager configuration inline for top-level visibility
+    {
+      home-manager = sharedHomeManagerConfig // {
+        users.larsartmann = { ... }: {
+          imports = [
+            ../platforms/darwin/home.nix
+          ];
         };
-      }
+        extraSpecialArgs = sharedHomeManagerSpecialArgs;
+      };
+    }
 
-      # Import Home Manager module for Darwin
-      home-manager.darwinModules.home-manager
-
-      # Define Home Manager configuration inline for top-level visibility
-      {
-        home-manager =
-          sharedHomeManagerConfig
-          // {
-            users.larsartmann = {...}: {
-              imports = [
-                ../platforms/darwin/home.nix
-              ];
-            };
-            extraSpecialArgs = sharedHomeManagerSpecialArgs;
-          };
-      }
-
-      # Core Darwin configuration
-      ../platforms/darwin/default.nix
-    ];
-  }
+    # Core Darwin configuration
+    ../platforms/darwin/default.nix
+  ];
+}

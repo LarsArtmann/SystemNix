@@ -1,9 +1,11 @@
-lib: {
+lib:
+{
   device,
   fsType,
-  options ? [],
+  options ? [ ],
   ...
-}: let
+}:
+let
   # Catch cross-filesystem option contamination — using options that are
   # only valid on one fs type on a different fs type.
   #
@@ -15,47 +17,47 @@ lib: {
   dangerousOptions = [
     {
       prefix = "discard=async";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS-only async TRIM. ext4/xfs use bare discard.";
     }
     {
       prefix = "space_cache=v2";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS free-space tree cache mode.";
     }
     {
       prefix = "space_cache=v1";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS free-space tree cache mode.";
     }
     {
       prefix = "compress";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS transparent compression.";
     }
     {
       prefix = "compress=zstd";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS transparent compression.";
     }
     {
       prefix = "compress=zstd:3";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS transparent compression.";
     }
     {
       prefix = "compress=lzo";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS transparent compression.";
     }
     {
       prefix = "subvol";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS subvolume selection.";
     }
     {
       prefix = "ssd";
-      validFsTypes = ["btrfs"];
+      validFsTypes = [ "btrfs" ];
       desc = "BTRFS SSD optimizations.";
     }
     {
@@ -77,29 +79,27 @@ lib: {
     }
   ];
 
-  violations =
-    builtins.filter (
-      {
-        prefix,
-        validFsTypes,
-        desc,
-      }:
-        !builtins.elem fsType validFsTypes && builtins.any (opt: lib.hasPrefix prefix opt) options
-    )
-    dangerousOptions;
+  violations = builtins.filter (
+    {
+      prefix,
+      validFsTypes,
+      desc,
+    }:
+    !builtins.elem fsType validFsTypes && builtins.any (opt: lib.hasPrefix prefix opt) options
+  ) dangerousOptions;
 
   violationMsg = builtins.concatStringsSep "\n  " (
     map (
-      v: "option '${v.prefix}' is only valid on [${builtins.concatStringsSep ", " v.validFsTypes}] but used on ${fsType}: ${v.desc}"
-    )
-    violations
+      v:
+      "option '${v.prefix}' is only valid on [${builtins.concatStringsSep ", " v.validFsTypes}] but used on ${fsType}: ${v.desc}"
+    ) violations
   );
 in
-  if violations != []
-  then
-    builtins.throw ''
-      mkFilesystem: invalid mount options for ${fsType} on ${device}:
-        ${violationMsg}''
-  else {
+if violations != [ ] then
+  builtins.throw ''
+    mkFilesystem: invalid mount options for ${fsType} on ${device}:
+      ${violationMsg}''
+else
+  {
     inherit device fsType options;
   }

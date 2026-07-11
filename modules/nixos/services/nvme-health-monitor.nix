@@ -1,197 +1,200 @@
 # NVMe SSD health monitoring with desktop notifications for critical events
 _: {
-  flake.nixosModules.nvme-health-monitor = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
-    cfg = config.services.nvme-health-monitor;
-    inherit (config.users) primaryUser;
-    inherit (import ../../../lib/default.nix lib) hardenUser mkDesktopNotifyService;
-    uid = builtins.toString config.users.users.${cfg.user}.uid;
+  flake.nixosModules.nvme-health-monitor =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      cfg = config.services.nvme-health-monitor;
+      inherit (config.users) primaryUser;
+      inherit (import ../../../lib/default.nix lib) hardenUser mkDesktopNotifyService;
+      uid = builtins.toString config.users.users.${cfg.user}.uid;
 
-    checkScript = ''
-      STATE_DIR="$HOME/.local/state/nvme-health-monitor"
-      mkdir -p "$STATE_DIR"
+      checkScript = ''
+        STATE_DIR="$HOME/.local/state/nvme-health-monitor"
+        mkdir -p "$STATE_DIR"
 
-      DEVICE="${cfg.device}"
+        DEVICE="${cfg.device}"
 
-      notify() {
-        local urgency="$1" title="$2" body="$3"
-        notify-send \
-          -u "$urgency" \
-          -a "nvme-health-monitor" \
-          -i "drive-harddisk" \
-          "$title" \
-          "$body" 2>/dev/null || true
-      }
+        notify() {
+          local urgency="$1" title="$2" body="$3"
+          notify-send \
+            -u "$urgency" \
+            -a "nvme-health-monitor" \
+            -i "drive-harddisk" \
+            "$title" \
+            "$body" 2>/dev/null || true
+        }
 
-      needs_notify() {
-        local key="$1" value="$2"
-        local state_file="$STATE_DIR/$key"
-        local last
-        last=$(cat "$state_file" 2>/dev/null || echo "")
-        if [ "$last" = "$value" ]; then
-          return 1
+        needs_notify() {
+          local key="$1" value="$2"
+          local state_file="$STATE_DIR/$key"
+          local last
+          last=$(cat "$state_file" 2>/dev/null || echo "")
+          if [ "$last" = "$value" ]; then
+            return 1
+          fi
+          echo "$value" > "$state_file"
+          return 0
+        }
+
+        # Read SMART data via nvme-cli
+        if ! command -v nvme &>/dev/null; then
+          exit 0
         fi
-        echo "$value" > "$state_file"
-        return 0
-      }
 
-      # Read SMART data via nvme-cli
-      if ! command -v nvme &>/dev/null; then
-        exit 0
-      fi
+        SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || exit 0
 
-      SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || exit 0
+        CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // 0')
+        AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.available_spare // 0')
+        PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percentage_used // 0')
+        MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // 0')
+        TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
+        TEMP_CELSIUS=$((TEMP_KELVIN - 273))
 
-      CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // 0')
-      AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.available_spare // 0')
-      PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percentage_used // 0')
-      MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // 0')
-      TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
-      TEMP_CELSIUS=$((TEMP_KELVIN - 273))
-
-      # Critical warning — any non-zero value is urgent
-      if [ "$CRITICAL_WARNING" -ne 0 ]; then
-        if needs_notify "critical_warning" "$CRITICAL_WARNING"; then
-          notify "critical" "NVMe Critical Warning!" \
-            "Critical warning flags: $CRITICAL_WARNING on $(basename $DEVICE). Check SMART data immediately."
-          logger -t "nvme-health-monitor" \
-            "CRITICAL: warning flags=$CRITICAL_WARNING on $DEVICE"
+        # Critical warning — any non-zero value is urgent
+        if [ "$CRITICAL_WARNING" -ne 0 ]; then
+          if needs_notify "critical_warning" "$CRITICAL_WARNING"; then
+            notify "critical" "NVMe Critical Warning!" \
+              "Critical warning flags: $CRITICAL_WARNING on $(basename $DEVICE). Check SMART data immediately."
+            logger -t "nvme-health-monitor" \
+              "CRITICAL: warning flags=$CRITICAL_WARNING on $DEVICE"
+          fi
+        else
+          needs_notify "critical_warning" "0" >/dev/null 2>&1 || true
         fi
-      else
-        needs_notify "critical_warning" "0" >/dev/null 2>&1 || true
-      fi
 
-      # Media errors — any non-zero is urgent
-      if [ "$MEDIA_ERRORS" -ne 0 ]; then
-        if needs_notify "media_errors" "$MEDIA_ERRORS"; then
-          notify "critical" "NVMe Media Errors Detected!" \
-        "$MEDIA_ERRORS media/data integrity errors on $(basename $DEVICE). Flash cells may be degrading."
-          logger -t "nvme-health-monitor" \
-            "CRITICAL: media_errors=$MEDIA_ERRORS on $DEVICE"
+        # Media errors — any non-zero is urgent
+        if [ "$MEDIA_ERRORS" -ne 0 ]; then
+          if needs_notify "media_errors" "$MEDIA_ERRORS"; then
+            notify "critical" "NVMe Media Errors Detected!" \
+          "$MEDIA_ERRORS media/data integrity errors on $(basename $DEVICE). Flash cells may be degrading."
+            logger -t "nvme-health-monitor" \
+              "CRITICAL: media_errors=$MEDIA_ERRORS on $DEVICE"
+          fi
+        else
+          needs_notify "media_errors" "0" >/dev/null 2>&1 || true
         fi
-      else
-        needs_notify "media_errors" "0" >/dev/null 2>&1 || true
-      fi
 
-      # Temperature check
-      if [ "$TEMP_CELSIUS" -ge ${toString cfg.criticalTempThreshold} ]; then
-        if needs_notify "temp_critical" "$TEMP_CELSIUS"; then
-          notify "critical" "NVMe SSD Overheating!" \
-            "Temperature: ''${TEMP_CELSIUS}°C (critical: ${toString cfg.criticalTempThreshold}°C) on $(basename $DEVICE)"
-          logger -t "nvme-health-monitor" \
-            "CRITICAL: temp=''${TEMP_CELSIUS}°C on $DEVICE"
+        # Temperature check
+        if [ "$TEMP_CELSIUS" -ge ${toString cfg.criticalTempThreshold} ]; then
+          if needs_notify "temp_critical" "$TEMP_CELSIUS"; then
+            notify "critical" "NVMe SSD Overheating!" \
+              "Temperature: ''${TEMP_CELSIUS}°C (critical: ${toString cfg.criticalTempThreshold}°C) on $(basename $DEVICE)"
+            logger -t "nvme-health-monitor" \
+              "CRITICAL: temp=''${TEMP_CELSIUS}°C on $DEVICE"
+          fi
+        elif [ "$TEMP_CELSIUS" -ge ${toString cfg.warnTempThreshold} ]; then
+          if needs_notify "temp_warn" "$TEMP_CELSIUS"; then
+            notify "normal" "NVMe SSD Temperature High" \
+              "Temperature: ''${TEMP_CELSIUS}°C (warning: ${toString cfg.warnTempThreshold}°C) on $(basename $DEVICE)"
+            logger -t "nvme-health-monitor" \
+              "WARN: temp=''${TEMP_CELSIUS}°C on $DEVICE"
+          fi
+        else
+          needs_notify "temp_warn" "ok" >/dev/null 2>&1 || true
+          needs_notify "temp_critical" "ok" >/dev/null 2>&1 || true
         fi
-      elif [ "$TEMP_CELSIUS" -ge ${toString cfg.warnTempThreshold} ]; then
-        if needs_notify "temp_warn" "$TEMP_CELSIUS"; then
-          notify "normal" "NVMe SSD Temperature High" \
-            "Temperature: ''${TEMP_CELSIUS}°C (warning: ${toString cfg.warnTempThreshold}°C) on $(basename $DEVICE)"
-          logger -t "nvme-health-monitor" \
-            "WARN: temp=''${TEMP_CELSIUS}°C on $DEVICE"
-        fi
-      else
-        needs_notify "temp_warn" "ok" >/dev/null 2>&1 || true
-        needs_notify "temp_critical" "ok" >/dev/null 2>&1 || true
-      fi
 
-      # Endurance check
-      if [ "$PERCENTAGE_USED" -ge 80 ]; then
-        if needs_notify "endurance" "$PERCENTAGE_USED"; then
-          notify "critical" "NVMe SSD Endurance Critical!" \
-            "''${PERCENTAGE_USED}% of rated endurance consumed on $(basename $DEVICE). Replace drive soon."
-          logger -t "nvme-health-monitor" \
-            "CRITICAL: endurance=''${PERCENTAGE_USED}% on $DEVICE"
+        # Endurance check
+        if [ "$PERCENTAGE_USED" -ge 80 ]; then
+          if needs_notify "endurance" "$PERCENTAGE_USED"; then
+            notify "critical" "NVMe SSD Endurance Critical!" \
+              "''${PERCENTAGE_USED}% of rated endurance consumed on $(basename $DEVICE). Replace drive soon."
+            logger -t "nvme-health-monitor" \
+              "CRITICAL: endurance=''${PERCENTAGE_USED}% on $DEVICE"
+          fi
+        elif [ "$PERCENTAGE_USED" -ge 50 ]; then
+          if needs_notify "endurance" "$PERCENTAGE_USED"; then
+            notify "normal" "NVMe SSD Endurance Warning" \
+              "''${PERCENTAGE_USED}% of rated endurance consumed on $(basename $DEVICE). Plan for replacement."
+            logger -t "nvme-health-monitor" \
+              "WARN: endurance=''${PERCENTAGE_USED}% on $DEVICE"
+          fi
+        else
+          needs_notify "endurance" "ok" >/dev/null 2>&1 || true
         fi
-      elif [ "$PERCENTAGE_USED" -ge 50 ]; then
-        if needs_notify "endurance" "$PERCENTAGE_USED"; then
-          notify "normal" "NVMe SSD Endurance Warning" \
-            "''${PERCENTAGE_USED}% of rated endurance consumed on $(basename $DEVICE). Plan for replacement."
-          logger -t "nvme-health-monitor" \
-            "WARN: endurance=''${PERCENTAGE_USED}% on $DEVICE"
-        fi
-      else
-        needs_notify "endurance" "ok" >/dev/null 2>&1 || true
-      fi
 
-      # Available spare check
-      if [ "$AVAILABLE_SPARE" -lt ${toString cfg.spareWarnThreshold} ]; then
-        if needs_notify "spare" "$AVAILABLE_SPARE"; then
-          notify "normal" "NVMe SSD Spare Blocks Low" \
-            "Only ''${AVAILABLE_SPARE}% spare blocks remaining on $(basename $DEVICE). Drive is aging."
-          logger -t "nvme-health-monitor" \
-            "WARN: spare=''${AVAILABLE_SPARE}% on $DEVICE"
+        # Available spare check
+        if [ "$AVAILABLE_SPARE" -lt ${toString cfg.spareWarnThreshold} ]; then
+          if needs_notify "spare" "$AVAILABLE_SPARE"; then
+            notify "normal" "NVMe SSD Spare Blocks Low" \
+              "Only ''${AVAILABLE_SPARE}% spare blocks remaining on $(basename $DEVICE). Drive is aging."
+            logger -t "nvme-health-monitor" \
+              "WARN: spare=''${AVAILABLE_SPARE}% on $DEVICE"
+          fi
+        else
+          needs_notify "spare" "ok" >/dev/null 2>&1 || true
         fi
-      else
-        needs_notify "spare" "ok" >/dev/null 2>&1 || true
-      fi
-    '';
+      '';
 
-    notifyService = mkDesktopNotifyService pkgs {
-      name = "nvme-health-monitor";
-      description = "Check NVMe SSD health and notify on critical events";
-      inherit checkScript;
-      runtimeInputs = [
-        pkgs.nvme-cli
-        pkgs.coreutils
-        pkgs.jq
-        pkgs.libnotify
-        pkgs.util-linux
-      ];
-      user = cfg.user;
-      inherit uid;
-      interval = cfg.interval;
-      bootDelay = "1min";
-      hardenFn = hardenUser;
+      notifyService = mkDesktopNotifyService pkgs {
+        name = "nvme-health-monitor";
+        description = "Check NVMe SSD health and notify on critical events";
+        inherit checkScript;
+        runtimeInputs = [
+          pkgs.nvme-cli
+          pkgs.coreutils
+          pkgs.jq
+          pkgs.libnotify
+          pkgs.util-linux
+        ];
+        user = cfg.user;
+        inherit uid;
+        interval = cfg.interval;
+        bootDelay = "1min";
+        hardenFn = hardenUser;
+      };
+    in
+    {
+      options.services.nvme-health-monitor = {
+        enable = lib.mkEnableOption "NVMe SSD health monitoring with desktop notifications";
+
+        device = lib.mkOption {
+          type = lib.types.str;
+          default = "/dev/nvme0n1";
+          description = "NVMe device to monitor";
+        };
+
+        warnTempThreshold = lib.mkOption {
+          type = lib.types.ints.unsigned;
+          default = 65;
+          description = "Temperature (°C) for warning notifications";
+        };
+
+        criticalTempThreshold = lib.mkOption {
+          type = lib.types.ints.unsigned;
+          default = 75;
+          description = "Temperature (°C) for critical notifications";
+        };
+
+        spareWarnThreshold = lib.mkOption {
+          type = lib.types.ints.unsigned;
+          default = 30;
+          description = "Available spare percentage below which to warn";
+        };
+
+        interval = lib.mkOption {
+          type = lib.types.str;
+          default = "2min";
+          description = "Systemd timer interval for health checks";
+        };
+
+        user = lib.mkOption {
+          type = lib.types.str;
+          default = primaryUser;
+          description = "User to send desktop notifications to";
+        };
+      };
+
+      config = lib.mkIf cfg.enable {
+        systemd = {
+          timers.nvme-health-monitor = notifyService.timer;
+          services.nvme-health-monitor = notifyService.service;
+        };
+      };
     };
-  in {
-    options.services.nvme-health-monitor = {
-      enable = lib.mkEnableOption "NVMe SSD health monitoring with desktop notifications";
-
-      device = lib.mkOption {
-        type = lib.types.str;
-        default = "/dev/nvme0n1";
-        description = "NVMe device to monitor";
-      };
-
-      warnTempThreshold = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 65;
-        description = "Temperature (°C) for warning notifications";
-      };
-
-      criticalTempThreshold = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 75;
-        description = "Temperature (°C) for critical notifications";
-      };
-
-      spareWarnThreshold = lib.mkOption {
-        type = lib.types.ints.unsigned;
-        default = 30;
-        description = "Available spare percentage below which to warn";
-      };
-
-      interval = lib.mkOption {
-        type = lib.types.str;
-        default = "2min";
-        description = "Systemd timer interval for health checks";
-      };
-
-      user = lib.mkOption {
-        type = lib.types.str;
-        default = primaryUser;
-        description = "User to send desktop notifications to";
-      };
-    };
-
-    config = lib.mkIf cfg.enable {
-      systemd = {
-        timers.nvme-health-monitor = notifyService.timer;
-        services.nvme-health-monitor = notifyService.service;
-      };
-    };
-  };
 }

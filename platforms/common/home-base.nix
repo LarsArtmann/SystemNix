@@ -1,7 +1,9 @@
 # Common Home Manager configuration for all platforms
-{config, ...}: let
+{ config, ... }:
+let
   privateGoPattern = "github.com/larsartmann/go-cqrs-lite,github.com/larsartmann/go-finding,github.com/larsartmann/go-structure-linter,github.com/LarsArtmann/go-commit";
-in {
+in
+{
   # Import common program configurations
   imports = [
     # Shell configurations (shared aliases, no duplication!)

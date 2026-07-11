@@ -5,9 +5,11 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   ytShortsBlocker = (import ../browser-extensions.nix).ytShortsBlocker;
-in {
+in
+{
   # Chromium browser with declarative extension management
   # NOTE: This Home Manager module is only used on Darwin (macOS).
   # On NixOS, extension management is handled system-wide via programs.chromium
@@ -29,7 +31,7 @@ in {
     # Extensions to install declaratively
     extensions = [
       # YouTube Shorts Blocker - hides Shorts from homepage, subscriptions, search
-      {inherit (ytShortsBlocker) id;}
+      { inherit (ytShortsBlocker) id; }
 
       # uBlock Origin - ad blocker (optional, uncomment if desired)
       # { id = "cjpalhdlnbpafiamejdnhcphjbkeiagm"; }

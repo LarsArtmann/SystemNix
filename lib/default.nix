@@ -1,16 +1,17 @@
-lib: let
-  harden = import ./systemd.nix {inherit lib;};
-  inherit
-    (import ./systemd/service-defaults.nix lib)
+lib:
+let
+  harden = import ./systemd.nix { inherit lib; };
+  inherit (import ./systemd/service-defaults.nix lib)
     serviceDefaults
     serviceDefaultsUser
     serviceOneshotDefaults
     serviceOneshotDefaultsUser
     onFailure
     ;
-in {
+in
+{
   inherit harden;
-  hardenUser = args: harden (args // {mode = "user";});
+  hardenUser = args: harden (args // { mode = "user"; });
   inherit
     serviceDefaults
     serviceDefaultsUser
@@ -19,7 +20,8 @@ in {
     onFailure
     ;
   serviceTypes = import ./types.nix lib;
-  mkDockerServiceFactory = {pkgs}:
+  mkDockerServiceFactory =
+    { pkgs }:
     import ./docker.nix {
       inherit
         pkgs
@@ -30,17 +32,21 @@ in {
         ;
     };
 
-  mkStateDir = path: mode: user: group: "d ${path} ${mode} ${user} ${group} -";
+  mkStateDir =
+    path: mode: user: group:
+    "d ${path} ${mode} ${user} ${group} -";
 
-  mkSecretCheck = pkgs: {
-    name,
-    secretPath,
-    message,
-    extraCheck ? "",
-  }:
+  mkSecretCheck =
+    pkgs:
+    {
+      name,
+      secretPath,
+      message,
+      extraCheck ? "",
+    }:
     pkgs.writeShellApplication {
       name = "check-${name}";
-      runtimeInputs = [pkgs.coreutils];
+      runtimeInputs = [ pkgs.coreutils ];
       text = ''
         secret_path="${secretPath}"
         if [ ! -s "$secret_path" ]; then
@@ -51,91 +57,98 @@ in {
       '';
     };
 
-  mkDesktopNotifyService = pkgs: {
-    name,
-    description,
-    checkScript,
-    runtimeInputs,
-    user,
-    uid,
-    interval ? "5min",
-    bootDelay ? "2min",
-    hardenFn ? harden,
-    extraHarden ? {},
-    extraServiceConfig ? {},
-  }: let
-    script = pkgs.writeShellApplication {
-      name = "${name}-check";
-      inherit runtimeInputs;
-      text = checkScript;
-    };
-  in {
-    timer = {
-      description = "Periodic ${description}";
-      timerConfig = {
-        OnBootSec = bootDelay;
-        OnUnitActiveSec = interval;
-        Persistent = true;
+  mkDesktopNotifyService =
+    pkgs:
+    {
+      name,
+      description,
+      checkScript,
+      runtimeInputs,
+      user,
+      uid,
+      interval ? "5min",
+      bootDelay ? "2min",
+      hardenFn ? harden,
+      extraHarden ? { },
+      extraServiceConfig ? { },
+    }:
+    let
+      script = pkgs.writeShellApplication {
+        name = "${name}-check";
+        inherit runtimeInputs;
+        text = checkScript;
       };
-      wantedBy = ["timers.target"];
-    };
+    in
+    {
+      timer = {
+        description = "Periodic ${description}";
+        timerConfig = {
+          OnBootSec = bootDelay;
+          OnUnitActiveSec = interval;
+          Persistent = true;
+        };
+        wantedBy = [ "timers.target" ];
+      };
 
-    service = {
-      inherit description onFailure;
-      serviceConfig = lib.mkMerge [
-        {
-          Type = "oneshot";
-          User = user;
-          Environment = [
-            "DISPLAY=:0"
-            "WAYLAND_DISPLAY=wayland-1"
-            "XDG_RUNTIME_DIR=/run/user/${uid}"
-          ];
-          ExecStart = lib.getExe script;
-          StandardOutput = "journal";
-          StandardError = "journal";
-        }
-        (hardenFn (lib.mkMerge [
+      service = {
+        inherit description onFailure;
+        serviceConfig = lib.mkMerge [
           {
-            ProtectHome = false;
-            NoNewPrivileges = false;
+            Type = "oneshot";
+            User = user;
+            Environment = [
+              "DISPLAY=:0"
+              "WAYLAND_DISPLAY=wayland-1"
+              "XDG_RUNTIME_DIR=/run/user/${uid}"
+            ];
+            ExecStart = lib.getExe script;
+            StandardOutput = "journal";
+            StandardError = "journal";
           }
-          extraHarden
-        ]))
-        extraServiceConfig
-      ];
+          (hardenFn (
+            lib.mkMerge [
+              {
+                ProtectHome = false;
+                NoNewPrivileges = false;
+              }
+              extraHarden
+            ]
+          ))
+          extraServiceConfig
+        ];
+      };
     };
-  };
 
-  mkHttpCheck = {
-    name,
-    group,
-    url,
-    interval ? "30s",
-    conditions ? ["[STATUS] == 200"],
-    alerts ? [],
-  }: {
-    inherit
-      name
-      group
-      url
-      interval
-      conditions
-      alerts
-      ;
-  };
+  mkHttpCheck =
+    {
+      name,
+      group,
+      url,
+      interval ? "30s",
+      conditions ? [ "[STATUS] == 200" ],
+      alerts ? [ ],
+    }:
+    {
+      inherit
+        name
+        group
+        url
+        interval
+        conditions
+        alerts
+        ;
+    };
 
-  ports = let
-    raw = (import ./ports.nix).ports;
-    byValue = builtins.groupBy (name: toString raw.${name}) (builtins.attrNames raw);
-    dupes = builtins.filter (v: builtins.length byValue.${v} > 1) (builtins.attrNames byValue);
-    dupeMsg = builtins.concatStringsSep "; " (
-      map (v: "port ${v} used by: ${builtins.concatStringsSep ", " byValue.${v}}") dupes
-    );
-  in
-    if dupes == []
-    then raw
-    else builtins.throw "Port collision: ${dupeMsg}";
+  ports =
+    let
+      raw = (import ./ports.nix).ports;
+      byValue = builtins.groupBy (name: toString raw.${name}) (builtins.attrNames raw);
+      dupes = builtins.filter (v: builtins.length byValue.${v} > 1) (builtins.attrNames byValue);
+      dupeMsg = builtins.concatStringsSep "; " (
+        map (v: "port ${v} used by: ${builtins.concatStringsSep ", " byValue.${v}}") dupes
+      );
+    in
+    if dupes == [ ] then raw else builtins.throw "Port collision: ${dupeMsg}";
 
   images = import ./images.nix;
 

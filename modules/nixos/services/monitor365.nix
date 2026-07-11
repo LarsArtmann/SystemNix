@@ -40,158 +40,166 @@
 # In a multi-machine deployment each machine would have its own sops
 # file but with the same tenant key value.  If a machine is compromised
 # the admin rotates the key in sops and redeploys.
-{inputs, ...}: {
-  flake.nixosModules.monitor365 = {
-    config,
-    pkgs,
-    lib,
-    ...
-  }: let
-    inherit (config.users) primaryUser;
-    ports = (import ../../../lib/default.nix lib).ports;
-    domain = config.networking.domain;
+{ inputs, ... }: {
+  flake.nixosModules.monitor365 =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      inherit (config.users) primaryUser;
+      ports = (import ../../../lib/default.nix lib).ports;
+      domain = config.networking.domain;
 
-    systemAgentCfg = config.services.monitor365;
-    desktopAgentCfg = config.services.monitor365-desktop;
-    serverCfg = config.services.monitor365-server;
+      systemAgentCfg = config.services.monitor365;
+      desktopAgentCfg = config.services.monitor365-desktop;
+      serverCfg = config.services.monitor365-server;
 
-    # Headless monitoring deps — CLI tools for system collectors.
-    systemDeps = with pkgs; [
-      procps
-      util-linux
-      coreutils
-      lm_sensors
-      networkmanager
-      bluez
-    ];
+      # Headless monitoring deps — CLI tools for system collectors.
+      systemDeps = with pkgs; [
+        procps
+        util-linux
+        coreutils
+        lm_sensors
+        networkmanager
+        bluez
+      ];
 
-    # Desktop monitoring deps — GUI tools for desktop collectors.
-    desktopDeps = with pkgs; [
-      xdotool
-      xprintidle
-      scrot
-      coreutils
-      procps
-    ];
-  in {
-    imports = [
-      inputs.monitor365.nixosModules.monitor365
-      inputs.monitor365.nixosModules.monitor365-desktop
-      inputs.monitor365.nixosModules.monitor365-server
-    ];
+      # Desktop monitoring deps — GUI tools for desktop collectors.
+      desktopDeps = with pkgs; [
+        xdotool
+        xprintidle
+        scrot
+        coreutils
+        procps
+      ];
+    in
+    {
+      imports = [
+        inputs.monitor365.nixosModules.monitor365
+        inputs.monitor365.nixosModules.monitor365-desktop
+        inputs.monitor365.nixosModules.monitor365-server
+      ];
 
-    config = lib.mkMerge [
-      # ── System agent defaults (headless, survives logout) ──────
-      (lib.mkIf systemAgentCfg.enable {
-        services.monitor365 = {
-          runtimeDeps = lib.mkDefault systemDeps;
+      config = lib.mkMerge [
+        # ── System agent defaults (headless, survives logout) ──────
+        (lib.mkIf systemAgentCfg.enable {
+          services.monitor365 = {
+            runtimeDeps = lib.mkDefault systemDeps;
 
-          settings = {
-            device = {
-              name = lib.mkDefault "${config.networking.hostName} (system)";
-              type = lib.mkDefault "server";
-            };
+            settings = {
+              device = {
+                name = lib.mkDefault "${config.networking.hostName} (system)";
+                type = lib.mkDefault "server";
+              };
 
-            storage = {
-              encryption = lib.mkDefault true;
-              encryption_key_file = lib.mkDefault "/var/lib/monitor365/storage_key";
-              max_size_mb = lib.mkDefault (30 * 1024);
-            };
+              storage = {
+                encryption = lib.mkDefault true;
+                encryption_key_file = lib.mkDefault "/var/lib/monitor365/storage_key";
+                max_size_mb = lib.mkDefault (30 * 1024);
+              };
 
-            logging.level = lib.mkDefault "warn";
-            metrics = {
-              enabled = lib.mkDefault true;
-              bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-metrics}";
-            };
+              logging.level = lib.mkDefault "warn";
+              metrics = {
+                enabled = lib.mkDefault true;
+                bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-metrics}";
+              };
 
-            # System agent authenticates via LoadCredential — systemd reads
-            # the sops secret as root and provisions it to the service.
-            cloud = lib.mkIf serverCfg.enable {
-              endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
-              sync_interval_seconds = lib.mkDefault 60;
-              authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
-            };
-          };
-        };
-      })
-
-      # ── Desktop agent defaults (graphical session) ────────────
-      (lib.mkIf desktopAgentCfg.enable {
-        services.monitor365-desktop = {
-          user = lib.mkDefault primaryUser;
-          group = lib.mkDefault "users";
-          runtimeDeps = lib.mkDefault desktopDeps;
-
-          # Desktop agent reads the tenant API key from a sops-managed
-          # env file owned by the desktop user.
-          environmentFile = lib.mkDefault config.sops.templates."monitor365-desktop-agent-env".path;
-
-          settings = {
-            device = {
-              id = lib.mkDefault "${config.networking.hostName}-desktop";
-              name = lib.mkDefault "${config.networking.hostName} (desktop)";
-              type = lib.mkDefault "desktop";
-            };
-
-            storage = {
-              path = lib.mkDefault "${config.users.users.${primaryUser}.home}/.local/share/monitor365-desktop";
-              encryption = lib.mkDefault true;
-              encryption_key_file = lib.mkDefault "${config.users.users.${primaryUser}.home}/.config/monitor365-desktop/storage_key";
-              max_size_mb = lib.mkDefault (30 * 1024);
-            };
-
-            logging.level = lib.mkDefault "warn";
-            metrics = {
-              enabled = lib.mkDefault true;
-              bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-desktop-metrics}";
-            };
-
-            # Desktop agent syncs to local server — token injected via
-            # environmentFile (sops template).
-            cloud = lib.mkIf serverCfg.enable {
-              endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
-              sync_interval_seconds = lib.mkDefault 60;
+              # System agent authenticates via LoadCredential — systemd reads
+              # the sops secret as root and provisions it to the service.
+              cloud = lib.mkIf serverCfg.enable {
+                endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
+                sync_interval_seconds = lib.mkDefault 60;
+                authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
+              };
             };
           };
-        };
-      })
+        })
 
-      # ── Server defaults ────────────────────────────────────────
-      (lib.mkIf serverCfg.enable {
-        services.monitor365-server = {
-          listenAddr = lib.mkDefault "0.0.0.0:${toString ports.monitor365-server}";
-          port = lib.mkDefault ports.monitor365-server;
-          dashboardUrl = lib.mkDefault "https://monitor.${domain}/ui/";
+        # ── Desktop agent defaults (graphical session) ────────────
+        (lib.mkIf desktopAgentCfg.enable {
+          services.monitor365-desktop = {
+            user = lib.mkDefault primaryUser;
+            group = lib.mkDefault "users";
+            runtimeDeps = lib.mkDefault desktopDeps;
 
-          # NOTE: corsOrigins intentionally NOT set here.  The upstream module
-          # emits it as MONITOR365_SERVER__CORS_ORIGINS (comma-separated string),
-          # but the server's Rust config parser expects a TOML sequence, not a
-          # string — causing a fatal parse error on startup.  CORS is unnecessary
-          # anyway: the WASM dashboard and API are served from the same origin
-          # behind Caddy (monitor.<domain>).  Fix the upstream module to use a
-          # config file for sequence types if CORS is ever needed.
+            # Desktop agent reads the tenant API key from a sops-managed
+            # env file owned by the desktop user.
+            environmentFile = lib.mkDefault config.sops.templates."monitor365-desktop-agent-env".path;
 
-          jwtSecretFile = lib.mkDefault config.sops.secrets.server_jwt_secret.path;
-          environmentFile = lib.mkDefault config.sops.templates."monitor365-server-env".path;
+            settings = {
+              device = {
+                id = lib.mkDefault "${config.networking.hostName}-desktop";
+                name = lib.mkDefault "${config.networking.hostName} (desktop)";
+                type = lib.mkDefault "desktop";
+              };
 
-          bootstrap = {
-            enable = lib.mkDefault true;
-            # Pre-provisioned tenant API key from sops — server, system agent,
-            # and desktop agent all read the same underlying value.
-            apiKeyFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
+              storage = {
+                path = lib.mkDefault "${config.users.users.${primaryUser}.home}/.local/share/monitor365-desktop";
+                encryption = lib.mkDefault true;
+                encryption_key_file = lib.mkDefault "${
+                  config.users.users.${primaryUser}.home
+                }/.config/monitor365-desktop/storage_key";
+                max_size_mb = lib.mkDefault (30 * 1024);
+              };
+
+              logging.level = lib.mkDefault "warn";
+              metrics = {
+                enabled = lib.mkDefault true;
+                bind_address = lib.mkDefault "127.0.0.1:${toString ports.monitor365-desktop-metrics}";
+              };
+
+              # Desktop agent syncs to local server — token injected via
+              # environmentFile (sops template).
+              cloud = lib.mkIf serverCfg.enable {
+                endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
+                sync_interval_seconds = lib.mkDefault 60;
+              };
+            };
+          };
+        })
+
+        # ── Server defaults ────────────────────────────────────────
+        (lib.mkIf serverCfg.enable {
+          services.monitor365-server = {
+            listenAddr = lib.mkDefault "0.0.0.0:${toString ports.monitor365-server}";
+            port = lib.mkDefault ports.monitor365-server;
+            dashboardUrl = lib.mkDefault "https://monitor.${domain}/ui/";
+
+            # NOTE: corsOrigins intentionally NOT set here.  The upstream module
+            # emits it as MONITOR365_SERVER__CORS_ORIGINS (comma-separated string),
+            # but the server's Rust config parser expects a TOML sequence, not a
+            # string — causing a fatal parse error on startup.  CORS is unnecessary
+            # anyway: the WASM dashboard and API are served from the same origin
+            # behind Caddy (monitor.<domain>).  Fix the upstream module to use a
+            # config file for sequence types if CORS is ever needed.
+
+            jwtSecretFile = lib.mkDefault config.sops.secrets.server_jwt_secret.path;
+            environmentFile = lib.mkDefault config.sops.templates."monitor365-server-env".path;
+
+            bootstrap = {
+              enable = lib.mkDefault true;
+              # Pre-provisioned tenant API key from sops — server, system agent,
+              # and desktop agent all read the same underlying value.
+              apiKeyFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
+            };
+
+            sso = lib.mkIf (config.services.pocket-id.enable or false) {
+              issuer = lib.mkDefault "https://auth.${domain}";
+              clientSecretFile = lib.mkDefault "${
+                config.services.pocket-id.dataDir or "/var/lib/pocket-id"
+              }/client-secrets/monitor365";
+              redirectUri = lib.mkDefault "https://monitor.${domain}/v1/auth/sso/callback";
+            };
           };
 
-          sso = lib.mkIf (config.services.pocket-id.enable or false) {
-            issuer = lib.mkDefault "https://auth.${domain}";
-            clientSecretFile = lib.mkDefault "${config.services.pocket-id.dataDir or "/var/lib/pocket-id"}/client-secrets/monitor365";
-            redirectUri = lib.mkDefault "https://monitor.${domain}/v1/auth/sso/callback";
-          };
-        };
-
-        # Grant pocket-id group to server user for SSO secret access
-        users.users.monitor365-server.extraGroups =
-          lib.optional (serverCfg.sso.enable && (config.services.pocket-id.enable or false)) "pocket-id";
-      })
-    ];
-  };
+          # Grant pocket-id group to server user for SSO secret access
+          users.users.monitor365-server.extraGroups = lib.optional (
+            serverCfg.sso.enable && (config.services.pocket-id.enable or false)
+          ) "pocket-id";
+        })
+      ];
+    };
 }

@@ -1,6 +1,8 @@
-{colorScheme, ...}: let
+{ colorScheme, ... }:
+let
   theme = import ../theme.nix;
-in {
+in
+{
   programs.zed-editor = {
     enable = true;
     mutableUserSettings = true;

@@ -4,10 +4,12 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   # User home directory (from nix-darwin users option - guaranteed to exist)
   userHome = config.users.users.larsartmann.home;
-in {
+in
+{
   # LaunchAgents for user-level services
   # Replaces scripts/nix-activitywatch-setup.sh with declarative Nix configuration
   # Using nix-darwin environment.userLaunchAgents option

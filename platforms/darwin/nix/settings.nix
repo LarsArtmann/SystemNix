@@ -1,6 +1,6 @@
-{lib, ...}: {
+{ lib, ... }: {
   # Import common Nix settings (Darwin-specific overrides below)
-  imports = [../../common/nix-settings.nix];
+  imports = [ ../../common/nix-settings.nix ];
 
   # Darwin-specific Nix settings overrides
   # Note: Most settings are inherited from ../../common/nix-settings.nix

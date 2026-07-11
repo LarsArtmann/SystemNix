@@ -5,9 +5,11 @@
   config,
   pkgs,
   ...
-}: let
+}:
+let
   theme = import ../common/theme.nix;
-in {
+in
+{
   imports = [
     ../common/home-base.nix
     ./programs/shells.nix

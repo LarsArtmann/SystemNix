@@ -1,4 +1,4 @@
-{lib, ...}: {
+{ lib, ... }: {
   options.networking.local = {
     lanIP = lib.mkOption {
       type = lib.types.nonEmptyStr;

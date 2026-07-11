@@ -15,9 +15,9 @@
   pkgs,
   lib,
   ...
-}: let
-  inherit
-    (import ../../../lib/default.nix lib)
+}:
+let
+  inherit (import ../../../lib/default.nix lib)
     harden
     serviceOneshotDefaults
     onFailure
@@ -106,7 +106,7 @@
   # ── GC guard: exits 1 (block GC) if device-unallocated < threshold ──────────
   btrfsGcGuard = pkgs.writeShellApplication {
     name = "btrfs-gc-guard";
-    runtimeInputs = [btrfsChunkCheck];
+    runtimeInputs = [ btrfsChunkCheck ];
     text = ''
       set -uo pipefail
       eval "$(btrfs-chunk-check / 2>/dev/null)"
@@ -130,7 +130,10 @@
   # ── Metrics collector: writes Prometheus textfile + logs state transitions ──
   btrfsHealthMetrics = pkgs.writeShellApplication {
     name = "btrfs-health-metrics";
-    runtimeInputs = [btrfsChunkCheck pkgs.btrfs-progs];
+    runtimeInputs = [
+      btrfsChunkCheck
+      pkgs.btrfs-progs
+    ];
     text = ''
       set -uo pipefail
       METRICS_FILE="${textfileDir}/btrfs.prom"
@@ -264,7 +267,10 @@
   # ── Compsize metrics: compression ratio (runs hourly — compsize is slow) ────
   btrfsCompsizeMetrics = pkgs.writeShellApplication {
     name = "btrfs-compsize-metrics";
-    runtimeInputs = [pkgs.btrfs-progs pkgs.compsize];
+    runtimeInputs = [
+      pkgs.btrfs-progs
+      pkgs.compsize
+    ];
     text = ''
       set -uo pipefail
       METRICS_FILE="${textfileDir}/btrfs-compression.prom"
@@ -295,7 +301,8 @@
       mv "$TMP_FILE" "$METRICS_FILE"
     '';
   };
-in {
+in
+{
   systemd = {
     # ── State directories ────────────────────────────────────────────────────
     tmpfiles.rules = [
@@ -308,7 +315,7 @@ in {
         description = "BTRFS chunk allocation health monitor";
         inherit onFailure;
         serviceConfig = lib.mkMerge [
-          (serviceOneshotDefaults {})
+          (serviceOneshotDefaults { })
           (harden {
             MemoryMax = "128M";
             ReadWritePaths = [
@@ -347,10 +354,10 @@ in {
         description = "BTRFS compression ratio metrics collector";
         inherit onFailure;
         serviceConfig = lib.mkMerge [
-          (serviceOneshotDefaults {})
+          (serviceOneshotDefaults { })
           (harden {
             MemoryMax = "256M";
-            ReadWritePaths = [textfileDir];
+            ReadWritePaths = [ textfileDir ];
           })
           {
             Type = "oneshot";
@@ -362,7 +369,7 @@ in {
 
     timers.btrfs-health = {
       description = "BTRFS health check every 5 minutes";
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "1min";
         OnUnitActiveSec = "5min";
@@ -372,7 +379,7 @@ in {
 
     timers.btrfs-compsize = {
       description = "BTRFS compression ratio check every 6 hours";
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
       timerConfig = {
         OnBootSec = "5min";
         OnUnitActiveSec = "6h";

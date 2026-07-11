@@ -2,9 +2,11 @@
   pkgs,
   colorScheme,
   ...
-}: let
+}:
+let
   colors = colorScheme.palette;
-in {
+in
+{
   # Zellij - Modern terminal multiplexer (tmux alternative)
   programs.zellij = {
     enable = true;
@@ -38,10 +40,7 @@ in {
       scrollback_lines = 10000;
 
       # Copy mode
-      copy_command =
-        if pkgs.stdenv.isDarwin
-        then "pbcopy"
-        else "wl-copy";
+      copy_command = if pkgs.stdenv.isDarwin then "pbcopy" else "wl-copy";
       copy_clipboard = "system";
       copy_on_select = false;
 
@@ -146,7 +145,7 @@ in {
                     pane = {
                       name = "editor";
                       command = "nvim";
-                      args = ["."];
+                      args = [ "." ];
                     };
                   }
                   {
@@ -213,14 +212,8 @@ in {
                         {
                           pane = {
                             name = "logs";
-                            command =
-                              if pkgs.stdenv.isDarwin
-                              then "log"
-                              else "journalctl";
-                            args =
-                              if pkgs.stdenv.isDarwin
-                              then ["stream"]
-                              else ["-f"];
+                            command = if pkgs.stdenv.isDarwin then "log" else "journalctl";
+                            args = if pkgs.stdenv.isDarwin then [ "stream" ] else [ "-f" ];
                           };
                         }
                         {
@@ -260,7 +253,7 @@ in {
       default = {
         layout = {
           _children = [
-            {pane = {};}
+            { pane = { }; }
             {
               pane = {
                 size = 1;
