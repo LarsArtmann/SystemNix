@@ -74,8 +74,12 @@ in {
       # delay on GMKtec EVO-X2 (dev-nvme0n1.device waits ~170s for controller to respond).
       # Zero cost on desktop (no battery), could save ~2.5min boot time.
       "nvme_core.default_ps_max_latency_us=0"
-      "systemd.show_status=true"
-      "systemd.log_level=debug"
+      # Removed systemd.log_level=debug and systemd.show_status=true (2026-07-11):
+      # These generated massive log I/O in initrd, compounding the BTRFS metadata
+      # ENOSPC stall. Every debug log line triggers a BTRFS metadata write for the
+      # journal, which takes seconds when metadata allocation is near-full.
+      # Result: 3.5min initrd activation (13s CPU, rest pure I/O wait on logging).
+      # Keep pstore for crash diagnosis — it writes to NVRAM, not the filesystem.
       # Enable task delay accounting — kernel has CONFIG_TASK_DELAY_ACCT=y compiled in
       # but it's inert without this boot param. iotop shows "CONFIG_TASK_DELAY_ACCT not
       # enabled" without it. Near-zero overhead. eBPF tools (bcc/bpftrace) don't need it
