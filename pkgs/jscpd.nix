@@ -40,8 +40,8 @@ stdenv.mkDerivation (finalAttrs: {
         cp ${./jscpd-pnpm-lock.yaml} $out/pnpm-lock.yaml
       '';
     };
-    fetcherVersion = 3;
-    hash = "sha256-Mlax/TNyx2TkMiZKOvo1Z661hww3T2YH0dQ8cwAQjDc=";
+    fetcherVersion = 4;
+    hash = "sha256-lZQ5I4ovJoYdGlgVx4J+8REDkCV7UIFH1RPTq9r+XLU=";
   };
 
   dontBuild = true;

@@ -23,7 +23,10 @@
     };
 
     # Add flake-parts for modular architecture
-    flake-parts.url = "github:hercules-ci/flake-parts";
+    flake-parts = {
+      url = "github:hercules-ci/flake-parts";
+      inputs.nixpkgs-lib.follows = "nixpkgs";
+    };
 
     # Single flake-utils source — all inputs follow this to avoid 10+ duplicate instances
     flake-utils = {
@@ -116,7 +119,8 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         home-manager.follows = "home-manager";
-        treefmt-full-flake.follows = "treefmt-full-flake";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
       };
     };
 
@@ -529,7 +533,7 @@
 
         # Development shells for different program categories
         devShells = {
-          default = pkgs.mkShell {
+          default = pkgs.mkShellNoCC {
             BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
             packages = with pkgs; [
               git
@@ -545,7 +549,7 @@
             ];
           };
           # Quickshell development — hot-reload QML shell development
-          quickshell = pkgs.mkShell {
+          quickshell = pkgs.mkShellNoCC {
             packages = [
               inputs.dankMaterialShell.packages.${system}.default
               pkgs.qt6.qtdeclarative

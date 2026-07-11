@@ -33,10 +33,9 @@
 # established via hardware fingerprint headers (x-device-fingerprint,
 # x-hardware-fingerprint, x-host-id) sent alongside the API key.
 #
-# The same sops secret value is materialised with different owners:
-#   1. monitor365_api_key → server (bootstrap.apiKeyFile)
-#                           + system agent (LoadCredential via authTokenFile)
-#   2. cloud_auth_token   → desktop agent (sops template env file)
+# The same sops secret value (cloud_auth_token) is materialised with
+# different owners (desktop user vs monitor365-server system user) because
+# sops-nix grants file ownership per entry.
 #
 # In a multi-machine deployment each machine would have its own sops
 # file but with the same tenant key value.  If a machine is compromised
@@ -110,7 +109,7 @@
             cloud = lib.mkIf serverCfg.enable {
               endpoint = lib.mkDefault "http://localhost:${toString ports.monitor365-server}";
               sync_interval_seconds = lib.mkDefault 60;
-              authTokenFile = lib.mkDefault config.sops.secrets.monitor365_api_key.path;
+              authTokenFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
             };
           };
         };
@@ -179,7 +178,7 @@
             enable = lib.mkDefault true;
             # Pre-provisioned tenant API key from sops — server, system agent,
             # and desktop agent all read the same underlying value.
-            apiKeyFile = lib.mkDefault config.sops.secrets.monitor365_api_key.path;
+            apiKeyFile = lib.mkDefault config.sops.secrets.cloud_auth_token.path;
           };
 
           sso = lib.mkIf (config.services.pocket-id.enable or false) {

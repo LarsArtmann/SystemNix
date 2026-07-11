@@ -49,6 +49,8 @@ scripts/               # Shell + Python operational scripts
 
 ### Private Go Repos (LarsArtmann)
 
+**GOPRIVATE setting** (`platforms/common/home-base.nix`): `privateGoPattern = "github.com/larsartmann/go-cqrs-lite,github.com/larsartmann/go-finding,github.com/larsartmann/go-structure-linter,github.com/LarsArtmann/go-commit"`. These 4 repos return 404 on `sum.golang.org` (checksum database). The Go proxy (`proxy.golang.org`) CAN serve their tagged versions, but the checksum DB can't verify them, so `GOPRIVATE` is required to skip sumdb verification. All other LarsArtmann repos are public and work fine WITHOUT GOPRIVATE.
+
 All private repos use `git+ssh://` URLs. Go tool packages defined in `mkLarsPackages` in `flake.nix` — NOT overlays.
 
 `mkPreparedSource` (from `go-nix-helpers`) auto-strips local replaces, normalizes pseudo-versions, generates `replace` directives. Features: `subModules` (handles `/v2` suffixes — include version in list entry, kept in path, stripped from dir), `stripLocalReplaces`, `subModuleVersionNormalize`.
@@ -218,6 +220,8 @@ Root (`@`): daily via btrbk, 14d+4w retention. `/data`: NOT snapshotted — BTRF
 | `monitor365.nix` port collision bypass (FIXED) | Was importing `lib/ports.nix` raw, skipping the duplicate-port detection wrapper in `lib/default.nix`. Now correctly imports via `lib/default.nix lib` |
 | Use `pkgs.formats.yaml{}.generate` not hand-rolled YAML | Homepage settings/services/widgets YAML, docker-compose files, and all config generation now use `pkgs.formats.yaml{}.generate` or `builtins.toJSON` over structured attrsets instead of manual string concatenation. This provides type-safe serialization, proper quoting, and structural validation |
 | Use `lib.generators.toKeyValue` for .env files | All sops `.env` templates now use `lib.generators.toKeyValue {}` over structured attrsets instead of hand-rolled `KEY=value` strings. Cleaner, less error-prone |
+| flake-parts `mkFlake` does NOT accept a bare list | Passing `[ moduleA moduleB ]` to `flake-parts.lib.mkFlake` causes nixpkgs `setDefaultModuleLocation` to wrap it in `{ imports = [ [ moduleA moduleB ] ]; }` — a nested list, which nixpkgs rejects with `Module imports can't be nested lists`. Use an attrset with `imports` instead: `{ imports = [ moduleA ]; ... }`. This broke nix-ssh-config's flake-parts migration (commit `1539f00`) and blocked ALL SystemNix evaluation |
+| catppuccin-gtk + Python 3.14 = build failure | nixpkgs unstable uses Python 3.14 as default `python3`. The catppuccin-gtk build script uses `argparse.BooleanOptionalAction` with `type=` kwarg, removed in Python 3.14. Also, the `catppuccin` Python package's `mpl.style.core` API broke with newer matplotlib. **Fixed** via overlay in `overlays/shared.nix`: `catppuccin-gtk.override { python3 = prev.python312; }` + `catppuccin.overridePythonAttrs { pythonImportsCheck = []; doCheck = false; }` |
 
 ---
 

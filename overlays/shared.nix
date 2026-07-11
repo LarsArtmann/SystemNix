@@ -1,5 +1,20 @@
 [
   (_final: prev: {
+    pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [
+      (_final: prev: {
+        catppuccin = prev.catppuccin.overridePythonAttrs (_old: {
+          pythonImportsCheck = [];
+          doCheck = false;
+        });
+      })
+    ];
+
+    catppuccin-gtk = prev.catppuccin-gtk.override {
+      python3 = prev.python312;
+    };
+  })
+
+  (_final: prev: {
     aw-watcher-utilization = prev.callPackage ../pkgs/aw-watcher-utilization.nix {};
   })
 

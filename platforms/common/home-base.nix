@@ -1,6 +1,6 @@
 # Common Home Manager configuration for all platforms
 {config, ...}: let
-  privateGoPattern = "github.com/LarsArtmann/*,github.com/larsartmann/*";
+  privateGoPattern = "github.com/larsartmann/go-cqrs-lite,github.com/larsartmann/go-finding,github.com/larsartmann/go-structure-linter,github.com/LarsArtmann/go-commit";
 in {
   # Import common program configurations
   imports = [
@@ -53,11 +53,13 @@ in {
       # Go development
       GOPATH = "${config.home.homeDirectory}/go";
 
-      # Private Go modules (use SSH instead of public proxy)
-      # Note: Both case variants needed - Go module paths are case-sensitive
+      # Only the 4 truly private LarsArtmann repos need to skip the Go proxy.
+      # All other repos are public and served by proxy.golang.org.
+      # Setting GOPRIVATE too broadly (e.g. github.com/LarsArtmann/*) causes Go to
+      # skip the proxy for ALL repos, breaking vendorHash computation in the Nix sandbox
+      # (sandbox has no SSH keys → git clone fails → build fails → fakeHash forever).
       GOPRIVATE = privateGoPattern;
 
-      # Disable checksum database for private repos
       GONOSUMDB = privateGoPattern;
     };
 
