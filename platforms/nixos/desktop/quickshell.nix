@@ -127,17 +127,33 @@ in {
     # DMS handles its own systemd service via the upstream HM module.
     # The upstream module binds to config.wayland.systemd.target which
     # niri-flake sets to niri.service — so the shell starts with niri.
-    systemd.user.services.dms.Service = {
-      Environment = [
-        # matugen package is removed (enableDynamicTheming = false), but DMS still
-        # probes `which matugen` and logs warnings. This env var makes DMS skip the
-        # probe entirely (Theme.qml:143). Catppuccin Mocha is our global theme.
-        "DMS_DISABLE_MATUGEN=1"
-      ];
-      # Defense-in-depth: DMS is now the launcher, clipboard, and all modals.
-      # Prevent a repeat of the 2026-06-30 rofi OOM (7 GB leak → compositor killed).
-      # 4G is generous for a Qt/QML shell but stops runaway leaks before global OOM.
-      MemoryMax = "4G";
+    systemd.user.services.dms = {
+      Service = {
+        Environment = [
+          # matugen package is removed (enableDynamicTheming = false), but DMS still
+          # probes `which matugen` and logs warnings. This env var makes DMS skip the
+          # probe entirely (Theme.qml:143). Catppuccin Mocha is our global theme.
+          "DMS_DISABLE_MATUGEN=1"
+        ];
+        # Defense-in-depth: DMS is now the launcher, clipboard, and all modals.
+        # Prevent a repeat of the 2026-06-30 rofi OOM (7 GB leak → compositor killed).
+        # 4G is generous for a Qt/QML shell but stops runaway leaks before global OOM.
+        MemoryMax = "4G";
+        # Restart hardening: upstream Quickshell has an unfixed ScriptModel UAF crash
+        # (issue #863) triggered by rapid Wayland toplevel churn (polkit dialogs,
+        # window open/close storms). DMS WILL crash occasionally — the goal is fast
+        # recovery without hammering the system. Backoff prevents the 288-restart
+        # storm observed on 2026-07-11.
+        Restart = lib.mkForce "always";
+        RestartSec = 2;
+      };
+      Unit = {
+        # High burst count: DMS crashes are transient (model churn). Allow many
+        # restarts within 5 minutes before giving up — losing the shell is worse
+        # than a few quick restarts. Clear with: systemctl --user reset-failed dms
+        StartLimitIntervalSec = 300;
+        StartLimitBurst = 30;
+      };
     };
   };
 }

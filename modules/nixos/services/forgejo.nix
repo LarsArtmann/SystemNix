@@ -431,7 +431,6 @@ _: {
         CLIENT_ID="forgejo"
         AUTH_NAME="PocketID"
         DISCOVERY_URL="https://auth.${config.networking.domain}/.well-known/openid-configuration"
-        SECRET_FILE="${config.services.pocket-id.dataDir}/client-secrets/$CLIENT_ID"
 
         echo "=== Forgejo OIDC Setup ==="
 
@@ -440,18 +439,7 @@ _: {
           sleep 2
         done
 
-        for _ in $(seq 1 60); do
-          [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ] && break
-          sleep 2
-        done
-
-        if [ ! -f "$SECRET_FILE" ] || [ ! -s "$SECRET_FILE" ]; then
-          echo "ERROR: Pocket ID client secret not found at $SECRET_FILE"
-          echo "Ensure pocket-id-provision has run and created the '$CLIENT_ID' OIDC client."
-          exit 1
-        fi
-
-        CLIENT_SECRET="$(cat "$SECRET_FILE")"
+        CLIENT_SECRET="$(cat "$CREDENTIALS_DIRECTORY/forgejo-oidc-client-secret")"
 
         EXISTING_ID=$(runuser -u forgejo -- \
           env FORGEJO_WORK_DIR="$WORK_DIR" \
@@ -681,6 +669,7 @@ _: {
             Type = "oneshot";
             User = "root";
             RemainAfterExit = true;
+            LoadCredential = ["forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"];
           }
           (harden {
             NoNewPrivileges = false;
