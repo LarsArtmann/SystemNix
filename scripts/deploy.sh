@@ -11,6 +11,10 @@ if nix run .#pre-deploy-check; then
   systemctl --user reset-failed 2>/dev/null || true
 
   echo ""
+  echo "=== Pre-Deploy BTRFS Snapshot ==="
+  nix run .#pre-deploy-snapshot
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   nh os switch . 2>&1
 

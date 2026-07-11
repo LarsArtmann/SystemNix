@@ -624,6 +624,14 @@
               mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
               [pkgs.curl]
               ./scripts/post-deploy-check.sh;
+            pre-deploy-snapshot =
+              mkApp "pre-deploy-snapshot" "Create BTRFS snapshot before deploy for rollback safety"
+              [pkgs.btrfs-progs pkgs.coreutils pkgs.findutils]
+              ./scripts/pre-deploy-snapshot.sh;
+            btrfs-inventory =
+              mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points"
+              [pkgs.btrfs-progs pkgs.util-linux pkgs.coreutils pkgs.findutils]
+              ./scripts/btrfs-subvolume-inventory.sh;
             pocket-id-login-code =
               mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
               [pkgs.curl pkgs.jq]

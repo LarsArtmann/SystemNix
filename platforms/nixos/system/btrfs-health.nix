@@ -130,7 +130,7 @@
   # ── Metrics collector: writes Prometheus textfile + logs state transitions ──
   btrfsHealthMetrics = pkgs.writeShellApplication {
     name = "btrfs-health-metrics";
-    runtimeInputs = [btrfsChunkCheck];
+    runtimeInputs = [btrfsChunkCheck pkgs.btrfs-progs];
     text = ''
       set -uo pipefail
       METRICS_FILE="${textfileDir}/btrfs.prom"
@@ -174,6 +174,71 @@
         echo "# HELP btrfs_metadata_utilization_pct BTRFS metadata pool utilization"
         echo "# TYPE btrfs_metadata_utilization_pct gauge"
         echo "btrfs_metadata_utilization_pct $META_PCT"
+
+        # ── Scrub metrics ────────────────────────────────────────────────────
+        echo "# HELP btrfs_scrub_status BTRFS scrub status (0=never 1=running 2=finished)"
+        echo "# TYPE btrfs_scrub_status gauge"
+        echo "# HELP btrfs_scrub_errors_total Total errors found by last scrub"
+        echo "# TYPE btrfs_scrub_errors_total gauge"
+        echo "# HELP btrfs_scrub_duration_seconds Duration of last completed scrub in seconds"
+        echo "# TYPE btrfs_scrub_duration_seconds gauge"
+        echo "# HELP btrfs_scrub_error_free Composite: 1=all mounts error-free 0=errors found"
+        echo "# TYPE btrfs_scrub_error_free gauge"
+        scrub_total_errors=0
+        for scrub_mnt in / /data; do
+          scrub_out=$(btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
+          scrub_err=$(echo "$scrub_out" | awk '
+            /no errors found/ {e=0}
+            /with [0-9]+ error/ {match($0, /with ([0-9]+)/, a); e=a[1]}
+            /found [0-9]+ error/ {match($0, /found ([0-9]+)/, a); e=a[1]}
+            END {print e+0}
+          ')
+          : "''${scrub_err:=0}"
+          scrub_total_errors=$(( scrub_total_errors + scrub_err ))
+          echo "$scrub_out" | awk -v mnt="$scrub_mnt" -v err="$scrub_err" '
+            BEGIN {status=3; duration=0; never=0}
+            /no scrub.*started/ {never=1}
+            /still running|Status:.*running/ {status=1}
+            /finished|Status:.*finished/ {if(status!=1) status=2}
+            /finished after/ {
+              if (match($0, /([0-9]+):([0-9]+):([0-9]+)/, t)) duration=t[1]*3600+t[2]*60+t[3]
+            }
+            /Duration:/ {
+              h=0; mn=0; sc=0
+              if (match($0, /([0-9]+)h/, a)) h=a[1]
+              if (match($0, /([0-9]+)m/, b)) mn=b[1]
+              if (match($0, /([0-9]+)s/, c)) sc=c[1]
+              if (h+mn+sc > 0) duration=h*3600+mn*60+sc
+              else if (match($0, /([0-9]+):([0-9]+):([0-9]+)/, t)) duration=t[1]*3600+t[2]*60+t[3]
+            }
+            END {
+              if (never) status=0
+              print "btrfs_scrub_status{mount=\"" mnt "\"} " status
+              print "btrfs_scrub_errors_total{mount=\"" mnt "\"} " err
+              print "btrfs_scrub_duration_seconds{mount=\"" mnt "\"} " duration
+            }
+          '
+        done
+        if [ "$scrub_total_errors" -eq 0 ]; then
+          echo "btrfs_scrub_error_free 1"
+        else
+          echo "btrfs_scrub_error_free 0"
+        fi
+
+        # ── Qgroup metrics (requires btrfs quota enable) ─────────────────────
+        echo "# HELP btrfs_qgroup_referenced_bytes BTRFS qgroup referenced bytes"
+        echo "# TYPE btrfs_qgroup_referenced_bytes gauge"
+        echo "# HELP btrfs_qgroup_exclusive_bytes BTRFS qgroup exclusive bytes"
+        echo "# TYPE btrfs_qgroup_exclusive_bytes gauge"
+        qgroup_out=$(btrfs qgroup show --raw / 2>/dev/null) || true
+        if [ -n "''${qgroup_out:-}" ]; then
+          echo "$qgroup_out" | awk '
+            $1 ~ /^0\// {
+              print "btrfs_qgroup_referenced_bytes{mount=\"/\",qgroup=\"" $1 "\"} " $2
+              print "btrfs_qgroup_exclusive_bytes{mount=\"/\",qgroup=\"" $1 "\"} " $3
+            }
+          '
+        fi
       } > "$TMP_FILE"
       mv "$TMP_FILE" "$METRICS_FILE"
 
@@ -193,6 +258,41 @@
       else
         echo "BTRFS health: $STATE (unalloc=''${UNALLOC_PCT}% meta=''${META_PCT}%)"
       fi
+    '';
+  };
+
+  # ── Compsize metrics: compression ratio (runs hourly — compsize is slow) ────
+  btrfsCompsizeMetrics = pkgs.writeShellApplication {
+    name = "btrfs-compsize-metrics";
+    runtimeInputs = [pkgs.btrfs-progs pkgs.compsize];
+    text = ''
+      set -uo pipefail
+      METRICS_FILE="${textfileDir}/btrfs-compression.prom"
+      TMP_FILE="''${METRICS_FILE}.tmp"
+
+      mkdir -p "${textfileDir}"
+
+      {
+        echo "# HELP btrfs_compression_ratio_pct BTRFS compression ratio (uncompressed / disk usage * 100)"
+        echo "# TYPE btrfs_compression_ratio_pct gauge"
+        echo "# HELP btrfs_compression_disk_usage_bytes Actual space used on disk after compression"
+        echo "# TYPE btrfs_compression_disk_usage_bytes gauge"
+        echo "# HELP btrfs_compression_uncompressed_bytes Logical size of files before compression"
+        echo "# TYPE btrfs_compression_uncompressed_bytes gauge"
+
+        for comp_mnt in / /data; do
+          compsize_out=$(compsize -b "$comp_mnt" 2>/dev/null) || continue
+          echo "$compsize_out" | awk -v mnt="$comp_mnt" '
+            /^TOTAL/ {
+              pct = $2; gsub(/%/, "", pct)
+              print "btrfs_compression_ratio_pct{mount=\"" mnt "\"} " pct
+              print "btrfs_compression_disk_usage_bytes{mount=\"" mnt "\"} " $3
+              print "btrfs_compression_uncompressed_bytes{mount=\"" mnt "\"} " $4
+            }
+          '
+        done
+      } > "$TMP_FILE"
+      mv "$TMP_FILE" "$METRICS_FILE"
     '';
   };
 in {
@@ -241,6 +341,23 @@ in {
           ExecStartPre = lib.getExe btrfsGcGuard;
         };
       };
+
+      # ── Compsize metrics collector (hourly — compsize walks the extent tree) ─
+      btrfs-compsize = {
+        description = "BTRFS compression ratio metrics collector";
+        inherit onFailure;
+        serviceConfig = lib.mkMerge [
+          (serviceOneshotDefaults {})
+          (harden {
+            MemoryMax = "256M";
+            ReadWritePaths = [textfileDir];
+          })
+          {
+            Type = "oneshot";
+            ExecStart = lib.getExe btrfsCompsizeMetrics;
+          }
+        ];
+      };
     };
 
     timers.btrfs-health = {
@@ -250,6 +367,16 @@ in {
         OnBootSec = "1min";
         OnUnitActiveSec = "5min";
         AccuracySec = "30s";
+      };
+    };
+
+    timers.btrfs-compsize = {
+      description = "BTRFS compression ratio check every 6 hours";
+      wantedBy = ["timers.target"];
+      timerConfig = {
+        OnBootSec = "5min";
+        OnUnitActiveSec = "6h";
+        AccuracySec = "5m";
       };
     };
   };

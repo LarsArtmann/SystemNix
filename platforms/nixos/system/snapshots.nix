@@ -95,7 +95,7 @@ in {
       snapshot_preserve = "14d 4w";
       volume."/data" = {
         snapshot_dir = "/data/.snapshots";
-        subvolume "." = {};
+        subvolume."." = {};
       };
     };
   };

@@ -417,6 +417,18 @@ _: {
                 alerts = discordAlert "BTRFS chunk allocation critical — device-unallocated <10% or metadata >85%. Nightly GC has been auto-blocked to prevent metadata ENOSPC crash. Free space: grow partition or delete old snapshots.";
               })
               (mkHttpCheck {
+                name = "BTRFS Scrub Health";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "10m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*btrfs_scrub_status*)"
+                  "[BODY] == pat(*btrfs_scrub_error_free 1*)"
+                ];
+                alerts = discordAlert "BTRFS scrub found errors — potential data corruption. Run 'btrfs scrub status /' and 'btrfs scrub status /data' to investigate. Check Prometheus btrfs_scrub_errors_total for details.";
+              })
+              (mkHttpCheck {
                 name = "NVMe SMART Metrics";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
