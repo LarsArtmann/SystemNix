@@ -293,6 +293,8 @@ in
       btrfs-health = {
         description = "BTRFS chunk allocation health monitor";
         inherit onFailure;
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
         serviceConfig = lib.mkMerge [
           (serviceOneshotDefaults { })
           (harden {
@@ -333,6 +335,8 @@ in
       btrfs-compsize = {
         description = "BTRFS compression ratio metrics collector";
         inherit onFailure;
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
         serviceConfig = lib.mkMerge [
           (serviceOneshotDefaults { })
           (harden {
@@ -343,6 +347,7 @@ in
           {
             Type = "oneshot";
             ExecStart = lib.getExe btrfsCompsizeMetrics;
+            TimeoutStartSec = 120;
           }
         ];
       };

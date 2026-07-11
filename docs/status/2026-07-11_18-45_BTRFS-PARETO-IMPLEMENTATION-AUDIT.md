@@ -293,3 +293,52 @@ The `-b` flag means `--binary` (KiB/MiB/GiB suffixes), NOT raw bytes. The awk wa
 | BUG 3 (scrub awk fragility) | **ACCEPTED** | Low risk. Patterns cover btrfs-progs stable output. Worst case: false zero on exotic error formats. |
 | BUG 4 (compsize -b suffix) | **FIXED** | Dropped byte metrics, kept ratio only, removed `-b` flag |
 | BUG 5 (CAP_SYS_ADMIN on compsize) | **FIXED** | `CapabilityBoundingSet = "CAP_SYS_ADMIN"` (defense-in-depth) |
+
+---
+
+## Appendix 2: Post-Audit Cleanup (2026-07-11 20:00)
+
+Four NixOS config issues identified in section E/F were resolved.
+
+### E1/D1 residue: `//` anti-pattern in `snapshots.nix`
+
+**File:** `platforms/nixos/system/snapshots.nix`
+
+The `btrfs-verify-snapshots` service used `harden {} // { ... }` — the last remaining `//` on `serviceConfig` in the tree. This silently discards `mkDefault`/`mkForce` priority annotations from `harden` (AGENTS.md explicitly bans this).
+
+**Fix:** Converted to `lib.mkMerge [ (harden {}) { ... } ]`. Verified `Type` resolves to `"oneshot"` via `nix eval`.
+
+Two non-BTRFS instances remain in desktop config (`niri-config.nix:104`, `niri-wrapped.nix:562`) — out of scope.
+
+### F35/F39: Missing start limits + timeout on btrfs services
+
+**File:** `platforms/nixos/system/btrfs-health.nix`
+
+AGENTS.md mandates `startLimitBurst = 5; startLimitIntervalSec = 300;` on all services. Neither `btrfs-health` nor `btrfs-compsize` had them. Additionally, `compsize` walks the entire BTRFS extent tree and can hang on a broken filesystem — it had no `TimeoutStartSec`.
+
+**Fix:**
+- Added `startLimitBurst = 5; startLimitIntervalSec = 300;` to both `btrfs-health` and `btrfs-compsize`
+- Added `TimeoutStartSec = 120;` to `btrfs-compsize` (120s ceiling on extent-tree walk)
+- Verified all three resolve via `nix eval`
+
+### T11 pre-deploy snapshot: REMOVED by user request
+
+**Files deleted/modified:** `scripts/pre-deploy-snapshot.sh` (deleted), `flake.nix` (app removed), `scripts/deploy.sh` (call removed), `AGENTS.md` (reference removed)
+
+User decided pre-deploy snapshots are unnecessary — btrbk daily snapshots at 23:00 + 14d/4w retention provide sufficient rollback safety. The `pre-deploy-snapshot.sh` script, its flake app, the `deploy.sh` invocation, and all AGENTS.md references were removed. Historical references in `docs/status/` archives were left intact (they are point-in-time records).
+
+### T24: TODO_LIST.md updated
+
+**File:** `TODO_LIST.md`
+
+Three BTRFS task descriptions updated to reflect current status:
+- Scrub task: notes that monitoring infrastructure is complete (metrics + Gatus alerting)
+- `/data` subvolume migration: notes btrbk snapshot protection now exists (daily 23:30, 14d+4w)
+- Stale `post-deploy-check.sh` path fix: removed (deploy.sh already uses `nix run .#post-deploy-check`)
+
+### Verification
+
+- `nix flake check --no-build` — passes
+- `nix fmt` — applied (25 files reformatted by treefmt)
+- `nix eval` confirms: `startLimitBurst=5`, `TimeoutStartSec=120`, `Type="oneshot"` all resolve correctly
+- No remaining `//` anti-patterns on BTRFS serviceConfig

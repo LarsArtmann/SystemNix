@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-11 (BTRFS ENOSPC crisis investigation, completed work moved to CHANGELOG.md)
+**Updated:** 2026-07-11 (BTRFS Pareto plan implementation: scrub metrics, compsize metrics, /data snapshots, Gatus alerting)
 **Last deploy:** 2026-07-05 (`26.11.20260705.d407951`)
 **Last commit:** 2026-07-08 (`4d75e83b` — NVMe discard=async status doc)
 
@@ -12,7 +12,7 @@
 
 - [ ] **Deploy the `discard=async` → `fstrim.timer` fix** — Fix is in `hardware-configuration.nix` (TRIM via mount option removed). Running system still has `discard=async` on 8 BTRFS mounts. Root cause of the 2026-07-08 watchdog hard-reset (253ms discard latency → 17.7s BTRFS commit → freeze → 30s watchdog → reset). Every nix build risks recurrence until deployed. Requires `nix run .#deploy` + reboot.
 - [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
-- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum (controller returning garbage under I/O pressure). No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /` to map all bad blocks and assess corruption extent.
+- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum (controller returning garbage under I/O pressure). No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /` to map all bad blocks and assess corruption extent. **Monitoring infrastructure is complete:** scrub metrics collected every 5 min (`btrfs_scrub_errors_total`, `btrfs_scrub_status`, `btrfs_scrub_error_free`), Gatus alerts on Discord when errors found.
 - [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation, available spare below threshold) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know. If media errors are climbing, drive replacement is needed urgently.
 
 ### Priority 0: Deploy & Verify
@@ -23,7 +23,7 @@
 - [ ] **Verify Monitor365 `/ui/` serves the WASM dashboard** post-deploy — `pkgs.monitor365-server` package fix written (session 156), needs deploy + visit `monitor.home.lan`
 - [ ] **Verify DiscordSync SSO** post-deploy — vHost wired (session 156, commit `b1e45529`), needs deploy + visit `discordsync.home.lan`
 - [ ] **Verify Overview vHost** post-deploy — wired in session 157 (commit `f3926729`), needs deploy + visit `overview.home.lan`
-- [ ] **Verify post-deploy smoke test** actually runs — `post-deploy-check.sh` written (session 157), wired into `deploy.sh:27` via `$(dirname "$0")/post-deploy-check.sh`. When run from nix store, the nix-store path doesn't contain the script → silent failure. May need rewrite to `nix run .#post-deploy-check` (same pattern as `pre-deploy-check`).
+- [ ] **Verify post-deploy smoke test runs after deploy** — `deploy.sh:27` uses `nix run .#post-deploy-check`. Needs deploy + verification that smoke checks actually execute.
 
 ### Priority 0: DNS Migration — dnsblockd → Primary Resolver (2026-07-02)
 
@@ -74,7 +74,6 @@
 
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist` because the PG container only has a `postgres` role. Data is NOT lost: 1 user, 1 workspace, 66 companies, 144 contacts across 90 tables (schemas `core` + `workspace_e9cj8i2yyuv46o8h43y8adli`, 17 MB total in `twenty_db-data` volume). The `twenty-server-local-data` volume (1.1 MB) has 2 workspace dirs from May 3 with generated SDK zips and custom function stubs. Needs: (1) fix the PG role mismatch so the app can connect, (2) decide whether to keep Twenty on Docker (it's 4 containers ~1.5 GB RAM for an idle CRM) or nixify it natively like SigNoz/Forgejo/Homepage. Twenty is the single biggest Docker consumer and a major contributor to BTRFS overlay2 metadata fragmentation.
 - [ ] **Fix Twenty CRM intermittent 502s** — APPEARS RESOLVED. Server running since 06-23, responding on :3200. Monitor for recurrence.
-- [ ] **Fix `post-deploy-check.sh` path in deploy.sh** — `$(dirname "$0")/post-deploy-check.sh` works from source but fails when run from nix store (script isn't in the store path). Should use `nix run .#post-deploy-check` pattern, same as `pre-deploy-check` at `deploy.sh:5`.
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
@@ -84,7 +83,7 @@
 
 ### Priority 3: Infrastructure
 
-- [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), no snapshot protection for Docker/Immich/AI data. Manual: create subvolume, update fstab, reboot, rsync data
+- [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), now has btrbk snapshot protection (daily at 23:30, 14d+4w retention) but still not a named subvolume. Migration to `@data` would enable separate CoW semantics and cleaner snapshot exclusion. Manual: create subvolume, update fstab, reboot, rsync data
 - [ ] **Swap investigation** — 4.5 GiB swap used on 128 GiB RAM (improved from 7.3 GiB on Jul 1). Run `smem -t -k | tail -20` and `swapoff -a && swapon -a` if needed
 - [ ] **GPUActive monitoring** — Add Prometheus/textfile collector for `/proc/meminfo`'s `GPUActive` (30.7 GiB now, was 51+ GiB after extended uptime) and `GPUReclaim` fields. Currently invisible to SigNoz/otel/Gatus. The #1 RAM consumer on Strix Halo.
 - [ ] **TTM `page_pool_size` reduction** — Currently `112 GiB` (exceeds the 94 GiB visible to Linux!). TODO documented in `boot.nix` since Jul 2 — needs reboot + Ollama testing. Reducing to ~32 GiB would force faster return of freed GPU pages to the kernel.

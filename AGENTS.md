@@ -117,7 +117,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 
 **Subvolume layout:** `/` mounts `@` (root). `/nix` and `/home` live INSIDE `@` — NOT separate `@nix`/`@home` subvolumes (wikis recommend flat layout; deferred to next reinstall). `/data` is a separate BTRFS partition (subvolid=5, toplevel). Cache dirs (`@cache-home`, `@go`, `@npm`, `@cargo`) are separate top-level subvolumes with automount. Rust `target/` dirs live on ext4 (`/rust-cache`) to avoid COW fragmentation.
 
-**Snapshots:** Root (`@`) daily via btrbk at 23:00, `/data` (toplevel) daily at 23:30, both 14d+4w retention. Staggered BEFORE nix-gc (00:00) so expired snapshots free extents before GC runs. Pre-deploy snapshots: automated via `nix run .#pre-deploy-snapshot` (called by `deploy.sh` before `nh os switch`, keeps last 10). Snapshot freshness verified daily (alerts if >3 days old). `/mnt/btrfs-root` (subvolid=5) automounted for btrbk access.
+**Snapshots:** Root (`@`) daily via btrbk at 23:00, `/data` (toplevel) daily at 23:30, both 14d+4w retention. Staggered BEFORE nix-gc (00:00) so expired snapshots free extents before GC runs. Snapshot freshness verified daily (alerts if >3 days old). `/mnt/btrfs-root` (subvolid=5) automounted for btrbk access.
 
 **No remote backup:** All snapshots are LOCAL-ONLY. If the NVMe fails, everything is lost. This is the #1 data loss risk (flagged since 2026-06-25).
 

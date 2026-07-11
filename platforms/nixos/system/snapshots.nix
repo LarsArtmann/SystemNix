@@ -102,11 +102,14 @@ in
       description = "Verify BTRFS snapshot freshness";
       inherit onFailure;
       path = [ pkgs.coreutils ];
-      serviceConfig = harden { } // {
-        Type = "oneshot";
-        ProtectSystem = "true";
-        ReadWritePaths = [ ];
-      };
+      serviceConfig = lib.mkMerge [
+        (harden { })
+        {
+          Type = "oneshot";
+          ProtectSystem = "true";
+          ReadWritePaths = [ ];
+        }
+      ];
       script = ''
         set -euo pipefail
         MAX_AGE_DAYS=3
