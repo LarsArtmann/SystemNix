@@ -227,21 +227,6 @@ let
         else
           echo "btrfs_scrub_error_free 0"
         fi
-
-        # ── Qgroup metrics (requires btrfs quota enable) ─────────────────────
-        echo "# HELP btrfs_qgroup_referenced_bytes BTRFS qgroup referenced bytes"
-        echo "# TYPE btrfs_qgroup_referenced_bytes gauge"
-        echo "# HELP btrfs_qgroup_exclusive_bytes BTRFS qgroup exclusive bytes"
-        echo "# TYPE btrfs_qgroup_exclusive_bytes gauge"
-        qgroup_out=$(btrfs qgroup show --raw / 2>/dev/null) || true
-        if [ -n "''${qgroup_out:-}" ]; then
-          echo "$qgroup_out" | awk '
-            $1 ~ /^0\// {
-              print "btrfs_qgroup_referenced_bytes{mount=\"/\",qgroup=\"" $1 "\"} " $2
-              print "btrfs_qgroup_exclusive_bytes{mount=\"/\",qgroup=\"" $1 "\"} " $3
-            }
-          '
-        fi
       } > "$TMP_FILE"
       mv "$TMP_FILE" "$METRICS_FILE"
 
@@ -279,21 +264,15 @@ let
       mkdir -p "${textfileDir}"
 
       {
-        echo "# HELP btrfs_compression_ratio_pct BTRFS compression ratio (uncompressed / disk usage * 100)"
+        echo "# HELP btrfs_compression_ratio_pct BTRFS compression ratio percentage"
         echo "# TYPE btrfs_compression_ratio_pct gauge"
-        echo "# HELP btrfs_compression_disk_usage_bytes Actual space used on disk after compression"
-        echo "# TYPE btrfs_compression_disk_usage_bytes gauge"
-        echo "# HELP btrfs_compression_uncompressed_bytes Logical size of files before compression"
-        echo "# TYPE btrfs_compression_uncompressed_bytes gauge"
 
         for comp_mnt in / /data; do
-          compsize_out=$(compsize -b "$comp_mnt" 2>/dev/null) || continue
+          compsize_out=$(compsize "$comp_mnt" 2>/dev/null) || continue
           echo "$compsize_out" | awk -v mnt="$comp_mnt" '
             /^TOTAL/ {
               pct = $2; gsub(/%/, "", pct)
               print "btrfs_compression_ratio_pct{mount=\"" mnt "\"} " pct
-              print "btrfs_compression_disk_usage_bytes{mount=\"" mnt "\"} " $3
-              print "btrfs_compression_uncompressed_bytes{mount=\"" mnt "\"} " $4
             }
           '
         done
@@ -318,6 +297,7 @@ in
           (serviceOneshotDefaults { })
           (harden {
             MemoryMax = "128M";
+            CapabilityBoundingSet = "CAP_SYS_ADMIN";
             ReadWritePaths = [
               textfileDir
               stateDir
@@ -357,6 +337,7 @@ in
           (serviceOneshotDefaults { })
           (harden {
             MemoryMax = "256M";
+            CapabilityBoundingSet = "CAP_SYS_ADMIN";
             ReadWritePaths = [ textfileDir ];
           })
           {

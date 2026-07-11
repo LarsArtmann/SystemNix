@@ -129,6 +129,10 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 
 **bees dedup:** NOT recommended on this hardware. bees does random 4KB reads across the entire filesystem to hash blocks — QLC NAND random IO sensitivity makes this counterproductive. `auto-optimise-store` (whole-file hardlink dedup) captures the biggest win with zero extra IO.
 
+**BTRFS quotas (qgroups):** NOT enabled. `btrfs quota enable` adds metadata overhead to every transaction for qgroup accounting. On QLC NAND, this I/O tax is not worth per-subvolume usage tracking. If the NVMe is upgraded to TLC/MLC, enable quotas and re-add the qgroup metrics (removed from `btrfs-health.nix` — search git history for `btrfs_qgroup_referenced_bytes`).
+
+**Scrub monitoring:** `btrfs-health-metrics` (every 5 min) collects `btrfs_scrub_errors_total`, `btrfs_scrub_status`, `btrfs_scrub_duration_seconds`, and `btrfs_scrub_error_free` via `btrfs scrub status`. Requires `CAP_SYS_ADMIN` (the kernel's `btrfs_ioctl_scrub_progress` checks `capable(CAP_SYS_ADMIN)`). The service overrides `harden {}`'s empty `CapabilityBoundingSet` with `CAP_SYS_ADMIN`. Gatus "BTRFS Scrub Health" endpoint alerts on Discord when `btrfs_scrub_error_free` drops to 0.
+
 ---
 
 ## Critical Rules
