@@ -12,7 +12,6 @@
 
 - [ ] **Deploy the `discard=async` → `fstrim.timer` fix** — Fix is in `hardware-configuration.nix` (TRIM via mount option removed). Running system still has `discard=async` on 8 BTRFS mounts. Root cause of the 2026-07-08 watchdog hard-reset (253ms discard latency → 17.7s BTRFS commit → freeze → 30s watchdog → reset). Every nix build risks recurrence until deployed. Requires `nix run .#deploy` + reboot.
 - [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
-- [x] **Investigate `project-meta` silent build failure** — Re-investigated 2026-07-09: `project-meta` builds successfully, is present in the evaluated `environment.systemPackages` (store path `meta-0.2.0`), and provides the `meta` binary. The original TODO was based on an outdated evaluation/grep. No code change needed; will be deployed with next `nix run .#deploy`.
 - [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum (controller returning garbage under I/O pressure). No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /` to map all bad blocks and assess corruption extent.
 - [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation, available spare below threshold) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know. If media errors are climbing, drive replacement is needed urgently.
 
@@ -20,7 +19,6 @@
 
 - [ ] **Reboot evo-x2** — verify boot time after NVMe APST fix + Caddy sops ordering fix. Target: ~35s (was 6m17s)
 - [ ] **Verify Pocket ID email sending** — test login notification or email verification after SMTP wiring + sops secret added
-- [x] **Reset Monitor365 failed state** — Root cause identified: upstream Rust panic (Axum 0.7 route syntax `:param` → `{param}`). Needs fix in `github:LarsArtmann/monitor365` source. Nix-side workaround not possible. *Superseded by sessions 156–158 fixes — see Completed.*
 - [ ] **Verify crush-daily collection** post-deploy — `ProtectHome=false` fix written (session 156, commit `29b5c267`), needs deploy + manual trigger: `systemctl start crush-daily-collect`
 - [ ] **Verify Monitor365 `/ui/` serves the WASM dashboard** post-deploy — `pkgs.monitor365-server` package fix written (session 156), needs deploy + visit `monitor.home.lan`
 - [ ] **Verify DiscordSync SSO** post-deploy — vHost wired (session 156, commit `b1e45529`), needs deploy + visit `discordsync.home.lan`
@@ -76,14 +74,7 @@
 
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist` because the PG container only has a `postgres` role. Data is NOT lost: 1 user, 1 workspace, 66 companies, 144 contacts across 90 tables (schemas `core` + `workspace_e9cj8i2yyuv46o8h43y8adli`, 17 MB total in `twenty_db-data` volume). The `twenty-server-local-data` volume (1.1 MB) has 2 workspace dirs from May 3 with generated SDK zips and custom function stubs. Needs: (1) fix the PG role mismatch so the app can connect, (2) decide whether to keep Twenty on Docker (it's 4 containers ~1.5 GB RAM for an idle CRM) or nixify it natively like SigNoz/Forgejo/Homepage. Twenty is the single biggest Docker consumer and a major contributor to BTRFS overlay2 metadata fragmentation.
 - [ ] **Fix Twenty CRM intermittent 502s** — APPEARS RESOLVED. Server running since 06-23, responding on :3200. Monitor for recurrence.
-- [x] **Audit Gatus health checks** — AUDITED 2026-06-25. Only 2 DOWN: Ollama (expected, `wantedBy = []` no autostart) and Monitor365 Server (upstream Rust panic). All 36 other endpoints pass. *Superseded by session 154 expansion: 38→41 endpoints with 31 Discord alerts and 17 response-time thresholds.*
 - [ ] **Fix `post-deploy-check.sh` path in deploy.sh** — `$(dirname "$0")/post-deploy-check.sh` works from source but fails when run from nix store (script isn't in the store path). Should use `nix run .#post-deploy-check` pattern, same as `pre-deploy-check` at `deploy.sh:5`.
-
-### Priority 1: Documentation Gaps (Discovered in Jul 8 Session)
-
-- [x] **Document `discard=async` QLC gotcha in AGENTS.md** — Added to AGENTS.md Non-Obvious Gotchas table on 2026-07-09.
-- [x] **Document `buildGoModule` env attr filtering gotcha** — Added to AGENTS.md Non-Obvious Gotchas table on 2026-07-09.
-- [x] **Document `buildGoDir` silent-swallow behavior** — Added to AGENTS.md Non-Obvious Gotchas table on 2026-07-09.
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
@@ -97,13 +88,6 @@
 - [ ] **Swap investigation** — 4.5 GiB swap used on 128 GiB RAM (improved from 7.3 GiB on Jul 1). Run `smem -t -k | tail -20` and `swapoff -a && swapon -a` if needed
 - [ ] **GPUActive monitoring** — Add Prometheus/textfile collector for `/proc/meminfo`'s `GPUActive` (30.7 GiB now, was 51+ GiB after extended uptime) and `GPUReclaim` fields. Currently invisible to SigNoz/otel/Gatus. The #1 RAM consumer on Strix Halo.
 - [ ] **TTM `page_pool_size` reduction** — Currently `112 GiB` (exceeds the 94 GiB visible to Linux!). TODO documented in `boot.nix` since Jul 2 — needs reboot + Ollama testing. Reducing to ~32 GiB would force faster return of freed GPU pages to the kernel.
-
-### Priority 4: Documentation
-
-- [x] **Archive old status reports** — moved 197 pre-June-22 files to `docs/status/archive/`. 13 current files remain (June 22-25: BTRFS crisis + DMS migration)
-- [x] **Create ROADMAP.md** — created with 6 themes: Reliability, Security, Desktop, Architecture, Upstream, AI/ML + deferred ideas
-- [x] **Create CHANGELOG.md** — created from git history, covers 2025-07 through 2026-06 with Keep a Changelog format
-- [x] **Documentation freshness pass** — README, FEATURES, docs/README, docs/CONTRIBUTING updated: retired Waybar/Dunst/Rofi for DMS, corrected counts (modules, packages, inputs, scripts, checks, alerts), replaced all `just` references with Nix flake commands, consolidated ADR directory references, fixed `.pre-commit-config.yaml` stale `just validate` hook
 
 ### Priority 5: Upstream Contributions
 
@@ -129,19 +113,11 @@ All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in S
 
 - [ ] **`library-policy`** — `overlays/shared.nix`. `mkTidyOverride` (go mod tidy + proxyVendor + overrideModAttrs). Fix: commit correct `go.sum` upstream
 - [ ] **`mr-sync`** — `overlays/shared.nix`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
-- [x] **`golangci-lint-auto-configure`** — Fixed: no more override needed (upstream `go.sum` correct)
-- [x] **`hierarchical-errors`** — Fixed: no more stale `vendorHash` or `go-finding` override
-- [x] **`go-auto-upgrade`** — Fixed session 138: added `go-error-family.follows`, removed redundant vendorHash override from overlay (hash was identical to upstream's own)
-- [x] **`go-structure-linter`** — Fixed: no more stale `vendorHash` override
-- [x] **`art-dupl`** — Fixed: no more stale `vendorHash` override (on `fork` branch)
-- [x] **`dnsblockd`** — Fixed: uses `dnsblockd.overlays.default`, no stale override
-- [x] **`emeet-pixyd`** — Fixed: uses `emeet-pixyd.overlays.default`, no stale override
 
 #### LarsArtmann Apps — Missing Upstream Features
 
 - [ ] **`monitor365`**: Support reading secrets from env vars (e.g., `MONITOR365_CLOUD_AUTH_TOKEN`) instead of requiring config file mutation via `sed` at runtime. Also: bundle runtime deps natively or provide `--runtime-deps-path` flag; respect `$DISPLAY` / Wayland APIs instead of hardcoding
 - [ ] **`hermes`**: Auto-create directory structure on first run (currently Nix does it); handle own state migration from old paths; sane defaults for `OLLAMA_API_KEY`/`TERMINAL_ENV`; handle deprecated config keys internally instead of requiring sed cleanup; use PID file or socket-based single-instance locking instead of `--replace` flag
-- [x] **`discordsync`**: Config file support (YAML via `DISCORDSYNC_CONFIG`) + boolean `BACKFILL_ON_STARTUP` landed upstream. Reactivated in SystemNix with `apiAddr` on port 8085 (localhost). GCS attachment backup opt-in via `gcsBucket` (needs bucket name + service account JSON)
 
 #### Third-Party Upstream Projects
 

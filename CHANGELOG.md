@@ -86,6 +86,12 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Monitor365 DB path** — `sqlite://` → `sqlite:///` (3 slashes = absolute path) + added `--config` flag to ExecStart
 - **aw-watcher-window-wayland startup race** — added `After=graphical-session.target` dependency
 - **Pocket ID OTel** — removed unnecessary traces/logs exporters, kept `OTEL_METRICS_EXPORTER=prometheus`
+- **project-meta build** — re-investigated; builds successfully, package is healthy. Original TODO was based on outdated evaluation
+- **7 LarsArtmann Go repos** — eliminated stale `vendorHash` / `go.sum` overrides: `golangci-lint-auto-configure`, `hierarchical-errors`, `go-structure-linter`, `art-dupl`, `dnsblockd`, `emeet-pixyd` (all use upstream overlays or `follows` now)
+
+### Added (Documentation)
+- **Documentation overhaul** — ROADMAP.md (6 themes), CHANGELOG.md, archived 197 old status reports, freshness pass across README/FEATURES/CONTRIBUTING (retired Waybar/Dunst/Rofi references, corrected counts, replaced `just` with flake commands)
+- **AGENTS.md gotchas** — `discard=async` QLC NAND I/O death spiral, `buildGoModule` silent env attr filtering, `buildGoDir` silent-swallow behavior, Helium wrapper double-wrap collision, VA-API flag renames
 
 ---
 
