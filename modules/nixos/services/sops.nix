@@ -155,19 +155,10 @@ in
               } [ "dataforseo_api_key" ]
             )
             # cloud_auth_token: single tenant-level API key shared by ALL monitor365
-            # consumers (server bootstrap, system agent, desktop agent).  The same
-            # YAML key is materialised as two sops secret entries because sops-nix
-            # grants file ownership per entry — the desktop user and the
-            # monitor365-server system user need separately-owned file handles.
-            # Desktop agent secret — owned by desktop user (user service)
-            // lib.optionalAttrs (svcEnabled "monitor365-desktop") (
-              mkSecrets "monitor365.yaml" {
-                owner = primaryUser;
-                group = "users";
-                restartUnits = [ "monitor365-desktop.service" ];
-              } [ "cloud_auth_token" ]
-            )
-            # Server + system agent secrets — owned by dedicated system user
+            # consumers (server bootstrap, unified agent).  The same YAML key is
+            # materialised as a sops secret entry owned by the monitor365-server
+            # system user.
+            # Server + agent secrets — owned by dedicated system user
             // lib.optionalAttrs (svcEnabled "monitor365-server") (
               mkSecrets "monitor365.yaml"
                 {
@@ -255,17 +246,6 @@ in
               restartUnits = [ "projects-management-automation.service" ];
               content = lib.generators.toKeyValue { } {
                 MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
-              };
-            };
-          }
-          // lib.optionalAttrs (svcEnabled "monitor365-desktop") {
-            # Desktop agent env: injects the tenant API key as MONITOR365__CLOUD__AUTH_TOKEN
-            "monitor365-desktop-agent-env" = {
-              owner = primaryUser;
-              group = "users";
-              restartUnits = [ "monitor365-desktop.service" ];
-              content = lib.generators.toKeyValue { } {
-                MONITOR365__CLOUD__AUTH_TOKEN = config.sops.placeholder.cloud_auth_token;
               };
             };
           }

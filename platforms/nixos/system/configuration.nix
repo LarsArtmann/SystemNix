@@ -393,10 +393,11 @@ in
         };
       };
 
-      # Monitor365 system agent — headless collectors (survives logout)
+      # Monitor365 unified agent — system + desktop collectors
       monitor365 = {
         enable = true;
         settings.collectors = {
+          # Headless collectors
           network.enabled = lib.mkDefault true;
           battery.enabled = lib.mkDefault true;
           system_info.enabled = lib.mkDefault true;
@@ -405,13 +406,7 @@ in
           fs_event.enabled = lib.mkDefault true;
           # bluetooth disabled (zbus::blocking panics inside tokio)
           bluetooth.enabled = lib.mkDefault false;
-        };
-      };
-
-      # Monitor365 desktop agent — graphical session collectors
-      monitor365-desktop = {
-        enable = true;
-        settings.collectors = {
+          # Desktop collectors (skip gracefully if no graphical session)
           screenshots.enabled = lib.mkDefault true;
           camera = {
             enabled = lib.mkDefault true;

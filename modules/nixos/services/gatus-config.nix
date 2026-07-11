@@ -418,19 +418,6 @@ _: {
                 alerts = discordAlert "Monitor365 system agent down — headless device telemetry collector not running";
               })
             ]
-            ++ lib.optionals (config.services.monitor365-desktop.enable or false) [
-              (mkHttpCheck {
-                name = "Monitor365 Desktop Agent";
-                group = "Monitoring";
-                url = "http://localhost:${toString ports.monitor365-desktop-metrics}/metrics";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*monitor365*)"
-                ];
-                alerts = discordAlert "Monitor365 desktop agent down — desktop telemetry collector not running (may be expected if user is logged out)";
-              })
-            ]
             ++ [
               (mkHttpCheck {
                 name = "EMEET PIXY";
