@@ -522,6 +522,7 @@
             inherit
               (pkgs)
               openaudible
+              openseo
               dnsblockd
               monitor365
               netwatch

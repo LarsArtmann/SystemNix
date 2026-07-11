@@ -230,3 +230,46 @@ If `workerd` proves impossible to run outside Docker, a **hybrid approach** is p
 - This gives Nix reproducibility without the `workerd` binary headache
 
 This is NOT the primary plan but documented as Plan B.
+
+---
+
+## 7. Completion Status (2026-07-11)
+
+### Phases Completed
+
+| Phase | Status | Notes |
+|---|---|---|
+| Phase 1: Nix Package | DONE | `pkgs/openseo.nix` builds v0.0.26 from source. `autoPatchelfHook` + `stdenv.cc.cc.lib` patches all native addons (workerd, sharp, lightningcss, libsql, oxlint, tailwindcss-oxide). `LD_LIBRARY_PATH` in `preBuild` avoids `/build/` RPATH leaks |
+| Phase 2: Flake Wiring | DONE | Overlay in `overlays/shared.nix` (Linux-only), exposed in `flake.nix` packages |
+| Phase 3: NixOS Module | DONE | Native systemd service, no Docker. Staging script symlinks Nix store to `/var/lib/openseo/project/`. ExecStartPre runs stage + D1 migrations |
+| Phase 4: Cleanup | DONE | Removed Docker image from `lib/images.nix`. Updated AGENTS.md + FEATURES.md |
+| Phase 5: Deploy | PENDING | Code ready — requires deploy-time data migration (below) |
+
+### Verification
+
+- `nix build .#openseo` — succeeds, `workerd` properly patched with Nix glibc
+- `nix flake check --no-build` — all checks passed
+- `nix eval` full system — succeeds
+
+### Deploy-Time Data Migration
+
+```bash
+# 1. Stop the old Docker-based service
+sudo systemctl stop openseo.service
+
+# 2. Copy D1 SQLite data from Docker volume to native state dir
+sudo mkdir -p /var/lib/openseo/.wrangler
+sudo cp -r /var/lib/docker/volumes/openseo_data/_data/* /var/lib/openseo/.wrangler/
+sudo chown -R openseo:openseo /var/lib/openseo/
+
+# 3. Deploy the new native module
+nix run .#deploy
+
+# 4. Verify
+sudo systemctl status openseo
+curl -s http://localhost:3002 | head -5
+```
+
+### Version Upgrade
+
+This migration also upgrades OpenSEO from v0.0.15 (old Docker image) to v0.0.26 (latest). D1 migrations run automatically at `ExecStartPre`.

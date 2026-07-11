@@ -1,4 +1,7 @@
 # OpenSEO self-hosted SEO suite (keyword research, rank tracking, audits)
+# Native NixOS service — builds from source, no Docker container.
+# SSO: no built-in auth (AUTH_MODE=local_noauth). Access is gated by
+# oauth2-proxy forward-auth (Layer 2 SSO) on seo.<domain>.
 _: {
   flake.nixosModules.openseo = {
     config,
@@ -9,61 +12,94 @@ _: {
     cfg = config.services.openseo;
     inherit (config.networking) domain;
     libHelpers = import ../../../lib/default.nix lib;
-    inherit (libHelpers) serviceTypes images ports;
-    inherit (libHelpers.mkDockerServiceFactory {inherit pkgs;}) mkDockerService;
+    inherit (libHelpers) harden serviceDefaults onFailure serviceTypes ports;
 
-    composeFile = pkgs.writeText "openseo-docker-compose.yml" (
-      builtins.toJSON {
-        name = "openseo";
-        services.openseo = {
-          image = images.openseo.ref;
-          restart = "unless-stopped";
-          environment = {
-            PORT = toString cfg.port;
-            AUTH_MODE = "local_noauth";
-            DATAFORSEO_API_KEY = "\${DATAFORSEO_API_KEY}";
-            ALLOWED_HOST = "seo.${domain}";
-            VITE_SHOW_DEVTOOLS = "false";
-            NODE_OPTIONS = "--max-old-space-size=3072";
-          };
-          ports = ["127.0.0.1:${toString cfg.port}:${toString cfg.port}"];
-          volumes = ["openseo_data:/app/.wrangler"];
-          tmpfs = ["/tmp:size=64m" "/app/node_modules/.vite-temp:size=64m"];
-          security_opt = ["no-new-privileges:true"];
-          cap_drop = ["ALL"];
-          mem_limit = "2g";
-          pids_limit = 100;
-          logging = {
-            driver = "json-file";
-            options = {
-              max-size = "10m";
-              max-file = "5";
-            };
-          };
-        };
-        volumes.openseo_data.name = "openseo_data";
-      }
-    );
+    pkg = pkgs.openseo;
+    stateDir = "/var/lib/openseo";
+    storeDir = "${pkg}/lib/openseo";
 
-    docker = mkDockerService {
-      name = "openseo";
-      inherit composeFile;
-      envTemplate = config.sops.templates."openseo-env".path;
-      extraHarden = {
-        ProtectHome = false;
-        NoNewPrivileges = false;
-      };
-    };
+    # Stage: symlink read-only project files from Nix store into a writable
+    # project directory, preserving the persistent .wrangler state dir.
+    stageScript = pkgs.writeShellScriptBin "openseo-stage" ''
+      set -euo pipefail
+      PROJECT="${stateDir}/project"
+      STORE="${storeDir}"
+
+      mkdir -p "$PROJECT" "${stateDir}/.wrangler"
+
+      # Remove old symlinks (preserves .wrangler which is a real dir at stateDir)
+      find "$PROJECT" -maxdepth 1 -type l -delete
+
+      # Symlink all files and dotfiles from the Nix store
+      for item in "$STORE"/* "$STORE"/.[!.]*; do
+        [ -e "$item" ] || continue
+        ln -s "$item" "$PROJECT/$(basename "$item")"
+      done
+
+      # Link .wrangler to persistent state directory (writable D1 SQLite)
+      ln -sfn "${stateDir}/.wrangler" "$PROJECT/.wrangler"
+    '';
+
+    # Migrate: apply D1 (SQLite) migrations locally
+    migrateScript = pkgs.writeShellScriptBin "openseo-migrate" ''
+      set -euo pipefail
+      cd "${stateDir}/project"
+      exec "${storeDir}/node_modules/.bin/wrangler" d1 migrations apply DB --local
+    '';
   in {
     options.services.openseo = {
       enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
       port = serviceTypes.servicePort ports.openseo "HTTP port for OpenSEO dashboard";
-      imageTag = serviceTypes.dockerImageTag images.openseo.tag;
     };
 
     config = lib.mkIf cfg.enable {
-      systemd.tmpfiles.rules = docker.tmpfiles;
-      systemd.services = docker.services;
+      users.users.openseo = {
+        isSystemUser = true;
+        group = "openseo";
+        home = stateDir;
+      };
+      users.groups.openseo = {};
+
+      systemd.services.openseo = {
+        description = "OpenSEO — self-hosted SEO suite";
+        inherit onFailure;
+        wantedBy = ["multi-user.target"];
+        after = ["network.target" "sops-nix.service"];
+        wants = ["sops-nix.service"];
+        path = [pkgs.nodejs];
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
+
+        serviceConfig = lib.mkMerge [
+          (harden {
+            MemoryMax = "2G";
+          })
+          (serviceDefaults {})
+          {
+            User = "openseo";
+            Group = "openseo";
+            StateDirectory = "openseo";
+            WorkingDirectory = "${stateDir}/project";
+            EnvironmentFile = config.sops.templates."openseo-env".path;
+
+            Environment = [
+              "PORT=${toString cfg.port}"
+              "AUTH_MODE=local_noauth"
+              "ALLOWED_HOST=seo.${domain}"
+              "VITE_SHOW_DEVTOOLS=false"
+              "NODE_OPTIONS=--max-old-space-size=1536"
+              "CLOUDFLARE_INCLUDE_PROCESS_ENV=true"
+              "HOME=${stateDir}"
+            ];
+
+            ExecStartPre = [
+              (lib.getExe stageScript)
+              (lib.getExe migrateScript)
+            ];
+            ExecStart = "${storeDir}/node_modules/.bin/vite preview --host 127.0.0.1 --port ${toString cfg.port}";
+          }
+        ];
+      };
     };
   };
 }

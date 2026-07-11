@@ -41,6 +41,10 @@
     govalid = prev.callPackage ../pkgs/govalid.nix {};
   })
 
+  (_final: prev: prev.lib.optionalAttrs prev.stdenv.isLinux {
+    openseo = prev.callPackage ../pkgs/openseo.nix {};
+  })
+
   (
     _final: prev:
       prev.lib.optionalAttrs prev.stdenv.isDarwin {

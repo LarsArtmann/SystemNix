@@ -1,0 +1,58 @@
+direction: down
+tier_1: BTRFS Health Plan {
+  shape: package
+  style: {fill: "#1a1a2e"}
+
+  critical: "Tier 1: CRITICAL — Prevent Data Loss (1% to 51%)" {
+    style: {fill: "#c0392b"; bold: true}
+    t01: "T01: smartctl SMART check (8min)" {style.fill: "#e74c3c"}
+    t02: "T02: btrfs scrub /data (5min)" {style.fill: "#e74c3c"}
+    t03: "T03: btrfs scrub / (5min)" {style.fill: "#e74c3c"}
+    t04: "T04: Document scrub results (10min)" {style.fill: "#e74c3c"}
+    t05: "T05: Scrub status metrics (12min)" {style.fill: "#e74c3c"}
+    t06: "T06: Gatus scrub alert (10min)" {style.fill: "#e74c3c"}
+  }
+
+  high: "Tier 2: HIGH — Protect Against Disk Failure (4% to 64%)" {
+    style: {fill: "#d35400"; bold: true}
+    t07: "T07: Research btrbk remote (12min)" {style.fill: "#e67e22"}
+    t08: "T08: btrbk remote backup (12min)" {style.fill: "#e67e22"}
+    t09: "T09: SSH key sops (10min)" {style.fill: "#e67e22"}
+    t10: "T10: Snapshot /data (10min)" {style.fill: "#e67e22"}
+    t11: "T11: Pre-deploy snapshot (12min)" {style.fill: "#e67e22"}
+  }
+
+  medium: "Tier 3: MEDIUM — Monitoring and Efficiency (20% to 80%)" {
+    style: {fill: "#2980b9"; bold: true}
+    t12: "T12: compsize metrics (12min)" {style.fill: "#3498db"}
+    t13: "T13: qgroup metrics (10min)" {style.fill: "#3498db"}
+    t14: "T14: compsize baseline (8min)" {style.fill: "#3498db"}
+    t15: "T15: space_cache=v2 (5min)" {style.fill: "#3498db"}
+    t16: "T16: bees dedup (12min)" {style.fill: "#3498db"}
+    t17: "T17: DMS compress widget (10min)" {style.fill: "#3498db"}
+  }
+
+  low: "Tier 4: LOW — Documentation and Planning (80% to 100%)" {
+    style: {fill: "#27ae60"; bold: true}
+    t18: "T18: Layout ref doc (12min)" {style.fill: "#2ecc71"}
+    t19: "T19: DR runbook (12min)" {style.fill: "#2ecc71"}
+    t20: "T20: @nix migration (12min)" {style.fill: "#2ecc71"}
+    t21: "T21: @home migration (10min)" {style.fill: "#2ecc71"}
+    t22: "T22: Disko spec (12min)" {style.fill: "#2ecc71"}
+    t23: "T23: Inventory script (10min)" {style.fill: "#2ecc71"}
+    t24: "T24: Usage baseline (5min)" {style.fill: "#2ecc71"}
+    t25: "T25: Update TODO_LIST (10min)" {style.fill: "#2ecc71"}
+    t26: "T26: Update AGENTS.md (10min)" {style.fill: "#2ecc71"}
+  }
+}
+
+t01 -> t04
+t02 -> t04
+t03 -> t04
+t04 -> t05
+t05 -> t06
+
+t07 -> t08
+t08 -> t09
+
+critical -> high -> medium -> low {style.stroke-dash: 4}

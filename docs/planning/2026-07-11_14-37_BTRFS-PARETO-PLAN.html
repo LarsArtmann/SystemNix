@@ -1,0 +1,1222 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BTRFS Pareto Plan — SystemNix evo-x2</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-green: #6bff9a;
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.6);
+        --text-faint: rgba(244, 244, 240, 0.35);
+        --border: rgba(244, 244, 240, 0.08);
+        --border-strong: rgba(244, 244, 240, 0.15);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+        --radius: 0px;
+        --font-heading: "Inter", system-ui, -apple-system, sans-serif;
+        --font-body: "Inter", system-ui, -apple-system, sans-serif;
+        --font-mono: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      .layout {
+        display: flex;
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+      .sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        width: 240px;
+        min-width: 240px;
+        border-right: 1px solid var(--border);
+        padding: 24px 16px;
+        overflow-y: auto;
+      }
+      .sidebar .label {
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-faint);
+        margin-bottom: 12px;
+      }
+      .sidebar a {
+        display: block;
+        padding: 6px 12px;
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 14px;
+        border-radius: 0;
+        border-left: 2px solid transparent;
+        transition: all 0.15s;
+      }
+      .sidebar a:hover {
+        color: var(--text);
+        border-left-color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        padding: 48px 48px 120px;
+        min-width: 0;
+      }
+
+      .hero {
+        margin-bottom: 48px;
+      }
+      .hero-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+        border: 1px solid var(--accent);
+        margin-bottom: 16px;
+      }
+      .hero h1 {
+        font-size: 36px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        margin-bottom: 12px;
+      }
+      .hero-subtitle {
+        color: var(--text-muted);
+        font-size: 17px;
+        max-width: 700px;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 16px;
+        margin-bottom: 48px;
+      }
+      .stat-card {
+        background: var(--surface-raised);
+        padding: 20px;
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--text-faint);
+      }
+      .stat-card.stat-bad {
+        border-left-color: var(--problem);
+      }
+      .stat-card.stat-warn {
+        border-left-color: var(--warning);
+      }
+      .stat-card.stat-good {
+        border-left-color: var(--solution);
+      }
+      .stat-value {
+        font-size: 32px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+      .stat-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      h2 {
+        font-size: 24px;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        margin: 48px 0 20px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+      }
+      h2 .num {
+        color: var(--accent);
+        margin-right: 8px;
+      }
+      h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 24px 0 12px;
+      }
+
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+      .card-problem {
+        border-left: 3px solid var(--problem);
+      }
+      .card-solution {
+        border-left: 3px solid var(--solution);
+      }
+      .card-warning {
+        border-left: 3px solid var(--warning);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 24px;
+        font-size: 14px;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      th {
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 0;
+      }
+      .badge-critical {
+        background: color-mix(in srgb, var(--problem) 20%, transparent);
+        color: var(--problem);
+        border: 1px solid var(--problem);
+      }
+      .badge-high {
+        background: color-mix(in srgb, var(--warning) 20%, transparent);
+        color: var(--warning);
+        border: 1px solid var(--warning);
+      }
+      .badge-medium {
+        background: color-mix(in srgb, var(--solution) 20%, transparent);
+        color: var(--solution);
+        border: 1px solid var(--solution);
+      }
+      .badge-low {
+        background: color-mix(in srgb, var(--color-green) 20%, transparent);
+        color: var(--color-green);
+        border: 1px solid var(--color-green);
+      }
+      .badge-code {
+        background: color-mix(in srgb, var(--accent) 15%, transparent);
+        color: var(--accent);
+      }
+      .badge-op {
+        background: color-mix(in srgb, var(--problem) 15%, transparent);
+        color: var(--problem);
+      }
+      .badge-doc {
+        background: color-mix(in srgb, var(--solution) 15%, transparent);
+        color: var(--solution);
+      }
+      .badge-research {
+        background: color-mix(in srgb, var(--warning) 15%, transparent);
+        color: var(--warning);
+      }
+
+      .callout {
+        padding: 16px 20px;
+        margin-bottom: 16px;
+        border: 1px solid var(--border);
+      }
+      .callout-solution {
+        border-left: 3px solid var(--solution);
+        background: color-mix(in srgb, var(--solution) 5%, transparent);
+      }
+      .callout-warning {
+        border-left: 3px solid var(--warning);
+        background: color-mix(in srgb, var(--warning) 5%, transparent);
+      }
+      .callout strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+
+      .svg-container {
+        margin: 24px 0;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+      }
+      .svg-container img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      .strengths {
+        display: grid;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .strength {
+        display: flex;
+        gap: 12px;
+        padding: 16px;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--solution);
+      }
+      .strength .check {
+        font-size: 20px;
+        font-weight: 900;
+        color: var(--solution);
+        flex-shrink: 0;
+      }
+      .strength strong {
+        display: block;
+        margin-bottom: 2px;
+      }
+      .strength span {
+        color: var(--text-muted);
+        font-size: 14px;
+      }
+
+      .footer {
+        margin-top: 64px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+        color: var(--text-faint);
+        font-size: 13px;
+      }
+
+      @media (max-width: 1024px) {
+        .sidebar {
+          display: none;
+        }
+        .main {
+          padding: 24px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout">
+      <aside class="sidebar">
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#pareto">Pareto Breakdown</a>
+          <a href="#tier1">Tier 1: Critical</a>
+          <a href="#tier2">Tier 2: High</a>
+          <a href="#tier3">Tier 3: Medium</a>
+          <a href="#tier4">Tier 4: Low</a>
+          <a href="#graph">Execution Graph</a>
+          <a href="#all-tasks">All Tasks (Sorted)</a>
+          <a href="#strengths">Strengths</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-badge">Pareto Plan &middot; 2026-07-11</div>
+          <h1>BTRFS Health Improvement Plan</h1>
+          <p class="hero-subtitle">
+            26 tasks across 4 priority tiers. Source: NixOS Wiki, Arch Wiki, Disko docs, community
+            guides vs. SystemNix evo-x2 actual state. Every task is 12 minutes or less.
+          </p>
+        </div>
+
+        <div class="stat-grid">
+          <div class="stat-card stat-bad">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Critical Tasks</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">5</div>
+            <div class="stat-label">High Priority</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Medium Priority</div>
+          </div>
+          <div class="stat-card" style="border-left-color: var(--color-green)">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Low Priority</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">244m</div>
+            <div class="stat-label">Total Estimate</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">8.5/10</div>
+            <div class="stat-label">Current Score</div>
+          </div>
+        </div>
+
+        <!-- ===== SUMMARY ===== -->
+        <h2 id="summary"><span class="num">01</span>Summary</h2>
+
+        <div class="card card-problem">
+          <strong style="display: block; margin-bottom: 8px">The Problem</strong>
+          SystemNix's BTRFS setup is production-hardened and goes far beyond wiki guidance in
+          monitoring and safety. However, two structural gaps (no remote backup, no subvolume
+          separation for <code>/nix</code> and <code>/home</code>) and several monitoring gaps (no
+          scrub alerting, no compression ratio tracking) leave data at risk.
+        </div>
+
+        <div class="card card-solution">
+          <strong style="display: block; margin-bottom: 8px">The Plan</strong>
+          26 tasks, each 12 minutes or less, sorted by Pareto impact. Tier 1 (critical: prevent data
+          loss) delivers 51% of the value in 50 minutes. Tiers 1-2 together deliver 64% in 86
+          minutes. All 26 tasks deliver 100% in ~4 hours.
+        </div>
+
+        <!-- ===== PARETO ===== -->
+        <h2 id="pareto"><span class="num">02</span>Pareto Breakdown</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Tier</th>
+              <th>Principle</th>
+              <th>Tasks</th>
+              <th>Total Time</th>
+              <th>Value Delivered</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-critical">Tier 1</span></td>
+              <td>
+                1% effort &rarr; 51% value: Stop active threats (data corruption, disk failure
+                blindness)
+              </td>
+              <td>6</td>
+              <td>50 min</td>
+              <td><strong>51%</strong></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-high">Tier 2</span></td>
+              <td>
+                4% effort &rarr; 64% value: Protect against catastrophic disk failure (remote
+                backup, data snapshots)
+              </td>
+              <td>5</td>
+              <td>56 min</td>
+              <td><strong>+13% = 64%</strong></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-medium">Tier 3</span></td>
+              <td>
+                20% effort &rarr; 80% value: Improve monitoring visibility and storage efficiency
+              </td>
+              <td>6</td>
+              <td>57 min</td>
+              <td><strong>+16% = 80%</strong></td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-low">Tier 4</span></td>
+              <td>
+                80% effort &rarr; 100% value: Documentation, migration planning, future-proofing
+              </td>
+              <td>9</td>
+              <td>81 min</td>
+              <td><strong>+20% = 100%</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== TIER 1 ===== -->
+        <h2 id="tier1">
+          <span class="num">&diams;</span>Tier 1: Critical &mdash; Prevent Data Loss
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px">
+          These tasks address active threats: 91K csum errors of unknown origin, no scrub ever run,
+          no SMART check, and no alerting on scrub failures.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Time</th>
+              <th>Type</th>
+              <th>Impact</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>T01</strong></td>
+              <td>Run <code>smartctl -a /dev/nvme0n1</code>, document SMART health</td>
+              <td>8m</td>
+              <td><span class="badge badge-op">Operational</span></td>
+              <td><span class="badge badge-critical">5/5</span></td>
+              <td>
+                91K csum errors could be NAND degradation. SMART data is the only way to know if the
+                Lexar NQ790 is dying. If media errors climb, drive replacement is urgent.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T02</strong></td>
+              <td>Start <code>btrfs scrub start /data</code> (read-only)</td>
+              <td>5m</td>
+              <td><span class="badge badge-op">Operational</span></td>
+              <td><span class="badge badge-critical">5/5</span></td>
+              <td>
+                No scrub has EVER been run on /data. 91,561 csum errors found in Jul 8 report. Scrub
+                maps all bad blocks and assesses corruption extent.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T03</strong></td>
+              <td>Start <code>btrfs scrub start /</code> (read-only)</td>
+              <td>5m</td>
+              <td><span class="badge badge-op">Operational</span></td>
+              <td><span class="badge badge-critical">5/5</span></td>
+              <td>
+                Root filesystem also unscrubbed. Same csum error risk. Must check both BTRFS
+                partitions independently.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T04</strong></td>
+              <td>Document scrub results + csum error analysis</td>
+              <td>10m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-high">4/5</span></td>
+              <td>
+                Write status report with: total errors, error type (csum vs read), affected blocks.
+                Determine if corruption is from discard=async (software) or media degradation
+                (hardware).
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T05</strong></td>
+              <td>Add scrub status to <code>btrfs-health</code> metrics collector</td>
+              <td>12m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-high">4/5</span></td>
+              <td>
+                Parse <code>btrfs scrub status</code> into Prometheus metrics:
+                <code>btrfs_scrub_errors_total</code>,
+                <code>btrfs_scrub_last_duration_seconds</code>. Run after each monthly autoScrub.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T06</strong></td>
+              <td>Add Gatus health check for scrub errors (Discord alert)</td>
+              <td>10m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-high">4/5</span></td>
+              <td>
+                If scrub finds errors, Discord alert fires. Currently scrub runs monthly but NO ONE
+                IS NOTIFIED of results. Silent corruption = silent data loss.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== TIER 2 ===== -->
+        <h2 id="tier2">
+          <span class="num">&diams;</span>Tier 2: High &mdash; Protect Against Disk Failure
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px">
+          If the NVMe dies, ALL data is lost. No remote backup exists. Docker volumes, Immich
+          photos, Forgejo git history, DiscordSync archive &mdash; all gone.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Time</th>
+              <th>Type</th>
+              <th>Impact</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>T07</strong></td>
+              <td>Research btrbk remote backup target (Hetzner StorageBox SSH)</td>
+              <td>12m</td>
+              <td><span class="badge badge-research">Research</span></td>
+              <td><span class="badge badge-critical">5/5</span></td>
+              <td>
+                Read btrbk docs for <code>target</code> directive + SSH. Evaluate Hetzner StorageBox
+                (already researched in <code>docs/research/hetzner-storagebox-borgbackup.md</code>).
+                Determine: btrfs send/receive vs Borg.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T08</strong></td>
+              <td>
+                Write btrbk <code>target</code> config for remote <code>btrfs send/receive</code>
+              </td>
+              <td>12m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-critical">5/5</span></td>
+              <td>
+                Add <code>target</code> section to existing btrbk instance. Incremental send/receive
+                is bandwidth-efficient (only changed blocks). Config in <code>snapshots.nix</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T09</strong></td>
+              <td>Add SSH key sops secret for remote backup target</td>
+              <td>10m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-high">4/5</span></td>
+              <td>
+                Generate SSH keypair for btrbk. Add private key to sops. Wire into btrbk systemd
+                service via <code>LoadCredential</code> or <code>SOPS_AGE_KEY</code> pattern.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T10</strong></td>
+              <td>Add <code>/data</code> subvolume to btrbk snapshot config</td>
+              <td>10m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-high">4/5</span></td>
+              <td>
+                <code>/data</code> is subvolid=5 (toplevel) &mdash; NOT snapshotted. Contains Docker
+                volumes, Immich DB, AI models. Needs its own btrbk instance targeting
+                <code>/data</code> device.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T11</strong></td>
+              <td>Write pre-deploy snapshot systemd oneshot service</td>
+              <td>12m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                AGENTS.md says "Pre-deploy snapshots: manual only". Automate:
+                <code>ExecStartPre</code> in deploy.sh creates a btrfs snapshot before every
+                <code>nh os switch</code>. Safety net for bad deploys.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== TIER 3 ===== -->
+        <h2 id="tier3">
+          <span class="num">&diams;</span>Tier 3: Medium &mdash; Monitoring &amp; Efficiency
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px">
+          Improve visibility into compression ratios, subvolume sizes, and dedup savings. These are
+          quality-of-life improvements that prevent future surprises.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Time</th>
+              <th>Type</th>
+              <th>Impact</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>T12</strong></td>
+              <td>Add <code>compsize</code> cron &rarr; Prometheus textfile collector</td>
+              <td>12m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                Track actual compression ratios over time. <code>compsize /</code> and
+                <code>compsize /nix/store</code> &rarr;
+                <code>btrfs_compression_ratio_pct</code> metric. Alert if ratio drops (could
+                indicate incompressible data flood).
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T13</strong></td>
+              <td>Add <code>btrfs qgroup show</code> to btrfs-health metrics</td>
+              <td>10m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                Track per-subvolume disk usage.
+                <code>btrfs qgroup show /mnt/btrfs-root</code> &rarr;
+                <code>btrfs_subvolume_referenced_bytes{subvol="@nix"}</code>. Enables capacity
+                planning.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T14</strong></td>
+              <td>
+                Run <code>compsize /</code> + <code>/nix/store</code> baseline, document ratios
+              </td>
+              <td>8m</td>
+              <td><span class="badge badge-op">Operational</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                One-time measurement: what compression ratio are we actually getting? NixOS Wiki
+                reports 86% on GHC docs. Establish baseline for future comparison.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T15</strong></td>
+              <td>Add explicit <code>space_cache=v2</code> to root <code>/</code> mount options</td>
+              <td>5m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-low">2/5</span></td>
+              <td>
+                Root mount doesn't declare <code>space_cache=v2</code> (it's mkfs default since
+                btrfs-progs 5.15). /data already has it explicit. Be consistent &mdash; declare it
+                everywhere for reproducibility.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T16</strong></td>
+              <td>Evaluate and write <code>bees</code> dedup service config</td>
+              <td>12m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                Nix store has cross-file block duplication that
+                <code>auto-optimise-store</code> (whole-file hardlinks) can't catch.
+                <code>services.beesd.filesystems.root</code> with hashTableSizeMB=2048. Monitor
+                CPU/IO impact.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T17</strong></td>
+              <td>Add DMS widget: show compression ratio from compsize</td>
+              <td>10m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-low">2/5</span></td>
+              <td>
+                Desktop-visible compression savings alongside existing BTRFS health widget. "ZSTD:
+                2.3x compression, saving 47GB". Motivating and informative.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== TIER 4 ===== -->
+        <h2 id="tier4">
+          <span class="num">&diams;</span>Tier 4: Low &mdash; Documentation &amp; Future Planning
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px">
+          Documentation, migration procedures for subvolume separation, and declarative disk layout
+          spec for future reinstalls.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Task</th>
+              <th>Time</th>
+              <th>Type</th>
+              <th>Impact</th>
+              <th>Why</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>T18</strong></td>
+              <td>Write BTRFS subvolume layout reference document</td>
+              <td>12m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                Current layout scattered across hardware-configuration.nix, snapshots.nix, boot.nix.
+                Consolidate into <code>docs/reference/btrfs-layout.md</code> with visual diagram.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T19</strong></td>
+              <td>Write BTRFS disaster recovery runbook</td>
+              <td>12m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-high">4/5</span></td>
+              <td>
+                No documented recovery procedure for: metadata ENOSPC, csum corruption, failed
+                mount, broken snapshot. Write <code>docs/runbooks/btrfs-disaster-recovery.md</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T20</strong></td>
+              <td>Write <code>@nix</code> subvolume migration procedure</td>
+              <td>12m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                Step-by-step: create <code>@nix</code>, rsync <code>/nix</code> contents, update
+                mounts, update btrbk to exclude. Plan for next maintenance window.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T21</strong></td>
+              <td>Write <code>@home</code> + <code>@log</code> subvolume migration procedure</td>
+              <td>10m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                Same pattern for <code>/home</code> and <code>/var/log</code>. Enables independent
+                snapshot/rollback of user data and system logs.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T22</strong></td>
+              <td>Write Disko declarative disk layout spec</td>
+              <td>12m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-medium">3/5</span></td>
+              <td>
+                NixOS Wiki recommends Disko for declarative disk management. Write a
+                <code>disko.nix</code> spec matching current layout + desired flat subvolumes for
+                future reinstalls.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T23</strong></td>
+              <td>Write <code>btrfs subvolume inventory</code> helper script</td>
+              <td>10m</td>
+              <td><span class="badge badge-code">Code</span></td>
+              <td><span class="badge badge-low">2/5</span></td>
+              <td>
+                Script: <code>btrfs subvolume list -t</code> + mount points + sizes + snapshot
+                status. Quick operational overview. Add to <code>scripts/</code>.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T24</strong></td>
+              <td>Run <code>btrfs filesystem df/usage</code> baseline, document</td>
+              <td>5m</td>
+              <td><span class="badge badge-op">Operational</span></td>
+              <td><span class="badge badge-low">2/5</span></td>
+              <td>
+                Snapshot current chunk allocation state for future comparison. Data, metadata,
+                system, unallocated &mdash; all in one status doc.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T25</strong></td>
+              <td>Update <code>TODO_LIST.md</code> with BTRFS tasks</td>
+              <td>10m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-low">2/5</span></td>
+              <td>
+                Mark completed items (discard fix, research doc). Add new tasks from this plan with
+                correct priorities.
+              </td>
+            </tr>
+            <tr>
+              <td><strong>T26</strong></td>
+              <td>Update <code>AGENTS.md</code> BTRFS section with findings</td>
+              <td>10m</td>
+              <td><span class="badge badge-doc">Doc</span></td>
+              <td><span class="badge badge-low">2/5</span></td>
+              <td>
+                Add: compsize availability, scrub status monitoring gap, subvolume separation
+                recommendation, Disko pointer.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== EXECUTION GRAPH ===== -->
+        <h2 id="graph"><span class="num">03</span>Execution Graph</h2>
+        <div class="svg-container">
+          <img src="btrfs-pareto-plan.svg" alt="BTRFS Pareto Plan execution graph" />
+        </div>
+
+        <!-- ===== ALL TASKS SORTED ===== -->
+        <h2 id="all-tasks">
+          <span class="num">04</span>All Tasks Sorted by Impact &divide; Effort
+        </h2>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tier</th>
+              <th>Task</th>
+              <th>Time</th>
+              <th>Impact</th>
+              <th>Effort</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>T02</td>
+              <td><span class="badge badge-critical">T1</span></td>
+              <td>btrfs scrub /data</td>
+              <td>5m</td>
+              <td>5</td>
+              <td>1</td>
+              <td><strong>5.00</strong></td>
+            </tr>
+            <tr>
+              <td>T03</td>
+              <td><span class="badge badge-critical">T1</span></td>
+              <td>btrfs scrub /</td>
+              <td>5m</td>
+              <td>5</td>
+              <td>1</td>
+              <td><strong>5.00</strong></td>
+            </tr>
+            <tr>
+              <td>T24</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>btrfs usage baseline</td>
+              <td>5m</td>
+              <td>2</td>
+              <td>1</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T15</td>
+              <td><span class="badge badge-medium">T3</span></td>
+              <td>space_cache=v2 on root</td>
+              <td>5m</td>
+              <td>2</td>
+              <td>1</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T01</td>
+              <td><span class="badge badge-critical">T1</span></td>
+              <td>smartctl SMART check</td>
+              <td>8m</td>
+              <td>5</td>
+              <td>1.5</td>
+              <td><strong>3.33</strong></td>
+            </tr>
+            <tr>
+              <td>T14</td>
+              <td><span class="badge badge-medium">T3</span></td>
+              <td>compsize baseline</td>
+              <td>8m</td>
+              <td>3</td>
+              <td>1.5</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T04</td>
+              <td><span class="badge badge-critical">T1</span></td>
+              <td>Document scrub results</td>
+              <td>10m</td>
+              <td>4</td>
+              <td>2</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T06</td>
+              <td><span class="badge badge-critical">T1</span></td>
+              <td>Gatus scrub alert</td>
+              <td>10m</td>
+              <td>4</td>
+              <td>2</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T09</td>
+              <td><span class="badge badge-high">T2</span></td>
+              <td>SSH key sops for remote</td>
+              <td>10m</td>
+              <td>4</td>
+              <td>2</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T10</td>
+              <td><span class="badge badge-high">T2</span></td>
+              <td>Snapshot /data in btrbk</td>
+              <td>10m</td>
+              <td>4</td>
+              <td>2</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T13</td>
+              <td><span class="badge badge-medium">T3</span></td>
+              <td>qgroup metrics</td>
+              <td>10m</td>
+              <td>3</td>
+              <td>2</td>
+              <td><strong>1.50</strong></td>
+            </tr>
+            <tr>
+              <td>T17</td>
+              <td><span class="badge badge-medium">T3</span></td>
+              <td>DMS compression widget</td>
+              <td>10m</td>
+              <td>2</td>
+              <td>2</td>
+              <td><strong>1.00</strong></td>
+            </tr>
+            <tr>
+              <td>T21</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>@home + @log migration</td>
+              <td>10m</td>
+              <td>3</td>
+              <td>2</td>
+              <td><strong>1.50</strong></td>
+            </tr>
+            <tr>
+              <td>T23</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>Inventory script</td>
+              <td>10m</td>
+              <td>2</td>
+              <td>2</td>
+              <td><strong>1.00</strong></td>
+            </tr>
+            <tr>
+              <td>T25</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>Update TODO_LIST</td>
+              <td>10m</td>
+              <td>2</td>
+              <td>2</td>
+              <td><strong>1.00</strong></td>
+            </tr>
+            <tr>
+              <td>T26</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>Update AGENTS.md</td>
+              <td>10m</td>
+              <td>2</td>
+              <td>2</td>
+              <td><strong>1.00</strong></td>
+            </tr>
+            <tr>
+              <td>T05</td>
+              <td><span class="badge badge-critical">T1</span></td>
+              <td>Scrub status metrics</td>
+              <td>12m</td>
+              <td>4</td>
+              <td>2.5</td>
+              <td><strong>1.60</strong></td>
+            </tr>
+            <tr>
+              <td>T07</td>
+              <td><span class="badge badge-high">T2</span></td>
+              <td>Research btrbk remote</td>
+              <td>12m</td>
+              <td>5</td>
+              <td>2.5</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T08</td>
+              <td><span class="badge badge-high">T2</span></td>
+              <td>btrbk remote backup module</td>
+              <td>12m</td>
+              <td>5</td>
+              <td>2.5</td>
+              <td><strong>2.00</strong></td>
+            </tr>
+            <tr>
+              <td>T11</td>
+              <td><span class="badge badge-high">T2</span></td>
+              <td>Pre-deploy snapshot oneshot</td>
+              <td>12m</td>
+              <td>3</td>
+              <td>2.5</td>
+              <td><strong>1.20</strong></td>
+            </tr>
+            <tr>
+              <td>T12</td>
+              <td><span class="badge badge-medium">T3</span></td>
+              <td>compsize &rarr; Prom collector</td>
+              <td>12m</td>
+              <td>3</td>
+              <td>2.5</td>
+              <td><strong>1.20</strong></td>
+            </tr>
+            <tr>
+              <td>T16</td>
+              <td><span class="badge badge-medium">T3</span></td>
+              <td>bees dedup config</td>
+              <td>12m</td>
+              <td>3</td>
+              <td>2.5</td>
+              <td><strong>1.20</strong></td>
+            </tr>
+            <tr>
+              <td>T18</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>Layout ref doc</td>
+              <td>12m</td>
+              <td>3</td>
+              <td>2.5</td>
+              <td><strong>1.20</strong></td>
+            </tr>
+            <tr>
+              <td>T19</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>DR runbook</td>
+              <td>12m</td>
+              <td>4</td>
+              <td>2.5</td>
+              <td><strong>1.60</strong></td>
+            </tr>
+            <tr>
+              <td>T20</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>@nix migration procedure</td>
+              <td>12m</td>
+              <td>3</td>
+              <td>2.5</td>
+              <td><strong>1.20</strong></td>
+            </tr>
+            <tr>
+              <td>T22</td>
+              <td><span class="badge badge-low">T4</span></td>
+              <td>Disko declarative spec</td>
+              <td>12m</td>
+              <td>3</td>
+              <td>2.5</td>
+              <td><strong>1.20</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- ===== STRENGTHS ===== -->
+        <h2 id="strengths"><span class="num">05</span>Existing Strengths (Already Done)</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>BTRFS metadata ENOSPC GC guard</strong
+              ><span
+                >Prevents the 2026-06-26 crash mode. No wiki recommends this.
+                <code>btrfs-health.nix</code></span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Chunk allocation Prometheus metrics</strong
+              ><span
+                >5-min metrics for device-unallocated, metadata utilization. Beyond any wiki
+                guidance.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Btrbk staggered before GC</strong
+              ><span
+                >23:00 snapshots, 00:00 GC. Prevents CoW-shared extent reclamation failure.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Snapshot freshness verifier</strong
+              ><span
+                >Daily timer alerts if snapshots are &gt;3 days old. Catches silent btrbk
+                failures.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Rust target/ on ext4</strong
+              ><span>Avoids 85K+ small file COW fragmentation. SystemNix innovation.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>mkFilesystem eval-time validator</strong
+              ><span
+                >Catches cross-filesystem option contamination (discard=async on ext4, compress on
+                xfs) at nix flake check time.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Cache subvolume automounts</strong
+              ><span
+                >.cache, .cargo, .npm, go/ as separate subvolumes with idle-timeout automount. Keeps
+                cache out of snapshots.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>compress=zstd + noatime everywhere</strong
+              ><span
+                >Filesystem-wide compression, correct level 3. Matches all wiki
+                recommendations.</span
+              >
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>auto-optimise-store + optimise.automatic</strong
+              ><span>Nix store dedup via hardlinks. 25-35% savings. Both layers enabled.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Monthly autoScrub on both filesystems</strong
+              ><span>/ and /data scrubbed monthly. Just missing result alerting (T05-T06).</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout-warning">
+          <strong>Key Insight</strong>
+          SystemNix is at 8.5/10. The remaining 1.5 points come from: (1) remote backup (the #1 gap
+          &mdash; flagged since June 25), (2) subvolume separation for /nix and /home, and (3) scrub
+          error alerting. Tier 1+2 tasks (106 min total) address the most critical gaps.
+        </div>
+
+        <div class="footer">
+          Generated 2026-07-11 &middot; Sources: NixOS Wiki, Arch Wiki, Disko docs, notashelf
+          impermanence guide, NixOS Discourse, Btrfs readthedocs.io &middot; Research:
+          <code>docs/research/2026-07-11_nixos-btrfs-wiki-recommendations.md</code>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

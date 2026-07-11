@@ -75,7 +75,7 @@ _A brutally honest audit of every feature the project actually has._
 | Manifest (LLM router) | ✅ | `manifest.nix` | Smart LLM router for AI agents, cost optimization, port 2099, `manifest.home.lan` |
 | Overview (project dashboard) | ✅ | `overview` flake input | Local project dashboard, git repo discovery, stats, activity, port 8083 |
 | Crush Daily (AI insights) | ✅ | `crush-daily.nix` | AI-powered development insights from Crush databases, port 8081, `daily.home.lan` |
-| OpenSEO (SEO suite) | ✅ | `openseo.nix` | Self-hosted SEO: rank tracking, keyword research, backlinks, port 3002, `seo.home.lan` |
+| OpenSEO (SEO suite) | ✅ | `openseo.nix` + `pkgs/openseo.nix` | Self-hosted SEO: rank tracking, keyword research, backlinks. Native NixOS service (built from source via Vite/pnpm, workerd runtime), port 3002, `seo.home.lan` |
 | Monitor365 (device monitoring) | ⚠️ | `monitor365.nix` | Agent + server dashboard, ActivityWatch integration — server stability uncertain after DB path fix, needs `systemctl reset-failed` |
 | PMA (auto-commit daemon) | ✅ | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval |
 | Gatus (health checks) | ✅ | `gatus-config.nix` | 38 health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |

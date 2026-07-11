@@ -8,11 +8,6 @@ let
     then "${image}:${tag}@${digest}"
     else "${image}:${tag}";
 in {
-  openseo = rec {
-    image = "ghcr.io/every-app/open-seo";
-    tag = "v0.0.15";
-    ref = mkRef {inherit image tag;};
-  };
   manifest = rec {
     image = "manifestdotbuild/manifest";
     tag = "6.6.1";
