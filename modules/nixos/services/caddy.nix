@@ -132,7 +132,16 @@ _: {
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-            "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
+            # SigNoz runs in impersonation mode (no internal auth) — ALL requests
+            # must pass through Pocket ID via oauth2-proxy. No LAN bypass.
+            "signoz.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${forwardAuth}
+                reverse_proxy localhost:${toString config.services.signoz.settings.queryService.port}
+              '';
+            };
             "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
             "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
             "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;

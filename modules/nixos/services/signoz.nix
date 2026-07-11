@@ -1,8 +1,9 @@
 # SigNoz observability: ClickHouse, OTel collector, dashboards, alerts
-# SSO: native OIDC is Enterprise-only (NOT in the Community Edition we run).
-# Access is therefore gated by oauth2-proxy forward-auth (Layer 2 SSO) on the
-# signoz.<domain> Caddy vHost. No code-level OIDC wiring is possible without a
-# paid SigNoz Enterprise license.
+# Auth: SigNoz CE OIDC/SAML is Enterprise-only ($4k/mo). Instead, impersonation
+# mode disables all internal auth (every request = root admin) and the ENTIRE
+# auth boundary is Caddy + oauth2-proxy (Pocket ID) on signoz.<domain>.
+# The Caddy vHost applies forward-auth UNCONDITIONALLY — no LAN bypass —
+# because impersonation mode means SigNoz itself has zero access control.
 {
   inputs,
   lib,
@@ -313,17 +314,19 @@ in {
                 Group = "signoz";
                 WorkingDirectory = cfg.settings.queryService.dataDir;
                 ExecStart = let
-                  jwtFile = "${cfg.settings.queryService.dataDir}/jwt-secret";
                   wrapper = pkgs.writeShellApplication {
                     name = "signoz-wrapper";
                     runtimeInputs = [pkgs.openssl];
                     text = ''
-                      if [ ! -f '${jwtFile}' ]; then
-                        openssl rand -base64 48 > '${jwtFile}'
-                        chmod 400 '${jwtFile}'
-                      fi
-                      SIGNOZ_TOKENIZER_JWT_SECRET="$(cat '${jwtFile}')"
-                      export SIGNOZ_TOKENIZER_JWT_SECRET
+                      # Impersonation mode: all requests treated as root admin.
+                      # Auth is enforced by Caddy + oauth2-proxy (Pocket ID), not SigNoz.
+                      export SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true
+                      export SIGNOZ_IDENTN_TOKENIZER_ENABLED=false
+                      export SIGNOZ_IDENTN_APIKEY_ENABLED=false
+                      export SIGNOZ_USER_ROOT_ENABLED=true
+                      export SIGNOZ_USER_ROOT_EMAIL="admin@${config.networking.domain}"
+                      export SIGNOZ_USER_ROOT_PASSWORD="$(openssl rand -base64 48)"
+                      export SIGNOZ_USER_ROOT_ORG_NAME="default"
                       exec ${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml
                     '';
                   };

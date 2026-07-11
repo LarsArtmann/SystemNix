@@ -83,6 +83,23 @@ in {
     };
   };
 
+  # /data is a separate BTRFS filesystem (subvolid=5, toplevel) containing
+  # Docker volumes, Immich DB, AI models. Snapshots are crash-consistent.
+  # The "." subvolume refers to the BTRFS toplevel. Nested subvolumes (like
+  # .snapshots itself) are automatically excluded from snapshots by BTRFS.
+  services.btrbk.instances."data" = {
+    onCalendar = "23:30";
+    snapshotOnly = true;
+    settings = {
+      snapshot_preserve_min = "7d";
+      snapshot_preserve = "14d 4w";
+      volume."/data" = {
+        snapshot_dir = "/data/.snapshots";
+        subvolume "." = {};
+      };
+    };
+  };
+
   systemd = {
     tmpfiles.rules = rustCacheDirs ++ rustCacheLinks;
 

@@ -44,6 +44,7 @@ in {
         "subvol=@"
         "compress=zstd"
         "noatime"
+        "space_cache=v2"
       ];
     };
     # TRIM via mount option removed — continuous discard=async causes severe I/O latency on
