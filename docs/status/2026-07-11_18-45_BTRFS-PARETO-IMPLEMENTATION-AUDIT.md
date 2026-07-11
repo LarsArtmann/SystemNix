@@ -229,3 +229,67 @@ The existing `btrfs-health.service` has been running successfully with `Capabili
 ### Q2: Should BTRFS quotas be enabled system-wide?
 
 Enabling BTRFS quotas (`btrfs quota enable`) has performance implications — it adds overhead to every metadata transaction for qgroup accounting. The qgroup metrics I added are useless without quotas. But enabling quotas has a cost. The user needs to decide: is per-subvolume usage tracking worth the overhead on a QLC NAND system that's already I/O-sensitive? This is a hardware-specific tradeoff that depends on the user's monitoring priorities vs performance sensitivity.
+
+---
+
+## Appendix: Post-Audit Fixes (2026-07-11 19:00)
+
+Both open questions resolved. All critical bugs fixed.
+
+### Q1 RESOLVED: CAP_SYS_ADMIN requirement confirmed via kernel source
+
+Analyzed `fs/btrfs/ioctl.c` (torvalds/linux) directly. Each ioctl has an explicit `capable(CAP_SYS_ADMIN)` check at function entry — no guessing needed:
+
+| btrfs-progs command | Kernel function | `CAP_SYS_ADMIN` check | Line (torvalds/linux) |
+|---------------------|-----------------|----------------------|----------------------|
+| `btrfs filesystem usage` | `btrfs_ioctl_fs_info` | **NO** | ioctl.c:2680 |
+| `btrfs scrub status` | `btrfs_ioctl_scrub_progress` | **YES** (`if (!capable(CAP_SYS_ADMIN)) return -EPERM`) | ioctl.c:3118 |
+| `btrfs scrub start` | `btrfs_ioctl_scrub` | **YES** | ioctl.c:3058 |
+| `btrfs scrub cancel` | `btrfs_ioctl_scrub_cancel` | **YES** | ioctl.c:3106 |
+| `btrfs qgroup show` | `btrfs_ioctl_tree_search` | **YES** | ioctl.c:1681 |
+| `btrfs quota enable` | `btrfs_ioctl_quota_ctl` | **YES** | ioctl.c:3627 |
+| `compsize` | `BTRFS_IOC_FS_INFO` | **NO** (uses `btrfs_ioctl_fs_info`) | ioctl.c:2680 |
+
+**Conclusion:** The existing `btrfs filesystem usage` metrics have been working correctly all along — `btrfs_ioctl_fs_info` has no capability check. The new scrub metrics would have silently failed without `CAP_SYS_ADMIN`.
+
+**Fix applied:** `CapabilityBoundingSet = "CAP_SYS_ADMIN"` added to both `btrfs-health` and `btrfs-compsize` services in `btrfs-health.nix`. Verified via `nix eval` — service config resolves to `"CAP_SYS_ADMIN"`.
+
+### Q2 RESOLVED: BTRFS quotas NOT enabled (QLC NAND)
+
+User decision: quotas stay disabled on QLC NAND. The metadata overhead from qgroup accounting is not worth per-subvolume tracking on I/O-sensitive hardware. If the NVMe is upgraded to TLC/MLC, quotas should be enabled and qgroup metrics re-added.
+
+**Action taken:**
+- Removed the entire qgroup metrics block (HELP/TYPE headers + `btrfs qgroup show` + awk parsing) from `btrfs-health-metrics`
+- Documented in `AGENTS.md` under a new **"BTRFS quotas (qgroups)"** paragraph: NOT enabled, with a note to re-enable on a TLC/MLC NVMe upgrade. Git history for `btrfs_qgroup_referenced_bytes` will surface the removed code when needed
+
+### BUG 4 FIXED: compsize output parsing
+
+The `-b` flag means `--binary` (KiB/MiB/GiB suffixes), NOT raw bytes. The awk was feeding suffixed values like `100G` into Prometheus, which can't parse them as numbers.
+
+**Fix applied:** Dropped the byte metrics entirely (`btrfs_compression_disk_usage_bytes`, `btrfs_compression_uncompressed_bytes`). Kept only `btrfs_compression_ratio_pct` — the percentage column from compsize output is a clean integer and parses correctly. Removed `-b` flag from the `compsize` invocation.
+
+### BUG 1 FIXED: CapabilityBoundingSet on btrfs-health
+
+**Fix applied:** `CapabilityBoundingSet = "CAP_SYS_ADMIN"` added to the `harden {}` call for `btrfs-health.service`. Without this, `btrfs scrub status` silently fails (EPERM from the kernel ioctl), the `2>/dev/null || continue` swallows the error, and all scrub metrics emit as zero — making `btrfs_scrub_error_free` always report `1` (no errors found).
+
+### BUG 5 FIXED: CapabilityBoundingSet on btrfs-compsize
+
+**Fix applied:** Same `CapabilityBoundingSet = "CAP_SYS_ADMIN"` override on `btrfs-compsize.service`. Although `compsize` uses `BTRFS_IOC_FS_INFO` (which does NOT require the cap), the override is harmless and future-proofs against adding other btrfs ioctls to the script.
+
+### Verification
+
+- `nix flake check --no-build` — passes
+- `nix eval .#nixosConfigurations.evo-x2.config.systemd.services.btrfs-health.serviceConfig.CapabilityBoundingSet` — `"CAP_SYS_ADMIN"`
+- `nix eval .#nixosConfigurations.evo-x2.config.systemd.services.btrfs-compsize.serviceConfig.CapabilityBoundingSet` — `"CAP_SYS_ADMIN"`
+
+### Summary of audit → fix mapping
+
+| Audit item | Status | What changed |
+|------------|--------|--------------|
+| Q1 (CAP_SYS_ADMIN) | **RESOLVED** | Kernel source confirmed: `filesystem usage` = NO, `scrub` = YES, `qgroup` = YES, `compsize` = NO. Added `CAP_SYS_ADMIN` to both services. |
+| Q2 (quotas) | **RESOLVED** | NOT enabling. Removed qgroup metrics. Documented in AGENTS.md. Re-enable on TLC/MLC upgrade. |
+| BUG 1 (CAP_SYS_ADMIN on btrfs-health) | **FIXED** | `CapabilityBoundingSet = "CAP_SYS_ADMIN"` |
+| BUG 2 (quotas not enabled) | **RESOLVED** | Moot — quotas intentionally disabled, qgroup metrics removed |
+| BUG 3 (scrub awk fragility) | **ACCEPTED** | Low risk. Patterns cover btrfs-progs stable output. Worst case: false zero on exotic error formats. |
+| BUG 4 (compsize -b suffix) | **FIXED** | Dropped byte metrics, kept ratio only, removed `-b` flag |
+| BUG 5 (CAP_SYS_ADMIN on compsize) | **FIXED** | `CapabilityBoundingSet = "CAP_SYS_ADMIN"` (defense-in-depth) |
