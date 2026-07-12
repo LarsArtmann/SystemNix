@@ -54,6 +54,14 @@ _: {
         cd "${stateDir}/project"
         exec "${storeDir}/node_modules/.bin/wrangler" d1 migrations apply DB --local
       '';
+
+      # Serve: vite preview must run from the staged project directory.
+      # Wrapped because systemd's WorkingDirectory is the state dir
+      # (the project subdir doesn't exist until ExecStartPre creates it).
+      serveScript = pkgs.writeShellScriptBin "openseo-serve" ''
+        cd "${stateDir}/project"
+        exec "${storeDir}/node_modules/.bin/vite" preview --host 127.0.0.1 --port ${toString cfg.port}
+      '';
     in
     {
       options.services.openseo = {
@@ -91,7 +99,7 @@ _: {
               User = "openseo";
               Group = "openseo";
               StateDirectory = "openseo";
-              WorkingDirectory = "${stateDir}/project";
+              WorkingDirectory = "${stateDir}";
               EnvironmentFile = config.sops.templates."openseo-env".path;
 
               Environment = [
@@ -108,7 +116,7 @@ _: {
                 (lib.getExe stageScript)
                 (lib.getExe migrateScript)
               ];
-              ExecStart = "${storeDir}/node_modules/.bin/vite preview --host 127.0.0.1 --port ${toString cfg.port}";
+              ExecStart = lib.getExe serveScript;
             }
           ];
         };

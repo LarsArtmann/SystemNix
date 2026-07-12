@@ -255,6 +255,8 @@ let
     runtimeInputs = [
       pkgs.btrfs-progs
       pkgs.compsize
+      pkgs.gawk
+      pkgs.coreutils
     ];
     text = ''
       set -uo pipefail
@@ -340,7 +342,7 @@ in
         serviceConfig = lib.mkMerge [
           (serviceOneshotDefaults { })
           (harden {
-            MemoryMax = "256M";
+            MemoryMax = "2G";
             CapabilityBoundingSet = "CAP_SYS_ADMIN";
             ReadWritePaths = [ textfileDir ];
           })
