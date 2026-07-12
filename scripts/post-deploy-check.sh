@@ -74,34 +74,34 @@ echo "Domain: $DOMAIN"
 echo ""
 
 # --- Infrastructure ---
-check_local "Caddy metrics" "" "/metrics" "200" "" 2>/dev/null || true
+check_local "Caddy metrics" "2019" "/metrics" "200" "" 2>/dev/null || true
 check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
 
-check_local "Pocket ID" "" "/healthz" "204" 2>/dev/null ||
-  check_local "Pocket ID" "" "/" "200" "" 2>/dev/null || true
+check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
+  check_local "Pocket ID" "1411" "/" "200" "" 2>/dev/null || true
 
-check_local "oauth2-proxy" "" "/ping" "200" 2>/dev/null || true
+check_local "oauth2-proxy" "4180" "/ping" "200" 2>/dev/null || true
 
-check_local "Homepage" "" "/" "200" "<html" 2>/dev/null || true
+check_local "Homepage" "8082" "/" "200" "<html" 2>/dev/null || true
 
-check_local "Gatus" "" "/" "200" "" 2>/dev/null || true
+check_local "Gatus" "9110" "/" "200" "" 2>/dev/null || true
 
 # --- Application health endpoints ---
-check_local "Forgejo" "" "/api/v1/version" "200" "" 2>/dev/null || true
+check_local "Forgejo" "3000" "/api/v1/version" "200" "" 2>/dev/null || true
 
-check_local "Immich" "" "/api/server-info/ping" "200" "" 2>/dev/null || true
+check_local "Immich" "2283" "/api/server/ping" "200" "" 2>/dev/null || true
 
-check_local "DiscordSync" "" "/healthz" "200" 2>/dev/null || true
+check_local "DiscordSync" "8085" "/api/stats" "200" 2>/dev/null || true
 
-check_local "Manifest" "" "/api/v1/health" "200" 2>/dev/null || true
+check_local "Manifest" "2099" "/api/v1/health" "200" 2>/dev/null || true
 
-check_local "Crush Daily" "" "/api/health" "200" 2>/dev/null || true
+check_local "Crush Daily" "8081" "/api/health" "200" 2>/dev/null || true
 
-check_local "Overview" "" "/" "200" "<html" 2>/dev/null || true
+check_local "Overview" "8083" "/" "200" "<html" 2>/dev/null || true
 
 # --- Monitor365: the bug we fixed ---
-check_local "Monitor365 API" "" "/health" "200" 2>/dev/null || true
-check_local "Monitor365 UI" "" "/ui/" "200" "<html" 2>/dev/null || true
+check_local "Monitor365 API" "3001" "/health" "200" 2>/dev/null || true
+check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
 
 # --- Functional checks (not just liveness) ---
 echo ""
@@ -164,7 +164,7 @@ echo "=== External vHost Checks ==="
 check "Homepage (HTTPS)" "https://dash.$DOMAIN/" "200" "<html" 2>/dev/null || true
 check "Forgejo (HTTPS)" "https://forgejo.$DOMAIN/api/v1/version" "200" "" 2>/dev/null || true
 check "Status (HTTPS)" "https://status.$DOMAIN/" "200" "<html" 2>/dev/null || true
-check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server-info/ping" "200" "" 2>/dev/null || true
+check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
 # --- Summary ---

@@ -358,11 +358,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783872486,
-        "narHash": "sha256-je0Z9o9AChIIanQgPJKj2bfWLU+kW92NfFB801pv6gA=",
+        "lastModified": 1783874881,
+        "narHash": "sha256-CXzNyRrf+/fcj8bwUPeU0IbB0IuklUVPgW5cV7AX1Mg=",
         "ref": "master",
-        "rev": "d82bcab1a97ccab9bb1f7c034b4cd1286e4cbf53",
-        "revCount": 225,
+        "rev": "2175b609c4a479e42c5f1902d5b0c7a10875d4ea",
+        "revCount": 226,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -2666,11 +2666,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1783871634,
-        "narHash": "sha256-Qj8z+G9VpHBcd1BmAw4FqtwvMubEpbASd7Qd2ahvFoQ=",
+        "lastModified": 1783875297,
+        "narHash": "sha256-6gwQklKDYKaWkFBJ7CJD5nm89gKcv6A3H1atBJFeX+Q=",
         "ref": "master",
-        "rev": "4aae581ae4e791f7b04b06f2700680675fd8c524",
-        "revCount": 2227,
+        "rev": "9fdbfde04d382730f3347e2d549cabc135eb5342",
+        "revCount": 2228,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
