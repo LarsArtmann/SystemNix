@@ -55,9 +55,12 @@ in
     unbound.settings.server = {
       verbosity = 1;
       local-zone = [ ''"${domain}." static'' ];
-      local-data = map (
-        subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"''
-      ) dnsLocal.localSubdomains;
+      local-data =
+        map (subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"'') dnsLocal.localSubdomains
+        ++ [
+          ''"*.${domain}. IN A ${serverIP}"''
+          ''"${domain}. IN A ${serverIP}"''
+        ];
     };
 
     dns-failover = {

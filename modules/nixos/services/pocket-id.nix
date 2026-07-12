@@ -480,15 +480,15 @@ _: {
           services.pocket-id = {
             inherit onFailure;
             unitConfig = {
-              StartLimitBurst = lib.mkForce 3;
-              StartLimitIntervalSec = lib.mkForce 300;
+              StartLimitBurst = lib.mkForce 5;
+              StartLimitIntervalSec = lib.mkForce 600;
             };
             serviceConfig = lib.mkMerge [
               (serviceDefaults { })
               (harden { MemoryMax = "512M"; })
               {
                 ExecStartPre = "+${lib.getExe checkEncryptionKey}";
-                ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
+                ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 120 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
               }
               (lib.optionalAttrs cfg.provision.enable {
                 ExecStartPre = lib.mkForce [

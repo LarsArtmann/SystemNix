@@ -144,7 +144,12 @@ in
             map (d: ''"${d}" transparent'') blocklists.whitelist
             ++ map (d: ''"${d}" always_nxdomain'') blocklists.extraDomains
             ++ [ ''"${domain}." static'' ];
-          local-data = map (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'') dnsLocal.localSubdomains;
+          local-data =
+            map (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'') dnsLocal.localSubdomains
+            ++ [
+              ''"*.${domain}. IN A ${lanIP}"''
+              ''"${domain}. IN A ${lanIP}"''
+            ];
         };
       };
     };

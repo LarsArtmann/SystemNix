@@ -15,6 +15,10 @@ _: {
       inherit (config.networking) domain;
       stateDir = "/var/lib/homepage-dashboard";
 
+      # enableLocalIcons bundles the homarr-labs/dashboard-icons pack into
+      # public/icons/ — without it, every service icon request 404s
+      homepagePkg = pkgs.homepage-dashboard.override { enableLocalIcons = true; };
+
       svcUrl = subdomain: "https://${subdomain}.${domain}";
       inherit (import ../../../lib/default.nix lib)
         harden
@@ -59,7 +63,7 @@ _: {
           startLimitIntervalSec = 300;
           serviceConfig = lib.mkMerge [
             {
-              ExecStart = lib.getExe pkgs.homepage-dashboard;
+              ExecStart = lib.getExe homepagePkg;
               WorkingDirectory = stateDir;
               Environment = [
                 "PORT=${toString cfg.port}"

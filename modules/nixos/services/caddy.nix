@@ -110,6 +110,16 @@ _: {
                 redir https://dash.${domain} permanent
               '';
             };
+            # Catch-all HTTPS for unknown *.home.lan — redirect to dashboard
+            # so typos/unknown subdomains never fall through to browser search
+            "https://*.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                redir * https://dash.${domain} permanent
+              '';
+            };
+
             "auth.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
