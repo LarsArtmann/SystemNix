@@ -332,7 +332,8 @@ in
                             openssl rand -base64 48 > "$ROOT_PW_FILE"
                             chmod 400 "$ROOT_PW_FILE"
                           fi
-                          export SIGNOZ_USER_ROOT_PASSWORD="$(cat "$ROOT_PW_FILE")"
+                          SIGNOZ_USER_ROOT_PASSWORD="$(cat "$ROOT_PW_FILE")"
+                          export SIGNOZ_USER_ROOT_PASSWORD
                           exec ${lib.getExe packages.signoz} server --config /etc/signoz/signoz.yaml
                         '';
                       };
