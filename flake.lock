@@ -261,11 +261,11 @@
     "cqrs-htmx": {
       "flake": false,
       "locked": {
-        "lastModified": 1783863055,
-        "narHash": "sha256-GBnA5Gupm7QujTPXnt9NdnToHs3FRCRqDHppk/aJOXM=",
+        "lastModified": 1783868949,
+        "narHash": "sha256-oaPEwKoYQImoCImKGD8PwKrstdEuTT6RWzVAFXPp35g=",
         "ref": "master",
-        "rev": "3f353e88b394214223b30d8e8b6f2a57cf64ef40",
-        "revCount": 1041,
+        "rev": "f36657629b36e503fbac5e034f2b279ac635022c",
+        "revCount": 1045,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       },
@@ -358,11 +358,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783870693,
-        "narHash": "sha256-L/T8PPRSP0uHJ18QsK0p4nXoXuQEsYz3pjhbYXClLbI=",
+        "lastModified": 1783872486,
+        "narHash": "sha256-je0Z9o9AChIIanQgPJKj2bfWLU+kW92NfFB801pv6gA=",
         "ref": "master",
-        "rev": "d982be932d134625ae93b4d65f78c2ce2a7e8459",
-        "revCount": 224,
+        "rev": "d82bcab1a97ccab9bb1f7c034b4cd1286e4cbf53",
+        "revCount": 225,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -419,11 +419,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783867013,
-        "narHash": "sha256-NyrUT+U9rzW45oGj++WXywG0scOmyYMWAoZFCGhQUu0=",
+        "lastModified": 1783872011,
+        "narHash": "sha256-nW8uizZQ3HyiZtcjcYlNqdw3peGTPf7n4wrw6KgOlPg=",
         "ref": "master",
-        "rev": "22cbbfa0737f826e873fcf7419cb2d766aa960cb",
-        "revCount": 829,
+        "rev": "216046c3b4b8d1e25ebb0d0e899d3fbc23f9752f",
+        "revCount": 832,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -1236,11 +1236,11 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1783860034,
-        "narHash": "sha256-MCSaBUNCdPukaZehkrb7UeOTBgsrveLyM4nWBp928Kw=",
+        "lastModified": 1783870060,
+        "narHash": "sha256-yrnles6TdHVPtT/tc/BdEC88DnQ2xyUFJsD3IP8/2gc=",
         "ref": "master",
-        "rev": "4f756cd06d5f848ceddae07af4f751e3cddaf1f5",
-        "revCount": 2894,
+        "rev": "6030095592c6be8a9e21d8b0a19da910fb798b79",
+        "revCount": 2897,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
