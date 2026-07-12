@@ -38,10 +38,28 @@ _: {
         # Remove old symlinks (preserves .wrangler which is a real dir at stateDir)
         find "$PROJECT" -maxdepth 1 -type l -delete
 
-        # Symlink all files and dotfiles from the Nix store
+        # Symlink all files and dotfiles from the Nix store.
+        # node_modules is handled separately below — it needs a writable .vite-temp.
         for item in "$STORE"/* "$STORE"/.[!.]*; do
           [ -e "$item" ] || continue
-          ln -s "$item" "$PROJECT/$(basename "$item")"
+          name="$(basename "$item")"
+          [ "$name" = "node_modules" ] && continue
+          ln -s "$item" "$PROJECT/$name"
+        done
+
+        # node_modules: Vite's config loader (loadConfigFromBundledFile) writes
+        # a temp .mjs bundle into node_modules/.vite-temp/. A plain symlink to
+        # the read-only Nix store node_modules makes vite preview crash with
+        # EROFS. Replace it with a real directory that re-points each top-level
+        # package to the store, plus a writable .vite-temp. rm -rf handles both
+        # the fresh symlink (from the loop above) and a real dir (prior run).
+        rm -rf "$PROJECT/node_modules"
+        mkdir -p "$PROJECT/node_modules/.vite-temp"
+        for item in "$STORE/node_modules"/* "$STORE/node_modules"/.[!.]*; do
+          [ -e "$item" ] || continue
+          name="$(basename "$item")"
+          [ "$name" = ".vite-temp" ] && continue
+          ln -s "$item" "$PROJECT/node_modules/$name"
         done
 
         # Link .wrangler to persistent state directory (writable D1 SQLite)
