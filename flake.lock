@@ -100,16 +100,16 @@
     "brew-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1781226006,
-        "narHash": "sha256-w4ZTuOnhYiDxjaynrMTASzp802QblBWmo3wpB8wVN4Y=",
+        "lastModified": 1783446865,
+        "narHash": "sha256-nCrPEbQjgnSAOVWTxRXD9Yi6P3oECdtZISYcQCFI9Fs=",
         "owner": "Homebrew",
         "repo": "brew",
-        "rev": "109191be4988470b51a60a5ef1998520aa24c01b",
+        "rev": "655769712a9a9499563d9685a8488f349354492d",
         "type": "github"
       },
       "original": {
         "owner": "Homebrew",
-        "ref": "6.0.1",
+        "ref": "6.0.9",
         "repo": "brew",
         "type": "github"
       }
@@ -142,11 +142,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1783810023,
-        "narHash": "sha256-aU+E8U5Q+JFP8WTNpEJXg6pUW50DMY/7RZ5pTipmMwc=",
+        "lastModified": 1783872043,
+        "narHash": "sha256-VPQ1ZY0EBlwBUNkqmUtWWoQify0poGnp0HM2it5rwOU=",
         "ref": "master",
-        "rev": "34d90dc25317eeba339dcdb1a4c47e846c02bf89",
-        "revCount": 4406,
+        "rev": "ceca5b4512075f0abe4135c701fdf4cff40d9627",
+        "revCount": 4407,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -261,11 +261,11 @@
     "cqrs-htmx": {
       "flake": false,
       "locked": {
-        "lastModified": 1783868949,
-        "narHash": "sha256-oaPEwKoYQImoCImKGD8PwKrstdEuTT6RWzVAFXPp35g=",
+        "lastModified": 1783873468,
+        "narHash": "sha256-i8dd+VPK4kEnyzQvcwgOYhHgQK7rDsnJX/WFYhorsUQ=",
         "ref": "master",
-        "rev": "f36657629b36e503fbac5e034f2b279ac635022c",
-        "revCount": 1045,
+        "rev": "5f65b825d14fb46d45e705a55f167049e089177a",
+        "revCount": 1051,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/cqrs-htmx"
       },
@@ -358,11 +358,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783874881,
-        "narHash": "sha256-CXzNyRrf+/fcj8bwUPeU0IbB0IuklUVPgW5cV7AX1Mg=",
+        "lastModified": 1783884623,
+        "narHash": "sha256-Qe72dcuXe0vTgpGJ1n8bBHNqBpzo7Yj4VMDTNC35ax8=",
         "ref": "master",
-        "rev": "2175b609c4a479e42c5f1902d5b0c7a10875d4ea",
-        "revCount": 226,
+        "rev": "76bba1a13ad58eddf1dfedbe85de0138a68d6eb8",
+        "revCount": 227,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -1236,11 +1236,11 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1783870060,
-        "narHash": "sha256-yrnles6TdHVPtT/tc/BdEC88DnQ2xyUFJsD3IP8/2gc=",
+        "lastModified": 1783871197,
+        "narHash": "sha256-Dau6NKobK6YXv/HX8k6MMy1y4G2uf64FXqcCBQ+36x8=",
         "ref": "master",
-        "rev": "6030095592c6be8a9e21d8b0a19da910fb798b79",
-        "revCount": 2897,
+        "rev": "e29bc6ee1b2c0af9c36a0abae1d4c2bddfbd9d7d",
+        "revCount": 2898,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
@@ -2508,11 +2508,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783864725,
-        "narHash": "sha256-us8JrRALodyyR7eOaA7Rjlf/XUAqc+YkoRXKLfAosnE=",
+        "lastModified": 1783877414,
+        "narHash": "sha256-cNN4Os7EJR4B40nBfu+5n0i8VZ6IQYxNjy7FtSHdPjo=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "a03268e5b7e0f2e9adcbf05fb8dca447cddadd36",
+        "rev": "ece6cf0bb94cca8df74f635570bd073db699ff8d",
         "type": "github"
       },
       "original": {
@@ -2852,11 +2852,11 @@
         "brew-src": "brew-src"
       },
       "locked": {
-        "lastModified": 1781389246,
-        "narHash": "sha256-ORqLAo/hoJdsZC7UPAuEHev6S0+XIqKEC7vjo5prz1k=",
+        "lastModified": 1783875858,
+        "narHash": "sha256-+yYNOkj/bkVQmwKH0hewqwBwAEoh4Gq2BmQPIP1jNrg=",
         "owner": "zhaofengli-wip",
         "repo": "nix-homebrew",
-        "rev": "de7953a08ed4bb9245be043e468561c17b89130d",
+        "rev": "60641da8324e6a1af716a0340d901ccb131c91ef",
         "type": "github"
       },
       "original": {
@@ -3020,11 +3020,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783870744,
-        "narHash": "sha256-1mC9dcSg3flcCN1jGdZ1XbjjSVej6heaQrDJRsMfXuQ=",
+        "lastModified": 1783881194,
+        "narHash": "sha256-46+SnjAZlxRtDet9t0vQLV7hiY3+c9C9a118+0tqCy4=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "a1bdbf3ad941427dd64989bfae3fd877135ef7fa",
+        "rev": "5b8b1e4f8a5dc5abed335d7197806d7c73e81e25",
         "type": "github"
       },
       "original": {
