@@ -43,6 +43,7 @@ _: {
       voiceAgentsEnabled = config.services.voice-agents.enable;
       discordsyncEnabled = config.services.discordsync.enable;
       overviewEnabled = config.services.overview.enable;
+      fileAndImageRenamerEnabled = config.services.file-and-image-renamer.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -95,6 +96,15 @@ _: {
               theme = "dark";
               color = "slate";
               headerStyle = "boxed";
+              hideVersion = true;
+              disableUpdateCheck = true;
+              useEqualHeights = true;
+              target = "_blank";
+              quicklaunch = {
+                searchDescriptions = true;
+                hideInternetSearch = false;
+                showSearchSuggestions = true;
+              };
               layout = {
                 Infrastructure = {
                   style = "row";
@@ -159,7 +169,7 @@ _: {
             ++ lib.optional hermesEnabled (
               mkService "Hermes" {
                 description = "AI Agent Gateway (Discord, Cron, Messaging)";
-                icon = "hermes-icon.png";
+                icon = "self-hosted-gateway.png";
                 statusStyle = "dot";
               }
             )
@@ -179,12 +189,12 @@ _: {
                 description = "Photo & Video Management";
                 icon = "immich.png";
                 statusStyle = "dot";
-                siteMonitor = "${svcUrl "immich"}/api/server-info/ping";
+                siteMonitor = "${svcUrl "immich"}/api/server/ping";
               })
               (mkService "DNS Blocker" {
                 href = "http://localhost:${toString config.services.dns-blocker.statsPort}/stats";
                 description = "DNS Block Stats";
-                icon = "shield.png";
+                icon = "blocky.png";
                 statusStyle = "dot";
                 siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
               })
@@ -214,7 +224,7 @@ _: {
                 mkService "Crush Daily" {
                   href = svcUrl "daily";
                   description = "AI-Powered Development Insights";
-                  icon = "ai.png";
+                  icon = "openai.png";
                   statusStyle = "dot";
                   siteMonitor = "${svcUrl "daily"}/api/health";
                 }
@@ -223,7 +233,7 @@ _: {
                 mkService "Manifest" {
                   href = svcUrl "manifest";
                   description = "Smart LLM Router (Cost Optimization)";
-                  icon = "ai.png";
+                  icon = "openai.png";
                   statusStyle = "dot";
                   siteMonitor = "${svcUrl "manifest"}/api/v1/health";
                 }
@@ -240,14 +250,14 @@ _: {
                 (mkService "LiveKit" {
                   href = svcUrl "voice";
                   description = "Real-Time Voice Infrastructure";
-                  icon = "voice.png";
+                  icon = "voip-info.png";
                   statusStyle = "dot";
                   siteMonitor = svcUrl "voice";
                 })
                 (mkService "Whisper ASR" {
                   href = svcUrl "whisper";
                   description = "Speech-to-Text (Gradio)";
-                  icon = "whisper.png";
+                  icon = "web-whisper.png";
                   statusStyle = "dot";
                   siteMonitor = svcUrl "whisper";
                 })
@@ -300,13 +310,13 @@ _: {
               ++ [
                 (mkService "dnsblockd" {
                   description = "DNS Block Page Server";
-                  icon = "shield.png";
+                  icon = "blocky.png";
                   statusStyle = "dot";
                   siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/metrics";
                 })
                 (mkService "EMEET PIXY" {
                   description = "Webcam Auto-Management Daemon";
-                  icon = "camera.png";
+                  icon = "camera-ui.png";
                   statusStyle = "dot";
                   siteMonitor = "http://localhost:${toString ports.emeet-pixyd}/metrics";
                 })
@@ -315,7 +325,7 @@ _: {
                 mkService "Monitor365" {
                   href = svcUrl "monitor";
                   description = "Device Monitoring Agent";
-                  icon = "monitor.png";
+                  icon = "uptime-kuma.png";
                   statusStyle = "dot";
                   siteMonitor = svcUrl "monitor";
                 }
@@ -326,16 +336,25 @@ _: {
                 mkService "Twenty CRM" {
                   href = svcUrl "crm";
                   description = "Customer Relationship Management";
-                  icon = "twenty.png";
+                  icon = "espocrm.png";
                   statusStyle = "dot";
                   siteMonitor = "${svcUrl "crm"}/healthz";
+                }
+              )
+              ++ lib.optional fileAndImageRenamerEnabled (
+                mkService "File Renamer" {
+                  href = svcUrl "renamer";
+                  description = "AI-Powered File & Image Renaming";
+                  icon = "mdi-file-rename-outline";
+                  statusStyle = "dot";
+                  siteMonitor = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
                 }
               )
               ++ [
                 (mkService "Taskwarrior" {
                   href = svcUrl "tasks";
                   description = "Task Sync Server (TaskChampion)";
-                  icon = "taskwarrior.png";
+                  icon = "taskcafe.png";
                   statusStyle = "dot";
                   siteMonitor = svcUrl "tasks";
                 })
@@ -348,7 +367,7 @@ _: {
                 (mkService "OpenSEO" {
                   href = svcUrl "seo";
                   description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
-                  icon = "search.png";
+                  icon = "google-search-console.png";
                   statusStyle = "dot";
                   siteMonitor = svcUrl "seo";
                 })
@@ -376,6 +395,22 @@ _: {
           "L+ ${stateDir}/widgets.yaml - - - - ${
             (pkgs.formats.yaml { }).generate "widgets.yaml" [
               { greeting.text = "evo-x2 Dashboard"; }
+              {
+                datetime = {
+                  text_size = "xl";
+                  format = {
+                    timeStyle = "short";
+                    dateStyle = "medium";
+                  };
+                };
+              }
+              {
+                search = {
+                  provider = "duckduckgo";
+                  target = "_blank";
+                  showSearchSuggestions = true;
+                };
+              }
               {
                 resources = {
                   cpu = true;

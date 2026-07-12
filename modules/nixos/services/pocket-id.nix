@@ -487,6 +487,7 @@ _: {
               (serviceDefaults { })
               (harden { MemoryMax = "512M"; })
               {
+                TimeoutStartSec = "180s";
                 ExecStartPre = "+${lib.getExe checkEncryptionKey}";
                 ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 120 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
               }

@@ -5,7 +5,15 @@
   ...
 }:
 let
+  # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
+  # 29360128 pages × 4096 = 112 GiB (exceeds ~94 GiB visible, but it's a ceiling not a reservation)
   ttmPagesLimit = 29360128;
+
+  # Pool cache for freed BO pages — pages retained for GPU reuse instead of returned to kernel.
+  # 6291456 pages × 4096 = 24 GiB (was 112 GiB — same as pages_limit, which meant freed pages
+  # were NEVER returned to the kernel, causing GPUActive=51+ GiB with only desktop workloads).
+  # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
+  ttmPagePoolSize = 6291456;
 in
 {
   # Bootloader and Kernel Configuration
@@ -128,16 +136,14 @@ in
   # TTM memory pool configuration for GPU workloads
   # System has 128 GiB physical RAM but only ~94 GiB visible to Linux (34 GiB BIOS VRAM carveout).
   # pages_limit = max pages TTM allocator can grab (ceiling, not reservation)
-  # page_pool_size = max pages TTM pool caches for reuse after BO free (freed pages retained, not returned to kernel)
-  # WARNING: both set to 112 GiB — this exceeds the 94 GiB visible to Linux. The GPU driver
-  # can consume virtually ALL system RAM for GPU buffer objects (GTT), starving CPU processes.
-  # Observed: GPUActive=51.4 GiB (55% of RAM) with only desktop workloads (Helium, Quickshell, niri).
-  # GPUReclaim=0 means none of those pages can be reclaimed under memory pressure.
-  # TODO: consider reducing page_pool_size to ~32 GiB so freed BO pages return to kernel faster,
-  # while keeping pages_limit high for ML model loading. Needs testing with Ollama.
+  # page_pool_size = max pages TTM pool caches for reuse after BO free
+  # Split (2026-07-12): page_pool_size reduced from 112 GiB → 24 GiB to fix the GPUActive black hole.
+  # With pool = 112 GiB, freed GPU BO pages were never returned to kernel → GPUActive=51+ GiB even
+  # with only desktop workloads → chronic memory pressure → BTRFS commit stalls → SQLite lock
+  # renewal failures → Pocket ID crash-loop → auth.home.lan down. See docs/status/ for analysis.
   boot.extraModprobeConfig = ''
     options ttm pages_limit=${toString ttmPagesLimit}
-    options ttm page_pool_size=${toString ttmPagesLimit}
+    options ttm page_pool_size=${toString ttmPagePoolSize}
   '';
 
   # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~94 GiB visible
