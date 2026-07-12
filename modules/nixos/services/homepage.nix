@@ -361,6 +361,7 @@ _: {
                 (mkService "Homepage" {
                   description = "This Page";
                   icon = "homepage.png";
+                  target = "_self";
                   statusStyle = "dot";
                   siteMonitor = svcUrl "dash";
                 })
@@ -416,6 +417,8 @@ _: {
                   cpu = true;
                   memory = true;
                   disk = "/";
+                  cputemp = true;
+                  network = true;
                   uptime = true;
                 };
               }

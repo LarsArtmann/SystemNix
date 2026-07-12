@@ -270,7 +270,7 @@ in
       };
       steam-config.enable = true;
       discordsync = {
-        enable = true; # Reactivated — upstream migrated to go-cqrs-lite v3 (ADR-0030)
+        enable = true; # Discord backup service
         gcsBucket = "discordsync-backup";
       };
 
