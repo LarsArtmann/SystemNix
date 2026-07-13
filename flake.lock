@@ -358,11 +358,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783884623,
-        "narHash": "sha256-Qe72dcuXe0vTgpGJ1n8bBHNqBpzo7Yj4VMDTNC35ax8=",
+        "lastModified": 1783887421,
+        "narHash": "sha256-3w3RM9eXTC4UzTLqH5A5QKaRHEJ4kfcFnPF6oYLM+TI=",
         "ref": "master",
-        "rev": "76bba1a13ad58eddf1dfedbe85de0138a68d6eb8",
-        "revCount": 227,
+        "rev": "888716d2ed300b6297d0647e4267b908c5a8f328",
+        "revCount": 228,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/crush-daily"
       },
@@ -419,11 +419,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783872011,
-        "narHash": "sha256-nW8uizZQ3HyiZtcjcYlNqdw3peGTPf7n4wrw6KgOlPg=",
+        "lastModified": 1783956789,
+        "narHash": "sha256-Hq6SUkxn6JRyysBQV7gstIba01P+6gI/VZFqX52hvUY=",
         "ref": "master",
-        "rev": "216046c3b4b8d1e25ebb0d0e899d3fbc23f9752f",
-        "revCount": 832,
+        "rev": "34e80fa0895721563e79be610b30ca4355928e3c",
+        "revCount": 838,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -505,11 +505,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1783871377,
-        "narHash": "sha256-1106WjWmHNxDZ1SDZOqYV0WE7H1vNprfMXLAmCDiQ8w=",
+        "lastModified": 1783916159,
+        "narHash": "sha256-mPmWoHL8Fq7N/f15xAwTBY5vIBFjBc0esdmsQ1bR//g=",
         "ref": "master",
-        "rev": "1ad427ac58ca4e77bb68c26f2b2fa10b76cc409d",
-        "revCount": 508,
+        "rev": "6e516d2fd73b7f28d2be9237ef609d2a99a8d316",
+        "revCount": 509,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/file-and-image-renamer"
       },
@@ -2380,11 +2380,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1783858037,
-        "narHash": "sha256-/Xa0TkKbEoOalummhTmo3kKQu2vITjQKiJyIaWsSEG8=",
+        "lastModified": 1783952874,
+        "narHash": "sha256-LjFHti0ySdWjnaqpNVcHgiVOuu/iqrMiGQbQixwoCdo=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "3661d99c2e4a4247392fc1a1eed5f37453393f8e",
+        "rev": "3a8490f6515dfea13292ae28e34f1174d2f68af1",
         "type": "github"
       },
       "original": {
@@ -2508,11 +2508,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1783877414,
-        "narHash": "sha256-cNN4Os7EJR4B40nBfu+5n0i8VZ6IQYxNjy7FtSHdPjo=",
+        "lastModified": 1783955761,
+        "narHash": "sha256-ler/Y3IOGZIL1ex7g2BWyFRRoWc60nYjzGIcmtTA7+0=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "ece6cf0bb94cca8df74f635570bd073db699ff8d",
+        "rev": "7d776fdf775089c62c13bf285eda5421b9a45d72",
         "type": "github"
       },
       "original": {
@@ -2666,11 +2666,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1783800937,
-        "narHash": "sha256-6gwQklKDYKaWkFBJ7CJD5nm89gKcv6A3H1atBJFeX+Q=",
+        "lastModified": 1783955742,
+        "narHash": "sha256-8OtgmNB6ZCwhaBEts2JdnffPF2IzllRf3hnTfcKESy8=",
         "ref": "master",
-        "rev": "0f0a05e27d94df55cb61fa5b5bd4f025a21df099",
-        "revCount": 2194,
+        "rev": "6c7aafccd962ace4d2d09197d9dd8ba64b2873a9",
+        "revCount": 2233,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/monitor365"
       },
@@ -2732,11 +2732,11 @@
         "xwayland-satellite-unstable": "xwayland-satellite-unstable"
       },
       "locked": {
-        "lastModified": 1783835967,
-        "narHash": "sha256-lbAgaLDBemsTac7H1HlABcaSKA9xCK5SBzYpEaklY4E=",
+        "lastModified": 1783896799,
+        "narHash": "sha256-eXIwrSxH79I3WgRg2q0zLEi6+fyEsd2PisHv2FaR0Po=",
         "owner": "sodiboo",
         "repo": "niri-flake",
-        "rev": "3374954b30e9e00637517f973a72ca928384b5f0",
+        "rev": "9d808f1bb6e86239780039bc18abb64e5415cb23",
         "type": "github"
       },
       "original": {
@@ -3020,11 +3020,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783881194,
-        "narHash": "sha256-46+SnjAZlxRtDet9t0vQLV7hiY3+c9C9a118+0tqCy4=",
+        "lastModified": 1783955405,
+        "narHash": "sha256-r82bRXXTeaQL2SYiqVWVuo+ATY8HXRj6iZI1578OVKk=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "5b8b1e4f8a5dc5abed335d7197806d7c73e81e25",
+        "rev": "c266a0ace10e59dde7abe351acd19c3d3be31fa9",
         "type": "github"
       },
       "original": {
@@ -3043,11 +3043,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1782724012,
-        "narHash": "sha256-cQiabhV0zUfQ8kLVm5krMYLtJAunJtTtT6/fKyIUgI4=",
+        "lastModified": 1783932250,
+        "narHash": "sha256-nS7s2lK2Dvypu8/+kK9Drd9iWds7BY+WoY2Gr74RiPw=",
         "owner": "ymtdzzz",
         "repo": "otel-tui",
-        "rev": "0a02a9cc6d930132fe71493ef25fba56a2345c61",
+        "rev": "9d64683c28be648617b634048ac7d9b96234f787",
         "type": "github"
       },
       "original": {
@@ -3466,11 +3466,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783834461,
-        "narHash": "sha256-FCmrs1StAghJDKfqy56KM96KZtxpYzgeq6zM3QO8wjA=",
+        "lastModified": 1783921439,
+        "narHash": "sha256-DsSIQSRMrLOz40LrGZ03sp2RlJ9sz3wKpd8XPTOzXnw=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "a286e5b998e852297a403786f063fb2c9fe7f57a",
+        "rev": "e013376c32a8fcf07ddb6ec71739552bc118b7bd",
         "type": "github"
       },
       "original": {
@@ -4305,11 +4305,11 @@
     "xwayland-satellite-unstable": {
       "flake": false,
       "locked": {
-        "lastModified": 1781226823,
-        "narHash": "sha256-28696iIw8uE0ZUyFTtzhEM8xMh85clCYypMxkvUi+sc=",
+        "lastModified": 1783895132,
+        "narHash": "sha256-Dl0Gvrig3EpE962hzF3ETPhUztlfuRhcmlpd8ioHN54=",
         "owner": "Supreeeme",
         "repo": "xwayland-satellite",
-        "rev": "8575d0ef55d70f9b4c46b6bffb3accf912217e1e",
+        "rev": "a2b5c635d8c8c99b286967658d0d177044887eb8",
         "type": "github"
       },
       "original": {
