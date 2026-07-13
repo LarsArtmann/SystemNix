@@ -50,7 +50,7 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
 
 ## Theme 4: Architecture & Code Quality
 
-- **Split large modules** — `monitor365.nix` (716L), `signoz.nix` (705L), `forgejo.nix` (583L) are too large. Extract sub-modules.
+- **Split large modules** — `signoz.nix` (943L), `forgejo.nix` (725L) are too large. Extract sub-modules. (monitor365.nix was 716L but is now 151L after restructuring.)
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`).
 - **Replace unbound with dnsblockd's embedded resolver** — ✅ DONE (2026-07-13). dnsblockd is now the sole DNS resolver on :53 with embedded sdns (DNSSEC, DoT, DoH, caching, local zones, LAN ACLs, blocklist hot-reload, cache flush). All six original gaps closed in the dnsblockd repo: local zones, upstream DoT forwarding, LAN ACLs, zone-level NXDOMAIN, DNS cache flush, IPv6 disable. SystemNix migrated: dns-blocker.nix generates dnsblockd YAML with `dns_enabled: true`, all unbound config removed, all service dependencies updated.
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing.

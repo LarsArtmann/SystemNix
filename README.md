@@ -15,9 +15,9 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI |
 | **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
 | **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
-| **Monitoring** | SigNoz (18 alert rules, 6 dashboards), Gatus (41+ health checks), ActivityWatch |
-| **Networking** | Caddy reverse proxy (TLS), Unbound DNS with 2.5M+ blocked domains, DNSSEC |
-| **Storage** | BTRFS with btrbk snapshots (daily), ZRAM swap, monthly scrub |
+| **Monitoring** | SigNoz (18 alert rules, 9 dashboards), Gatus (52+ health checks), ActivityWatch |
+| **Networking** | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), 2.5M+ blocked domains |
+| **Storage** | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub |
 
 ## Quick Start
 
@@ -52,7 +52,7 @@ nix flake check --no-build  # Validate configuration syntax
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
 ├── modules/nixos/services/     # 35 NixOS service modules + 6 desktop modules (auto-discovered, ~34 enabled)
-├── pkgs/                        # 7 custom package derivations (Go, Rust, Python, Node.js, AppImage) + dms-plugins/
+├── pkgs/                        # 6 custom package derivations + dms-plugins/ (13 widgets)
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
 ├── lib/                         # 10 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
@@ -78,7 +78,7 @@ SystemNix/
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (41+ health checks) + SigNoz (18 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (52+ health checks) + SigNoz (18 alert rules, 9 dashboards):
 
 | Service | Port | URL | Description |
 |---------|------|-----|-------------|
@@ -101,16 +101,17 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **PMA** | — | — | Projects Management Automation (AI commit messages, repo discovery) |
 | **Dual-WAN** | — | — | MPTCP dual-WAN with route health monitoring |
 | **Gatus** | 9110 | `status.home.lan` | Health check monitoring with Discord alerts |
-| **DNS Blocker** | 53, 8050 | — | Unbound + dnsblockd, 23 blocklists, 2.5M+ domains blocked, DoT upstream |
+| **DNS Blocker** | 53, 8050 | — | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked |
 | **Mullvad VPN** | — | — | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf) |
 | **DiscordSync** | — | — | Continuous Discord channel backup bot |
 
 ### DNS Blocking
 
+- dnsblockd with embedded sdns recursive resolver (DNSSEC, DoT, DoH, caching, local zones, LAN ACLs)
 - 2.5M+ blocked domains across 23 blocklists (ads, trackers, malware, telemetry, gambling, native device trackers)
-- Upstream: Quad9 (DNS-over-TLS) + Cloudflare fallback
-- Local `.home.lan` DNS records for all services
-- DNSSEC enabled, qname minimization
+- Blocklist hot-reload with automatic cache flush
+- Local `.home.lan` DNS zone with wildcard resolution for all services
+- IPv6 disabled at DNS level (no global IPv6 on evo-x2)
 - **DNS failover**: Raspberry Pi 3 secondary resolver with VRRP VIP (planned)
 
 ## NixOS Desktop
@@ -129,7 +130,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **CPU** | AMD Ryzen AI Max+ 395 (Strix Halo), amd_pstate=guided |
 | **GPU** | AMD integrated (amdgpu), Mesa latest, ROCm compute stack |
 | **NPU** | AMD XDNA via nix-amd-npu, XRT runtime |
-| **Memory** | 128GB unified, ZRAM swap (32GB), tuned for AI/ML workloads |
+| **Memory** | 128GB physical (~94 GiB visible after GPU VRAM carveout), ZRAM swap (~16 GiB), tuned for AI/ML workloads |
 | **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily) |
 | **Boot** | systemd-boot (50 generations), latest Linux kernel |
 | **Network** | Realtek 2.5G Ethernet, MediaTek WiFi |

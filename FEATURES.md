@@ -56,7 +56,7 @@ _A brutally honest audit of every feature the project actually has._
 | SOPS secrets management | ✅ | `sops.nix` | Age-encrypted via SSH host key, 4 sops files, auto-restart per secret, ALL service-specific secrets guarded with `lib.optionalAttrs` |
 | Pocket ID (OIDC provider) | ✅ | `pocket-id.nix` | Passkey-only OIDC provider, Go backend, SQLite, web UI for user/client management
 | oauth2-proxy | ✅ | `oauth2-proxy.nix` | Forward-auth bridge between Caddy and Pocket ID, cookie-based sessions |
-| DNS Failover (Keepalived VRRP) | 📋 | `dns-failover.nix` | Two-node VRRP cluster, unbound health tracking, GARP refresh — Pi 3 not provisioned |
+| DNS Failover (Keepalived VRRP) | 📋 | `dns-failover.nix` | Two-node VRRP cluster, dnsblockd health tracking, GARP refresh — Pi 3 not provisioned |
 
 ### Self-Hosted Applications
 
@@ -66,7 +66,7 @@ _A brutally honest audit of every feature the project actually has._
 | Forgejo repos (declarative mirroring) | ✅ | `forgejo-repos.nix` | Auto-sync on rebuild + daily timer, push mirrors to GitHub, hardened oneshot, sops-managed tokens |
 | Homepage Dashboard | ✅ | `homepage.nix` | Catppuccin Mocha, programmatic `mkGroup`/`mkService` tiles, 5 categories, `ALLOWED_HOSTS`, cache dir, conditional tiles per service |
 | Immich (photo/video management) | ✅ | `immich.nix` | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access |
-| PhotoMap AI | 🔧 | `photomap.nix` | CLIP embedding visualization, OCI container, port 8051, disabled in config |
+| ~~PhotoMap AI~~ | ❌ | — | Removed (2026-07-04): OCI container permission issue, niche feature, maintenance burden |
 | SigNoz (observability) | ✅ | `signoz.nix` | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 18 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics |
 | TaskChampion (Taskwarrior sync) | ✅ | `taskchampion.nix` | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days |
 | Twenty CRM | ✅ | `twenty.nix` | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan |
@@ -76,9 +76,9 @@ _A brutally honest audit of every feature the project actually has._
 | Overview (project dashboard) | ✅ | `overview` flake input | Local project dashboard, git repo discovery, stats, activity, port 8083 |
 | Crush Daily (AI insights) | ✅ | `crush-daily.nix` | AI-powered development insights from Crush databases, port 8081, `daily.home.lan` |
 | OpenSEO (SEO suite) | ✅ | `openseo.nix` + `pkgs/openseo.nix` | Self-hosted SEO: rank tracking, keyword research, backlinks. Native NixOS service (built from source via Vite/pnpm, workerd runtime), port 3002, `seo.home.lan` |
-| Monitor365 (device monitoring) | ⚠️ | `monitor365.nix` | Agent + server dashboard, ActivityWatch integration — server stability uncertain after DB path fix, needs `systemctl reset-failed` |
+| Monitor365 (device monitoring) | ✅ | `monitor365.nix` | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID |
 | PMA (auto-commit daemon) | ✅ | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval |
-| Gatus (health checks) | ✅ | `gatus-config.nix` | 38 health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |
+| Gatus (health checks) | ✅ | `gatus-config.nix` | 52+ health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan` |
 | Disk Monitor | ✅ | `disk-monitor.nix` | Desktop notifications at disk usage thresholds |
 | NVMe Health Monitor | ✅ | `nvme-health-monitor.nix` | Desktop notifications for critical NVMe SMART events |
 | DiscordSync | ✅ | `discordsync.nix` | Continuous Discord channel backup bot — real-time sync via Discord Gateway, turso-sync backend (local + cloud), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). GCS attachment backup opt-in via `gcsBucket`. |
@@ -248,25 +248,25 @@ _A brutally honest audit of every feature the project actually has._
 | Bluetooth | ✅ | Power-on-boot, A2DP source/sink (Google Nest Audio), Blueman GUI |
 | DDC/CI brightness | ✅ | i2c-dev kernel module, ddcutil for external monitor brightness |
 | BTRFS root (`/`) | ✅ | zstd compression, noatime |
-| BTRFS data (`/data`) | ✅ | zstd:3 compression, SSD optimizations, async discard, space_cache=v2 — Docker lives here |
+| BTRFS data (`/data`) | ✅ | zstd:3 compression, SSD optimizations, space_cache=v2 — Docker lives here (discard=async removed: QLC NAND I/O choke) |
 | FAT32 boot (`/boot`) | ✅ | Restrictive masks (fmask=0077, dmask=0077) |
 | BTRFS snapshots | ✅ | btrbk: daily snapshots of root (@), 14d + 4w retention, monthly scrub, verify timer alerts stale snapshots |
-| ZRAM swap | ✅ | 50% of RAM (64GB compressed) |
+| ZRAM swap | ✅ | 17% of visible RAM (~16 GiB compressed), zstd compression |
 | AMD virtualization | ✅ | KVM-AMD + AMD microcode updates |
 
 ### Networking & DNS
 
-#### DNS Stack (dnsblockd — ~930 lines of production Go)
+#### DNS Stack (dnsblockd with embedded sdns resolver)
 
-The DNS blocker is one of the largest custom features in the project — a full Pi-hole-like system with its own Go application, NixOS module, and processor binary.
+The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole DNS resolver on :53. Unbound was fully removed (2026-07-13). dnsblockd lives in its own repo (`github.com/LarsArtmann/dnsblockd`).
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| Unbound resolver | ✅ | 2 threads, 32MB msg cache, 64MB rrset cache, DNSSEC, qname minimization, DoT upstream (Quad9 + Cloudflare) |
+| dnsblockd embedded resolver | ✅ | sdns recursive resolver: DNSSEC, DoT/DoH listeners, caching, local zones with NXDOMAIN boundaries, LAN ACLs, cache flush on blocklist reload, IPv6 disable |
 | dnsblockd (Go app) | ✅ | ~930-line production Go: dynamic TLS cert generation per domain (SNI-based, CA-signed), Catppuccin-themed block page UI |
-| Blocklist processing | ✅ | Build-time: 23 blocklists fetched via `fetchurl` (StevenBlack + HaGeZi ultimate/tif/doh + 14 native device trackers), processed by `dnsblockd process` into unbound config |
+| Blocklist processing | ✅ | Build-time: 23 blocklists fetched via `fetchurl` (StevenBlack + HaGeZi ultimate/tif/doh + 14 native device trackers), processed by `dnsblockd process` into dnsblockd config |
 | 10-category system | ✅ | Advertising 📢, Tracking 👀, Analytics 📊, Malware 🦠, Phishing 🎣, Gambling 🎰, Adult 🔞, Social 💬, Crypto 💰, Scam 🎭 |
-| Temp-allow API | ✅ | Bypass blocks for 5m/15m/60m/24h via web UI, auto-redirects after allow, unbound reload + cache flush |
+| Temp-allow API | ✅ | Bypass blocks for 5m/15m/60m/24h via web UI, auto-redirects after allow, dnsblockd reload + cache flush |
 | False positive reporting | ✅ | `/api/report` endpoint, last 100 reports in memory |
 | Prometheus metrics | ✅ | `dnsblockd_blocked_total`, `dnsblockd_active_temp_allows`, `dnsblockd_false_positive_reports` on `/metrics` |
 | Stats API (port 9090) | ✅ | Top blocked domains, recent blocks (100), health endpoint, total blocked count, uptime |
@@ -415,7 +415,7 @@ The DNS blocker is one of the largest custom features in the project — a full 
 | `verify-deployment.sh` | ✅ | Pre-deployment validator | Boot config, AMD GPU, Niri, SSH hardening, user/groups, security, generates timestamped report |
 | `test-home-manager.sh` | ✅ | Post-deploy HM integration | Starship, Fish aliases, env vars (EDITOR, LANG), PATH entries, Tmux settings |
 | `test-shell-aliases.sh` | ✅ | ADR-002 alias validation | 8 common + 3 platform aliases across Fish/Zsh/Bash, percentage grading |
-| `dns-diagnostics.sh` | ✅ | Full DNS diagnostics | Resolution, blocking, DoT upstream, cache stats, unbound config validation |
+| `dns-diagnostics.sh` | ✅ | Full DNS diagnostics | Resolution, blocking, cache stats, dnsblockd config validation |
 | `lib.sh` | ✅ | Shared shell library | `PROJECT_ROOT` auto-detect, platform detection, helper functions |
 
 ---
@@ -438,7 +438,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Area | Issue | Severity |
 |------|-------|----------|
 | Raspberry Pi 3 | Hardware not provisioned — entire DNS failover cluster is planned-only | High |
-| PhotoMap AI | Disabled in configuration, port 8051 | Medium |
+| ~~PhotoMap AI~~ | Removed (2026-07-04) — module, port, Docker image all cleaned up | — |
 | Multi-WM (Sway) | Enabled as backup compositor at SDDM login — may have minor bitrot | Low |
 | Twenty CRM | Module exists, enabled in configuration, Caddy at crm.home.lan | Low |
 | Voice agents | Disabled in configuration, Whisper Docker + ROCm pipeline | Medium |
@@ -463,7 +463,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Cross-platform preferences | `platforms/common/preferences.nix` | Shared option module — drives macOS dark mode AND Linux GTK theme from single source |
 | Dendritic modules | `modules/nixos/services/*.nix` | Each file is self-contained flake-parts module with own `config` options |
 | Local network options | `platforms/nixos/system/local-network.nix` | `networking.local.*` module options used by both evo-x2 and rpi3-dns |
-| Shared DNS blocklists | `platforms/shared/dns-blocklists.nix` | Blocklist config consumed by both evo-x2 unbound and rpi3-dns |
+| Shared DNS blocklists | `platforms/shared/dns-blocklists.nix` | Blocklist config consumed by both evo-x2 dnsblockd and rpi3-dns |
 
 ### Architecture Decision Records (ADRs)
 

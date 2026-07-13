@@ -1,8 +1,8 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-11 (BTRFS Pareto plan implementation: scrub metrics, compsize metrics, /data snapshots, Gatus alerting)
-**Last deploy:** 2026-07-05 (`26.11.20260705.d407951`)
-**Last commit:** 2026-07-08 (`4d75e83b` — NVMe discard=async status doc)
+**Updated:** 2026-07-13 (DNS migration: unbound → dnsblockd sole resolver committed)
+**Last deploy:** 2026-07-09 (`26.11.20260709` — build succeeded, 3 activation failures fixed)
+**Last commit:** 2026-07-13 (`076dc778` — feat(dns): migrate from unbound to dnsblockd as sole DNS resolver)
 
 ---
 
@@ -10,7 +10,7 @@
 
 ### Priority 0: Critical (Block or Risk Data Loss)
 
-- [ ] **Deploy the `discard=async` → `fstrim.timer` fix** — Fix is in `hardware-configuration.nix` (TRIM via mount option removed). Running system still has `discard=async` on 8 BTRFS mounts. Root cause of the 2026-07-08 watchdog hard-reset (253ms discard latency → 17.7s BTRFS commit → freeze → 30s watchdog → reset). Every nix build risks recurrence until deployed. Requires `nix run .#deploy` + reboot.
+- [ ] **Deploy pending changes** — DNS migration (commit `076dc778`), NVMe discard fix, monitor365/openseo fixes are in source. Build succeeded 2026-07-09 but DNS migration is newer. Needs `nix run .#deploy` + reboot to activate the unbound→dnsblockd cutover.
 - [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
 - [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum (controller returning garbage under I/O pressure). No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /` to map all bad blocks and assess corruption extent. **Monitoring infrastructure is complete:** scrub metrics collected every 5 min (`btrfs_scrub_errors_total`, `btrfs_scrub_status`, `btrfs_scrub_error_free`), Gatus alerts on Discord when errors found.
 - [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation, available spare below threshold) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know. If media errors are climbing, drive replacement is needed urgently.
@@ -114,8 +114,8 @@ All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in S
 - [ ] **AppArmor enablement** — commented out in security-hardening.nix
 - [ ] **Darwin Home Manager parity** — disk constrained (256GB, 90%+ full)
 - [ ] **Monitor365 agent→server auth** — no auth, anyone on LAN can POST data
-- [ ] **Disabled service triage** — voice-agents, minecraft, photomap: decide enable or remove
-- [ ] **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)
+- [ ] **Disabled service triage** — voice-agents, minecraft: decide enable or remove (photomap already removed)
+- [ ] **Split large modules** — signoz (943L), forgejo (725L), monitor365 (151L, previously 716L — already reduced)
 
 ---
 
