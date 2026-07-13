@@ -95,12 +95,12 @@
           after = [
             "network-online.target"
             "sops-nix.service"
-            "unbound.service"
+            "dnsblockd.service"
           ];
           wants = [
             "network-online.target"
             "sops-nix.service"
-            "unbound.service"
+            "dnsblockd.service"
           ];
           inherit onFailure;
           startLimitIntervalSec = 300;

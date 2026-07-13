@@ -17,45 +17,6 @@ let
     ;
   interface = "eth0";
   domain = "home.lan";
-
-  fetchedBlocklists = map (bl: {
-    inherit (bl) name;
-    file = pkgs.fetchurl {
-      inherit (bl) url;
-      inherit (bl) hash;
-      name = "${bl.name}-raw";
-    };
-  }) blocklists.blocklists;
-
-  whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (
-    lib.concatStringsSep "\n" blocklists.whitelist
-  );
-
-  processorArgs = lib.concatStringsSep " " (
-    lib.concatMap (bl: [
-      (toString bl.file)
-      bl.name
-    ]) fetchedBlocklists
-  );
-
-  processedBlocklist =
-    pkgs.runCommand "dns-blocker-processed"
-      {
-        nativeBuildInputs = [ pkgs.dnsblockd ];
-      }
-      ''
-        mkdir -p $out
-        dnsblockd process \
-          "0.0.0.0" \
-          ${whitelistFile} \
-          $out/unbound.conf \
-          $out/mapping.json \
-          ${processorArgs}
-      '';
-
-  unboundIncludeFile = pkgs.writeText "dns-blocker-unbound.conf" ''
-    include: ${processedBlocklist}/unbound.conf
-  '';
 in
 {
   imports = [
@@ -117,41 +78,49 @@ in
       };
     };
 
-    unbound = {
+    # dnsblockd: embedded DNS resolver + block page server.
+    # Direct root recursion (no DoT forwarders) — simpler and sufficient
+    # for a backup node. Local zones mirror evo-x2 for LAN consistency.
+    dns-blocker = {
       enable = true;
 
-      settings = {
-        server = {
-          interface = [
-            "0.0.0.0"
-            "::0"
-          ];
-          access-control = [
-            "127.0.0.0/8 allow"
-            "::1/128 allow"
-            "${subnet} allow"
-          ];
+      blockIP = piIP;
+      blockPort = 80;
+      blockTLSPort = 443;
+      blockInterface = "eth0";
+      blockIPPrefix = 24;
+      statsPort = 9090;
 
-          num-threads = 2;
-          msg-cache-size = "32m";
-          rrset-cache-size = "64m";
+      inherit (blocklists)
+        blocklists
+        whitelist
+        extraDomains
+        categories
+        ;
 
-          include = toString unboundIncludeFile;
+      enableDNSSEC = true;
+      tempAllowAll = false;
 
-          root-hints = "${pkgs.dns-root-data}/root.hints";
-
-          local-zone =
-            map (d: ''"${d}" transparent'') blocklists.whitelist
-            ++ map (d: ''"${d}" always_nxdomain'') blocklists.extraDomains
-            ++ [ ''"${domain}." static'' ];
-          local-data =
-            map (subdomain: ''"${subdomain}.${domain}. IN A ${lanIP}"'') dnsLocal.localSubdomains
-            ++ [
-              ''"*.${domain}. IN A ${lanIP}"''
-              ''"${domain}. IN A ${lanIP}"''
-            ];
+      # Local DNS records — mirror evo-x2 for LAN consistency.
+      # On failover, clients query rpi3 and get the same home.lan records.
+      localRecords =
+        builtins.listToAttrs (
+          map (subdomain: {
+            name = "${subdomain}.${domain}.";
+            value = lanIP;
+          }) dnsLocal.localSubdomains
+        )
+        // {
+          "*.${domain}." = lanIP;
+          "${domain}." = lanIP;
         };
-      };
+      localZones = [ "${domain}." ];
+      allowedNetworks = [
+        "127.0.0.0/8"
+        "::1/128"
+        "${subnet}"
+      ];
+      dnsIPv6Enabled = false;
     };
 
     dns-failover = {
@@ -177,7 +146,6 @@ in
 
   environment.systemPackages = with pkgs; [
     dig
-    unbound
     pkgs.nur.repos.charmbracelet.crush
   ];
 
@@ -192,7 +160,6 @@ in
       wantedBy = [ "timers.target" ];
     };
     services = {
-      unbound.reloadIfChanged = true;
       crush-update-providers = {
         description = "Update Crush AI providers";
         onFailure = [ "crush-update-failure.service" ];

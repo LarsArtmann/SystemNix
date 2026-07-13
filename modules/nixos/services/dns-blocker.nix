@@ -1,15 +1,14 @@
-# DNS blocker: Unbound + blocklists + dnsblockd block page + stats API
+# DNS blocker: dnsblockd (embedded sdns resolver) + blocklists + block page + stats API
 #
-# Blocklist fetch + process pipeline mirrors dnsblockd's own NixOS module
-# (nix/modules/nixos/default.nix). The duplication exists because this module
-# predates dnsblockd's module and adds SystemNix-specific integration
-# (sops secrets, IP attach, Unbound tuning, Firefox cert trust).
+# dnsblockd is the sole DNS resolver on :53 with an embedded recursive resolver
+# (sdns), DNSSEC, local zones, LAN ACLs, DoT forwarding, and blocklist matching.
+# The block-page HTTP server runs on the block IP (:80/:443).
 #
-# Migration path: When ready, import dnsblockd's module via
-#   inputs.dnsblockd.nixosModules.default
-# and compose only the SystemNix-specific extras here. The shared
-# blocklist processing (fetchedBlocklists → processorArgs → processedBlocklist)
-# can then be removed from this module.
+# Blocklist files are fetched at eval time (pkgs.fetchurl) and passed directly
+# to dnsblockd via the dns_blocklists config key — dnsblockd parses them natively
+# at startup and hot-reloads them on interval. The dnsblockd process subcommand
+# still runs at build time to generate mapping.json (domain → source → category)
+# used by the HTTP block page for category display.
 _: {
   flake.nixosModules.dns-blocker = {
     config,
@@ -61,7 +60,7 @@ _: {
       })
       cfg.blocklists;
 
-    # Whitelist file
+    # Whitelist file (used by dnsblockd process for mapping.json generation)
     whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (lib.concatLines cfg.whitelist);
 
     # Build processor arguments: blocklist-file name pairs
@@ -73,7 +72,8 @@ _: {
       fetchedBlocklists
     );
 
-    # Run processor at build time — dnsblockd process subcommand
+    # Run processor at build time to generate mapping.json (domain → source → category).
+    # The unbound.conf output is no longer used but the subcommand requires the arg.
     processedBlocklist =
       pkgs.runCommand "dns-blocker-processed"
       {
@@ -89,14 +89,15 @@ _: {
           ${processorArgs}
       '';
 
-    # Unbound include file: temp-allowlist BEFORE blocklist so transparent zones win
-    unboundIncludeFile = pkgs.writeText "dns-blocker-unbound.conf" ''
-      include: /var/lib/dnsblockd/temp-allowlist.conf
-      include: ${processedBlocklist}/unbound.conf
-    '';
+    # Blocklist file paths for dnsblockd's native DNS blocklist loader.
+    # When tempAllowAll is true, pass an empty list so nothing is blocked.
+    blocklistPaths =
+      if cfg.tempAllowAll
+      then []
+      else map (bl: toString bl.file) fetchedBlocklists;
   in {
     options.services.dns-blocker = {
-      enable = mkEnableOption "DNS blocker with unbound + block page";
+      enable = mkEnableOption "DNS blocker with embedded resolver + block page";
 
       blockInterface = mkOption {
         type = types.str;
@@ -169,12 +170,6 @@ _: {
         description = "Additional domains to block (not in blocklists)";
       };
 
-      enableDNSSEC = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Enable DNSSEC validation";
-      };
-
       categories = mkOption {
         type = types.attrsOf types.str;
         default = {};
@@ -184,104 +179,83 @@ _: {
       tempAllowAll = mkOption {
         type = types.bool;
         default = false;
-        description = "Temporarily allow all DNS queries (disable blocking). Write 'local-zone: \".\" transparent' to temp-allowlist.conf";
+        description = "Temporarily allow all DNS queries (skip blocklist loading). When true, dnsblockd resolves all queries without blocking.";
       };
 
-      upstreamDns = mkOption {
+      # ── DNS resolver options (embedded sdns) ──
+
+      enableDNSSEC = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable DNSSEC validation in the embedded resolver";
+      };
+
+      dnsForwarders = mkOption {
         type = types.listOf types.str;
         default = [];
         description = ''
-          Upstream DNS servers for forwarding (DoT format: IP@PORT#HOSTNAME).
-          When empty (default), Unbound performs full root recursion using
-          the IANA root hints and DNSSEC root trust anchor — no third-party
-          dependency, maximum privacy.
+          Upstream DNS forwarders (sdns format).
+          When empty (default), the embedded resolver performs full root recursion
+          using IANA root hints and DNSSEC — no third-party dependency, maximum privacy.
 
           Set to forward through a trusted resolver when:
           - Behind a VPN/firewall that blocks port 53
           - ISP injects fake DNS responses
           - You want the speed of a caching forwarder
 
-          Example: ["194.242.2.2@853#dns.mullvad.net" "9.9.9.9@853#dns.quad9.net"]
+          Example: ["tls://194.242.2.2" "tls://9.9.9.9"]
         '';
+      };
+
+      localRecords = mkOption {
+        type = types.attrsOf types.str;
+        default = {};
+        example = {
+          "forgejo.home.lan." = "192.168.1.150";
+        };
+        description = "Static DNS A/AAAA records (domain → IP). Answered before blocklist or resolver lookup.";
+      };
+
+      localZones = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = ["home.lan."];
+        description = "Local zone boundaries — returns NXDOMAIN for unknown names within these zones (like Unbound local-zone static). Prevents internal naming from leaking upstream.";
+      };
+
+      allowedNetworks = mkOption {
+        type = types.listOf types.str;
+        default = ["127.0.0.0/8"];
+        description = "CIDR networks allowed to query the DNS resolver. Prevents open-resolver abuse.";
+      };
+
+      dnsIPv6Enabled = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Enable IPv6 upstream DNS resolution. Set to false on networks without global IPv6 (matches Unbound's do-ip6 = false).";
+      };
+
+      dnsReloadInterval = mkOption {
+        type = types.str;
+        default = "1h";
+        description = "Blocklist hot-reload interval (Go duration format).";
       };
     };
 
     config = lib.mkIf cfg.enable {
-      services.unbound = {
-        enable = true;
-        resolveLocalQueries = true;
-        enableRootTrustAnchor = cfg.enableDNSSEC;
-
-        settings = {
-          server = {
-            # Listen on both IPv4 and IPv6 so all local clients can query
-            # the resolver. do-ip6 = false below controls upstream behavior
-            # (no IPv6 queries to roots/forwarders), not local listening.
-            interface = [
-              "0.0.0.0"
-              "::"
-            ];
-            do-ip6 = false; # Avoid IPv6 timeouts on networks without global IPv6
-            access-control = [
-              "127.0.0.0/8 allow"
-              "::1/128 allow"
-              "${config.networking.local.subnet} allow"
-            ];
-
-            num-threads = 2;
-            msg-cache-size = "64m";
-            rrset-cache-size = "128m";
-            key-cache-size = "16m"; # DNSSEC key cache — unbounded by default
-            neg-cache-size = "16m"; # NXDOMAIN cache — unbounded by default
-            infra-cache-numhosts = 10000; # Limit RTT cache entries (default 10000, explicit for documentation)
-            prefetch = true;
-            prefetch-key = true;
-
-            qname-minimisation = true;
-            hide-identity = true;
-            hide-version = true;
-
-            harden-glue = true;
-            harden-dnssec-stripped = cfg.enableDNSSEC;
-            harden-below-nxdomain = true;
-            harden-referral-path = true;
-
-            include = toString unboundIncludeFile;
-
-            local-zone =
-              map (d: ''"${d}." transparent'') cfg.whitelist
-              ++ map (d: ''"${d}." always_nxdomain'') cfg.extraDomains;
-          };
-
-          # When upstreamDns is set, forward all queries via DoT.
-          # When empty (default), Unbound uses native root recursion —
-          # no third-party dependency, maximum privacy and resilience.
-          forward-zone = lib.optional (cfg.upstreamDns != []) {
-            name = ".";
-            forward-tls-upstream = "yes";
-            forward-addr = cfg.upstreamDns;
-          };
-
-          remote-control = {
-            control-enable = true;
-            control-interface = "/run/unbound/unbound.ctl";
-          };
-        };
-      };
+      assertions = [
+        {
+          assertion = cfg.allowedNetworks != [];
+          message = "services.dns-blocker.allowedNetworks must not be empty — an empty ACL makes dnsblockd an open resolver.";
+        }
+        {
+          assertion = cfg.localZones != [] || cfg.localRecords == {};
+          message = "services.dns-blocker.localZones must be set when localRecords has entries — without zone boundaries, unknown names in local zones leak upstream.";
+        }
+      ];
 
       systemd = {
         services = {
-          unbound = {
-            reloadIfChanged = true;
-
-            # Skip unbound-anchor network fetch on every boot — certs are cached in
-            # /var/lib/unbound/ and root key updates happen via RFC 5011 auto-trust.
-            # Saves ~4s per boot.
-            preStart = lib.mkForce ''
-              ${config.services.unbound.package}/bin/unbound-control-setup -d /var/lib/unbound
-            '';
-          };
-
           dnsblockd-attach-ip = {
             description = "Attach dnsblockd block IP to ${cfg.blockInterface}";
             wantedBy = ["multi-user.target"];
@@ -303,25 +277,23 @@ _: {
                 ExecStart = lib.getExe attachIPScript;
               }
               (harden {
-                ProtectHome = false; # Oneshot — ip addr add needs no /home access; false overrides harden default
+                ProtectHome = false;
                 CapabilityBoundingSet = "CAP_NET_ADMIN";
-                NoNewPrivileges = false; # CAP_NET_ADMIN requires relaxed NoNewPrivileges for network config
+                NoNewPrivileges = false;
               })
               (serviceOneshotDefaults {})
             ];
           };
 
           dnsblockd = {
-            description = "DNS Block Page Server";
+            description = "DNS Block Page Server + Embedded Resolver";
             after = [
               "dnsblockd-attach-ip.service"
-              "unbound.service"
               "sops-nix.service"
             ];
             wants = [
               "dnsblockd-attach-ip.service"
               "sops-nix.service"
-              "unbound.service"
             ];
             wantedBy = ["multi-user.target"];
             inherit onFailure;
@@ -336,11 +308,6 @@ _: {
                 runtimeInputs = [pkgs.coreutils];
                 text = ''
                   install -d /var/lib/dnsblockd
-                  ${
-                    if cfg.tempAllowAll
-                    then ''printf 'local-zone: "." transparent\n' > /var/lib/dnsblockd/temp-allowlist.conf''
-                    else "[ -f /var/lib/dnsblockd/temp-allowlist.conf ] || printf '# dnsblockd temp allowlist\\n' > /var/lib/dnsblockd/temp-allowlist.conf"
-                  }
                 '';
               };
               caCert = config.sops.secrets.dnsblockd_ca_cert.path;
@@ -356,10 +323,32 @@ _: {
                     ca_cert_file = "${caCert}";
                     ca_key_file = "${caKey}";
                     blocklist_mapping_file = "${processedBlocklist}/mapping.json";
-                    unbound_control = "${config.services.unbound.package}/bin/unbound-control";
                     temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
                     tracking_mode = "METADATA_ONLY";
                     tracking_db_path = "/var/lib/dnsblockd/tracking.db";
+
+                    # ── Embedded DNS resolver ──
+                    dns_enabled = true;
+                    dns_listen_addr = "0.0.0.0";
+                    dns_port = 53;
+                    dns_block_ip = cfg.blockIP;
+                    dns_block_response = "zero_ip";
+                    dns_blocklists = blocklistPaths;
+                    dns_dnssec_enabled = cfg.enableDNSSEC;
+                    dns_ipv6_enabled = cfg.dnsIPv6Enabled;
+                    dns_reload_interval = cfg.dnsReloadInterval;
+                  }
+                  // lib.optionalAttrs (cfg.dnsForwarders != []) {
+                    dns_forwarders = cfg.dnsForwarders;
+                  }
+                  // lib.optionalAttrs (cfg.localRecords != {}) {
+                    dns_local_records = cfg.localRecords;
+                  }
+                  // lib.optionalAttrs (cfg.localZones != []) {
+                    dns_local_zones = cfg.localZones;
+                  }
+                  // lib.optionalAttrs (cfg.allowedNetworks != []) {
+                    dns_allowed_networks = cfg.allowedNetworks;
                   }
                   // lib.optionalAttrs (cfg.categories != {}) {
                     categories_file = "${categoriesJSON}";
@@ -398,7 +387,6 @@ _: {
                   ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
                   StateDirectory = "dnsblockd";
                   WorkingDirectory = "/var/lib/dnsblockd";
-                  SupplementaryGroups = ["unbound"];
                   RestrictAddressFamilies = [
                     "AF_INET"
                     "AF_INET6"
@@ -409,14 +397,9 @@ _: {
           };
         };
 
-        tmpfiles.rules =
-          [
-            (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
-          ]
-          ++ lib.optional (!cfg.tempAllowAll) "f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - # dnsblockd temp allowlist placeholder"
-          ++ lib.optional cfg.tempAllowAll ''
-            f /var/lib/dnsblockd/temp-allowlist.conf 0644 root root - local-zone: "." transparent
-          '';
+        tmpfiles.rules = [
+          (mkStateDir "/var/lib/dnsblockd" "0755" "root" "root")
+        ];
       };
     };
   };

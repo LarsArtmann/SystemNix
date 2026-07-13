@@ -186,7 +186,6 @@ in
               criticalSystemServices = [
                 "caddy"
                 "forgejo"
-                "unbound"
                 "dnsblockd"
                 "postgresql"
               ];

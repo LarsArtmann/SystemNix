@@ -22,7 +22,7 @@ in
     ./networking.nix
     ./local-network.nix
     ./primary-user.nix
-    ./dns-blocker-config.nix # DNS blocker with unbound + block page (replaces Technitium)
+    ./dns-blocker-config.nix # DNS blocker: dnsblockd embedded resolver + block page
     ./snapshots.nix # BTRFS snapshots with btrbk
     ./btrfs-health.nix # BTRFS chunk allocation health monitor + GC guard (prevents 2026-06-26 crash)
     ./scheduled-tasks.nix # Daily scheduled tasks (crush update-providers, etc.)
@@ -299,7 +299,7 @@ in
 
       # Mullvad VPN daemon — DISABLED.
       # talpid_dns periodically overwrites /etc/resolv.conf even when disconnected,
-      # breaking unbound resolution every ~90s. Re-enable manually only when needed:
+      # breaking dnsblockd resolution every ~90s. Re-enable manually only when needed:
       #   mullvad-vpn.enable = true; mullvad dns set custom 192.168.1.150
       mullvad-vpn.enable = false;
 

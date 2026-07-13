@@ -19,7 +19,7 @@
         "eno1"
         "interface-name:eno1"
       ];
-      dns = "none"; # Keep unbound as the sole resolver
+      dns = "none"; # Keep dnsblockd as the sole resolver
     };
     enableIPv6 = true;
 

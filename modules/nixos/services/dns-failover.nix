@@ -1,4 +1,4 @@
-# DNS failover via Keepalived VRRP with Unbound health tracking
+# DNS failover via Keepalived VRRP with DNS health tracking
 _: {
   flake.nixosModules.dns-failover =
     {
@@ -60,7 +60,7 @@ _: {
           enable = true;
           openFirewall = true;
 
-          vrrpScripts.chk_unbound = {
+          vrrpScripts.chk_dns = {
             script = "${lib.getExe' pkgs.bind.dnsutils "host"} google.com 127.0.0.1 > /dev/null 2>&1";
             interval = 5;
             fall = 3;
@@ -77,7 +77,7 @@ _: {
               { addr = "${cfg.virtualIP}/${toString cfg.subnetPrefix}"; }
             ];
 
-            trackScripts = [ "chk_unbound" ];
+            trackScripts = [ "chk_dns" ];
 
             extraConfig = ''
               authentication {

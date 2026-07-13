@@ -19,12 +19,12 @@
       after ? [
         "docker.service"
         "sops-nix.service"
-        "unbound.service"
+        "dnsblockd.service"
       ],
       requires ? [ "docker.service" ],
       wants ? [
         "sops-nix.service"
-        "unbound.service"
+        "dnsblockd.service"
       ],
       extraTmpfiles ? [ ],
       backup ? null,
@@ -92,12 +92,12 @@
               after = [
                 "docker.service"
                 "network-online.target"
-                "unbound.service"
+                "dnsblockd.service"
               ];
               requires = [ "docker.service" ];
               wants = [
                 "network-online.target"
-                "unbound.service"
+                "dnsblockd.service"
               ];
               wantedBy = [ "${name}.service" ];
               path = [ pkgs.docker ];

@@ -152,9 +152,9 @@ _: {
                 statusStyle = "dot";
                 siteMonitor = svcUrl "dash";
               })
-              (mkService "Unbound DNS" {
+              (mkService "dnsblockd" {
                 description = "DNS Resolver + Blocker";
-                icon = "unbound.png";
+                icon = "adguard-home.png";
                 statusStyle = "dot";
               })
               (mkService "PostgreSQL" {

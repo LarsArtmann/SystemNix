@@ -1,5 +1,5 @@
 # DNS Blocker - Declarative DNS with ad blocking and block pages
-# Uses unbound + dnsblockd (Go HTTP server for block pages)
+# Uses dnsblockd (embedded sdns recursive resolver + Go HTTP server for block pages)
 #
 # Coverage: ~2.5M+ unique domains across 25 blocklists
 # - Ads, malware, phishing, scams, fakenews, gambling, porn, social trackers
@@ -11,7 +11,7 @@
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # Local DNS records are in platforms/common/dns-local.nix
-# DNS resolution: DoT forwarding to Mullvad/Quad9 (port 853 — VPN-firewall-safe)
+# DNS resolution: direct root recursion (DNSSEC validated)
 { config, ... }:
 let
   inherit (config.networking) domain;
@@ -45,22 +45,33 @@ in
       # Temporarily allow all DNS queries (disable blocking)
       # Set to true to bypass all DNS blocking
       tempAllowAll = false;
+
+      # Local DNS records: home.lan zone with all service subdomains.
+      # Zone boundary ensures unknown *.home.lan names return NXDOMAIN
+      # (like Unbound's local-zone "static").
+      localRecords =
+        builtins.listToAttrs (
+          map (subdomain: {
+            name = "${subdomain}.${domain}.";
+            value = serverIP;
+          }) dnsLocal.localSubdomains
+        )
+        // {
+          "*.${domain}." = serverIP;
+          "${domain}." = serverIP;
+        };
+      localZones = ["${domain}."];
+      allowedNetworks = [
+        "127.0.0.0/8"
+        "::1/128"
+        "${config.networking.local.subnet}"
+      ];
+      dnsIPv6Enabled = false; # evo-x2 has no global IPv6
     };
 
     dnsblockd-cert-trust = {
       enable = true;
       caCertPath = config.sops.secrets.dnsblockd_ca_cert.path;
-    };
-
-    unbound.settings.server = {
-      verbosity = 1;
-      local-zone = [ ''"${domain}." static'' ];
-      local-data =
-        map (subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"'') dnsLocal.localSubdomains
-        ++ [
-          ''"*.${domain}. IN A ${serverIP}"''
-          ''"${domain}. IN A ${serverIP}"''
-        ];
     };
 
     dns-failover = {

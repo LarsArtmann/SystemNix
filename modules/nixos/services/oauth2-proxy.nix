@@ -75,13 +75,13 @@ _: {
           after = [
             "network-online.target"
             "pocket-id.service"
-            "unbound.service"
+            "dnsblockd.service"
           ]
           ++ lib.optional provisionEnabled "pocket-id-provision.service";
           wants = [
             "network-online.target"
             "pocket-id.service"
-            "unbound.service"
+            "dnsblockd.service"
           ]
           ++ lib.optional provisionEnabled "pocket-id-provision.service";
           unitConfig = {

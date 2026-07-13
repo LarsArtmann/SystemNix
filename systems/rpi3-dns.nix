@@ -39,6 +39,7 @@ nixpkgs.lib.nixosSystem {
         extraSpecialArgs = sharedHomeManagerSpecialArgs;
       };
     }
+    inputs.self.nixosModules.dns-blocker
     inputs.self.nixosModules.dns-failover
     inputs.sops-nix.nixosModules.sops
     inputs.self.nixosModules.sops
