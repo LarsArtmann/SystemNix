@@ -142,11 +142,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1783872043,
-        "narHash": "sha256-VPQ1ZY0EBlwBUNkqmUtWWoQify0poGnp0HM2it5rwOU=",
+        "lastModified": 1783958592,
+        "narHash": "sha256-Q80iA/eMzBCpA2ykfW+ZyvbeFQHTq544x+Dj3AlCp+E=",
         "ref": "master",
-        "rev": "ceca5b4512075f0abe4135c701fdf4cff40d9627",
-        "revCount": 4407,
+        "rev": "43c3d908f8f72b317cf485c90dd629605140480c",
+        "revCount": 4408,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/BuildFlow"
       },
@@ -419,11 +419,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783956789,
-        "narHash": "sha256-Hq6SUkxn6JRyysBQV7gstIba01P+6gI/VZFqX52hvUY=",
+        "lastModified": 1783959026,
+        "narHash": "sha256-JtnsYptb1qtBDLJl9Hf9XUNpVLkwDZcIol9MckFsqXA=",
         "ref": "master",
-        "rev": "34e80fa0895721563e79be610b30ca4355928e3c",
-        "revCount": 838,
+        "rev": "32bb4843fcd550a278179e8bf3cd21e568003699",
+        "revCount": 840,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/DiscordSync"
       },
@@ -3020,11 +3020,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1783955405,
-        "narHash": "sha256-r82bRXXTeaQL2SYiqVWVuo+ATY8HXRj6iZI1578OVKk=",
+        "lastModified": 1783957284,
+        "narHash": "sha256-VXMVhOMv2BWQ/AMSwL1+uD8CCf0t8JZw07iBj7+kLVA=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "c266a0ace10e59dde7abe351acd19c3d3be31fa9",
+        "rev": "e18f2f1c564dfe8a6aecc20919c2ad22c28d0881",
         "type": "github"
       },
       "original": {

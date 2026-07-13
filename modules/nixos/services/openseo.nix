@@ -3,141 +3,148 @@
 # SSO: no built-in auth (AUTH_MODE=local_noauth). Access is gated by
 # oauth2-proxy forward-auth (Layer 2 SSO) on seo.<domain>.
 _: {
-  flake.nixosModules.openseo =
-    {
-      config,
-      pkgs,
-      lib,
-      ...
-    }:
-    let
-      cfg = config.services.openseo;
-      inherit (config.networking) domain;
-      libHelpers = import ../../../lib/default.nix lib;
-      inherit (libHelpers)
-        harden
-        serviceDefaults
-        onFailure
-        serviceTypes
-        ports
-        ;
+  flake.nixosModules.openseo = {
+    config,
+    pkgs,
+    lib,
+    ...
+  }: let
+    cfg = config.services.openseo;
+    inherit (config.networking) domain;
+    libHelpers = import ../../../lib/default.nix lib;
+    inherit
+      (libHelpers)
+      harden
+      serviceDefaults
+      onFailure
+      serviceTypes
+      ports
+      ;
 
-      pkg = pkgs.openseo;
-      stateDir = "/var/lib/openseo";
-      storeDir = "${pkg}/lib/openseo";
+    pkg = pkgs.openseo;
+    stateDir = "/var/lib/openseo";
+    storeDir = "${pkg}/lib/openseo";
 
-      # Stage: symlink read-only project files from Nix store into a writable
-      # project directory, preserving the persistent .wrangler state dir.
-      stageScript = pkgs.writeShellScriptBin "openseo-stage" ''
-        set -euo pipefail
-        PROJECT="${stateDir}/project"
-        STORE="${storeDir}"
+    # Stage: symlink read-only project files from Nix store into a writable
+    # project directory, preserving the persistent .wrangler state dir.
+    stageScript = pkgs.writeShellScriptBin "openseo-stage" ''
+      set -euo pipefail
+      PROJECT="${stateDir}/project"
+      STORE="${storeDir}"
 
-        mkdir -p "$PROJECT" "${stateDir}/.wrangler"
+      mkdir -p "$PROJECT" "${stateDir}/.wrangler"
 
-        # Remove old symlinks (preserves .wrangler which is a real dir at stateDir)
-        find "$PROJECT" -maxdepth 1 -type l -delete
+      # Remove old symlinks (preserves .wrangler which is a real dir at stateDir)
+      find "$PROJECT" -maxdepth 1 -type l -delete
 
-        # Symlink all files and dotfiles from the Nix store.
-        # node_modules is handled separately below — it needs a writable .vite-temp.
-        for item in "$STORE"/* "$STORE"/.[!.]*; do
-          [ -e "$item" ] || continue
-          name="$(basename "$item")"
-          [ "$name" = "node_modules" ] && continue
-          ln -s "$item" "$PROJECT/$name"
-        done
+      # Symlink all files and dotfiles from the Nix store.
+      # node_modules is handled separately below — it needs a writable .vite-temp.
+      for item in "$STORE"/* "$STORE"/.[!.]*; do
+        [ -e "$item" ] || continue
+        name="$(basename "$item")"
+        [ "$name" = "node_modules" ] && continue
+        ln -s "$item" "$PROJECT/$name"
+      done
 
-        # node_modules: Vite's config loader (loadConfigFromBundledFile) writes
-        # a temp .mjs bundle into node_modules/.vite-temp/. A plain symlink to
-        # the read-only Nix store node_modules makes vite preview crash with
-        # EROFS. Replace it with a real directory that re-points each top-level
-        # package to the store, plus a writable .vite-temp. rm -rf handles both
-        # the fresh symlink (from the loop above) and a real dir (prior run).
-        rm -rf "$PROJECT/node_modules"
-        mkdir -p "$PROJECT/node_modules/.vite-temp"
-        for item in "$STORE/node_modules"/* "$STORE/node_modules"/.[!.]*; do
-          [ -e "$item" ] || continue
-          name="$(basename "$item")"
-          [ "$name" = ".vite-temp" ] && continue
-          ln -s "$item" "$PROJECT/node_modules/$name"
-        done
+      # node_modules: Vite's config loader (loadConfigFromBundledFile) writes
+      # a temp .mjs bundle into node_modules/.vite-temp/. A plain symlink to
+      # the read-only Nix store node_modules makes vite preview crash with
+      # EROFS. Replace it with a real directory that re-points each top-level
+      # package to the store, plus a writable .vite-temp. rm -rf handles both
+      # the fresh symlink (from the loop above) and a real dir (prior run).
+      rm -rf "$PROJECT/node_modules"
+      mkdir -p "$PROJECT/node_modules/.vite-temp"
+      for item in "$STORE/node_modules"/* "$STORE/node_modules"/.[!.]*; do
+        [ -e "$item" ] || continue
+        name="$(basename "$item")"
+        [ "$name" = ".vite-temp" ] && continue
+        ln -s "$item" "$PROJECT/node_modules/$name"
+      done
 
-        # Link .wrangler to persistent state directory (writable D1 SQLite)
-        ln -sfn "${stateDir}/.wrangler" "$PROJECT/.wrangler"
-      '';
+      # Link .wrangler to persistent state directory (writable D1 SQLite)
+      ln -sfn "${stateDir}/.wrangler" "$PROJECT/.wrangler"
 
-      # Migrate: apply D1 (SQLite) migrations locally
-      migrateScript = pkgs.writeShellScriptBin "openseo-migrate" ''
-        set -euo pipefail
-        cd "${stateDir}/project"
-        exec "${storeDir}/node_modules/.bin/wrangler" d1 migrations apply DB --local
-      '';
+      # Seed deploy config from build output (generated by @cloudflare/vite-plugin
+      # during vite build). vite preview reads .wrangler/deploy/config.json at
+      # startup — it's static worker config, not runtime state.
+      if [ -f "${storeDir}/.wrangler/deploy/config.json" ] && \
+         [ ! -f "${stateDir}/.wrangler/deploy/config.json" ]; then
+        mkdir -p "${stateDir}/.wrangler/deploy"
+        cp "${storeDir}/.wrangler/deploy/config.json" "${stateDir}/.wrangler/deploy/config.json"
+      fi
+    '';
 
-      # Serve: vite preview must run from the staged project directory.
-      # Wrapped because systemd's WorkingDirectory is the state dir
-      # (the project subdir doesn't exist until ExecStartPre creates it).
-      serveScript = pkgs.writeShellScriptBin "openseo-serve" ''
-        cd "${stateDir}/project"
-        exec "${storeDir}/node_modules/.bin/vite" preview --host 127.0.0.1 --port ${toString cfg.port}
-      '';
-    in
-    {
-      options.services.openseo = {
-        enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
-        port = serviceTypes.servicePort ports.openseo "HTTP port for OpenSEO dashboard";
+    # Migrate: apply D1 (SQLite) migrations locally
+    migrateScript = pkgs.writeShellScriptBin "openseo-migrate" ''
+      set -euo pipefail
+      cd "${stateDir}/project"
+      exec "${storeDir}/node_modules/.bin/wrangler" d1 migrations apply DB --local
+    '';
+
+    # Serve: vite preview must run from the staged project directory.
+    # Wrapped because systemd's WorkingDirectory is the state dir
+    # (the project subdir doesn't exist until ExecStartPre creates it).
+    serveScript = pkgs.writeShellScriptBin "openseo-serve" ''
+      cd "${stateDir}/project"
+      exec "${storeDir}/node_modules/.bin/vite" preview --host 127.0.0.1 --port ${toString cfg.port}
+    '';
+  in {
+    options.services.openseo = {
+      enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
+      port = serviceTypes.servicePort ports.openseo "HTTP port for OpenSEO dashboard";
+    };
+
+    config = lib.mkIf cfg.enable {
+      users.users.openseo = {
+        isSystemUser = true;
+        group = "openseo";
+        home = stateDir;
       };
+      users.groups.openseo = {};
 
-      config = lib.mkIf cfg.enable {
-        users.users.openseo = {
-          isSystemUser = true;
-          group = "openseo";
-          home = stateDir;
-        };
-        users.groups.openseo = { };
+      systemd.services.openseo = {
+        description = "OpenSEO — self-hosted SEO suite";
+        inherit onFailure;
+        wantedBy = ["multi-user.target"];
+        after = [
+          "network.target"
+          "sops-nix.service"
+        ];
+        wants = ["sops-nix.service"];
+        path = [pkgs.nodejs];
+        startLimitBurst = 5;
+        startLimitIntervalSec = 300;
 
-        systemd.services.openseo = {
-          description = "OpenSEO — self-hosted SEO suite";
-          inherit onFailure;
-          wantedBy = [ "multi-user.target" ];
-          after = [
-            "network.target"
-            "sops-nix.service"
-          ];
-          wants = [ "sops-nix.service" ];
-          path = [ pkgs.nodejs ];
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
+        serviceConfig = lib.mkMerge [
+          (harden {
+            MemoryMax = "2G";
+          })
+          (serviceDefaults {})
+          {
+            User = "openseo";
+            Group = "openseo";
+            StateDirectory = "openseo";
+            WorkingDirectory = "${stateDir}";
+            EnvironmentFile = config.sops.templates."openseo-env".path;
 
-          serviceConfig = lib.mkMerge [
-            (harden {
-              MemoryMax = "2G";
-            })
-            (serviceDefaults { })
-            {
-              User = "openseo";
-              Group = "openseo";
-              StateDirectory = "openseo";
-              WorkingDirectory = "${stateDir}";
-              EnvironmentFile = config.sops.templates."openseo-env".path;
+            Environment = [
+              "PORT=${toString cfg.port}"
+              "AUTH_MODE=local_noauth"
+              "ALLOWED_HOST=seo.${domain}"
+              "VITE_SHOW_DEVTOOLS=false"
+              "NODE_OPTIONS=--max-old-space-size=1536"
+              "CLOUDFLARE_INCLUDE_PROCESS_ENV=true"
+              "HOME=${stateDir}"
+            ];
 
-              Environment = [
-                "PORT=${toString cfg.port}"
-                "AUTH_MODE=local_noauth"
-                "ALLOWED_HOST=seo.${domain}"
-                "VITE_SHOW_DEVTOOLS=false"
-                "NODE_OPTIONS=--max-old-space-size=1536"
-                "CLOUDFLARE_INCLUDE_PROCESS_ENV=true"
-                "HOME=${stateDir}"
-              ];
-
-              ExecStartPre = [
-                (lib.getExe stageScript)
-                (lib.getExe migrateScript)
-              ];
-              ExecStart = lib.getExe serveScript;
-            }
-          ];
-        };
+            ExecStartPre = [
+              (lib.getExe stageScript)
+              (lib.getExe migrateScript)
+            ];
+            ExecStart = lib.getExe serveScript;
+          }
+        ];
       };
     };
+  };
 }
