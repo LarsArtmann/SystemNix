@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-13 (DNS migration: unbound → dnsblockd sole resolver committed)
+**Updated:** 2026-07-13 (docs-health audit: 17 stale claims fixed; 19 new tasks integrated from status report findings)
 **Last deploy:** 2026-07-09 (`26.11.20260709` — build succeeded, 3 activation failures fixed)
 **Last commit:** 2026-07-13 (`076dc778` — feat(dns): migrate from unbound to dnsblockd as sole DNS resolver)
 
@@ -24,6 +24,7 @@
 - [ ] **Verify DiscordSync SSO** post-deploy — vHost wired (session 156, commit `b1e45529`), needs deploy + visit `discordsync.home.lan`
 - [ ] **Verify Overview vHost** post-deploy — wired in session 157 (commit `f3926729`), needs deploy + visit `overview.home.lan`
 - [ ] **Verify post-deploy smoke test runs after deploy** — `deploy.sh:27` uses `nix run .#post-deploy-check`. Needs deploy + verification that smoke checks actually execute.
+- [ ] **Verify signoz-provision at runtime** — wait-loop fix deployed but never exercised. Needs deploy + check `systemctl status signoz-provision` and confirm dashboards/alerts appear in SigNoz UI.
 
 ### Priority 0: DNS Migration — ✅ CODE COMPLETE (2026-07-13, pending deploy)
 
@@ -57,6 +58,9 @@
 
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist` because the PG container only has a `postgres` role. Data is NOT lost: 1 user, 1 workspace, 66 companies, 144 contacts across 90 tables (schemas `core` + `workspace_e9cj8i2yyuv46o8h43y8adli`, 17 MB total in `twenty_db-data` volume). The `twenty-server-local-data` volume (1.1 MB) has 2 workspace dirs from May 3 with generated SDK zips and custom function stubs. Needs: (1) fix the PG role mismatch so the app can connect, (2) decide whether to keep Twenty on Docker (it's 4 containers ~1.5 GB RAM for an idle CRM) or nixify it natively like SigNoz/Forgejo/Homepage. Twenty is the single biggest Docker consumer and a major contributor to BTRFS overlay2 metadata fragmentation.
 - [ ] **Fix Twenty CRM intermittent 502s** — APPEARS RESOLVED. Server running since 06-23, responding on :3200. Monitor for recurrence.
+- [ ] **Fix post-deploy-check empty ports bug** — 14 false FAILs from missing port interpolation. The check references ports that don't get substituted, causing noise on every deploy.
+- [ ] **Add `harden` to `immich.nix` db-backup service** — `immich.nix:105-129` database backup oneshot runs without `harden {}` or `serviceDefaults {}`. Unhardened service with DB access.
+- [ ] **Fix upstream monitor365 CORS bug** — env var can't represent TOML sequences. Current workaround removes CORS entirely. Needs upstream PR to support list-valued env vars or switch to file-based config.
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
@@ -70,6 +74,23 @@
 - [ ] **Swap investigation** — 4.5 GiB swap used on 128 GiB RAM (improved from 7.3 GiB on Jul 1). Run `smem -t -k | tail -20` and `swapoff -a && swapon -a` if needed
 - [ ] **GPUActive monitoring** — Add Prometheus/textfile collector for `/proc/meminfo`'s `GPUActive` (30.7 GiB now, was 51+ GiB after extended uptime) and `GPUReclaim` fields. Currently invisible to SigNoz/otel/Gatus. The #1 RAM consumer on Strix Halo.
 - [ ] **TTM `page_pool_size` reduction** — Currently `112 GiB` (exceeds the 94 GiB visible to Linux!). TODO documented in `boot.nix` since Jul 2 — needs reboot + Ollama testing. Reducing to ~32 GiB would force faster return of freed GPU pages to the kernel.
+- [ ] **Firewall deny-by-default** — all inbound allowed, services exposed to LAN. Should restrict to 80/443 + SSH + LAN-only ports.
+
+### Priority 4: Code Quality (from Jul 9 nix anti-pattern reports)
+
+- [ ] **Audit all `writeShellApplication` scripts for missing `runtimeInputs`** — gpu-active collector lacked `gawk` in `runtimeInputs`, causing silent failures. Same bug class may exist in other scripts.
+- [ ] **Convert `minecraft.nix` raw iptables** → declarative `networking.firewall.allowedTCPPorts` — avoids fragile manual iptables manipulation.
+- [ ] **Convert 6 `activationScripts`** → `systemd.tmpfiles.rules` (hermes, discordsync, crush-daily, configuration, 2 darwin) — tmpfiles is the idiomatic NixOS pattern for directory creation.
+- [ ] **Split large modules** — signoz (943L), forgejo (725L) into sub-modules. (monitor365 already reduced: 716L→151L.)
+
+### Priority 4: Desktop (from Jul 9 Helium/browser reports)
+
+- [ ] **Runtime-verify Helium wrapper double-wrap fix** — single-layer `makeWrapper` fix never tested at runtime. Verify all flags survive (`--enable-features`, VA-API, privacy flags).
+- [ ] **Verify browser extension policies actually install in Helium** — ungoogled-chromium may ignore `update_url`-based extension installation. Check `chrome://extensions` post-deploy.
+- [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes entirely, `--disable-gpu-watchdog` may become unnecessary (regaining GPU hang detection). See `docs/status/2026-07-09_08-48_helium-config-overhaul-audit.md`.
+- [ ] **Remove `--enable-gpu-rasterization`** — increases GPUActive memory pressure on Strix Halo with no proven benefit.
+- [ ] **Configure Memory Saver via enterprise policy** — aggressive tab discarding for this memory-constrained system (chronic GPUActive pressure).
+- [ ] **Remove 9gag Post Filter** — abandoned extension ("THIS PROJECT IS DEAD"). Clean removal from Chromium policies.
 
 ### Priority 5: Upstream Contributions
 
@@ -91,14 +112,12 @@
 
 #### LarsArtmann Go Repos — Stale `go.sum` / `vendorHash`
 
-All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in SystemNix that vanish when the upstream repo commits a correct `go.sum` and updates its own flake `vendorHash`:
-
-- [ ] **`library-policy`** — `overlays/shared.nix`. `mkTidyOverride` (go mod tidy + proxyVendor + overrideModAttrs). Fix: commit correct `go.sum` upstream
-- [ ] **`mr-sync`** — `overlays/shared.nix`. Same `mkTidyOverride` pattern. Fix: commit correct `go.sum` upstream
+- [x] **`library-policy`** — Removed local `replace github.com/larsartmann/go-finding => /home/lars/projects/go-finding` from go.mod; switched to published v1.2.0. `go.sum` was already correct. The `mkTidyOverride` workaround was already removed from SystemNix in a prior refactor (commit `4cffb612`)
+- [x] **`mr-sync`** — Already correct: no local replaces, `go.sum` matches `go mod tidy` (0 diff), no workarounds remain in SystemNix
 
 #### LarsArtmann Apps — Missing Upstream Features
 
-- [ ] **`monitor365`**: Support reading secrets from env vars (e.g., `MONITOR365_CLOUD_AUTH_TOKEN`) instead of requiring config file mutation via `sed` at runtime. Also: bundle runtime deps natively or provide `--runtime-deps-path` flag; respect `$DISPLAY` / Wayland APIs instead of hardcoding
+- [x] **`monitor365`**: Secrets already read from env vars (`MONITOR365__CLOUD__AUTH_TOKEN` via systemd `LoadCredential`) — the `sed` concern was stale. Fixed upstream: (1) `runtimeDeps` option is now wired into the systemd service `PATH` (was defined but never used), (2) added `displayUser` option — when set, the start script discovers `DISPLAY`/`WAYLAND_DISPLAY`/`XAUTHORITY`/`XDG_RUNTIME_DIR`/`DBUS_SESSION_BUS_ADDRESS` from the user's active login session via `/proc/<pid>/environ` (no more hardcoding)
 - [ ] **`hermes`**: Auto-create directory structure on first run (currently Nix does it); handle own state migration from old paths; sane defaults for `OLLAMA_API_KEY`/`TERMINAL_ENV`; handle deprecated config keys internally instead of requiring sed cleanup; use PID file or socket-based single-instance locking instead of `--replace` flag
 
 #### Third-Party Upstream Projects
@@ -115,7 +134,18 @@ All of these have `go mod tidy` workarounds or stale `vendorHash` overrides in S
 - [ ] **Darwin Home Manager parity** — disk constrained (256GB, 90%+ full)
 - [ ] **Monitor365 agent→server auth** — no auth, anyone on LAN can POST data
 - [ ] **Disabled service triage** — voice-agents, minecraft: decide enable or remove (photomap already removed)
-- [ ] **Split large modules** — signoz (943L), forgejo (725L), monitor365 (151L, previously 716L — already reduced)
+
+### Priority 6: Documentation (from docs-health audit)
+
+- [ ] **Verify README.md flake input count** — claims "56 inputs." Run `nix flake metadata --json | jq '.locks.nodes | length'` to confirm.
+- [ ] **Verify CHANGELOG.md covers DNS migration** — `rg "dnsblockd\|unbound" CHANGELOG.md` — major architectural change should be logged.
+- [ ] **Deep FEATURES.md service status audit** — verify every ✅ service has a Gatus endpoint and is actually deployed. Status icons were spot-checked, not systematically verified.
+- [ ] **Count Caddy vhosts** — FEATURES.md claims "15 vhosts." Verify against `caddy.nix` (`rg 'protectedVHost\|reverse_proxy' modules/nixos/services/caddy.nix | wc -l`).
+- [ ] **Verify DMS plugin count** — FEATURES.md says 13. Verify `pkgs/dms-plugins/` has 13 dirs (excl. `_template`) and each has valid `plugin.json` + `.qml`.
+- [ ] **Add Helium to README.md desktop row** — primary browser not mentioned in "What You Get" table (lists Niri, DMS, SDDM, Ghostty, Kitty, Sway, Rofi).
+- [ ] **Add doc-freshness CI check** — script that verifies doc counts (Gatus endpoints, module counts, flake inputs) against code. Prevents the static-count rot caught in this audit.
+- [ ] **Create monitoring runbook** — "what to do when each Discord alert fires" (started in `docs/runbooks/monitoring-runbook.md`, needs completion).
+- [ ] **Add documentation freshness section to AGENTS.md** — document the docs-health skill, file ownership model, and "update FEATURES.md after deploy" rule.
 
 ---
 

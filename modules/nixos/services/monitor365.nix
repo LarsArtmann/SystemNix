@@ -15,7 +15,8 @@
 #      - Dedicated 'monitor365' system user with linger
 #      - Headless collectors: network, process, system_info, battery, etc.
 #      - Desktop collectors: screenshots, camera, keystrokes, etc.
-#        (graphical collectors skip gracefully if no session)
+#        Display env discovered from displayUser's active session via
+#        /proc/<pid>/environ; skip gracefully if no session
 #      - IPC socket at /run/monitor365/agent.sock for graphical helper
 #      - Auth via LoadCredential (reads sops secret as root)
 #      - graphicalUsers: login users granted IPC group access
@@ -53,6 +54,7 @@
       serverCfg = config.services.monitor365-server;
 
       # Runtime deps — CLI tools for system + desktop collectors.
+      # Wired into the systemd service PATH by the upstream module.
       runtimeDeps = with pkgs; [
         procps
         util-linux
@@ -77,6 +79,7 @@
           services.monitor365 = {
             runtimeDeps = lib.mkDefault runtimeDeps;
             graphicalUsers = lib.mkDefault [ primaryUser ];
+            displayUser = lib.mkDefault primaryUser;
 
             settings = {
               device = {
