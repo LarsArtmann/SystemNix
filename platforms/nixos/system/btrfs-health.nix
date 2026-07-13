@@ -133,6 +133,7 @@ let
     runtimeInputs = [
       btrfsChunkCheck
       pkgs.btrfs-progs
+      pkgs.gawk
     ];
     text = ''
       set -uo pipefail

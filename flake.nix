@@ -155,10 +155,6 @@
     };
 
     # monitor365 — Device monitoring agent (Rust)
-    # WARNING: flake.lock is pinned to revCount 2194 (0f0a05e). Upstream master
-    # (2228+) reintroduces "SQLite databases do not support creating sequences"
-    # (CREATE SEQUENCE is PostgreSQL syntax). Do NOT bump monitor365 via
-    # `nix flake update` until upstream fixes the SQLite schema. See AGENTS.md.
     monitor365 = {
       url = "git+ssh://git@github.com/LarsArtmann/monitor365?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
