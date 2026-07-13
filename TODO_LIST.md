@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-13 (docs-health audit: 17 stale claims fixed; 19 new tasks integrated from status report findings)
+**Updated:** 2026-07-13 (session: upstream Go repo + monitor365 fixes — 3 upstream commits local-only, 3 SystemNix files uncommitted)
 **Last deploy:** 2026-07-09 (`26.11.20260709` — build succeeded, 3 activation failures fixed)
 **Last commit:** 2026-07-13 (`076dc778` — feat(dns): migrate from unbound to dnsblockd as sole DNS resolver)
 
@@ -10,6 +10,7 @@
 
 ### Priority 0: Critical (Block or Risk Data Loss)
 
+- [ ] **Push + commit + deploy upstream Go/monitor365 fixes** — 3 upstream commits (library-policy ×2, monitor365 ×1) are local-only. SystemNix has 3 uncommitted files (monitor365.nix, TODO_LIST.md, AGENTS.md). flake.lock NOT updated. **Order:** (1) `git push` in library-policy + monitor365, (2) `nix flake lock --update-input library-policy --update-input monitor365`, (3) `nix flake check --no-build`, (4) commit SystemNix, (5) deploy. Without flake.lock update, eval fails — `displayUser` option doesn't exist in the pinned monitor365 commit.
 - [ ] **Deploy pending changes** — DNS migration (commit `076dc778`), NVMe discard fix, monitor365/openseo fixes are in source. Build succeeded 2026-07-09 but DNS migration is newer. Needs `nix run .#deploy` + reboot to activate the unbound→dnsblockd cutover.
 - [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
 - [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum (controller returning garbage under I/O pressure). No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /` to map all bad blocks and assess corruption extent. **Monitoring infrastructure is complete:** scrub metrics collected every 5 min (`btrfs_scrub_errors_total`, `btrfs_scrub_status`, `btrfs_scrub_error_free`), Gatus alerts on Discord when errors found.
@@ -21,6 +22,7 @@
 - [ ] **Verify Pocket ID email sending** — test login notification or email verification after SMTP wiring + sops secret added
 - [ ] **Verify crush-daily collection** post-deploy — `ProtectHome=false` fix written (session 156, commit `29b5c267`), needs deploy + manual trigger: `systemctl start crush-daily-collect`
 - [ ] **Verify Monitor365 `/ui/` serves the WASM dashboard** post-deploy — `pkgs.monitor365-server` package fix written (session 156), needs deploy + visit `monitor.home.lan`
+- [ ] **Verify monitor365 display discovery + runtimeDeps PATH** post-deploy — upstream commit `9b709d83` wires `runtimeDeps` to `PATH` and adds `displayUser` option. After deploy + login: `systemctl show monitor365.service -p Environment` (check PATH), `journalctl -u monitor365.service | grep -i display` (check discovery), verify graphical collectors produce data on dashboard
 - [ ] **Verify DiscordSync SSO** post-deploy — vHost wired (session 156, commit `b1e45529`), needs deploy + visit `discordsync.home.lan`
 - [ ] **Verify Overview vHost** post-deploy — wired in session 157 (commit `f3926729`), needs deploy + visit `overview.home.lan`
 - [ ] **Verify post-deploy smoke test runs after deploy** — `deploy.sh:27` uses `nix run .#post-deploy-check`. Needs deploy + verification that smoke checks actually execute.
@@ -61,6 +63,7 @@
 - [ ] **Fix post-deploy-check empty ports bug** — 14 false FAILs from missing port interpolation. The check references ports that don't get substituted, causing noise on every deploy.
 - [ ] **Add `harden` to `immich.nix` db-backup service** — `immich.nix:105-129` database backup oneshot runs without `harden {}` or `serviceDefaults {}`. Unhardened service with DB access.
 - [ ] **Fix upstream monitor365 CORS bug** — env var can't represent TOML sequences. Current workaround removes CORS entirely. Needs upstream PR to support list-valued env vars or switch to file-based config.
+- [ ] **Replace X11-only runtime deps with Wayland equivalents in monitor365** — SystemNix `monitor365.nix` lists `xdotool`, `xprintidle`, `scrot` (X11-only) but evo-x2 runs niri (Wayland-only). Display discovery now exports `WAYLAND_DISPLAY`, but these CLI tools can't use it. Native Rust providers (xcap, x11rb) should work, but CLI fallbacks always fail. Consider adding `grim`, `slurp`, `wtype`, `wlr-randr`.
 
 ### Priority 2: Manual Steps (Blocked on Human)
 
@@ -134,6 +137,16 @@
 - [ ] **Darwin Home Manager parity** — disk constrained (256GB, 90%+ full)
 - [ ] **Monitor365 agent→server auth** — no auth, anyone on LAN can POST data
 - [ ] **Disabled service triage** — voice-agents, minecraft: decide enable or remove (photomap already removed)
+
+### Recently Completed (Session 2026-07-13)
+
+- [x] **library-policy: remove local go-finding replace** — Upstream commit `ad71a72` (UNPUSHED). Removed `replace ... => /home/lars/projects/go-finding`; switched to published `v1.2.0`. Build + tests pass
+- [x] **library-policy: deadnix + nix-fmt auto-fixes** — Upstream commit `4467e3c` (UNPUSHED)
+- [x] **mr-sync: verified already correct** — `go.sum` matches `go mod tidy` (0 diff), no local replaces, no SystemNix workarounds
+- [x] **monitor365: runtimeDeps wired to systemd PATH** — Upstream commit `9b709d83` (UNPUSHED). Option existed but was never wired into `PATH`
+- [x] **monitor365: displayUser option for display discovery** — Upstream commit `9b709d83` (UNPUSHED). Discovers display env from `/proc/<compositor-pid>/environ`
+- [x] **monitor365: env var secrets confirmed working** — `sed` concern was stale. Agent uses `LoadCredential` → `MONITOR365__CLOUD__AUTH_TOKEN`
+- [x] **SystemNix monitor365.nix + AGENTS.md updated** — `displayUser = primaryUser`, new gotcha rows (UNCOMMITTED)
 
 ### Priority 6: Documentation (from docs-health audit)
 
