@@ -15,8 +15,8 @@
 #      - Dedicated 'monitor365' system user with linger
 #      - Headless collectors: network, process, system_info, battery, etc.
 #      - Desktop collectors: screenshots, camera, keystrokes, etc.
-#        Display env discovered from displayUser's active session via
-#        /proc/<pid>/environ; skip gracefully if no session
+#        Display env discovered from active sessions via the graphical helper;
+#        skip gracefully if no session
 #      - IPC socket at /run/monitor365/agent.sock for graphical helper
 #      - Auth via LoadCredential (reads sops secret as root)
 #      - graphicalUsers: login users granted IPC group access
@@ -79,7 +79,6 @@
           services.monitor365 = {
             runtimeDeps = lib.mkDefault runtimeDeps;
             graphicalUsers = lib.mkDefault [ primaryUser ];
-            displayUser = lib.mkDefault primaryUser;
 
             settings = {
               device = {

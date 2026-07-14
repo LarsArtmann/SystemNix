@@ -1,4 +1,4 @@
-{ colorScheme, ... }:
+_:
 let
   theme = import ../theme.nix;
 in

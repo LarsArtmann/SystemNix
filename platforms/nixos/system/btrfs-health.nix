@@ -11,7 +11,6 @@
 #
 # See docs/crash-analysis-2026-06-26.md for full forensic analysis.
 {
-  config,
   pkgs,
   lib,
   ...

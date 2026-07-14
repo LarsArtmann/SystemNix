@@ -42,7 +42,7 @@ stdenv.mkDerivation (finalAttrs: {
   # autoPatchelfHook handles final patching in postFixup (no /build/ references).
   preBuild = ''
     export LD_LIBRARY_PATH="${
-      lib.makeLibraryPath [stdenv.cc.cc.lib]
+      lib.makeLibraryPath [ stdenv.cc.cc.lib ]
     }''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
   '';
 

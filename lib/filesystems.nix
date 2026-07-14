@@ -83,7 +83,6 @@ let
     {
       prefix,
       validFsTypes,
-      desc,
     }:
     !builtins.elem fsType validFsTypes && builtins.any (opt: lib.hasPrefix prefix opt) options
   ) dangerousOptions;

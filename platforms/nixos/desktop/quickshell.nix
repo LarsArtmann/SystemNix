@@ -3,7 +3,6 @@
   lib,
   pkgs,
   dankMaterialShell,
-  colorScheme,
   ...
 }:
 let

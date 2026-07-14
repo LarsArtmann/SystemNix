@@ -1,6 +1,4 @@
 {
-  pkgs,
-  lib,
   nixpkgs,
   system,
 }:
@@ -12,7 +10,7 @@ in
   boot = makeTest {
     name = "boot";
 
-    nodes.machine = { pkgs, ... }: {
+    nodes.machine = _: {
       system.stateVersion = "25.11";
     };
 

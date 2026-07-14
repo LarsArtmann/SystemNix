@@ -1,9 +1,6 @@
 {
   nix-ssh-config,
-  colorScheme,
-  lib,
   config,
-  pkgs,
   ...
 }:
 let

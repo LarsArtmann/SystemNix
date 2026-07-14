@@ -32,7 +32,6 @@
     inputs@{
       self,
       flake-parts,
-      go-nix-helpers,
       # go-finding,
       ...
     }:
@@ -45,7 +44,6 @@
           config,
           pkgs,
           lib,
-          system,
           ...
         }:
         let

@@ -14,7 +14,7 @@
   ...
 }:
 {
-  networking.nameservers = ["127.0.0.1"];
+  networking.nameservers = [ "127.0.0.1" ];
 
   services.resolved.enable = false;
 
@@ -26,9 +26,9 @@
   # Static, immutable resolv.conf (Nix store symlink — cannot be overwritten).
   environment.etc."resolv.conf" = {
     text = lib.concatStringsSep "\n" (
-      ["nameserver 127.0.0.1"]
+      [ "nameserver 127.0.0.1" ]
       ++ lib.optional (config.networking.domain != "") "search ${config.networking.domain}"
-      ++ ["options edns0 trust-ad"]
+      ++ [ "options edns0 trust-ad" ]
     );
     mode = "0444";
   };
