@@ -90,6 +90,58 @@ _: {
       # Blocklist file paths for dnsblockd's native DNS blocklist loader.
       # When tempAllowAll is true, pass an empty list so nothing is blocked.
       blocklistPaths = if cfg.tempAllowAll then [ ] else map (bl: toString bl.file) fetchedBlocklists;
+
+      # Sops secret paths and generated YAML config — in outer scope so that
+      # restartTriggers can reference the config file, forcing a service restart
+      # whenever the binary, config, or blocklists change.
+      # Without restartTriggers, switch-to-configuration may not detect unit-file
+      # changes on certain deploys (observed during the unbound→dnsblockd migration:
+      # the running process kept old config while unbound was stopped, leaving :53 unbound).
+      caCert = config.sops.secrets.dnsblockd_ca_cert.path;
+      caKey = config.sops.secrets.dnsblockd_ca_key.path;
+      dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
+        lib.generators.toYAML { } (
+          {
+            listen_addr = cfg.blockIP;
+            port = cfg.blockPort;
+            tls_port = cfg.blockTLSPort;
+            stats_addr = "127.0.0.1";
+            stats_port = cfg.statsPort;
+            ca_cert_file = "${caCert}";
+            ca_key_file = "${caKey}";
+            blocklist_mapping_file = "${processedBlocklist}/mapping.json";
+            temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
+            tracking_mode = "METADATA_ONLY";
+            tracking_db_path = "/var/lib/dnsblockd/tracking.db";
+
+            # ── Embedded DNS resolver ──
+            dns_enabled = true;
+            dns_listen_addr = "0.0.0.0";
+            dns_port = 53;
+            dns_block_ip = cfg.blockIP;
+            dns_block_response = "zero_ip";
+            dns_blocklists = blocklistPaths;
+            dns_dnssec_enabled = cfg.enableDNSSEC;
+            dns_ipv6_enabled = cfg.dnsIPv6Enabled;
+            dns_reload_interval = cfg.dnsReloadInterval;
+          }
+          // lib.optionalAttrs (cfg.dnsForwarders != [ ]) {
+            dns_forwarders = cfg.dnsForwarders;
+          }
+          // lib.optionalAttrs (cfg.localRecords != { }) {
+            dns_local_records = cfg.localRecords;
+          }
+          // lib.optionalAttrs (cfg.localZones != [ ]) {
+            dns_local_zones = cfg.localZones;
+          }
+          // lib.optionalAttrs (cfg.allowedNetworks != [ ]) {
+            dns_allowed_networks = cfg.allowedNetworks;
+          }
+          // lib.optionalAttrs (cfg.categories != { }) {
+            categories_file = "${categoriesJSON}";
+          }
+        )
+      );
     in
     {
       options.services.dns-blocker = {
@@ -293,6 +345,10 @@ _: {
               ];
               wantedBy = [ "multi-user.target" ];
               inherit onFailure;
+              restartTriggers = [
+                dnsblockdConfigFile
+                pkgs.dnsblockd
+              ];
               unitConfig = {
                 StartLimitBurst = 10;
                 StartLimitIntervalSec = 120;
@@ -307,51 +363,6 @@ _: {
                       install -d /var/lib/dnsblockd
                     '';
                   };
-                  caCert = config.sops.secrets.dnsblockd_ca_cert.path;
-                  caKey = config.sops.secrets.dnsblockd_ca_key.path;
-                  dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
-                    lib.generators.toYAML { } (
-                      {
-                        listen_addr = cfg.blockIP;
-                        port = cfg.blockPort;
-                        tls_port = cfg.blockTLSPort;
-                        stats_addr = "127.0.0.1";
-                        stats_port = cfg.statsPort;
-                        ca_cert_file = "${caCert}";
-                        ca_key_file = "${caKey}";
-                        blocklist_mapping_file = "${processedBlocklist}/mapping.json";
-                        temp_allowlist_path = "/var/lib/dnsblockd/temp-allowlist";
-                        tracking_mode = "METADATA_ONLY";
-                        tracking_db_path = "/var/lib/dnsblockd/tracking.db";
-
-                        # ── Embedded DNS resolver ──
-                        dns_enabled = true;
-                        dns_listen_addr = "0.0.0.0";
-                        dns_port = 53;
-                        dns_block_ip = cfg.blockIP;
-                        dns_block_response = "zero_ip";
-                        dns_blocklists = blocklistPaths;
-                        dns_dnssec_enabled = cfg.enableDNSSEC;
-                        dns_ipv6_enabled = cfg.dnsIPv6Enabled;
-                        dns_reload_interval = cfg.dnsReloadInterval;
-                      }
-                      // lib.optionalAttrs (cfg.dnsForwarders != [ ]) {
-                        dns_forwarders = cfg.dnsForwarders;
-                      }
-                      // lib.optionalAttrs (cfg.localRecords != { }) {
-                        dns_local_records = cfg.localRecords;
-                      }
-                      // lib.optionalAttrs (cfg.localZones != [ ]) {
-                        dns_local_zones = cfg.localZones;
-                      }
-                      // lib.optionalAttrs (cfg.allowedNetworks != [ ]) {
-                        dns_allowed_networks = cfg.allowedNetworks;
-                      }
-                      // lib.optionalAttrs (cfg.categories != { }) {
-                        categories_file = "${categoriesJSON}";
-                      }
-                    )
-                  );
                   secretCheck = pkgs.writeShellApplication {
                     name = "dnsblockd-wait-secrets";
                     runtimeInputs = [ pkgs.coreutils ];
