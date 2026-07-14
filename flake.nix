@@ -134,7 +134,7 @@
 
     # dnsblockd — DNS blocklist service with block pages and blocklist processing
     dnsblockd = {
-      url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=refs/tags/v0.2.0";
+      url = "git+ssh://git@github.com/LarsArtmann/dnsblockd?ref=refs/heads/master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
