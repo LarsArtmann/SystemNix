@@ -39,6 +39,18 @@ _: {
           fi
         '';
       };
+
+      waitOidcReady = pkgs.writeShellApplication {
+        name = "oauth2-proxy-wait-oidc";
+        runtimeInputs = [ pkgs.curl ];
+        text = ''
+          echo "oauth2-proxy: waiting for OIDC endpoint at auth.${domain}..."
+          curl -ksf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+            -o /dev/null "https://auth.${domain}/.well-known/openid-configuration" \
+            || { echo "oauth2-proxy: OIDC endpoint not reachable after 120s" >&2; exit 1; }
+          echo "oauth2-proxy: OIDC endpoint ready"
+        '';
+      };
     in
     {
       options.services.oauth2-proxy-config = {
@@ -85,14 +97,17 @@ _: {
           ]
           ++ lib.optional provisionEnabled "pocket-id-provision.service";
           unitConfig = {
-            StartLimitBurst = lib.mkForce 3;
+            StartLimitBurst = lib.mkForce 10;
             StartLimitIntervalSec = lib.mkForce 300;
           };
           serviceConfig = lib.mkMerge [
             (harden { })
             (serviceDefaults { })
             {
-              ExecStartPre = "+${lib.getExe checkCookieSecret}";
+              ExecStartPre = [
+                "+${lib.getExe checkCookieSecret}"
+                "+${lib.getExe waitOidcReady}"
+              ];
               ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
             }
           ];

@@ -19,6 +19,18 @@
       inherit (lib) types;
       discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
+
+      waitDnsReady = pkgs.writeShellApplication {
+        name = "discordsync-wait-dns";
+        runtimeInputs = [ pkgs.curl ];
+        text = ''
+          echo "discordsync: waiting for DNS resolution..."
+          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+            -o /dev/null "https://discord.com" \
+            || { echo "discordsync: DNS/network not ready after 120s — dnsblockd may not be initialized" >&2; exit 1; }
+          echo "discordsync: DNS resolution ready"
+        '';
+      };
     in
     {
       options.services.discordsync = {
@@ -104,13 +116,14 @@
           ];
           inherit onFailure;
           startLimitIntervalSec = 300;
-          startLimitBurst = 5;
+          startLimitBurst = 10;
 
           serviceConfig = lib.mkMerge [
             {
               Type = "simple";
               User = cfg.user;
               Group = cfg.group;
+              ExecStartPre = "+${lib.getExe waitDnsReady}";
               ExecStart = "${lib.getExe discordsyncPkg}";
               WorkingDirectory = cfg.stateDir;
               Environment = [
