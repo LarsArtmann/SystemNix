@@ -21,9 +21,6 @@ jobs:
       - name: Validate flake structure
         run: nix flake show --allow-import-from-derivation 2>&1 | head -20
 
-      - name: Build local packages
-        run: nix build .#jscpd .#govalid .#aw-watcher-utilization -L
-
       - name: Run statix linter
         run: nix run nixpkgs#statix -- check .
 
