@@ -13,8 +13,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: DeterminateSystems/nix-installer-action@v16
-
-      - uses: DeterminateSystems/magic-nix-cache-action@v9
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
 
       - name: Check flake evaluation (all systems)
         run: nix flake check --no-build --all-systems
