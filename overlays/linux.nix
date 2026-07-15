@@ -51,12 +51,36 @@ let
         };
       });
     };
+
+  # monitor365's upstream .cargo/config.toml mandates -fuse-ld=mold for native
+  # targets (devShell convenience), but the regular package build doesn't include
+  # mold in nativeBuildInputs. Without this, gcc's collect2 fails with
+  # "cannot find 'ld'" when linking native cdylib crates like wasm-streams.
+  # We must patch BOTH the CLI and the server (which is a symlinkJoin wrapping
+  # the CLI) because the upstream overlay bakes the unpatched CLI into the server.
+  monitor365MoldFixOverlay = final: prev: {
+    monitor365 = prev.monitor365.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.mold ];
+    });
+    monitor365-server = final.symlinkJoin {
+      name = prev.monitor365-server.name;
+      paths = [ final.monitor365 prev.monitor365-ui ];
+      nativeBuildInputs = [ final.makeWrapper ];
+      postBuild = ''
+        mkdir -p $out/share/monitor365/ui
+        cp -r ${prev.monitor365-ui}/* $out/share/monitor365/ui/
+        wrapProgram $out/bin/monitor365-server \
+          --set-default UI_DIST_PATH "$out/share/monitor365/ui"
+      '';
+    };
+  };
 in
 [
   openaudibleOverlay
   dnsblockd.overlays.default
   emeet-pixyd.overlays.default
   monitor365.overlays.default
+  monitor365MoldFixOverlay
   netwatchOverlay
   file-and-image-renamer.overlays.default
   crush-daily.overlays.default
