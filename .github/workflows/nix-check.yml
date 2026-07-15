@@ -16,6 +16,7 @@ jobs:
         with:
           extra-conf: |
             experimental-features = nix-command flakes pipe-operators
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
       - name: Check flake evaluation (all systems)
         run: nix flake check --no-build --all-systems
