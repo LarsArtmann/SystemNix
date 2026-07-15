@@ -448,11 +448,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784067082,
-        "narHash": "sha256-LxuYdxaI1SeKMRQZsihTDsrncGJA5k3RkidsBZ2ywNM=",
+        "lastModified": 1784147442,
+        "narHash": "sha256-lc/ErC6E+DnEPLz/saTR2tKN5z4Cctx1RbH2LXGGUys=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "5366be8329fe0177948e17e197c4ca5af24691e1",
+        "rev": "114dcd1dabd926c197ca07814c28c98dc5d7a472",
         "type": "github"
       },
       "original": {
@@ -472,11 +472,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1784146156,
-        "narHash": "sha256-4jmZcczbFf7Ek04JEWz8UgwnAoYvN3qmQuTYEABfJS0=",
+        "lastModified": 1784148155,
+        "narHash": "sha256-hA916nlhS+vwMzxmDHtAJJEW+QhXnL4TCdrRAMQd07w=",
         "owner": "LarsArtmann",
         "repo": "emeet-pixyd",
-        "rev": "2820cdc984a2ad7c8ae1cc7b1862fb8fc2d78616",
+        "rev": "e9a9838530969d263cf4740f6d0fdfb4705a5175",
         "type": "github"
       },
       "original": {
@@ -2705,11 +2705,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1784053785,
-        "narHash": "sha256-7gWzrw5cr2M1ICavlXIO26eHxAuDaaF204WjP2Hdl/Q=",
+        "lastModified": 1784148164,
+        "narHash": "sha256-pumgaHKmhK9SFCnXr1fZyg0lJCeaP/NczdnzCky6/i4=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "a7d231ffb30b4c955dc37080f55203e149ca404f",
+        "rev": "d9632276f2d09f1fcf2b407c0887d8f3708f8fdc",
         "type": "github"
       },
       "original": {

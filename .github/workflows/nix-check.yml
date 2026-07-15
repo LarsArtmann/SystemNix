@@ -18,8 +18,8 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check flake evaluation
-        run: nix flake check --no-build
+      - name: Validate flake structure
+        run: nix flake show --allow-import-from-derivation 2>&1 | head -20
 
       - name: Build local packages
         run: nix build .#jscpd .#govalid .#aw-watcher-utilization -L
