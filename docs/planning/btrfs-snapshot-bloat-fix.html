@@ -397,8 +397,7 @@
         </p>
         <pre>
 trace_log*, query_log*, metric_log*, part_log*,
-asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre
-        >
+asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre>
         <p>Expected savings: ~15 GB once TTL kicks in and old data expires.</p>
       </div>
     </div>
@@ -445,8 +444,7 @@ asynchronous_metric_log, query_views_log, histogram_metric_log, etc.</pre
 mountpoint /home/lars/.cache  # should say "is a mountpoint"
 mountpoint /home/lars/go       # should say "is a mountpoint"
 mountpoint /home/lars/.npm     # should say "is a mountpoint"
-mountpoint /home/lars/.cargo   # should say "is a mountpoint"</pre
-        >
+mountpoint /home/lars/.cargo   # should say "is a mountpoint"</pre>
       </div>
     </div>
 
@@ -466,8 +464,7 @@ mountpoint /home/lars/.cargo   # should say "is a mountpoint"</pre
 sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.20260526T0000
 sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.20260528T0000
 sudo btrfs subvolume delete /mnt/btrfs-root/.snapshots/@.pre-deploy-2026-05-25T041055
-sudo btrfs filesystem sync /</pre
-        >
+sudo btrfs filesystem sync /</pre>
         <p>Expected: free ~50 GB exclusive data</p>
 
         <h3>Delete .pre-subvol backups</h3>
@@ -475,20 +472,17 @@ sudo btrfs filesystem sync /</pre
 
         <h3>Delete stale regular-dir-bak dirs</h3>
         <pre>
-sudo rm -rf /mnt/btrfs-root/@go.regular-dir-bak /mnt/btrfs-root/@npm.regular-dir-bak /mnt/btrfs-root/@cargo.regular-dir-bak</pre
-        >
+sudo rm -rf /mnt/btrfs-root/@go.regular-dir-bak /mnt/btrfs-root/@npm.regular-dir-bak /mnt/btrfs-root/@cargo.regular-dir-bak</pre>
 
         <h3>Gitea pre-migration cleanup (19 GB)</h3>
         <pre>
 sudo du -sh /var/lib/gitea.pre-forgejo-migration/*  # review contents
 # If Forgejo is confirmed working:
-sudo rm -rf /var/lib/gitea.pre-forgejo-migration</pre
-        >
+sudo rm -rf /var/lib/gitea.pre-forgejo-migration</pre>
 
         <h3>Verify ClickHouse TTL applied</h3>
         <pre>
-sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHERE database = 'system' AND name LIKE '%trace_log%'"</pre
-        >
+sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHERE database = 'system' AND name LIKE '%trace_log%'"</pre>
       </div>
     </div>
 
@@ -556,8 +550,7 @@ sudo clickhouse-client --query "SELECT table, engine_full FROM system.tables WHE
       };
     };
   };
-}</pre
-            >
+}</pre>
           </li>
           <li><code>disko --dry-run --mode format,mount</code> to verify (no changes)</li>
           <li>

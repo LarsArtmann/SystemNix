@@ -79,8 +79,9 @@ in
     };
 
     # dnsblockd: embedded DNS resolver + block page server.
-    # Direct root recursion (no DoT forwarders) — simpler and sufficient
-    # for a backup node. Local zones mirror evo-x2 for LAN consistency.
+    # DoT forwarders (same as evo-x2 — sdns root recursion requires
+    # middleware.Setup() which dnsblockd doesn't call). Local zones
+    # mirror evo-x2 for LAN consistency.
     dns-blocker = {
       enable = true;
 
@@ -99,6 +100,10 @@ in
         ;
 
       enableDNSSEC = true;
+      dnsForwarders = [
+        "tls://1.1.1.1:853"
+        "tls://9.9.9.9:853"
+      ];
       tempAllowAll = false;
 
       # Local DNS records — mirror evo-x2 for LAN consistency.

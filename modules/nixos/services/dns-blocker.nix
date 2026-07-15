@@ -116,6 +116,7 @@ _: {
 
             # ── Embedded DNS resolver ──
             dns_enabled = true;
+            dns_exit_on_failure = true;
             dns_listen_addr = "0.0.0.0";
             dns_port = 53;
             dns_block_ip = cfg.blockIP;

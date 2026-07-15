@@ -64,7 +64,10 @@ let
     });
     monitor365-server = final.symlinkJoin {
       name = prev.monitor365-server.name;
-      paths = [ final.monitor365 prev.monitor365-ui ];
+      paths = [
+        final.monitor365
+        prev.monitor365-ui
+      ];
       nativeBuildInputs = [ final.makeWrapper ];
       postBuild = ''
         mkdir -p $out/share/monitor365/ui

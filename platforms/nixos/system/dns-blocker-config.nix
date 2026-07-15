@@ -11,7 +11,10 @@
 #
 # Blocklists are shared with rpi3-dns via platforms/common/dns-blocklists.nix
 # Local DNS records are in platforms/common/dns-local.nix
-# DNS resolution: direct root recursion (DNSSEC validated)
+# DNS resolution: forwarded via DNS-over-TLS to Cloudflare + Quad9
+# (sdns root recursion requires middleware.Setup() which dnsblockd doesn't
+# call — the queryer/store needed for NS lookups are never wired, causing
+# "No reachable authoritative servers" for all non-local queries)
 { config, ... }:
 let
   inherit (config.networking) domain;
@@ -41,6 +44,15 @@ in
         ;
 
       enableDNSSEC = true;
+
+      # Forward via DNS-over-TLS. The sdns embedded resolver's root recursion
+      # is broken in dnsblockd (middleware pipeline not wired up), so we
+      # forward to trusted DoT resolvers. Local zones, blocklists, and ACLs
+      # are still handled by dnsblockd before forwarding.
+      dnsForwarders = [
+        "tls://1.1.1.1:853"
+        "tls://9.9.9.9:853"
+      ];
 
       # Temporarily allow all DNS queries (disable blocking)
       # Set to true to bypass all DNS blocking
