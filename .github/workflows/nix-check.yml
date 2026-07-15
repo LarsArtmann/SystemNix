@@ -28,4 +28,4 @@ jobs:
         run: nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names .
 
       - name: Check Nix formatting
-        run: nix fmt -- --check .
+        run: nix fmt -- --ci
