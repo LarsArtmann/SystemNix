@@ -9,6 +9,8 @@ on:
 jobs:
   nix-check:
     runs-on: ubuntu-latest
+    env:
+      NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM: "1"
     steps:
       - uses: actions/checkout@v4
 
