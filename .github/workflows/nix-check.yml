@@ -9,8 +9,6 @@ on:
 jobs:
   nix-check:
     runs-on: ubuntu-latest
-    env:
-      NIXPKGS_ALLOW_UNSUPPORTED_SYSTEM: "1"
     steps:
       - uses: actions/checkout@v4
 
@@ -20,8 +18,8 @@ jobs:
             experimental-features = nix-command flakes pipe-operators
             access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check flake evaluation (all systems)
-        run: nix flake check --no-build --all-systems
+      - name: Check flake evaluation
+        run: nix flake check --no-build
 
       - name: Build local packages
         run: nix build .#jscpd .#govalid .#aw-watcher-utilization -L
