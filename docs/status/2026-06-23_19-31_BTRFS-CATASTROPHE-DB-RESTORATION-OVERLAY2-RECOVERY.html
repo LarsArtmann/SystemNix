@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      Status Report — BTRFS Catastrophe, DB Restoration, Overlay2 Recovery
-    </title>
+    <title>Status Report — BTRFS Catastrophe, DB Restoration, Overlay2 Recovery</title>
     <style>
       :root {
         --color-graphite: #0e0e10;
@@ -30,12 +28,9 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --radius: 0px;
-        --font-heading:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-        --font-body:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-        --font-mono:
-          "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
+        --font-heading: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
       }
       * {
         margin: 0;
@@ -339,27 +334,15 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 5%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 5%, var(--surface-raised));
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 5%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 5%, var(--surface-raised));
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 5%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 5%, var(--surface-raised));
       }
       .severity {
         display: inline-block;
@@ -455,21 +438,16 @@
       <main class="main">
         <div class="hero">
           <div class="hero-badge">Status Report &middot; Session 147</div>
-          <h1>
-            BTRFS Catastrophe, Database Restoration &amp; Overlay2 Recovery
-          </h1>
+          <h1>BTRFS Catastrophe, Database Restoration &amp; Overlay2 Recovery</h1>
           <p class="hero-subtitle">
-            The "PostgreSQL checkpoint corruption" from session 146 turned out
-            to be a systemic BTRFS data corruption event on <code>/data</code> —
-            23.5 million uncorrectable checksum errors. Two databases restored
-            from backup, Docker overlay2 cache nuked and rebuilt. The filesystem
-            is still actively degrading.
+            The "PostgreSQL checkpoint corruption" from session 146 turned out to be a systemic
+            BTRFS data corruption event on <code>/data</code> — 23.5 million uncorrectable checksum
+            errors. Two databases restored from backup, Docker overlay2 cache nuked and rebuilt. The
+            filesystem is still actively degrading.
           </p>
           <div class="hero-meta">
             <span>&#128337; 2026-06-23 19:31 CEST</span>
-            <span
-              >&#128187; evo-x2 &middot; NixOS 26.11 &middot; kernel 7.1.0</span
-            >
+            <span>&#128187; evo-x2 &middot; NixOS 26.11 &middot; kernel 7.1.0</span>
             <span>&#9888;&#65039; Generation 428</span>
           </div>
         </div>
@@ -478,35 +456,28 @@
         <h2 id="summary"><span class="num">00</span>Executive Summary</h2>
 
         <p>
-          What began as "fix two restart-looping containers" revealed itself as
-          a
+          What began as "fix two restart-looping containers" revealed itself as a
           <strong>full-blown BTRFS data corruption catastrophe</strong> on the
           <code>/data</code> partition. A BTRFS scrub completed with
-          <strong>23,549,416 uncorrectable checksum errors</strong> — zero
-          corrected. This is not OOM-induced WAL corruption; it's permanent data
-          loss across the entire filesystem. The NVMe SMART data is clean (0
-          media errors, 6% wear), confirming this is filesystem-level
+          <strong>23,549,416 uncorrectable checksum errors</strong> — zero corrected. This is not
+          OOM-induced WAL corruption; it's permanent data loss across the entire filesystem. The
+          NVMe SMART data is clean (0 media errors, 6% wear), confirming this is filesystem-level
           corruption, not hardware failure.
         </p>
 
         <p>
-          Despite this, <strong>all critical services are operational</strong>.
-          Two PostgreSQL databases were successfully restored from daily
-          <code>pg_dump</code> backups. Docker's entire overlay2 layer cache was
-          nuked and rebuilt from registries after discovering that image layer
-          deduplication was silently reusing corrupted data. The system is
-          functional — but running on a dying filesystem.
+          Despite this, <strong>all critical services are operational</strong>. Two PostgreSQL
+          databases were successfully restored from daily <code>pg_dump</code> backups. Docker's
+          entire overlay2 layer cache was nuked and rebuilt from registries after discovering that
+          image layer deduplication was silently reusing corrupted data. The system is functional —
+          but running on a dying filesystem.
         </p>
 
         <div class="callout callout-problem">
-          <strong
-            >&#128680; Active Emergency: /data filesystem is still
-            corrupting</strong
-          >
+          <strong>&#128680; Active Emergency: /data filesystem is still corrupting</strong>
           Since BTRFS device stats were reset (~2 hours ago),
-          <strong>94,210 new corruption errors</strong> have appeared. The
-          filesystem is actively degrading. Every read/write cycle risks further
-          data loss. A full reformat is needed.
+          <strong>94,210 new corruption errors</strong> have appeared. The filesystem is actively
+          degrading. Every read/write cycle risks further data loss. A full reformat is needed.
         </div>
 
         <!-- STATS -->
@@ -554,46 +525,41 @@
           <h3>&#9989; Twenty CRM — Full Recovery</h3>
           <p>
             All 4 containers running healthy:
-            <code>twenty-db-1</code> (PostgreSQL 16, restored from June 22
-            backup), <code>twenty-redis-1</code> (fresh state),
-            <code>twenty-server-1</code> (healthy),
-            <code>twenty-worker-1</code> (running). Database contains 1
-            workspace, 1 user. Data loss: ~16 hours of CRM activity (June 22
-            00:26 → crash).
+            <code>twenty-db-1</code> (PostgreSQL 16, restored from June 22 backup),
+            <code>twenty-redis-1</code> (fresh state), <code>twenty-server-1</code> (healthy),
+            <code>twenty-worker-1</code> (running). Database contains 1 workspace, 1 user. Data
+            loss: ~16 hours of CRM activity (June 22 00:26 → crash).
           </p>
         </div>
 
         <div class="card card-solution">
           <h3>&#9989; Manifest — Full Recovery</h3>
           <p>
-            <code>mnfst-postgres-1</code> restored from June 22 backup (29
-            tables, 1 user). <code>mnfst-manifest-1</code> app healthy, 663
-            pricing entries loaded. The heap file
-            <code>base/16384/2659</code> that was causing every query to fail is
-            now gone (wiped + re-initialized).
+            <code>mnfst-postgres-1</code> restored from June 22 backup (29 tables, 1 user).
+            <code>mnfst-manifest-1</code> app healthy, 663 pricing entries loaded. The heap file
+            <code>base/16384/2659</code> that was causing every query to fail is now gone (wiped +
+            re-initialized).
           </p>
         </div>
 
         <div class="card card-solution">
           <h3>&#9989; Docker Overlay2 — Full Rebuild</h3>
           <p>
-            Entire <code>/data/docker/overlay2/</code> +
-            <code>/data/docker/image/</code> nuked and rebuilt. Docker re-pulled
-            all 6 images from registries (2.27 GB). Redis SSL symbol resolution
-            failure fixed — the root cause was BTRFS serving corrupted
+            Entire <code>/data/docker/overlay2/</code> + <code>/data/docker/image/</code> nuked and
+            rebuilt. Docker re-pulled all 6 images from registries (2.27 GB). Redis SSL symbol
+            resolution failure fixed — the root cause was BTRFS serving corrupted
             <code>libssl.so.3</code> from a reused overlay2 layer.
-            <code>docker system prune -af</code> alone was insufficient because
-            Docker deduplicates layers by digest and was reusing corrupted data.
+            <code>docker system prune -af</code> alone was insufficient because Docker deduplicates
+            layers by digest and was reusing corrupted data.
           </p>
         </div>
 
         <div class="card card-solution">
           <h3>&#9989; Prevention Systems (from Session 146)</h3>
           <p>
-            Still operational and committed: <code>mkFilesystem</code> helper
-            with cross-fs option validation (7-test suite passing),
-            <code>pre-deploy-check.sh</code> wired into <code>deploy.sh</code>,
-            <code>harden</code> function passthrough fix, Docker
+            Still operational and committed: <code>mkFilesystem</code> helper with cross-fs option
+            validation (7-test suite passing), <code>pre-deploy-check.sh</code> wired into
+            <code>deploy.sh</code>, <code>harden</code> function passthrough fix, Docker
             <code>userland-proxy = false</code>,
             <code>oci-containers.backend = "docker"</code> unified.
           </p>
@@ -602,10 +568,9 @@
         <div class="card card-solution">
           <h3>&#9989; System Stability</h3>
           <p>
-            0 failed units (except OpenSEO). 24 active services including
-            Immich, Forgejo, Caddy, Hermes, Pocket ID, SigNoz, Gatus, Unbound,
-            DNS Blocker, Homepage Dashboard. 93 GB RAM (24 GB used, 69 GB
-            available). Load average 1.71.
+            0 failed units (except OpenSEO). 24 active services including Immich, Forgejo, Caddy,
+            Hermes, Pocket ID, SigNoz, Gatus, Unbound, DNS Blocker, Homepage Dashboard. 93 GB RAM
+            (24 GB used, 69 GB available). Load average 1.71.
           </p>
         </div>
 
@@ -615,61 +580,52 @@
         <div class="card card-warning">
           <h3>&#9888;&#65039; /data BTRFS Filesystem — Corrupted but Usable</h3>
           <p>
-            <strong>What's done:</strong> BTRFS scrub completed (18 min, 625 GB
-            scanned). Corruption mapped: 23.5M uncorrectable csum errors. Device
-            stats reset after scrub.
+            <strong>What's done:</strong> BTRFS scrub completed (18 min, 625 GB scanned). Corruption
+            mapped: 23.5M uncorrectable csum errors. Device stats reset after scrub.
           </p>
           <p>
             <strong>What's NOT done:</strong> The filesystem still has
-            <strong>94,210 new corruption errors</strong> since the stats were
-            reset. Known corrupted data: Docker overlay2 layers (19+ confirmed),
-            Twenty WAL segment 6, Manifest heap file 2659, Redis libssl.so.3, AI
-            model files (gemma-4-31b, HiDream-O1-Image). The filesystem needs a
-            complete reformat to stop the bleeding.
+            <strong>94,210 new corruption errors</strong> since the stats were reset. Known
+            corrupted data: Docker overlay2 layers (19+ confirmed), Twenty WAL segment 6, Manifest
+            heap file 2659, Redis libssl.so.3, AI model files (gemma-4-31b, HiDream-O1-Image). The
+            filesystem needs a complete reformat to stop the bleeding.
           </p>
           <p>
-            <strong>What works:</strong> All critical services are running
-            because their data happens to be on non-corrupted blocks or was
-            restored from backup. But any service could hit corrupted data at
-            any time.
+            <strong>What works:</strong> All critical services are running because their data
+            happens to be on non-corrupted blocks or was restored from backup. But any service could
+            hit corrupted data at any time.
           </p>
         </div>
 
         <div class="card card-warning">
-          <h3>
-            &#9888;&#65039; Deploy Latest Config — Committed But Not Running
-          </h3>
+          <h3>&#9888;&#65039; Deploy Latest Config — Committed But Not Running</h3>
           <p>
             Generation 428 (current) does NOT include the
-            <code>mkFilesystem</code> + <code>pre-deploy-check</code> changes.
-            These are committed to the repo but never deployed. Running
-            <code>nix run .#deploy</code> would bring them online. However,
-            deploying during an active corruption event carries risk.
+            <code>mkFilesystem</code> + <code>pre-deploy-check</code> changes. These are committed
+            to the repo but never deployed. Running <code>nix run .#deploy</code> would bring them
+            online. However, deploying during an active corruption event carries risk.
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>&#9888;&#65039; OpenSEO — Image Corrupted, Data Intact</h3>
           <p>
-            The <code>openseo-openseo-1</code> container's image layers are
-            corrupted (wrangler.js unreadable, libssl.so.3 corrupted). The
-            SQLite D1 database (<code>openseo_data</code> volume) passed
-            <code>PRAGMA integrity_check</code> — data is fine. The overlay2
-            nuke fixed the image layer issue for other services, but OpenSEO's
-            systemd service is still in <code>failed</code> state. Restarting it
-            should pull a fresh image.
+            The <code>openseo-openseo-1</code> container's image layers are corrupted (wrangler.js
+            unreadable, libssl.so.3 corrupted). The SQLite D1 database (<code>openseo_data</code>
+            volume) passed <code>PRAGMA integrity_check</code> — data is fine. The overlay2 nuke
+            fixed the image layer issue for other services, but OpenSEO's systemd service is still
+            in <code>failed</code> state. Restarting it should pull a fresh image.
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>&#9888;&#65039; Backup Coverage — Incomplete</h3>
           <p>
-            Daily <code>pg_dump</code> backups exist for Twenty (30-day
-            retention), Manifest (30-day), and Immich (7-day). However: all June
-            23 backups are <strong>0-byte files</strong> (backup timer ran while
-            DBs were crashed). No off-site backup exists. No backup for OpenSEO
-            SQLite, Docker volumes, or AI models. No backup integrity
-            validation.
+            Daily <code>pg_dump</code> backups exist for Twenty (30-day retention), Manifest
+            (30-day), and Immich (7-day). However: all June 23 backups are
+            <strong>0-byte files</strong> (backup timer ran while DBs were crashed). No off-site
+            backup exists. No backup for OpenSEO SQLite, Docker volumes, or AI models. No backup
+            integrity validation.
           </p>
         </div>
 
@@ -680,21 +636,17 @@
           <h3>&#9851;&#65039; /data BTRFS Reformat (Phase 2 Recovery)</h3>
           <p>
             The nuclear option: back up all readable data, reformat
-            <code>/data</code> as fresh BTRFS with proper subvolumes + snapshot
-            schedule, restore data. This requires significant downtime and
-            careful planning. Not started.
+            <code>/data</code> as fresh BTRFS with proper subvolumes + snapshot schedule, restore
+            data. This requires significant downtime and careful planning. Not started.
           </p>
         </div>
 
         <div class="card">
-          <h3>
-            &#9851;&#65039; Off-site Backup (BorgBackup to Hetzner StorageBox)
-          </h3>
+          <h3>&#9851;&#65039; Off-site Backup (BorgBackup to Hetzner StorageBox)</h3>
           <p>
             Research document exists at
-            <code>docs/research/hetzner-storagebox-borgbackup.md</code> with
-            full NixOS config example. Not deployed. Listed in
-            <code>ROADMAP.md</code> as a known gap.
+            <code>docs/research/hetzner-storagebox-borgbackup.md</code> with full NixOS config
+            example. Not deployed. Listed in <code>ROADMAP.md</code> as a known gap.
           </p>
         </div>
 
@@ -702,28 +654,23 @@
           <h3>&#9851;&#65039; Docker Volume Lifecycle Management</h3>
           <p>
             628 total Docker volumes, only 4 active,
-            <strong>624 orphaned</strong> (37 GB reclaimable). No automated
-            cleanup exists. The <code>docker-prune.timer</code> runs weekly but
-            apparently doesn't remove volumes.
+            <strong>624 orphaned</strong> (37 GB reclaimable). No automated cleanup exists. The
+            <code>docker-prune.timer</code> runs weekly but apparently doesn't remove volumes.
           </p>
         </div>
 
         <div class="card">
           <h3>&#9851;&#65039; flake.lock Commit</h3>
-          <p>
-            Dirty since session start. Pre-existing — not our change. Never
-            committed.
-          </p>
+          <p>Dirty since session start. Pre-existing — not our change. Never committed.</p>
         </div>
 
         <div class="card">
           <h3>&#9851;&#65039; BTRFS Snapshot Configuration for /data</h3>
           <p>
-            <code>/data</code> is BTRFS toplevel (subvolid=5) with
-            <strong>no snapshots</strong> and no subvolumes. If it had
-            snapshots, the corruption recovery would have been trivial — roll
-            back to the last good snapshot. <code>btrbk</code> is configured for
-            root (<code>@</code>) but NOT for <code>/data</code>.
+            <code>/data</code> is BTRFS toplevel (subvolid=5) with <strong>no snapshots</strong> and
+            no subvolumes. If it had snapshots, the corruption recovery would have been trivial —
+            roll back to the last good snapshot. <code>btrbk</code> is configured for root
+            (<code>@</code>) but NOT for <code>/data</code>.
           </p>
         </div>
 
@@ -732,9 +679,8 @@
           <p>
             At least 2 confirmed corrupted model files:
             <code>gemma-4-31b-abliterated-Q8_0.gguf</code> and
-            <code>HiDream-O1-Image/model-00001-of-00008.safetensors</code>. User
-            mentioned removing some models. Others may be silently corrupted but
-            not yet discovered.
+            <code>HiDream-O1-Image/model-00001-of-00008.safetensors</code>. User mentioned removing
+            some models. Others may be silently corrupted but not yet discovered.
           </p>
         </div>
 
@@ -744,41 +690,33 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Catastrophic</span>
           <h3>/data BTRFS Filesystem — 23.5M Uncorrectable Errors</h3>
-          <div class="where">
-            /dev/nvme0n1p8 &middot; BTRFS &middot; 1 TB &middot; 627 GB used
-          </div>
+          <div class="where">/dev/nvme0n1p8 &middot; BTRFS &middot; 1 TB &middot; 627 GB used</div>
           <p>
-            This is the single biggest issue. A single-device BTRFS filesystem
-            with 23.5 million checksum errors means
+            This is the single biggest issue. A single-device BTRFS filesystem with 23.5 million
+            checksum errors means
             <strong>~90 GB of data has been permanently lost</strong>
-            (zero-filled blocks with no mirror to recover from). The corruption
-            is
-            <strong>still active</strong> — 94,210 new errors appeared in the ~2
-            hours since stats were reset. This will keep destroying data until
-            the filesystem is reformatted.
+            (zero-filled blocks with no mirror to recover from). The corruption is
+            <strong>still active</strong> — 94,210 new errors appeared in the ~2 hours since stats
+            were reset. This will keep destroying data until the filesystem is reformatted.
           </p>
           <p>
-            <strong>Root cause unknown.</strong> NVMe SMART is clean (0 media
-            errors, 6% wear, 100% spare). The BTRFS scrub found and reported the
-            corruption but corrected nothing (single device = no redundancy).
-            This may have been caused by the OOM hard reset (unclean shutdown),
-            a BTRFS bug, or silent NVMe write errors that SMART doesn't track.
+            <strong>Root cause unknown.</strong> NVMe SMART is clean (0 media errors, 6% wear, 100%
+            spare). The BTRFS scrub found and reported the corruption but corrected nothing (single
+            device = no redundancy). This may have been caused by the OOM hard reset (unclean
+            shutdown), a BTRFS bug, or silent NVMe write errors that SMART doesn't track.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Data Loss</span>
           <h3>June 23 Backups — All 0-Byte</h3>
-          <div class="where">
-            /var/lib/twenty/backup/ &middot; /var/lib/manifest/backup/
-          </div>
+          <div class="where">/var/lib/twenty/backup/ &middot; /var/lib/manifest/backup/</div>
           <p>
-            The backup timer fired at ~00:18-00:27 on June 23, but the databases
-            were already crashed from the OOM event. Result:
-            <strong>8 backup files, all 0 bytes</strong> (4 for Twenty, 4 for
-            Manifest). The backup script doesn't validate output size or check
-            if the DB is reachable before dumping. This is a design flaw in the
-            backup system.
+            The backup timer fired at ~00:18-00:27 on June 23, but the databases were already
+            crashed from the OOM event. Result:
+            <strong>8 backup files, all 0 bytes</strong> (4 for Twenty, 4 for Manifest). The backup
+            script doesn't validate output size or check if the DB is reachable before dumping. This
+            is a design flaw in the backup system.
           </p>
         </div>
 
@@ -790,11 +728,10 @@
             /data/models/HiDream-O1-Image/
           </div>
           <p>
-            At least 2 large model files confirmed with I/O errors. These are
-            multi-GB files that must be re-downloaded. Others on
-            <code>/data</code> (322 GB of models, 157 GB of AI data, 106 GB of
-            llama.cpp models) may also be silently corrupted — we only scanned a
-            sample.
+            At least 2 large model files confirmed with I/O errors. These are multi-GB files that
+            must be re-downloaded. Others on
+            <code>/data</code> (322 GB of models, 157 GB of AI data, 106 GB of llama.cpp models) may
+            also be silently corrupted — we only scanned a sample.
           </p>
         </div>
 
@@ -802,33 +739,26 @@
           <span class="severity severity-critical">Silent Corruption</span>
           <h3>Services Running on Corrupted Data</h3>
           <div class="where">
-            /data/containers/ &middot; /data/.crush/ &middot; /data/ai/ &middot;
-            /data/cache/
+            /data/containers/ &middot; /data/.crush/ &middot; /data/ai/ &middot; /data/cache/
           </div>
           <p>
-            All four directories showed I/O errors in our scan. Services using
-            these paths may be serving corrupted data without knowing it. The
-            Immich machine learning models, Crush agent state, and container
-            runtime data are all at risk. There's no way to know what's
+            All four directories showed I/O errors in our scan. Services using these paths may be
+            serving corrupted data without knowing it. The Immich machine learning models, Crush
+            agent state, and container runtime data are all at risk. There's no way to know what's
             corrupted without a full filesystem scan.
           </p>
         </div>
 
         <!-- WHAT WE SHOULD IMPROVE -->
-        <h2 id="improve">
-          <span class="num">05</span>E) What We Should Improve
-        </h2>
+        <h2 id="improve"><span class="num">05</span>E) What We Should Improve</h2>
 
         <div class="card card-problem">
           <h3>&#128165; BTRFS Single-Device = No Recovery</h3>
           <p>
-            The entire <code>/data</code> partition is BTRFS on a single NVMe
-            with no redundancy. BTRFS checksumming detected the corruption but
-            couldn't fix it. If this were BTRFS RAID1 (or even BTRFS with
-            periodic snapshots), recovery would be trivial.
-            <strong
-              >Single-device BTRFS gives you detection without recovery</strong
-            >
+            The entire <code>/data</code> partition is BTRFS on a single NVMe with no redundancy.
+            BTRFS checksumming detected the corruption but couldn't fix it. If this were BTRFS RAID1
+            (or even BTRFS with periodic snapshots), recovery would be trivial.
+            <strong>Single-device BTRFS gives you detection without recovery</strong>
             — the worst of both worlds.
           </p>
         </div>
@@ -837,54 +767,50 @@
           <h3>&#128165; No Off-site Backup</h3>
           <p>
             Zero off-site backup exists. All backups are
-            <code>pg_dump</code> files on the same machine. If the NVMe fails
-            completely, everything is gone. The Hetzner StorageBox + BorgBackup
-            research is done but never deployed. This is the #1 infrastructure
-            gap.
+            <code>pg_dump</code> files on the same machine. If the NVMe fails completely, everything
+            is gone. The Hetzner StorageBox + BorgBackup research is done but never deployed. This
+            is the #1 infrastructure gap.
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>&#9888;&#65039; Backup Validation Missing</h3>
           <p>
-            The backup system blindly pipes <code>pg_dump</code> to a file. If
-            the DB is down, it creates a 0-byte file and moves on. No size
-            check, no <code>pg_restore --dry-run</code> validation, no alerting.
-            The backup timer should fail loudly when it produces empty output.
+            The backup system blindly pipes <code>pg_dump</code> to a file. If the DB is down, it
+            creates a 0-byte file and moves on. No size check, no
+            <code>pg_restore --dry-run</code> validation, no alerting. The backup timer should fail
+            loudly when it produces empty output.
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>&#9888;&#65039; Docker Volume Hoarding</h3>
           <p>
-            628 volumes, 624 orphaned, 37 GB wasted. Docker Compose creates
-            anonymous volumes that are never cleaned up. The
-            <code>docker-prune.timer</code> runs weekly but apparently doesn't
-            remove volumes. Need <code>docker volume prune -f</code> in the
-            timer, or better: name all volumes explicitly and track lifecycle.
+            628 volumes, 624 orphaned, 37 GB wasted. Docker Compose creates anonymous volumes that
+            are never cleaned up. The
+            <code>docker-prune.timer</code> runs weekly but apparently doesn't remove volumes. Need
+            <code>docker volume prune -f</code> in the timer, or better: name all volumes explicitly
+            and track lifecycle.
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>&#9888;&#65039; Container Health Checks Are Lies</h3>
           <p>
-            Manifest PostgreSQL reported <code>"healthy"</code> while every
-            query was failing with I/O errors. The healthcheck
-            (<code>pg_isready</code>) only checks if the port is open — it
-            doesn't actually query the database. Twenty Redis reported
-            <code>"healthy"</code> while its binary couldn't load SSL symbols.
-            Healthchecks need to test actual functionality, not just network
-            reachability.
+            Manifest PostgreSQL reported <code>"healthy"</code> while every query was failing with
+            I/O errors. The healthcheck (<code>pg_isready</code>) only checks if the port is open —
+            it doesn't actually query the database. Twenty Redis reported
+            <code>"healthy"</code> while its binary couldn't load SSL symbols. Healthchecks need to
+            test actual functionality, not just network reachability.
           </p>
         </div>
 
         <div class="card">
           <h3>&#128161; Pre-Deploy /data Snapshots</h3>
           <p>
-            <code>AGENTS.md</code> says pre-deploy snapshots for
-            <code>/data</code> are "manual only." This means any deploy that
-            touches <code>/data</code> services has no rollback safety net for
-            the data partition. Should be automated via <code>btrbk</code> or a
+            <code>AGENTS.md</code> says pre-deploy snapshots for <code>/data</code> are "manual
+            only." This means any deploy that touches <code>/data</code> services has no rollback
+            safety net for the data partition. Should be automated via <code>btrbk</code> or a
             pre-deploy hook.
           </p>
         </div>
@@ -892,17 +818,14 @@
         <div class="card">
           <h3>&#128161; BTRFS Scrub Frequency Too Low</h3>
           <p>
-            The scrub timer runs <strong>monthly</strong> (next: July 1). Given
-            the corruption rate, this should be weekly. A weekly scrub would
-            have caught this corruption days earlier, before it destroyed the
-            databases.
+            The scrub timer runs <strong>monthly</strong> (next: July 1). Given the corruption rate,
+            this should be weekly. A weekly scrub would have caught this corruption days earlier,
+            before it destroyed the databases.
           </p>
         </div>
 
         <!-- TOP 25 -->
-        <h2 id="next">
-          <span class="num">06</span>F) Top 25 Things to Get Done Next
-        </h2>
+        <h2 id="next"><span class="num">06</span>F) Top 25 Things to Get Done Next</h2>
 
         <table>
           <thead>
@@ -917,8 +840,8 @@
             <tr>
               <td><strong>1</strong></td>
               <td>
-                <strong>Reformat /data BTRFS</strong> — backup readable data →
-                reformat → restore. Stops active corruption.
+                <strong>Reformat /data BTRFS</strong> — backup readable data → reformat → restore.
+                Stops active corruption.
               </td>
               <td><span class="badge badge-critical">Critical</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -926,10 +849,7 @@
             <tr>
               <td><strong>2</strong></td>
               <td>
-                <strong
-                  >Deploy off-site backup (BorgBackup → Hetzner
-                  StorageBox)</strong
-                >
+                <strong>Deploy off-site backup (BorgBackup → Hetzner StorageBox)</strong>
                 — protects against total NVMe failure.
               </td>
               <td><span class="badge badge-critical">Critical</span></td>
@@ -938,8 +858,8 @@
             <tr>
               <td><strong>3</strong></td>
               <td>
-                <strong>Fix OpenSEO</strong> — restart service, overlay2 already
-                rebuilt, SQLite data intact. Quick win.
+                <strong>Fix OpenSEO</strong> — restart service, overlay2 already rebuilt, SQLite
+                data intact. Quick win.
               </td>
               <td><span class="badge badge-high">High</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -947,9 +867,8 @@
             <tr>
               <td><strong>4</strong></td>
               <td>
-                <strong>Deploy latest config</strong> —
-                <code>nix run .#deploy</code> brings mkFilesystem +
-                pre-deploy-check online.
+                <strong>Deploy latest config</strong> — <code>nix run .#deploy</code> brings
+                mkFilesystem + pre-deploy-check online.
               </td>
               <td><span class="badge badge-high">High</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -957,8 +876,8 @@
             <tr>
               <td><strong>5</strong></td>
               <td>
-                <strong>Set up /data BTRFS snapshots</strong> — subvolumes +
-                btrbk. Would have made this recovery trivial.
+                <strong>Set up /data BTRFS snapshots</strong> — subvolumes + btrbk. Would have made
+                this recovery trivial.
               </td>
               <td><span class="badge badge-critical">Critical</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -966,8 +885,7 @@
             <tr>
               <td><strong>6</strong></td>
               <td>
-                <strong>Prune 624 orphaned Docker volumes</strong> — reclaim 37
-                GB immediately.
+                <strong>Prune 624 orphaned Docker volumes</strong> — reclaim 37 GB immediately.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -975,8 +893,8 @@
             <tr>
               <td><strong>7</strong></td>
               <td>
-                <strong>nix-collect-garbage -d</strong> — root disk at 94%, 149
-                GB in /nix/var. 420+ generations.
+                <strong>nix-collect-garbage -d</strong> — root disk at 94%, 149 GB in /nix/var. 420+
+                generations.
               </td>
               <td><span class="badge badge-high">High</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -984,8 +902,8 @@
             <tr>
               <td><strong>8</strong></td>
               <td>
-                <strong>Add backup validation</strong> — check for 0-byte dumps,
-                alert on failure, periodic <code>pg_restore --dry-run</code>.
+                <strong>Add backup validation</strong> — check for 0-byte dumps, alert on failure,
+                periodic <code>pg_restore --dry-run</code>.
               </td>
               <td><span class="badge badge-high">High</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -993,8 +911,8 @@
             <tr>
               <td><strong>9</strong></td>
               <td>
-                <strong>Increase BTRFS scrub frequency</strong> — monthly →
-                weekly. Would catch corruption sooner.
+                <strong>Increase BTRFS scrub frequency</strong> — monthly → weekly. Would catch
+                corruption sooner.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -1002,8 +920,8 @@
             <tr>
               <td><strong>10</strong></td>
               <td>
-                <strong>Add BTRFS corruption alerting</strong> — Prometheus
-                alert when <code>corruption_errs &gt; 0</code> on device stats.
+                <strong>Add BTRFS corruption alerting</strong> — Prometheus alert when
+                <code>corruption_errs &gt; 0</code> on device stats.
               </td>
               <td><span class="badge badge-high">High</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1011,8 +929,8 @@
             <tr>
               <td><strong>11</strong></td>
               <td>
-                <strong>Clean up 8 zero-byte backup files</strong> — remove the
-                June 23 failed backups.
+                <strong>Clean up 8 zero-byte backup files</strong> — remove the June 23 failed
+                backups.
               </td>
               <td><span class="badge badge-low">Low</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -1020,8 +938,8 @@
             <tr>
               <td><strong>12</strong></td>
               <td>
-                <strong>Re-download corrupted AI models</strong> — gemma-4-31b,
-                HiDream-O1-Image. Scan all models for corruption.
+                <strong>Re-download corrupted AI models</strong> — gemma-4-31b, HiDream-O1-Image.
+                Scan all models for corruption.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1029,8 +947,8 @@
             <tr>
               <td><strong>13</strong></td>
               <td>
-                <strong>Fix container health checks</strong> — DB containers
-                should run actual queries, not just <code>pg_isready</code>.
+                <strong>Fix container health checks</strong> — DB containers should run actual
+                queries, not just <code>pg_isready</code>.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1038,9 +956,7 @@
             <tr>
               <td><strong>14</strong></td>
               <td>
-                <strong
-                  >Audit all services on /data for silent corruption</strong
-                >
+                <strong>Audit all services on /data for silent corruption</strong>
                 — scan models, AI data, caches, container state.
               </td>
               <td><span class="badge badge-high">High</span></td>
@@ -1049,8 +965,8 @@
             <tr>
               <td><strong>15</strong></td>
               <td>
-                <strong>Consider BTRFS RAID1 for /data</strong> — add second
-                NVMe, mirror. Eliminates single-point-of-failure.
+                <strong>Consider BTRFS RAID1 for /data</strong> — add second NVMe, mirror.
+                Eliminates single-point-of-failure.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1058,8 +974,8 @@
             <tr>
               <td><strong>16</strong></td>
               <td>
-                <strong>Document overlay2 corruption recovery</strong> — the
-                nuke procedure from this session, added to AGENTS.md.
+                <strong>Document overlay2 corruption recovery</strong> — the nuke procedure from
+                this session, added to AGENTS.md.
               </td>
               <td><span class="badge badge-low">Low</span></td>
               <td><span class="badge badge-low">Low</span></td>
@@ -1067,8 +983,8 @@
             <tr>
               <td><strong>17</strong></td>
               <td>
-                <strong>Move Docker root to BTRFS subvolume</strong> — enables
-                snapshotting of all Docker state.
+                <strong>Move Docker root to BTRFS subvolume</strong> — enables snapshotting of all
+                Docker state.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1076,26 +992,23 @@
             <tr>
               <td><strong>18</strong></td>
               <td>
-                <strong>Add OpenSEO backup</strong> — no backup exists for the
-                SQLite D1 database. Add to backup rotation.
+                <strong>Add OpenSEO backup</strong> — no backup exists for the SQLite D1 database.
+                Add to backup rotation.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-low">Low</span></td>
             </tr>
             <tr>
               <td><strong>19</strong></td>
-              <td>
-                <strong>Commit flake.lock</strong> — dirty since session start.
-                Pre-existing.
-              </td>
+              <td><strong>Commit flake.lock</strong> — dirty since session start. Pre-existing.</td>
               <td><span class="badge badge-low">Low</span></td>
               <td><span class="badge badge-low">Low</span></td>
             </tr>
             <tr>
               <td><strong>20</strong></td>
               <td>
-                <strong>Create disaster recovery runbook</strong> — document the
-                full BTRFS corruption recovery procedure.
+                <strong>Create disaster recovery runbook</strong> — document the full BTRFS
+                corruption recovery procedure.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1103,8 +1016,8 @@
             <tr>
               <td><strong>21</strong></td>
               <td>
-                <strong>Review OOM prevention</strong> — the original trigger.
-                MGLRU + MemoryHigh/MemoryMax in place, but verify effectiveness.
+                <strong>Review OOM prevention</strong> — the original trigger. MGLRU +
+                MemoryHigh/MemoryMax in place, but verify effectiveness.
               </td>
               <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1130,8 +1043,8 @@
             <tr>
               <td><strong>24</strong></td>
               <td>
-                <strong>Add Docker image pull verification</strong> — post-pull
-                integrity check, not just digest match.
+                <strong>Add Docker image pull verification</strong> — post-pull integrity check, not
+                just digest match.
               </td>
               <td><span class="badge badge-low">Low</span></td>
               <td><span class="badge badge-medium">Medium</span></td>
@@ -1139,8 +1052,8 @@
             <tr>
               <td><strong>25</strong></td>
               <td>
-                <strong>Schedule /data reformat downtime</strong> — plan the
-                maintenance window, notify users, execute.
+                <strong>Schedule /data reformat downtime</strong> — plan the maintenance window,
+                notify users, execute.
               </td>
               <td><span class="badge badge-high">High</span></td>
               <td><span class="badge badge-high">High</span></td>
@@ -1149,62 +1062,56 @@
         </table>
 
         <!-- THE BIG QUESTION -->
-        <h2 id="question">
-          <span class="num">&#10067;</span>G) The One Question I Cannot Answer
-        </h2>
+        <h2 id="question"><span class="num">&#10067;</span>G) The One Question I Cannot Answer</h2>
 
         <div class="callout callout-problem">
           <strong
-            >Should we reformat /data NOW, or wait until off-site backups are in
-            place?</strong
+            >Should we reformat /data NOW, or wait until off-site backups are in place?</strong
           >
         </div>
 
         <p>
-          The <code>/data</code> filesystem is
-          <strong>actively corrupting</strong> — 94,210 new errors in ~2 hours.
-          Every hour we wait, more data is silently destroyed. But reformatting
+          The <code>/data</code> filesystem is <strong>actively corrupting</strong> — 94,210 new
+          errors in ~2 hours. Every hour we wait, more data is silently destroyed. But reformatting
           means:
         </p>
 
         <ol>
           <li>
-            <strong>Downtime</strong> for every service on
-            <code>/data</code> (Docker, models, AI, containers) — potentially
-            hours
+            <strong>Downtime</strong> for every service on <code>/data</code> (Docker, models, AI,
+            containers) — potentially hours
           </li>
           <li>
-            <strong>Data migration risk</strong> — we'd be copying
-            potentially-corrupted data to a backup, then restoring it. If the
-            backup itself has corrupted blocks, we're back to square one
+            <strong>Data migration risk</strong> — we'd be copying potentially-corrupted data to a
+            backup, then restoring it. If the backup itself has corrupted blocks, we're back to
+            square one
           </li>
           <li>
-            <strong>No safety net</strong> — without off-site backup, a reformat
-            mistake is catastrophic and irreversible
+            <strong>No safety net</strong> — without off-site backup, a reformat mistake is
+            catastrophic and irreversible
           </li>
         </ol>
 
         <p>
-          The counter-argument: <strong>waiting is also catastrophic</strong>.
-          The corruption is eating data right now. The models, AI training data,
-          and Docker volumes we haven't checked yet may be degrading as we
-          speak. By the time we set up BorgBackup (which itself requires reading
-          data from this corrupted filesystem), more data will be lost.
+          The counter-argument: <strong>waiting is also catastrophic</strong>. The corruption is
+          eating data right now. The models, AI training data, and Docker volumes we haven't checked
+          yet may be degrading as we speak. By the time we set up BorgBackup (which itself requires
+          reading data from this corrupted filesystem), more data will be lost.
         </p>
 
         <p>
           <strong>I cannot determine the right tradeoff here.</strong>
-          Reformatting now stops the bleeding but risks losing everything if
-          something goes wrong. Waiting preserves optionality but guarantees
-          more data loss. The answer depends on: (a) how much of the 627 GB on
-          <code>/data</code> is irreplaceable, (b) whether we can verify data
-          integrity before reformatting, and (c) whether you have external
-          copies of the critical data (models, etc.) that we can re-download.
+          Reformatting now stops the bleeding but risks losing everything if something goes wrong.
+          Waiting preserves optionality but guarantees more data loss. The answer depends on: (a)
+          how much of the 627 GB on
+          <code>/data</code> is irreplaceable, (b) whether we can verify data integrity before
+          reformatting, and (c) whether you have external copies of the critical data (models, etc.)
+          that we can re-download.
         </p>
 
         <footer class="footer">
-          Generated 2026-06-23 19:31 CEST &middot; Session 147 &middot; evo-x2
-          &middot; NixOS 26.11.20260616.3e41b24 &middot; kernel 7.1.0
+          Generated 2026-06-23 19:31 CEST &middot; Session 147 &middot; evo-x2 &middot; NixOS
+          26.11.20260616.3e41b24 &middot; kernel 7.1.0
         </footer>
       </main>
     </div>
