@@ -157,6 +157,27 @@ else
   SKIP=$((SKIP + 1))
 fi
 
+# Monitor365: agent must be connected to server (not just alive).
+# The health endpoint returns a JSON "realtime" field showing device count.
+# "connected (0 devices)" means the API key desync bug is still present.
+if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
+  if echo "$m365_health" | grep -q '"realtime"'; then
+    if echo "$m365_health" | grep -q '"realtime":"connected (0 devices)"'; then
+      echo -e "${RED}FAIL${NC} Monitor365 agent NOT connected — server reports 0 devices (API key desync or agent crash)"
+      FAIL=$((FAIL + 1))
+    else
+      echo -e "${GREEN}PASS${NC} Monitor365 agent connected to server"
+      PASS=$((PASS + 1))
+    fi
+  else
+    echo -e "${YELLOW}WARN${NC} Monitor365 health reachable but realtime field missing"
+    SKIP=$((SKIP + 1))
+  fi
+else
+  echo -e "${YELLOW}SKIP${NC} Monitor365 server not reachable on localhost:3001"
+  SKIP=$((SKIP + 1))
+fi
+
 # --- External vHost checks (from LAN) ---
 echo ""
 echo "=== External vHost Checks ==="
