@@ -2,7 +2,31 @@
 
 **Date:** 2026-07-16 22:24
 **Session Scope:** Diagnose monitor365 agent/server logs, find root cause of 401 auth failures + SSO login errors
-**Status:** Root causes identified, code fixes written, **NOT DEPLOYED**
+**Status:** Root causes identified, code fixes written and **hardened**, **NOT DEPLOYED**
+
+---
+
+## Hardening Session (2026-07-16 23:00)
+
+Critical review of the initial fix identified 7 issues. All code-level issues fixed:
+
+| Issue | Fix | Commit |
+|-------|-----|--------|
+| No empty-token guard (would recreate SHA256("") bug) | Skip sync when token is empty | `8b1d6d14` |
+| SQL interpolation without hash validation | `grep -qE '^[0-9a-f]{64}$'` before any SQL | `8b1d6d14` |
+| Token trim mismatch with upstream Rust `trim()` | `sed 's/^[[:space:]]*//;s/[[:space:]]*$//'` | `8b1d6d14` |
+| `2>/dev/null` hid DuckDB errors | Removed -- errors now visible in journal | `8b1d6d14` |
+| No read-back verification after UPDATE | SELECT + grep to confirm row was updated | `8b1d6d14` |
+| Post-deploy-check only checked HTTP 200 | Added functional check for `realtime` field | `9cc5fc5d` |
+| No Gatus alert for agent disconnection | Added check: `realtime != connected (0 devices)` | `3d1f0591` |
+| Pre-commit statix scanned entire repo | Fixed to only check staged files | `8b1d6d14` |
+| Pre-commit alejandra version mismatch with treefmt | Replaced with treefmt formatting | `8b1d6d14` |
+
+**Remaining manual steps (require deploy):**
+1. Deploy: `nix run .#deploy`
+2. Verify agent connects: `/health` shows `connected (1+ devices)`
+3. Verify SSO login works end-to-end
+4. Stop stale `monitor365-desktop` user service: `systemctl --user stop monitor365-desktop`
 
 ---
 
