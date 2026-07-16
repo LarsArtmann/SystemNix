@@ -31,14 +31,14 @@
         --radius: 0px;
         --radius-sm: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -234,15 +234,27 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue {
         background: var(--surface-raised);
@@ -253,15 +265,27 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -631,9 +655,10 @@
           <div class="hero-badge">Full System Audit</div>
           <h1>SystemNix — Comprehensive Status</h1>
           <p class="hero-subtitle">
-            Cross-platform Nix configuration (macOS + NixOS) running on evo-x2 (128 GiB, AMD Ryzen
-            AI Max+ 395) and Lars-MacBook-Air (24 GiB, aarch64-darwin). 39 service modules, 155+
-            features, 8 ADRs — but the memory arithmetic is fundamentally broken on the Strix Halo
+            Cross-platform Nix configuration (macOS + NixOS) running on evo-x2
+            (128 GiB, AMD Ryzen AI Max+ 395) and Lars-MacBook-Air (24 GiB,
+            aarch64-darwin). 39 service modules, 155+ features, 8 ADRs — but the
+            memory arithmetic is fundamentally broken on the Strix Halo
             platform.
           </p>
         </div>
@@ -685,10 +710,11 @@
         <div class="card card-problem">
           <h4>Immediate trigger for this report</h4>
           <p>
-            Deploy failed with <code>ExitStatus(Exited(4))</code> — systemd start-limit-hit. User
-            ran <code>nh os switch</code> directly instead of <code>nix run .#deploy</code>, which
-            runs <code>systemctl reset-failed</code> first. This is a symptom of deeper memory
-            pressure problems (see section D).
+            Deploy failed with <code>ExitStatus(Exited(4))</code> — systemd
+            start-limit-hit. User ran <code>nh os switch</code> directly instead
+            of <code>nix run .#deploy</code>, which runs
+            <code>systemctl reset-failed</code> first. This is a symptom of
+            deeper memory pressure problems (see section D).
           </p>
         </div>
 
@@ -714,9 +740,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>SSO / OIDC two-layer architecture</strong>
               <span
-                >Pocket ID (passkey-only IdP) + oauth2-proxy forward-auth. Layer 1 native OIDC:
-                Forgejo, Immich, Gatus. Layer 2 proxy auth: Homepage, SigNoz, Twenty, Taskchampion,
-                Manifest, OpenSEO, Crush Daily, Dozzle, Monitor365.</span
+                >Pocket ID (passkey-only IdP) + oauth2-proxy forward-auth. Layer
+                1 native OIDC: Forgejo, Immich, Gatus. Layer 2 proxy auth:
+                Homepage, SigNoz, Twenty, Taskchampion, Manifest, OpenSEO, Crush
+                Daily, Dozzle, Monitor365.</span
               >
             </div>
           </div>
@@ -725,9 +752,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>DNS resolution stack</strong>
               <span
-                >Unbound on :53 (local zones, DoT upstream to Mullvad/Quad9, LAN ACLs, DNSSEC) +
-                dnsblockd block-page HTTP server with 13 local A records. Shared blocklists across
-                evo-x2 + rpi3-dns.</span
+                >Unbound on :53 (local zones, DoT upstream to Mullvad/Quad9, LAN
+                ACLs, DNSSEC) + dnsblockd block-page HTTP server with 13 local A
+                records. Shared blocklists across evo-x2 + rpi3-dns.</span
               >
             </div>
           </div>
@@ -737,9 +764,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
               <strong>Caddy reverse proxy with TLS</strong>
               <span
                 >Automated vHost management via <code>protectedVHost</code> +
-                <code>commonConfig</code>. TLS 1.2+ enforced, strict SNI, security headers (HSTS,
-                nosniff, frame-options), zstd/gzip, access logging with rotation. Sops-managed
-                certs.</span
+                <code>commonConfig</code>. TLS 1.2+ enforced, strict SNI,
+                security headers (HSTS, nosniff, frame-options), zstd/gzip,
+                access logging with rotation. Sops-managed certs.</span
               >
             </div>
           </div>
@@ -749,8 +776,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
               <strong>SigNoz observability stack</strong>
               <span
                 >ClickHouse + SigNoz + OTEL Collector + cAdvisor. Custom
-                <code>signoz.target</code> decoupled from boot (2m faster). JWT auto-generation.
-                SQLite migration-lock self-healing. Discord channel routing per threshold.</span
+                <code>signoz.target</code> decoupled from boot (2m faster). JWT
+                auto-generation. SQLite migration-lock self-healing. Discord
+                channel routing per threshold.</span
               >
             </div>
           </div>
@@ -759,8 +787,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>Gatus health monitoring</strong>
               <span
-                >36+ endpoints with Discord alerts + response-time thresholds. Every user-facing
-                service monitored. Native OIDC for Gatus itself (Layer 1).</span
+                >36+ endpoints with Discord alerts + response-time thresholds.
+                Every user-facing service monitored. Native OIDC for Gatus
+                itself (Layer 1).</span
               >
             </div>
           </div>
@@ -769,8 +798,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>Sops + Age secret management</strong>
               <span
-                >All secrets in sops-encrypted YAML. Age keys derived from SSH host keys. All
-                secrets guarded with <code>lib.optionalAttrs</code> to prevent atomic blocking.
+                >All secrets in sops-encrypted YAML. Age keys derived from SSH
+                host keys. All secrets guarded with
+                <code>lib.optionalAttrs</code> to prevent atomic blocking.
                 Project-local skill for workflow.</span
               >
             </div>
@@ -780,9 +810,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>Deploy pipeline</strong>
               <span
-                ><code>nix run .#deploy</code> = pre-deploy-check → reset-failed →
-                <code>nh os switch</code> → post-deploy smoke test. Catches boot-breaking issues,
-                functional verification, silent failure detection.</span
+                ><code>nix run .#deploy</code> = pre-deploy-check → reset-failed
+                → <code>nh os switch</code> → post-deploy smoke test. Catches
+                boot-breaking issues, functional verification, silent failure
+                detection.</span
               >
             </div>
           </div>
@@ -791,9 +822,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>DMS / Quickshell desktop shell</strong>
               <span
-                >DankMaterialShell replaces Waybar, Dunst, Wlogout, polkit_gnome, and Rofi. 13
-                SystemNix-native plugins + 2 community plugins (emoji launcher, calculator).
-                MemoryMax=4G defense-in-depth. Niri scrollable tiling compositor.</span
+                >DankMaterialShell replaces Waybar, Dunst, Wlogout,
+                polkit_gnome, and Rofi. 13 SystemNix-native plugins + 2
+                community plugins (emoji launcher, calculator). MemoryMax=4G
+                defense-in-depth. Niri scrollable tiling compositor.</span
               >
             </div>
           </div>
@@ -802,9 +834,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>BTRFS snapshots on root</strong>
               <span
-                >Daily btrbk snapshots with 14d+4w retention. BTRFS health monitoring
-                (btrfs-health.nix) gates <code>nix-gc</code> via ExecStartPre guard. Gatus alerts on
-                metadata ENOSPC. Staggered before GC.</span
+                >Daily btrbk snapshots with 14d+4w retention. BTRFS health
+                monitoring (btrfs-health.nix) gates <code>nix-gc</code> via
+                ExecStartPre guard. Gatus alerts on metadata ENOSPC. Staggered
+                before GC.</span
               >
             </div>
           </div>
@@ -813,8 +846,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>GitHub Actions CI</strong>
               <span
-                >Weekly flake-update PR + on-push nix-check (builds local packages, statix + deadnix
-                linting, <code>nix fmt --check</code>). 9 pre-commit hooks including gitleaks.</span
+                >Weekly flake-update PR + on-push nix-check (builds local
+                packages, statix + deadnix linting,
+                <code>nix fmt --check</code>). 9 pre-commit hooks including
+                gitleaks.</span
               >
             </div>
           </div>
@@ -823,9 +858,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>Home Manager cross-platform</strong>
               <span
-                >Shared ~80% config in <code>platforms/common/</code> — base packages, programs,
-                theme (Catppuccin Mocha), locale. NixOS gets full parity; Darwin is minimal (disk
-                constrained).</span
+                >Shared ~80% config in <code>platforms/common/</code> — base
+                packages, programs, theme (Catppuccin Mocha), locale. NixOS gets
+                full parity; Darwin is minimal (disk constrained).</span
               >
             </div>
           </div>
@@ -834,8 +869,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>Forgejo + OIDC + CI runners</strong>
               <span
-                >Native OIDC via Pocket ID (forgejo-oidc-setup oneshot). Auto-registration + account
-                linking. Gitea runners with 4G MemoryMax each.</span
+                >Native OIDC via Pocket ID (forgejo-oidc-setup oneshot).
+                Auto-registration + account linking. Gitea runners with 4G
+                MemoryMax each.</span
               >
             </div>
           </div>
@@ -844,8 +880,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>Immich photo stack</strong>
               <span
-                >Server + machine-learning (4G) + PostgreSQL. Native OIDC via Pocket ID. Database
-                backup oneshot. Caddy reverse proxy.</span
+                >Server + machine-learning (4G) + PostgreSQL. Native OIDC via
+                Pocket ID. Database backup oneshot. Caddy reverse proxy.</span
               >
             </div>
           </div>
@@ -854,8 +890,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>DiscordSync reactivated</strong>
               <span
-                >Upstream go-cqrs-lite v3 migration complete. API server on localhost:8085 (avoids
-                SigNoz conflict). Schema-drift migration fixed. GCS backup opt-in.</span
+                >Upstream go-cqrs-lite v3 migration complete. API server on
+                localhost:8085 (avoids SigNoz conflict). Schema-drift migration
+                fixed. GCS backup opt-in.</span
               >
             </div>
           </div>
@@ -864,9 +901,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>OOM hardening layers</strong>
               <span
-                >systemd-oomd at 50%/20s. MGLRU thrash protection (min_ttl_ms=1000). User slice
-                MemoryHigh=56G/MemoryMax=64G. Hardware watchdog (30s). Protected journald
-                (OOMScoreAdj=-500). Helium <code>--disable-gpu-watchdog</code>.</span
+                >systemd-oomd at 50%/20s. MGLRU thrash protection
+                (min_ttl_ms=1000). User slice MemoryHigh=56G/MemoryMax=64G.
+                Hardware watchdog (30s). Protected journald (OOMScoreAdj=-500).
+                Helium <code>--disable-gpu-watchdog</code>.</span
               >
             </div>
           </div>
@@ -875,9 +913,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <div class="text">
               <strong>8 Architecture Decision Records</strong>
               <span
-                >Go workspace sub-module pattern, GPU memory headroom, BindsTo→Wants, PartOf→DMS,
-                Discord routing, local deps pattern, Gatus secret injection, Authelia→Pocket ID
-                migration.</span
+                >Go workspace sub-module pattern, GPU memory headroom,
+                BindsTo→Wants, PartOf→DMS, Discord routing, local deps pattern,
+                Gatus secret injection, Authelia→Pocket ID migration.</span
               >
             </div>
           </div>
@@ -889,39 +927,48 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
         <div class="issue issue-important">
           <span class="severity severity-important">In Progress</span>
           <h3>DNS migration: dnsblockd → primary resolver</h3>
-          <div class="where">modules/nixos/services/dns-blocker.nix · TODO_LIST.md Priority 0</div>
+          <div class="where">
+            modules/nixos/services/dns-blocker.nix · TODO_LIST.md Priority 0
+          </div>
           <p>
-            Plan complete (4 phases), Phase 2 module rework defined. dnsblockd has a full recursive
-            resolver (sdns, DNSSEC, DoT, DoH) but is feature-flagged
-            <code>dns_enabled: false</code>. Three gaps block migration: no local zones, no upstream
-            DoT forwarding, no LAN ACLs.
+            Plan complete (4 phases), Phase 2 module rework defined. dnsblockd
+            has a full recursive resolver (sdns, DNSSEC, DoT, DoH) but is
+            feature-flagged
+            <code>dns_enabled: false</code>. Three gaps block migration: no
+            local zones, no upstream DoT forwarding, no LAN ACLs.
           </p>
           <div class="callout callout-warning">
-            <strong>Blocking on:</strong> dnsblockd upstream work (~15h). Then Nix-side migration +
-            24h observation.
+            <strong>Blocking on:</strong> dnsblockd upstream work (~15h). Then
+            Nix-side migration + 24h observation.
           </div>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Chronic</span>
           <h3>Memory pressure management</h3>
-          <div class="where">platforms/nixos/system/boot.nix · All service MemoryMax values</div>
+          <div class="where">
+            platforms/nixos/system/boot.nix · All service MemoryMax values
+          </div>
           <p>
-            Extensive mitigations deployed (oomd, MGLRU, user slice limits, per-service MemoryMax,
-            watchdog, GPUActive monitoring) but the
-            <strong>root cause persists</strong>: GPUActive consumes 51+ GiB (55%) of visible RAM
-            with GPUReclaim=0. The TTM pool is configured at 112 GiB — exceeds the 94 GiB visible.
-            Every heavy workload triggers the OOM chain.
+            Extensive mitigations deployed (oomd, MGLRU, user slice limits,
+            per-service MemoryMax, watchdog, GPUActive monitoring) but the
+            <strong>root cause persists</strong>: GPUActive consumes 51+ GiB
+            (55%) of visible RAM with GPUReclaim=0. The TTM pool is configured
+            at 112 GiB — exceeds the 94 GiB visible. Every heavy workload
+            triggers the OOM chain.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Blocked</span>
           <h3>DNS failover cluster (Pi 3)</h3>
-          <div class="where">platforms/nixos/rpi3/ · modules/nixos/services/dns-failover.nix</div>
+          <div class="where">
+            platforms/nixos/rpi3/ · modules/nixos/services/dns-failover.nix
+          </div>
           <p>
-            Module and config ready (keepalived VRRP, unbound config). Hardware not purchased.
-            evo-x2 has no DNS redundancy — if unbound dies, LAN DNS breaks entirely.
+            Module and config ready (keepalived VRRP, unbound config). Hardware
+            not purchased. evo-x2 has no DNS redundancy — if unbound dies, LAN
+            DNS breaks entirely.
           </p>
         </div>
 
@@ -930,9 +977,10 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>BTRFS /data subvolume migration</h3>
           <div class="where">ROADMAP.md Theme 1</div>
           <p>
-            <code>/data</code> is BTRFS toplevel (subvolid=5) — cannot be snapshotted.
-            Docker/Immich/AI data has zero snapshot protection. Migration plan exists (7 steps, ~1h
-            downtime, USB rescue boot). Requires manual execution window.
+            <code>/data</code> is BTRFS toplevel (subvolid=5) — cannot be
+            snapshotted. Docker/Immich/AI data has zero snapshot protection.
+            Migration plan exists (7 steps, ~1h downtime, USB rescue boot).
+            Requires manual execution window.
           </p>
         </div>
 
@@ -942,7 +990,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <div class="where">modules/nixos/services/twenty.nix</div>
           <p>
             APPEARS RESOLVED (running since 06-23, responding on :3200). SSO is
-            billing-entitlement-gated (stays on Layer 2 proxy auth). Monitoring for recurrence.
+            billing-entitlement-gated (stays on Layer 2 proxy auth). Monitoring
+            for recurrence.
           </p>
         </div>
 
@@ -953,8 +1002,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <p>
             Root cause: upstream Rust panic (Axum 0.7 route syntax
             <code>:param</code> → <code>{param}</code>). Needs fix in
-            <code>github:LarsArtmann/monitor365</code>. Nix-side workaround not possible. Server
-            works; agent crashes.
+            <code>github:LarsArtmann/monitor365</code>. Nix-side workaround not
+            possible. Server works; agent crashes.
           </p>
         </div>
 
@@ -963,8 +1012,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Hermes configuration</h3>
           <div class="where">modules/nixos/services/hermes.nix</div>
           <p>
-            Nix wiring complete. Blocked on human: (1) install SSH deploy key, (2) set fallback
-            model. Active pip extras: messaging, anthropic, firecrawl, edge-tts, fal, exa.
+            Nix wiring complete. Blocked on human: (1) install SSH deploy key,
+            (2) set fallback model. Active pip extras: messaging, anthropic,
+            firecrawl, edge-tts, fal, exa.
           </p>
         </div>
 
@@ -973,8 +1023,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Darwin Home Manager parity</h3>
           <div class="where">platforms/darwin/default.nix</div>
           <p>
-            256GB SSD 90%+ full, 24GB RAM. HM config is minimal — no terminal/editor/theme parity
-            with NixOS. Blocked by disk constraint.
+            256GB SSD 90%+ full, 24GB RAM. HM config is minimal — no
+            terminal/editor/theme parity with NixOS. Blocked by disk constraint.
             <code>nix-collect-garbage</code> hangs.
           </p>
         </div>
@@ -1066,25 +1116,30 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Memory budget is mathematically impossible</h3>
           <div class="where">All MemoryMax values vs. actual available RAM</div>
           <p>
-            The sum of all per-service <code>MemoryMax</code> quotas is <strong>~94 GiB+</strong>:
+            The sum of all per-service <code>MemoryMax</code> quotas is
+            <strong>~94 GiB+</strong>:
           </p>
           <div class="dep-tree">
             <span class="root">MemoryMax quotas</span> ├── ollama:
-            <span class="unwanted">32G</span> ├── hermes: <span class="unwanted">24G</span> ├──
-            whisper-asr: <span class="unwanted">8G</span> ├── clickhouse: 4G ├── immich-ml: 4G ├──
-            minecraft: 4G ├── gitea-runner: 4G ├── 20+ services @ 256M-2G: ~14G └──
-            <span class="unwanted">TOTAL: ~94G+ (but only ~43G actually available)</span>
+            <span class="unwanted">32G</span> ├── hermes:
+            <span class="unwanted">24G</span> ├── whisper-asr:
+            <span class="unwanted">8G</span> ├── clickhouse: 4G ├── immich-ml:
+            4G ├── minecraft: 4G ├── gitea-runner: 4G ├── 20+ services @
+            256M-2G: ~14G └──
+            <span class="unwanted"
+              >TOTAL: ~94G+ (but only ~43G actually available)</span
+            >
           </div>
           <p>
-            oomd kills at 50% pressure / 20s. Services die → restart → 5 restarts in 300s →
-            start-limit-hit →
-            <code>reset-failed</code> needed on every deploy. This is the engine that generates the
-            problem, and it's baked into the architecture.
+            oomd kills at 50% pressure / 20s. Services die → restart → 5
+            restarts in 300s → start-limit-hit →
+            <code>reset-failed</code> needed on every deploy. This is the engine
+            that generates the problem, and it's baked into the architecture.
           </p>
           <div class="callout callout-solution">
-            <strong>Fix:</strong> Right-size quotas to actual usage, disable unused heavy services
-            (ollama 32G + whisper 8G = 40G freed), or constrain GPUActive via amdgpu.gtt_size kernel
-            param.
+            <strong>Fix:</strong> Right-size quotas to actual usage, disable
+            unused heavy services (ollama 32G + whisper 8G = 40G freed), or
+            constrain GPUActive via amdgpu.gtt_size kernel param.
           </div>
         </div>
 
@@ -1093,15 +1148,16 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>reset-failed band-aid masks chronic crash-loops</h3>
           <div class="where">scripts/deploy.sh</div>
           <p>
-            <code>systemctl reset-failed</code> runs before every deploy — not as defense-in-depth,
-            but as a <strong>load-bearing crutch</strong>. It clears the start-limit-hit state that
-            accumulates because services keep crash-looping between deploys. The band-aid hides the
-            underlying failures instead of fixing them. A healthy NixOS box never needs
-            <code>reset-failed</code>.
+            <code>systemctl reset-failed</code> runs before every deploy — not
+            as defense-in-depth, but as a <strong>load-bearing crutch</strong>.
+            It clears the start-limit-hit state that accumulates because
+            services keep crash-looping between deploys. The band-aid hides the
+            underlying failures instead of fixing them. A healthy NixOS box
+            never needs <code>reset-failed</code>.
           </p>
           <div class="callout callout-warning">
-            <strong>Trap:</strong> Removing it now would block every deploy until root causes are
-            fixed. Must fix the crash sources first.
+            <strong>Trap:</strong> Removing it now would block every deploy
+            until root causes are fixed. Must fix the crash sources first.
           </div>
         </div>
 
@@ -1110,18 +1166,20 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Strix Halo GPU memory management is uncontrollable</h3>
           <div class="where">/proc/meminfo → GPUActive · boot.nix</div>
           <p>
-            GPUActive consumes <strong>51+ GiB (55%)</strong> of visible RAM with
-            <code>GPUReclaim=0</code>. The TTM pool is configured with
+            GPUActive consumes <strong>51+ GiB (55%)</strong> of visible RAM
+            with <code>GPUReclaim=0</code>. The TTM pool is configured with
             <code>pages_limit = page_pool_size = 112 GiB</code> — which
-            <strong>exceeds the 94 GiB visible</strong>. The GPU driver can consume virtually all
-            system RAM. <code>/proc/meminfo</code> has a <code>GPUActive</code> counter but standard
-            tools (<code>free</code>, <code>htop</code>) don't show it — making the "missing" RAM
-            invisible.
+            <strong>exceeds the 94 GiB visible</strong>. The GPU driver can
+            consume virtually all system RAM. <code>/proc/meminfo</code> has a
+            <code>GPUActive</code> counter but standard tools
+            (<code>free</code>, <code>htop</code>) don't show it — making the
+            "missing" RAM invisible.
           </p>
           <div class="callout callout-solution">
-            <strong>Known mitigations deployed:</strong> User slice MemoryMax=64G, oomd at 50%,
-            MGLRU min_ttl_ms=1000, Helium --disable-gpu-watchdog. But the pool size (112 GiB) and
-            GPUReclaim=0 mean the fundamental problem persists.
+            <strong>Known mitigations deployed:</strong> User slice
+            MemoryMax=64G, oomd at 50%, MGLRU min_ttl_ms=1000, Helium
+            --disable-gpu-watchdog. But the pool size (112 GiB) and GPUReclaim=0
+            mean the fundamental problem persists.
           </div>
         </div>
 
@@ -1130,30 +1188,35 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
           <h3>Pocket ID provisioning desync chain</h3>
           <div class="where">modules/nixos/services/pocket-id.nix</div>
           <p>
-            Pocket ID is a single point of failure for the entire OIDC chain. If pocket-id is slow
-            to start (30 retries × 120s window), 4 downstream services (gatus, forgejo-oidc-setup,
-            oauth2-proxy, immich-server) all wait, then start simultaneously, spiking memory.
-            Historical desync: client-secret file had old sops value while DB had null/stale → 401
-            at token exchange. Migration block now removed, but the boot-time cascade remains.
+            Pocket ID is a single point of failure for the entire OIDC chain. If
+            pocket-id is slow to start (30 retries × 120s window), 4 downstream
+            services (gatus, forgejo-oidc-setup, oauth2-proxy, immich-server)
+            all wait, then start simultaneously, spiking memory. Historical
+            desync: client-secret file had old sops value while DB had
+            null/stale → 401 at token exchange. Migration block now removed, but
+            the boot-time cascade remains.
           </p>
         </div>
 
         <!-- ===== E) IMPROVE ===== -->
-        <h2 id="improve"><span class="num">05</span>E) What We Should Improve</h2>
+        <h2 id="improve">
+          <span class="num">05</span>E) What We Should Improve
+        </h2>
 
         <div class="grid-2">
           <div class="card card-warning">
             <h4>1. Memory budget reconciliation</h4>
             <p>
-              Create a centralized <code>lib/memory-budget.nix</code> that sums all MemoryMax values
-              and validates against available RAM (visible − GPUActive headroom). Fail eval if
-              overcommitted.
+              Create a centralized <code>lib/memory-budget.nix</code> that sums
+              all MemoryMax values and validates against available RAM (visible
+              − GPUActive headroom). Fail eval if overcommitted.
             </p>
           </div>
           <div class="card card-warning">
             <h4>2. Boot ordering: stagger downstream starts</h4>
             <p>
-              Add <code>RestartSec=10</code> + <code>StartupIntervalSec=10</code> to services after
+              Add <code>RestartSec=10</code> +
+              <code>StartupIntervalSec=10</code> to services after
               pocket-id-provision so they don't all hit simultaneously.
             </p>
           </div>
@@ -1161,65 +1224,68 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
             <h4>3. Service defaults: add RestartSec + RestartSteps</h4>
             <p>
               Add <code>RestartSec=5</code> and <code>RestartSteps=3</code> to
-              <code>serviceDefaults</code> to space out restarts (5s → 10s → 15s) and avoid hitting
-              the 5-in-300s limit.
+              <code>serviceDefaults</code> to space out restarts (5s → 10s →
+              15s) and avoid hitting the 5-in-300s limit.
             </p>
           </div>
           <div class="card card-warning">
             <h4>4. Disable unused heavy services</h4>
             <p>
-              ollama (32G), whisper-asr (8G), minecraft (4G) — disabling frees 44G. Start ollama
-              on-demand via socket activation.
+              ollama (32G), whisper-asr (8G), minecraft (4G) — disabling frees
+              44G. Start ollama on-demand via socket activation.
             </p>
           </div>
           <div class="card card-warning">
             <h4>5. Cloud backup — zero off-site recovery</h4>
             <p>
-              No off-site backup exists. BorgBackup to Hetzner StorageBox is researched but not
-              started. This is the single highest-risk gap.
+              No off-site backup exists. BorgBackup to Hetzner StorageBox is
+              researched but not started. This is the single highest-risk gap.
             </p>
           </div>
           <div class="card card-warning">
             <h4>6. Firewall hardening</h4>
             <p>
-              NixOS allows all inbound. Docker punches its own holes. Transition to explicit
-              allowlist with deny-by-default.
+              NixOS allows all inbound. Docker punches its own holes. Transition
+              to explicit allowlist with deny-by-default.
             </p>
           </div>
           <div class="card card-warning">
             <h4>7. Typed NixOS module options</h4>
             <p>
-              Most modules use <code>mkEnableOption</code> only. Add typed options for ports, paths,
-              timeouts → enables validation, testing, and self-documenting config.
+              Most modules use <code>mkEnableOption</code> only. Add typed
+              options for ports, paths, timeouts → enables validation, testing,
+              and self-documenting config.
             </p>
           </div>
           <div class="card card-warning">
             <h4>8. Module splitting</h4>
             <p>
-              monitor365 (716L), signoz (705L), forgejo (583L) are too large. Extract sub-modules
-              for testability and readability.
+              monitor365 (716L), signoz (705L), forgejo (583L) are too large.
+              Extract sub-modules for testability and readability.
             </p>
           </div>
           <div class="card card-warning">
             <h4>9. GPUActive visibility</h4>
             <p>
-              The <code>GPUActive</code> field in <code>/proc/meminfo</code> is the ONLY way to see
-              the memory drain. Add it to the DMS widget + Gatus monitoring + SigNoz metrics. Make
-              it impossible to miss.
+              The <code>GPUActive</code> field in <code>/proc/meminfo</code> is
+              the ONLY way to see the memory drain. Add it to the DMS widget +
+              Gatus monitoring + SigNoz metrics. Make it impossible to miss.
             </p>
           </div>
           <div class="card card-warning">
             <h4>10. Comprehensive memory diagnostic script</h4>
             <p>
-              Write a <code>scripts/memory-audit.sh</code> that shows: visible RAM, GPUActive,
-              per-service MemoryMax vs actual RSS, overcommit ratio, failed units, OOM history. Run
-              it before every deploy.
+              Write a <code>scripts/memory-audit.sh</code> that shows: visible
+              RAM, GPUActive, per-service MemoryMax vs actual RSS, overcommit
+              ratio, failed units, OOM history. Run it before every deploy.
             </p>
           </div>
         </div>
 
         <!-- ===== F) TOP 25 NEXT ===== -->
-        <h2 id="next25"><span class="num">06</span>F) Top 25 Things To Do Next</h2>
+        <h2 id="next25">
+          <span class="num">06</span>F) Top 25 Things To Do Next
+        </h2>
 
         <p>Sorted by impact (Pareto: 80% of value from the top 20%).</p>
 
@@ -1239,8 +1305,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Right-size MemoryMax quotas</strong> — sum must fit ~43 GiB available.
-                  Disable unused services first (ollama 32G + whisper 8G = 40G freed).
+                  <strong>Right-size MemoryMax quotas</strong> — sum must fit
+                  ~43 GiB available. Disable unused services first (ollama 32G +
+                  whisper 8G = 40G freed).
                 </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">10/10</span></td>
@@ -1249,8 +1316,12 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Add RestartSec=5 + RestartSteps=3 to serviceDefaults</strong>
-                  — spaces out crash-loop restarts, prevents start-limit-hit cascade.
+                  <strong
+                    >Add RestartSec=5 + RestartSteps=3 to
+                    serviceDefaults</strong
+                  >
+                  — spaces out crash-loop restarts, prevents start-limit-hit
+                  cascade.
                 </td>
                 <td>30m</td>
                 <td><span class="badge badge-fixed">9/10</span></td>
@@ -1259,8 +1330,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Write memory-audit diagnostic script</strong> — visible RAM, GPUActive,
-                  per-service RSS, overcommit ratio, failed units, OOM history.
+                  <strong>Write memory-audit diagnostic script</strong> —
+                  visible RAM, GPUActive, per-service RSS, overcommit ratio,
+                  failed units, OOM history.
                 </td>
                 <td>1h</td>
                 <td><span class="badge badge-fixed">9/10</span></td>
@@ -1269,8 +1341,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Set up BorgBackup to Hetzner StorageBox</strong> — zero off-site backup is
-                  the single highest-risk gap. Research doc already exists.
+                  <strong>Set up BorgBackup to Hetzner StorageBox</strong> —
+                  zero off-site backup is the single highest-risk gap. Research
+                  doc already exists.
                 </td>
                 <td>4h</td>
                 <td><span class="badge badge-fixed">10/10</span></td>
@@ -1279,8 +1352,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>5</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>GPUActive monitoring</strong> — add to DMS widget, Gatus endpoint, SigNoz
-                  metrics. Make the invisible 51G visible.
+                  <strong>GPUActive monitoring</strong> — add to DMS widget,
+                  Gatus endpoint, SigNoz metrics. Make the invisible 51G
+                  visible.
                 </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">8/10</span></td>
@@ -1289,8 +1363,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>6</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>BTRFS /data subvolume migration</strong> — Docker/Immich/AI data has zero
-                  snapshot protection. 7-step plan ready, needs ~1h downtime window.
+                  <strong>BTRFS /data subvolume migration</strong> —
+                  Docker/Immich/AI data has zero snapshot protection. 7-step
+                  plan ready, needs ~1h downtime window.
                 </td>
                 <td>1h + downtime</td>
                 <td><span class="badge badge-fixed">8/10</span></td>
@@ -1299,8 +1374,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Firewall deny-by-default</strong> — NixOS allows all inbound. Transition
-                  to explicit allowlist.
+                  <strong>Firewall deny-by-default</strong> — NixOS allows all
+                  inbound. Transition to explicit allowlist.
                 </td>
                 <td>3h</td>
                 <td><span class="badge badge-fixed">7/10</span></td>
@@ -1309,8 +1384,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>8</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Monitor365 agent auth</strong> — no auth, anyone on LAN can POST data. Add
-                  shared secret or mTLS.
+                  <strong>Monitor365 agent auth</strong> — no auth, anyone on
+                  LAN can POST data. Add shared secret or mTLS.
                 </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">7/10</span></td>
@@ -1319,8 +1394,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Fix Jan llama-server respawn</strong> — spawns new llama-server every 1-3
-                  min (~1.2GB each). Not a systemd service, no cgroup limits.
+                  <strong>Fix Jan llama-server respawn</strong> — spawns new
+                  llama-server every 1-3 min (~1.2GB each). Not a systemd
+                  service, no cgroup limits.
                 </td>
                 <td>3h</td>
                 <td><span class="badge badge-fixed">7/10</span></td>
@@ -1329,8 +1405,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>10</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>DNS migration Phase 2</strong> — dnsblockd → primary resolver. Plan
-                  complete, blocked on upstream dnsblockd work (~15h across both repos).
+                  <strong>DNS migration Phase 2</strong> — dnsblockd → primary
+                  resolver. Plan complete, blocked on upstream dnsblockd work
+                  (~15h across both repos).
                 </td>
                 <td>15h</td>
                 <td><span class="badge badge-fixed">6/10</span></td>
@@ -1339,8 +1416,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>11</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Fix Monitor365 agent upstream</strong> — Axum 0.7 route syntax panic.
-                  Needs fix in github:LarsArtmann/monitor365.
+                  <strong>Fix Monitor365 agent upstream</strong> — Axum 0.7
+                  route syntax panic. Needs fix in
+                  github:LarsArtmann/monitor365.
                 </td>
                 <td>2h upstream</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
@@ -1349,8 +1427,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>12</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Bind Immich to localhost</strong> — on 0.0.0.0 with openFirewall. Caddy
-                  already proxies. Remove openFirewall.
+                  <strong>Bind Immich to localhost</strong> — on 0.0.0.0 with
+                  openFirewall. Caddy already proxies. Remove openFirewall.
                 </td>
                 <td>15m</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
@@ -1359,7 +1437,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>13</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Hermes: install SSH deploy key + set fallback model</strong>
+                  <strong
+                    >Hermes: install SSH deploy key + set fallback model</strong
+                  >
                   — manual steps blocking Hermes from being fully operational.
                 </td>
                 <td>15m</td>
@@ -1369,9 +1449,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Stagger downstream pocket-id starts</strong> — add RestartSec to gatus,
-                  forgejo-oidc-setup, oauth2-proxy, immich-server so they don't spike memory
-                  simultaneously.
+                  <strong>Stagger downstream pocket-id starts</strong> — add
+                  RestartSec to gatus, forgejo-oidc-setup, oauth2-proxy,
+                  immich-server so they don't spike memory simultaneously.
                 </td>
                 <td>30m</td>
                 <td><span class="badge badge-fixed">5/10</span></td>
@@ -1380,8 +1460,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>15</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Create lib/memory-budget.nix</strong> — sums all MemoryMax values,
-                  validates against available RAM at eval time. Fail eval if overcommitted.
+                  <strong>Create lib/memory-budget.nix</strong> — sums all
+                  MemoryMax values, validates against available RAM at eval
+                  time. Fail eval if overcommitted.
                 </td>
                 <td>2h</td>
                 <td><span class="badge badge-fixed">6/10</span></td>
@@ -1390,8 +1471,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>16</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Swap investigation</strong> — 8 GiB swap used on 128 GiB RAM. Run smem +
-                  swapoff/swapon to identify swap hogs.
+                  <strong>Swap investigation</strong> — 8 GiB swap used on 128
+                  GiB RAM. Run smem + swapoff/swapon to identify swap hogs.
                 </td>
                 <td>1h</td>
                 <td><span class="badge badge-fixed">4/10</span></td>
@@ -1400,8 +1481,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>17</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Provision Pi 3 for DNS failover</strong> — hardware purchase required.
-                  Module and config ready.
+                  <strong>Provision Pi 3 for DNS failover</strong> — hardware
+                  purchase required. Module and config ready.
                 </td>
                 <td>$$$</td>
                 <td><span class="badge badge-fixed">4/10</span></td>
@@ -1410,8 +1491,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>18</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo
-                  (583L) into sub-modules.
+                  <strong>Split large modules</strong> — monitor365 (716L),
+                  signoz (705L), forgejo (583L) into sub-modules.
                 </td>
                 <td>4h</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
@@ -1420,8 +1501,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>19</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Typed NixOS module options</strong> — ports, paths, timeouts for all
-                  custom modules → validation + testing.
+                  <strong>Typed NixOS module options</strong> — ports, paths,
+                  timeouts for all custom modules → validation + testing.
                 </td>
                 <td>8h</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
@@ -1430,8 +1511,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>20</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>AppArmor enablement</strong> — currently mkDefault false. Re-evaluate with
-                  kernel 6.x.
+                  <strong>AppArmor enablement</strong> — currently mkDefault
+                  false. Re-evaluate with kernel 6.x.
                 </td>
                 <td>4h</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
@@ -1440,8 +1521,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>21</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Auditd enablement</strong> — blocked on NixOS 26.05 bug #483085.
-                  Re-evaluate when fixed.
+                  <strong>Auditd enablement</strong> — blocked on NixOS 26.05
+                  bug #483085. Re-evaluate when fixed.
                 </td>
                 <td>blocked</td>
                 <td><span class="badge badge-fixed">3/10</span></td>
@@ -1450,9 +1531,9 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>22</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Upstream nixpkgs PRs</strong> — aw-watcher-utilization poetry-core,
-                  valkey/aiocache test fixes, taskwarrior3 flags, Kitty GC patch, KeePassXC Chromium
-                  manifests.
+                  <strong>Upstream nixpkgs PRs</strong> — aw-watcher-utilization
+                  poetry-core, valkey/aiocache test fixes, taskwarrior3 flags,
+                  Kitty GC patch, KeePassXC Chromium manifests.
                 </td>
                 <td>varies</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
@@ -1461,8 +1542,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>23</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Upstream HM PRs</strong> — ActivityWatch Wayland watcher deps, theme
-                  option, Darwin user definition (#6036).
+                  <strong>Upstream HM PRs</strong> — ActivityWatch Wayland
+                  watcher deps, theme option, Darwin user definition (#6036).
                 </td>
                 <td>varies</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
@@ -1471,8 +1552,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>24</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>NPU exploration</strong> — AMD XDNA driver loaded, no workloads. Explore
-                  ONNX Runtime / Ryzen AI SDK.
+                  <strong>NPU exploration</strong> — AMD XDNA driver loaded, no
+                  workloads. Explore ONNX Runtime / Ryzen AI SDK.
                 </td>
                 <td>research</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
@@ -1481,8 +1562,8 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
                 <td>25</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Darwin HM parity</strong> — blocked by 256GB disk. Consider cleanup +
-                  selective parity for terminal/editor.
+                  <strong>Darwin HM parity</strong> — blocked by 256GB disk.
+                  Consider cleanup + selective parity for terminal/editor.
                 </td>
                 <td>blocked</td>
                 <td><span class="badge badge-fixed">2/10</span></td>
@@ -1492,48 +1573,61 @@ OOM kills → crash-loops → start-limit-hit → reset-failed needed</code></pr
         </div>
 
         <!-- ===== G) QUESTION ===== -->
-        <h2 id="question"><span class="num">07</span>G) The #1 Question I Can't Answer</h2>
+        <h2 id="question">
+          <span class="num">07</span>G) The #1 Question I Can't Answer
+        </h2>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Blocking</span>
-          <h3>Are ollama (32G), whisper-asr (8G), and hermes (24G) actually used daily?</h3>
-          <div class="where">64G of MemoryMax quota — 67% of all available RAM</div>
+          <h3>
+            Are ollama (32G), whisper-asr (8G), and hermes (24G) actually used
+            daily?
+          </h3>
+          <div class="where">
+            64G of MemoryMax quota — 67% of all available RAM
+          </div>
           <p>
             These three services alone reserve
             <strong>64 GiB of MemoryMax quota</strong> — more than the
-            <strong>43 GiB actually available</strong> after GPUActive takes its 51 GiB cut. They
-            are the single biggest lever in the memory budget. But I don't know:
+            <strong>43 GiB actually available</strong> after GPUActive takes its
+            51 GiB cut. They are the single biggest lever in the memory budget.
+            But I don't know:
           </p>
           <ul style="margin: 0.5rem 0 1rem 1.5rem">
             <li>
-              Are you actively using ollama for inference daily, or could it be socket-activated
-              on-demand?
+              Are you actively using ollama for inference daily, or could it be
+              socket-activated on-demand?
             </li>
             <li>
-              Is whisper-asr (8G, disabled in config but quota-allocated) still needed at all?
+              Is whisper-asr (8G, disabled in config but quota-allocated) still
+              needed at all?
             </li>
             <li>
-              Is hermes (24G, 6 pip extras) running production workloads, or is it experimental?
+              Is hermes (24G, 6 pip extras) running production workloads, or is
+              it experimental?
             </li>
           </ul>
           <p>
-            The answer determines the entire memory strategy. If these three can be disabled or
-            on-demand, the memory crisis
-            <strong>resolves overnight</strong> — we go from chronic overcommitment to comfortable
-            headroom. If they must all run simultaneously, we need a fundamentally different
-            approach (GPU memory partitioning, kernel param tuning, or accepting the OOM chain as
-            permanent).
+            The answer determines the entire memory strategy. If these three can
+            be disabled or on-demand, the memory crisis
+            <strong>resolves overnight</strong> — we go from chronic
+            overcommitment to comfortable headroom. If they must all run
+            simultaneously, we need a fundamentally different approach (GPU
+            memory partitioning, kernel param tuning, or accepting the OOM chain
+            as permanent).
           </p>
           <div class="callout callout-solution">
-            <strong>Why I can't figure this out:</strong> Only you know your daily workflow. The
-            config shows them enabled, but I can't tell the difference between "running because I
-            use it" and "running because I forgot to disable it."
+            <strong>Why I can't figure this out:</strong> Only you know your
+            daily workflow. The config shows them enabled, but I can't tell the
+            difference between "running because I use it" and "running because I
+            forgot to disable it."
           </div>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-04 09:29 CET &middot; Reviewed against master @ f28167e1 &middot; Data
-          sources: TODO_LIST.md, FEATURES.md, ROADMAP.md, AGENTS.md, git log, live service analysis
+          Generated 2026-07-04 09:29 CET &middot; Reviewed against master @
+          f28167e1 &middot; Data sources: TODO_LIST.md, FEATURES.md, ROADMAP.md,
+          AGENTS.md, git log, live service analysis
         </footer>
       </main>
     </div>
