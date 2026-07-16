@@ -47,7 +47,11 @@
     }:
     let
       inherit (config.users) primaryUser;
-      ports = (import ../../../lib/default.nix lib).ports;
+      inherit (import ../../../lib/default.nix lib)
+        ports
+        harden
+        serviceOneshotDefaults
+        ;
       domain = config.networking.domain;
 
       systemAgentCfg = config.services.monitor365;
@@ -65,6 +69,7 @@
         xdotool
         xprintidle
         scrot
+        wmctrl # Window collector dependency (upstream warns if missing)
       ];
     in
     {
@@ -147,6 +152,72 @@
           users.users.monitor365-server.extraGroups = lib.optional (
             serverCfg.sso.enable && (config.services.pocket-id.enable or false)
           ) "pocket-id";
+        })
+
+        # ── API Key Sync ───────────────────────────────────────────
+        # The upstream bootstrap is idempotent — it reads the API key
+        # from sops ONLY on first boot (when no tenants exist). If the
+        # sops secret is rotated or was initially empty, the server's DB
+        # retains a stale key hash while the agent sends the current
+        # value, causing 401 Unauthorized on every request.
+        #
+        # This oneshot runs before the server starts and re-syncs the
+        # sops secret's SHA-256 hash into the tenants table so the agent
+        # and server always agree on the key.
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-api-key-sync = {
+            description = "Sync monitor365 API key from sops to DuckDB";
+            wantedBy = [ "monitor365-server.service" ];
+            before = [ "monitor365-server.service" ];
+
+            path = [
+              pkgs.duckdb
+              pkgs.coreutils
+            ];
+
+            serviceConfig = lib.mkMerge [
+              (harden { })
+              (serviceOneshotDefaults { })
+              {
+                User = "monitor365-server";
+                Group = "monitor365-server";
+              }
+            ];
+
+            script = ''
+              DB="${serverCfg.stateDir}/monitor365.duckdb"
+              SECRET="${config.sops.secrets.cloud_auth_token.path}"
+
+              # Skip if DB doesn't exist yet (first boot — bootstrap handles it)
+              if [ ! -f "$DB" ]; then
+                echo "Database not found, skipping API key sync (first boot)"
+                exit 0
+              fi
+
+              # Skip if secret file isn't readable
+              if [ ! -r "$SECRET" ]; then
+                echo "Secret file not readable, skipping API key sync"
+                exit 0
+              fi
+
+              # Compute SHA-256 hash matching the server's ApiKeyHash::from_key().
+              # Rust's str::trim() removes leading/trailing whitespace; command
+              # substitution $(cat) strips trailing newlines; printf '%s'
+              # avoids adding one back.
+              TOKEN=$(cat "$SECRET")
+              HASH=$(printf '%s' "$TOKEN" | sha256sum | cut -d' ' -f1)
+
+              # Update all tenants' API key hash (single-tenant deployment = 1 row).
+              # Non-fatal on failure — the server still starts with existing key.
+              echo "Syncing API key hash to DuckDB..."
+              if duckdb "$DB" "UPDATE tenants SET api_key = '$HASH';" 2>/dev/null; then
+                echo "API key synced successfully"
+              else
+                echo "WARNING: Failed to update API key in DuckDB (non-fatal)"
+                exit 0
+              fi
+            '';
+          };
         })
       ];
     };
