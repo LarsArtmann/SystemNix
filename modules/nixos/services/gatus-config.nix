@@ -405,6 +405,17 @@ _: {
                 ];
                 alerts = discordAlert "Monitor365 external endpoint down — reverse proxy or TLS issue";
               })
+              (mkHttpCheck {
+                name = "Monitor365 Agent Connected";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.monitor365-server}/health";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY].jsonpath.realtime != connected (0 devices)"
+                ];
+                alerts = discordAlert "Monitor365 agent not connected to server — API key desync or agent crash";
+              })
             ]
             ++ lib.optionals (config.services.monitor365.enable or false) [
               (mkHttpCheck {
