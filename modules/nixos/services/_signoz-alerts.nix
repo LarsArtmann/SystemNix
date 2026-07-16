@@ -96,6 +96,15 @@ in
       target = 1;
       interval = "1m";
     };
+    "signoz/rules/dnsblockd-crashes.json".source = mkRule {
+      name = "DNS Blocker Listener Crashes";
+      description = "dnsblockd DNS listener crashed and may not have recovered";
+      query = "rate(dnsblockd_dns_crashes_total[5m]) > 0";
+      step = 60;
+      target = 0;
+      interval = "1m";
+      severity = "warning";
+    };
     "signoz/rules/emeet-pixyd-down.json".source = mkRule {
       name = "EMEET PIXY Daemon Down";
       description = "emeet-pixyd metrics endpoint is unreachable";

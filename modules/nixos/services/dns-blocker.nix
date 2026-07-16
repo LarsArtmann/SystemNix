@@ -1,14 +1,16 @@
-# DNS blocker: dnsblockd (embedded sdns resolver) + blocklists + block page + stats API
+# DNS blocker: dnsblockd (embedded recursive resolver) + blocklists + block page + stats API
 #
 # dnsblockd is the sole DNS resolver on :53 with an embedded recursive resolver
-# (sdns), DNSSEC, local zones, LAN ACLs, DoT forwarding, and blocklist matching.
+# (IANA root hints + DNSSEC), local zones, LAN ACLs, DoT/DoH forwarding, and
+# blocklist matching.
 # The block-page HTTP server runs on the block IP (:80/:443).
 #
 # Blocklist files are fetched at eval time (pkgs.fetchurl) and passed directly
 # to dnsblockd via the dns_blocklists config key — dnsblockd parses them natively
 # at startup and hot-reloads them on interval. The dnsblockd process subcommand
-# still runs at build time to generate mapping.json (domain → source → category)
-# used by the HTTP block page for category display.
+# runs at build time to generate mapping.json (domain → source → category)
+# used by the HTTP block page for category display. The unbound.conf output is
+# a required positional argument of `dnsblockd process` but is unused at runtime.
 _: {
   flake.nixosModules.dns-blocker =
     {
@@ -50,7 +52,7 @@ _: {
       };
 
       # Fetch each blocklist file at eval time (fast - just metadata lookup)
-      fetchedBlocklists = map (bl: {
+      fetchedRawBlocklists = map (bl: {
         inherit (bl) name;
         file = pkgs.fetchurl {
           inherit (bl) url;
@@ -58,6 +60,103 @@ _: {
           name = "${bl.name}-raw";
         };
       }) cfg.blocklists;
+
+      # Filter out whitelisted domains (and their subdomains) from each blocklist
+      # at eval time. dnsblockd's runtime blocklist matcher walks up the dot
+      # hierarchy, so a whitelisted `discord.com` must also strip `*.discord.com`
+      # entries — otherwise `foo.discord.com` still matches its own blocklist
+      # row. This complements the build-time processor whitelist (which only
+      # affects mapping.json) by making the allowlist effective at runtime.
+      whitelistFileForFilter = pkgs.writeText "dns-blocker-filter-whitelist.txt" (
+        lib.concatLines cfg.whitelist
+      );
+
+      filterScript = pkgs.writeText "dns-blocker-filter.py" ''
+        import sys, os
+
+        whitelist_path = os.environ["WHITELIST_FILE"]
+        src_path = os.environ["SRC_FILE"]
+        dst_path = os.environ["DST_FILE"]
+
+        def normalize(d):
+            d = d.strip().rstrip(".").lower()
+            return d
+
+        whitelist = set()
+        with open(whitelist_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                norm = normalize(line)
+                if norm:
+                    whitelist.add(norm)
+
+        def is_whitelisted(domain):
+            if not domain:
+                return False
+            d = normalize(domain)
+            if d in whitelist:
+                return True
+            # Walk up parent domains: foo.bar.discord.com is covered by
+            # whitelist entry "discord.com" or "bar.discord.com".
+            parts = d.split(".")
+            for i in range(1, len(parts)):
+                parent = ".".join(parts[i:])
+                if parent in whitelist:
+                    return True
+            return False
+
+        def extract_domain(line):
+            s = line.strip()
+            if not s or s.startswith("#") or s.startswith("!"):
+                return ""
+            if s.startswith("address=/") or s.startswith("local=/"):
+                rest = s[len("address=/"):] if s.startswith("address=/") else s[len("local=/"):]
+                return rest.rstrip("/")
+            if s.startswith("||"):
+                rest = s[2:]
+                if "^" in rest:
+                    rest = rest[:rest.index("^")]
+                return rest
+            fields = s.split()
+            if len(fields) >= 2:
+                return fields[1]
+            if len(fields) == 1:
+                return fields[0]
+            return ""
+
+        kept = 0
+        skipped = 0
+        with open(src_path) as src, open(dst_path, "w") as dst:
+            for line in src:
+                original = line.rstrip("\n")
+                domain = extract_domain(original)
+                if is_whitelisted(domain):
+                    skipped += 1
+                    continue
+                dst.write(original + "\n")
+                kept += 1
+
+        print(f"kept={kept} skipped={skipped}", file=sys.stderr)
+      '';
+
+      filterBlocklist =
+        name: srcPath:
+        pkgs.runCommand "${name}-filtered" { } ''
+          mkdir -p $out
+          WHITELIST_FILE=${whitelistFileForFilter} \
+          SRC_FILE=${srcPath} \
+          DST_FILE=$out/${name} \
+            ${pkgs.python3}/bin/python3 ${filterScript}
+        '';
+
+      # Apply the whitelist filter to every fetched blocklist.
+      # The runtime DNS engine and the build-time processor both consume these.
+      fetchedBlocklists = map (bl: {
+        inherit (bl) name;
+        file = filterBlocklist bl.name (toString bl.file);
+      }) fetchedRawBlocklists;
 
       # Whitelist file (used by dnsblockd process for mapping.json generation)
       whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (lib.concatLines cfg.whitelist);
@@ -71,7 +170,7 @@ _: {
       );
 
       # Run processor at build time to generate mapping.json (domain → source → category).
-      # The unbound.conf output is no longer used but the subcommand requires the arg.
+      # unbound.conf is a required CLI positional argument but unused at runtime.
       processedBlocklist =
         pkgs.runCommand "dns-blocker-processed"
           {
@@ -114,17 +213,42 @@ _: {
             tracking_mode = "METADATA_ONLY";
             tracking_db_path = "/var/lib/dnsblockd/tracking.db";
 
+            # ── Reverse proxy for temp-allowed domains ──
+            proxy_enabled = cfg.proxyEnabled;
+            proxy_connect_timeout = cfg.proxyConnectTimeout;
+
             # ── Embedded DNS resolver ──
             dns_enabled = true;
             dns_exit_on_failure = true;
             dns_listen_addr = "0.0.0.0";
             dns_port = 53;
             dns_block_ip = cfg.blockIP;
-            dns_block_response = "zero_ip";
+            dns_block_response = cfg.dnsBlockResponse;
             dns_blocklists = blocklistPaths;
             dns_dnssec_enabled = cfg.enableDNSSEC;
             dns_ipv6_enabled = cfg.dnsIPv6Enabled;
             dns_reload_interval = cfg.dnsReloadInterval;
+            dns_block_ttl = cfg.dnsBlockTTL;
+            dns_resolve_timeout = cfg.dnsResolveTimeout;
+            dns_restart_backoff = cfg.dnsRestartBackoff;
+            dns_rate_limit_per_sec = cfg.dnsRateLimitPerSec;
+            dns_rate_limit_burst = cfg.dnsRateLimitBurst;
+            dns_rate_limit_max_clients = cfg.dnsRateLimitMaxClients;
+          }
+          // lib.optionalAttrs cfg.dnsTLSEnabled {
+            dns_tls_enabled = true;
+            dns_tls_port = cfg.dnsTLSPort;
+          }
+          // lib.optionalAttrs cfg.dnsDOHEnabled {
+            dns_doh_enabled = true;
+            dns_doh_port = cfg.dnsDOHPort;
+            dns_doh_path = cfg.dnsDOHPath;
+          }
+          // lib.optionalAttrs (cfg.dnsDOHTrustedProxies != [ ]) {
+            dns_doh_trusted_proxies = cfg.dnsDOHTrustedProxies;
+          }
+          // lib.optionalAttrs (cfg.proxyUpstreamDNS != [ ]) {
+            proxy_upstream_dns = cfg.proxyUpstreamDNS;
           }
           // lib.optionalAttrs (cfg.dnsForwarders != [ ]) {
             dns_forwarders = cfg.dnsForwarders;
@@ -231,7 +355,7 @@ _: {
           description = "Temporarily allow all DNS queries (skip blocklist loading). When true, dnsblockd resolves all queries without blocking.";
         };
 
-        # ── DNS resolver options (embedded sdns) ──
+        # ── DNS resolver options ──
 
         enableDNSSEC = mkOption {
           type = types.bool;
@@ -243,7 +367,7 @@ _: {
           type = types.listOf types.str;
           default = [ ];
           description = ''
-            Upstream DNS forwarders (sdns format).
+            Upstream DNS forwarders (tls://, https://, or host:port format).
             When empty (default), the embedded resolver performs full root recursion
             using IANA root hints and DNSSEC — no third-party dependency, maximum privacy.
 
@@ -289,6 +413,138 @@ _: {
           default = "1h";
           description = "Blocklist hot-reload interval (Go duration format).";
         };
+
+        dnsBlockResponse = mkOption {
+          type = types.enum [
+            "zero_ip"
+            "nxdomain"
+          ];
+          default = "zero_ip";
+          description = ''
+            DNS response type for blocked domains.
+            `zero_ip` returns the block IP (allows block-page HTTP serving).
+            `nxdomain` returns NXDOMAIN (faster, but no block page).
+          '';
+        };
+
+        dnsBlockTTL = mkOption {
+          type = types.ints.positive;
+          default = 60;
+          description = "TTL (seconds) for block response DNS records. Lower values propagate policy changes faster at the cost of more client re-queries.";
+        };
+
+        dnsResolveTimeout = mkOption {
+          type = types.str;
+          default = "10s";
+          description = "Per-query resolver timeout (Go duration). A SERVFAIL is sent to the client if no upstream response arrives in time. Increase for slow links.";
+        };
+
+        dnsRestartBackoff = mkOption {
+          type = types.str;
+          default = "1s";
+          description = "Initial restart backoff after a DNS listener crash (Go duration). Doubles per failed attempt up to 10s, with ±20% jitter.";
+        };
+
+        dnsRateLimitPerSec = mkOption {
+          type = types.ints.unsigned;
+          default = 0;
+          description = ''
+            Maximum DNS queries per second per client IP (DoS protection).
+            0 = disabled (default, matches upstream). Clients exceeding the limit
+            receive REFUSED. Enable on any resolver reachable beyond a single
+            trusted host.
+          '';
+        };
+
+        dnsRateLimitBurst = mkOption {
+          type = types.ints.unsigned;
+          default = 0;
+          description = ''
+            Burst allowance for DNS rate limiting. 0 = disabled (default, matches upstream).
+            Must be set when dnsRateLimitPerSec > 0.
+          '';
+        };
+
+        dnsRateLimitMaxClients = mkOption {
+          type = types.ints.positive;
+          default = 10000;
+          description = "Maximum tracked client IPs for rate limiting. Oldest entries are evicted when the table fills.";
+        };
+
+        # ── DNS-over-TLS (DoT) ──
+
+        dnsTLSEnabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable DNS-over-TLS (DoT) listener on port 853. Requires ca_cert_file/ca_key_file (wired automatically via sops).";
+        };
+
+        dnsTLSPort = mkOption {
+          type = types.port;
+          default = 853;
+          description = "Port for DNS-over-TLS listener.";
+        };
+
+        # ── DNS-over-HTTPS (DoH, RFC 8484) ──
+
+        dnsDOHEnabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = "Enable DNS-over-HTTPS (DoH) listener. Requires ca_cert_file/ca_key_file (wired automatically via sops).";
+        };
+
+        dnsDOHPort = mkOption {
+          type = types.port;
+          default = 8443;
+          description = "Port for DNS-over-HTTPS listener (must differ from tls_port and dnsTLSPort).";
+        };
+
+        dnsDOHPath = mkOption {
+          type = types.str;
+          default = "/dns-query";
+          description = "URL path for DoH queries (RFC 8484 default).";
+        };
+
+        dnsDOHTrustedProxies = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            CIDR ranges trusted to set X-Forwarded-For for DoH ACL evaluation.
+            Empty = never trust XFF (all queries appear to come from the proxy IP).
+            Set when behind a known reverse proxy (e.g. ["10.0.0.0/8"]).
+          '';
+        };
+
+        # ── Reverse proxy for temp-allowed domains ──
+
+        proxyEnabled = mkOption {
+          type = types.bool;
+          default = false;
+          description = ''
+            Reverse-proxy temp-allowed domains to their real backend.
+            Browsers cache the block IP, so after temp-allowing a domain the user
+            often cannot reach the real site. The proxy fetches content transparently
+            so the "Continue to site" link works immediately. SSRF-protected (blocks
+            RFC1918, loopback, link-local, and CGNAT IPs); response body capped at 10MB.
+          '';
+        };
+
+        proxyConnectTimeout = mkOption {
+          type = types.str;
+          default = "10s";
+          description = "Timeout for connecting to the real backend through the proxy (Go duration).";
+        };
+
+        proxyUpstreamDNS = mkOption {
+          type = types.listOf types.str;
+          default = [ ];
+          description = ''
+            DNS servers used by the proxy to resolve real backend IPs.
+            Must bypass dnsblockd's own resolver to prevent loops.
+            When empty, dnsblockd uses its compiled-in defaults (Cloudflare, Google, Quad9).
+            Example: ["1.1.1.1:53" "8.8.8.8:53"]
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -300,6 +556,18 @@ _: {
           {
             assertion = cfg.localZones != [ ] || cfg.localRecords == { };
             message = "services.dns-blocker.localZones must be set when localRecords has entries — without zone boundaries, unknown names in local zones leak upstream.";
+          }
+          {
+            assertion = !(cfg.dnsRateLimitPerSec > 0) || cfg.dnsRateLimitBurst > 0;
+            message = "services.dns-blocker.dnsRateLimitBurst must be > 0 when dnsRateLimitPerSec is enabled.";
+          }
+          {
+            assertion = !cfg.dnsTLSEnabled || cfg.dnsTLSPort != cfg.dnsDOHPort || !cfg.dnsDOHEnabled;
+            message = "services.dns-blocker.dnsTLSPort and dnsDOHPort must differ to avoid bind conflict.";
+          }
+          {
+            assertion = !cfg.dnsDOHEnabled || cfg.dnsDOHPort != cfg.blockTLSPort;
+            message = "services.dns-blocker.dnsDOHPort must differ from blockTLSPort to avoid bind conflict.";
           }
         ];
 

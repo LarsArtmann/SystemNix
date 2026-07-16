@@ -285,6 +285,7 @@ _: {
                 conditions = [
                   "[STATUS] == 200"
                   "[RESPONSE_TIME] < 500"
+                  "[BODY].jsonpath.dnsRunning == true"
                 ];
                 alerts = discordAlert "DNS blocker down — no ad/malware blocking";
               })
