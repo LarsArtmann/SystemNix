@@ -173,6 +173,8 @@
             path = [
               pkgs.duckdb
               pkgs.coreutils
+              pkgs.gnused
+              pkgs.gnugrep
             ];
 
             serviceConfig = lib.mkMerge [
@@ -181,6 +183,7 @@
               {
                 User = "monitor365-server";
                 Group = "monitor365-server";
+                StateDirectory = "monitor365-server";
               }
             ];
 
@@ -200,20 +203,52 @@
                 exit 0
               fi
 
+              # Read and trim the token to match upstream Rust String::trim().
+              # sed strips leading/trailing whitespace (including \r from CRLF);
+              # $() strips the trailing newline. Matches the server's
+              # bootstrap read_secret_with_retry() + trim().
+              TOKEN=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' "$SECRET")
+
+              # Guard against empty token — writing SHA256("") recreates the
+              # original desync bug (server stores empty hash, agent sends real key).
+              if [ -z "$TOKEN" ]; then
+                echo "WARNING: cloud_auth_token is empty — skipping sync to avoid writing SHA256(\"\")"
+                echo "Fix the sops secret and redeploy"
+                exit 0
+              fi
+
               # Compute SHA-256 hash matching the server's ApiKeyHash::from_key().
-              # Rust's str::trim() removes leading/trailing whitespace; command
-              # substitution $(cat) strips trailing newlines; printf '%s'
-              # avoids adding one back.
-              TOKEN=$(cat "$SECRET")
+              # printf '%s' avoids adding a trailing newline (matches Rust's exact bytes).
               HASH=$(printf '%s' "$TOKEN" | sha256sum | cut -d' ' -f1)
 
-              # Update all tenants' API key hash (single-tenant deployment = 1 row).
-              # Non-fatal on failure — the server still starts with existing key.
+              # Validate hash format before SQL interpolation (defense-in-depth).
+              # SHA-256 hex is always 64 lowercase hex chars — anything else is a bug.
+              if ! printf '%s' "$HASH" | grep -qE '^[0-9a-f]{64}$'; then
+                echo "ERROR: Computed hash has unexpected format (expected 64 hex chars, got $(printf '%s' "$HASH" | wc -c) chars)"
+                exit 1
+              fi
+
+              # Check if key is already in sync — skip unnecessary writes.
+              EXISTING=$(duckdb "$DB" -c "SELECT api_key FROM tenants LIMIT 1;" 2>&1 || echo "")
+              if echo "$EXISTING" | grep -q "$HASH"; then
+                echo "API key already in sync — no update needed"
+                exit 0
+              fi
+
               echo "Syncing API key hash to DuckDB..."
-              if duckdb "$DB" "UPDATE tenants SET api_key = '$HASH';" 2>/dev/null; then
-                echo "API key synced successfully"
+
+              # Update all tenants' API key hash (single-tenant deployment = 1 row).
+              # Non-fatal on failure — the server starts with the existing key.
+              if duckdb "$DB" -c "UPDATE tenants SET api_key = '$HASH';"; then
+                # Verify the update took effect by reading back the hash.
+                VERIFY=$(duckdb "$DB" -c "SELECT api_key FROM tenants LIMIT 1;" 2>&1 || echo "")
+                if echo "$VERIFY" | grep -q "$HASH"; then
+                  echo "API key synced and verified successfully"
+                else
+                  echo "WARNING: UPDATE returned success but verification mismatch — server may use stale key"
+                fi
               else
-                echo "WARNING: Failed to update API key in DuckDB (non-fatal)"
+                echo "WARNING: Failed to update API key in DuckDB (non-fatal — server starts with existing key)"
                 exit 0
               fi
             '';

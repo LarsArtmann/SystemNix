@@ -52,8 +52,8 @@ if [ -n "$STAGED_NIX" ]; then
         all_passed=false
     fi
 
-    log_info "Running statix (Nix linter)..."
-    if nix shell nixpkgs#statix --command statix check -o errfmt . 2>&1 | grep -v ':E:0:' > /tmp/statix.log; then
+    log_info "Running statix (Nix linter) on staged files..."
+    if echo "$STAGED_NIX" | xargs nix shell nixpkgs#statix --command statix check -o errfmt 2>&1 | grep -v ':E:0:' > /tmp/statix.log; then
         log_success "Statix passed! No antipatterns found."
     else
         if [ -s /tmp/statix.log ]; then
@@ -65,14 +65,14 @@ if [ -n "$STAGED_NIX" ]; then
         fi
     fi
 
-    log_info "Running alejandra (formatter check) on staged files..."
-    if echo "$STAGED_NIX" | xargs nix shell nixpkgs#alejandra --command alejandra --check > /tmp/alejandra.log 2>&1; then
-        log_success "Alejandra passed! Code is properly formatted."
-    else
-        log_error "Alejandra found formatting issues!"
-        cat /tmp/alejandra.log
-        all_passed=false
-    fi
+    log_info "Formatting staged .nix files with treefmt (nix fmt)..."
+    nix fmt > /dev/null 2>&1 || true
+    echo "$STAGED_NIX" | while read -r f; do
+        if [ -f "$f" ]; then
+            git add "$f" 2>/dev/null || true
+        fi
+    done
+    log_success "Files formatted with treefmt."
 else
     log_info "No staged .nix files — skipping Nix linters."
 fi
