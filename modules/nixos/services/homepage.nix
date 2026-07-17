@@ -14,6 +14,7 @@ _: {
       cfg = config.services.homepage;
       inherit (config.networking) domain;
       stateDir = "/var/lib/homepage-dashboard";
+      cacheDir = "/var/cache/homepage-dashboard";
 
       # enableLocalIcons bundles the homarr-labs/dashboard-icons pack into
       # public/icons/ — without it, every service icon request 404s
@@ -62,6 +63,14 @@ _: {
           after = [ "network.target" ];
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
+          restartTriggers = [ homepagePkg ];
+          # Clear stale Next.js prerender cache on restart.
+          # Without this, a package upgrade changes the buildId but old cached
+          # pages still reference the old chunk hashes → 404 on _next/static/*.
+          # See: nixpkgs#346016, gethomepage/homepage#4560
+          preStart = ''
+            rm -rf "${cacheDir}"/* 2>/dev/null || true
+          '';
           serviceConfig = lib.mkMerge [
             {
               ExecStart = lib.getExe homepagePkg;
@@ -70,11 +79,13 @@ _: {
                 "PORT=${toString cfg.port}"
                 "HOMEPAGE_CONFIG_DIR=${stateDir}"
                 "HOMEPAGE_ALLOWED_HOSTS=dash.${domain}"
+                "NIXPKGS_HOMEPAGE_CACHE_DIR=${cacheDir}"
                 "NODE_OPTIONS=--max-old-space-size=192"
               ];
               User = "homepage";
               Group = "homepage";
               StateDirectory = "homepage-dashboard";
+              CacheDirectory = "homepage-dashboard";
             }
             (harden { MemoryMax = "384M"; })
             (serviceDefaults { })
@@ -192,11 +203,11 @@ _: {
                 siteMonitor = "${svcUrl "immich"}/api/server/ping";
               })
               (mkService "DNS Blocker" {
-                href = "http://localhost:${toString config.services.dns-blocker.statsPort}/stats";
+                href = svcUrl "dnsblockd";
                 description = "DNS Block Stats";
                 icon = "blocky.png";
                 statusStyle = "dot";
-                siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/health";
+                siteMonitor = "${svcUrl "dnsblockd"}/health";
               })
             ];
 

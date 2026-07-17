@@ -427,6 +427,8 @@ _: {
         text = ''
           set -euo pipefail
 
+          runuser() { shift 2; shift; "$@"; }
+
           FORGEJO=${lib.getExe forgejoPkg}
           WORK_DIR=${stateDir}
           CLIENT_ID="forgejo"
@@ -666,18 +668,18 @@ _: {
             "pocket-id-provision.service"
           ];
           wantedBy = [ "forgejo.service" ];
+          restartTriggers = [ (lib.getExe oidcSetupScript) ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
-              User = "root";
+              User = "forgejo";
+              Group = "forgejo";
               RemainAfterExit = true;
               LoadCredential = [
                 "forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"
               ];
             }
-            (harden {
-              NoNewPrivileges = false;
-            })
+            (harden { })
             (serviceOneshotDefaults { })
           ];
           script = lib.getExe oidcSetupScript;

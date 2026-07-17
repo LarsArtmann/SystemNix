@@ -47,11 +47,7 @@
     }:
     let
       inherit (config.users) primaryUser;
-      inherit (import ../../../lib/default.nix lib)
-        ports
-        harden
-        serviceOneshotDefaults
-        ;
+      inherit (import ../../../lib/default.nix lib) ports;
       domain = config.networking.domain;
 
       systemAgentCfg = config.services.monitor365;
@@ -148,111 +144,34 @@
             };
           };
 
-          # Grant pocket-id group to server user for SSO secret access
           users.users.monitor365-server.extraGroups = lib.optional (
             serverCfg.sso.enable && (config.services.pocket-id.enable or false)
           ) "pocket-id";
         })
 
-        # ── API Key Sync ───────────────────────────────────────────
-        # The upstream bootstrap is idempotent — it reads the API key
-        # from sops ONLY on first boot (when no tenants exist). If the
-        # sops secret is rotated or was initially empty, the server's DB
-        # retains a stale key hash while the agent sends the current
-        # value, causing 401 Unauthorized on every request.
-        #
-        # This oneshot runs before the server starts and re-syncs the
-        # sops secret's SHA-256 hash into the tenants table so the agent
-        # and server always agree on the key.
+        # Restart both agent and server when the sops secret changes.
+        (lib.mkIf (systemAgentCfg.enable || serverCfg.enable) {
+          systemd.services.monitor365.restartTriggers = [
+            config.sops.secrets.cloud_auth_token.path
+          ];
+          systemd.services.monitor365-server.restartTriggers = [
+            config.sops.secrets.cloud_auth_token.path
+          ];
+        })
+
+        # Workaround for upstream bug: the tenant projection replay inserts
+        # api_key = '' (empty) because TenantCreated events don't carry the
+        # hash. The projection reset wipes the bootstrap's correct key, then
+        # the replay restores it empty → 401 on every agent request.
+        # Fix: delete the DuckDB before server start so bootstrap creates a
+        # fresh tenant with the correct key (no events = no replay = no reset).
+        # LOSES monitoring history on each restart — acceptable for homelab.
+        # Remove when upstream includes api_key in TenantCreated events.
         (lib.mkIf serverCfg.enable {
-          systemd.services.monitor365-api-key-sync = {
-            description = "Sync monitor365 API key from sops to DuckDB";
-            wantedBy = [ "monitor365-server.service" ];
-            before = [ "monitor365-server.service" ];
-
-            path = [
-              pkgs.duckdb
-              pkgs.coreutils
-              pkgs.gnused
-              pkgs.gnugrep
-            ];
-
-            serviceConfig = lib.mkMerge [
-              (harden { })
-              (serviceOneshotDefaults { })
-              {
-                User = "monitor365-server";
-                Group = "monitor365-server";
-                StateDirectory = "monitor365-server";
-              }
-            ];
-
-            script = ''
-              DB="${serverCfg.stateDir}/monitor365.duckdb"
-              SECRET="${config.sops.secrets.cloud_auth_token.path}"
-
-              # Skip if DB doesn't exist yet (first boot — bootstrap handles it)
-              if [ ! -f "$DB" ]; then
-                echo "Database not found, skipping API key sync (first boot)"
-                exit 0
-              fi
-
-              # Skip if secret file isn't readable
-              if [ ! -r "$SECRET" ]; then
-                echo "Secret file not readable, skipping API key sync"
-                exit 0
-              fi
-
-              # Read and trim the token to match upstream Rust String::trim().
-              # sed strips leading/trailing whitespace (including \r from CRLF);
-              # $() strips the trailing newline. Matches the server's
-              # bootstrap read_secret_with_retry() + trim().
-              TOKEN=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' "$SECRET")
-
-              # Guard against empty token — writing SHA256("") recreates the
-              # original desync bug (server stores empty hash, agent sends real key).
-              if [ -z "$TOKEN" ]; then
-                echo "WARNING: cloud_auth_token is empty — skipping sync to avoid writing SHA256(\"\")"
-                echo "Fix the sops secret and redeploy"
-                exit 0
-              fi
-
-              # Compute SHA-256 hash matching the server's ApiKeyHash::from_key().
-              # printf '%s' avoids adding a trailing newline (matches Rust's exact bytes).
-              HASH=$(printf '%s' "$TOKEN" | sha256sum | cut -d' ' -f1)
-
-              # Validate hash format before SQL interpolation (defense-in-depth).
-              # SHA-256 hex is always 64 lowercase hex chars — anything else is a bug.
-              if ! printf '%s' "$HASH" | grep -qE '^[0-9a-f]{64}$'; then
-                echo "ERROR: Computed hash has unexpected format (expected 64 hex chars, got $(printf '%s' "$HASH" | wc -c) chars)"
-                exit 1
-              fi
-
-              # Check if key is already in sync — skip unnecessary writes.
-              EXISTING=$(duckdb "$DB" -c "SELECT api_key FROM tenants LIMIT 1;" 2>&1 || echo "")
-              if echo "$EXISTING" | grep -q "$HASH"; then
-                echo "API key already in sync — no update needed"
-                exit 0
-              fi
-
-              echo "Syncing API key hash to DuckDB..."
-
-              # Update all tenants' API key hash (single-tenant deployment = 1 row).
-              # Non-fatal on failure — the server starts with the existing key.
-              if duckdb "$DB" -c "UPDATE tenants SET api_key = '$HASH';"; then
-                # Verify the update took effect by reading back the hash.
-                VERIFY=$(duckdb "$DB" -c "SELECT api_key FROM tenants LIMIT 1;" 2>&1 || echo "")
-                if echo "$VERIFY" | grep -q "$HASH"; then
-                  echo "API key synced and verified successfully"
-                else
-                  echo "WARNING: UPDATE returned success but verification mismatch — server may use stale key"
-                fi
-              else
-                echo "WARNING: Failed to update API key in DuckDB (non-fatal — server starts with existing key)"
-                exit 0
-              fi
-            '';
-          };
+          systemd.services.monitor365-server.preStart = ''
+            rm -f "${serverCfg.stateDir}/monitor365.duckdb" \
+                  "${serverCfg.stateDir}/monitor365.duckdb.wal" 2>/dev/null || true
+          '';
         })
       ];
     };
