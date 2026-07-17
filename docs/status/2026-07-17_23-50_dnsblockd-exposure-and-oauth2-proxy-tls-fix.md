@@ -263,3 +263,46 @@ the hardcoded value and just say "compare against the CA in
    `dns-blocker-config.nix`). If the sops secret `dnsblockd_ca_cert` was ever regenerated
    separately, these would be different CAs and the server cert wouldn't match the trusted CA.
    Can you verify on the server: `openssl x509 -fingerprint -sha1 -noout -in /run/secrets/dnsblockd_ca_cert`?
+
+---
+
+## Appendix A — Correction: Caddy Changes Were NOT Destroyed by treefmt (2026-07-17 23:58)
+
+**Section D.1 above claims the pre-commit treefmt hook destroyed the caddy.nix changes. This is wrong.**
+
+That claim was speculation. I never observed the commit process — I only saw a
+clean `git status` afterward and invented a narrative from the commit message's
+mention of "treefmt". The actual cause, confirmed by `git reflog`, is simpler:
+
+### What the reflog shows
+
+```
+HEAD@{4}: commit 118e75f2 — "homepage cache, monitor365..." (homepage.nix committed)
+HEAD@{3}: commit 8e503916 — "docs: record Forgejo OIDC..."
+HEAD@{2}: reset: moving to HEAD           ← uncommitted working tree cleared here
+HEAD@{1}: commit c5c37a2e — "flake.lock: update..."
+HEAD@{0}: commit d5719019 — "harden oauth2-proxy TLS" (oauth2-proxy.nix committed)
+```
+
+The caddy.nix changes were **never committed**. They were uncommitted working-tree
+modifications. A `git reset` to HEAD (visible at reflog HEAD@{2}) discarded them
+along with all other uncommitted changes. The homepage.nix and oauth2-proxy.nix
+changes survived only because they were already committed before the reset.
+
+### What this means
+
+- **Not a treefmt hook bug** — the hook didn't destroy anything.
+- **Not a selective commit** — the changes simply weren't staged/committed in time.
+- **The fix is the same** — re-apply the caddy vhost for `dnsblockd.home.lan`.
+
+### Process lesson
+
+Commit work immediately after verification, or stage it, before moving on to
+other tasks. Uncommitted changes in a working tree are one `git reset` away
+from oblivion.
+
+### Question G.1 corrected
+
+The original question asked whether the changes were "intentionally reverted."
+They weren't reverted — they were never committed. The re-application is
+unambiguously needed.
