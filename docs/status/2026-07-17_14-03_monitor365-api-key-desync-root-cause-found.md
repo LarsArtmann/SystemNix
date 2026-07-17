@@ -242,3 +242,17 @@ Deleting the DuckDB file means:
 2. **Should I commit the changes now, or do you want to review the diff first?** The working tree has: the monitor365 module fix, AGENTS.md update, and the previous session's overlays/linux.nix change. All are deployed and working.
 
 3. **Should I file an upstream issue in the monitor365 repo for the `TenantCreated` event missing `api_key`?** This is the proper fix — the projection replay should preserve the api_key hash. The workaround (DuckDB deletion) should be temporary.
+
+---
+
+## Resolution (2026-07-17 23:00)
+
+**STATUS: FULLY RESOLVED.** The DuckDB-deletion workaround described in this report has been **REMOVED**. The root cause was properly fixed at the source:
+
+1. **Upstream commit `58ae68d03`:** `DomainEvent::TenantCreated` now carries `api_key_hash: Option<ApiKeyHash>`. Bootstrap emits the event with the SHA-256 hash. Projection rebuilds restore the correct key.
+
+2. **Upstream commit `6e6537082`:** The API-created tenant path (`POST /v1/tenants`) was also fixed — `TenantCommand::Create` now threads the `ApiKeyHash` through the full event chain. `ApiKeyHash` is a `#[serde(transparent)]` newtype for type safety.
+
+3. **Upstream commits `6582b2766` + `664debdee`:** Fixed three DuckDB SQL compatibility issues in `app_usage.rs` that were causing background task failures (`now() - INTERVAL` on TIMESTAMPTZ, nested `MAX()` aggregates, VARCHAR vs TIMESTAMP comparisons, strict GROUP BY).
+
+**Production verified:** 21/21 post-deploy checks pass, monitor365 agent connected, zero DuckDB errors, monitoring history preserved across restarts.
