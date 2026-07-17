@@ -66,21 +66,14 @@ if [ -n "$STAGED_NIX" ]; then
         log_success "Statix passed! No antipatterns found."
     fi
 
-    log_info "Formatting staged .nix files with treefmt (nix fmt)..."
-    nix fmt > /dev/null 2>&1 || true
+    log_info "Formatting staged .nix files with alejandra..."
     echo "$STAGED_NIX" | while read -r f; do
         if [ -f "$f" ]; then
+            nix shell nixpkgs#alejandra --command alejandra "$f" 2>/dev/null || true
             git add "$f" 2>/dev/null || true
         fi
     done
-    # treefmt formats the whole project — undo damage to non-.nix files
-    git diff --name-only -- '*.html' '*.md' '*.json' '*.yaml' '*.yml' '*.toml' \
-        | while read -r f; do
-            if [ -n "$f" ] && ! git diff --cached --name-only -- "$f" | grep -q .; then
-                git restore "$f" 2>/dev/null || true
-            fi
-        done
-    log_success "Files formatted with treefmt."
+    log_success "Staged .nix files formatted."
 else
     log_info "No staged .nix files — skipping Nix linters."
 fi
