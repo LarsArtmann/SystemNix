@@ -159,20 +159,6 @@
           ];
         })
 
-        # Workaround for upstream bug: the tenant projection replay inserts
-        # api_key = '' (empty) because TenantCreated events don't carry the
-        # hash. The projection reset wipes the bootstrap's correct key, then
-        # the replay restores it empty → 401 on every agent request.
-        # Fix: delete the DuckDB before server start so bootstrap creates a
-        # fresh tenant with the correct key (no events = no replay = no reset).
-        # LOSES monitoring history on each restart — acceptable for homelab.
-        # Remove when upstream includes api_key in TenantCreated events.
-        (lib.mkIf serverCfg.enable {
-          systemd.services.monitor365-server.preStart = ''
-            rm -f "${serverCfg.stateDir}/monitor365.duckdb" \
-                  "${serverCfg.stateDir}/monitor365.duckdb.wal" 2>/dev/null || true
-          '';
-        })
       ];
     };
 }
