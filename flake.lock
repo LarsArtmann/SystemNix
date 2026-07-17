@@ -449,11 +449,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784280196,
-        "narHash": "sha256-/DqWEVeojHLOVfQEONRAHXS9lBJn29erJi0IqGWAD6M=",
+        "lastModified": 1784284495,
+        "narHash": "sha256-n/Bd6oE7zS5dtCucdopZ1RLySRFZr1FSm+QcWGRACLI=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "49fadf1e700b3f525dd12f786b5f23f899f22aea",
+        "rev": "fcadef9650ba66c20f2b99d107311bd96477fbcc",
         "type": "github"
       },
       "original": {
@@ -3139,11 +3139,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784283070,
-        "narHash": "sha256-VMHvjqaM8+5GzR+g17xBaBgbb1tEsykKxwPZiztuecs=",
+        "lastModified": 1784284142,
+        "narHash": "sha256-fzD5iea+J6NugDdldKF0QzUN/HruEp8V4p0S+Mmlz6U=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "4624ba037348951b2f8427ac5c7491b97a83fc20",
+        "rev": "7f078cd15fe253f860c8aaefdec3e0058b0c8840",
         "type": "github"
       },
       "original": {
