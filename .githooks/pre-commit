@@ -53,16 +53,17 @@ if [ -n "$STAGED_NIX" ]; then
     fi
 
     log_info "Running statix (Nix linter) on staged files..."
-    if echo "$STAGED_NIX" | xargs nix shell nixpkgs#statix --command statix check -o errfmt 2>&1 | grep -v ':E:0:' > /tmp/statix.log; then
-        log_success "Statix passed! No antipatterns found."
+    > /tmp/statix.log
+    while IFS= read -r f; do
+        nix shell nixpkgs#statix --command statix check -o errfmt "$f" 2>&1 \
+            | grep -v ':E:0:' >> /tmp/statix.log || true
+    done <<< "$STAGED_NIX"
+    if [ -s /tmp/statix.log ]; then
+        log_error "Statix found issues in staged files!"
+        cat /tmp/statix.log
+        all_passed=false
     else
-        if [ -s /tmp/statix.log ]; then
-            log_error "Statix found issues in staged files!"
-            cat /tmp/statix.log
-            all_passed=false
-        else
-            log_success "Statix passed! No antipatterns found."
-        fi
+        log_success "Statix passed! No antipatterns found."
     fi
 
     log_info "Formatting staged .nix files with treefmt (nix fmt)..."
@@ -72,6 +73,13 @@ if [ -n "$STAGED_NIX" ]; then
             git add "$f" 2>/dev/null || true
         fi
     done
+    # treefmt formats the whole project — undo damage to non-.nix files
+    git diff --name-only -- '*.html' '*.md' '*.json' '*.yaml' '*.yml' '*.toml' \
+        | while read -r f; do
+            if [ -n "$f" ] && ! git diff --cached --name-only -- "$f" | grep -q .; then
+                git restore "$f" 2>/dev/null || true
+            fi
+        done
     log_success "Files formatted with treefmt."
 else
     log_info "No staged .nix files — skipping Nix linters."

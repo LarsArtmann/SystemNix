@@ -45,10 +45,20 @@ _: {
         runtimeInputs = [ pkgs.curl ];
         text = ''
           echo "oauth2-proxy: waiting for OIDC endpoint at auth.${domain}..."
-          curl -ksf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+          # No -k: TLS verification MUST succeed so oauth2-proxy (which verifies
+          # TLS for token exchange) can actually reach Pocket ID.  A -k here
+          # would mask a CA mismatch and produce mysterious 500s on callback.
+          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
             -o /dev/null "https://auth.${domain}/.well-known/openid-configuration" \
-            || { echo "oauth2-proxy: OIDC endpoint not reachable after 120s" >&2; exit 1; }
-          echo "oauth2-proxy: OIDC endpoint ready"
+            || {
+              echo "oauth2-proxy: OIDC endpoint unreachable or TLS verification failed after 120s" >&2
+              echo "  If TLS failed, the dnsblockd-CA may not match the server cert." >&2
+              echo "  Compare fingerprints:" >&2
+              echo "    openssl x509 -fingerprint -sha1 -noout -in /run/secrets/dnsblockd_ca_cert" >&2
+              echo "    Expected: 05:3B:B1:48:34:14:4D:94:84:85:DD:DB:AC:1B:83:33:8D:15:F7:B0" >&2
+              exit 1
+            }
+          echo "oauth2-proxy: OIDC endpoint ready (TLS verified)"
         '';
       };
     in
@@ -111,6 +121,13 @@ _: {
               ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
             }
           ];
+          # Explicit CA bundle path for Go's crypto/tls on NixOS.
+          # /etc/ssl/certs/ca-certificates.crt is the NixOS-merged bundle that
+          # includes both the Mozilla roots and the dnsblockd-CA from
+          # security.pki.certificates.  Without SSL_CERT_FILE, some Go binaries
+          # on NixOS silently fail to find the system cert pool, causing
+          # token-exchange 500 errors against TLS-terminated upstreams.
+          environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
         };
       };
     };

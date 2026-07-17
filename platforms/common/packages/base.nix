@@ -184,6 +184,7 @@ let
       buf
       delve
       gup
+      templ
 
       # CGO build tools for Go
       gcc
