@@ -55,34 +55,36 @@ let
   # utoipa-swagger-ui build script PermissionDenied fix.
   #
   # Root cause: Rust's std::fs::copy propagates permissions from the source
-  # file to the destination. Nix store files are mode 0444 (read-only).
-  # Crane's buildDepsOnly runs `cargo check --release` THEN `cargo build --release`.
-  # During `check`, the utoipa-swagger-ui build script copies the swagger-ui zip
-  # from the nix store to OUT_DIR — the copy gets mode 0444.
-  # During `build`, the script re-runs (different fingerprint), and fs::copy
-  # tries to truncate the existing 0444 file → EACCES (PermissionDenied).
+  # file to the destination. Nix store files are mode 0444 (read-only) after
+  # fixup — chmod in a builder is futile. Crane's buildDepsOnly runs
+  # `cargo check --release` THEN `cargo build --release`. During `check`, the
+  # utoipa-swagger-ui build script copies the swagger-ui zip from the nix store
+  # to OUT_DIR — the copy inherits 0444. During `build`, the script re-runs and
+  # fs::copy tries to truncate the existing 0444 file → EACCES.
   #
-  # Fix: provide a writable copy (mode 0644) so the copy remains overwritable
-  # across the check→build double-execution.
+  # Fix: override the deps buildPhase to delete swagger-ui zip copies between
+  # `cargo check` and `cargo build`, so the second run creates the file fresh.
   monitor365SwaggerUiFixOverlay =
     final: prev:
     let
-      swaggerUiZip = final.fetchurl {
-        url = "https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.17.14.zip";
-        hash = "sha256-SBJE0IEgl7Efuu73n3HZQrFxYX+cn5UU5jrL4T5xzNw=";
-      };
-      swaggerUiZipWritable = final.runCommand "swagger-ui-v5.17.14-writable.zip" { } ''
-        cp ${swaggerUiZip} $out
-        chmod 0644 $out
+      cleanSwaggerZips = ''
+        # Remove swagger-ui zip copies left by `cargo check` to prevent
+        # PermissionDenied when `cargo build` re-runs the build script.
+        find target -path '*/utoipa-swagger-ui-*/out/*.zip' -delete 2>/dev/null || true
       '';
-      writableSwaggerUrl = "file://${swaggerUiZipWritable}";
     in
     {
       monitor365 = prev.monitor365.overrideAttrs (old: {
         cargoArtifacts = old.cargoArtifacts.overrideAttrs (_: {
-          SWAGGER_UI_DOWNLOAD_URL = writableSwaggerUrl;
+          buildPhase = ''
+            runHook preBuild
+            cargo --version
+            cargoWithProfile check --locked
+            ${cleanSwaggerZips}
+            cargoWithProfile build --locked
+            runHook postBuild
+          '';
         });
-        SWAGGER_UI_DOWNLOAD_URL = writableSwaggerUrl;
       });
 
       # Rebuild monitor365-server with the fixed CLI.
