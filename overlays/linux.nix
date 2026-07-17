@@ -51,12 +51,64 @@ let
         };
       });
     };
+
+  # utoipa-swagger-ui build script PermissionDenied fix.
+  #
+  # Root cause: Rust's std::fs::copy propagates permissions from the source
+  # file to the destination. Nix store files are mode 0444 (read-only).
+  # Crane's buildDepsOnly runs `cargo check --release` THEN `cargo build --release`.
+  # During `check`, the utoipa-swagger-ui build script copies the swagger-ui zip
+  # from the nix store to OUT_DIR — the copy gets mode 0444.
+  # During `build`, the script re-runs (different fingerprint), and fs::copy
+  # tries to truncate the existing 0444 file → EACCES (PermissionDenied).
+  #
+  # Fix: provide a writable copy (mode 0644) so the copy remains overwritable
+  # across the check→build double-execution.
+  monitor365SwaggerUiFixOverlay =
+    final: prev:
+    let
+      swaggerUiZip = final.fetchurl {
+        url = "https://github.com/swagger-api/swagger-ui/archive/refs/tags/v5.17.14.zip";
+        hash = "sha256-SBJE0IEgl7Efuu73n3HZQrFxYX+cn5UU5jrL4T5xzNw=";
+      };
+      swaggerUiZipWritable = final.runCommand "swagger-ui-v5.17.14-writable.zip" { } ''
+        cp ${swaggerUiZip} $out
+        chmod 0644 $out
+      '';
+      writableSwaggerUrl = "file://${swaggerUiZipWritable}";
+    in
+    {
+      monitor365 = prev.monitor365.overrideAttrs (old: {
+        cargoArtifacts = old.cargoArtifacts.overrideAttrs (_: {
+          SWAGGER_UI_DOWNLOAD_URL = writableSwaggerUrl;
+        });
+        SWAGGER_UI_DOWNLOAD_URL = writableSwaggerUrl;
+      });
+
+      # Rebuild monitor365-server with the fixed CLI.
+      # The upstream symlinkJoin bakes in the original (unfixed) monitor365-cli.
+      monitor365-server = final.symlinkJoin {
+        name = prev.monitor365-server.name;
+        paths = [
+          final.monitor365
+          prev.monitor365-ui
+        ];
+        nativeBuildInputs = [ final.makeWrapper ];
+        postBuild = ''
+          mkdir -p $out/share/monitor365/ui
+          cp -r ${prev.monitor365-ui}/* $out/share/monitor365/ui/
+          wrapProgram $out/bin/monitor365-server \
+            --set-default UI_DIST_PATH "$out/share/monitor365/ui"
+        '';
+      };
+    };
 in
 [
   openaudibleOverlay
   dnsblockd.overlays.default
   emeet-pixyd.overlays.default
   monitor365.overlays.default
+  monitor365SwaggerUiFixOverlay
   netwatchOverlay
   file-and-image-renamer.overlays.default
   crush-daily.overlays.default

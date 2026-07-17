@@ -17,6 +17,7 @@ lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
   branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
+  cqrs-lint = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;

@@ -322,6 +322,19 @@
       };
     };
 
+    # go-cqrs-lite — CQRS/Event-Sourcing library (provides cqrs-lint CLI)
+    # Go dep inputs (go-finding, go-output, etc.) are NOT followed — overriding
+    # flake=false tarballs changes vendored content and breaks vendorHash.
+    go-cqrs-lite = {
+      url = "github:LarsArtmann/go-cqrs-lite?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+      };
+    };
+
     # branching-flow — Error context preservation analyzer
     branching-flow = {
       url = "github:LarsArtmann/branching-flow?ref=master";
