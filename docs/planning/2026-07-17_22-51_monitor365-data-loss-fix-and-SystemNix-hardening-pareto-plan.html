@@ -29,14 +29,14 @@
         --warning: var(--color-yellow);
         --success: var(--color-green);
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -246,8 +246,8 @@
   <body>
     <h1>Pareto Plan — monitor365 Data Loss Fix &amp; SystemNix Hardening</h1>
     <p class="subtitle">
-      2026-07-17 22:51 · 68 tasks · 3 sources (status report + SystemNix TODO +
-      monitor365 TODO) · Sorted by impact/effort/customer-value
+      2026-07-17 22:51 · 68 tasks · 3 sources (status report + SystemNix TODO + monitor365 TODO) ·
+      Sorted by impact/effort/customer-value
     </p>
 
     <div class="stats">
@@ -270,11 +270,10 @@
     </div>
 
     <div class="callout callout-problem">
-      <strong>The 1% that delivers 51%:</strong> Fix the API-created tenant gap
-      (same bug, different entry point), clean disk (deploy is blocked at 92%),
-      deploy the fix, commit SystemNix changes so they stop vanishing, and
-      verify the api_key survives a restart in production. Without these 5
-      tasks, the source fix is theoretical.
+      <strong>The 1% that delivers 51%:</strong> Fix the API-created tenant gap (same bug, different
+      entry point), clean disk (deploy is blocked at 92%), deploy the fix, commit SystemNix changes
+      so they stop vanishing, and verify the api_key survives a restart in production. Without these
+      5 tasks, the source fix is theoretical.
     </div>
 
     <!-- TIER 1 -->
@@ -283,8 +282,8 @@
       <span class="badge b-1pct">CRITICAL PATH</span>
     </h2>
     <p>
-      These 5 outcomes unblock everything else. Data integrity + deploy + commit
-      = the fix becomes real.
+      These 5 outcomes unblock everything else. Data integrity + deploy + commit = the fix becomes
+      real.
     </p>
     <table>
       <thead>
@@ -302,10 +301,9 @@
           <td class="id">T001</td>
           <td>
             Fix API-created tenant gap: thread api_key through
-            <code>TenantCommand::Create</code> →
-            <code>TenantEvent::Created</code> →
-            <code>DomainEvent::TenantCreated</code> so API-created tenants also
-            survive projection rebuilds
+            <code>TenantCommand::Create</code> → <code>TenantEvent::Created</code> →
+            <code>DomainEvent::TenantCreated</code> so API-created tenants also survive projection
+            rebuilds
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">12m</td>
@@ -316,8 +314,8 @@
           <td class="id">T002</td>
           <td>
             Clean disk:
-            <code>sudo rm -rf /nix/var/nix/builds/nix-*</code> (stale
-            sandboxes), <code>nix-collect-garbage --delete-older-than 7d</code>
+            <code>sudo rm -rf /nix/var/nix/builds/nix-*</code> (stale sandboxes),
+            <code>nix-collect-garbage --delete-older-than 7d</code>
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">10m</td>
@@ -327,8 +325,7 @@
         <tr>
           <td class="id">T003</td>
           <td>
-            Commit SystemNix changes (AGENTS.md update + base.nix templ) with
-            detailed message
+            Commit SystemNix changes (AGENTS.md update + base.nix templ) with detailed message
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">5m</td>
@@ -338,8 +335,8 @@
         <tr>
           <td class="id">T004</td>
           <td>
-            Deploy to evo-x2: <code>nix run .#deploy</code> (builds + activates
-            new monitor365 + templ)
+            Deploy to evo-x2: <code>nix run .#deploy</code> (builds + activates new monitor365 +
+            templ)
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">12m</td>
@@ -373,10 +370,7 @@
       Tier 2 — The 4% That Delivers 64%
       <span class="badge b-4pct">CORRECTNESS</span>
     </h2>
-    <p>
-      Regression prevention, test coverage, and cleanup that stops the bug from
-      coming back.
-    </p>
+    <p>Regression prevention, test coverage, and cleanup that stops the bug from coming back.</p>
     <table>
       <thead>
         <tr>
@@ -393,8 +387,8 @@
           <td class="id">T006</td>
           <td>
             Write regression test: bootstrap creates tenant → trigger
-            <code>check_and_rebuild_projections</code> → verify
-            <code>api_key</code> preserved (the exact bug scenario)
+            <code>check_and_rebuild_projections</code> → verify <code>api_key</code> preserved (the
+            exact bug scenario)
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">12m</td>
@@ -405,9 +399,7 @@
           <td class="id">T007</td>
           <td>
             Write backward-compat test: deserialize old JSON
-            <code
-              >{"type":"tenant_created","tenant_id":"t1","name":"n","plan":"free"}</code
-            >
+            <code>{"type":"tenant_created","tenant_id":"t1","name":"n","plan":"free"}</code>
             → verify <code>api_key == None</code>
           </td>
           <td><span class="badge b-high">High</span></td>
@@ -417,10 +409,7 @@
         </tr>
         <tr>
           <td class="id">T008</td>
-          <td>
-            Run <code>cargo clippy</code> on monitor365 changes and fix any
-            warnings
-          </td>
+          <td>Run <code>cargo clippy</code> on monitor365 changes and fix any warnings</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">8m</td>
           <td class="repo">monitor365</td>
@@ -428,9 +417,7 @@
         </tr>
         <tr>
           <td class="id">T009</td>
-          <td>
-            Run BDD tests: <code>cargo test -p monitor365-bdd-tests</code>
-          </td>
+          <td>Run BDD tests: <code>cargo test -p monitor365-bdd-tests</code></td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -439,8 +426,8 @@
         <tr>
           <td class="id">T010</td>
           <td>
-            Restore stale HTML files: <code>git restore docs/</code> (25 files
-            damaged by blanket <code>nix fmt</code>)
+            Restore stale HTML files: <code>git restore docs/</code> (25 files damaged by blanket
+            <code>nix fmt</code>)
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">3m</td>
@@ -450,9 +437,8 @@
         <tr>
           <td class="id">T011</td>
           <td>
-            Fix hardcoded <code>Plan::Free</code> in
-            <code>emit_tenant_created_event</code> — pass the actual plan
-            variable
+            Fix hardcoded <code>Plan::Free</code> in <code>emit_tenant_created_event</code> — pass
+            the actual plan variable
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">5m</td>
@@ -463,8 +449,7 @@
           <td class="id">T012</td>
           <td>
             Centralize api_key hashing — extract
-            <code>ApiKeyHash::from_key</code> calls into one shared bootstrap
-            helper
+            <code>ApiKeyHash::from_key</code> calls into one shared bootstrap helper
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">12m</td>
@@ -474,8 +459,8 @@
         <tr>
           <td class="id">T013</td>
           <td>
-            Verify <code>monitor365.nix</code> has no unused bindings after
-            preStart removal (run <code>deadnix</code> on it)
+            Verify <code>monitor365.nix</code> has no unused bindings after preStart removal (run
+            <code>deadnix</code> on it)
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">5m</td>
@@ -485,8 +470,8 @@
         <tr>
           <td class="id">T014</td>
           <td>
-            Add conditional check before <code>rotate_tenant_api_key</code> —
-            skip if hash already matches (avoid unnecessary writes)
+            Add conditional check before <code>rotate_tenant_api_key</code> — skip if hash already
+            matches (avoid unnecessary writes)
           </td>
           <td><span class="badge b-low">Low</span></td>
           <td class="effort">8m</td>
@@ -517,8 +502,7 @@
       <span class="badge b-20pct">DEPLOY &amp; VERIFY</span>
     </h2>
     <p>
-      Deploy verification, broken service fixes, and production hardening.
-      Customer-visible value.
+      Deploy verification, broken service fixes, and production hardening. Customer-visible value.
     </p>
     <table>
       <thead>
@@ -535,8 +519,7 @@
         <tr>
           <td class="id">T016</td>
           <td>
-            Run <code>nix run .#post-deploy-check</code> after deploy — verify
-            all smoke tests pass
+            Run <code>nix run .#post-deploy-check</code> after deploy — verify all smoke tests pass
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">5m</td>
@@ -570,8 +553,8 @@
         <tr>
           <td class="id">T020</td>
           <td>
-            Run BTRFS scrub on <code>/</code> and <code>/data</code> — map csum
-            errors, assess corruption extent
+            Run BTRFS scrub on <code>/</code> and <code>/data</code> — map csum errors, assess
+            corruption extent
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">10m*</td>
@@ -581,8 +564,7 @@
         <tr>
           <td class="id">T021</td>
           <td>
-            Run <code>smartctl -a /dev/nvme0n1</code> — check if Lexar NQ790 is
-            physically failing
+            Run <code>smartctl -a /dev/nvme0n1</code> — check if Lexar NQ790 is physically failing
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">5m</td>
@@ -592,8 +574,7 @@
         <tr>
           <td class="id">T022</td>
           <td>
-            Off-site backup setup — evaluate Hetzner StorageBox BorgBackup (data
-            loss is #1 risk)
+            Off-site backup setup — evaluate Hetzner StorageBox BorgBackup (data loss is #1 risk)
           </td>
           <td><span class="badge b-critical">Critical</span></td>
           <td class="effort">12m</td>
@@ -602,10 +583,7 @@
         </tr>
         <tr>
           <td class="id">T023</td>
-          <td>
-            Verify monitor365 <code>/ui/</code> serves WASM dashboard
-            post-deploy
-          </td>
+          <td>Verify monitor365 <code>/ui/</code> serves WASM dashboard post-deploy</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">5m</td>
           <td class="repo">SystemNix</td>
@@ -613,9 +591,7 @@
         </tr>
         <tr>
           <td class="id">T024</td>
-          <td>
-            Verify monitor365 display discovery + runtimeDeps PATH post-deploy
-          </td>
+          <td>Verify monitor365 display discovery + runtimeDeps PATH post-deploy</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">8m</td>
           <td class="repo">SystemNix</td>
@@ -623,9 +599,7 @@
         </tr>
         <tr>
           <td class="id">T025</td>
-          <td>
-            Verify Forgejo OIDC still works after runuser fix — test login flow
-          </td>
+          <td>Verify Forgejo OIDC still works after runuser fix — test login flow</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">8m</td>
           <td class="repo">SystemNix</td>
@@ -633,10 +607,7 @@
         </tr>
         <tr>
           <td class="id">T026</td>
-          <td>
-            Investigate monitor365 WS idle timeout cycle (connect/disconnect
-            every 1s)
-          </td>
+          <td>Investigate monitor365 WS idle timeout cycle (connect/disconnect every 1s)</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">12m</td>
           <td class="repo">monitor365</td>
@@ -657,8 +628,7 @@
         <tr>
           <td class="id">T028</td>
           <td>
-            Fix post-deploy-check empty ports bug (14 false FAILs from missing
-            port interpolation)
+            Fix post-deploy-check empty ports bug (14 false FAILs from missing port interpolation)
           </td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">10m</td>
@@ -667,11 +637,7 @@
         </tr>
         <tr>
           <td class="id">T029</td>
-          <td>
-            Twenty CRM: fix PG role mismatch (<code
-              >role "twenty" does not exist</code
-            >)
-          </td>
+          <td>Twenty CRM: fix PG role mismatch (<code>role "twenty" does not exist</code>)</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">12m</td>
           <td class="repo">SystemNix</td>
@@ -679,10 +645,7 @@
         </tr>
         <tr>
           <td class="id">T030</td>
-          <td>
-            Add <code>harden</code> to immich.nix db-backup service (unhardened
-            DB access)
-          </td>
+          <td>Add <code>harden</code> to immich.nix db-backup service (unhardened DB access)</td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">8m</td>
           <td class="repo">SystemNix</td>
@@ -691,8 +654,8 @@
         <tr>
           <td class="id">T031</td>
           <td>
-            Add Gatus alert for monitor365 agent connection stability (catch 1s
-            connect/disconnect cycle)
+            Add Gatus alert for monitor365 agent connection stability (catch 1s connect/disconnect
+            cycle)
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">10m</td>
@@ -702,8 +665,8 @@
         <tr>
           <td class="id">T032</td>
           <td>
-            Replace X11-only runtime deps with Wayland equivalents in monitor365
-            (grim, slurp, wtype)
+            Replace X11-only runtime deps with Wayland equivalents in monitor365 (grim, slurp,
+            wtype)
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">10m</td>
@@ -713,8 +676,7 @@
         <tr>
           <td class="id">T033</td>
           <td>
-            Add restartTriggers audit — verify ALL services serving nix-store
-            static files have it
+            Add restartTriggers audit — verify ALL services serving nix-store static files have it
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">12m</td>
@@ -724,8 +686,7 @@
         <tr>
           <td class="id">T034</td>
           <td>
-            Verify sops <code>cloud_auth_token</code> is non-empty (original
-            desync root cause)
+            Verify sops <code>cloud_auth_token</code> is non-empty (original desync root cause)
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">3m</td>
@@ -743,9 +704,7 @@
         <tr>
           <td class="id">T036</td>
           <td>
-            Verify crush-daily collection post-deploy (<code
-              >ProtectHome=false</code
-            >
+            Verify crush-daily collection post-deploy (<code>ProtectHome=false</code>
             fix)
           </td>
           <td><span class="badge b-medium">Medium</span></td>
@@ -773,8 +732,7 @@
           <td class="id">T039</td>
           <td>
             DNS migration validation:
-            <code>dig @127.0.0.1 forgejo.home.lan.</code> + zone boundary + root
-            recursion
+            <code>dig @127.0.0.1 forgejo.home.lan.</code> + zone boundary + root recursion
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">8m</td>
@@ -785,8 +743,8 @@
           <td class="id">T040</td>
           <td>
             Update old status report
-            (<code>2026-07-17_14-03_monitor365-api-key-desync-root-cause-found.md</code>)
-            — point to source fix
+            (<code>2026-07-17_14-03_monitor365-api-key-desync-root-cause-found.md</code>) — point to
+            source fix
           </td>
           <td><span class="badge b-low">Low</span></td>
           <td class="effort">5m</td>
@@ -804,12 +762,9 @@
     </table>
 
     <!-- TIER 4 -->
-    <h2>
-      Tier 4 — The Rest <span class="badge b-rest">HARDENING &amp; DOCS</span>
-    </h2>
+    <h2>Tier 4 — The Rest <span class="badge b-rest">HARDENING &amp; DOCS</span></h2>
     <p>
-      Infrastructure improvements, monitor365 architecture items, test coverage,
-      and documentation.
+      Infrastructure improvements, monitor365 architecture items, test coverage, and documentation.
     </p>
     <table>
       <thead>
@@ -836,10 +791,7 @@
         </tr>
         <tr>
           <td class="id">T042</td>
-          <td>
-            monitor365: Add optimistic concurrency to tenant/user command
-            handlers
-          </td>
+          <td>monitor365: Add optimistic concurrency to tenant/user command handlers</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">12m</td>
           <td class="repo">monitor365</td>
@@ -847,10 +799,7 @@
         </tr>
         <tr>
           <td class="id">T043</td>
-          <td>
-            monitor365: Populate <code>aaguid</code> column during passkey
-            registration
-          </td>
+          <td>monitor365: Populate <code>aaguid</code> column during passkey registration</td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -858,10 +807,7 @@
         </tr>
         <tr>
           <td class="id">T044</td>
-          <td>
-            monitor365: Add load test harness using <code>goose</code> (already
-            in dev-deps)
-          </td>
+          <td>monitor365: Add load test harness using <code>goose</code> (already in dev-deps)</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">12m</td>
           <td class="repo">monitor365</td>
@@ -869,10 +815,7 @@
         </tr>
         <tr>
           <td class="id">T045</td>
-          <td>
-            monitor365: Load test — event ingest throughput (1000 events/s for 5
-            min)
-          </td>
+          <td>monitor365: Load test — event ingest throughput (1000 events/s for 5 min)</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -880,10 +823,7 @@
         </tr>
         <tr>
           <td class="id">T046</td>
-          <td>
-            monitor365: Soak test — 1-hour agent→server sync with event
-            accumulation
-          </td>
+          <td>monitor365: Soak test — 1-hour agent→server sync with event accumulation</td>
           <td><span class="badge b-high">High</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -915,9 +855,7 @@
         </tr>
         <tr>
           <td class="id">T050</td>
-          <td>
-            monitor365: SSO callback → token exchange → JWT integration test
-          </td>
+          <td>monitor365: SSO callback → token exchange → JWT integration test</td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">12m</td>
           <td class="repo">monitor365</td>
@@ -936,9 +874,7 @@
         </tr>
         <tr>
           <td class="id">T052</td>
-          <td>
-            monitor365: Fix <code>AppConfig::load()</code> to return source path
-          </td>
+          <td>monitor365: Fix <code>AppConfig::load()</code> to return source path</td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -962,10 +898,7 @@
         </tr>
         <tr>
           <td class="id">T055</td>
-          <td>
-            monitor365: CLI sync integration test (buffer → upload → ack →
-            delete)
-          </td>
+          <td>monitor365: CLI sync integration test (buffer → upload → ack → delete)</td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -1009,8 +942,8 @@
         <tr>
           <td class="id">T060</td>
           <td>
-            TTM <code>page_pool_size</code> reduction (112 GiB → ~32 GiB) —
-            needs reboot + Ollama test
+            TTM <code>page_pool_size</code> reduction (112 GiB → ~32 GiB) — needs reboot + Ollama
+            test
           </td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">10m</td>
@@ -1019,9 +952,7 @@
         </tr>
         <tr>
           <td class="id">T061</td>
-          <td>
-            Firewall deny-by-default — restrict to 80/443 + SSH + LAN-only ports
-          </td>
+          <td>Firewall deny-by-default — restrict to 80/443 + SSH + LAN-only ports</td>
           <td><span class="badge b-medium">Medium</span></td>
           <td class="effort">12m</td>
           <td class="repo">SystemNix</td>
@@ -1029,10 +960,7 @@
         </tr>
         <tr>
           <td class="id">T062</td>
-          <td>
-            Fix upstream monitor365 CORS bug — env var can't represent TOML
-            sequences
-          </td>
+          <td>Fix upstream monitor365 CORS bug — env var can't represent TOML sequences</td>
           <td><span class="badge b-low">Low</span></td>
           <td class="effort">12m</td>
           <td class="repo">monitor365</td>
@@ -1064,10 +992,7 @@
         </tr>
         <tr>
           <td class="id">T066</td>
-          <td>
-            BTRFS <code>/data</code> subvolume migration (toplevel →
-            <code>@data</code>)
-          </td>
+          <td>BTRFS <code>/data</code> subvolume migration (toplevel → <code>@data</code>)</td>
           <td><span class="badge b-low">Low</span></td>
           <td class="effort">12m</td>
           <td class="repo">SystemNix</td>
@@ -1083,10 +1008,7 @@
         </tr>
         <tr>
           <td class="id">T068</td>
-          <td>
-            Document event-sourcing migration path (CRUD vs event-sourced
-            tenants)
-          </td>
+          <td>Document event-sourcing migration path (CRUD vs event-sourced tenants)</td>
           <td><span class="badge b-low">Low</span></td>
           <td class="effort">10m</td>
           <td class="repo">monitor365</td>
@@ -1154,19 +1076,17 @@
     </table>
 
     <div class="callout callout-solution">
-      <strong>Execution strategy:</strong> Start with Tier 1 (49 min) — this
-      makes the fix real. Then Tier 2 (76 min) — this prevents regression. Tiers
-      3-4 can be batched and parallelized. All tasks are ≤12 min. Many Tier 3
-      tasks depend on T004 (deploy) and can run in sequence after it. monitor365
-      tasks (T041-T055, T062, T067-T068) are independent and can be parallelized
-      with SystemNix tasks.
+      <strong>Execution strategy:</strong> Start with Tier 1 (49 min) — this makes the fix real.
+      Then Tier 2 (76 min) — this prevents regression. Tiers 3-4 can be batched and parallelized.
+      All tasks are ≤12 min. Many Tier 3 tasks depend on T004 (deploy) and can run in sequence after
+      it. monitor365 tasks (T041-T055, T062, T067-T068) are independent and can be parallelized with
+      SystemNix tasks.
     </div>
 
     <p class="subtitle" style="margin-top: 2rem">
-      * T020 (BTRFS scrub) effort is setup time — the scrub itself runs in
-      background for hours.<br />Tasks T063-T065 are blocked on human action
-      (manual steps).<br />Generated 2026-07-17 22:51 from 3 sources: session
-      status report, SystemNix TODO_LIST.md, monitor365 TODO_LIST.md.
+      * T020 (BTRFS scrub) effort is setup time — the scrub itself runs in background for hours.<br />Tasks
+      T063-T065 are blocked on human action (manual steps).<br />Generated 2026-07-17 22:51 from 3
+      sources: session status report, SystemNix TODO_LIST.md, monitor365 TODO_LIST.md.
     </p>
   </body>
 </html>
