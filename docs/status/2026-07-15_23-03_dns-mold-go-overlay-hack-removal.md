@@ -1,6 +1,6 @@
 # Status: DNS Fixes + Upstream Hack Removal
 
-**Date:** 2026-07-15 23:03  
+**Date:** 2026-07-15 23:03
 **Session Focus:** Fix dnsblockd DNS, remove overlay hacks, fix upstream repos
 
 ---
@@ -103,6 +103,7 @@
 ## f) Up to 50 things to get done next
 
 ### DNS (Priority 0)
+
 1. Deploy current SystemNix state cleanly to evo-x2
 2. Run post-deploy smoke test and verify all services
 3. Add `discord.com` to dnsblockd whitelist (fixs discordsync crash)
@@ -115,11 +116,13 @@
 10. Test DNS failover between evo-x2 and rpi3
 
 ### Overlay Cleanup
+
 11. Remove `pocketIdUpgradeOverlay` Go version sed hack (fix upstream)
 12. Audit all overlays for consumer-side patches on owned repos
 13. Move pocket-id upgrade to upstream or nixpkgs PR
 
 ### Build/Deploy
+
 14. Add pre-deploy DNS verification to `deploy.sh`
 15. Add `--dry-run` DNS test to CI pipeline
 16. Investigate intermittent DNS instability reports
@@ -127,6 +130,7 @@
 18. Add dnsblockd metrics to SigNoz dashboard
 
 ### Upstream Repos
+
 19. Fix dnsblockd `initDNS()` to return errors instead of silently swallowing
 20. Fix dnsblockd `parseDNSExtensions()` to not discard all records on one failure
 21. Fix dnsblockd sdns middleware pipeline wiring for root recursion
@@ -137,6 +141,7 @@
 26. Consider removing the fast-build mold variant entirely in monitor365
 
 ### AGENTS.md / Docs
+
 27. Update AGENTS.md mold gotcha (remove overlay reference, say "fixed upstream")
 28. Update AGENTS.md dnsblockd section with DoT forwarder architecture
 29. Document sdns root recursion limitation in dnsblockd README
@@ -144,6 +149,7 @@
 31. Clean up old status reports referencing overlay hacks
 
 ### Service Hardening
+
 32. Investigate oauth2-proxy startup race with DNS
 33. Add `after = [ "dnsblockd.service" ]` to oauth2-proxy if not present
 34. Add DNS readiness gate to all services depending on external DNS
@@ -151,12 +157,14 @@
 36. Audit all services for missing DNS dependencies
 
 ### Monitoring
+
 37. Add Gatus alert for DNS resolution failure
 38. Add Gatus alert for DNS response time > 100ms
 39. Add BTRFS-style health metrics for DNS (query count, cache hit rate)
 40. Monitor DoT forwarder connection health
 
 ### General SystemNix
+
 41. Commit all current changes
 42. Clean up stale flake.lock entries
 43. Run `nix flake check --no-build` in CI

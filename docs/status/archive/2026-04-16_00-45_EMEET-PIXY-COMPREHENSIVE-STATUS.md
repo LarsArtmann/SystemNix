@@ -20,6 +20,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 ## A) FULLY DONE
 
 ### Core Daemon (`pkgs/emeet-pixyd/main.go` — 799 lines)
+
 - [x] **Call detection via `/proc/*/fd` scanning** — catches every app (browsers, Zoom, Discord, OBS, ffplay) with zero false negatives
 - [x] **Auto-activation on call start** — enables face tracking + hardware noise cancellation via USB HID
 - [x] **Auto-privacy on call end** — physically disables the camera
@@ -41,6 +42,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 - [x] **All errcheck warnings fixed** — json.Unmarshal, os.MkdirAll, f.Close, saveState callers, conn.Write
 
 ### Type Architecture
+
 - [x] **`CameraState` type** — with `HIDByte()` and `Valid()` methods
 - [x] **`AudioMode` type** — with `HIDByte()`, `Next()`, and `Valid()` methods
 - [x] **`Config` struct** — replaces hardcoded constants (stateDir, pollInterval, debounceCount)
@@ -48,6 +50,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 - [x] **`NewDaemon(cfg Config)`** — dependency injection for testability
 
 ### NixOS Module (`platforms/nixos/hardware/emeet-pixy.nix` — 74 lines)
+
 - [x] **udev rules** — `GROUP="video" MODE="0660"` for HID and video4linux devices
 - [x] **User-level systemd service** — inherits Wayland + pipewire session environments
 - [x] **`path` for v4l-utils + wireplumber + libnotify** — correct NixOS PATH extension
@@ -56,6 +59,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 - [x] **WatchdogSec=30** — systemd kills hung daemon after 30s without heartbeat
 
 ### Waybar Integration (`platforms/nixos/desktop/waybar.nix`)
+
 - [x] **`custom/camera` module** — polls daemon every 2s via `emeet-pixyd waybar`
 - [x] **Click → toggle privacy** — emergency camera kill switch
 - [x] **Right-click → enable tracking** — manual face tracking
@@ -64,6 +68,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 - [x] **Nerd Font glyphs** — camera, power, video, X icons
 
 ### Nix Packaging (`pkgs/emeet-pixyd.nix`)
+
 - [x] **`buildGoModule` derivation** — zero vendor hash (no dependencies)
 - [x] **Overlay** (`emeetPixyOverlay`) — available system-wide
 - [x] **perSystem package** — available via `nix build .#emeet-pixyd`
@@ -72,6 +77,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 - [x] **Version 0.2.0**
 
 ### Tests (`pkgs/emeet-pixyd/main_test.go` — 374 lines)
+
 - [x] **20 tests** covering:
   - State defaults, save/load, corrupt files, missing files
   - Command handling: status, unknown, auto toggle, audio invalid, device required, toggle-privacy, probe
@@ -85,11 +91,13 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 - [x] **`go build` clean**
 
 ### Documentation
+
 - [x] **AGENTS.md** — full EMEET PIXY section with architecture, commands, all features documented
 - [x] **Status reports** — 2 comprehensive session reports in `docs/status/`
 - [x] **Directory tree** — `pkgs/emeet-pixyd/` and `hardware/` entries
 
 ### Justfile Recipes (10 commands)
+
 - [x] `just cam-status` — show camera state
 - [x] `just cam-privacy` — toggle privacy mode
 - [x] `just cam-track` — enable face tracking
@@ -105,10 +113,12 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 ## B) PARTIALLY DONE
 
 ### Binary Split
+
 - **Status:** Symlink approach (`emeet-pixy` → `emeet-pixyd`). Single binary handles both daemon and client modes.
 - **Remaining:** Could split into separate `main()` functions, but the current approach is simpler and sufficient.
 
 ### OBS Integration
+
 - **Status:** OBS Studio is installed with virtual camera support (`programs.obs-studio.enableVirtualCamera = true`).
 - **Remaining:** No automated OBS virtual camera lifecycle. OBS auto-start/stop was removed because `obs-cli` doesn't exist in nixpkgs and the previous implementation used a fake empty password. Needs proper OBS WebSocket integration.
 
@@ -139,6 +149,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 **Nothing is broken.** All builds pass, all 20 tests pass with race detector, `go vet` clean, `nix flake check` passes, all pre-commit hooks (gitleaks, deadnix, statix, alejandra) pass.
 
 ### Lessons Learned (Across Both Sessions)
+
 - **`cleanSourceWith` with `lib` vs `prev.lib`** — Overlay context uses `prev.lib`, not `lib`. Applied `replace_all` which accidentally changed dnsblockd filters too. Fixed by reverting dnsblockd and using `prev.lib` only in the emeet-pixyd overlay.
 - **`os.WriteFile` during file modification race** — The `write` tool sometimes fails silently when the file is modified between read and write. Had to use `view` + `multiedit` approach.
 - **State race condition** — Initial implementation had zero synchronization between socket handler and poll loop. Caught in review, fixed with `sync.Mutex` before it caused real bugs.
@@ -150,6 +161,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 ## E) WHAT WE SHOULD IMPROVE
 
 ### Code Quality
+
 1. ~~**Type model methods**~~ — DONE
 2. ~~**Config struct**~~ — DONE
 3. **`wpctl status` parsing** — `findPixySource()` parses human-readable output. Could break on wireplumber updates. Consider using PipeWire's D-Bus or native Go bindings.
@@ -157,12 +169,14 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 5. **golangci-lint stale cache** — The LSP shows 22 errcheck warnings that are false positives. Should investigate why the cache isn't invalidated after file writes.
 
 ### Architecture
+
 6. **State file in tmpfs** — `/run/emeet-pixyd/` is intentional (boot always starts in privacy), but means manual settings like `auto-off` don't survive reboot. Could add XDG config file for persistent overrides.
 7. **No PID file** — Could lead to multiple daemon instances if started manually via both `systemctl` and direct binary.
 8. **Single binary** — Daemon and client share one binary. Could split for cleaner separation, but the symlink approach works well enough.
 9. **Watchdog in autoManage loop** — `sdNotify("WATCHDOG=1")` fires after `autoManage()` returns. If `autoManage` blocks on HID write, the watchdog won't fire. Should use a separate goroutine with its own ticker.
 
 ### Reliability
+
 10. **No HID ACK reading** — Fire-and-forget commands. If camera ignores a command, the daemon's "believed state" diverges from reality.
 11. **Socket accept loop** — If the listener fails, the goroutine exits and the daemon becomes unresponsive to IPC (but continues running the poll loop). Should handle listener failures more gracefully.
 
@@ -171,6 +185,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 ## F) TOP #25 THINGS TO DO NEXT
 
 ### Priority 1 — Reliability (should do before relying on this daily)
+
 1. **Separate watchdog goroutine** — decouple from `autoManage()` blocking; use own ticker
 2. **PID file** — prevent multiple daemon instances
 3. **Socket listener error recovery** — restart listener goroutine on fatal errors
@@ -178,6 +193,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 5. **HID ACK reading** — validate commands succeeded instead of fire-and-forget
 
 ### Priority 2 — UX Polish
+
 6. **Niri keybind** — `Mod+P` for privacy toggle via niri config
 7. **Rofi camera menu** — all camera options in a discoverable dmenu
 8. **`--help` / man page** — proper flag parsing with usage text
@@ -185,6 +201,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 10. **Audio cycling indicator** — notify which mode was selected after cycling
 
 ### Priority 3 — OBS Integration (proper)
+
 11. **Install `obs-websocket` plugin** — NixOS package for OBS WebSocket server
 12. **Configure OBS WebSocket credentials** — via sops-nix (secret management)
 13. **Implement OBS WebSocket client in Go** — `StartVirtualCam`/`StopVirtualCam` commands
@@ -192,6 +209,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 15. **Document OBS setup** — step-by-step for the video pipeline: PIXY → OBS → Virtual Camera → apps
 
 ### Priority 4 — Advanced Features
+
 16. **PTZ preset save/recall** — named camera positions stored in state file
 17. **Screen lock integration** — auto-privacy when swaylock engages
 18. **Auto anti-flicker** — detect locale or probe power line frequency
@@ -199,6 +217,7 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 20. **Config file support** — `/etc/emeet-pixyd.toml` for persistent settings
 
 ### Priority 5 — Infrastructure
+
 21. **Typed command parsing** — replace string-based `handleCommand` with struct-based parsing
 22. **PipeWire native integration** — replace `wpctl status` parsing with D-Bus or Go bindings
 23. **Metrics endpoint** — Prometheus-compatible metrics for camera state
@@ -212,11 +231,13 @@ The EMEET PIXY webcam management system is **production-ready** for daily use. O
 **Does the EMEET PIXY actually report its current state (tracking/privacy/audio mode) via HID, or is it purely fire-and-forget SET commands?**
 
 The community scripts and our daemon only send SET commands. We never query the camera's actual state. This means:
+
 - If someone toggles tracking via the physical camera button, the daemon doesn't know
 - If the camera resets its state after a firmware event, the daemon's state is stale
 - We maintain a "believed state" that may diverge from reality
 
 To answer this, someone would need to:
+
 1. Monitor HID responses from the camera while pressing physical buttons
 2. Check if there's a QUERY command that returns current mode
 3. Cross-reference with the Windows EMEET Studio software behavior
@@ -247,27 +268,27 @@ a468dbe fix(emeet-pixy): use path instead of environment.PATH to avoid conflict
 
 ## Validation Results
 
-| Check | Result |
-|-------|--------|
-| `go vet ./...` | PASS |
-| `go test -race ./...` | PASS (20 tests, race clean) |
-| `go build` | PASS |
-| `nix flake check` | PASS (verified via pre-commit hooks ×5) |
-| gitleaks | PASS |
-| deadnix | PASS |
-| statix | PASS |
-| alejandra | PASS |
+| Check                 | Result                                  |
+| --------------------- | --------------------------------------- |
+| `go vet ./...`        | PASS                                    |
+| `go test -race ./...` | PASS (20 tests, race clean)             |
+| `go build`            | PASS                                    |
+| `nix flake check`     | PASS (verified via pre-commit hooks ×5) |
+| gitleaks              | PASS                                    |
+| deadnix               | PASS                                    |
+| statix                | PASS                                    |
+| alejandra             | PASS                                    |
 
 ## File Inventory
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `pkgs/emeet-pixyd/main.go` | 799 | Go daemon (config, types, HID, call detection, IPC, notifications) |
-| `pkgs/emeet-pixyd/main_test.go` | 374 | 20 tests with race detector |
-| `pkgs/emeet-pixyd/go.mod` | 3 | Go module (zero dependencies) |
-| `pkgs/emeet-pixyd.nix` | 28 | buildGoModule derivation + symlink |
-| `platforms/nixos/hardware/emeet-pixy.nix` | 74 | NixOS module (udev, systemd, tmpfiles) |
-| `platforms/nixos/desktop/waybar.nix` | ~344 | Camera state module (modified section) |
-| `flake.nix` | ~475 | Overlay + perSystem package |
-| `justfile` | ~1935 | 10 `cam-*` recipes |
-| `AGENTS.md` | ~310 | Documentation section |
+| File                                      | Lines | Purpose                                                            |
+| ----------------------------------------- | ----- | ------------------------------------------------------------------ |
+| `pkgs/emeet-pixyd/main.go`                | 799   | Go daemon (config, types, HID, call detection, IPC, notifications) |
+| `pkgs/emeet-pixyd/main_test.go`           | 374   | 20 tests with race detector                                        |
+| `pkgs/emeet-pixyd/go.mod`                 | 3     | Go module (zero dependencies)                                      |
+| `pkgs/emeet-pixyd.nix`                    | 28    | buildGoModule derivation + symlink                                 |
+| `platforms/nixos/hardware/emeet-pixy.nix` | 74    | NixOS module (udev, systemd, tmpfiles)                             |
+| `platforms/nixos/desktop/waybar.nix`      | ~344  | Camera state module (modified section)                             |
+| `flake.nix`                               | ~475  | Overlay + perSystem package                                        |
+| `justfile`                                | ~1935 | 10 `cam-*` recipes                                                 |
+| `AGENTS.md`                               | ~310  | Documentation section                                              |

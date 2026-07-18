@@ -14,24 +14,24 @@
 
 Resolved what appeared to be a partially-applied rebase/merge with 7 files in dirty state across `pkgs/emeet-pixyd/`. All conflicts were semantic, not marker-based — the diffs were clean but tests were failing because code and tests diverged.
 
-| Fix | File | What Changed |
-|-----|------|-------------|
-| Offline zoom default | `handlers.go:32-46` | `getWebStatus()` now sets `Zoom=0` when offline, `Zoom=100` only when device present |
-| Full offline status | `main.go:868-887` | `getStatus()` returns structured `camera=offline audio=nc gesture=...` instead of bare `"camera=offline (device not found)"` |
-| PTZ empty axis route | `handlers.go:373-376` | Added `POST /api/ptz/` route returning 400 for missing axis |
-| Index offline test | `integration_test.go:215` | Checks `"Camera offline"` instead of `"camera=offline"` |
-| Socket readiness | `integration_test.go:860-869` | Replaced fixed 50ms sleep with `os.Stat` polling loop (up to 1s) |
-| Audio no-device test | `integration_test.go:1018-1035` | Expects `"error:"` prefix when no device connected |
-| Command status test | `main_test.go:255-265` | Checks structured offline status with multiple field prefixes |
+| Fix                  | File                            | What Changed                                                                                                                 |
+| -------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Offline zoom default | `handlers.go:32-46`             | `getWebStatus()` now sets `Zoom=0` when offline, `Zoom=100` only when device present                                         |
+| Full offline status  | `main.go:868-887`               | `getStatus()` returns structured `camera=offline audio=nc gesture=...` instead of bare `"camera=offline (device not found)"` |
+| PTZ empty axis route | `handlers.go:373-376`           | Added `POST /api/ptz/` route returning 400 for missing axis                                                                  |
+| Index offline test   | `integration_test.go:215`       | Checks `"Camera offline"` instead of `"camera=offline"`                                                                      |
+| Socket readiness     | `integration_test.go:860-869`   | Replaced fixed 50ms sleep with `os.Stat` polling loop (up to 1s)                                                             |
+| Audio no-device test | `integration_test.go:1018-1035` | Expects `"error:"` prefix when no device connected                                                                           |
+| Command status test  | `main_test.go:255-265`          | Checks structured offline status with multiple field prefixes                                                                |
 
 ### 2. Pre-existing Work (committed before this session)
 
-| Commit | Description |
-|--------|-------------|
-| `b0e6ad1` | Suppress gosec G104 errors, refactor integration tests |
-| `74a99dd` | Restructure golangci-lint config, extract CLI error handler |
+| Commit    | Description                                                           |
+| --------- | --------------------------------------------------------------------- |
+| `b0e6ad1` | Suppress gosec G104 errors, refactor integration tests                |
+| `74a99dd` | Restructure golangci-lint config, extract CLI error handler           |
 | `bc1e9a2` | Consolidate pan/tilt/zoom handlers, extract ptzSlider templ component |
-| `304b70c` | Consolidate golangci config (.yaml → .yml), improve code quality |
+| `304b70c` | Consolidate golangci config (.yaml → .yml), improve code quality      |
 
 ---
 

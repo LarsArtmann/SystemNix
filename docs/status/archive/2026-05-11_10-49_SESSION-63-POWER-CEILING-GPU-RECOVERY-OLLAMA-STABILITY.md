@@ -36,6 +36,7 @@ Three distinct workstreams this session:
 ### GPU Recovery Script Hardening (scripts/)
 
 **`gpu-recovery.sh`** — Full rewrite of error handling:
+
 - All fatal error paths now call `reboot_system()` instead of `exit 1`
 - GPU rebind failure → automatic system reboot (no more hung state requiring manual intervention)
 - DRM device not returning after 30s → automatic reboot
@@ -43,6 +44,7 @@ Three distinct workstreams this session:
 - Post-niri-start sleep increased from 3s to 5s for more reliable DRM acquisition
 
 **`niri-drm-healthcheck.sh`** — Consecutive failure tracking:
+
 - State file `/tmp/niri-drm-healthcheck.state` tracks consecutive failure count
 - Only triggers `gpu-recovery.service` after 3 consecutive checks with ≥10 DRM errors
 - Prevents crash loop: old behavior SIGKILLed niri repeatedly when GPU was truly wedged
@@ -117,33 +119,33 @@ However, **root disk at 90%** is concerning. With `systemd.coredump.extraConfig 
 
 ## f) Top #25 Things We Should Get Done Next
 
-| # | Priority | Task | Effort |
-|---|----------|------|--------|
-| 1 | P0 | **Reboot into BIOS → check AMD CBS for PPT/TDP/cTDP controls** | 10min |
-| 2 | P0 | **Check gmktec.com for EVO-X2 BIOS update** (use another device) | 5min |
-| 3 | P0 | **Root disk cleanup** — `just clean`, check coredumps, nix-collect-garbage | 15min |
-| 4 | P1 | Run `just switch` to apply amd_pstate=performance + Ollama stability changes | 30min |
-| 5 | P1 | Verify Ollama stability under load with new MAX_LOADED_MODELS=1 setting | 30min |
-| 6 | P1 | Test GPU recovery flow — simulate DRM zombie and verify auto-reboot | 20min |
-| 7 | P1 | Move niri-drm-healthcheck state file from /tmp to /var/lib | 5min |
-| 8 | P1 | Provison Pi 3 for DNS failover cluster | 2hr |
-| 9 | P2 | Add power estimation to waybar (RAPL energy_uj delta) | 30min |
-| 10 | P2 | Check Ollama model swapping behavior with MAX_LOADED_MODELS=1 | 20min |
-| 11 | P2 | Audit all 17 gatus health check endpoints for accuracy | 15min |
-| 12 | P2 | Verify SigNoz is ingesting metrics from all exporters | 15min |
-| 13 | P2 | Check Gitea GitHub mirror sync status | 10min |
-| 14 | P2 | Add disk monitoring alerts (current: 90% root, 68% data) | 20min |
-| 15 | P2 | Review and clean up old status reports in docs/status/ | 10min |
-| 16 | P3 | Investigate amd_pstate EPP (Energy Performance Preference) support | 20min |
-| 17 | P3 | Write EFI variable analysis script for future BIOS option discovery | 1hr |
-| 18 | P3 | Document GMKtec BIOS hidden menu access procedure | 30min |
-| 19 | P3 | Add BTRFS snapshot health check to disk-monitor module | 30min |
-| 20 | P3 | Test dual-WAN failover (mptcp-endpoint-manager) | 1hr |
-| 21 | P3 | Review awww-daemon sandboxing completeness | 15min |
-| 22 | P3 | Check if niri-session-manager handles GPU recovery reboots correctly | 15min |
-| 23 | P4 | Investigate whether Strix Halo supports AMD Curve Optimizer | 30min |
-| 24 | P4 | Add waybar module showing current CPU package power estimate | 30min |
-| 25 | P4 | Test full system recovery: GPU hang → auto-reboot → session restore | 30min |
+| #   | Priority | Task                                                                         | Effort |
+| --- | -------- | ---------------------------------------------------------------------------- | ------ |
+| 1   | P0       | **Reboot into BIOS → check AMD CBS for PPT/TDP/cTDP controls**               | 10min  |
+| 2   | P0       | **Check gmktec.com for EVO-X2 BIOS update** (use another device)             | 5min   |
+| 3   | P0       | **Root disk cleanup** — `just clean`, check coredumps, nix-collect-garbage   | 15min  |
+| 4   | P1       | Run `just switch` to apply amd_pstate=performance + Ollama stability changes | 30min  |
+| 5   | P1       | Verify Ollama stability under load with new MAX_LOADED_MODELS=1 setting      | 30min  |
+| 6   | P1       | Test GPU recovery flow — simulate DRM zombie and verify auto-reboot          | 20min  |
+| 7   | P1       | Move niri-drm-healthcheck state file from /tmp to /var/lib                   | 5min   |
+| 8   | P1       | Provison Pi 3 for DNS failover cluster                                       | 2hr    |
+| 9   | P2       | Add power estimation to waybar (RAPL energy_uj delta)                        | 30min  |
+| 10  | P2       | Check Ollama model swapping behavior with MAX_LOADED_MODELS=1                | 20min  |
+| 11  | P2       | Audit all 17 gatus health check endpoints for accuracy                       | 15min  |
+| 12  | P2       | Verify SigNoz is ingesting metrics from all exporters                        | 15min  |
+| 13  | P2       | Check Gitea GitHub mirror sync status                                        | 10min  |
+| 14  | P2       | Add disk monitoring alerts (current: 90% root, 68% data)                     | 20min  |
+| 15  | P2       | Review and clean up old status reports in docs/status/                       | 10min  |
+| 16  | P3       | Investigate amd_pstate EPP (Energy Performance Preference) support           | 20min  |
+| 17  | P3       | Write EFI variable analysis script for future BIOS option discovery          | 1hr    |
+| 18  | P3       | Document GMKtec BIOS hidden menu access procedure                            | 30min  |
+| 19  | P3       | Add BTRFS snapshot health check to disk-monitor module                       | 30min  |
+| 20  | P3       | Test dual-WAN failover (mptcp-endpoint-manager)                              | 1hr    |
+| 21  | P3       | Review awww-daemon sandboxing completeness                                   | 15min  |
+| 22  | P3       | Check if niri-session-manager handles GPU recovery reboots correctly         | 15min  |
+| 23  | P4       | Investigate whether Strix Halo supports AMD Curve Optimizer                  | 30min  |
+| 24  | P4       | Add waybar module showing current CPU package power estimate                 | 30min  |
+| 25  | P4       | Test full system recovery: GPU hang → auto-reboot → session restore          | 30min  |
 
 ---
 
@@ -157,21 +159,21 @@ I cannot answer this without physically entering the BIOS setup. The EFI variabl
 
 ## Uncommitted Changes (on disk, not yet committed)
 
-| File | Change | Status |
-|------|--------|--------|
-| `platforms/nixos/system/boot.nix` | `amd_pstate=guided` → `amd_pstate=performance`, added `powerManagement.cpuFreqGovernor` | Ready to commit |
-| `AGENTS.md` | Added 130W power ceiling to Known Issues | Ready to commit |
-| `modules/nixos/services/ai-stack.nix` | Ollama stability: MAX_LOADED_MODELS, GPU_OVERHEAD, OOMScoreAdjust | Ready to commit |
-| `modules/nixos/services/niri-config.nix` | niri OOMScoreAdjust -900 → -1000 | Ready to commit |
-| `scripts/gpu-recovery.sh` | Auto-reboot on unrecoverable GPU state | Ready to commit |
-| `scripts/niri-drm-healthcheck.sh` | Consecutive failure thresholding, state file tracking | Ready to commit |
+| File                                     | Change                                                                                  | Status          |
+| ---------------------------------------- | --------------------------------------------------------------------------------------- | --------------- |
+| `platforms/nixos/system/boot.nix`        | `amd_pstate=guided` → `amd_pstate=performance`, added `powerManagement.cpuFreqGovernor` | Ready to commit |
+| `AGENTS.md`                              | Added 130W power ceiling to Known Issues                                                | Ready to commit |
+| `modules/nixos/services/ai-stack.nix`    | Ollama stability: MAX_LOADED_MODELS, GPU_OVERHEAD, OOMScoreAdjust                       | Ready to commit |
+| `modules/nixos/services/niri-config.nix` | niri OOMScoreAdjust -900 → -1000                                                        | Ready to commit |
+| `scripts/gpu-recovery.sh`                | Auto-reboot on unrecoverable GPU state                                                  | Ready to commit |
+| `scripts/niri-drm-healthcheck.sh`        | Consecutive failure thresholding, state file tracking                                   | Ready to commit |
 
 ## Recent Commits (this session and previous)
 
-| Commit | Description |
-|--------|-------------|
+| Commit     | Description                                                          |
+| ---------- | -------------------------------------------------------------------- |
 | `628fa63f` | Deep dive research doc: Strix Halo + Linux 7 + GPU memory protection |
-| `3577431a` | Switch amd_pstate to performance, document 130W ceiling |
-| `a9c8ecd5` | Session 62 status report |
-| `554010b0` | Normalize arithmetic expression spacing |
-| `a5322e87` | Session 61 status report |
+| `3577431a` | Switch amd_pstate to performance, document 130W ceiling              |
+| `a9c8ecd5` | Session 62 status report                                             |
+| `554010b0` | Normalize arithmetic expression spacing                              |
+| `a5322e87` | Session 61 status report                                             |

@@ -5,11 +5,11 @@
 
 ## Fixed (3/4)
 
-| Warning | Root Cause | Fix | File |
-|---------|-----------|-----|------|
-| `'swww' has been renamed to 'awww'` | Package renamed upstream | `swww` → `awww` | `platforms/common/packages/base.nix:175`, `platforms/nixos/programs/niri-wrapped.nix:19,218` |
-| `programs.kitty.theme changed to programs.kitty.themeFile` | HM option renamed with different type | `theme = "Catppuccin-Mocha"` → `themeFile = "Catppuccin-Mocha"` | `platforms/nixos/users/home.nix:27` |
-| `'system' has been renamed to/replaced by 'stdenv.hostPlatform.system'` (local) | `builtins.hasAttr "system" pkgs` | `pkgs.stdenv.hostPlatform.system != null` | `platforms/common/core/security.nix:20` |
+| Warning                                                                         | Root Cause                            | Fix                                                             | File                                                                                         |
+| ------------------------------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `'swww' has been renamed to 'awww'`                                             | Package renamed upstream              | `swww` → `awww`                                                 | `platforms/common/packages/base.nix:175`, `platforms/nixos/programs/niri-wrapped.nix:19,218` |
+| `programs.kitty.theme changed to programs.kitty.themeFile`                      | HM option renamed with different type | `theme = "Catppuccin-Mocha"` → `themeFile = "Catppuccin-Mocha"` | `platforms/nixos/users/home.nix:27`                                                          |
+| `'system' has been renamed to/replaced by 'stdenv.hostPlatform.system'` (local) | `builtins.hasAttr "system" pkgs`      | `pkgs.stdenv.hostPlatform.system != null`                       | `platforms/common/core/security.nix:20`                                                      |
 
 Additional: migrated `flake.nix` from deprecated `system = "..."` parameter to `nixpkgs.hostPlatform = "..."` in module config for both NixOS and Darwin systems.
 

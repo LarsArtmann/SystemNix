@@ -16,38 +16,38 @@ Created a dedicated 800GB BTRFS partition (`/data`) for AI models and large data
 
 ### New Partition
 
-| Property | Value |
-|----------|-------|
-| Device | `/dev/nvme0n1p8` |
-| Size | 800 GB |
-| Filesystem | BTRFS |
-| Label | `data` |
-| UUID | `046ea663-da55-48b7-b516-0dcdb87ba710` |
-| Mount point | `/data` |
+| Property      | Value                                                      |
+| ------------- | ---------------------------------------------------------- |
+| Device        | `/dev/nvme0n1p8`                                           |
+| Size          | 800 GB                                                     |
+| Filesystem    | BTRFS                                                      |
+| Label         | `data`                                                     |
+| UUID          | `046ea663-da55-48b7-b516-0dcdb87ba710`                     |
+| Mount point   | `/data`                                                    |
 | Mount options | `compress=zstd:3,noatime,ssd,discard=async,space_cache=v2` |
-| No snapshots | Intentionally excluded from Timeshift |
+| No snapshots  | Intentionally excluded from Timeshift                      |
 
 ### Data Migrated
 
-| Source | Destination | Size |
-|--------|-------------|------|
-| `~/projects/wan-i2v/models/` | `/data/models/` | 213 GB |
-| — Wan2.1-I2V-14B-480P | `/data/models/Wan2.1-I2V-14B-480P/` | 84 GB |
-| — LTX-Video-0.9.7-distilled | `/data/models/LTX-Video-0.9.7-distilled/` | 45 GB |
-| — HunyuanVideo1.5-I2V | `/data/models/HunyuanVideo1.5-I2V/` | 36 GB |
-| — Wan2.2-TI2V-5B-Diffusers | `/data/models/Wan2.2-TI2V-5B-Diffusers/` | 32 GB |
-| — CogVideoX-5b-I2V | `/data/models/CogVideoX-5b-I2V/` | 17 GB |
-| `~/.ollama/models/` | `/data/ollama/models/` | 3.8 GB |
-| `~/.cache/huggingface/` | `/data/cache/huggingface/` | 4.4 GB |
-| **Total migrated** | | **~222 GB** |
+| Source                       | Destination                               | Size        |
+| ---------------------------- | ----------------------------------------- | ----------- |
+| `~/projects/wan-i2v/models/` | `/data/models/`                           | 213 GB      |
+| — Wan2.1-I2V-14B-480P        | `/data/models/Wan2.1-I2V-14B-480P/`       | 84 GB       |
+| — LTX-Video-0.9.7-distilled  | `/data/models/LTX-Video-0.9.7-distilled/` | 45 GB       |
+| — HunyuanVideo1.5-I2V        | `/data/models/HunyuanVideo1.5-I2V/`       | 36 GB       |
+| — Wan2.2-TI2V-5B-Diffusers   | `/data/models/Wan2.2-TI2V-5B-Diffusers/`  | 32 GB       |
+| — CogVideoX-5b-I2V           | `/data/models/CogVideoX-5b-I2V/`          | 17 GB       |
+| `~/.ollama/models/`          | `/data/ollama/models/`                    | 3.8 GB      |
+| `~/.cache/huggingface/`      | `/data/cache/huggingface/`                | 4.4 GB      |
+| **Total migrated**           |                                           | **~222 GB** |
 
 ### Symlinks Created
 
-| Symlink | Target |
-|---------|--------|
-| `~/projects/wan-i2v/models` | `/data/models` |
-| `~/.ollama/models` | `/data/ollama/models` |
-| `~/.cache/huggingface` | `/data/cache/huggingface` |
+| Symlink                     | Target                    |
+| --------------------------- | ------------------------- |
+| `~/projects/wan-i2v/models` | `/data/models`            |
+| `~/.ollama/models`          | `/data/ollama/models`     |
+| `~/.cache/huggingface`      | `/data/cache/huggingface` |
 
 ### NixOS Config Changes
 
@@ -62,16 +62,16 @@ Created a dedicated 800GB BTRFS partition (`/data`) for AI models and large data
 [p7 2G EFI] [p1 2G EFI] [p6 512G ROOT /] [p8 800G /data] [p3 31G old] [p2 10G swap] [p5 4G old] [p4 1.2G WinRec]
 ```
 
-| Partition | Size | Type | Mount | Status |
-|-----------|------|------|-------|--------|
-| `nvme0n1p7` | 2G | EFI | `/boot` | Active |
-| `nvme0n1p1` | 2G | EFI | — | Unused (old?) |
-| `nvme0n1p6` | 512G | BTRFS | `/` | 62% used (193G free) |
-| `nvme0n1p8` | 800G | BTRFS | `/data` | 22% used (630G free) |
-| `nvme0n1p3` | 31.3G | ext4 | — | Unused (old root?) |
-| `nvme0n1p2` | 10G | swap | [SWAP] | Active |
-| `nvme0n1p5` | 4G | BTRFS | — | Unused |
-| `nvme0n1p4` | 1.2G | NTFS | — | Windows recovery |
+| Partition   | Size  | Type  | Mount   | Status               |
+| ----------- | ----- | ----- | ------- | -------------------- |
+| `nvme0n1p7` | 2G    | EFI   | `/boot` | Active               |
+| `nvme0n1p1` | 2G    | EFI   | —       | Unused (old?)        |
+| `nvme0n1p6` | 512G  | BTRFS | `/`     | 62% used (193G free) |
+| `nvme0n1p8` | 800G  | BTRFS | `/data` | 22% used (630G free) |
+| `nvme0n1p3` | 31.3G | ext4  | —       | Unused (old root?)   |
+| `nvme0n1p2` | 10G   | swap  | [SWAP]  | Active               |
+| `nvme0n1p5` | 4G    | BTRFS | —       | Unused               |
+| `nvme0n1p4` | 1.2G  | NTFS  | —       | Windows recovery     |
 
 ---
 

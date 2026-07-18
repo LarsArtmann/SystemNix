@@ -26,12 +26,12 @@ A **QML/Qt6 toolkit** for building your entire desktop shell as one cohesive sys
 
 ### Required Qt Modules
 
-| Module | Purpose |
-|--------|---------|
-| `qtsvg` | SVG image loading |
-| `qtimageformats` | WEBP and uncommon formats |
-| `qtmultimedia` | Audio/video playback |
-| `qt5compat` | Gaussian blur and extra effects |
+| Module           | Purpose                         |
+| ---------------- | ------------------------------- |
+| `qtsvg`          | SVG image loading               |
+| `qtimageformats` | WEBP and uncommon formats       |
+| `qtmultimedia`   | Audio/video playback            |
+| `qt5compat`      | Gaussian blur and extra effects |
 
 ### Nix Installation
 
@@ -57,22 +57,22 @@ inputs.quickshell = {
 
 ## Current Desktop Stack (evo-x2)
 
-| Component | Tool | File | Notes |
-|-----------|------|------|-------|
-| **Compositor** | Niri | `platforms/nixos/desktop/niri-wrapped.nix` | Scrollable tiling, 5 named workspaces |
-| **Bar** | Waybar | `platforms/nixos/desktop/waybar.nix` | 6 custom shell scripts, 42px top bar |
-| **Notifications** | Dunst | `platforms/nixos/users/home.nix:435` | Catppuccin Mocha, overlay layer |
-| **Launcher** | Rofi | `platforms/nixos/programs/rofi.nix` | Grid layout, rofi-calc, rofi-emoji |
-| **Lockscreen** | swaylock-effects | `platforms/nixos/programs/swaylock.nix` | Catppuccin Mocha, PAM |
-| **Power menu** | wlogout | `platforms/nixos/programs/wlogout.nix` | 6 actions, inline SVG icons |
-| **Wallpaper** | awww | `platforms/nixos/desktop/niri-wrapped.nix:461` | Animated wallpaper daemon |
-| **Idle** | swayidle | `platforms/nixos/desktop/niri-wrapped.nix:505` | 12h suspend, before-sleep lock |
-| **Screenshots** | grim + slurp + swappy | keybinds in niri-wrapped.nix | Area/full/output + annotation |
-| **OSD** | **NONE** | — | No volume/brightness overlay! |
-| **Clipboard** | cliphist + wl-clipboard | systemd user service | History via rofi |
-| **Session** | niri-session-manager | flake input | Window save/restore |
-| **Display manager** | SDDM + SilentSDDM | `modules/nixos/services/display-manager.nix` | Catppuccin Mocha |
-| **Theme** | Catppuccin Mocha | Global | GTK, Qt, icons (Papirus), cursor (Bibata) |
+| Component           | Tool                    | File                                           | Notes                                     |
+| ------------------- | ----------------------- | ---------------------------------------------- | ----------------------------------------- |
+| **Compositor**      | Niri                    | `platforms/nixos/desktop/niri-wrapped.nix`     | Scrollable tiling, 5 named workspaces     |
+| **Bar**             | Waybar                  | `platforms/nixos/desktop/waybar.nix`           | 6 custom shell scripts, 42px top bar      |
+| **Notifications**   | Dunst                   | `platforms/nixos/users/home.nix:435`           | Catppuccin Mocha, overlay layer           |
+| **Launcher**        | Rofi                    | `platforms/nixos/programs/rofi.nix`            | Grid layout, rofi-calc, rofi-emoji        |
+| **Lockscreen**      | swaylock-effects        | `platforms/nixos/programs/swaylock.nix`        | Catppuccin Mocha, PAM                     |
+| **Power menu**      | wlogout                 | `platforms/nixos/programs/wlogout.nix`         | 6 actions, inline SVG icons               |
+| **Wallpaper**       | awww                    | `platforms/nixos/desktop/niri-wrapped.nix:461` | Animated wallpaper daemon                 |
+| **Idle**            | swayidle                | `platforms/nixos/desktop/niri-wrapped.nix:505` | 12h suspend, before-sleep lock            |
+| **Screenshots**     | grim + slurp + swappy   | keybinds in niri-wrapped.nix                   | Area/full/output + annotation             |
+| **OSD**             | **NONE**                | —                                              | No volume/brightness overlay!             |
+| **Clipboard**       | cliphist + wl-clipboard | systemd user service                           | History via rofi                          |
+| **Session**         | niri-session-manager    | flake input                                    | Window save/restore                       |
+| **Display manager** | SDDM + SilentSDDM       | `modules/nixos/services/display-manager.nix`   | Catppuccin Mocha                          |
+| **Theme**           | Catppuccin Mocha        | Global                                         | GTK, Qt, icons (Papirus), cursor (Bibata) |
 
 ### Waybar Custom Scripts (6 total)
 
@@ -93,32 +93,32 @@ These polling-based scripts are exactly the kind of thing QuickShell replaces wi
 
 ### CAN Replace (built-in QuickShell support)
 
-| # | Current | QuickShell Module | Impact | Effort |
-|---|---------|-------------------|--------|--------|
-| 1 | **No OSD** | `Pipewire` + `UPower` native bindings | **HIGH** — new capability, currently missing | Medium |
-| 2 | **Waybar** | `PanelWindow` + native Pipewire/MPRIS/Network | **HIGH** — eliminates 6 polling scripts, unified reactive UI | High |
-| 3 | **Dunst** | `NotificationServer` | **MEDIUM** — shared theme with bar, tighter integration | Low |
-| 4 | **wlogout** | `FloatingWindow` power menu | **MEDIUM** — unified theme | Low |
-| 5 | **Rofi** (launcher) | `DesktopEntries` + `PopupWindow` | **MEDIUM** — native app launcher | Medium |
-| 6 | **swaylock-effects** | `WlSessionLock` + `PamContext` | **LOW** — works fine, cosmetic upgrade | Medium |
+| #   | Current              | QuickShell Module                             | Impact                                                       | Effort |
+| --- | -------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------ |
+| 1   | **No OSD**           | `Pipewire` + `UPower` native bindings         | **HIGH** — new capability, currently missing                 | Medium |
+| 2   | **Waybar**           | `PanelWindow` + native Pipewire/MPRIS/Network | **HIGH** — eliminates 6 polling scripts, unified reactive UI | High   |
+| 3   | **Dunst**            | `NotificationServer`                          | **MEDIUM** — shared theme with bar, tighter integration      | Low    |
+| 4   | **wlogout**          | `FloatingWindow` power menu                   | **MEDIUM** — unified theme                                   | Low    |
+| 5   | **Rofi** (launcher)  | `DesktopEntries` + `PopupWindow`              | **MEDIUM** — native app launcher                             | Medium |
+| 6   | **swaylock-effects** | `WlSessionLock` + `PamContext`                | **LOW** — works fine, cosmetic upgrade                       | Medium |
 
 ### COULD Replace (but risky/low-value)
 
-| Component | Why Not |
-|-----------|---------|
-| SDDM | Display manager works fine, QuickShell Greetd integration is experimental |
-| awww wallpaper | Custom daemon already works, no native QuickShell wallpaper setter |
-| Niri compositor | QuickShell is a shell toolkit, not a compositor |
+| Component       | Why Not                                                                   |
+| --------------- | ------------------------------------------------------------------------- |
+| SDDM            | Display manager works fine, QuickShell Greetd integration is experimental |
+| awww wallpaper  | Custom daemon already works, no native QuickShell wallpaper setter        |
+| Niri compositor | QuickShell is a shell toolkit, not a compositor                           |
 
 ### SHOULD NOT Replace
 
-| Component | Reason |
-|-----------|--------|
-| swayidle | QuickShell has `IdleInhibitor`/`IdleMonitor` but not idle action management |
-| grim/slurp/swappy | Screenshots are compositor-level, not shell |
-| cliphist | Clipboard management is separate from shell UI |
-| niri-session-manager | Window save/restore is orthogonal to shell |
-| Rofi calc/emoji | rofi-calc and rofi-emoji have no QuickShell equivalent |
+| Component            | Reason                                                                      |
+| -------------------- | --------------------------------------------------------------------------- |
+| swayidle             | QuickShell has `IdleInhibitor`/`IdleMonitor` but not idle action management |
+| grim/slurp/swappy    | Screenshots are compositor-level, not shell                                 |
+| cliphist             | Clipboard management is separate from shell UI                              |
+| niri-session-manager | Window save/restore is orthogonal to shell                                  |
+| Rofi calc/emoji      | rofi-calc and rofi-emoji have no QuickShell equivalent                      |
 
 ---
 
@@ -227,22 +227,22 @@ in {
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|------|------------|
-| QuickShell crashes → no bar | systemd auto-restart, keep wlogout/rofi as fallback |
-| qml-niri plugin not in nixpkgs | Build from source or use flake |
-| Learning curve for QML | Hot-reload makes iteration fast, LSP helps |
-| Losing rofi-calc/rofi-emoji | Keep Rofi installed alongside, bind different keys |
-| Waybar muscle memory | Can run both temporarily during migration |
+| Risk                           | Mitigation                                          |
+| ------------------------------ | --------------------------------------------------- |
+| QuickShell crashes → no bar    | systemd auto-restart, keep wlogout/rofi as fallback |
+| qml-niri plugin not in nixpkgs | Build from source or use flake                      |
+| Learning curve for QML         | Hot-reload makes iteration fast, LSP helps          |
+| Losing rofi-calc/rofi-emoji    | Keep Rofi installed alongside, bind different keys  |
+| Waybar muscle memory           | Can run both temporarily during migration           |
 
 ---
 
 ## Reference Projects
 
-| Project | Description | URL |
-|---------|-------------|-----|
-| iNiR | Full Niri shell, Material You theming, 5 visual styles | https://github.com/snowarch/iNiR |
-| quickshell-niri | Example Niri configs for QuickShell | https://github.com/imiric/quickshell-niri |
-| qml-niri | QML plugin for Niri IPC | https://github.com/imiric/qml-niri |
-| DankMaterialShell | Modular shell for Niri/Hyprland | https://github.com/AvengeMedia/DankMaterialShell |
-| Noctalia | Minimal Niri shell | https://github.com/jaytaph/noctalia |
+| Project           | Description                                            | URL                                              |
+| ----------------- | ------------------------------------------------------ | ------------------------------------------------ |
+| iNiR              | Full Niri shell, Material You theming, 5 visual styles | https://github.com/snowarch/iNiR                 |
+| quickshell-niri   | Example Niri configs for QuickShell                    | https://github.com/imiric/quickshell-niri        |
+| qml-niri          | QML plugin for Niri IPC                                | https://github.com/imiric/qml-niri               |
+| DankMaterialShell | Modular shell for Niri/Hyprland                        | https://github.com/AvengeMedia/DankMaterialShell |
+| Noctalia          | Minimal Niri shell                                     | https://github.com/jaytaph/noctalia              |

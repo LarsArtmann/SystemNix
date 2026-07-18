@@ -9,14 +9,14 @@
 
 ## Timeline
 
-| Time | Event |
-|------|-------|
-| 06:05 | `just switch` begins building new generation |
-| 06:06 | Activation starts — old units stopped, new units activated |
+| Time     | Event                                                          |
+| -------- | -------------------------------------------------------------- |
+| 06:05    | `just switch` begins building new generation                   |
+| 06:06    | Activation starts — old units stopped, new units activated     |
 | 06:06:53 | `clickhouse.service` fails → `signoz.service` dependency fails |
-| 06:06:56 | `dnsblockd.service` fails (restart loop, counter 32) |
-| 06:06:58 | `authelia-main.service` fails (config validation) |
-| 06:08 | Activation exits with code 4 |
+| 06:06:56 | `dnsblockd.service` fails (restart loop, counter 32)           |
+| 06:06:58 | `authelia-main.service` fails (config validation)              |
+| 06:08    | Activation exits with code 4                                   |
 
 ---
 
@@ -29,14 +29,14 @@
 
 Authelia upgraded to **4.39.12** which introduced strict config validation. Five errors + one deprecation warning:
 
-| # | Error | Fix |
-|---|-------|-----|
-| 1 | `notifier.filesystem.path` unexpected | → `filesystem.filename` |
-| 2 | `server.endpoints.enable.enable_expvars` unexpected | → `endpoints.enable_expvars` |
-| 3 | `server.endpoints.enable.enable_pprof` unexpected | → `endpoints.enable_pprof` |
-| 4 | `domain 'lan'` not valid cookie domain | Domain migration (see below) |
-| 5 | `notifier: filesystem: option 'filename' is required` | Same as #1 |
-| ⚠ | `webauthn.user_verification` deprecated | → `selection_criteria.user_verification` |
+| #   | Error                                                 | Fix                                      |
+| --- | ----------------------------------------------------- | ---------------------------------------- |
+| 1   | `notifier.filesystem.path` unexpected                 | → `filesystem.filename`                  |
+| 2   | `server.endpoints.enable.enable_expvars` unexpected   | → `endpoints.enable_expvars`             |
+| 3   | `server.endpoints.enable.enable_pprof` unexpected     | → `endpoints.enable_pprof`               |
+| 4   | `domain 'lan'` not valid cookie domain                | Domain migration (see below)             |
+| 5   | `notifier: filesystem: option 'filename' is required` | Same as #1                               |
+| ⚠   | `webauthn.user_verification` deprecated               | → `selection_criteria.user_verification` |
 
 ### 2. ClickHouse XML Parse Error
 
@@ -80,17 +80,18 @@ networking.domain = "home.lan"            ← ONE definition in networking.nix
 
 ### What was Nixified
 
-| Before (hardcoded) | After (derived) | File |
-|--------------------|-----------------|------|
-| `"home.lan"` x7 files | `config.networking.domain` | all service modules |
-| `"192.168.1.150"` | `builtins.head config.networking.interfaces.eno1.ipv4.addresses).address` | `dns-blocker-config.nix` |
-| 7 copy-pasted Caddy vhosts | `protectedVHost` function | `caddy.nix` |
-| 14 hardcoded URLs in homepage | `svcUrl` helper function | `homepage.nix` |
-| 7 hardcoded DNS records | `map` over subdomain list | `dns-blocker-config.nix` |
+| Before (hardcoded)            | After (derived)                                                           | File                     |
+| ----------------------------- | ------------------------------------------------------------------------- | ------------------------ |
+| `"home.lan"` x7 files         | `config.networking.domain`                                                | all service modules      |
+| `"192.168.1.150"`             | `builtins.head config.networking.interfaces.eno1.ipv4.addresses).address` | `dns-blocker-config.nix` |
+| 7 copy-pasted Caddy vhosts    | `protectedVHost` function                                                 | `caddy.nix`              |
+| 14 hardcoded URLs in homepage | `svcUrl` helper function                                                  | `homepage.nix`           |
+| 7 hardcoded DNS records       | `map` over subdomain list                                                 | `dns-blocker-config.nix` |
 
 ### DRY Patterns Introduced
 
 **caddy.nix** — `protectedVHost` helper:
+
 ```nix
 protectedVHost = subdomain: port: {
   extraConfig = ''
@@ -103,11 +104,13 @@ protectedVHost = subdomain: port: {
 ```
 
 **homepage.nix** — `svcUrl` helper:
+
 ```nix
 svcUrl = subdomain: "https://${subdomain}.${domain}";
 ```
 
 **dns-blocker-config.nix** — mapped DNS records:
+
 ```nix
 local-data = map
   (subdomain: ''"${subdomain}.${domain}. IN A ${serverIP}"'')
@@ -118,18 +121,18 @@ local-data = map
 
 ## Files Changed
 
-| File | Changes |
-|------|---------|
-| `platforms/nixos/system/networking.nix` | Added `networking.domain = "home.lan"` |
-| `modules/nixos/services/authelia.nix` | Domain from config, 4.39 schema fixes, `selection_criteria` |
-| `modules/nixos/services/caddy.nix` | `protectedVHost` helper, all domains from config |
-| `modules/nixos/services/homepage.nix` | `svcUrl` helper, all URLs from config |
-| `modules/nixos/services/immich.nix` | `issuerUrl` from config |
-| `modules/nixos/services/gitea.nix` | `ROOT_URL`/`DOMAIN` from config, http→https fix |
-| `modules/nixos/services/signoz.nix` | ClickHouse XML root element fix |
-| `platforms/nixos/system/dns-blocker-config.nix` | Domain + IP from config, `map` for DNS records |
-| `platforms/nixos/modules/dns-blocker.nix` | `sops-nix.service` dependency |
-| `README.md`, `AGENTS.md`, `IMMICH-BULL-BOARD-PATCH-GUIDE.md` | Domain references |
+| File                                                         | Changes                                                     |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `platforms/nixos/system/networking.nix`                      | Added `networking.domain = "home.lan"`                      |
+| `modules/nixos/services/authelia.nix`                        | Domain from config, 4.39 schema fixes, `selection_criteria` |
+| `modules/nixos/services/caddy.nix`                           | `protectedVHost` helper, all domains from config            |
+| `modules/nixos/services/homepage.nix`                        | `svcUrl` helper, all URLs from config                       |
+| `modules/nixos/services/immich.nix`                          | `issuerUrl` from config                                     |
+| `modules/nixos/services/gitea.nix`                           | `ROOT_URL`/`DOMAIN` from config, http→https fix             |
+| `modules/nixos/services/signoz.nix`                          | ClickHouse XML root element fix                             |
+| `platforms/nixos/system/dns-blocker-config.nix`              | Domain + IP from config, `map` for DNS records              |
+| `platforms/nixos/modules/dns-blocker.nix`                    | `sops-nix.service` dependency                               |
+| `README.md`, `AGENTS.md`, `IMMICH-BULL-BOARD-PATCH-GUIDE.md` | Domain references                                           |
 
 ## Validation
 

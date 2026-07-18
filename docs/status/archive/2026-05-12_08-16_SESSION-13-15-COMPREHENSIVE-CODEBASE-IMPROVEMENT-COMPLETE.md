@@ -10,22 +10,22 @@
 
 ### 14 commits, 42 files changed, +519/-428 lines
 
-| # | Commit | Category | Description |
-|---|--------|----------|-------------|
-| 1 | `287d2975` | docs | AGENTS.md: otel-tui Linux-only pattern, Darwin disk exhaustion, _module.args pattern |
-| 2 | `94bbcdb0` | fix | Remove broken config-validate.sh references from global pre-commit config |
-| 3 | `b0780bd0` | fix | Alejandra formatting in niri-config.nix, disable dead sublime-sync LaunchAgent |
-| 4 | `a4bb3b94` | refactor | justfile: [linux] tag on dns-update, extract evo_x2_ip, simplify gpu-python |
-| 5 | `a4bb3b94` | refactor | dns-blocker: replace inline hardening with shared `harden{}` + `serviceDefaults{}` |
-| 6 | `29f9164b` | refactor | niri-wrapped: use `hardenUser{}` + `serviceDefaultsUser{}` for awww-daemon, swayidle, cliphist |
-| 7 | `fa0efa75` | refactor | gitea + gitea-repos: extract 10x hardcoded `localhost:3000` to config-derived `giteaUrl` |
-| 8 | `fa0efa75` | fix | pre-commit: statix hook loops files individually (only accepts one target) |
-| 9 | `4785469d` | refactor | overlays: extract `mkPackageOverlay` helper — deduplicates 4 identical overlays |
-| 10 | `9e1f229a` | docs | Header comments on all 35 service modules |
-| 11 | `33327c7b` | fix | **statix pre-commit hook root cause**: `grep -q .` returns 1 on no match → false failures on EVERY commit. Fixed with result variable pattern |
-| 12 | `df0473cb` | refactor | signoz: extract alert rules to `signoz-alerts.nix` with `mkRule` helper (939 → 599 lines, -36%) |
-| 13 | `bfd0541d` | docs | AGENTS.md: mkPackageOverlay, config-derived URLs, signoz split, statix gotchas |
-| 14 | `git push` | ops | Rebased onto remote (1 new commit from emeet-pixyd update), pushed all 14 commits |
+| #   | Commit     | Category | Description                                                                                                                                   |
+| --- | ---------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `287d2975` | docs     | AGENTS.md: otel-tui Linux-only pattern, Darwin disk exhaustion, _module.args pattern                                                          |
+| 2   | `94bbcdb0` | fix      | Remove broken config-validate.sh references from global pre-commit config                                                                     |
+| 3   | `b0780bd0` | fix      | Alejandra formatting in niri-config.nix, disable dead sublime-sync LaunchAgent                                                                |
+| 4   | `a4bb3b94` | refactor | justfile: [linux] tag on dns-update, extract evo_x2_ip, simplify gpu-python                                                                   |
+| 5   | `a4bb3b94` | refactor | dns-blocker: replace inline hardening with shared `harden{}` + `serviceDefaults{}`                                                            |
+| 6   | `29f9164b` | refactor | niri-wrapped: use `hardenUser{}` + `serviceDefaultsUser{}` for awww-daemon, swayidle, cliphist                                                |
+| 7   | `fa0efa75` | refactor | gitea + gitea-repos: extract 10x hardcoded `localhost:3000` to config-derived `giteaUrl`                                                      |
+| 8   | `fa0efa75` | fix      | pre-commit: statix hook loops files individually (only accepts one target)                                                                    |
+| 9   | `4785469d` | refactor | overlays: extract `mkPackageOverlay` helper — deduplicates 4 identical overlays                                                               |
+| 10  | `9e1f229a` | docs     | Header comments on all 35 service modules                                                                                                     |
+| 11  | `33327c7b` | fix      | **statix pre-commit hook root cause**: `grep -q .` returns 1 on no match → false failures on EVERY commit. Fixed with result variable pattern |
+| 12  | `df0473cb` | refactor | signoz: extract alert rules to `signoz-alerts.nix` with `mkRule` helper (939 → 599 lines, -36%)                                               |
+| 13  | `bfd0541d` | docs     | AGENTS.md: mkPackageOverlay, config-derived URLs, signoz split, statix gotchas                                                                |
+| 14  | `git push` | ops      | Rebased onto remote (1 new commit from emeet-pixyd update), pushed all 14 commits                                                             |
 
 ### Key Achievements
 
@@ -47,13 +47,13 @@ Nothing partially done — all started work was completed.
 
 These were identified during analysis but deprioritized:
 
-| Item | Why Skipped |
-|------|-------------|
-| niri-wrapped.nix split (504 lines) | No repetitive boilerplate to compress — binds and window-rules are all unique one-liners. Splitting would create 3+ tiny files without reducing complexity. |
+| Item                                                      | Why Skipped                                                                                                                                                                        |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| niri-wrapped.nix split (504 lines)                        | No repetitive boilerplate to compress — binds and window-rules are all unique one-liners. Splitting would create 3+ tiny files without reducing complexity.                        |
 | Migrate services to `serviceTypes.systemdServiceIdentity` | 5 services (signoz, homepage, gitea, comfyui, ai-stack) still define user/group manually. Low impact — each is 3 lines, and `serviceTypes` adds import overhead for trivial cases. |
-| `onFailure` roll into serviceDefaults | `onFailure` is a `[Unit]` directive; `serviceDefaults` produces `[Service]` attrs. Would need a separate `unitDefaults` function. Low ROI (22 occurrences). |
-| flake.nix double-registration anti-pattern | Modules listed in both `imports` AND `inputs.self.nixosModules` — 68 lines of duplication. High risk change (touches flake.nix entry point), deferred. |
-| Option naming standardization | Inconsistent suffixes: `-config`, `-tools`, bare names, one camelCase (`unslothStudio`). Cross-cutting rename with wide blast radius. |
+| `onFailure` roll into serviceDefaults                     | `onFailure` is a `[Unit]` directive; `serviceDefaults` produces `[Service]` attrs. Would need a separate `unitDefaults` function. Low ROI (22 occurrences).                        |
+| flake.nix double-registration anti-pattern                | Modules listed in both `imports` AND `inputs.self.nixosModules` — 68 lines of duplication. High risk change (touches flake.nix entry point), deferred.                             |
+| Option naming standardization                             | Inconsistent suffixes: `-config`, `-tools`, bare names, one camelCase (`unslothStudio`). Cross-cutting rename with wide blast radius.                                              |
 
 ---
 
@@ -153,16 +153,16 @@ Sorted by impact / effort (highest first):
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Commits | 14 (across 3 sessions) |
-| Files changed | 42 |
-| Lines added | +519 |
-| Lines removed | -428 |
-| Net change | +91 lines |
-| Largest reduction | signoz.nix: -343 lines |
-| Pre-commit hooks fixed | 1 (statix) |
-| New patterns documented | 4 (mkPackageOverlay, config-derived URLs, mkRule, header comments) |
-| Services migrated to shared lib | 2 (dns-blocker, niri-wrapped) |
-| All hooks passing | ✅ (gitleaks, deadnix, statix, alejandra, nix-check, shellcheck) |
-| `nix flake check --no-build` | ✅ All checks passed |
+| Metric                          | Value                                                              |
+| ------------------------------- | ------------------------------------------------------------------ |
+| Commits                         | 14 (across 3 sessions)                                             |
+| Files changed                   | 42                                                                 |
+| Lines added                     | +519                                                               |
+| Lines removed                   | -428                                                               |
+| Net change                      | +91 lines                                                          |
+| Largest reduction               | signoz.nix: -343 lines                                             |
+| Pre-commit hooks fixed          | 1 (statix)                                                         |
+| New patterns documented         | 4 (mkPackageOverlay, config-derived URLs, mkRule, header comments) |
+| Services migrated to shared lib | 2 (dns-blocker, niri-wrapped)                                      |
+| All hooks passing               | ✅ (gitleaks, deadnix, statix, alejandra, nix-check, shellcheck)   |
+| `nix flake check --no-build`    | ✅ All checks passed                                               |

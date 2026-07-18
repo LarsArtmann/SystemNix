@@ -16,18 +16,18 @@ Successfully researched, designed, and implemented a comprehensive Nix-based sol
 
 ### a) FULLY DONE ✅
 
-| # | Task | Status | Details |
-|---|------|--------|---------|
-| 1 | Research open-source YT Shorts blockers | ✅ Complete | Found 8 extensions, selected "Shorts Blocker by Umut Seven" (10K+ users, 4.5/5 rating) |
-| 2 | Research Chrome extension Nix configuration | ✅ Complete | Documented Home Manager, system policies, and Helium browser support |
-| 3 | Research Helium browser extension support | ✅ Complete | Confirmed full Chromium extension support, pre-installed uBlock Origin |
-| 4 | Create Home Manager chromium config | ✅ Complete | `platforms/common/programs/chromium.nix` - Brave browser with extensions |
-| 5 | Create macOS Chrome policy config | ✅ Complete | `platforms/darwin/programs/chrome.nix` - Policy file + helper script |
-| 6 | Create NixOS Chrome policy config | ✅ Complete | `platforms/nixos/programs/chrome.nix` - Enterprise policy management |
-| 7 | Wire configurations to main files | ✅ Complete | Updated `home-base.nix`, `darwin/default.nix`, `nixos/configuration.nix` |
-| 8 | Create comprehensive documentation | ✅ Complete | `docs/CHROMIUM-EXTENSIONS-GUIDE.md` - 200+ lines of documentation |
-| 9 | Validate Nix configuration | ✅ Complete | `just test-fast` passed successfully |
-| 10 | Write status report | ✅ Complete | This document |
+| #   | Task                                        | Status      | Details                                                                                |
+| --- | ------------------------------------------- | ----------- | -------------------------------------------------------------------------------------- |
+| 1   | Research open-source YT Shorts blockers     | ✅ Complete | Found 8 extensions, selected "Shorts Blocker by Umut Seven" (10K+ users, 4.5/5 rating) |
+| 2   | Research Chrome extension Nix configuration | ✅ Complete | Documented Home Manager, system policies, and Helium browser support                   |
+| 3   | Research Helium browser extension support   | ✅ Complete | Confirmed full Chromium extension support, pre-installed uBlock Origin                 |
+| 4   | Create Home Manager chromium config         | ✅ Complete | `platforms/common/programs/chromium.nix` - Brave browser with extensions               |
+| 5   | Create macOS Chrome policy config           | ✅ Complete | `platforms/darwin/programs/chrome.nix` - Policy file + helper script                   |
+| 6   | Create NixOS Chrome policy config           | ✅ Complete | `platforms/nixos/programs/chrome.nix` - Enterprise policy management                   |
+| 7   | Wire configurations to main files           | ✅ Complete | Updated `home-base.nix`, `darwin/default.nix`, `nixos/configuration.nix`               |
+| 8   | Create comprehensive documentation          | ✅ Complete | `docs/CHROMIUM-EXTENSIONS-GUIDE.md` - 200+ lines of documentation                      |
+| 9   | Validate Nix configuration                  | ✅ Complete | `just test-fast` passed successfully                                                   |
+| 10  | Write status report                         | ✅ Complete | This document                                                                          |
 
 ---
 
@@ -36,6 +36,7 @@ Successfully researched, designed, and implemented a comprehensive Nix-based sol
 ### Extension Selected
 
 **Shorts Blocker by Umut Seven**
+
 - **Extension ID**: `ckagfhpboagdopichicnebandlofghbc`
 - **Repository**: https://github.com/umutseven92/shorts-blocker
 - **Chrome Web Store**: [Link](https://chromewebstore.google.com/detail/shorts-blocker/ckagfhpboagdopichicnebandlofghbc)
@@ -45,17 +46,18 @@ Successfully researched, designed, and implemented a comprehensive Nix-based sol
 
 ### Files Created
 
-| File | Purpose | Lines |
-|------|---------|-------|
-| `platforms/common/programs/chromium.nix` | Home Manager config for Brave | 65 |
-| `platforms/darwin/programs/chrome.nix` | macOS policy configuration | 77 |
-| `platforms/nixos/programs/chrome.nix` | NixOS enterprise policies | 68 |
-| `docs/CHROMIUM-EXTENSIONS-GUIDE.md` | Complete documentation | 215 |
-| `docs/status/2026-03-17_19-15_YT-SHORTS-BLOCKER-IMPLEMENTATION.md` | This report | 150+ |
+| File                                                               | Purpose                       | Lines |
+| ------------------------------------------------------------------ | ----------------------------- | ----- |
+| `platforms/common/programs/chromium.nix`                           | Home Manager config for Brave | 65    |
+| `platforms/darwin/programs/chrome.nix`                             | macOS policy configuration    | 77    |
+| `platforms/nixos/programs/chrome.nix`                              | NixOS enterprise policies     | 68    |
+| `docs/CHROMIUM-EXTENSIONS-GUIDE.md`                                | Complete documentation        | 215   |
+| `docs/status/2026-03-17_19-15_YT-SHORTS-BLOCKER-IMPLEMENTATION.md` | This report                   | 150+  |
 
 ### Configuration Approaches
 
 #### 1. Home Manager (macOS with Brave)
+
 ```nix
 programs.chromium = {
   enable = true;
@@ -65,6 +67,7 @@ programs.chromium = {
 ```
 
 #### 2. System Policies (NixOS)
+
 ```nix
 programs.chromium = {
   enable = true;
@@ -79,6 +82,7 @@ programs.chromium = {
 ```
 
 #### 3. macOS Policy Helper
+
 ```bash
 sudo chrome-apply-policies
 ```
@@ -87,19 +91,19 @@ sudo chrome-apply-policies
 
 ## b) PARTIALLY DONE 🟡
 
-| Item | Status | Notes |
-|------|--------|-------|
+| Item                       | Status     | Notes                                                                             |
+| -------------------------- | ---------- | --------------------------------------------------------------------------------- |
 | Helium browser Nix package | 🟡 Partial | Helium available via flake input but not fully integrated with extension policies |
 
 ---
 
 ## c) NOT STARTED 🔴
 
-| Item | Reason |
-|------|--------|
-| Testing on actual hardware | Pending deployment to NixOS (evo-x2) |
+| Item                             | Reason                                               |
+| -------------------------------- | ---------------------------------------------------- |
+| Testing on actual hardware       | Pending deployment to NixOS (evo-x2)                 |
 | Verifying extension auto-install | Requires browser restart and Chrome Web Store access |
-| Policy file manual application | User must run `sudo chrome-apply-policies` on macOS |
+| Policy file manual application   | User must run `sudo chrome-apply-policies` on macOS  |
 
 ---
 
@@ -192,6 +196,7 @@ Helium browser (from `github:imputnet/helium`) is a privacy-focused Chromium for
 ### The Problem
 
 Home Manager's `programs.chromium` module installs extensions to:
+
 - `~/.config/chromium/External Extensions/` (Linux)
 - `~/Library/Application Support/Chromium/External Extensions/` (macOS)
 
@@ -214,6 +219,7 @@ But Helium doesn't read from these locations. It uses its own branding paths.
 ### What I Need
 
 Guidance on the preferred approach for declarative Helium extension management. Should we:
+
 - A) Extend the existing chrome.nix policy config to cover Helium?
 - B) Create a custom Home Manager module for Helium?
 - C) Use a different approach entirely?
@@ -235,14 +241,14 @@ All Nix configurations validated successfully. No syntax errors or evaluation fa
 
 ### Files Changed
 
-| Status | File | Description |
-|--------|------|-------------|
-| M | `platforms/common/programs/keepassxc.nix` | Updated Helium config directory path |
-| A | `platforms/common/programs/chromium.nix` | NEW: Home Manager Chromium config |
-| A | `platforms/darwin/programs/chrome.nix` | NEW: macOS Chrome policy config |
-| A | `platforms/nixos/programs/chrome.nix` | NEW: NixOS Chrome policy config |
-| A | `docs/CHROMIUM-EXTENSIONS-GUIDE.md` | NEW: Comprehensive documentation |
-| A | `docs/status/2026-03-17_19-15_YT-SHORTS-BLOCKER-IMPLEMENTATION.md` | NEW: This status report |
+| Status | File                                                               | Description                          |
+| ------ | ------------------------------------------------------------------ | ------------------------------------ |
+| M      | `platforms/common/programs/keepassxc.nix`                          | Updated Helium config directory path |
+| A      | `platforms/common/programs/chromium.nix`                           | NEW: Home Manager Chromium config    |
+| A      | `platforms/darwin/programs/chrome.nix`                             | NEW: macOS Chrome policy config      |
+| A      | `platforms/nixos/programs/chrome.nix`                              | NEW: NixOS Chrome policy config      |
+| A      | `docs/CHROMIUM-EXTENSIONS-GUIDE.md`                                | NEW: Comprehensive documentation     |
+| A      | `docs/status/2026-03-17_19-15_YT-SHORTS-BLOCKER-IMPLEMENTATION.md` | NEW: This status report              |
 
 ### Modified Integration Points
 
@@ -257,6 +263,7 @@ All Nix configurations validated successfully. No syntax errors or evaluation fa
 ✅ **MISSION ACCOMPLISHED**
 
 The YouTube Shorts blocker extension has been fully integrated into the Nix configuration with:
+
 - Multi-platform support (macOS + NixOS)
 - Multiple management approaches (Home Manager + System Policies)
 - Comprehensive documentation
@@ -266,5 +273,5 @@ The YouTube Shorts blocker extension has been fully integrated into the Nix conf
 
 ---
 
-*Generated with Crush*
-*Assisted-by: Claude via Crush <crush@charm.land>*
+_Generated with Crush_
+_Assisted-by: Claude via Crush <crush@charm.land>_

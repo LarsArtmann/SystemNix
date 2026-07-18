@@ -16,11 +16,11 @@ Two significant changes: (1) All overlays extracted from `flake.nix` into a sepa
 
 ### Overlay Extraction (overlays/ directory)
 
-| File | Contents |
-|------|----------|
-| `overlays/default.nix` | Entry point — imports shared.nix/linux.nix, defines disableTests/pythonTest, exposes `sharedOverlays`/`linuxOnlyOverlays` |
-| `overlays/shared.nix` | 13 shared overlays (aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin) |
-| `overlays/linux.nix` | 6 Linux-only overlays (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer) |
+| File                   | Contents                                                                                                                                                                                                               |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `overlays/default.nix` | Entry point — imports shared.nix/linux.nix, defines disableTests/pythonTest, exposes `sharedOverlays`/`linuxOnlyOverlays`                                                                                              |
+| `overlays/shared.nix`  | 13 shared overlays (aw-watcher, todo-list-ai, jscpd, library-policy, buildflow, go-auto-upgrade, go-structure-linter, branching-flow, art-dupl, golangci-lint-auto-configure, mr-sync, hierarchical-errors, d2-darwin) |
+| `overlays/linux.nix`   | 6 Linux-only overlays (openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer)                                                                                                              |
 
 **Impact:** `flake.nix` reduced from ~843 lines to ~671 lines (-172). Overlay definitions no longer inline in the main file.
 
@@ -91,6 +91,7 @@ Same as session 72 — no new items. Priorities remain: push upstream fixes, `ju
 **Should the `overlays/` extraction pattern be documented in AGENTS.md as the canonical way to organize overlays?**
 
 The current pattern is:
+
 - `overlays/default.nix` — imports + composes
 - `overlays/shared.nix` — returns a list of overlays
 - `overlays/linux.nix` — returns a list of overlays
@@ -101,15 +102,15 @@ This is clean but not documented. If it becomes the standard, AGENTS.md should e
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Root disk (`/`) | 80% used (100 GB free) | ⚠️ Clean needed |
-| Data disk (`/data`) | 80% used (206 GB free) | ⚠️ Watch |
-| Go/Rust projects wired | 14/14 | ✅ |
-| Go local packages in pkgs/ | 0 | ✅ Zero |
-| Overlays in separate files | 3 (default, shared, linux) | ✅ Clean |
-| SystemNix `test-fast` | Passes (both platforms) | ✅ |
-| Uncommitted changes | 0 (after this commit) | ✅ |
+| Metric                     | Value                      | Status          |
+| -------------------------- | -------------------------- | --------------- |
+| Root disk (`/`)            | 80% used (100 GB free)     | ⚠️ Clean needed |
+| Data disk (`/data`)        | 80% used (206 GB free)     | ⚠️ Watch        |
+| Go/Rust projects wired     | 14/14                      | ✅              |
+| Go local packages in pkgs/ | 0                          | ✅ Zero         |
+| Overlays in separate files | 3 (default, shared, linux) | ✅ Clean        |
+| SystemNix `test-fast`      | Passes (both platforms)    | ✅              |
+| Uncommitted changes        | 0 (after this commit)      | ✅              |
 
 ---
 

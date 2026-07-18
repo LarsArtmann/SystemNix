@@ -19,18 +19,18 @@ Opportunities already have a pipeline (Kanban) view. Configure stages for freela
 1. Go to **Settings → Data Model → Create Object**
 2. Name it "Project" with fields:
 
-| Field       | Type                  | Purpose                      |
-|-------------|-----------------------|------------------------------|
-| Status      | SELECT                | Lead / Quoted / Active / Delivered / Invoiced / Closed |
-| Rate        | NUMBER                | Hourly/project rate          |
-| Budget      | NUMBER                | Total project value          |
-| Start Date  | DATE                  | Project start                |
-| Deadline    | DATE                  | Delivery date                |
-| Client      | RELATION → Company    | Link to client               |
-| Contact     | RELATION → Person     | Main contact                 |
-| Opportunity | RELATION → Opportunity| Link to the originating deal |
-| Tech Stack  | MULTI-SELECT          | Technologies involved        |
-| Notes       | RICH TEXT             | Project description          |
+| Field       | Type                   | Purpose                                                |
+| ----------- | ---------------------- | ------------------------------------------------------ |
+| Status      | SELECT                 | Lead / Quoted / Active / Delivered / Invoiced / Closed |
+| Rate        | NUMBER                 | Hourly/project rate                                    |
+| Budget      | NUMBER                 | Total project value                                    |
+| Start Date  | DATE                   | Project start                                          |
+| Deadline    | DATE                   | Delivery date                                          |
+| Client      | RELATION → Company     | Link to client                                         |
+| Contact     | RELATION → Person      | Main contact                                           |
+| Opportunity | RELATION → Opportunity | Link to the originating deal                           |
+| Tech Stack  | MULTI-SELECT           | Technologies involved                                  |
+| Notes       | RICH TEXT              | Project description                                    |
 
 ## Recommended Setup
 

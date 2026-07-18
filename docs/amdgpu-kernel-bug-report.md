@@ -78,30 +78,30 @@ detected ip block number 12 <isp_v4_1_1> (isp_ip)
 
 ## Timeline (all times UTC+2)
 
-| Time | Event |
-|------|-------|
-| May 04 22:38 | Clean boot. amdgpu 3.64.0 initializes. SMU OK. DCN 3.5.1 OK. ISP v4.1.1 detected. |
-| May 05 ~23:14 | AI workloads running: llama-server (multimodal GPU compute via libhsa-runtime64), Minecraft (java), 30+ node/vtsls processes |
-| 23:14:40 | System under memory pressure. journald flushing caches repeatedly. |
-| 23:14:52 | earlyoom triggers: SIGTERM llama-server (947 MiB). Memory at 9%, swap at 10%. |
-| 23:15:05-08 | earlyoom kills dozens of node processes (vtsls), java (Minecraft), python3, helium |
-| 23:16:03-19 | Swap exhausted (0 MiB free). earlyoom SIGKILLs: systemd-coredump, awww-daemon, wallpaper-set, dunst, pipewire-pulse, gcr-ssh-agent, **dbus-broker**, systembus-notify, swayidle, dconf-service, **waybar** |
-| ~23:16:19 | niri loses DRM master. First "Permission denied" on DRM page flip. libinput reports "system is too slow". |
-| 23:16:19 | GPU device change detected. niri: "error emitting MonitorsChanged: BrokenPipe" |
-| 23:16:28-25:33 | Multiple python3.13 segfaults in libhsa-runtime64.so (GPU compute library) |
-| 23:39:19 | Memory recovered: 84.77% RAM free, 76.10% swap free |
-| May 06 00:22 | First niri restart attempt (systemd Restart=always). New PID gets "DeviceMissing" DRM errors. |
-| 02:50:05 | GPU reset attempted via sysfs. "resetting" / "reset done". DRM still broken. |
-| 04:46:25 | Driver unbind attempted for recovery. Console switches to dummy device. |
-| 04:46:25 | `amdgpu: VM memory stats for proc (0) task (0) is non-zero when fini` — GPU VM already corrupted |
-| 04:46:25 | `kfd: Sending SIGBUS to process 3550225` |
-| 04:46:29 | **KERNEL OOPS**: NULL deref in `isp_genpd_remove_device+0x1c` |
-| 04:46:29 | `note: tee[1700675] exited with irqs disabled` |
-| 04:50:27 | perf interrupt latency: 2508 > 2500 |
-| ~05:00 | CPU frequency stuck at 600 MHz on all cores (user observation) |
-| 05:00:40 | perf interrupt latency: 3344 > 3135 |
-| 05:34 | Driver rebind attempted. Hangs in D-state, no Ctrl+C possible. |
-| 05:34 | CPU at 600 MHz, 100% load, 89°C, 144W. Not thermal throttling. |
+| Time           | Event                                                                                                                                                                                                      |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| May 04 22:38   | Clean boot. amdgpu 3.64.0 initializes. SMU OK. DCN 3.5.1 OK. ISP v4.1.1 detected.                                                                                                                          |
+| May 05 ~23:14  | AI workloads running: llama-server (multimodal GPU compute via libhsa-runtime64), Minecraft (java), 30+ node/vtsls processes                                                                               |
+| 23:14:40       | System under memory pressure. journald flushing caches repeatedly.                                                                                                                                         |
+| 23:14:52       | earlyoom triggers: SIGTERM llama-server (947 MiB). Memory at 9%, swap at 10%.                                                                                                                              |
+| 23:15:05-08    | earlyoom kills dozens of node processes (vtsls), java (Minecraft), python3, helium                                                                                                                         |
+| 23:16:03-19    | Swap exhausted (0 MiB free). earlyoom SIGKILLs: systemd-coredump, awww-daemon, wallpaper-set, dunst, pipewire-pulse, gcr-ssh-agent, **dbus-broker**, systembus-notify, swayidle, dconf-service, **waybar** |
+| ~23:16:19      | niri loses DRM master. First "Permission denied" on DRM page flip. libinput reports "system is too slow".                                                                                                  |
+| 23:16:19       | GPU device change detected. niri: "error emitting MonitorsChanged: BrokenPipe"                                                                                                                             |
+| 23:16:28-25:33 | Multiple python3.13 segfaults in libhsa-runtime64.so (GPU compute library)                                                                                                                                 |
+| 23:39:19       | Memory recovered: 84.77% RAM free, 76.10% swap free                                                                                                                                                        |
+| May 06 00:22   | First niri restart attempt (systemd Restart=always). New PID gets "DeviceMissing" DRM errors.                                                                                                              |
+| 02:50:05       | GPU reset attempted via sysfs. "resetting" / "reset done". DRM still broken.                                                                                                                               |
+| 04:46:25       | Driver unbind attempted for recovery. Console switches to dummy device.                                                                                                                                    |
+| 04:46:25       | `amdgpu: VM memory stats for proc (0) task (0) is non-zero when fini` — GPU VM already corrupted                                                                                                           |
+| 04:46:25       | `kfd: Sending SIGBUS to process 3550225`                                                                                                                                                                   |
+| 04:46:29       | **KERNEL OOPS**: NULL deref in `isp_genpd_remove_device+0x1c`                                                                                                                                              |
+| 04:46:29       | `note: tee[1700675] exited with irqs disabled`                                                                                                                                                             |
+| 04:50:27       | perf interrupt latency: 2508 > 2500                                                                                                                                                                        |
+| ~05:00         | CPU frequency stuck at 600 MHz on all cores (user observation)                                                                                                                                             |
+| 05:00:40       | perf interrupt latency: 3344 > 3135                                                                                                                                                                        |
+| 05:34          | Driver rebind attempted. Hangs in D-state, no Ctrl+C possible.                                                                                                                                             |
+| 05:34          | CPU at 600 MHz, 100% load, 89°C, 144W. Not thermal throttling.                                                                                                                                             |
 
 ## Bug 1: NULL Pointer Dereference in isp_genpd_remove_device
 
@@ -112,6 +112,7 @@ detected ip block number 12 <isp_v4_1_1> (isp_ip)
 `isp_v4_1_1_hw_fini` → `device_for_each_child` → `isp_genpd_remove_device`
 
 **Crash:**
+
 ```
 BUG: unable to handle page fault for address: ffffffffffffffb8
 #PF: supervisor read access in kernel mode
@@ -166,6 +167,7 @@ After the OOM event kills dbus-broker and logind:
 **Onset:** ~30 minutes after the kernel oops (gradual, not immediate)
 
 **Symptoms:**
+
 ```
 scaling_driver:              amd-pstate
 amd_pstate status:           guided
@@ -189,6 +191,7 @@ preventing CPU boost. The `exited with irqs disabled` note suggests interrupt st
 on CPU 16 was also corrupted.
 
 **Kernel timing anomalies after oops:**
+
 ```
 perf: interrupt took too long (2508 > 2500), lowering sample_rate to 79000
 perf: interrupt took too long (3344 > 3135), lowering sample_rate to 59000

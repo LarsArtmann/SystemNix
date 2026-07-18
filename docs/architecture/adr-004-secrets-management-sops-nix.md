@@ -21,12 +21,12 @@ The NixOS configuration manages secrets (API tokens, service credentials) via pl
 
 ### Alternatives Considered
 
-| Solution | Type | Self-Hosted | NixOS Native | Offline | Resource Overhead |
-|---|---|---|---|---|---|
-| **sops-nix** | File encryption | N/A | Yes (module) | Yes | Negligible |
-| **agenix** | File encryption | N/A | Yes (module) | Yes | Negligible |
-| **Infisical** | Secrets platform | Yes | No (CLI only) | No | 4GB+ RAM, PostgreSQL, Redis |
-| **Doppler** | Secrets platform | No (SaaS only) | No (CLI only) | No | N/A |
+| Solution      | Type             | Self-Hosted    | NixOS Native  | Offline | Resource Overhead           |
+| ------------- | ---------------- | -------------- | ------------- | ------- | --------------------------- |
+| **sops-nix**  | File encryption  | N/A            | Yes (module)  | Yes     | Negligible                  |
+| **agenix**    | File encryption  | N/A            | Yes (module)  | Yes     | Negligible                  |
+| **Infisical** | Secrets platform | Yes            | No (CLI only) | No      | 4GB+ RAM, PostgreSQL, Redis |
+| **Doppler**   | Secrets platform | No (SaaS only) | No (CLI only) | No      | N/A                         |
 
 ### Evaluation
 
@@ -80,13 +80,14 @@ The NixOS configuration manages secrets (API tokens, service credentials) via pl
 
 A **3-2-1 backup** must be established:
 
-| Rule | Requirement | Implementation |
-|------|-------------|----------------|
-| **3** copies | Production + 2 backups | evo-x2 machine + USB drive + cloud storage |
-| **2** different media | Different storage types | Local SSD + USB/Cloud |
-| **1** offsite | Geographic separation | Cloud storage (e.g., Backblaze B2, S3) |
+| Rule                  | Requirement             | Implementation                             |
+| --------------------- | ----------------------- | ------------------------------------------ |
+| **3** copies          | Production + 2 backups  | evo-x2 machine + USB drive + cloud storage |
+| **2** different media | Different storage types | Local SSD + USB/Cloud                      |
+| **1** offsite         | Geographic separation   | Cloud storage (e.g., Backblaze B2, S3)     |
 
 Files to back up:
+
 - `/etc/ssh/ssh_host_ed25519_key` (private key — **NEVER commit to git**)
 - `/etc/ssh/ssh_host_ed25519_key.pub` (public key — for reference)
 

@@ -36,11 +36,11 @@ services.dnsblockd = {
 
 ### DNS Configuration Chain
 
-| Component | Configuration | Risk |
-|-----------|-------------|------|
-| networking.nameservers | `["127.0.0.1" "9.9.9.9"]` | 127.0.0.1 is primary, no fallback during restart |
-| services.unbound.reloadIfChanged | `true` | Reloads on config change, brief DNS gap |
-| dnsblockd.service | Missing unbound dependency | Can start before unbound socket exists |
+| Component                        | Configuration              | Risk                                             |
+| -------------------------------- | -------------------------- | ------------------------------------------------ |
+| networking.nameservers           | `["127.0.0.1" "9.9.9.9"]`  | 127.0.0.1 is primary, no fallback during restart |
+| services.unbound.reloadIfChanged | `true`                     | Reloads on config change, brief DNS gap          |
+| dnsblockd.service                | Missing unbound dependency | Can start before unbound socket exists           |
 
 ## Fix Applied
 
@@ -64,6 +64,7 @@ services.dnsblockd = {
 ```
 
 **Changes:**
+
 - Added `unbound.service` to `after` list — ensures startup order
 - Added `requires = ["unbound.service"]` — hard dependency; if unbound fails, dnsblockd won't start
 
@@ -97,6 +98,7 @@ systemctl show unbound.service -p ReloadResult
 ## Future Considerations
 
 1. **Consider `stopIfChanged = false`** for unbound to prevent service stop/start cycles:
+
    ```nix
    systemd.services.unbound = {
      reloadIfChanged = lib.mkForce false;
@@ -105,6 +107,7 @@ systemctl show unbound.service -p ReloadResult
    ```
 
 2. **External DNS fallback**: Reorder nameservers to try external DNS first:
+
    ```nix
    nameservers = ["9.9.9.9" "127.0.0.1"];
    ```
@@ -113,11 +116,11 @@ systemctl show unbound.service -p ReloadResult
 
 ## References
 
-| File | Description |
-|------|-------------|
-| `platforms/nixos/modules/dns-blocker.nix` | DNS blocker service module |
-| `platforms/nixos/system/networking.nix` | Network configuration |
-| `platforms/nixos/system/dns-blocker-config.nix` | DNS blocker configuration |
+| File                                            | Description                |
+| ----------------------------------------------- | -------------------------- |
+| `platforms/nixos/modules/dns-blocker.nix`       | DNS blocker service module |
+| `platforms/nixos/system/networking.nix`         | Network configuration      |
+| `platforms/nixos/system/dns-blocker-config.nix` | DNS blocker configuration  |
 
 ---
 

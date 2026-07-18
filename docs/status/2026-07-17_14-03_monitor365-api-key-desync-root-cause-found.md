@@ -16,21 +16,21 @@ The monitor365 agent was returning **401 Unauthorized on every request** after e
 
 ## Session Timeline
 
-| Time | Event |
-|------|-------|
-| 12:24 | User ran `nix flake update -v` + `nh os boot` (20 derivations, 24s) |
-| 12:37 | `nh os boot` again (34 derivations, 10m49s — monitor365 rebuild from source) |
-| 12:39 | `nh os switch` — activation succeeded, all services started |
-| 12:45 | Post-deploy-check: **1 FAIL** — monitor365 agent NOT connected (0 devices) |
-| 12:50 | Investigation: `monitor365-api-key-sync` failed with DuckDB lock conflict |
-| 12:52 | **Attempt 1:** Moved sync to ExecStartPre of monitor365-server |
+| Time  | Event                                                                           |
+| ----- | ------------------------------------------------------------------------------- |
+| 12:24 | User ran `nix flake update -v` + `nh os boot` (20 derivations, 24s)             |
+| 12:37 | `nh os boot` again (34 derivations, 10m49s — monitor365 rebuild from source)    |
+| 12:39 | `nh os switch` — activation succeeded, all services started                     |
+| 12:45 | Post-deploy-check: **1 FAIL** — monitor365 agent NOT connected (0 devices)      |
+| 12:50 | Investigation: `monitor365-api-key-sync` failed with DuckDB lock conflict       |
+| 12:52 | **Attempt 1:** Moved sync to ExecStartPre of monitor365-server                  |
 | 12:56 | Deploy → ExecStartPre's duckdb CLI process held DuckDB lock → server crash-loop |
-| 13:04 | Server down (DuckDB lock conflict from stale ExecStartPre process) |
-| 13:10 | **Attempt 2:** Removed sync entirely, added restartTriggers → 401 persisted |
-| 13:15 | Deep source code analysis of upstream monitor365 crates |
-| 13:25 | **ROOT CAUSE FOUND:** `tenant_projection.rs:46` inserts `api_key = ''` |
-| 13:27 | **Attempt 3 (FINAL):** preStart deletes DuckDB → clean bootstrap → auth works |
-| 13:30 | Post-deploy-check: **21/21 PASS** — agent connected |
+| 13:04 | Server down (DuckDB lock conflict from stale ExecStartPre process)              |
+| 13:10 | **Attempt 2:** Removed sync entirely, added restartTriggers → 401 persisted     |
+| 13:15 | Deep source code analysis of upstream monitor365 crates                         |
+| 13:25 | **ROOT CAUSE FOUND:** `tenant_projection.rs:46` inserts `api_key = ''`          |
+| 13:27 | **Attempt 3 (FINAL):** preStart deletes DuckDB → clean bootstrap → auth works   |
+| 13:30 | Post-deploy-check: **21/21 PASS** — agent connected                             |
 
 ---
 
@@ -53,6 +53,7 @@ Server starts
 ```
 
 **Source evidence** (`crates/server/src/projection/tenant_projection.rs:36-51`):
+
 ```rust
 DomainEvent::TenantCreated {
     tenant_id,
@@ -83,11 +84,11 @@ The `TenantCreated` event carries `tenant_id`, `name`, and `plan` — but **NOT*
 
 ### Why the Old `monitor365-api-key-sync` Couldn't Fix This
 
-| Approach | Why It Failed |
-|----------|---------------|
-| Standalone oneshot with `before = [ "monitor365-server.service" ]` | Raced the server's stop job during `switch-to-configuration` — DuckDB lock conflict |
-| ExecStartPre of monitor365-server | The duckdb CLI process held the DuckDB lock when ExecStart tried to open the same file |
-| Both approaches | Ran BEFORE the bootstrap (tenants table empty → UPDATE affected 0 rows). And even if they ran AFTER bootstrap, the projection rebuild would overwrite the key again |
+| Approach                                                           | Why It Failed                                                                                                                                                       |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Standalone oneshot with `before = [ "monitor365-server.service" ]` | Raced the server's stop job during `switch-to-configuration` — DuckDB lock conflict                                                                                 |
+| ExecStartPre of monitor365-server                                  | The duckdb CLI process held the DuckDB lock when ExecStart tried to open the same file                                                                              |
+| Both approaches                                                    | Ran BEFORE the bootstrap (tenants table empty → UPDATE affected 0 rows). And even if they ran AFTER bootstrap, the projection rebuild would overwrite the key again |
 
 ### The Fix
 
@@ -100,6 +101,7 @@ systemd.services.monitor365-server.preStart = ''
 ```
 
 Deleting the DuckDB file means:
+
 1. No existing domain events → no projection rebuild → no `DELETE FROM tenants`
 2. Bootstrap creates a fresh tenant with the correct api_key
 3. The key persists until the next restart
@@ -166,6 +168,7 @@ Deleting the DuckDB file means:
 ## Up to 50 Things to Get Done Next
 
 ### Monitor365 (Critical)
+
 1. Fix upstream: include `api_key` in `TenantCreated` domain event
 2. Remove the DuckDB deletion workaround once upstream is fixed
 3. Investigate the WS idle timeout cycle (connect/disconnect every 1s)
@@ -176,11 +179,13 @@ Deleting the DuckDB file means:
 8. Consider persistent storage for monitoring data (currently lost on every restart)
 
 ### DiscordSync
+
 9. Fix Turso sync — either upgrade Turso plan or disable sync entirely
 10. The circuit breaker is tripped at 151 failures — investigate if local-only mode works
 11. DiscordSync stats endpoint returns unexpected response (post-deploy-check WARN)
 
 ### System Health
+
 12. Clean up 18 stale build sandboxes in `/nix/var/nix/builds/` (7.3 GB)
 13. Run `nix-collect-garbage` or `nix build --gc` to free root filesystem space (98% full)
 14. Root filesystem at 98% — investigate what's consuming space (BTRFS snapshots? nix store?)
@@ -188,34 +193,40 @@ Deleting the DuckDB file means:
 16. Run `btrfs filesystem df /` to check chunk allocation vs statfs
 
 ### Git & Deploy Hygiene
+
 17. Commit the monitor365 fix + AGENTS.md update
 18. Run `nix fmt` to ensure formatting compliance
 19. Clean up untracked status docs from previous sessions
 20. Review the `overlays/linux.nix` change (utoipa-swagger-ui fix from previous session)
 
 ### Crush Daily
+
 21. Fix the post-deploy-check SKIP on crush-daily reports endpoint (null byte parsing issue)
 22. Verify crush-daily is actually generating reports (not just returning 200 on health)
 
 ### Monitor365 Module Cleanup
+
 23. Remove all references to the old `monitor365-api-key-sync` service from docs/comments
 24. Consolidate the auth-model documentation (currently scattered across 3 AGENTS.md entries)
 25. Document the DuckDB reset tradeoff in the module header comment
 26. Add a TODO comment with the upstream issue reference
 
 ### Post-Deploy Check Improvements
+
 27. Add WS stability check (connect + stay connected for 10s)
 28. Fix the null byte warning in crush-daily check
 29. Add a check for DiscordSync Turso sync health
 30. Add rate-limit-aware testing (wait for window to expire before retesting)
 
 ### Monitoring & Alerting
+
 31. Add a Gatus alert for monitor365 WS disconnect rate
 32. Add a Gatus alert for DiscordSync circuit breaker state
 33. Add a disk space alert for root filesystem > 95%
 34. Add a stale-build-sandbox alert (> 5 GB in /nix/var/nix/builds/)
 
 ### General
+
 35. Review all services for similar projection-replay bugs
 36. Audit all `preStart` scripts for potential lock conflicts
 37. Document the debugging methodology (source-first, not symptom-first)

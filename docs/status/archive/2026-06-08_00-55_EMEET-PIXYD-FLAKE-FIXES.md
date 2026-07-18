@@ -12,19 +12,19 @@
 
 ### This Session (4 commits on SystemNix, 2 commits upstream)
 
-| Commit | Repo | What | Impact |
-|--------|------|------|--------|
+| Commit     | Repo      | What                                                           | Impact                                                    |
+| ---------- | --------- | -------------------------------------------------------------- | --------------------------------------------------------- |
 | `5c3d109c` | SystemNix | Restore hierarchical-errors and projects-management-automation | Both packages back in system closure after upstream fixes |
-| `a5d936f3` | SystemNix | Status report for session 120 | 307-line comprehensive status document |
-| `a6400556` | SystemNix | Update flake.lock for emeet-pixyd fixes | `meta.version` now shows real version instead of `<none>` |
+| `a5d936f3` | SystemNix | Status report for session 120                                  | 307-line comprehensive status document                    |
+| `a6400556` | SystemNix | Update flake.lock for emeet-pixyd fixes                        | `meta.version` now shows real version instead of `<none>` |
 
 ### Upstream Fixes Applied (External Repos — Session 120)
 
-| Repo | Commit | What Fixed | Root Cause |
-|------|--------|-----------|------------|
-| **hierarchical-errors** | `97d2bcd` | Fixed `goPkg = goPkg` infinite recursion, updated import to `go-filewatcher/v2`, replaced broken sed with `proxyVendor` + `preBuild go mod tidy` | Sed duplicated `go-gitignore` into BOTH `require (` blocks; `go-filewatcher` module is `/v2` but import was bare |
-| **projects-management-automation** | `b90fcbd7` | Added missing `preset` and `cache` subModules to `project-discovery-sdk`, added `preset` to `requireDeps`, fixed `goPkg = goPkg` recursion | `project-discovery-sdk/preset` was imported but NOT listed in `subModules` — Go tried to fetch private repo via HTTPS |
-| **emeet-pixyd** | `039bbcb` | Fixed duplicate `checks.build`, missing `pkgs.` prefix on `templ`, `prev.callPackage` → `final.callPackage`, added `meta.version` | `nh` showed `<none>` for version; flake had 4 bugs that prevented clean eval/build |
+| Repo                               | Commit     | What Fixed                                                                                                                                       | Root Cause                                                                                                            |
+| ---------------------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| **hierarchical-errors**            | `97d2bcd`  | Fixed `goPkg = goPkg` infinite recursion, updated import to `go-filewatcher/v2`, replaced broken sed with `proxyVendor` + `preBuild go mod tidy` | Sed duplicated `go-gitignore` into BOTH `require (` blocks; `go-filewatcher` module is `/v2` but import was bare      |
+| **projects-management-automation** | `b90fcbd7` | Added missing `preset` and `cache` subModules to `project-discovery-sdk`, added `preset` to `requireDeps`, fixed `goPkg = goPkg` recursion       | `project-discovery-sdk/preset` was imported but NOT listed in `subModules` — Go tried to fetch private repo via HTTPS |
+| **emeet-pixyd**                    | `039bbcb`  | Fixed duplicate `checks.build`, missing `pkgs.` prefix on `templ`, `prev.callPackage` → `final.callPackage`, added `meta.version`                | `nh` showed `<none>` for version; flake had 4 bugs that prevented clean eval/build                                    |
 
 ### emeet-pixyd Bug Fixes Detail
 
@@ -42,34 +42,35 @@ All 4 fixed in upstream commit `039bbcb`.
 
 ### Go Tooling Ecosystem Status (All Green)
 
-| Package | Status | Build Method |
-|---------|--------|-------------|
-| art-dupl | ✅ | Manual overlay (templ vendor surgery) |
-| branching-flow | ✅ | `mkPackageOverlay` with vendorHash override |
-| buildflow | ✅ | Manual overlay (18 indirect requires + sed for `// indirect`) |
-| go-auto-upgrade | ✅ | `mkPackageOverlay` with vendorHash override |
-| go-structure-linter | ✅ | `mkPackageOverlay` with vendorHash override |
-| hierarchical-errors | ✅ **RESTORED** | `mkPackageOverlay` {} (upstream fixed) |
-| projects-management-automation | ✅ **RESTORED** | `mkPackageOverlay` {} (upstream fixed) |
-| project-meta | ✅ | Manual overlay (charmtone version sed) |
-| golangci-lint-auto-configure | ✅ | `mkPackageOverlay` with vendorHash override |
-| library-policy | ✅ | `mkPackageOverlay` with vendorHash override |
-| mr-sync | ✅ | `mkPackageOverlay` with vendorHash override |
-| todo-list-ai | ✅ | `mkPackageOverlay` {} (no overrides) |
+| Package                        | Status          | Build Method                                                  |
+| ------------------------------ | --------------- | ------------------------------------------------------------- |
+| art-dupl                       | ✅              | Manual overlay (templ vendor surgery)                         |
+| branching-flow                 | ✅              | `mkPackageOverlay` with vendorHash override                   |
+| buildflow                      | ✅              | Manual overlay (18 indirect requires + sed for `// indirect`) |
+| go-auto-upgrade                | ✅              | `mkPackageOverlay` with vendorHash override                   |
+| go-structure-linter            | ✅              | `mkPackageOverlay` with vendorHash override                   |
+| hierarchical-errors            | ✅ **RESTORED** | `mkPackageOverlay` {} (upstream fixed)                        |
+| projects-management-automation | ✅ **RESTORED** | `mkPackageOverlay` {} (upstream fixed)                        |
+| project-meta                   | ✅              | Manual overlay (charmtone version sed)                        |
+| golangci-lint-auto-configure   | ✅              | `mkPackageOverlay` with vendorHash override                   |
+| library-policy                 | ✅              | `mkPackageOverlay` with vendorHash override                   |
+| mr-sync                        | ✅              | `mkPackageOverlay` with vendorHash override                   |
+| todo-list-ai                   | ✅              | `mkPackageOverlay` {} (no overrides)                          |
 
 ### Linux-Only Packages
 
-| Package | Status | Notes |
-|---------|--------|-------|
-| dnsblockd | ✅ | `linux.nix` overlay, vendorHash updated |
-| emeet-pixyd | ✅ | `linux.nix` overlay, now shows real version `039bbcb` |
-| monitor365 | ✅ | Monitor overlay |
-| netwatch | ✅ | Custom package |
-| file-and-image-renamer | ✅ | `mkPackageOverlay` {} |
+| Package                | Status | Notes                                                 |
+| ---------------------- | ------ | ----------------------------------------------------- |
+| dnsblockd              | ✅     | `linux.nix` overlay, vendorHash updated               |
+| emeet-pixyd            | ✅     | `linux.nix` overlay, now shows real version `039bbcb` |
+| monitor365             | ✅     | Monitor overlay                                       |
+| netwatch               | ✅     | Custom package                                        |
+| file-and-image-renamer | ✅     | `mkPackageOverlay` {}                                 |
 
 ### System Services (38 modules, 42 enabled)
 
 All NixOS services in `configuration.nix` are enabled and building. Key services:
+
 - Caddy reverse proxy with oauth2-proxy + Pocket ID
 - Forgejo with Actions runner
 - SigNoz observability (traces/metrics/logs)
@@ -97,19 +98,19 @@ All NixOS services in `configuration.nix` are enabled and building. Key services
 
 ## B. Partially Done
 
-| Area | Status | Gap |
-|------|--------|-----|
-| **Darwin parity** | Home Manager has 7 lines | No terminal, editor, theme parity with NixOS (4h estimate) |
-| **Flake inputs audit** | 48 inputs | Not audited for stale/unused entries |
-| **nix-colors integration** | Input exists in flake | Not wired to Home Manager — 17+ hardcoded colors remain |
-| **Photomap** | Module exists, disabled | CLIP embedding visualization, not deployed |
-| **Minecraft** | Module exists, disabled | Not deployed |
-| **DNS failover (rpi3)** | Module + config exist | Hardware not provisioned |
-| **BTRFS /data subvolume** | `data` is toplevel (subvolid=5) | Cannot be snapshotted; `just snapshot-migrate-data` exists but not run |
-| **Hermes secondary LLM** | Not configured | GLM-5.1 is sole provider; no fallback |
-| **SigNoz alert routing** | Single Discord channel | No per-threshold routing (critical vs warning) |
-| **buildflowOverlay** | Still needed | 18 `go mod edit -require` + 18 `sed` lines — extremely brittle |
-| **projectMetaOverlay** | Still needed | charmbracelet version mismatch sed |
+| Area                       | Status                          | Gap                                                                    |
+| -------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| **Darwin parity**          | Home Manager has 7 lines        | No terminal, editor, theme parity with NixOS (4h estimate)             |
+| **Flake inputs audit**     | 48 inputs                       | Not audited for stale/unused entries                                   |
+| **nix-colors integration** | Input exists in flake           | Not wired to Home Manager — 17+ hardcoded colors remain                |
+| **Photomap**               | Module exists, disabled         | CLIP embedding visualization, not deployed                             |
+| **Minecraft**              | Module exists, disabled         | Not deployed                                                           |
+| **DNS failover (rpi3)**    | Module + config exist           | Hardware not provisioned                                               |
+| **BTRFS /data subvolume**  | `data` is toplevel (subvolid=5) | Cannot be snapshotted; `just snapshot-migrate-data` exists but not run |
+| **Hermes secondary LLM**   | Not configured                  | GLM-5.1 is sole provider; no fallback                                  |
+| **SigNoz alert routing**   | Single Discord channel          | No per-threshold routing (critical vs warning)                         |
+| **buildflowOverlay**       | Still needed                    | 18 `go mod edit -require` + 18 `sed` lines — extremely brittle         |
+| **projectMetaOverlay**     | Still needed                    | charmbracelet version mismatch sed                                     |
 
 ---
 
@@ -149,12 +150,14 @@ All NixOS services in `configuration.nix` are enabled and building. Key services
 **Severity:** MEDIUM-HIGH (recurring)
 
 Every flake.lock update that bumps Go dependency inputs breaks ALL downstream Go packages. The pattern:
+
 1. Upstream dep repo changes (new commit)
 2. Consumer's `vendorHash` becomes stale
 3. Build fails with "hash mismatch"
 4. OR: "inconsistent vendoring" due to `mkPreparedSource` stripping local `replace` directives
 
 **Mitigation in place:**
+
 - All packages now have explicit `vendorHash` overrides in `overlays/shared.nix` or `overlays/linux.nix`
 - `buildflow` and `project-meta` use manual overlays with `preBuild` patches
 - `proxyVendor = true` used where `go mod vendor` fails due to replace directives
@@ -182,6 +185,7 @@ Found and fixed in 3 repos: hierarchical-errors, projects-management-automation,
 **Severity:** MEDIUM (discovered in emeet-pixyd)
 
 The emeet-pixyd flake had 4 bugs that were only discovered when trying to update the lock file:
+
 - Duplicate `checks.build`
 - Missing `pkgs.` prefix
 - Wrong overlay scope (`prev` vs `final`)

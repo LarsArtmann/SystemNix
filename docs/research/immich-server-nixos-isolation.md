@@ -17,35 +17,35 @@ Immich is a self-hosted Google Photos alternative with native NixOS module suppo
 
 ### Dependencies (auto-managed by NixOS module)
 
-| Component | Purpose | Notes |
-|-----------|---------|-------|
-| PostgreSQL + pgvector + vectorchord | Metadata + vector search | Auto-configured, uses Unix socket auth |
-| Redis | Caching/queues | Auto-configured, Unix socket (port 0) |
-| Machine Learning | Face detection, CLIP search, Smart Search | CPU-only on NixOS (see below) |
+| Component                           | Purpose                                   | Notes                                  |
+| ----------------------------------- | ----------------------------------------- | -------------------------------------- |
+| PostgreSQL + pgvector + vectorchord | Metadata + vector search                  | Auto-configured, uses Unix socket auth |
+| Redis                               | Caching/queues                            | Auto-configured, Unix socket (port 0)  |
+| Machine Learning                    | Face detection, CLIP search, Smart Search | CPU-only on NixOS (see below)          |
 
 ### Hardware Requirements
 
-| Component | Minimum | Recommended |
-|-----------|---------|-------------|
-| RAM | 6 GB | 8 GB+ |
-| CPU | 2 cores | 4 cores |
-| Storage | Library size + 20% | SSD for DB |
+| Component | Minimum            | Recommended |
+| --------- | ------------------ | ----------- |
+| RAM       | 6 GB               | 8 GB+       |
+| CPU       | 2 cores            | 4 cores     |
+| Storage   | Library size + 20% | SSD for DB  |
 
 ---
 
 ## 2. Isolation Approaches Compared
 
-| Factor | Direct Service | nspawn | Incus | MicroVM |
-|--------|---------------|--------|-------|---------|
-| Setup effort | Minimal | Low | Medium | High |
-| Isolation strength | Weak | Medium | Strong | Strongest |
-| GPU passthrough | Module handles it | Manual | Clean | Complex |
-| BTRFS snapshots | Host-level | Host-level | Native driver | N/A |
-| Network isolation | None | Private network | Bridge/NAT | Full |
-| Resource limits | systemd | Partial | cgroups v2 | Full |
-| Web management | No | No | Yes | No |
-| Multi-service future | No | Yes | Yes | Yes |
-| Fully declarative | Yes | Yes | Partial | Yes |
+| Factor               | Direct Service    | nspawn          | Incus         | MicroVM   |
+| -------------------- | ----------------- | --------------- | ------------- | --------- |
+| Setup effort         | Minimal           | Low             | Medium        | High      |
+| Isolation strength   | Weak              | Medium          | Strong        | Strongest |
+| GPU passthrough      | Module handles it | Manual          | Clean         | Complex   |
+| BTRFS snapshots      | Host-level        | Host-level      | Native driver | N/A       |
+| Network isolation    | None              | Private network | Bridge/NAT    | Full      |
+| Resource limits      | systemd           | Partial         | cgroups v2    | Full      |
+| Web management       | No                | No              | Yes           | No        |
+| Multi-service future | No                | Yes             | Yes           | Yes       |
+| Fully declarative    | Yes               | Yes             | Partial       | Yes       |
 
 ---
 
@@ -53,11 +53,11 @@ Immich is a self-hosted Google Photos alternative with native NixOS module suppo
 
 ### Module Hardening (built into NixOS module)
 
-| `accelerationDevices` | `PrivateDevices` | Effective Access |
-|-----------------------|------------------|------------------|
-| `[]` (default) | `true` | No devices |
-| `null` | `false` | All devices |
-| `["/dev/dri/..."]` | `false` | All devices (DeviceAllow is no-op without PrivateDevices) |
+| `accelerationDevices` | `PrivateDevices` | Effective Access                                          |
+| --------------------- | ---------------- | --------------------------------------------------------- |
+| `[]` (default)        | `true`           | No devices                                                |
+| `null`                | `false`          | All devices                                               |
+| `["/dev/dri/..."]`    | `false`          | All devices (DeviceAllow is no-op without PrivateDevices) |
 
 ### GPU Acceleration — Likely CPU-Only
 
@@ -80,6 +80,7 @@ Ollama (`ai-stack.nix`, port 11434) shares the same AMD GPU. Since Immich ML run
 ### DNS Blocker Whitelist
 
 Added to `dns-blocker-config.nix`:
+
 - `api.immich.app`, `immich.app` — version checks
 - `github.com`, `github-releases.githubusercontent.com`, `objects.githubusercontent.com` — ML model downloads
 - `nominatim.openstreetmap.org`, `tile.openstreetmap.org` — reverse geocoding, map tiles
@@ -87,6 +88,7 @@ Added to `dns-blocker-config.nix`:
 ### Storage Layout (BTRFS)
 
 Consider a dedicated subvolume for Immich data:
+
 - `@immich` — media, thumbnails, transcoded video
 - Keeps Timeshift snapshots from bloating with media data
 - BTRFS compression (`zstd`) helps with thumbnails
@@ -96,6 +98,7 @@ Consider a dedicated subvolume for Immich data:
 ### Backup Strategy
 
 Daily `pg_dump` timer configured. Photos are irreplaceable — add off-site backup:
+
 1. DB consistency: `pg_dump` before backup (configured)
 2. Local backup: Borg/Restic to external drive or NAS
 3. Off-site backup: Borg to remote storage (e.g., rsync.net, S3)
@@ -103,6 +106,7 @@ Daily `pg_dump` timer configured. Photos are irreplaceable — add off-site back
 ### Reverse Proxy / Remote Access (Future)
 
 Mobile app requires a reachable HTTPS URL. Options:
+
 - Tailscale Serve/Funnel — cleanest for LAN-only
 - Caddy + Let's Encrypt — if exposing publicly
 

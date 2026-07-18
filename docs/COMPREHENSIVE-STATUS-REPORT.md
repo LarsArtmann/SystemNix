@@ -216,20 +216,22 @@ Workspace 5: Communication (signal, discord, Element, Telegram)
 ### Ollama gpt-oss:20b Benchmark Results
 
 **Test 1: 256 prompt + 256 generation (5 runs)**
-| Metric | Average |
-|--------|----------|
-| Time | 11.01s |
-| Prompt Speed | 8,444 t/s |
-| Generation Speed | 23.8 t/s |
-| **Rating** | **7.6/10 GOOD+** |
+
+| Metric           | Average          |
+| ---------------- | ---------------- |
+| Time             | 11.01s           |
+| Prompt Speed     | 8,444 t/s        |
+| Generation Speed | 23.8 t/s         |
+| **Rating**       | **7.6/10 GOOD+** |
 
 **Test 2: 512 prompt + 128 generation (3 runs)**
-| Metric | Average |
-|--------|----------|
-| Time | 5.56s |
-| Prompt Speed | 14,976 t/s |
-| Generation Speed | 23.9 t/s |
-| **Rating** | **7.6/10 GOOD+** |
+
+| Metric           | Average          |
+| ---------------- | ---------------- |
+| Time             | 5.56s            |
+| Prompt Speed     | 14,976 t/s       |
+| Generation Speed | 23.9 t/s         |
+| **Rating**       | **7.6/10 GOOD+** |
 
 **Performance Assessment:**
 

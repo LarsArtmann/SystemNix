@@ -8,7 +8,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 
 ## a) FULLY DONE
 
-1. **Root cause identified:** dnsblockd flake input was `refs/tags/v0.2.0` (commit `ad14663`). The embedded sdns recursive resolver was added in commits *after* v0.2.0 tag — it only exists on master. The Nix module (`076dc778` "migrate from unbound to dnsblockd") was written for a feature that doesn't exist in the pinned binary.
+1. **Root cause identified:** dnsblockd flake input was `refs/tags/v0.2.0` (commit `ad14663`). The embedded sdns recursive resolver was added in commits _after_ v0.2.0 tag — it only exists on master. The Nix module (`076dc778` "migrate from unbound to dnsblockd") was written for a feature that doesn't exist in the pinned binary.
 
 2. **Flake input fixed:** Changed `flake.nix` line 137 from `refs/tags/v0.2.0` → `refs/heads/master`. This was the **only** LarsArtmann repo still pinned to a tag — all others already track master.
 
@@ -77,6 +77,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (blocks deploy)
+
 1. Commit the flake input fix (`refs/tags/v0.2.0` → `refs/heads/master`) + lock update
 2. Deploy gen 517 with `nix run .#deploy`
 3. Verify dnsblockd logs show "DNS server initialized (embedded recursive resolver)" after deploy
@@ -88,6 +89,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 9. Check Gatus dashboard for DNS-related health checks passing
 
 ### Short-term (hardening)
+
 10. Add DNS smoke test to `post-deploy-check` script: `getent hosts google.com && getent hosts auth.home.lan`
 11. Update AGENTS.md gotchas table with dnsblockd tag pin lesson
 12. Add `dnsblockd` to AGENTS.md GOPRIVATE/overlay section noting it must track master
@@ -98,6 +100,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 17. Check if the `dns_local_records` wildcard `"*.home.lan."` is handled correctly by sdns (different from Unbound's local-zone)
 
 ### Medium-term (prevention)
+
 18. Add a NixOS test that boots with dnsblockd enabled and verifies :53 responds to queries
 19. Add upstream validation to dnsblockd: if `dns_enabled: true` but the binary doesn't have sdns compiled in, fail with a clear error (not silent ignore)
 20. Add `nix flake check` that asserts no LarsArtmann private repos are pinned to tags
@@ -108,11 +111,13 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 25. Verify DNSSEC validation works end-to-end (dig +dnssec for a signed domain)
 
 ### Cluster / rpi3
+
 26. Verify rpi3-dns dnsblockd input also tracks master (not tags)
 27. Test VRRP failover between evo-x2 and rpi3-dns with dnsblockd embedded resolver
 28. Update rpi3-dns config if it has different dnsblockd config requirements
 
 ### Monitoring
+
 29. Add Gatus check for dnsblockd stats API (`127.0.0.1:9090`) health
 30. Add Prometheus alert for dnsblockd DNS query rate dropping to zero
 31. Verify sdns cache metrics (`dns_cache_hits`, `dns_cache_misses`) are scraped
@@ -120,6 +125,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 33. Add Gatus DNS check: query `auth.home.lan` via `dig @127.0.0.1` and assert response
 
 ### Documentation
+
 34. Update AGENTS.md with dnsblockd embedded resolver architecture notes
 35. Document the sdns config keys that dnsblockd supports (reference upstream dnsblockd docs)
 36. Update `platforms/common/dns-resolver.nix` comments to reflect embedded resolver
@@ -127,6 +133,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 38. Update TODO_LIST.md with completed/pending DNS migration items
 
 ### Cleanup
+
 39. Remove the old `unbound.conf` references from any remaining test files
 40. Clean up the `tests/default.nix` that had unbound-specific test cases removed in `076dc778`
 41. Verify no orphaned sops secrets for unbound remain
@@ -136,6 +143,7 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 45. Review whether `hermes-agent` tag pin (`v2026.6.5`) is appropriate (upstream versioned release vs internal tool)
 
 ### Operational
+
 46. Document the recovery procedure: `nixos-rebuild switch --flake .#evo-x2 --sudo --rollback` for gen rollback
 47. Add a note about `switch-to-configuration test` exit code 4 → run `systemctl reset-failed` (already in AGENTS.md but reinforce)
 48. Consider adding a DNS failover to a public resolver (e.g. 9.9.9.9) as a secondary in `/etc/resolv.conf` for resilience
@@ -149,11 +157,13 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 ### Q1: Should we deploy right now (gen 517), or investigate further first?
 
 The fix is minimal (1-line input URL change + lock update), the package builds, and `nix flake check --no-build` passes. But the original migration commit `076dc778` shipped without testing, and we're now trusting that master HEAD `4fa21f8` has a working embedded resolver based on source code inspection (`internal/dns/` package exists) and binary `strings` output (sdns symbols present). **We have NOT actually tested that the resolver binds :53 and answers queries.** Should we:
+
 - (a) Deploy and verify via logs + `getent`, rolling back if it fails, OR
 - (b) Build a local test first (run dnsblockd with the generated config in a tmpdir and query it)?
 
 ### Q2: The `nix flake update` pulled unrelated changes (buildflow `abf5cdf`, cmdguard `1e1deed`, homebrew-cask, nur) into flake.lock alongside the dnsblockd fix. Should we isolate?
 
 The user ran `nix flake update -v` as part of their retry, which updated ALL inputs. The lock file now contains changes from multiple concerns mixed together. Options:
+
 - (a) Commit as-is (the unrelated updates are benign — buildflow/cmdguard are master HEAD updates that already built successfully on gen 516's second attempt)
 - (b) Try to isolate only the dnsblockd change (would require manually reverting the other lock entries — messy and low-value)

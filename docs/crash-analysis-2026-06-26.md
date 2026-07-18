@@ -10,7 +10,7 @@
 
 ## TL;DR
 
-The nightly `nix-gc` timer (configured: `nix.gc.automatic = true; dates = "daily"`) fired at 00:00 and began mass-deleting thousands of store paths starting at 00:01:03. Each deletion is a BTRFS metadata transaction. The filesystem's device was **100% allocated** (1 MiB unallocated), and metadata was at **91.31%** utilization. Approximately 60 seconds into the deletion storm, BTRFS could no longer allocate metadata for the transactions themselves. I/O threads parked in D-state. The kernel never reached its own panic handler (no pstore dump). ~30 seconds later, the **sp5100-tco hardware watchdog** (armed by `watchdogd` with `timeout=30`, confirmed in `boot.nix`) fired a raw hardware reset. On reboot, NixOS activation hung because activation is itself a metadata storm (symlink tree rebuild), and the filesystem was still in the same deadlocked state. Rolling back generations didn't help because the problem was the *filesystem*, not the generation.
+The nightly `nix-gc` timer (configured: `nix.gc.automatic = true; dates = "daily"`) fired at 00:00 and began mass-deleting thousands of store paths starting at 00:01:03. Each deletion is a BTRFS metadata transaction. The filesystem's device was **100% allocated** (1 MiB unallocated), and metadata was at **91.31%** utilization. Approximately 60 seconds into the deletion storm, BTRFS could no longer allocate metadata for the transactions themselves. I/O threads parked in D-state. The kernel never reached its own panic handler (no pstore dump). ~30 seconds later, the **sp5100-tco hardware watchdog** (armed by `watchdogd` with `timeout=30`, confirmed in `boot.nix`) fired a raw hardware reset. On reboot, NixOS activation hung because activation is itself a metadata storm (symlink tree rebuild), and the filesystem was still in the same deadlocked state. Rolling back generations didn't help because the problem was the _filesystem_, not the generation.
 
 This is the **second time** this exact failure mode occurred (first: 2026-06-15, see `docs/crash-analysis-2026-06-15.md`). On 06-15 it was triggered manually (`btrfs balance` + `nix-collect-garbage` concurrently). On 06-26 it was **fully automated** — the nightly GC timer alone was sufficient. The recurrence is structural: the `nix.gc` timer has no awareness of BTRFS chunk allocation state, and `df`/node_exporter cannot see it.
 
@@ -34,11 +34,12 @@ Device unallocated:    1.00 MiB                ← effectively ZERO raw space
 ```
 
 **What this means:**
-- `df` and node_exporter report **22 GiB free** (the `statfs` number). This is free space *inside existing Data chunks*.
+
+- `df` and node_exporter report **22 GiB free** (the `statfs` number). This is free space _inside existing Data chunks_.
 - That 22 GiB is **useless for metadata operations**. It cannot be repurposed.
 - To get more metadata capacity, BTRFS must allocate a **brand-new Metadata chunk** from **device-unallocated** space.
 - Device-unallocated was **1 MiB**. No new metadata chunk could be created.
-- BTRFS can reclaim space *out of* Data chunks back to device-unallocated, but only by **completely emptying a Data chunk** first. At 95% per-chunk utilization, none were empty. This creates a **circular deadlock**: need metadata space → need to free a data chunk → need metadata transactions to free it → need metadata space.
+- BTRFS can reclaim space _out of_ Data chunks back to device-unallocated, but only by **completely emptying a Data chunk** first. At 95% per-chunk utilization, none were empty. This creates a **circular deadlock**: need metadata space → need to free a data chunk → need metadata transactions to free it → need metadata space.
 
 **The metadata ratchet — why we marched toward the cliff over 8 days:**
 
@@ -47,6 +48,7 @@ Device unallocated:    1.00 MiB                ← effectively ZERO raw space
 ### Layer 2: The Crash Trigger — Nightly nix-gc Timer
 
 **Config** (`platforms/common/nix-settings.nix`):
+
 ```nix
 nix.gc = {
   automatic = true;
@@ -57,6 +59,7 @@ nix.gc = {
 ```
 
 Also relevant (`nix.settings` in same file):
+
 ```nix
 min-free = 5000000000;   # 5 GB — trigger GC when df reports < 5 GB free
 max-free = 100000000000; # 100 GB — stop GC when 100 GB free
@@ -66,15 +69,15 @@ The `min-free`/`max-free` thresholds use the `df` statfs number (22 GiB), which 
 
 **Timeline of the crash window:**
 
-| Time (CEST) | Event |
-|-------------|-------|
-| 00:00:00 | `nix.gc` daily timer fires |
-| 00:01:03 | GC begins mass-deleting store paths (first journal entry: `nix-gc-start[3401362]: deleting ...`) |
-| 00:01:03–00:01:28 | Thousands of store path deletions, each a metadata transaction (visible in journal) |
-| ~00:01:28 | Deletion journal entries slow/stop — metadata ENOSPC likely begins here |
-| 00:02:00 | **Last journal entry ever** — Twenty CRM cron job (`1acabbf3006c[3699790]: BullMQDriver Processing job`) |
-| 00:02:00+ | System frozen. Journald cannot write (metadata ENOSPC). No shutdown sequence, no OOM message, no kernel panic, no stack trace. |
-| ~00:02:30 | **sp5100-tco hardware watchdog fires** (watchdogd `timeout=30` — last pet ~00:02:00) — raw hardware reset |
+| Time (CEST)       | Event                                                                                                                          |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 00:00:00          | `nix.gc` daily timer fires                                                                                                     |
+| 00:01:03          | GC begins mass-deleting store paths (first journal entry: `nix-gc-start[3401362]: deleting ...`)                               |
+| 00:01:03–00:01:28 | Thousands of store path deletions, each a metadata transaction (visible in journal)                                            |
+| ~00:01:28         | Deletion journal entries slow/stop — metadata ENOSPC likely begins here                                                        |
+| 00:02:00          | **Last journal entry ever** — Twenty CRM cron job (`1acabbf3006c[3699790]: BullMQDriver Processing job`)                       |
+| 00:02:00+         | System frozen. Journald cannot write (metadata ENOSPC). No shutdown sequence, no OOM message, no kernel panic, no stack trace. |
+| ~00:02:30         | **sp5100-tco hardware watchdog fires** (watchdogd `timeout=30` — last pet ~00:02:00) — raw hardware reset                      |
 
 **Why the journal stops mid-stream:** BTRFS couldn't commit the metadata transaction for journald's write. Every write blocked in D-state. Journald's entries were in its memory buffer but could never reach disk. The last flushed entry (00:02:00) was the final one before the I/O path fully wedged.
 
@@ -83,19 +86,23 @@ The `min-free`/`max-free` thresholds use the `df` statfs number (22 GiB), which 
 **Evidence that this was a hardware reset, not a software panic:**
 
 1. **pstore is empty.** Config in `platforms/nixos/system/boot.nix`:
+
    ```
    "pstore.backend=efi"
    "pstore.record_console=true"
    "pstore.max_reason=3"   # PANIC(1), OOPS(2), EMERG(3)
    ```
+
    `max_reason=3` is a **severity threshold** (not a count limit). It means: "record a dump for any event with reason code ≤ 3." The kernel is explicitly configured to panic on soft lockups (`softlockup_panic=1`) and hung tasks (`hung_task_panic=1`). If either had fired, `KMSG_DUMP_PANIC(1)` ≤ 3 → pstore would have captured the console log + stack trace. **It captured nothing.** `/sys/fs/pstore/` is empty.
 
 2. **Confirmed watchdog hardware** (dmesg):
+
    ```
    sp5100_tco: SP5100/SB800 TCO WatchDog Timer Driver
    sp5100-tco sp5100-tco: Using 0xfeb00000 for watchdog MMIO address
    sp5100-tco sp5100-tco: initialized. heartbeat=60 sec (nowayout=0)
    ```
+
    `/sys/class/watchdog/watchdog0/identity` = `SP5100 TCO timer`, `timeout` = `60`.
 
 3. **The ~30-second gap** between the last journal entry (~00:02:00) and the reset (~00:02:30) aligns precisely with `watchdogd`'s `timeout = 30` (from `boot.nix`). The kernel dmesg shows `heartbeat=60 sec` — that's the sp5100-tco driver's initial default, but `watchdogd` overrides it to 30s when it opens `/dev/watchdog0`. When the system froze, watchdogd couldn't get scheduled to pet the WDT → 30s of silence → sp5100-tco pulls the plug. The WDT doesn't ask the kernel, doesn't trigger a panic handler, doesn't write to pstore — it just cuts power.
@@ -107,6 +114,7 @@ The `min-free`/`max-free` thresholds use the `df` statfs number (22 GiB), which 
 After the WDT reset, the system could not boot normally. It hung at "Starting NixOS Activation."
 
 **Why:** NixOS activation (`switch-to-configuration`) is a **metadata-intensive operation**:
+
 - Rebuilds the entire `/run/current-system` symlink tree (hundreds of symlinks)
 - Recreates `/etc` symlinks
 - Touches `/var/lib/...` state directories
@@ -114,24 +122,25 @@ After the WDT reset, the system could not boot normally. It hung at "Starting Ni
 
 The filesystem was in the **exact same deadlocked state** after the WDT reset — device still 100% allocated, metadata still at 91%, no unallocated space for new metadata chunks. Activation's metadata storm hit the same wall GC did.
 
-**Why rollback to gen 433 didn't help:** Rolling back changes the *generation* (which system closure to activate), but the *filesystem* is the same. The activation script for gen 433 is equally metadata-intensive. The problem was never the generation — it was the BTRFS chunk allocation deadlock. No generation rollback can fix a filesystem-level ENOSPC.
+**Why rollback to gen 433 didn't help:** Rolling back changes the _generation_ (which system closure to activate), but the _filesystem_ is the same. The activation script for gen 433 is equally metadata-intensive. The problem was never the generation — it was the BTRFS chunk allocation deadlock. No generation rollback can fix a filesystem-level ENOSPC.
 
 **Why TTY/rescue mode didn't work either:** `systemd.unit=emergency.target`, `rd.systemd.unit=rescue.target`, `init=/bin/sh` — all fail because:
+
 - Activation runs during early boot, before any target is reached
 - The `sulogin` "root account locked" intercept is a known NixOS behavior for passwordless root
 - Even if a shell was reached, BTRFS metadata ENOSPC would block any operation that writes metadata
 
 ### Layer 5: Recovery Obstacles
 
-| Attempt | Result | Why |
-|---------|--------|-----|
-| Ctrl+Alt+F2/F3/F4 (TTY switch) | No TTY | systemd never reached `getty.target` — stuck at activation |
-| `systemd.unit=emergency.target` | Hung at activation | Activation runs before targets |
-| `init=/bin/sh` | "root account locked" | NixOS `sulogin` intercept for passwordless root |
-| `init=/run/current-system/sw/bin/bash` | Same lock | Same intercept |
-| `rd.systemd.unit=rescue.target + loglevel=7` | BTRFS debug info, still locked | Showed BTRFS messages but didn't bypass sulogin |
-| USB installer (first boot) | Wouldn't boot | Needed `nomodeset` for Strix Halo GPU |
-| USB installer (with `nomodeset`) | Booted | NixOS 24.11 installer, used to mount and repair |
+| Attempt                                      | Result                         | Why                                                        |
+| -------------------------------------------- | ------------------------------ | ---------------------------------------------------------- |
+| Ctrl+Alt+F2/F3/F4 (TTY switch)               | No TTY                         | systemd never reached `getty.target` — stuck at activation |
+| `systemd.unit=emergency.target`              | Hung at activation             | Activation runs before targets                             |
+| `init=/bin/sh`                               | "root account locked"          | NixOS `sulogin` intercept for passwordless root            |
+| `init=/run/current-system/sw/bin/bash`       | Same lock                      | Same intercept                                             |
+| `rd.systemd.unit=rescue.target + loglevel=7` | BTRFS debug info, still locked | Showed BTRFS messages but didn't bypass sulogin            |
+| USB installer (first boot)                   | Wouldn't boot                  | Needed `nomodeset` for Strix Halo GPU                      |
+| USB installer (with `nomodeset`)             | Booted                         | NixOS 24.11 installer, used to mount and repair            |
 
 ---
 
@@ -169,6 +178,7 @@ The user had previously moved partitions p7/p8/p9 on the 2 TB NVMe, creating 203
 **Three-step grow (each layer must see the change before the next can act):**
 
 **4a. Grow the partition in the GPT (sfdisk):**
+
 ```bash
 # Backup current table
 sfdisk -d /dev/nvme0n1 > /tmp/nvme-parts.bak
@@ -183,6 +193,7 @@ sfdisk --no-reread /dev/nvme0n1 < /tmp/nvme-parts.new
 ```
 
 **4b. Push new size to the running kernel (partx):**
+
 ```bash
 # sfdisk re-read failed (EBUSY) because p6 is mounted.
 # partx uses BLKPG_RESIZE_PARTITION which works on mounted partitions.
@@ -191,6 +202,7 @@ partx -u --nr 6:6 /dev/nvme0n1
 ```
 
 **4c. Grow the BTRFS filesystem:**
+
 ```bash
 btrfs filesystem resize max /
 # → BTRFS absorbs the new raw space
@@ -214,15 +226,15 @@ The deadlock is dissolved: BTRFS can now allocate fresh Metadata chunks on deman
 
 ## Comparison with 2026-06-15 Crash
 
-| Aspect | 2026-06-15 | 2026-06-26 |
-|--------|-----------|-----------|
-| **Trigger** | Manual: `btrfs balance` + `nix-collect-garbage` concurrently | **Automated**: nightly `nix-gc` timer alone |
-| **Data fullness** | 97.57% | 95.03% |
-| **Metadata fullness** | 78.00% | 91.31% |
-| **Device allocated** | 94.5% | **100%** |
-| **Device unallocated** | ~28 GiB (low but nonzero) | **1 MiB** (effectively zero) |
-| **Nature of trigger** | Human error (concurrent reclaim) | Structural (GC on metadata-starved FS) |
-| **Could repeat?** | No (manual action) | **YES — nightly timer will fire again under same conditions** |
+| Aspect                 | 2026-06-15                                                   | 2026-06-26                                                    |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------- |
+| **Trigger**            | Manual: `btrfs balance` + `nix-collect-garbage` concurrently | **Automated**: nightly `nix-gc` timer alone                   |
+| **Data fullness**      | 97.57%                                                       | 95.03%                                                        |
+| **Metadata fullness**  | 78.00%                                                       | 91.31%                                                        |
+| **Device allocated**   | 94.5%                                                        | **100%**                                                      |
+| **Device unallocated** | ~28 GiB (low but nonzero)                                    | **1 MiB** (effectively zero)                                  |
+| **Nature of trigger**  | Human error (concurrent reclaim)                             | Structural (GC on metadata-starved FS)                        |
+| **Could repeat?**      | No (manual action)                                           | **YES — nightly timer will fire again under same conditions** |
 
 The 06-26 crash is more dangerous because it was **automated and structural**. It will recur if device-unallocated drops near zero again. The 06-15 crash required human intervention to trigger; this one needs none.
 
@@ -232,7 +244,7 @@ The 06-26 crash is more dangerous because it was **automated and structural**. I
 
 ### P0 — Critical: Prevent Automated Reclamation from Crashing the System
 
-**The core insight:** the crash trigger (GC timer) and the crash condition (metadata ENOSPC) are the same operation class. GC trying to reclaim space on a device too full to reclaim *is the bug*. Making the timer aware of BTRFS state prevents recurrence regardless of monitoring.
+**The core insight:** the crash trigger (GC timer) and the crash condition (metadata ENOSPC) are the same operation class. GC trying to reclaim space on a device too full to reclaim _is the bug_. Making the timer aware of BTRFS state prevents recurrence regardless of monitoring.
 
 **Action: Gate `nix.gc` and `nix-build-cleanup` on device-unallocated space.**
 
@@ -270,7 +282,8 @@ Wire this into `nix.gc.options` or as a pre-exec wrapper on the `nix-gc.service`
 
 ### P1 — High: BTRFS Metrics Collector for node_exporter
 
-**The blind spot:** `df` / node_exporter's `filesystem` collector reports the BTRFS `statfs` free number (22 GiB). This is free space *inside Data chunks*. It cannot see:
+**The blind spot:** `df` / node_exporter's `filesystem` collector reports the BTRFS `statfs` free number (22 GiB). This is free space _inside Data chunks_. It cannot see:
+
 - Device-unallocated (the metric that hit 1 MiB and killed the system)
 - Metadata utilization (the metric that hit 91%)
 - Chunk allocation state (the metric that hit 100%)
@@ -290,19 +303,20 @@ btrfs_device_allocated_pct 72                  # was 100%
 
 **Alert thresholds (configure in Gatus, which is already running):**
 
-| Metric | Warning | Critical |
-|--------|---------|----------|
-| `btrfs_device_unallocated_pct` | < 15% | < 10% |
-| `btrfs_metadata_utilization_pct` | > 85% | > 90% |
-| `btrfs_device_allocated_pct` | > 90% | > 95% |
+| Metric                           | Warning | Critical |
+| -------------------------------- | ------- | -------- |
+| `btrfs_device_unallocated_pct`   | < 15%   | < 10%    |
+| `btrfs_metadata_utilization_pct` | > 85%   | > 90%    |
+| `btrfs_device_allocated_pct`     | > 90%   | > 95%    |
 
 ### P2 — Medium: Snapshot Retention Policy
 
 8 daily snapshots (`@.20260619T0000`–`@.20260626T0000`) were pinning extents via CoW, preventing GC from freeing data while still requiring metadata writes for refcount changes. This is the ratchet that walked metadata toward 91%.
 
 **Action:**
+
 - Review `btrbk` or snapshot configuration — confirm retention is bounded (e.g., keep 3 daily snapshots, not open-ended)
-- Consider deleting snapshots *before* GC runs (snapshot deletion frees extents that GC can then reclaim, making GC more effective)
+- Consider deleting snapshots _before_ GC runs (snapshot deletion frees extents that GC can then reclaim, making GC more effective)
 - Sequence: delete old snapshots → GC → done. Never run snapshot operations concurrently with GC.
 
 ### P3 — Medium: Hardware Watchdog Awareness
@@ -316,6 +330,7 @@ See Appendix D for the full analysis of why the WDT timeout (30s) races against 
 ### P4 — Low: Document the Recovery Procedure
 
 **Action: Add a `docs/troubleshooting/btrfs-metadata-enospc-recovery.md`** with:
+
 1. How to identify the condition (`btrfs filesystem usage /` — look for Device unallocated ≈ 0)
 2. Why `df` is misleading (statfs reports Data-pool free space, not chunk-level)
 3. The partition-grow procedure (sfdisk → partx → btrfs resize)
@@ -332,6 +347,7 @@ The `docs/crash-analysis-2026-06-15.md` recommended `docker system prune -a --vo
 ## Evidence Sources
 
 ### Journal Analysis
+
 ```
 journalctl --list-boots
 # Boot 0 (crashed): 1cc421c712724ed5b23fa899ba55d577
@@ -345,6 +361,7 @@ journalctl --since "2026-06-26 00:01:00" --until "2026-06-26 00:02:30"
 ```
 
 ### BTRFS State (Pre-Fix)
+
 ```
 btrfs filesystem usage /
 Device allocated:   519.50 GiB / 519.50 GiB    ← 100% allocated
@@ -355,6 +372,7 @@ btrfs device stats: all zero (no hardware errors)
 ```
 
 ### Hardware Watchdog (Confirmed)
+
 ```
 dmesg | grep sp5100
 # sp5100_tco: SP5100/SB800 TCO WatchDog Timer Driver
@@ -366,6 +384,7 @@ dmesg | grep sp5100
 ```
 
 ### pstore (Empty — confirms WDT, not panic)
+
 ```
 /sys/fs/pstore/ — empty (no dump)
 /var/lib/systemd/pstore/ — only stale May 6 directory
@@ -375,6 +394,7 @@ dmesg | grep sp5100
 ```
 
 ### Partition Table (Post-Fix)
+
 ```
 sfdisk -d /dev/nvme0n1
 /dev/nvme0n1p6 : start=8390656, size=1515227136  (722.5 GiB — was 519.5 GiB)
@@ -384,6 +404,7 @@ sfdisk -d /dev/nvme0n1
 ```
 
 ### Config References
+
 - GC timer: `platforms/common/nix-settings.nix` — `nix.gc.automatic = true; dates = "daily"`
 - min-free threshold: same file — `min-free = 5000000000` (uses `df` statfs, blind to chunk state)
 - Build cleanup: `platforms/nixos/system/scheduled-tasks.nix:420` — every 4h
@@ -394,19 +415,19 @@ sfdisk -d /dev/nvme0n1
 
 ## Glossary
 
-| Term | Meaning |
-|------|---------|
-| **Chunk (block group)** | A fixed-size region of the physical partition assigned to a specific type (Data/Metadata/System). ~1 GiB for data, ~256 MiB-1 GiB for metadata. |
-| **Device allocated** | Total physical space already carved into chunks. Once 100%, BTRFS cannot create new chunks without freeing empty ones. |
-| **Device unallocated** | Raw physical space not yet assigned to any chunk. This is the only source for new Metadata chunks. When ≈ 0, BTRFS enters metadata ENOSPC deadlock. |
-| **Metadata ENOSPC** | "No space left on device" at the metadata level, despite `df` showing free space. Caused by device-unallocated exhaustion. The most dangerous BTRFS failure mode because it blocks ALL write operations. |
-| **statfs free** | The number `df` reports. For BTRFS, this is estimated usable free space inside existing Data chunks. Does NOT reflect metadata headroom or device-unallocated. |
+| Term                     | Meaning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chunk (block group)**  | A fixed-size region of the physical partition assigned to a specific type (Data/Metadata/System). ~1 GiB for data, ~256 MiB-1 GiB for metadata.                                                                                                                                                                                                                                                                                                                                                          |
+| **Device allocated**     | Total physical space already carved into chunks. Once 100%, BTRFS cannot create new chunks without freeing empty ones.                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Device unallocated**   | Raw physical space not yet assigned to any chunk. This is the only source for new Metadata chunks. When ≈ 0, BTRFS enters metadata ENOSPC deadlock.                                                                                                                                                                                                                                                                                                                                                      |
+| **Metadata ENOSPC**      | "No space left on device" at the metadata level, despite `df` showing free space. Caused by device-unallocated exhaustion. The most dangerous BTRFS failure mode because it blocks ALL write operations.                                                                                                                                                                                                                                                                                                 |
+| **statfs free**          | The number `df` reports. For BTRFS, this is estimated usable free space inside existing Data chunks. Does NOT reflect metadata headroom or device-unallocated.                                                                                                                                                                                                                                                                                                                                           |
 | **WDT (Watchdog Timer)** | Hardware timer that resets the system if not periodically "kicked" (reset). The sp5100-tco kernel driver defaults to `heartbeat=60 sec`, but `watchdogd` overrides this to 30s (`boot.nix`: `timeout = 30`). With `nowayout=0`, the WDT is disarmed when no userspace process holds `/dev/watchdog0` open — meaning it does NOT protect against boot/activation hangs (watchdogd hasn't started yet). Operates independently of the kernel — fires even when the kernel is frozen. See Appendix B and D. |
-| **pstore** | Persistent store for kernel crash logs in EFI NVRAM. Survives reboots. `max_reason=3` means capture PANIC/OOPS/EMERG events. Empty pstore = no software panic occurred. |
+| **pstore**               | Persistent store for kernel crash logs in EFI NVRAM. Survives reboots. `max_reason=3` means capture PANIC/OOPS/EMERG events. Empty pstore = no software panic occurred.                                                                                                                                                                                                                                                                                                                                  |
 
 ---
 
-*Analysis performed 2026-06-26, during recovery from USB installer chroot (`nixos-enter --root /mnt`). All evidence gathered live from the affected system's journal, BTRFS, dmesg, and NixOS configuration.*
+_Analysis performed 2026-06-26, during recovery from USB installer chroot (`nixos-enter --root /mnt`). All evidence gathered live from the affected system's journal, BTRFS, dmesg, and NixOS configuration._
 
 ---
 
@@ -425,6 +446,7 @@ btrfs filesystem usage /mnt
 ```
 
 **Metadata ENOSPC confirmed if ALL of these are true:**
+
 - `Device unallocated:` ≈ 0 (anything < 1 GiB is critical)
 - `Metadata,DUP:` utilization > 85%
 - `df` still shows free space (the trap — `df` is lying)
@@ -438,6 +460,7 @@ nixos-enter --root /mnt
 ```
 
 If `nixos-enter` fails, check that all needed subvolumes are mounted:
+
 ```bash
 mount -t btrfs -o subvol=@home /dev/nvme0n1p6 /mnt/home
 ```
@@ -505,13 +528,13 @@ reboot
 
 ## What NOT to Do
 
-| Command | Why It Fails |
-|---------|-------------|
-| `btrfs balance start /` | Balance needs device-unallocated space to relocate blocks. On a full device, it can't progress and may wedge the system. |
-| `nix-collect-garbage` | Each deletion is a metadata transaction. On a metadata-starved filesystem, GC makes it worse, not better. |
-| `rm -rf` large trees | Same — metadata storm. Every file removal is a metadata write. |
-| Rollback to previous generation | The problem is the *filesystem*, not the generation. All generations require the same metadata operations to activate. |
-| `btrfs balance start -musage=50` | Safer than full balance but still needs unallocated space. Only attempt AFTER growing the partition. |
+| Command                          | Why It Fails                                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `btrfs balance start /`          | Balance needs device-unallocated space to relocate blocks. On a full device, it can't progress and may wedge the system. |
+| `nix-collect-garbage`            | Each deletion is a metadata transaction. On a metadata-starved filesystem, GC makes it worse, not better.                |
+| `rm -rf` large trees             | Same — metadata storm. Every file removal is a metadata write.                                                           |
+| Rollback to previous generation  | The problem is the _filesystem_, not the generation. All generations require the same metadata operations to activate.   |
+| `btrfs balance start -musage=50` | Safer than full balance but still needs unallocated space. Only attempt AFTER growing the partition.                     |
 
 ---
 
@@ -521,15 +544,15 @@ reboot
 
 ## The Escape Attempts (from `paste_1.txt` timeline)
 
-| # | Method | Result | Root Cause |
-|---|--------|--------|------------|
-| 1 | Wait for activation to complete | Hung 10+ minutes | NixOS activation is a metadata storm (symlink tree rebuild). BTRFS can't commit the transactions. |
-| 2 | Rollback to gen 433 (GRUB menu) | Still hangs | Same filesystem, same metadata ENOSPC. The generation doesn't matter — activation for any generation requires the same metadata operations. |
-| 3 | Ctrl+Alt+F2/F3/F4 | No TTY | systemd never reached `getty.target`. It was stuck at the `nixos-activation.service` unit, which is a boot-critical dependency. No target past activation can start. |
-| 4 | GRUB `e` → `systemd.unit=emergency.target` | Activation still runs | NixOS activation (`boot.systemd.initrdStoresPaths` → `nixos-activation.service`) runs as part of `sysinit.target`, which executes BEFORE any user-selected target. You can't skip it by changing the target. |
-| 5 | GRUB `e` → `init=/bin/sh` | "root account locked" | NixOS replaces `/bin/sh` with a `sulogin` wrapper for passwordless root. When PID 1 is replaced, `sulogin` intercepts and demands a password. NixOS's root account has `!` (locked) in `/etc/shadow` by default. |
-| 6 | `init=/run/current-system/sw/bin/bash` | Same "root account locked" | Same `sulogin` intercept — it's baked into the NixOS boot process, not the shell path. |
-| 7 | `rd.systemd.unit=rescue.target + loglevel=7` | BTRFS debug info but still locked | Showed BTRFS kernel messages (confirming the filesystem was alive) but `sulogin` still intercepted in the initrd phase. |
+| #   | Method                                       | Result                            | Root Cause                                                                                                                                                                                                       |
+| --- | -------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Wait for activation to complete              | Hung 10+ minutes                  | NixOS activation is a metadata storm (symlink tree rebuild). BTRFS can't commit the transactions.                                                                                                                |
+| 2   | Rollback to gen 433 (GRUB menu)              | Still hangs                       | Same filesystem, same metadata ENOSPC. The generation doesn't matter — activation for any generation requires the same metadata operations.                                                                      |
+| 3   | Ctrl+Alt+F2/F3/F4                            | No TTY                            | systemd never reached `getty.target`. It was stuck at the `nixos-activation.service` unit, which is a boot-critical dependency. No target past activation can start.                                             |
+| 4   | GRUB `e` → `systemd.unit=emergency.target`   | Activation still runs             | NixOS activation (`boot.systemd.initrdStoresPaths` → `nixos-activation.service`) runs as part of `sysinit.target`, which executes BEFORE any user-selected target. You can't skip it by changing the target.     |
+| 5   | GRUB `e` → `init=/bin/sh`                    | "root account locked"             | NixOS replaces `/bin/sh` with a `sulogin` wrapper for passwordless root. When PID 1 is replaced, `sulogin` intercepts and demands a password. NixOS's root account has `!` (locked) in `/etc/shadow` by default. |
+| 6   | `init=/run/current-system/sw/bin/bash`       | Same "root account locked"        | Same `sulogin` intercept — it's baked into the NixOS boot process, not the shell path.                                                                                                                           |
+| 7   | `rd.systemd.unit=rescue.target + loglevel=7` | BTRFS debug info but still locked | Showed BTRFS kernel messages (confirming the filesystem was alive) but `sulogin` still intercepted in the initrd phase.                                                                                          |
 
 ## Why the Hardware Watchdog Didn't Help During Recovery
 
@@ -571,6 +594,7 @@ The only reliable escape from a metadata-ENOSPC activation hang is an external b
 ## C3: The Generation Number Anomaly
 
 **Observation:**
+
 ```
 Live root @ (subvolid 256):     Generation 1695999
 Latest snapshot @.20260626T0000: Generation 816361
@@ -578,6 +602,7 @@ Delta:                          ~879,638 transactions
 ```
 
 For comparison, the normal daily delta between snapshots is ~18,000 generations:
+
 ```
 @.20260625T0000: gen 798366
 @.20260626T0000: gen 816361
@@ -604,6 +629,7 @@ Boot  0 (1cc421c712724ed5b23fa899ba55d577): Jun 23 05:50:01 → Jun 26 00:02:22 
 Boot -1 was a **clean 66-second reboot** (Jun 23, with a proper `systemd-shutdown` sequence) — NOT the crash. The user's "boot -1" in their notes referred to a different perspective (likely from the USB installer, where the crashed boot would be "boot -1" relative to the installer's boot).
 
 The actual freeze timeline within the crash boot:
+
 - 00:00:00 — GC timer fires
 - 00:01:03 — First deletion journal entry
 - ~00:01:28 — Last deletion journal entry (metadata ENOSPC begins)
@@ -616,13 +642,13 @@ The ~90 seconds from GC start (00:01:03) to WDT reset (~00:02:30) is the real "h
 
 In the final 30 minutes (23:30–00:02), the following signals were present:
 
-| Signal | Severity | Interpretation |
-|--------|----------|---------------|
-| SigNoz health check `success=false` | Ongoing (pre-existing) | SigNoz was already down/failing before the crash. Not related. |
-| Ollama health check `success=false` | Ongoing (pre-existing) | Ollama was already down/failing. Not related. |
-| "ISP down (2 failures)" every ~5s | Noise | This was an ISP outage, not system degradation. Appears throughout the boot. |
-| `node_exporter` write errors (`connection reset by peer`) | Started ~00:01:07 | **Early symptom** — prometheus scraping was getting I/O errors as BTRFS started struggling. This is the first sign of metadata pressure. |
-| `dnsblockd` TLS handshake errors | Throughout | Pre-existing — TLS version mismatch from a client. Not crash-related. |
+| Signal                                                    | Severity               | Interpretation                                                                                                                           |
+| --------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| SigNoz health check `success=false`                       | Ongoing (pre-existing) | SigNoz was already down/failing before the crash. Not related.                                                                           |
+| Ollama health check `success=false`                       | Ongoing (pre-existing) | Ollama was already down/failing. Not related.                                                                                            |
+| "ISP down (2 failures)" every ~5s                         | Noise                  | This was an ISP outage, not system degradation. Appears throughout the boot.                                                             |
+| `node_exporter` write errors (`connection reset by peer`) | Started ~00:01:07      | **Early symptom** — prometheus scraping was getting I/O errors as BTRFS started struggling. This is the first sign of metadata pressure. |
+| `dnsblockd` TLS handshake errors                          | Throughout             | Pre-existing — TLS version mismatch from a client. Not crash-related.                                                                    |
 
 **No new service failures appeared in the 23:30–00:01 window.** The system was operating normally until GC started at 00:00. The crash was sudden — there was no gradual degradation, just a 90-second death spiral triggered by the GC timer.
 
@@ -634,7 +660,7 @@ In the final 30 minutes (23:30–00:02), the following signals were present:
 
 ## The Five-Layer Race Condition
 
-The system had four mechanisms that *should* have produced a diagnostic record before death. None of them fired. Here's why:
+The system had four mechanisms that _should_ have produced a diagnostic record before death. None of them fired. Here's why:
 
 ```
                     BTRFS Metadata ENOSPC
@@ -664,17 +690,17 @@ The system had four mechanisms that *should* have produced a diagnostic record b
 
 ### Layer 1: Why `softlockup_panic=1` Didn't Fire
 
-`boot.nix` sets `kernel.softlockup_panic=1` and `kernel.watchdog_thresh=20`. The soft lockup detector watches for CPUs stuck in kernel mode with **interrupts disabled** for >20s. A soft lockup is the CPU *spinning* — executing kernel code but unable to service interrupts.
+`boot.nix` sets `kernel.softlockup_panic=1` and `kernel.watchdog_thresh=20`. The soft lockup detector watches for CPUs stuck in kernel mode with **interrupts disabled** for >20s. A soft lockup is the CPU _spinning_ — executing kernel code but unable to service interrupts.
 
 **BTRFS metadata ENOSPC does not cause soft lockups.** It causes tasks to enter **D-state** (uninterruptible sleep, `TASK_UNINTERRUPTIBLE`). The CPU is not spinning — it's parked, waiting for an I/O completion that never comes. The softlockup detector explicitly excludes D-state tasks (it checks `hrtimer` overrun on active CPUs, not sleeping tasks). The CPUs that scheduled these tasks are free to run other work — they just happen to have nothing useful to do because all I/O is blocked.
 
 ### Layer 2: Why `hung_task_panic=1` Didn't Fire
 
-`boot.nix` sets `kernel.hung_task_panic=1` and `kernel.hung_task_timeout_secs=120`. The hung task detector *does* catch D-state tasks — it wakes every 120s, scans for tasks stuck in D-state for >120s, and panics.
+`boot.nix` sets `kernel.hung_task_panic=1` and `kernel.hung_task_timeout_secs=120`. The hung task detector _does_ catch D-state tasks — it wakes every 120s, scans for tasks stuck in D-state for >120s, and panics.
 
 **The WDT fired first.** watchdogd's timeout is **30 seconds** (from `boot.nix`: `services.watchdogd.settings.timeout = 30`). The hung task detector fires at 120s. The WDT fires at 30s. **The WDT won the race by 90 seconds.** The system was reset before hung_task ever had a chance to scan.
 
-This is a configuration conflict: `watchdogd timeout (30s) < hung_task_timeout (120s)`. The WDT will *always* fire before hung_task, making `hung_task_panic=1` effectively dead code for any scenario where watchdogd is running. The hung task panic can only fire if watchdogd is NOT running (e.g., during early boot, before watchdogd starts).
+This is a configuration conflict: `watchdogd timeout (30s) < hung_task_timeout (120s)`. The WDT will _always_ fire before hung_task, making `hung_task_panic=1` effectively dead code for any scenario where watchdogd is running. The hung task panic can only fire if watchdogd is NOT running (e.g., during early boot, before watchdogd starts).
 
 ### Layer 3: Why `kernel.panic=30` Didn't Produce a pstore Dump
 
@@ -687,6 +713,7 @@ pstore only triggers on kernel events (PANIC, OOPS, EMERG). Since no panic occur
 ### Layer 5: Why `watchdogd timeout=30` Is Correct (Despite Being Too Short for Diagnostics)
 
 watchdogd's 30s timeout is configured in `boot.nix`:
+
 ```nix
 services.watchdogd.settings = {
   timeout = 30;   # Hard reset after 30s without a kick
@@ -700,11 +727,11 @@ The kernel dmesg shows `sp5100-tco: initialized. heartbeat=60 sec (nowayout=0)` 
 
 ### The Fundamental Tension
 
-| Goal | Requirement | Conflict |
-|------|-------------|----------|
-| Fast recovery from hangs | Short WDT timeout (30s) | No time for diagnostics |
-| Diagnostic capture before death | Long WDT timeout (>120s) | 120s+ of unresponsiveness |
-| pstore dump on BTRFS ENOSPC | hung_task must fire before WDT | Needs WDT > 120s |
+| Goal                            | Requirement                    | Conflict                  |
+| ------------------------------- | ------------------------------ | ------------------------- |
+| Fast recovery from hangs        | Short WDT timeout (30s)        | No time for diagnostics   |
+| Diagnostic capture before death | Long WDT timeout (>120s)       | 120s+ of unresponsiveness |
+| pstore dump on BTRFS ENOSPC     | hung_task must fire before WDT | Needs WDT > 120s          |
 
 **There is no perfect setting.** The current 30s prioritizes recovery over forensics. If crash forensics become more important than recovery speed, raise watchdogd timeout to 120s (matching hung_task). But the real fix is preventing the crash in the first place — which is what Appendix E and F address.
 
@@ -717,12 +744,14 @@ The kernel dmesg shows `sp5100-tco: initialized. heartbeat=60 sec (nowayout=0)` 
 ## The Existing `systemnix-btrfs` DMS Plugin Is Blind
 
 The Quickshell desktop widget (`pkgs/dms-plugins/systemnix-btrfs/BtrfsWidget.qml`) monitors two things:
+
 1. **Snapshot age** (how long since `btrbk.timer` last ran)
 2. **Disk usage percentage** via `df --output=pcent /`
 
 The disk percentage comes from `df`, which uses the `statfs` syscall. For BTRFS, `statfs` returns `f_bavail` — the estimated usable free space **inside existing Data chunks**. This is the **22 GiB number** that looked fine right up until the crash.
 
 **The widget cannot see:**
+
 - Device-unallocated (the metric that hit 1 MiB)
 - Metadata utilization (the metric that hit 91%)
 - Chunk allocation state (the metric that hit 100%)
@@ -735,17 +764,18 @@ node_exporter's `filesystem` collector scrapes the same `statfs` numbers. Promet
 
 ## The Three Metrics That Matter (And Aren't Collected)
 
-| Metric | Source | What It Means | Crash Value |
-|--------|--------|---------------|-------------|
-| Device unallocated | `btrfs filesystem usage` | Raw space for new chunks (any type) | **1 MiB** |
-| Metadata utilization | `btrfs filesystem usage` | How full existing metadata chunks are | **91.31%** |
-| Device allocated % | `btrfs filesystem usage` | How much of the partition is carved into chunks | **100%** |
+| Metric               | Source                   | What It Means                                   | Crash Value |
+| -------------------- | ------------------------ | ----------------------------------------------- | ----------- |
+| Device unallocated   | `btrfs filesystem usage` | Raw space for new chunks (any type)             | **1 MiB**   |
+| Metadata utilization | `btrfs filesystem usage` | How full existing metadata chunks are           | **91.31%**  |
+| Device allocated %   | `btrfs filesystem usage` | How much of the partition is carved into chunks | **100%**    |
 
 None of these are exposed by `df`, `statfs`, node_exporter's filesystem collector, or the DMS widget. They require parsing `btrfs filesystem usage` output — a privileged command that needs root or appropriate capabilities.
 
 ## Why `min-free`/`max-free` Can't Help
 
 NixOS's `nix.gc` can trigger GC based on free space thresholds:
+
 ```nix
 # platforms/common/nix-settings.nix
 min-free = 5000000000;   # 5 GB — trigger GC when df reports < 5 GB
@@ -1004,11 +1034,11 @@ This makes the desktop widget show the real danger metric, not the misleading `d
 
 ## Alert Thresholds Summary
 
-| Metric | OK | Warning | Critical | GC Blocked |
-|--------|-----|---------|----------|------------|
-| Device unallocated % | >15% | 10-15% | 5-10% | <10% |
-| Metadata utilization % | <80% | 80-85% | 85-90% | >85% (warning only) |
-| Device allocated % | <90% | 90-95% | >95% | (informational) |
+| Metric                 | OK   | Warning | Critical | GC Blocked          |
+| ---------------------- | ---- | ------- | -------- | ------------------- |
+| Device unallocated %   | >15% | 10-15%  | 5-10%    | <10%                |
+| Metadata utilization % | <80% | 80-85%  | 85-90%   | >85% (warning only) |
+| Device allocated %     | <90% | 90-95%  | >95%     | (informational)     |
 
 ## Implementation Priority
 
@@ -1019,4 +1049,4 @@ This makes the desktop widget show the real danger metric, not the misleading `d
 
 ---
 
-*Appendices A-F added 2026-06-26. Forensics gathered from live journal, BTRFS, dmesg, and NixOS configuration during recovery chroot session.*
+_Appendices A-F added 2026-06-26. Forensics gathered from live journal, BTRFS, dmesg, and NixOS configuration during recovery chroot session._

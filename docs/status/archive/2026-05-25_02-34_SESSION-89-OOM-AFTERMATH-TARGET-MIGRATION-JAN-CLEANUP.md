@@ -13,6 +13,7 @@
 evo-x2 is **up but stressed**. A fresh boot (56 min) shows the system recovering from what appears to be an OOM cascade — swap is 8.4/16 GiB used, root disk is **100% full** (2.5 GB free of 512 GB), and load averages are elevated (5.35 / 8.19 / 22.95). No earlyoom kills this boot, but Twenty CRM is throwing database timeouts and the critical service health check is failing.
 
 **Key events this session:**
+
 1. **OOM cascade identified and mitigated** — Helium (Electron) spawned 42 processes, not in earlyoom `--prefer` list, OOM killed journald → cascade. Now fixed: `helium`+`electron` added to prefer list, `MemoryHigh` added to `harden {}` for proactive throttling.
 2. **Docker service targets migrated** — All container/service targets moved from `graphical.target` to `multi-user.target` so Docker services don't block desktop startup.
 3. **Jan `llama-server` killed and disabled** — Non-Nix user service (`llama-vision.service`) was spawning llama-server every 1-3 min with ~1.2 GB per instance. Trashed the service file.
@@ -26,18 +27,18 @@ evo-x2 is **up but stressed**. A fresh boot (56 min) shows the system recovering
 
 ## System Health Snapshot
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| RAM | 44/62 GiB used (71%) | ⚠️ Elevated |
-| Swap | 8.4/16 GiB used (51%) | ⚠️ Half full on fresh boot |
-| Root disk | 504/512 GB used (100%) | 🔴 **CRITICAL** — 2.5 GB free |
-| /data disk | 854/1024 GB used (84%) | ⚠️ Growing |
-| /boot | 312M/2.0 GB (16%) | ✅ |
-| Load avg | 5.35 / 8.19 / 22.95 | ⚠️ High for 56 min uptime |
-| ZRAM | 5.7/6.2 GiB used | ⚠️ Nearly full |
-| OOM kills this boot | 0 | ✅ |
-| earlyoom status | Active, `helium`+`electron` in prefer | ✅ Fixed |
-| Uptime | 56 min | Fresh boot |
+| Metric              | Value                                 | Status                        |
+| ------------------- | ------------------------------------- | ----------------------------- |
+| RAM                 | 44/62 GiB used (71%)                  | ⚠️ Elevated                   |
+| Swap                | 8.4/16 GiB used (51%)                 | ⚠️ Half full on fresh boot    |
+| Root disk           | 504/512 GB used (100%)                | 🔴 **CRITICAL** — 2.5 GB free |
+| /data disk          | 854/1024 GB used (84%)                | ⚠️ Growing                    |
+| /boot               | 312M/2.0 GB (16%)                     | ✅                            |
+| Load avg            | 5.35 / 8.19 / 22.95                   | ⚠️ High for 56 min uptime     |
+| ZRAM                | 5.7/6.2 GiB used                      | ⚠️ Nearly full                |
+| OOM kills this boot | 0                                     | ✅                            |
+| earlyoom status     | Active, `helium`+`electron` in prefer | ✅ Fixed                      |
+| Uptime              | 56 min                                | Fresh boot                    |
 
 ---
 
@@ -45,29 +46,29 @@ evo-x2 is **up but stressed**. A fresh boot (56 min) shows the system recovering
 
 ### 1. OOM Cascade Root Cause Found and Fixed
 
-| Aspect | Detail |
-|--------|--------|
+| Aspect         | Detail                                                                                                                                                   |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Root cause** | Helium browser (Electron) spawned 42 processes consuming massive RAM. Not in earlyoom `--prefer` list → earlyoom killed journald instead → cascade crash |
-| **Fix 1** | `helium` + `electron` added to earlyoom `--prefer` regex in `boot.nix` |
-| **Fix 2** | `MemoryHigh = "80%"` added to `harden {}` in `lib/systemd.nix` — throttles services at 80% of MemoryMax before hard kill |
-| **Impact** | All hardened services now get proactive memory throttling, not just hard kills |
+| **Fix 1**      | `helium` + `electron` added to earlyoom `--prefer` regex in `boot.nix`                                                                                   |
+| **Fix 2**      | `MemoryHigh = "80%"` added to `harden {}` in `lib/systemd.nix` — throttles services at 80% of MemoryMax before hard kill                                 |
+| **Impact**     | All hardened services now get proactive memory throttling, not just hard kills                                                                           |
 
 ### 2. Docker Service Target Migration
 
-| From | To | Services affected |
-|------|----|-------------------|
+| From               | To                  | Services affected                                                              |
+| ------------------ | ------------------- | ------------------------------------------------------------------------------ |
 | `graphical.target` | `multi-user.target` | Docker daemon, dns-blocker, hermes, homepage, signoz, cadvisor, otel-collector |
 
 **Why:** Desktop (graphical.target) should not wait for Docker containers to start. Services start earlier at multi-user.target without blocking the compositor.
 
 ### 3. Jan llama-vision.service Removed
 
-| Action | Detail |
-|--------|--------|
-| **Identified** | Non-Nix user service at `~/.config/systemd/user/llama-vision.service` |
-| **Problem** | Spawning `llama-server` processes loading 26B model (~1.2 GB each), restart counter at 9 |
-| **Fixed** | Service file and symlink trashed |
-| **Cleanup** | `systemctl --user daemon-reload` needed |
+| Action         | Detail                                                                                   |
+| -------------- | ---------------------------------------------------------------------------------------- |
+| **Identified** | Non-Nix user service at `~/.config/systemd/user/llama-vision.service`                    |
+| **Problem**    | Spawning `llama-server` processes loading 26B model (~1.2 GB each), restart counter at 9 |
+| **Fixed**      | Service file and symlink trashed                                                         |
+| **Cleanup**    | `systemctl --user daemon-reload` needed                                                  |
 
 ### 4. GPU udev Rule Fixed
 
@@ -83,14 +84,14 @@ Docker Whisper (ROCm) service explicitly disabled in `configuration.nix`.
 
 ### 7. Previously Completed (Sessions 84-88)
 
-| Milestone | Status |
-|-----------|--------|
-| BTRFS snapshots (btrbk) — deployed, verified, hardened | ✅ Production |
-| Pocket ID migration (from Authelia) — code complete | ✅ Code done |
-| Timeshift completely removed | ✅ Gone |
-| mkPreparedSource centralized to go-nix-helpers | ✅ ADR-005 |
-| Vendor hash cascade fixed (5 packages) | ✅ All rebuilt |
-| Portal fix (niri native) | ✅ Deployed |
+| Milestone                                              | Status         |
+| ------------------------------------------------------ | -------------- |
+| BTRFS snapshots (btrbk) — deployed, verified, hardened | ✅ Production  |
+| Pocket ID migration (from Authelia) — code complete    | ✅ Code done   |
+| Timeshift completely removed                           | ✅ Gone        |
+| mkPreparedSource centralized to go-nix-helpers         | ✅ ADR-005     |
+| Vendor hash cascade fixed (5 packages)                 | ✅ All rebuilt |
+| Portal fix (niri native)                               | ✅ Deployed    |
 
 ---
 
@@ -98,21 +99,21 @@ Docker Whisper (ROCm) service explicitly disabled in `configuration.nix`.
 
 ### 1. Uncommitted Changes — 13 Files, Not Deployed
 
-| File | Change | Risk |
-|------|--------|------|
-| `lib/docker.nix` | `graphical.target` → `multi-user.target` | Medium — affects all Docker services |
-| `lib/systemd.nix` | Added `MemoryHigh = "80%"` | Low — additive hardening |
-| `modules/nixos/services/default.nix` | Docker target change | Medium |
-| `modules/nixos/services/dns-blocker.nix` | Target change | Low |
-| `modules/nixos/services/hermes.nix` | Target change | Low |
-| `modules/nixos/services/homepage.nix` | Target change | Low |
-| `modules/nixos/services/signoz.nix` | Target change + SMART extract fix | Low |
-| `modules/nixos/services/sops.nix` | `gnupg.sshKeyPaths = []` | Low |
-| `platforms/nixos/hardware/amd-gpu.nix` | udev `card[0-9]` | Low |
-| `platforms/nixos/system/boot.nix` | earlyoom prefer list | Low |
-| `platforms/nixos/system/configuration.nix` | voice-agents disabled | Low |
-| `AGENTS.md` | 5 new gotchas documented | None |
-| `flake.lock` | Input updates | Low |
+| File                                       | Change                                   | Risk                                 |
+| ------------------------------------------ | ---------------------------------------- | ------------------------------------ |
+| `lib/docker.nix`                           | `graphical.target` → `multi-user.target` | Medium — affects all Docker services |
+| `lib/systemd.nix`                          | Added `MemoryHigh = "80%"`               | Low — additive hardening             |
+| `modules/nixos/services/default.nix`       | Docker target change                     | Medium                               |
+| `modules/nixos/services/dns-blocker.nix`   | Target change                            | Low                                  |
+| `modules/nixos/services/hermes.nix`        | Target change                            | Low                                  |
+| `modules/nixos/services/homepage.nix`      | Target change                            | Low                                  |
+| `modules/nixos/services/signoz.nix`        | Target change + SMART extract fix        | Low                                  |
+| `modules/nixos/services/sops.nix`          | `gnupg.sshKeyPaths = []`                 | Low                                  |
+| `platforms/nixos/hardware/amd-gpu.nix`     | udev `card[0-9]`                         | Low                                  |
+| `platforms/nixos/system/boot.nix`          | earlyoom prefer list                     | Low                                  |
+| `platforms/nixos/system/configuration.nix` | voice-agents disabled                    | Low                                  |
+| `AGENTS.md`                                | 5 new gotchas documented                 | None                                 |
+| `flake.lock`                               | Input updates                            | Low                                  |
 
 **Status:** All changes are unstaged. Need `just test-fast` → `just switch` to deploy.
 
@@ -138,35 +139,35 @@ Docker Whisper (ROCm) service explicitly disabled in `configuration.nix`.
 
 ### Infrastructure
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Execute `just snapshot-migrate-data` — convert /data to @data subvolume | 30 min | Enable /data snapshots |
-| 2 | Add btrbk instance for /data after migration | 10 min | Complete snapshot coverage |
-| 3 | Add `just verify-packages` recipe to build all Go packages after flake.lock updates | 15 min | **#1 defense** against stale vendor hashes |
-| 4 | GitHub Actions CI for all Go repos | 1-2 hrs | Catch build breakage before SystemNix |
-| 5 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 6 | `just update-vendor-hash` recipe (set `""`, build, extract `got:`) | 15 min | Automate tedious hash cycle |
-| 7 | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS) | 15 min | Stop error spam |
-| 8 | Fix node_exporter pocket-id credentials mountpoint error | 10 min | Stop error spam |
+| #   | Task                                                                                | Effort  | Impact                                     |
+| --- | ----------------------------------------------------------------------------------- | ------- | ------------------------------------------ |
+| 1   | Execute `just snapshot-migrate-data` — convert /data to @data subvolume             | 30 min  | Enable /data snapshots                     |
+| 2   | Add btrbk instance for /data after migration                                        | 10 min  | Complete snapshot coverage                 |
+| 3   | Add `just verify-packages` recipe to build all Go packages after flake.lock updates | 15 min  | **#1 defense** against stale vendor hashes |
+| 4   | GitHub Actions CI for all Go repos                                                  | 1-2 hrs | Catch build breakage before SystemNix      |
+| 5   | Pre-push hook to verify Go packages build                                           | 15 min  | Last line of defense                       |
+| 6   | `just update-vendor-hash` recipe (set `""`, build, extract `got:`)                  | 15 min  | Automate tedious hash cycle                |
+| 7   | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)                                 | 15 min  | Stop error spam                            |
+| 8   | Fix node_exporter pocket-id credentials mountpoint error                            | 10 min  | Stop error spam                            |
 
 ### Services
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 9 | Fix photomap podman permission issue and re-enable | 1 hr | Photo visualization |
-| 10 | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
-| 11 | Minecraft server `enable = false` — needs enabling if wanted | 5 min | |
-| 12 | Configure secondary LLM provider for Hermes (OpenRouter/OpenAI) | 30 min | GLM-5.1 fallback |
+| #   | Task                                                             | Effort | Impact                 |
+| --- | ---------------------------------------------------------------- | ------ | ---------------------- |
+| 9   | Fix photomap podman permission issue and re-enable               | 1 hr   | Photo visualization    |
+| 10  | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
+| 11  | Minecraft server `enable = false` — needs enabling if wanted     | 5 min  |                        |
+| 12  | Configure secondary LLM provider for Hermes (OpenRouter/OpenAI)  | 30 min | GLM-5.1 fallback       |
 
 ### Documentation & Housekeeping
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 13 | Archive `docs/status/` — 115 files in root | 10 min | Clutter reduction |
-| 14 | Fix 3 remaining stale Timeshift docs | 5 min | Accuracy |
-| 15 | Update TODO_LIST.md and FEATURES.md to current state | 15 min | Accuracy |
-| 16 | D2 architecture diagram of Go dependency graph | 20 min | Visualization |
-| 17 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
+| #   | Task                                                   | Effort | Impact              |
+| --- | ------------------------------------------------------ | ------ | ------------------- |
+| 13  | Archive `docs/status/` — 115 files in root             | 10 min | Clutter reduction   |
+| 14  | Fix 3 remaining stale Timeshift docs                   | 5 min  | Accuracy            |
+| 15  | Update TODO_LIST.md and FEATURES.md to current state   | 15 min | Accuracy            |
+| 16  | D2 architecture diagram of Go dependency graph         | 20 min | Visualization       |
+| 17  | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
 
 ---
 
@@ -181,6 +182,7 @@ This is **critical**. 512 GB root partition with only 2.5 GB free. The system is
 ### 2. Swap Half Full on Fresh Boot
 
 8.4/16 GiB swap used after only 56 minutes. This suggests either:
+
 - The OOM recovery left residual swap usage
 - Services are genuinely consuming more memory than available RAM
 - The system is still settling after boot
@@ -234,48 +236,48 @@ Forward auth has been broken since the Authelia → Pocket ID migration. All ser
 
 ### Critical — Fix Broken Things
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 1 | **Free root disk space** — `just clean` or `nix-collect-garbage` | 5 min | 2.5 GB free = system will break on next build |
-| 2 | **Deploy uncommitted changes** (`just test-fast && just switch`) | 15 min | OOM fix, target migration, udev fix — all sitting idle |
-| 3 | **Fix oauth2-proxy** — create Pocket ID OAuth client, update sops | 30 min | Forward auth down for days = security gap |
-| 4 | **Investigate health-check.service failure** | 15 min | No automated service alerting |
-| 5 | **Execute /data BTRFS migration** (`just snapshot-migrate-data`) | 30 min | 827 GB with zero snapshots |
+| #   | Task                                                              | Effort | Why                                                    |
+| --- | ----------------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| 1   | **Free root disk space** — `just clean` or `nix-collect-garbage`  | 5 min  | 2.5 GB free = system will break on next build          |
+| 2   | **Deploy uncommitted changes** (`just test-fast && just switch`)  | 15 min | OOM fix, target migration, udev fix — all sitting idle |
+| 3   | **Fix oauth2-proxy** — create Pocket ID OAuth client, update sops | 30 min | Forward auth down for days = security gap              |
+| 4   | **Investigate health-check.service failure**                      | 15 min | No automated service alerting                          |
+| 5   | **Execute /data BTRFS migration** (`just snapshot-migrate-data`)  | 30 min | 827 GB with zero snapshots                             |
 
 ### High — Prevent Future Failures
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 6 | Add `just verify-packages` recipe | 15 min | #1 defense against stale vendor hashes |
-| 7 | GitHub Actions CI for Go repos | 1-2 hrs | Catch stale hashes at source |
-| 8 | Automate vendor hash discovery (`just update-vendor-hash`) | 15 min | Reduce 5-min manual cycle |
-| 9 | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS) | 15 min | Stop log spam |
-| 10 | Fix node_exporter pocket-id credentials mountpoint error | 10 min | Stop log spam |
-| 11 | Add `MemoryHigh` overrides for known memory hogs (SigNoz, Twenty) | 10 min | Prevent future OOM |
+| #   | Task                                                              | Effort  | Why                                    |
+| --- | ----------------------------------------------------------------- | ------- | -------------------------------------- |
+| 6   | Add `just verify-packages` recipe                                 | 15 min  | #1 defense against stale vendor hashes |
+| 7   | GitHub Actions CI for Go repos                                    | 1-2 hrs | Catch stale hashes at source           |
+| 8   | Automate vendor hash discovery (`just update-vendor-hash`)        | 15 min  | Reduce 5-min manual cycle              |
+| 9   | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)               | 15 min  | Stop log spam                          |
+| 10  | Fix node_exporter pocket-id credentials mountpoint error          | 10 min  | Stop log spam                          |
+| 11  | Add `MemoryHigh` overrides for known memory hogs (SigNoz, Twenty) | 10 min  | Prevent future OOM                     |
 
 ### Medium — Upstream Hygiene
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 12 | Clean up `docs/status/` (archive ~100 old reports) | 10 min | 115 files is noise |
-| 13 | Fix 3 remaining stale Timeshift doc references | 5 min | Accuracy |
-| 14 | Update TODO_LIST.md and FEATURES.md to current state | 15 min | Both are stale (last updated session 75/83) |
-| 15 | Commit library-policy test refactoring | 5 min | 18 dirty files |
-| 16 | Fix file-and-image-renamer Go 1.26.3 issue | 30 min | Service is disabled |
-| 17 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
-| 18 | Add Gatus endpoints for Hermes, Monitor365, disk/nvme | 15 min | Complete observability |
-| 19 | Configure secondary LLM provider for Hermes | 30 min | GLM-5.1 rate limit fallback |
+| #   | Task                                                   | Effort | Why                                         |
+| --- | ------------------------------------------------------ | ------ | ------------------------------------------- |
+| 12  | Clean up `docs/status/` (archive ~100 old reports)     | 10 min | 115 files is noise                          |
+| 13  | Fix 3 remaining stale Timeshift doc references         | 5 min  | Accuracy                                    |
+| 14  | Update TODO_LIST.md and FEATURES.md to current state   | 15 min | Both are stale (last updated session 75/83) |
+| 15  | Commit library-policy test refactoring                 | 5 min  | 18 dirty files                              |
+| 16  | Fix file-and-image-renamer Go 1.26.3 issue             | 30 min | Service is disabled                         |
+| 17  | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack                         |
+| 18  | Add Gatus endpoints for Hermes, Monitor365, disk/nvme  | 15 min | Complete observability                      |
+| 19  | Configure secondary LLM provider for Hermes            | 30 min | GLM-5.1 rate limit fallback                 |
 
 ### Lower — Polish & Future-proofing
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 20 | D2 architecture diagram of Go dependency graph | 20 min | Visualize cascade chain |
-| 21 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 22 | Port-centric test (all `ports.*` unique) | 15 min | Prevent port conflicts |
-| 23 | Reduce flake inputs from 48 | 1-2 hrs | Simplify maintenance |
-| 24 | Darwin parity testing | Ongoing | d2 overlay hack is fragile |
-| 25 | Add snapshot count to `just disk-status` output | 5 min | Visibility |
+| #   | Task                                            | Effort  | Why                        |
+| --- | ----------------------------------------------- | ------- | -------------------------- |
+| 20  | D2 architecture diagram of Go dependency graph  | 20 min  | Visualize cascade chain    |
+| 21  | Pre-push hook to verify Go packages build       | 15 min  | Last line of defense       |
+| 22  | Port-centric test (all `ports.*` unique)        | 15 min  | Prevent port conflicts     |
+| 23  | Reduce flake inputs from 48                     | 1-2 hrs | Simplify maintenance       |
+| 24  | Darwin parity testing                           | Ongoing | d2 overlay hack is fragile |
+| 25  | Add snapshot count to `just disk-status` output | 5 min   | Visibility                 |
 
 ---
 
@@ -298,18 +300,18 @@ The oauth2-proxy has been failing since session 85 (Pocket ID migration). Pocket
 
 ## System Configuration Summary
 
-| Aspect | Value |
-|--------|-------|
-| Flake inputs | 48 |
-| Service modules | 30 in `serviceModules` |
-| Uncommitted files | 13 |
-| User systemd services | 14 (all Nix-managed after llama-vision removal) |
-| Non-Nix user services | 0 (was 1: llama-vision, now trashed) |
-| Pre-commit hooks | 9 |
-| Scripts | 23 |
-| Status reports | 490+ total |
-| Disabled services | photomap, file-and-image-renamer, minecraft, voice-agents |
-| Failed services | oauth2-proxy, health-check timer |
-| BTRFS snapshots | Root: daily via btrbk ✅, /data: none ❌ |
-| BTRFS scrub | Monthly (root + /data) |
-| Timeshift | Completely removed |
+| Aspect                | Value                                                     |
+| --------------------- | --------------------------------------------------------- |
+| Flake inputs          | 48                                                        |
+| Service modules       | 30 in `serviceModules`                                    |
+| Uncommitted files     | 13                                                        |
+| User systemd services | 14 (all Nix-managed after llama-vision removal)           |
+| Non-Nix user services | 0 (was 1: llama-vision, now trashed)                      |
+| Pre-commit hooks      | 9                                                         |
+| Scripts               | 23                                                        |
+| Status reports        | 490+ total                                                |
+| Disabled services     | photomap, file-and-image-renamer, minecraft, voice-agents |
+| Failed services       | oauth2-proxy, health-check timer                          |
+| BTRFS snapshots       | Root: daily via btrbk ✅, /data: none ❌                  |
+| BTRFS scrub           | Monthly (root + /data)                                    |
+| Timeshift             | Completely removed                                        |

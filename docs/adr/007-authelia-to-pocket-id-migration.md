@@ -18,14 +18,14 @@ Pocket ID is a passkey-only OIDC provider (Go backend, SQLite, web UI). It does 
 
 Replace Authelia with Pocket ID + oauth2-proxy:
 
-| Role | Before | After |
-|------|--------|-------|
-| OIDC Provider | Authelia | Pocket ID |
-| Forward Auth | Authelia `/api/authz/forward-auth` | oauth2-proxy `/oauth2/auth` |
-| User Backend | YAML file (`users_database.yml`) | Pocket ID SQLite (web UI) |
-| 2FA | TOTP + WebAuthn (configurable) | Passkey-only (WebAuthn/FIDO2) |
-| Client Management | Nix declarative (`mkClient`) | Pocket ID web UI / REST API |
-| Session | Authelia cookie (1h / 5min inactivity) | oauth2-proxy cookie (domain-wide) |
+| Role              | Before                                 | After                             |
+| ----------------- | -------------------------------------- | --------------------------------- |
+| OIDC Provider     | Authelia                               | Pocket ID                         |
+| Forward Auth      | Authelia `/api/authz/forward-auth`     | oauth2-proxy `/oauth2/auth`       |
+| User Backend      | YAML file (`users_database.yml`)       | Pocket ID SQLite (web UI)         |
+| 2FA               | TOTP + WebAuthn (configurable)         | Passkey-only (WebAuthn/FIDO2)     |
+| Client Management | Nix declarative (`mkClient`)           | Pocket ID web UI / REST API       |
+| Session           | Authelia cookie (1h / 5min inactivity) | oauth2-proxy cookie (domain-wide) |
 
 ### Architecture
 

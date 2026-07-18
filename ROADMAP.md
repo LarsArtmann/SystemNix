@@ -18,7 +18,7 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
   5. Reboot, verify `/data` mounts the new subvolume
   6. Add `@data` to btrbk config for snapshot protection
   7. Clean up old toplevel data (after verifying snapshots work)
-  Requires ~1h downtime window. Docker containers on `/data/docker` will be stopped.
+     Requires ~1h downtime window. Docker containers on `/data/docker` will be stopped.
 - **Cloud backup** — no off-site backup exists. Evaluate BorgBackup to Hetzner StorageBox (see `docs/research/hetzner-storagebox-borgbackup.md`). Critical for disaster recovery.
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP). Module and config ready, hardware not purchased.
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed upstream.
@@ -80,12 +80,12 @@ See [TODO_LIST.md](./TODO_LIST.md) Priority 5 for detailed task breakdowns.
 
 ## Deferred / Rejected Ideas
 
-| Idea | Status | Reason |
-|------|--------|--------|
-| OpenZFS on macOS | Rejected | Kernel panics (ADR-003) |
-| otel-tui on Darwin | Rejected | 40+ min builds, disk exhaustion |
-| ComfyUI | Removed | Prefer using AI models via code directly |
-| Authelia | Removed | Replaced by Pocket ID (passkey-based, simpler) |
-| Prometheus | Removed | Replaced by SigNoz (full-stack observability) |
-| Hyprland | Removed | Replaced by Niri (scrollable tiling) |
-| DNS-over-QUIC overlay | Disabled | Breaks binary cache (40+ min builds) |
+| Idea                  | Status   | Reason                                         |
+| --------------------- | -------- | ---------------------------------------------- |
+| OpenZFS on macOS      | Rejected | Kernel panics (ADR-003)                        |
+| otel-tui on Darwin    | Rejected | 40+ min builds, disk exhaustion                |
+| ComfyUI               | Removed  | Prefer using AI models via code directly       |
+| Authelia              | Removed  | Replaced by Pocket ID (passkey-based, simpler) |
+| Prometheus            | Removed  | Replaced by SigNoz (full-stack observability)  |
+| Hyprland              | Removed  | Replaced by Niri (scrollable tiling)           |
+| DNS-over-QUIC overlay | Disabled | Breaks binary cache (40+ min builds)           |

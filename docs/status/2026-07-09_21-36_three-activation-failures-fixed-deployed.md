@@ -57,6 +57,7 @@ The post-deploy smoke test showed 14 FAILs with `localhost:` (empty port) — e.
 ### B. AGENTS.md Not Updated (FORGOTTEN)
 
 I discovered three new gotchas this session but didn't add them to `AGENTS.md`:
+
 1. `writeShellApplication` + `awk` — must include `pkgs.gawk` in `runtimeInputs` (awk is in gawk, not coreutils)
 2. `timeout N bash -c '...'` inside hardened `writeShellApplication` — `bash` won't be on PATH, use native bash loops instead
 3. Upstream monitor365 `corsOrigins` env var — incompatible with Rust config deserializer (needs upstream fix)
@@ -85,14 +86,14 @@ signoz-provision wasn't re-triggered during deploy. The fix is in the built syst
 
 ## Service Status After This Session
 
-| Service | Status | Notes |
-|---------|--------|-------|
-| gpu-active.service | **ACTIVE** | Metrics being written to `gpu_active.prom` |
-| monitor365-server.service | **ACTIVE** | Responding to HTTP, enforcing auth (401s in logs) |
-| monitor365.service (system agent) | **ACTIVE** | Started during deploy |
-| signoz-provision.service | **UNKNOWN** | Wasn't re-triggered this deploy. Fix in place but unverified |
-| signoz.service | **ACTIVE** | (Not restarted this deploy) |
-| monitor365-desktop.service | **UNVERIFIED** | User service — not checked if it's running |
+| Service                           | Status         | Notes                                                        |
+| --------------------------------- | -------------- | ------------------------------------------------------------ |
+| gpu-active.service                | **ACTIVE**     | Metrics being written to `gpu_active.prom`                   |
+| monitor365-server.service         | **ACTIVE**     | Responding to HTTP, enforcing auth (401s in logs)            |
+| monitor365.service (system agent) | **ACTIVE**     | Started during deploy                                        |
+| signoz-provision.service          | **UNKNOWN**    | Wasn't re-triggered this deploy. Fix in place but unverified |
+| signoz.service                    | **ACTIVE**     | (Not restarted this deploy)                                  |
+| monitor365-desktop.service        | **UNVERIFIED** | User service — not checked if it's running                   |
 
 ---
 
@@ -110,10 +111,10 @@ Stale build sandboxes still flagged: 11 in `/nix/var/nix/builds/`.
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/gpu-active.nix:30` | Added `pkgs.gawk` to `runtimeInputs` |
-| `modules/nixos/services/signoz.nix:374-383` | Rewrote `preStart` wait loop (removed `bash -c`) |
+| File                                            | Change                                                   |
+| ----------------------------------------------- | -------------------------------------------------------- |
+| `modules/nixos/services/gpu-active.nix:30`      | Added `pkgs.gawk` to `runtimeInputs`                     |
+| `modules/nixos/services/signoz.nix:374-383`     | Rewrote `preStart` wait loop (removed `bash -c`)         |
 | `modules/nixos/services/monitor365.nix:165-172` | Removed `corsOrigins` (upstream env var incompatibility) |
 
 ---

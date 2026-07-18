@@ -96,7 +96,11 @@ repos:
       - id: check-merge-conflicts
         name: check for merge conflicts
         entry: bash
-        args: [-c, "! grep -rnE '^<{7} |^={7}$$|^>{7} ' --include='*.nix' --include='*.lock' --include='*.json' --include='*.yaml' --include='*.yml' . || { echo 'ERROR: Found merge conflict markers - resolve before committing'; exit 1; }"]
+        args:
+          [
+            -c,
+            "! grep -rnE '^<{7} |^={7}$$|^>{7} ' --include='*.nix' --include='*.lock' --include='*.json' --include='*.yaml' --include='*.yml' . || { echo 'ERROR: Found merge conflict markers - resolve before committing'; exit 1; }",
+          ]
         language: system
         pass_filenames: false
 

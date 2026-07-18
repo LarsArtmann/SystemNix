@@ -16,75 +16,75 @@ Systematic elimination of the `mkPackageOverlay` indirection layer that wrapped 
 
 ### Overlay System Refactoring (THIS SESSION)
 
-| Item | Status | Details |
-|------|--------|---------|
-| `mkPackageOverlay` helper removed | ✅ Done | Eliminated from `overlays/default.nix` entirely |
+| Item                                          | Status  | Details                                                                                                                                                                                                           |
+| --------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mkPackageOverlay` helper removed             | ✅ Done | Eliminated from `overlays/default.nix` entirely                                                                                                                                                                   |
 | 12 Go tool overlays removed from `shared.nix` | ✅ Done | art-dupl, buildflow, branching-flow, go-auto-upgrade, go-structure-linter, golangci-lint-auto-configure, hierarchical-errors, library-policy, mr-sync, project-meta, projects-management-automation, todo-list-ai |
-| `mkLarsPackages` single source of truth | ✅ Done | Top-level `let` in `flake.nix:476-514` — resolves all Go tools from flake inputs, handles vendorHash/mkTidy overrides, platform-safe via `filterAttrs` |
-| `perSystem.packages` simplified | ✅ Done | Uses `mkLarsPackages system` directly instead of `inherit (pkgs)` for 12 packages |
-| `base.nix` simplified | ✅ Done | Receives `larsPackages` attrset via specialArgs, uses `builtins.attrValues` — no more individual Go tool inputs or override helpers |
-| PMA service module fixed | ✅ Done | `projects-management-automation.nix` now references `inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default` directly |
-| `art-dupl` vendorHash fixed | ✅ Done | Correct hash `sha256-IcR8IPln7ZBB+QJP2MZKFMdr0204pgdH9IA/lIbrpjA=` applied inline in `mkLarsPackages` |
-| Darwin specialArgs wired | ✅ Done | `larsPackages = mkLarsPackages "aarch64-darwin"` passed to Darwin config |
-| NixOS specialArgs wired | ✅ Done | `larsPackages = mkLarsPackages "x86_64-linux"` passed to NixOS config |
-| AGENTS.md updated | ✅ Done | Removed all `mkPackageOverlay` references, documented new `mkLarsPackages` pattern |
-| `just test-fast` passes | ✅ Done | All eval checks pass, zero warnings (fixed `pkgs.system` deprecation too) |
-| Formatted with alejandra | ✅ Done | `nix fmt .` — 2 files changed (formatting only) |
+| `mkLarsPackages` single source of truth       | ✅ Done | Top-level `let` in `flake.nix:476-514` — resolves all Go tools from flake inputs, handles vendorHash/mkTidy overrides, platform-safe via `filterAttrs`                                                            |
+| `perSystem.packages` simplified               | ✅ Done | Uses `mkLarsPackages system` directly instead of `inherit (pkgs)` for 12 packages                                                                                                                                 |
+| `base.nix` simplified                         | ✅ Done | Receives `larsPackages` attrset via specialArgs, uses `builtins.attrValues` — no more individual Go tool inputs or override helpers                                                                               |
+| PMA service module fixed                      | ✅ Done | `projects-management-automation.nix` now references `inputs.projects-management-automation.packages.${pkgs.stdenv.hostPlatform.system}.default` directly                                                          |
+| `art-dupl` vendorHash fixed                   | ✅ Done | Correct hash `sha256-IcR8IPln7ZBB+QJP2MZKFMdr0204pgdH9IA/lIbrpjA=` applied inline in `mkLarsPackages`                                                                                                             |
+| Darwin specialArgs wired                      | ✅ Done | `larsPackages = mkLarsPackages "aarch64-darwin"` passed to Darwin config                                                                                                                                          |
+| NixOS specialArgs wired                       | ✅ Done | `larsPackages = mkLarsPackages "x86_64-linux"` passed to NixOS config                                                                                                                                             |
+| AGENTS.md updated                             | ✅ Done | Removed all `mkPackageOverlay` references, documented new `mkLarsPackages` pattern                                                                                                                                |
+| `just test-fast` passes                       | ✅ Done | All eval checks pass, zero warnings (fixed `pkgs.system` deprecation too)                                                                                                                                         |
+| Formatted with alejandra                      | ✅ Done | `nix fmt .` — 2 files changed (formatting only)                                                                                                                                                                   |
 
 ### Pre-Existing (From Prior Sessions)
 
-| Item | Status | Details |
-|------|--------|---------|
-| Cross-platform flake (Darwin + NixOS) | ✅ | 52 flake inputs, 123 .nix files, flake-parts architecture |
-| 40 service modules auto-discovered | ✅ | `modules/nixos/services/` — filename IS the module name |
-| 48 enabled services on evo-x2 | ✅ | Docker, Caddy, SOPS, Forgejo, Immich, SigNoz, Pocket ID, etc. |
-| Centralized port registry | ✅ | `lib/ports.nix` — collision-protected |
-| Centralized image registry | ✅ | `lib/images.nix` — pinned container refs with digests |
-| systemd hardening helpers | ✅ | `harden`, `hardenUser`, `serviceDefaults` in `lib/` |
-| BTRFS snapshot automation | ✅ | Pre-deploy snapshots, daily btrbk, auto-pruning |
-| DNS stack (unbound + dnsblockd) | ✅ | Custom DNS blocker with block page |
-| Caddy reverse proxy with forward auth | ✅ | 15 virtual hosts, oauth2-proxy + Pocket ID |
-| Gatus health monitoring | ✅ | 33 health check endpoints, Discord alerting |
-| sops-nix secrets management | ✅ | Age-encrypted via SSH host keys |
+| Item                                  | Status | Details                                                       |
+| ------------------------------------- | ------ | ------------------------------------------------------------- |
+| Cross-platform flake (Darwin + NixOS) | ✅     | 52 flake inputs, 123 .nix files, flake-parts architecture     |
+| 40 service modules auto-discovered    | ✅     | `modules/nixos/services/` — filename IS the module name       |
+| 48 enabled services on evo-x2         | ✅     | Docker, Caddy, SOPS, Forgejo, Immich, SigNoz, Pocket ID, etc. |
+| Centralized port registry             | ✅     | `lib/ports.nix` — collision-protected                         |
+| Centralized image registry            | ✅     | `lib/images.nix` — pinned container refs with digests         |
+| systemd hardening helpers             | ✅     | `harden`, `hardenUser`, `serviceDefaults` in `lib/`           |
+| BTRFS snapshot automation             | ✅     | Pre-deploy snapshots, daily btrbk, auto-pruning               |
+| DNS stack (unbound + dnsblockd)       | ✅     | Custom DNS blocker with block page                            |
+| Caddy reverse proxy with forward auth | ✅     | 15 virtual hosts, oauth2-proxy + Pocket ID                    |
+| Gatus health monitoring               | ✅     | 33 health check endpoints, Discord alerting                   |
+| sops-nix secrets management           | ✅     | Age-encrypted via SSH host keys                               |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What's Left |
-|------|--------|-------------|
-| `just test-fast` passes, full build untested | ⚠️ | `nh os boot .` not re-run after overlay refactor — vendorHash fix should resolve the art-dupl FOD failure, but full build not verified |
-| Overlay documentation in AGENTS.md | ⚠️ | Updated for `mkLarsPackages`, but FEATURES.md still references old overlay patterns ("19 via flake-input overlays") |
-| TODO_LIST.md upstream Go repo entries | ⚠️ | Still references `overlays/shared.nix` for library-policy and mr-sync mkTidyOverride — now lives in `mkLarsPackages` |
-| Monitor365 | ⚠️ | Server was crash-looping (DB path fixed in prior session), needs `reset-failed` after deploy |
-| Hermes AI gateway | ⚠️ | Config wired, missing OpenAI API key in sops + SSH deploy key |
-| Twenty CRM | ⚠️ | Intermittent 502s — possible container OOM or PG connection exhaustion |
+| Item                                         | Status | What's Left                                                                                                                            |
+| -------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `just test-fast` passes, full build untested | ⚠️     | `nh os boot .` not re-run after overlay refactor — vendorHash fix should resolve the art-dupl FOD failure, but full build not verified |
+| Overlay documentation in AGENTS.md           | ⚠️     | Updated for `mkLarsPackages`, but FEATURES.md still references old overlay patterns ("19 via flake-input overlays")                    |
+| TODO_LIST.md upstream Go repo entries        | ⚠️     | Still references `overlays/shared.nix` for library-policy and mr-sync mkTidyOverride — now lives in `mkLarsPackages`                   |
+| Monitor365                                   | ⚠️     | Server was crash-looping (DB path fixed in prior session), needs `reset-failed` after deploy                                           |
+| Hermes AI gateway                            | ⚠️     | Config wired, missing OpenAI API key in sops + SSH deploy key                                                                          |
+| Twenty CRM                                   | ⚠️     | Intermittent 502s — possible container OOM or PG connection exhaustion                                                                 |
 
 ---
 
 ## c) NOT STARTED
 
-| Item | Why It Matters |
-|------|----------------|
-| Full `nh os boot .` verification after overlay refactor | Must confirm the build actually succeeds, not just eval |
-| `ROADMAP.md` | 37 planning docs in `docs/planning/`, no consolidated roadmap |
-| `CHANGELOG.md` | 185+ commits, no changelog |
-| Status report archiving | 195 files in `docs/status/` — pre-session-100 should be archived |
-| BTRFS `/data` subvolume migration | `/data` is BTRFS toplevel (subvolid=5) — no snapshot protection for Docker/Immich/AI data |
-| Raspberry Pi 3 DNS failover node | Hardware not provisioned, VRRP config defined |
-| Swap investigation | 8 GiB swap used on 128 GiB RAM — stale LSP processes suspected |
+| Item                                                    | Why It Matters                                                                            |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Full `nh os boot .` verification after overlay refactor | Must confirm the build actually succeeds, not just eval                                   |
+| `ROADMAP.md`                                            | 37 planning docs in `docs/planning/`, no consolidated roadmap                             |
+| `CHANGELOG.md`                                          | 185+ commits, no changelog                                                                |
+| Status report archiving                                 | 195 files in `docs/status/` — pre-session-100 should be archived                          |
+| BTRFS `/data` subvolume migration                       | `/data` is BTRFS toplevel (subvolid=5) — no snapshot protection for Docker/Immich/AI data |
+| Raspberry Pi 3 DNS failover node                        | Hardware not provisioned, VRRP config defined                                             |
+| Swap investigation                                      | 8 GiB swap used on 128 GiB RAM — stale LSP processes suspected                            |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| Item | Severity | Details |
-|------|----------|---------|
-| **195 status report files** | Medium | `docs/status/` has ballooned to 195 files. Almost none are ever referenced again. This is organizational debt — should be archived to `docs/status/archive/` or deleted |
-| **art-dupl `fork` branch** | Medium | The upstream `art-dupl` repo on the `fork` branch has a stale `vendorHash` in its own flake. We patched around it in SystemNix, but the upstream repo should be fixed. This will break again if the hash changes |
-| **`disableTests` overlay** | Low | 4 packages (`valkey`, `aiocache`, `timm`, `xformers`) have `doCheck = false` overrides. This masks upstream test failures — should be investigated and PR'd to nixpkgs |
-| ** FEATURES.md is stale** | Low | Says "19 via flake-input overlays" — now only 7 real overlays remain in `linux.nix` (upstream `.overlays.default`) + 5 `callPackage` overlays in `shared.nix`. The 12 Go tools are no longer overlays at all |
-| **`flake.lock` churn** | Low | 148 lines changed in `flake.lock` — this is from prior session input updates, not this session's work |
+| Item                        | Severity | Details                                                                                                                                                                                                          |
+| --------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **195 status report files** | Medium   | `docs/status/` has ballooned to 195 files. Almost none are ever referenced again. This is organizational debt — should be archived to `docs/status/archive/` or deleted                                          |
+| **art-dupl `fork` branch**  | Medium   | The upstream `art-dupl` repo on the `fork` branch has a stale `vendorHash` in its own flake. We patched around it in SystemNix, but the upstream repo should be fixed. This will break again if the hash changes |
+| **`disableTests` overlay**  | Low      | 4 packages (`valkey`, `aiocache`, `timm`, `xformers`) have `doCheck = false` overrides. This masks upstream test failures — should be investigated and PR'd to nixpkgs                                           |
+| ** FEATURES.md is stale**   | Low      | Says "19 via flake-input overlays" — now only 7 real overlays remain in `linux.nix` (upstream `.overlays.default`) + 5 `callPackage` overlays in `shared.nix`. The 12 Go tools are no longer overlays at all     |
+| **`flake.lock` churn**      | Low      | 148 lines changed in `flake.lock` — this is from prior session input updates, not this session's work                                                                                                            |
 
 ---
 
@@ -174,16 +174,16 @@ The local override in `mkLarsPackages` works and unblocks the build immediately.
 
 ## Files Changed This Session
 
-| File | Lines | What Changed |
-|------|-------|-------------|
-| `flake.nix` | +42 -21 | Added `mkLarsPackages`, simplified `perSystem.packages`, wired `larsPackages` to both platform specialArgs |
-| `overlays/shared.nix` | +9 -62 | Removed 12 `mkPackageOverlay` entries + `mkTidyOverride` helper + all input parameters. Now a bare list of 5 real overlays |
-| `overlays/default.nix` | +4 -15 | Removed `mkPackageOverlay` helper definition + `inherit mkPackageOverlay` export |
-| `platforms/common/packages/base.nix` | +2 -23 | Removed 12 Go tool inputs + `mkTidy`/`larsGoTools` helpers. Accepts `larsPackages` attrset |
-| `modules/nixos/services/projects-management-automation.nix` | +1 -1 | `pkgs.projects-management-automation` → direct flake input reference |
-| `platforms/common/dns-resolver.nix` | +4 -2 | Formatting only (alejandra) |
-| `AGENTS.md` | +9 -9 | Updated overlay documentation, removed mkPackageOverlay references |
-| `flake.lock` | +74 -74 | Prior session input updates (not this session) |
+| File                                                        | Lines   | What Changed                                                                                                               |
+| ----------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `flake.nix`                                                 | +42 -21 | Added `mkLarsPackages`, simplified `perSystem.packages`, wired `larsPackages` to both platform specialArgs                 |
+| `overlays/shared.nix`                                       | +9 -62  | Removed 12 `mkPackageOverlay` entries + `mkTidyOverride` helper + all input parameters. Now a bare list of 5 real overlays |
+| `overlays/default.nix`                                      | +4 -15  | Removed `mkPackageOverlay` helper definition + `inherit mkPackageOverlay` export                                           |
+| `platforms/common/packages/base.nix`                        | +2 -23  | Removed 12 Go tool inputs + `mkTidy`/`larsGoTools` helpers. Accepts `larsPackages` attrset                                 |
+| `modules/nixos/services/projects-management-automation.nix` | +1 -1   | `pkgs.projects-management-automation` → direct flake input reference                                                       |
+| `platforms/common/dns-resolver.nix`                         | +4 -2   | Formatting only (alejandra)                                                                                                |
+| `AGENTS.md`                                                 | +9 -9   | Updated overlay documentation, removed mkPackageOverlay references                                                         |
+| `flake.lock`                                                | +74 -74 | Prior session input updates (not this session)                                                                             |
 
 **Total: +151 -201 (net -50 lines)**
 
@@ -191,9 +191,9 @@ The local override in `mkLarsPackages` works and unblocks the build immediately.
 
 ## Build Status
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| `just test-fast` | ✅ Pass | All eval checks, zero warnings |
-| `nix fmt .` | ✅ Pass | 2 files formatted (dns-resolver.nix, formatting only) |
-| `nh os boot .` | ⏳ Untested | Was failing on art-dupl vendorHash — now fixed. Needs re-verification |
-| `nix flake check` | ⏳ Untested | Should pass given test-fast passes |
+| Check             | Status      | Notes                                                                 |
+| ----------------- | ----------- | --------------------------------------------------------------------- |
+| `just test-fast`  | ✅ Pass     | All eval checks, zero warnings                                        |
+| `nix fmt .`       | ✅ Pass     | 2 files formatted (dns-resolver.nix, formatting only)                 |
+| `nh os boot .`    | ⏳ Untested | Was failing on art-dupl vendorHash — now fixed. Needs re-verification |
+| `nix flake check` | ⏳ Untested | Should pass given test-fast passes                                    |

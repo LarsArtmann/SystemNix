@@ -10,15 +10,15 @@
 
 All six boot-time service failures are **root-caused and fixed in Nix** (commit `f09dae03`). The deploy-blocking exit-code-4 bug is **also fixed** (commit `71081507`). The DiscordSync upstream migration bug — the only remaining failure — is **fixed in the DiscordSync repo** (commit `e6c7606`). **Everything is ready to deploy.** Nothing has been deployed yet.
 
-| Metric | Value |
-|--------|-------|
-| Services fixed in Nix | 6/7 (DiscordSync needs flake update) |
-| Services deployed | 0 — deploy pending |
-| Failed units (live now) | 4 (all `start-limit-hit` from boot — will clear on deploy) |
-| Disk: root (`/`) | 536G / 723G (76%) |
-| Disk: `/data` | 631G / 1.1T (61%) |
-| SystemNix commits ahead of origin | 1 |
-| DiscordSync commits ahead of origin | 2 (1 mine + 1 pre-existing refactoring) |
+| Metric                              | Value                                                      |
+| ----------------------------------- | ---------------------------------------------------------- |
+| Services fixed in Nix               | 6/7 (DiscordSync needs flake update)                       |
+| Services deployed                   | 0 — deploy pending                                         |
+| Failed units (live now)             | 4 (all `start-limit-hit` from boot — will clear on deploy) |
+| Disk: root (`/`)                    | 536G / 723G (76%)                                          |
+| Disk: `/data`                       | 631G / 1.1T (61%)                                          |
+| SystemNix commits ahead of origin   | 1                                                          |
+| DiscordSync commits ahead of origin | 2 (1 mine + 1 pre-existing refactoring)                    |
 
 ---
 
@@ -50,25 +50,25 @@ All six boot-time service failures are **root-caused and fixed in Nix** (commit 
 
 ## b) PARTIALLY DONE ⚠️
 
-| Area | Status | What remains |
-|------|--------|--------------|
-| **Deploy** | All fixes committed, eval-verified, pre-commit hooks green. | **`nix run .#deploy` not yet run.** The 4 failed services are still in `start-limit-hit` from the last boot. Deploy will auto-reset them. |
-| **DiscordSync in SystemNix** | Migration bug fixed in DiscordSync repo (`e6c7606`). | DiscordSync commit **not pushed**. SystemNix flake input **not updated** (`nix flake lock --update-input discordsync`). |
-| **Verification** | `nix flake check --no-build` ✅, `nix eval .#nixosConfigurations.evo-x2` ✅. | No live deploy verification — can't confirm services actually start until deployed. |
-| **DiscordSync repo** | Has 2 unpushed commits (mine `e6c7606` + pre-existing refactoring by another agent). | 17 files of uncommitted formatting/refactoring changes in working tree that I did **not** author — leaving untouched. |
+| Area                         | Status                                                                               | What remains                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Deploy**                   | All fixes committed, eval-verified, pre-commit hooks green.                          | **`nix run .#deploy` not yet run.** The 4 failed services are still in `start-limit-hit` from the last boot. Deploy will auto-reset them. |
+| **DiscordSync in SystemNix** | Migration bug fixed in DiscordSync repo (`e6c7606`).                                 | DiscordSync commit **not pushed**. SystemNix flake input **not updated** (`nix flake lock --update-input discordsync`).                   |
+| **Verification**             | `nix flake check --no-build` ✅, `nix eval .#nixosConfigurations.evo-x2` ✅.         | No live deploy verification — can't confirm services actually start until deployed.                                                       |
+| **DiscordSync repo**         | Has 2 unpushed commits (mine `e6c7606` + pre-existing refactoring by another agent). | 17 files of uncommitted formatting/refactoring changes in working tree that I did **not** author — leaving untouched.                     |
 
 ---
 
 ## c) NOT STARTED 📋
 
-| Item | Notes |
-|------|-------|
-| **Deploy the fixes** | `nix run .#deploy` — the single action that activates everything. |
-| **Push DiscordSync commit** | `git push` in DiscordSync repo, then `nix flake lock --update-input discordsync` in SystemNix, then redeploy. |
-| **Off-site backup** | No BorgBackup to Hetzner StorageBox. Single point of failure. |
-| **BTRFS `/data` subvolume migration** | `/data` is toplevel (subvolid=5), no snapshot protection. ~1h downtime. |
-| **Firewall deny-by-default** | NixOS allows all inbound. |
-| **Monitor365 agent→server auth** | No authentication on LAN. |
+| Item                                  | Notes                                                                                                         |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| **Deploy the fixes**                  | `nix run .#deploy` — the single action that activates everything.                                             |
+| **Push DiscordSync commit**           | `git push` in DiscordSync repo, then `nix flake lock --update-input discordsync` in SystemNix, then redeploy. |
+| **Off-site backup**                   | No BorgBackup to Hetzner StorageBox. Single point of failure.                                                 |
+| **BTRFS `/data` subvolume migration** | `/data` is toplevel (subvolid=5), no snapshot protection. ~1h downtime.                                       |
+| **Firewall deny-by-default**          | NixOS allows all inbound.                                                                                     |
+| **Monitor365 agent→server auth**      | No authentication on LAN.                                                                                     |
 
 ---
 
@@ -105,33 +105,33 @@ The migration fix is in the DiscordSync repo (`e6c7606`), but SystemNix consumes
 
 ## f) Top 25 Things to Get Done Next
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Deploy the 6 fixes** (`nix run .#deploy`) | 🔴 Critical | XS |
-| 2 | **Push DiscordSync** `e6c7606` → update flake lock → redeploy | 🔴 Critical | S |
-| 3 | **Commit/stash DiscordSync's 17 uncommitted files** | 🔴 Blocker for push | XS |
-| 4 | **Verify all 7 services start post-deploy** | 🔴 High | XS |
-| 5 | **Verify signoz-provision completes** (should self-heal now) | 🔴 High | XS |
-| 6 | **Push SystemNix** to origin (1 commit ahead) | 🟠 Medium | XS |
-| 7 | **Set up BorgBackup** to Hetzner StorageBox | 🔴 Critical | M |
-| 8 | **BTRFS `/data` subvolume migration** | 🔴 High | L |
-| 9 | **Hermes manual steps** (OpenAI key, SSH key, fallback model) | 🟠 Medium | S |
-| ~~10~~ | ~~**Fix network-dependent service ordering** (`.device` units)~~ | ✅ Done | M |
-| 10 | **Reduce signoz-provision boot tail** | 🟠 Medium | M |
-| 12 | **Firewall deny-by-default** | 🟠 High | M |
-| 13 | **Bind Immich to localhost** | 🟡 Security | XS |
-| 14 | **Monitor365 agent→server auth** | 🟡 Security | M |
-| 15 | **Post-deploy health assertion** in deploy.sh | 🟠 Medium | S |
-| 16 | **Watchdog for stuck-failed services** | 🟠 Medium | M |
-| 17 | **Two-repo deploy automation script** | 🟢 Low | M |
-| 18 | **Remove photomap** (decided, not done) | 🟢 Low | XS |
-| 19 | **Audit `/nix` at 118G** — run `nix-collect-garbage -d` | 🟠 Medium | S |
-| 20 | **Split large modules** (monitor365 716L, signoz 705L) | 🟢 Low | L |
-| 21 | **Upstream nixpkgs PRs** (aw-watcher-utilization, etc.) | 🟢 Low | S |
-| 22 | **Auditd enablement** (re-check NixOS bug #483085) | 🟡 Security | S |
-| 23 | **Jan llama-server respawn investigation** | 🟠 Medium | M |
-| 24 | **Provision Pi 3** for DNS failover cluster | 🟢 Low | L |
-| 25 | **Darwin HM parity** (blocked by 256GB disk) | 🟢 Low | L |
+| #      | Task                                                             | Impact              | Effort |
+| ------ | ---------------------------------------------------------------- | ------------------- | ------ |
+| 1      | **Deploy the 6 fixes** (`nix run .#deploy`)                      | 🔴 Critical         | XS     |
+| 2      | **Push DiscordSync** `e6c7606` → update flake lock → redeploy    | 🔴 Critical         | S      |
+| 3      | **Commit/stash DiscordSync's 17 uncommitted files**              | 🔴 Blocker for push | XS     |
+| 4      | **Verify all 7 services start post-deploy**                      | 🔴 High             | XS     |
+| 5      | **Verify signoz-provision completes** (should self-heal now)     | 🔴 High             | XS     |
+| 6      | **Push SystemNix** to origin (1 commit ahead)                    | 🟠 Medium           | XS     |
+| 7      | **Set up BorgBackup** to Hetzner StorageBox                      | 🔴 Critical         | M      |
+| 8      | **BTRFS `/data` subvolume migration**                            | 🔴 High             | L      |
+| 9      | **Hermes manual steps** (OpenAI key, SSH key, fallback model)    | 🟠 Medium           | S      |
+| ~~10~~ | ~~**Fix network-dependent service ordering** (`.device` units)~~ | ✅ Done             | M      |
+| 10     | **Reduce signoz-provision boot tail**                            | 🟠 Medium           | M      |
+| 12     | **Firewall deny-by-default**                                     | 🟠 High             | M      |
+| 13     | **Bind Immich to localhost**                                     | 🟡 Security         | XS     |
+| 14     | **Monitor365 agent→server auth**                                 | 🟡 Security         | M      |
+| 15     | **Post-deploy health assertion** in deploy.sh                    | 🟠 Medium           | S      |
+| 16     | **Watchdog for stuck-failed services**                           | 🟠 Medium           | M      |
+| 17     | **Two-repo deploy automation script**                            | 🟢 Low              | M      |
+| 18     | **Remove photomap** (decided, not done)                          | 🟢 Low              | XS     |
+| 19     | **Audit `/nix` at 118G** — run `nix-collect-garbage -d`          | 🟠 Medium           | S      |
+| 20     | **Split large modules** (monitor365 716L, signoz 705L)           | 🟢 Low              | L      |
+| 21     | **Upstream nixpkgs PRs** (aw-watcher-utilization, etc.)          | 🟢 Low              | S      |
+| 22     | **Auditd enablement** (re-check NixOS bug #483085)               | 🟡 Security         | S      |
+| 23     | **Jan llama-server respawn investigation**                       | 🟠 Medium           | M      |
+| 24     | **Provision Pi 3** for DNS failover cluster                      | 🟢 Low              | L      |
+| 25     | **Darwin HM parity** (blocked by 256GB disk)                     | 🟢 Low              | L      |
 
 ---
 
@@ -142,6 +142,7 @@ The migration fix is in the DiscordSync repo (`e6c7606`), but SystemNix consumes
 They contain real refactoring (not mine): `getEnvInt`/`getEnvDuration` collapsed into a generic `getEnvParsed[T]`, test dedup, and gofumpt formatting across `internal/bot/`, `internal/db/`, `internal/projection/`, and `internal/config/`. They were present when I started working on the migration fix.
 
 Options:
+
 - **Commit them** — they look like clean refactoring from another agent/session, but I didn't author them and can't verify their intent
 - **Stash them** — safe, but blocks `git push` (my commit `e6c7606` is already committed on top of them, so push would work, but the stash creates divergence)
 - **Leave them** — they don't block pushing `e6c7606` (it's already committed), but the working tree stays dirty
@@ -154,35 +155,37 @@ I need to know: are these your changes? Should I commit them, or are they WIP fr
 
 ### SystemNix (1 commit ahead of origin)
 
-| Commit | Summary |
-|--------|---------|
+| Commit     | Summary                                                                  |
+| ---------- | ------------------------------------------------------------------------ |
 | `71081507` | fix(deploy): reset failed units before activation to prevent exit code 4 |
-| `f09dae03` | fix(services): resolve six boot-time service failures from log audit |
+| `f09dae03` | fix(services): resolve six boot-time service failures from log audit     |
 
 ### DiscordSync (2 commits ahead of origin, 1 mine)
 
-| Commit | Summary |
-|--------|---------|
+| Commit    | Summary                                                                  |
+| --------- | ------------------------------------------------------------------------ |
 | `e6c7606` | fix(db): split schema into individual statements for turso driver compat |
 
 ## Files Changed
 
 ### SystemNix
-| File | Change |
-|------|--------|
-| `modules/nixos/services/signoz.nix` | + ExecStartPre (migration lock cleanup) |
-| `modules/nixos/services/monitor365.nix` | agent `%t` specifier; server dropped `--config` |
-| `modules/nixos/services/dns-blocker.nix` | `path = [pkgs.nss.tools pkgs.coreutils]` |
-| `platforms/common/programs/activitywatch.nix` | + `Restart=on-failure` |
-| `platforms/nixos/system/configuration.nix` | + `security.wrappers.fusermount3` |
-| `scripts/deploy.sh` | + `systemctl reset-failed` before activation |
-| `AGENTS.md` | + 7 gotcha entries |
-| `docs/status/2026-06-27_21-18_*` | Previous status report |
+
+| File                                          | Change                                          |
+| --------------------------------------------- | ----------------------------------------------- |
+| `modules/nixos/services/signoz.nix`           | + ExecStartPre (migration lock cleanup)         |
+| `modules/nixos/services/monitor365.nix`       | agent `%t` specifier; server dropped `--config` |
+| `modules/nixos/services/dns-blocker.nix`      | `path = [pkgs.nss.tools pkgs.coreutils]`        |
+| `platforms/common/programs/activitywatch.nix` | + `Restart=on-failure`                          |
+| `platforms/nixos/system/configuration.nix`    | + `security.wrappers.fusermount3`               |
+| `scripts/deploy.sh`                           | + `systemctl reset-failed` before activation    |
+| `AGENTS.md`                                   | + 7 gotcha entries                              |
+| `docs/status/2026-06-27_21-18_*`              | Previous status report                          |
 
 ### DiscordSync
-| File | Change |
-|------|--------|
-| `internal/db/db.go` | `splitSQLStatements()` + `execSchema()` replacing single multi-statement Exec |
-| `internal/db/db_test.go` | + 3 tests for splitter + trigger verification |
+
+| File                     | Change                                                                        |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `internal/db/db.go`      | `splitSQLStatements()` + `execSchema()` replacing single multi-statement Exec |
+| `internal/db/db_test.go` | + 3 tests for splitter + trigger verification                                 |
 
 **Validation:** `nix flake check --no-build` ✅ · `nix eval .#nixosConfigurations.evo-x2` ✅ · `go test ./...` ✅ · BuildFlow ✅

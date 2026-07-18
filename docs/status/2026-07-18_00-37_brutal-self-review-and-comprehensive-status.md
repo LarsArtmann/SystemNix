@@ -15,14 +15,15 @@
 
 **What I fixed (4 upstream commits):**
 
-| Commit | Fix |
-|--------|-----|
-| `58ae68d03` | Bootstrap path: emit `TenantCreated` domain event with SHA-256 hash, re-sync on every startup |
+| Commit      | Fix                                                                                                                                        |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `58ae68d03` | Bootstrap path: emit `TenantCreated` domain event with SHA-256 hash, re-sync on every startup                                              |
 | `6e6537082` | API path (`POST /v1/tenants`): thread `ApiKeyHash` through `TenantCommand::Create` → `TenantEvent::Created` → `DomainEvent::TenantCreated` |
-| `6582b2766` | DuckDB SQL: `CAST(now() AS TIMESTAMP)` for TIMESTAMPTZ, `GREATEST()` instead of nested `MAX()` |
-| `664debdee` | DuckDB SQL: `CAST(timestamp AS TIMESTAMP)` for VARCHAR columns, strict `GROUP BY` with all columns |
+| `6582b2766` | DuckDB SQL: `CAST(now() AS TIMESTAMP)` for TIMESTAMPTZ, `GREATEST()` instead of nested `MAX()`                                             |
+| `664debdee` | DuckDB SQL: `CAST(timestamp AS TIMESTAMP)` for VARCHAR columns, strict `GROUP BY` with all columns                                         |
 
 **Strong typing improvement (per user request):**
+
 - `api_key: Option<String>` → `api_key_hash: Option<ApiKeyHash>` across the entire type chain
 - `ApiKeyHash` is now `#[serde(transparent)]` — a true newtype that makes it impossible to accidentally put a plaintext key where a hash belongs, or vice versa
 - `#[serde(rename = "api_key")]` on the field preserves backward compatibility with existing event store JSON
@@ -41,6 +42,7 @@
 ### A4. DuckDB background task errors eliminated
 
 Three classes of DuckDB SQL errors that were firing every 5 minutes in production:
+
 1. `-(TIMESTAMP WITH TIME ZONE, INTERVAL)` — no such overload in DuckDB
 2. `MAX(x, 1)` parsed as nested aggregate
 3. VARCHAR vs TIMESTAMP comparison on `events.timestamp` column
@@ -95,6 +97,7 @@ I marked T012 (centralize `ApiKeyHash::from_key` calls into one shared bootstrap
 ### B4. WS idle timeout cycle (INVESTIGATED, NOT FIXED)
 
 The WebSocket connects then disconnects every ~1 second:
+
 ```
 INFO Agent WebSocket connected device_id=evo-x2
 WARN Agent WS idle timeout or disconnect device_id=evo-x2
@@ -107,20 +110,20 @@ The server has a 90-second idle timeout (`ws_agent.rs:138`), but the connection 
 
 ## C) NOT STARTED — In the plan but untouched
 
-| Task | Description |
-|------|-------------|
-| T014 | Add conditional check before `rotate_tenant_api_key` — skip if hash already matches |
-| T018-T019 | Deploy templ to macOS (requires running `darwin-rebuild` on the Mac) |
-| T020-T021 | BTRFS scrub + smartctl health check (requires `sudo`) |
-| T022 | Off-site backup setup (Hetzner StorageBox BorgBackup) |
-| T028 | Fix post-deploy-check empty ports bug (14 false FAILs) |
-| T029 | Twenty CRM: fix PG role mismatch |
-| T031 | Add Gatus alert for monitor365 agent connection stability |
-| T032 | Replace X11-only runtime deps with Wayland equivalents in monitor365 |
-| T033 | restartTriggers audit for all services serving nix-store static files |
+| Task      | Description                                                                                       |
+| --------- | ------------------------------------------------------------------------------------------------- |
+| T014      | Add conditional check before `rotate_tenant_api_key` — skip if hash already matches               |
+| T018-T019 | Deploy templ to macOS (requires running `darwin-rebuild` on the Mac)                              |
+| T020-T021 | BTRFS scrub + smartctl health check (requires `sudo`)                                             |
+| T022      | Off-site backup setup (Hetzner StorageBox BorgBackup)                                             |
+| T028      | Fix post-deploy-check empty ports bug (14 false FAILs)                                            |
+| T029      | Twenty CRM: fix PG role mismatch                                                                  |
+| T031      | Add Gatus alert for monitor365 agent connection stability                                         |
+| T032      | Replace X11-only runtime deps with Wayland equivalents in monitor365                              |
+| T033      | restartTriggers audit for all services serving nix-store static files                             |
 | T041-T055 | monitor365 architecture improvements (durable event worker, OCC, load tests, passkey tests, etc.) |
-| T056 | Wire `templ lsp` into neovim config |
-| T059-T061 | GPUActive monitoring, TTM pool reduction, firewall deny-by-default |
+| T056      | Wire `templ lsp` into neovim config                                                               |
+| T059-T061 | GPUActive monitoring, TTM pool reduction, firewall deny-by-default                                |
 
 ---
 
@@ -141,6 +144,7 @@ Treefmt damaged HTML docs during my commit. I ran `git restore docs/` to undo th
 ### D4. I didn't verify the api_key is actually non-empty in production
 
 I couldn't access DuckDB directly (permission denied on the file). I inferred the fix works because:
+
 1. The bootstrap log says "appended missing TenantCreated event"
 2. The projection reset ran
 3. The post-deploy-check shows the agent connected
@@ -154,6 +158,7 @@ But I never actually ran `SELECT api_key FROM tenants` against the production da
 ### D6. The device registration 400 parse error
 
 When the agent tries to re-register after getting 404, it fails with:
+
 ```
 "Failed to parse the request body as JSON: expected value at line 1 column 1"
 ```
@@ -272,6 +277,7 @@ The GPUActive memory issue (51+ GiB consumed by GTT buffer objects) is documente
 ### G1. Can you give me `sudo` access or run specific commands for me?
 
 I need to:
+
 - `sudo rm -rf /nix/var/nix/builds/nix-*` (stale sandboxes, disk at 93%)
 - `sudo duckdb /var/lib/monitor365/monitor365.duckdb -c "SELECT id, api_key != '' as has_key FROM tenants"` (verify the fix in production)
 - `sudo btrfs scrub status /` and `sudo btrfs scrub status /data` (corruption check)

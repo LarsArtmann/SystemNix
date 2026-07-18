@@ -17,19 +17,20 @@ Complete overhaul of the Hermes AI gateway service: migrated state directory, fi
 
 ### 1. Hermes State Migration (`/var/lib/hermes` → `/home/hermes`)
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| `stateDir` default | `/var/lib/hermes` | `/home/hermes` |
-| User `home` | `/var/lib/hermes` | `/home/hermes` |
-| `createHome` | `false` | `true` |
-| Old dead path | `/home/.hermes` | Removed |
-| Migration source | Only `/home/.hermes` | Both `/home/lars/.hermes` and `/var/lib/hermes` |
-| Migration guard | `ls -A` (broken by tmpfiles) | `state.db > 1MB` (correct) |
-| `ProtectHome` | `true` (blocked `/home/`) | `false` |
-| User groups | `hermes` only | `hermes` + `users` |
-| `/home/lars` perms | `700` | `770` (group rwx) |
+| Aspect             | Before                       | After                                           |
+| ------------------ | ---------------------------- | ----------------------------------------------- |
+| `stateDir` default | `/var/lib/hermes`            | `/home/hermes`                                  |
+| User `home`        | `/var/lib/hermes`            | `/home/hermes`                                  |
+| `createHome`       | `false`                      | `true`                                          |
+| Old dead path      | `/home/.hermes`              | Removed                                         |
+| Migration source   | Only `/home/.hermes`         | Both `/home/lars/.hermes` and `/var/lib/hermes` |
+| Migration guard    | `ls -A` (broken by tmpfiles) | `state.db > 1MB` (correct)                      |
+| `ProtectHome`      | `true` (blocked `/home/`)    | `false`                                         |
+| User groups        | `hermes` only                | `hermes` + `users`                              |
+| `/home/lars` perms | `700`                        | `770` (group rwx)                               |
 
 **Two migration bugs fixed:**
+
 - **Bug 1:** Migration script looked for `/home/.hermes` (wrong path). Fixed by listing both real source paths.
 - **Bug 2:** `tmpfiles.rules` created empty subdirs before migration, making `ls -A` think target was populated. Fixed by checking `state.db` size > 1MB.
 
@@ -52,6 +53,7 @@ Replaced `pkgs.libopus` in service `path` with `pkgs.binutils`. The `ctypes.util
 ### 5. golangci-lint-auto-configure Build Fix
 
 Three-part fix for stale `go.mod` + Nix sandbox:
+
 1. `go mod tidy` in `postPatch` with `dontFixup` guard (runs only in go-modules derivation which has network)
 2. `modPostBuild = "go mod download all"` (ensures all transitive deps cached)
 3. GOPROXY set to local go-modules output in main build's `postPatch` so `go mod tidy` resolves offline
@@ -139,39 +141,40 @@ Went through many wrong approaches (LD_PRELOAD, GOFLAGS override, proxyVendor=fa
 
 ## F) Top 25 Things We Should Get Done Next
 
-| # | Priority | Task | Impact | Effort |
-|---|----------|------|--------|--------|
-| 1 | P0 | **Trash `/home/lars/.hermes` (1.3GB)** | Cleanup | 1min |
-| 2 | P0 | **Trash `/var/lib/hermes` (4KB)** | Cleanup | 1min |
-| 3 | P0 | **Commit flake.lock** — monitor365-src bump uncommitted | Git | 1min |
-| 4 | P1 | **Configure Authelia SMTP notifier** — replace filesystem with real email | UX | 30min |
-| 5 | P1 | **Test hermes Discord bot end-to-end** — send a message, verify response | Verification | 5min |
-| 6 | P1 | **Test hermes voice playback** — join Discord voice channel | Verification | 5min |
-| 7 | P1 | **Run `just health`** — full system health check | Monitoring | 5min |
-| 8 | P2 | **Add hermes state verification to justfile** — `just hermes-verify` | DX | 15min |
-| 9 | P2 | **Update AGENTS.md with all session changes** — migration fix, group access, caddy bypass | Docs | 15min |
-| 10 | P2 | **Push all commits to origin** — `git push` | Git | 1min |
-| 11 | P2 | **Run `just format`** — ensure all Nix files formatted | Hygiene | 2min |
-| 12 | P2 | **Document dontFixut + modPostBuild pattern in AGENTS.md** | Docs | 10min |
-| 13 | P2 | **Document tmpfiles vs migration ordering gotcha** | Docs | 10min |
-| 14 | P3 | **Audit all services for ProtectHome conflicts** | Security | 15min |
-| 15 | P3 | **Add hermes to SigNoz monitoring** | Observability | 30min |
-| 16 | P3 | **Fix dnsblockd dependabot vulnerability** — check high-severity alert | Security | 15min |
-| 17 | P3 | **Create `lib/buildGoModule.nix` helper** — extract go mod tidy pattern | DX | 30min |
-| 18 | P3 | **Audit all buildGoModule packages** — dnsblockd, netwatch, monitor365 | Reliability | 30min |
-| 19 | P3 | **Add `just hermes-backup`** — backup state.db | DX | 15min |
-| 20 | P3 | **Add hermes service to homepage dashboard** | UX | 15min |
-| 21 | P4 | **Consider `ProtectHome = "read-only"` for hermes** | Security | 10min |
-| 22 | P4 | **Silence dnsblockd TLS handshake errors** — client unsupported versions noise | Observability | 5min |
-| 23 | P4 | **Review systemd hardening across all services** | Security | 30min |
-| 24 | P4 | **Add password reset instructions to Authelia login page** | UX | 15min |
-| 25 | P4 | **Write integration test for hermes migration script** | Reliability | 30min |
+| #   | Priority | Task                                                                                      | Impact        | Effort |
+| --- | -------- | ----------------------------------------------------------------------------------------- | ------------- | ------ |
+| 1   | P0       | **Trash `/home/lars/.hermes` (1.3GB)**                                                    | Cleanup       | 1min   |
+| 2   | P0       | **Trash `/var/lib/hermes` (4KB)**                                                         | Cleanup       | 1min   |
+| 3   | P0       | **Commit flake.lock** — monitor365-src bump uncommitted                                   | Git           | 1min   |
+| 4   | P1       | **Configure Authelia SMTP notifier** — replace filesystem with real email                 | UX            | 30min  |
+| 5   | P1       | **Test hermes Discord bot end-to-end** — send a message, verify response                  | Verification  | 5min   |
+| 6   | P1       | **Test hermes voice playback** — join Discord voice channel                               | Verification  | 5min   |
+| 7   | P1       | **Run `just health`** — full system health check                                          | Monitoring    | 5min   |
+| 8   | P2       | **Add hermes state verification to justfile** — `just hermes-verify`                      | DX            | 15min  |
+| 9   | P2       | **Update AGENTS.md with all session changes** — migration fix, group access, caddy bypass | Docs          | 15min  |
+| 10  | P2       | **Push all commits to origin** — `git push`                                               | Git           | 1min   |
+| 11  | P2       | **Run `just format`** — ensure all Nix files formatted                                    | Hygiene       | 2min   |
+| 12  | P2       | **Document dontFixut + modPostBuild pattern in AGENTS.md**                                | Docs          | 10min  |
+| 13  | P2       | **Document tmpfiles vs migration ordering gotcha**                                        | Docs          | 10min  |
+| 14  | P3       | **Audit all services for ProtectHome conflicts**                                          | Security      | 15min  |
+| 15  | P3       | **Add hermes to SigNoz monitoring**                                                       | Observability | 30min  |
+| 16  | P3       | **Fix dnsblockd dependabot vulnerability** — check high-severity alert                    | Security      | 15min  |
+| 17  | P3       | **Create `lib/buildGoModule.nix` helper** — extract go mod tidy pattern                   | DX            | 30min  |
+| 18  | P3       | **Audit all buildGoModule packages** — dnsblockd, netwatch, monitor365                    | Reliability   | 30min  |
+| 19  | P3       | **Add `just hermes-backup`** — backup state.db                                            | DX            | 15min  |
+| 20  | P3       | **Add hermes service to homepage dashboard**                                              | UX            | 15min  |
+| 21  | P4       | **Consider `ProtectHome = "read-only"` for hermes**                                       | Security      | 10min  |
+| 22  | P4       | **Silence dnsblockd TLS handshake errors** — client unsupported versions noise            | Observability | 5min   |
+| 23  | P4       | **Review systemd hardening across all services**                                          | Security      | 30min  |
+| 24  | P4       | **Add password reset instructions to Authelia login page**                                | UX            | 15min  |
+| 25  | P4       | **Write integration test for hermes migration script**                                    | Reliability   | 30min  |
 
 ---
 
 ## G) Top #1 Question I Cannot Figure Out Myself
 
 **What SMTP credentials/server should Authelia use?** I can configure the Authelia notifier to use SMTP instead of filesystem, but I need to know:
+
 - Which SMTP server (Gmail, SendGrid, self-hosted, etc.)
 - The from address
 - Whether credentials should go in sops secrets
@@ -197,13 +200,13 @@ fe0e7b3 fix(pkgs/golangci-lint-auto-configure): use fakeHash and add go mod tidy
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/hermes.nix` | stateDir → /home/hermes, migration rewrite, GATEWAY_ALLOW_ALL_USERS, binutils opus fix, ProtectHome=false, dontFixup guard, state.db > 1MB migration check, extraGroups=["users"], chmod g+rwx /home/lars |
-| `pkgs/golangci-lint-auto-configure.nix` | proxyVendor=true, go mod tidy with dontFixut guard, modPostBuild, GOPROXY for main build, new vendorHash |
-| `justfile` | hermes-status path → /home/hermes |
-| `AGENTS.md` | Hermes docs: stateDir, paths, new features |
-| `flake.lock` | dnsblockd a0b1879, monitor365-src, golangci-lint-auto-configure-src, NUR |
+| File                                    | Change                                                                                                                                                                                                    |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/hermes.nix`     | stateDir → /home/hermes, migration rewrite, GATEWAY_ALLOW_ALL_USERS, binutils opus fix, ProtectHome=false, dontFixup guard, state.db > 1MB migration check, extraGroups=["users"], chmod g+rwx /home/lars |
+| `pkgs/golangci-lint-auto-configure.nix` | proxyVendor=true, go mod tidy with dontFixut guard, modPostBuild, GOPROXY for main build, new vendorHash                                                                                                  |
+| `justfile`                              | hermes-status path → /home/hermes                                                                                                                                                                         |
+| `AGENTS.md`                             | Hermes docs: stateDir, paths, new features                                                                                                                                                                |
+| `flake.lock`                            | dnsblockd a0b1879, monitor365-src, golangci-lint-auto-configure-src, NUR                                                                                                                                  |
 
 ## Upstream Commits (dnsblockd)
 
@@ -214,15 +217,15 @@ a0b1879 fix(nix): update vendorHash for semconv v1.40.0 migration
 
 ## System State
 
-| Component | Status |
-|-----------|--------|
-| Hermes | ✅ Running at `/home/hermes`, 1.3GB state, zero warnings |
-| dnsblockd | ✅ Running, no OTel errors, serving block pages |
-| Authelia | ✅ Running, processing requests, argon2id hashes |
-| Caddy | ✅ Running, LAN bypass for forward auth |
-| golangci-lint-auto-configure | ✅ Builds successfully |
-| Full pipeline | ✅ update → check → build → switch → boot all pass |
-| `/home/lars` perms | `770 lars:users` — hermes has full access |
-| `/home/hermes` perms | `2770 hermes:hermes` — service-owned |
-| Old state dirs | ⚠️ `/home/lars/.hermes` (1.3GB) + `/var/lib/hermes` (4KB) pending cleanup |
-| flake.lock | ⚠️ monitor365-src bump uncommitted |
+| Component                    | Status                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| Hermes                       | ✅ Running at `/home/hermes`, 1.3GB state, zero warnings                  |
+| dnsblockd                    | ✅ Running, no OTel errors, serving block pages                           |
+| Authelia                     | ✅ Running, processing requests, argon2id hashes                          |
+| Caddy                        | ✅ Running, LAN bypass for forward auth                                   |
+| golangci-lint-auto-configure | ✅ Builds successfully                                                    |
+| Full pipeline                | ✅ update → check → build → switch → boot all pass                        |
+| `/home/lars` perms           | `770 lars:users` — hermes has full access                                 |
+| `/home/hermes` perms         | `2770 hermes:hermes` — service-owned                                      |
+| Old state dirs               | ⚠️ `/home/lars/.hermes` (1.3GB) + `/var/lib/hermes` (4KB) pending cleanup |
+| flake.lock                   | ⚠️ monitor365-src bump uncommitted                                        |

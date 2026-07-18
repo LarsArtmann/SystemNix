@@ -20,29 +20,29 @@ dex2jar app.apk -o app.jar
 jd-gui app.jar                              # GUI viewer
 ```
 
-| Tool | Purpose |
-|------|---------|
-| **apktool** | Decode resources, AndroidManifest.xml, smali bytecode |
-| **jadx** | Dex → decompiled Java (best readability) |
-| **dex2jar** | .dex → .jar conversion |
-| **baksmali** | Disassemble to smali (bytecode level) |
+| Tool         | Purpose                                               |
+| ------------ | ----------------------------------------------------- |
+| **apktool**  | Decode resources, AndroidManifest.xml, smali bytecode |
+| **jadx**     | Dex → decompiled Java (best readability)              |
+| **dex2jar**  | .dex → .jar conversion                                |
+| **baksmali** | Disassemble to smali (bytecode level)                 |
 
 ## Security Analysis Checklist
 
 After decompiling, look for:
 
-| Category | What to check | Where |
-|----------|---------------|-------|
-| **Hardcoded secrets** | API keys, tokens, passwords in source | `grep -ri "api_key\|secret\|token\|password" app_jadx/` |
-| **Insecure storage** | SharedPreferences in plaintext, SQLCipher absent | Search for `SharedPreferences`, `getWritableDatabase` |
-| **Cleartext traffic** | HTTP instead of HTTPS | `AndroidManifest.xml` → `usesCleartextTraffic`, grep `http://` |
-| **Weak crypto** | ECB mode, MD5/SHA1 for passwords, hardcoded IVs | Search for `Cipher.getInstance`, `MessageDigest` |
-| **Certificate pinning** | Missing or bypassable | Search for `CertificatePinner`, `TrustManager` |
-| **Intent injection** | Exported activities/services without permission checks | `AndroidManifest.xml` → `exported="true"` |
-| **SQL injection** | String concatenation in queries | Search for `rawQuery`, `execSQL` with string formatting |
-| **Logging leaks** | Sensitive data in Logcat | Search for `Log.d\|Log.i\|Log.e` with sensitive params |
-| **WebView risks** | JS enabled + addJavascriptInterface | Search for `setJavaScriptEnabled`, `addJavascriptInterface` |
-| **Insecure intents** | Implicit intents for sensitive actions | Search for `ACTION_SEND`, `startActivity` patterns |
+| Category                | What to check                                          | Where                                                          |
+| ----------------------- | ------------------------------------------------------ | -------------------------------------------------------------- |
+| **Hardcoded secrets**   | API keys, tokens, passwords in source                  | `grep -ri "api_key\|secret\|token\|password" app_jadx/`        |
+| **Insecure storage**    | SharedPreferences in plaintext, SQLCipher absent       | Search for `SharedPreferences`, `getWritableDatabase`          |
+| **Cleartext traffic**   | HTTP instead of HTTPS                                  | `AndroidManifest.xml` → `usesCleartextTraffic`, grep `http://` |
+| **Weak crypto**         | ECB mode, MD5/SHA1 for passwords, hardcoded IVs        | Search for `Cipher.getInstance`, `MessageDigest`               |
+| **Certificate pinning** | Missing or bypassable                                  | Search for `CertificatePinner`, `TrustManager`                 |
+| **Intent injection**    | Exported activities/services without permission checks | `AndroidManifest.xml` → `exported="true"`                      |
+| **SQL injection**       | String concatenation in queries                        | Search for `rawQuery`, `execSQL` with string formatting        |
+| **Logging leaks**       | Sensitive data in Logcat                               | Search for `Log.d\|Log.i\|Log.e` with sensitive params         |
+| **WebView risks**       | JS enabled + addJavascriptInterface                    | Search for `setJavaScriptEnabled`, `addJavascriptInterface`    |
+| **Insecure intents**    | Implicit intents for sensitive actions                 | Search for `ACTION_SEND`, `startActivity` patterns             |
 
 ## Automated Scanning Tools
 
@@ -60,12 +60,12 @@ drozer console connect
 run app.package.attacksurface com.example.app
 ```
 
-| Tool | What it finds |
-|------|---------------|
-| **MobSF** | Full SAST+DAST: secrets, misconfigurations, permissions, crypto issues |
-| **Quark** | Known malicious behavior patterns in Dalvik bytecode |
-| **Drozer** | Runtime attack surface (exported components, content providers) |
-| **nuclei** (mobile templates) | Known CVEs in packaged libraries |
+| Tool                          | What it finds                                                          |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| **MobSF**                     | Full SAST+DAST: secrets, misconfigurations, permissions, crypto issues |
+| **Quark**                     | Known malicious behavior patterns in Dalvik bytecode                   |
+| **Drozer**                    | Runtime attack surface (exported components, content providers)        |
+| **nuclei** (mobile templates) | Known CVEs in packaged libraries                                       |
 
 ## Bulk Extraction (All Apps)
 

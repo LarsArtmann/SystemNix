@@ -72,13 +72,13 @@ See Section E/F below for prioritized backlog.
 
 **5 repos still have this ticking time bomb:**
 
-| Repo | Lines with `overrideModAttrs`/`go mod tidy` | Risk Level |
-|------|----------------------------------------------|------------|
-| `art-dupl` | `overrideModAttrs`, `go mod tidy` in preBuild | 🔴 HIGH |
-| `go-auto-upgrade` | `overrideModAttrs` + `go mod tidy` in both dev/prod | 🔴 HIGH |
-| `file-and-image-renamer` | `overrideModAttrs` + `go mod tidy` | 🔴 HIGH |
-| `projects-management-automation` | `overrideModAttrs = _: { preBuild = "go mod tidy"; }` | 🔴 HIGH |
-| `go-filewatcher` | `go mod tidy` in apps | 🟡 MEDIUM |
+| Repo                             | Lines with `overrideModAttrs`/`go mod tidy`           | Risk Level |
+| -------------------------------- | ----------------------------------------------------- | ---------- |
+| `art-dupl`                       | `overrideModAttrs`, `go mod tidy` in preBuild         | 🔴 HIGH    |
+| `go-auto-upgrade`                | `overrideModAttrs` + `go mod tidy` in both dev/prod   | 🔴 HIGH    |
+| `file-and-image-renamer`         | `overrideModAttrs` + `go mod tidy`                    | 🔴 HIGH    |
+| `projects-management-automation` | `overrideModAttrs = _: { preBuild = "go mod tidy"; }` | 🔴 HIGH    |
+| `go-filewatcher`                 | `go mod tidy` in apps                                 | 🟡 MEDIUM  |
 
 **Why it's fucked:** Any `go.mod` change (version bump, new dep, indirect dep resolution change) will cause the SAME inconsistent vendoring error we just fixed. The `go mod tidy` in `overrideModAttrs` runs during go-modules derivation (with network), producing a different vendor/modules.txt than the main build sees (without network). It "works" only when the go.mod is already perfectly tidy — which breaks on the next `go get -u` or indirect dep resolution change.
 
@@ -86,9 +86,9 @@ See Section E/F below for prioritized backlog.
 
 **2 repos use `self.rev or self.dirtyRev or "dev"` as version:**
 
-| Repo | Current Version String | Should Be |
-|------|------------------------|-----------|
-| `mr-sync` | `76abcde52e262a...` (40-char git hash) | `"0.1.0"` or similar semver |
+| Repo             | Current Version String                   | Should Be                   |
+| ---------------- | ---------------------------------------- | --------------------------- |
+| `mr-sync`        | `76abcde52e262a...` (40-char git hash)   | `"0.1.0"` or similar semver |
 | `branching-flow` | `db2ba469089121d5...` (40-char git hash) | `"0.1.0"` or similar semver |
 
 This violates the AGENTS.md convention and produces garbage package names.
@@ -96,6 +96,7 @@ This violates the AGENTS.md convention and produces garbage package names.
 ### 3. Duplicate `go-nix-helpers` Flake Inputs
 
 SystemNix flake.lock has **6 copies** of `go-nix-helpers` at the same rev (`8317854`):
+
 - `go-nix-helpers`, `go-nix-helpers_2` through `go-nix-helpers_6`
 
 Each consumer repo declares its own `go-nix-helpers` input with `flake = false`. These should use `follows` to deduplicate.
@@ -132,33 +133,33 @@ The vendorHash that works locally (with mr-sync's own nixpkgs) differs from what
 
 ## F) Top 25 Next Actions (Sorted by Impact × Ease)
 
-| # | Action | Impact | Effort | Repo |
-|---|--------|--------|--------|------|
-| 1 | Fix PMA: add `project-discovery-sdk` submodules (`detection`, `discovery`, `mr`) to `subModules` | 🔴 Blocks system build | 5 min | pma |
-| 2 | Fix PMA: update vendorHash after submodules fix | 🔴 Blocks system build | 3 min | pma |
-| 3 | Remove `overrideModAttrs` from `art-dupl` + update vendorHash | 🔴 Time bomb | 5 min | art-dupl |
-| 4 | Remove `overrideModAttrs` from `go-auto-upgrade` + update vendorHash | 🔴 Time bomb | 5 min | go-auto-upgrade |
-| 5 | Remove `overrideModAttrs` from `file-and-image-renamer` + update vendorHash | 🔴 Time bomb | 5 min | file-and-image-renamer |
-| 6 | Remove `overrideModAttrs` from `projects-management-automation` + update vendorHash | 🔴 Time bomb | 5 min | pma |
-| 7 | Fix `mr-sync` version: replace `self.rev` with `"0.1.0"` | 🟡 Convention violation | 2 min | mr-sync |
-| 8 | Fix `branching-flow` version: replace `self.rev` with `"0.1.0"` | 🟡 Convention violation | 2 min | branching-flow |
-| 9 | Verify `go-filewatcher` doesn't need overrideModAttrs removal | 🟡 Potential | 5 min | go-filewatcher |
-| 10 | Update PMA go-output submodules list (add `delimited`, `markup`, `serialization`, `plantuml`) | 🟡 Missing deps | 5 min | pma |
-| 11 | Update go-output pins across all repos to v0.6.0 (be1a3ec) | 🟡 Consistency | 15 min | all |
-| 12 | Add go-output `sort` → remove if nonexistent, verify all submodules | 🟡 Correctness | 5 min | per-repo |
-| 13 | Commit SystemNix flake.lock changes | 🟡 Tracked | 1 min | SystemNix |
-| 14 | Push SystemNix | 🟡 Deploy | 1 min | SystemNix |
-| 15 | Auto-detect submodules in `mkPreparedSource` (scan for go.mod) | 🟢 Architecture | 30 min | go-nix-helpers |
-| 16 | Add validation to `mkPreparedSource` (check replace directives) | 🟢 Architecture | 30 min | go-nix-helpers |
-| 17 | Deduplicate `go-nix-helpers` inputs (use `follows`) | 🟢 Cleanup | 20 min | SystemNix + repos |
-| 18 | Fix `mr-sync` vendorHash nixpkgs-context dependency | 🟢 Robustness | 15 min | mr-sync |
-| 19 | Add CI check: `nix build` for each overlay package | 🟢 Prevention | 30 min | SystemNix |
-| 20 | Audit all Go repos for `sort` submodule (doesn't exist in go-output) | 🟢 Correctness | 10 min | all |
-| 21 | Update AGENTS.md with `overrideModAttrs` anti-pattern warning | 🟢 Documentation | 5 min | SystemNix |
-| 22 | Add `just check-vendor` recipe to SystemNix justfile | 🟢 Tooling | 10 min | SystemNix |
-| 23 | Check if `go-finding` submodules need listing in any consumer | 🟢 Correctness | 5 min | all |
-| 24 | Review `go-output` pin strategy — should all repos use `?ref=master`? | 🟢 Strategy | 10 min | all |
-| 25 | Consider `gomod2nix` as alternative to manual vendorHash management | 🟢 Future | 60 min | research |
+| #   | Action                                                                                           | Impact                  | Effort | Repo                   |
+| --- | ------------------------------------------------------------------------------------------------ | ----------------------- | ------ | ---------------------- |
+| 1   | Fix PMA: add `project-discovery-sdk` submodules (`detection`, `discovery`, `mr`) to `subModules` | 🔴 Blocks system build  | 5 min  | pma                    |
+| 2   | Fix PMA: update vendorHash after submodules fix                                                  | 🔴 Blocks system build  | 3 min  | pma                    |
+| 3   | Remove `overrideModAttrs` from `art-dupl` + update vendorHash                                    | 🔴 Time bomb            | 5 min  | art-dupl               |
+| 4   | Remove `overrideModAttrs` from `go-auto-upgrade` + update vendorHash                             | 🔴 Time bomb            | 5 min  | go-auto-upgrade        |
+| 5   | Remove `overrideModAttrs` from `file-and-image-renamer` + update vendorHash                      | 🔴 Time bomb            | 5 min  | file-and-image-renamer |
+| 6   | Remove `overrideModAttrs` from `projects-management-automation` + update vendorHash              | 🔴 Time bomb            | 5 min  | pma                    |
+| 7   | Fix `mr-sync` version: replace `self.rev` with `"0.1.0"`                                         | 🟡 Convention violation | 2 min  | mr-sync                |
+| 8   | Fix `branching-flow` version: replace `self.rev` with `"0.1.0"`                                  | 🟡 Convention violation | 2 min  | branching-flow         |
+| 9   | Verify `go-filewatcher` doesn't need overrideModAttrs removal                                    | 🟡 Potential            | 5 min  | go-filewatcher         |
+| 10  | Update PMA go-output submodules list (add `delimited`, `markup`, `serialization`, `plantuml`)    | 🟡 Missing deps         | 5 min  | pma                    |
+| 11  | Update go-output pins across all repos to v0.6.0 (be1a3ec)                                       | 🟡 Consistency          | 15 min | all                    |
+| 12  | Add go-output `sort` → remove if nonexistent, verify all submodules                              | 🟡 Correctness          | 5 min  | per-repo               |
+| 13  | Commit SystemNix flake.lock changes                                                              | 🟡 Tracked              | 1 min  | SystemNix              |
+| 14  | Push SystemNix                                                                                   | 🟡 Deploy               | 1 min  | SystemNix              |
+| 15  | Auto-detect submodules in `mkPreparedSource` (scan for go.mod)                                   | 🟢 Architecture         | 30 min | go-nix-helpers         |
+| 16  | Add validation to `mkPreparedSource` (check replace directives)                                  | 🟢 Architecture         | 30 min | go-nix-helpers         |
+| 17  | Deduplicate `go-nix-helpers` inputs (use `follows`)                                              | 🟢 Cleanup              | 20 min | SystemNix + repos      |
+| 18  | Fix `mr-sync` vendorHash nixpkgs-context dependency                                              | 🟢 Robustness           | 15 min | mr-sync                |
+| 19  | Add CI check: `nix build` for each overlay package                                               | 🟢 Prevention           | 30 min | SystemNix              |
+| 20  | Audit all Go repos for `sort` submodule (doesn't exist in go-output)                             | 🟢 Correctness          | 10 min | all                    |
+| 21  | Update AGENTS.md with `overrideModAttrs` anti-pattern warning                                    | 🟢 Documentation        | 5 min  | SystemNix              |
+| 22  | Add `just check-vendor` recipe to SystemNix justfile                                             | 🟢 Tooling              | 10 min | SystemNix              |
+| 23  | Check if `go-finding` submodules need listing in any consumer                                    | 🟢 Correctness          | 5 min  | all                    |
+| 24  | Review `go-output` pin strategy — should all repos use `?ref=master`?                            | 🟢 Strategy             | 10 min | all                    |
+| 25  | Consider `gomod2nix` as alternative to manual vendorHash management                              | 🟢 Future               | 60 min | research               |
 
 ---
 
@@ -167,6 +168,7 @@ The vendorHash that works locally (with mr-sync's own nixpkgs) differs from what
 **Should `go-output` be pinned to a specific rev in every consumer repo, or should all repos use `?ref=master` and rely on flake.lock for reproducibility?**
 
 Current state is inconsistent:
+
 - `mr-sync`: pinned to `rev=be1a3ec` (v0.6.0)
 - `pma`, `go-auto-upgrade`, `go-structure-linter`: `ref=master`
 - `library-policy`, `art-dupl`, `dnsblockd`: inherited via go-finding or not directly using go-output
@@ -179,13 +181,13 @@ The AGENTS.md pattern uses `ref=master` for all private inputs. But pinning to a
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Repos modified | 2 (library-policy, mr-sync) |
-| Commits pushed | 4 (library-policy: 1, mr-sync: 3) |
-| Build failures fixed | 2 (library-policy, mr-sync) |
-| Build failures remaining | 1 (projects-management-automation) |
-| Anti-patterns found | 5 repos with `overrideModAttrs` + `go mod tidy` |
-| Convention violations | 2 repos using `self.rev` as version |
-| Duplicate flake inputs | 6 copies of `go-nix-helpers` |
-| Total time | ~30 min |
+| Metric                   | Value                                           |
+| ------------------------ | ----------------------------------------------- |
+| Repos modified           | 2 (library-policy, mr-sync)                     |
+| Commits pushed           | 4 (library-policy: 1, mr-sync: 3)               |
+| Build failures fixed     | 2 (library-policy, mr-sync)                     |
+| Build failures remaining | 1 (projects-management-automation)              |
+| Anti-patterns found      | 5 repos with `overrideModAttrs` + `go mod tidy` |
+| Convention violations    | 2 repos using `self.rev` as version             |
+| Duplicate flake inputs   | 6 copies of `go-nix-helpers`                    |
+| Total time               | ~30 min                                         |

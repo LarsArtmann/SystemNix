@@ -14,6 +14,7 @@
 Successfully executed Pareto-focused execution plan with focus on high-impact work. Completed all critical tasks (delivering 51% value), most high-priority validation tasks, and made significant progress on testing and documentation.
 
 **Key Achievement:**
+
 - ✅ Fixed CRITICAL Ollama GPU variable scope issue (would have broken GPU access)
 - ✅ Resolved all linting and syntax issues from pre-commit hooks
 - ✅ Created comprehensive Pareto-focused execution plan
@@ -21,6 +22,7 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 - ⚠️ Darwin build test has unresolved error (investigation needed)
 
 **Progress Summary:**
+
 - **Critical Success (51% value):** 80% complete (4/5 tasks)
 - **High Success (64% value):** 63% complete (5/8 tasks)
 - **Full Success (80% value):** 0% complete (0/6 medium tasks)
@@ -34,10 +36,12 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 ### **1. Pareto Analysis & Planning** (30 minutes)
 
 #### Task P1: Complete Pareto Analysis and Identify High-Impact Tasks ✅
+
 **Time:** 20 minutes
 **Status:** COMPLETE
 
 **Analysis Performed:**
+
 - Identified 1% effort → 51% value (critical fixes)
 - Identified 4% effort → 64% value (validation & cleanup)
 - Identified 20% effort → 80% value (complete de-duplication)
@@ -45,32 +49,38 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 - Focused on high-impact work only
 
 **Key Decisions:**
+
 - Skip Phase 3: Organizational refactoring (not critical)
 - Skip module reorganization (current structure works)
 - Focus on: Critical fixes, validation, de-duplication completion
 - Value-to-effort ratio optimization applied
 
 #### Task P2: Create Comprehensive Plan with 30-100 Min Tasks ✅
+
 **Time:** 5 minutes
 **Status:** COMPLETE
 
 **Plan Created:**
+
 - 15 high-value tasks identified
 - Total estimated time: 4 hours 15 minutes
 - Categorized: Critical (C1), High (H1-H8), Medium (M1-M6)
 - Sorted by impact/effort ratio
 
 #### Task P3: Break Down Plan into Max 15 Min Tasks ✅
+
 **Time:** 5 minutes
 **Status:** COMPLETE
 
 **Task Breakdown:**
+
 - All 15 tasks broken into subtasks (max 15 min each)
 - Detailed subtask steps documented
 - Dependencies mapped
 - Execution order defined
 
 **Files Created:**
+
 - `docs/planning/2025-12-26_17-40_pareto-focused-execution-plan.md`
   - 574 lines of comprehensive planning
   - Mermaid.js execution graph
@@ -78,16 +88,19 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
   - Detailed subtask breakdowns
 
 #### Task P4: Write Detailed Plan with Mermaid.js to .md File ✅
+
 **Time:** Included in above tasks
 **Status:** COMPLETE
 
 **Documentation:**
+
 - Mermaid.js graph showing task dependencies
 - Success criteria defined (Critical, High, Full)
 - Commit strategy documented
 - Execution instructions provided
 
 #### Task P5: Commit Comprehensive Plan to Git ✅
+
 **Time:** 5 minutes
 **Status:** COMPLETE
 
@@ -99,11 +112,13 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 ### **2. Critical Fixes (51% value)**
 
 #### Task C1: Fix Ollama GPU Variable Scope ✅
+
 **Time:** 10 minutes
 **Status:** COMPLETE
 **Impact:** CRITICAL - Fixes GPU access for Ollama service
 
 **Problem Identified:**
+
 - AI environment variables were in `home.sessionVariables` (user-level scope)
 - Ollama runs as a system service (`services.ollama.enable = true`)
 - System-level systemd services **CANNOT** see user-level environment variables
@@ -111,6 +126,7 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 - All AI/ML workloads would run CPU-only (100x slower)
 
 **Solution Implemented:**
+
 - Removed ALL AI variables from `platforms/nixos/users/home.nix`:
   - `HIP_VISIBLE_DEVICES = "0"`
   - `ROCM_PATH = "${pkgs.rocmPackages.rocm-runtime}"`
@@ -140,12 +156,14 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
   ```
 
 **Technical Details:**
+
 - Used `rocmOverrideGfx` option instead of manual `HSA_OVERRIDE_GFX_VERSION`
 - Variables now in service-level scope (correct NixOS pattern)
 - Variables scoped to service only (no global pollution)
 - Added performance tuning variables
 
 **Impact:**
+
 - ✅ Ollama service will now correctly detect and use AMD GPU
 - ✅ GPU acceleration for AI/ML workloads will work
 - ✅ Variables properly scoped to service
@@ -155,6 +173,7 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 **Pushed:** ✅ to origin/master
 
 **Research Documentation:**
+
 - `docs/status/2025-12-26_17-06_critical-ollama-gpu-variable-scope-fix.md`
   - Comprehensive research on systemd service environment variables
   - Detailed explanation of variable scope issues
@@ -166,6 +185,7 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 ### **3. Code Quality & Linting (High priority)**
 
 #### Task H1: Run `just pre-commit-run` ✅
+
 **Time:** 5 minutes
 **Status:** COMPLETE
 
@@ -208,22 +228,26 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 ### **4. Code Cleanup (High priority)**
 
 #### Task H2: Clean Empty Placeholder Files ✅
+
 **Time:** 5 minutes
 **Status:** COMPLETE
 
 **Action Taken:**
+
 - Removed `platforms/nixos/desktop/default.nix` (19 lines)
 - File was never imported anywhere in the repository
 - Contained only commented placeholder code
 - Comment stated: "This is a placeholder that will be expanded when NixOS deployment begins"
 
 **Reason for Removal:**
+
 - File not imported by any module
 - No actual configuration (all commented)
 - Placeholder functionality not needed (NixOS builds work without it)
 - Reduces confusion about what is active vs. placeholder code
 
 **Verification:**
+
 - `nix flake check` passes after removal
 - No imports reference deleted file
 - NixOS and Darwin configurations unaffected
@@ -236,10 +260,12 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 ### **5. Documentation Updates (High priority)**
 
 #### Task H3: Update Phase 1 Documentation ✅
+
 **Time:** 10 minutes
 **Status:** COMPLETE
 
 **Purpose:**
+
 - Document critical correction for Task 1.3 regarding Ollama GPU variable scope
 - Explain why initial implementation was incorrect
 - Document the correct service-level approach
@@ -248,6 +274,7 @@ Successfully executed Pareto-focused execution plan with focus on high-impact wo
 **Changes Made:**
 
 File: `docs/status/2025-12-26_08-15_de-duplication-phase1-2-complete.md`
+
 - Added new section: "⚠️ CRITICAL CORRECTION (2025-12-26 17:40 CET)"
 
 **Correction Details:**
@@ -279,27 +306,32 @@ File: `docs/status/2025-12-26_08-15_de-duplication-phase1-2-complete.md`
 ### **6. Build Testing (Critical validation)**
 
 #### Task H4: Run NixOS Build Test ✅
+
 **Time:** 30 minutes
 **Status:** COMPLETE
 
 **Test Performed:**
+
 ```bash
 nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel
 ```
 
 **Result:**
+
 - ✅ NixOS configuration evaluated successfully
 - ✅ System derivation created
 - ✅ No critical errors or warnings
 - ✅ Derivation: `/nix/store/y1xr4s0jxmvjk543g7csd7nc614xi56s-nixos-system-evo-x2-26.05.20251225.3c1016e.drv`
 
 **Verification:**
+
 - All imports resolve correctly
 - No duplicate options
 - Configuration valid for NixOS
 - Ready for deployment to NixOS system (evo-x2)
 
 **Impact:**
+
 - Confirms NixOS configuration is syntactically correct
 - Verifies all modules can be loaded
 - Ensures no broken imports or circular dependencies
@@ -311,18 +343,21 @@ nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel
 ### **7. Darwin Build Testing (Critical validation)**
 
 #### Task H5: Run Darwin Build Test ⚠️
+
 **Time:** 30 minutes
 **Status:** INCOMPLETE - Has unresolved error
 **Impact:** HIGH - Cannot deploy Darwin configuration
 
 **Test Performed:**
+
 ```bash
 darwin-rebuild build --flake .#Lars-MacBook-Air
 ```
 
 **Issues Found:**
 
-**Issue 1: Undefined Variable '_'** ✅ FIXED
+**Issue 1: Undefined Variable '\_'** ✅ FIXED
+
 - **File:** `platforms/darwin/security/pam.nix`
 - **Line:** 1
 - **Error:** `undefined variable '_'`
@@ -330,6 +365,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - **Fix Applied:** Changed to `{ config, pkgs, ... }: {` (correct signature)
 
 **Issue 2: Boost Format String Error** 🔴 UNRESOLVED
+
 - **Error:** `boost::too_few_args: format-string referred to more arguments than were passed`
 - **Location:** Unknown (error message doesn't show file path)
 - **Context:** Occurs during Nix evaluation of Darwin configuration
@@ -338,17 +374,20 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
   - Or similar formatting mismatch
 
 **Attempts Made:**
+
 1. Fixed undefined variable `_` error
 2. Retried build with `--show-trace` flag
 3. Still getting boost error without file location
 4. Cannot identify which file has the format-string error
 
 **Impact:**
+
 - 🔴 CRITICAL - Blocks Darwin deployment
 - Cannot apply configuration to macOS system (Lars-MacBook-Air)
 - Must fix before can proceed with Darwin-related work
 
 **Status:**
+
 - ⚠️ INCOMPLETE - Needs investigation
 - Requires debugging to find which file has format-string error
 - May need user assistance to identify the issue
@@ -360,10 +399,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **High Priority Validation Tasks**
 
 #### Task H6: Verify All Imports Valid 🚫
+
 **Estimated Time:** 10 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Search all `.nix` files in `platforms/` for `import` statements
 2. Verify each imported file exists
 3. Check for circular imports
@@ -371,6 +412,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Document any broken imports found
 
 **Deliverables:**
+
 - List of all imports in the repository
 - Status of each import (valid/broken)
 - Any circular import dependencies identified
@@ -379,10 +421,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task H7: Create Testing Checklist 🚫
+
 **Estimated Time:** 15 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Create comprehensive testing checklist
 2. Include build tests (NixOS, Darwin)
 3. Include runtime tests (Fish shell, fonts, AI services)
@@ -390,6 +434,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Save to `docs/testing/checklist.md`
 
 **Deliverables:**
+
 - Actionable testing checklist
 - Covers all critical functionality
 - Easy to follow and execute
@@ -398,10 +443,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task H8: Document Testing Results 🚫
+
 **Estimated Time:** 20 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Record results of build tests (H4, H5)
 2. Document NixOS build success
 3. Document Darwin build error (boost::too_few_args)
@@ -409,6 +456,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Create status report: `docs/status/<timestamp>_testing-results.md`
 
 **Deliverables:**
+
 - Complete testing results documentation
 - All test outcomes recorded
 - Issues clearly identified
@@ -419,10 +467,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **Medium Priority De-duplication Tasks**
 
 #### Task M1: Comprehensive Package Audit 🚫
+
 **Estimated Time:** 30 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Search ALL `platforms/` files for package references
 2. Identify all package duplications
 3. Prioritize by frequency and impact
@@ -430,6 +480,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Estimate time required for each package
 
 **Deliverables:**
+
 - Complete list of all package references
 - Duplications identified
 - Prioritized list created
@@ -438,10 +489,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task M2: Fix Remaining Package Duplications 🚫
+
 **Estimated Time:** 60 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Create common modules for duplicated packages (from M1)
 2. Update all platform modules to import common packages
 3. Remove inline package definitions from platform configs
@@ -449,6 +502,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Commit changes with detailed messages
 
 **Deliverables:**
+
 - All package duplications eliminated
 - Single source of truth for each package
 - Flake checks pass
@@ -457,10 +511,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task M3: Cross-Platform Consistency Check 🚫
+
 **Estimated Time:** 60 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Compare package versions across platforms (NixOS vs Darwin)
 2. Compare configuration options across platforms
 3. Document any inconsistencies found
@@ -468,6 +524,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Provide recommendations for fixing unintentional inconsistencies
 
 **Deliverables:**
+
 - Package version comparison report
 - Configuration option comparison report
 - Documented inconsistencies
@@ -476,10 +533,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task M4: Update AGENTS.md Documentation 🚫
+
 **Estimated Time:** 30 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Document new package structure (post de-duplication)
 2. Update de-duplication patterns section
 3. Add reference to testing checklist (H7)
@@ -487,6 +546,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Update architecture overview
 
 **Deliverables:**
+
 - AGENTS.md reflects current architecture
 - De-duplication patterns documented
 - Easy to understand for future work
@@ -495,10 +555,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task M5: Fix Configuration Duplications 🚫
+
 **Estimated Time:** 45 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Identify all configuration duplications (not just packages)
 2. Move duplications to common modules
 3. Update platform configs to import common configurations
@@ -506,6 +568,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Commit changes
 
 **Deliverables:**
+
 - Configuration duplications eliminated
 - Single source of truth
 - Flake checks pass
@@ -514,10 +577,12 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### Task M6: Run `just health` 🚫
+
 **Estimated Time:** 15 minutes
 **Status:** NOT STARTED
 
 **Planned Actions:**
+
 1. Execute `just health` command
 2. Analyze output for issues
 3. Identify any problems reported
@@ -525,6 +590,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 5. Document results
 
 **Deliverables:**
+
 - Health check executed
 - Issues identified and documented
 - Issues fixed (if possible)
@@ -537,12 +603,14 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **Critical Build Failure**
 
 #### Issue: Darwin Build Test (H5) - FAILED 🔴
+
 **Error:** `boost::too_few_args: format-string referred to more arguments than were passed`
 **Location:** Unknown (error message doesn't show file path or line number)
 **Impact:** HIGH - Cannot deploy Darwin configuration
 **Severity:** CRITICAL - Blocks all Darwin deployment work
 
 **Problem Analysis:**
+
 1. **Error Type:** Boost format string error
    - Boost is C++ library used by Nix
    - Format string error means: a string has format specifiers (%s, %d, etc.) but fewer arguments provided
@@ -573,12 +641,14 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
    - User assistance or insight
 
 **Impact:**
+
 - 🔴 CRITICAL - Cannot deploy Darwin configuration to macOS system
 - Blocks all Darwin-related work
 - Must fix before can proceed with testing on macOS
 - Affects Lars-MacBook-Air deployment
 
 **Status:**
+
 - 🔴 UNRESOLVED - Needs investigation
 - Requires debugging or user assistance
 - Cannot proceed with H6-H8 until Darwin builds pass
@@ -590,11 +660,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **1. Better Error Messages for Nix Evaluation**
 
 **Problem:**
+
 - Boost format string error doesn't show file location
 - Makes debugging very difficult
 - Spent significant time trying to find the issue
 
 **Improvement:**
+
 - Use `nix flake check --show-trace --show-trace` multiple times
 - Consider using `nix eval` on individual files to isolate error
 - Look for Nix debugging tools that provide better error messages
@@ -605,11 +677,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **2. Pre-commit Hook Coverage**
 
 **Problem:**
+
 - Pre-commit hooks didn't catch Darwin build error
 - Only caught syntax errors and style issues
 - Didn't validate actual build evaluation
 
 **Improvement:**
+
 - Add `nix eval` checks to pre-commit hooks for each platform
 - Validate that both NixOS and Darwin can evaluate successfully
 - Consider adding derivation creation tests (lightweight)
@@ -620,11 +694,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **3. Build Test Automation**
 
 **Problem:**
+
 - Build tests are manual (need to run commands)
 - Not part of CI/CD pipeline
 - Only running `nix flake check` (syntax validation)
 
 **Improvement:**
+
 - Create automated build test script
 - Add to CI/CD pipeline (GitHub Actions)
 - Run `nix eval` for both platforms on every commit
@@ -636,11 +712,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **4. Documentation Quality and Consistency**
 
 **Problem:**
+
 - Phase 1 documentation needed critical correction
 - Shows that initial analysis wasn't perfect
 - Need better research before implementing changes
 
 **Improvement:**
+
 - More thorough research before making changes
 - Test variable scope on actual system if possible
 - Document assumptions and verify them
@@ -652,11 +730,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **5. Task Execution and Time Estimation**
 
 **Problem:**
+
 - Some tasks taking longer than estimated (Darwin build investigation)
 - Need to adjust time estimates for complex debugging
 - Pareto analysis was accurate, but debugging wasn't accounted for
 
 **Improvement:**
+
 - Add buffer time for unexpected issues (20-30%)
 - Separate research time from implementation time
 - Break debugging into separate tasks
@@ -667,11 +747,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **6. Error Handling and Recovery**
 
 **Problem:**
+
 - When Darwin build failed, had to stop and investigate
 - No clear path forward when error is unresolvable
 - Need better approach for blocking issues
 
 **Improvement:**
+
 - Create clear escalation path when hitting unknown errors
 - Document common Nix error types and solutions
 - Have backup plans (e.g., skip problematic task and continue)
@@ -684,11 +766,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **CRITICAL (Do Immediately - Today)**
 
 #### 1. 🔥 Fix Darwin Build Error (boost::too_few_args)
+
 **Priority:** CRITICAL
 **Time:** 30-60 minutes investigation + fix
 **Impact:** HIGH - Blocks all Darwin deployment
 
 **Actions:**
+
 - Investigate which file has format-string error
 - Use `nix eval` on individual files to isolate error
 - Check all Nix files for string formatting issues
@@ -697,6 +781,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Consider using grep to find potential issues: `grep -r '%s' platforms/`
 
 **Success Criteria:**
+
 - Darwin build passes successfully
 - `darwin-rebuild build` completes without errors
 - System derivation created
@@ -706,11 +791,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 2. 🔥 H6: Verify All Imports Valid
+
 **Priority:** HIGH
 **Time:** 10 minutes
 **Impact:** MEDIUM - Ensures no broken imports
 
 **Actions:**
+
 - Search all `.nix` files in `platforms/` for `import` statements
 - Verify each imported file exists
 - Check for circular import dependencies
@@ -718,6 +805,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Fix any broken imports
 
 **Success Criteria:**
+
 - All imports documented
 - All imports verified to exist
 - No broken imports found
@@ -728,11 +816,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 3. 🔥 H7: Create Testing Checklist
+
 **Priority:** HIGH
 **Time:** 15 minutes
 **Impact:** MEDIUM - Provides clear testing guidelines
 
 **Actions:**
+
 - Create comprehensive testing checklist
 - Include build tests (NixOS, Darwin)
 - Include runtime tests (Fish shell, fonts, AI services)
@@ -741,6 +831,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Make checklist actionable and comprehensive
 
 **Success Criteria:**
+
 - Checklist created
 - Covers all critical functionality
 - Easy to follow and execute
@@ -751,11 +842,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 4. 🔥 H8: Document Testing Results
+
 **Priority:** HIGH
 **Time:** 20 minutes
 **Impact:** MEDIUM - Documents test outcomes
 
 **Actions:**
+
 - Record results of build tests (H4, H5)
 - Document NixOS build success (H4)
 - Document Darwin build error (H5 - boost::too_few_args)
@@ -763,6 +856,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Create status report: `docs/status/<timestamp>_testing-results.md`
 
 **Success Criteria:**
+
 - All test results documented
 - Issues clearly identified
 - Status report created and saved
@@ -775,11 +869,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **HIGH PRIORITY (Do Today/This Week)**
 
 #### 5. ⚡ M1: Comprehensive Package Audit
+
 **Priority:** HIGH
 **Time:** 30 minutes
 **Impact:** HIGH - Identifies all package duplications
 
 **Actions:**
+
 - Search ALL `platforms/` files for package references
 - Use grep to find all `pkgs.<package>` references
 - Identify all package duplications
@@ -787,6 +883,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Estimate time required for each package
 
 **Success Criteria:**
+
 - Complete list of all package references
 - All duplications identified
 - Prioritized list created
@@ -797,11 +894,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 6. ⚡ M2: Fix Remaining Package Duplications
+
 **Priority:** HIGH
 **Time:** 60 minutes
 **Impact:** HIGH - Completes de-duplication work
 
 **Actions:**
+
 - Create common modules for duplicated packages (from M1)
 - Update all platform modules to import common packages
 - Remove inline package definitions from platform configs
@@ -809,6 +908,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Commit changes with detailed messages
 
 **Success Criteria:**
+
 - All package duplications eliminated
 - Single source of truth for each package
 - Flake checks pass
@@ -819,11 +919,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 7. ⚡ M3: Cross-Platform Consistency Check
+
 **Priority:** HIGH
 **Time:** 60 minutes
 **Impact:** MEDIUM - Ensures consistency across platforms
 
 **Actions:**
+
 - Compare package versions across platforms (NixOS vs Darwin)
 - Compare configuration options across platforms
 - Document any inconsistencies found
@@ -831,6 +933,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Provide recommendations for fixes
 
 **Success Criteria:**
+
 - Package version comparison report
 - Configuration option comparison report
 - Inconsistencies documented
@@ -841,11 +944,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 8. ⚡ M4: Update AGENTS.md Documentation
+
 **Priority:** HIGH
 **Time:** 30 minutes
 **Impact:** MEDIUM - Keeps documentation current
 
 **Actions:**
+
 - Document new package structure (post de-duplication)
 - Update de-duplication patterns section
 - Add reference to testing checklist (H7)
@@ -854,6 +959,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Make AGENTS.md easy to understand for future work
 
 **Success Criteria:**
+
 - AGENTS.md reflects current architecture
 - De-duplication patterns documented
 - Testing checklist referenced
@@ -865,11 +971,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 9. ⚡ M5: Fix Configuration Duplications
+
 **Priority:** HIGH
 **Time:** 45 minutes
 **Impact:** MEDIUM - Completes de-duplication (not just packages)
 
 **Actions:**
+
 - Identify all configuration duplications (not just packages)
 - Move duplications to common modules
 - Update platform configs to import common configurations
@@ -877,6 +985,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Commit changes
 
 **Success Criteria:**
+
 - Configuration duplications eliminated
 - Single source of truth
 - Flake checks pass
@@ -887,11 +996,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 10. ⚡ M6: Run `just health`
+
 **Priority:** MEDIUM
 **Time:** 15 minutes
 **Impact:** MEDIUM - Overall system health validation
 
 **Actions:**
+
 - Execute `just health` command
 - Analyze output for issues
 - Identify any problems reported
@@ -899,6 +1010,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Document results
 
 **Success Criteria:**
+
 - Health check executed
 - Issues identified and documented
 - Issues fixed (if possible)
@@ -911,11 +1023,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **MEDIUM PRIORITY (Do This Week)**
 
 #### 11. 📝 Shell Alias Safety Validation
+
 **Priority:** MEDIUM
 **Time:** 1 hour
 **Impact:** MEDIUM - Prevents broken shell aliases
 
 **Actions:**
+
 - Add dependency checks to Fish aliases
 - Ensure all aliases work (commands exist)
 - Test on both platforms (Darwin, NixOS)
@@ -923,6 +1037,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Fix broken aliases
 
 **Success Criteria:**
+
 - All Fish aliases validated
 - Dependency checks added
 - No broken aliases
@@ -933,11 +1048,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 12. 📝 Clarify BROWSER Variable
+
 **Priority:** MEDIUM
 **Time:** 30 minutes
 **Impact:** LOW - Removes ambiguity
 
 **Actions:**
+
 - Decide between Chrome vs Helium
 - Update configuration to reflect decision
 - Remove TODO comment about BROWSER variable
@@ -945,6 +1062,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Test configuration
 
 **Success Criteria:**
+
 - BROWSER variable clearly defined
 - TODO comment removed
 - Configuration updated
@@ -955,11 +1073,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 13. 📝 Clarify TERMINAL Variable
+
 **Priority:** MEDIUM
 **Time:** 30 minutes
 **Impact:** LOW - Removes ambiguity
 
 **Actions:**
+
 - Decide between environment variable vs module configuration
 - Implement the chosen approach
 - Remove TODO comment about TERMINAL variable
@@ -967,6 +1087,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Test configuration
 
 **Success Criteria:**
+
 - TERMINAL variable clearly defined
 - TODO comment removed
 - Configuration implemented
@@ -977,17 +1098,20 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 14. 📝 Merge DevShells
+
 **Priority:** MEDIUM
 **Time:** 1 hour
 **Impact:** LOW - Simplifies development workflow
 
 **Actions:**
+
 - Merge default and system-config devShells
 - Reduce from 3 to 2 devShells (keeping development)
 - Update documentation
 - Test devShell functionality
 
 **Success Criteria:**
+
 - DevShells merged (3 → 2)
 - Functionality preserved
 - Documentation updated
@@ -998,11 +1122,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 15. 📝 Review and Fix System Checks
+
 **Priority:** MEDIUM
 **Time:** 2 hours
 **Impact:** MEDIUM - Addresses suspicious pattern
 
 **Actions:**
+
 - Evaluate `checks = lib.mkForce {}` pattern
 - Find safer approach if needed
 - Review all system checks
@@ -1010,6 +1136,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Fix any issues found
 
 **Success Criteria:**
+
 - System checks reviewed
 - Unsafe patterns addressed
 - Safer approach implemented (if needed)
@@ -1022,11 +1149,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **LOW PRIORITY (Do This Month/Year)**
 
 #### 16. 📚 Create Getting Started Guide
+
 **Priority:** LOW
 **Time:** 3 hours
 **Impact:** LOW - Improves onboarding
 
 **Actions:**
+
 - Create comprehensive getting started guide
 - Explain repository structure
 - Explain how to build and deploy
@@ -1034,6 +1163,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Save to `docs/getting-started.md`
 
 **Success Criteria:**
+
 - Guide created
 - Easy to follow
 - Covers all basics
@@ -1044,11 +1174,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 17. 📚 Performance Benchmarking
+
 **Priority:** LOW
 **Time:** 1 hour
 **Impact:** LOW - Establishes baseline
 
 **Actions:**
+
 - Measure Nix evaluation time (both platforms)
 - Measure build time (both platforms)
 - Establish baseline for future improvements
@@ -1056,6 +1188,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Create benchmarks document
 
 **Success Criteria:**
+
 - Nix evaluation time measured
 - Build time measured
 - Baseline established
@@ -1066,11 +1199,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 18. 📚 Security Audit
+
 **Priority:** LOW
 **Time:** 2 hours
 **Impact:** MEDIUM - Verifies security configurations
 
 **Actions:**
+
 - Review all security configurations
 - Verify no security vulnerabilities in packages
 - Check for exposed credentials or secrets
@@ -1079,6 +1214,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Document findings
 
 **Success Criteria:**
+
 - Security configurations reviewed
 - No vulnerabilities found
 - No exposed credentials
@@ -1089,11 +1225,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 19. 📚 Automate Script Cleanup
+
 **Priority:** LOW
 **Time:** 2 hours
 **Impact:** LOW - Identifies dead scripts
 
 **Actions:**
+
 - Identify all scripts in repository
 - Check which scripts are used
 - Identify dead scripts (unused)
@@ -1101,6 +1239,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Delete or archive dead scripts
 
 **Success Criteria:**
+
 - All scripts inventoried
 - Dead scripts identified
 - Documentation created
@@ -1111,11 +1250,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 20. 📚 Create Migration Guide
+
 **Priority:** LOW
 **Time:** 2 hours
 **Impact:** LOW - Documents breaking changes
 
 **Actions:**
+
 - Document all breaking changes in repository
 - Explain migration steps
 - Include rollback instructions
@@ -1123,6 +1264,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Make it user-friendly
 
 **Success Criteria:**
+
 - Migration guide created
 - Breaking changes documented
 - Migration steps clear
@@ -1133,11 +1275,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 21. 📚 Document Architecture Decisions
+
 **Priority:** LOW
 **Time:** 4 hours
 **Impact:** MEDIUM - Improves onboarding and maintenance
 
 **Actions:**
+
 - Create ARCHITECTURE.md document
 - Document all major architectural decisions
 - Explain rationale for key choices
@@ -1146,6 +1290,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Save to `docs/architecture.md`
 
 **Success Criteria:**
+
 - Architecture document created
 - Major decisions documented
 - Rationale explained
@@ -1156,11 +1301,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 22. 📚 Review and Clean Up TODO Comments
+
 **Priority:** LOW
 **Time:** 4 hours
 **Impact:** MEDIUM - Reduces technical debt
 
 **Actions:**
+
 - Find all TODO comments in codebase
 - Evaluate each TODO
 - Address each TODO (fix, implement, or remove)
@@ -1168,6 +1315,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Document remaining TODOs
 
 **Success Criteria:**
+
 - All TODO comments reviewed
 - Issues addressed or documented
 - Clean comments left
@@ -1178,11 +1326,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 23. 📚 Create Integration Tests
+
 **Priority:** LOW
 **Time:** 3 hours
 **Impact:** MEDIUM - Ensures critical modules work
 
 **Actions:**
+
 - Create automated tests for critical modules
 - Test Fish shell configuration
 - Test NixOS and Darwin builds
@@ -1190,6 +1340,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Add to CI/CD pipeline
 
 **Success Criteria:**
+
 - Integration tests created
 - Critical modules tested
 - Tests automated
@@ -1200,11 +1351,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 24. 📚 Improve Error Messages and Debugging
+
 **Priority:** MEDIUM
 **Time:** 2 hours
 **Impact:** MEDIUM - Better debugging experience
 
 **Actions:**
+
 - Document common Nix error types
 - Document solutions for common errors
 - Create debugging checklist
@@ -1212,6 +1365,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Share knowledge with community
 
 **Success Criteria:**
+
 - Common errors documented
 - Solutions provided
 - Debugging checklist created
@@ -1222,11 +1376,13 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ---
 
 #### 25. 📚 Update Justfile Tasks
+
 **Priority:** LOW
 **Time:** 1 hour
 **Impact:** LOW - Improves automation
 
 **Actions:**
+
 - Review all Justfile tasks
 - Add missing useful tasks
 - Improve existing tasks
@@ -1234,6 +1390,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - Test all tasks
 
 **Success Criteria:**
+
 - Justfile reviewed
 - Missing tasks added
 - Tasks improved
@@ -1253,6 +1410,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ### **Full Context:**
 
 **Error Details:**
+
 - **Error Message:** `boost::too_few_args: format-string referred to more arguments than were passed`
 - **Command:** `darwin-rebuild build --flake .#Lars-MacBook-Air`
 - **Alternative Command:** `nix eval .#darwinConfigurations."Lars-MacBook-Air".config.system.build.toplevel`
@@ -1265,6 +1423,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
   5. Searched for common format string patterns - no luck
 
 **Technical Details:**
+
 - Boost is a C++ library used by Nix for string formatting
 - Format string error means: a string has format specifiers like `%s`, `%d`, etc. but fewer arguments are provided
 - Example of the error: `"Error: %s %s"` with only one argument provided
@@ -1350,6 +1509,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
    - Come back to Darwin build later?
 
 **Impact of This Question:**
+
 - 🔴 CRITICAL - Blocks all Darwin deployment work
 - Cannot proceed with Darwin-related tasks until resolved
 - Affects ability to deploy configuration to macOS system (Lars-MacBook-Air)
@@ -1360,6 +1520,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 ## 📊 OVERALL SESSION METRICS
 
 ### **Time Invested:**
+
 - **Session Duration:** 1 hour 59 minutes
 - **Planned Tasks:** 15 tasks (4 hours 15 minutes)
 - **Completed Tasks:** 9 tasks (2 hours)
@@ -1367,12 +1528,14 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
 - **Not Started:** 8 tasks (blocked or pending)
 
 ### **Tasks by Status:**
+
 - ✅ **Fully Done:** 9 tasks (60% of planned)
 - ⚠️ **Partially Done:** 1 task (7% of planned - has issues)
 - 🚫 **Not Started:** 8 tasks (33% of planned - pending)
 - 🔴 **Critical Issues:** 1 issue (Darwin build error)
 
 ### **Value Delivered:**
+
 - **Critical Success (51% value):** 80% complete (4/5 tasks)
   - ✅ C1: Ollama GPU fix (CRITICAL - was broken)
   - ✅ H1: Pre-commit (code quality)
@@ -1390,6 +1553,7 @@ darwin-rebuild build --flake .#Lars-MacBook-Air
   - 🚫 M1, M2, M3, M4, M5, M6 pending (medium priority)
 
 ### **Total Value Delivered:** 60%
+
 - **Critical fixes:** 100% (all done)
 - **High priority validation:** 63% (5/8 done)
 - **Medium priority de-duplication:** 0% (none started)
@@ -1518,6 +1682,7 @@ This session produced the following commits:
    - M6: Run just health (15 min)
 
 ### **Estimated Remaining Time:**
+
 - Darwin build fix: 30-60 minutes (investigation + fix)
 - Validation tasks: 45 minutes
 - Medium priority tasks: 3.75 hours
@@ -1528,6 +1693,7 @@ This session produced the following commits:
 ## 📦 FILES MODIFIED
 
 ### **Configuration Files:**
+
 - `platforms/nixos/users/home.nix` - Removed AI variables
 - `platforms/nixos/desktop/ai-stack.nix` - Added AI variables to service
 - `platforms/darwin/default.nix` - Fixed undefined variable `pkgs`
@@ -1535,14 +1701,18 @@ This session produced the following commits:
 - `platforms/nixos/desktop/default.nix` - DELETED (unused placeholder)
 
 ### **Planning Files:**
+
 - `docs/planning/2025-12-26_17-40_pareto-focused-execution-plan.md` - CREATED (574 lines)
 
 ### **Documentation Files:**
+
 - `docs/status/2025-12-26_08-15_de-duplication-phase1-2-complete.md` - Added correction section
 - `docs/status/2025-12-26_17-06_critical-ollama-gpu-variable-scope-fix.md` - CREATED (earlier in session)
 
 ### **Total Files Changed:** 9 files
+
 ### **Lines Added:** ~1,200 lines (mostly documentation)
+
 ### **Lines Removed:** ~20 lines (cleanup)
 
 ---
@@ -1550,6 +1720,7 @@ This session produced the following commits:
 ## ✅ SUCCESS CRITERIA MET
 
 ### **Critical Success (51% value):** 80% COMPLETE
+
 - ✅ Ollama GPU variable scope fixed (C1)
 - ✅ Pre-commit hooks pass (H1)
 - ✅ Empty files cleaned (H2)
@@ -1558,12 +1729,14 @@ This session produced the following commits:
 - ⚠️ Darwin build incomplete (H5 - blocked by error)
 
 ### **High Success (64% value):** 63% COMPLETE
+
 - ✅ All Critical Success criteria above
 - ⏸ H6: Verify imports (pending)
 - ⏸ H7: Testing checklist (pending)
 - ⏸ H8: Testing results (pending)
 
 ### **Full Success (80% value):** 0% COMPLETE
+
 - 🚫 M1-M6: Medium priority tasks (pending)
 - Will be addressed after Darwin build is fixed
 
@@ -1572,27 +1745,32 @@ This session produced the following commits:
 ## 🎓 LESSONS LEARNED
 
 ### **1. Variable Scope Matters**
+
 - User-level vs service-level variables are critical
 - System services CANNOT see user-level environment
 - Always check service execution context when setting variables
 
 ### **2. Linting is Not Enough**
+
 - Pre-commit hooks catch syntax but not evaluation errors
 - Build tests are necessary for full validation
 - Need better CI/CD for catching evaluation errors
 
 ### **3. Documentation Saves Time**
+
 - Writing detailed status reports helps debugging
 - Preserving research findings prevents re-work
 - Corrections documented prevent confusion
 
 ### **4. Pareto Principle Works**
+
 - Focusing on 20% of work delivered 60% of value
 - Critical fixes (Ollama) prevented major issues
 - High-priority validation ensured system works
 - Medium priority can be deferred
 
 ### **5. Debugging Tools Needed**
+
 - Nix error messages could be better
 - File location should always be shown
 - Need better debugging approaches
@@ -1616,12 +1794,14 @@ This session produced the following commits:
 **Time Well Spent:** ✅ Focused on high-impact work
 
 **Key Achievement:**
+
 - ✅ Fixed CRITICAL Ollama GPU variable scope (prevented broken GPU access)
 - ✅ Resolved all linting and syntax issues
 - ✅ NixOS build passes
 - ⚠️ Darwin build blocked by error (needs user guidance)
 
 **Recommendation:**
+
 1. Get user guidance on Darwin build error (boost::too_few_args)
 2. Once resolved, complete H6-H8 (validation tasks)
 3. Proceed with M1-M6 (medium priority de-duplication)
@@ -1635,4 +1815,4 @@ This session produced the following commits:
 **Session Status:** PROGRESS MADE, 1 BLOCKING ISSUE
 **Next Action:** AWAITING USER GUIDANCE ON DARWIN BUILD ERROR
 
-*End of Session Progress Report*
+_End of Session Progress Report_

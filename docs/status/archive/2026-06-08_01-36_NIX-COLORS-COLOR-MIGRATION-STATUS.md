@@ -9,6 +9,7 @@
 ## a) FULLY DONE ✅
 
 ### Theme System Expansion
+
 - **`platforms/common/theme.nix`** — Added comprehensive `colors` attrset with 26 named Catppuccin Mocha colors:
   - Full palette: `rosewater`, `flamingo`, `pink`, `mauve`, `red`, `maroon`, `peach`, `yellow`, `green`, `teal`, `sky`, `sapphire`, `blue`, `lavender`, `text`, `subtext1`, `subtext0`, `overlay2`, `overlay1`, `overlay0`, `surface2`, `surface1`, `surface0`, `base`, `mantle`, `crust`
   - `palette` now extends `colors` with base16 aliases (`base00`–`base0F`) so both naming conventions work everywhere
@@ -16,19 +17,20 @@
 
 ### Color Migration (164 hardcoded hex values → `colorScheme.palette` references)
 
-| File | Colors Migrated | Notes |
-|------|----------------|-------|
-| `platforms/nixos/desktop/waybar.nix` | 26 | All CSS hex → `colors.*`. Added `colorScheme` to function args. |
-| `platforms/nixos/programs/rofi.nix` | 8 | All rasi hex+alpha → `colors.*`. Added `colorScheme` to function args. |
-| `platforms/nixos/programs/wlogout.nix` | 10 | CSS + SVG stroke colors → `colors.*`. Added `colorScheme` to function args. Replaced rgba() with hex+alpha. |
-| `platforms/nixos/programs/yazi.nix` | ~55 | All theme hex → `colors.*`. Added `colorScheme` to function args. |
-| `modules/nixos/services/homepage.nix` | 14 | CSS custom properties → `colors.*`. Imported theme in let-binding. |
-| `platforms/nixos/users/home.nix` (foot) | 16 | Terminal color hex values → `colors.*`. |
-| `platforms/nixos/programs/swaylock.nix` | 21 | All config hex → `colors.*`. Added `colorScheme` to function args. |
-| `platforms/common/programs/fzf.nix` | 1 | Stray `#a6adc8` → `colors.subtext0`. |
-| **TOTAL** | **~164** | Zero hardcoded Catppuccin hex values remain in Nix files (except `#000000` in niri-wrapped). |
+| File                                    | Colors Migrated | Notes                                                                                                       |
+| --------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------- |
+| `platforms/nixos/desktop/waybar.nix`    | 26              | All CSS hex → `colors.*`. Added `colorScheme` to function args.                                             |
+| `platforms/nixos/programs/rofi.nix`     | 8               | All rasi hex+alpha → `colors.*`. Added `colorScheme` to function args.                                      |
+| `platforms/nixos/programs/wlogout.nix`  | 10              | CSS + SVG stroke colors → `colors.*`. Added `colorScheme` to function args. Replaced rgba() with hex+alpha. |
+| `platforms/nixos/programs/yazi.nix`     | ~55             | All theme hex → `colors.*`. Added `colorScheme` to function args.                                           |
+| `modules/nixos/services/homepage.nix`   | 14              | CSS custom properties → `colors.*`. Imported theme in let-binding.                                          |
+| `platforms/nixos/users/home.nix` (foot) | 16              | Terminal color hex values → `colors.*`.                                                                     |
+| `platforms/nixos/programs/swaylock.nix` | 21              | All config hex → `colors.*`. Added `colorScheme` to function args.                                          |
+| `platforms/common/programs/fzf.nix`     | 1               | Stray `#a6adc8` → `colors.subtext0`.                                                                        |
+| **TOTAL**                               | **~164**        | Zero hardcoded Catppuccin hex values remain in Nix files (except `#000000` in niri-wrapped).                |
 
 ### Verification
+
 - `just test-fast` — all checks pass ✅
 - `nix flake check --system x86_64-linux` — all checks pass ✅
 - `deadnix` check passes ✅
@@ -40,12 +42,14 @@
 ## b) PARTIALLY DONE ⚠️
 
 ### "nix-colors integration" Task
+
 - **Color migration:** DONE — all hardcoded colors centralized
 - **nix-colors flake input:** NOT DONE — nix-colors was removed in Session 47 (~500MB eval memory saved, 3 lock nodes removed). I did NOT re-add it.
 - **nix-colors Home Manager module wiring:** NOT DONE — `nix-colors.homeManagerModules.default` (auto-generates GTK/Qt/terminal config from base16 scheme) was never wired.
 - **`color-scheme.nix`:** Still uses inline `theme.colorScheme` instead of looking up from nix-colors.
 
 ### niri-wrapped.nix
+
 - Uses `color = "#00000060"` (with alpha) which was missed by the `#[0-9a-fA-F]{6}` regex. Not migrated.
 
 ---
@@ -78,6 +82,7 @@ This is a **scope miss**, not a breakage.
 ## e) WHAT WE SHOULD IMPROVE 🔧
 
 ### Immediate (next session)
+
 1. **Decide on nix-colors vs inline theme** — see Question #1 below
 2. **Fix `color-scheme.nix` dead code** — `options.colorScheme.default` is always overridden by `config.colorScheme` (NIX-REVIEW.md 2.9)
 3. **Fix `preferences.nix` duplication** — imports `theme.nix` and duplicates all values as option defaults (NIX-REVIEW.md 2.8)
@@ -85,6 +90,7 @@ This is a **scope miss**, not a breakage.
 5. **Update AGENTS.md** — document the `colors.*` vs `palette.*` dual naming
 
 ### Short-term (next 2–3 sessions)
+
 6. **Add `pre-commit` hook for hardcoded colors** — prevent regression
 7. **Add structured type for colorScheme** — `lib.types.attrs` is too loose
 8. **Evaluate stylix** — could replace our manual GTK/Qt/terminal config entirely
@@ -92,6 +98,7 @@ This is a **scope miss**, not a breakage.
 10. **Standardize on `colors.*` vs `palette.*`** — currently both are used interchangeably
 
 ### Architecture-level
+
 11. **Theme as a proper NixOS module** — instead of importing `theme.nix` everywhere, define options and let config derive the scheme
 12. **Color derivation instead of hardcoding** — for alpha variants (e.g., `#b4befe66` for hover states), derive from base colors
 13. **Per-app theme overrides** — some apps might want different accent colors
@@ -100,33 +107,33 @@ This is a **scope miss**, not a breakage.
 
 ## f) Top #25 Things To Get Done Next (Sorted by Impact/Work Ratio) 🎯
 
-| Rank | Task | Impact | Work | Ratio | Notes |
-|------|------|--------|------|-------|-------|
-| 1 | **Decide: re-add nix-colors or keep inline** | High | Low | ⭐⭐⭐⭐⭐ | Blocks all other theme work |
-| 2 | **Migrate niri-wrapped `#00000060`** | Low | 2 min | ⭐⭐⭐⭐⭐ | One-liner fix |
-| 3 | **Fix `color-scheme.nix` dead default** | Medium | 5 min | ⭐⭐⭐⭐⭐ | Remove `config.colorScheme` override |
-| 4 | **Update AGENTS.md theme section** | Medium | 10 min | ⭐⭐⭐⭐ | Document new structure |
-| 5 | **Add hardcoded-color pre-commit hook** | High | 15 min | ⭐⭐⭐⭐ | Prevents regression |
-| 6 | **Fix `preferences.nix` duplication** | Medium | 10 min | ⭐⭐⭐⭐ | Consume theme.nix instead |
-| 7 | **Add structured type for colorScheme** | Medium | 20 min | ⭐⭐⭐ | `types.submodule` with palette fields |
-| 8 | **Re-add nix-colors flake input** | High | 10 min | ⭐⭐⭐ | If decision is YES |
-| 9 | **Wire nix-colors HM module** | High | 20 min | ⭐⭐⭐ | Auto-generates program configs |
-| 10 | **Standardize `colors.*` vs `palette.*`** | Low | 15 min | ⭐⭐⭐ | Pick one, migrate all |
-| 11 | **Remove theme.nix direct imports** | Low | 20 min | ⭐⭐⭐ | Use passed arg everywhere |
-| 12 | **Add theme consistency test** | Medium | 30 min | ⭐⭐⭐ | Nix derivation that checks all files |
-| 13 | **Derive alpha variants programmatically** | Medium | 30 min | ⭐⭐⭐ | Use nix-colors.lib or custom fn |
-| 14 | **Evaluate stylix** | High | 1h | ⭐⭐ | Could replace ALL manual theming |
-| 15 | **Theme as NixOS module with options** | High | 1h | ⭐⭐ | Proper options/config pattern |
-| 16 | **Per-app accent color overrides** | Low | 30 min | ⭐⭐ | e.g., yazi uses different accent |
-| 17 | **Add light/dark variant toggle** | Medium | 1h | ⭐⭐ | Use nix-colors scheme switching |
-| 18 | **Auto-generate waybar CSS from theme** | Medium | 1h | ⭐⭐ | Use nix-colors.lib CSS generator |
-| 19 | **Auto-generate rofi theme from scheme** | Medium | 1h | ⭐⭐ | Use nix-colors.lib rasi generator |
-| 20 | **Theme preview command** | Low | 30 min | ⭐ | `just theme-preview` shows all colors |
-| 21 | **Migrate all programs to nix-colors HM** | High | 2h | ⭐ | If using HM module |
-| 22 | **Add `theme switch` subcommand** | Low | 1h | ⭐ | Switch between schemes at runtime |
-| 23 | **Document color naming conventions** | Low | 20 min | ⭐ | DOMAIN_LANGUAGE.md entry |
-| 24 | **Theme regression screenshot tests** | Low | 2h | ⭐ | Visual diff of themed apps |
-| 25 | **Contribute Catppuccin scheme upstream** | Low | 30 min | ⭐ | If nix-colors missing our variant |
+| Rank | Task                                         | Impact | Work   | Ratio      | Notes                                 |
+| ---- | -------------------------------------------- | ------ | ------ | ---------- | ------------------------------------- |
+| 1    | **Decide: re-add nix-colors or keep inline** | High   | Low    | ⭐⭐⭐⭐⭐ | Blocks all other theme work           |
+| 2    | **Migrate niri-wrapped `#00000060`**         | Low    | 2 min  | ⭐⭐⭐⭐⭐ | One-liner fix                         |
+| 3    | **Fix `color-scheme.nix` dead default**      | Medium | 5 min  | ⭐⭐⭐⭐⭐ | Remove `config.colorScheme` override  |
+| 4    | **Update AGENTS.md theme section**           | Medium | 10 min | ⭐⭐⭐⭐   | Document new structure                |
+| 5    | **Add hardcoded-color pre-commit hook**      | High   | 15 min | ⭐⭐⭐⭐   | Prevents regression                   |
+| 6    | **Fix `preferences.nix` duplication**        | Medium | 10 min | ⭐⭐⭐⭐   | Consume theme.nix instead             |
+| 7    | **Add structured type for colorScheme**      | Medium | 20 min | ⭐⭐⭐     | `types.submodule` with palette fields |
+| 8    | **Re-add nix-colors flake input**            | High   | 10 min | ⭐⭐⭐     | If decision is YES                    |
+| 9    | **Wire nix-colors HM module**                | High   | 20 min | ⭐⭐⭐     | Auto-generates program configs        |
+| 10   | **Standardize `colors.*` vs `palette.*`**    | Low    | 15 min | ⭐⭐⭐     | Pick one, migrate all                 |
+| 11   | **Remove theme.nix direct imports**          | Low    | 20 min | ⭐⭐⭐     | Use passed arg everywhere             |
+| 12   | **Add theme consistency test**               | Medium | 30 min | ⭐⭐⭐     | Nix derivation that checks all files  |
+| 13   | **Derive alpha variants programmatically**   | Medium | 30 min | ⭐⭐⭐     | Use nix-colors.lib or custom fn       |
+| 14   | **Evaluate stylix**                          | High   | 1h     | ⭐⭐       | Could replace ALL manual theming      |
+| 15   | **Theme as NixOS module with options**       | High   | 1h     | ⭐⭐       | Proper options/config pattern         |
+| 16   | **Per-app accent color overrides**           | Low    | 30 min | ⭐⭐       | e.g., yazi uses different accent      |
+| 17   | **Add light/dark variant toggle**            | Medium | 1h     | ⭐⭐       | Use nix-colors scheme switching       |
+| 18   | **Auto-generate waybar CSS from theme**      | Medium | 1h     | ⭐⭐       | Use nix-colors.lib CSS generator      |
+| 19   | **Auto-generate rofi theme from scheme**     | Medium | 1h     | ⭐⭐       | Use nix-colors.lib rasi generator     |
+| 20   | **Theme preview command**                    | Low    | 30 min | ⭐         | `just theme-preview` shows all colors |
+| 21   | **Migrate all programs to nix-colors HM**    | High   | 2h     | ⭐         | If using HM module                    |
+| 22   | **Add `theme switch` subcommand**            | Low    | 1h     | ⭐         | Switch between schemes at runtime     |
+| 23   | **Document color naming conventions**        | Low    | 20 min | ⭐         | DOMAIN_LANGUAGE.md entry              |
+| 24   | **Theme regression screenshot tests**        | Low    | 2h     | ⭐         | Visual diff of themed apps            |
+| 25   | **Contribute Catppuccin scheme upstream**    | Low    | 30 min | ⭐         | If nix-colors missing our variant     |
 
 ---
 
@@ -137,10 +144,12 @@ This is a **scope miss**, not a breakage.
 > **Context:** You intentionally removed `nix-colors` in Session 47 (commit `ca28e6e3`), saving ~500MB eval memory and 3 lock nodes. The current inline `theme.nix` works perfectly for our single-theme (Catppuccin Mocha) use case.
 >
 > **Trade-offs:**
+>
 > - **Re-add nix-colors:** Gets us `homeManagerModules.default` (auto-generates config for 10+ programs), `nix-colors.lib` (color derivation), and 200+ scheme switching. Costs 3 lock nodes + eval memory.
 > - **Keep inline:** Lighter, faster eval, zero external dependency. But we manually maintain the palette and all program configs.
 >
 > **Sub-question:** If YES, do you want:
+>
 > - **Full HM module:** `nix-colors.homeManagerModules.default` auto-generates GTK/Qt/terminal/foot/dunst/etc. config (may conflict with our manual configs)
 > - **Palette-only:** Just `nix-colors.colorSchemes.catppuccin-mocha` as the data source, keep our manual HM program configs
 >
@@ -180,5 +189,5 @@ platforms/nixos/desktop/niri-wrapped.nix:#000000  # (only remaining — missed b
 
 ---
 
-*Report generated: 2026-06-08 01:36 CEST*
-*Status: AWAITING INSTRUCTIONS*
+_Report generated: 2026-06-08 01:36 CEST_
+_Status: AWAITING INSTRUCTIONS_

@@ -84,6 +84,7 @@ Fixed 5 distinct issues across 2 repos (SystemNix + monitor365), deployed 4 time
 ### Uncommitted changes in SystemNix
 
 Three `.nix` files changed + `flake.lock` updated, none committed:
+
 - `modules/nixos/services/gpu-active.nix` — added `pkgs.gawk`
 - `modules/nixos/services/signoz.nix` — rewrote preStart wait loop
 - `modules/nixos/services/monitor365.nix` — removed CORS origins
@@ -93,6 +94,7 @@ Three `.nix` files changed + `flake.lock` updated, none committed:
 ### AGENTS.md not updated
 
 Five new gotchas discovered, none documented:
+
 1. `writeShellApplication` + `awk` — must include `pkgs.gawk` (not in coreutils)
 2. `timeout N bash -c` inside `writeShellApplication` — bash won't be on PATH
 3. Upstream monitor365 `corsOrigins` env var — incompatible with Rust config deserializer

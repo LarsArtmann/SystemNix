@@ -22,15 +22,15 @@
 
 ## 4. Recommended Additions
 
-| Priority | Action | Why |
-|----------|--------|-----|
-| **High** | Restic/Borg backup to offsite (e.g., Hetzner, B2, S3) | Local snapshots die with the disk |
-| **High** | BTRFS read-only snapshots for `/data` and `/home` | Immutable recovery points |
-| **High** | Email attachment hygiene — don't open unknown attachments | #1 ransomware vector |
-| **Medium** | Separate backup credentials from daily-use credentials | Ransomware runs as your user |
-| **Medium** | Keep sops age keys offline (YubiKey or offline USB) | If keys are on disk, ransomware can decrypt secrets |
-| **Medium** | Restrict SSH access (key-only, no password auth) | Prevent lateral movement |
-| **Low** | AppArmor/firejail for browser isolation | Browser is the main attack surface |
+| Priority   | Action                                                    | Why                                                 |
+| ---------- | --------------------------------------------------------- | --------------------------------------------------- |
+| **High**   | Restic/Borg backup to offsite (e.g., Hetzner, B2, S3)     | Local snapshots die with the disk                   |
+| **High**   | BTRFS read-only snapshots for `/data` and `/home`         | Immutable recovery points                           |
+| **High**   | Email attachment hygiene — don't open unknown attachments | #1 ransomware vector                                |
+| **Medium** | Separate backup credentials from daily-use credentials    | Ransomware runs as your user                        |
+| **Medium** | Keep sops age keys offline (YubiKey or offline USB)       | If keys are on disk, ransomware can decrypt secrets |
+| **Medium** | Restrict SSH access (key-only, no password auth)          | Prevent lateral movement                            |
+| **Low**    | AppArmor/firejail for browser isolation                   | Browser is the main attack surface                  |
 
 ## 5. Quick Wins
 

@@ -9,29 +9,29 @@
 
 ### CPU
 
-| Spec | Value |
-|------|-------|
-| **Architecture** | Zen 5 (cpu family 26) |
-| **Cores/Threads** | 16C/32T |
-| **Base/Boost** | 625 MHz / 5,187 MHz |
-| **L3 Cache** | 64 MiB (2 × 32 MiB CCDs) |
-| **TDP** | 45-120W configurable |
-| **Instruction Set** | AVX-512, BFloat16 |
-| **NUMA** | Single node |
+| Spec                | Value                    |
+| ------------------- | ------------------------ |
+| **Architecture**    | Zen 5 (cpu family 26)    |
+| **Cores/Threads**   | 16C/32T                  |
+| **Base/Boost**      | 625 MHz / 5,187 MHz      |
+| **L3 Cache**        | 64 MiB (2 × 32 MiB CCDs) |
+| **TDP**             | 45-120W configurable     |
+| **Instruction Set** | AVX-512, BFloat16        |
+| **NUMA**            | Single node              |
 
 ### GPU — Radeon 8060S (RDNA 3.5)
 
-| Spec | Value | Source |
-|------|-------|--------|
-| **Architecture** | RDNA 3.5 (gfx1105) | KFD topology: `gfx_target_version 110501` |
-| **Compute Units** | 80 CU (4 arrays × 10 CU/array) | KFD: `simd_count 80, array_count 4, cu_per_simd_array 10` |
-| **SIMD per CU** | 2 | KFD: `simd_per_cu 2` |
-| **PCI Device ID** | `1002:1586` (subsystem `2014:801D`) | sysfs uevent |
-| **VRAM (carveout)** | **64 GiB** (68,719,476,736 bytes) | `mem_info_vram_total` |
-| **Visible VRAM** | **64 GiB** (same as VRAM — full aperture) | `mem_info_vis_vram_total` |
-| **GTT (system RAM mapped to GPU)** | **32 GiB** (34,359,738,368 bytes) | `mem_info_gtt_total` |
-| **GPU Busy** | 100% (wedged state) | `gpu_busy_percent` |
-| **DPM State** | performance | `power_dpm_state` |
+| Spec                               | Value                                     | Source                                                    |
+| ---------------------------------- | ----------------------------------------- | --------------------------------------------------------- |
+| **Architecture**                   | RDNA 3.5 (gfx1105)                        | KFD topology: `gfx_target_version 110501`                 |
+| **Compute Units**                  | 80 CU (4 arrays × 10 CU/array)            | KFD: `simd_count 80, array_count 4, cu_per_simd_array 10` |
+| **SIMD per CU**                    | 2                                         | KFD: `simd_per_cu 2`                                      |
+| **PCI Device ID**                  | `1002:1586` (subsystem `2014:801D`)       | sysfs uevent                                              |
+| **VRAM (carveout)**                | **64 GiB** (68,719,476,736 bytes)         | `mem_info_vram_total`                                     |
+| **Visible VRAM**                   | **64 GiB** (same as VRAM — full aperture) | `mem_info_vis_vram_total`                                 |
+| **GTT (system RAM mapped to GPU)** | **32 GiB** (34,359,738,368 bytes)         | `mem_info_gtt_total`                                      |
+| **GPU Busy**                       | 100% (wedged state)                       | `gpu_busy_percent`                                        |
+| **DPM State**                      | performance                               | `power_dpm_state`                                         |
 
 ### Critical Memory Layout
 
@@ -70,14 +70,14 @@ $ uname -r
 
 ### Kernel Release Timeline
 
-| Version | Status | Date |
-|---------|--------|------|
-| 6.12.87 | Longterm (LTS) | Active maintenance |
-| 6.18.29 | Longterm | Active maintenance |
-| 6.19.14 | EOL | End of life |
-| **7.0.6** | **Stable** | **2026-05-11** |
-| 7.1-rc3 | Mainline (development) | 2026-05-10 |
-| 7.2 | Merge window June 2026 | Upcoming |
+| Version   | Status                 | Date               |
+| --------- | ---------------------- | ------------------ |
+| 6.12.87   | Longterm (LTS)         | Active maintenance |
+| 6.18.29   | Longterm               | Active maintenance |
+| 6.19.14   | EOL                    | End of life        |
+| **7.0.6** | **Stable**             | **2026-05-11**     |
+| 7.1-rc3   | Mainline (development) | 2026-05-10         |
+| 7.2       | Merge window June 2026 | Upcoming           |
 
 ### Linux 7.0 Highlights (from Phoronix coverage)
 
@@ -95,13 +95,13 @@ $ uname -r
 
 ### Linux 7.2 Upcoming (from Phoronix articles)
 
-| Feature | Relevance |
-|---------|-----------|
-| **AMDGPU DC Power Module** | Better power management aligned with Windows behavior — may help with GPU scheduling fairness |
-| **SR-IOV for Ryzen AI NPUs** | Virtual NPU partitioning — doesn't help with iGPU VRAM but good for NPU workloads |
-| **RadeonSI code reorganization** | Multimedia-only driver builds — cleaner separation of compute vs display |
-| **dm-inlinecrypt** | Inline block device encryption |
-| **Realtek RTL8159 10GbE** | 10GbE USB Ethernet support |
+| Feature                          | Relevance                                                                                     |
+| -------------------------------- | --------------------------------------------------------------------------------------------- |
+| **AMDGPU DC Power Module**       | Better power management aligned with Windows behavior — may help with GPU scheduling fairness |
+| **SR-IOV for Ryzen AI NPUs**     | Virtual NPU partitioning — doesn't help with iGPU VRAM but good for NPU workloads             |
+| **RadeonSI code reorganization** | Multimedia-only driver builds — cleaner separation of compute vs display                      |
+| **dm-inlinecrypt**               | Inline block device encryption                                                                |
+| **Realtek RTL8159 10GbE**        | 10GbE USB Ethernet support                                                                    |
 
 ### Dirty Frag Vulnerability (2026-05-07)
 
@@ -117,11 +117,11 @@ The Ryzen AI Max+ 395 is unique: it has **128 GiB LPDDR5X** shared between CPU a
 
 **TTM (Translation Table Manager)** manages three memory domains:
 
-| Domain | Description | Size on evo-x2 |
-|--------|-------------|---------------|
-| **VRAM** | Dedicated GPU-local memory (LPDDR5X carveout) | 64 GiB |
-| **GTT** (Graphics Translation Table) | System RAM mapped into GPU address space | 32 GiB |
-| **System** | CPU-only system RAM | ~32 GiB (62 GiB total - 32 GiB GTT) |
+| Domain                               | Description                                   | Size on evo-x2                      |
+| ------------------------------------ | --------------------------------------------- | ----------------------------------- |
+| **VRAM**                             | Dedicated GPU-local memory (LPDDR5X carveout) | 64 GiB                              |
+| **GTT** (Graphics Translation Table) | System RAM mapped into GPU address space      | 32 GiB                              |
+| **System**                           | CPU-only system RAM                           | ~32 GiB (62 GiB total - 32 GiB GTT) |
 
 ### sysfs Memory Info
 
@@ -164,13 +164,13 @@ This allows the GPU to address more system RAM for large model loads, but doesn'
 
 AMD APUs **do not have MPS (Multi-Process Service)** equivalent. NVIDIA MPS allows time-slicing GPU compute between processes with priority. AMD has no such mechanism:
 
-| Feature | NVIDIA | AMD (RDNA 3.5) |
-|---------|--------|-----------------|
-| Per-process VRAM limits | ✅ nvidia-cgroup | ❌ Not available |
-| Compute priority (MPS) | ✅ CUDA MPS | ❌ No equivalent |
-| GPU time-slicing | ✅ Time-slice + MPS | ❌ Cooperative only |
-| cgroup GPU controller | ❌ Not merged | ❌ Not available |
-| DRM scheduler priority | ✅ Some support | ⚠️ `drm/sched` exists but no user-space control |
+| Feature                 | NVIDIA              | AMD (RDNA 3.5)                                  |
+| ----------------------- | ------------------- | ----------------------------------------------- |
+| Per-process VRAM limits | ✅ nvidia-cgroup    | ❌ Not available                                |
+| Compute priority (MPS)  | ✅ CUDA MPS         | ❌ No equivalent                                |
+| GPU time-slicing        | ✅ Time-slice + MPS | ❌ Cooperative only                             |
+| cgroup GPU controller   | ❌ Not merged       | ❌ Not available                                |
+| DRM scheduler priority  | ✅ Some support     | ⚠️ `drm/sched` exists but no user-space control |
 
 ### What IS Available
 
@@ -194,19 +194,20 @@ AMD APUs **do not have MPS (Multi-Process Service)** equivalent. NVIDIA MPS allo
 
 ### Environment Variables (from Sourcegraph code analysis)
 
-| Variable | Default | Description |
-|----------|---------|-------------|
+| Variable                   | Default              | Description                                        |
+| -------------------------- | -------------------- | -------------------------------------------------- |
 | `OLLAMA_MAX_LOADED_MODELS` | Auto (based on VRAM) | **Maximum number of models loaded simultaneously** |
-| `OLLAMA_NUM_PARALLEL` | 1 | Parallel request processing per runner |
-| `OLLAMA_GPU_OVERHEAD` | 0 | Reserve extra VRAM (bytes) beyond model size |
-| `OLLAMA_SCHED_SPREAD` | false | Spread models across available GPUs |
-| `OLLAMA_FLASH_ATTENTION` | false | Enable flash attention (reduces VRAM) |
-| `OLLAMA_KV_CACHE_TYPE` | "f16" | KV cache quantization ("q8_0" uses less VRAM) |
-| `OLLAMA_KEEP_ALIVE` | "5m" | How long to keep models loaded after last request |
+| `OLLAMA_NUM_PARALLEL`      | 1                    | Parallel request processing per runner             |
+| `OLLAMA_GPU_OVERHEAD`      | 0                    | Reserve extra VRAM (bytes) beyond model size       |
+| `OLLAMA_SCHED_SPREAD`      | false                | Spread models across available GPUs                |
+| `OLLAMA_FLASH_ATTENTION`   | false                | Enable flash attention (reduces VRAM)              |
+| `OLLAMA_KV_CACHE_TYPE`     | "f16"                | KV cache quantization ("q8_0" uses less VRAM)      |
+| `OLLAMA_KEEP_ALIVE`        | "5m"                 | How long to keep models loaded after last request  |
 
 ### How Ollama Decides Runner Count
 
 Ollama's scheduler (`ollama/scheduler.go`) decides how many GPU runners to create based on:
+
 1. Available VRAM reported by the driver
 2. Model size (weights + KV cache)
 3. `OLLAMA_MAX_LOADED_MODELS` (if set)
@@ -234,6 +235,7 @@ PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45";
 ```
 
 **Missing:**
+
 - `OLLAMA_MAX_LOADED_MODELS = "1"` ← **CRITICAL — not set**
 - `OLLAMA_GPU_OVERHEAD` ← not set (should reserve headroom)
 
@@ -256,6 +258,7 @@ niri-drm-healthcheck.timer (every 60s)
 ### Problem Analysis
 
 The healthcheck **SIGKILLs niri** when it detects DRM errors, but:
+
 1. It doesn't detect "GPU is truly wedged" vs "transient glitch"
 2. It creates a **crash loop** — niri restarts into the same broken state 638 times
 3. The `gpu-recovery.service` (unbind/rebind) is only triggered when niri hasn't been running for >5 minutes, but the healthcheck keeps restarting it
@@ -277,6 +280,7 @@ niri-drm-healthcheck.timer (every 60s)
 Published 2026-05-07 — local privilege escalation affecting ALL Linux distributions. Embargo broken early, patches not yet available in all distros.
 
 **Action for evo-x2:**
+
 - Ensure kernel 7.0.6 or later is running (7.0.1 may be vulnerable)
 - Check: `uname -r` → currently 7.0.1
 - Update when patched kernel lands in nixpkgs unstable
@@ -287,30 +291,31 @@ Published 2026-05-07 — local privilege escalation affecting ALL Linux distribu
 
 ### Tier 1: Immediate (prevent re-occurrence)
 
-| # | Action | File | Effort |
-|---|--------|------|--------|
-| 1 | Set `OLLAMA_MAX_LOADED_MODELS = "1"` | `modules/nixos/services/ai-stack.nix` | 1 min |
-| 2 | Set `OLLAMA_GPU_OVERHEAD = "8589934592"` (8 GiB reserve) | `modules/nixos/services/ai-stack.nix` | 1 min |
-| 3 | Raise niri `OOMScoreAdjust` to `-1000` | `modules/nixos/services/niri-config.nix` | 1 min |
-| 4 | Add `OOMScoreAdjust = 500` to Ollama | `modules/nixos/services/ai-stack.nix` | 1 min |
+| #   | Action                                                   | File                                     | Effort |
+| --- | -------------------------------------------------------- | ---------------------------------------- | ------ |
+| 1   | Set `OLLAMA_MAX_LOADED_MODELS = "1"`                     | `modules/nixos/services/ai-stack.nix`    | 1 min  |
+| 2   | Set `OLLAMA_GPU_OVERHEAD = "8589934592"` (8 GiB reserve) | `modules/nixos/services/ai-stack.nix`    | 1 min  |
+| 3   | Raise niri `OOMScoreAdjust` to `-1000`                   | `modules/nixos/services/niri-config.nix` | 1 min  |
+| 4   | Add `OOMScoreAdjust = 500` to Ollama                     | `modules/nixos/services/ai-stack.nix`    | 1 min  |
 
 ### Tier 2: DRM Healthcheck Fix
 
-| # | Action | File | Effort |
-|---|--------|------|--------|
-| 5 | Rewrite healthcheck: count consecutive errors, don't SIGKILL | `scripts/niri-drm-healthcheck.sh` | 30 min |
-| 6 | Add auto-reboot on unrecoverable GPU state | `scripts/gpu-recovery.sh` | 15 min |
+| #   | Action                                                       | File                              | Effort |
+| --- | ------------------------------------------------------------ | --------------------------------- | ------ |
+| 5   | Rewrite healthcheck: count consecutive errors, don't SIGKILL | `scripts/niri-drm-healthcheck.sh` | 30 min |
+| 6   | Add auto-reboot on unrecoverable GPU state                   | `scripts/gpu-recovery.sh`         | 15 min |
 
 ### Tier 3: Kernel / System
 
-| # | Action | Effort |
-|---|--------|--------|
-| 7 | Update kernel to 7.0.6+ (Dirty Frag fix) | `nixpkgs` bump |
-| 8 | Consider `amdgpu.gttsize` reduction (currently 112 GiB, maybe 64 GiB to limit GTT abuse) | 5 min |
+| #   | Action                                                                                   | Effort         |
+| --- | ---------------------------------------------------------------------------------------- | -------------- |
+| 7   | Update kernel to 7.0.6+ (Dirty Frag fix)                                                 | `nixpkgs` bump |
+| 8   | Consider `amdgpu.gttsize` reduction (currently 112 GiB, maybe 64 GiB to limit GTT abuse) | 5 min          |
 
 ### Architecture Reality
 
 **There is no kernel-level mechanism to protect niri's GPU memory from AI workloads on AMD APUs.** The protection must come from userspace:
+
 - `OLLAMA_MAX_LOADED_MODELS=1` (prevents dual-runner)
 - `OLLAMA_GPU_OVERHEAD=8G` (reserves headroom)
 - `per_process_memory_fraction:0.45` (existing, limits single runner)

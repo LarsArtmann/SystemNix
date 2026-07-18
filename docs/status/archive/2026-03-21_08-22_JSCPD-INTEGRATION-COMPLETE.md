@@ -16,19 +16,19 @@
 
 ### a) Fully Done ✅
 
-| Item | Status | Details |
-|------|--------|---------|
+| Item                                   | Status  | Details                                                          |
+| -------------------------------------- | ------- | ---------------------------------------------------------------- |
 | Research jscpd availability in nixpkgs | ✅ DONE | jscpd NOT in standard nixpkgs (nodePackages drastically reduced) |
-| Clean up broken references | ✅ DONE | Removed `nodePackages.jscpd` from base.nix (doesn't exist) |
-| Add jscpd to devShell | ✅ DONE | Added via `bunx jscpd` alias in flake.nix devShell |
-| Verify jscpd works | ✅ DONE | Version 4.0.8 runs successfully |
-| Changes committed | ✅ DONE | Commit 63f06ae |
+| Clean up broken references             | ✅ DONE | Removed `nodePackages.jscpd` from base.nix (doesn't exist)       |
+| Add jscpd to devShell                  | ✅ DONE | Added via `bunx jscpd` alias in flake.nix devShell               |
+| Verify jscpd works                     | ✅ DONE | Version 4.0.8 runs successfully                                  |
+| Changes committed                      | ✅ DONE | Commit 63f06ae                                                   |
 
 ### b) Partially Done
 
-| Item | Status | Notes |
-|------|--------|-------|
-| System-wide package | N/A | Not possible - jscpd not in nixpkgs, custom package complex |
+| Item                | Status | Notes                                                       |
+| ------------------- | ------ | ----------------------------------------------------------- |
+| System-wide package | N/A    | Not possible - jscpd not in nixpkgs, custom package complex |
 
 ### c) Not Started
 
@@ -85,6 +85,7 @@ None.
 ### Question: Why does nix develop --command fail but piping commands works?
 
 **Observation:**
+
 - `nix develop .#default --command 'jscpd --version'` → "not found"
 - `echo 'jscpd --version' | nix develop .#default` → works (4.0.8)
 

@@ -73,6 +73,7 @@ The `forgejo-oidc-setup` oneshot service had been **crashing on every boot since
 ## f) Next Steps (Prioritized)
 
 ### P0 — Immediate
+
 1. **Run `nix fmt`** to fix formatting on the modified files
 2. **Run `nix flake check --no-build`** to validate the final state
 3. **Commit all changes** (forgejo.nix, AGENTS.md, pre-deploy-check.sh reversion)
@@ -80,6 +81,7 @@ The `forgejo-oidc-setup` oneshot service had been **crashing on every boot since
 5. **Investigate root disk at 97%** — this is a data loss risk (flagged in AGENTS.md since 2026-06-25 as #1 risk)
 
 ### P1 — Short Term
+
 6. **Rewrite `oidcSetupScript`** to remove `runuser` calls entirely (call `$FORGEJO` directly since service runs as forgejo user)
 7. **Remove the `runuser()` passthrough function** once script is rewritten
 8. **Add post-deploy smoke test** for Forgejo OIDC login button presence
@@ -90,6 +92,7 @@ The `forgejo-oidc-setup` oneshot service had been **crashing on every boot since
 13. **Clean up stale nix build sandboxes** — 18 in `/nix/var/nix/builds/` (7.3 GiB)
 
 ### P2 — Medium Term
+
 14. **Monitor365 agent connection** — post-deploy check showed it passing now, but earlier deploys showed "0 devices" (API key desync). Monitor for recurrence.
 15. **DiscordSync stats** — post-deploy smoke test shows WARN on stats endpoint. Investigate.
 16. **Crush Daily reports** — post-deploy smoke test SKIPs this check. Investigate why.
@@ -99,6 +102,7 @@ The `forgejo-oidc-setup` oneshot service had been **crashing on every boot since
 20. **Document the `runuser` + `harden {}` incompatibility** as a pre-commit check (like the `protect-home-audit` hook)
 
 ### P3 — Nice to Have
+
 21. **Consolidate privilege-dropping patterns** — `genRunnerToken` uses `+` prefix ExecStartPre, `oidcSetupScript` uses `User = "forgejo"`. Standardize on one approach.
 22. **Add a `forgejo-oidc-verify` health script** that checks the auth source exists via `forgejo admin auth list`
 23. **Consider a systemd `RemainAfterExit` + `Restart=on-failure` pattern** for OIDC setup so transient failures retry automatically

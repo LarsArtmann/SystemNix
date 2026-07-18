@@ -33,6 +33,7 @@ TLS during the token exchange at `https://auth.home.lan/api/oidc/token`, and if
 it can't find/trust the dnsblockd-CA, the exchange fails with a 500.
 
 Fixes applied (committed):
+
 - Removed `-k` from `waitOidcReady` — startup now fails fast with a diagnostic
   message (includes expected CA fingerprint `05:3B:B1...F7:B0`) if TLS
   verification fails
@@ -67,6 +68,7 @@ it.
 **What needs to be re-applied:**
 
 1. **Caddy vhost** in `modules/nixos/services/caddy.nix`:
+
 ```nix
 # dnsblockd stats dashboard — app redirects "/" → "/dashboard",
 # so the bare vhost lands on the dashboard. protectedVHost gives
@@ -77,6 +79,7 @@ it.
 ```
 
 2. **systemd ordering** in `modules/nixos/services/caddy.nix`:
+
 ```nix
 after = [ ... ]
   ++ lib.optional config.services.dns-blocker.enable "dnsblockd.service";
@@ -87,6 +90,7 @@ wants = [ ... ]
 ### 2. dnsblockd App Changes — UNCOMMITTED
 
 All three files in the dnsblockd repo are modified but uncommitted:
+
 - `internal/server/handlers.go` — statsRootHandler + route
 - `internal/server/not_found_test.go` — redirect test
 - `AGENTS.md` — endpoint documentation

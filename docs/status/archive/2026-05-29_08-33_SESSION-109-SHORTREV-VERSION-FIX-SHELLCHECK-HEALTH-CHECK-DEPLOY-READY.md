@@ -10,16 +10,16 @@
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Disk `/` | 474G / 512G (94%) | WARN — 32G free |
-| RAM | 42G / 93G used (45%) | OK |
-| Swap | 10G / 19G used (53%) | WARN |
-| NixOS Build | Exit 0, all 44 derivations cached | OK |
-| Git Working Tree | Clean, pushed to origin | OK |
-| Pre-commit Hooks | All passing (gitleaks, deadnix, statix, alejandra, flake check) | OK |
-| Shellcheck | All `writeShellApplication` scripts clean | OK |
-| Package Versions | All 16 packages: 7-char hashes or semver | OK |
+| Metric           | Value                                                           | Status          |
+| ---------------- | --------------------------------------------------------------- | --------------- |
+| Disk `/`         | 474G / 512G (94%)                                               | WARN — 32G free |
+| RAM              | 42G / 93G used (45%)                                            | OK              |
+| Swap             | 10G / 19G used (53%)                                            | WARN            |
+| NixOS Build      | Exit 0, all 44 derivations cached                               | OK              |
+| Git Working Tree | Clean, pushed to origin                                         | OK              |
+| Pre-commit Hooks | All passing (gitleaks, deadnix, statix, alejandra, flake check) | OK              |
+| Shellcheck       | All `writeShellApplication` scripts clean                       | OK              |
+| Package Versions | All 16 packages: 7-char hashes or semver                        | OK              |
 
 ---
 
@@ -29,16 +29,16 @@
 
 All LarsArtmann Go packages now produce readable 7-char store paths instead of 40-char git hashes.
 
-| Repo | Commit | Status |
-|------|--------|--------|
-| `buildflow` | `20f50f5` | Pushed |
-| `branching-flow` | `037fc93` | Pushed |
-| `hierarchical-errors` | `5873db2` | Pushed |
+| Repo                           | Commit    | Status |
+| ------------------------------ | --------- | ------ |
+| `buildflow`                    | `20f50f5` | Pushed |
+| `branching-flow`               | `037fc93` | Pushed |
+| `hierarchical-errors`          | `5873db2` | Pushed |
 | `golangci-lint-auto-configure` | `783368d` | Pushed |
-| `mr-sync` | `4892ddc` | Pushed |
-| `library-policy` | `f5f11e3` | Pushed |
-| `go-commit` | `e0b1b18` | Pushed |
-| `file-and-image-renamer` | `11dbc5f` | Pushed |
+| `mr-sync`                      | `4892ddc` | Pushed |
+| `library-policy`               | `f5f11e3` | Pushed |
+| `go-commit`                    | `e0b1b18` | Pushed |
+| `file-and-image-renamer`       | `11dbc5f` | Pushed |
 
 **Key finding:** Session 108 applied the fix to 4 repos but never committed — changes were staged locally. Session 109 discovered this, committed, and pushed all 4.
 
@@ -93,11 +93,11 @@ af30f78b refactor(niri): inline wallpaper-set.sh into niri-wrapped.nix
 
 4 packages have hardcoded `vendorHash` overrides in `overlays/shared.nix` that should live upstream:
 
-| Package | Current Location | Should Be |
-|---------|-----------------|-----------|
+| Package               | Current Location         | Should Be                       |
+| --------------------- | ------------------------ | ------------------------------- |
 | `hierarchical-errors` | `overlays/shared.nix:57` | `hierarchical-errors/flake.nix` |
-| `mr-sync` | `overlays/shared.nix:59` | `mr-sync/flake.nix` |
-| `buildflow` | `overlays/shared.nix:60` | `BuildFlow/flake.nix` |
+| `mr-sync`             | `overlays/shared.nix:59` | `mr-sync/flake.nix`             |
+| `buildflow`           | `overlays/shared.nix:60` | `BuildFlow/flake.nix`           |
 | `go-structure-linter` | `overlays/shared.nix:62` | `go-structure-linter/flake.nix` |
 
 **Status:** Identified but not moved. The overrides work correctly — they're just fragile (break on every input update until manually re-pinned).
@@ -201,39 +201,40 @@ Every time an upstream Go dep changes, the vendorHash in `overlays/shared.nix` m
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Task | Impact | Effort | Why |
-|---|------|--------|--------|-----|
-| 1 | **`just switch` — Deploy** | HIGH | 5min | 6 commits undeployed, all tested |
-| 2 | **Disk GC + monitoring** | HIGH | 30min | 94% disk, no alerting |
-| 3 | **Move 4 vendorHash upstream** | HIGH | 2h | Every dep update breaks builds |
-| 4 | **Add disk space Gatus alert** | HIGH | 15min | Silent disk-full risk |
-| 5 | **Add swap/RAM Gatus alert** | HIGH | 15min | gopls OOM risk |
-| 6 | **Rebuild TODO_LIST.md** | MED | 30min | Stale since session 75 |
-| 7 | **Audit FEATURES.md** | MED | 1h | Verify against actual code |
-| 8 | **BTRFS /data snapshot migration** | MED | 1h | `/data` unprotected by snapshots |
-| 9 | **Fix upstream pre-commit hooks** | MED | 2h | `--no-verify` on every commit |
-| 10 | **Flake inputs audit (47 → ?)** | MED | 2h | Reduce lock file churn |
-| 11 | **crates.io upstream fix** | MED | 1h | File nixpkgs issue / patch fetchCrate |
-| 12 | **nix-colors integration** | MED | 6h | 17+ hardcoded colors |
-| 13 | **Deploy Dozzle** | LOW | 30min | Docker log tailing |
-| 14 | **Wire Pi 3 DNS failover** | LOW | 4h | Hardware sitting idle |
-| 15 | **Hermes secondary LLM** | LOW | 2h | Single-provider risk |
-| 16 | **Hermes SSH deploy key** | LOW | 30min | Git operations fail in sandbox |
-| 17 | **Create shared flake-parts template** | LOW | 3h | Reduce boilerplate across repos |
-| 18 | **Fix `file-and-image-renamer` Go version** | LOW | 30min | Disabled due to 1.26.2 vs 1.26.3 |
-| 19 | **Fix `photomap` Podman permissions** | LOW | 1h | Disabled service |
-| 20 | **SigNoz per-threshold channel routing** | LOW | 1h | All alerts → same channel |
-| 21 | **Consolidate voice-agents Caddy vHost** | LOW | 30min | Not following caddy.nix pattern |
-| 22 | **`just status` command** | LOW | 2h | Manual status reports |
-| 23 | **Convert go-auto-upgrade `path:` → SSH** | LOW | 15min | Non-portable input type |
-| 24 | **Verify boot time (~35s target)** | LOW | 5min | Measure after deploy |
-| 25 | **Archive old docs/status/ reports** | LOW | 15min | 420+ files, most outdated |
+| #   | Task                                        | Impact | Effort | Why                                   |
+| --- | ------------------------------------------- | ------ | ------ | ------------------------------------- |
+| 1   | **`just switch` — Deploy**                  | HIGH   | 5min   | 6 commits undeployed, all tested      |
+| 2   | **Disk GC + monitoring**                    | HIGH   | 30min  | 94% disk, no alerting                 |
+| 3   | **Move 4 vendorHash upstream**              | HIGH   | 2h     | Every dep update breaks builds        |
+| 4   | **Add disk space Gatus alert**              | HIGH   | 15min  | Silent disk-full risk                 |
+| 5   | **Add swap/RAM Gatus alert**                | HIGH   | 15min  | gopls OOM risk                        |
+| 6   | **Rebuild TODO_LIST.md**                    | MED    | 30min  | Stale since session 75                |
+| 7   | **Audit FEATURES.md**                       | MED    | 1h     | Verify against actual code            |
+| 8   | **BTRFS /data snapshot migration**          | MED    | 1h     | `/data` unprotected by snapshots      |
+| 9   | **Fix upstream pre-commit hooks**           | MED    | 2h     | `--no-verify` on every commit         |
+| 10  | **Flake inputs audit (47 → ?)**             | MED    | 2h     | Reduce lock file churn                |
+| 11  | **crates.io upstream fix**                  | MED    | 1h     | File nixpkgs issue / patch fetchCrate |
+| 12  | **nix-colors integration**                  | MED    | 6h     | 17+ hardcoded colors                  |
+| 13  | **Deploy Dozzle**                           | LOW    | 30min  | Docker log tailing                    |
+| 14  | **Wire Pi 3 DNS failover**                  | LOW    | 4h     | Hardware sitting idle                 |
+| 15  | **Hermes secondary LLM**                    | LOW    | 2h     | Single-provider risk                  |
+| 16  | **Hermes SSH deploy key**                   | LOW    | 30min  | Git operations fail in sandbox        |
+| 17  | **Create shared flake-parts template**      | LOW    | 3h     | Reduce boilerplate across repos       |
+| 18  | **Fix `file-and-image-renamer` Go version** | LOW    | 30min  | Disabled due to 1.26.2 vs 1.26.3      |
+| 19  | **Fix `photomap` Podman permissions**       | LOW    | 1h     | Disabled service                      |
+| 20  | **SigNoz per-threshold channel routing**    | LOW    | 1h     | All alerts → same channel             |
+| 21  | **Consolidate voice-agents Caddy vHost**    | LOW    | 30min  | Not following caddy.nix pattern       |
+| 22  | **`just status` command**                   | LOW    | 2h     | Manual status reports                 |
+| 23  | **Convert go-auto-upgrade `path:` → SSH**   | LOW    | 15min  | Non-portable input type               |
+| 24  | **Verify boot time (~35s target)**          | LOW    | 5min   | Measure after deploy                  |
+| 25  | **Archive old docs/status/ reports**        | LOW    | 15min  | 420+ files, most outdated             |
 
 ---
 
 ## G) TOP QUESTION
 
 **Why is disk at 94%?** The `df -h` output shows 474G used on a 512G disk. Nix store garbage collection behavior needs investigation:
+
 - When was the last successful `nix-collect-garbage`?
 - How much of the 474G is `/nix/store` vs `/data` vs home directories?
 - Is there a generation accumulation problem?

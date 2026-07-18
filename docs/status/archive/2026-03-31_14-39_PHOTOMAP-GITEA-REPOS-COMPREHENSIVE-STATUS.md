@@ -25,14 +25,14 @@ Three major features were worked on across this session:
 
 All NixOS configuration files have been written, wired into the flake, verified via `nix flake check --no-build` (passed), and committed to git.
 
-| Component | File | Status |
-|---|---|---|
-| Service module | `modules/nixos/services/photomap.nix` | Committed, eval verified |
-| Caddy reverse proxy | `modules/nixos/services/caddy.nix` (lines 51-57) | Committed, eval verified |
-| DNS A record | `platforms/nixos/system/dns-blocker-config.nix` (line 171) | Committed, eval verified |
+| Component             | File                                                            | Status                   |
+| --------------------- | --------------------------------------------------------------- | ------------------------ |
+| Service module        | `modules/nixos/services/photomap.nix`                           | Committed, eval verified |
+| Caddy reverse proxy   | `modules/nixos/services/caddy.nix` (lines 51-57)                | Committed, eval verified |
+| DNS A record          | `platforms/nixos/system/dns-blocker-config.nix` (line 171)      | Committed, eval verified |
 | HuggingFace whitelist | `platforms/nixos/system/dns-blocker-config.nix` (lines 126-128) | Committed, eval verified |
-| Homepage dashboard | `modules/nixos/services/homepage.nix` (lines 83-87) | Committed, eval verified |
-| Flake wiring | `flake.nix` (lines 145, 332) | Committed, eval verified |
+| Homepage dashboard    | `modules/nixos/services/homepage.nix` (lines 83-87)             | Committed, eval verified |
+| Flake wiring          | `flake.nix` (lines 145, 332)                                    | Committed, eval verified |
 
 **Key design decisions:**
 
@@ -72,16 +72,16 @@ All NixOS configuration files have been written, wired into the flake, verified 
 
 **Module created and committed** but has an unresolved issue with sops age key conversion.
 
-| Component | Status | Notes |
-|---|---|---|
-| `modules/nixos/services/gitea-repos.nix` | Committed | Script logic complete |
-| `scripts/fix-gitea-token.sh` | Committed | Workaround for sops SSH→age key |
-| `justfile` commands | Committed | `gitea-update-token`, `gitea-sync-repos`, `gitea-setup` |
-| `configuration.nix` enablement | Committed | `services.gitea-repos.enable = true` |
-| Sops secret template | Committed | `gitea-sync.env` template in `sops.nix` |
-| Token actually working | **Unknown** | `SOPS_AGE_SSH_PRIVATE_KEY_FILE` doesn't work with modern age/sops — requires `ssh-to-age` conversion |
-| Deployed to evo-x2 | **No** | Not deployed yet |
-| Tested | **No** | Cannot test without deployment |
+| Component                                | Status      | Notes                                                                                                |
+| ---------------------------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/gitea-repos.nix` | Committed   | Script logic complete                                                                                |
+| `scripts/fix-gitea-token.sh`             | Committed   | Workaround for sops SSH→age key                                                                      |
+| `justfile` commands                      | Committed   | `gitea-update-token`, `gitea-sync-repos`, `gitea-setup`                                              |
+| `configuration.nix` enablement           | Committed   | `services.gitea-repos.enable = true`                                                                 |
+| Sops secret template                     | Committed   | `gitea-sync.env` template in `sops.nix`                                                              |
+| Token actually working                   | **Unknown** | `SOPS_AGE_SSH_PRIVATE_KEY_FILE` doesn't work with modern age/sops — requires `ssh-to-age` conversion |
+| Deployed to evo-x2                       | **No**      | Not deployed yet                                                                                     |
+| Tested                                   | **No**      | Cannot test without deployment                                                                       |
 
 **Blocking issue:** `sops-nix` with SSH host keys requires `ssh-to-age` key conversion. The `scripts/fix-gitea-token.sh` is a workaround. This needs testing on evo-x2.
 
@@ -204,6 +204,7 @@ Config is 100% complete but **zero deployment steps** have been executed:
 This is THE blocking question. Everything else is configurable, but the mount paths in `photomap.nix` are hardcoded based on the assumption that Immich stores photos in `upload/`. If the user has configured Immich with external libraries (mounted from NAS, etc.), photos may be in `library/` or custom paths. The current config only mounts `upload/`.
 
 To answer, someone needs to run on evo-x2:
+
 ```bash
 ls -la /var/lib/immich/
 find /var/lib/immich/upload -maxdepth 3 -type d | head -30
@@ -215,20 +216,20 @@ du -sh /var/lib/immich/upload /var/lib/immich/library 2>/dev/null
 
 ## Files Changed This Session (All Committed)
 
-| Commit | Description | Files |
-|---|---|---|
+| Commit    | Description                                                                      | Files                                                                                           |
+| --------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | `14d02a4` | feat(gitea): add declarative GitHub-to-Gitea repo mirroring + PhotoMapAI updates | `flake.nix`, `justfile`, `gitea-repos.nix`, `homepage.nix`, `photomap.nix`, `configuration.nix` |
-| `ce06182` | feat(ssh): add evo-x2 workstation host and enable global keepalive | SSH config |
-| `ae514f8` | fix(nixos): prevent hypridle suspend when active SSH sessions exist | Hypridle config |
-| `39b3ea4` | fix(nixos): add linkedin.com to DNS blocker whitelist | DNS blocker config |
-| `0ca8f4d` | chore(flake.lock): update flake inputs to latest versions | `flake.lock` |
-| `9146312` | Revert "refactor(dnsblockd): remove temporary allowlist feature" | DNS blocker |
-| `0cec348` | refactor(dnsblockd): remove temporary allowlist feature | DNS blocker |
-| `5d13c12` | fix(dns-blocker): fix temp-allowlist tmpfiles and add DNS cache flush | DNS blocker |
-| `ee1f4d1` | feat(gitea-repos): add auto-detection of SystemNix repo location | `gitea-repos.nix` |
-| `e365f93` | refactor(dnsblockd): use unbound-control directly | DNS blocker Go code |
-| `fb68584` | fix(gitea-repos): use absolute sops path | `gitea-repos.nix` |
-| `b3b2651` | feat(gitea-repos): add declarative GitHub repo mirroring with sops-nix | `gitea-repos.nix`, status report, fix script |
+| `ce06182` | feat(ssh): add evo-x2 workstation host and enable global keepalive               | SSH config                                                                                      |
+| `ae514f8` | fix(nixos): prevent hypridle suspend when active SSH sessions exist              | Hypridle config                                                                                 |
+| `39b3ea4` | fix(nixos): add linkedin.com to DNS blocker whitelist                            | DNS blocker config                                                                              |
+| `0ca8f4d` | chore(flake.lock): update flake inputs to latest versions                        | `flake.lock`                                                                                    |
+| `9146312` | Revert "refactor(dnsblockd): remove temporary allowlist feature"                 | DNS blocker                                                                                     |
+| `0cec348` | refactor(dnsblockd): remove temporary allowlist feature                          | DNS blocker                                                                                     |
+| `5d13c12` | fix(dns-blocker): fix temp-allowlist tmpfiles and add DNS cache flush            | DNS blocker                                                                                     |
+| `ee1f4d1` | feat(gitea-repos): add auto-detection of SystemNix repo location                 | `gitea-repos.nix`                                                                               |
+| `e365f93` | refactor(dnsblockd): use unbound-control directly                                | DNS blocker Go code                                                                             |
+| `fb68584` | fix(gitea-repos): use absolute sops path                                         | `gitea-repos.nix`                                                                               |
+| `b3b2651` | feat(gitea-repos): add declarative GitHub repo mirroring with sops-nix           | `gitea-repos.nix`, status report, fix script                                                    |
 
 **Unpushed:** `b3b2651` (1 commit ahead of origin/master)
 
@@ -236,14 +237,14 @@ du -sh /var/lib/immich/upload /var/lib/immich/library 2>/dev/null
 
 ## System State
 
-| Item | Status |
-|---|---|
-| Git working tree | Clean |
-| Flake check --no-build | Passes |
-| PhotoMapAI config | Committed, eval verified |
-| PhotoMapAI deployed | **NO** |
-| Gitea-repos config | Committed, eval verified |
-| Gitea-repos deployed | **NO** |
-| DNS blocker | Committed, deployed (last known state) |
-| Dev machine disk | 99% full (3.8G free of 229G) |
+| Item                    | Status                                    |
+| ----------------------- | ----------------------------------------- |
+| Git working tree        | Clean                                     |
+| Flake check --no-build  | Passes                                    |
+| PhotoMapAI config       | Committed, eval verified                  |
+| PhotoMapAI deployed     | **NO**                                    |
+| Gitea-repos config      | Committed, eval verified                  |
+| Gitea-repos deployed    | **NO**                                    |
+| DNS blocker             | Committed, deployed (last known state)    |
+| Dev machine disk        | 99% full (3.8G free of 229G)              |
 | Target machine (evo-x2) | Unknown — no SSH access from dev terminal |

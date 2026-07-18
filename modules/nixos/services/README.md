@@ -136,24 +136,24 @@ inherit (import ../../../lib/default.nix lib)
   harden serviceDefaults onFailure serviceTypes mkStateDir mkDockerServiceFactory ports;
 ```
 
-| Helper | Purpose |
-|--------|---------|
-| `harden { MemoryMax = "512M"; }` | Systemd security hardening (`ProtectSystem`, `NoNewPrivileges`, `MemoryMax`, etc.). Pass `mode = "user"` for user services. |
-| `serviceDefaults {}` | Common daemon defaults: `Restart = "always"`, `RestartSec = "5s"`. Uses `lib.mkForce`. |
-| `serviceDefaultsUser {}` | Same as `serviceDefaults` but without `mkForce` — required for Home Manager user services. |
-| `onFailure` | Constant `["notify-failure@%n.service"]` — route failures to the notify template. |
-| `serviceTypes.systemdServiceIdentity { defaultUser = "..."; }` | Generates `user`, `group`, `stateDir` options with defaults. |
-| `serviceTypes.servicePort 8080 "..."` | Port option with collision checking. |
-| `serviceTypes.dockerImageTag "1.2.3"` | Docker tag option that rejects `"latest"` at eval time. |
-| `serviceTypes.restartDelay "5"` | Restart delay option (string, seconds). |
-| `serviceTypes.stopTimeout "120"` | Stop timeout option (string, seconds). |
-| `mkStateDir "/var/lib/foo" "0755" "foo" "foo"` | Generates a `systemd.tmpfiles` rule string. |
-| `mkDockerServiceFactory { inherit pkgs; }` | Returns `mkDockerService` for Docker Compose systemd wrappers. |
-| `ports.<name>` | Centralized port registry — use for well-known ports. |
-| `images.<name>.ref` | Pinned Docker image references (with optional digest). |
-| `mkSecretCheck pkgs { name = "..."; secretPath = "..."; message = "..."; }` | Pre-start secret validation script generator. Supports `extraCheck` for custom validation. |
+| Helper                                                                                                                                      | Purpose                                                                                                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `harden { MemoryMax = "512M"; }`                                                                                                            | Systemd security hardening (`ProtectSystem`, `NoNewPrivileges`, `MemoryMax`, etc.). Pass `mode = "user"` for user services.    |
+| `serviceDefaults {}`                                                                                                                        | Common daemon defaults: `Restart = "always"`, `RestartSec = "5s"`. Uses `lib.mkForce`.                                         |
+| `serviceDefaultsUser {}`                                                                                                                    | Same as `serviceDefaults` but without `mkForce` — required for Home Manager user services.                                     |
+| `onFailure`                                                                                                                                 | Constant `["notify-failure@%n.service"]` — route failures to the notify template.                                              |
+| `serviceTypes.systemdServiceIdentity { defaultUser = "..."; }`                                                                              | Generates `user`, `group`, `stateDir` options with defaults.                                                                   |
+| `serviceTypes.servicePort 8080 "..."`                                                                                                       | Port option with collision checking.                                                                                           |
+| `serviceTypes.dockerImageTag "1.2.3"`                                                                                                       | Docker tag option that rejects `"latest"` at eval time.                                                                        |
+| `serviceTypes.restartDelay "5"`                                                                                                             | Restart delay option (string, seconds).                                                                                        |
+| `serviceTypes.stopTimeout "120"`                                                                                                            | Stop timeout option (string, seconds).                                                                                         |
+| `mkStateDir "/var/lib/foo" "0755" "foo" "foo"`                                                                                              | Generates a `systemd.tmpfiles` rule string.                                                                                    |
+| `mkDockerServiceFactory { inherit pkgs; }`                                                                                                  | Returns `mkDockerService` for Docker Compose systemd wrappers.                                                                 |
+| `ports.<name>`                                                                                                                              | Centralized port registry — use for well-known ports.                                                                          |
+| `images.<name>.ref`                                                                                                                         | Pinned Docker image references (with optional digest).                                                                         |
+| `mkSecretCheck pkgs { name = "..."; secretPath = "..."; message = "..."; }`                                                                 | Pre-start secret validation script generator. Supports `extraCheck` for custom validation.                                     |
 | `mkDesktopNotifyService pkgs { name = "..."; description = "..."; checkScript = "..."; runtimeInputs = [...]; user = "..."; uid = "..."; }` | Generates timer + oneshot service for desktop notifications. Defaults to `harden`; override with `hardenFn` for user services. |
-| `mkHttpCheck { name = "..."; group = "..."; url = "..."; }` | Gatus endpoint definition helper. |
+| `mkHttpCheck { name = "..."; group = "..."; url = "..."; }`                                                                                 | Gatus endpoint definition helper.                                                                                              |
 
 ---
 
@@ -472,22 +472,22 @@ Moved out of this directory (no longer cluttering the module tree):
 
 ## Common Gotchas
 
-| Issue | Rule |
-|-------|------|
-| **Module not discovered** | Filename must exactly match `flake.nixosModules.<name>`. |
-| **Port collisions** | Always register ports in `lib/ports.nix`. The registry throws on duplicates. |
-| **Caddy vHost in wrong file** | ALL virtual hosts live in `caddy.nix`. No other module touches `services.caddy.virtualHosts`. |
-| **WatchdogSec misuse** | Only set `WatchdogSec` on services that send periodic `WATCHDOG=1` via `sd_notify()`. Do NOT use on Python, Node.js, or Go/Rust services without explicit sd_notify keepalives. |
-| **`handle_path` vs `handle`** | `handle_path /prefix/*` **strips** the prefix before proxying. Use `handle` (not `handle_path`) when the backend expects the full path (e.g., oauth2-proxy callbacks). |
-| **Docker service target** | Use `multi-user.target`. Desktop must not wait for containers. |
-| **Home Manager `mkForce`** | `serviceDefaults` uses `mkForce`. For HM user services, use `serviceDefaultsUser` instead. |
-| **sops secret path** | Use `config.sops.placeholder.<name>` in templates, `config.sops.secrets.<name>.path` in service config. |
-| **Config-derived URLs** | Never hardcode `localhost:PORT`. Derive from `config.services.<name>.port` or equivalent. |
-| **User service hardening** | Use `hardenUser` (not `harden`) for Home Manager user services — it sets `mode = "user"`. |
-| **Primary user default** | User-configurable services should default to `config.users.primaryUser`. |
-| **Docker import pattern** | Always use `libHelpers.mkDockerServiceFactory { inherit pkgs; }` — do not import `lib/docker.nix` directly. |
-| **`-config` suffix** | Use when avoiding namespace collision with upstream NixOS services (e.g., `pocket-id-config`). |
-| **Image digests** | Pin Docker images with digests in `lib/images.nix` for reproducibility. |
+| Issue                         | Rule                                                                                                                                                                            |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Module not discovered**     | Filename must exactly match `flake.nixosModules.<name>`.                                                                                                                        |
+| **Port collisions**           | Always register ports in `lib/ports.nix`. The registry throws on duplicates.                                                                                                    |
+| **Caddy vHost in wrong file** | ALL virtual hosts live in `caddy.nix`. No other module touches `services.caddy.virtualHosts`.                                                                                   |
+| **WatchdogSec misuse**        | Only set `WatchdogSec` on services that send periodic `WATCHDOG=1` via `sd_notify()`. Do NOT use on Python, Node.js, or Go/Rust services without explicit sd_notify keepalives. |
+| **`handle_path` vs `handle`** | `handle_path /prefix/*` **strips** the prefix before proxying. Use `handle` (not `handle_path`) when the backend expects the full path (e.g., oauth2-proxy callbacks).          |
+| **Docker service target**     | Use `multi-user.target`. Desktop must not wait for containers.                                                                                                                  |
+| **Home Manager `mkForce`**    | `serviceDefaults` uses `mkForce`. For HM user services, use `serviceDefaultsUser` instead.                                                                                      |
+| **sops secret path**          | Use `config.sops.placeholder.<name>` in templates, `config.sops.secrets.<name>.path` in service config.                                                                         |
+| **Config-derived URLs**       | Never hardcode `localhost:PORT`. Derive from `config.services.<name>.port` or equivalent.                                                                                       |
+| **User service hardening**    | Use `hardenUser` (not `harden`) for Home Manager user services — it sets `mode = "user"`.                                                                                       |
+| **Primary user default**      | User-configurable services should default to `config.users.primaryUser`.                                                                                                        |
+| **Docker import pattern**     | Always use `libHelpers.mkDockerServiceFactory { inherit pkgs; }` — do not import `lib/docker.nix` directly.                                                                     |
+| **`-config` suffix**          | Use when avoiding namespace collision with upstream NixOS services (e.g., `pocket-id-config`).                                                                                  |
+| **Image digests**             | Pin Docker images with digests in `lib/images.nix` for reproducibility.                                                                                                         |
 
 ---
 

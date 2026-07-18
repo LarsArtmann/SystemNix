@@ -21,6 +21,7 @@ The Linux kernel OOM killer is a **last-resort mechanism**, not a memory manager
 ### 1a. It Only Fires After Memory Is EXHAUSTED
 
 The kernel doesn't invoke the OOM killer until:
+
 1. An allocation fails
 2. Direct reclaim (freeing page cache) fails
 3. Swapping fails (or no swap left)
@@ -31,6 +32,7 @@ On a 128 GB system, this means **the system is already thrashing** when the kill
 ### 1b. 2–15 Second Latency
 
 The kill process:
+
 1. Scan all processes (O(n) — hundreds of processes on this system)
 2. Calculate `oom_badness()` for each (RSS + swap + page tables + oom_score_adj)
 3. Select highest-scoring process
@@ -42,6 +44,7 @@ During those seconds, the system is unresponsive. On a desktop with a compositor
 ### 1c. Heuristics Are Wrong for AI Workloads
 
 The kernel picks the process with the highest `oom_score`:
+
 - Ollama at 30 GB gets score ~234 (30/128 * 1000)
 - A random Python script at 2 GB gets score ~15
 - **But the Python script might be the one that triggered the allocation**
@@ -62,16 +65,17 @@ earlyoom is a **significant improvement** over the kernel OOM killer — it's fa
 
 earlyoom reads `MemAvailable` from `/proc/meminfo`. On unified memory systems:
 
-| Memory Consumer | Visible in MemAvailable? | earlyoom Aware? |
-|----------------|--------------------------|-----------------|
-| CPU process RSS | Yes | Yes |
-| Page cache | Yes (reclaimable) | Yes |
-| GPU allocations (amdgpu VRAM) | Partially | Partially |
-| GPU allocations (GTT-mapped) | **No** | **No** |
-| TTM page pool | Reclaimable (shrinker) | Indirectly |
-| ZRAM compressed swap | As swap, not RAM | Yes |
+| Memory Consumer               | Visible in MemAvailable? | earlyoom Aware? |
+| ----------------------------- | ------------------------ | --------------- |
+| CPU process RSS               | Yes                      | Yes             |
+| Page cache                    | Yes (reclaimable)        | Yes             |
+| GPU allocations (amdgpu VRAM) | Partially                | Partially       |
+| GPU allocations (GTT-mapped)  | **No**                   | **No**          |
+| TTM page pool                 | Reclaimable (shrinker)   | Indirectly      |
+| ZRAM compressed swap          | As swap, not RAM         | Yes             |
 
 **GTT (Graphics Translation Table)** allocations allow the GPU to map system RAM into GPU address space. When Ollama allocates 30 GB for a model via ROCm, that memory is:
+
 - Physically consumed from the 128 GB pool
 - **Not visible in `MemAvailable`** — GTT-mapped pages are kernel-internal
 - earlyoom thinks the system has more free memory than it actually does
@@ -81,12 +85,14 @@ This means earlyoom's `freeMemThreshold = 10%` (~12.8 GB) is calculated against 
 ### 2b. AND Logic With Swap Delays Response Under Normal Pressure
 
 The `lowmem_sig()` function in earlyoom's `main.c` uses `&&` (confirmed from source):
+
 ```c
 if (m->MemAvailablePercent <= args->mem_kill_percent && m->SwapFreePercent <= args->swap_kill_percent)
     return SIGKILL;
 ```
 
 Your config:
+
 - `freeMemThreshold = 10` — kill when <12.8 GB free
 - `freeSwapThreshold = 10` — kill when <1.28 GB swap free (ZRAM is 12.8 GB)
 
@@ -99,6 +105,7 @@ With `vm.swappiness = 1`, the kernel aggressively avoids swapping under normal-t
 ### 2c. Process Selection Is Regex-Based, Not Context-Aware
 
 `--prefer` / `--avoid` are process name regexes. They can't distinguish:
+
 - Hermes (critical AI agent) vs a random Python script
 - Ollama doing legitimate inference vs Ollama loading a 3rd model it shouldn't
 - Jan AI spawning new `llama-server` processes every 1-3 min (each ~1.2 GB)
@@ -119,6 +126,7 @@ For **integrated GPUs** (APUs like Strix Halo), nvtop detects `AMDGPU_IDS_FLAGS_
 **This is not a bug** — it's showing the total GPU-addressable memory space. But it's misleading because VRAM and GTT overlap (they're both backed by the same 128 GB physical RAM). The "used" column double-counts memory that's mapped via both VRAM and GTT simultaneously.
 
 **What's actually happening on your system:**
+
 - `amdgpu.gttsize=114688` (112 GB) — max GTT address space
 - `amdgpu.ttm.pages_limit=29360128` (~112 GB) — TTM page pool limit
 - Physical VRAM region carved from system RAM by firmware: ~48 GB
@@ -133,28 +141,29 @@ For **integrated GPUs** (APUs like Strix Halo), nvtop detects `AMDGPU_IDS_FLAGS_
 This is your strongest protection. When a service hits its `MemoryMax`, the **kernel's cgroup OOM killer** fires immediately — no scan, no heuristics, no 15-second delay. It's per-cgroup, so it only kills the offending service.
 
 **How it works:**
+
 1. `MemoryHigh = "80%"` — kernel throttles the service (makes it slow, reclaim memory)
 2. `MemoryMax = "32G"` — hard ceiling. Kernel kills the service if it exceeds this.
 
 **Audit results:**
 
-| Status | Count | Services |
-|--------|-------|----------|
-| Has MemoryMax | 33 | All hardened services |
-| NO MemoryMax — long-running | 3 | **pocket-id**, **monitor365-agent**, **monitor365-server** |
-| NO MemoryMax — oneshot/OK | 5 | signoz-provision, forgejo-generate-token, immich-db-backup, whisper-asr-pull, docker |
+| Status                      | Count | Services                                                                             |
+| --------------------------- | ----- | ------------------------------------------------------------------------------------ |
+| Has MemoryMax               | 33    | All hardened services                                                                |
+| NO MemoryMax — long-running | 3     | **pocket-id**, **monitor365-agent**, **monitor365-server**                           |
+| NO MemoryMax — oneshot/OK   | 5     | signoz-provision, forgejo-generate-token, immich-db-backup, whisper-asr-pull, docker |
 
 **Top memory consumers and their limits:**
 
-| Service | MemoryMax | Purpose |
-|---------|-----------|---------|
-| ollama | 32 GB | LLM inference (ROCm) |
-| hermes | 24 GB | AI agent (PyTorch + ROCm) |
-| clickhouse | 4 GB | SigNoz metrics DB |
-| immich-ml | 4 GB | Photo ML |
-| minecraft | 4 GB | Game server |
-| whisper-asr | 8 GB | Voice transcription |
-| Everything else | 512 MB | Standard services |
+| Service         | MemoryMax | Purpose                   |
+| --------------- | --------- | ------------------------- |
+| ollama          | 32 GB     | LLM inference (ROCm)      |
+| hermes          | 24 GB     | AI agent (PyTorch + ROCm) |
+| clickhouse      | 4 GB      | SigNoz metrics DB         |
+| immich-ml       | 4 GB      | Photo ML                  |
+| minecraft       | 4 GB      | Game server               |
+| whisper-asr     | 8 GB      | Voice transcription       |
+| Everything else | 512 MB    | Standard services         |
 
 **GAP: The combined MemoryMax of just ollama (32G) + hermes (24G) = 56 GB. That's 44% of total RAM. If both hit their limits simultaneously, systemd kills them both — but their combined steady-state usage can still crowd out the desktop.**
 
@@ -200,14 +209,17 @@ Layer 1 (outermost): watchdogd hard reboot                   → Nuclear option,
 **Fix:** Set `freeSwapThreshold` high enough that the condition is met (swap is "below" this = swap has been used). Actually — re-reading earlyoom's logic: it triggers when **both** MemAvailable < threshold AND SwapFree < threshold. With swap mostly free, SwapFree > threshold, so the AND fails.
 
 Two options:
+
 - **Option A (recommended):** Ignore swap entirely. Set `freeSwapThreshold = 100` (swap is always "below" 100%, so the condition is always met, effectively making it RAM-only).
 - **Option B:** Lower the memory threshold and accept that earlyoom only fires on RAM.
 
 Also consider absolute thresholds instead of percentages:
+
 - `freeMemThreshold` is percentage-based
 - Can use `-M` flag for absolute KiB: e.g., kill when < 8 GB free (more predictable)
 
 **Config change:**
+
 ```nix
 earlyoom = {
   enable = true;
@@ -227,6 +239,7 @@ earlyoom = {
 systemd-oomd monitors **Pressure Stall Information (PSI)** — a kernel-provided metric that measures how much time processes spend waiting for memory. Unlike earlyoom's absolute thresholds, PSI detects **memory starvation** even when there's technically free RAM (e.g., GPU ate most of it).
 
 **Config:**
+
 ```nix
 systemd.oomd = {
   enable = true;
@@ -237,6 +250,7 @@ systemd.oomd = {
 ```
 
 This adds per-slice PSI monitoring:
+
 - If `system.slice` experiences >60% memory pressure for 20s → kill something in that slice
 - If `user.slice` experiences >50% memory pressure for 20s → kill something in that slice
 - PSI is **reactive to actual memory starvation**, not just free memory levels
@@ -262,6 +276,7 @@ systemd.user.services.monitor365-server.serviceConfig =
 ### 5d. Consider Reducing GPU Memory Overhead
 
 Current config:
+
 ```
 OLLAMA_GPU_OVERHEAD = 8589934592  # 8 GB reserved for compositor
 PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45"
@@ -270,12 +285,14 @@ PYTORCH_CUDA_ALLOC_CONF = "per_process_memory_fraction:0.45"
 If Ollama's `MemoryMax = 32G` and GPU overhead is 8 GB, that's 40 GB for Ollama alone. With hermes at 24 GB, that's 64 GB — half the system — just for AI services.
 
 **Consider:**
+
 - Reducing `OLLAMA_GPU_OVERHEAD` to 4 GB (4 GB is generous for niri + waybar)
 - Or reducing `MemoryMax` for ollama to 28 GB (still huge)
 
 ### 5e. Keep Existing Protections
 
 These are already correct:
+
 - `vm.overcommit_memory = 0` — heuristic overcommit (prevents wild allocation)
 - `vm.min_free_kbytes = 2097152` — 2 GB reserved for kernel/GPU
 - `vm.swappiness = 1` — minimal swap usage
@@ -288,30 +305,32 @@ These are already correct:
 ## 6. Why unified Memory Makes Everything Harder
 
 On a traditional system with a discrete GPU:
+
 - CPU RAM = 128 GB, GPU VRAM = 24 GB (separate pools)
 - Memory pressure is unambiguous — either CPU is low or GPU is low
 - earlyoom/MemAvailable accurately reflects CPU state
 
 On Strix Halo with unified memory:
+
 - CPU and GPU share the same 128 GB physical pool
 - GPU allocations via GTT are **invisible** to `/proc/meminfo`
 - TTM page pool pages are **reclaimable** but show as free in MemAvailable
 - The kernel can evict TTM pages under pressure, but only if it knows to — and earlyoom doesn't trigger the eviction path
 
-**The fundamental gap:** No userspace tool has a complete view of memory usage. The closest thing is PSI, which measures the *effect* of memory pressure (process stalling) rather than trying to measure the *cause* (how much memory is free).
+**The fundamental gap:** No userspace tool has a complete view of memory usage. The closest thing is PSI, which measures the _effect_ of memory pressure (process stalling) rather than trying to measure the _cause_ (how much memory is free).
 
 ---
 
 ## 7. Summary of Recommended Changes
 
-| Change | File | Impact |
-|--------|------|--------|
-| Fix earlyoom swap threshold | `boot.nix` | earlyoom actually triggers now |
-| Add `-M` absolute threshold | `boot.nix` | More predictable kill point |
-| Enable systemd-oomd slices | `configuration.nix` | PSI-based pressure kills |
-| Add MemoryMax to pocket-id | `pocket-id.nix` | Unbounded service → bounded |
-| Add MemoryMax to monitor365 | `monitor365.nix` | Unbounded services → bounded |
-| Reduce OLLAMA_GPU_OVERHEAD | `ai-stack.nix` | 8 GB → 4 GB compositor reserve |
+| Change                      | File                | Impact                         |
+| --------------------------- | ------------------- | ------------------------------ |
+| Fix earlyoom swap threshold | `boot.nix`          | earlyoom actually triggers now |
+| Add `-M` absolute threshold | `boot.nix`          | More predictable kill point    |
+| Enable systemd-oomd slices  | `configuration.nix` | PSI-based pressure kills       |
+| Add MemoryMax to pocket-id  | `pocket-id.nix`     | Unbounded service → bounded    |
+| Add MemoryMax to monitor365 | `monitor365.nix`    | Unbounded services → bounded   |
+| Reduce OLLAMA_GPU_OVERHEAD  | `ai-stack.nix`      | 8 GB → 4 GB compositor reserve |
 
 None of these are breaking changes — they're additive safety layers. The `MemoryMax` cgroup limits (Layer 5) remain the primary defense, as they're instant and per-service.
 

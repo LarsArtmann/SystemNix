@@ -15,11 +15,11 @@ Session 80 focused on getting `nh os boot .` to succeed. The build was broken by
 
 **3 commits pushed:**
 
-| Commit | Description |
-|--------|-------------|
+| Commit     | Description                                            |
+| ---------- | ------------------------------------------------------ |
 | `384826a9` | Revert Forgejo SOPS migration (secret not provisioned) |
-| `597ada01` | Disable 4 broken Go packages + update vendor hashes |
-| `e3eee087` | Disable ActivityWatch + skip Taskwarrior flaky test |
+| `597ada01` | Disable 4 broken Go packages + update vendor hashes    |
+| `e3eee087` | Disable ActivityWatch + skip Taskwarrior flaky test    |
 
 ---
 
@@ -277,33 +277,33 @@ ALL OIDC clients share the SAME bcrypt client secret hash, hardcoded in the nix 
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Priority | Task | Est. | Impact |
-|---|----------|------|------|--------|
-| 1 | **P0** | `just switch` + reboot — deploy ALL 22+ undeployed commits | 30m | Prevents repeat crash |
-| 2 | **P0** | Verify watchdog rewrites work after deploy | 10m | Confirms crash fix |
-| 3 | **P0** | Verify ZRAM increased to 10% after reboot | 2m | Confirms swap headroom |
-| 4 | **P0** | Verify Jan no longer auto-starts after reboot | 2m | Confirms skip_apps |
-| 5 | **P0** | Verify Immich VA-API hardware transcoding works | 10m | Media performance |
-| 6 | **P0** | Fix 4 upstream Go repos (_local_deps / preparedSrc) | 2h | Restores dev tooling |
-| 7 | **P0** | Add `GOMEMLIMIT=1GiB` to gopls via Nix config | 15m | Caps gopls memory |
-| 8 | **P0** | Fix `nix fmt` / shfmt script damage | 15m | Prevents silent breakage |
-| 9 | **P0** | Investigate service-health-check failures (every 15 min) | 20m | Stops alert spam |
-| 10 | **P1** | Run Forgejo SOPS migration script (needs sudo) | 5m | Security |
-| 11 | **P1** | Configure secondary LLM provider for Hermes | 30m | Hermes resilience |
-| 12 | **P1** | Verify Hermes firecrawl/edge-tts/fal/exa at runtime | 15m | Confirms extras work |
-| 13 | **P1** | Hermes git remote access (SSH deploy key) | 30m | Repo access |
-| 14 | **P1** | Resolve port 3001 conflict (monitor365 vs openseo) | 10m | Prevents bind failure |
-| 15 | **P1** | Docker MemoryMax for SigNoz/Twenty (not just Homepage) | 20m | Prevents memory runaway |
-| 16 | **P1** | Investigate OpenSEO auth — can `local_auth` work? | 20m | Security |
-| 17 | **P1** | Consolidate watchdog state management into shared lib | 45m | DRY, fewer bugs |
-| 18 | **P1** | Add memory/swap alerting to Gatus (80% mem, 50% swap) | 30m | Early warning |
-| 19 | **P2** | Fix FEATURES.md — ZRAM, boot time, phantom scripts | 15m | Doc accuracy |
-| 20 | **P2** | Update TODO_LIST.md with current state | 15m | Doc accuracy |
-| 21 | **P2** | Re-enable ActivityWatch — fix or overlay broken nixpkgs package | 30m | Time tracking |
-| 22 | **P2** | Deploy Dozzle at `logs.home.lan` | 45m | Real-time Docker logs |
-| 23 | **P3** | Flake inputs audit — 47 inputs, find stale | 2h | Dependency hygiene |
-| 24 | **P3** | Provision Pi 3 for DNS failover cluster | 4h | DNS resilience |
-| 25 | **P3** | Investigate boot time: 1m44s initrd (post-serial8250) | 60m | Faster reboots |
+| #   | Priority | Task                                                            | Est. | Impact                   |
+| --- | -------- | --------------------------------------------------------------- | ---- | ------------------------ |
+| 1   | **P0**   | `just switch` + reboot — deploy ALL 22+ undeployed commits      | 30m  | Prevents repeat crash    |
+| 2   | **P0**   | Verify watchdog rewrites work after deploy                      | 10m  | Confirms crash fix       |
+| 3   | **P0**   | Verify ZRAM increased to 10% after reboot                       | 2m   | Confirms swap headroom   |
+| 4   | **P0**   | Verify Jan no longer auto-starts after reboot                   | 2m   | Confirms skip_apps       |
+| 5   | **P0**   | Verify Immich VA-API hardware transcoding works                 | 10m  | Media performance        |
+| 6   | **P0**   | Fix 4 upstream Go repos (_local_deps / preparedSrc)             | 2h   | Restores dev tooling     |
+| 7   | **P0**   | Add `GOMEMLIMIT=1GiB` to gopls via Nix config                   | 15m  | Caps gopls memory        |
+| 8   | **P0**   | Fix `nix fmt` / shfmt script damage                             | 15m  | Prevents silent breakage |
+| 9   | **P0**   | Investigate service-health-check failures (every 15 min)        | 20m  | Stops alert spam         |
+| 10  | **P1**   | Run Forgejo SOPS migration script (needs sudo)                  | 5m   | Security                 |
+| 11  | **P1**   | Configure secondary LLM provider for Hermes                     | 30m  | Hermes resilience        |
+| 12  | **P1**   | Verify Hermes firecrawl/edge-tts/fal/exa at runtime             | 15m  | Confirms extras work     |
+| 13  | **P1**   | Hermes git remote access (SSH deploy key)                       | 30m  | Repo access              |
+| 14  | **P1**   | Resolve port 3001 conflict (monitor365 vs openseo)              | 10m  | Prevents bind failure    |
+| 15  | **P1**   | Docker MemoryMax for SigNoz/Twenty (not just Homepage)          | 20m  | Prevents memory runaway  |
+| 16  | **P1**   | Investigate OpenSEO auth — can `local_auth` work?               | 20m  | Security                 |
+| 17  | **P1**   | Consolidate watchdog state management into shared lib           | 45m  | DRY, fewer bugs          |
+| 18  | **P1**   | Add memory/swap alerting to Gatus (80% mem, 50% swap)           | 30m  | Early warning            |
+| 19  | **P2**   | Fix FEATURES.md — ZRAM, boot time, phantom scripts              | 15m  | Doc accuracy             |
+| 20  | **P2**   | Update TODO_LIST.md with current state                          | 15m  | Doc accuracy             |
+| 21  | **P2**   | Re-enable ActivityWatch — fix or overlay broken nixpkgs package | 30m  | Time tracking            |
+| 22  | **P2**   | Deploy Dozzle at `logs.home.lan`                                | 45m  | Real-time Docker logs    |
+| 23  | **P3**   | Flake inputs audit — 47 inputs, find stale                      | 2h   | Dependency hygiene       |
+| 24  | **P3**   | Provision Pi 3 for DNS failover cluster                         | 4h   | DNS resilience           |
+| 25  | **P3**   | Investigate boot time: 1m44s initrd (post-serial8250)           | 60m  | Faster reboots           |
 
 ---
 
@@ -317,67 +317,67 @@ ALL OIDC clients share the SAME bcrypt client secret hash, hardcoded in the nix 
 
 ## System Vital Signs (Pre-Reboot, Live)
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Branch** | master, up to date with origin | ✅ |
-| **Build** | `nh os boot .` passes clean | ✅ |
-| **Undeployed commits** | 22+ (Sessions 76–80) | ⚠️ |
-| **Uptime** | 16h 43m | 🟢 Stable |
-| **RAM** | 22/62 GiB (35%) | 🟢 Healthy |
-| **Swap** | 11.5/13.1 GiB (88%) | 🔴 Very high |
-| **Disk** | 437/512 GiB (88%) | 🟡 Trending up |
-| **Load** | 0.69 | 🟢 Light |
-| **gopls** | 11+ procs, ~5.5 GiB | 🟡 Top consumer |
-| **ClickHouse** | 1 proc, ~968 MiB | 🟢 |
-| **Display** | connected, enabled | 🟢 |
+| Metric                 | Value                          | Status          |
+| ---------------------- | ------------------------------ | --------------- |
+| **Branch**             | master, up to date with origin | ✅              |
+| **Build**              | `nh os boot .` passes clean    | ✅              |
+| **Undeployed commits** | 22+ (Sessions 76–80)           | ⚠️              |
+| **Uptime**             | 16h 43m                        | 🟢 Stable       |
+| **RAM**                | 22/62 GiB (35%)                | 🟢 Healthy      |
+| **Swap**               | 11.5/13.1 GiB (88%)            | 🔴 Very high    |
+| **Disk**               | 437/512 GiB (88%)              | 🟡 Trending up  |
+| **Load**               | 0.69                           | 🟢 Light        |
+| **gopls**              | 11+ procs, ~5.5 GiB            | 🟡 Top consumer |
+| **ClickHouse**         | 1 proc, ~968 MiB               | 🟢              |
+| **Display**            | connected, enabled             | 🟢              |
 
 ### Go Packages Build Status
 
-| Package | Building | Notes |
-|---------|----------|-------|
-| hierarchical-errors | ✅ | Fixed: removed go-finding.follows |
-| golangci-lint-auto-configure | ✅ | Clean |
-| mr-sync | ✅ | Updated vendorHash |
-| go-auto-upgrade | ✅ | Clean |
-| branching-flow | ✅ | Clean |
-| art-dupl | ✅ | Clean |
-| library-policy | ❌ Disabled | go.mod local replace |
-| buildflow | ❌ Disabled | Upstream syntax error |
-| go-structure-linter | ❌ Disabled | Inconsistent vendoring |
-| projects-management-automation | ❌ Disabled | Missing dep in vendor |
+| Package                        | Building    | Notes                             |
+| ------------------------------ | ----------- | --------------------------------- |
+| hierarchical-errors            | ✅          | Fixed: removed go-finding.follows |
+| golangci-lint-auto-configure   | ✅          | Clean                             |
+| mr-sync                        | ✅          | Updated vendorHash                |
+| go-auto-upgrade                | ✅          | Clean                             |
+| branching-flow                 | ✅          | Clean                             |
+| art-dupl                       | ✅          | Clean                             |
+| library-policy                 | ❌ Disabled | go.mod local replace              |
+| buildflow                      | ❌ Disabled | Upstream syntax error             |
+| go-structure-linter            | ❌ Disabled | Inconsistent vendoring            |
+| projects-management-automation | ❌ Disabled | Missing dep in vendor             |
 
 ---
 
 ## Services Status
 
-| Service | Enabled | Deployed | Issues |
-|---------|---------|----------|--------|
-| **Caddy** | ✅ | ✅ | All vhosts consolidated |
-| **Forgejo** | ✅ | ✅ | Admin password in plaintext (SOPS blocked) |
-| **Immich** | ✅ | ✅ | VA-API committed, undeployed |
-| **Authelia** | ✅ | ✅ | 2 OIDC clients, hardcoded secrets |
-| **Homepage** | ✅ | ✅ | Memory fix committed, undeployed |
-| **SigNoz** | ✅ | ✅ | 17 rules, swap-critical added |
-| **Twenty** | ✅ | ✅ | Tag pinned to v2.7.3 |
-| **Voice Agents** | ✅ | ✅ | Caddy vhosts now protected |
-| **Hermes** | ✅ | ✅ | Git/sudo broken, tools untested, MemoryMax=24G |
-| **Ollama** | ✅ | ❌ No autostart | `wantedBy = []` — rationale unknown |
-| **Manifest** | ✅ | ✅ | Tag pinned to 6.6.1, CORS fixed |
-| **OpenSEO** | ✅ | ✅ | Tag pinned to v0.0.15, **no auth** |
-| **TaskChampion** | ✅ | ✅ | Forward-auth added, undeployed |
-| **Gatus** | ✅ | ✅ | Endpoints active, Hermes check removed |
-| **Monitor365** | ✅ | ✅ | Port 3001 conflict with openseo |
-| **Deer Flow** | ✅ | ✅ | Frontend 1.4 GB, no memory limit |
-| **DNS Blocker** | ✅ | ✅ | DoQ disabled (no ngtcp2) |
-| **Dual WAN** | ✅ | ✅ | Clean |
-| **Disk Monitor** | ✅ | ✅ | Clean |
-| **NVMe Health** | ✅ | ✅ | Hardcoded /dev/nvme0n1 |
-| **Display Manager** | ✅ | ✅ | Fix committed, undeployed |
-| **Niri** | ✅ | ✅ | gpu-recovery dead code removed |
-| **ActivityWatch** | ❌ | — | Disabled (broken nixpkgs build) |
-| **PhotoMap** | ❌ | — | Disabled (podman permissions) |
-| **Minecraft** | ❌ | — | Disabled |
-| **File Renamer** | ❌ | — | Disabled (Go 1.26.3 blocker) |
+| Service             | Enabled | Deployed        | Issues                                         |
+| ------------------- | ------- | --------------- | ---------------------------------------------- |
+| **Caddy**           | ✅      | ✅              | All vhosts consolidated                        |
+| **Forgejo**         | ✅      | ✅              | Admin password in plaintext (SOPS blocked)     |
+| **Immich**          | ✅      | ✅              | VA-API committed, undeployed                   |
+| **Authelia**        | ✅      | ✅              | 2 OIDC clients, hardcoded secrets              |
+| **Homepage**        | ✅      | ✅              | Memory fix committed, undeployed               |
+| **SigNoz**          | ✅      | ✅              | 17 rules, swap-critical added                  |
+| **Twenty**          | ✅      | ✅              | Tag pinned to v2.7.3                           |
+| **Voice Agents**    | ✅      | ✅              | Caddy vhosts now protected                     |
+| **Hermes**          | ✅      | ✅              | Git/sudo broken, tools untested, MemoryMax=24G |
+| **Ollama**          | ✅      | ❌ No autostart | `wantedBy = []` — rationale unknown            |
+| **Manifest**        | ✅      | ✅              | Tag pinned to 6.6.1, CORS fixed                |
+| **OpenSEO**         | ✅      | ✅              | Tag pinned to v0.0.15, **no auth**             |
+| **TaskChampion**    | ✅      | ✅              | Forward-auth added, undeployed                 |
+| **Gatus**           | ✅      | ✅              | Endpoints active, Hermes check removed         |
+| **Monitor365**      | ✅      | ✅              | Port 3001 conflict with openseo                |
+| **Deer Flow**       | ✅      | ✅              | Frontend 1.4 GB, no memory limit               |
+| **DNS Blocker**     | ✅      | ✅              | DoQ disabled (no ngtcp2)                       |
+| **Dual WAN**        | ✅      | ✅              | Clean                                          |
+| **Disk Monitor**    | ✅      | ✅              | Clean                                          |
+| **NVMe Health**     | ✅      | ✅              | Hardcoded /dev/nvme0n1                         |
+| **Display Manager** | ✅      | ✅              | Fix committed, undeployed                      |
+| **Niri**            | ✅      | ✅              | gpu-recovery dead code removed                 |
+| **ActivityWatch**   | ❌      | —               | Disabled (broken nixpkgs build)                |
+| **PhotoMap**        | ❌      | —               | Disabled (podman permissions)                  |
+| **Minecraft**       | ❌      | —               | Disabled                                       |
+| **File Renamer**    | ❌      | —               | Disabled (Go 1.26.3 blocker)                   |
 
 ---
 

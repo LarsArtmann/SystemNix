@@ -29,6 +29,7 @@
 Two commits landed:
 
 **Commit `b5882a33`** — Major overlay cleanup + activation fixes:
+
 - Eliminated ALL sed patches from overlays — fixed upstream repos instead
 - Upstream repos tagged with semver (library-policy v1.0.0, mr-sync v0.3.0, etc.)
 - BuildFlow unpinned from locked revision back to `ref=master`
@@ -40,18 +41,18 @@ Two commits landed:
 
 ### Project Stats
 
-| Metric | Value |
-|--------|-------|
-| Total lines of Nix | ~13,772 |
-| Service modules | 37 (34 active, 3 orphan/unused) |
-| Enabled services on evo-x2 | ~25+ |
-| Flake inputs | 48 |
-| Overlays | 13 packages (shared + Linux-only) |
-| ADRs | 8 |
-| Status reports | 20+ |
-| Home Manager (NixOS) | 536 lines (`home.nix`) |
-| Home Manager (Darwin) | 62 lines (`default.nix`) — **bare minimum** |
-| Caddy virtual hosts | ~10 |
+| Metric                     | Value                                       |
+| -------------------------- | ------------------------------------------- |
+| Total lines of Nix         | ~13,772                                     |
+| Service modules            | 37 (34 active, 3 orphan/unused)             |
+| Enabled services on evo-x2 | ~25+                                        |
+| Flake inputs               | 48                                          |
+| Overlays                   | 13 packages (shared + Linux-only)           |
+| ADRs                       | 8                                           |
+| Status reports             | 20+                                         |
+| Home Manager (NixOS)       | 536 lines (`home.nix`)                      |
+| Home Manager (Darwin)      | 62 lines (`default.nix`) — **bare minimum** |
+| Caddy virtual hosts        | ~10                                         |
 
 ---
 
@@ -61,93 +62,93 @@ These are complete, tested, wired, and working:
 
 ### Infrastructure Core
 
-| What | Details |
-|------|---------|
-| Cross-platform Nix flake | Single flake, Darwin + NixOS, 80% shared via `platforms/common/` |
-| flake-parts modular architecture | 37 service modules auto-discovered |
-| Overlay system | `mkPackageOverlay` helper, platform-safe (empty overlay on wrong system) |
-| SOPS + Age secrets | SSH host key → age conversion, 4 sops files, per-secret auto-restart |
-| Home Manager integration | `useGlobalPkgs = true`, `useUserPackages = true`, backup on conflict |
-| Formatter (treefmt + alejandra) | Via `treefmt-full-flake` |
-| Flake checks | statix, deadnix, eval per-system, Linux-specific |
+| What                             | Details                                                                  |
+| -------------------------------- | ------------------------------------------------------------------------ |
+| Cross-platform Nix flake         | Single flake, Darwin + NixOS, 80% shared via `platforms/common/`         |
+| flake-parts modular architecture | 37 service modules auto-discovered                                       |
+| Overlay system                   | `mkPackageOverlay` helper, platform-safe (empty overlay on wrong system) |
+| SOPS + Age secrets               | SSH host key → age conversion, 4 sops files, per-secret auto-restart     |
+| Home Manager integration         | `useGlobalPkgs = true`, `useUserPackages = true`, backup on conflict     |
+| Formatter (treefmt + alejandra)  | Via `treefmt-full-flake`                                                 |
+| Flake checks                     | statix, deadnix, eval per-system, Linux-specific                         |
 
 ### Overlay Cleanup (This Session)
 
-| What | Details |
-|------|---------|
+| What                   | Details                                                                                 |
+| ---------------------- | --------------------------------------------------------------------------------------- |
 | Eliminated sed patches | `buildflow`, `golangci-lint-auto-configure`, `hierarchical-errors` — all fixed upstream |
-| Semver versioning | library-policy v1.0.0, mr-sync v0.3.0, PMA v0.2.0, golangci-lint-auto-configure v0.2.0 |
-| BuildFlow unpinned | Back to `ref=master` from locked revision |
-| `overlays/shared.nix` | 3 override blocks removed, clean `mkPackageOverlay` pass-throughs |
+| Semver versioning      | library-policy v1.0.0, mr-sync v0.3.0, PMA v0.2.0, golangci-lint-auto-configure v0.2.0  |
+| BuildFlow unpinned     | Back to `ref=master` from locked revision                                               |
+| `overlays/shared.nix`  | 3 override blocks removed, clean `mkPackageOverlay` pass-throughs                       |
 
 ### Services (25+ Running)
 
-| Service | Module | Status |
-|---------|--------|--------|
-| Caddy reverse proxy | `caddy.nix` (118 LOC) | ✅ TLS, forward auth, 10 vhosts, metrics |
-| Forgejo (Git forge) | `forgejo.nix` | ✅ SQLite, LFS, Actions runner, push mirrors |
-| Immich (photos) | `immich.nix` | ✅ PostgreSQL + Redis + ML, VA-API transcoding |
-| SigNoz (observability) | `signoz.nix` | ✅ Full-stack traces/metrics/logs, 7 alert rules, 4 dashboards |
-| Homepage Dashboard | `homepage.nix` | ✅ Catppuccin Mocha, health checks, widgets |
-| Pocket ID (OIDC) | `pocket-id.nix` | ✅ Passkey-only auth provider |
-| oauth2-proxy | `oauth2-proxy.nix` | ✅ Forward-auth bridge |
-| DNS Blocker (dnsblockd) | `dns-blocker.nix` (342 LOC) | ✅ 25 blocklists, ~2.5M domains, stats API |
-| Unbound DNS | `dns-blocker.nix` | ✅ Full recursive, DNSSEC, blocklists |
-| Twenty CRM | `twenty.nix` | ✅ Docker Compose, daily DB backup |
-| Gatus (health checks) | `gatus-config.nix` | ✅ Memory/swap metric collection, Discord alerts |
-| TaskChampion sync | `taskchampion.nix` | ✅ Port 10222, TLS |
-| Hermes (AI assistant) | `hermes.nix` | ✅ Discord bot, anthropic, firecrawl, edge-tts |
-| Manifest (LLM router) | `manifest.nix` | ✅ AI cost optimization |
-| OpenSEO | `openseo.nix` | ✅ Self-hosted SEO suite |
-| Dual-WAN | `dual-wan.nix` | ✅ MPTCP + route monitoring |
-| Disk monitor | `disk-monitor.nix` | ✅ Desktop notifications at thresholds (`pcent` fix applied) |
-| NVMe health monitor | `nvme-health-monitor.nix` | ✅ Desktop notifications for critical events |
-| Projects Management Automation | `projects-management-automation.nix` | ✅ Running |
-| Docker | `default.nix` | ✅ Always-on, overlay2, weekly prune |
-| Niri (Wayland compositor) | `niri-config.nix` | ✅ Custom animations, window rules |
-| Audio (PipeWire) | `audio.nix` | ✅ Low-latency, VA-API |
-| Steam | `steam.nix` | ✅ Configured |
-| Display manager (SDDM) | `display-manager.nix` | ✅ Silent SDDM |
-| Browser policies | `browser-policies.nix` | ✅ DoH disabled, cert injected |
+| Service                        | Module                               | Status                                                         |
+| ------------------------------ | ------------------------------------ | -------------------------------------------------------------- |
+| Caddy reverse proxy            | `caddy.nix` (118 LOC)                | ✅ TLS, forward auth, 10 vhosts, metrics                       |
+| Forgejo (Git forge)            | `forgejo.nix`                        | ✅ SQLite, LFS, Actions runner, push mirrors                   |
+| Immich (photos)                | `immich.nix`                         | ✅ PostgreSQL + Redis + ML, VA-API transcoding                 |
+| SigNoz (observability)         | `signoz.nix`                         | ✅ Full-stack traces/metrics/logs, 7 alert rules, 4 dashboards |
+| Homepage Dashboard             | `homepage.nix`                       | ✅ Catppuccin Mocha, health checks, widgets                    |
+| Pocket ID (OIDC)               | `pocket-id.nix`                      | ✅ Passkey-only auth provider                                  |
+| oauth2-proxy                   | `oauth2-proxy.nix`                   | ✅ Forward-auth bridge                                         |
+| DNS Blocker (dnsblockd)        | `dns-blocker.nix` (342 LOC)          | ✅ 25 blocklists, ~2.5M domains, stats API                     |
+| Unbound DNS                    | `dns-blocker.nix`                    | ✅ Full recursive, DNSSEC, blocklists                          |
+| Twenty CRM                     | `twenty.nix`                         | ✅ Docker Compose, daily DB backup                             |
+| Gatus (health checks)          | `gatus-config.nix`                   | ✅ Memory/swap metric collection, Discord alerts               |
+| TaskChampion sync              | `taskchampion.nix`                   | ✅ Port 10222, TLS                                             |
+| Hermes (AI assistant)          | `hermes.nix`                         | ✅ Discord bot, anthropic, firecrawl, edge-tts                 |
+| Manifest (LLM router)          | `manifest.nix`                       | ✅ AI cost optimization                                        |
+| OpenSEO                        | `openseo.nix`                        | ✅ Self-hosted SEO suite                                       |
+| Dual-WAN                       | `dual-wan.nix`                       | ✅ MPTCP + route monitoring                                    |
+| Disk monitor                   | `disk-monitor.nix`                   | ✅ Desktop notifications at thresholds (`pcent` fix applied)   |
+| NVMe health monitor            | `nvme-health-monitor.nix`            | ✅ Desktop notifications for critical events                   |
+| Projects Management Automation | `projects-management-automation.nix` | ✅ Running                                                     |
+| Docker                         | `default.nix`                        | ✅ Always-on, overlay2, weekly prune                           |
+| Niri (Wayland compositor)      | `niri-config.nix`                    | ✅ Custom animations, window rules                             |
+| Audio (PipeWire)               | `audio.nix`                          | ✅ Low-latency, VA-API                                         |
+| Steam                          | `steam.nix`                          | ✅ Configured                                                  |
+| Display manager (SDDM)         | `display-manager.nix`                | ✅ Silent SDDM                                                 |
+| Browser policies               | `browser-policies.nix`               | ✅ DoH disabled, cert injected                                 |
 
 ### Resilience & Recovery
 
-| What | Details |
-|------|---------|
-| BTRFS snapshots | Daily via btrbk, 14d + 4w retention, pre-deploy auto-snapshot |
-| Journald limits | 16G system, 2G runtime, 1 month retention |
-| systemd-oomd | Per-service `MemoryMax`, `MemoryHigh` for heavy services |
+| What                          | Details                                                       |
+| ----------------------------- | ------------------------------------------------------------- |
+| BTRFS snapshots               | Daily via btrbk, 14d + 4w retention, pre-deploy auto-snapshot |
+| Journald limits               | 16G system, 2G runtime, 1 month retention                     |
+| systemd-oomd                  | Per-service `MemoryMax`, `MemoryHigh` for heavy services      |
 | Service failure notifications | `notify-failure@%n.service` template for all service failures |
-| Gatus TLS cert expiry | Alerts before cert expiration |
-| SigNoz swap alerts | Critical at 80% swap usage |
+| Gatus TLS cert expiry         | Alerts before cert expiration                                 |
+| SigNoz swap alerts            | Critical at 80% swap usage                                    |
 
 ### Developer Experience
 
-| What | Details |
-|------|---------|
-| `just test-fast` | Syntax-only validation (~30s) |
-| `just test` | Full build validation via `nh os test` |
-| `just switch` | Apply config with auto-snapshots |
-| `just hash-check` | Verify overlay vendor hashes |
-| `just test-exec-paths` | Validate 127 ExecStart paths |
-| Pre-commit hooks | alejandra, deadnix, statix, gitleaks |
-| `mkPackageOverlay` | Platform-safe overlay helper |
-| `lib/` helpers | harden, serviceDefaults, mkStateDir, mkDockerServiceFactory, ports, images |
+| What                   | Details                                                                    |
+| ---------------------- | -------------------------------------------------------------------------- |
+| `just test-fast`       | Syntax-only validation (~30s)                                              |
+| `just test`            | Full build validation via `nh os test`                                     |
+| `just switch`          | Apply config with auto-snapshots                                           |
+| `just hash-check`      | Verify overlay vendor hashes                                               |
+| `just test-exec-paths` | Validate 127 ExecStart paths                                               |
+| Pre-commit hooks       | alejandra, deadnix, statix, gitleaks                                       |
+| `mkPackageOverlay`     | Platform-safe overlay helper                                               |
+| `lib/` helpers         | harden, serviceDefaults, mkStateDir, mkDockerServiceFactory, ports, images |
 
 ### Desktop (NixOS)
 
-| What | Details |
-|------|---------|
-| Ghostty (primary terminal) | ✅ Promoted this session |
-| Kitty (backup terminal) | ✅ Mod+Shift+Return |
-| Niri window rules | ✅ Per-app floating, sizing, workspace |
-| Waybar | ✅ Custom config |
-| Rofi | ✅ App launcher, DNS management |
-| wlogout | ✅ Logout menu |
-| swaylock | ✅ Screen locker |
-| Fonts | ✅ JetBrainsMono Nerd Font, Noto family |
-| Color scheme | ✅ Dark mode (dconf + xdg portal) |
-| EMEET Pixy webcam | ✅ Auto-tracking, Niri integration |
+| What                       | Details                                 |
+| -------------------------- | --------------------------------------- |
+| Ghostty (primary terminal) | ✅ Promoted this session                |
+| Kitty (backup terminal)    | ✅ Mod+Shift+Return                     |
+| Niri window rules          | ✅ Per-app floating, sizing, workspace  |
+| Waybar                     | ✅ Custom config                        |
+| Rofi                       | ✅ App launcher, DNS management         |
+| wlogout                    | ✅ Logout menu                          |
+| swaylock                   | ✅ Screen locker                        |
+| Fonts                      | ✅ JetBrainsMono Nerd Font, Noto family |
+| Color scheme               | ✅ Dark mode (dconf + xdg portal)       |
+| EMEET Pixy webcam          | ✅ Auto-tracking, Niri integration      |
 
 ---
 
@@ -155,46 +156,46 @@ These are complete, tested, wired, and working:
 
 ### Overlay Cleanup — Almost Complete
 
-| Item | Status | Remaining |
-|------|--------|-----------|
-| `buildflow` sed patches | ✅ Removed | — |
-| `golangci-lint-auto-configure` sed patches | ✅ Removed | — |
-| `hierarchical-errors` vendorHash override | ✅ Removed | — |
-| `go-structure-linter` | ❌ Still broken | Private `template-LICENSE/types` dep, `go mod tidy` fails in sandbox. Overlay commented out. Package removed from base.nix. Flake input still exists. |
-| Remaining `vendorHash` overrides | ⚠️ 5 remain | library-policy, mr-sync, go-auto-upgrade, branching-flow, art-dupl — needed because `inputs.follows` pins shared deps at different versions |
+| Item                                       | Status          | Remaining                                                                                                                                             |
+| ------------------------------------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `buildflow` sed patches                    | ✅ Removed      | —                                                                                                                                                     |
+| `golangci-lint-auto-configure` sed patches | ✅ Removed      | —                                                                                                                                                     |
+| `hierarchical-errors` vendorHash override  | ✅ Removed      | —                                                                                                                                                     |
+| `go-structure-linter`                      | ❌ Still broken | Private `template-LICENSE/types` dep, `go mod tidy` fails in sandbox. Overlay commented out. Package removed from base.nix. Flake input still exists. |
+| Remaining `vendorHash` overrides           | ⚠️ 5 remain     | library-policy, mr-sync, go-auto-upgrade, branching-flow, art-dupl — needed because `inputs.follows` pins shared deps at different versions           |
 
 ### SigNoz Alerting — Functional but Incomplete
 
-| Item | Status |
-|------|--------|
-| Memory-critical alert | ✅ |
-| Swap-critical alert | ✅ |
-| Service failure spike alert | ✅ |
-| TLS cert expiry alert | ✅ |
-| Per-threshold channel routing (critical→Discord, warning→log) | ❌ Not done |
-| Discord channel test | ❌ Not verified |
+| Item                                                          | Status          |
+| ------------------------------------------------------------- | --------------- |
+| Memory-critical alert                                         | ✅              |
+| Swap-critical alert                                           | ✅              |
+| Service failure spike alert                                   | ✅              |
+| TLS cert expiry alert                                         | ✅              |
+| Per-threshold channel routing (critical→Discord, warning→log) | ❌ Not done     |
+| Discord channel test                                          | ❌ Not verified |
 
 ### DNS Infrastructure — Functional but Incomplete
 
-| Item | Status |
-|------|--------|
-| Unbound recursive resolver | ✅ Working |
-| dnsblockd block page | ✅ Working |
-| 25 blocklists (~2.5M domains) | ✅ Working |
-| Stats API + Prometheus metrics | ✅ Working |
-| DNS-over-QUIC | ❌ Disabled — unbound lacks ngtcp2 |
-| DNS failover (VRRP to Pi 3) | ❌ Pi 3 not provisioned |
-| DoQ overlay (patched unbound) | ❌ Disabled — kills binary cache (40+ min rebuilds) |
+| Item                           | Status                                              |
+| ------------------------------ | --------------------------------------------------- |
+| Unbound recursive resolver     | ✅ Working                                          |
+| dnsblockd block page           | ✅ Working                                          |
+| 25 blocklists (~2.5M domains)  | ✅ Working                                          |
+| Stats API + Prometheus metrics | ✅ Working                                          |
+| DNS-over-QUIC                  | ❌ Disabled — unbound lacks ngtcp2                  |
+| DNS failover (VRRP to Pi 3)    | ❌ Pi 3 not provisioned                             |
+| DoQ overlay (patched unbound)  | ❌ Disabled — kills binary cache (40+ min rebuilds) |
 
 ### Hermes (AI Assistant) — Running with Gaps
 
-| Item | Status |
-|------|--------|
-| Discord bot | ✅ Working |
-| Anthropic integration | ✅ Working |
-| Secondary LLM provider fallback | ❌ Not configured |
-| Git remote (SSH deploy key) | ❌ `origin` unreachable in sandbox |
-| GLM-5.1 rate limit monitoring | ❌ Not verified |
+| Item                            | Status                             |
+| ------------------------------- | ---------------------------------- |
+| Discord bot                     | ✅ Working                         |
+| Anthropic integration           | ✅ Working                         |
+| Secondary LLM provider fallback | ❌ Not configured                  |
+| Git remote (SSH deploy key)     | ❌ `origin` unreachable in sandbox |
+| GLM-5.1 rate limit monitoring   | ❌ Not verified                    |
 
 ---
 
@@ -202,37 +203,37 @@ These are complete, tested, wired, and working:
 
 ### Infrastructure
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Provision Raspberry Pi 3 for DNS failover cluster | 2-4h | High — eliminates single DNS point of failure |
-| 2 | Wire Pi 3 as secondary DNS in dns-failover.nix | 1h | High — part of #1 |
-| 3 | Deploy Dozzle (Docker container log tailing at `logs.home.lan`) | 30min | Medium — operational visibility |
-| 4 | nix-colors integration: migrate 17+ hardcoded colors | 6h | Medium — consistency |
-| 5 | Create `just status` command for automated status generation | 2h | Medium — DX |
+| #   | Item                                                            | Effort | Impact                                        |
+| --- | --------------------------------------------------------------- | ------ | --------------------------------------------- |
+| 1   | Provision Raspberry Pi 3 for DNS failover cluster               | 2-4h   | High — eliminates single DNS point of failure |
+| 2   | Wire Pi 3 as secondary DNS in dns-failover.nix                  | 1h     | High — part of #1                             |
+| 3   | Deploy Dozzle (Docker container log tailing at `logs.home.lan`) | 30min  | Medium — operational visibility               |
+| 4   | nix-colors integration: migrate 17+ hardcoded colors            | 6h     | Medium — consistency                          |
+| 5   | Create `just status` command for automated status generation    | 2h     | Medium — DX                                   |
 
 ### Testing & CI
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 6 | Add nixosTests for each service module (34 modules without tests) | 4-20h | High — catch regressions |
-| 7 | Wire nixosTests into GitHub Actions | 15min | Medium — CI |
-| 8 | Add `just test` to GitHub Actions (full build) | 1h | High — CI |
-| 9 | Darwin CI | 2h | Medium — cross-platform |
+| #   | Item                                                              | Effort | Impact                   |
+| --- | ----------------------------------------------------------------- | ------ | ------------------------ |
+| 6   | Add nixosTests for each service module (34 modules without tests) | 4-20h  | High — catch regressions |
+| 7   | Wire nixosTests into GitHub Actions                               | 15min  | Medium — CI              |
+| 8   | Add `just test` to GitHub Actions (full build)                    | 1h     | High — CI                |
+| 9   | Darwin CI                                                         | 2h     | Medium — cross-platform  |
 
 ### Documentation
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 10 | Create shared flake-parts template (mkGoPackage, checks, devshells) | 3h | Medium — standardize Go repos |
-| 11 | Convert go-auto-upgrade `path:` inputs to SSH URLs | 1h | Low — correctness |
-| 12 | Bring Darwin home.nix to parity with NixOS (terminal, editor, theme, xdg) | 4h | Medium — if Darwin is actively used |
+| #   | Item                                                                      | Effort | Impact                              |
+| --- | ------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| 10  | Create shared flake-parts template (mkGoPackage, checks, devshells)       | 3h     | Medium — standardize Go repos       |
+| 11  | Convert go-auto-upgrade `path:` inputs to SSH URLs                        | 1h     | Low — correctness                   |
+| 12  | Bring Darwin home.nix to parity with NixOS (terminal, editor, theme, xdg) | 4h     | Medium — if Darwin is actively used |
 
 ### Upstream Contributions
 
-| # | Item | Effort | Impact |
-|---|------|--------|--------|
-| 13 | Fix `go-structure-linter` upstream — expose `template-LICENSE/types` via `_local_deps` | 1h | Medium — unblocks tool |
-| 14 | Contribute `go-finding` API stability fixes upstream | 2h | Medium — prevent future breaks |
+| #   | Item                                                                                   | Effort | Impact                         |
+| --- | -------------------------------------------------------------------------------------- | ------ | ------------------------------ |
+| 13  | Fix `go-structure-linter` upstream — expose `template-LICENSE/types` via `_local_deps` | 1h     | Medium — unblocks tool         |
+| 14  | Contribute `go-finding` API stability fixes upstream                                   | 2h     | Medium — prevent future breaks |
 
 ---
 
@@ -312,6 +313,7 @@ Pocket ID → oauth2-proxy → sops secrets chain requires manual steps. No auto
 ### E7. Darwin Parity — Decide and Commit
 
 Either:
+
 - **Actively use Darwin** → invest 4h in bringing home.nix to parity (terminal, editor, theme, xdg)
 - **De-prioritize Darwin** → accept minimal config, focus on NixOS
 
@@ -334,58 +336,58 @@ Sorted by impact × urgency (Pareto ranking):
 
 ### P0: Deploy & Verify (Immediate)
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 1 | **Deploy uncommitted changes** (`just switch`) | 5min | 2 commits ahead of origin — overlay cleanup + activation fixes sitting idle |
-| 2 | **Push to origin** (`git push`) | 1min | Branch is 1 commit ahead |
-| 3 | **Verify activation** — check all 3 previously-failing services | 10min | Confirm portal-gtk, home-manager-lars, dnsblockd all start cleanly |
+| #   | Task                                                            | Effort | Why                                                                         |
+| --- | --------------------------------------------------------------- | ------ | --------------------------------------------------------------------------- |
+| 1   | **Deploy uncommitted changes** (`just switch`)                  | 5min   | 2 commits ahead of origin — overlay cleanup + activation fixes sitting idle |
+| 2   | **Push to origin** (`git push`)                                 | 1min   | Branch is 1 commit ahead                                                    |
+| 3   | **Verify activation** — check all 3 previously-failing services | 10min  | Confirm portal-gtk, home-manager-lars, dnsblockd all start cleanly          |
 
 ### P1: Resilience (This Week)
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 4 | **Add `/data` disk growth trend alerting** — Gatus check for >90% with daily delta | 1h | Prevents repeat of May 30 disk-full crash |
-| 5 | **ClickHouse data retention policy** — TTL for SigNoz traces/metrics (30d default) | 2h | Largest contributor to disk growth |
-| 6 | **Automated stale process cleanup** — systemd timer killing gopls >24h old | 1h | Root cause of swap exhaustion |
-| 7 | **Investigate Monitor365 crash-loop** — user service broken since boot | 30min | P1 service failure |
+| #   | Task                                                                               | Effort | Why                                       |
+| --- | ---------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| 4   | **Add `/data` disk growth trend alerting** — Gatus check for >90% with daily delta | 1h     | Prevents repeat of May 30 disk-full crash |
+| 5   | **ClickHouse data retention policy** — TTL for SigNoz traces/metrics (30d default) | 2h     | Largest contributor to disk growth        |
+| 6   | **Automated stale process cleanup** — systemd timer killing gopls >24h old         | 1h     | Root cause of swap exhaustion             |
+| 7   | **Investigate Monitor365 crash-loop** — user service broken since boot             | 30min  | P1 service failure                        |
 
 ### P2: CI & Testing (This Week)
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 8 | **Add GitHub Actions CI** — `just test-fast` + `just hash-check` on PRs/push | 1h | Single highest-impact DX improvement |
-| 9 | **Add `just test` to CI** — full build on merge to master | 30min | Catches vendor hash drift, eval-only issues |
-| 10 | **Add nixosTest for dnsblockd module** — verify service starts with mock sops | 2h | Most complex custom service, zero test coverage |
+| #   | Task                                                                          | Effort | Why                                             |
+| --- | ----------------------------------------------------------------------------- | ------ | ----------------------------------------------- |
+| 8   | **Add GitHub Actions CI** — `just test-fast` + `just hash-check` on PRs/push  | 1h     | Single highest-impact DX improvement            |
+| 9   | **Add `just test` to CI** — full build on merge to master                     | 30min  | Catches vendor hash drift, eval-only issues     |
+| 10  | **Add nixosTest for dnsblockd module** — verify service starts with mock sops | 2h     | Most complex custom service, zero test coverage |
 
 ### P3: Code Quality (Next 2 Weeks)
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 11 | **Delete orphan modules** — `ai-stack.nix`, `default-services.nix` | 15min | Dead code, confusing for AI sessions |
-| 12 | **Fix port 8050 conflict** — reassign photomap or dnsblockd | 15min | Latent bomb |
-| 13 | **Clean up `go-structure-linter` flake input** — remove or fix upstream | 1h | Dead input, confusing |
-| 14 | **Audit flake inputs** — 48 inputs, some may be stale/unused | 2h | Reduces eval time, attack surface |
-| 15 | **Add `just status` command** — automated status report | 2h | DX, replaces manual status sessions |
+| #   | Task                                                                    | Effort | Why                                  |
+| --- | ----------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 11  | **Delete orphan modules** — `ai-stack.nix`, `default-services.nix`      | 15min  | Dead code, confusing for AI sessions |
+| 12  | **Fix port 8050 conflict** — reassign photomap or dnsblockd             | 15min  | Latent bomb                          |
+| 13  | **Clean up `go-structure-linter` flake input** — remove or fix upstream | 1h     | Dead input, confusing                |
+| 14  | **Audit flake inputs** — 48 inputs, some may be stale/unused            | 2h     | Reduces eval time, attack surface    |
+| 15  | **Add `just status` command** — automated status report                 | 2h     | DX, replaces manual status sessions  |
 
 ### P4: Architecture (Next Month)
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 16 | **Separate `/data` subvolume for observability** — prevent ClickHouse from filling root | 2h | Long-term disk safety |
-| 17 | **Provision Pi 3 for DNS failover** — eliminate single DNS point of failure | 4h | Infrastructure resilience |
-| 18 | **nix-colors integration** — migrate 17+ hardcoded colors | 6h | Consistency, maintainability |
-| 19 | **Darwin home.nix parity** — if actively used | 4h | DX parity |
-| 20 | **Shared flake-parts template** — mkGoPackage, checks, devshells for all Go repos | 3h | Standardization across 10+ repos |
+| #   | Task                                                                                    | Effort | Why                              |
+| --- | --------------------------------------------------------------------------------------- | ------ | -------------------------------- |
+| 16  | **Separate `/data` subvolume for observability** — prevent ClickHouse from filling root | 2h     | Long-term disk safety            |
+| 17  | **Provision Pi 3 for DNS failover** — eliminate single DNS point of failure             | 4h     | Infrastructure resilience        |
+| 18  | **nix-colors integration** — migrate 17+ hardcoded colors                               | 6h     | Consistency, maintainability     |
+| 19  | **Darwin home.nix parity** — if actively used                                           | 4h     | DX parity                        |
+| 20  | **Shared flake-parts template** — mkGoPackage, checks, devshells for all Go repos       | 3h     | Standardization across 10+ repos |
 
 ### P5: Polish & Future
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 21 | **Deploy Dozzle** — Docker container log tailing at `logs.home.lan` | 30min | Operational visibility |
-| 22 | **Add per-threshold SigNoz channel routing** — critical→Discord, warning→log | 1h | Alert hygiene |
-| 23 | **Configure Hermes secondary LLM provider** — OpenRouter/OpenAI fallback | 30min | Reliability |
-| 24 | **Add nixosTests for critical services** — caddy auth chain, forgejo, immich | 8h | Regression prevention |
-| 25 | **Automated secret rotation** — sops + age key rotation | 4h | Security hygiene |
+| #   | Task                                                                         | Effort | Why                    |
+| --- | ---------------------------------------------------------------------------- | ------ | ---------------------- |
+| 21  | **Deploy Dozzle** — Docker container log tailing at `logs.home.lan`          | 30min  | Operational visibility |
+| 22  | **Add per-threshold SigNoz channel routing** — critical→Discord, warning→log | 1h     | Alert hygiene          |
+| 23  | **Configure Hermes secondary LLM provider** — OpenRouter/OpenAI fallback     | 30min  | Reliability            |
+| 24  | **Add nixosTests for critical services** — caddy auth chain, forgejo, immich | 8h     | Regression prevention  |
+| 25  | **Automated secret rotation** — sops + age key rotation                      | 4h     | Security hygiene       |
 
 ---
 
@@ -406,20 +408,20 @@ Currently: 62 lines of HM config, no desktop, no terminal, no editor. If it's a 
 
 ## Appendix: Recent Session Timeline
 
-| Date | Session | Key Achievement |
-|------|---------|-----------------|
-| Jun 3 | 117 | Overlay cleanup, activation fixes (this session) |
-| Jun 3 | 116 | Post-crash forensics, journald limits, disk-monitor fix |
-| Jun 2 | 115 | Ghostty migration, justfile fixes, Gatus alerting |
-| Jun 1 | 114 | WriteSARIF upstream fix cascade, BuildFlow vendoring |
-| Jun 1 | 113 | PMA service stop, submodule cascade |
-| May 31 | 112 | PMA notification fix, build fix, flake quality |
-| May 30 | 111 | BTRFS cache subvolumes |
-| May 30 | 110 | Niri animation speedup, DNS blocklist, Rofi benchmark |
-| May 28 | 108 | Services README, lib refactor, full status |
-| May 28 | 107 | mkPreparedSource auto-features, mkPackageOverlay platform safety |
-| May 25 | 96 | OOM hardening, build parallelism |
-| May 24 | 85 | Authelia → Pocket ID migration |
+| Date   | Session | Key Achievement                                                  |
+| ------ | ------- | ---------------------------------------------------------------- |
+| Jun 3  | 117     | Overlay cleanup, activation fixes (this session)                 |
+| Jun 3  | 116     | Post-crash forensics, journald limits, disk-monitor fix          |
+| Jun 2  | 115     | Ghostty migration, justfile fixes, Gatus alerting                |
+| Jun 1  | 114     | WriteSARIF upstream fix cascade, BuildFlow vendoring             |
+| Jun 1  | 113     | PMA service stop, submodule cascade                              |
+| May 31 | 112     | PMA notification fix, build fix, flake quality                   |
+| May 30 | 111     | BTRFS cache subvolumes                                           |
+| May 30 | 110     | Niri animation speedup, DNS blocklist, Rofi benchmark            |
+| May 28 | 108     | Services README, lib refactor, full status                       |
+| May 28 | 107     | mkPreparedSource auto-features, mkPackageOverlay platform safety |
+| May 25 | 96      | OOM hardening, build parallelism                                 |
+| May 24 | 85      | Authelia → Pocket ID migration                                   |
 
 ---
 

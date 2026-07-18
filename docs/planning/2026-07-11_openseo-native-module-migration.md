@@ -14,16 +14,16 @@ OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application
 
 ### Key Blockers & Mitigations
 
-| # | Blocker | Impact | Mitigation |
-|---|---------|--------|------------|
-| 1 | **`workerd` not in nixpkgs** (issue #355460, closed "not planned" — bazel build too complex) | Critical: the runtime depends on `workerd` | The `wrangler` npm package bundles a pre-compiled `workerd` binary for linux-x64. We use that binary directly. It should work in Nix if it can find its shared libraries (typically just glibc, which NixOS provides) |
-| 2 | **No `buildPnpmPackage`** in nixpkgs | High: manual pnpm packaging required | Use `fetchPnpmDeps` + `pnpmConfigHook` pattern (project precedent: `pkgs/jscpd.nix`). Requires checked-in `pnpm-lock.yaml` |
-| 3 | **Build-time env var inlining** (`AUTH_MODE` baked into client bundle by `vite build`) | Medium: Docker rebuilds at container start to handle this | SystemNix always uses `AUTH_MODE=local_noauth` — hardcode at Nix build time |
-| 4 | **4GB heap build** (~7400 Vite modules) | Low: evo-x2 has 128GB RAM | Set `NODE_OPTIONS=--max-old-space-size=4096` in `buildPhase` |
-| 5 | **Runtime needs full project tree** (node_modules + dist + wrangler config + workerd binary) | Medium: large closure, can't just serve static files | Copy entire build output to `$out/lib/openseo/`, create wrapper script |
-| 6 | **D1 SQLite persistence** (`.wrangler/state/`) | Medium: needs writable persistent state | Mount from `/var/lib/openseo/.wrangler` via systemd `StateDirectory` |
-| 7 | **`vite preview` is dev-grade** | Low: upstream-sanctioned for self-host (Docker image uses the same) | Accept this limitation — it's the only option without Cloudflare deployment |
-| 8 | **pnpm workspace** (`pnpm-workspace.yaml`) | Medium: `fetchPnpmDeps` may need workspace-aware handling | Include `pnpm-workspace.yaml` in the fetch source; may need `postPatch` fixes |
+| #   | Blocker                                                                                      | Impact                                                              | Mitigation                                                                                                                                                                                                            |
+| --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **`workerd` not in nixpkgs** (issue #355460, closed "not planned" — bazel build too complex) | Critical: the runtime depends on `workerd`                          | The `wrangler` npm package bundles a pre-compiled `workerd` binary for linux-x64. We use that binary directly. It should work in Nix if it can find its shared libraries (typically just glibc, which NixOS provides) |
+| 2   | **No `buildPnpmPackage`** in nixpkgs                                                         | High: manual pnpm packaging required                                | Use `fetchPnpmDeps` + `pnpmConfigHook` pattern (project precedent: `pkgs/jscpd.nix`). Requires checked-in `pnpm-lock.yaml`                                                                                            |
+| 3   | **Build-time env var inlining** (`AUTH_MODE` baked into client bundle by `vite build`)       | Medium: Docker rebuilds at container start to handle this           | SystemNix always uses `AUTH_MODE=local_noauth` — hardcode at Nix build time                                                                                                                                           |
+| 4   | **4GB heap build** (~7400 Vite modules)                                                      | Low: evo-x2 has 128GB RAM                                           | Set `NODE_OPTIONS=--max-old-space-size=4096` in `buildPhase`                                                                                                                                                          |
+| 5   | **Runtime needs full project tree** (node_modules + dist + wrangler config + workerd binary) | Medium: large closure, can't just serve static files                | Copy entire build output to `$out/lib/openseo/`, create wrapper script                                                                                                                                                |
+| 6   | **D1 SQLite persistence** (`.wrangler/state/`)                                               | Medium: needs writable persistent state                             | Mount from `/var/lib/openseo/.wrangler` via systemd `StateDirectory`                                                                                                                                                  |
+| 7   | **`vite preview` is dev-grade**                                                              | Low: upstream-sanctioned for self-host (Docker image uses the same) | Accept this limitation — it's the only option without Cloudflare deployment                                                                                                                                           |
+| 8   | **pnpm workspace** (`pnpm-workspace.yaml`)                                                   | Medium: `fetchPnpmDeps` may need workspace-aware handling           | Include `pnpm-workspace.yaml` in the fetch source; may need `postPatch` fixes                                                                                                                                         |
 
 ### What Stays the Same
 
@@ -36,14 +36,14 @@ OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application
 
 ### What Changes
 
-| Before (Docker) | After (Native) |
-|---|---|
-| Docker container via `mkDockerService` | Systemd service via `harden {} // serviceDefaults {}` |
+| Before (Docker)                            | After (Native)                                            |
+| ------------------------------------------ | --------------------------------------------------------- |
+| Docker container via `mkDockerService`     | Systemd service via `harden {} // serviceDefaults {}`     |
 | Image `ghcr.io/every-app/open-seo:v0.0.15` | Nix-built package from `github:every-app/open-seo` source |
-| Volume `openseo_data:/app/.wrangler` | `StateDirectory=openseo` → `/var/lib/openseo` |
-| Compose YAML in Nix | Native `systemd.services.openseo` |
-| `mem_limit: 2g` in compose | `MemoryMax=2G` in systemd harden |
-| Docker tmpfs for `/tmp` | systemd `TemporaryFileSystem=/tmp` |
+| Volume `openseo_data:/app/.wrangler`       | `StateDirectory=openseo` → `/var/lib/openseo`             |
+| Compose YAML in Nix                        | Native `systemd.services.openseo`                         |
+| `mem_limit: 2g` in compose                 | `MemoryMax=2G` in systemd harden                          |
+| Docker tmpfs for `/tmp`                    | systemd `TemporaryFileSystem=/tmp`                        |
 
 ---
 
@@ -94,11 +94,13 @@ OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application
 **Goal:** Build OpenSEO from source as a Nix derivation.
 
 **Deliverables:**
+
 - `pkgs/openseo-pnpm-lock.yaml` — vendored lock file (from upstream)
 - `pkgs/openseo.nix` — derivation using `fetchPnpmDeps` + `pnpmConfigHook`
 - Package output includes: built `dist/`, `node_modules/`, vite/wrangler configs, and a wrapper script
 
 **Steps:**
+
 1. Fetch `pnpm-lock.yaml` and `pnpm-workspace.yaml` from upstream
 2. Create derivation with `fetchFromGitHub` for source
 3. Use `fetchPnpmDeps` for hermetic dependency fetch (will need hash — set to `""` first, read from error)
@@ -114,6 +116,7 @@ OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application
 **Goal:** Make the package available in the flake.
 
 **Steps:**
+
 1. Add `open-seo` as a flake input OR use `fetchFromGitHub` inside the package (prefer the latter — no new flake input needed)
 2. Add overlay entry in `overlays/shared.nix`: `openseo = prev.callPackage ../pkgs/openseo.nix {};`
 3. Add to `flake.nix` packages output: `inherit (pkgs) openseo;`
@@ -125,10 +128,12 @@ OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application
 **Goal:** Replace Docker-based module with native systemd service.
 
 **Deliverables:**
+
 - Rewritten `modules/nixos/services/openseo.nix` — no Docker, uses native package
 - Keeps same options: `enable`, `port`, drops `imageTag` (no longer needed)
 
 **Service definition:**
+
 ```nix
 systemd.services.openseo = {
   description = "OpenSEO — self-hosted SEO suite";
@@ -166,6 +171,7 @@ systemd.services.openseo = {
 ```
 
 **State directory handling:**
+
 - `StateDirectory = "openseo"` → `/var/lib/openseo`
 - Symlink or bind-mount `.wrangler` from state dir into the package's working directory
 - Actually: set `HOME=/var/lib/openseo` and run from a writable copy, OR use `WRANGLER_HOME` env var
@@ -177,6 +183,7 @@ systemd.services.openseo = {
 ### Phase 4: Cleanup & Updates
 
 **Steps:**
+
 1. Remove `openseo` entry from `lib/images.nix` (no longer using Docker image)
 2. Keep `openseo` port in `lib/ports.nix` (still needed)
 3. Remove `imageTag` option from the module
@@ -189,6 +196,7 @@ systemd.services.openseo = {
 ### Phase 5: Deploy & Test
 
 **Steps:**
+
 1. `nix run .#pre-deploy-check` — validate no boot-breaking issues
 2. `nix run .#deploy` — build and deploy
 3. Verify service: `systemctl status openseo`
@@ -201,20 +209,21 @@ systemd.services.openseo = {
 
 ## 4. Risk Assessment
 
-| Risk | Probability | Impact | Mitigation |
-|---|---|---|---|
-| `workerd` binary fails in Nix (missing libs) | Medium | Critical (blocks entire migration) | Use `autoPatchelfHook`; if it still fails, fall back to Docker |
-| `fetchPnpmDeps` doesn't handle pnpm workspaces | Medium | High | May need to flatten workspace or use a custom fetch derivation |
-| Vite build fails in Nix sandbox (network access needed) | Low | High | Vite build should be offline after `pnpm install`. If not, use `--offline` |
-| Cloudflare bindings don't work in `vite preview` outside Docker | Low | Medium | The `@cloudflare/vite-plugin` handles this the same way Docker does |
-| Data migration from Docker volume to native state dir | Medium | Medium | Copy `/var/lib/docker/volumes/openseo_data/_data/` to `/var/lib/openseo/.wrangler/` before first deploy |
-| Build takes too long (>30min) | Low | Low | Acceptable on evo-x2 (128GB RAM, fast NVMe) |
+| Risk                                                            | Probability | Impact                             | Mitigation                                                                                              |
+| --------------------------------------------------------------- | ----------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `workerd` binary fails in Nix (missing libs)                    | Medium      | Critical (blocks entire migration) | Use `autoPatchelfHook`; if it still fails, fall back to Docker                                          |
+| `fetchPnpmDeps` doesn't handle pnpm workspaces                  | Medium      | High                               | May need to flatten workspace or use a custom fetch derivation                                          |
+| Vite build fails in Nix sandbox (network access needed)         | Low         | High                               | Vite build should be offline after `pnpm install`. If not, use `--offline`                              |
+| Cloudflare bindings don't work in `vite preview` outside Docker | Low         | Medium                             | The `@cloudflare/vite-plugin` handles this the same way Docker does                                     |
+| Data migration from Docker volume to native state dir           | Medium      | Medium                             | Copy `/var/lib/docker/volumes/openseo_data/_data/` to `/var/lib/openseo/.wrangler/` before first deploy |
+| Build takes too long (>30min)                                   | Low         | Low                                | Acceptable on evo-x2 (128GB RAM, fast NVMe)                                                             |
 
 ---
 
 ## 5. Rollback Plan
 
 If the migration fails at any phase:
+
 1. The old Docker-based module is preserved in git history
 2. `git revert` the migration commit to restore Docker module
 3. Docker volume data is untouched (Docker daemon still running)
@@ -225,6 +234,7 @@ If the migration fails at any phase:
 ## 6. Fallback: Docker Image from Nix Build
 
 If `workerd` proves impossible to run outside Docker, a **hybrid approach** is possible:
+
 - Build a Docker image with `pkgs.dockerTools.buildImage` (reproducible, Nix-built)
 - Run via the existing `oci-containers` infrastructure (no Docker compose, just a container)
 - This gives Nix reproducibility without the `workerd` binary headache
@@ -237,13 +247,13 @@ This is NOT the primary plan but documented as Plan B.
 
 ### Phases Completed
 
-| Phase | Status | Notes |
-|---|---|---|
-| Phase 1: Nix Package | DONE | `pkgs/openseo.nix` builds v0.0.26 from source. `autoPatchelfHook` + `stdenv.cc.cc.lib` patches all native addons (workerd, sharp, lightningcss, libsql, oxlint, tailwindcss-oxide). `LD_LIBRARY_PATH` in `preBuild` avoids `/build/` RPATH leaks |
-| Phase 2: Flake Wiring | DONE | Overlay in `overlays/shared.nix` (Linux-only), exposed in `flake.nix` packages |
-| Phase 3: NixOS Module | DONE | Native systemd service, no Docker. Staging script symlinks Nix store to `/var/lib/openseo/project/`. ExecStartPre runs stage + D1 migrations |
-| Phase 4: Cleanup | DONE | Removed Docker image from `lib/images.nix`. Updated AGENTS.md + FEATURES.md |
-| Phase 5: Deploy | PENDING | Code ready — requires deploy-time data migration (below) |
+| Phase                 | Status  | Notes                                                                                                                                                                                                                                            |
+| --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Phase 1: Nix Package  | DONE    | `pkgs/openseo.nix` builds v0.0.26 from source. `autoPatchelfHook` + `stdenv.cc.cc.lib` patches all native addons (workerd, sharp, lightningcss, libsql, oxlint, tailwindcss-oxide). `LD_LIBRARY_PATH` in `preBuild` avoids `/build/` RPATH leaks |
+| Phase 2: Flake Wiring | DONE    | Overlay in `overlays/shared.nix` (Linux-only), exposed in `flake.nix` packages                                                                                                                                                                   |
+| Phase 3: NixOS Module | DONE    | Native systemd service, no Docker. Staging script symlinks Nix store to `/var/lib/openseo/project/`. ExecStartPre runs stage + D1 migrations                                                                                                     |
+| Phase 4: Cleanup      | DONE    | Removed Docker image from `lib/images.nix`. Updated AGENTS.md + FEATURES.md                                                                                                                                                                      |
+| Phase 5: Deploy       | PENDING | Code ready — requires deploy-time data migration (below)                                                                                                                                                                                         |
 
 ### Verification
 

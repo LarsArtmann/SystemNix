@@ -38,6 +38,7 @@ App → 127.0.0.1:53 (unbound) → blocklist check → DoT on port 853 → throu
 ```
 
 **Pros:**
+
 - Low effort — change unbound config only
 - Blocklists still work (applied before forwarding)
 - Local zones (`*.home.lan`) still work
@@ -45,6 +46,7 @@ App → 127.0.0.1:53 (unbound) → blocklist check → DoT on port 853 → throu
 - Encrypted upstream — better privacy than plain recursion
 
 **Cons:**
+
 - Loses "no third-party resolver" purity
 - Trusts upstream resolver (e.g. Mullvad DNS `194.242.2.2` or Quad9 `9.9.9.9`)
 - Adds one hop of latency for cache misses
@@ -55,6 +57,7 @@ Not possible. The firewall is deeply integrated into the Mullvad daemon — it
 is the kill switch, DNS leak protection, and WireGuard routing all in one.
 
 **What happens if you force-disable it:**
+
 - No kill switch — if the tunnel drops, all traffic leaks in cleartext
 - No DNS leak protection — any app can bypass your DNS config
 - Must manually manage WireGuard routing rules, mark-based policy routing,
@@ -70,11 +73,13 @@ Use `networking.wireguard` directly in NixOS with Mullvad's server endpoints
 and your own key pair. Full control over routing, DNS, and firewall.
 
 **Pros:**
+
 - Full control over nftables, kill switch, DNS routing
 - No interference with local resolver — recursion works as-is
 - Declarative in NixOS config
 
 **Cons:**
+
 - Lose Mullvad GUI, CLI (`mullvad relay list`, location switching)
 - Must hand-build kill switch (nftables rules to block non-tunnel traffic)
 - Must handle DNS leak prevention yourself
@@ -91,7 +96,7 @@ loses Mullvad's convenience features.
 **Option 1 (DoT forwarding)** — IMPLEMENTED.
 
 Unbound now forwards via DNS-over-TLS to Mullvad DNS (`194.242.2.2@853#dns.mullvad.net`)
-with Quad9 (`9.9.9.9@853#dns.quad9.net`) as fallback. This works *with* Mullvad's
+with Quad9 (`9.9.9.9@853#dns.quad9.net`) as fallback. This works _with_ Mullvad's
 security model — port 853 is not intercepted by the firewall.
 
 ## Implementation

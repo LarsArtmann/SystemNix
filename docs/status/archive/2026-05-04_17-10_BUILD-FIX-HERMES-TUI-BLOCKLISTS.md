@@ -36,19 +36,19 @@ Fixed all build failures in `nh os build .` — three independent categories of 
 
 HaGeZi DNS blocklists update their content frequently (they're live blocklists from `hagezi/dns-blocklists` GitHub repo). 10 of 25 blocklists had stale hashes:
 
-| Blocklist | Status |
-|-----------|--------|
-| HaGeZi-ultimate | Updated |
-| HaGeZi-tif | Updated |
-| HaGeZi-doh | Updated |
-| HaGeZi-bypass-full | Updated |
+| Blocklist               | Status  |
+| ----------------------- | ------- |
+| HaGeZi-ultimate         | Updated |
+| HaGeZi-tif              | Updated |
+| HaGeZi-doh              | Updated |
+| HaGeZi-bypass-full      | Updated |
 | HaGeZi-native-winoffice | Updated |
-| HaGeZi-gambling | Updated |
-| HaGeZi-nsfw | Updated |
-| HaGeZi-anti-piracy | Updated |
-| HaGeZi-dyndns | Updated |
-| HaGeZi-urlshortener | Updated |
-| HaGeZi-dga7 | Updated |
+| HaGeZi-gambling         | Updated |
+| HaGeZi-nsfw             | Updated |
+| HaGeZi-anti-piracy      | Updated |
+| HaGeZi-dyndns           | Updated |
+| HaGeZi-urlshortener     | Updated |
+| HaGeZi-dga7             | Updated |
 
 **Files changed:** `platforms/shared/dns-blocklists.nix`
 
@@ -77,16 +77,19 @@ None — all identified build failures were fully resolved.
 ### From MASTER_TODO_PLAN.md (65% → ~66% after this session)
 
 **P5 — DEPLOYMENT & VERIFICATION (0/13, 0%)** — All require evo-x2 hardware access:
+
 - `just switch` on evo-x2
 - Verify all services after deploy
 - Pi 3 build and DNS failover cluster setup
 
 **P1 — SECURITY (3/7, 43%)** — Remaining:
+
 - Move Taskwarrior encryption to sops (BLOCKED on evo-x2)
 - Pin Docker digests for Voice Agents, PhotoMap (BLOCKED on evo-x2)
 - Secure VRRP auth_pass with sops (BLOCKED on evo-x2)
 
 **P9 — FUTURE (2/12, 17%)** — Research tasks:
+
 - Automated blocklist hash updates (THIS SESSION would have benefited from this!)
 - NixOS tests for service modules
 - Home Manager Darwin migration
@@ -201,12 +204,12 @@ REMOVED:
 
 ## Files Changed This Session
 
-| File | Change | Lines |
-|------|--------|-------|
-| `modules/nixos/services/hermes.nix` | callPackage interception for tui npmDeps fix | +21/-1 |
-| `platforms/shared/dns-blocklists.nix` | 10 HaGeZi blocklist hash updates | +11/-11 |
-| `pkgs/golangci-lint-auto-configure.nix` | vendorHash update | +1/-1 |
-| `flake.lock` | dnsblockd, homebrew-cask, NUR, silent-sddm updates | +13/-13 |
+| File                                    | Change                                             | Lines   |
+| --------------------------------------- | -------------------------------------------------- | ------- |
+| `modules/nixos/services/hermes.nix`     | callPackage interception for tui npmDeps fix       | +21/-1  |
+| `platforms/shared/dns-blocklists.nix`   | 10 HaGeZi blocklist hash updates                   | +11/-11 |
+| `pkgs/golangci-lint-auto-configure.nix` | vendorHash update                                  | +1/-1   |
+| `flake.lock`                            | dnsblockd, homebrew-cask, NUR, silent-sddm updates | +13/-13 |
 
 ---
 

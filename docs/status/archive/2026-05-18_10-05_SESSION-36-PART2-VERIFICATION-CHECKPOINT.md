@@ -33,14 +33,14 @@ None. All prior tasks are either completed or explicitly pending awaiting instru
 
 Same 30+ tasks from the comprehensive execution plan (see 03:05 status report for full list). Key categories:
 
-| Category | Tasks |
-|----------|-------|
-| Deploy | `nh os boot` deployment to evo-x2 |
-| Cross-platform | Darwin (`aarch64-darwin`) and rpi3-dns (`aarch64-linux`) build verification |
-| Documentation | Update AGENTS.md with `_local_deps`, `overrideModAttrs`, transitive go.sum patterns |
-| Tooling | `lib/prepared-source.nix`, `just test-upstream-builds`, `just update-vendor-hashes` |
-| Upstream cleanup | Squash go-structure-linter 10 commits, vendor hash audit |
-| Architecture | ADR for `_local_deps`, evaluate gomod2nix |
+| Category         | Tasks                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| Deploy           | `nh os boot` deployment to evo-x2                                                   |
+| Cross-platform   | Darwin (`aarch64-darwin`) and rpi3-dns (`aarch64-linux`) build verification         |
+| Documentation    | Update AGENTS.md with `_local_deps`, `overrideModAttrs`, transitive go.sum patterns |
+| Tooling          | `lib/prepared-source.nix`, `just test-upstream-builds`, `just update-vendor-hashes` |
+| Upstream cleanup | Squash go-structure-linter 10 commits, vendor hash audit                            |
+| Architecture     | ADR for `_local_deps`, evaluate gomod2nix                                           |
 
 ---
 
@@ -104,8 +104,8 @@ Use '--all-systems' to check all.
 
 ## Current Blocking Items
 
-| Blocker | Resolution Path | ETA |
-|---------|----------------|-----|
-| Darwin verification | Run `nix build` from MacBook | Manual |
-| rpi3-dns verification | Run `--system aarch64-linux` from evo-x2 | Manual |
-| Deployment (nh os boot) | User approval required | On demand |
+| Blocker                 | Resolution Path                          | ETA       |
+| ----------------------- | ---------------------------------------- | --------- |
+| Darwin verification     | Run `nix build` from MacBook             | Manual    |
+| rpi3-dns verification   | Run `--system aarch64-linux` from evo-x2 | Manual    |
+| Deployment (nh os boot) | User approval required                   | On demand |

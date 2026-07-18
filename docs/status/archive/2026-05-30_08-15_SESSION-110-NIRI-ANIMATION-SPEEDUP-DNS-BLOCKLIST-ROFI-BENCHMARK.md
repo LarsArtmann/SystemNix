@@ -10,23 +10,23 @@
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Disk `/` | 484G / 512G (96%) | CRITICAL — 23G free |
-| Disk `/data` | 942G / 1.0T (93%) | WARN — 82G free |
-| RAM | 36G / 93G (39%) | OK |
-| Swap | 17G / 19G (89%) | CRITICAL — 2.4G free |
-| Load avg | 9.36 / 12.08 / 10.87 | HIGH — heavy load |
-| NixOS Build | Not tested this session | UNKNOWN |
-| Git Working Tree | 2 modified, not staged | DIRTY |
+| Metric           | Value                   | Status               |
+| ---------------- | ----------------------- | -------------------- |
+| Disk `/`         | 484G / 512G (96%)       | CRITICAL — 23G free  |
+| Disk `/data`     | 942G / 1.0T (93%)       | WARN — 82G free      |
+| RAM              | 36G / 93G (39%)         | OK                   |
+| Swap             | 17G / 19G (89%)         | CRITICAL — 2.4G free |
+| Load avg         | 9.36 / 12.08 / 10.87    | HIGH — heavy load    |
+| NixOS Build      | Not tested this session | UNKNOWN              |
+| Git Working Tree | 2 modified, not staged  | DIRTY                |
 
 ### Worsened Since Session 109
 
-| Metric | Session 109 | Session 110 | Delta |
-|--------|-------------|-------------|-------|
-| Disk `/` | 94% (32G free) | **96% (23G free)** | -9G |
-| Swap | 53% (10G/19G) | **89% (17G/19G)** | +7G used |
-| `/data` | Not reported | 93% (82G free) | Baseline |
+| Metric   | Session 109    | Session 110        | Delta    |
+| -------- | -------------- | ------------------ | -------- |
+| Disk `/` | 94% (32G free) | **96% (23G free)** | -9G      |
+| Swap     | 53% (10G/19G)  | **89% (17G/19G)**  | +7G used |
+| `/data`  | Not reported   | 93% (82G free)     | Baseline |
 
 ---
 
@@ -40,11 +40,11 @@
 
 All 6 spring animations in `platforms/nixos/desktop/niri-wrapped.nix` updated:
 
-| Parameter | Before | After | Effect |
-|-----------|--------|-------|--------|
-| `stiffness` | 800–1000 | **80000** | Settles ~100x faster |
-| `damping-ratio` | 0.7–0.8 (underdamped) | **1.0** (critically damped) | Zero bounce |
-| `epsilon` | 0.0001 | **0.01** | Animation "done" 100x sooner |
+| Parameter       | Before                | After                       | Effect                       |
+| --------------- | --------------------- | --------------------------- | ---------------------------- |
+| `stiffness`     | 800–1000              | **80000**                   | Settles ~100x faster         |
+| `damping-ratio` | 0.7–0.8 (underdamped) | **1.0** (critically damped) | Zero bounce                  |
+| `epsilon`       | 0.0001                | **0.01**                    | Animation "done" 100x sooner |
 
 **Applies to:** `window-open`, `window-close`, `window-movement`, `window-resize`, `horizontal-view-movement`, `workspace-switch`
 
@@ -138,33 +138,33 @@ The status directory has 141 files (many in archive/). The reports are comprehen
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Task | Impact | Effort | Why |
-|---|------|--------|--------|-----|
-| 1 | **Nix GC immediately** | CRITICAL | 5min | 96% disk, 23G free |
-| 2 | **Kill gopls processes** | CRITICAL | 1min | Swap at 89%, OOM imminent |
-| 3 | **`just switch` — Deploy** | HIGH | 10min | 7+ commits undeployed |
-| 4 | **Test niri animation feel** | HIGH | 5min | 80000 stiffness may be too much |
-| 5 | **Add disk space Gatus alert** | HIGH | 15min | Silent disk-full risk |
-| 6 | **Add swap/RAM SigNoz alert** | HIGH | 15min | OOM risk unmonitored |
-| 7 | **Move 4 vendorHash upstream** | HIGH | 2h | Breaks on every dep update |
-| 8 | **Rebuild TODO_LIST.md** | MED | 30min | Stale since session 75 |
-| 9 | **Clean up docs/status/ (141 files)** | MED | 15min | Hard to navigate |
-| 10 | **Audit FEATURES.md** | MED | 1h | Verify against actual code |
-| 11 | **BTRFS /data snapshot migration** | MED | 1h | /data unprotected by snapshots |
-| 12 | **Fix upstream pre-commit hooks** | MED | 2h | `--no-verify` on every commit |
-| 13 | **Flake inputs audit (47 → ?)** | MED | 2h | Reduce lock file churn |
-| 14 | **crates.io upstream fix** | MED | 1h | File nixpkgs issue |
-| 15 | **nix-colors integration** | MED | 6h | 17+ hardcoded colors |
-| 16 | **Deploy Dozzle** | LOW | 30min | Docker log tailing |
-| 17 | **Wire Pi 3 DNS failover** | LOW | 4h | Hardware sitting idle |
-| 18 | **Hermes secondary LLM** | LOW | 2h | Single-provider risk |
-| 19 | **Hermes SSH deploy key** | LOW | 30min | Git ops fail in sandbox |
-| 20 | **Create shared flake-parts template** | LOW | 3h | Reduce boilerplate across repos |
-| 21 | **Fix `file-and-image-renamer` Go version** | LOW | 30min | Disabled, Go 1.26.2 vs 1.26.3 |
-| 22 | **Fix `photomap` Podman permissions** | LOW | 1h | Disabled service |
-| 23 | **SigNoz per-threshold channel routing** | LOW | 1h | All alerts → same channel |
-| 24 | **Consolidate voice-agents Caddy vHost** | LOW | 30min | Not following caddy.nix pattern |
-| 25 | **Verify boot time (~35s target)** | LOW | 5min | Measure after deploy |
+| #   | Task                                        | Impact   | Effort | Why                             |
+| --- | ------------------------------------------- | -------- | ------ | ------------------------------- |
+| 1   | **Nix GC immediately**                      | CRITICAL | 5min   | 96% disk, 23G free              |
+| 2   | **Kill gopls processes**                    | CRITICAL | 1min   | Swap at 89%, OOM imminent       |
+| 3   | **`just switch` — Deploy**                  | HIGH     | 10min  | 7+ commits undeployed           |
+| 4   | **Test niri animation feel**                | HIGH     | 5min   | 80000 stiffness may be too much |
+| 5   | **Add disk space Gatus alert**              | HIGH     | 15min  | Silent disk-full risk           |
+| 6   | **Add swap/RAM SigNoz alert**               | HIGH     | 15min  | OOM risk unmonitored            |
+| 7   | **Move 4 vendorHash upstream**              | HIGH     | 2h     | Breaks on every dep update      |
+| 8   | **Rebuild TODO_LIST.md**                    | MED      | 30min  | Stale since session 75          |
+| 9   | **Clean up docs/status/ (141 files)**       | MED      | 15min  | Hard to navigate                |
+| 10  | **Audit FEATURES.md**                       | MED      | 1h     | Verify against actual code      |
+| 11  | **BTRFS /data snapshot migration**          | MED      | 1h     | /data unprotected by snapshots  |
+| 12  | **Fix upstream pre-commit hooks**           | MED      | 2h     | `--no-verify` on every commit   |
+| 13  | **Flake inputs audit (47 → ?)**             | MED      | 2h     | Reduce lock file churn          |
+| 14  | **crates.io upstream fix**                  | MED      | 1h     | File nixpkgs issue              |
+| 15  | **nix-colors integration**                  | MED      | 6h     | 17+ hardcoded colors            |
+| 16  | **Deploy Dozzle**                           | LOW      | 30min  | Docker log tailing              |
+| 17  | **Wire Pi 3 DNS failover**                  | LOW      | 4h     | Hardware sitting idle           |
+| 18  | **Hermes secondary LLM**                    | LOW      | 2h     | Single-provider risk            |
+| 19  | **Hermes SSH deploy key**                   | LOW      | 30min  | Git ops fail in sandbox         |
+| 20  | **Create shared flake-parts template**      | LOW      | 3h     | Reduce boilerplate across repos |
+| 21  | **Fix `file-and-image-renamer` Go version** | LOW      | 30min  | Disabled, Go 1.26.2 vs 1.26.3   |
+| 22  | **Fix `photomap` Podman permissions**       | LOW      | 1h     | Disabled service                |
+| 23  | **SigNoz per-threshold channel routing**    | LOW      | 1h     | All alerts → same channel       |
+| 24  | **Consolidate voice-agents Caddy vHost**    | LOW      | 30min  | Not following caddy.nix pattern |
+| 25  | **Verify boot time (~35s target)**          | LOW      | 5min   | Measure after deploy            |
 
 ---
 

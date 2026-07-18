@@ -9,26 +9,31 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [Unreleased]
 
 ### Added
+
 - **ssh-suspend-guard** — holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active, preventing idle suspend during remote work
 - **PSI memory pressure metrics** — textfile collector in SigNoz exports `/proc/pressure/memory` avg10 values + derived alert boolean, with Gatus Discord alerting
 - **md-go-validator** — added to both NixOS and macOS desktops
 - **USB printing support** — added to NixOS hardware configuration
 
 ### Changed
+
 - **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
 - **goreleaser** added to Linux base packages
 
 ### Removed
+
 - **justfile** — removed in favor of direct Nix flake commands (`nix run .#deploy`, `nix flake check --no-build`, `nix fmt`). All recipes replaced by flake apps and `scripts/` shell scripts
 
 ### Fixed
+
 - Cascading build failures across 10+ Go repos (cmdguard follows clause, vendor hash cascades)
 - Hermes hardcoded `lars` username → `config.users.primaryUser`
 - Forgejo duplicate password generation in admin setup
 - Monitor365 re-enabled after SQLX_OFFLINE fix
 
 ### Disabled
+
 - **Mullvad VPN** — `mullvad-vpn.enable = false` due to talpid_dns corrupting `/etc/resolv.conf`. Config preserved for future re-enablement
 
 ---
@@ -36,6 +41,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-07] — Desktop Shell Migration & Infrastructure Hardening
 
 ### Added
+
 - **DankMaterialShell (DMS)** — replaced Waybar, Dunst, Rofi as sole Quickshell desktop shell. Owns notifications, wallpapers, clipboard, launcher, polkit
 - **DMS community plugins** — emoji launcher (`:e` trigger) and DankCalculator (`=` trigger) via `fetchFromGitHub`
 - **DMS SystemNix plugins** — 13 native widgets (clock, volume, brightness, network, battery, workspace bar, etc.)
@@ -63,6 +69,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **dnsblockd v0.2.0** — tagged with full embedded recursive resolver (sdns, DNSSEC, DoT, DoH, caching, local zones, ACLs, upstream forwarding). Ready for SystemNix migration
 
 ### Changed
+
 - **Rofi → DMS migration** — all 5 niri rofi keybindings rewired to DMS IPC (spotlight, clipboard, keybinds, emoji, calc). Root cause: rofi leaked 7 GB → global OOM killed niri + 8 other processes
 - **Unbound cache bounds** — `key-cache-size = "16m"`, `neg-cache-size = "16m"`, `infra-cache-numhost = 10000`. Was 1.5 GiB RSS for 192 MiB explicit caches (DNSSEC key + NXDOMAIN caches were unbounded)
 - **OOM tuning** — `user-1000.slice` MemoryHigh=56G / MemoryMax=64G, oomd 50%/20s pressure threshold
@@ -71,12 +78,14 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Crush-daily data collection repaired** — `ProtectHome=false` + scoped `ReadOnlyPaths` to `.crush/`. `harden{}` defaults made `/home` invisible — silent empty output for weeks
 
 ### Removed
+
 - **Photomap** — module, port (8051), Docker image, Homepage tile, config stub all cleaned up
 - **cliphist service** — `wl-paste --watch cliphist store` retired; DMS owns clipboard history exclusively. CLI tool kept for manual use
 - **Waybar** — completely removed (import, package, service, scripts). DMS is sole shell
 - **Dunst** — disabled (`services.dunst.enable = lib.mkForce false`). DMS owns `org.freedesktop.Notifications`
 
 ### Fixed
+
 - **Rofi OOM crash** — 7 GB leak over 5h22m triggered global OOM killing niri, ghostty, signal, pipewire, unbound, clickhouse, immich
 - **Helium display-hotplug crash** — GPU watchdog killed process during slow surface recreation under GPUActive memory pressure
 - **`switch-to-configuration` exit code 4** — crash-looped services at boot block deploys until manually reset
@@ -90,6 +99,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **7 LarsArtmann Go repos** — eliminated stale `vendorHash` / `go.sum` overrides: `golangci-lint-auto-configure`, `hierarchical-errors`, `go-structure-linter`, `art-dupl`, `dnsblockd`, `emeet-pixyd` (all use upstream overlays or `follows` now)
 
 ### Added (Documentation)
+
 - **Documentation overhaul** — ROADMAP.md (6 themes), CHANGELOG.md, archived 197 old status reports, freshness pass across README/FEATURES/CONTRIBUTING (retired Waybar/Dunst/Rofi references, corrected counts, replaced `just` with flake commands)
 - **AGENTS.md gotchas** — `discard=async` QLC NAND I/O death spiral, `buildGoModule` silent env attr filtering, `buildGoDir` silent-swallow behavior, Helium wrapper double-wrap collision, VA-API flag renames
 
@@ -98,10 +108,12 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-06] — Auth & Service Wiring
 
 ### Added
+
 - **Sops secret management skill** — project-local skill at `.crush/skills/sops-secret-management/SKILL.md` with gitignore whitelist
 - **ssh-to-age** — added to system packages (was not installed, needed `nix run` every time)
 
 ### Fixed
+
 - **Caddy boot ordering** — `wants = ["sops-nix.service"]` + `after` prevents 14-hour outage recurrence
 - **DNS A records for 5 subdomains** — status, seo, daily, logs, monitor added to both primary + RPi3 DNS
 - **All sops secrets guarded** — hermes, crush-daily, openseo, monitor365, signoz, voice-agents wrapped in `lib.optionalAttrs config.services.X.enable`
@@ -112,6 +124,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-05] — Ecosystem Stabilization Sprint
 
 ### Added
+
 - **Pocket ID migration** — replaced Authelia with passkey-based OIDC provider, declarative provisioning (`pocket-id-config.provision.enable`)
 - **BTRFS snapshot overhaul** — btrbk daily snapshots with 14d+4w retention, `btrfs-verify-snapshots` timer, `/mnt/btrfs-root` automount
 - **Custom `signoz.target`** — decouples SigNoz/ClickHouse from `multi-user.target`, ~2m faster boot
@@ -122,6 +135,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **NVMe APST boot delay fix** — `nvme_core.default_ps_max_latency_us=0` kernel param prevents 2m50s device detection delay
 
 ### Changed
+
 - Migrated from earlyoom to systemd-oomd
 - Consolidated flake follows (38 duplicate lock nodes eliminated: 182→144)
 - SigNoz JWT auto-generation wrapper script (no longer needs sops secret)
@@ -132,6 +146,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - Hermes icon fix (`ai.png` → `hermes-icon.png`)
 
 ### Fixed
+
 - OOM crash chain — Helium/Electron renderers in `user-1000.slice` exhausting RAM → journald starved → sp5100-tco WDT hard reset
 - DNS rollback incident — Mullvad talpid_dns crisis
 - Boot performance — `initrd-nixos-activation` 2m50s hang (sops owner validation)
@@ -143,12 +158,14 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-04] — Service Hardening & Auth Stack
 
 ### Added
+
 - **oauth2-proxy** — forward-auth bridge between Caddy and Pocket ID
 - **Gatus health monitoring** — expanding endpoint coverage with Discord alerting
 - **SigNoz dashboards** — Caddy, DNS, Docker, GPU, overview, SigNoz-overview
 - **Pocket ID SMTP** — configurable via module options (`cfg.smtp.*`)
 
 ### Changed
+
 - Homepage Dashboard rewritten with `mkGroup`/`mkService` helpers
 - All sops secrets guarded with `lib.optionalAttrs config.services.X.enable`
 - Caddy boot ordering fix (`wants = ["sops-nix.service"]`)
@@ -158,11 +175,13 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-03] — Desktop & Display Manager Migration
 
 ### Added
+
 - **SilentSDDM** — replaced SDDM with themed login manager
 - **Ghostty terminal** — primary terminal (GPU-accelerated, native Wayland)
 - **Nix-colors migration** — 164 colors migrated to local `theme.nix`
 
 ### Changed
+
 - Display manager migration from LightDM/GDM to SilentSDDM
 - DNS blocklist ultimate expansion (23 blocklists, 2.5M+ domains)
 
@@ -171,6 +190,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-02] — Kernel Panic Investigation & Recovery
 
 ### Fixed
+
 - Kernel panic investigation and ZFS removal on macOS (ADR-003)
 - Nix-darwin build fix (Go module builder mismatch)
 - Path reference cleanup
@@ -180,6 +200,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2026-01] — Nix Anti-Patterns Elimination
 
 ### Changed
+
 - Phase 3-4 anti-patterns elimination — major refactoring
 - GOPATH implementation made Nix-native
 - Wrapper system removal
@@ -190,6 +211,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2025-12] — v1.0 Release
 
 ### Added
+
 - Cross-platform Nix flake (Darwin + NixOS)
 - Flake-parts modular architecture
 - Home Manager integration for Darwin
@@ -201,6 +223,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2025-11] — NixOS Desktop Setup
 
 ### Added
+
 - Hyprland (later replaced by Niri)
 - btop wallpaper automation
 - Home Manager consolidation
@@ -211,6 +234,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 ## [2025-07] — v2.0.0 (Initial Nix Migration)
 
 ### Added
+
 - Initial migration from dotfiles to Nix flake
 - Terminal performance optimization
 - Network monitoring setup

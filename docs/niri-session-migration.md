@@ -15,10 +15,10 @@ SystemNix has a custom bash-based niri session save/restore system. The goal is 
 
 ### Files
 
-| File | Purpose |
-|------|---------|
-| `scripts/niri-session-save.sh` | Periodic snapshot of niri state (60s timer) |
-| `scripts/niri-session-restore.sh` | Restore windows on niri startup |
+| File                                        | Purpose                                        |
+| ------------------------------------------- | ---------------------------------------------- |
+| `scripts/niri-session-save.sh`              | Periodic snapshot of niri state (60s timer)    |
+| `scripts/niri-session-restore.sh`           | Restore windows on niri startup                |
 | `platforms/nixos/programs/niri-wrapped.nix` | NixOS module wiring scripts + systemd services |
 
 ### What it does
@@ -29,12 +29,12 @@ SystemNix has a custom bash-based niri session save/restore system. The goal is 
 
 ### Saved data
 
-| File | Source |
-|------|--------|
-| `windows.json` | `niri msg -j windows` — app_id, pid, workspace_id, is_floating, tile_size, focus_timestamp |
-| `workspaces.json` | `niri msg -j workspaces` — workspace names + IDs |
-| `kitty-state.json` | Per-kitty-window: PID, args, CWD, child process command + CWD (walks `/proc` tree) |
-| `timestamp` | Epoch seconds of last save |
+| File               | Source                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------ |
+| `windows.json`     | `niri msg -j windows` — app_id, pid, workspace_id, is_floating, tile_size, focus_timestamp |
+| `workspaces.json`  | `niri msg -j workspaces` — workspace names + IDs                                           |
+| `kitty-state.json` | Per-kitty-window: PID, args, CWD, child process command + CWD (walks `/proc` tree)         |
+| `timestamp`        | Epoch seconds of last save                                                                 |
 
 ### Restore features
 
@@ -49,11 +49,11 @@ SystemNix has a custom bash-based niri session save/restore system. The goal is 
 
 ### Module options (`services.niri-session`)
 
-| Option | Default | Purpose |
-|--------|---------|---------|
-| `sessionSaveInterval` | `"60s"` | Timer interval |
-| `maxSessionAgeDays` | `7` | Max age before fallback |
-| `fallbackApps` | kitty, kitty -e btop, kitty -e nvtop, amdgpu_top, helium, signal-desktop | Fallback apps |
+| Option                | Default                                                                  | Purpose                 |
+| --------------------- | ------------------------------------------------------------------------ | ----------------------- |
+| `sessionSaveInterval` | `"60s"`                                                                  | Timer interval          |
+| `maxSessionAgeDays`   | `7`                                                                      | Max age before fallback |
+| `fallbackApps`        | kitty, kitty -e btop, kitty -e nvtop, amdgpu_top, helium, signal-desktop | Fallback apps           |
 
 ### Weaknesses ("meh")
 
@@ -77,6 +77,7 @@ SystemNix has a custom bash-based niri session save/restore system. The goal is 
 The most mature and actively maintained solution. Rust binary with proper NixOS flake module.
 
 **Features:**
+
 - Periodic session saving with configurable interval
 - Automatic session restoration on startup
 - Backup management with configurable retention
@@ -88,6 +89,7 @@ The most mature and actively maintained solution. Rust binary with proper NixOS 
 - `app_mappings` for app ID → command remapping
 
 **CLI options:**
+
 ```
 --save-interval <MINUTES>     How often to save the session (default: 15)
 --max-backup-count <COUNT>    Number of backup files to keep (default: 5)
@@ -97,6 +99,7 @@ The most mature and actively maintained solution. Rust binary with proper NixOS 
 ```
 
 **Config example (`$XDG_CONFIG_HOME/niri-session-manager/config.toml`):**
+
 ```toml
 [single_instance_apps]
 apps = ["firefox", "zen"]
@@ -113,6 +116,7 @@ apps = ["discord", "slack"]
 ```
 
 **NixOS integration:**
+
 ```nix
 niri-session-manager.nixosModules.niri-session-manager
 # Then:
@@ -124,17 +128,21 @@ services.niri-session-manager.settings = {
 ```
 
 **Storage:**
+
 - Session: `$XDG_DATA_HOME/niri-session-manager/session.json`
 - Backups: `$XDG_DATA_HOME/niri-session-manager/session-{timestamp}.bak`
 - Config: `$XDG_CONFIG_HOME/niri-session-manager/config.toml`
 
 **TODO (from their README):**
+
 - Use PID to fetch the actual process command
 
 **Future (when IPC supports it):**
+
 - Grab window size and further details for better placement when restoring windows
 
 **Open PR: [PR #2](https://github.com/MTeaHead/niri-session-manager/pull/2)** — "Use workspace idx/name and output to restore windows instead of workspace id"
+
 - **Author:** fmuehlis
 - **Status:** Open, assigned to MTeaHead, mergeable (clean merge state)
 - **Created:** 2025-07-26
@@ -157,6 +165,7 @@ Repository is gone. Was listed on awesome-niri as a "Session manager that automa
 CLI tool to save and load compositor tree/layout. Named layouts, workspace-specific restore, dry-run.
 
 **Features:**
+
 - Save and load your sway/niri tree (layout)
 - Named layouts (`--name`)
 - Workspace-specific load (`--workspace`)
@@ -171,26 +180,26 @@ CLI tool to save and load compositor tree/layout. Named layouts, workspace-speci
 
 ## Comparison Matrix
 
-| Feature | Our Bash Scripts | niri-session-manager | swaytreesave |
-|---------|-----------------|---------------------|--------------|
-| **Language** | Bash | Rust | Rust |
-| **NixOS module** | Yes (custom) | Yes (upstream) | No |
-| **Periodic save** | Yes (60s timer) | Yes (15min default) | Manual only |
-| **Auto-restore on startup** | Yes (spawn-at-startup) | Yes | Manual only |
-| **Workspace placement** | Yes (by name/ID) | Yes (by ID, PR #2 fixes) | Yes (by name) |
-| **Floating state restore** | Yes | No | No |
-| **Column width restore** | Yes | No | No |
-| **Focus order restore** | Yes (focus_timestamp) | No | No |
-| **Kitty CWD recovery** | Yes (/proc walking) | No | No |
-| **Kitty child command** | Yes (/proc tree walk) | No | No |
-| **App ID→command mapping** | Hardcoded (bash case) | TOML config | YAML config |
-| **Single-instance dedup** | pgrep -x (racey) | Configurable | Configurable |
-| **Skip apps** | No | Yes (config) | No |
-| **Backup rotation** | No | Yes (configurable count) | Named layouts |
-| **Retry logic** | No | Yes (configurable attempts) | Yes (per-item) |
-| **Spawn timeout** | sleep 0.5 (hardcoded) | Configurable | Configurable |
-| **Named layouts** | No | No | Yes |
-| **Multi-compositor** | niri only | niri only | sway + i3 + niri |
+| Feature                     | Our Bash Scripts       | niri-session-manager        | swaytreesave     |
+| --------------------------- | ---------------------- | --------------------------- | ---------------- |
+| **Language**                | Bash                   | Rust                        | Rust             |
+| **NixOS module**            | Yes (custom)           | Yes (upstream)              | No               |
+| **Periodic save**           | Yes (60s timer)        | Yes (15min default)         | Manual only      |
+| **Auto-restore on startup** | Yes (spawn-at-startup) | Yes                         | Manual only      |
+| **Workspace placement**     | Yes (by name/ID)       | Yes (by ID, PR #2 fixes)    | Yes (by name)    |
+| **Floating state restore**  | Yes                    | No                          | No               |
+| **Column width restore**    | Yes                    | No                          | No               |
+| **Focus order restore**     | Yes (focus_timestamp)  | No                          | No               |
+| **Kitty CWD recovery**      | Yes (/proc walking)    | No                          | No               |
+| **Kitty child command**     | Yes (/proc tree walk)  | No                          | No               |
+| **App ID→command mapping**  | Hardcoded (bash case)  | TOML config                 | YAML config      |
+| **Single-instance dedup**   | pgrep -x (racey)       | Configurable                | Configurable     |
+| **Skip apps**               | No                     | Yes (config)                | No               |
+| **Backup rotation**         | No                     | Yes (configurable count)    | Named layouts    |
+| **Retry logic**             | No                     | Yes (configurable attempts) | Yes (per-item)   |
+| **Spawn timeout**           | sleep 0.5 (hardcoded)  | Configurable                | Configurable     |
+| **Named layouts**           | No                     | No                          | Yes              |
+| **Multi-compositor**        | niri only              | niri only                   | sway + i3 + niri |
 
 ---
 
@@ -199,6 +208,7 @@ CLI tool to save and load compositor tree/layout. Named layouts, workspace-speci
 **Chosen path:** Migrate to `niri-session-manager`, accept losing terminal state recovery for now.
 
 ### What we gain
+
 - Proper Rust IPC instead of fragile bash + `/proc` walking
 - TOML-based app ID mapping (no more hardcoded `signal` → `signal-desktop`)
 - Backup rotation with configurable retention
@@ -208,18 +218,21 @@ CLI tool to save and load compositor tree/layout. Named layouts, workspace-speci
 - Active community (65 stars, 3 forks)
 
 ### What we lose (temporarily)
+
 - **Kitty CWD/child command recovery** — the `/proc` tree walking that re-spawns kitty with the correct working directory and child process (btop, nvim, etc.)
 - **Floating state restore** — `move-window-to-floating` after spawn
 - **Column width restore** — `SetColumnWidth` proportion calculation
 - **Focus order** — `focus_timestamp`-based last-window refocus
 
 ### Mitigation
+
 - Floating state: handled by niri `window-rules` (already configured in niri-wrapped.nix for pavucontrol, floating class, etc.)
 - Column width: handled by niri `window-rules` with `default-column-width` per app
 - Kitty CWD: niri-session-manager has "Use PID to fetch the actual process command" on their TODO — future contribution opportunity
 - Focus order: minor convenience loss
 
 ### Future contribution opportunity
+
 The kitty terminal state recovery logic (walking `/proc` to find child process command + CWD) is unique to our implementation. Porting this into `niri-session-manager` as an upstream contribution would give the community proper terminal state recovery in Rust, without the bash fragility. This aligns with their existing TODO item.
 
 ---

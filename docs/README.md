@@ -4,15 +4,15 @@ Documentation for the SystemNix cross-platform Nix configuration (macOS + NixOS)
 
 ## Directory Structure
 
-| Directory | Purpose |
-|-----------|---------|
-| `architecture/` | System architecture docs, ADRs, dependency graphs |
-| `learnings/` | Lessons learned from debugging and sessions |
-| `operations/` | Operational procedures and post-deployment checklists |
-| `planning/` | Roadmaps, planning documents, unimplemented proposals |
-| `prompts/` | Reusable debugging and analysis prompts |
-| `status/` | Status reports from work sessions (older reports in `status/archive/`) |
-| `troubleshooting/` | Known issues and their solutions |
+| Directory          | Purpose                                                                |
+| ------------------ | ---------------------------------------------------------------------- |
+| `architecture/`    | System architecture docs, ADRs, dependency graphs                      |
+| `learnings/`       | Lessons learned from debugging and sessions                            |
+| `operations/`      | Operational procedures and post-deployment checklists                  |
+| `planning/`        | Roadmaps, planning documents, unimplemented proposals                  |
+| `prompts/`         | Reusable debugging and analysis prompts                                |
+| `status/`          | Status reports from work sessions (older reports in `status/archive/`) |
+| `troubleshooting/` | Known issues and their solutions                                       |
 
 ## Key Documents
 

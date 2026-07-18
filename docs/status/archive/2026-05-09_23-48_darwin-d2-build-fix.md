@@ -51,13 +51,13 @@ Investigated and resolved the Darwin build failure caused by `d2` diagram tool p
 
 The d2 fix is correct, but the full `nh darwin switch` still fails due to:
 
-| Package | Status | Cause |
-|---------|--------|-------|
-| `d2-0.7.1` | ✅ Fixed by overlay | Linux-only deps stubbed |
-| `library-policy-0.0.0-unstable-go-modules` | ❌ Network failure | Go proxy `proxy.golang.org` connection reset / timeout |
-| `todo-list-ai-deps` | ⏸ Blocked by library-policy | Dependency chain |
-| `otel-tui-v0.7.2-go-modules` | ⏸ Blocked | Dependency chain |
-| `golangci-lint-auto-configure-0.1.0-go-modules` | ⏸ Blocked | Dependency chain |
+| Package                                         | Status                      | Cause                                                  |
+| ----------------------------------------------- | --------------------------- | ------------------------------------------------------ |
+| `d2-0.7.1`                                      | ✅ Fixed by overlay         | Linux-only deps stubbed                                |
+| `library-policy-0.0.0-unstable-go-modules`      | ❌ Network failure          | Go proxy `proxy.golang.org` connection reset / timeout |
+| `todo-list-ai-deps`                             | ⏸ Blocked by library-policy | Dependency chain                                       |
+| `otel-tui-v0.7.2-go-modules`                    | ⏸ Blocked                   | Dependency chain                                       |
+| `golangci-lint-auto-configure-0.1.0-go-modules` | ⏸ Blocked                   | Dependency chain                                       |
 
 **Root cause:** `library-policy` Go module download hits `proxy.golang.org` and gets `connection reset by peer` / `i/o timeout`. This is a transient network issue — not a Nix configuration problem.
 
@@ -74,6 +74,7 @@ The d2 fix is correct, but the full `nh darwin switch` still fails due to:
 ### Build Environment Network Instability
 
 During this session, multiple network issues caused build failures and long waits:
+
 - `hyprland.cachix.org` — DNS resolution failure (not our cache, probably from an old substituter config)
 - `proxy.golang.org` — connection reset during Go module downloads for `library-policy`
 - `cache.nixos.org` — intermittent DNS failures
@@ -126,6 +127,7 @@ These are external infrastructure issues, not caused by our configuration. They 
 ## Top #1 Question (g)
 
 **The `library-policy` Go module download failure is transient (network issue).** Should we:
+
 - (a) Just retry the build when network is stable?
 - (b) Vendor Go dependencies in the `library-policy` repo to make builds hermetic?
 - (c) Pre-build `library-policy` in a CI pipeline and push to a binary cache?
@@ -136,14 +138,14 @@ Option (a) is the path of least resistance. Option (b) is the most robust long-t
 
 ## Files Changed
 
-| File | Change | Status |
-|------|--------|--------|
+| File        | Change                                      | Status                 |
+| ----------- | ------------------------------------------- | ---------------------- |
 | `flake.nix` | Added d2 Darwin overlay in `sharedOverlays` | Committed (`524be5ab`) |
 
 ## Build Status
 
-| Target | Status | Notes |
-|--------|--------|-------|
-| `d2` on Darwin | ✅ Fixed | Overlay stubs Linux-only deps |
-| `library-policy` | ❌ Network failure | Go proxy timeout — transient |
-| Full Darwin build | ⏳ Blocked by network | Retry when stable |
+| Target            | Status                | Notes                         |
+| ----------------- | --------------------- | ----------------------------- |
+| `d2` on Darwin    | ✅ Fixed              | Overlay stubs Linux-only deps |
+| `library-policy`  | ❌ Network failure    | Go proxy timeout — transient  |
+| Full Darwin build | ⏳ Blocked by network | Retry when stable             |

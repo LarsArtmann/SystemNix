@@ -28,13 +28,14 @@ All shell configurations (Fish, Zsh, Bash) achieve **excellent startup performan
 **Performance:** ⚡ FASTEST - 43ms average startup time
 
 **Run-by-Run Results:**
+
 | Run | Startup Time | Variance from Avg |
-|------|---------------|-------------------|
-| 1/5 | 45ms | +2ms |
-| 2/5 | 42ms | -1ms |
-| 3/5 | 43ms | 0ms |
-| 4/5 | 44ms | +1ms |
-| 5/5 | 43ms | 0ms |
+| --- | ------------ | ----------------- |
+| 1/5 | 45ms         | +2ms              |
+| 2/5 | 42ms         | -1ms              |
+| 3/5 | 43ms         | 0ms               |
+| 4/5 | 44ms         | +1ms              |
+| 5/5 | 43ms         | 0ms               |
 
 **Statistics:**
 
@@ -59,13 +60,14 @@ All shell configurations (Fish, Zsh, Bash) achieve **excellent startup performan
 **Performance:** ⚡ FAST - 49ms average startup time
 
 **Run-by-Run Results:**
+
 | Run | Startup Time | Variance from Avg |
-|------|---------------|-------------------|
-| 1/5 | 44ms | -5ms |
-| 2/5 | 54ms | +5ms |
-| 3/5 | 50ms | +1ms |
-| 4/5 | 54ms | +5ms |
-| 5/5 | 45ms | -4ms |
+| --- | ------------ | ----------------- |
+| 1/5 | 44ms         | -5ms              |
+| 2/5 | 54ms         | +5ms              |
+| 3/5 | 50ms         | +1ms              |
+| 4/5 | 54ms         | +5ms              |
+| 5/5 | 45ms         | -4ms              |
 
 **Statistics:**
 
@@ -90,13 +92,14 @@ All shell configurations (Fish, Zsh, Bash) achieve **excellent startup performan
 **Performance:** ⚡ GOOD - 76ms average startup time
 
 **Run-by-Run Results:**
+
 | Run | Startup Time | Variance from Avg |
-|------|---------------|-------------------|
-| 1/5 | 208ms | +132ms |
-| 2/5 | 48ms | -28ms |
-| 3/5 | 44ms | -32ms |
-| 4/5 | 41ms | -35ms |
-| 5/5 | 39ms | -37ms |
+| --- | ------------ | ----------------- |
+| 1/5 | 208ms        | +132ms            |
+| 2/5 | 48ms         | -28ms             |
+| 3/5 | 44ms         | -32ms             |
+| 4/5 | 41ms         | -35ms             |
+| 5/5 | 39ms         | -37ms             |
 
 **Statistics:**
 

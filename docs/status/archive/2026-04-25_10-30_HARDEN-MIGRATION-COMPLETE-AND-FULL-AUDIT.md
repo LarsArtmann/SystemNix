@@ -16,30 +16,30 @@ Completed the `harden` helper migration across **all 10 service modules**, fixed
 
 ### From MASTER_TODO_PLAN:
 
-| # | Task | How Verified |
-|---|------|-------------|
-| P0-2 | Clear stale git stashes | `git stash list` → empty |
-| P0-3 | Delete remote copilot branches | `git branch -r | grep copilot` → none |
-| P0-4 | Archive old status docs | 242 files in `docs/status/archive/` |
-| P0-5 | Rewrite status README | `docs/status/README.md` updated |
-| P0-6 | Fix "29 modules" → correct count | Done in prior session |
-| P1-8 | Add systemd hardening to gitea-ensure-repos | Inline hardening at gitea-repos.nix:281-285 (PrivateTmp, NoNewPrivileges, ProtectHome, ProtectSystem, MemoryMax) |
-| P1-12 | Remove dead ublock-filters module | No ublock files found anywhere, no import in home-base.nix |
-| P1-13 | Fix gitea-ensure-repos Restart + StartLimitBurst | Restart=on-failure, RestartSec=5, startLimitBurst=3 at gitea-repos.nix:258-260,279-280 |
-| P2-14 | WatchdogSec for caddy, gitea, authelia, taskchampion | Verified via grep: all have WatchdogSec |
-| P2-15 | Restart=on-failure for services | Added across all hardened services |
-| P2-18 | Fix fonts.packages darwin compat | `fonts.nix:6` uses `lib.mkIf pkgs.stdenv.isLinux` |
-| P2-19 | Enable udisks2 on NixOS | configuration.nix:154 — also fixed duplicate |
-| P2-20 | Add .editorconfig | Exists — **fixed merge conflict markers this session** |
-| P2-21 | Make deadnix check strict | `--fail` flag in flake.nix checks |
-| P3-31 | Fix bash.nix history config | bash.nix updated with HISTCONTROL, shopt settings |
-| P3-32 | Fix Fish fake variables | fish_history_size removed, LC_ALL removed |
-| P3-34 | Create lib/systemd.nix shared helper | `lib/systemd.nix` — simple `harden` function |
-| P7-69 | GitHub Actions nix-check on push | `.github/workflows/nix-check.yml` exists |
-| P7-74 | Replace nixpkgs-fmt with alejandra | `.pre-commit-config.yaml:47` uses alejandra |
-| P7-76 | Fix LC_ALL override | No LC_ALL found in platforms/common/programs/ |
-| P7-77 | Remove allowUnsupportedSystem | `nix-settings.nix:75` already `= false` |
-| P7-78 | Taskwarrior backup timer | `just task-backup` + daily systemd timer exists |
+| #     | Task                                                 | How Verified                                                                                                     |
+| ----- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| P0-2  | Clear stale git stashes                              | `git stash list` → empty                                                                                         |
+| P0-3  | Delete remote copilot branches                       | `git branch -r                                                                                                   | grep copilot` → none |
+| P0-4  | Archive old status docs                              | 242 files in `docs/status/archive/`                                                                              |
+| P0-5  | Rewrite status README                                | `docs/status/README.md` updated                                                                                  |
+| P0-6  | Fix "29 modules" → correct count                     | Done in prior session                                                                                            |
+| P1-8  | Add systemd hardening to gitea-ensure-repos          | Inline hardening at gitea-repos.nix:281-285 (PrivateTmp, NoNewPrivileges, ProtectHome, ProtectSystem, MemoryMax) |
+| P1-12 | Remove dead ublock-filters module                    | No ublock files found anywhere, no import in home-base.nix                                                       |
+| P1-13 | Fix gitea-ensure-repos Restart + StartLimitBurst     | Restart=on-failure, RestartSec=5, startLimitBurst=3 at gitea-repos.nix:258-260,279-280                           |
+| P2-14 | WatchdogSec for caddy, gitea, authelia, taskchampion | Verified via grep: all have WatchdogSec                                                                          |
+| P2-15 | Restart=on-failure for services                      | Added across all hardened services                                                                               |
+| P2-18 | Fix fonts.packages darwin compat                     | `fonts.nix:6` uses `lib.mkIf pkgs.stdenv.isLinux`                                                                |
+| P2-19 | Enable udisks2 on NixOS                              | configuration.nix:154 — also fixed duplicate                                                                     |
+| P2-20 | Add .editorconfig                                    | Exists — **fixed merge conflict markers this session**                                                           |
+| P2-21 | Make deadnix check strict                            | `--fail` flag in flake.nix checks                                                                                |
+| P3-31 | Fix bash.nix history config                          | bash.nix updated with HISTCONTROL, shopt settings                                                                |
+| P3-32 | Fix Fish fake variables                              | fish_history_size removed, LC_ALL removed                                                                        |
+| P3-34 | Create lib/systemd.nix shared helper                 | `lib/systemd.nix` — simple `harden` function                                                                     |
+| P7-69 | GitHub Actions nix-check on push                     | `.github/workflows/nix-check.yml` exists                                                                         |
+| P7-74 | Replace nixpkgs-fmt with alejandra                   | `.pre-commit-config.yaml:47` uses alejandra                                                                      |
+| P7-76 | Fix LC_ALL override                                  | No LC_ALL found in platforms/common/programs/                                                                    |
+| P7-77 | Remove allowUnsupportedSystem                        | `nix-settings.nix:75` already `= false`                                                                          |
+| P7-78 | Taskwarrior backup timer                             | `just task-backup` + daily systemd timer exists                                                                  |
 
 ### Harden Migration (completed this session):
 
@@ -59,6 +59,7 @@ All 10 service modules migrated from dead `mkHardenedServiceConfig`/`mkServiceRe
 Zero files still reference `mkHardenedServiceConfig`, `mkServiceRestartConfig`, or `mkOneshotHardenedConfig`.
 
 ### Session 4 fixes:
+
 - **minecraft.nix**: `};;` → `};` (parse error)
 - **gitea.nix**: Removed duplicate WatchdogSec from first `systemd.services.gitea` block (line 329) — kept pre-existing one at line 371
 - **.editorconfig**: Resolved 2 merge conflict markers (from rebase)
@@ -68,12 +69,12 @@ Zero files still reference `mkHardenedServiceConfig`, `mkServiceRestartConfig`, 
 
 ## B) PARTIALLY DONE
 
-| # | Task | Status | What Remains |
-|---|------|--------|-------------|
-| P0-1 | `git push` | 6 local commits unpushed | Blocked: need to commit current work first, then push |
-| P1-7 | Move Taskwarrior encryption secret to sops | Nix wiring done (sops.nix, flake.nix, taskwarrior.nix) | Actual sops-encrypted file must be created on evo-x2: `sops platforms/nixos/secrets/secrets.yaml` |
-| P4-35 | Wire preferences.nix to GTK/cursor theming | Options declared | No consumers on NixOS — GTK/cursor/font theme not wired |
-| P4-36 | Convert niri session restore to module options | Some `let` block extracted | Not proper NixOS module options yet |
+| #     | Task                                           | Status                                                 | What Remains                                                                                      |
+| ----- | ---------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| P0-1  | `git push`                                     | 6 local commits unpushed                               | Blocked: need to commit current work first, then push                                             |
+| P1-7  | Move Taskwarrior encryption secret to sops     | Nix wiring done (sops.nix, flake.nix, taskwarrior.nix) | Actual sops-encrypted file must be created on evo-x2: `sops platforms/nixos/secrets/secrets.yaml` |
+| P4-35 | Wire preferences.nix to GTK/cursor theming     | Options declared                                       | No consumers on NixOS — GTK/cursor/font theme not wired                                           |
+| P4-36 | Convert niri session restore to module options | Some `let` block extracted                             | Not proper NixOS module options yet                                                               |
 
 ---
 
@@ -81,65 +82,67 @@ Zero files still reference `mkHardenedServiceConfig`, `mkServiceRestartConfig`, 
 
 ### High-priority not-started:
 
-| # | Task | Category | Est. | Impact |
-|---|------|----------|------|--------|
-| P1-9 | Pin Docker image digest: Voice Agents | Security | 5m | Prevents silent breakage |
-| P1-10 | Pin Docker image digest: PhotoMap | Security | 5m | Prevents silent breakage |
-| P1-11 | Secure VRRP auth_pass with sops | Security | 8m | Plaintext password in repo |
-| P2-16 | Fix 3 dead `let` bindings | Cleanup | 5m | twenty, dns-blocker, aw-watcher |
-| P2-17 | Fix git.nix core.pager vs pager.diff conflict | Quality | 3m | pager.diff never takes effect |
-| P2-23 | Add date + commit hash to debug-map.md | Docs | 1m | Trivial |
-| P2-24 | Add homepage URL to emeet-pixyd meta | Quality | 1m | Trivial |
-| P3-25-28 | Fix deadnix unused params (4 batches, 24 files) | Quality | 40m | Lint noise |
-| P3-29 | Remove duplicate git global ignores | Quality | 3m | `.so`, `*~` appear twice |
-| P3-30 | Fix GPG path cross-platform | Cross-plat | 5m | NixOS-only path |
-| P3-33 | Clean unfree allowlist | Cleanup | 3m | signal-desktop-bin, castlabs-electron, cursor listed but not installed |
-| P7-70 | GitHub Actions: Go test CI | CI | 10m | emeet-pixyd, dnsblockd have tests but no CI |
-| P7-71 | GitHub Actions: flake.lock auto-update | CI | 10m | Renovate/Deps |
-| P7-73 | Consolidate duplicate justfile recipes | Cleanup | 8m | validate = check-nix-syntax, deploy = switch |
-| P7-75 | Trim system monitors (4→2) | Cleanup | 3m | btop, bottom, procs, htop |
+| #        | Task                                            | Category   | Est. | Impact                                                                 |
+| -------- | ----------------------------------------------- | ---------- | ---- | ---------------------------------------------------------------------- |
+| P1-9     | Pin Docker image digest: Voice Agents           | Security   | 5m   | Prevents silent breakage                                               |
+| P1-10    | Pin Docker image digest: PhotoMap               | Security   | 5m   | Prevents silent breakage                                               |
+| P1-11    | Secure VRRP auth_pass with sops                 | Security   | 8m   | Plaintext password in repo                                             |
+| P2-16    | Fix 3 dead `let` bindings                       | Cleanup    | 5m   | twenty, dns-blocker, aw-watcher                                        |
+| P2-17    | Fix git.nix core.pager vs pager.diff conflict   | Quality    | 3m   | pager.diff never takes effect                                          |
+| P2-23    | Add date + commit hash to debug-map.md          | Docs       | 1m   | Trivial                                                                |
+| P2-24    | Add homepage URL to emeet-pixyd meta            | Quality    | 1m   | Trivial                                                                |
+| P3-25-28 | Fix deadnix unused params (4 batches, 24 files) | Quality    | 40m  | Lint noise                                                             |
+| P3-29    | Remove duplicate git global ignores             | Quality    | 3m   | `.so`, `*~` appear twice                                               |
+| P3-30    | Fix GPG path cross-platform                     | Cross-plat | 5m   | NixOS-only path                                                        |
+| P3-33    | Clean unfree allowlist                          | Cleanup    | 3m   | signal-desktop-bin, castlabs-electron, cursor listed but not installed |
+| P7-70    | GitHub Actions: Go test CI                      | CI         | 10m  | emeet-pixyd, dnsblockd have tests but no CI                            |
+| P7-71    | GitHub Actions: flake.lock auto-update          | CI         | 10m  | Renovate/Deps                                                          |
+| P7-73    | Consolidate duplicate justfile recipes          | Cleanup    | 8m   | validate = check-nix-syntax, deploy = switch                           |
+| P7-75    | Trim system monitors (4→2)                      | Cleanup    | 3m   | btop, bottom, procs, htop                                              |
 
 ### Medium-priority not-started:
 
-| # | Task | Category | Est. |
-|---|------|----------|------|
-| P4-37-40 | Add enable toggles to 16 always-on modules (4 batches) | Architecture | 48m |
-| P6-54 | Twenty CRM backup rotation | Reliability | 8m |
-| P6-56 | ComfyUI hardcoded paths | Architecture | 12m |
-| P6-58 | ComfyUI run as system user | Security | 8m |
-| P6-59 | Voice agents health check | Observability | 8m |
-| P6-60 | Voice agents unused pipecatPort | Cleanup | 2m |
-| P6-61 | Voice agents PIDFile cleanup | Cleanup | 3m |
-| P6-62 | Hermes health check | Observability | 10m |
-| P6-63 | Hermes migrate providers to key_env | Security | 10m |
-| P6-64 | SigNoz duplicate rules on reboot | Reliability | 10m |
-| P6-65 | SigNoz missing metrics for 10 services | Observability | 12m |
-| P6-66 | Authelia SMTP notifications | UX | 10m |
-| P6-67-68 | Backup restore tests (Immich, Twenty) | Reliability | 24m |
-| P7-72 | Fix eval smoke tests (remove `\|\| true`) | Quality | 5m |
-| P8-79 | Update top-level README | Docs | 12m |
-| P8-80 | Document DNS cluster in AGENTS.md | Docs | 8m |
-| P8-81 | Write ADR for niri session restore | Docs | 10m |
-| P8-82 | Add module option descriptions | Docs | 10m |
-| P8-83 | Create CONTRIBUTING.md | Docs | 12m |
-| P8-84 | Add MANPAGER + VISUAL env vars | Quality | 2m |
+| #        | Task                                                   | Category      | Est. |
+| -------- | ------------------------------------------------------ | ------------- | ---- |
+| P4-37-40 | Add enable toggles to 16 always-on modules (4 batches) | Architecture  | 48m  |
+| P6-54    | Twenty CRM backup rotation                             | Reliability   | 8m   |
+| P6-56    | ComfyUI hardcoded paths                                | Architecture  | 12m  |
+| P6-58    | ComfyUI run as system user                             | Security      | 8m   |
+| P6-59    | Voice agents health check                              | Observability | 8m   |
+| P6-60    | Voice agents unused pipecatPort                        | Cleanup       | 2m   |
+| P6-61    | Voice agents PIDFile cleanup                           | Cleanup       | 3m   |
+| P6-62    | Hermes health check                                    | Observability | 10m  |
+| P6-63    | Hermes migrate providers to key_env                    | Security      | 10m  |
+| P6-64    | SigNoz duplicate rules on reboot                       | Reliability   | 10m  |
+| P6-65    | SigNoz missing metrics for 10 services                 | Observability | 12m  |
+| P6-66    | Authelia SMTP notifications                            | UX            | 10m  |
+| P6-67-68 | Backup restore tests (Immich, Twenty)                  | Reliability   | 24m  |
+| P7-72    | Fix eval smoke tests (remove `\|\| true`)              | Quality       | 5m   |
+| P8-79    | Update top-level README                                | Docs          | 12m  |
+| P8-80    | Document DNS cluster in AGENTS.md                      | Docs          | 8m   |
+| P8-81    | Write ADR for niri session restore                     | Docs          | 10m  |
+| P8-82    | Add module option descriptions                         | Docs          | 10m  |
+| P8-83    | Create CONTRIBUTING.md                                 | Docs          | 12m  |
+| P8-84    | Add MANPAGER + VISUAL env vars                         | Quality       | 2m   |
 
 ### All P5 (Deployment) — requires evo-x2 runtime:
+
 P5-41 through P5-53: All require physical access to evo-x2 or manual deployment.
 
 ### All P9 (Future/Research) — deferred:
+
 P9-85 through P9-96: Research tasks, large refactors, upstream issues.
 
 ---
 
 ## D) TOTALLY FUCKED UP
 
-| What | Impact | Root Cause | Fix |
-|------|--------|-----------|-----|
-| `.editorconfig` had merge conflict markers | Parse errors in editors, potential CI failures | Rebase conflict not resolved in this file during session 3 | **Fixed this session** — clean merged version |
-| `configuration.nix` had duplicate `udisks2.enable` | Pre-commit `nix flake check` failed on every commit | Likely a merge artifact from rebase | **Fixed this session** — removed line 171 |
-| 8 files edited in batch without intermediate parse checks | 2 parse errors went undetected (minecraft `;;`, gitea duplicate key) | Edited all 8 files, then validated | Lesson: validate after EACH edit |
-| `git push` never done across 4 sessions | 6 local commits could vanish if disk fails | User never explicitly asked; "when done" instruction | Must push this session |
+| What                                                      | Impact                                                               | Root Cause                                                 | Fix                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------- |
+| `.editorconfig` had merge conflict markers                | Parse errors in editors, potential CI failures                       | Rebase conflict not resolved in this file during session 3 | **Fixed this session** — clean merged version |
+| `configuration.nix` had duplicate `udisks2.enable`        | Pre-commit `nix flake check` failed on every commit                  | Likely a merge artifact from rebase                        | **Fixed this session** — removed line 171     |
+| 8 files edited in batch without intermediate parse checks | 2 parse errors went undetected (minecraft `;;`, gitea duplicate key) | Edited all 8 files, then validated                         | Lesson: validate after EACH edit              |
+| `git push` never done across 4 sessions                   | 6 local commits could vanish if disk fails                           | User never explicitly asked; "when done" instruction       | Must push this session                        |
 
 ---
 
@@ -159,33 +162,33 @@ P9-85 through P9-96: Research tasks, large refactors, upstream issues.
 
 Sorted by impact × effort (highest first):
 
-| Rank | # | Task | Why | Est. |
-|------|---|------|-----|------|
-| 1 | P0-1 | **`git push`** | 6 commits at risk — do immediately after this commit | 1m |
-| 2 | P7-73 | Consolidate duplicate justfile recipes | Confusing UX, trivial fix | 8m |
-| 3 | P2-23 | Add date + commit hash to debug-map.md | 1 min, forensic value | 1m |
-| 4 | P2-24 | Add homepage URL to emeet-pixyd meta | 1 min, consistency | 1m |
-| 5 | P3-33 | Clean unfree allowlist | 3 min, misleading config | 3m |
-| 6 | P3-29 | Remove duplicate git global ignores | 3 min, lint noise | 3m |
-| 7 | P2-17 | Fix git.nix core.pager vs pager.diff | 3 min, broken feature | 3m |
-| 8 | P2-16 | Fix 3 dead `let` bindings | 5 min, dead code | 5m |
-| 9 | P1-11 | Secure VRRP auth_pass with sops | Plaintext password in repo | 8m |
-| 10 | P7-70 | Add Go test CI for emeet-pixyd + dnsblockd | Real tests, no CI | 10m |
-| 11 | P8-81 | Write ADR for niri session restore | Complex system, no design record | 10m |
-| 12 | P7-72 | Fix eval smoke tests (remove `\|\| true`) | Tests give false confidence | 5m |
-| 13 | P3-30 | Fix GPG path cross-platform | Broken on Darwin | 5m |
-| 14 | P6-60 | Voice agents unused pipecatPort | 2 min dead code | 2m |
-| 15 | P6-61 | Voice agents PIDFile cleanup | 3 min dead directive | 3m |
-| 16 | P1-9 | Pin Docker image: Voice Agents | Security — silent breakage risk | 5m |
-| 17 | P1-10 | Pin Docker image: PhotoMap | Security — silent breakage risk | 5m |
-| 18 | P8-84 | Add MANPAGER + VISUAL env vars | 2 min, standard env | 2m |
-| 19 | P7-75 | Trim system monitors 4→2 | 3 min cleanup | 3m |
-| 20 | P6-54 | Twenty CRM backup rotation | Currently grows unbounded | 8m |
-| 21 | P8-80 | Document DNS cluster in AGENTS.md | Important infra undocumented | 8m |
-| 22 | P3-25 | Deadnix unused params batch 1 (6 files) | Lint hygiene | 10m |
-| 23 | P4-35 | Wire preferences.nix to GTK/cursor | Declared but unused options | 12m |
-| 24 | P7-71 | Add flake.lock auto-update CI | Automate what's manual | 10m |
-| 25 | P8-79 | Update top-level README | Stale since migration | 12m |
+| Rank | #     | Task                                       | Why                                                  | Est. |
+| ---- | ----- | ------------------------------------------ | ---------------------------------------------------- | ---- |
+| 1    | P0-1  | **`git push`**                             | 6 commits at risk — do immediately after this commit | 1m   |
+| 2    | P7-73 | Consolidate duplicate justfile recipes     | Confusing UX, trivial fix                            | 8m   |
+| 3    | P2-23 | Add date + commit hash to debug-map.md     | 1 min, forensic value                                | 1m   |
+| 4    | P2-24 | Add homepage URL to emeet-pixyd meta       | 1 min, consistency                                   | 1m   |
+| 5    | P3-33 | Clean unfree allowlist                     | 3 min, misleading config                             | 3m   |
+| 6    | P3-29 | Remove duplicate git global ignores        | 3 min, lint noise                                    | 3m   |
+| 7    | P2-17 | Fix git.nix core.pager vs pager.diff       | 3 min, broken feature                                | 3m   |
+| 8    | P2-16 | Fix 3 dead `let` bindings                  | 5 min, dead code                                     | 5m   |
+| 9    | P1-11 | Secure VRRP auth_pass with sops            | Plaintext password in repo                           | 8m   |
+| 10   | P7-70 | Add Go test CI for emeet-pixyd + dnsblockd | Real tests, no CI                                    | 10m  |
+| 11   | P8-81 | Write ADR for niri session restore         | Complex system, no design record                     | 10m  |
+| 12   | P7-72 | Fix eval smoke tests (remove `\|\| true`)  | Tests give false confidence                          | 5m   |
+| 13   | P3-30 | Fix GPG path cross-platform                | Broken on Darwin                                     | 5m   |
+| 14   | P6-60 | Voice agents unused pipecatPort            | 2 min dead code                                      | 2m   |
+| 15   | P6-61 | Voice agents PIDFile cleanup               | 3 min dead directive                                 | 3m   |
+| 16   | P1-9  | Pin Docker image: Voice Agents             | Security — silent breakage risk                      | 5m   |
+| 17   | P1-10 | Pin Docker image: PhotoMap                 | Security — silent breakage risk                      | 5m   |
+| 18   | P8-84 | Add MANPAGER + VISUAL env vars             | 2 min, standard env                                  | 2m   |
+| 19   | P7-75 | Trim system monitors 4→2                   | 3 min cleanup                                        | 3m   |
+| 20   | P6-54 | Twenty CRM backup rotation                 | Currently grows unbounded                            | 8m   |
+| 21   | P8-80 | Document DNS cluster in AGENTS.md          | Important infra undocumented                         | 8m   |
+| 22   | P3-25 | Deadnix unused params batch 1 (6 files)    | Lint hygiene                                         | 10m  |
+| 23   | P4-35 | Wire preferences.nix to GTK/cursor         | Declared but unused options                          | 12m  |
+| 24   | P7-71 | Add flake.lock auto-update CI              | Automate what's manual                               | 10m  |
+| 25   | P8-79 | Update top-level README                    | Stale since migration                                | 12m  |
 
 ---
 
@@ -232,10 +235,10 @@ d8c9894 refactor(theme): consolidate color scheme to shared colorScheme arg
 
 ## Progress on 96 Tasks
 
-| Status | Count | Tasks |
-|--------|-------|-------|
-| **DONE** | ~22 | P0-2,3,4,5,6, P1-8,12,13, P2-14,15,18,19,20,21, P3-31,32,34, P7-69,74,76,77,78 |
-| **PARTIALLY DONE** | 3 | P0-1 (unpushed), P1-7 (needs sops on evo-x2), P4-35/36 |
-| **NOT STARTED** | ~55 | P1-9,10,11, P2-16,17,22,23,24, P3-25-30,33, P4-35-40, P5-41-53, P6-54-68, P7-70-73,75, P8-79-84 |
-| **FUTURE** | 12 | P9-85-96 |
-| **N/A** | ~4 | P7-74 (already alejandra), P7-77 (already false), etc. |
+| Status             | Count | Tasks                                                                                           |
+| ------------------ | ----- | ----------------------------------------------------------------------------------------------- |
+| **DONE**           | ~22   | P0-2,3,4,5,6, P1-8,12,13, P2-14,15,18,19,20,21, P3-31,32,34, P7-69,74,76,77,78                  |
+| **PARTIALLY DONE** | 3     | P0-1 (unpushed), P1-7 (needs sops on evo-x2), P4-35/36                                          |
+| **NOT STARTED**    | ~55   | P1-9,10,11, P2-16,17,22,23,24, P3-25-30,33, P4-35-40, P5-41-53, P6-54-68, P7-70-73,75, P8-79-84 |
+| **FUTURE**         | 12    | P9-85-96                                                                                        |
+| **N/A**            | ~4    | P7-74 (already alejandra), P7-77 (already false), etc.                                          |

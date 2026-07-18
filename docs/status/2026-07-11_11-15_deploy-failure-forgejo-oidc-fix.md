@@ -12,26 +12,28 @@ A `nh os switch . -v --show-activation-logs --keep-going` deploy at ~09:23 CEST 
 
 Analyzed actual `journalctl` logs (not just the deploy summary) for every reported failure:
 
-| Service | Verdict | Evidence |
-|---------|---------|----------|
-| **forgejo-oidc-setup** | REAL — **Fixed this session** | Secret file invisible inside hardened mount namespace |
-| **discordsync** | REAL — upstream bug | Migration crash: `duplicate column name: "messages_stored"` |
-| **oauth2-proxy** | FALSE ALARM | Running fine since 09:25:13, Gatus pinging every 30s, all HTTP 200 |
-| **hermes** | FALSE ALARM | Started at 09:28:25 after delayed retry, only benign legacy key warning |
-| **systemd-localed** | TRANSIENT | D-Bus timeout during rapid service cycling, self-heals |
-| **home-manager-lars** | SELF-HEALING | Was mid-activation (sd-switch running) when log captured |
+| Service                | Verdict                       | Evidence                                                                |
+| ---------------------- | ----------------------------- | ----------------------------------------------------------------------- |
+| **forgejo-oidc-setup** | REAL — **Fixed this session** | Secret file invisible inside hardened mount namespace                   |
+| **discordsync**        | REAL — upstream bug           | Migration crash: `duplicate column name: "messages_stored"`             |
+| **oauth2-proxy**       | FALSE ALARM                   | Running fine since 09:25:13, Gatus pinging every 30s, all HTTP 200      |
+| **hermes**             | FALSE ALARM                   | Started at 09:28:25 after delayed retry, only benign legacy key warning |
+| **systemd-localed**    | TRANSIENT                     | D-Bus timeout during rapid service cycling, self-heals                  |
+| **home-manager-lars**  | SELF-HEALING                  | Was mid-activation (sd-switch running) when log captured                |
 
 ### 2. forgejo-oidc-setup Fix — LoadCredential Pattern
 
 **Root cause:** The `forgejo-oidc-setup` oneshot uses `harden {}` which creates a mount namespace (`ProtectSystem=full`, `ProtectHome=true`). The pocket-id client secret at `/var/lib/pocket-id/client-secrets/forgejo` exists on disk (confirmed by `pocket-id-provision` running without hardening and reporting "Secret file already exists"), but the file is **invisible inside the namespace**. The script polled for 120 seconds (60 iterations x 2s sleep) and never saw it.
 
 **Fix applied** (`modules/nixos/services/forgejo.nix`):
+
 - Removed the 120-second polling loop for the secret file (10 lines deleted)
 - Script now reads `cat "$CREDENTIALS_DIRECTORY/forgejo-oidc-client-secret"` (1 line)
 - Service config adds `LoadCredential = ["forgejo-oidc-client-secret:${dataDir}/client-secrets/forgejo"]`
 - PID 1 (systemd) reads the file from the real filesystem **before** the namespace is set up, then exposes it at `$CREDENTIALS_DIRECTORY/` — same pattern gatus already uses successfully
 
 **Verified:**
+
 - `nix eval .#nixosConfigurations.evo-x2.config.systemd.services.forgejo-oidc-setup.serviceConfig.LoadCredential` returns the correct value
 - The generated script correctly references `$CREDENTIALS_DIRECTORY/forgejo-oidc-client-secret`
 - The pre-existing `nix flake check --no-build` error (DMS Restart conflict) is unrelated to this change
@@ -47,12 +49,15 @@ Analyzed actual `journalctl` logs (not just the deploy summary) for every report
 ## c) NOT STARTED
 
 ### Deploy verification
+
 The forgejo fix has **not been deployed or tested** on evo-x2. `nix run .#deploy` has not been run since the fix.
 
 ### Discordsync workaround
+
 Rolling back `flake.lock` to the previous discordsync rev (`eeef979` or `b594bcd`) would restore the service, but was not done. The user needs to decide.
 
 ### AGENTS.md update
+
 The LoadCredential pattern for forgejo-oidc-setup should be documented in the gotchas table.
 
 ---
@@ -62,15 +67,18 @@ The LoadCredential pattern for forgejo-oidc-setup should be documented in the go
 ### My initial analysis was WRONG (before checking logs)
 
 My first response diagnosed **all four services as real failures**. After the user said "Actually check the logs", I discovered:
+
 - **oauth2-proxy**: I said "Real failure" → Actually running perfectly, 200 OK every 30s
 - **hermes**: I said "Real failure" → Actually running fine, started after a retry delay
 
 **Lesson:** I should have checked logs FIRST before giving a diagnosis. The deploy summary output is misleading — `Failed to start` in the activation log can be a transient race that resolves seconds later.
 
 ### Did not run `nix fmt` after editing
+
 Standard procedure after any Nix edit is `nix fmt`. Not done.
 
 ### Did not fix the DMS Restart conflict found during `nix flake check`
+
 Found a pre-existing error in `quickshell.nix` where `dms.service` has conflicting `Restart` values (`"always"` vs `"on-failure"`). Reported it but didn't fix it. This breaks the standard `nix flake check --no-build` validation step.
 
 ---
@@ -90,12 +98,14 @@ Found a pre-existing error in `quickshell.nix` where `dms.service` has conflicti
 ## f) Up to 50 Things to Do Next
 
 ### Immediate (blocking or high-impact)
+
 1. **Deploy the forgejo fix** — `nix run .#deploy` (run `nix fmt` first)
 2. **Run post-deploy smoke test** — `nix run .#post-deploy-check` to verify forgejo OIDC actually works
 3. **Fix DMS Restart conflict in quickshell.nix** — `nix flake check --no-build` must pass
 4. **Decide discordsync strategy**: roll back flake.lock to working rev, OR fix upstream migration, OR temporarily disable the service
 
 ### Short-term (this session's follow-ups)
+
 5. **Run `nix fmt`** — format the forgejo.nix changes
 6. **Update AGENTS.md gotchas table** — add the `harden {}` + pocket-id client secrets = invisible pattern, and the LoadCredential solution
 7. **Update AGENTS.md SSO section** — forgejo-oidc-setup now uses LoadCredential (like gatus), not raw file access
@@ -104,6 +114,7 @@ Found a pre-existing error in `quickshell.nix` where `dms.service` has conflicti
 10. **Check if discordsync can be temporarily disabled** — `services.discordsync.enable = false` in configuration.nix to stop the crash-loop noise
 
 ### Medium-term (noticed during this session)
+
 11. **Standardize pocket-id secret consumption pattern** — document a single canonical approach (LoadCredential) for all OIDC clients
 12. **Review immich's `_secret` mechanism** — does it also suffer from the namespace invisibility? It uses a different mechanism, verify it works
 13. **Review monitor365's inject-auth script** — does it read the secret from the raw file? Could it have the same bug?
@@ -116,6 +127,7 @@ Found a pre-existing error in `quickshell.nix` where `dms.service` has conflicti
 20. **Verify the `monitor365_api_key` secret removal** — deploy log showed `removing secret: monitor365_api_key`, verify monitor365 still works without it
 
 ### Lower-priority improvements
+
 21. **Add a pre-deploy check for services in start-limit-hit state** — warn before attempting activation
 22. **Consider `ProtectSystem=strict` + explicit `ReadOnlyPaths` for forgejo-oidc-setup** — tighter than `full`, now that LoadCredential handles the secret
 23. **Document the deploy wrapper vs raw nh distinction more prominently** — maybe a git pre-push hook that warns

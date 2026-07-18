@@ -14,110 +14,110 @@ System is **stable but has uncommitted work**. Two unrelated improvements in the
 
 ## Working Tree Changes (Uncommitted)
 
-| File | Change | Status |
-|------|--------|--------|
-| `modules/nixos/services/minecraft.nix` | Parameterized module options (port, jvmOpts, difficulty, maxPlayers, motd, viewDistance, simulationDistance, whitelist) | ✅ Ready to commit |
-| `platforms/nixos/system/scheduled-tasks.nix` | Replaced hardcoded UID 1000 with dynamic `config.users.users.${primaryUser}.uid` | ✅ Ready to commit |
-| `platforms/common/packages/base.nix` | Added `jetbrains.idea` (COMMITTED in `017005c`) | ✅ Already committed |
-| `platforms/common/core/nix-settings.nix` | Added `"idea"` + `"idea-ultimate"` to allowUnfreePredicate (COMMITTED in `017005c`) | ✅ Already committed |
+| File                                         | Change                                                                                                                  | Status               |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `modules/nixos/services/minecraft.nix`       | Parameterized module options (port, jvmOpts, difficulty, maxPlayers, motd, viewDistance, simulationDistance, whitelist) | ✅ Ready to commit   |
+| `platforms/nixos/system/scheduled-tasks.nix` | Replaced hardcoded UID 1000 with dynamic `config.users.users.${primaryUser}.uid`                                        | ✅ Ready to commit   |
+| `platforms/common/packages/base.nix`         | Added `jetbrains.idea` (COMMITTED in `017005c`)                                                                         | ✅ Already committed |
+| `platforms/common/core/nix-settings.nix`     | Added `"idea"` + `"idea-ultimate"` to allowUnfreePredicate (COMMITTED in `017005c`)                                     | ✅ Already committed |
 
 ---
 
 ## Recent Commits (Last 24h)
 
-| Hash | Message |
-|------|---------|
-| `0707c4d` | docs(status): comprehensive system status report (2026-04-23 06:07) |
+| Hash      | Message                                                                      |
+| --------- | ---------------------------------------------------------------------------- |
+| `0707c4d` | docs(status): comprehensive system status report (2026-04-23 06:07)          |
 | `b5d4b42` | feat(unbound): enable DNS-over-QUIC (DoQ) via libngtcp2 + libnghttp3 overlay |
-| `017005c` | chore(jetbrains): add JetBrains IDEA to Linux packages |
+| `017005c` | chore(jetbrains): add JetBrains IDEA to Linux packages                       |
 
 ---
 
 ## Codebase Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total `.nix` files | 91 |
-| Total `.go` files | 19 |
-| Nix lines of code | 11,667 |
-| Go lines of code | 7,744 |
-| **Total lines** | **~19,411** |
-| NixOS service modules | 17 |
-| Common program modules | 16 |
-| Custom packages | 9 |
-| Flake inputs | 20 |
-| Justfile recipes | ~150+ |
-| Status reports | 238 (31 active, 207 archived) |
+| Metric                 | Value                         |
+| ---------------------- | ----------------------------- |
+| Total `.nix` files     | 91                            |
+| Total `.go` files      | 19                            |
+| Nix lines of code      | 11,667                        |
+| Go lines of code       | 7,744                         |
+| **Total lines**        | **~19,411**                   |
+| NixOS service modules  | 17                            |
+| Common program modules | 16                            |
+| Custom packages        | 9                             |
+| Flake inputs           | 20                            |
+| Justfile recipes       | ~150+                         |
+| Status reports         | 238 (31 active, 207 archived) |
 
 ---
 
 ## A) FULLY DONE ✅
 
-| Item | Details |
-|------|---------|
-| JetBrains IDEA package | Added `jetbrains.idea` to `linuxUtilities`, unfree predicate updated |
-| DNS-over-QUIC (DoQ) | Unbound + libngtcp2 + libnghttp3 overlay (`b5d4b42`) |
-| Niri session save/restore | 24/24 features implemented across 2 rounds |
-| TODO list (2026-04-22) | 27/30 complete (96%) |
-| SSH config extraction | Shared common module (`839f6dc`) |
-| Networking extraction | Local network config module (`8d91214`) |
-| MIME type associations | Image/video for Helium browser (`f01a24b`) |
-| Systemd hardening | Watchdog, reliability, sandboxing across services (`2328de8`) |
-| Hermes system service | Converted from user to system-level (`862c67b`) |
-| AI stack module | Proper NixOS module with conditional Unsloth (`61b90aa`) |
-| jscpd native package | Code duplication detection tool packaged (`1acdfa0`) |
-| EMEET PIXY refactor | Removed htmx eval, moved toasts server-side (`285f427`) |
-| Monitor365 integration | Local dev path + module enhancements (`81aa90e`) |
-| Config cleanup | App descriptions, temp file handling, encryption (`4a59df5`) |
-| Code formatting | 56 files formatted via `nix fmt` (alejandra) |
-| CI pipeline | 5 jobs (flake check, darwin build, syntax, 2x Go tests) |
-| Pre-commit hooks | 8 hooks (gitleaks, deadnix, statix, alejandra, etc.) |
-| Flake checks | statix, deadnix, nix-eval-darwin, nix-eval-nixos |
+| Item                      | Details                                                              |
+| ------------------------- | -------------------------------------------------------------------- |
+| JetBrains IDEA package    | Added `jetbrains.idea` to `linuxUtilities`, unfree predicate updated |
+| DNS-over-QUIC (DoQ)       | Unbound + libngtcp2 + libnghttp3 overlay (`b5d4b42`)                 |
+| Niri session save/restore | 24/24 features implemented across 2 rounds                           |
+| TODO list (2026-04-22)    | 27/30 complete (96%)                                                 |
+| SSH config extraction     | Shared common module (`839f6dc`)                                     |
+| Networking extraction     | Local network config module (`8d91214`)                              |
+| MIME type associations    | Image/video for Helium browser (`f01a24b`)                           |
+| Systemd hardening         | Watchdog, reliability, sandboxing across services (`2328de8`)        |
+| Hermes system service     | Converted from user to system-level (`862c67b`)                      |
+| AI stack module           | Proper NixOS module with conditional Unsloth (`61b90aa`)             |
+| jscpd native package      | Code duplication detection tool packaged (`1acdfa0`)                 |
+| EMEET PIXY refactor       | Removed htmx eval, moved toasts server-side (`285f427`)              |
+| Monitor365 integration    | Local dev path + module enhancements (`81aa90e`)                     |
+| Config cleanup            | App descriptions, temp file handling, encryption (`4a59df5`)         |
+| Code formatting           | 56 files formatted via `nix fmt` (alejandra)                         |
+| CI pipeline               | 5 jobs (flake check, darwin build, syntax, 2x Go tests)              |
+| Pre-commit hooks          | 8 hooks (gitleaks, deadnix, statix, alejandra, etc.)                 |
+| Flake checks              | statix, deadnix, nix-eval-darwin, nix-eval-nixos                     |
 
 ## B) PARTIALLY DONE ⚠️
 
-| Item | Status | What's Missing |
-|------|--------|----------------|
-| Minecraft module | Options defined but **not yet committed** | Needs `git add` + commit |
-| Scheduled tasks UID | Fix written but **not yet committed** | Needs `git add` + commit |
-| SigNoz observability | Stack running but **JWT secret missing** | Errors on every restart |
-| Hermes gateway | Service running but **state is `{}`** | Discord bot unconfirmed working |
-| Taskwarrior sync | Server running, **client unconfigured** | Client ID not set, no device sync |
-| EMEET PIXY daemon | Package built, **service down** | Needs manual restart |
-| DNS blocklist | Unbound + dnsblockd running, **DoQ not yet deployed** | `just switch` needed |
-| Security hardening | auditd config exists, **disabled** | Blocked by NixOS 26.05 bug #483085 |
-| NPU driver | Module loaded, **SVA bind failures** | `amdxdna` ret -19 |
+| Item                 | Status                                                | What's Missing                     |
+| -------------------- | ----------------------------------------------------- | ---------------------------------- |
+| Minecraft module     | Options defined but **not yet committed**             | Needs `git add` + commit           |
+| Scheduled tasks UID  | Fix written but **not yet committed**                 | Needs `git add` + commit           |
+| SigNoz observability | Stack running but **JWT secret missing**              | Errors on every restart            |
+| Hermes gateway       | Service running but **state is `{}`**                 | Discord bot unconfirmed working    |
+| Taskwarrior sync     | Server running, **client unconfigured**               | Client ID not set, no device sync  |
+| EMEET PIXY daemon    | Package built, **service down**                       | Needs manual restart               |
+| DNS blocklist        | Unbound + dnsblockd running, **DoQ not yet deployed** | `just switch` needed               |
+| Security hardening   | auditd config exists, **disabled**                    | Blocked by NixOS 26.05 bug #483085 |
+| NPU driver           | Module loaded, **SVA bind failures**                  | `amdxdna` ret -19                  |
 
 ## C) NOT STARTED ❌
 
-| Item | Priority | Notes |
-|------|----------|-------|
-| **Disk encryption (LUKS)** | CRITICAL | Root + /data are plain btrfs |
-| **TPM2 setup** | CRITICAL | No measured boot |
-| **Boot editor lockdown** | HIGH | One-line fix: `systemd-boot.editor = false` |
-| **Passwordless sudo removal** | HIGH | `wheelNeedsPassword = false` persists |
-| **fwupd firmware updates** | MEDIUM | Not enabled |
-| Kernel sysctl hardening | MEDIUM | No custom sysctl.conf |
-| NixOS VM/integration tests | LOW | Zero automated tests |
-| `passthru.tests` for custom packages | LOW | No package-level tests |
-| Shell scripts → Nix apps migration | LOW | Deferred from TODO list |
-| Niri fullscreen restore | LOW | Blocked: niri IPC doesn't expose `is_fullscreen` |
-| Session restore stats in waybar | LOW | Not started |
-| Integration test for session save/restore | LOW | Not started |
-| Real-time save via event-stream | LOW | Not started |
-| ADR for session restore design | LOW | Not started |
-| AGENTS.md update | LOW | Last updated 2026-04-04 (19 days behind) |
-| Status report archival/cleanup | LOW | 238 reports, growing unbounded |
-| Gitea GitHub sync token | MEDIUM | Token rejected, needs regeneration |
+| Item                                      | Priority | Notes                                            |
+| ----------------------------------------- | -------- | ------------------------------------------------ |
+| **Disk encryption (LUKS)**                | CRITICAL | Root + /data are plain btrfs                     |
+| **TPM2 setup**                            | CRITICAL | No measured boot                                 |
+| **Boot editor lockdown**                  | HIGH     | One-line fix: `systemd-boot.editor = false`      |
+| **Passwordless sudo removal**             | HIGH     | `wheelNeedsPassword = false` persists            |
+| **fwupd firmware updates**                | MEDIUM   | Not enabled                                      |
+| Kernel sysctl hardening                   | MEDIUM   | No custom sysctl.conf                            |
+| NixOS VM/integration tests                | LOW      | Zero automated tests                             |
+| `passthru.tests` for custom packages      | LOW      | No package-level tests                           |
+| Shell scripts → Nix apps migration        | LOW      | Deferred from TODO list                          |
+| Niri fullscreen restore                   | LOW      | Blocked: niri IPC doesn't expose `is_fullscreen` |
+| Session restore stats in waybar           | LOW      | Not started                                      |
+| Integration test for session save/restore | LOW      | Not started                                      |
+| Real-time save via event-stream           | LOW      | Not started                                      |
+| ADR for session restore design            | LOW      | Not started                                      |
+| AGENTS.md update                          | LOW      | Last updated 2026-04-04 (19 days behind)         |
+| Status report archival/cleanup            | LOW      | 238 reports, growing unbounded                   |
+| Gitea GitHub sync token                   | MEDIUM   | Token rejected, needs regeneration               |
 
 ## D) TOTALLY FUCKED UP 💥
 
-| Item | Severity | Details |
-|------|----------|---------|
-| **No disk encryption** | 💀 CRITICAL | Physical access = full compromise. Has been flagged for 3+ reports with zero action. |
-| **Hermes env delivery conflict** | HIGH | `EnvironmentFile` AND `mergeEnvScript` both present from concurrent editing sessions. Design conflict unresolved — file has conflicting mechanisms. |
-| **Gitea GitHub sync** | MEDIUM | Token rejected: "invalid username, password or token". Sync broken, needs sops secret regeneration. |
-| **NPU (AMD XDNA)** | LOW | `amdxdna` SVA bind failures (ret -19). Hardware support is incomplete upstream. |
+| Item                             | Severity    | Details                                                                                                                                             |
+| -------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No disk encryption**           | 💀 CRITICAL | Physical access = full compromise. Has been flagged for 3+ reports with zero action.                                                                |
+| **Hermes env delivery conflict** | HIGH        | `EnvironmentFile` AND `mergeEnvScript` both present from concurrent editing sessions. Design conflict unresolved — file has conflicting mechanisms. |
+| **Gitea GitHub sync**            | MEDIUM      | Token rejected: "invalid username, password or token". Sync broken, needs sops secret regeneration.                                                 |
+| **NPU (AMD XDNA)**               | LOW         | `amdxdna` SVA bind failures (ret -19). Hardware support is incomplete upstream.                                                                     |
 
 ## E) WHAT WE SHOULD IMPROVE 🔧
 
@@ -178,6 +178,7 @@ System is **stable but has uncommitted work**. Two unrelated improvements in the
 This is the single most impactful security improvement possible. The machine has 128GB RAM and holds Docker volumes, sops secrets, Gitea repos, and personal data on unencrypted btrfs. The risk is clear: physical access (theft, lost laptop, disposal) = full data compromise including all sops-encrypted secrets (which are decrypted at runtime).
 
 Possible blockers I cannot determine:
+
 - Is there a migration path concern? (reinstall vs in-place)
 - Is performance a worry? (btrfs + LUKS on NVMe should be negligible)
 - Is TPM2 needed first for auto-unlock?

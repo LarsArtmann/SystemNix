@@ -13,9 +13,11 @@
 ## A) FULLY DONE ✅
 
 ### Dendritic Pattern Migration
+
 Successfully migrated 5 NixOS services from traditional relative imports to self-contained flake-parts modules.
 
 **New Module Architecture:**
+
 ```
 modules/nixos/services/
 ├── caddy.nix      # flake.nixosModules.caddy
@@ -30,11 +32,13 @@ modules/nixos/services/
 **Changes Made:**
 
 #### 1. flake.nix
+
 - Added dendritic `imports` section for flake-parts modules
 - Wired 5 modules into `nixosModules` flake output
 - Removed direct service imports from nixosConfigurations module list
 
 #### 2. modules/nixos/services/immich.nix
+
 - **Self-contained flake-parts module**: `{ inputs, ... }: { flake.nixosModules.immich = ... }`
 - Immich photo/video management on port 2283
 - PostgreSQL database with daily backup (7-day retention)
@@ -43,6 +47,7 @@ modules/nixos/services/
 - User added to video/render groups for hardware access
 
 #### 3. modules/nixos/services/gitea.nix
+
 - **Self-contained flake-parts module**: `{ inputs, ... }: { flake.nixosModules.gitea = ... }`
 - Self-hosted Git service with SQLite database
 - Git LFS support enabled
@@ -54,6 +59,7 @@ modules/nixos/services/
 - Systemd timer: syncs every 6 hours
 
 #### 4. modules/nixos/services/caddy.nix
+
 - **Self-contained flake-parts module**: `{ inputs, ... }: { flake.nixosModules.caddy = ... }`
 - Reverse proxy with metrics enabled
 - Virtual hosts:
@@ -64,6 +70,7 @@ modules/nixos/services/
 - Firewall ports 80/443 opened
 
 #### 5. modules/nixos/services/grafana.nix
+
 - **Self-contained flake-parts module**: `{ inputs, ... }: { flake.nixosModules.grafana = ... }`
 - Grafana on `127.0.0.1:3001`
 - Auto-provisioned Prometheus datasource
@@ -72,6 +79,7 @@ modules/nixos/services/
 - Domain: `grafana.lan`
 
 #### 6. modules/nixos/services/ssh.nix
+
 - **Self-contained flake-parts module**: `{ inputs, ... }: { flake.nixosModules.ssh = ... }`
 - Hardened SSH daemon with key-based auth only
 - Support for modern (rsa-sha2-256/512) and legacy (ssh-rsa) keys
@@ -82,6 +90,7 @@ modules/nixos/services/
 - Firewall port 22 opened
 
 #### 7. platforms/nixos/system/configuration.nix
+
 - Commented out old relative imports for migrated services
 - Services now loaded via `inputs.self.nixosModules.<name>`
 
@@ -90,12 +99,14 @@ modules/nixos/services/
 ## B) PARTIALLY DONE ⚠️
 
 ### Dendritic Pattern Adoption
+
 - ✅ Core service modules migrated
 - ❌ Common modules (packages, programs) still use relative imports
 - ❌ Darwin configuration not yet dendritic
 - ❌ No `import-tree` integration for automatic discovery
 
 **Remaining Relative Imports in configuration.nix:**
+
 ```nix
 imports = [
   ../../common/packages/base.nix      # Still relative
@@ -108,6 +119,7 @@ imports = [
 ```
 
 ### Home Manager Architecture
+
 - ✅ NixOS module integration working
 - ❌ Still has dual Darwin/NixOS code paths
 - ❌ Not yet migrated to dendritic modules
@@ -117,6 +129,7 @@ imports = [
 ## C) NOT STARTED ⏸️
 
 ### Full Dendritic Migration
+
 - [ ] Migrate common packages (`platforms/common/packages/*.nix`)
 - [ ] Migrate common programs (`platforms/common/programs/*.nix`)
 - [ ] Migrate Darwin configuration (`platforms/darwin/*.nix`)
@@ -145,6 +158,7 @@ imports = [
   ```
 
 ### Infrastructure Improvements from Previous Report
+
 - [ ] NixOS firewall (deny-by-default)
 - [ ] Immich GPU acceleration (ROCm)
 - [ ] Immich media backup
@@ -158,14 +172,17 @@ imports = [
 ## D) TOTALLY FUCKED UP ❌
 
 ### Nothing New
+
 The dendritic migration did not introduce any new issues. Previous issues remain:
 
 #### dnsblockd — Still Crash-Looping (Pre-existing)
+
 - **Status:** Port conflict with Caddy (Caddy binds `*:80/443`, dnsblockd needs `127.0.0.2:80/443`)
 - **Impact:** DNS blocking works, but block page shows connection errors instead of pretty page
 - **Note:** This is NOT caused by dendritic migration — was already broken
 
 #### service-health-check.service — Still Failed (Pre-existing)
+
 - **Status:** `notify-send` requires Wayland display variables not available in systemd context
 - **Impact:** No desktop notifications on service failure
 
@@ -205,33 +222,33 @@ The dendritic migration did not introduce any new issues. Previous issues remain
 
 ## F) Top 25 Things to Do Next 📋
 
-| # | Task | Effort | Impact | Category |
-|---|------|--------|--------|----------|
-| 1 | Migrate remaining services to dendritic | ~100 lines | Architecture | Dendritic |
-| 2 | Add import-tree auto-discovery | ~10 lines | Maintainability | Dendritic |
-| 3 | Migrate common packages to dendritic | ~50 lines | Architecture | Dendritic |
-| 4 | Migrate Darwin config to dendritic | ~80 lines | Architecture | Dendritic |
-| 5 | Enable NixOS firewall (deny-by-default) | ~20 lines | Critical security | Security |
-| 6 | Bind Immich to localhost | 2 lines | Critical security | Security |
-| 7 | Backup Immich media to external storage | ~30 lines | Data loss | Backup |
-| 8 | Add off-disk backup (restic/borg) | ~40 lines | Data loss | Backup |
-| 9 | Enable fail2ban for SSH | 1 line | Brute-force | Security |
-| 10 | Fix dnsblockd port conflict with Caddy | ~10 lines | Broken service | Bugfix |
-| 11 | Enable Immich GPU acceleration (ROCm) | ~5 lines | ML performance | Performance |
-| 12 | Add systemd restart policies | ~15 lines | Reliability | Reliability |
-| 13 | Enable SSD TRIM | 1 line | SSD health | Maintenance |
-| 14 | Enable SMART disk monitoring | 3 lines | Disk health | Maintenance |
-| 15 | Add automatic Nix GC timer | 5 lines | Disk space | Maintenance |
-| 16 | Remove `max_cstate=1` kernel param | 1 line | Power | Performance |
-| 17 | Fix Hyprland `$mod,G` bind conflict | 1 line | UX | Bugfix |
-| 18 | Delete dead Technitium files | 2 files | Hygiene | Cleanup |
-| 19 | Deduplicate Go overlay in flake.nix | ~20 lines | Maintainability | Cleanup |
-| 20 | Fix justfile for NixOS platform | ~50 lines | DevEx | Tooling |
-| 21 | Add disk space alerts | ~15 lines | Monitoring | Observability |
-| 22 | Fix `immich.lan` DNS to LAN IP | 2 lines | Accessibility | Bugfix |
-| 23 | Change Gitea ROOT_URL to gitea.lan | 2 lines | Proper URLs | Bugfix |
-| 24 | Tune PostgreSQL for Immich | ~10 lines | Performance | Performance |
-| 25 | Document dendritic architecture in AGENTS.md | ~50 lines | Documentation | Docs |
+| #   | Task                                         | Effort     | Impact            | Category      |
+| --- | -------------------------------------------- | ---------- | ----------------- | ------------- |
+| 1   | Migrate remaining services to dendritic      | ~100 lines | Architecture      | Dendritic     |
+| 2   | Add import-tree auto-discovery               | ~10 lines  | Maintainability   | Dendritic     |
+| 3   | Migrate common packages to dendritic         | ~50 lines  | Architecture      | Dendritic     |
+| 4   | Migrate Darwin config to dendritic           | ~80 lines  | Architecture      | Dendritic     |
+| 5   | Enable NixOS firewall (deny-by-default)      | ~20 lines  | Critical security | Security      |
+| 6   | Bind Immich to localhost                     | 2 lines    | Critical security | Security      |
+| 7   | Backup Immich media to external storage      | ~30 lines  | Data loss         | Backup        |
+| 8   | Add off-disk backup (restic/borg)            | ~40 lines  | Data loss         | Backup        |
+| 9   | Enable fail2ban for SSH                      | 1 line     | Brute-force       | Security      |
+| 10  | Fix dnsblockd port conflict with Caddy       | ~10 lines  | Broken service    | Bugfix        |
+| 11  | Enable Immich GPU acceleration (ROCm)        | ~5 lines   | ML performance    | Performance   |
+| 12  | Add systemd restart policies                 | ~15 lines  | Reliability       | Reliability   |
+| 13  | Enable SSD TRIM                              | 1 line     | SSD health        | Maintenance   |
+| 14  | Enable SMART disk monitoring                 | 3 lines    | Disk health       | Maintenance   |
+| 15  | Add automatic Nix GC timer                   | 5 lines    | Disk space        | Maintenance   |
+| 16  | Remove `max_cstate=1` kernel param           | 1 line     | Power             | Performance   |
+| 17  | Fix Hyprland `$mod,G` bind conflict          | 1 line     | UX                | Bugfix        |
+| 18  | Delete dead Technitium files                 | 2 files    | Hygiene           | Cleanup       |
+| 19  | Deduplicate Go overlay in flake.nix          | ~20 lines  | Maintainability   | Cleanup       |
+| 20  | Fix justfile for NixOS platform              | ~50 lines  | DevEx             | Tooling       |
+| 21  | Add disk space alerts                        | ~15 lines  | Monitoring        | Observability |
+| 22  | Fix `immich.lan` DNS to LAN IP               | 2 lines    | Accessibility     | Bugfix        |
+| 23  | Change Gitea ROOT_URL to gitea.lan           | 2 lines    | Proper URLs       | Bugfix        |
+| 24  | Tune PostgreSQL for Immich                   | ~10 lines  | Performance       | Performance   |
+| 25  | Document dendritic architecture in AGENTS.md | ~50 lines  | Documentation     | Docs          |
 
 ---
 
@@ -252,20 +269,24 @@ imports = [
 ```
 
 **Option A: Continue Manual Migration (Current Approach)**
+
 - Pros: Explicit, predictable, no new dependencies
 - Cons: Must update flake.nix for every new module
 
 **Option B: Switch to import-tree Auto-Discovery**
+
 - Pros: Drop any `.nix` file in `modules/` and it's automatically loaded; no flake.nix edits
 - Cons: Adds `vic/import-tree` dependency; less explicit (magic)
 
 **Trade-off:**
+
 - Manual: More boilerplate, but crystal clear what's being imported
 - import-tree: Less boilerplate, but "magic" happens in the importer
 
 I cannot decide this autonomously because it affects the long-term maintainability philosophy of the project. The AGENTS.md previously noted that `import-tree` "cannot be combined with `mkMerge` in flake-parts outputs" — but the current approach uses `imports` which works fine.
 
 **This decision requires choosing between:**
+
 1. Explicit, verbose, but transparent imports (current)
 2. Automatic, concise, but "magical" discovery (import-tree)
 
@@ -273,18 +294,18 @@ I cannot decide this autonomously because it affects the long-term maintainabili
 
 ## System State at Time of Report
 
-| Category | Status |
-|----------|--------|
-| **Working tree** | Clean — committed as `26312a2` |
-| **Branch** | `master`, ahead of origin by 3 commits |
-| **Dendritic modules** | 5 services migrated |
-| **Test status** | ✅ `just test-fast` passes |
-| **NixOS modules** | caddy, gitea, grafana, immich, ssh |
-| **Active services** | 14 of 15 running (dnsblockd still crash-looping) |
-| **Failed units** | 1 (service-health-check.service — pre-existing) |
-| **Disk** | 55% used (232 GB free) |
-| **Memory** | 17/62 GiB used (45 GiB available) |
-| **Monitoring stack** | Prometheus, Grafana, Homepage all operational |
+| Category              | Status                                           |
+| --------------------- | ------------------------------------------------ |
+| **Working tree**      | Clean — committed as `26312a2`                   |
+| **Branch**            | `master`, ahead of origin by 3 commits           |
+| **Dendritic modules** | 5 services migrated                              |
+| **Test status**       | ✅ `just test-fast` passes                       |
+| **NixOS modules**     | caddy, gitea, grafana, immich, ssh               |
+| **Active services**   | 14 of 15 running (dnsblockd still crash-looping) |
+| **Failed units**      | 1 (service-health-check.service — pre-existing)  |
+| **Disk**              | 55% used (232 GB free)                           |
+| **Memory**            | 17/62 GiB used (45 GiB available)                |
+| **Monitoring stack**  | Prometheus, Grafana, Homepage all operational    |
 
 ---
 
@@ -308,5 +329,5 @@ flake.nix
 
 ---
 
-*Report generated 2026-03-29 16:53:40 CEST*
-*Migration commit: `26312a2`*
+_Report generated 2026-03-29 16:53:40 CEST_
+_Migration commit: `26312a2`_

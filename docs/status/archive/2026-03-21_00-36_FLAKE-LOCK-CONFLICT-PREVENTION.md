@@ -56,15 +56,18 @@ This corruption occurred during a `git stash pop` operation after a commit, wher
 ### 1.2 Why Existing Tooling Failed
 
 **Pre-commit Hooks:**
+
 - The `check-merge-conflict` hook from `pre-commit-hooks` only checks staged files
 - `flake.lock` is often modified by `nix flake update`, not manually staged
 - The stash operation bypassed the commit hook entirely
 
 **Validation Scripts:**
+
 - `scripts/config-validate.sh` validated JSON syntax but not conflict markers
 - JSON parsers fail with cryptic errors on conflict markers (not human-friendly)
 
 **Just Recipes:**
+
 - No dedicated command existed for manual conflict checking
 - Users had to rely on implicit checks during `nix` operations
 
@@ -121,6 +124,7 @@ This pattern avoids matching markdown headers like `======== Header ========` wh
 **Action:** Manually resolved 3 merge conflict instances
 
 **Conflicts Found:**
+
 1. `agenix` input node (Updated upstream vs Stashed changes)
 2. `home-manager` input node (revision mismatch)
 3. `nixpkgs` input node (branch divergence)
@@ -183,6 +187,7 @@ conflict-check:
 **Changes:**
 
 1. **Added `flake.lock` to `check-json` hook:**
+
    ```yaml
    - id: check-json
      files: \.(json|lock)$
@@ -190,6 +195,7 @@ conflict-check:
    ```
 
 2. **Added custom `flake-lock-validate` local hook:**
+
    ```yaml
    - repo: local
      hooks:
@@ -214,6 +220,7 @@ conflict-check:
 **Change:** Updated `pre-commit-hooks` input revision from `v4.4.0` to `v6.0.0`
 
 **Rationale:**
+
 - `v4.4.0` is over 2 years old
 - `v6.0.0` includes improved `check-merge-conflict` hook
 - Better support for modern git features
@@ -320,12 +327,14 @@ Validate flake.lock for conflicts........................................Passed
 **Location:** `.git/hooks/pre-commit`
 
 **Content:**
+
 ```bash
 #!/usr/bin/env bash
 buildflow --build-mode pre-commit --parallel "$@"
 ```
 
 **Error:**
+
 ```
 panic: runtime error: invalid memory address or nil pointer dereference
 [signal SIGABRT: abort trap]
@@ -333,11 +342,13 @@ oxfmt trying to write to gomod2nix.toml
 ```
 
 **Impact:**
+
 - Standard `git commit` fails
 - `git commit --no-verify` required (bypasses all hooks)
 - Prevents use of new conflict detection hooks
 
 **Workaround:**
+
 ```bash
 git commit --no-verify -m "message"
 ```
@@ -473,30 +484,30 @@ git commit --no-verify -m "message"
 
 ### 9.1 Implementation Complexity
 
-| Layer | Files Changed | Lines Added | Coverage |
-|-------|--------------|-------------|----------|
-| Validation Script | 1 | 6 | Lockfile-specific |
-| Just Recipe | 1 | 14 | All config files |
-| Pre-commit Config | 1 | 10 | Staged files |
-| Nix Package | 1 | 1 | All repos |
-| **Total** | **4** | **31** | **Multi-layer** |
+| Layer             | Files Changed | Lines Added | Coverage          |
+| ----------------- | ------------- | ----------- | ----------------- |
+| Validation Script | 1             | 6           | Lockfile-specific |
+| Just Recipe       | 1             | 14          | All config files  |
+| Pre-commit Config | 1             | 10          | Staged files      |
+| Nix Package       | 1             | 1           | All repos         |
+| **Total**         | **4**         | **31**      | **Multi-layer**   |
 
 ### 9.2 Detection Coverage
 
-| Scenario | Before | After | Improvement |
-|----------|--------|-------|-------------|
-| Staged commits | ❌ | ✅ | Pre-commit hooks |
-| Manual checks | ❌ | ✅ | `just conflict-check` |
-| Nix operations | ❌ | ✅ | Validation script |
-| Stash operations | ❌ | ❌ | Still manual |
+| Scenario         | Before | After | Improvement           |
+| ---------------- | ------ | ----- | --------------------- |
+| Staged commits   | ❌     | ✅    | Pre-commit hooks      |
+| Manual checks    | ❌     | ✅    | `just conflict-check` |
+| Nix operations   | ❌     | ✅    | Validation script     |
+| Stash operations | ❌     | ❌    | Still manual          |
 
 ### 9.3 Error Message Quality
 
-| Stage | Before | After |
-|-------|--------|-------|
-| Nix parse | `error: parse error: expected value` | `Lockfile contains merge conflict markers!` |
-| Pre-commit | Silent failure | `Check for merge conflicts...Passed/Failed` |
-| Manual check | N/A | `No merge conflict markers found.` |
+| Stage        | Before                               | After                                       |
+| ------------ | ------------------------------------ | ------------------------------------------- |
+| Nix parse    | `error: parse error: expected value` | `Lockfile contains merge conflict markers!` |
+| Pre-commit   | Silent failure                       | `Check for merge conflicts...Passed/Failed` |
+| Manual check | N/A                                  | `No merge conflict markers found.`          |
 
 ---
 

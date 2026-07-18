@@ -137,7 +137,7 @@
 
 ### Question 1: Does `lib.mkMerge` work on `serviceConfig` inside a flake-parts NixOS module?
 
-AGENTS.md states: *"lib.mkMerge + flake-parts does not work — use inline config or imports"*. But that refers to top-level `config = lib.mkMerge [...]`. The `serviceConfig` attribute inside `systemd.services.<name>` is a **local value**, not a module-system `config` merge. I believe `mkMerge` on `serviceConfig` is safe because it's just building an attribute set value that gets assigned to an option — the module system handles the merge at the `systemd.services.<name>.serviceConfig` option level. But I cannot verify this without testing it, and if I'm wrong, recommending `mkMerge` across 4+ files would introduce build failures.
+AGENTS.md states: _"lib.mkMerge + flake-parts does not work — use inline config or imports"_. But that refers to top-level `config = lib.mkMerge [...]`. The `serviceConfig` attribute inside `systemd.services.<name>` is a **local value**, not a module-system `config` merge. I believe `mkMerge` on `serviceConfig` is safe because it's just building an attribute set value that gets assigned to an option — the module system handles the merge at the `systemd.services.<name>.serviceConfig` option level. But I cannot verify this without testing it, and if I'm wrong, recommending `mkMerge` across 4+ files would introduce build failures.
 
 **What I need:** Someone to test `serviceConfig = lib.mkMerge [ (harden {}) (serviceDefaults {}) ]` in one service and run `nix flake check --no-build`.
 

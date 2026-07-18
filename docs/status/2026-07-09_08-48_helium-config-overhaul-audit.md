@@ -26,46 +26,46 @@ User asked "How can we improve our Helium config?" — then asked for deeper res
 
 ## a) FULLY DONE
 
-| # | Item | Details |
-|---|------|---------|
-| 1 | Double-wrap bug identified | SystemNix wrapped the upstream makeWrapper script (`$heliumPackage/bin/helium`), not the real binary (`$heliumPackage/opt/helium/helium`). Two `--enable-features` switches → Chromium's `GetSwitchValueASCII` returns only the last value → silent feature loss. |
-| 2 | Double-wrap bug fixed | Rewrote wrapper to `makeWrapper $out/opt/helium/helium $out/bin/helium` — wrapping the real binary directly. All flags now in a single makeWrapper layer. |
-| 3 | Invalid feature names corrected | Removed `AcceleratedVideoDecoder` (never existed). Renamed `VaapiVideoEncoder` → `AcceleratedVideoEncoder`. Added `AcceleratedVideoDecodeLinuxGL`, `AcceleratedVideoDecodeLinuxZeroCopyGL`, `VaapiIgnoreDriverChecks`, `UseMultiPlaneFormatForHardwareVideo`. |
-| 4 | Backgrounding-disable flags removed | `--disable-backgrounding-occluded-windows` and `--disable-renderer-backgrounding` deleted. These prevented Chromium's tab lifecycle management, contributing to the 2026-06-19 OOM cascade (66h unbounded renderer growth). |
-| 5 | Upstream privacy flags merged | `--disable-component-update`, `--simulate-outdated-no-au`, `--check-for-update-interval=0`, `--disable-background-networking` added to the single wrapper (previously only in the upstream wrapper layer that was being double-wrapped). |
-| 6 | LD_LIBRARY_PATH replicated | Upstream wrapper set `--prefix LD_LIBRARY_PATH` for libGL, libvdpau, libva, pipewire, alsa-lib, libpulseaudio. Replicated in the new single wrapper since we no longer pass through the upstream wrapper. |
-| 7 | `--ozone-platform-hint=auto` made explicit | Was in upstream wrapper but lost to the double-wrap collision. Now explicit. |
-| 8 | `--enable-gpu-rasterization` added | Offloads rasterization to GPU, reducing CPU memory buffers. |
-| 9 | `nix flake check --no-build` passes | All modules, packages, and checks eval successfully. |
-| 10 | AGENTS.md updated | 4 new entries: double-wrap collision, VA-API renames, backgrounding flags, Helium identity. |
+| #   | Item                                       | Details                                                                                                                                                                                                                                                           |
+| --- | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Double-wrap bug identified                 | SystemNix wrapped the upstream makeWrapper script (`$heliumPackage/bin/helium`), not the real binary (`$heliumPackage/opt/helium/helium`). Two `--enable-features` switches → Chromium's `GetSwitchValueASCII` returns only the last value → silent feature loss. |
+| 2   | Double-wrap bug fixed                      | Rewrote wrapper to `makeWrapper $out/opt/helium/helium $out/bin/helium` — wrapping the real binary directly. All flags now in a single makeWrapper layer.                                                                                                         |
+| 3   | Invalid feature names corrected            | Removed `AcceleratedVideoDecoder` (never existed). Renamed `VaapiVideoEncoder` → `AcceleratedVideoEncoder`. Added `AcceleratedVideoDecodeLinuxGL`, `AcceleratedVideoDecodeLinuxZeroCopyGL`, `VaapiIgnoreDriverChecks`, `UseMultiPlaneFormatForHardwareVideo`.     |
+| 4   | Backgrounding-disable flags removed        | `--disable-backgrounding-occluded-windows` and `--disable-renderer-backgrounding` deleted. These prevented Chromium's tab lifecycle management, contributing to the 2026-06-19 OOM cascade (66h unbounded renderer growth).                                       |
+| 5   | Upstream privacy flags merged              | `--disable-component-update`, `--simulate-outdated-no-au`, `--check-for-update-interval=0`, `--disable-background-networking` added to the single wrapper (previously only in the upstream wrapper layer that was being double-wrapped).                          |
+| 6   | LD_LIBRARY_PATH replicated                 | Upstream wrapper set `--prefix LD_LIBRARY_PATH` for libGL, libvdpau, libva, pipewire, alsa-lib, libpulseaudio. Replicated in the new single wrapper since we no longer pass through the upstream wrapper.                                                         |
+| 7   | `--ozone-platform-hint=auto` made explicit | Was in upstream wrapper but lost to the double-wrap collision. Now explicit.                                                                                                                                                                                      |
+| 8   | `--enable-gpu-rasterization` added         | Offloads rasterization to GPU, reducing CPU memory buffers.                                                                                                                                                                                                       |
+| 9   | `nix flake check --no-build` passes        | All modules, packages, and checks eval successfully.                                                                                                                                                                                                              |
+| 10  | AGENTS.md updated                          | 4 new entries: double-wrap collision, VA-API renames, backgrounding flags, Helium identity.                                                                                                                                                                       |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | Item | What's done | What's missing |
-|---|------|-------------|----------------|
-| 1 | Flake validation | `--no-build` eval check passes | **No actual build test.** Never ran `nix build` or eval of the full toplevel. The wrapper might fail at build time (e.g., `$out/opt/helium/helium` path might not exist after symlinkJoin + cp). |
-| 2 | AGENTS.md update | 4 new entries added | The existing "Helium crash on display hotplug" entry (line 205) still mentions `--enable-zero-copy` as crash-amplifying — but we KEPT `--enable-zero-copy`. No cross-reference added. |
-| 3 | Feature flag research | Identified correct names for Chromium 131+ | Did not verify whether Helium (Chromium 150) actually recognizes all flags. Some may have been removed or renamed again between 131 and 150. |
-| 4 | Wayland migration | `--ozone-platform-hint=auto` added | `WaylandWindowDecorations` feature was DROPPED from the merged `--enable-features` line with no documented reason. This was in the upstream wrapper. |
+| #   | Item                  | What's done                                | What's missing                                                                                                                                                                                   |
+| --- | --------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Flake validation      | `--no-build` eval check passes             | **No actual build test.** Never ran `nix build` or eval of the full toplevel. The wrapper might fail at build time (e.g., `$out/opt/helium/helium` path might not exist after symlinkJoin + cp). |
+| 2   | AGENTS.md update      | 4 new entries added                        | The existing "Helium crash on display hotplug" entry (line 205) still mentions `--enable-zero-copy` as crash-amplifying — but we KEPT `--enable-zero-copy`. No cross-reference added.            |
+| 3   | Feature flag research | Identified correct names for Chromium 131+ | Did not verify whether Helium (Chromium 150) actually recognizes all flags. Some may have been removed or renamed again between 131 and 150.                                                     |
+| 4   | Wayland migration     | `--ozone-platform-hint=auto` added         | `WaylandWindowDecorations` feature was DROPPED from the merged `--enable-features` line with no documented reason. This was in the upstream wrapper.                                             |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Item | Impact |
-|---|------|--------|
-| 1 | **Deploy + runtime verification** | Zero runtime testing. We don't know if the wrapper actually works, if Wayland activates, if VA-API decodes, if the real binary path is correct. |
-| 2 | **VA-API verification** | No `vainfo` check, no `chrome://gpu` check, no DevTools Media tab verification. We're assuming the flags work. |
-| 3 | **Memory impact measurement** | Removed backgrounding-disable flags but have no before/after memory measurement. Can't verify the OOM mitigation actually helps. |
-| 4 | **`nix fmt`** | Never ran treefmt/alejandra on the changed files. |
-| 5 | **Disk cache to tmpfs** | ArchWiki recommends `--disk-cache-dir="$XDG_RUNTIME_DIR/chromium-cache"`. Reduces disk writes and speeds up browsing. Not configured. |
-| 6 | **KeePassXC native messaging** | FEATURES.md says "Browser integration, Chromium + Helium native messaging manifests" but we didn't verify the native messaging host is wired to the new wrapper path. |
-| 7 | **macOS Helium flags** | The `heliumWrapped` returns raw `heliumPackage` on Darwin (no wrapping). macOS Helium runs with upstream flags only — none of SystemNix's VAAPI/GPU/session flags apply (some are Linux-only, but privacy flags like `--disable-background-networking` are cross-platform). |
-| 8 | **`browser-policies.nix` interaction** | `programs.chromium` is enabled with forced extensions (ytShortsBlocker, OneTab). Helium is ungoogled-chromium — unclear if `programs.chromium` policies apply to it. They likely DON'T (the NixOS module targets the `chromium` package, not Helium). This means Helium may be missing forced extensions. |
-| 9 | **Helium Memory Saver configuration** | Chromium has enterprise policies (`HighEfficiencyModeEnabled`, `MemorySaverModeSavings`) for Memory saver. Could set `Maximum` mode via policy for aggressive tab discarding on the memory-constrained Strix Halo system. Not configured. |
-| 10 | **Gatus monitoring for browser session** | No health check for "is the desktop session alive and is Helium running." |
+| #   | Item                                     | Impact                                                                                                                                                                                                                                                                                                    |
+| --- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Deploy + runtime verification**        | Zero runtime testing. We don't know if the wrapper actually works, if Wayland activates, if VA-API decodes, if the real binary path is correct.                                                                                                                                                           |
+| 2   | **VA-API verification**                  | No `vainfo` check, no `chrome://gpu` check, no DevTools Media tab verification. We're assuming the flags work.                                                                                                                                                                                            |
+| 3   | **Memory impact measurement**            | Removed backgrounding-disable flags but have no before/after memory measurement. Can't verify the OOM mitigation actually helps.                                                                                                                                                                          |
+| 4   | **`nix fmt`**                            | Never ran treefmt/alejandra on the changed files.                                                                                                                                                                                                                                                         |
+| 5   | **Disk cache to tmpfs**                  | ArchWiki recommends `--disk-cache-dir="$XDG_RUNTIME_DIR/chromium-cache"`. Reduces disk writes and speeds up browsing. Not configured.                                                                                                                                                                     |
+| 6   | **KeePassXC native messaging**           | FEATURES.md says "Browser integration, Chromium + Helium native messaging manifests" but we didn't verify the native messaging host is wired to the new wrapper path.                                                                                                                                     |
+| 7   | **macOS Helium flags**                   | The `heliumWrapped` returns raw `heliumPackage` on Darwin (no wrapping). macOS Helium runs with upstream flags only — none of SystemNix's VAAPI/GPU/session flags apply (some are Linux-only, but privacy flags like `--disable-background-networking` are cross-platform).                               |
+| 8   | **`browser-policies.nix` interaction**   | `programs.chromium` is enabled with forced extensions (ytShortsBlocker, OneTab). Helium is ungoogled-chromium — unclear if `programs.chromium` policies apply to it. They likely DON'T (the NixOS module targets the `chromium` package, not Helium). This means Helium may be missing forced extensions. |
+| 9   | **Helium Memory Saver configuration**    | Chromium has enterprise policies (`HighEfficiencyModeEnabled`, `MemorySaverModeSavings`) for Memory saver. Could set `Maximum` mode via policy for aggressive tab discarding on the memory-constrained Strix Halo system. Not configured.                                                                 |
+| 10  | **Gatus monitoring for browser session** | No health check for "is the desktop session alive and is Helium running."                                                                                                                                                                                                                                 |
 
 ---
 

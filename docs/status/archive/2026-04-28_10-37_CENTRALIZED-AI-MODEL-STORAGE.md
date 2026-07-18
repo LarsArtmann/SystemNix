@@ -15,6 +15,7 @@ Successfully implemented a centralized AI model storage architecture under `/dat
 ## a) FULLY DONE
 
 ### 1. New `ai-models.nix` Centralized Module
+
 - **File:** `modules/nixos/services/ai-models.nix`
 - **Purpose:** Single source of truth for ALL AI model directories
 - **Features:**
@@ -25,6 +26,7 @@ Successfully implemented a centralized AI model storage architecture under `/dat
   - `environment.sessionVariables` exports standardized env vars
 
 ### 2. Unified Directory Structure
+
 ```
 /data/ai/
 ├── models/
@@ -48,34 +50,39 @@ Successfully implemented a centralized AI model storage architecture under `/dat
 
 ### 3. Refactored All AI Services to Use Centralized Paths
 
-| Service | File | Change |
-|---------|------|--------|
-| **Ollama** | `ai-stack.nix` | `home` → `aiPaths.ollama`, `models` → `aiPaths.ollama-models` |
-| **Unsloth** | `ai-stack.nix` | `unslothDataDir` → `aiPaths.unsloth` |
+| Service     | File               | Change                                                         |
+| ----------- | ------------------ | -------------------------------------------------------------- |
+| **Ollama**  | `ai-stack.nix`     | `home` → `aiPaths.ollama`, `models` → `aiPaths.ollama-models`  |
+| **Unsloth** | `ai-stack.nix`     | `unslothDataDir` → `aiPaths.unsloth`                           |
 | **Whisper** | `voice-agents.nix` | `whisperModelsDir` → `config.services.ai-models.paths.whisper` |
-| **ComfyUI** | `comfyui.nix` | `HF_HOME` → `config.services.ai-models.paths.huggingface` |
+| **ComfyUI** | `comfyui.nix`      | `HF_HOME` → `config.services.ai-models.paths.huggingface`      |
 
 ### 4. Removed Duplicate Path Definitions
+
 - Deleted scattered `systemd.tmpfiles.rules` from `ai-stack.nix` (3 rules)
 - Deleted `systemd.tmpfiles.rules` from `voice-agents.nix` (1 rule)
 - Removed duplicate `environment.sessionVariables` from `ai-stack.nix` (5 vars)
 - All directory creation now centralized in `ai-models.nix`
 
 ### 5. Jan AI Integration
+
 - Added `pkgs.jan` to `home.packages` in `platforms/nixos/users/home.nix`
 - Added `home.activation.jan-data-link` to symlink `~/.config/Jan/data` → `/data/ai/models/jan`
 - Jan's data folder path is stored in `settings.json`, NOT via env vars — symlink approach is the cleanest Nix-native solution
 
 ### 6. Migration Tooling (`justfile`)
+
 - **`just ai-migrate`** — idempotent migration from legacy `/data/{models,cache,unsloth}` to `/data/ai/`
 - **`just ai-status`** — shows directory tree, disk usage per model type, and env vars
 
 ### 7. Module Registration
+
 - Added to `flake.nix` module definitions (line ~270)
 - Added to `evo-x2` module imports (line ~573)
 - Enabled in `platforms/nixos/system/configuration.nix` via `services.ai-models.enable = true`
 
 ### 8. Verification
+
 - `nix flake check --no-build` → ✅ PASS (all 26 modules validated)
 - `nix eval .#nixosConfigurations.evo-x2.config.services.ai-models.paths` → ✅ All 13 paths correct
 - `nix eval .#nixosConfigurations.evo-x2.config.services.ollama.home` → ✅ `/data/ai/models/ollama`
@@ -86,12 +93,14 @@ Successfully implemented a centralized AI model storage architecture under `/dat
 ## b) PARTIALLY DONE
 
 ### Jan AI Full Integration
+
 - ✅ Package installed via nixpkgs
 - ✅ Data folder symlinked via HM activation
 - ⚠️ Jan's `settings.json` data folder path may need manual UI adjustment if user previously set a custom path
 - ⚠️ Jan models stored under `/data/ai/models/jan/models/` — Jan will create this structure automatically
 
 ### LLaMA.cpp Path Integration
+
 - ✅ `LLAMA_MODEL_PATH` env var set to `/data/ai/models/gguf`
 - ⚠️ No dedicated NixOS service for llama.cpp yet (runs manually via `llama-server`)
 - ⚠️ No `llama.cpp` module with `stateDirectory` option (not in nixpkgs as a service)
@@ -101,40 +110,48 @@ Successfully implemented a centralized AI model storage architecture under `/dat
 ## c) NOT STARTED
 
 ### 1. Model Download Automation
+
 - No `services.ollama.loadModels` configured (user pulls models manually)
 - No declarative model manifest (e.g., `ai-models.models = [ "llama3.2" "qwen2.5" ]`)
 
 ### 2. Cross-Platform macOS Support
+
 - `ai-models.nix` is NixOS-only (uses `systemd.tmpfiles`)
 - macOS (Darwin) has no equivalent centralized AI model storage
 - Could add `home.file` basedirs for Darwin in `platforms/darwin/home.nix`
 
 ### 3. BTRFS Subvolume for `/data/ai`
+
 - `/data` is a flat BTRFS mount (no subvolumes)
 - Could create `@ai` subvolume for independent snapshot/backup of models
 - Currently models share the same BTRFS filesystem as other `/data` content
 
 ### 4. Backup Strategy for Models
+
 - No automated backup of downloaded models
 - Models are large (10-100GB each) — backup is expensive
 - Could add `restic` or `borg` backup for `/data/ai/models` with exclusions for cache
 
 ### 5. Model Deduplication
+
 - No deduplication across tool-specific model directories
 - e.g., same GGUF model could exist in both `gguf/` and `jan/`
 - Could use hardlinks or a shared model registry
 
 ### 6. Garbage Collection
+
 - No automatic cleanup of unused models
 - Old Ollama models accumulate in `/data/ai/models/ollama/models`
 - Could add a periodic cleanup script
 
 ### 7. Permission Hardening
+
 - All directories are 0755 (world-readable)
 - Could restrict to 0750 for sensitive/finetuned models
 - No ACL support for multi-user model access
 
 ### 8. Quota/Size Limits
+
 - No per-tool size limits
 - A runaway ComfyUI download could fill the disk
 - Could add `systemd` `MemoryMax` or directory quotas
@@ -146,6 +163,7 @@ Successfully implemented a centralized AI model storage architecture under `/dat
 **Nothing.** All changes are clean, tested, and backward-compatible. The migration is opt-in via `just ai-migrate`.
 
 However, one minor concern:
+
 - The `jan` package in nixpkgs is an Electron app — it may have issues with Wayland on Niri. This is unrelated to our storage work but worth noting.
 
 ---
@@ -155,6 +173,7 @@ However, one minor concern:
 ### Immediate (Next Session)
 
 1. **Add `services.ai-models.models` option** — declarative list of models to pre-download
+
    ```nix
    services.ai-models.models = [
      { name = "llama3.2"; source = "ollama"; }
@@ -194,33 +213,33 @@ However, one minor concern:
 
 ## f) Top #25 Things To Get Done Next
 
-| # | Task | Impact | Effort | Status |
-|---|------|--------|--------|--------|
-| 1 | Update AGENTS.md with new AI model architecture | High | Low | ⏳ |
-| 2 | Add `services.ai-models.models` declarative option | High | Medium | ⏳ |
-| 3 | Test `just ai-migrate` on actual `/data` | Critical | Low | ⏳ |
-| 4 | Add `just ai-health` diagnostic command | Medium | Low | ⏳ |
-| 5 | Verify Jan AI launches with symlinked data dir | High | Low | ⏳ |
-| 6 | Add macOS `ai-models` home-manager equivalent | Medium | Medium | ⏳ |
-| 7 | Create BTRFS `@ai` subvolume | Medium | Low | ⏳ |
-| 8 | Add model backup strategy (restic/borg) | Medium | Medium | ⏳ |
-| 9 | Integrate `ollama.loadModels` with centralized paths | Medium | Low | ⏳ |
-| 10 | Add `services.ai-models.cleanup` periodic GC | Low | Medium | ⏳ |
-| 11 | Document migration path in README | Medium | Low | ⏳ |
-| 12 | Add `ai-models` to homepage dashboard | Low | Low | ⏳ |
-| 13 | Monitor `/data/ai` disk usage via SigNoz | Low | Low | ⏳ |
-| 14 | Add per-tool size quota options | Low | Medium | ⏳ |
-| 15 | Hardlink deduplication across model dirs | Low | High | ⏳ |
-| 16 | Add `ai-models.cache.maxAge` for HF cache cleanup | Low | Low | ⏳ |
-| 17 | Support `services.ai-models.paths.custom` for user dirs | Low | Low | ⏳ |
-| 18 | Add NixOS test for `ai-models` module | Low | Medium | ⏳ |
-| 19 | Create `lib/ai-models.nix` shared helper | Low | Low | ⏳ |
-| 20 | Add `Type = lib.types.path` for all path options | Low | Low | ⏳ |
-| 21 | Document Jan data folder UI configuration | Low | Low | ⏳ |
-| 22 | Add `ollama-rocm` model warmup script | Low | Medium | ⏳ |
-| 23 | Create model download progress wrapper | Low | Medium | ⏳ |
-| 24 | Add `ai-models` to Darwin packages if useful | Low | Low | ⏳ |
-| 25 | Evaluate `llama.cpp` NixOS service module | Low | High | ⏳ |
+| #   | Task                                                    | Impact   | Effort | Status |
+| --- | ------------------------------------------------------- | -------- | ------ | ------ |
+| 1   | Update AGENTS.md with new AI model architecture         | High     | Low    | ⏳     |
+| 2   | Add `services.ai-models.models` declarative option      | High     | Medium | ⏳     |
+| 3   | Test `just ai-migrate` on actual `/data`                | Critical | Low    | ⏳     |
+| 4   | Add `just ai-health` diagnostic command                 | Medium   | Low    | ⏳     |
+| 5   | Verify Jan AI launches with symlinked data dir          | High     | Low    | ⏳     |
+| 6   | Add macOS `ai-models` home-manager equivalent           | Medium   | Medium | ⏳     |
+| 7   | Create BTRFS `@ai` subvolume                            | Medium   | Low    | ⏳     |
+| 8   | Add model backup strategy (restic/borg)                 | Medium   | Medium | ⏳     |
+| 9   | Integrate `ollama.loadModels` with centralized paths    | Medium   | Low    | ⏳     |
+| 10  | Add `services.ai-models.cleanup` periodic GC            | Low      | Medium | ⏳     |
+| 11  | Document migration path in README                       | Medium   | Low    | ⏳     |
+| 12  | Add `ai-models` to homepage dashboard                   | Low      | Low    | ⏳     |
+| 13  | Monitor `/data/ai` disk usage via SigNoz                | Low      | Low    | ⏳     |
+| 14  | Add per-tool size quota options                         | Low      | Medium | ⏳     |
+| 15  | Hardlink deduplication across model dirs                | Low      | High   | ⏳     |
+| 16  | Add `ai-models.cache.maxAge` for HF cache cleanup       | Low      | Low    | ⏳     |
+| 17  | Support `services.ai-models.paths.custom` for user dirs | Low      | Low    | ⏳     |
+| 18  | Add NixOS test for `ai-models` module                   | Low      | Medium | ⏳     |
+| 19  | Create `lib/ai-models.nix` shared helper                | Low      | Low    | ⏳     |
+| 20  | Add `Type = lib.types.path` for all path options        | Low      | Low    | ⏳     |
+| 21  | Document Jan data folder UI configuration               | Low      | Low    | ⏳     |
+| 22  | Add `ollama-rocm` model warmup script                   | Low      | Medium | ⏳     |
+| 23  | Create model download progress wrapper                  | Low      | Medium | ⏳     |
+| 24  | Add `ai-models` to Darwin packages if useful            | Low      | Low    | ⏳     |
+| 25  | Evaluate `llama.cpp` NixOS service module               | Low      | High   | ⏳     |
 
 ---
 
@@ -237,6 +256,7 @@ However, one minor concern:
 3. **What about the Ollama systemd service?** After `just switch`, Ollama will restart and point to the new path. If the migration hasn't happened yet, it will see an empty directory.
 
 **Possible Solutions:**
+
 - **A) Require `just ai-migrate` BEFORE `just switch`** — document this clearly
 - **B) Add a systemd `ExecStartPre` migration script** — runs once to move data if old path exists
 - **C) Use symlink approach** — `/data/models` → `/data/ai/models` (backward-compatible but messy)

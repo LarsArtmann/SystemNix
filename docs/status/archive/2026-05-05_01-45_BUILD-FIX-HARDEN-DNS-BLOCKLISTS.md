@@ -14,38 +14,38 @@ Fixed `nh os build .` from 20 errors down to 2 remaining upstream-only failures.
 
 ## A) FULLY DONE ✅
 
-| Item | What | Files |
-|------|------|-------|
-| **Harden mkDefault fix** | `lib/systemd.nix` now uses `lib.mkDefault` on all values so upstream nixpkgs module defaults take priority. Added `mkDefault'` helper that detects `lib.mkForce`/`lib.mkOverride` thunks to avoid double-wrapping. | `lib/systemd.nix`, `lib/default.nix` |
-| **Harden lib param** | Converted `systemd.nix` to curried function `{lib}: { ... }:` so callers pass `{ inherit lib; }` and get back a callable function. | `lib/systemd.nix` |
-| **All 18 callers updated** | Every file importing `lib/systemd.nix` now passes `{ inherit lib; }` — matches the new curried signature. | 18 service modules + scheduled-tasks.nix |
-| **DNS blocklist hashes** | Batch-fetched and updated 11 of 25 blocklist hashes that went stale (HaGeZi lists update frequently). | `platforms/shared/dns-blocklists.nix` |
-| **mr-sync vendor fix** | Added `proxyVendor = true` and updated `vendorHash` to fix inconsistent vendoring (charmtone version mismatch). Package builds successfully. | `pkgs/mr-sync.nix` |
-| **wallpaper-set.sh lint** | Fixed SC2034 (unused `i` → `_`) and SC2012 (ls → find with -iname). | `scripts/wallpaper-set.sh` |
-| **file-and-image-renamer postPatch** | Changed `--replace-fail` to `--replace-warn` and added fallback `echo >> go.mod` to inject replace directives when upstream removes them. | `pkgs/file-and-image-renamer.nix` |
-| **NixOS evaluation** | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` passes clean. | — |
+| Item                                 | What                                                                                                                                                                                                               | Files                                    |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------- |
+| **Harden mkDefault fix**             | `lib/systemd.nix` now uses `lib.mkDefault` on all values so upstream nixpkgs module defaults take priority. Added `mkDefault'` helper that detects `lib.mkForce`/`lib.mkOverride` thunks to avoid double-wrapping. | `lib/systemd.nix`, `lib/default.nix`     |
+| **Harden lib param**                 | Converted `systemd.nix` to curried function `{lib}: { ... }:` so callers pass `{ inherit lib; }` and get back a callable function.                                                                                 | `lib/systemd.nix`                        |
+| **All 18 callers updated**           | Every file importing `lib/systemd.nix` now passes `{ inherit lib; }` — matches the new curried signature.                                                                                                          | 18 service modules + scheduled-tasks.nix |
+| **DNS blocklist hashes**             | Batch-fetched and updated 11 of 25 blocklist hashes that went stale (HaGeZi lists update frequently).                                                                                                              | `platforms/shared/dns-blocklists.nix`    |
+| **mr-sync vendor fix**               | Added `proxyVendor = true` and updated `vendorHash` to fix inconsistent vendoring (charmtone version mismatch). Package builds successfully.                                                                       | `pkgs/mr-sync.nix`                       |
+| **wallpaper-set.sh lint**            | Fixed SC2034 (unused `i` → `_`) and SC2012 (ls → find with -iname).                                                                                                                                                | `scripts/wallpaper-set.sh`               |
+| **file-and-image-renamer postPatch** | Changed `--replace-fail` to `--replace-warn` and added fallback `echo >> go.mod` to inject replace directives when upstream removes them.                                                                          | `pkgs/file-and-image-renamer.nix`        |
+| **NixOS evaluation**                 | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath` passes clean.                                                                                                                         | —                                        |
 
 ## B) PARTIALLY DONE 🔧
 
-| Item | Status | Next Step |
-|------|--------|-----------|
-| **file-and-image-renamer build** | postPatch fixed but upstream has `gogenfilter@v3.0.0+incompatible` go.mod error | Fix upstream go.mod (major version path mismatch) |
-| **hermes-tui npmDepsHash** | Hash was restored to cached value, builds from cache | May need hash update if hermes-agent source changes |
+| Item                             | Status                                                                          | Next Step                                           |
+| -------------------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------- |
+| **file-and-image-renamer build** | postPatch fixed but upstream has `gogenfilter@v3.0.0+incompatible` go.mod error | Fix upstream go.mod (major version path mismatch)   |
+| **hermes-tui npmDepsHash**       | Hash was restored to cached value, builds from cache                            | May need hash update if hermes-agent source changes |
 
 ## C) NOT STARTED ⏳
 
-| Item | Priority | Notes |
-|------|----------|-------|
-| AGENTS.md update for new `harden` signature | LOW | Usage pattern changed: `harden = import ../../../lib/systemd.nix { inherit lib; };` |
-| Automated blocklist hash updater | MEDIUM | 11/25 stale in one session — needs CI or justfile recipe |
-| NixOS `just switch` | HIGH | Build must pass first (upstream fixes needed) |
+| Item                                        | Priority | Notes                                                                               |
+| ------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| AGENTS.md update for new `harden` signature | LOW      | Usage pattern changed: `harden = import ../../../lib/systemd.nix { inherit lib; };` |
+| Automated blocklist hash updater            | MEDIUM   | 11/25 stale in one session — needs CI or justfile recipe                            |
+| NixOS `just switch`                         | HIGH     | Build must pass first (upstream fixes needed)                                       |
 
 ## D) TOTALLY FUCKED UP 💥
 
-| Item | Root Cause | Impact |
-|------|-----------|--------|
-| **todo-list-ai build** | Upstream lockfile stale: `bun install` fails with `lockfile had changes, but lockfile is frozen` | Blocks `system-path`, `man-paths`, `etc` derivations — cascades to 10+ failures |
-| **file-and-image-renamer build** | Upstream `go.mod` has `gogenfilter@v3.0.0+incompatible` — Go refuses to resolve (needs `/v3` suffix) | Can't build the package until upstream fixes go.mod |
+| Item                             | Root Cause                                                                                           | Impact                                                                          |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **todo-list-ai build**           | Upstream lockfile stale: `bun install` fails with `lockfile had changes, but lockfile is frozen`     | Blocks `system-path`, `man-paths`, `etc` derivations — cascades to 10+ failures |
+| **file-and-image-renamer build** | Upstream `go.mod` has `gogenfilter@v3.0.0+incompatible` — Go refuses to resolve (needs `/v3` suffix) | Can't build the package until upstream fixes go.mod                             |
 
 Both are **upstream issues** that require fixes in their respective GitHub repos, not in SystemNix.
 
@@ -59,33 +59,33 @@ Both are **upstream issues** that require fixes in their respective GitHub repos
 
 ## F) Top 25 Next Actions
 
-| # | Action | Impact | Effort |
-|---|--------|--------|--------|
-| 1 | Fix todo-list-ai upstream lockfile (PR or push) | 🔴 HIGH | LOW |
-| 2 | Fix file-and-image-renamer upstream go.mod | 🔴 HIGH | LOW |
-| 3 | `just switch` after upstream fixes | 🔴 HIGH | LOW |
-| 4 | Create `just update-blocklists` recipe | 🟡 MED | LOW |
-| 5 | Update AGENTS.md with new harden signature | 🟡 MED | LOW |
-| 6 | Add `just build-packages` recipe (builds all custom pkgs) | 🟡 MED | LOW |
-| 7 | Test `just switch` on darwin (Lars-MacBook-Air) | 🟡 MED | MED |
-| 8 | Review harden mkDefault interactions with all NixOS services | 🟢 LOW | MED |
-| 9 | Audit all Go packages for stale vendorHashes | 🟡 MED | MED |
-| 10 | Add `nix flake check --no-build` to justfile | 🟢 LOW | LOW |
-| 11 | Enable SigNoz build test in CI | 🟢 LOW | HIGH |
-| 12 | Update flake.lock for all upstream fixes | 🟡 MED | LOW |
-| 13 | Test Immich backup restore procedure | 🟢 LOW | MED |
-| 14 | Review GPU hang recovery (Hermes anime pipeline) | 🟢 LOW | HIGH |
-| 15 | DNS failover: provision Pi 3 hardware | 🟡 MED | HIGH |
-| 16 | Add Authelia SSO to remaining services | 🟡 MED | MED |
-| 17 | Centralized AI model storage migration verification | 🟢 LOW | LOW |
-| 18 | Niri session restore testing after harden changes | 🟢 LOW | LOW |
-| 19 | Review wallpaper self-healing with awww 0.12.0 | 🟢 LOW | LOW |
-| 20 | Update Crush config deployment (just update && just switch) | 🟢 LOW | LOW |
-| 21 | Gitea repo sync automation test | 🟢 LOW | MED |
-| 22 | Twenty CRM build status check | 🟢 LOW | MED |
-| 23 | Gatus endpoint monitoring review | 🟢 LOW | LOW |
-| 24 | Library policy package build verification | 🟢 LOW | LOW |
-| 25 | Disk monitoring setup for BTRFS snapshots | 🟢 LOW | MED |
+| #   | Action                                                       | Impact  | Effort |
+| --- | ------------------------------------------------------------ | ------- | ------ |
+| 1   | Fix todo-list-ai upstream lockfile (PR or push)              | 🔴 HIGH | LOW    |
+| 2   | Fix file-and-image-renamer upstream go.mod                   | 🔴 HIGH | LOW    |
+| 3   | `just switch` after upstream fixes                           | 🔴 HIGH | LOW    |
+| 4   | Create `just update-blocklists` recipe                       | 🟡 MED  | LOW    |
+| 5   | Update AGENTS.md with new harden signature                   | 🟡 MED  | LOW    |
+| 6   | Add `just build-packages` recipe (builds all custom pkgs)    | 🟡 MED  | LOW    |
+| 7   | Test `just switch` on darwin (Lars-MacBook-Air)              | 🟡 MED  | MED    |
+| 8   | Review harden mkDefault interactions with all NixOS services | 🟢 LOW  | MED    |
+| 9   | Audit all Go packages for stale vendorHashes                 | 🟡 MED  | MED    |
+| 10  | Add `nix flake check --no-build` to justfile                 | 🟢 LOW  | LOW    |
+| 11  | Enable SigNoz build test in CI                               | 🟢 LOW  | HIGH   |
+| 12  | Update flake.lock for all upstream fixes                     | 🟡 MED  | LOW    |
+| 13  | Test Immich backup restore procedure                         | 🟢 LOW  | MED    |
+| 14  | Review GPU hang recovery (Hermes anime pipeline)             | 🟢 LOW  | HIGH   |
+| 15  | DNS failover: provision Pi 3 hardware                        | 🟡 MED  | HIGH   |
+| 16  | Add Authelia SSO to remaining services                       | 🟡 MED  | MED    |
+| 17  | Centralized AI model storage migration verification          | 🟢 LOW  | LOW    |
+| 18  | Niri session restore testing after harden changes            | 🟢 LOW  | LOW    |
+| 19  | Review wallpaper self-healing with awww 0.12.0               | 🟢 LOW  | LOW    |
+| 20  | Update Crush config deployment (just update && just switch)  | 🟢 LOW  | LOW    |
+| 21  | Gitea repo sync automation test                              | 🟢 LOW  | MED    |
+| 22  | Twenty CRM build status check                                | 🟢 LOW  | MED    |
+| 23  | Gatus endpoint monitoring review                             | 🟢 LOW  | LOW    |
+| 24  | Library policy package build verification                    | 🟢 LOW  | LOW    |
+| 25  | Disk monitoring setup for BTRFS snapshots                    | 🟢 LOW  | MED    |
 
 ## G) Top #1 Question
 

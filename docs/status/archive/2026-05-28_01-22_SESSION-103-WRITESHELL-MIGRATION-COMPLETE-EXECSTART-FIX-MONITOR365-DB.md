@@ -12,6 +12,7 @@
 ## A) Fully Done
 
 ### 1. Fixed 11 latent ExecStart bugs from Session 101
+
 - **Root cause:** `writeShellApplication` produces a **directory** (`/nix/store/xxx-name/bin/name`), not a single executable file. Session 101 converted 11 scripts but referenced the derivation path directly as ExecStart, pointing systemd at a directory instead of a binary. Services would fail at runtime with "Permission denied" or "Is a directory".
 - **Fix:** Changed all references to use `"${var}/bin/<name>"` or `lib.getExe var` pattern.
 - **Files fixed:**
@@ -25,27 +26,29 @@
 - **Impact:** Critical runtime fix — services would not start without this.
 
 ### 2. Completed `writeShellScript` → `writeShellApplication` migration (ALL 31 remaining scripts)
+
 - **Total converted this session:** 31 scripts across 10 files
 - **Combined with Session 101:** 42 scripts total (11 + 31)
 - **Remaining `writeShellScript` in codebase:** ZERO
 
 **Converted this session:**
 
-| Module | Scripts | Details |
-|--------|---------|---------|
-| `forgejo.nix` | 8 | mirror-github, mirror-starred, setup, ensure-password-file, admin-setup, token-gen, gen-runner-token, register-runner |
-| `forgejo-repos.nix` | 3 | ensure-repos, update-github-token, wait-for-forgejo |
-| `waybar.nix` | 7 | camera, dns-stats, media, clipboard, clipboard-menu, clipboard-clear, weather |
-| `dual-wan.nix` | 4 | route-health-monitor, mptcp-endpoint-manager, mptcpize-wrapper, mptcp-dispatcher |
-| `monitor365.nix` | 1 | inject-auth |
-| `dns-blocker.nix` | 2 | init (dnsblockd-init), start-wrapper (dnsblockd-start) |
-| `niri-wrapped.nix` | 2 | awww-check-wayland, swayidle-suspend |
-| `taskwarrior.nix` | 1 | taskwarrior-backup |
-| `ai-stack.nix` | 1 | gpu-python |
-| `scheduled-tasks.nix` | 2 | dns-update, service-health-check (external .sh via `builtins.readFile`) |
-| `flake.nix` | 3 | deploy, validate, dns-diagnostics (apps, external .sh via `builtins.readFile`) |
+| Module                | Scripts | Details                                                                                                               |
+| --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| `forgejo.nix`         | 8       | mirror-github, mirror-starred, setup, ensure-password-file, admin-setup, token-gen, gen-runner-token, register-runner |
+| `forgejo-repos.nix`   | 3       | ensure-repos, update-github-token, wait-for-forgejo                                                                   |
+| `waybar.nix`          | 7       | camera, dns-stats, media, clipboard, clipboard-menu, clipboard-clear, weather                                         |
+| `dual-wan.nix`        | 4       | route-health-monitor, mptcp-endpoint-manager, mptcpize-wrapper, mptcp-dispatcher                                      |
+| `monitor365.nix`      | 1       | inject-auth                                                                                                           |
+| `dns-blocker.nix`     | 2       | init (dnsblockd-init), start-wrapper (dnsblockd-start)                                                                |
+| `niri-wrapped.nix`    | 2       | awww-check-wayland, swayidle-suspend                                                                                  |
+| `taskwarrior.nix`     | 1       | taskwarrior-backup                                                                                                    |
+| `ai-stack.nix`        | 1       | gpu-python                                                                                                            |
+| `scheduled-tasks.nix` | 2       | dns-update, service-health-check (external .sh via `builtins.readFile`)                                               |
+| `flake.nix`           | 3       | deploy, validate, dns-diagnostics (apps, external .sh via `builtins.readFile`)                                        |
 
 **Benefits gained across all scripts:**
+
 - Automatic `set -euo pipefail` (removed 15+ manual `set -euo pipefail` lines)
 - Shellcheck at build time (catches bugs before deployment)
 - `runtimeInputs` for PATH management (replaced 50+ `${pkgs.xxx}/bin/` prefixes)
@@ -53,23 +56,27 @@
 - Consistent pattern across entire codebase — single convention
 
 **External `.sh` files handled via `builtins.readFile`:**
+
 - `route-health-monitor.sh`, `mptcp-endpoint-manager.sh` — shebang and `set -euo pipefail` are harmless (shebang = comment, set is idempotent)
 - `dns-update.sh`, `service-health-check`, `deploy.sh`, `validate.sh`, `dns-diagnostics.sh` — same approach
 - `wallpaper-set.sh` — already converted in `niri-wrapped.nix` using same pattern
 - `flake.nix` apps — refactored with `mkApp` helper to DRY the pattern
 
 ### 3. Fixed `monitor365-server` database connection
+
 - **Root cause:** SQLite URL used `sqlite:/path` (2 slashes) instead of `sqlite:///path` (3 slashes for absolute paths). This caused SQLite error code 14 ("unable to open database file") on every startup attempt, creating a crash loop.
 - **Fix:** Changed `monitor365.nix:541` from `sqlite:${cfg.home}/server/monitor365.db` to `sqlite://${cfg.home}/server/monitor365.db`
 - **Evidence:** `journalctl --user -u monitor365-server -n 50` showed consistent `Failed to initialize database: error returned from database: (code: 14) unable to open database file`
 - **Impact:** monitor365-server was in crash loop since at least May 27. Fix unblocks the dashboard.
 
 ### 4. Refactored `flake.nix` apps with `mkApp` helper
+
 - **Before:** 3 separate `writeShellScriptBin` blocks with identical structure
 - **After:** Single `mkApp` function parameterized by name, description, runtimeInputs, and scriptPath
 - **Files:** `flake.nix`
 
 ### 5. `waybar.nix` full restructure
+
 - Extracted all 7 inline scripts to top-level `let` bindings as named `writeShellApplication` derivations
 - Scripts now have `runtimeInputs` instead of `${pkgs.xxx}/bin/` prefixes
 - Used `lib.getExe` consistently for waybar config `exec` and `on-click` references
@@ -85,6 +92,7 @@
 ## C) Not Started
 
 ### From Session 99/100/101 (still outstanding)
+
 1. ~~**Move `todo-list-ai` FOD hash upstream**~~ **DONE (Session 107)** — upstream flake.nix now manages bun deps hash
 2. ~~**Move `dnsblockd`/`file-and-image-renamer` vendorHash upstream**~~ **DONE (Session 107)** — upstream repos manage vendorHash; SystemNix removed hardcoded overrides
 3. ~~**GitHub Actions CI** — no CI exists at all~~ **DONE (Session 104)** — `nix-check.yml` + `flake-update.yml` already exist
@@ -97,6 +105,7 @@
 10. ~~**Validate sops secret values at activation time**~~ **DONE (Session 104)** — added ExecStartPre validation to `pocket-id` (encryption key) and `gatus` (env template for Discord alerts).
 
 ### New this session
+
 11. **Deploy and verify monitor365-server with fixed SQLite URL** — code fix committed but not deployed yet
 
 ---
@@ -115,12 +124,14 @@
 ## E) What We Should Improve
 
 ### Process Improvements
+
 1. ~~**Add NixOS VM test for ExecStart correctness**~~ **DONE (Session 105)** — created `tests/exec-start-paths.nix` + `just test-exec-paths`. Evaluates all 127 ExecStart paths from full NixOS config, verifies each is a regular executable file. Catches the "Is a directory" bug class.
 2. ~~**Use `lib.getExe` consistently**~~ **DONE (Session 105)** — converted all 31 old-style `"${pkg}/bin/binary"` to `lib.getExe`/`lib.getExe'` across 18 files. Added `meta.mainProgram` to signoz packages. Zero remaining old-style patterns in Exec* lines.
 3. **Commit per logical change** — this session combined 3 logical changes (ExecStart fix, migration completion, monitor365-server fix) into one commit. Acceptable for a migration sprint but worth separating when possible.
 4. ~~**Auto-generate `service-health-check` service list**~~ **DONE (Session 104)** — hybrid approach: 6 critical services + `systemctl --failed` dynamic catch-all.
 
 ### Architecture Improvements
+
 5. **Textfile collectors directory ownership** — `nobody:nogroup 1777` (world-writable). Consider dedicated `node-exporter` user.
 6. **Cross-module tmpfiles dependencies** — `niri-config.nix` writes to dir created by `signoz.nix`. Should be explicit.
 7. **Type models for secrets** — no validation of secret content (length, format). ExecStartPre pattern works but Nix-level assertions would be better.
@@ -131,48 +142,48 @@
 
 ### Tier 1: Immediate (today, <30 min each)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Deploy and verify all changes — `just switch` | 10 min | Ship everything |
-| 2 | Verify `monitor365-server` starts after SQLite URL fix | 5 min | Confirm DB fix works |
-| 3 | Run `just test` (full build) to catch any build-time issues | 20 min | Confidence before deploy |
-| ~~4~~ | ~~Move `dnsblockd` vendorHash to upstream repo~~ **DONE (S107)** | — | — |
-| ~~5~~ | ~~Move `file-and-image-renamer` vendorHash to upstream repo~~ **DONE (S107)** | — | — |
+| #     | Task                                                                          | Effort | Impact                   |
+| ----- | ----------------------------------------------------------------------------- | ------ | ------------------------ |
+| 1     | Deploy and verify all changes — `just switch`                                 | 10 min | Ship everything          |
+| 2     | Verify `monitor365-server` starts after SQLite URL fix                        | 5 min  | Confirm DB fix works     |
+| 3     | Run `just test` (full build) to catch any build-time issues                   | 20 min | Confidence before deploy |
+| ~~4~~ | ~~Move `dnsblockd` vendorHash to upstream repo~~ **DONE (S107)**              | —      | —                        |
+| ~~5~~ | ~~Move `file-and-image-renamer` vendorHash to upstream repo~~ **DONE (S107)** | —      | —                        |
 
 ### Tier 2: This Week (<2 hr each)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| ~~6~~ | ~~Move `todo-list-ai` bun FOD hash management to upstream repo~~ **DONE (S107)** | — | — |
-| ~~7~~ | ~~Fix PMA go.work: `go 1.26.2` → `go 1.26.3`~~ **DONE (S106)** — already at 1.26.3 | — | — |
-| ~~8~~ | ~~Publish git tags for go-output submodules (9 tags)~~ **DONE (S106)** — 10 tags moved to HEAD | — | — |
-| ~~9~~ | ~~Remove PMA `overrideModAttrs` after tags exist~~ **DONE (S106)** — removed, vendorHash updated | — | — |
-| 10 | ~~Add GitHub Actions CI~~ **DONE** — `nix-check.yml` + `flake-update.yml` already exist | — | — |
-| ~~11~~ | ~~Auto-generate `service-health-check` service list~~ **DONE (S104)** | — | — |
-| ~~12~~ | ~~Add NixOS VM test for ExecStart path correctness~~ **DONE (S105)** — `just test-exec-paths` | — | — |
-| 13 | Strip shebangs from external `.sh` files used with `writeShellApplication` | 30 min | Cleaner generated scripts |
+| #      | Task                                                                                             | Effort | Impact                    |
+| ------ | ------------------------------------------------------------------------------------------------ | ------ | ------------------------- |
+| ~~6~~  | ~~Move `todo-list-ai` bun FOD hash management to upstream repo~~ **DONE (S107)**                 | —      | —                         |
+| ~~7~~  | ~~Fix PMA go.work: `go 1.26.2` → `go 1.26.3`~~ **DONE (S106)** — already at 1.26.3               | —      | —                         |
+| ~~8~~  | ~~Publish git tags for go-output submodules (9 tags)~~ **DONE (S106)** — 10 tags moved to HEAD   | —      | —                         |
+| ~~9~~  | ~~Remove PMA `overrideModAttrs` after tags exist~~ **DONE (S106)** — removed, vendorHash updated | —      | —                         |
+| 10     | ~~Add GitHub Actions CI~~ **DONE** — `nix-check.yml` + `flake-update.yml` already exist          | —      | —                         |
+| ~~11~~ | ~~Auto-generate `service-health-check` service list~~ **DONE (S104)**                            | —      | —                         |
+| ~~12~~ | ~~Add NixOS VM test for ExecStart path correctness~~ **DONE (S105)** — `just test-exec-paths`    | —      | —                         |
+| 13     | Strip shebangs from external `.sh` files used with `writeShellApplication`                       | 30 min | Cleaner generated scripts |
 
 ### Tier 3: Architecture (this sprint)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
+| #      | Task                                                                                                                                                            | Effort | Impact                  |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------- |
 | ~~14~~ | ~~Redesign `mkPreparedSource` to auto-generate `require` lines~~ **DONE (S107)** — auto-strips local replaces, auto-normalizes pseudo-versions. See Appendix D. |
-| ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D. |
-| 16 | Convert `/data` BTRFS from toplevel to `@data` subvolume | 30 min | Enables /data snapshots |
-| ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP) | — | — |
-| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — `lib/images.nix` registry | — | — |
-| ~~19~~ | ~~Standardize on `lib.getExe`~~ **DONE (S105)** — 31 conversions, zero old-style remaining | — | — |
+| ~~15~~ | ~~Add `mkPackageOverlay` platform filtering (skip Linux-only on Darwin)~~ **DONE (S107)** — safe fallback via `or null`. See Appendix D.                        |
+| 16     | Convert `/data` BTRFS from toplevel to `@data` subvolume                                                                                                        | 30 min | Enables /data snapshots |
+| ~~17~~ | ~~Add Gatus health checks for all services~~ **DONE (S104)** — 26 endpoints, Hermes excluded (no HTTP)                                                          | —      | —                       |
+| ~~18~~ | ~~Centralize Docker image tags in `lib/`~~ **DONE (S104)** — `lib/images.nix` registry                                                                          | —      | —                       |
+| ~~19~~ | ~~Standardize on `lib.getExe`~~ **DONE (S105)** — 31 conversions, zero old-style remaining                                                                      | —      | —                       |
 
 ### Tier 4: Nice to Have
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 20 | Add `just test` to GitHub Actions (full build) | 1 hr | Complete CI coverage |
-| 21 | Create `modules/nixos/services/` README with conventions | 15 min | Onboarding |
-| 22 | Benchmark flake eval time before/after auto-discovery | 10 min | Performance baseline |
-| 23 | Add `# @module <name>` convention to replace file parsing | 1 hr | Faster eval, more explicit |
-| ~~24~~ | ~~Add runtime secret validation for critical secrets~~ **DONE (S104)** — pocket-id + gatus ExecStartPre | — | — |
-| 25 | Textfile collectors: dedicated `node-exporter` user instead of 1777 | 30 min | Better security posture |
+| #      | Task                                                                                                    | Effort | Impact                     |
+| ------ | ------------------------------------------------------------------------------------------------------- | ------ | -------------------------- |
+| 20     | Add `just test` to GitHub Actions (full build)                                                          | 1 hr   | Complete CI coverage       |
+| 21     | Create `modules/nixos/services/` README with conventions                                                | 15 min | Onboarding                 |
+| 22     | Benchmark flake eval time before/after auto-discovery                                                   | 10 min | Performance baseline       |
+| 23     | Add `# @module <name>` convention to replace file parsing                                               | 1 hr   | Faster eval, more explicit |
+| ~~24~~ | ~~Add runtime secret validation for critical secrets~~ **DONE (S104)** — pocket-id + gatus ExecStartPre | —      | —                          |
+| 25     | Textfile collectors: dedicated `node-exporter` user instead of 1777                                     | 30 min | Better security posture    |
 
 ---
 
@@ -186,19 +197,19 @@
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files changed | 16 |
-| Lines changed | +1076 -955 (2031 total) |
-| Session 101 ExecStart bugs fixed | 11 (across 6 files) |
-| Scripts converted to writeShellApplication | 31 (this session) + 11 (session 101) = 42 total |
-| Remaining writeShellScript in codebase | **ZERO** (was 31) |
-| writeShellApplication usages in codebase | 46 |
-| monitor365-server crash loop fixed | 1 (SQLite URL) |
-| External scripts converted (builtins.readFile) | 5 |
-| flake.nix apps refactored with mkApp | 3 |
-| Build | All checks passed ✅ |
-| Working tree | 16 modified files, 1 untracked (gather-status.sh) |
+| Metric                                         | Value                                             |
+| ---------------------------------------------- | ------------------------------------------------- |
+| Files changed                                  | 16                                                |
+| Lines changed                                  | +1076 -955 (2031 total)                           |
+| Session 101 ExecStart bugs fixed               | 11 (across 6 files)                               |
+| Scripts converted to writeShellApplication     | 31 (this session) + 11 (session 101) = 42 total   |
+| Remaining writeShellScript in codebase         | **ZERO** (was 31)                                 |
+| writeShellApplication usages in codebase       | 46                                                |
+| monitor365-server crash loop fixed             | 1 (SQLite URL)                                    |
+| External scripts converted (builtins.readFile) | 5                                                 |
+| flake.nix apps refactored with mkApp           | 3                                                 |
+| Build                                          | All checks passed ✅                              |
+| Working tree                                   | 16 modified files, 1 untracked (gather-status.sh) |
 
 ---
 
@@ -208,60 +219,60 @@
 
 ### Commits
 
-| Commit | Description |
-|--------|-------------|
+| Commit     | Description                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------- |
 | `b4e2803b` | `refactor(images): introduce centralized image registry and migrate all services to use it` |
-| `df631cd6` | `test(systemd): add ExecStart path validation for systemd service binaries` |
-| `bd6d0b7c` | `refactor(systemd): migrate ExecStart binary paths from hardcoded to lib.getExe` |
+| `df631cd6` | `test(systemd): add ExecStart path validation for systemd service binaries`                 |
+| `bd6d0b7c` | `refactor(systemd): migrate ExecStart binary paths from hardcoded to lib.getExe`            |
 
 ### What Changed
 
-| Change | Files | Details |
-|--------|-------|---------|
-| **Monitor365 Gatus check** | `gatus-config.nix` | Added TCP check on port 3001 (26 endpoints total) |
-| **`lib/images.nix`** | new file | Central Docker image registry with `mkRef` helper. 7 entries (openseo, manifest, manifest-postgres, twenty, twenty-postgres, twenty-redis). |
-| **Docker image pinning** | `twenty.nix` | `postgres:16` → `postgres:16-alpine`, bare `redis` → `redis:7-alpine` |
-| **Image registry wiring** | `openseo.nix`, `manifest.nix`, `twenty.nix` | All use `images.*.ref` in compose files |
-| **Auto-gen health check** | `scheduled-tasks.nix` | Replaced hardcoded 31-service script with hybrid: 6 critical + `systemctl --failed` dynamic catch-all |
-| **Sops validation** | `pocket-id.nix`, `gatus-config.nix` | ExecStartPre checks encryption key and gatus env file |
-| **ExecStart path validation** | `tests/exec-start-paths.nix`, `justfile` | `just test-exec-paths` evaluates all 127 ExecStart paths, verifies each is a regular executable file |
-| **`lib.getExe` migration** | 18 files | 31 conversions from `"${pkg}/bin/binary"` to `lib.getExe`/`lib.getExe'` |
-| **`meta.mainProgram`** | `signoz.nix` | Added to both `signoz` and `signoz-otel-collector` packages |
-| **`lib.getExe'` for NUR** | `scheduled-tasks.nix`, `rpi3/default.nix` | crush package has no `mainProgram` |
+| Change                        | Files                                       | Details                                                                                                                                     |
+| ----------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monitor365 Gatus check**    | `gatus-config.nix`                          | Added TCP check on port 3001 (26 endpoints total)                                                                                           |
+| **`lib/images.nix`**          | new file                                    | Central Docker image registry with `mkRef` helper. 7 entries (openseo, manifest, manifest-postgres, twenty, twenty-postgres, twenty-redis). |
+| **Docker image pinning**      | `twenty.nix`                                | `postgres:16` → `postgres:16-alpine`, bare `redis` → `redis:7-alpine`                                                                       |
+| **Image registry wiring**     | `openseo.nix`, `manifest.nix`, `twenty.nix` | All use `images.*.ref` in compose files                                                                                                     |
+| **Auto-gen health check**     | `scheduled-tasks.nix`                       | Replaced hardcoded 31-service script with hybrid: 6 critical + `systemctl --failed` dynamic catch-all                                       |
+| **Sops validation**           | `pocket-id.nix`, `gatus-config.nix`         | ExecStartPre checks encryption key and gatus env file                                                                                       |
+| **ExecStart path validation** | `tests/exec-start-paths.nix`, `justfile`    | `just test-exec-paths` evaluates all 127 ExecStart paths, verifies each is a regular executable file                                        |
+| **`lib.getExe` migration**    | 18 files                                    | 31 conversions from `"${pkg}/bin/binary"` to `lib.getExe`/`lib.getExe'`                                                                     |
+| **`meta.mainProgram`**        | `signoz.nix`                                | Added to both `signoz` and `signoz-otel-collector` packages                                                                                 |
+| **`lib.getExe'` for NUR**     | `scheduled-tasks.nix`, `rpi3/default.nix`   | crush package has no `mainProgram`                                                                                                          |
 
 ### Remaining Uncommitted (4 files)
 
-| File | Change |
-|------|--------|
-| `signoz.nix` | `meta.mainProgram` additions |
-| `niri-wrapped.nix` | swayidle/swaylock/wallpaper-set `getExe` conversions |
-| `rpi3/default.nix` | crush `getExe'` fix |
-| `scheduled-tasks.nix` | crush `getExe'` fix |
+| File                  | Change                                               |
+| --------------------- | ---------------------------------------------------- |
+| `signoz.nix`          | `meta.mainProgram` additions                         |
+| `niri-wrapped.nix`    | swayidle/swaylock/wallpaper-set `getExe` conversions |
+| `rpi3/default.nix`    | crush `getExe'` fix                                  |
+| `scheduled-tasks.nix` | crush `getExe'` fix                                  |
 
 ### Skipped Tasks (requires external access)
 
-| Task | Why |
-|------|-----|
-| ~~#1 todo-list-ai FOD~~ | **DONE (S107)** — upstream bun.lock + depsHash updated |
-| ~~#2 vendorHash upstream~~ | **DONE (S107)** — dnsblockd and file-and-image-renamer vendorHash moved upstream |
-| ~~#4 PMA go.work~~ | **DONE (S106)** — already at 1.26.3 |
-| ~~#5 PMA overrideModAttrs~~ | **DONE (S106)** — tags published, overrideModAttrs removed |
-| #6 BTRFS /data migration | Dangerous, needs `just snapshot-migrate-data` + reboot on evo-x2 |
-| #11 Deploy monitor365 | Needs `just switch` on evo-x2 |
+| Task                        | Why                                                                              |
+| --------------------------- | -------------------------------------------------------------------------------- |
+| ~~#1 todo-list-ai FOD~~     | **DONE (S107)** — upstream bun.lock + depsHash updated                           |
+| ~~#2 vendorHash upstream~~  | **DONE (S107)** — dnsblockd and file-and-image-renamer vendorHash moved upstream |
+| ~~#4 PMA go.work~~          | **DONE (S106)** — already at 1.26.3                                              |
+| ~~#5 PMA overrideModAttrs~~ | **DONE (S106)** — tags published, overrideModAttrs removed                       |
+| #6 BTRFS /data migration    | Dangerous, needs `just snapshot-migrate-data` + reboot on evo-x2                 |
+| #11 Deploy monitor365       | Needs `just switch` on evo-x2                                                    |
 
 ### Session 105 Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files changed | 22 (3 sessions total) |
-| `lib.getExe` conversions | 31 across 18 files |
-| Old-style `"${pkg}/bin/"` remaining in Exec* lines | **ZERO** |
-| Remaining in inline shell scripts | 5 (not ExecStart — inside bash strings) |
-| Gatus endpoints | 26 (was 24) |
-| Docker images centralized | 7 in `lib/images.nix` |
-| Services with sops ExecStartPre validation | 4 (oauth2-proxy, pocket-id, gatus, + existing patterns) |
-| `just test-exec-paths` paths checked | 127 (96 verified, 31 not built locally) |
-| Build | All checks passed ✅ |
+| Metric                                             | Value                                                   |
+| -------------------------------------------------- | ------------------------------------------------------- |
+| Files changed                                      | 22 (3 sessions total)                                   |
+| `lib.getExe` conversions                           | 31 across 18 files                                      |
+| Old-style `"${pkg}/bin/"` remaining in Exec* lines | **ZERO**                                                |
+| Remaining in inline shell scripts                  | 5 (not ExecStart — inside bash strings)                 |
+| Gatus endpoints                                    | 26 (was 24)                                             |
+| Docker images centralized                          | 7 in `lib/images.nix`                                   |
+| Services with sops ExecStartPre validation         | 4 (oauth2-proxy, pocket-id, gatus, + existing patterns) |
+| `just test-exec-paths` paths checked               | 127 (96 verified, 31 not built locally)                 |
+| Build                                              | All checks passed ✅                                    |
 
 ---
 
@@ -271,12 +282,12 @@
 
 ### What Changed
 
-| Change | Repo | Details |
-|--------|------|--------|
+| Change                       | Repo        | Details                                                                                                                                                                                                                                                           |
+| ---------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **go-output submodule tags** | `go-output` | Moved 10 `v0.0.0` tags (d2, delimited, enum, escape, graph, markup, plantuml, serialization, table, testhelpers) + `testhelpers/graphtest` from stale commits to HEAD (`ab60a5c`). All submodules now have `go 1.26.3` in their `go.mod`. Force-pushed to origin. |
-| **PMA go.work** | `PMA` | Already at `go 1.26.3` — no change needed |
-| **Removed overrideModAttrs** | `PMA` | Deleted `overrideModAttrs = _: { preBuild = "go mod tidy"; };` from `flake.nix:222`. The `mkPreparedSource` + `postPatchExtra` already produce a consistent go.mod — `go mod tidy` was unnecessary. |
-| **Updated vendorHash** | `PMA` | `sha256-lFke...` → `sha256-i+hl...` (different vendor tree without tidy phase) |
+| **PMA go.work**              | `PMA`       | Already at `go 1.26.3` — no change needed                                                                                                                                                                                                                         |
+| **Removed overrideModAttrs** | `PMA`       | Deleted `overrideModAttrs = _: { preBuild = "go mod tidy"; };` from `flake.nix:222`. The `mkPreparedSource` + `postPatchExtra` already produce a consistent go.mod — `go mod tidy` was unnecessary.                                                               |
+| **Updated vendorHash**       | `PMA`       | `sha256-lFke...` → `sha256-i+hl...` (different vendor tree without tidy phase)                                                                                                                                                                                    |
 
 ### Verified
 
@@ -296,13 +307,13 @@ The `overrideModAttrs` was a no-op in practice — `mkPreparedSource` + `postPat
 
 ### What Changed
 
-| Change | Repo | Details |
-|--------|------|---------|
-| **todo-list-ai bun.lock** | `todo-list-ai` | `bun.lock` was stale (out of sync with `package.json`). Regenerated, updated `depsHash` to `sha256-WpViT+00F+n6GWLP77qMs4u4ilI7gn5PyBexsWPrFIQ=`. |
-| **todo-list-ai overlay** | `SystemNix` | Replaced 32-line `todoListAiOverlay` + `todoListAiFixedHash` with `(mkPackageOverlay todo-list-ai "todo-list-ai" {})` in `overlays/shared.nix`. |
-| **file-and-image-renamer vendorHash** | `file-and-image-renamer` | Updated `vendorHash` from stale `sha256-of+yn...` → `sha256-aH+cnh...` in upstream `flake.nix`. |
-| **file-and-image-renamer overlay** | `SystemNix` | Removed `{vendorHash = "sha256-..."}` override from `overlays/linux.nix`. |
-| **dnsblockd overlay** | `SystemNix` | Removed `{vendorHash = "sha256-..."}` override from `overlays/linux.nix`. Upstream `nix/vendor-hash.nix` was already correct. |
+| Change                                | Repo                     | Details                                                                                                                                           |
+| ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **todo-list-ai bun.lock**             | `todo-list-ai`           | `bun.lock` was stale (out of sync with `package.json`). Regenerated, updated `depsHash` to `sha256-WpViT+00F+n6GWLP77qMs4u4ilI7gn5PyBexsWPrFIQ=`. |
+| **todo-list-ai overlay**              | `SystemNix`              | Replaced 32-line `todoListAiOverlay` + `todoListAiFixedHash` with `(mkPackageOverlay todo-list-ai "todo-list-ai" {})` in `overlays/shared.nix`.   |
+| **file-and-image-renamer vendorHash** | `file-and-image-renamer` | Updated `vendorHash` from stale `sha256-of+yn...` → `sha256-aH+cnh...` in upstream `flake.nix`.                                                   |
+| **file-and-image-renamer overlay**    | `SystemNix`              | Removed `{vendorHash = "sha256-..."}` override from `overlays/linux.nix`.                                                                         |
+| **dnsblockd overlay**                 | `SystemNix`              | Removed `{vendorHash = "sha256-..."}` override from `overlays/linux.nix`. Upstream `nix/vendor-hash.nix` was already correct.                     |
 
 ### Verified
 
@@ -325,19 +336,19 @@ All three packages now follow the same pattern as every other private Go repo in
 
 ### mkPreparedSource (go-nix-helpers) — 3 commits pushed
 
-| Commit | Description |
-|--------|-------------|
-| `474f1ea` | feat: auto-generate require lines and strip local replaces |
-| `ca0d2fc` | fix: use standalone require directives for sub-module require lines |
+| Commit    | Description                                                               |
+| --------- | ------------------------------------------------------------------------- |
+| `474f1ea` | feat: auto-generate require lines and strip local replaces                |
+| `ca0d2fc` | fix: use standalone require directives for sub-module require lines       |
 | `89f5236` | fix: remove auto-require for sub-modules, keep only version normalization |
 
 **Auto-features delivered:**
 
-| Feature | Default | What it does |
-|---------|---------|--------------|
-| `stripLocalReplaces` | `true` | Strips `replace X => /home/...` + empty replace blocks |
-| `subModuleVersionNormalize` | from `subModules` | Normalizes `v0.0.0-YYYYMMDD...` to `v0.0.0` |
-| Auto-generate `replace` directives | from `subModules` | Generates replace entries for sub-module paths |
+| Feature                            | Default           | What it does                                           |
+| ---------------------------------- | ----------------- | ------------------------------------------------------ |
+| `stripLocalReplaces`               | `true`            | Strips `replace X => /home/...` + empty replace blocks |
+| `subModuleVersionNormalize`        | from `subModules` | Normalizes `v0.0.0-YYYYMMDD...` to `v0.0.0`            |
+| Auto-generate `replace` directives | from `subModules` | Generates replace entries for sub-module paths         |
 
 **Design decision — auto-require removed:** Initially injected `require` lines for all `subModules`. This caused "inconsistent vendoring" because `subModules` lists both imported sub-modules AND sub-modules needed only for `replace` routing. New requires must use `requireDeps` explicitly.
 
@@ -347,15 +358,15 @@ Safe fallback: `input.packages.${system}.default or null` → returns empty over
 
 ### Consumer Repo Migration — 7 repos updated
 
-| Repo | postPatchExtra Before | After | Builds? |
-|------|----------------------|-------|---------|
-| **BuildFlow** | 3 lines (sed strip) | removed | ✅ |
-| **library-policy** | 2 lines (sed + rm) | 1 line (rm only) | ✅ |
-| **mr-sync** | 0 lines | 0 lines + vendorHash update | ✅ |
-| **Standup-Killer** | 2 lines (sed strip) | removed | ⚠ pre-existing Go type errors |
-| **PMA** | ~35 lines | ~10 lines + `requireDeps` for 3 sub-modules | ✅ |
-| **go-structure-linter** | unchanged | unchanged | ✅ |
-| **branching-flow** | unchanged | unchanged | ⚠ pre-existing private repo fetch |
+| Repo                    | postPatchExtra Before | After                                       | Builds?                           |
+| ----------------------- | --------------------- | ------------------------------------------- | --------------------------------- |
+| **BuildFlow**           | 3 lines (sed strip)   | removed                                     | ✅                                |
+| **library-policy**      | 2 lines (sed + rm)    | 1 line (rm only)                            | ✅                                |
+| **mr-sync**             | 0 lines               | 0 lines + vendorHash update                 | ✅                                |
+| **Standup-Killer**      | 2 lines (sed strip)   | removed                                     | ⚠ pre-existing Go type errors     |
+| **PMA**                 | ~35 lines             | ~10 lines + `requireDeps` for 3 sub-modules | ✅                                |
+| **go-structure-linter** | unchanged             | unchanged                                   | ✅                                |
+| **branching-flow**      | unchanged             | unchanged                                   | ⚠ pre-existing private repo fetch |
 
 All 7 repos: `flake.lock` updated to `go-nix-helpers@89f5236`. 5 repos have uncommitted code changes pending commit & push.
 
@@ -364,4 +375,5 @@ All 7 repos: `flake.lock` updated to `go-nix-helpers@89f5236`. 5 repos have unco
 - SystemNix `just test-fast` — all checks passed ✅
 - 5/7 consumer repos build successfully
 - Platform filtering verified: Linux returns package, Darwin returns `{}`
->>>>>>> e4070a45 (docs(status): Session 107 — mkPreparedSource auto-features & mkPackageOverlay platform safety)
+
+> > > > > > > e4070a45 (docs(status): Session 107 — mkPreparedSource auto-features & mkPackageOverlay platform safety)

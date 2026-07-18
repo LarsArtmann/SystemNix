@@ -22,18 +22,18 @@ Overlay `pkgs.sudo` with a wrapper script that translates `sudo` CLI calls to `r
 
 Complete inventory of `sudo` flags used by NixOS modules + SystemNix codebase:
 
-| sudo flag | NixOS uses | run0 equivalent | Status |
-|-----------|-----------|-----------------|--------|
-| `-u <user>` | 23 modules | `-u <user>` | Direct match |
-| `-g <group>` | pretix | `-g <group>` | Direct match |
-| `-n` (non-interactive) | homebridge | `--no-ask-password` | Direct match |
-| `-i` (login shell) | user aliases | `-i` | Direct match |
-| `-s` (shell) | user aliases | `--via-shell` | Different name |
-| `--` (end flags) | mediawiki | `--` | Direct match |
-| `--preserve-env=VAR` | pretix, pretalx, healthchecks, nextcloud | `--setenv=VAR=$VAR` | Parseable in wrapper |
-| `-E` (preserve all env) | paperless, glitchtip, pdfding | Enumerate all env vars | Ugly but works |
-| `--preserve-env` (bare) | mastodon, libretranslate, healthchecks | Enumerate all env vars | Ugly but works |
-| `-A` (askpass) | nowhere | No equivalent | Unused — not a concern |
+| sudo flag               | NixOS uses                               | run0 equivalent        | Status                 |
+| ----------------------- | ---------------------------------------- | ---------------------- | ---------------------- |
+| `-u <user>`             | 23 modules                               | `-u <user>`            | Direct match           |
+| `-g <group>`            | pretix                                   | `-g <group>`           | Direct match           |
+| `-n` (non-interactive)  | homebridge                               | `--no-ask-password`    | Direct match           |
+| `-i` (login shell)      | user aliases                             | `-i`                   | Direct match           |
+| `-s` (shell)            | user aliases                             | `--via-shell`          | Different name         |
+| `--` (end flags)        | mediawiki                                | `--`                   | Direct match           |
+| `--preserve-env=VAR`    | pretix, pretalx, healthchecks, nextcloud | `--setenv=VAR=$VAR`    | Parseable in wrapper   |
+| `-E` (preserve all env) | paperless, glitchtip, pdfding            | Enumerate all env vars | Ugly but works         |
+| `--preserve-env` (bare) | mastodon, libretranslate, healthchecks   | Enumerate all env vars | Ugly but works         |
+| `-A` (askpass)          | nowhere                                  | No equivalent          | Unused — not a concern |
 
 ### The `--preserve-env` problem
 
@@ -70,11 +70,10 @@ run0 authenticates via polkit, which needs D-Bus.
 
 ```javascript
 // /etc/polkit-1/rules.d/20-run0-wheel.rules
-polkit.addRule(function(action, subject) {
-    if (action.id.indexOf("org.freedesktop.systemd1.") === 0 &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
-    }
+polkit.addRule(function (action, subject) {
+  if (action.id.indexOf("org.freedesktop.systemd1.") === 0 && subject.isInGroup("wheel")) {
+    return polkit.Result.YES;
+  }
 });
 ```
 
@@ -109,6 +108,7 @@ Affected modules: nextcloud, mastodon, paperless, pretix, pretalx, healthchecks,
 ### 7. The `sudo` Binary Path
 
 NixOS modules use two paths:
+
 - `/run/wrappers/bin/sudo` — the setuid wrapper (used by most modules)
 - `${config.security.wrapperDir}/sudo` — same thing, parameterized
 - `${pkgs.sudo}/bin/sudo` — the package directly (used by borgmatic, restic)

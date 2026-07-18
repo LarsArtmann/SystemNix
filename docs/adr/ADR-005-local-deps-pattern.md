@@ -114,6 +114,7 @@ my-app must have: go-branded-id in go.sum
 Go sub-modules (e.g., `go-output/testhelpers`) need published tags for `go mod tidy` to resolve them via GOPROXY. If a sub-module only exists via `replace` in its parent repo, downstream consumers can't fetch it.
 
 **Fix:** Publish tags with the module path prefix:
+
 ```bash
 git tag testhelpers/v0.0.0
 git push origin testhelpers/v0.0.0
@@ -152,12 +153,14 @@ mr-sync (3 deps)
 ## Consequences
 
 ### Positive
+
 - ✅ Private Go repos build in Nix sandbox without SSH or network hacks
 - ✅ No `GOPATH` pollution, no `go install` binaries
 - ✅ All deps pinned via flake.lock (reproducible)
 - ✅ Works with nixpkgs `buildGoModule` (no custom builder needed)
 
 ### Negative
+
 - ⚠️ Changing a core dep (go-output) cascades to ALL consumers
 - ⚠️ Cross-repo coordination required for breaking changes
 - ⚠️ `vendorHash` becomes stale when upstream deps change

@@ -16,7 +16,7 @@ This means: **the entire EMEET PIXY integration — auto-tracking, noise cancell
 
 ## a) FULLY DONE
 
-1. **Root cause identified** — `probeVideo4linux()` in `probe.go` reads `/sys/class/video4linux/<dev>/device/id/vendor` and `/device/id/product`. On real hardware, `device` is a symlink to the USB *interface* directory, which does NOT contain an `id/` subdirectory. The `idVendor`/`idProduct` files only exist at the USB *device* level (parent directory). This means the probe silently fails on every iteration, `videoDev` is always empty, and the daemon reports `camera=offline`.
+1. **Root cause identified** — `probeVideo4linux()` in `probe.go` reads `/sys/class/video4linux/<dev>/device/id/vendor` and `/device/id/product`. On real hardware, `device` is a symlink to the USB _interface_ directory, which does NOT contain an `id/` subdirectory. The `idVendor`/`idProduct` files only exist at the USB _device_ level (parent directory). This means the probe silently fails on every iteration, `videoDev` is always empty, and the daemon reports `camera=offline`.
 
 2. **Fix written in emeet-pixyd repo** (`/tmp/emeet-pixyd-review/`):
    - `probe.go`: Replaced broken `device/id/vendor` + `device/id/product` reads with `device/uevent` → parse `PRODUCT=328f/c0/2004` line. This matches the actual kernel sysfs structure and mirrors the working `probeHidraw()` pattern (which already uses uevent).
@@ -86,58 +86,58 @@ This means: **the entire EMEET PIXY integration — auto-tracking, noise cancell
 
 ### Immediate (Session 79 continuation)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | Generate templ files + run `go test` in emeet-pixyd | Verify fix | 5 min |
-| 2 | Commit + push emeet-pixyd probe fix | Unblock deploy | 2 min |
-| 3 | Update flake.lock in SystemNix | Pull fix | 1 min |
-| 4 | Deploy `just switch` on evo-x2 | Fix takes effect | 5 min |
-| 5 | Verify camera detection: `emeet-pixy status` | Confirm fix | 1 min |
-| 6 | Test call auto-tracking cycle | End-to-end validation | 5 min |
+| #   | Task                                                | Impact                | Effort |
+| --- | --------------------------------------------------- | --------------------- | ------ |
+| 1   | Generate templ files + run `go test` in emeet-pixyd | Verify fix            | 5 min  |
+| 2   | Commit + push emeet-pixyd probe fix                 | Unblock deploy        | 2 min  |
+| 3   | Update flake.lock in SystemNix                      | Pull fix              | 1 min  |
+| 4   | Deploy `just switch` on evo-x2                      | Fix takes effect      | 5 min  |
+| 5   | Verify camera detection: `emeet-pixy status`        | Confirm fix           | 1 min  |
+| 6   | Test call auto-tracking cycle                       | End-to-end validation | 5 min  |
 
 ### NixOS Module Improvements (emeet-pixyd upstream)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 7 | Add `WatchdogSec=30` to NixOS module | Crash detection | 1 min |
-| 8 | Add `OOMScoreAdjust=-100` to NixOS module | OOM survival | 1 min |
-| 9 | Add probe failure WARN logging in `probeVideo4linux` | Observability | 5 min |
-| 10 | Add `Type=notify` to NixOS module (daemon already calls sd_notify) | Correctness | 1 min |
+| #   | Task                                                               | Impact          | Effort |
+| --- | ------------------------------------------------------------------ | --------------- | ------ |
+| 7   | Add `WatchdogSec=30` to NixOS module                               | Crash detection | 1 min  |
+| 8   | Add `OOMScoreAdjust=-100` to NixOS module                          | OOM survival    | 1 min  |
+| 9   | Add probe failure WARN logging in `probeVideo4linux`               | Observability   | 5 min  |
+| 10  | Add `Type=notify` to NixOS module (daemon already calls sd_notify) | Correctness     | 1 min  |
 
 ### Monitoring & Alerting
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 11 | Add Gatus check for emeet-pixyd status | Alerting | 10 min |
-| 12 | Add SigNoz/journald log alert for "camera=offline" persistence | Proactive detection | 15 min |
-| 13 | Add waybar tooltip showing last probe result | UX observability | 10 min |
+| #   | Task                                                           | Impact              | Effort |
+| --- | -------------------------------------------------------------- | ------------------- | ------ |
+| 11  | Add Gatus check for emeet-pixyd status                         | Alerting            | 10 min |
+| 12  | Add SigNoz/journald log alert for "camera=offline" persistence | Proactive detection | 15 min |
+| 13  | Add waybar tooltip showing last probe result                   | UX observability    | 10 min |
 
 ### Integration Test Hardening
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 14 | Add `TestProbeVideo4linux_RealSysfs` (skip if no device) | Prevent regression | 10 min |
-| 15 | Add `TestProbeVideo4linux_UeventProductFormat` edge cases | Robustness | 5 min |
-| 16 | Add `TestHasPixyProduct` unit tests (new function) | Coverage | 5 min |
-| 17 | Add NixOS VM test for emeet-pixyd module | Integration testing | 30 min |
+| #   | Task                                                      | Impact              | Effort |
+| --- | --------------------------------------------------------- | ------------------- | ------ |
+| 14  | Add `TestProbeVideo4linux_RealSysfs` (skip if no device)  | Prevent regression  | 10 min |
+| 15  | Add `TestProbeVideo4linux_UeventProductFormat` edge cases | Robustness          | 5 min  |
+| 16  | Add `TestHasPixyProduct` unit tests (new function)        | Coverage            | 5 min  |
+| 17  | Add NixOS VM test for emeet-pixyd module                  | Integration testing | 30 min |
 
 ### Documentation & Cleanup
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 18 | Update AGENTS.md emeet-pixy section with fix details | Knowledge | 5 min |
-| 19 | Add ADR for uevent-based probing vs sysfs id files | Record decision | 10 min |
-| 20 | Update emeet-pixyd CHANGELOG.md | Changelog | 2 min |
+| #   | Task                                                 | Impact          | Effort |
+| --- | ---------------------------------------------------- | --------------- | ------ |
+| 18  | Update AGENTS.md emeet-pixy section with fix details | Knowledge       | 5 min  |
+| 19  | Add ADR for uevent-based probing vs sysfs id files   | Record decision | 10 min |
+| 20  | Update emeet-pixyd CHANGELOG.md                      | Changelog       | 2 min  |
 
 ### Broader Lessons
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 21 | Audit other probe functions for similar sysfs path bugs | Preventive | 15 min |
-| 22 | Review all hardware-related NixOS modules for similar issues | Preventive | 30 min |
-| 23 | Add `just cam-status` to daily health check | Workflow | 2 min |
-| 24 | Verify Ollama GPU OOM defense is still effective post-incident | Safety | 10 min |
-| 25 | Check if other user services need OOMScoreAdjust | Hardening | 15 min |
+| #   | Task                                                           | Impact     | Effort |
+| --- | -------------------------------------------------------------- | ---------- | ------ |
+| 21  | Audit other probe functions for similar sysfs path bugs        | Preventive | 15 min |
+| 22  | Review all hardware-related NixOS modules for similar issues   | Preventive | 30 min |
+| 23  | Add `just cam-status` to daily health check                    | Workflow   | 2 min  |
+| 24  | Verify Ollama GPU OOM defense is still effective post-incident | Safety     | 10 min |
+| 25  | Check if other user services need OOMScoreAdjust               | Hardening  | 15 min |
 
 ---
 
@@ -169,6 +169,7 @@ What exists:
 ### The Fix
 
 Before (broken):
+
 ```go
 vendorFile := fmt.Sprintf("%s/%s/device/id/vendor", sysfsPath, name)
 productFile := fmt.Sprintf("%s/%s/device/id/product", sysfsPath, name)
@@ -176,6 +177,7 @@ productFile := fmt.Sprintf("%s/%s/device/id/product", sysfsPath, name)
 ```
 
 After (working):
+
 ```go
 ueventFile := fmt.Sprintf("%s/%s/device/uevent", sysfsPath, name)
 ueventData, uErr := os.ReadFile(ueventFile)
@@ -185,24 +187,24 @@ if hasPixyProduct(ueventData) { return videoPath }
 
 ### Timeline
 
-| Date | Event |
-|------|-------|
-| 2026-04-30 | Initial commit with broken `probeVideo4linux` — camera never worked |
-| 2026-05-06 06:39 | Web UI port conflict on boot (address already in use) |
-| 2026-05-06 18:15 | OOM killed during GPU OOM cascade incident |
+| Date             | Event                                                               |
+| ---------------- | ------------------------------------------------------------------- |
+| 2026-04-30       | Initial commit with broken `probeVideo4linux` — camera never worked |
+| 2026-05-06 06:39 | Web UI port conflict on boot (address already in use)               |
+| 2026-05-06 18:15 | OOM killed during GPU OOM cascade incident                          |
 | 2026-05-08 11:38 | auto mode changed from `full` → `tracking-only` (but still offline) |
-| 2026-05-10 | Multiple reboots for GPU incident debugging |
-| 2026-05-11 22:41 | Current boot — still `camera=offline` |
-| 2026-05-12 06:40 | Root cause identified and fix written |
+| 2026-05-10       | Multiple reboots for GPU incident debugging                         |
+| 2026-05-11 22:41 | Current boot — still `camera=offline`                               |
+| 2026-05-12 06:40 | Root cause identified and fix written                               |
 
 ---
 
 ## Files Changed (emeet-pixyd, NOT YET COMMITTED)
 
-| File | Change |
-|------|--------|
-| `probe.go` | Replace `device/id/vendor`+`device/id/product` with `device/uevent` + new `hasPixyProduct()` |
-| `main_test.go` | Rewrite fakeVideoDev struct, createFakeVideo4linux helper, all 8 probe test cases |
+| File           | Change                                                                                       |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| `probe.go`     | Replace `device/id/vendor`+`device/id/product` with `device/uevent` + new `hasPixyProduct()` |
+| `main_test.go` | Rewrite fakeVideoDev struct, createFakeVideo4linux helper, all 8 probe test cases            |
 
 ## Files Changed (SystemNix)
 

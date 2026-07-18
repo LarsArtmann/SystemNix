@@ -9,16 +9,16 @@
 
 ## Executive Summary
 
-| Metric | Before | After |
-|--------|--------|-------|
-| Total systemd timers | 13 | 13 |
-| With `Persistent=true` | 11/13 | 11/13 (2 interval — correct) |
-| With `RandomizedDelaySec` | 1/13 | 11/13 |
-| With `OnFailure` notification | 1/13 | 11/13 |
-| Cron jobs to migrate | 0 | 0 |
-| Double-scheduling bugs | 1 (Timeshift) | 0 |
-| Deadnix failures | 20 files | 0 |
-| Pre-commit hook passing | Broken (deadnix) | Broken (sandbox-only) |
+| Metric                        | Before           | After                        |
+| ----------------------------- | ---------------- | ---------------------------- |
+| Total systemd timers          | 13               | 13                           |
+| With `Persistent=true`        | 11/13            | 11/13 (2 interval — correct) |
+| With `RandomizedDelaySec`     | 1/13             | 11/13                        |
+| With `OnFailure` notification | 1/13             | 11/13                        |
+| Cron jobs to migrate          | 0                | 0                            |
+| Double-scheduling bugs        | 1 (Timeshift)    | 0                            |
+| Deadnix failures              | 20 files         | 0                            |
+| Pre-commit hook passing       | Broken (deadnix) | Broken (sandbox-only)        |
 
 ---
 
@@ -62,33 +62,33 @@
 
 ## F) TOP 25 NEXT ACTIONS 🎯
 
-| # | P | Action | Est | Blocked? |
-|---|---|--------|-----|----------|
-| 1 | P0 | Push all commits to remote | 1m | No |
-| 2 | P1 | Fix deadnix derivation (sandbox issue) | 30m | Unknown |
-| 3 | P1 | Add Docker prune weekly timer | 15m | No |
-| 4 | P1 | Add OnFailure to rpi3 crush-update-providers | 5m | No |
-| 5 | P2 | Add config backup daily timer | 15m | No |
-| 6 | P2 | Fix storage-cleanup.sh for NixOS | 15m | No |
-| 7 | P2 | Add `just timers` command to justfile | 10m | No |
-| 8 | P2 | Wire backup rotation into backup service | 10m | No |
-| 9 | P2 | Deploy to evo-x2, verify `systemctl list-timers` | 5m | SSH |
-| 10 | P2 | Verify `notify-failure@` works on evo-x2 | 5m | SSH |
-| 11 | P3 | Centralize rpi3 timers into scheduled-tasks.nix | 15m | No |
-| 12 | P3 | Add Go binary auto-update timer | 10m | No |
-| 13 | P3 | Document timer inventory in AGENTS.md | 10m | No |
-| 14 | P3 | Check fstrim timer schedule (NixOS managed) | 5m | SSH |
-| 15 | P3 | Verify Gitea dump timer fires | 5m | SSH |
-| 16 | P3 | Add monitoring for timer freshness | 20m | No |
-| 17 | P4 | Audit nix.gc schedule (weekly vs daily) | 5m | No |
-| 18 | P4 | Check smartd self-test notifications | 5m | No |
-| 19 | P4 | Add ExecStopPost to backup services for success logging | 10m | No |
-| 20 | P4 | Add systemd-analyze verify in CI | 15m | No |
-| 21 | P4 | Consider Gitea SQLite → PostgreSQL migration | 30m | No |
-| 22 | P5 | Add ClickHouse/SigNoz backup timer | 20m | No |
-| 23 | P5 | Ollama model cleanup/pruning timer | 15m | No |
-| 24 | P5 | Evaluate `just update` auto-timer (risky) | 5m | No |
-| 25 | P5 | Add `just timer-status` showing last/next run | 10m | SSH |
+| #   | P   | Action                                                  | Est | Blocked? |
+| --- | --- | ------------------------------------------------------- | --- | -------- |
+| 1   | P0  | Push all commits to remote                              | 1m  | No       |
+| 2   | P1  | Fix deadnix derivation (sandbox issue)                  | 30m | Unknown  |
+| 3   | P1  | Add Docker prune weekly timer                           | 15m | No       |
+| 4   | P1  | Add OnFailure to rpi3 crush-update-providers            | 5m  | No       |
+| 5   | P2  | Add config backup daily timer                           | 15m | No       |
+| 6   | P2  | Fix storage-cleanup.sh for NixOS                        | 15m | No       |
+| 7   | P2  | Add `just timers` command to justfile                   | 10m | No       |
+| 8   | P2  | Wire backup rotation into backup service                | 10m | No       |
+| 9   | P2  | Deploy to evo-x2, verify `systemctl list-timers`        | 5m  | SSH      |
+| 10  | P2  | Verify `notify-failure@` works on evo-x2                | 5m  | SSH      |
+| 11  | P3  | Centralize rpi3 timers into scheduled-tasks.nix         | 15m | No       |
+| 12  | P3  | Add Go binary auto-update timer                         | 10m | No       |
+| 13  | P3  | Document timer inventory in AGENTS.md                   | 10m | No       |
+| 14  | P3  | Check fstrim timer schedule (NixOS managed)             | 5m  | SSH      |
+| 15  | P3  | Verify Gitea dump timer fires                           | 5m  | SSH      |
+| 16  | P3  | Add monitoring for timer freshness                      | 20m | No       |
+| 17  | P4  | Audit nix.gc schedule (weekly vs daily)                 | 5m  | No       |
+| 18  | P4  | Check smartd self-test notifications                    | 5m  | No       |
+| 19  | P4  | Add ExecStopPost to backup services for success logging | 10m | No       |
+| 20  | P4  | Add systemd-analyze verify in CI                        | 15m | No       |
+| 21  | P4  | Consider Gitea SQLite → PostgreSQL migration            | 30m | No       |
+| 22  | P5  | Add ClickHouse/SigNoz backup timer                      | 20m | No       |
+| 23  | P5  | Ollama model cleanup/pruning timer                      | 15m | No       |
+| 24  | P5  | Evaluate `just update` auto-timer (risky)               | 5m  | No       |
+| 25  | P5  | Add `just timer-status` showing last/next run           | 10m | SSH      |
 
 ## G) TOP #1 QUESTION 🤔
 
@@ -98,21 +98,22 @@
 
 ## Commits This Session (9 total)
 
-| Commit | Description |
-|--------|-------------|
-| `46d36c3` | feat(timers): OnFailure notifications on 5 backup/sync services |
-| `b86837f` | fix(timers): notify-failure template + rpi3 RandomizedDelaySec |
-| `24fb888` | docs(status): comprehensive systemd timer audit |
-| `00fcc8b` | fix(lint): resolve all deadnix unused lambda patterns (20 files) |
-| `a9b10c9` | fix(niri-config): extract systemd user units from niri-unstable |
-| `2f111f0` | fix(boot): use asDropin strategy for niri systemd override |
-| `9633f7b` | revert(boot): remove niri OOMScoreAdjust override |
+| Commit    | Description                                                              |
+| --------- | ------------------------------------------------------------------------ |
+| `46d36c3` | feat(timers): OnFailure notifications on 5 backup/sync services          |
+| `b86837f` | fix(timers): notify-failure template + rpi3 RandomizedDelaySec           |
+| `24fb888` | docs(status): comprehensive systemd timer audit                          |
+| `00fcc8b` | fix(lint): resolve all deadnix unused lambda patterns (20 files)         |
+| `a9b10c9` | fix(niri-config): extract systemd user units from niri-unstable          |
+| `2f111f0` | fix(boot): use asDropin strategy for niri systemd override               |
+| `9633f7b` | revert(boot): remove niri OOMScoreAdjust override                        |
 | `e0268df` | refactor(niri-config): replace systemd.packages with explicit user.units |
-| (+ docs) | Status reports |
+| (+ docs)  | Status reports                                                           |
 
 ## Files Modified (28 files)
 
 Key changes by area:
+
 - **Timers (9 files):** scheduled-tasks.nix, snapshots.nix, gitea.nix, gitea-repos.nix, immich.nix, twenty.nix, taskwarrior.nix, rpi3/default.nix
 - **Lint (20 files):** flake.nix + 19 program/service modules (unused params removed)
 - **Niri-config (2 files):** niri-config.nix, boot.nix (systemd unit installation refactor)

@@ -10,15 +10,18 @@
 ## A) FULLY DONE
 
 ### Bug Fixes (2)
+
 1. **`monitor365.nix:34`** — port collision bypass fixed. Was importing `lib/ports.nix` raw, skipping the duplicate-port detection wrapper. Now imports via `lib/default.nix lib`
 2. **`ai-stack.nix:98`** — `with pkgs;` was silently hiding a missing `pkgs.llama-cpp-rocwmma` attribute, resolving to a `let`-bound variable of the same name. Converted to explicit reference, exposing the shadowing
 
 ### `//` → `lib.mkMerge` Conversion (25 files, 30+ instances)
+
 3. **Verified `mkMerge` works on `serviceConfig`** in flake-parts NixOS modules. The AGENTS.md warning about `mkMerge` + flake-parts refers to top-level `config`, NOT local attrset values like `serviceConfig`. Tested by converting one file, running `nix flake check`, then applying to all
 4. **All `//` chains on `serviceConfig` converted** across 18+ files: immich, gatus-config, hermes, twenty, discordsync, signoz (9 instances), forgejo (5), dns-blocker (3), dual-wan (4), taskchampion, oauth2-proxy, minecraft, forgejo-repos (2), ai-stack, crush-daily, caddy, gpu-active, pocket-id, file-and-image-renamer, btrfs-health, niri-config (2), homepage, lib/default.nix (mkDesktopNotifyService)
 5. **AGENTS.md gotcha updated** — clarified that `mkMerge` on `serviceConfig` IS safe; the warning was about top-level `config` only
 
 ### Config Generation: Manual Strings → Nix Generators (11 files)
+
 6. **`homepage.nix`** — 250-line hand-rolled YAML emitter (`mkGroup`/`mkService` with string concat) → `pkgs.formats.yaml{}.generate` over structured attrsets. Settings YAML, services YAML, and widgets YAML all converted
 7. **4 docker-compose YAML files** converted to `builtins.toJSON` over structured attrsets:
    - `twenty.nix` — 77-line compose → JSON attrset
@@ -32,12 +35,14 @@
    - `twenty.nix` — 1 template (twenty-env)
 
 ### Script Extraction & Fixes (4 files)
+
 10. **`signoz.nix`** — 70-line provision `script` → `writeShellApplication` with `runtimeInputs = [pkgs.curl pkgs.jq pkgs.coreutils]`. PreStart wait loop → separate `writeShellApplication`. `writeShellScriptBin` wrapper → `writeShellApplication` with `runtimeInputs = [pkgs.openssl]`
 11. **`nvme-health-monitor.nix`** — `grep -oP` JSON parsing → `jq -r`. `gnugrep` removed from runtimeInputs, `jq` added. Script still uses `mkDesktopNotifyService` (which already wraps in `writeShellApplication`)
 12. **`disk-monitor.nix`** — `concatStringsSep " "` for shell arrays → `lib.escapeShellArgs` for proper quoting/safety
 13. **`lib/default.nix`** — `mkDesktopNotifyService` helper's internal `//` chain → `lib.mkMerge`
 
 ### Cleanup & Modernization (10 files)
+
 14. **`security-hardening.nix`** — duplicated IP list extracted to `let ignoreIpList` binding. `with pkgs;` → explicit `pkgs.` prefixes (24 packages)
 15. **`discordsync.nix`** — manual `if cfg.backfillOnStartup then "true" else "false"` → `lib.boolToString`
 16. **`dns-blocker.nix`** — `concatStringsSep "\n"` → `lib.concatLines`. Conditional `categories_file` key moved inside generator attrset via `lib.optionalAttrs` instead of string concatenation
@@ -106,6 +111,7 @@
 ## F) Up to 50 Things We Should Get Done Next
 
 ### HIGH Priority — Correctness & Security
+
 1. **Fix `signoz.nix:509-595`** — 6 `grep -oP` instances in NVMe/GPU metrics scripts → `jq`
 2. **Add `harden`/`serviceOneshotDefaults` to `immich.nix:105-129`** db-backup service
 3. **Convert `minecraft.nix:456-460`** raw `iptables` → declarative `networking.firewall.allowedTCPPorts`
@@ -116,6 +122,7 @@
 8. **Fix `sops.nix:12,23`** — `secretsDir + "/${file}"` in top-level `let` → restructure to get `lib` in scope
 
 ### MEDIUM Priority — Consistency
+
 9. **Fix `niri-config.nix` 4 `with pkgs;` instances** → explicit `pkgs.` prefixes
 10. **Fix `base.nix` 5 `with pkgs;` instances** → explicit `pkgs.` prefixes
 11. **Fix `amd-gpu.nix` 2 `with pkgs;` instances** → explicit `pkgs.` prefixes
@@ -133,6 +140,7 @@
 23. **Convert `dns-blocker.nix:279-281` unbound preStart** → `writeShellApplication`
 
 ### LOW Priority — Expand Review Coverage
+
 24. **Review `platforms/common/programs/yazi.nix`** (512 lines) — likely has embedded config patterns
 25. **Review `platforms/nixos/desktop/niri-wrapped.nix`** (571 lines) — largest desktop file
 26. **Review `platforms/darwin/`** files — launchagents, activation, shells
@@ -144,6 +152,7 @@
 32. **Review `platforms/common/packages/base.nix`** (270 lines) — beyond `with pkgs;`
 
 ### Verification
+
 33. **Run `nix run .#deploy`** to verify runtime behavior of all converted files
 34. **Run `nix run .#post-deploy-check`** — verify services are functional, not just alive
 35. **Diff old homepage services.yaml vs new** — verify the `pkgs.formats.yaml` output matches the old hand-rolled output structure
@@ -153,6 +162,7 @@
 39. **Run `nix flake check --all-systems`** — verify Darwin eval too
 
 ### Documentation
+
 40. **Update `docs/nix-review-report.md`** — mark fixed items as completed
 41. **Add `with pkgs;` shadowing example to AGENTS.md** — document the `llama-cpp-rocwmma` case
 42. **Document `lib.generators.toKeyValue` with custom separator** — the minecraft `:` separator pattern
@@ -160,6 +170,7 @@
 44. **Document `builtins.toJSON` for docker-compose** — Docker accepts JSON natively
 
 ### Structural
+
 45. **Consider a `lib.mkDockerService` compose attrset helper** — instead of `pkgs.writeText "compose.yml" (builtins.toJSON {...})`, provide a helper that takes a Nix attrset directly
 46. **Consider a `lib.mkEnvTemplate` helper** — wraps `lib.generators.toKeyValue` for sops templates with standard owner/group/mode/restartUnits defaults
 47. **Consider a `lib.mkMergedServiceConfig` helper** — wraps the `lib.mkMerge [ (harden {}) (serviceDefaults {}) {} ]` pattern to reduce boilerplate
@@ -177,7 +188,7 @@
 
 ### Question 2: Should the remaining 20+ `with pkgs;` instances be fixed in this session or a follow-up?
 
-**Resolved — answer: leave them.** `with pkgs;` is valid Nix used throughout nixpkgs itself. The `llama-cpp-rocwmma` shadowing was a one-off scoping bug, not a systemic risk. Fixing 20+ instances introduces *more* shadowing bugs than it prevents (the report itself acknowledged this). Not worth the churn.
+**Resolved — answer: leave them.** `with pkgs;` is valid Nix used throughout nixpkgs itself. The `llama-cpp-rocwmma` shadowing was a one-off scoping bug, not a systemic risk. Fixing 20+ instances introduces _more_ shadowing bugs than it prevents (the report itself acknowledged this). Not worth the churn.
 
 ---
 
@@ -187,20 +198,20 @@ Cuts the 50-item list to what has real value vs what is churn or YAGNI.
 
 ### Worth fixing (high value, real risk)
 
-| # | Item | Source | Why |
-|---|------|--------|-----|
-| 1 | **Runtime verification: deploy + `post-deploy-check`** | C9, F33-34 | Biggest blind spot. 30+ files converted with only `nix eval` — zero runtime proof. One deploy validates all conversions at once. Single highest-value action. |
-| 2 | **`immich.nix:105-129` db-backup unhardened** | B6, F2 | Genuine security gap — backup service runs with zero hardening. Quick fix, real risk. |
-| 3 | **`signoz.nix:509-595` grep -oP → jq** | B3, F1 | Brittle JSON-via-regex that silently produces wrong metrics. Same fix already applied to `nvme-health-monitor.nix`. |
-| 4 | **`minecraft.nix:456-460` raw iptables** | B5, F3 | Raw `iptables -A` in `extraCommands` accumulates duplicate rules on every reload. Declarative `allowedTCPPorts` is the fix. |
+| #   | Item                                                   | Source     | Why                                                                                                                                                           |
+| --- | ------------------------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Runtime verification: deploy + `post-deploy-check`** | C9, F33-34 | Biggest blind spot. 30+ files converted with only `nix eval` — zero runtime proof. One deploy validates all conversions at once. Single highest-value action. |
+| 2   | **`immich.nix:105-129` db-backup unhardened**          | B6, F2     | Genuine security gap — backup service runs with zero hardening. Quick fix, real risk.                                                                         |
+| 3   | **`signoz.nix:509-595` grep -oP → jq**                 | B3, F1     | Brittle JSON-via-regex that silently produces wrong metrics. Same fix already applied to `nvme-health-monitor.nix`.                                           |
+| 4   | **`minecraft.nix:456-460` raw iptables**               | B5, F3     | Raw `iptables -A` in `extraCommands` accumulates duplicate rules on every reload. Declarative `allowedTCPPorts` is the fix.                                   |
 
 ### Not worth fixing (low value, or risk exceeds reward)
 
-| Item | Source | Why skip |
-|------|--------|----------|
-| **20+ `with pkgs;` instances** | F9-20 | Valid Nix, used in nixpkgs itself. Fixing 20+ instances creates more shadowing bugs than it prevents. See G-Q2. |
-| **`sops.nix:12,23` secretsDir concatenation** | F8 | 2 trivial instances where `lib` isn't in scope. String concat works. Restructuring the module for 2 lines is over-engineering. |
-| **`activationScripts` → `tmpfiles`** | F4-7 | Complex conversion (setfacl, ordering) for code that works. High effort + breakage risk. Defer unless touching those services anyway. |
-| **Helper functions** (`mkDockerService`, `mkEnvTemplate`, `mkMergedServiceConfig`) | F45-47 | YAGNI. Extract when repetition justifies it, not preemptively. |
-| **Pre-commit checks for `//` / `with pkgs;` / `grep -oP`** | F48-50 | Speculative infrastructure for patterns just eliminated. Add when regressions actually appear. |
-| **"Review X file" items** (yazi, niri-wrapped, darwin, pkgs/, lib/, templates/) | F24-32 | Speculative audits with no known issues. Review when you touch the file. |
+| Item                                                                               | Source | Why skip                                                                                                                              |
+| ---------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **20+ `with pkgs;` instances**                                                     | F9-20  | Valid Nix, used in nixpkgs itself. Fixing 20+ instances creates more shadowing bugs than it prevents. See G-Q2.                       |
+| **`sops.nix:12,23` secretsDir concatenation**                                      | F8     | 2 trivial instances where `lib` isn't in scope. String concat works. Restructuring the module for 2 lines is over-engineering.        |
+| **`activationScripts` → `tmpfiles`**                                               | F4-7   | Complex conversion (setfacl, ordering) for code that works. High effort + breakage risk. Defer unless touching those services anyway. |
+| **Helper functions** (`mkDockerService`, `mkEnvTemplate`, `mkMergedServiceConfig`) | F45-47 | YAGNI. Extract when repetition justifies it, not preemptively.                                                                        |
+| **Pre-commit checks for `//` / `with pkgs;` / `grep -oP`**                         | F48-50 | Speculative infrastructure for patterns just eliminated. Add when regressions actually appear.                                        |
+| **"Review X file" items** (yazi, niri-wrapped, darwin, pkgs/, lib/, templates/)    | F24-32 | Speculative audits with no known issues. Review when you touch the file.                                                              |

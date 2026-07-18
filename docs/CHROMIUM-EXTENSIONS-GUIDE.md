@@ -11,14 +11,14 @@ The configuration manages browser extensions through two approaches:
 
 ## Extension: YouTube Shorts Blocker
 
-| Property | Value |
-|----------|-------|
-| **Name** | Shorts Blocker by Umut Seven |
-| **Extension ID** | `ckagfhpboagdopichicnebandlofghbc` |
-| **Repository** | https://github.com/umutseven92/shorts-blocker |
+| Property             | Value                                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------- |
+| **Name**             | Shorts Blocker by Umut Seven                                                             |
+| **Extension ID**     | `ckagfhpboagdopichicnebandlofghbc`                                                       |
+| **Repository**       | https://github.com/umutseven92/shorts-blocker                                            |
 | **Chrome Web Store** | https://chromewebstore.google.com/detail/shorts-blocker/ckagfhpboagdopichicnebandlofghbc |
-| **License** | Open source |
-| **Maintenance** | Actively maintained (10,000+ users, 4.5/5 rating) |
+| **License**          | Open source                                                                              |
+| **Maintenance**      | Actively maintained (10,000+ users, 4.5/5 rating)                                        |
 
 ### What It Does
 
@@ -84,13 +84,13 @@ programs.chromium = {
 
 **Helium Browser** is a privacy-focused Chromium fork with the following extension capabilities:
 
-| Feature | Support | Notes |
-|---------|---------|-------|
-| Chrome Web Store | ✅ Yes | All extensions supported |
-| Manifest V2 | ✅ Yes | Will maintain MV2 support as long as possible |
-| Manifest V3 | ✅ Yes | Fully supported |
-| uBlock Origin | ✅ Pre-installed | Custom Helium fork included |
-| Extension Declarative Install | ⚠️ Manual | No native Nix module available |
+| Feature                       | Support          | Notes                                         |
+| ----------------------------- | ---------------- | --------------------------------------------- |
+| Chrome Web Store              | ✅ Yes           | All extensions supported                      |
+| Manifest V2                   | ✅ Yes           | Will maintain MV2 support as long as possible |
+| Manifest V3                   | ✅ Yes           | Fully supported                               |
+| uBlock Origin                 | ✅ Pre-installed | Custom Helium fork included                   |
+| Extension Declarative Install | ⚠️ Manual        | No native Nix module available                |
 
 ### Installing Extensions in Helium
 
@@ -109,12 +109,14 @@ Since Helium is not in nixpkgs and uses a custom flake, you need to install exte
 Helium supports Chromium enterprise policies. You can create a policy file:
 
 **macOS**:
+
 ```bash
 sudo mkdir -p "/Library/Application Support/Helium/policies/managed"
 sudo cp /etc/chrome/policies/managed/extensions.json "/Library/Application Support/Helium/policies/managed/"
 ```
 
 **NixOS**:
+
 ```nix
 environment.etc."chromium/policies/managed/extensions.json".text = builtins.toJSON {
   ExtensionInstallForcelist = [
@@ -125,23 +127,24 @@ environment.etc."chromium/policies/managed/extensions.json".text = builtins.toJS
 
 ## Extension Management Approaches Compared
 
-| Approach | Works With | Pros | Cons |
-|----------|-----------|------|------|
-| Home Manager | Brave, Chromium, ungoogled-chromium | Native Nix integration, user-configurable | Doesn't work with Google Chrome |
-| System Policies | Chrome, Chromium, Brave, Helium | Works with all Chromium forks, enterprise-grade | Requires system-level configuration |
-| Manual Install | All browsers | Simple, no configuration needed | Not declarative, requires manual steps |
+| Approach        | Works With                          | Pros                                            | Cons                                   |
+| --------------- | ----------------------------------- | ----------------------------------------------- | -------------------------------------- |
+| Home Manager    | Brave, Chromium, ungoogled-chromium | Native Nix integration, user-configurable       | Doesn't work with Google Chrome        |
+| System Policies | Chrome, Chromium, Brave, Helium     | Works with all Chromium forks, enterprise-grade | Requires system-level configuration    |
+| Manual Install  | All browsers                        | Simple, no configuration needed                 | Not declarative, requires manual steps |
 
 ## Alternative Extensions
 
 If you want to try different YouTube Shorts blockers:
 
-| Extension | ID | Repository | Pros |
-|-----------|-----|------------|------|
-| Shorts Blocker (Umut Seven) | `ckagfhpboagdopichicnebandlofghbc` | [GitHub](https://github.com/umutseven92/shorts-blocker) | Actively maintained, simple |
-| YouTube Shorts Blocker (TaylorHo) | `jchbbofddpgfbaheknainnhbdonkpogf` | [GitHub](https://github.com/TaylorHo/youtube-shorts-blocker) | Multilingual, toggle button |
-| Youtube Shorts Block (CarlosSanchess) | `kpcihppklbfdolkgkojhlgiblmeheihp` | [GitHub](https://github.com/CarlosSanchess/Youtube-Shorts-Block) | Multiple blocking modes |
+| Extension                             | ID                                 | Repository                                                       | Pros                        |
+| ------------------------------------- | ---------------------------------- | ---------------------------------------------------------------- | --------------------------- |
+| Shorts Blocker (Umut Seven)           | `ckagfhpboagdopichicnebandlofghbc` | [GitHub](https://github.com/umutseven92/shorts-blocker)          | Actively maintained, simple |
+| YouTube Shorts Blocker (TaylorHo)     | `jchbbofddpgfbaheknainnhbdonkpogf` | [GitHub](https://github.com/TaylorHo/youtube-shorts-blocker)     | Multilingual, toggle button |
+| Youtube Shorts Block (CarlosSanchess) | `kpcihppklbfdolkgkojhlgiblmeheihp` | [GitHub](https://github.com/CarlosSanchess/Youtube-Shorts-Block) | Multiple blocking modes     |
 
 To switch extensions, update the ID in:
+
 - `platforms/common/programs/chromium.nix` (Home Manager)
 - `platforms/darwin/programs/chrome.nix` (Darwin policies)
 - `platforms/nixos/programs/chrome.nix` (NixOS policies)
@@ -165,6 +168,7 @@ To switch extensions, update the ID in:
 ### Policy Conflicts
 
 If you use both Home Manager and system policies, ensure they don't conflict:
+
 - Home Manager installs extensions to `~/.config/chromium/External Extensions/`
 - System policies install via Chrome's policy system
 - These can coexist, but the same extension shouldn't be defined in both

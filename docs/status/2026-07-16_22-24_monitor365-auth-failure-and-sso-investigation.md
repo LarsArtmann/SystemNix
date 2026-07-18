@@ -10,19 +10,20 @@
 
 Critical review of the initial fix identified 7 issues. All code-level issues fixed:
 
-| Issue | Fix | Commit |
-|-------|-----|--------|
-| No empty-token guard (would recreate SHA256("") bug) | Skip sync when token is empty | `8b1d6d14` |
-| SQL interpolation without hash validation | `grep -qE '^[0-9a-f]{64}$'` before any SQL | `8b1d6d14` |
-| Token trim mismatch with upstream Rust `trim()` | `sed 's/^[[:space:]]*//;s/[[:space:]]*$//'` | `8b1d6d14` |
-| `2>/dev/null` hid DuckDB errors | Removed -- errors now visible in journal | `8b1d6d14` |
-| No read-back verification after UPDATE | SELECT + grep to confirm row was updated | `8b1d6d14` |
-| Post-deploy-check only checked HTTP 200 | Added functional check for `realtime` field | `9cc5fc5d` |
-| No Gatus alert for agent disconnection | Added check: `realtime != connected (0 devices)` | `3d1f0591` |
-| Pre-commit statix scanned entire repo | Fixed to only check staged files | `8b1d6d14` |
-| Pre-commit alejandra version mismatch with treefmt | Replaced with treefmt formatting | `8b1d6d14` |
+| Issue                                                | Fix                                              | Commit     |
+| ---------------------------------------------------- | ------------------------------------------------ | ---------- |
+| No empty-token guard (would recreate SHA256("") bug) | Skip sync when token is empty                    | `8b1d6d14` |
+| SQL interpolation without hash validation            | `grep -qE '^[0-9a-f]{64}$'` before any SQL       | `8b1d6d14` |
+| Token trim mismatch with upstream Rust `trim()`      | `sed 's/^[[:space:]]*//;s/[[:space:]]*$//'`      | `8b1d6d14` |
+| `2>/dev/null` hid DuckDB errors                      | Removed -- errors now visible in journal         | `8b1d6d14` |
+| No read-back verification after UPDATE               | SELECT + grep to confirm row was updated         | `8b1d6d14` |
+| Post-deploy-check only checked HTTP 200              | Added functional check for `realtime` field      | `9cc5fc5d` |
+| No Gatus alert for agent disconnection               | Added check: `realtime != connected (0 devices)` | `3d1f0591` |
+| Pre-commit statix scanned entire repo                | Fixed to only check staged files                 | `8b1d6d14` |
+| Pre-commit alejandra version mismatch with treefmt   | Replaced with treefmt formatting                 | `8b1d6d14` |
 
 **Remaining manual steps (require deploy):**
+
 1. Deploy: `nix run .#deploy`
 2. Verify agent connects: `/health` shows `connected (1+ devices)`
 3. Verify SSO login works end-to-end
@@ -77,6 +78,7 @@ Critical review of the initial fix identified 7 issues. All code-level issues fi
 ## f) Up to 50 Things to Get Done Next
 
 ### Immediate (blocks deploy verification)
+
 1. **Deploy the changes** (`nix run .#deploy`)
 2. **Verify agent connects** — `GET /health` shows `connected (1 device)`
 3. **Verify no more 401s** in server logs after deploy
@@ -84,6 +86,7 @@ Critical review of the initial fix identified 7 issues. All code-level issues fi
 5. **Verify the user table is intact** after the projection rebuild (`duckdb` query `SELECT email FROM users`)
 
 ### Short-term (should do within 1-2 days)
+
 6. **Add hash format validation** in the API key sync script (`^[0-9a-f]{64}$`)
 7. **Add Gatus health check** for monitor365 agent connectivity (check `GET /health` shows `connected (1+ device)`)
 8. **Add Gatus health check** for the agent metrics endpoint (`127.0.0.1:9191`)
@@ -96,6 +99,7 @@ Critical review of the initial fix identified 7 issues. All code-level issues fi
 15. **Add a Discord alert** for when the agent has been disconnected for >5 minutes
 
 ### Medium-term (should do within 1-2 weeks)
+
 16. **Push upstream fix:** `auto_bootstrap` should re-sync API key on every startup (not just first boot)
 17. **Push upstream fix:** Add `monitor365-server sync-api-key` CLI command as an alternative to the oneshot
 18. **Push upstream fix:** DuckDB timestamp arithmetic compatibility for background cleanup
@@ -113,6 +117,7 @@ Critical review of the initial fix identified 7 issues. All code-level issues fi
 30. **Document the recovery procedure** — what to do when the API key desyncs again
 
 ### Long-term / Nice-to-have
+
 31. **Add a Gatus dashboard tile** for monitor365 on the Homepage
 32. **Review all monitor365 collectors** — which are useful, which produce noise
 33. **Set up event retention policies** — how long to keep keystrokes/screenshots/etc.

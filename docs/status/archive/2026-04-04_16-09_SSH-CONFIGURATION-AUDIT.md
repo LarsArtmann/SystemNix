@@ -13,6 +13,7 @@ After thorough investigation, the SSH authorized keys configuration is **CORRECT
 ### What Was Confused
 
 During the git sync conflict resolution, there was confusion about whether to use:
+
 - `nix-ssh-config.sshKeys.lars` (flake output)
 - `builtins.pathExists` + `builtins.readFile` (file-based)
 
@@ -65,13 +66,13 @@ authorizedKeys = [nix-ssh-config.sshKeys.lars];
 
 ### ✅ DONE - Proper Integration Verified
 
-| Component | Status | Location |
-|-----------|--------|----------|
-| Flake input declared | ✅ | SystemNix/flake.nix:96-97 |
-| Flake input inherited | ✅ | SystemNix/flake.nix:327 |
-| Passed to specialArgs | ✅ | SystemNix/flake.nix:306 |
-| Used in user config | ✅ | SystemNix/platforms/nixos/system/configuration.nix:82 |
-| Used in ssh-server config | ✅ | SystemNix/platforms/nixos/system/configuration.nix:142 |
+| Component                 | Status | Location                                               |
+| ------------------------- | ------ | ------------------------------------------------------ |
+| Flake input declared      | ✅     | SystemNix/flake.nix:96-97                              |
+| Flake input inherited     | ✅     | SystemNix/flake.nix:327                                |
+| Passed to specialArgs     | ✅     | SystemNix/flake.nix:306                                |
+| Used in user config       | ✅     | SystemNix/platforms/nixos/system/configuration.nix:82  |
+| Used in ssh-server config | ✅     | SystemNix/platforms/nixos/system/configuration.nix:142 |
 
 ### Why This Is Correct
 
@@ -186,6 +187,7 @@ M  platforms/nixos/system/configuration.nix
 **Why does `nix flake check` hang indefinitely even with `--no-build`?**
 
 This happens when:
+
 1. The flake has complex imports that require full evaluation
 2. There's a circular dependency in the module system
 3. Network requests are blocking (fetching remote inputs)

@@ -17,14 +17,14 @@ This session diagnosed a **split-brain OAuth failure** between Pocket ID and Imm
 
 ## a) FULLY DONE
 
-| Item | Detail | Verification |
-|------|--------|-------------|
-| OAuth root-cause diagnosis | Pocket ID ↔ Immich secret desync traced through full OIDC flow | Token endpoint returns `401 invalid client secret`; logs show all-green auth+code issuance then failure at `/api/oidc/token` |
-| AGENTS.md gotcha documented | "PocketID client-secret file desync" entry added to Non-Obvious Gotchas table | `git diff AGENTS.md` shows single-line addition |
-| DMS matugen suppression | `DMS_DISABLE_MATUGEN=1` env var added to `dms` user service in `quickshell.nix` | Prevents 38+ `which matugen` warnings per DMS restart |
-| Flake lock updates | helium-browser, home-manager, homebrew-cask, library-policy, niri-flake updated | `git diff flake.lock` — all routine upstream bumps |
-| Flake eval validation | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes | 2 deprecated `system` warnings (pre-existing, not introduced) |
-| Provision script analysis | Full audit of `pocket-id-provision` secret lifecycle: migration seeding → skip-if-exists → permanent desync | Root cause confirmed: file seeded from old sops, never synced to PocketID DB secret |
+| Item                        | Detail                                                                                                      | Verification                                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| OAuth root-cause diagnosis  | Pocket ID ↔ Immich secret desync traced through full OIDC flow                                              | Token endpoint returns `401 invalid client secret`; logs show all-green auth+code issuance then failure at `/api/oidc/token` |
+| AGENTS.md gotcha documented | "PocketID client-secret file desync" entry added to Non-Obvious Gotchas table                               | `git diff AGENTS.md` shows single-line addition                                                                              |
+| DMS matugen suppression     | `DMS_DISABLE_MATUGEN=1` env var added to `dms` user service in `quickshell.nix`                             | Prevents 38+ `which matugen` warnings per DMS restart                                                                        |
+| Flake lock updates          | helium-browser, home-manager, homebrew-cask, library-policy, niri-flake updated                             | `git diff flake.lock` — all routine upstream bumps                                                                           |
+| Flake eval validation       | `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes                                 | 2 deprecated `system` warnings (pre-existing, not introduced)                                                                |
+| Provision script analysis   | Full audit of `pocket-id-provision` secret lifecycle: migration seeding → skip-if-exists → permanent desync | Root cause confirmed: file seeded from old sops, never synced to PocketID DB secret                                          |
 
 ### Diagnosis Detail: Why Pocket ID "Looked Happy"
 
@@ -45,26 +45,26 @@ The `client-secrets/immich` file was seeded during migration from the **old sops
 
 ## b) PARTIALLY DONE
 
-| Item | What's Done | What Remains |
-|------|-------------|--------------|
-| Immich OAuth fix | Root cause identified, fix procedure documented, AGENTS.md updated | **Immich is DOWN** — fix not completed (see section d) |
-| Pocket ID provision hardening | Desync mechanism fully understood, documented in AGENTS.md | Provision script NOT yet hardened (migration-secret-seeding still active) |
-| DMS matugen env var | Code change committed in working tree | NOT deployed — needs `nix run .#deploy` to take effect |
-| Flake lock updates | Updated in working tree | NOT deployed, NOT committed |
+| Item                          | What's Done                                                        | What Remains                                                              |
+| ----------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Immich OAuth fix              | Root cause identified, fix procedure documented, AGENTS.md updated | **Immich is DOWN** — fix not completed (see section d)                    |
+| Pocket ID provision hardening | Desync mechanism fully understood, documented in AGENTS.md         | Provision script NOT yet hardened (migration-secret-seeding still active) |
+| DMS matugen env var           | Code change committed in working tree                              | NOT deployed — needs `nix run .#deploy` to take effect                    |
+| Flake lock updates            | Updated in working tree                                            | NOT deployed, NOT committed                                               |
 
 ---
 
 ## c) NOT STARTED
 
-| Item | Context |
-|------|---------|
-| Reboot verification | TODO P0: verify boot time (~35s target) after NVMe APST fix |
-| Pocket ID email verification | TODO P0: test SMTP login notification |
-| BTRFS `/data` subvolume migration | TODO P3: `/data` is BTRFS toplevel (subvolid=5), no snapshot protection |
-| Cloud backup (off-site) | No BorgBackup/Restic to Hetzner StorageBox yet |
-| Pi 3 DNS failover provisioning | Hardware not purchased |
-| Provision script refactor | Remove migration-secret-seeding (marker already set, migration is one-shot) |
-| Upstream nixpkgs PRs (7 items) | All documented in TODO_LIST.md Priority 5 |
+| Item                              | Context                                                                     |
+| --------------------------------- | --------------------------------------------------------------------------- |
+| Reboot verification               | TODO P0: verify boot time (~35s target) after NVMe APST fix                 |
+| Pocket ID email verification      | TODO P0: test SMTP login notification                                       |
+| BTRFS `/data` subvolume migration | TODO P3: `/data` is BTRFS toplevel (subvolid=5), no snapshot protection     |
+| Cloud backup (off-site)           | No BorgBackup/Restic to Hetzner StorageBox yet                              |
+| Pi 3 DNS failover provisioning    | Hardware not purchased                                                      |
+| Provision script refactor         | Remove migration-secret-seeding (marker already set, migration is one-shot) |
+| Upstream nixpkgs PRs (7 items)    | All documented in TODO_LIST.md Priority 5                                   |
 
 ---
 
@@ -117,6 +117,7 @@ sudo systemctl start immich-server.service
 ```
 
 **Lessons:**
+
 1. `LoadCredential` makes the secret file **load-bearing at service-start time** — deleting it is NOT safe while the service runs
 2. The provision script's `POST /api/oidc/clients/$ID/secret` **regenerates** the DB secret — if it succeeds, the file and DB will be in sync (actually fixing the original OAuth bug)
 3. The correct recovery order is: **provision first** (regenerate file), **then** restart immich
@@ -127,27 +128,27 @@ sudo systemctl start immich-server.service
 
 ### Architecture
 
-| Issue | Impact | Fix |
-|-------|--------|-----|
-| **Provision script seeds secret from old sops, never re-syncs** | Permanent secret desync after any PocketID DB reset | Remove migration-seeding block (`.provision-migrated` marker is already set — migration is complete). Always call `POST /secret` and write fresh value |
-| **`LoadCredential` makes secret file load-bearing** | Deleting the file = instant service crash | Document this in the immich.nix module comment. Consider `LoadCredentialEncrypted` or fallback path |
-| **No health check for OAuth token exchange** | OAuth failures are invisible until a user tries to log in | Add a Gatus check that does a full OIDC code-flow test (or at least a token-endpoint probe) |
-| **Provision has no verification step** | "Secret file already exists" is logged but the secret's validity is never checked | After writing secret, do a test token-exchange call to verify the secret matches the DB |
+| Issue                                                           | Impact                                                                            | Fix                                                                                                                                                    |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Provision script seeds secret from old sops, never re-syncs** | Permanent secret desync after any PocketID DB reset                               | Remove migration-seeding block (`.provision-migrated` marker is already set — migration is complete). Always call `POST /secret` and write fresh value |
+| **`LoadCredential` makes secret file load-bearing**             | Deleting the file = instant service crash                                         | Document this in the immich.nix module comment. Consider `LoadCredentialEncrypted` or fallback path                                                    |
+| **No health check for OAuth token exchange**                    | OAuth failures are invisible until a user tries to log in                         | Add a Gatus check that does a full OIDC code-flow test (or at least a token-endpoint probe)                                                            |
+| **Provision has no verification step**                          | "Secret file already exists" is logged but the secret's validity is never checked | After writing secret, do a test token-exchange call to verify the secret matches the DB                                                                |
 
 ### Operational
 
-| Issue | Impact | Fix |
-|-------|--------|-----|
-| **`sudo` blocked in Crush** | Cannot run recovery commands autonomously | Expected — security boundary. Document recovery procedures clearly |
-| **3 unpushed commits** | Work not backed up to remote | `git push` when ready |
-| **Deprecated `system` attr warnings** | 2 evaluation warnings | Replace `system` with `stdenv.hostPlatform.system` in flake.nix |
+| Issue                                 | Impact                                    | Fix                                                                |
+| ------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------ |
+| **`sudo` blocked in Crush**           | Cannot run recovery commands autonomously | Expected — security boundary. Document recovery procedures clearly |
+| **3 unpushed commits**                | Work not backed up to remote              | `git push` when ready                                              |
+| **Deprecated `system` attr warnings** | 2 evaluation warnings                     | Replace `system` with `stdenv.hostPlatform.system` in flake.nix    |
 
 ### Documentation
 
-| Issue | Fix |
-|-------|-----|
+| Issue                                | Fix                                                                     |
+| ------------------------------------ | ----------------------------------------------------------------------- |
 | Recovery procedure for secret desync | Add to `.crush/skills/sops-secret-management/SKILL.md` or a new runbook |
-| Provision script comment | Add warning that `LoadCredential` makes the file load-bearing |
+| Provision script comment             | Add warning that `LoadCredential` makes the file load-bearing           |
 
 ---
 
@@ -155,53 +156,53 @@ sudo systemctl start immich-server.service
 
 ### Critical (Immich is DOWN)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Recover Immich** — run provision to regenerate secret, reset start-limit, verify OAuth | Unblocks all photo/video access | 15 min |
-| 2 | **Verify OAuth end-to-end** — login at immich.home.lan via Pocket ID | Confirms the fix actually works | 5 min |
+| #   | Task                                                                                     | Impact                          | Effort |
+| --- | ---------------------------------------------------------------------------------------- | ------------------------------- | ------ |
+| 1   | **Recover Immich** — run provision to regenerate secret, reset start-limit, verify OAuth | Unblocks all photo/video access | 15 min |
+| 2   | **Verify OAuth end-to-end** — login at immich.home.lan via Pocket ID                     | Confirms the fix actually works | 5 min  |
 
 ### High Priority
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 3 | **Deploy current changes** — DMS_DISABLE_MATUGEN + flake lock updates + AGENTS.md | Gets working tree clean, matugen warnings gone | 10 min |
-| 4 | **Harden provision script** — remove migration-seeding, add post-write verification | Prevents future desync permanently | 30 min |
-| 5 | **Commit and push** — 3 unpushed commits + working tree changes | Backup to remote | 5 min |
-| 6 | **Reboot evo-x2** — verify boot time (~35s target after NVMe APST fix) | TODO P0, overdue | 10 min |
-| 7 | **Verify Pocket ID email sending** — test SMTP notification | TODO P0 | 5 min |
+| #   | Task                                                                                | Impact                                         | Effort |
+| --- | ----------------------------------------------------------------------------------- | ---------------------------------------------- | ------ |
+| 3   | **Deploy current changes** — DMS_DISABLE_MATUGEN + flake lock updates + AGENTS.md   | Gets working tree clean, matugen warnings gone | 10 min |
+| 4   | **Harden provision script** — remove migration-seeding, add post-write verification | Prevents future desync permanently             | 30 min |
+| 5   | **Commit and push** — 3 unpushed commits + working tree changes                     | Backup to remote                               | 5 min  |
+| 6   | **Reboot evo-x2** — verify boot time (~35s target after NVMe APST fix)              | TODO P0, overdue                               | 10 min |
+| 7   | **Verify Pocket ID email sending** — test SMTP notification                         | TODO P0                                        | 5 min  |
 
 ### Medium Priority
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 8 | **Add OAuth health check to Gatus** — detect token-endpoint failures proactively | Catches OAuth breakage before users notice | 30 min |
-| 9 | **Fix deprecated `system` warnings** — replace with `stdenv.hostPlatform.system` | Clean evaluation, no warnings | 15 min |
-| 10 | **BTRFS `/data` subvolume migration** — create `@data`, update fstab, add to btrbk | Snapshot protection for Docker/Immich/AI data | 1-2h |
-| 11 | **Hermes: add OpenAI API key to sops** — TODO P2, config already wired | Enables secondary LLM provider | 5 min |
-| 12 | **Swap investigation** — 8 GiB swap on 128 GiB RAM, run `smem` | Understand memory pressure | 15 min |
-| 13 | **Monitor365 upstream fix** — Axum 0.7 route syntax (`:param` → `{param}`) | Unblocks monitor365 server | 30 min |
+| #   | Task                                                                               | Impact                                        | Effort |
+| --- | ---------------------------------------------------------------------------------- | --------------------------------------------- | ------ |
+| 8   | **Add OAuth health check to Gatus** — detect token-endpoint failures proactively   | Catches OAuth breakage before users notice    | 30 min |
+| 9   | **Fix deprecated `system` warnings** — replace with `stdenv.hostPlatform.system`   | Clean evaluation, no warnings                 | 15 min |
+| 10  | **BTRFS `/data` subvolume migration** — create `@data`, update fstab, add to btrbk | Snapshot protection for Docker/Immich/AI data | 1-2h   |
+| 11  | **Hermes: add OpenAI API key to sops** — TODO P2, config already wired             | Enables secondary LLM provider                | 5 min  |
+| 12  | **Swap investigation** — 8 GiB swap on 128 GiB RAM, run `smem`                     | Understand memory pressure                    | 15 min |
+| 13  | **Monitor365 upstream fix** — Axum 0.7 route syntax (`:param` → `{param}`)         | Unblocks monitor365 server                    | 30 min |
 
 ### Architecture & Quality
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 14 | **Provision script: add secret validation** — test token-exchange after write | Catches desync at provision time | 30 min |
-| 15 | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L) | Maintainability | 2-3h |
-| 16 | **Typed NixOS module options** — ports, paths, timeouts with types | Validation + testing | 3-4h |
-| 17 | **Extract dnsblockd** — ~930 lines of Go embedded in Nix config | Standalone repo, testability | 4-6h |
-| 18 | **Firewall deny-by-default** — explicit allowlist instead of open | Security hardening | 2h |
-| 19 | **Remove photomap** — decided to remove, niche + maintenance burden | Cleanup | 15 min |
+| #   | Task                                                                          | Impact                           | Effort |
+| --- | ----------------------------------------------------------------------------- | -------------------------------- | ------ |
+| 14  | **Provision script: add secret validation** — test token-exchange after write | Catches desync at provision time | 30 min |
+| 15  | **Split large modules** — monitor365 (716L), signoz (705L), forgejo (583L)    | Maintainability                  | 2-3h   |
+| 16  | **Typed NixOS module options** — ports, paths, timeouts with types            | Validation + testing             | 3-4h   |
+| 17  | **Extract dnsblockd** — ~930 lines of Go embedded in Nix config               | Standalone repo, testability     | 4-6h   |
+| 18  | **Firewall deny-by-default** — explicit allowlist instead of open             | Security hardening               | 2h     |
+| 19  | **Remove photomap** — decided to remove, niche + maintenance burden           | Cleanup                          | 15 min |
 
 ### Upstream & Ecosystem
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 20 | **nixpkgs: `aw-watcher-utilization` poetry-core migration** | Removes custom overlay | 1h |
-| 21 | **nixpkgs: KeePassXC Chromium manifests** | Removes workaround code | 30 min |
-| 22 | **HM: ActivityWatch Wayland watcher deps** | Removes After= workaround | 30 min |
-| 23 | **library-policy: commit correct go.sum upstream** | Removes mkTidyOverride | 30 min |
-| 24 | **Cloud backup setup** — BorgBackup to Hetzner StorageBox | Disaster recovery | 3-4h |
-| 25 | **DiscordSync migration** — watermill.CatchUpSubscriber from deleted projection/v2 | Re-enable discordsync | 2-3h |
+| #   | Task                                                                               | Impact                    | Effort |
+| --- | ---------------------------------------------------------------------------------- | ------------------------- | ------ |
+| 20  | **nixpkgs: `aw-watcher-utilization` poetry-core migration**                        | Removes custom overlay    | 1h     |
+| 21  | **nixpkgs: KeePassXC Chromium manifests**                                          | Removes workaround code   | 30 min |
+| 22  | **HM: ActivityWatch Wayland watcher deps**                                         | Removes After= workaround | 30 min |
+| 23  | **library-policy: commit correct go.sum upstream**                                 | Removes mkTidyOverride    | 30 min |
+| 24  | **Cloud backup setup** — BorgBackup to Hetzner StorageBox                          | Disaster recovery         | 3-4h   |
+| 25  | **DiscordSync migration** — watermill.CatchUpSubscriber from deleted projection/v2 | Re-enable discordsync     | 2-3h   |
 
 ---
 
@@ -210,6 +211,7 @@ sudo systemctl start immich-server.service
 **Why did `pocket-id-provision.service` NOT regenerate the secret file after it was deleted?**
 
 The provision script logic at `pocket-id.nix:248-250` is:
+
 ```bash
 if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
   echo "  Secret file already exists."
@@ -222,6 +224,7 @@ fi
 The user ran `sudo rm /var/lib/pocket-id/client-secrets/immich` then `sudo systemctl start pocket-id-provision.service`. The journal shows **zero provision entries after 18:57:48** — the service either didn't start, started and failed immediately (before logging), or the file deletion and provision start happened in a different order than expected.
 
 **I cannot determine this because:**
+
 1. `sudo` and `systemctl` are blocked in my environment
 2. I cannot read `/var/lib/pocket-id/client-secrets/` (permission denied)
 3. The provision journal after 18:57:48 is empty — no success or failure logged
@@ -250,11 +253,11 @@ Unpushed commits (3):
 
 ## Service Health Summary
 
-| Category | Services | Status |
-|----------|----------|--------|
-| Infrastructure | Docker, Caddy, SOPS, Pocket ID, oauth2-proxy | ✅ Operational |
-| Self-Hosted Apps | Forgejo, Homepage, SigNoz, TaskChampion, Twenty, Dozzle, Manifest, Overview, Crush Daily, OpenSEO, PMA | ✅ Operational |
-| **Immich** | **immich-server, immich-machine-learning** | **❌ DOWN (start-limit-hit)** |
-| Desktop | DMS (13 plugins), niri, Quickshell | ✅ Operational |
-| Disabled | voice-agents, minecraft, photomap | 🔧 Intentionally disabled |
-| Monitoring | Gatus (36/38 endpoints passing) | ⚠️ 2 expected DOWN (Ollama, Monitor365) |
+| Category         | Services                                                                                               | Status                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| Infrastructure   | Docker, Caddy, SOPS, Pocket ID, oauth2-proxy                                                           | ✅ Operational                          |
+| Self-Hosted Apps | Forgejo, Homepage, SigNoz, TaskChampion, Twenty, Dozzle, Manifest, Overview, Crush Daily, OpenSEO, PMA | ✅ Operational                          |
+| **Immich**       | **immich-server, immich-machine-learning**                                                             | **❌ DOWN (start-limit-hit)**           |
+| Desktop          | DMS (13 plugins), niri, Quickshell                                                                     | ✅ Operational                          |
+| Disabled         | voice-agents, minecraft, photomap                                                                      | 🔧 Intentionally disabled               |
+| Monitoring       | Gatus (36/38 endpoints passing)                                                                        | ⚠️ 2 expected DOWN (Ollama, Monitor365) |

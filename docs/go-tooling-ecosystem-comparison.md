@@ -7,17 +7,17 @@
 
 ## Project Status
 
-| Project | Has flake.nix | Framework | Maturity |
-|---------|:---:|---|---|
-| **library-policy** | ✅ | flake-parts + treefmt-nix + git-hooks-nix | Most mature — modular, 7 checks, 10 apps |
-| **BuildFlow** | ✅ | flake-utils | Broken — fakeHash, no local module handling |
-| **projects-management-automation** | ✅ | flake-utils (441 lines) | Medium — 25 apps, but vendorHash=null, strips replaces |
-| **hierarchical-errors** | ❌ | — | Proposal only — `docs/proposals/MIGRATION_TO_NIX_FLAKES_PROPOSAL.md` |
-| **golangci-lint-auto-configure** | ✅ | flake-utils | Functional — SSH flake input for go-finding |
-| **go-structure-linter** | ✅ | Raw `genAttrs` | Minimal — no apps, no shellHook, unclean src |
-| **branching-flow** | ✅ | flake-utils | Functional — templ build, GOPRIVATE set |
-| **go-auto-upgrade** | ✅ | flake-utils | Most checks (build/test/lint/nix-fmt) but local path inputs |
-| **art-dupl** | ✅ | Raw `genAttrs` | Most polished — overlay, vendor swap, pinned dep |
+| Project                            | Has flake.nix | Framework                                 | Maturity                                                             |
+| ---------------------------------- | :-----------: | ----------------------------------------- | -------------------------------------------------------------------- |
+| **library-policy**                 |      ✅       | flake-parts + treefmt-nix + git-hooks-nix | Most mature — modular, 7 checks, 10 apps                             |
+| **BuildFlow**                      |      ✅       | flake-utils                               | Broken — fakeHash, no local module handling                          |
+| **projects-management-automation** |      ✅       | flake-utils (441 lines)                   | Medium — 25 apps, but vendorHash=null, strips replaces               |
+| **hierarchical-errors**            |      ❌       | —                                         | Proposal only — `docs/proposals/MIGRATION_TO_NIX_FLAKES_PROPOSAL.md` |
+| **golangci-lint-auto-configure**   |      ✅       | flake-utils                               | Functional — SSH flake input for go-finding                          |
+| **go-structure-linter**            |      ✅       | Raw `genAttrs`                            | Minimal — no apps, no shellHook, unclean src                         |
+| **branching-flow**                 |      ✅       | flake-utils                               | Functional — templ build, GOPRIVATE set                              |
+| **go-auto-upgrade**                |      ✅       | flake-utils                               | Most checks (build/test/lint/nix-fmt) but local path inputs          |
+| **art-dupl**                       |      ✅       | Raw `genAttrs`                            | Most polished — overlay, vendor swap, pinned dep                     |
 
 ---
 
@@ -25,11 +25,11 @@
 
 Three different approaches are used. No two projects share the same framework choice consistently.
 
-| Framework | Projects | Pros | Cons |
-|---|---|---|---|
-| **flake-parts** | library-policy | Modular, composable, shared config, perSystem | More complex, requires understanding flake-parts |
-| **flake-utils** | BuildFlow, PMA, golangci-lint-auto-configure, branching-flow, go-auto-upgrade | Simple, `eachDefaultSystem` | Flat structure, gets unwieldy past ~100 lines |
-| **Raw `genAttrs`** | go-structure-linter, art-dupl | No extra dependency | Verbose system list, no auto-discovery |
+| Framework          | Projects                                                                      | Pros                                          | Cons                                             |
+| ------------------ | ----------------------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------ |
+| **flake-parts**    | library-policy                                                                | Modular, composable, shared config, perSystem | More complex, requires understanding flake-parts |
+| **flake-utils**    | BuildFlow, PMA, golangci-lint-auto-configure, branching-flow, go-auto-upgrade | Simple, `eachDefaultSystem`                   | Flat structure, gets unwieldy past ~100 lines    |
+| **Raw `genAttrs`** | go-structure-linter, art-dupl                                                 | No extra dependency                           | Verbose system list, no auto-discovery           |
 
 **Recommendation:** Standardize on **flake-parts**. library-policy already demonstrates the best pattern — modular files under `nix/`, shared `buildTags`/`version`, treefmt integration, pre-commit hooks. Every other project would benefit from this structure.
 
@@ -103,52 +103,52 @@ stripReplaceDirectives = ''
 
 ### Critical
 
-| Issue | Projects | Impact |
-|---|---|---|
-| **`vendorHash = fakeHash`** | BuildFlow | Build always fails — completely broken |
-| **`vendorHash = null`** | PMA | Non-reproducible builds |
-| **No flake.nix** | hierarchical-errors | No nix support at all |
-| **Local `path:` inputs** | go-auto-upgrade | Only works on one machine |
+| Issue                       | Projects            | Impact                                 |
+| --------------------------- | ------------------- | -------------------------------------- |
+| **`vendorHash = fakeHash`** | BuildFlow           | Build always fails — completely broken |
+| **`vendorHash = null`**     | PMA                 | Non-reproducible builds                |
+| **No flake.nix**            | hierarchical-errors | No nix support at all                  |
+| **Local `path:` inputs**    | go-auto-upgrade     | Only works on one machine              |
 
 ### High
 
-| Issue | Projects | Impact |
-|---|---|---|
-| **Strips `replace` directives** | PMA | Silently drops workspace deps |
-| **No `src` filtering** | go-structure-linter | Includes `.git` in build source |
-| **`go_1_26` doesn't exist in nixpkgs** | BuildFlow, PMA | May fail or silently downgrade |
-| **No go-finding integration** | library-policy | Can't produce SARIF output |
-| **No CGO_ENABLED=0** | go-structure-linter, golangci-lint-auto-configure | May fail on systems without gcc |
+| Issue                                  | Projects                                          | Impact                          |
+| -------------------------------------- | ------------------------------------------------- | ------------------------------- |
+| **Strips `replace` directives**        | PMA                                               | Silently drops workspace deps   |
+| **No `src` filtering**                 | go-structure-linter                               | Includes `.git` in build source |
+| **`go_1_26` doesn't exist in nixpkgs** | BuildFlow, PMA                                    | May fail or silently downgrade  |
+| **No go-finding integration**          | library-policy                                    | Can't produce SARIF output      |
+| **No CGO_ENABLED=0**                   | go-structure-linter, golangci-lint-auto-configure | May fail on systems without gcc |
 
 ### Medium
 
-| Issue | Projects | Impact |
-|---|---|---|
-| **Duplicated constants** (buildTags, version, src) | library-policy (nix/) | DRY violation across 4 nix files |
-| **No GOWORK=off** | golangci-lint-auto-configure (devShell), go-structure-linter | May break if go.work exists |
-| **No GOPRIVATE/GOINSECURE** | All except branching-flow | May fail to fetch private deps in devShell |
-| **Hardcoded versions** | go-structure-linter (0.3.0), branching-flow (0.0.1) | Not derived from git |
-| **Redundant platform lists** | branching-flow (`unix ++ darwin`) | darwin is subset of unix |
-| **`import nixpkgs { inherit system; }`** | golangci-lint-auto-configure, branching-flow | Unnecessary evaluation overhead |
+| Issue                                              | Projects                                                     | Impact                                     |
+| -------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------ |
+| **Duplicated constants** (buildTags, version, src) | library-policy (nix/)                                        | DRY violation across 4 nix files           |
+| **No GOWORK=off**                                  | golangci-lint-auto-configure (devShell), go-structure-linter | May break if go.work exists                |
+| **No GOPRIVATE/GOINSECURE**                        | All except branching-flow                                    | May fail to fetch private deps in devShell |
+| **Hardcoded versions**                             | go-structure-linter (0.3.0), branching-flow (0.0.1)          | Not derived from git                       |
+| **Redundant platform lists**                       | branching-flow (`unix ++ darwin`)                            | darwin is subset of unix                   |
+| **`import nixpkgs { inherit system; }`**           | golangci-lint-auto-configure, branching-flow                 | Unnecessary evaluation overhead            |
 
 ---
 
 ## Feature Matrix
 
-| Feature | library-policy | BuildFlow | PMA | hier-errors | golangci-auto | go-struct | branch-flow | go-auto-up | art-dupl |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Builds with nix** | ✅ | ❌ | ⚠️ | — | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Modular nix files** | ✅ | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **treefmt** | ✅ | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **pre-commit hooks** | ✅ | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Multiple packages** | ✅ (debug+prod) | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **7+ checks** | ✅ | ❌ | 3 | — | 1 | 1 | 1 | 4 | 2 |
-| **Apps** | 10 | 0 | 25 | — | 1 | 0 | 2 | 1 | 2 |
-| **Overlay output** | ❌ | ❌ | ❌ | — | ❌ | ❌ | ❌ | ❌ | ✅ |
-| **Portable (no local paths)** | ✅ | ❌ | ⚠️ | — | ✅ | ✅ | ✅ | ❌ | ✅ |
-| **Sibling dep handling** | N/A | ❌ | ⚠️ strip | — | ✅ postPatch | N/A | N/A | ⚠️ local paths | ✅ vendor swap |
-| **Dev shell richness** | Full | Full | Full | — | Full | Minimal | Medium | Full | Medium |
-| **CGO_ENABLED=0** | ✅ | ❌ | ✅ | — | ❌ | ❌ | ❌ | ❌ | ✅ |
+| Feature                       | library-policy  | BuildFlow |   PMA    | hier-errors | golangci-auto | go-struct | branch-flow |   go-auto-up   |    art-dupl    |
+| ----------------------------- | :-------------: | :-------: | :------: | :---------: | :-----------: | :-------: | :---------: | :------------: | :------------: |
+| **Builds with nix**           |       ✅        |    ❌     |    ⚠️    |      —      |      ✅       |    ✅     |     ✅      |       ✅       |       ✅       |
+| **Modular nix files**         |       ✅        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
+| **treefmt**                   |       ✅        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
+| **pre-commit hooks**          |       ✅        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
+| **Multiple packages**         | ✅ (debug+prod) |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ❌       |
+| **7+ checks**                 |       ✅        |    ❌     |    3     |      —      |       1       |     1     |      1      |       4        |       2        |
+| **Apps**                      |       10        |     0     |    25    |      —      |       1       |     0     |      2      |       1        |       2        |
+| **Overlay output**            |       ❌        |    ❌     |    ❌    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ✅       |
+| **Portable (no local paths)** |       ✅        |    ❌     |    ⚠️    |      —      |      ✅       |    ✅     |     ✅      |       ❌       |       ✅       |
+| **Sibling dep handling**      |       N/A       |    ❌     | ⚠️ strip |      —      | ✅ postPatch  |    N/A    |     N/A     | ⚠️ local paths | ✅ vendor swap |
+| **Dev shell richness**        |      Full       |   Full    |   Full   |      —      |     Full      |  Minimal  |   Medium    |      Full      |     Medium     |
+| **CGO_ENABLED=0**             |       ✅        |    ❌     |    ✅    |      —      |      ❌       |    ❌     |     ❌      |       ❌       |       ✅       |
 
 ---
 
@@ -178,19 +178,19 @@ stripReplaceDirectives = ''
 
 ## SystemNix Integration Status
 
-| Project | SystemNix flake input | Overlay | Global install |
-|---|---|---|---|
-| library-policy | ✅ `git+ssh://...master` | ✅ `libraryPolicyOverlay` | ✅ `base.nix` |
-| golangci-lint-auto-configure | ✅ `git+ssh://...master` (src) | ✅ `sharedOverlays` | ✅ `base.nix` |
-| go-finding | ✅ `git+ssh://...master` (src) | Via auto-configure | Indirect |
-| cmdguard | ✅ (via go-output-submodules) | Via auto-configure | Indirect |
-| go-output | ✅ (via go-output-submodules) | Via auto-configure | Indirect |
-| BuildFlow | ❌ | ❌ | ❌ |
-| PMA | ❌ | ❌ | ❌ |
-| hierarchical-errors | ❌ | ❌ | ❌ |
-| branching-flow | ❌ | ❌ | ❌ |
-| go-structure-linter | ❌ | ❌ | ❌ |
-| go-auto-upgrade | ❌ | ❌ | ❌ |
-| art-dupl | ❌ | ❌ | ❌ |
+| Project                      | SystemNix flake input          | Overlay                   | Global install |
+| ---------------------------- | ------------------------------ | ------------------------- | -------------- |
+| library-policy               | ✅ `git+ssh://...master`       | ✅ `libraryPolicyOverlay` | ✅ `base.nix`  |
+| golangci-lint-auto-configure | ✅ `git+ssh://...master` (src) | ✅ `sharedOverlays`       | ✅ `base.nix`  |
+| go-finding                   | ✅ `git+ssh://...master` (src) | Via auto-configure        | Indirect       |
+| cmdguard                     | ✅ (via go-output-submodules)  | Via auto-configure        | Indirect       |
+| go-output                    | ✅ (via go-output-submodules)  | Via auto-configure        | Indirect       |
+| BuildFlow                    | ❌                             | ❌                        | ❌             |
+| PMA                          | ❌                             | ❌                        | ❌             |
+| hierarchical-errors          | ❌                             | ❌                        | ❌             |
+| branching-flow               | ❌                             | ❌                        | ❌             |
+| go-structure-linter          | ❌                             | ❌                        | ❌             |
+| go-auto-upgrade              | ❌                             | ❌                        | ❌             |
+| art-dupl                     | ❌                             | ❌                        | ❌             |
 
 Only library-policy and golangci-lint-auto-configure are wired into SystemNix. The remaining 6 tools are either not yet needed on the NixOS machine or would need new flake inputs + overlays to be added.

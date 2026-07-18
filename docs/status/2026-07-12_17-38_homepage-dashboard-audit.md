@@ -10,15 +10,15 @@
 
 ### Fully Done (a)
 
-| # | Change | Lines | Verification |
-|---|--------|-------|-------------|
-| 1 | Added `fileAndImageRenamerEnabled` conditional flag | `homepage.nix:46` | `nix eval` passes |
-| 2 | Added settings.yaml polish: `hideVersion`, `disableUpdateCheck`, `useEqualHeights`, `target="_blank"`, `quicklaunch` config | `homepage.nix:99-107` | `nix eval` passes |
-| 3 | Added File Renamer tile to Productivity group (was missing despite having vHost + port + Gatus monitoring) | `homepage.nix:344-351` | `nix eval` passes |
-| 4 | Added datetime widget (xl text, short time, medium date) | `homepage.nix:398-406` | `nix eval` passes |
-| 5 | Added search widget (DuckDuckGo, suggestions, new tab) | `homepage.nix:407-413` | `nix eval` passes |
-| 6 | `nix flake check --no-build` | all checks passed | confirmed |
-| 7 | Full `nix eval` of evo-x2 toplevel | store path generated | confirmed |
+| #   | Change                                                                                                                      | Lines                  | Verification      |
+| --- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----------------- |
+| 1   | Added `fileAndImageRenamerEnabled` conditional flag                                                                         | `homepage.nix:46`      | `nix eval` passes |
+| 2   | Added settings.yaml polish: `hideVersion`, `disableUpdateCheck`, `useEqualHeights`, `target="_blank"`, `quicklaunch` config | `homepage.nix:99-107`  | `nix eval` passes |
+| 3   | Added File Renamer tile to Productivity group (was missing despite having vHost + port + Gatus monitoring)                  | `homepage.nix:344-351` | `nix eval` passes |
+| 4   | Added datetime widget (xl text, short time, medium date)                                                                    | `homepage.nix:398-406` | `nix eval` passes |
+| 5   | Added search widget (DuckDuckGo, suggestions, new tab)                                                                      | `homepage.nix:407-413` | `nix eval` passes |
+| 6   | `nix flake check --no-build`                                                                                                | all checks passed      | confirmed         |
+| 7   | Full `nix eval` of evo-x2 toplevel                                                                                          | store path generated   | confirmed         |
 
 ### Partially Done (b)
 
@@ -89,6 +89,7 @@ Nothing is broken. But:
 ## What We Should Improve — Up to 50 Next Steps
 
 ### Deploy & Verify (Priority 0)
+
 1. **Deploy the changes** — `nix run .#deploy` and check the dashboard visually
 2. **Verify all icons resolve** — check browser console for 404s on `/icons/*.png`
 3. **Verify `mdi-file-rename-outline` renders** — if not, find the correct icon name
@@ -99,6 +100,7 @@ Nothing is broken. But:
 8. **Run post-deploy smoke test** — `nix run .#post-deploy-check`
 
 ### Icon Accuracy (Priority 1)
+
 9. **Audit ALL icons against the actual icon pack** — `ls /nix/store/*-homepage-dashboard-*/share/homepage/public/icons/ | grep -i <name>`
 10. **Fix Taskwarrior icon** — `taskcafe.png` is NOT Taskwarrior. Check for `taskwarrior.png` or `task.png` or `go-task.png`
 11. **Fix Twenty CRM icon** — `espocrm.png` is NOT Twenty. Check for `twenty.png` or use `mdi-contacts`
@@ -108,6 +110,7 @@ Nothing is broken. But:
 15. **Create a test script** that validates all icon references against the installed pack
 
 ### Dashboard Polish (Priority 2)
+
 16. **Add `cputemp: true` to resources widget** — critical for Strix Halo thermal monitoring
 17. **Add `network: true` to resources widget** — network throughput at a glance
 18. **Consider layout tabs** — group Infrastructure+Monitoring under "System", Development+Productivity under "Work", etc.
@@ -119,6 +122,7 @@ Nothing is broken. But:
 24. **Set Homepage tile `target: _self`** — opening the current page in a new tab is redundant
 
 ### Missing Services (Priority 3)
+
 25. **Add btrbk snapshots** — primary backup mechanism, currently invisible on dashboard
 26. **Add btrfs-health** — chunk allocation monitor, prevents ENOSPC crash
 27. **Add smartd / NVMe health** — disk health monitoring
@@ -133,6 +137,7 @@ Nothing is broken. But:
 36. **Add Bluetooth** — if relevant
 
 ### Architecture (Priority 4)
+
 37. **Consider a "System Health" group** — btrfs, smartd, disk-monitor, gpu-active, fstrim, nvme-health as a dedicated section rather than cramming into Infrastructure
 38. **Consider splitting "Monitoring"** — observability tools (SigNoz, Gatus, Dozzle) vs system metrics (Node Exporter, cAdvisor, EMEET PIXY)
 39. **Add Gatus link to each service** — deep-link to the Gatus endpoint for that service
@@ -140,6 +145,7 @@ Nothing is broken. But:
 41. **Add `ping` (ICMP) for external hosts** — e.g., the rpi3 DNS failover partner
 
 ### Code Quality (Priority 5)
+
 42. **Extract `mkService` to a helper** — it's defined inline; could be shared if other dashboards are added
 43. **Add a homepage integration test** — verify the generated YAML has expected structure
 44. **Document the icon verification process** in AGENTS.md — how to check icons before adding
@@ -148,6 +154,7 @@ Nothing is broken. But:
 47. **Consider Prometheus/Grafana link** — if a Grafana dashboard exists, add it prominently
 
 ### AGENTS.md / Docs (Priority 5)
+
 48. **Update AGENTS.md** with the new tiles and widgets
 49. **Document the icon naming convention** — `.png` vs `mdi-` vs `si-` prefixes
 50. **Add homepage to FEATURES.md** if not already there — with current status
@@ -165,6 +172,7 @@ I cannot list the nix store path without building or querying the system. The `e
 ### 2. Should the dashboard be deployed now, or are the pre-existing working-tree changes (Pocket ID v2.10.0 overlay, boot.nix changes) ready to go too?
 
 The working tree has changes from another session that I didn't make and didn't review:
+
 - `overlays/linux.nix` — Pocket ID upgrade to v2.10.0 with new vendorHash/pnpmDeps
 - `platforms/nixos/system/boot.nix` — 22 lines changed
 - `AGENTS.md` — icon gotcha + wildcard DNS entries

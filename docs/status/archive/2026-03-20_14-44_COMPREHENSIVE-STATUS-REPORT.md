@@ -17,52 +17,56 @@ The system is highly functional, though some bleeding-edge hardware features (AM
 ## a) FULLY DONE (Recent Achievements)
 
 ### Desktop Environment & UX
-* **Hyprland 0.54 Compatibility:** Window rules completely updated to the new 0.54 syntax, resolving deprecation warnings and layout bugs.
-* **Waybar Stability:** Resolved recurring Waybar crashes, injected UTF-8 fonts for icons, and relaxed idle timeouts for better daily usability.
-* **Browser Extensions:** Declarative YouTube Shorts blocker extension management fully implemented across platforms.
+
+- **Hyprland 0.54 Compatibility:** Window rules completely updated to the new 0.54 syntax, resolving deprecation warnings and layout bugs.
+- **Waybar Stability:** Resolved recurring Waybar crashes, injected UTF-8 fonts for icons, and relaxed idle timeouts for better daily usability.
+- **Browser Extensions:** Declarative YouTube Shorts blocker extension management fully implemented across platforms.
 
 ### Security & Password Management
-* **KeePassXC Integration:**
-  * Implemented KeePassXC Hyprland window rules for seamless popup behavior.
-  * Added `kop` shell alias for quick access.
-  * Split and simplified native messaging manifests for Chromium and Helium browsers.
-  * Fixed an infinite recursion bug in the KeePassXC wrapper.
+
+- **KeePassXC Integration:**
+  - Implemented KeePassXC Hyprland window rules for seamless popup behavior.
+  - Added `kop` shell alias for quick access.
+  - Split and simplified native messaging manifests for Chromium and Helium browsers.
+  - Fixed an infinite recursion bug in the KeePassXC wrapper.
 
 ### AI Stack & Hardware Enablement
-* **Ollama Vulkan Backend:** Successfully switched Ollama to the Vulkan backend, bypassing previous compute issues.
-* **Benchmarks:** Added comprehensive GLM-4.7-Flash quantisation benchmark suite.
-* **AMD XDNA NPU:** Added driver support and AI monitoring scripts.
-* **SSH Configuration:** Fixed SSH key pathing issues to properly deploy the root key to `authorized_keys.d`.
+
+- **Ollama Vulkan Backend:** Successfully switched Ollama to the Vulkan backend, bypassing previous compute issues.
+- **Benchmarks:** Added comprehensive GLM-4.7-Flash quantisation benchmark suite.
+- **AMD XDNA NPU:** Added driver support and AI monitoring scripts.
+- **SSH Configuration:** Fixed SSH key pathing issues to properly deploy the root key to `authorized_keys.d`.
 
 ### CI & Tooling
-* **Git Hooks:** Updated pre-commit-hooks from v4.4.0 to v6.0.0. Added flake.lock validation and a robust merge conflict detection recipe.
-* **Health Scripts:** Refactored the health script for better accuracy and removed stale inline TODOs.
-* **JSCPD:** Converted the jscpd function to a lightweight shell alias for `bunx`.
+
+- **Git Hooks:** Updated pre-commit-hooks from v4.4.0 to v6.0.0. Added flake.lock validation and a robust merge conflict detection recipe.
+- **Health Scripts:** Refactored the health script for better accuracy and removed stale inline TODOs.
+- **JSCPD:** Converted the jscpd function to a lightweight shell alias for `bunx`.
 
 ---
 
 ## b) PARTIALLY DONE
 
-* **ActivityWatch Ecosystem:** 4 of 5 buckets working. Input watcher still suffers from permissions issues on macOS.
-* **Homebrew Migration:** Still lingering on the Intel-era `/usr/local` prefix on Apple Silicon. Migration to `/opt/homebrew` is documented but pending a final execution decision.
-* **File Organization:** Pre-commit hooks now catch conflicts, but the repository root still contains miscellaneous Python benchmark scripts (`test_speed.py`, `download_glm_model.py`) that belong in `dev/` or `scripts/`.
+- **ActivityWatch Ecosystem:** 4 of 5 buckets working. Input watcher still suffers from permissions issues on macOS.
+- **Homebrew Migration:** Still lingering on the Intel-era `/usr/local` prefix on Apple Silicon. Migration to `/opt/homebrew` is documented but pending a final execution decision.
+- **File Organization:** Pre-commit hooks now catch conflicts, but the repository root still contains miscellaneous Python benchmark scripts (`test_speed.py`, `download_glm_model.py`) that belong in `dev/` or `scripts/`.
 
 ---
 
 ## c) NOT STARTED
 
-* **Repo Split into Sub-projects:** The monolithic repository architecture identified in `HARDCORE_REVIEW.md` remains intact.
-* **Library Extraction:** `nix-error-lib` and `nix-types-lib` have not yet been extracted into standalone reusable flakes.
-* **Go Overlay Scoping:** The Go 1.26.1 global override still risks breaking unrelated nixpkgs derivations.
-* **Automated CI Testing Framework:** No continuous integration beyond pre-commit and flake checking.
+- **Repo Split into Sub-projects:** The monolithic repository architecture identified in `HARDCORE_REVIEW.md` remains intact.
+- **Library Extraction:** `nix-error-lib` and `nix-types-lib` have not yet been extracted into standalone reusable flakes.
+- **Go Overlay Scoping:** The Go 1.26.1 global override still risks breaking unrelated nixpkgs derivations.
+- **Automated CI Testing Framework:** No continuous integration beyond pre-commit and flake checking.
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-* **AMD NPU XRT Build Failures:** The `amd-npu` module had to be explicitly disabled because the upstream XRT build fails against Boost 1.89.0. This blocks native hardware AI acceleration until NixOS upstream resolves the dependency clash.
-* **Documentation Bloat:** The `docs/status/` directory is overflowing with historical, unread AI-generated markdown files, cluttering IDE searches and artificially inflating the repo size.
-* **Pre-commit `oxfmt` Panics:** The `oxfmt` tool currently panics on `gomod2nix.toml`, causing all standard `git commit` commands to fail unless bypassed with `--no-verify`.
+- **AMD NPU XRT Build Failures:** The `amd-npu` module had to be explicitly disabled because the upstream XRT build fails against Boost 1.89.0. This blocks native hardware AI acceleration until NixOS upstream resolves the dependency clash.
+- **Documentation Bloat:** The `docs/status/` directory is overflowing with historical, unread AI-generated markdown files, cluttering IDE searches and artificially inflating the repo size.
+- **Pre-commit `oxfmt` Panics:** The `oxfmt` tool currently panics on `gomod2nix.toml`, causing all standard `git commit` commands to fail unless bypassed with `--no-verify`.
 
 ---
 
@@ -77,7 +81,7 @@ The system is highly functional, though some bleeding-edge hardware features (AM
 
 ## f) TOP 25 THINGS WE SHOULD GET DONE NEXT
 
-*(Prioritized list of actionable tasks)*
+_(Prioritized list of actionable tasks)_
 
 1. [P0] Fix the `oxfmt` pre-commit hook panic on `gomod2nix.toml`.
 2. [P0] Track and wait for upstream fix for XRT vs Boost 1.89.0.

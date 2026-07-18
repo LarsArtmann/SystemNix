@@ -13,9 +13,16 @@
           "step": 300
         }
       },
-      "thresholds": {"steps": [{"color": "green"}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]},
+      "thresholds": {
+        "steps": [
+          { "color": "green" },
+          { "color": "yellow", "value": 70 },
+          { "color": "red", "value": 90 }
+        ]
+      },
       "unit": "percent",
-      "min": 0, "max": 100
+      "min": 0,
+      "max": 100
     },
     {
       "title": "Memory Usage",
@@ -27,9 +34,16 @@
           "step": 300
         }
       },
-      "thresholds": {"steps": [{"color": "green"}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]},
+      "thresholds": {
+        "steps": [
+          { "color": "green" },
+          { "color": "yellow", "value": 70 },
+          { "color": "red", "value": 90 }
+        ]
+      },
       "unit": "percent",
-      "min": 0, "max": 100
+      "min": 0,
+      "max": 100
     },
     {
       "title": "Disk Usage",
@@ -41,9 +55,16 @@
           "step": 300
         }
       },
-      "thresholds": {"steps": [{"color": "green"}, {"color": "yellow", "value": 70}, {"color": "red", "value": 90}]},
+      "thresholds": {
+        "steps": [
+          { "color": "green" },
+          { "color": "yellow", "value": 70 },
+          { "color": "red", "value": 90 }
+        ]
+      },
       "unit": "percent",
-      "min": 0, "max": 100
+      "min": 0,
+      "max": 100
     },
     {
       "title": "CPU Temperature",
@@ -55,9 +76,16 @@
           "step": 300
         }
       },
-      "thresholds": {"steps": [{"color": "green"}, {"color": "yellow", "value": 70}, {"color": "red", "value": 85}]},
+      "thresholds": {
+        "steps": [
+          { "color": "green" },
+          { "color": "yellow", "value": 70 },
+          { "color": "red", "value": 85 }
+        ]
+      },
       "unit": "celsius",
-      "min": 0, "max": 100
+      "min": 0,
+      "max": 100
     },
     {
       "title": "Load Average (1m)",
@@ -174,5 +202,5 @@
   ],
   "variables": [],
   "refresh": "30s",
-  "timeRange": {"from": "now-6h", "to": "now"}
+  "timeRange": { "from": "now-6h", "to": "now" }
 }

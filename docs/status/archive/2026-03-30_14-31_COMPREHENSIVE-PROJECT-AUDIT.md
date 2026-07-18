@@ -19,96 +19,96 @@ Setup-Mac is a **production-grade, cross-platform Nix configuration** managing a
 
 ### Infrastructure & Core Systems
 
-| Component | File(s) | Status |
-|-----------|---------|--------|
-| **Cross-platform Nix flake** | `flake.nix` (16 inputs, 2 systems) | Production-ready |
-| **Darwin (macOS) config** | `platforms/darwin/` (12 modules) | Deployed and working |
-| **NixOS (evo-x2) config** | `platforms/nixos/` (35+ modules) | Deployed and working |
-| **Home Manager integration** | Both platforms, shared common modules | Verified |
-| **DNS Blocker (Unbound + dnsblockd)** | `platforms/nixos/modules/dns-blocker.nix`, Go daemon | Working, 15 blocklists, ~1.9M domains |
-| **DNS Block Page (HTTPS)** | Self-signed CA + server cert, Firefox NSS install | Working on LAN |
-| **Caddy Reverse Proxy** | `modules/nixos/services/caddy.nix` | 5 virtual hosts on `*.lan` |
-| **Immich Photo Management** | `modules/nixos/services/immich.nix` | Running on port 2283, PostgreSQL tuned |
-| **Immich ML Optimization** | CLIP SigLIP2 #1 model, antelopev2 faces, fixed duplicate detection | +23% search quality |
-| **Gitea (self-hosted Git)** | `modules/nixos/services/gitea.nix` | SQLite, GitHub sync every 6h |
-| **Grafana + Prometheus** | `modules/nixos/services/grafana.nix`, `monitoring.nix` | 4 exporters, auto-provisioned |
-| **Homepage Dashboard** | `modules/nixos/services/homepage.nix` | All LAN services visible |
-| **sops-nix Secrets** | `modules/nixos/services/sops.nix` | SSH host key decryption |
-| **SSH Hardening** | `modules/nixos/services/ssh.nix` | Key-only, restricted ciphers, AllowUsers |
-| **PhotoMap AI** | `modules/nixos/services/photomap.nix` | OCI container, Immich mount |
-| **Docker daemon** | `modules/nixos/services/default.nix` | Weekly auto-prune |
-| **ZFS/BTRFS Snapshots** | `platforms/nixos/system/snapshots.nix` | Timeshift daily + autoScrub |
-| **AMD GPU (RDNA 3.5)** | `platforms/nixos/hardware/amd-gpu.nix` | VAAPI, ROCm env vars |
-| **Audio (PipeWire)** | `platforms/nixos/desktop/audio.nix` | Full PulseAudio/JACK compat |
-| **Bluetooth** | `platforms/nixos/hardware/bluetooth.nix` | Blueman enabled |
+| Component                             | File(s)                                                            | Status                                   |
+| ------------------------------------- | ------------------------------------------------------------------ | ---------------------------------------- |
+| **Cross-platform Nix flake**          | `flake.nix` (16 inputs, 2 systems)                                 | Production-ready                         |
+| **Darwin (macOS) config**             | `platforms/darwin/` (12 modules)                                   | Deployed and working                     |
+| **NixOS (evo-x2) config**             | `platforms/nixos/` (35+ modules)                                   | Deployed and working                     |
+| **Home Manager integration**          | Both platforms, shared common modules                              | Verified                                 |
+| **DNS Blocker (Unbound + dnsblockd)** | `platforms/nixos/modules/dns-blocker.nix`, Go daemon               | Working, 15 blocklists, ~1.9M domains    |
+| **DNS Block Page (HTTPS)**            | Self-signed CA + server cert, Firefox NSS install                  | Working on LAN                           |
+| **Caddy Reverse Proxy**               | `modules/nixos/services/caddy.nix`                                 | 5 virtual hosts on `*.lan`               |
+| **Immich Photo Management**           | `modules/nixos/services/immich.nix`                                | Running on port 2283, PostgreSQL tuned   |
+| **Immich ML Optimization**            | CLIP SigLIP2 #1 model, antelopev2 faces, fixed duplicate detection | +23% search quality                      |
+| **Gitea (self-hosted Git)**           | `modules/nixos/services/gitea.nix`                                 | SQLite, GitHub sync every 6h             |
+| **Grafana + Prometheus**              | `modules/nixos/services/grafana.nix`, `monitoring.nix`             | 4 exporters, auto-provisioned            |
+| **Homepage Dashboard**                | `modules/nixos/services/homepage.nix`                              | All LAN services visible                 |
+| **sops-nix Secrets**                  | `modules/nixos/services/sops.nix`                                  | SSH host key decryption                  |
+| **SSH Hardening**                     | `modules/nixos/services/ssh.nix`                                   | Key-only, restricted ciphers, AllowUsers |
+| **PhotoMap AI**                       | `modules/nixos/services/photomap.nix`                              | OCI container, Immich mount              |
+| **Docker daemon**                     | `modules/nixos/services/default.nix`                               | Weekly auto-prune                        |
+| **ZFS/BTRFS Snapshots**               | `platforms/nixos/system/snapshots.nix`                             | Timeshift daily + autoScrub              |
+| **AMD GPU (RDNA 3.5)**                | `platforms/nixos/hardware/amd-gpu.nix`                             | VAAPI, ROCm env vars                     |
+| **Audio (PipeWire)**                  | `platforms/nixos/desktop/audio.nix`                                | Full PulseAudio/JACK compat              |
+| **Bluetooth**                         | `platforms/nixos/hardware/bluetooth.nix`                           | Blueman enabled                          |
 
 ### Desktop Environment
 
-| Component | File(s) | Status |
-|-----------|---------|--------|
-| **Hyprland (Wayland compositor)** | `platforms/nixos/desktop/hyprland.nix` | Working, some plugins disabled for 0.54.2 |
-| **Niri (scrollable-tiling)** | `platforms/nixos/programs/niri-wrapped.nix` | Working, niri-flake HM module |
-| **Waybar** | `platforms/nixos/desktop/waybar.nix` | Shared by both compositors |
-| **Rofi launcher** | `platforms/nixos/programs/rofi.nix` | Catppuccin themed |
-| **Hyprlock (lock screen)** | `platforms/nixos/programs/hyprlock.nix` | Catppuccin themed |
-| **Hypridle (idle daemon)** | `platforms/nixos/programs/hypridle.nix` | Configured |
-| **Wlogout (power menu)** | `platforms/nixos/programs/wlogout.nix` | Catppuccin themed |
-| **Dunst (notifications)** | `platforms/nixos/users/home.nix` | TV-friendly (2m viewing) |
-| **Zellij (terminal multiplexer)** | `platforms/nixos/programs/zellij.nix` | Configured |
-| **Kitty + Foot terminals** | `platforms/nixos/users/home.nix` | Both working |
-| **Animated Wallpaper (Hyprland)** | `platforms/nixos/modules/hyprland-animated-wallpaper.nix` | Fixed: configurable `wallpaperDir` |
-| **Niri Wallpaper** | `platforms/nixos/programs/niri-wrapped.nix` | `swww` + `Mod+W` random pick |
-| **Fish shell** | `platforms/common/programs/fish.nix` + platform overrides | Cross-platform |
-| **Starship prompt** | `platforms/common/programs/starship.nix` | Cross-platform |
-| **Tmux** | `platforms/common/programs/tmux.nix` | Cross-platform |
-| **KeePassXC** | `platforms/common/programs/keepassxc.nix` | Configured |
+| Component                         | File(s)                                                   | Status                                    |
+| --------------------------------- | --------------------------------------------------------- | ----------------------------------------- |
+| **Hyprland (Wayland compositor)** | `platforms/nixos/desktop/hyprland.nix`                    | Working, some plugins disabled for 0.54.2 |
+| **Niri (scrollable-tiling)**      | `platforms/nixos/programs/niri-wrapped.nix`               | Working, niri-flake HM module             |
+| **Waybar**                        | `platforms/nixos/desktop/waybar.nix`                      | Shared by both compositors                |
+| **Rofi launcher**                 | `platforms/nixos/programs/rofi.nix`                       | Catppuccin themed                         |
+| **Hyprlock (lock screen)**        | `platforms/nixos/programs/hyprlock.nix`                   | Catppuccin themed                         |
+| **Hypridle (idle daemon)**        | `platforms/nixos/programs/hypridle.nix`                   | Configured                                |
+| **Wlogout (power menu)**          | `platforms/nixos/programs/wlogout.nix`                    | Catppuccin themed                         |
+| **Dunst (notifications)**         | `platforms/nixos/users/home.nix`                          | TV-friendly (2m viewing)                  |
+| **Zellij (terminal multiplexer)** | `platforms/nixos/programs/zellij.nix`                     | Configured                                |
+| **Kitty + Foot terminals**        | `platforms/nixos/users/home.nix`                          | Both working                              |
+| **Animated Wallpaper (Hyprland)** | `platforms/nixos/modules/hyprland-animated-wallpaper.nix` | Fixed: configurable `wallpaperDir`        |
+| **Niri Wallpaper**                | `platforms/nixos/programs/niri-wrapped.nix`               | `swww` + `Mod+W` random pick              |
+| **Fish shell**                    | `platforms/common/programs/fish.nix` + platform overrides | Cross-platform                            |
+| **Starship prompt**               | `platforms/common/programs/starship.nix`                  | Cross-platform                            |
+| **Tmux**                          | `platforms/common/programs/tmux.nix`                      | Cross-platform                            |
+| **KeePassXC**                     | `platforms/common/programs/keepassxc.nix`                 | Configured                                |
 
 ### Security
 
-| Component | File(s) | Status |
-|-----------|---------|--------|
-| **AppArmor** | `platforms/nixos/desktop/security-hardening.nix` | Enabled |
-| **fail2ban** | Same file | sshd jail, aggressive mode |
-| **ClamAV** | Same file | Daemon + updater |
-| **Sudo (passwordless)** | `platforms/nixos/system/sudo.nix` | Wheel group |
-| **TouchID for sudo (macOS)** | `platforms/darwin/security/pam.nix` | Enabled |
-| **macOS Firewall** | `platforms/darwin/networking/default.nix` | Enabled |
-| **GPG commit signing** | `platforms/common/programs/git.nix` | Mandatory |
-| **Gitleaks pre-commit** | `.pre-commit-config.yaml` | Active |
-| **Firefox DoH bypass** | DNS blocker config | DoH disabled+locked, cert installed |
-| **Catppuccin Mocha theming** | GTK, Qt, Waybar, Rofi, Hyprlock, Dunst | Consistent across all |
+| Component                    | File(s)                                          | Status                              |
+| ---------------------------- | ------------------------------------------------ | ----------------------------------- |
+| **AppArmor**                 | `platforms/nixos/desktop/security-hardening.nix` | Enabled                             |
+| **fail2ban**                 | Same file                                        | sshd jail, aggressive mode          |
+| **ClamAV**                   | Same file                                        | Daemon + updater                    |
+| **Sudo (passwordless)**      | `platforms/nixos/system/sudo.nix`                | Wheel group                         |
+| **TouchID for sudo (macOS)** | `platforms/darwin/security/pam.nix`              | Enabled                             |
+| **macOS Firewall**           | `platforms/darwin/networking/default.nix`        | Enabled                             |
+| **GPG commit signing**       | `platforms/common/programs/git.nix`              | Mandatory                           |
+| **Gitleaks pre-commit**      | `.pre-commit-config.yaml`                        | Active                              |
+| **Firefox DoH bypass**       | DNS blocker config                               | DoH disabled+locked, cert installed |
+| **Catppuccin Mocha theming** | GTK, Qt, Waybar, Rofi, Hyprlock, Dunst           | Consistent across all               |
 
 ### Architecture & DevOps
 
-| Component | Status |
-|-----------|--------|
-| **flake-parts dendritic modules** | All 10 services migrated |
-| **Overlays** | Go 1.26, aw-watcher-utilization, dnsblockd |
-| **Custom packages** | dnsblockd, dnsblockd-processor, dnsblockd-cert, modernize, aw-watcher-utilization, geekbench-ai, superfile |
-| **Justfile** | 90+ recipes covering all workflows |
-| **Pre-commit hooks** | Gitleaks, trailing whitespace, Nix syntax |
-| **Alejandra formatter** | Configured as default formatter |
-| **NUR integration** | Enabled for bleeding-edge packages |
-| **Import graph integrity** | All 94 .nix files verified, zero broken imports |
+| Component                         | Status                                                                                                     |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **flake-parts dendritic modules** | All 10 services migrated                                                                                   |
+| **Overlays**                      | Go 1.26, aw-watcher-utilization, dnsblockd                                                                 |
+| **Custom packages**               | dnsblockd, dnsblockd-processor, dnsblockd-cert, modernize, aw-watcher-utilization, geekbench-ai, superfile |
+| **Justfile**                      | 90+ recipes covering all workflows                                                                         |
+| **Pre-commit hooks**              | Gitleaks, trailing whitespace, Nix syntax                                                                  |
+| **Alejandra formatter**           | Configured as default formatter                                                                            |
+| **NUR integration**               | Enabled for bleeding-edge packages                                                                         |
+| **Import graph integrity**        | All 94 .nix files verified, zero broken imports                                                            |
 
 ---
 
 ## B) PARTIALLY DONE
 
-| Component | Status | What's Left |
-|-----------|--------|-------------|
-| **Hyprland 0.54.2 compatibility** | Working but degraded | hy3, hyprsplit, hyprwinwrap plugins disabled; scroll animation removed; `no_gaps_when_only` gone |
-| **Immich GPU acceleration** | Researched, not implemented | ML runs CPU-only; would need Docker+ROCm or custom overlay |
-| **AI Stack (Ollama)** | Running on Vulkan | No web UI; FastFlowLM not a service; no model pre-pulling; Vulkan < ROCm perf |
-| **AMD NPU (XDNA2, 50 TOPS)** | Kernel module loaded | Disabled in config; requires kernel 6.14+ for full functionality |
-| **DNS Blocker blocklist hashing** | Working | Pinned SHA256 hashes break when upstream files change; auto-updater exists but fragile |
-| **Security hardening** | Strong but incomplete | auditd disabled (NixOS bug #483085), audit kernel module disabled (AppArmor conflict) |
-| **Monitoring stack** | Prometheus+Grafana+exporters working | No custom dashboards beyond overview.json; no alerting rules |
-| **PhotoMap** | Running | Uses `latest` tag (non-reproducible); niche upstream image |
-| **docs/STATUS.md** | Exists but stale | Last updated 2025-12-27; doesn't reflect March 2026 changes |
-| **docs/TODO-STATUS.md** | Exists but stale | Last updated 2026-01-13; some items resolved but not marked |
-| **Ghost Systems type safety** | Core files written | Types.nix, State.nix, Validation.nix NOT imported in flake (0/14 tasks done) |
-| **Desktop Improvements Roadmap** | Planned | 0/55 items completed (Phase 1: 0/21, Phase 2: 0/21, Phase 3: 0/13) |
+| Component                         | Status                               | What's Left                                                                                      |
+| --------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| **Hyprland 0.54.2 compatibility** | Working but degraded                 | hy3, hyprsplit, hyprwinwrap plugins disabled; scroll animation removed; `no_gaps_when_only` gone |
+| **Immich GPU acceleration**       | Researched, not implemented          | ML runs CPU-only; would need Docker+ROCm or custom overlay                                       |
+| **AI Stack (Ollama)**             | Running on Vulkan                    | No web UI; FastFlowLM not a service; no model pre-pulling; Vulkan < ROCm perf                    |
+| **AMD NPU (XDNA2, 50 TOPS)**      | Kernel module loaded                 | Disabled in config; requires kernel 6.14+ for full functionality                                 |
+| **DNS Blocker blocklist hashing** | Working                              | Pinned SHA256 hashes break when upstream files change; auto-updater exists but fragile           |
+| **Security hardening**            | Strong but incomplete                | auditd disabled (NixOS bug #483085), audit kernel module disabled (AppArmor conflict)            |
+| **Monitoring stack**              | Prometheus+Grafana+exporters working | No custom dashboards beyond overview.json; no alerting rules                                     |
+| **PhotoMap**                      | Running                              | Uses `latest` tag (non-reproducible); niche upstream image                                       |
+| **docs/STATUS.md**                | Exists but stale                     | Last updated 2025-12-27; doesn't reflect March 2026 changes                                      |
+| **docs/TODO-STATUS.md**           | Exists but stale                     | Last updated 2026-01-13; some items resolved but not marked                                      |
+| **Ghost Systems type safety**     | Core files written                   | Types.nix, State.nix, Validation.nix NOT imported in flake (0/14 tasks done)                     |
+| **Desktop Improvements Roadmap**  | Planned                              | 0/55 items completed (Phase 1: 0/21, Phase 2: 0/21, Phase 3: 0/13)                               |
 
 ---
 
@@ -208,33 +208,33 @@ Setup-Mac is a **production-grade, cross-platform Nix configuration** managing a
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Task | Priority | Est. Time | Category |
-|---|------|----------|-----------|----------|
-| 1 | **Import immich-config.json into running Immich** | CRITICAL | 5min | Immich |
-| 2 | **Re-run Smart Search on ALL assets** (new CLIP model) | CRITICAL | Hours | Immich |
-| 3 | **Re-run Face Detection on ALL assets** (antelopev2) | CRITICAL | Hours | Immich |
-| 4 | **Re-run Duplicate Detection** (fixed maxDistance) | HIGH | Hours | Immich |
-| 5 | **Update docs/STATUS.md** to reflect March 2026 reality | HIGH | 30min | Documentation |
-| 6 | **Update docs/TODO-STATUS.md** with resolved items | HIGH | 30min | Documentation |
-| 7 | **Research Immich GPU ML via Docker+ROCm** | HIGH | 4h | Immich |
-| 8 | **Enable NPU** (check kernel 6.14+ availability) | HIGH | 2h | Hardware |
-| 9 | **Migrate Hyprland audio from pactl to wpctl** | MED | 30min | Desktop |
-| 10 | **Pin PhotoMap image to specific hash** (not `latest`) | MED | 10min | Services |
-| 11 | **Add GPU temp to Waybar** (AMD GPU) | MED | 1.5h | Desktop P1 |
-| 12 | **Add CPU usage to Waybar** (per-core) | MED | 1.5h | Desktop P1 |
-| 13 | **Add memory usage to Waybar** | MED | 1.5h | Desktop P1 |
-| 14 | **Create Quake Terminal dropdown** (F12) | MED | 2h | Desktop P1 |
-| 15 | **Add Hyprland hot-reload** (Ctrl+Alt+R) | MED | 10min | Desktop P1 |
-| 16 | **Set up SMTP for Immich notifications** | MED | 1h | Immich |
-| 17 | **Add Prometheus alerting rules** (disk, service, CPU) | MED | 2h | Monitoring |
-| 18 | **Import core/Types.nix in flake** | MED | 15min | Architecture |
-| 19 | **Import core/State.nix in flake** | MED | 15min | Architecture |
-| 20 | **Import core/Validation.nix in flake** | MED | 15min | Architecture |
-| 21 | **Consolidate user config** (eliminate split brain) | MED | 45min | Architecture |
-| 22 | **Set up Bluetooth + Nest Audio** | LOW | 1h | Hardware |
-| 23 | **Configure Immich external domain** (remote access) | LOW | 2h | Immich |
-| 24 | **Create Screenshot + OCR script** | LOW | 2h | Desktop P1 |
-| 25 | **Add audio visualizer** (real-time) | LOW | 1h | Desktop P2 |
+| #   | Task                                                    | Priority | Est. Time | Category      |
+| --- | ------------------------------------------------------- | -------- | --------- | ------------- |
+| 1   | **Import immich-config.json into running Immich**       | CRITICAL | 5min      | Immich        |
+| 2   | **Re-run Smart Search on ALL assets** (new CLIP model)  | CRITICAL | Hours     | Immich        |
+| 3   | **Re-run Face Detection on ALL assets** (antelopev2)    | CRITICAL | Hours     | Immich        |
+| 4   | **Re-run Duplicate Detection** (fixed maxDistance)      | HIGH     | Hours     | Immich        |
+| 5   | **Update docs/STATUS.md** to reflect March 2026 reality | HIGH     | 30min     | Documentation |
+| 6   | **Update docs/TODO-STATUS.md** with resolved items      | HIGH     | 30min     | Documentation |
+| 7   | **Research Immich GPU ML via Docker+ROCm**              | HIGH     | 4h        | Immich        |
+| 8   | **Enable NPU** (check kernel 6.14+ availability)        | HIGH     | 2h        | Hardware      |
+| 9   | **Migrate Hyprland audio from pactl to wpctl**          | MED      | 30min     | Desktop       |
+| 10  | **Pin PhotoMap image to specific hash** (not `latest`)  | MED      | 10min     | Services      |
+| 11  | **Add GPU temp to Waybar** (AMD GPU)                    | MED      | 1.5h      | Desktop P1    |
+| 12  | **Add CPU usage to Waybar** (per-core)                  | MED      | 1.5h      | Desktop P1    |
+| 13  | **Add memory usage to Waybar**                          | MED      | 1.5h      | Desktop P1    |
+| 14  | **Create Quake Terminal dropdown** (F12)                | MED      | 2h        | Desktop P1    |
+| 15  | **Add Hyprland hot-reload** (Ctrl+Alt+R)                | MED      | 10min     | Desktop P1    |
+| 16  | **Set up SMTP for Immich notifications**                | MED      | 1h        | Immich        |
+| 17  | **Add Prometheus alerting rules** (disk, service, CPU)  | MED      | 2h        | Monitoring    |
+| 18  | **Import core/Types.nix in flake**                      | MED      | 15min     | Architecture  |
+| 19  | **Import core/State.nix in flake**                      | MED      | 15min     | Architecture  |
+| 20  | **Import core/Validation.nix in flake**                 | MED      | 15min     | Architecture  |
+| 21  | **Consolidate user config** (eliminate split brain)     | MED      | 45min     | Architecture  |
+| 22  | **Set up Bluetooth + Nest Audio**                       | LOW      | 1h        | Hardware      |
+| 23  | **Configure Immich external domain** (remote access)    | LOW      | 2h        | Immich        |
+| 24  | **Create Screenshot + OCR script**                      | LOW      | 2h        | Desktop P1    |
+| 25  | **Add audio visualizer** (real-time)                    | LOW      | 1h        | Desktop P2    |
 
 ---
 
@@ -248,62 +248,62 @@ The CLIP model chosen (`ViT-SO400M-16-SigLIP2-384__webli`) is the #1 Pareto-opti
 
 ## Service Inventory
 
-| Service | Port | URL | Status |
-|---------|------|-----|--------|
-| Immich | 2283 | `immich.lan` | Running |
-| Gitea | 3000 | `gitea.lan` | Running |
-| Grafana | 3001 | `grafana.lan` | Running |
-| Homepage | 8082 | `home.lan` | Running |
-| PhotoMap | 8050 | `photomap.lan` | Running |
-| Prometheus | 9091 | localhost | Running |
-| Ollama | 11434 | localhost | Running |
-| DNS Blocker | 53/80/443 | 192.168.1.163 | Running |
-| SSH | 22 | 192.168.1.162 | Running |
-| Caddy | 80/443 | 192.168.1.162 | Running |
+| Service     | Port      | URL            | Status  |
+| ----------- | --------- | -------------- | ------- |
+| Immich      | 2283      | `immich.lan`   | Running |
+| Gitea       | 3000      | `gitea.lan`    | Running |
+| Grafana     | 3001      | `grafana.lan`  | Running |
+| Homepage    | 8082      | `home.lan`     | Running |
+| PhotoMap    | 8050      | `photomap.lan` | Running |
+| Prometheus  | 9091      | localhost      | Running |
+| Ollama      | 11434     | localhost      | Running |
+| DNS Blocker | 53/80/443 | 192.168.1.163  | Running |
+| SSH         | 22        | 192.168.1.162  | Running |
+| Caddy       | 80/443    | 192.168.1.162  | Running |
 
 ## Scheduled Tasks
 
-| Task | Schedule | File |
-|------|----------|------|
-| Crush provider update | Daily 00:00 | `scheduled-tasks.nix` |
-| Blocklist hash update | Weekly Mon 04:00 | `scheduled-tasks.nix` |
-| Service health check | Every 15min | `scheduled-tasks.nix` |
-| Immich DB backup | Daily | `immich.nix` |
-| Gitea GitHub sync | Every 6h | `gitea.nix` |
-| Docker auto-prune | Weekly | `default.nix` |
-| BTRFS autoScrub | Monthly | `snapshots.nix` |
-| Timeshift backup | Daily | `snapshots.nix` |
-| ClamAV signature update | Daily | `security-hardening.nix` |
+| Task                    | Schedule         | File                     |
+| ----------------------- | ---------------- | ------------------------ |
+| Crush provider update   | Daily 00:00      | `scheduled-tasks.nix`    |
+| Blocklist hash update   | Weekly Mon 04:00 | `scheduled-tasks.nix`    |
+| Service health check    | Every 15min      | `scheduled-tasks.nix`    |
+| Immich DB backup        | Daily            | `immich.nix`             |
+| Gitea GitHub sync       | Every 6h         | `gitea.nix`              |
+| Docker auto-prune       | Weekly           | `default.nix`            |
+| BTRFS autoScrub         | Monthly          | `snapshots.nix`          |
+| Timeshift backup        | Daily            | `snapshots.nix`          |
+| ClamAV signature update | Daily            | `security-hardening.nix` |
 
 ## Hardware Context (evo-x2 / GMKtec)
 
-| Component | Spec | NixOS Status |
-|-----------|------|-------------|
-| CPU | AMD Ryzen AI Max+ 395 (16C/32T, 5.19 GHz) | Fully working |
-| RAM | 128 GiB LPDDR5X (62 GiB OS, ~64 GiB GPU) | Working |
-| GPU | AMD Radeon 8060S (RDNA 3.5, gfx1151) | VAAPI working, ROCm env set |
-| NPU | AMD XDNA2 (50 TOPS) | Module loaded, **disabled** |
-| Storage | NVMe PCIe 4.0, BTRFS + zstd | Working, snapshots active |
-| Display | TV via DP-3 (4K@30 or 1080p@120, kanshi) | Working |
+| Component | Spec                                      | NixOS Status                |
+| --------- | ----------------------------------------- | --------------------------- |
+| CPU       | AMD Ryzen AI Max+ 395 (16C/32T, 5.19 GHz) | Fully working               |
+| RAM       | 128 GiB LPDDR5X (62 GiB OS, ~64 GiB GPU)  | Working                     |
+| GPU       | AMD Radeon 8060S (RDNA 3.5, gfx1151)      | VAAPI working, ROCm env set |
+| NPU       | AMD XDNA2 (50 TOPS)                       | Module loaded, **disabled** |
+| Storage   | NVMe PCIe 4.0, BTRFS + zstd               | Working, snapshots active   |
+| Display   | TV via DP-3 (4K@30 or 1080p@120, kanshi)  | Working                     |
 
 ---
 
 ## Project Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total commits | 1,249 |
-| Nix files | 94 |
-| Lines of Nix code | 9,378 |
-| Flake inputs | 16 |
-| Services managed | 15+ |
-| DNS blocklists | 15 (~1.9M domains) |
-| Custom packages | 7 |
-| Justfile recipes | 90+ |
-| Documentation files | 200+ |
-| Status reports | 120+ |
-| ADRs (Architecture Decision Records) | 4+ |
-| Desktop improvement items planned | 55 |
-| Architecture refactoring items planned | 14 |
-| Active TODOs in source | 2 (auditd-related) |
-| Stale documentation files | 2 (STATUS.md, TODO-STATUS.md) |
+| Metric                                 | Value                         |
+| -------------------------------------- | ----------------------------- |
+| Total commits                          | 1,249                         |
+| Nix files                              | 94                            |
+| Lines of Nix code                      | 9,378                         |
+| Flake inputs                           | 16                            |
+| Services managed                       | 15+                           |
+| DNS blocklists                         | 15 (~1.9M domains)            |
+| Custom packages                        | 7                             |
+| Justfile recipes                       | 90+                           |
+| Documentation files                    | 200+                          |
+| Status reports                         | 120+                          |
+| ADRs (Architecture Decision Records)   | 4+                            |
+| Desktop improvement items planned      | 55                            |
+| Architecture refactoring items planned | 14                            |
+| Active TODOs in source                 | 2 (auditd-related)            |
+| Stale documentation files              | 2 (STATUS.md, TODO-STATUS.md) |

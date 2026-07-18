@@ -38,6 +38,7 @@ allowUnfreePredicate = pkg:
 ```
 
 **Rationale:**
+
 - Explicit whitelist prevents accidental installation of unwanted unfree software
 - Single source of truth for all platforms (Darwin and NixOS)
 - Easy to audit and modify
@@ -53,6 +54,7 @@ permittedInsecurePackages = [
 ```
 
 **Policy:** Only permit insecure packages when:
+
 1. No secure alternative exists
 2. The package is essential for the workflow
 3. The vulnerability is understood and accepted
@@ -60,6 +62,7 @@ permittedInsecurePackages = [
 ### 2. Chrome/Chromium Extension Policy
 
 **Locations:**
+
 - Darwin: `platforms/darwin/programs/chrome.nix`
 - NixOS: `platforms/nixos/programs/chrome.nix`
 
@@ -68,11 +71,13 @@ permittedInsecurePackages = [
 The system enforces a declarative extension management policy:
 
 **Force-Installed Extensions:**
+
 - YouTube Shorts Blocker (`ckagfhpboagdopichicnebandlofghbc`)
   - Rationale: Productivity enhancement
   - Source: Open source (https://github.com/umutseven92/shorts-blocker)
 
 **Security Policies:**
+
 ```nix
 BrowserSignin = 0;              # Disable browser sign-in
 SyncDisabled = true;            # Disable sync
@@ -82,6 +87,7 @@ HttpsOnlyMode = "force_enabled"; # Force HTTPS
 ```
 
 **Platform Differences:**
+
 - **Darwin:** Uses `/etc/chrome/policies/managed/` + manual application script
 - **NixOS:** Uses native `programs.chromium` module for full enterprise management
 
@@ -94,6 +100,7 @@ HttpsOnlyMode = "force_enabled"; # Force HTTPS
 **Purpose:** Eliminate hardcoded path fragmentation across the system
 
 **Default Paths:**
+
 ```nix
 defaultPaths = {
   home = "/Users/larsartmann";
@@ -105,6 +112,7 @@ defaultPaths = {
 ```
 
 **Usage:**
+
 ```nix
 # Instead of:
 somePath = "/Users/larsartmann/.config/app";
@@ -120,6 +128,7 @@ somePath = "${paths.config}/app";
 **Purpose:** Centralized path management for shell scripts
 
 **Usage:**
+
 ```bash
 #!/usr/bin/env bash
 source scripts/lib/paths.sh
@@ -130,6 +139,7 @@ cd "$DOTFILES_DIR"
 ```
 
 **Available Variables:**
+
 - `PROJECT_ROOT` - SystemNix repository root
 - `DOTFILES_DIR` - Dotfiles directory
 - `PLATFORMS_DIR` - Platform-specific configs
@@ -138,6 +148,7 @@ cd "$DOTFILES_DIR"
 - `COMMON_DIR`, `DARWIN_DIR`, `NIXOS_DIR` - Platform directories
 
 **Helper Functions:**
+
 - `get_platform_dir <platform> [subdir]` - Get platform-specific directory
 - `resolve_path <relative_path>` - Resolve path relative to project root
 - `is_darwin()` - Check if running on macOS
@@ -151,6 +162,7 @@ cd "$DOTFILES_DIR"
 **Purpose:** Single source of truth for user-specific configuration
 
 **Schema:**
+
 ```nix
 UserType = {
   username = "larsartmann";
@@ -162,6 +174,7 @@ UserType = {
 ```
 
 **Helper Functions:**
+
 - `mkUserConfig <user>` - Create user config from partial data
 - `validateUserConfig <user>` - Validate user configuration
 
@@ -170,6 +183,7 @@ UserType = {
 ### DO ✅
 
 1. **Use centralized configuration**
+
    ```nix
    # Good
    imports = [ ../common/core/nix-settings.nix ];
@@ -179,6 +193,7 @@ UserType = {
    ```
 
 2. **Use relative paths**
+
    ```nix
    # Good
    safe.directory = [ "~" "~/projects" ];
@@ -265,6 +280,7 @@ nixos-option programs.chromium.extensions
 ### Migrating Hardcoded Paths
 
 1. **Identify the path**
+
    ```bash
    grep -r "/Users/larsartmann" --include="*.nix" platforms/
    ```
@@ -275,6 +291,7 @@ nixos-option programs.chromium.extensions
    - User-specific → Import and use `UserConfig.nix`
 
 3. **Update the configuration**
+
    ```nix
    # Before
    path = "/Users/larsartmann/projects";
@@ -292,6 +309,7 @@ nixos-option programs.chromium.extensions
 ### Adding New Unfree Packages
 
 1. **Edit centralized config**
+
    ```nix
    # platforms/common/core/nix-settings.nix
    allowUnfreePredicate = pkg:
@@ -302,6 +320,7 @@ nixos-option programs.chromium.extensions
    ```
 
 2. **Test the change**
+
    ```bash
    just test
    just switch
@@ -318,6 +337,7 @@ nixos-option programs.chromium.extensions
 **Symptom:** Build errors about duplicate `allowUnfree` configuration
 
 **Solution:**
+
 1. Check for duplicate `nixpkgs.config` in platform files
 2. Remove duplicates and rely on `common/core/nix-settings.nix`
 3. Rebuild with `just switch`
@@ -327,6 +347,7 @@ nixos-option programs.chromium.extensions
 **Symptom:** Configuration fails when cloned to different user account
 
 **Solution:**
+
 1. Find all hardcoded paths: `grep -r "/Users/$(whoami)" --include="*.nix"`
 2. Replace with dynamic paths using `~` or `config.home.homeDirectory`
 3. Update to use `PathConfig.nix` for project paths
@@ -336,6 +357,7 @@ nixos-option programs.chromium.extensions
 **Symptom:** Force-installed extensions don't appear in browser
 
 **Darwin Solution:**
+
 ```bash
 # Run the policy application script
 sudo chrome-apply-policies
@@ -345,6 +367,7 @@ sudo chrome-apply-policies
 ```
 
 **NixOS Solution:**
+
 ```bash
 # Rebuild system
 sudo nixos-rebuild switch --flake .#evo-x2

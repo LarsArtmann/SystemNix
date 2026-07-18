@@ -13,6 +13,7 @@
 ## Session 94 Recap
 
 Session 94 fixed a cascade of build failures triggered by `go-output` modularizing into `d2/` and `graph/` sub-modules. The sub-modules had `replace` directives making them impossible to import externally. Fixed across 8 repos:
+
 - `go-output`: removed `replace` directives
 - `cmdguard`: updated imports to new sub-module paths
 - `go-auto-upgrade`, `mr-sync`, `go-structure-linter`, `BuildFlow`, `projects-management-automation`, `golangci-lint-auto-configure`: added `d2`+`graph` to `go.mod`, `flake.nix` subModules, and updated `vendorHash`
@@ -33,20 +34,21 @@ All `vendorHash` overrides removed from SystemNix `overlays/shared.nix`. Build s
 
 ### 2. All 8 Upstream Go Repos Fixed and Pushed (Session 94)
 
-| Repo | Status | Commit |
-|------|--------|--------|
-| `go-output` | Fixed sub-module packaging | `b9356ba` |
-| `cmdguard` | Updated imports | `623c19c` |
-| `go-auto-upgrade` | Added d2+graph deps | `86c9081` |
-| `mr-sync` | Updated vendorHash | `a5bf426` |
-| `go-structure-linter` | Updated vendorHash | `8a8653d` |
-| `BuildFlow` | Updated vendorHash | `b269ebf` |
-| `projects-management-automation` | Updated vendorHash | `2d34a35` |
-| `golangci-lint-auto-configure` | Updated vendorHash | `1b965e5` |
+| Repo                             | Status                     | Commit    |
+| -------------------------------- | -------------------------- | --------- |
+| `go-output`                      | Fixed sub-module packaging | `b9356ba` |
+| `cmdguard`                       | Updated imports            | `623c19c` |
+| `go-auto-upgrade`                | Added d2+graph deps        | `86c9081` |
+| `mr-sync`                        | Updated vendorHash         | `a5bf426` |
+| `go-structure-linter`            | Updated vendorHash         | `8a8653d` |
+| `BuildFlow`                      | Updated vendorHash         | `b269ebf` |
+| `projects-management-automation` | Updated vendorHash         | `2d34a35` |
+| `golangci-lint-auto-configure`   | Updated vendorHash         | `1b965e5` |
 
 ### 3. All Non-Auth Services Running
 
 From the activation log (07:10), these started successfully:
+
 - caddy, cadvisor, clickhouse, dnsblockd, forgejo, gatus, hermes
 - homepage-dashboard, immich (server + ML), manifest, openseo
 - pocket-id, signoz (server + collector), taskchampion-sync-server, twenty
@@ -55,6 +57,7 @@ From the activation log (07:10), these started successfully:
 ### 4. Services Correctly Removed (Session 94 Diff)
 
 These were cleanly removed as part of the configuration:
+
 - `earlyoom` — replaced by `systemd-oomd` (session 92)
 - `livekit` — removed (no longer needed)
 - `whisper-asr` + `whisper-asr-pull` — removed (no longer needed)
@@ -72,19 +75,23 @@ The `oauth2_proxy_cookie_secret` in `platforms/nixos/secrets/pocket-id.yaml` is 
 **Root cause:** Pre-existing issue from Pocket ID migration (session 85). The cookie secret was never properly set — it contains a placeholder/invalid value.
 
 **Fix prepared:** New 32-byte hex secret generated:
+
 ```
 c4189de207650c1de3132583f49798beed5feb95d7fc742ee2b4a75aa2464305
 ```
 
 **Why not fixed:** The sops file is encrypted with the host's SSH ed25519 key (`/etc/ssh/ssh_host_ed25519_key`). This key is only readable by root. The `sudo` command is blocked in this environment. Multiple approaches tried:
+
 - `sops --set` with `SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key` → permission denied
 - `sudo sops` → command blocked by security policy
 - Direct sops edit → needs root for host key access
 
 **Required user action:**
+
 ```bash
 sudo SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key sops platforms/nixos/secrets/pocket-id.yaml
 ```
+
 Then set `oauth2_proxy_cookie_secret` to the 32-byte value above. Then `just switch`.
 
 ### 2. AGENTS.md Not Updated
@@ -115,6 +122,7 @@ This is NOT a regression from session 94. It's a pre-existing issue from the Poc
 The fact that it's 21 bytes suggests it was a manually typed string rather than a generated secret. oauth2-proxy silently accepted this in older versions but now validates the length.
 
 **Impact:** All services behind `protectedVHost` (forward-auth via oauth2-proxy) are inaccessible:
+
 - Any service using `protectedVHost "subdomain" port` pattern
 - Users cannot authenticate through Pocket ID for protected services
 
@@ -153,48 +161,48 @@ The fact that it's 21 bytes suggests it was a manually typed string rather than 
 
 ### P0 — Blocking (Do Immediately)
 
-| # | Task | Why | Blocking? |
-|---|------|-----|-----------|
-| 1 | **Fix oauth2-proxy cookie secret** | All protected services inaccessible | YES |
-| 2 | **Verify all services start** after secret fix | Confirm no cascading failures | YES |
-| 3 | **Investigate 42 GiB RAM usage** | OOM risk with systemd-oomd | HIGH |
+| #   | Task                                           | Why                                 | Blocking? |
+| --- | ---------------------------------------------- | ----------------------------------- | --------- |
+| 1   | **Fix oauth2-proxy cookie secret**             | All protected services inaccessible | YES       |
+| 2   | **Verify all services start** after secret fix | Confirm no cascading failures       | YES       |
+| 3   | **Investigate 42 GiB RAM usage**               | OOM risk with systemd-oomd          | HIGH      |
 
 ### P1 — High Impact (Do Today)
 
-| # | Task | Why |
-|---|------|-----|
-| 4 | **Add `just sops-edit` recipe** with `SOPS_AGE_SSH_PRIVATE_KEY_FILE` | Prevent future sops editing blockers |
-| 5 | **Update AGENTS.md** with session 94 learnings | Future sessions need context |
-| 6 | **Check `protectedVHost` services** are accessible after fix | Verify auth chain works end-to-end |
-| 7 | **Monitor swap** — should decrease after build workload ends | 3.3 GiB is elevated |
-| 8 | **Verify `systemd-oomd` is active** and not killing services | Post-reboot validation |
+| #   | Task                                                                 | Why                                  |
+| --- | -------------------------------------------------------------------- | ------------------------------------ |
+| 4   | **Add `just sops-edit` recipe** with `SOPS_AGE_SSH_PRIVATE_KEY_FILE` | Prevent future sops editing blockers |
+| 5   | **Update AGENTS.md** with session 94 learnings                       | Future sessions need context         |
+| 6   | **Check `protectedVHost` services** are accessible after fix         | Verify auth chain works end-to-end   |
+| 7   | **Monitor swap** — should decrease after build workload ends         | 3.3 GiB is elevated                  |
+| 8   | **Verify `systemd-oomd` is active** and not killing services         | Post-reboot validation               |
 
 ### P2 — Important (Do This Week)
 
-| # | Task | Why |
-|---|------|-----|
-| 9 | **Tag `go-output/graph` and `go-output/d2`** with v0.1.0 | Pseudo-versions are fragile |
-| 10 | **Add CI to `go-output`** for sub-module external builds | Prevents replace-directive regression |
-| 11 | **`/data` BTRFS migration** (`just snapshot-migrate-data`) | 89% full, no snapshots |
-| 12 | **Darwin build verification** | Cross-platform regressions invisible until deploy |
-| 13 | **`just test` full build check** | Only syntax check was run in session 94 |
-| 14 | **rpi3-dns build verification** | Different overlay set |
-| 15 | **Create Go repo dependency graph** | Predict cascade impacts |
-| 16 | **Review `nix-amd-npu`** — last updated April 8 | Stale input |
+| #   | Task                                                       | Why                                               |
+| --- | ---------------------------------------------------------- | ------------------------------------------------- |
+| 9   | **Tag `go-output/graph` and `go-output/d2`** with v0.1.0   | Pseudo-versions are fragile                       |
+| 10  | **Add CI to `go-output`** for sub-module external builds   | Prevents replace-directive regression             |
+| 11  | **`/data` BTRFS migration** (`just snapshot-migrate-data`) | 89% full, no snapshots                            |
+| 12  | **Darwin build verification**                              | Cross-platform regressions invisible until deploy |
+| 13  | **`just test` full build check**                           | Only syntax check was run in session 94           |
+| 14  | **rpi3-dns build verification**                            | Different overlay set                             |
+| 15  | **Create Go repo dependency graph**                        | Predict cascade impacts                           |
+| 16  | **Review `nix-amd-npu`** — last updated April 8            | Stale input                                       |
 
 ### P3 — Nice to Have (Do Eventually)
 
-| # | Task | Why |
-|---|------|-----|
-| 17 | **`just check-secrets` recipe** | Validate all sops secrets are present and valid |
-| 18 | **Add user SSH key as secondary sops recipient** | Allow sops editing without root |
-| 19 | **`just update-and-build` recipe** | One-command flake update + build |
-| 20 | **Auto-detect `subModules` in `mkPreparedSource`** | Eliminate manual sub-module lists |
-| 21 | **Monitor365 effectiveness audit** | Verify uptime monitoring is reporting |
-| 22 | **DNS blocker blocklist freshness check** | Ensure blocklists are current |
-| 23 | **Consider `GOWORK` instead of `_local_deps`** | Native Go solution for multi-module dev |
-| 24 | **Review stale flake inputs** — `homebrew-bundle` (Apr 2025), `niri-session-manager` (Jul 2025) | Security/functionality updates |
-| 25 | **NixOS 26.05 → 26.11 tracking** | Watch for breaking changes in unstable |
+| #   | Task                                                                                            | Why                                             |
+| --- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| 17  | **`just check-secrets` recipe**                                                                 | Validate all sops secrets are present and valid |
+| 18  | **Add user SSH key as secondary sops recipient**                                                | Allow sops editing without root                 |
+| 19  | **`just update-and-build` recipe**                                                              | One-command flake update + build                |
+| 20  | **Auto-detect `subModules` in `mkPreparedSource`**                                              | Eliminate manual sub-module lists               |
+| 21  | **Monitor365 effectiveness audit**                                                              | Verify uptime monitoring is reporting           |
+| 22  | **DNS blocker blocklist freshness check**                                                       | Ensure blocklists are current                   |
+| 23  | **Consider `GOWORK` instead of `_local_deps`**                                                  | Native Go solution for multi-module dev         |
+| 24  | **Review stale flake inputs** — `homebrew-bundle` (Apr 2025), `niri-session-manager` (Jul 2025) | Security/functionality updates                  |
+| 25  | **NixOS 26.05 → 26.11 tracking**                                                                | Watch for breaking changes in unstable          |
 
 ---
 
@@ -203,6 +211,7 @@ The fact that it's 21 bytes suggests it was a manually typed string rather than 
 **Is the 42 GiB RAM usage normal for this system's service load, or is a service leaking memory post-reboot?**
 
 Before the reboot (session 94), RAM was at 16/62 GiB. Now it's 42/62 GiB. The increase could be:
+
 - Normal: all services starting simultaneously (Ollama loading models, Immich ML, ClickHouse, SigNoz)
 - Abnormal: a service leaking (Helium/Electron, Jan spawning llama-server processes)
 - Transient: build artifacts still cached

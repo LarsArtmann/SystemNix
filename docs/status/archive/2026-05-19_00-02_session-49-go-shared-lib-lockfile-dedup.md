@@ -13,40 +13,40 @@ Added 6 shared Go libraries as top-level `flake = false` inputs in SystemNix, th
 
 **New top-level inputs:**
 
-| Input | URL | flake |
-|-------|-----|-------|
-| `go-finding` | `git+ssh://git@github.com/LarsArtmann/go-finding?ref=master` | false |
-| `go-output` | `git+ssh://git@github.com/LarsArtmann/go-output?ref=master` | false |
-| `gogenfilter` | `git+ssh://git@github.com/LarsArtmann/gogenfilter?ref=master` | false |
-| `go-branded-id` | `git+ssh://git@github.com/LarsArtmann/go-branded-id?ref=master` | false |
+| Input            | URL                                                              | flake |
+| ---------------- | ---------------------------------------------------------------- | ----- |
+| `go-finding`     | `git+ssh://git@github.com/LarsArtmann/go-finding?ref=master`     | false |
+| `go-output`      | `git+ssh://git@github.com/LarsArtmann/go-output?ref=master`      | false |
+| `gogenfilter`    | `git+ssh://git@github.com/LarsArtmann/gogenfilter?ref=master`    | false |
+| `go-branded-id`  | `git+ssh://git@github.com/LarsArtmann/go-branded-id?ref=master`  | false |
 | `go-filewatcher` | `git+ssh://git@github.com/LarsArtmann/go-filewatcher?ref=master` | false |
-| `cmdguard` | `git+ssh://git@github.com/LarsArtmann/cmdguard?ref=master` | false |
+| `cmdguard`       | `git+ssh://git@github.com/LarsArtmann/cmdguard?ref=master`       | false |
 
 **New follows directives (30 total):**
 
-| Go Tool Repo | Library Follows Added |
-|-------------|----------------------|
-| `golangci-lint-auto-configure` | `goFindingSrc → go-finding` |
-| `mr-sync` | `cmdguard`, `go-output`, `go-branded-id` |
-| `hierarchical-errors` | `go-finding`, `go-filewatcher`, `gogenfilter` |
-| `buildflow` | `cmdguard`, `go-finding`, `go-output`, `go-branded-id` |
-| `go-auto-upgrade` | `cmdguard`, `go-finding`, `go-output`, `go-branded-id` |
-| `go-structure-linter` | `go-finding`, `go-output`, `gogenfilter`, `go-branded-id` |
-| `branching-flow` | `go-finding`, `go-output` |
+| Go Tool Repo                     | Library Follows Added                                                     |
+| -------------------------------- | ------------------------------------------------------------------------- |
+| `golangci-lint-auto-configure`   | `goFindingSrc → go-finding`                                               |
+| `mr-sync`                        | `cmdguard`, `go-output`, `go-branded-id`                                  |
+| `hierarchical-errors`            | `go-finding`, `go-filewatcher`, `gogenfilter`                             |
+| `buildflow`                      | `cmdguard`, `go-finding`, `go-output`, `go-branded-id`                    |
+| `go-auto-upgrade`                | `cmdguard`, `go-finding`, `go-output`, `go-branded-id`                    |
+| `go-structure-linter`            | `go-finding`, `go-output`, `gogenfilter`, `go-branded-id`                 |
+| `branching-flow`                 | `go-finding`, `go-output`                                                 |
 | `projects-management-automation` | `cmdguard`, `go-output`, `go-branded-id`, `go-filewatcher`, `gogenfilter` |
 
 **Nodes eliminated this session:**
 
-| Category | Nodes Removed |
-|----------|:---:|
-| `go-finding` duplicates | 5 |
-| `go-output` duplicates | 5 |
-| `gogenfilter` duplicates | 2 |
-| `go-branded-id` duplicates | 4 |
-| `go-filewatcher` duplicates | 1 |
-| `cmdguard` duplicates | 2 |
-| `goFindingSrc` (renamed alias) | 1 |
-| **Total** | **20** |
+| Category                       | Nodes Removed |
+| ------------------------------ | :-----------: |
+| `go-finding` duplicates        |       5       |
+| `go-output` duplicates         |       5       |
+| `gogenfilter` duplicates       |       2       |
+| `go-branded-id` duplicates     |       4       |
+| `go-filewatcher` duplicates    |       1       |
+| `cmdguard` duplicates          |       2       |
+| `goFindingSrc` (renamed alias) |       1       |
+| **Total**                      |    **20**     |
 
 ### VRRP Sops Auto-Provisioning (Session 49)
 
@@ -72,33 +72,33 @@ Added 6 shared Go libraries as top-level `flake = false` inputs in SystemNix, th
 
 ### Cumulative Lockfile Dedup (Sessions 48+49)
 
-| Metric | Value |
-|--------|-------|
-| Nodes before session 48 | 123 |
-| Nodes after session 48 | 93 |
-| Nodes after session 49 | **73** |
-| **Total nodes eliminated** | **50 (40.7% reduction)** |
-| Suffixed (duplicate) nodes remaining | **4** (from 23) |
-| New top-level inputs added (48+49) | 9 |
-| Total follows directives added (48+49) | 48 |
+| Metric                                 | Value                    |
+| -------------------------------------- | ------------------------ |
+| Nodes before session 48                | 123                      |
+| Nodes after session 48                 | 93                       |
+| Nodes after session 49                 | **73**                   |
+| **Total nodes eliminated**             | **50 (40.7% reduction)** |
+| Suffixed (duplicate) nodes remaining   | **4** (from 23)          |
+| New top-level inputs added (48+49)     | 9                        |
+| Total follows directives added (48+49) | 48                       |
 
 ### Follows Coverage (After Session 49)
 
-| Follows Target | Inputs | Status |
-|---|---|---|
-| `nixpkgs` | 30/30 | ✅ 100% |
-| `flake-utils` | 10/10 | ✅ 100% |
-| `flake-parts` | 8/8 | ✅ 100% |
-| `treefmt-nix` | 4/4 | ✅ 100% |
-| `systems` | 2/2 | ✅ 100% |
-| `home-manager` | 1/1 | ✅ 100% |
-| `treefmt-full-flake` | 1/1 | ✅ 100% |
-| `go-finding` | 6/6 | ✅ 100% |
-| `go-output` | 6/6 | ✅ 100% |
-| `gogenfilter` | 3/3 | ✅ 100% |
-| `go-branded-id` | 5/5 | ✅ 100% |
-| `go-filewatcher` | 2/2 | ✅ 100% |
-| `cmdguard` | 4/4 | ✅ 100% |
+| Follows Target       | Inputs | Status  |
+| -------------------- | ------ | ------- |
+| `nixpkgs`            | 30/30  | ✅ 100% |
+| `flake-utils`        | 10/10  | ✅ 100% |
+| `flake-parts`        | 8/8    | ✅ 100% |
+| `treefmt-nix`        | 4/4    | ✅ 100% |
+| `systems`            | 2/2    | ✅ 100% |
+| `home-manager`       | 1/1    | ✅ 100% |
+| `treefmt-full-flake` | 1/1    | ✅ 100% |
+| `go-finding`         | 6/6    | ✅ 100% |
+| `go-output`          | 6/6    | ✅ 100% |
+| `gogenfilter`        | 3/3    | ✅ 100% |
+| `go-branded-id`      | 5/5    | ✅ 100% |
+| `go-filewatcher`     | 2/2    | ✅ 100% |
+| `cmdguard`           | 4/4    | ✅ 100% |
 
 ---
 
@@ -106,14 +106,15 @@ Added 6 shared Go libraries as top-level `flake = false` inputs in SystemNix, th
 
 ### Remaining 4 Duplicate Lockfile Nodes
 
-| Node | Source | Why Remaining |
-|------|--------|---------------|
-| `gogenfilter_2` | `projects-management-automation` → `project-discovery-sdk` (transitive) | PMA has `project-discovery-sdk` as `flake: false` which internally depends on `gogenfilter` — nested transitive we can't override from SystemNix |
-| `pyproject-nix_2` | `hermes-agent` (third-party) | Third-party controlled, no action possible |
-| `pyproject-nix_3` | `hermes-agent` (third-party) | Third-party controlled, no action possible |
-| `uv2nix_2` | `hermes-agent` (third-party) | Third-party controlled, no action possible |
+| Node              | Source                                                                  | Why Remaining                                                                                                                                    |
+| ----------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `gogenfilter_2`   | `projects-management-automation` → `project-discovery-sdk` (transitive) | PMA has `project-discovery-sdk` as `flake: false` which internally depends on `gogenfilter` — nested transitive we can't override from SystemNix |
+| `pyproject-nix_2` | `hermes-agent` (third-party)                                            | Third-party controlled, no action possible                                                                                                       |
+| `pyproject-nix_3` | `hermes-agent` (third-party)                                            | Third-party controlled, no action possible                                                                                                       |
+| `uv2nix_2`        | `hermes-agent` (third-party)                                            | Third-party controlled, no action possible                                                                                                       |
 
 **Actionability:**
+
 - `gogenfilter_2`: Could be fixed by adding `project-discovery-sdk` as a top-level input with `gogenfilter` follows, OR by making PMA expose `project-discovery-sdk` as an overridable input
 - `pyproject-nix_*` / `uv2nix_2`: Third-party (`hermes-agent` by NousResearch). Not our bug. No action possible unless we fork.
 
@@ -207,48 +208,48 @@ The only "acceptance" items:
 
 ### P0 — High Impact, Immediate
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | **Deploy session 48+49 changes to evo-x2** — `just switch` + verify all services | 30min | Confirm 50-node lockfile reduction works in production |
-| 2 | **Fix `gogenfilter_2` transitive duplicate** — add `project-discovery-sdk` as top-level or make PMA expose it | 1h | Eliminate last controllable duplicate (73→72 nodes) |
-| 3 | **Update AGENTS.md** — Flake Inputs table + Go library follows section + lockfile hygiene rules | 30min | Accurate documentation for future sessions |
+| #   | Task                                                                                                          | Effort | Impact                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------ |
+| 1   | **Deploy session 48+49 changes to evo-x2** — `just switch` + verify all services                              | 30min  | Confirm 50-node lockfile reduction works in production |
+| 2   | **Fix `gogenfilter_2` transitive duplicate** — add `project-discovery-sdk` as top-level or make PMA expose it | 1h     | Eliminate last controllable duplicate (73→72 nodes)    |
+| 3   | **Update AGENTS.md** — Flake Inputs table + Go library follows section + lockfile hygiene rules               | 30min  | Accurate documentation for future sessions             |
 
 ### P1 — High Impact, Near-term
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 4 | **Provision Pi 3 DNS backup node** — hardware + NixOS + sops age key + VRRP testing | 3-4h | DNS HA failover operational |
-| 5 | **Execute Gitea → Forgejo migration** — plan ready at `docs/migration-gitea-to-forgejo.md` | 4-6h | Community-governed git hosting, federation-ready |
-| 6 | **Distributed builds** — configure MacBook to offload builds to evo-x2 | 2h | Unblocks Darwin builds at 90% disk |
-| 7 | **Dual-WAN failover testing** — disconnect ethernet, verify ECMP→WiFi transition | 1h | Confidence in failover working |
-| 8 | **SigNoz per-threshold channel routing** — critical→Discord, warning→log | 1h | Better alert signal-to-noise |
-| 9 | **Automated lockfile audit CI** — node count threshold check | 1h | Prevents regression |
+| #   | Task                                                                                       | Effort | Impact                                           |
+| --- | ------------------------------------------------------------------------------------------ | ------ | ------------------------------------------------ |
+| 4   | **Provision Pi 3 DNS backup node** — hardware + NixOS + sops age key + VRRP testing        | 3-4h   | DNS HA failover operational                      |
+| 5   | **Execute Gitea → Forgejo migration** — plan ready at `docs/migration-gitea-to-forgejo.md` | 4-6h   | Community-governed git hosting, federation-ready |
+| 6   | **Distributed builds** — configure MacBook to offload builds to evo-x2                     | 2h     | Unblocks Darwin builds at 90% disk               |
+| 7   | **Dual-WAN failover testing** — disconnect ethernet, verify ECMP→WiFi transition           | 1h     | Confidence in failover working                   |
+| 8   | **SigNoz per-threshold channel routing** — critical→Discord, warning→log                   | 1h     | Better alert signal-to-noise                     |
+| 9   | **Automated lockfile audit CI** — node count threshold check                               | 1h     | Prevents regression                              |
 
 ### P2 — Medium Impact
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 10 | **Convert go-auto-upgrade `path:` inputs to SSH URLs** | 30min | Clean flake pattern |
-| 11 | **Photomap re-enablement** — fix podman permission, uncomment in configuration.nix | 1-2h | Another service running |
-| 12 | **Memory regression baseline** — record peak `nix eval` RSS for future comparison | 30min | Track optimization impact |
-| 13 | **OpenSEO DataForSEO usage monitoring** — set budget alerts | 30min | Cost control |
-| 14 | **Hermes gateway model rotation** — evaluate newer GLM models | 1h | Better bot responses |
-| 15 | **Twenty CRM data migration** — populate with actual data | 2h | Useful CRM |
-| 16 | **GPU memory budget documentation** — verify actual vs configured fractions | 30min | Confirm GPU headroom |
-| 17 | **Deploy Dozzle** — container log tailing at `logs.home.lan` | 1h | Better debugging |
+| #   | Task                                                                               | Effort | Impact                    |
+| --- | ---------------------------------------------------------------------------------- | ------ | ------------------------- |
+| 10  | **Convert go-auto-upgrade `path:` inputs to SSH URLs**                             | 30min  | Clean flake pattern       |
+| 11  | **Photomap re-enablement** — fix podman permission, uncomment in configuration.nix | 1-2h   | Another service running   |
+| 12  | **Memory regression baseline** — record peak `nix eval` RSS for future comparison  | 30min  | Track optimization impact |
+| 13  | **OpenSEO DataForSEO usage monitoring** — set budget alerts                        | 30min  | Cost control              |
+| 14  | **Hermes gateway model rotation** — evaluate newer GLM models                      | 1h     | Better bot responses      |
+| 15  | **Twenty CRM data migration** — populate with actual data                          | 2h     | Useful CRM                |
+| 16  | **GPU memory budget documentation** — verify actual vs configured fractions        | 30min  | Confirm GPU headroom      |
+| 17  | **Deploy Dozzle** — container log tailing at `logs.home.lan`                       | 1h     | Better debugging          |
 
 ### P3 — Lower Impact, Good to Have
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 18 | **Minecraft server enablement** — for fun, module exists | 30min | Gaming |
-| 19 | **awww-daemon upstream bug report** — file BrokenPipe issue | 30min | Help upstream |
-| 20 | **watchdogd nixpkgs bug report** — file `device` section parsing bug | 30min | Help upstream |
-| 21 | **Darwin disk cleanup automation** — scheduled nix-collect-garbage | 1h | Prevent build failures |
-| 22 | **Security audit of Caddy configs** — review all virtual hosts | 1h | Defense in depth |
-| 23 | **BTRFS snapshot automation** — verify Timeshift schedules | 30min | Backup reliability |
-| 24 | **Documentation pass** — update FEATURES.md, TODO_LIST.md, AGENTS.md to current state | 1-2h | Accurate docs |
-| 25 | **Git hooks improvement** — add lockfile node count check to pre-commit | 30min | Automated hygiene |
+| #   | Task                                                                                  | Effort | Impact                 |
+| --- | ------------------------------------------------------------------------------------- | ------ | ---------------------- |
+| 18  | **Minecraft server enablement** — for fun, module exists                              | 30min  | Gaming                 |
+| 19  | **awww-daemon upstream bug report** — file BrokenPipe issue                           | 30min  | Help upstream          |
+| 20  | **watchdogd nixpkgs bug report** — file `device` section parsing bug                  | 30min  | Help upstream          |
+| 21  | **Darwin disk cleanup automation** — scheduled nix-collect-garbage                    | 1h     | Prevent build failures |
+| 22  | **Security audit of Caddy configs** — review all virtual hosts                        | 1h     | Defense in depth       |
+| 23  | **BTRFS snapshot automation** — verify Timeshift schedules                            | 30min  | Backup reliability     |
+| 24  | **Documentation pass** — update FEATURES.md, TODO_LIST.md, AGENTS.md to current state | 1-2h   | Accurate docs          |
+| 25  | **Git hooks improvement** — add lockfile node count check to pre-commit               | 30min  | Automated hygiene      |
 
 ---
 
@@ -268,21 +269,21 @@ The technical question I can't answer: **Are there any Gitea→Forgejo migration
 
 ## Session Stats
 
-| Metric | Value |
-|--------|-------|
-| Session 49 nodes eliminated | 20 |
-| Cumulative nodes eliminated (48+49) | 50 |
-| Lock nodes before | 123 |
-| Lock nodes after | **73** |
-| Total reduction | **40.7%** |
-| Suffixed nodes before session 48 | 23 |
-| Suffixed nodes after session 49 | **4** |
-| New top-level inputs (this session) | 6 (go-finding, go-output, gogenfilter, go-branded-id, go-filewatcher, cmdguard) |
-| New follows directives (this session) | 30 |
-| Build status | ✅ All checks passed |
-| Flake check | ✅ `nix flake check --no-build` passes |
-| Commits this session | 1 (pending) |
-| Active services | 27/35 |
-| Disabled services | 3 (comfyui, minecraft, photomap) |
-| Remaining controllable duplicates | 1 (`gogenfilter_2`) |
-| Third-party unfixable | 3 (`pyproject-nix_*`, `uv2nix_2`) |
+| Metric                                | Value                                                                           |
+| ------------------------------------- | ------------------------------------------------------------------------------- |
+| Session 49 nodes eliminated           | 20                                                                              |
+| Cumulative nodes eliminated (48+49)   | 50                                                                              |
+| Lock nodes before                     | 123                                                                             |
+| Lock nodes after                      | **73**                                                                          |
+| Total reduction                       | **40.7%**                                                                       |
+| Suffixed nodes before session 48      | 23                                                                              |
+| Suffixed nodes after session 49       | **4**                                                                           |
+| New top-level inputs (this session)   | 6 (go-finding, go-output, gogenfilter, go-branded-id, go-filewatcher, cmdguard) |
+| New follows directives (this session) | 30                                                                              |
+| Build status                          | ✅ All checks passed                                                            |
+| Flake check                           | ✅ `nix flake check --no-build` passes                                          |
+| Commits this session                  | 1 (pending)                                                                     |
+| Active services                       | 27/35                                                                           |
+| Disabled services                     | 3 (comfyui, minecraft, photomap)                                                |
+| Remaining controllable duplicates     | 1 (`gogenfilter_2`)                                                             |
+| Third-party unfixable                 | 3 (`pyproject-nix_*`, `uv2nix_2`)                                               |

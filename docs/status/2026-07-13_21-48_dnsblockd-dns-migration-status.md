@@ -172,93 +172,93 @@ None of these are "fucked up" in the sense of broken code — they're unverified
 
 ### Tier 0: BLOCKING — Must verify before deploy
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 1  | Verify `validation.NewDomainName("*.home.lan.").IsValid()` in dnsblockd repo | 10min | Wildcard DNS breaks silently if rejected |
-| 2  | If wildcard rejected: patch dnsblockd validator or handle wildcard in LocalZoneStore | 1-2h | Same |
-| 3  | Verify rpi3 sops has `dnsblockd_ca_cert` + `dnsblockd_ca_key` | 5min | Service crashes without TLS secrets |
-| 4  | Verify `adguard-home.png` exists in homepage-dashboard icon pack | 5min | 404 on dashboard tile |
-| 5  | Update/remove `modules/nixos/services/dashboards/dns.json` (stale unbound PromQL) | 30min | Empty Grafana panels |
+| #   | Task                                                                                 | Effort | Why                                      |
+| --- | ------------------------------------------------------------------------------------ | ------ | ---------------------------------------- |
+| 1   | Verify `validation.NewDomainName("*.home.lan.").IsValid()` in dnsblockd repo         | 10min  | Wildcard DNS breaks silently if rejected |
+| 2   | If wildcard rejected: patch dnsblockd validator or handle wildcard in LocalZoneStore | 1-2h   | Same                                     |
+| 3   | Verify rpi3 sops has `dnsblockd_ca_cert` + `dnsblockd_ca_key`                        | 5min   | Service crashes without TLS secrets      |
+| 4   | Verify `adguard-home.png` exists in homepage-dashboard icon pack                     | 5min   | 404 on dashboard tile                    |
+| 5   | Update/remove `modules/nixos/services/dashboards/dns.json` (stale unbound PromQL)    | 30min  | Empty Grafana panels                     |
 
 ### Tier 1: Deploy & Validate
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 6  | `nix run .#pre-deploy-check` | 1min | Catch boot-breaking issues |
-| 7  | `nix run .#deploy` to evo-x2 | 5-10min | Activate migration |
-| 8  | `dig @127.0.0.1 forgejo.home.lan.` → server IP | 30s | Verify local records |
-| 9  | `dig @127.0.0.1 unknown.home.lan.` → NXDOMAIN | 30s | Verify zone boundary |
-| 10 | `dig @127.0.0.1 google.com.` → resolves | 30s | Verify root recursion |
-| 11 | `dig @127.0.0.1 doubleclick.net.` → block IP | 30s | Verify blocklist |
-| 12 | `dig @<serverIP> google.com.` from LAN client | 30s | Verify ACL |
-| 13 | `dig @127.0.0.1 -p 53 -t AAAA google.com.` → no IPv6 upstream timeout | 30s | Verify IPv6 disabled |
-| 14 | Run `nix run .#post-deploy-check` | 1min | Verify functional outcomes |
-| 15 | Check `journalctl -u dnsblockd.service` for errors | 1min | Catch startup issues |
-| 16 | Verify dnsblockd stats API on :9090 | 30s | Stats endpoint works |
-| 17 | 24h observation — monitor stats, error rates | 24h | Stability |
+| #   | Task                                                                  | Effort  | Why                        |
+| --- | --------------------------------------------------------------------- | ------- | -------------------------- |
+| 6   | `nix run .#pre-deploy-check`                                          | 1min    | Catch boot-breaking issues |
+| 7   | `nix run .#deploy` to evo-x2                                          | 5-10min | Activate migration         |
+| 8   | `dig @127.0.0.1 forgejo.home.lan.` → server IP                        | 30s     | Verify local records       |
+| 9   | `dig @127.0.0.1 unknown.home.lan.` → NXDOMAIN                         | 30s     | Verify zone boundary       |
+| 10  | `dig @127.0.0.1 google.com.` → resolves                               | 30s     | Verify root recursion      |
+| 11  | `dig @127.0.0.1 doubleclick.net.` → block IP                          | 30s     | Verify blocklist           |
+| 12  | `dig @<serverIP> google.com.` from LAN client                         | 30s     | Verify ACL                 |
+| 13  | `dig @127.0.0.1 -p 53 -t AAAA google.com.` → no IPv6 upstream timeout | 30s     | Verify IPv6 disabled       |
+| 14  | Run `nix run .#post-deploy-check`                                     | 1min    | Verify functional outcomes |
+| 15  | Check `journalctl -u dnsblockd.service` for errors                    | 1min    | Catch startup issues       |
+| 16  | Verify dnsblockd stats API on :9090                                   | 30s     | Stats endpoint works       |
+| 17  | 24h observation — monitor stats, error rates                          | 24h     | Stability                  |
 
 ### Tier 2: Monitoring & Observability
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 18 | Update Gatus config for dnsblockd DNS health check | 30min | Must monitor DNS |
-| 19 | Update Grafana `dns.json` with dnsblockd PromQL metric names | 1h | Dashboard panels |
-| 20 | Verify dnsblockd exposes Prometheus metrics on stats port | 15min | Monitoring data source |
-| 21 | Add Gatus alert for DNS resolution failure | 15min | Proactive alerting |
+| #   | Task                                                         | Effort | Why                    |
+| --- | ------------------------------------------------------------ | ------ | ---------------------- |
+| 18  | Update Gatus config for dnsblockd DNS health check           | 30min  | Must monitor DNS       |
+| 19  | Update Grafana `dns.json` with dnsblockd PromQL metric names | 1h     | Dashboard panels       |
+| 20  | Verify dnsblockd exposes Prometheus metrics on stats port    | 15min  | Monitoring data source |
+| 21  | Add Gatus alert for DNS resolution failure                   | 15min  | Proactive alerting     |
 
 ### Tier 3: Testing
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 22 | Write dnsblockd DNS VM test (replaces removed unbound test) | 2-3h | Test coverage |
-| 23 | Test: blocked domain returns block IP | — | Part of VM test |
-| 24 | Test: local zone record resolves | — | Part of VM test |
-| 25 | Test: unknown name in local zone → NXDOMAIN | — | Part of VM test |
-| 26 | Test: ACL denies queries from outside allowed networks | — | Part of VM test |
+| #   | Task                                                        | Effort | Why             |
+| --- | ----------------------------------------------------------- | ------ | --------------- |
+| 22  | Write dnsblockd DNS VM test (replaces removed unbound test) | 2-3h   | Test coverage   |
+| 23  | Test: blocked domain returns block IP                       | —      | Part of VM test |
+| 24  | Test: local zone record resolves                            | —      | Part of VM test |
+| 25  | Test: unknown name in local zone → NXDOMAIN                 | —      | Part of VM test |
+| 26  | Test: ACL denies queries from outside allowed networks      | —      | Part of VM test |
 
 ### Tier 4: rpi3 Migration
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 27 | Build dnsblockd for aarch64-linux (cross-compile or native) | 30min | Verify package builds |
-| 28 | Deploy rpi3 image | 30min | Backup node |
-| 29 | Verify rpi3 DNS resolution | 5min | Failover readiness |
-| 30 | Test VRRP failover (manual: stop dnsblockd on evo-x2) | 10min | HA verification |
+| #   | Task                                                        | Effort | Why                   |
+| --- | ----------------------------------------------------------- | ------ | --------------------- |
+| 27  | Build dnsblockd for aarch64-linux (cross-compile or native) | 30min  | Verify package builds |
+| 28  | Deploy rpi3 image                                           | 30min  | Backup node           |
+| 29  | Verify rpi3 DNS resolution                                  | 5min   | Failover readiness    |
+| 30  | Test VRRP failover (manual: stop dnsblockd on evo-x2)       | 10min  | HA verification       |
 
 ### Tier 5: Cleanup & Polish
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 31 | Remove `dnsblockd process` build step if mapping.json not needed | 1h | Dead code elimination |
-| 32 | Investigate whether `blocklist_mapping_file` is redundant with `dns_blocklists` native loading | 30min | Config simplification |
-| 33 | Document sdns `defaultCacheSize` and verify 1G MemoryMax is sufficient | 15min | Capacity planning |
-| 34 | Consider enabling DoT forwarders (`dnsForwarders`) for ISP privacy | 5min | Privacy |
-| 35 | Consider enabling DoT listener (`dns_tls_enabled: true`) on :853 | 5min | Encrypted DNS transport |
-| 36 | Consider enabling DoH listener (`dns_doh_enabled: true`) on :8443 | 5min | Browser encrypted DNS |
-| 37 | Update `config.example.yaml` in dnsblockd repo if format changed | 15min | Documentation |
-| 38 | Clean up `docs/feedback/systemnix-integration.md` in dnsblockd repo | 15min | Migration doc is now historical |
-| 39 | Remove "Extract dnsblockd" item from ROADMAP.md (already extracted) | 5min | Stale roadmap item |
+| #   | Task                                                                                           | Effort | Why                             |
+| --- | ---------------------------------------------------------------------------------------------- | ------ | ------------------------------- |
+| 31  | Remove `dnsblockd process` build step if mapping.json not needed                               | 1h     | Dead code elimination           |
+| 32  | Investigate whether `blocklist_mapping_file` is redundant with `dns_blocklists` native loading | 30min  | Config simplification           |
+| 33  | Document sdns `defaultCacheSize` and verify 1G MemoryMax is sufficient                         | 15min  | Capacity planning               |
+| 34  | Consider enabling DoT forwarders (`dnsForwarders`) for ISP privacy                             | 5min   | Privacy                         |
+| 35  | Consider enabling DoT listener (`dns_tls_enabled: true`) on :853                               | 5min   | Encrypted DNS transport         |
+| 36  | Consider enabling DoH listener (`dns_doh_enabled: true`) on :8443                              | 5min   | Browser encrypted DNS           |
+| 37  | Update `config.example.yaml` in dnsblockd repo if format changed                               | 15min  | Documentation                   |
+| 38  | Clean up `docs/feedback/systemnix-integration.md` in dnsblockd repo                            | 15min  | Migration doc is now historical |
+| 39  | Remove "Extract dnsblockd" item from ROADMAP.md (already extracted)                            | 5min   | Stale roadmap item              |
 
 ### Tier 6: Architecture & Hardening
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 40 | Add `MemoryMax` tuning — measure actual dnsblockd RSS with sdns + 2.5M domains | 30min | OOM prevention |
-| 41 | Verify `harden {}` allows sdns to make outbound UDP/TCP :53 queries | — | Already tested via eval, verify at runtime |
-| 42 | Add systemd `WatchdogSec` if dnsblockd supports `sd_notify` | 30min | Crash detection |
-| 43 | Consider rate limiting on DNS port (dnsblockd has HTTP rate limiter, not DNS) | 2h | DDoS resilience |
-| 44 | Review whether `RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"]` covers sdns needs | 15min | Hardening correctness |
+| #   | Task                                                                                             | Effort | Why                                        |
+| --- | ------------------------------------------------------------------------------------------------ | ------ | ------------------------------------------ |
+| 40  | Add `MemoryMax` tuning — measure actual dnsblockd RSS with sdns + 2.5M domains                   | 30min  | OOM prevention                             |
+| 41  | Verify `harden {}` allows sdns to make outbound UDP/TCP :53 queries                              | —      | Already tested via eval, verify at runtime |
+| 42  | Add systemd `WatchdogSec` if dnsblockd supports `sd_notify`                                      | 30min  | Crash detection                            |
+| 43  | Consider rate limiting on DNS port (dnsblockd has HTTP rate limiter, not DNS)                    | 2h     | DDoS resilience                            |
+| 44  | Review whether `RestrictAddressFamilies = ["AF_INET" "AF_INET6" "AF_NETLINK"]` covers sdns needs | 15min  | Hardening correctness                      |
 
 ### Tier 7: Future Features
 
-| #  | Task | Effort | Why |
-|----|------|--------|-----|
-| 45 | DoQ (DNS-over-QUIC) support — dnsblockd doesn't have it yet | — | Modern transport |
-| 46 | DNS query logging / analytics dashboard | 2h | Visibility |
-| 47 | Per-client DNS statistics | 2h | Network insights |
-| 48 | Conditional forwarding (different upstream per domain) | 4h | Flexibility |
-| 49 | DNS rebinding protection | 2h | Security |
-| 50 | Split-horizon DNS (different answers for LAN vs VPN clients) | 4h | Topology |
+| #   | Task                                                         | Effort | Why              |
+| --- | ------------------------------------------------------------ | ------ | ---------------- |
+| 45  | DoQ (DNS-over-QUIC) support — dnsblockd doesn't have it yet  | —      | Modern transport |
+| 46  | DNS query logging / analytics dashboard                      | 2h     | Visibility       |
+| 47  | Per-client DNS statistics                                    | 2h     | Network insights |
+| 48  | Conditional forwarding (different upstream per domain)       | 4h     | Flexibility      |
+| 49  | DNS rebinding protection                                     | 2h     | Security         |
+| 50  | Split-horizon DNS (different answers for LAN vs VPN clients) | 4h     | Topology         |
 
 ---
 

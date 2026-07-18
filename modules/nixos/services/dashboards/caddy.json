@@ -3,10 +3,10 @@
   "description": "Request rates, latencies, errors, and upstream health",
   "tags": ["caddy", "http", "evo-x2"],
   "layout": [
-    {"h": 6, "i": "w1", "moved": false, "static": false, "w": 12, "x": 0, "y": 0},
-    {"h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 0, "y": 6},
-    {"h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 6, "y": 6},
-    {"h": 6, "i": "w4", "moved": false, "static": false, "w": 12, "x": 0, "y": 12}
+    { "h": 6, "i": "w1", "moved": false, "static": false, "w": 12, "x": 0, "y": 0 },
+    { "h": 6, "i": "w2", "moved": false, "static": false, "w": 6, "x": 0, "y": 6 },
+    { "h": 6, "i": "w3", "moved": false, "static": false, "w": 6, "x": 6, "y": 6 },
+    { "h": 6, "i": "w4", "moved": false, "static": false, "w": 12, "x": 0, "y": 12 }
   ],
   "widgets": [
     {
@@ -70,5 +70,5 @@
   ],
   "variables": [],
   "refresh": "30s",
-  "timeRange": {"from": "now-6h", "to": "now"}
+  "timeRange": { "from": "now-6h", "to": "now" }
 }

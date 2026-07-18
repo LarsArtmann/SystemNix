@@ -18,21 +18,22 @@ Standardized Nix flake builds across the entire Go tooling ecosystem (9 projects
 
 ### Projects That Build Successfully
 
-| # | Project | Flake Status | Key Fix |
-|---|---------|-------------|---------|
-| 1 | **library-policy** | ✅ Best flake (flake-parts, modular) | DRY'd up shared bindings, added overlay |
-| 2 | **BuildFlow** | ✅ Complete rewrite | SSH inputs, preparedSrc with 4 private deps, go-output sub-modules |
-| 3 | **go-auto-upgrade** | ✅ Fixed | Converted path: → SSH URLs, go.mod replace fix, overlay |
-| 4 | **go-structure-linter** | ✅ Complete rewrite | SSH inputs, preparedSrc, go-output sub-modules, overlay |
-| 5 | **branching-flow** | ✅ Complete rewrite | SSH inputs, preparedSrc, GOFLAGS=-mod=mod, overlay |
-| 6 | **golangci-lint-auto-configure** | ✅ Improved | Added overlay, standardized env vars |
-| 7 | **art-dupl** | ✅ Fixed | Updated gogenfilter pin (235fb88), env vars → env block |
-| 8 | **PMA** | ✅ Fixed (was hardest) | preparedSrc with 10 private deps, go.work version fixes |
-| 9 | **hierarchical-errors** | ✅ NEW FLAKE | Created from scratch, fixed go-finding API migration |
+| #   | Project                          | Flake Status                         | Key Fix                                                            |
+| --- | -------------------------------- | ------------------------------------ | ------------------------------------------------------------------ |
+| 1   | **library-policy**               | ✅ Best flake (flake-parts, modular) | DRY'd up shared bindings, added overlay                            |
+| 2   | **BuildFlow**                    | ✅ Complete rewrite                  | SSH inputs, preparedSrc with 4 private deps, go-output sub-modules |
+| 3   | **go-auto-upgrade**              | ✅ Fixed                             | Converted path: → SSH URLs, go.mod replace fix, overlay            |
+| 4   | **go-structure-linter**          | ✅ Complete rewrite                  | SSH inputs, preparedSrc, go-output sub-modules, overlay            |
+| 5   | **branching-flow**               | ✅ Complete rewrite                  | SSH inputs, preparedSrc, GOFLAGS=-mod=mod, overlay                 |
+| 6   | **golangci-lint-auto-configure** | ✅ Improved                          | Added overlay, standardized env vars                               |
+| 7   | **art-dupl**                     | ✅ Fixed                             | Updated gogenfilter pin (235fb88), env vars → env block            |
+| 8   | **PMA**                          | ✅ Fixed (was hardest)               | preparedSrc with 10 private deps, go.work version fixes            |
+| 9   | **hierarchical-errors**          | ✅ NEW FLAKE                         | Created from scratch, fixed go-finding API migration               |
 
 ### SystemNix Wiring
 
 5 new flake inputs added with overlays:
+
 - `buildflow` — build automation
 - `go-auto-upgrade` — library upgrade automation
 - `go-structure-linter` — project structure validation
@@ -99,13 +100,13 @@ Nothing — all targeted work is complete.
 
 ## c) NOT STARTED
 
-| Task | Priority | Notes |
-|------|----------|-------|
-| Migrate all flakes to `flake-parts` | Low | Only library-policy uses it; others use flake-utils |
-| Shared Nix helper library for preparedSrc | Medium | Reduce per-project duplication |
-| CI verification for all flakes | Medium | None tested in CI |
-| Add hierarchical-errors + PMA overlays to SystemNix | Low | Both build but not yet wired into SystemNix |
-| Standardize devShells across all projects | Low | Some have minimal devShells |
+| Task                                                | Priority | Notes                                               |
+| --------------------------------------------------- | -------- | --------------------------------------------------- |
+| Migrate all flakes to `flake-parts`                 | Low      | Only library-policy uses it; others use flake-utils |
+| Shared Nix helper library for preparedSrc           | Medium   | Reduce per-project duplication                      |
+| CI verification for all flakes                      | Medium   | None tested in CI                                   |
+| Add hierarchical-errors + PMA overlays to SystemNix | Low      | Both build but not yet wired into SystemNix         |
+| Standardize devShells across all projects           | Low      | Some have minimal devShells                         |
 
 ---
 
@@ -186,6 +187,7 @@ Nothing — all projects build successfully.
 ## g) Top Question
 
 **Should we create a shared `nix-helpers` repo (or add to an existing one) that provides:**
+
 - `preparedSrc` helper function
 - `go-output-sub-modules` helper
 - Standard `devShell` template
@@ -200,6 +202,7 @@ This would eliminate ~50% of the per-project boilerplate. But it adds another de
 ### The PMA Fix (Hardest Case — 10 Private Deps)
 
 PMA had 10 private `github.com/LarsArtmann/*` dependencies plus:
+
 - `go.work` with local absolute paths
 - Two local sub-packages (`pkg/coreutils`, `pkg/domain`)
 - Version mismatches from the go.work era:
@@ -209,6 +212,7 @@ PMA had 10 private `github.com/LarsArtmann/*` dependencies plus:
   - Missing `golang.org/x/time v0.15.0` transitive dep
 
 **Failed approaches** (before finding the right one):
+
 1. ❌ Vendor swap with real source dummies (transitive dep chains → `go mod tidy` needed)
 2. ❌ Stub packages (couldn't provide sub-packages like `pkg/meta`)
 3. ❌ `GOFLAGS=-mod=mod` (doesn't fix version mismatches)
@@ -218,18 +222,18 @@ PMA had 10 private `github.com/LarsArtmann/*` dependencies plus:
 
 ### Files Modified
 
-| Repo | Files Changed | Commits |
-|------|--------------|---------|
-| BuildFlow | flake.nix, flake.lock | 2 |
-| go-auto-upgrade | flake.nix, flake.lock | 2 |
-| go-structure-linter | flake.nix, flake.lock | 2 |
-| branching-flow | flake.nix, flake.lock | 2 |
-| golangci-lint-auto-configure | flake.nix | 2 |
-| art-dupl | flake.nix, flake.lock | 3 |
-| PMA | flake.nix, flake.lock | 2 |
-| hierarchical-errors | flake.nix, flake.lock, pkg/finding/bridge.go, go.mod, go.sum | 2 |
-| library-policy | nix/packages/default.nix, flake.nix | 2 |
-| SystemNix | flake.nix, flake.lock | 3 |
+| Repo                         | Files Changed                                                | Commits |
+| ---------------------------- | ------------------------------------------------------------ | ------- |
+| BuildFlow                    | flake.nix, flake.lock                                        | 2       |
+| go-auto-upgrade              | flake.nix, flake.lock                                        | 2       |
+| go-structure-linter          | flake.nix, flake.lock                                        | 2       |
+| branching-flow               | flake.nix, flake.lock                                        | 2       |
+| golangci-lint-auto-configure | flake.nix                                                    | 2       |
+| art-dupl                     | flake.nix, flake.lock                                        | 3       |
+| PMA                          | flake.nix, flake.lock                                        | 2       |
+| hierarchical-errors          | flake.nix, flake.lock, pkg/finding/bridge.go, go.mod, go.sum | 2       |
+| library-policy               | nix/packages/default.nix, flake.nix                          | 2       |
+| SystemNix                    | flake.nix, flake.lock                                        | 3       |
 
 ---
 

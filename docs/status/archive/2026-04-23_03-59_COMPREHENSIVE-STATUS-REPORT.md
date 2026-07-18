@@ -16,18 +16,18 @@ The 2026-04-22 improvement list (30 items) is **96% complete** — 27 done, 3 de
 
 ## Codebase Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total lines (Nix + Go + config) | ~19,400 |
-| NixOS service modules | 16 (flake-parts) |
-| Common program modules | 16 |
-| Custom packages (pkgs/) | 7 (emeet-pixyd, dnsblockd, dnsblockd-processor, jscpd, modernize, monitor365, aw-watcher-utilization) |
-| Flake inputs | 20 |
-| Git commits (all time) | ~2,100+ |
-| Git commits (last 24h) | 17 |
-| Status reports (active) | 30 |
-| Status reports (archived) | 202 |
-| Git stashes | 3 (stale) |
+| Metric                          | Value                                                                                                 |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Total lines (Nix + Go + config) | ~19,400                                                                                               |
+| NixOS service modules           | 16 (flake-parts)                                                                                      |
+| Common program modules          | 16                                                                                                    |
+| Custom packages (pkgs/)         | 7 (emeet-pixyd, dnsblockd, dnsblockd-processor, jscpd, modernize, monitor365, aw-watcher-utilization) |
+| Flake inputs                    | 20                                                                                                    |
+| Git commits (all time)          | ~2,100+                                                                                               |
+| Git commits (last 24h)          | 17                                                                                                    |
+| Status reports (active)         | 30                                                                                                    |
+| Status reports (archived)       | 202                                                                                                   |
+| Git stashes                     | 3 (stale)                                                                                             |
 
 ---
 
@@ -87,17 +87,17 @@ The 2026-04-22 improvement list (30 items) is **96% complete** — 27 done, 3 de
 
 ## B) PARTIALLY DONE
 
-| Item | Status | What's Missing |
-|------|--------|----------------|
-| **Hermes gateway** | Module deployed, runs as system service | Service may still be failing — needs runtime verification after last night's crashes |
-| **SigNoz JWT secret** | `SIGNOZ_TOKENIZER_JWT_SECRET` | Not set — logged as critical on every restart |
-| **Gitea GitHub sync** | Service runs, repos configured | Token auth may still be broken (terminal prompts disabled error) |
-| **Voice agents** | Module defined, LiveKit + Whisper ASR | Status unknown — no runtime verification |
-| **Minecraft server** | Module defined, `services.minecraft = true` | Status unknown — no runtime verification |
-| **Monitor365** | Package built, module exists | `enable = false` in configuration.nix — intentionally disabled |
-| **Twenty CRM** | Module defined, Docker image pinned | Was crash-looping last night (`python3: can't open file '/app/python'`) |
-| **Unsloth Studio** | Module defined, conditional enablement | Was restart-looping last night (exit code 1, 154+ attempts) |
-| **Security hardening** | Good baseline (firewall, SSH, fail2ban, ClamAV, systemd sandboxing) | No LUKS, no TPM2, no fwupd, no kernel sysctl hardening, auditd disabled |
+| Item                   | Status                                                              | What's Missing                                                                       |
+| ---------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Hermes gateway**     | Module deployed, runs as system service                             | Service may still be failing — needs runtime verification after last night's crashes |
+| **SigNoz JWT secret**  | `SIGNOZ_TOKENIZER_JWT_SECRET`                                       | Not set — logged as critical on every restart                                        |
+| **Gitea GitHub sync**  | Service runs, repos configured                                      | Token auth may still be broken (terminal prompts disabled error)                     |
+| **Voice agents**       | Module defined, LiveKit + Whisper ASR                               | Status unknown — no runtime verification                                             |
+| **Minecraft server**   | Module defined, `services.minecraft = true`                         | Status unknown — no runtime verification                                             |
+| **Monitor365**         | Package built, module exists                                        | `enable = false` in configuration.nix — intentionally disabled                       |
+| **Twenty CRM**         | Module defined, Docker image pinned                                 | Was crash-looping last night (`python3: can't open file '/app/python'`)              |
+| **Unsloth Studio**     | Module defined, conditional enablement                              | Was restart-looping last night (exit code 1, 154+ attempts)                          |
+| **Security hardening** | Good baseline (firewall, SSH, fail2ban, ClamAV, systemd sandboxing) | No LUKS, no TPM2, no fwupd, no kernel sysctl hardening, auditd disabled              |
 
 ---
 
@@ -136,14 +136,14 @@ The 2026-04-22 improvement list (30 items) is **96% complete** — 27 done, 3 de
 
 ## D) TOTALLY FUCKED UP
 
-| Item | Severity | Details |
-|------|----------|---------|
-| **No disk encryption** | **CRITICAL** | Root + /data are plain btrfs. This is the single biggest security gap. Any physical access = full compromise. |
-| **No firmware updates** | **HIGH** | `fwupd` not enabled. BIOS/UEFI vulnerabilities cannot be patched. |
-| **Passwordless sudo** | **MEDIUM** | `wheelNeedsPassword = false` means any user-level code execution = instant root. On a desktop with browsers, this is the most likely privilege escalation path. |
-| **auditd blocked** | **MEDIUM** | NixOS 26.05 bug prevents audit rules from loading. Rules are written and ready but cannot activate. |
-| **Boot editor open** | **MEDIUM** | `systemd-boot` editor allows arbitrary kernel params at boot screen. Combined with no encryption, trivial to bypass. |
-| **Stale git stashes** | **LOW** | 3 stashes from old sessions, likely no longer relevant |
+| Item                    | Severity     | Details                                                                                                                                                         |
+| ----------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **No disk encryption**  | **CRITICAL** | Root + /data are plain btrfs. This is the single biggest security gap. Any physical access = full compromise.                                                   |
+| **No firmware updates** | **HIGH**     | `fwupd` not enabled. BIOS/UEFI vulnerabilities cannot be patched.                                                                                               |
+| **Passwordless sudo**   | **MEDIUM**   | `wheelNeedsPassword = false` means any user-level code execution = instant root. On a desktop with browsers, this is the most likely privilege escalation path. |
+| **auditd blocked**      | **MEDIUM**   | NixOS 26.05 bug prevents audit rules from loading. Rules are written and ready but cannot activate.                                                             |
+| **Boot editor open**    | **MEDIUM**   | `systemd-boot` editor allows arbitrary kernel params at boot screen. Combined with no encryption, trivial to bypass.                                            |
+| **Stale git stashes**   | **LOW**      | 3 stashes from old sessions, likely no longer relevant                                                                                                          |
 
 ---
 
@@ -177,33 +177,33 @@ The 2026-04-22 improvement list (30 items) is **96% complete** — 27 done, 3 de
 
 ## F) Top 25 Next Actions
 
-| # | Priority | Action | Effort | Impact |
-|---|----------|--------|--------|--------|
-| 1 | **P0** | **Enable LUKS + TPM2 auto-unlock** — Full disk encryption with zero UX change (TPM binds to boot) | High | Critical — closes physical attack surface |
-| 2 | **P0** | **Set `boot.loader.systemd-boot.editor = false`** — One line, prevents boot param editing | Low | High — prevents init=/bin/sh bypass |
-| 3 | **P0** | **Enable `services.fwupd.enable = true`** — Firmware updates for real hardware | Low | High — patches firmware vulnerabilities |
-| 4 | **P0** | **Add kernel security sysctls** — `kptr_restrict=2`, `dmesg_restrict=1`, `kexec_load=0`, `rp_filter=1`, `unprivileged_bpf_disabled=1` | Low | Medium — standard kernel hardening |
-| 5 | **P0** | **Set `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops | Low | Medium — critical security fix logged every restart |
-| 6 | **P1** | **Verify Hermes gateway is running** — Check service status, Discord bot connectivity | Low | Medium — confirm last night's fix worked |
-| 7 | **P1** | **Re-evaluate `wheelNeedsPassword = false`** — Consider `true` with `timestampTimeout = 30` | Low | Medium — closes privilege escalation path |
-| 8 | **P1** | **Add `StartLimitBurst`/`StartLimitIntervalSec`** to all services — prevent infinite restart loops | Low | Medium — stops 150-restart insanity |
-| 9 | **P1** | **Verify Twenty CRM container** — Check if 0.16.2 image fixed the `/app/python` error | Low | Medium — confirm or disable |
-| 10 | **P1** | **Verify Unsloth Studio** — Check if conditional enablement + structlog fix resolved issues | Low | Medium — confirm or disable |
-| 11 | **P1** | **Enable `security.tpm2.enable = true`** — Prerequisite for LUKS TPM binding, zero cost alone | Low | Medium — enables future LUKS auto-unlock |
-| 12 | **P1** | **Clean root filesystem** — 402G/512G used, find large removable files | Medium | Medium — prevent disk space emergency |
-| 13 | **P2** | **Add disk space alerting** — SigNoz alert for root >85% | Low | Medium — proactive warning |
-| 14 | **P2** | **Add swap usage alerting** — SigNoz alert for swap >5G | Low | Low — anomaly detection |
-| 15 | **P2** | **Fix Gitea GitHub sync auth** — Verify token is valid and not expired | Low | Low — restores mirror functionality |
-| 16 | **P2** | **Clean up 3 stale git stashes** — Evaluate and drop | Low | Low — repo hygiene |
-| 17 | **P2** | **Update AGENTS.md** — 19 days behind, many changes undocumented | Medium | Medium — AI agent accuracy |
-| 18 | **P2** | **Add Hermes SigNoz monitoring** — journald ingestion, alert rules | Medium | Medium — observability gap |
-| 19 | **P2** | **Prune `docs/` top-level files** — Archive or delete stale analysis docs | Medium | Low — repo cleanliness |
-| 20 | **P2** | **Status report auto-archive** — Keep last 10, move rest to archive quarterly | Low | Low — prevent unbounded growth |
-| 21 | **P3** | **Validate Darwin build** — Ensure macOS config still builds | Low | Medium — cross-platform health |
-| 22 | **P3** | **Fix amdxdna NPU driver** — SVA bind failure ret -19 | Hard | Medium — NPU unusable |
-| 23 | **P3** | **Monitor auditd NixOS bug** — Re-enable when [#483085](https://github.com/NixOS/nixpkgs/issues/483085) is fixed | Low | Medium — audit trail |
-| 24 | **P3** | **Flake.lock staleness alerting** — Automated check for inputs older than 30 days | Medium | Low — dependency freshness |
-| 25 | **P3** | **Add NixOS VM tests** — At least smoke tests for critical services (caddy, immich, signoz) | High | High — prevents regressions |
+| #   | Priority | Action                                                                                                                                | Effort | Impact                                              |
+| --- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------ | --------------------------------------------------- |
+| 1   | **P0**   | **Enable LUKS + TPM2 auto-unlock** — Full disk encryption with zero UX change (TPM binds to boot)                                     | High   | Critical — closes physical attack surface           |
+| 2   | **P0**   | **Set `boot.loader.systemd-boot.editor = false`** — One line, prevents boot param editing                                             | Low    | High — prevents init=/bin/sh bypass                 |
+| 3   | **P0**   | **Enable `services.fwupd.enable = true`** — Firmware updates for real hardware                                                        | Low    | High — patches firmware vulnerabilities             |
+| 4   | **P0**   | **Add kernel security sysctls** — `kptr_restrict=2`, `dmesg_restrict=1`, `kexec_load=0`, `rp_filter=1`, `unprivileged_bpf_disabled=1` | Low    | Medium — standard kernel hardening                  |
+| 5   | **P0**   | **Set `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops                                                                                        | Low    | Medium — critical security fix logged every restart |
+| 6   | **P1**   | **Verify Hermes gateway is running** — Check service status, Discord bot connectivity                                                 | Low    | Medium — confirm last night's fix worked            |
+| 7   | **P1**   | **Re-evaluate `wheelNeedsPassword = false`** — Consider `true` with `timestampTimeout = 30`                                           | Low    | Medium — closes privilege escalation path           |
+| 8   | **P1**   | **Add `StartLimitBurst`/`StartLimitIntervalSec`** to all services — prevent infinite restart loops                                    | Low    | Medium — stops 150-restart insanity                 |
+| 9   | **P1**   | **Verify Twenty CRM container** — Check if 0.16.2 image fixed the `/app/python` error                                                 | Low    | Medium — confirm or disable                         |
+| 10  | **P1**   | **Verify Unsloth Studio** — Check if conditional enablement + structlog fix resolved issues                                           | Low    | Medium — confirm or disable                         |
+| 11  | **P1**   | **Enable `security.tpm2.enable = true`** — Prerequisite for LUKS TPM binding, zero cost alone                                         | Low    | Medium — enables future LUKS auto-unlock            |
+| 12  | **P1**   | **Clean root filesystem** — 402G/512G used, find large removable files                                                                | Medium | Medium — prevent disk space emergency               |
+| 13  | **P2**   | **Add disk space alerting** — SigNoz alert for root >85%                                                                              | Low    | Medium — proactive warning                          |
+| 14  | **P2**   | **Add swap usage alerting** — SigNoz alert for swap >5G                                                                               | Low    | Low — anomaly detection                             |
+| 15  | **P2**   | **Fix Gitea GitHub sync auth** — Verify token is valid and not expired                                                                | Low    | Low — restores mirror functionality                 |
+| 16  | **P2**   | **Clean up 3 stale git stashes** — Evaluate and drop                                                                                  | Low    | Low — repo hygiene                                  |
+| 17  | **P2**   | **Update AGENTS.md** — 19 days behind, many changes undocumented                                                                      | Medium | Medium — AI agent accuracy                          |
+| 18  | **P2**   | **Add Hermes SigNoz monitoring** — journald ingestion, alert rules                                                                    | Medium | Medium — observability gap                          |
+| 19  | **P2**   | **Prune `docs/` top-level files** — Archive or delete stale analysis docs                                                             | Medium | Low — repo cleanliness                              |
+| 20  | **P2**   | **Status report auto-archive** — Keep last 10, move rest to archive quarterly                                                         | Low    | Low — prevent unbounded growth                      |
+| 21  | **P3**   | **Validate Darwin build** — Ensure macOS config still builds                                                                          | Low    | Medium — cross-platform health                      |
+| 22  | **P3**   | **Fix amdxdna NPU driver** — SVA bind failure ret -19                                                                                 | Hard   | Medium — NPU unusable                               |
+| 23  | **P3**   | **Monitor auditd NixOS bug** — Re-enable when [#483085](https://github.com/NixOS/nixpkgs/issues/483085) is fixed                      | Low    | Medium — audit trail                                |
+| 24  | **P3**   | **Flake.lock staleness alerting** — Automated check for inputs older than 30 days                                                     | Medium | Low — dependency freshness                          |
+| 25  | **P3**   | **Add NixOS VM tests** — At least smoke tests for critical services (caddy, immich, signoz)                                           | High   | High — prevents regressions                         |
 
 ---
 
@@ -220,6 +220,7 @@ The 2026-04-22 improvement list (30 items) is **96% complete** — 27 done, 3 de
 ```
 
 Key changes:
+
 - `modules/nixos/services/*.nix` — Systemd hardening, watchdog, dependency fixes across 12 services
 - `platforms/common/programs/ssh-config.nix` — New shared SSH config module
 - `platforms/nixos/system/local-network.nix` — New local network config module
@@ -231,21 +232,21 @@ Key changes:
 
 ## Appendix: Service Module Inventory
 
-| Module | Path | Enabled | Systemd Hardened | Watchdog |
-|--------|------|---------|------------------|----------|
-| Authelia | `modules/nixos/services/authelia.nix` | Yes | Yes (7 directives) | Yes (30s) |
-| Caddy | `modules/nixos/services/caddy.nix` | Yes | Yes (5 directives) | Yes (30s) |
-| Docker | `modules/nixos/services/default.nix` | Yes | — | — |
-| Gitea | `modules/nixos/services/gitea.nix` | Yes | Yes (3 services) | — |
-| Gitea Repos | `modules/nixos/services/gitea-repos.nix` | Yes | — | — |
-| Hermes | `modules/nixos/services/hermes.nix` | Yes | Yes (7 directives) | — |
-| Homepage | `modules/nixos/services/homepage.nix` | Yes | Yes (5 directives) | Yes (30s) |
-| Immich | `modules/nixos/services/immich.nix` | Yes | Yes (2 services) | Yes (30s) |
-| Minecraft | `modules/nixos/services/minecraft.nix` | Yes | Yes (4 directives) | — |
-| Monitor365 | `modules/nixos/services/monitor365.nix` | **No** | Yes (4 directives) | — |
-| Photomap | `modules/nixos/services/photomap.nix` | Yes | Yes (3 directives) | — |
-| SigNoz | `modules/nixos/services/signoz.nix` | Yes | Yes (4 services) | Yes (30s) |
-| Sops | `modules/nixos/services/sops.nix` | Yes | — | — |
-| TaskChampion | `modules/nixos/services/taskchampion.nix` | Yes | Yes (4 directives) | Yes (30s) |
-| Twenty | `modules/nixos/services/twenty.nix` | Yes | Yes (3 directives) | — |
-| Voice Agents | `modules/nixos/services/voice-agents.nix` | Yes | Yes (3 directives) | — |
+| Module       | Path                                      | Enabled | Systemd Hardened   | Watchdog  |
+| ------------ | ----------------------------------------- | ------- | ------------------ | --------- |
+| Authelia     | `modules/nixos/services/authelia.nix`     | Yes     | Yes (7 directives) | Yes (30s) |
+| Caddy        | `modules/nixos/services/caddy.nix`        | Yes     | Yes (5 directives) | Yes (30s) |
+| Docker       | `modules/nixos/services/default.nix`      | Yes     | —                  | —         |
+| Gitea        | `modules/nixos/services/gitea.nix`        | Yes     | Yes (3 services)   | —         |
+| Gitea Repos  | `modules/nixos/services/gitea-repos.nix`  | Yes     | —                  | —         |
+| Hermes       | `modules/nixos/services/hermes.nix`       | Yes     | Yes (7 directives) | —         |
+| Homepage     | `modules/nixos/services/homepage.nix`     | Yes     | Yes (5 directives) | Yes (30s) |
+| Immich       | `modules/nixos/services/immich.nix`       | Yes     | Yes (2 services)   | Yes (30s) |
+| Minecraft    | `modules/nixos/services/minecraft.nix`    | Yes     | Yes (4 directives) | —         |
+| Monitor365   | `modules/nixos/services/monitor365.nix`   | **No**  | Yes (4 directives) | —         |
+| Photomap     | `modules/nixos/services/photomap.nix`     | Yes     | Yes (3 directives) | —         |
+| SigNoz       | `modules/nixos/services/signoz.nix`       | Yes     | Yes (4 services)   | Yes (30s) |
+| Sops         | `modules/nixos/services/sops.nix`         | Yes     | —                  | —         |
+| TaskChampion | `modules/nixos/services/taskchampion.nix` | Yes     | Yes (4 directives) | Yes (30s) |
+| Twenty       | `modules/nixos/services/twenty.nix`       | Yes     | Yes (3 directives) | —         |
+| Voice Agents | `modules/nixos/services/voice-agents.nix` | Yes     | Yes (3 directives) | —         |

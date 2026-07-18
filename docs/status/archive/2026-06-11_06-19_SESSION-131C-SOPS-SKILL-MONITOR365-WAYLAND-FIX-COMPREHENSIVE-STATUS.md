@@ -14,6 +14,7 @@
 Session 131 continued with infrastructure hardening and bug fixes. **14 commits** total across the full session (~6 hours). This segment (131c) focused on learning from the sops secret management struggles and fixing two more broken services.
 
 **Key outcomes this segment:**
+
 - Created project-local sops-secret-management skill (`.crush/skills/`) with gitignore whitelist
 - Added `ssh-to-age` to system packages (wasn't installed)
 - Discovered `ssh-to-age` needs the **private** key with `-private-key` flag for decryption (public key only produces recipients)
@@ -30,34 +31,34 @@ Session 131 continued with infrastructure hardening and bug fixes. **14 commits*
 
 ### This Segment (131c) — All Committed & Pushed
 
-| # | Item | Commit | Details |
-|---|------|--------|---------|
-| 1 | **Resend API key added to sops** | (runtime) | `pocket_id_smtp_password` set in `platforms/nixos/secrets/pocket-id.yaml` via `ssh-to-age -private-key` + `SOPS_AGE_KEY` one-liner |
-| 2 | **ssh-to-age added to system packages** | `83460d43` | Was not installed — had to use `nix run nixpkgs#ssh-to-age` every time. Now global |
-| 3 | **AGENTS.md sops guide corrected (3 iterations)** | `4b667876`, `7fbf9c0f`, `62a51d53` | Learned: ssh-to-age needs `-private-key` flag on private key for decryption, `SOPS_AGE_KEY` in RAM works, no temp files needed |
-| 4 | **Sops-secret-management skill created** | `62a51d53` → `8dd81800` | Project-local skill at `.crush/skills/sops-secret-management/SKILL.md`. Covers ssh-to-age usage, one-liner pattern, common mistakes table, full workflow for adding secrets, guard patterns, secret file inventory |
-| 5 | **.gitignore whitelist for `.crush/skills/`** | `8dd81800` | Changed `.crush/` → `.crush/*` + `!.crush/skills/` so skills are versioned while Crush state files stay ignored |
-| 6 | **Monitor365 server DB fix** | `2c7970cc` | Two issues: (a) ExecStart had no `--config` flag — server wasn't reading any config file, relying solely on env vars. (b) `sqlite://` with 2 slashes is a relative path URI; `sqlite:///` with 3 slashes is absolute. Changed default from `sqlite://${cfg.home}/server/monitor365.db` to `sqlite:///${cfg.home}/server/monitor365.db` |
-| 7 | **aw-watcher-window-wayland startup fix** | `2c7970cc` | Added `After = ["graphical-session.target"]` and `PartOf = ["graphical-session.target"]` to the systemd user service. Upstream HM module only sets `After=["activitywatch.service"]` but the wayland watcher needs a compositor to connect to |
+| #   | Item                                              | Commit                             | Details                                                                                                                                                                                                                                                                                                                                |
+| --- | ------------------------------------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Resend API key added to sops**                  | (runtime)                          | `pocket_id_smtp_password` set in `platforms/nixos/secrets/pocket-id.yaml` via `ssh-to-age -private-key` + `SOPS_AGE_KEY` one-liner                                                                                                                                                                                                     |
+| 2   | **ssh-to-age added to system packages**           | `83460d43`                         | Was not installed — had to use `nix run nixpkgs#ssh-to-age` every time. Now global                                                                                                                                                                                                                                                     |
+| 3   | **AGENTS.md sops guide corrected (3 iterations)** | `4b667876`, `7fbf9c0f`, `62a51d53` | Learned: ssh-to-age needs `-private-key` flag on private key for decryption, `SOPS_AGE_KEY` in RAM works, no temp files needed                                                                                                                                                                                                         |
+| 4   | **Sops-secret-management skill created**          | `62a51d53` → `8dd81800`            | Project-local skill at `.crush/skills/sops-secret-management/SKILL.md`. Covers ssh-to-age usage, one-liner pattern, common mistakes table, full workflow for adding secrets, guard patterns, secret file inventory                                                                                                                     |
+| 5   | **.gitignore whitelist for `.crush/skills/`**     | `8dd81800`                         | Changed `.crush/` → `.crush/*` + `!.crush/skills/` so skills are versioned while Crush state files stay ignored                                                                                                                                                                                                                        |
+| 6   | **Monitor365 server DB fix**                      | `2c7970cc`                         | Two issues: (a) ExecStart had no `--config` flag — server wasn't reading any config file, relying solely on env vars. (b) `sqlite://` with 2 slashes is a relative path URI; `sqlite:///` with 3 slashes is absolute. Changed default from `sqlite://${cfg.home}/server/monitor365.db` to `sqlite:///${cfg.home}/server/monitor365.db` |
+| 7   | **aw-watcher-window-wayland startup fix**         | `2c7970cc`                         | Added `After = ["graphical-session.target"]` and `PartOf = ["graphical-session.target"]` to the systemd user service. Upstream HM module only sets `After=["activitywatch.service"]` but the wayland watcher needs a compositor to connect to                                                                                          |
 
 ### Full Session 131 Summary (14 commits)
 
-| Commit | Description |
-|--------|-------------|
-| `24c779ec` | fix(caddy): sops-nix boot ordering + DNS A records for 5 subdomains |
-| `c600e2cb` | docs(status): session 131a comprehensive audit |
-| `8a939063` | fix(caddy): `bindsTo` → `wants` for sops-nix (switch compatibility) |
+| Commit     | Description                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------- |
+| `24c779ec` | fix(caddy): sops-nix boot ordering + DNS A records for 5 subdomains                               |
+| `c600e2cb` | docs(status): session 131a comprehensive audit                                                    |
+| `8a939063` | fix(caddy): `bindsTo` → `wants` for sops-nix (switch compatibility)                               |
 | `e616de4b` | fix(pocket-id,sops): OTel prometheus exporter + sops guards for 7 services + TODO/FEATURES update |
-| `ace83cc1` | feat(pocket-id): Resend SMTP wiring + remove unnecessary OTel env vars |
-| `cb6b780a` | docs(status): session 131b — SMTP, sops guards, OTel, boot ordering |
-| `4b667876` | docs(AGENTS): expand sops toolchain guide (wrong instructions) |
-| `83460d43` | feat(packages): add ssh-to-age |
-| `7fbf9c0f` | docs(AGENTS): fix sops guide — ssh-to-age -private-key, SOPS_AGE_KEY in RAM |
-| `62a51d53` | feat(skill): sops-secret-management skill + trim AGENTS.md |
-| `a0a8867b` | fix: move skill to docs/skills/ (.crush/ was gitignored) |
-| `8dd81800` | feat: move skill to .crush/skills/ with gitignore whitelist |
-| `2c7970cc` | fix(monitor365,activitywatch): server DB path + wayland watcher startup |
-| (runtime) | sops secret: added `pocket_id_smtp_password` to pocket-id.yaml |
+| `ace83cc1` | feat(pocket-id): Resend SMTP wiring + remove unnecessary OTel env vars                            |
+| `cb6b780a` | docs(status): session 131b — SMTP, sops guards, OTel, boot ordering                               |
+| `4b667876` | docs(AGENTS): expand sops toolchain guide (wrong instructions)                                    |
+| `83460d43` | feat(packages): add ssh-to-age                                                                    |
+| `7fbf9c0f` | docs(AGENTS): fix sops guide — ssh-to-age -private-key, SOPS_AGE_KEY in RAM                       |
+| `62a51d53` | feat(skill): sops-secret-management skill + trim AGENTS.md                                        |
+| `a0a8867b` | fix: move skill to docs/skills/ (.crush/ was gitignored)                                          |
+| `8dd81800` | feat: move skill to .crush/skills/ with gitignore whitelist                                       |
+| `2c7970cc` | fix(monitor365,activitywatch): server DB path + wayland watcher startup                           |
+| (runtime)  | sops secret: added `pocket_id_smtp_password` to pocket-id.yaml                                    |
 
 ---
 
@@ -97,23 +98,23 @@ Session 131 continued with infrastructure hardening and bug fixes. **14 commits*
 
 ## c) NOT STARTED 📋
 
-| # | Item | Priority | Blocker |
-|---|------|----------|---------|
-| 1 | **Verify Pocket ID email sending** | HIGH | Test after deploy |
-| 2 | **Twenty CRM intermittent 502s** | MEDIUM | Run `docker logs twenty-server-1 --tail=100` |
-| 3 | **PostgreSQL collation fix** | MEDIUM | `ALTER DATABASE postgres REFRESH COLLATION VERSION` in Docker PG container — runtime fix, not Nix config |
-| 4 | **Swap investigation** | MEDIUM | 8 GiB swap on 128 GiB RAM |
-| 5 | **BTRFS `/data` subvolume migration** | HIGH | `just snapshot-migrate-data` exists, requires downtime |
-| 6 | **Reboot to verify boot time** | LOW | NVMe APST + Caddy sops ordering need reboot to verify (~35s target) |
-| 7 | **Audit Gatus health checks** | MEDIUM | 6 DOWN endpoints to verify |
-| 8 | **Archive old status reports** | LOW | 178 → ~30 files |
-| 9 | **Create ROADMAP.md** | LOW | No single source of truth |
-| 10 | **Create CHANGELOG.md** | LOW | 185+ commits, no changelog |
-| 11 | **Pi 3 DNS failover** | LOW | Hardware required |
-| 12 | **Auditd** | LOW | Blocked: NixOS 26.05 bug #483085 |
-| 13 | **AppArmor** | LOW | Commented out |
-| 14 | **Darwin Home Manager parity** | LOW | Disk at 90%+ full |
-| 15 | **Monitor365 agent→server auth** | LOW | No auth on LAN |
+| #   | Item                                  | Priority | Blocker                                                                                                  |
+| --- | ------------------------------------- | -------- | -------------------------------------------------------------------------------------------------------- |
+| 1   | **Verify Pocket ID email sending**    | HIGH     | Test after deploy                                                                                        |
+| 2   | **Twenty CRM intermittent 502s**      | MEDIUM   | Run `docker logs twenty-server-1 --tail=100`                                                             |
+| 3   | **PostgreSQL collation fix**          | MEDIUM   | `ALTER DATABASE postgres REFRESH COLLATION VERSION` in Docker PG container — runtime fix, not Nix config |
+| 4   | **Swap investigation**                | MEDIUM   | 8 GiB swap on 128 GiB RAM                                                                                |
+| 5   | **BTRFS `/data` subvolume migration** | HIGH     | `just snapshot-migrate-data` exists, requires downtime                                                   |
+| 6   | **Reboot to verify boot time**        | LOW      | NVMe APST + Caddy sops ordering need reboot to verify (~35s target)                                      |
+| 7   | **Audit Gatus health checks**         | MEDIUM   | 6 DOWN endpoints to verify                                                                               |
+| 8   | **Archive old status reports**        | LOW      | 178 → ~30 files                                                                                          |
+| 9   | **Create ROADMAP.md**                 | LOW      | No single source of truth                                                                                |
+| 10  | **Create CHANGELOG.md**               | LOW      | 185+ commits, no changelog                                                                               |
+| 11  | **Pi 3 DNS failover**                 | LOW      | Hardware required                                                                                        |
+| 12  | **Auditd**                            | LOW      | Blocked: NixOS 26.05 bug #483085                                                                         |
+| 13  | **AppArmor**                          | LOW      | Commented out                                                                                            |
+| 14  | **Darwin Home Manager parity**        | LOW      | Disk at 90%+ full                                                                                        |
+| 15  | **Monitor365 agent→server auth**      | LOW      | No auth on LAN                                                                                           |
 
 ---
 
@@ -121,15 +122,16 @@ Session 131 continued with infrastructure hardening and bug fixes. **14 commits*
 
 ### Sops Toolchain — Took 5 Attempts to Get Right
 
-| Attempt | Approach | Failed With |
-|---------|----------|-------------|
-| 1 | `SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key` | sops CLI doesn't support this env var |
-| 2 | `sudo env SOPS_AGE_SSH_PRIVATE_KEY_FILE=... sops --set` | sudo strips env vars |
-| 3 | `sudo cat ... \| ssh-to-age > /tmp/age-key` + `SOPS_AGE_KEY_FILE=/tmp/age-key` | sudo + redirect conflict, age-key file permission denied |
-| 4 | `ssh-to-age < /etc/ssh/ssh_host_ed25519_key` (no flag) | Produces recipient (`age1...`) from public key, not identity. sops says "unknown identity type" |
-| 5 | `ssh-to-age -private-key` on private key + `SOPS_AGE_KEY=$(sudo cat ...) sops --set` | ✅ Worked |
+| Attempt | Approach                                                                             | Failed With                                                                                     |
+| ------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| 1       | `SOPS_AGE_SSH_PRIVATE_KEY_FILE=/etc/ssh/ssh_host_ed25519_key`                        | sops CLI doesn't support this env var                                                           |
+| 2       | `sudo env SOPS_AGE_SSH_PRIVATE_KEY_FILE=... sops --set`                              | sudo strips env vars                                                                            |
+| 3       | `sudo cat ... \| ssh-to-age > /tmp/age-key` + `SOPS_AGE_KEY_FILE=/tmp/age-key`       | sudo + redirect conflict, age-key file permission denied                                        |
+| 4       | `ssh-to-age < /etc/ssh/ssh_host_ed25519_key` (no flag)                               | Produces recipient (`age1...`) from public key, not identity. sops says "unknown identity type" |
+| 5       | `ssh-to-age -private-key` on private key + `SOPS_AGE_KEY=$(sudo cat ...) sops --set` | ✅ Worked                                                                                       |
 
 **Key learnings extracted into skill:**
+
 - `ssh-to-age` on public key → recipient (for encryption). `ssh-to-age -private-key` on private key → identity (for decryption)
 - `SOPS_AGE_KEY` (inline env var, in RAM) works. `SOPS_AGE_KEY_FILE` also works but writes to disk unnecessarily
 - `sudo` inside scripts + redirects don't compose. Use `VAR=$(sudo cat ...) command` pattern
@@ -185,58 +187,58 @@ GC automation exists (daily, 3d retention) but the Nix store will grow. `nix-col
 
 ### Priority 0: Deploy & Verify
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **`just switch`** — deploy Monitor365 + aw-watcher fixes | Restores 2 services | 5 min |
-| 2 | **Verify Pocket ID email sending** | Confirms SMTP end-to-end | 5 min |
-| 3 | **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION` | Silences 15K log lines/day | 2 min |
-| 4 | **Reset Monitor365 failed state** — `systemctl --user reset-failed monitor365-server` | Unblocks service after fix | 1 min |
+| #   | Task                                                                                  | Impact                     | Effort |
+| --- | ------------------------------------------------------------------------------------- | -------------------------- | ------ |
+| 1   | **`just switch`** — deploy Monitor365 + aw-watcher fixes                              | Restores 2 services        | 5 min  |
+| 2   | **Verify Pocket ID email sending**                                                    | Confirms SMTP end-to-end   | 5 min  |
+| 3   | **PostgreSQL collation fix** — `ALTER DATABASE postgres REFRESH COLLATION VERSION`    | Silences 15K log lines/day | 2 min  |
+| 4   | **Reset Monitor365 failed state** — `systemctl --user reset-failed monitor365-server` | Unblocks service after fix | 1 min  |
 
 ### Priority 1: Service Health
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 5 | **Audit Gatus health checks** — verify 6 DOWN endpoints | Reliable monitoring | 30 min |
-| 6 | **Investigate Twenty CRM 502s** — docker logs | CRM stability | 30 min |
-| 7 | **Swap investigation** — `smem` + `swapoff -a && swapon -a` | Memory efficiency | 15 min |
+| #   | Task                                                        | Impact              | Effort |
+| --- | ----------------------------------------------------------- | ------------------- | ------ |
+| 5   | **Audit Gatus health checks** — verify 6 DOWN endpoints     | Reliable monitoring | 30 min |
+| 6   | **Investigate Twenty CRM 502s** — docker logs               | CRM stability       | 30 min |
+| 7   | **Swap investigation** — `smem` + `swapoff -a && swapon -a` | Memory efficiency   | 15 min |
 
 ### Priority 2: Manual Steps
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 8 | **Hermes: add OpenAI API key to sops** | LLM fallback | 2 min |
-| 9 | **Hermes: install SSH deploy key** | Git repo access | 5 min |
-| 10 | **Hermes: set fallback model** | Automatic fallback | 2 min |
+| #   | Task                                   | Impact             | Effort |
+| --- | -------------------------------------- | ------------------ | ------ |
+| 8   | **Hermes: add OpenAI API key to sops** | LLM fallback       | 2 min  |
+| 9   | **Hermes: install SSH deploy key**     | Git repo access    | 5 min  |
+| 10  | **Hermes: set fallback model**         | Automatic fallback | 2 min  |
 
 ### Priority 3: Infrastructure
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 11 | **Reboot evo-x2** — verify boot time (~35s target) | Confirms NVMe APST + Caddy sops fixes | 5 min |
-| 12 | **`/data` BTRFS subvolume migration** | Snapshot protection for Docker/Immich/AI | 1 hr + downtime |
-| 13 | **Archive old status reports** — pre-session-100 to archive/ | 178 → ~30 files | 10 min |
+| #   | Task                                                         | Impact                                   | Effort          |
+| --- | ------------------------------------------------------------ | ---------------------------------------- | --------------- |
+| 11  | **Reboot evo-x2** — verify boot time (~35s target)           | Confirms NVMe APST + Caddy sops fixes    | 5 min           |
+| 12  | **`/data` BTRFS subvolume migration**                        | Snapshot protection for Docker/Immich/AI | 1 hr + downtime |
+| 13  | **Archive old status reports** — pre-session-100 to archive/ | 178 → ~30 files                          | 10 min          |
 
 ### Priority 4: Documentation
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 14 | **Create CHANGELOG.md** | Track changes | 30 min |
-| 15 | **Create ROADMAP.md** | Direction clarity | 1 hr |
-| 16 | **DiscordSync upstream issue** — INSERT OR IGNORE | Reduces backfill noise | 10 min |
+| #   | Task                                              | Impact                 | Effort |
+| --- | ------------------------------------------------- | ---------------------- | ------ |
+| 14  | **Create CHANGELOG.md**                           | Track changes          | 30 min |
+| 15  | **Create ROADMAP.md**                             | Direction clarity      | 1 hr   |
+| 16  | **DiscordSync upstream issue** — INSERT OR IGNORE | Reduces backfill noise | 10 min |
 
 ### Priority 5: Long-Term
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 17 | **Monitor365 agent→server auth** | Security | 30 min |
-| 18 | **Disabled service triage** — voice/minecraft/photomap | Dead code cleanup | 30 min |
-| 19 | **Split large modules** — monitor365 716L, signoz 705L | Maintainability | 3 hr |
-| 20 | **Pi 3 DNS failover** | Network resilience | 4 hr |
-| 21 | **Darwin Home Manager parity** | Cross-platform consistency | 2 hr |
-| 22 | **Dozzle proper module** | Clean architecture | 30 min |
-| 23 | **Deer Flow NixOS module** | Consistency | 45 min |
-| 24 | **Auditd + AppArmor** | Security hardening | 2 hr |
-| 25 | **DNS ↔ Caddy single source of truth** | Eliminate sync risk | 1 hr |
+| #   | Task                                                   | Impact                     | Effort |
+| --- | ------------------------------------------------------ | -------------------------- | ------ |
+| 17  | **Monitor365 agent→server auth**                       | Security                   | 30 min |
+| 18  | **Disabled service triage** — voice/minecraft/photomap | Dead code cleanup          | 30 min |
+| 19  | **Split large modules** — monitor365 716L, signoz 705L | Maintainability            | 3 hr   |
+| 20  | **Pi 3 DNS failover**                                  | Network resilience         | 4 hr   |
+| 21  | **Darwin Home Manager parity**                         | Cross-platform consistency | 2 hr   |
+| 22  | **Dozzle proper module**                               | Clean architecture         | 30 min |
+| 23  | **Deer Flow NixOS module**                             | Consistency                | 45 min |
+| 24  | **Auditd + AppArmor**                                  | Security hardening         | 2 hr   |
+| 25  | **DNS ↔ Caddy single source of truth**                 | Eliminate sync risk        | 1 hr   |
 
 ---
 
@@ -257,20 +259,20 @@ If DNS isn't complete, emails will be sent but land in spam or be rejected by re
 
 ## Session Timeline
 
-| Time | Event |
-|------|-------|
-| 00:15 | Caddy boot ordering + DNS A records |
-| 00:39 | Session 131a status report |
-| 00:42 | `bindsTo` → `wants` fix |
-| 01:00 | OTel fix + sops guards + TODO/FEATURES |
-| 02:30 | Resend SMTP wiring |
-| 02:57 | Session 131b status report |
-| 03:00 | sops toolchain debugging (5 attempts) |
+| Time  | Event                                            |
+| ----- | ------------------------------------------------ |
+| 00:15 | Caddy boot ordering + DNS A records              |
+| 00:39 | Session 131a status report                       |
+| 00:42 | `bindsTo` → `wants` fix                          |
+| 01:00 | OTel fix + sops guards + TODO/FEATURES           |
+| 02:30 | Resend SMTP wiring                               |
+| 02:57 | Session 131b status report                       |
+| 03:00 | sops toolchain debugging (5 attempts)            |
 | 03:35 | ssh-to-age added to packages + AGENTS.md updated |
-| 03:50 | sops-secret-management skill created |
-| 04:10 | gitignore whitelist for `.crush/skills/` |
-| 05:30 | Monitor365 DB path fix + aw-watcher-wayland fix |
-| 06:19 | Session 131c status report |
+| 03:50 | sops-secret-management skill created             |
+| 04:10 | gitignore whitelist for `.crush/skills/`         |
+| 05:30 | Monitor365 DB path fix + aw-watcher-wayland fix  |
+| 06:19 | Session 131c status report                       |
 
 ## System Snapshot
 

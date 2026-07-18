@@ -17,6 +17,7 @@ Successfully configured Ollama to use models stored on the `/data` partition ins
 ### ✅ FULLY DONE
 
 #### 1. Data Partition Migration
+
 - **Location:** `/data/models/ollama/`
 - **Size:** ~44GB of AI models migrated from root partition
 - **Structure:**
@@ -26,6 +27,7 @@ Successfully configured Ollama to use models stored on the `/data` partition ins
   - `.cache/` - Runtime cache
 
 #### 2. Ollama Service Configuration
+
 **File:** `platforms/nixos/desktop/ai-stack.nix`
 
 ```nix
@@ -46,7 +48,9 @@ services.ollama = {
 ```
 
 #### 3. Permission Fix Service
+
 Created `ollama-permissions.service` that:
+
 - Runs at boot before Ollama starts
 - Fixes ownership to `ollama:ollama` (UID 61547)
 - Sets proper permissions (755 for dirs, 644 for files)
@@ -72,6 +76,7 @@ systemd.services.ollama-permissions = {
 ```
 
 #### 4. Ollama 0.20.0 Upgrade
+
 **Critical:** Upgraded from 0.19.0 to 0.20.0 for Gemma 4 architecture support.
 
 ```nix
@@ -87,26 +92,30 @@ ollama-rocm-0_20 = pkgs.ollama-rocm.overrideAttrs (old: rec {
 ```
 
 #### 5. Models Verified Working
-| Model | Size | Status |
-|-------|------|--------|
-| llama3.2:1b | 1.2GB | ✅ Working |
-| gemma4-e2b-it | 3.5GB | ✅ Working (0.20.0) |
-| gemma4-e4b-it | 5.4GB | ✅ Working (0.20.0) |
-| gemma4-26b-a4b-it | 17GB | ✅ Working (0.20.0) |
-| gemma4-31b-it | 19GB | ✅ Working (0.20.0) |
+
+| Model             | Size  | Status              |
+| ----------------- | ----- | ------------------- |
+| llama3.2:1b       | 1.2GB | ✅ Working          |
+| gemma4-e2b-it     | 3.5GB | ✅ Working (0.20.0) |
+| gemma4-e4b-it     | 5.4GB | ✅ Working (0.20.0) |
+| gemma4-26b-a4b-it | 17GB  | ✅ Working (0.20.0) |
+| gemma4-31b-it     | 19GB  | ✅ Working (0.20.0) |
 
 ---
 
 ### 🔧 PARTIALLY DONE
 
 #### 1. tmpfiles Rules
+
 Added but not fully effective:
+
 ```nix
 systemd.tmpfiles.rules = [
   "R /data/models/ollama 0755 ollama ollama - -"  # Remove if exists
   "d /data/models/ollama 0755 ollama ollama -"     # Create with proper perms
 ];
 ```
+
 **Note:** The `R` (remove) directive is aggressive - consider removing in future if causing issues.
 
 ---
@@ -114,14 +123,17 @@ systemd.tmpfiles.rules = [
 ### ❌ NOT STARTED
 
 #### 1. Automated Backup for /data/models
+
 - No automated backup solution for the model files
 - Risk: 44GB of models could be lost if /data partition corrupted
 
 #### 2. Model Pruning Strategy
+
 - No automatic cleanup of unused model blobs
 - Partial downloads may accumulate over time
 
 #### 3. Multi-User Access
+
 - Currently only `ollama` user can access models
 - No read-only access for other users
 
@@ -130,9 +142,11 @@ systemd.tmpfiles.rules = [
 ### 💥 TOTALLY FUCKED UP (Now Fixed!)
 
 #### Issue #1: Wrong Path Configuration
+
 **Problem:** Initial config pointed to `/data/ollama` instead of `/data/models/ollama`
 
 **Impact:**
+
 - Service created empty directory at wrong location
 - All models appeared missing (`ollama ls` showed nothing)
 - Service failed with "file does not exist" errors
@@ -140,9 +154,11 @@ systemd.tmpfiles.rules = [
 **Fix:** Corrected `home` path in configuration
 
 #### Issue #2: Permission Denied on chmod/chown
+
 **Problem:** Root couldn't chmod directories owned by `nobody:nogroup`
 
 **Root Cause:**
+
 - Directories created by previous Ollama runs with dynamic user
 - BTRFS subvolume permissions quirks
 - `chmod 755` failed even as root
@@ -150,6 +166,7 @@ systemd.tmpfiles.rules = [
 **Fix:** Use `mkdir -p` to recreate with correct ownership
 
 #### Issue #3: Gemma 4 Not Supported
+
 **Problem:** `unknown model architecture: 'gemma4'`
 
 **Root Cause:** Ollama 0.19.0 didn't include Gemma 4 support
@@ -161,6 +178,7 @@ systemd.tmpfiles.rules = [
 ## 📊 Current System State
 
 ### Directory Structure
+
 ```
 /data/models/ollama/
 ├── blobs/           # 11 blob files, 44GB total
@@ -170,6 +188,7 @@ systemd.tmpfiles.rules = [
 ```
 
 ### Permissions
+
 ```
 drwxr-xr-x 1 ollama ollama 38 Apr  4 04:34 /data/models/ollama
 drwxr-xr-x 1 ollama ollama 1562 Apr  4 00:19 blobs/
@@ -177,11 +196,13 @@ drwx------ 1 ollama ollama 36 Apr  4 00:17 manifests/
 ```
 
 ### Service Status
+
 - `ollama.service`: ✅ Active (running)
 - `ollama-permissions.service`: ✅ Active (exited cleanly)
 - Port 11434: ✅ Listening on 127.0.0.1
 
 ### GPU Acceleration
+
 - Backend: ROCm (ollama-rocm)
 - GPU: AMD Radeon 8060S Graphics (gfx1151)
 - VRAM: 192GB unified memory
@@ -309,6 +330,7 @@ drwx------ 1 ollama ollama 36 Apr  4 00:17 manifests/
 **What is your preferred backup strategy for the 44GB of AI models?**
 
 Options:
+
 - a) **Re-download as needed** - Keep manifests only, re-pull models if lost (bandwidth intensive)
 - b) **External drive backup** - Periodic rsync to external SSD (time intensive)
 - c) **Cloud storage** - Sync to S3/GCS (cost intensive)
@@ -316,6 +338,7 @@ Options:
 - e) **No backup** - Accept risk of re-download (risk intensive)
 
 This affects:
+
 - Whether we should prioritize deduplication
 - How we handle model versioning
 - Recovery procedures documentation
@@ -326,6 +349,7 @@ This affects:
 ## 🔧 Technical Details
 
 ### Current NixOS Configuration
+
 ```nix
 # From platforms/nixos/desktop/ai-stack.nix
 services.ollama = {
@@ -345,6 +369,7 @@ services.ollama = {
 ```
 
 ### Ollama 0.20.0 Override
+
 ```nix
 ollama-rocm-0_20 = pkgs.ollama-rocm.overrideAttrs (old: rec {
   version = "0.20.0";
@@ -358,6 +383,7 @@ ollama-rocm-0_20 = pkgs.ollama-rocm.overrideAttrs (old: rec {
 ```
 
 ### Permission Service
+
 ```nix
 systemd.services.ollama-permissions = {
   description = "Fix Ollama data directory permissions";
@@ -382,6 +408,7 @@ systemd.services.ollama-permissions = {
 ## 📝 Changelog
 
 ### 2026-04-04 04:47
+
 - Fixed Ollama data partition configuration
 - Upgraded to Ollama 0.20.0 for Gemma 4 support
 - Added permission fix service

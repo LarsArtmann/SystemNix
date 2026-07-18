@@ -65,28 +65,33 @@
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Priority 0 — Immediate
+
 1. **Deploy the fix** — Run `nix run .#deploy` and verify the system boots with the fixed monitor365
 2. **Run `nix run .#post-deploy-check`** — Verify monitor365 is functional after deploy
 3. **Verify monitor365-server binary works** — Check that `monitor365-server --version` runs and serves the UI on port 3001
 
 ### Priority 1 — Upstream Fixes
+
 4. **File upstream issue at juhaku/utoipa** — Report the `fs::copy` PermissionDenied bug with the reproduction steps from this session
 5. **Submit upstream PR to utoipa-swagger-ui** — Replace `fs::copy(file_path, zip_path).unwrap()` with `fs::remove_file(&zip_path).ok(); fs::copy(file_path, &zip_path).unwrap()` or use `fs::read`+`fs::write`
 6. **File upstream issue/PR at LarsArtmann/monitor365** — Suggest setting `doCheck = false` in `buildDepsOnly` as a workaround until utoipa-swagger-ui is fixed
 7. **Remove `monitor365SwaggerUiFixOverlay`** once upstream utoipa-swagger-ui is fixed and monitor365 updates its dependency
 
 ### Priority 2 — Documentation & Cleanup
+
 8. **Update `docs/status/2026-07-15_23-03_dns-mold-go-overlay-hack-removal.md`** — It lists "AGENTS.md cleanup — mold linker gotcha still references the overlay fix" as outstanding work. This is now done (entry replaced with swagger-ui fix). Mark it as resolved.
 9. **Audit other overlays for stale `monitor365MoldFixOverlay` references** — Search for any remaining references to the removed mold overlay in docs, scripts, or tests
 10. **Add a pre-commit check for stale AGENTS.md entries** — Entries that reference removed overlays/code should be detected automatically
 
 ### Priority 3 — Build Hardening
+
 11. **Make the `find -delete` more robust** — Replace `find target -path '*/utoipa-swagger-ui-*/out/*.zip' -delete` with `rm -rf target/release/build/utoipa-swagger-ui-*/out/` to handle version changes
 12. **Add a CI check that builds monitor365-deps** — Catch build failures before deploy, not during
 13. **Consider `--option build-fallback false` for deploys** — Prevent partial builds from leaving the system in a broken state
 14. **Add `nix build .#packages.x86_64-linux.monitor365-server` to pre-deploy-check** — Verify the monitor365-server package builds before attempting a full deploy
 
 ### Priority 4 — General SystemNix Improvements (noticed during this session)
+
 15. **Stale `flake.lock` changes** — `flake.lock` shows as modified in `git status` from a prior session. Investigate whether these changes are intentional or stale.
 16. **HTML docs reformatted by `nix fmt`** — 25 HTML files were reformatted by treefmt. These are generated/styled docs that shouldn't be tracked by treefmt. Consider excluding `docs/**/*.html` from the treefmt config.
 17. **`nix fmt` touched 28 files** — The formatter reformatted many unrelated files. The treefmt config should be scoped to only relevant file types.
@@ -95,6 +100,7 @@
 20. **Add the swagger-ui zip hash to a variable** — The `sha256-SBJE0IEgl7Efuu73n3HZQrFxYX+cn5UU5jrL4T5xzNw` hash is hardcoded in the upstream flake. If it changes, the overlay's `fetchurl` will break. Since the overlay no longer uses `fetchurl` (the `runCommand` approach was removed), this is moot — but worth noting if the approach changes back.
 
 ### Priority 5 — Broader Observations
+
 21. **Crane's `buildDepsOnly` double-execution is a known footgun** — Any build script with side effects that aren't idempotent will break. Document this pattern for future Rust+Nix work.
 22. **Rust's `fs::copy` permission propagation is surprising** — Most developers don't expect `fs::copy` to copy permissions. This is documented in the Rust std docs but rarely read. Add to the gotchas table.
 23. **The overlay rebuilds `monitor365-server` identically to upstream** — This is fragile duplication. Consider a `lib.fixup` helper that patches a specific attribute of a symlinkJoin without re-specifying the entire thing.

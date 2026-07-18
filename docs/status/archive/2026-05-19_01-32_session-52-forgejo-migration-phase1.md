@@ -13,37 +13,38 @@
 
 All NixOS module code migrated from Gitea to Forgejo. Build passes. Ready for data migration (Phase 2).
 
-| What | Detail |
-|------|--------|
-| `modules/nixos/services/forgejo.nix` | 537 lines — full port of gitea.nix with improvements |
-| `modules/nixos/services/forgejo-repos.nix` | 303 lines — declarative repo mirroring with push mirrors |
-| `flake.nix` serviceModules | Replaced gitea/gitea-repos → forgejo/forgejo-repos |
-| `configuration.nix` | `forgejo.enable = true` + `forgejo-repos` config |
-| `caddy.nix` | `config.services.forgejo.settings.server.HTTP_PORT` |
-| `gatus-config.nix` | Health check → Forgejo (port reference updated) |
-| `signoz.nix` | Journald `forgejo.service` in log collection |
-| `sops.nix` | `forgejo_token` secret key, `forgejo-sync.env` template, updated restartUnits |
-| `homepage.nix` | Forgejo entry with forgejo.png icon |
-| `authelia.nix` | client_name → "Forgejo" (client_id kept as `gitea`) |
-| `justfile` | `forgejo-sync-repos`, `forgejo-update-token` |
-| `AGENTS.md` | All gitea references → forgejo (8 replacements) |
-| `FEATURES.md` | All gitea references → forgejo (5 replacements) |
-| `docs/migration-gitea-to-forgejo.md` | Phase 1 marked complete, full migration plan preserved |
+| What                                       | Detail                                                                        |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| `modules/nixos/services/forgejo.nix`       | 537 lines — full port of gitea.nix with improvements                          |
+| `modules/nixos/services/forgejo-repos.nix` | 303 lines — declarative repo mirroring with push mirrors                      |
+| `flake.nix` serviceModules                 | Replaced gitea/gitea-repos → forgejo/forgejo-repos                            |
+| `configuration.nix`                        | `forgejo.enable = true` + `forgejo-repos` config                              |
+| `caddy.nix`                                | `config.services.forgejo.settings.server.HTTP_PORT`                           |
+| `gatus-config.nix`                         | Health check → Forgejo (port reference updated)                               |
+| `signoz.nix`                               | Journald `forgejo.service` in log collection                                  |
+| `sops.nix`                                 | `forgejo_token` secret key, `forgejo-sync.env` template, updated restartUnits |
+| `homepage.nix`                             | Forgejo entry with forgejo.png icon                                           |
+| `authelia.nix`                             | client_name → "Forgejo" (client_id kept as `gitea`)                           |
+| `justfile`                                 | `forgejo-sync-repos`, `forgejo-update-token`                                  |
+| `AGENTS.md`                                | All gitea references → forgejo (8 replacements)                               |
+| `FEATURES.md`                              | All gitea references → forgejo (5 replacements)                               |
+| `docs/migration-gitea-to-forgejo.md`       | Phase 1 marked complete, full migration plan preserved                        |
 
 ### Improvements over Gitea
 
-| Feature | Gitea | Forgejo |
-|---------|-------|---------|
-| Package | `pkgs.gitea` | `pkgs.forgejo-lts` (LTS channel) |
-| Push mirrors | Not configured | Auto-setup: Forgejo → GitHub on every push for owned repos |
-| Federation | Not available | `federation.ENABLED = true` (ActivityPub/ForgeFed ready) |
-| UI themes | `gitea-auto` | `forgejo-auto` (Forgejo-native themes) |
-| Governance | For-profit corp | Community-governed (Codeberg e.V.) |
-| License | MIT + proprietary | GPLv3 (fully free) |
+| Feature      | Gitea             | Forgejo                                                    |
+| ------------ | ----------------- | ---------------------------------------------------------- |
+| Package      | `pkgs.gitea`      | `pkgs.forgejo-lts` (LTS channel)                           |
+| Push mirrors | Not configured    | Auto-setup: Forgejo → GitHub on every push for owned repos |
+| Federation   | Not available     | `federation.ENABLED = true` (ActivityPub/ForgeFed ready)   |
+| UI themes    | `gitea-auto`      | `forgejo-auto` (Forgejo-native themes)                     |
+| Governance   | For-profit corp   | Community-governed (Codeberg e.V.)                         |
+| License      | MIT + proprietary | GPLv3 (fully free)                                         |
 
 ### DNS Subdomain Strategy
 
 Kept `gitea.home.lan` as the subdomain — zero DNS/Authelia disruption:
+
 - Caddy still proxies `gitea.${domain}` → Forgejo
 - Authelia OIDC client_id stays `"gitea"`
 - Homepage `svcUrl "gitea"` unchanged
@@ -62,6 +63,7 @@ Reviewed `/home/lars/projects/mr-sync` — it fetches GitHub repos via `gh api` 
 The code is ready but the actual service switch hasn't happened. Requires manual intervention on the NixOS machine:
 
 **Steps needed on evo-x2:**
+
 1. Stop all gitea services
 2. Backup `/var/lib/gitea`
 3. **Rename `gitea_token` → `forgejo_token` in sops secrets file** (`platforms/nixos/secrets/secrets.yaml`)
@@ -76,15 +78,15 @@ The code is ready but the actual service switch hasn't happened. Requires manual
 
 ## c) NOT STARTED
 
-| Item | Description | Priority |
-|------|-------------|----------|
-| Phase 2 data migration | Move `/var/lib/gitea` → `/var/lib/forgejo`, rename sops key, `just switch` | HIGH |
-| Forgejo push mirrors setup | First run of `forgejo-mirror-github` to create push mirrors for all owned repos | HIGH (Phase 2) |
-| Forgejo federation testing | Verify `federation.ENABLED = true` doesn't break anything; test federated stars | LOW |
-| DNS subdomain rename | Optional: `gitea.home.lan` → `git.home.lan` (cleaner naming, but disruptive) | LOW |
-| `forgejo-runner` package switch | Currently using `pkgs.gitea-actions-runner`; may want `pkgs.forgejo-runner` if available | LOW |
-| Subdomain rename in Authelia | If we rename DNS, need to update OIDC client_id + callback URLs | LOW |
-| mr-sync integration | Use mr-sync's GitHub Fetcher as the repo inventory source for Forgejo mirroring | LOW |
+| Item                            | Description                                                                              | Priority       |
+| ------------------------------- | ---------------------------------------------------------------------------------------- | -------------- |
+| Phase 2 data migration          | Move `/var/lib/gitea` → `/var/lib/forgejo`, rename sops key, `just switch`               | HIGH           |
+| Forgejo push mirrors setup      | First run of `forgejo-mirror-github` to create push mirrors for all owned repos          | HIGH (Phase 2) |
+| Forgejo federation testing      | Verify `federation.ENABLED = true` doesn't break anything; test federated stars          | LOW            |
+| DNS subdomain rename            | Optional: `gitea.home.lan` → `git.home.lan` (cleaner naming, but disruptive)             | LOW            |
+| `forgejo-runner` package switch | Currently using `pkgs.gitea-actions-runner`; may want `pkgs.forgejo-runner` if available | LOW            |
+| Subdomain rename in Authelia    | If we rename DNS, need to update OIDC client_id + callback URLs                          | LOW            |
+| mr-sync integration             | Use mr-sync's GitHub Fetcher as the repo inventory source for Forgejo mirroring          | LOW            |
 
 ---
 
@@ -95,6 +97,7 @@ The code is ready but the actual service switch hasn't happened. Requires manual
 The module now references `forgejo_token` in sops, but the actual encrypted secrets file (`platforms/nixos/secrets/secrets.yaml`) still has the key `gitea_token`. **This will cause `just switch` to fail** — sops-nix will error because `config.sops.placeholder.forgejo_token` doesn't exist.
 
 **Fix required BEFORE `just switch`:**
+
 ```bash
 # On evo-x2, rename the sops key
 cd /home/lars/projects/SystemNix
@@ -132,43 +135,43 @@ In `forgejo.nix` line ~78, the `jq -n` call uses `$clone_addr` as the variable n
 
 ### HIGH PRIORITY (must do before Phase 2 deploy)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | **Fix jq variable mismatch in forgejo-mirror-github** (`clone_url` vs `clone_addr`) | 5 min | Bug fix — mirrors won't create repos correctly |
-| 2 | **Fix same bug in forgejo-repos.nix** mirror script | 5 min | Same bug in ensure-repos script |
-| 3 | **Add AGENTS.md gotchas for Forgejo** — stateDir, sops key, runner package | 15 min | Prevent future confusion |
-| 4 | **Rename `gitea_token` → `forgejo_token` in sops secrets** (on evo-x2) | 5 min | Blocker for Phase 2 |
-| 5 | **Phase 2: Data migration** — backup, mv, switch, verify | 30 min | Actual deployment |
-| 6 | **Verify Forgejo starts and serves repos** after migration | 10 min | Validation |
-| 7 | **Regenerate tokens** — API token + runner token after migration | 10 min | Functional service |
-| 8 | **Run `just test`** (full build) to catch runtime issues | 60 min | Build confidence |
+| #   | Task                                                                                | Effort | Impact                                         |
+| --- | ----------------------------------------------------------------------------------- | ------ | ---------------------------------------------- |
+| 1   | **Fix jq variable mismatch in forgejo-mirror-github** (`clone_url` vs `clone_addr`) | 5 min  | Bug fix — mirrors won't create repos correctly |
+| 2   | **Fix same bug in forgejo-repos.nix** mirror script                                 | 5 min  | Same bug in ensure-repos script                |
+| 3   | **Add AGENTS.md gotchas for Forgejo** — stateDir, sops key, runner package          | 15 min | Prevent future confusion                       |
+| 4   | **Rename `gitea_token` → `forgejo_token` in sops secrets** (on evo-x2)              | 5 min  | Blocker for Phase 2                            |
+| 5   | **Phase 2: Data migration** — backup, mv, switch, verify                            | 30 min | Actual deployment                              |
+| 6   | **Verify Forgejo starts and serves repos** after migration                          | 10 min | Validation                                     |
+| 7   | **Regenerate tokens** — API token + runner token after migration                    | 10 min | Functional service                             |
+| 8   | **Run `just test`** (full build) to catch runtime issues                            | 60 min | Build confidence                               |
 
 ### MEDIUM PRIORITY (next session)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 9 | **Test push mirrors** — verify Forgejo → GitHub auto-push works | 15 min | Bidirectional sync |
-| 10 | **Create dedicated GitHub PAT for push mirrors** (minimal scope) | 10 min | Security |
-| 11 | **Update forgejo-federation.md** with current implementation status | 15 min | Documentation |
-| 12 | **Check nixpkgs for `forgejo-runner` package** — switch from `gitea-actions-runner` if available | 10 min | Correctness |
-| 13 | **Add Forgejo to Gatus endpoints** — verify `/api/v1/version` returns valid response | 5 min | Monitoring |
-| 14 | **Update Gatus endpoint name** in dashboard — shows "Forgejo" instead of "Gitea" | 2 min | UI consistency |
-| 15 | **Test `forgejo-ensure-repos` script** with dnsblockd and BuildFlow repos | 10 min | Verify declarative mirroring |
-| 16 | **Test `forgejo-update-github-token` script** — verify sops key update works | 5 min | Operational |
+| #   | Task                                                                                             | Effort | Impact                       |
+| --- | ------------------------------------------------------------------------------------------------ | ------ | ---------------------------- |
+| 9   | **Test push mirrors** — verify Forgejo → GitHub auto-push works                                  | 15 min | Bidirectional sync           |
+| 10  | **Create dedicated GitHub PAT for push mirrors** (minimal scope)                                 | 10 min | Security                     |
+| 11  | **Update forgejo-federation.md** with current implementation status                              | 15 min | Documentation                |
+| 12  | **Check nixpkgs for `forgejo-runner` package** — switch from `gitea-actions-runner` if available | 10 min | Correctness                  |
+| 13  | **Add Forgejo to Gatus endpoints** — verify `/api/v1/version` returns valid response             | 5 min  | Monitoring                   |
+| 14  | **Update Gatus endpoint name** in dashboard — shows "Forgejo" instead of "Gitea"                 | 2 min  | UI consistency               |
+| 15  | **Test `forgejo-ensure-repos` script** with dnsblockd and BuildFlow repos                        | 10 min | Verify declarative mirroring |
+| 16  | **Test `forgejo-update-github-token` script** — verify sops key update works                     | 5 min  | Operational                  |
 
 ### LOWER PRIORITY (backlog)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 17 | **DNS subdomain rename** `gitea.home.lan` → `git.home.lan` (optional cleanup) | 30 min | Aesthetic |
-| 18 | **Test Forgejo federation** — verify ActivityPub endpoints work | 30 min | Future-proofing |
-| 19 | **Integrate mr-sync** as GitHub repo inventory source for Forgejo mirroring | 2h | Code reuse |
-| 20 | **Add Forgejo Actions CI** — port any Gitea Actions workflows | 1h | CI/CD |
-| 21 | **Configure Forgejo email notifications** (requires SMTP relay) | 30 min | Notifications |
-| 22 | **Set up Forgejo OAuth2 apps** — allow other services to auth via Forgejo | 30 min | SSO integration |
-| 23 | **Migrate from `gitea-actions-runner` to `forgejo-runner`** when available | 15 min | Correctness |
-| 24 | **Add Forgejo API token rotation** — auto-refresh tokens before expiry | 1h | Security |
-| 25 | **Document Forgejo admin procedures** — backup, restore, emergency procedures | 30 min | Operational readiness |
+| #   | Task                                                                          | Effort | Impact                |
+| --- | ----------------------------------------------------------------------------- | ------ | --------------------- |
+| 17  | **DNS subdomain rename** `gitea.home.lan` → `git.home.lan` (optional cleanup) | 30 min | Aesthetic             |
+| 18  | **Test Forgejo federation** — verify ActivityPub endpoints work               | 30 min | Future-proofing       |
+| 19  | **Integrate mr-sync** as GitHub repo inventory source for Forgejo mirroring   | 2h     | Code reuse            |
+| 20  | **Add Forgejo Actions CI** — port any Gitea Actions workflows                 | 1h     | CI/CD                 |
+| 21  | **Configure Forgejo email notifications** (requires SMTP relay)               | 30 min | Notifications         |
+| 22  | **Set up Forgejo OAuth2 apps** — allow other services to auth via Forgejo     | 30 min | SSO integration       |
+| 23  | **Migrate from `gitea-actions-runner` to `forgejo-runner`** when available    | 15 min | Correctness           |
+| 24  | **Add Forgejo API token rotation** — auto-refresh tokens before expiry        | 1h     | Security              |
+| 25  | **Document Forgejo admin procedures** — backup, restore, emergency procedures | 30 min | Operational readiness |
 
 ---
 
@@ -182,14 +185,14 @@ I cannot run `sops -d` without sudo (security restriction), so I cannot verify t
 
 ## Session Summary
 
-| Metric | Value |
-|--------|-------|
-| Files changed | 15 |
-| Lines added | +223 |
-| Lines removed | -264 |
-| Net change | -41 lines (cleaner — removed dead Gitea references) |
-| New files | 2 (forgejo.nix, forgejo-repos.nix) |
-| Deleted files | 2 (gitea.nix, gitea-repos.nix) |
-| Build status | `just test-fast` — all checks passed |
-| Phase 1 (code) | COMPLETE |
+| Metric         | Value                                                |
+| -------------- | ---------------------------------------------------- |
+| Files changed  | 15                                                   |
+| Lines added    | +223                                                 |
+| Lines removed  | -264                                                 |
+| Net change     | -41 lines (cleaner — removed dead Gitea references)  |
+| New files      | 2 (forgejo.nix, forgejo-repos.nix)                   |
+| Deleted files  | 2 (gitea.nix, gitea-repos.nix)                       |
+| Build status   | `just test-fast` — all checks passed                 |
+| Phase 1 (code) | COMPLETE                                             |
 | Phase 2 (data) | NOT STARTED — requires manual intervention on evo-x2 |

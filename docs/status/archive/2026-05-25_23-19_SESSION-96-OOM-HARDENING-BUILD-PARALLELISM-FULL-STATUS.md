@@ -25,19 +25,20 @@ At 20:40:48, process `compile` (PID 637607, UID 1000) invoked `oom-killer`. The 
 ### Contributing Factor
 
 The `boot.nix` comment said **"128GB unified memory"** — this was the SoC's max SKU config, not the actual 64 GiB DIMMs. This caused all VM tuning to be calibrated for double the available RAM:
+
 - `vm.dirty_ratio = 10` → comment said "~13GB" → actually ~6.4 GiB
 - ZRAM 10% → comment said "~12.8GB" → actually ~6.4 GiB
 - `swappiness = 1` → justified by "128GB makes swap unnecessary" → false at 64 GiB
 
 ### Fix Applied (This Session)
 
-| Setting | Before | After | Impact |
-|---------|--------|-------|--------|
-| `build-max-jobs` | `auto` (32) | `4` | Max 4 derivations in parallel |
-| `cores` | `0` (unlimited) | `8` | Max 8 threads per build job |
-| `vm.swappiness` | `1` | `10` | Kernel uses swap before OOM-killing |
-| Comments | "128GB unified memory" | "AMD Ryzen AI MAX+ 395 — 64 GB unified DDR5" | Factual accuracy |
-| ZRAM comment | "~12.8GB on 128GB" | "~6.4 GB on 64 GB unified DDR5" | Accurate sizing |
+| Setting          | Before                 | After                                        | Impact                              |
+| ---------------- | ---------------------- | -------------------------------------------- | ----------------------------------- |
+| `build-max-jobs` | `auto` (32)            | `4`                                          | Max 4 derivations in parallel       |
+| `cores`          | `0` (unlimited)        | `8`                                          | Max 8 threads per build job         |
+| `vm.swappiness`  | `1`                    | `10`                                         | Kernel uses swap before OOM-killing |
+| Comments         | "128GB unified memory" | "AMD Ryzen AI MAX+ 395 — 64 GB unified DDR5" | Factual accuracy                    |
+| ZRAM comment     | "~12.8GB on 128GB"     | "~6.4 GB on 64 GB unified DDR5"              | Accurate sizing                     |
 
 **Worst case now:** 4 jobs × 8 rustc = 32 parallel processes × ~2 GiB = ~64 GiB peak. With swap (16 GiB) and swappiness=10, this fits without OOM.
 
@@ -50,6 +51,7 @@ The `boot.nix` comment said **"128GB unified memory"** — this was the SoC's ma
 ## ✅ A) FULLY DONE
 
 ### Infrastructure & Core Services
+
 - [x] **NixOS build & deployment pipeline** — `just test-fast` passes, `just switch` works
 - [x] **32 service modules** registered in `serviceModules` list (flake.nix)
 - [x] **42 port assignments** in centralized `lib/ports.nix` registry
@@ -68,12 +70,14 @@ The `boot.nix` comment said **"128GB unified memory"** — this was the SoC's ma
 - [x] **Home Manager** — cross-platform (NixOS + Darwin) with shared base
 
 ### Private Go Ecosystem (Overlays)
+
 - [x] **8 Go repos fixed and pushed** (session 94) — go-output, cmdguard, go-auto-upgrade, mr-sync, go-structure-linter, BuildFlow, projects-management-automation, golangci-lint-auto-configure
 - [x] **Overlay architecture** — `overlays/default.nix` (mkPackageOverlay), `shared.nix`, `linux.nix`
 - [x] **Versioning convention** — hardcoded semver, no `self.rev`/`self.shortRev`
 - [x] **mkPreparedSource centralized** — extracted to `go-nix-helpers` repo
 
 ### Security & Hardening
+
 - [x] **systemd service hardening** — `harden {}` / `hardenUser {}` wrappers with MemoryMax/MemoryHigh
 - [x] **OOM score adjustments** — sshd (-1000), journald/dbus/logind/udevd (-500), waybar/pipewire (-500)
 - [x] **BFQ I/O scheduler** — configured for NVMe + block devices
@@ -81,6 +85,7 @@ The `boot.nix` comment said **"128GB unified memory"** — this was the SoC's ma
 - [x] **Coredump limits** — 1 GiB max, prevents AI crash dumps from filling disk
 
 ### Documentation
+
 - [x] **8 ADRs** in `docs/adr/`
 - [x] **FEATURES.md** — 50+ features catalogued with statuses
 - [x] **TODO_LIST.md** — prioritized task list (last updated session 75)
@@ -122,7 +127,7 @@ The `boot.nix` comment said **"128GB unified memory"** — this was the SoC's ma
 
 ## 💀 D) TOTALLY FUCKED UP
 
-1. **The "128GB" lie** — `boot.nix` comment claimed "128GB unified memory" for months. The Ryzen AI MAX+ 395 *supports* up to 128 GiB, but this system has **64 GiB DDR5**. Every VM tuning calculation was wrong by 2x. This directly contributed to the OOM crash by creating false confidence that swap was unnecessary.
+1. **The "128GB" lie** — `boot.nix` comment claimed "128GB unified memory" for months. The Ryzen AI MAX+ 395 _supports_ up to 128 GiB, but this system has **64 GiB DDR5**. Every VM tuning calculation was wrong by 2x. This directly contributed to the OOM crash by creating false confidence that swap was unnecessary.
 
 2. **Nix build parallelism was a loaded gun** — `max-jobs = auto` (= 32) + `cores = 0` (unlimited) on a unified memory APU with AI workloads was a disaster waiting to happen. The system survived this long only because most builds hit binary caches instead of compiling from source.
 
@@ -193,6 +198,7 @@ The `boot.nix` comment said **"128GB unified memory"** — this was the SoC's ma
 **What is the actual physical RAM configuration?**
 
 `/proc/meminfo` reports 62.4 GiB (65,465,648 kB), but the Ryzen AI MAX+ 395 supports 64 or 128 GiB. The 1.6 GiB gap (64 - 62.4) could be:
+
 - Hardware-reserved memory (BIOS/firmware)
 - GPU carve-out at boot (amdgpu VRAM reservation)
 - Memory mapped to PCIe BAR space
@@ -205,19 +211,19 @@ The TTM `pages_limit = 29360128` (112 GiB) and `vis_vram_total = 64 GiB` suggest
 
 ## System State Summary
 
-| Metric | Value |
-|--------|-------|
-| **Platform** | AMD Ryzen AI MAX+ 395 w/ Radeon 8060S |
-| **CPU** | 32 threads (16C/32T) |
-| **RAM** | 64 GiB unified DDR5 (62.4 GiB visible) |
-| **GPU VRAM** | 64 GiB (shared with CPU via GTT, 112 GiB aperture) |
-| **GPU VRAM used** | 1.56 GiB |
-| **Swap** | 16.2 GiB (6.2 GiB ZRAM + 10 GiB partition), 5.1% used |
-| **Disk /** | 304/512 GiB used (61%) |
-| **Disk /data** | 906/1024 GiB used (89%) — ⚠️ no snapshots |
-| **NixOS generation** | system-364 |
-| **Service modules** | 32 registered |
-| **Flake inputs** | 47 |
-| **Kernel** | 7.0.9 (NixOS, PREEMPT lazy) |
-| **Compositor** | Niri (Wayland) |
-| **Session** | 96 |
+| Metric               | Value                                                 |
+| -------------------- | ----------------------------------------------------- |
+| **Platform**         | AMD Ryzen AI MAX+ 395 w/ Radeon 8060S                 |
+| **CPU**              | 32 threads (16C/32T)                                  |
+| **RAM**              | 64 GiB unified DDR5 (62.4 GiB visible)                |
+| **GPU VRAM**         | 64 GiB (shared with CPU via GTT, 112 GiB aperture)    |
+| **GPU VRAM used**    | 1.56 GiB                                              |
+| **Swap**             | 16.2 GiB (6.2 GiB ZRAM + 10 GiB partition), 5.1% used |
+| **Disk /**           | 304/512 GiB used (61%)                                |
+| **Disk /data**       | 906/1024 GiB used (89%) — ⚠️ no snapshots             |
+| **NixOS generation** | system-364                                            |
+| **Service modules**  | 32 registered                                         |
+| **Flake inputs**     | 47                                                    |
+| **Kernel**           | 7.0.9 (NixOS, PREEMPT lazy)                           |
+| **Compositor**       | Niri (Wayland)                                        |
+| **Session**          | 96                                                    |

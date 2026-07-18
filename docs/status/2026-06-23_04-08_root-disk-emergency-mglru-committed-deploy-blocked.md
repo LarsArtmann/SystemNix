@@ -10,16 +10,16 @@
 
 ## ⚡ WHAT CHANGED SINCE SESSION 144
 
-| Item | Session 144 (03:25) | Session 145 (04:08) | Trend |
-|------|---------------------|---------------------|-------|
-| **Root disk free** | 13 GB (98%) | **5.8 GB (99%)** | 🔴 EMERGENCY — deploy now impossible |
-| MGLRU `min_ttl_ms` | Researched only | **Committed** (`a5376242`) | ✅ Code done |
-| go-nix-helpers flake fix | Uncommitted | **Committed** (`a8b95de8`) | ✅ |
-| Working tree | 11 modified files | **Clean** | ✅ |
-| Swap free | 68 MiB | 632 KiB | 🔴 Swap exhausted |
-| Deployed? | No | **No** | 🔴 Unchanged |
-| Failed services | 11 | 11 | 🔴 Unchanged |
-| /data BTRFS corruption | 37 csum errors | 37 csum errors | — (same boot) |
+| Item                     | Session 144 (03:25) | Session 145 (04:08)        | Trend                                |
+| ------------------------ | ------------------- | -------------------------- | ------------------------------------ |
+| **Root disk free**       | 13 GB (98%)         | **5.8 GB (99%)**           | 🔴 EMERGENCY — deploy now impossible |
+| MGLRU `min_ttl_ms`       | Researched only     | **Committed** (`a5376242`) | ✅ Code done                         |
+| go-nix-helpers flake fix | Uncommitted         | **Committed** (`a8b95de8`) | ✅                                   |
+| Working tree             | 11 modified files   | **Clean**                  | ✅                                   |
+| Swap free                | 68 MiB              | 632 KiB                    | 🔴 Swap exhausted                    |
+| Deployed?                | No                  | **No**                     | 🔴 Unchanged                         |
+| Failed services          | 11                  | 11                         | 🔴 Unchanged                         |
+| /data BTRFS corruption   | 37 csum errors      | 37 csum errors             | — (same boot)                        |
 
 ---
 
@@ -45,13 +45,13 @@ Full forensic analysis of the 2026-06-19 crash, 7-layer OOM defense architecture
 
 ### 4. All Pre-Existing Session Work (Sessions 143–144)
 
-| Commit | Description | Status |
-|--------|-------------|--------|
+| Commit     | Description                                                        | Status       |
+| ---------- | ------------------------------------------------------------------ | ------------ |
 | `5b10e09c` | OOM hardening: user-slice limits, PSI metrics, early-warning alert | ✅ Committed |
-| `f5ffd424` | AGENTS.md OOM hardening + build commands + gotchas | ✅ Committed |
-| `d71e8561` | ssh-suspend-guard (prevent idle suspend during SSH) | ✅ Committed |
-| `3f0f706d` | Disk recovery scripts, corruption assessment | ✅ Committed |
-| `5e3a71ae` | Rust-cache partition, drop disk swap, build cleanup | ✅ Committed |
+| `f5ffd424` | AGENTS.md OOM hardening + build commands + gotchas                 | ✅ Committed |
+| `d71e8561` | ssh-suspend-guard (prevent idle suspend during SSH)                | ✅ Committed |
+| `3f0f706d` | Disk recovery scripts, corruption assessment                       | ✅ Committed |
+| `5e3a71ae` | Rust-cache partition, drop disk swap, build cleanup                | ✅ Committed |
 
 ### 5. Build Validation — Passing
 
@@ -69,13 +69,13 @@ Working tree: CLEAN (0 modified, 0 untracked)
 
 **This remains the single most critical gap.** Four commits of OOM defense work exist in git but the running generation is 9 days old:
 
-| Fix | Commit | Running? |
-|-----|--------|----------|
-| user-1000.slice MemoryHigh=56G / MemoryMax=64G | `5b10e09c` | ❌ `memory.max = max` |
+| Fix                                              | Commit     | Running?                   |
+| ------------------------------------------------ | ---------- | -------------------------- |
+| user-1000.slice MemoryHigh=56G / MemoryMax=64G   | `5b10e09c` | ❌ `memory.max = max`      |
 | systemd-oomd thresholds (50%/20s, per-slice 50%) | `5b10e09c` | ❌ defaults (60%/30s, 80%) |
-| niri-health-metrics MemoryMax=1G | `5b10e09c` | ❌ |
-| PSI metrics collector + Gatus alert | `5b10e09c` | ❌ |
-| MGLRU min_ttl_ms=1000 | `a5376242` | ❌ `min_ttl_ms = 0` |
+| niri-health-metrics MemoryMax=1G                 | `5b10e09c` | ❌                         |
+| PSI metrics collector + Gatus alert              | `5b10e09c` | ❌                         |
+| MGLRU min_ttl_ms=1000                            | `a5376242` | ❌ `min_ttl_ms = 0`        |
 
 **Blocker:** Root disk at 99% (5.8 GB free). `nix run .#deploy` requires building a new generation (~5-10 GB). **Deploy is physically impossible without prior cleanup.**
 
@@ -154,33 +154,33 @@ Layer 6: sp5100-tco WDT (60s)         → DEPLOYED (hardware)
 
 Sorted by impact × urgency:
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | **FREE ROOT DISK NOW** — `nix-collect-garbage -d`, Docker prune, clear caches | 🔴 EMERGENCY | 10min | Ops |
-| 2 | **Deploy OOM + MGLRU hardening** — `nix run .#deploy` | 🔴 Critical | 10min | Deploy |
-| 3 | **Root-cause active disk consumption** — 7 GB in 40 min, what's writing? | 🔴 High | 15min | Investigate |
-| 4 | **Fix Docker startup failure** — half the homelab is dark | 🔴 High | 30min | Bug |
-| 5 | **Assess /data BTRFS corruption** — `btrfs scrub`, determine data loss | 🔴 High | 1-4h | Ops |
-| 6 | **Add automated nix.gc** — prevent recurring disk-full | 🟡 High | 10min | Config |
-| 7 | **BIOS: AC Power Recovery → Power On** — auto-recover after WDT | 🟡 High | Manual | Firmware |
-| 8 | **Fix disk-growth-check service** — `/var/lib/disk-growth` missing | 🟡 Medium | 10min | Bug |
-| 9 | **Fix btrfs-verify-snapshots** — failing at boot | 🟡 Medium | 10min | Bug |
-| 10 | **Fix oauth2-proxy** — intermittent startup failure | 🟡 Medium | 30min | Bug |
-| 11 | **Fix monitor365-server + agent** — exit-code failures | 🟡 Medium | 1h | Bug |
-| 12 | **Fix dnsblockd-cert-import** — NSS cert import fails | 🟡 Medium | 15min | Bug |
-| 13 | **Fix DiscordSync** — backup service down | 🟡 Medium | 30min | Bug |
-| 14 | **Add Docker log limits** — `log-driver=json-file` with max-size | 🟡 Medium | 10min | Config |
-| 15 | **Add disk space alerting** — Gatus endpoint for root + /data thresholds | 🟡 Medium | 20min | Config |
-| 16 | **Consolidate AI model directories** — deduplicate 828 GB | 🟡 Medium | 2h | Ops |
-| 17 | **Add SigNoz/ClickHouse TTL** — retention on all tables | 🔵 Low | 1h | Config |
-| 18 | **Reduce OLLAMA_GPU_OVERHEAD** — 8 GB → 4 GB | 🔵 Low | 5min | Config |
-| 19 | **Clean caches** — pip (6.3G), goimports (4G), etc. | 🔵 Low | 5min | Ops |
-| 20 | **PSI Grafana dashboard** — visualize pressure trends | 🔵 Low | 30min | Monitoring |
-| 21 | **Redis `vm.overcommit_memory=1`** — boot warning | 🔵 Low | 2min | Config |
-| 22 | **Redis authentication** — no password set | 🔵 Low | 15min | Security |
-| 23 | **Bluetooth `hci0: wmt func ctrl (-22)`** — every boot | 🔵 Low | 15min | Bug |
-| 24 | **docs/status/ cleanup** — archive old status reports | 🔵 Low | 15min | Hygiene |
-| 25 | **Enable DAMON_RECLAIM** — proactive cold-page reclaim (deferred) | 🔵 Low | 30min | Config |
+| #   | Task                                                                          | Impact       | Effort | Category    |
+| --- | ----------------------------------------------------------------------------- | ------------ | ------ | ----------- |
+| 1   | **FREE ROOT DISK NOW** — `nix-collect-garbage -d`, Docker prune, clear caches | 🔴 EMERGENCY | 10min  | Ops         |
+| 2   | **Deploy OOM + MGLRU hardening** — `nix run .#deploy`                         | 🔴 Critical  | 10min  | Deploy      |
+| 3   | **Root-cause active disk consumption** — 7 GB in 40 min, what's writing?      | 🔴 High      | 15min  | Investigate |
+| 4   | **Fix Docker startup failure** — half the homelab is dark                     | 🔴 High      | 30min  | Bug         |
+| 5   | **Assess /data BTRFS corruption** — `btrfs scrub`, determine data loss        | 🔴 High      | 1-4h   | Ops         |
+| 6   | **Add automated nix.gc** — prevent recurring disk-full                        | 🟡 High      | 10min  | Config      |
+| 7   | **BIOS: AC Power Recovery → Power On** — auto-recover after WDT               | 🟡 High      | Manual | Firmware    |
+| 8   | **Fix disk-growth-check service** — `/var/lib/disk-growth` missing            | 🟡 Medium    | 10min  | Bug         |
+| 9   | **Fix btrfs-verify-snapshots** — failing at boot                              | 🟡 Medium    | 10min  | Bug         |
+| 10  | **Fix oauth2-proxy** — intermittent startup failure                           | 🟡 Medium    | 30min  | Bug         |
+| 11  | **Fix monitor365-server + agent** — exit-code failures                        | 🟡 Medium    | 1h     | Bug         |
+| 12  | **Fix dnsblockd-cert-import** — NSS cert import fails                         | 🟡 Medium    | 15min  | Bug         |
+| 13  | **Fix DiscordSync** — backup service down                                     | 🟡 Medium    | 30min  | Bug         |
+| 14  | **Add Docker log limits** — `log-driver=json-file` with max-size              | 🟡 Medium    | 10min  | Config      |
+| 15  | **Add disk space alerting** — Gatus endpoint for root + /data thresholds      | 🟡 Medium    | 20min  | Config      |
+| 16  | **Consolidate AI model directories** — deduplicate 828 GB                     | 🟡 Medium    | 2h     | Ops         |
+| 17  | **Add SigNoz/ClickHouse TTL** — retention on all tables                       | 🔵 Low       | 1h     | Config      |
+| 18  | **Reduce OLLAMA_GPU_OVERHEAD** — 8 GB → 4 GB                                  | 🔵 Low       | 5min   | Config      |
+| 19  | **Clean caches** — pip (6.3G), goimports (4G), etc.                           | 🔵 Low       | 5min   | Ops         |
+| 20  | **PSI Grafana dashboard** — visualize pressure trends                         | 🔵 Low       | 30min  | Monitoring  |
+| 21  | **Redis `vm.overcommit_memory=1`** — boot warning                             | 🔵 Low       | 2min   | Config      |
+| 22  | **Redis authentication** — no password set                                    | 🔵 Low       | 15min  | Security    |
+| 23  | **Bluetooth `hci0: wmt func ctrl (-22)`** — every boot                        | 🔵 Low       | 15min  | Bug         |
+| 24  | **docs/status/ cleanup** — archive old status reports                         | 🔵 Low       | 15min  | Hygiene     |
+| 25  | **Enable DAMON_RECLAIM** — proactive cold-page reclaim (deferred)             | 🔵 Low       | 30min  | Config      |
 
 ---
 
@@ -201,18 +201,18 @@ I cannot run `sudo btrfs filesystem du` or `sudo du` to investigate (sudo is blo
 
 ## System Health Snapshot
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| RAM used | 46G / 93G (49%) | 🟢 Healthy |
-| Swap (ZRAM) | 9.4G / 9.4G (100%) | 🔴 Exhausted |
-| PSI some avg10 | 0.00% | 🟢 No pressure |
-| Root disk | 495G / 512G (99%) | 🔴 EMERGENCY — 5.8 GB free |
-| /data disk | 638G / 1.0T (63%) | 🟡 OK but corrupting |
-| Failed services | 11 | 🔴 Docker cascade |
-| BTRFS csum errors (this boot) | 37 | 🔴 Active corruption |
-| Booted generation age | 9 days | 🔴 All fixes undeployed |
-| Load average | 6.91, 11.03, 12.22 | 🟡 Moderate (18 users) |
-| Working tree | Clean | ✅ |
+| Metric                        | Value              | Status                     |
+| ----------------------------- | ------------------ | -------------------------- |
+| RAM used                      | 46G / 93G (49%)    | 🟢 Healthy                 |
+| Swap (ZRAM)                   | 9.4G / 9.4G (100%) | 🔴 Exhausted               |
+| PSI some avg10                | 0.00%              | 🟢 No pressure             |
+| Root disk                     | 495G / 512G (99%)  | 🔴 EMERGENCY — 5.8 GB free |
+| /data disk                    | 638G / 1.0T (63%)  | 🟡 OK but corrupting       |
+| Failed services               | 11                 | 🔴 Docker cascade          |
+| BTRFS csum errors (this boot) | 37                 | 🔴 Active corruption       |
+| Booted generation age         | 9 days             | 🔴 All fixes undeployed    |
+| Load average                  | 6.91, 11.03, 12.22 | 🟡 Moderate (18 users)     |
+| Working tree                  | Clean              | ✅                         |
 
 ---
 
@@ -220,14 +220,14 @@ I cannot run `sudo btrfs filesystem du` or `sudo du` to investigate (sudo is blo
 
 ### Committed This Session Chain (Sessions 143–145)
 
-| Commit | Description |
-|--------|-------------|
-| `aa89f3ad` | chore: update flake.lock and format HTML docs |
-| `381574c8` | docs(status): session 144 — OOM forensics, memory strategy |
-| `a5376242` | **feat(oom): enable MGLRU thrashing prevention (min_ttl_ms=1000)** |
-| `a8b95de8` | fix(flake): wire go-nix-helpers across Go dependency tree |
-| `3f0f706d` | disk recovery: repartitioning scripts, corruption assessment |
-| `5e3a71ae` | feat(evo-x2): rust-cache partition, drop disk swap, build cleanup |
+| Commit     | Description                                                               |
+| ---------- | ------------------------------------------------------------------------- |
+| `aa89f3ad` | chore: update flake.lock and format HTML docs                             |
+| `381574c8` | docs(status): session 144 — OOM forensics, memory strategy                |
+| `a5376242` | **feat(oom): enable MGLRU thrashing prevention (min_ttl_ms=1000)**        |
+| `a8b95de8` | fix(flake): wire go-nix-helpers across Go dependency tree                 |
+| `3f0f706d` | disk recovery: repartitioning scripts, corruption assessment              |
+| `5e3a71ae` | feat(evo-x2): rust-cache partition, drop disk swap, build cleanup         |
 | `5b10e09c` | **feat(oom): user-slice memory limits, PSI metrics, early-warning alert** |
 
 ### Working Tree

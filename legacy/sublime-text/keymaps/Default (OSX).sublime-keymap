@@ -1,30 +1,34 @@
 [
-    // File operations
-    { "keys": ["cmd+shift+n"], "command": "new_window" },
-    { "keys": ["cmd+option+n"], "command": "advanced_new_file_new" },
-    
-    // Code navigation
-    { "keys": ["cmd+r"], "command": "show_overlay", "args": {"overlay": "goto", "text": "@"} },
-    { "keys": ["cmd+shift+r"], "command": "show_overlay", "args": {"overlay": "goto", "text": "@"} },
-    
-    // Terminal integration
-    { "keys": ["cmd+shift+t"], "command": "terminus_open", "args": {"config_name": "Default"} },
-    
-    // Code formatting
-    { "keys": ["cmd+shift+f"], "command": "lsp_format_document" },
-    
-    // Git operations
-    { "keys": ["cmd+shift+g"], "command": "git_status" },
-    
-    // Sidebar toggle
-    { "keys": ["cmd+k", "cmd+b"], "command": "toggle_side_bar" },
-    
-    // Multiple cursors
-    { "keys": ["cmd+shift+l"], "command": "split_selection_into_lines" },
-    { "keys": ["cmd+d"], "command": "find_under_expand" },
-    { "keys": ["cmd+k", "cmd+d"], "command": "find_under_expand_skip" },
-    
-    // Code folding
-    { "keys": ["cmd+option+["], "command": "fold" },
-    { "keys": ["cmd+option+]"], "command": "unfold" }
+  // File operations
+  { "keys": ["cmd+shift+n"], "command": "new_window" },
+  { "keys": ["cmd+option+n"], "command": "advanced_new_file_new" },
+
+  // Code navigation
+  { "keys": ["cmd+r"], "command": "show_overlay", "args": { "overlay": "goto", "text": "@" } },
+  {
+    "keys": ["cmd+shift+r"],
+    "command": "show_overlay",
+    "args": { "overlay": "goto", "text": "@" },
+  },
+
+  // Terminal integration
+  { "keys": ["cmd+shift+t"], "command": "terminus_open", "args": { "config_name": "Default" } },
+
+  // Code formatting
+  { "keys": ["cmd+shift+f"], "command": "lsp_format_document" },
+
+  // Git operations
+  { "keys": ["cmd+shift+g"], "command": "git_status" },
+
+  // Sidebar toggle
+  { "keys": ["cmd+k", "cmd+b"], "command": "toggle_side_bar" },
+
+  // Multiple cursors
+  { "keys": ["cmd+shift+l"], "command": "split_selection_into_lines" },
+  { "keys": ["cmd+d"], "command": "find_under_expand" },
+  { "keys": ["cmd+k", "cmd+d"], "command": "find_under_expand_skip" },
+
+  // Code folding
+  { "keys": ["cmd+option+["], "command": "fold" },
+  { "keys": ["cmd+option+]"], "command": "unfold" },
 ]

@@ -20,18 +20,20 @@ blind spot I only noticed during this review.
 ## a) FULLY DONE ✅
 
 ### From Round 1 (still done, still verified)
+
 1. **Flake lock bumped** from `c448d11` → `305fb0e` (latest dnsblockd tip).
 2. **8 config keys exposed** in Round 1 (TTL, resolve timeout, restart backoff,
    rate-limit trio, proxy enable, proxy timeout).
 
 ### Round 2 fixes (this session)
+
 3. **Reverted dangerous defaults to match upstream:**
    - `proxyEnabled`: `true` → **`false`**
    - `dnsRateLimitPerSec`: `50` → **`0`** (disabled)
    - `dnsRateLimitBurst`: `100` → **`0`** (disabled)
    - Rate-limit option types: `types.ints.positive` → `types.ints.unsigned` (0 is valid = disabled)
 4. **Exposed `dns_block_response`** — was hardcoded `"zero_ip"`; now a `types.enum
-   [ "zero_ip" "nxdomain" ]` option.
+[ "zero_ip" "nxdomain" ]` option.
 5. **Exposed DoT** — `dnsTLSEnabled` (false) + `dnsTLSPort` (853), wired via `optionalAttrs`.
 6. **Exposed DoH** — `dnsDOHEnabled` (false), `dnsDOHPort` (8443), `dnsDOHPath`
    (`/dns-query`), `dnsDOHTrustedProxies` (`[]`), all wired via `optionalAttrs`.
@@ -143,6 +145,7 @@ blind spot I only noticed during this review.
 ## f) NEXT — up to 50 things to do 🔜
 
 ### Critical (fix the fuckups)
+
 1. Fix the Signoz alert metric name — grep dnsblockd telemetry code for exact
    Prometheus metric names, use `sum(rate(...)) > 0` across all three per-protocol
    counters.
@@ -152,6 +155,7 @@ blind spot I only noticed during this review.
 4. Cross-build `rpi3-dns` for aarch64 to confirm the actual target isn't broken.
 
 ### Commit & deploy
+
 5. Commit all 4 files with a clear message.
 6. Deploy to `rpi3-dns` and verify DNS still resolves.
 7. Deploy to `evo-x2` and verify no regression.
@@ -159,6 +163,7 @@ blind spot I only noticed during this review.
 9. Verify gatus health check passes after deploy.
 
 ### Remaining feature exposure (from audit section c round 1)
+
 10. Verify `extraDomains` is wired or delete the option.
 11. Verify `whitelist` is passed to runtime (not just mapping.json).
 12. Expose `tracking_mode` as an enum option (currently hardcoded METADATA_ONLY).
@@ -172,6 +177,7 @@ blind spot I only noticed during this review.
 20. Expose `otlp_endpoint`.
 
 ### Observability
+
 21. Fix/verify the Signoz crash alert metric name.
 22. Add per-protocol crash alert (separate rules for UDP/TCP, DoT, DoH).
 23. Add listener-down alert (detect protocol marked dead after restart exhaustion).
@@ -181,6 +187,7 @@ blind spot I only noticed during this review.
 27. Enrich homepage `dnsblockd` card with listener status.
 
 ### Testing & CI
+
 28. Add `nixosTests.dns-blocker` VM test (boot, query :53, hit block page).
 29. Add `nixosTests.dns-blocker-dot` (DoT query test).
 30. Add `nixosTests.dns-blocker-doh` (DoH query test).
@@ -189,6 +196,7 @@ blind spot I only noticed during this review.
 33. Add system test for temp-allow + proxy flow.
 
 ### Hardening
+
 34. Add assertion: DoT/DoH/proxy require cert secrets present.
 35. Add Go-duration validation for all `types.str` duration options.
 36. Type `dnsBlockResponse` with a dedicated sub-module (already enum, good).
@@ -198,11 +206,13 @@ blind spot I only noticed during this review.
 40. Consider exposing `dns_port` as an option (currently hardcoded 53).
 
 ### Lock hygiene
+
 41. Audit every other node changed in `flake.lock` (build each affected package).
 42. Consider pinning dnsblockd to a tag instead of `ref=master`.
 43. Add a recurring drift check for dnsblockd specifically.
 
 ### Documentation
+
 44. Update SystemNix `AGENTS.md` with new options.
 45. Add CHANGELOG entry for the new options.
 46. Reconcile dnsblockd's `AGENTS.md` "SystemNix integration" section.
@@ -210,6 +220,7 @@ blind spot I only noticed during this review.
 48. Document the `unbound.conf` positional argument requirement.
 
 ### Process
+
 49. Schedule a recurring "flake input drift" check.
 50. Decide: should these changes be a PR or direct-to-master commit?
 
@@ -219,11 +230,11 @@ blind spot I only noticed during this review.
 
 1. **Should the Signoz crash alert use `sum(rate(dnsblockd_dns_crashes_*_total[5m]))`**
    (aggregated, one alert for any protocol crash), or do you want **per-protocol
-   alerts** (separate rules for UDP/TCP, DoT, DoH so you know *which* transport
-   failed)? *(This is an operational preference — aggregated is simpler, per-protocol
-   is more diagnostic. I can't infer your alert-routing strategy.)*
+   alerts** (separate rules for UDP/TCP, DoT, DoH so you know _which_ transport
+   failed)? _(This is an operational preference — aggregated is simpler, per-protocol
+   is more diagnostic. I can't infer your alert-routing strategy.)_
 
 2. **Should I commit these 4 files now** (flake.lock + dns-blocker.nix +
    _signoz-alerts.nix + gatus-config.nix), or do you want to review the diff first
-   and/or batch this with other pending work? *(Commit timing is a workflow
-   preference — I don't know what else you have staged or if you want a PR.)*
+   and/or batch this with other pending work? _(Commit timing is a workflow
+   preference — I don't know what else you have staged or if you want a PR.)_

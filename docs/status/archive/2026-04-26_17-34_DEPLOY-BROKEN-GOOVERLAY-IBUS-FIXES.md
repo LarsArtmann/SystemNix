@@ -19,96 +19,96 @@ The project is in a **broken deploy state** — `nixos-rebuild switch` fails. Th
 
 ### Session 5 accomplishments (this session, in progress)
 
-| Item | Status | Detail |
-|------|--------|--------|
-| goOverlay removal from all 4 overlay lists | **DONE** (unstaged) | Removed from darwin, perSystem, nixos-host, rpi3-host overlay lists + let binding replaced with comment |
-| hermes-agent flake input update | **DONE** (committed `1f50bdc`) | Updated from rev `6f1eed3` → `59b56d4` to fix npmDepsHash mismatch |
-| disableTestsOverlay addition | **DONE** (committed `1f50bdc`) | Added to perSystem overlays, avoids running test suites during build |
+| Item                                       | Status                         | Detail                                                                                                  |
+| ------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------- |
+| goOverlay removal from all 4 overlay lists | **DONE** (unstaged)            | Removed from darwin, perSystem, nixos-host, rpi3-host overlay lists + let binding replaced with comment |
+| hermes-agent flake input update            | **DONE** (committed `1f50bdc`) | Updated from rev `6f1eed3` → `59b56d4` to fix npmDepsHash mismatch                                      |
+| disableTestsOverlay addition               | **DONE** (committed `1f50bdc`) | Added to perSystem overlays, avoids running test suites during build                                    |
 
 ### Prior sessions — P0 CRITICAL (6/6 done)
 
-| # | Task | Evidence |
-|---|------|----------|
-| 1 | `git push` | All commits pushed to origin |
-| 2 | `git stash clear` | `git stash list` returns empty |
-| 3 | Delete copilot branches | `git branch -r | grep copilot` returns nothing |
-| 4 | Archive redundant status docs | 242 files in `archive/`, 12 active remain |
-| 5 | Rewrite docs/status/README.md | 3 lines: current status, archive pointer, policy |
-| 6 | Fix "29 modules" → correct count | Done in prior session (`821d829`) |
+| #   | Task                             | Evidence                                         |
+| --- | -------------------------------- | ------------------------------------------------ |
+| 1   | `git push`                       | All commits pushed to origin                     |
+| 2   | `git stash clear`                | `git stash list` returns empty                   |
+| 3   | Delete copilot branches          | `git branch -r                                   | grep copilot` returns nothing |
+| 4   | Archive redundant status docs    | 242 files in `archive/`, 12 active remain        |
+| 5   | Rewrite docs/status/README.md    | 3 lines: current status, archive pointer, policy |
+| 6   | Fix "29 modules" → correct count | Done in prior session (`821d829`)                |
 
 ### P1 — SECURITY (3/7 done)
 
-| # | Task | Status |
-|---|------|--------|
-| 7 | Move Taskwarrior encryption to sops | **BLOCKED** — requires evo-x2 runtime |
-| 8 | Add systemd hardening to gitea-ensure-repos | **DONE** — hardening directives present |
-| 9 | Pin Voice Agents Docker digest | **BLOCKED** — requires evo-x2 to pull digest |
-| 10 | Pin PhotoMap Docker digest | **BLOCKED** — requires evo-x2 to pull digest |
-| 11 | Secure VRRP auth_pass with sops | **BLOCKED** — requires evo-x2 runtime |
-| 12 | Remove dead ublock-filters.nix | **DONE** — file deleted, import removed |
-| 13 | Fix gitea-ensure-repos Restart + StartLimitBurst | **DONE** — Restart=on-failure, StartLimitBurst=3 |
+| #   | Task                                             | Status                                           |
+| --- | ------------------------------------------------ | ------------------------------------------------ |
+| 7   | Move Taskwarrior encryption to sops              | **BLOCKED** — requires evo-x2 runtime            |
+| 8   | Add systemd hardening to gitea-ensure-repos      | **DONE** — hardening directives present          |
+| 9   | Pin Voice Agents Docker digest                   | **BLOCKED** — requires evo-x2 to pull digest     |
+| 10  | Pin PhotoMap Docker digest                       | **BLOCKED** — requires evo-x2 to pull digest     |
+| 11  | Secure VRRP auth_pass with sops                  | **BLOCKED** — requires evo-x2 runtime            |
+| 12  | Remove dead ublock-filters.nix                   | **DONE** — file deleted, import removed          |
+| 13  | Fix gitea-ensure-repos Restart + StartLimitBurst | **DONE** — Restart=on-failure, StartLimitBurst=3 |
 
 ### P2 — RELIABILITY (10/11 done)
 
-| # | Task | Status |
-|---|------|--------|
-| 14 | WatchdogSec for caddy, gitea, authelia, taskchampion | **DONE** |
-| 15 | Restart=on-failure for 5 services | **DONE** |
-| 16 | Fix dead let bindings | **DONE** — none found |
-| 17 | Fix core.pager vs pager.diff | **DONE** — no conflict exists |
-| 18 | Fix fonts.packages darwin compat | **DONE** — guarded with `mkIf` |
-| 19 | Enable udisks2 on NixOS | **DONE** |
-| 20 | Add .editorconfig | **NOT DONE** |
-| 21 | Make deadnix strict | **DONE** |
-| 22 | Fix pre-commit statix hook | **DONE** |
-| 23 | Add date + commit to debug-map.md | **DONE** |
-| 24 | Add homepage URL to emeet-pixyd | **DONE** |
+| #   | Task                                                 | Status                         |
+| --- | ---------------------------------------------------- | ------------------------------ |
+| 14  | WatchdogSec for caddy, gitea, authelia, taskchampion | **DONE**                       |
+| 15  | Restart=on-failure for 5 services                    | **DONE**                       |
+| 16  | Fix dead let bindings                                | **DONE** — none found          |
+| 17  | Fix core.pager vs pager.diff                         | **DONE** — no conflict exists  |
+| 18  | Fix fonts.packages darwin compat                     | **DONE** — guarded with `mkIf` |
+| 19  | Enable udisks2 on NixOS                              | **DONE**                       |
+| 20  | Add .editorconfig                                    | **NOT DONE**                   |
+| 21  | Make deadnix strict                                  | **DONE**                       |
+| 22  | Fix pre-commit statix hook                           | **DONE**                       |
+| 23  | Add date + commit to debug-map.md                    | **DONE**                       |
+| 24  | Add homepage URL to emeet-pixyd                      | **DONE**                       |
 
 ### P3 — CODE QUALITY (7/9 done)
 
-| # | Task | Status |
-|---|------|--------|
-| 25-28 | Deadnix unused params | **SUPPRESSED** via `--no-lambda-pattern-names` |
-| 29 | Duplicate git ignores | **DONE** — none found |
-| 30 | GPG path cross-platform | **DONE** |
-| 31 | Fix bash.nix history config | **NOT CHECKED** |
-| 32 | Fix Fish $GOPATH init | **NOT CHECKED** |
-| 33 | Clean unfree allowlist | **DONE** |
+| #     | Task                        | Status                                         |
+| ----- | --------------------------- | ---------------------------------------------- |
+| 25-28 | Deadnix unused params       | **SUPPRESSED** via `--no-lambda-pattern-names` |
+| 29    | Duplicate git ignores       | **DONE** — none found                          |
+| 30    | GPG path cross-platform     | **DONE**                                       |
+| 31    | Fix bash.nix history config | **NOT CHECKED**                                |
+| 32    | Fix Fish $GOPATH init       | **NOT CHECKED**                                |
+| 33    | Clean unfree allowlist      | **DONE**                                       |
 
 ### P4 — ARCHITECTURE (4/7 done)
 
-| # | Task | Status |
-|---|------|--------|
-| 34 | Create lib/systemd.nix shared helper | **DONE** — pre-existing |
-| 35 | Wire preferences.nix to GTK/Qt/cursor | **NOT DONE** |
-| 36 | Convert niri restore to module options | **NOT DONE** |
-| 37-40 | Enable toggles batches 1-4 | **DONE** — all 16 modules have `mkEnableOption` |
+| #     | Task                                   | Status                                          |
+| ----- | -------------------------------------- | ----------------------------------------------- |
+| 34    | Create lib/systemd.nix shared helper   | **DONE** — pre-existing                         |
+| 35    | Wire preferences.nix to GTK/Qt/cursor  | **NOT DONE**                                    |
+| 36    | Convert niri restore to module options | **NOT DONE**                                    |
+| 37-40 | Enable toggles batches 1-4             | **DONE** — all 16 modules have `mkEnableOption` |
 
 ### P7 — TOOLING & CI (7/10 done)
 
-| # | Task | Status |
-|---|------|--------|
-| 69-71 | GitHub Actions (nix check, go test, flake lock update) | **DONE** |
-| 72 | Fix eval smoke tests | **DONE** |
-| 73 | Consolidate duplicate justfile recipes | **DONE** |
-| 74 | Replace nixpkgs-fmt with alejandra | **DONE** |
-| 75 | Trim system monitors | **DONE** |
-| 76 | Fix LC_ALL/LANG redundancy | **NOT DONE** |
-| 77 | Remove allowUnsupportedSystem | **DONE** |
-| 78 | Taskwarrior backup timer | **DONE** |
+| #     | Task                                                   | Status       |
+| ----- | ------------------------------------------------------ | ------------ |
+| 69-71 | GitHub Actions (nix check, go test, flake lock update) | **DONE**     |
+| 72    | Fix eval smoke tests                                   | **DONE**     |
+| 73    | Consolidate duplicate justfile recipes                 | **DONE**     |
+| 74    | Replace nixpkgs-fmt with alejandra                     | **DONE**     |
+| 75    | Trim system monitors                                   | **DONE**     |
+| 76    | Fix LC_ALL/LANG redundancy                             | **NOT DONE** |
+| 77    | Remove allowUnsupportedSystem                          | **DONE**     |
+| 78    | Taskwarrior backup timer                               | **DONE**     |
 
 ### Custom Packages (8 total, all working)
 
-| Package | Status | Notes |
-|---------|--------|-------|
-| aw-watcher-utilization | OK | Python, both platforms |
-| dnsblockd | OK | Go, Linux only |
-| dnsblockd-processor | OK | Go, Linux only |
-| emeet-pixyd | OK | Go, Linux only, full daemon |
-| jscpd | OK | Node.js, both platforms |
-| modernize | OK | Go, dev tool |
-| monitor365 | OK | Rust, Linux only |
-| openaudible | OK | AppImage wrap, Linux only |
+| Package                | Status | Notes                       |
+| ---------------------- | ------ | --------------------------- |
+| aw-watcher-utilization | OK     | Python, both platforms      |
+| dnsblockd              | OK     | Go, Linux only              |
+| dnsblockd-processor    | OK     | Go, Linux only              |
+| emeet-pixyd            | OK     | Go, Linux only, full daemon |
+| jscpd                  | OK     | Node.js, both platforms     |
+| modernize              | OK     | Go, dev tool                |
+| monitor365             | OK     | Rust, Linux only            |
+| openaudible            | OK     | AppImage wrap, Linux only   |
 
 ### NixOS Service Modules (25 with enable toggles)
 
@@ -119,41 +119,41 @@ sops, authelia, caddy, gitea, gitea-repos, homepage, immich, photomap, signoz (+
 
 ## B) PARTIALLY DONE
 
-| Task | What's done | What remains |
-|------|-------------|--------------|
-| goOverlay removal | Let binding replaced with comment, all 4 overlay list references removed | **Unstaged** — needs `git add` + commit |
-| `nixos-rebuild switch` | hermes npmDepsHash fixed, goOverlay undefined var fixed, flake eval passes | ibus parallel build failure still present — needs overlay |
-| P0-4 Archive docs | 242 archived | 12 active could be reduced to 5 |
-| P3-25-28 Deadnix params | Suppressed via flag | Could clean up unused params for hygiene |
-| MASTER_TODO_PLAN | 42/96 verified done | Plan is ~60% stale, needs regeneration |
+| Task                    | What's done                                                                | What remains                                              |
+| ----------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------- |
+| goOverlay removal       | Let binding replaced with comment, all 4 overlay list references removed   | **Unstaged** — needs `git add` + commit                   |
+| `nixos-rebuild switch`  | hermes npmDepsHash fixed, goOverlay undefined var fixed, flake eval passes | ibus parallel build failure still present — needs overlay |
+| P0-4 Archive docs       | 242 archived                                                               | 12 active could be reduced to 5                           |
+| P3-25-28 Deadnix params | Suppressed via flag                                                        | Could clean up unused params for hygiene                  |
+| MASTER_TODO_PLAN        | 42/96 verified done                                                        | Plan is ~60% stale, needs regeneration                    |
 
 ---
 
 ## C) NOT STARTED (AI-actionable, sorted by effort)
 
-| # | Task | Category | Est. | Why |
-|---|------|----------|------|-----|
-| P2-20 | Add `.editorconfig` (2-space indent, UTF-8, LF) | QUALITY | 2m | No consistent editor settings |
-| P7-76 | Fix LC_ALL / LANG redundancy in home-base.nix | QUALITY | 2m | LC_ALL overrides LANG, making it dead |
-| P6-60 | Remove unused `pipecatPort = 8500` from voice-agents.nix | CLEANUP | 2m | Defined but never referenced |
-| P6-61 | Remove unused PIDFile from voice-agents.nix | CLEANUP | 3m | Points to nonexistent file |
-| P1-7 | Move Taskwarrior encryption secret to sops-nix | SECURITY | 10m | Encryption key is public in repo |
-| P3-31 | Fix bash.nix — add history config + shopt | QUALITY | 8m | Minimal config missing baseline |
-| P3-32 | Fix Fish $GOPATH init timing | QUALITY | 5m | Potential empty var at init |
-| P4-35 | Wire preferences.nix to GTK/Qt/cursor theming | ARCH | 12m | Options declared but not consumed |
-| P4-36 | Convert niri session restore `let` block to module options | ARCH | 12m | Configurable values should be options |
-| P6-54 | Verify Twenty CRM backup rotation exists | RELIABILITY | 5m | May already be done |
-| P6-57 | Add ComfyUI WatchdogSec + MemoryMax | RELIABILITY | 5m | No crash detection on GPU workloads |
-| P6-59 | Add Whisper ASR health check (ExecStartPost) | OBSERVABILITY | 8m | No health check defined |
-| P6-62 | Add Hermes health check endpoint | OBSERVABILITY | 10m | No systemd health check |
-| P6-63 | Migrate remaining Hermes providers to `key_env` | SECURITY | 10m | Some API keys inline in config.yaml |
-| P6-64 | Fix SigNoz provision duplicate rules on reboot | RELIABILITY | 10m | POST not PUT — non-idempotent |
-| P8-82 | Add module option description fields | DOCS | 10m | mkEnableOption descriptions |
-| P8-79 | Update top-level README.md | DOCS | 12m | First impression for visitors |
-| P8-80 | Document DNS cluster in AGENTS.md | DOCS | 8m | Critical infra undocumented |
-| P8-81 | Write ADR for niri session restore | DOCS | 10m | Complex system, no decision record |
-| P8-83 | Create CONTRIBUTING.md with module patterns | DOCS | 12m | AGENTS.md is AI-focused |
-| NEW | Add ibusOverlay to fix ibus parallel build | RELIABILITY | 5m | Build failure blocks deploy |
+| #     | Task                                                       | Category      | Est. | Why                                   |
+| ----- | ---------------------------------------------------------- | ------------- | ---- | ------------------------------------- |
+| P2-20 | Add `.editorconfig` (2-space indent, UTF-8, LF)            | QUALITY       | 2m   | No consistent editor settings         |
+| P7-76 | Fix LC_ALL / LANG redundancy in home-base.nix              | QUALITY       | 2m   | LC_ALL overrides LANG, making it dead |
+| P6-60 | Remove unused `pipecatPort = 8500` from voice-agents.nix   | CLEANUP       | 2m   | Defined but never referenced          |
+| P6-61 | Remove unused PIDFile from voice-agents.nix                | CLEANUP       | 3m   | Points to nonexistent file            |
+| P1-7  | Move Taskwarrior encryption secret to sops-nix             | SECURITY      | 10m  | Encryption key is public in repo      |
+| P3-31 | Fix bash.nix — add history config + shopt                  | QUALITY       | 8m   | Minimal config missing baseline       |
+| P3-32 | Fix Fish $GOPATH init timing                               | QUALITY       | 5m   | Potential empty var at init           |
+| P4-35 | Wire preferences.nix to GTK/Qt/cursor theming              | ARCH          | 12m  | Options declared but not consumed     |
+| P4-36 | Convert niri session restore `let` block to module options | ARCH          | 12m  | Configurable values should be options |
+| P6-54 | Verify Twenty CRM backup rotation exists                   | RELIABILITY   | 5m   | May already be done                   |
+| P6-57 | Add ComfyUI WatchdogSec + MemoryMax                        | RELIABILITY   | 5m   | No crash detection on GPU workloads   |
+| P6-59 | Add Whisper ASR health check (ExecStartPost)               | OBSERVABILITY | 8m   | No health check defined               |
+| P6-62 | Add Hermes health check endpoint                           | OBSERVABILITY | 10m  | No systemd health check               |
+| P6-63 | Migrate remaining Hermes providers to `key_env`            | SECURITY      | 10m  | Some API keys inline in config.yaml   |
+| P6-64 | Fix SigNoz provision duplicate rules on reboot             | RELIABILITY   | 10m  | POST not PUT — non-idempotent         |
+| P8-82 | Add module option description fields                       | DOCS          | 10m  | mkEnableOption descriptions           |
+| P8-79 | Update top-level README.md                                 | DOCS          | 12m  | First impression for visitors         |
+| P8-80 | Document DNS cluster in AGENTS.md                          | DOCS          | 8m   | Critical infra undocumented           |
+| P8-81 | Write ADR for niri session restore                         | DOCS          | 10m  | Complex system, no decision record    |
+| P8-83 | Create CONTRIBUTING.md with module patterns                | DOCS          | 12m  | AGENTS.md is AI-focused               |
+| NEW   | Add ibusOverlay to fix ibus parallel build                 | RELIABILITY   | 5m   | Build failure blocks deploy           |
 
 ---
 
@@ -163,11 +163,11 @@ sops, authelia, caddy, gitea, gitea-repos, homepage, immich, photomap, signoz (+
 
 **Status**: 3 errors encountered, 2 fixed, 1 remains
 
-| # | Error | Cause | Status |
-|---|-------|-------|--------|
-| 1 | `hermes-tui-0.0.1 npmDepsHash mismatch` | Upstream hermes-agent had stale hash | **FIXED** — flake input updated to rev `59b56d4` |
-| 2 | `undefined variable 'goOverlay'` at flake.nix:437 | goOverlay let-binding removed but darwin overlay list still referenced it | **FIXED** (unstaged) — removed from all 4 overlay lists |
-| 3 | `ibus-1.5.33` build failure: `install: cannot create regular file '...IBus.py': File exists` | nixpkgs ibus packaging bug — parallel make installs IBus.py in both install-data and install-exec | **NOT FIXED** — needs `ibusOverlay` with `enableParallelBuilding = false` |
+| #   | Error                                                                                        | Cause                                                                                             | Status                                                                    |
+| --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1   | `hermes-tui-0.0.1 npmDepsHash mismatch`                                                      | Upstream hermes-agent had stale hash                                                              | **FIXED** — flake input updated to rev `59b56d4`                          |
+| 2   | `undefined variable 'goOverlay'` at flake.nix:437                                            | goOverlay let-binding removed but darwin overlay list still referenced it                         | **FIXED** (unstaged) — removed from all 4 overlay lists                   |
+| 3   | `ibus-1.5.33` build failure: `install: cannot create regular file '...IBus.py': File exists` | nixpkgs ibus packaging bug — parallel make installs IBus.py in both install-data and install-exec | **NOT FIXED** — needs `ibusOverlay` with `enableParallelBuilding = false` |
 
 **Impact**: Cannot deploy ANY pending changes. All module toggles, hardening improvements, and new features are code-only — not running on the actual machine.
 
@@ -230,33 +230,33 @@ Each session re-verifies ~20 already-done tasks. This report is the fix — next
 
 Sorted by: deploy-unblock → security → effort → impact.
 
-| Rank | Task | Est. | Impact | Category |
-|------|------|------|--------|----------|
-| 1 | **Add ibusOverlay** to fix ibus parallel build failure | 5m | CRITICAL | Blocks ALL deploys |
-| 2 | **Stage + commit** goOverlay removal + ibusOverlay | 2m | CRITICAL | Uncommitted work can vanish |
-| 3 | **`nixos-rebuild switch`** on evo-x2 | 45m | CRITICAL | All module changes need deployment |
-| 4 | **Verify services** after rebuild: ollama, steam, caddy, hermes, waybar, niri | 15m | HIGH | 8+ unverified services |
-| 5 | **P1-7**: Move Taskwarrior encryption to sops-nix | 10m | HIGH | Encryption key is public in repo |
-| 6 | **P1-9/10**: Pin Docker image digests (Voice Agents + PhotoMap) | 10m | HIGH | Silent breakage on redeploy |
-| 7 | **P1-11**: Secure VRRP auth_pass with sops | 8m | HIGH | Plaintext secret in repo |
-| 8 | **P2-20**: Add `.editorconfig` | 2m | MEDIUM | Consistency for contributors |
-| 9 | **P7-76**: Fix LC_ALL/LANG redundancy | 2m | LOW | Dead code removal |
-| 10 | **P6-60**: Remove unused `pipecatPort` | 2m | LOW | Dead code |
-| 11 | **P6-61**: Remove unused PIDFile | 3m | LOW | Misleading config |
-| 12 | **P3-31**: Fix bash.nix history + shopt | 8m | MEDIUM | Baseline shell config |
-| 13 | **P3-32**: Fix Fish $GOPATH init timing | 5m | MEDIUM | Potential runtime error |
-| 14 | **P4-35**: Wire preferences.nix to GTK/cursor theming | 12m | HIGH | Theme system incomplete |
-| 15 | **P4-36**: Convert niri restore to module options | 12m | HIGH | Config values should be options |
-| 16 | **P6-57**: ComfyUI WatchdogSec + MemoryMax | 5m | MEDIUM | No limits on GPU workloads |
-| 17 | **P6-62**: Add Hermes health check | 10m | MEDIUM | No crash detection |
-| 18 | **Migrate services to shared harden helper** | 15m | MEDIUM | DRY — 4 services inline |
-| 19 | **Regenerate MASTER_TODO_PLAN** from current code state | 15m | MEDIUM | Current plan ~60% stale |
-| 20 | **P5-50-53**: Pi 3 DNS cluster build + test | 60m | HIGH | Entire DNS failover untested |
-| 21 | **P8-79**: Update top-level README.md | 12m | MEDIUM | First impression |
-| 22 | **P8-80**: Document DNS cluster in AGENTS.md | 8m | MEDIUM | Critical infra undocumented |
-| 23 | **P6-64**: Fix SigNoz provision duplicate rules | 10m | MEDIUM | Non-idempotent on reboot |
-| 24 | **Nix store GC**: reclaim space from invalidated cache paths | 10m | MEDIUM | Root disk at 93% |
-| 25 | **P9-96**: File nixpkgs issue for hipblaslt Tensile | 10m | LOW | Upstream responsibility |
+| Rank | Task                                                                          | Est. | Impact   | Category                           |
+| ---- | ----------------------------------------------------------------------------- | ---- | -------- | ---------------------------------- |
+| 1    | **Add ibusOverlay** to fix ibus parallel build failure                        | 5m   | CRITICAL | Blocks ALL deploys                 |
+| 2    | **Stage + commit** goOverlay removal + ibusOverlay                            | 2m   | CRITICAL | Uncommitted work can vanish        |
+| 3    | **`nixos-rebuild switch`** on evo-x2                                          | 45m  | CRITICAL | All module changes need deployment |
+| 4    | **Verify services** after rebuild: ollama, steam, caddy, hermes, waybar, niri | 15m  | HIGH     | 8+ unverified services             |
+| 5    | **P1-7**: Move Taskwarrior encryption to sops-nix                             | 10m  | HIGH     | Encryption key is public in repo   |
+| 6    | **P1-9/10**: Pin Docker image digests (Voice Agents + PhotoMap)               | 10m  | HIGH     | Silent breakage on redeploy        |
+| 7    | **P1-11**: Secure VRRP auth_pass with sops                                    | 8m   | HIGH     | Plaintext secret in repo           |
+| 8    | **P2-20**: Add `.editorconfig`                                                | 2m   | MEDIUM   | Consistency for contributors       |
+| 9    | **P7-76**: Fix LC_ALL/LANG redundancy                                         | 2m   | LOW      | Dead code removal                  |
+| 10   | **P6-60**: Remove unused `pipecatPort`                                        | 2m   | LOW      | Dead code                          |
+| 11   | **P6-61**: Remove unused PIDFile                                              | 3m   | LOW      | Misleading config                  |
+| 12   | **P3-31**: Fix bash.nix history + shopt                                       | 8m   | MEDIUM   | Baseline shell config              |
+| 13   | **P3-32**: Fix Fish $GOPATH init timing                                       | 5m   | MEDIUM   | Potential runtime error            |
+| 14   | **P4-35**: Wire preferences.nix to GTK/cursor theming                         | 12m  | HIGH     | Theme system incomplete            |
+| 15   | **P4-36**: Convert niri restore to module options                             | 12m  | HIGH     | Config values should be options    |
+| 16   | **P6-57**: ComfyUI WatchdogSec + MemoryMax                                    | 5m   | MEDIUM   | No limits on GPU workloads         |
+| 17   | **P6-62**: Add Hermes health check                                            | 10m  | MEDIUM   | No crash detection                 |
+| 18   | **Migrate services to shared harden helper**                                  | 15m  | MEDIUM   | DRY — 4 services inline            |
+| 19   | **Regenerate MASTER_TODO_PLAN** from current code state                       | 15m  | MEDIUM   | Current plan ~60% stale            |
+| 20   | **P5-50-53**: Pi 3 DNS cluster build + test                                   | 60m  | HIGH     | Entire DNS failover untested       |
+| 21   | **P8-79**: Update top-level README.md                                         | 12m  | MEDIUM   | First impression                   |
+| 22   | **P8-80**: Document DNS cluster in AGENTS.md                                  | 8m   | MEDIUM   | Critical infra undocumented        |
+| 23   | **P6-64**: Fix SigNoz provision duplicate rules                               | 10m  | MEDIUM   | Non-idempotent on reboot           |
+| 24   | **Nix store GC**: reclaim space from invalidated cache paths                  | 10m  | MEDIUM   | Root disk at 93%                   |
+| 25   | **P9-96**: File nixpkgs issue for hipblaslt Tensile                           | 10m  | LOW      | Upstream responsibility            |
 
 ---
 
@@ -272,36 +272,36 @@ Context: The ibus failure is `install: cannot create regular file '...IBus.py': 
 
 ## Build Error History (this session)
 
-| Attempt | Error | Root Cause | Fix | Status |
-|---------|-------|------------|-----|--------|
-| 1 | `hermes-tui-0.0.1 npmDepsHash mismatch` | Upstream hermes-agent had stale npmDepsHash | `nix flake lock --update-input hermes-agent` | Committed in `1f50bdc` |
-| 2 | `ibus-1.5.33 install: IBus.py File exists` | nixpkgs ibus packaging bug — parallel make race | Need ibusOverlay with `enableParallelBuilding = false` | Pending |
-| 3 | `undefined variable 'goOverlay'` at flake.nix:437 | goOverlay removed from `let` but still in 4 overlay lists | Removed from all 4 lists + replaced binding with comment | Unstaged |
+| Attempt | Error                                             | Root Cause                                                | Fix                                                      | Status                 |
+| ------- | ------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------- | ---------------------- |
+| 1       | `hermes-tui-0.0.1 npmDepsHash mismatch`           | Upstream hermes-agent had stale npmDepsHash               | `nix flake lock --update-input hermes-agent`             | Committed in `1f50bdc` |
+| 2       | `ibus-1.5.33 install: IBus.py File exists`        | nixpkgs ibus packaging bug — parallel make race           | Need ibusOverlay with `enableParallelBuilding = false`   | Pending                |
+| 3       | `undefined variable 'goOverlay'` at flake.nix:437 | goOverlay removed from `let` but still in 4 overlay lists | Removed from all 4 lists + replaced binding with comment | Unstaged               |
 
 ---
 
 ## System Resources
 
-| Metric | Value |
-|--------|-------|
-| Root disk | 512G total, 469G used, 39G free (**93%**) |
-| /data disk | 800G total, 627G used, 175G free (79%) |
-| RAM | 62G total, 17G used, 45G available |
-| Swap | 41G total, 8.4G used |
-| Load | 5.06, 7.47, 18.05 (recovering from build load) |
-| Uptime | 3 days 10 hours |
+| Metric     | Value                                          |
+| ---------- | ---------------------------------------------- |
+| Root disk  | 512G total, 469G used, 39G free (**93%**)      |
+| /data disk | 800G total, 627G used, 175G free (79%)         |
+| RAM        | 62G total, 17G used, 45G available             |
+| Swap       | 41G total, 8.4G used                           |
+| Load       | 5.06, 7.47, 18.05 (recovering from build load) |
+| Uptime     | 3 days 10 hours                                |
 
 ---
 
 ## Session Stats
 
-| Metric | Value |
-|--------|-------|
-| Commits this session | 1 (`1f50bdc`) |
-| Unstaged changes | flake.nix (goOverlay removal from 4 overlay lists) |
-| Build errors fixed | 2 of 3 (hermes npmDepsHash, goOverlay undefined) |
-| Build errors remaining | 1 (ibus parallel build) |
-| Flake evaluation | PASSES (`nix flake check --no-build` OK) |
-| Full build | NOT TESTED (blocked by ibus) |
-| Tasks verified DONE (all sessions) | 42 of 96 (44%) |
-| Tasks BLOCKED on deploy | 4 (P1-7, P1-9, P1-10, P1-11) + all P5 verify tasks |
+| Metric                             | Value                                              |
+| ---------------------------------- | -------------------------------------------------- |
+| Commits this session               | 1 (`1f50bdc`)                                      |
+| Unstaged changes                   | flake.nix (goOverlay removal from 4 overlay lists) |
+| Build errors fixed                 | 2 of 3 (hermes npmDepsHash, goOverlay undefined)   |
+| Build errors remaining             | 1 (ibus parallel build)                            |
+| Flake evaluation                   | PASSES (`nix flake check --no-build` OK)           |
+| Full build                         | NOT TESTED (blocked by ibus)                       |
+| Tasks verified DONE (all sessions) | 42 of 96 (44%)                                     |
+| Tasks BLOCKED on deploy            | 4 (P1-7, P1-9, P1-10, P1-11) + all P5 verify tasks |

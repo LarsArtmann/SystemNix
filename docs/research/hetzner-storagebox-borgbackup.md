@@ -18,6 +18,7 @@ evo-x2 has local BTRFS snapshots via `btrbk` (`platforms/nixos/system/snapshots.
 Hetzner Storage Box is **ZFS-based** (snapshots live in `/.zfs/snapshot/`). It exposes file-level protocols (SFTP/SSH/rsync/BorgBackup) — not block-level access. You cannot run `btrfs receive` on it.
 
 **Workaround:** `btrfs send | age > stream.btrfs.age` + `rsync` to Storage Box. Possible but:
+
 - Manual incremental chain management
 - Large stream files with no remote dedup
 - Cannot restore directly on Storage Box (need a BTRFS system)
@@ -39,27 +40,29 @@ Borg is **always incremental, forever:**
 5. Creates a new snapshot pointing to the deduplicated chunk tree
 
 **Practical example:**
+
 - Day 1 full: ~50 GB uploaded
 - Day 2 after `just switch`: ~200 MB (changed Nix store paths)
 - Day 3: ~50 MB
 - A week of daily backups: ~52 GB total (not 50×7 = 350 GB)
 
-`prune` removes old snapshot *metadata* — shared chunks stay until no snapshot references them.
+`prune` removes old snapshot _metadata_ — shared chunks stay until no snapshot references them.
 
 ### Encryption
 
 Borg encrypts **before** upload. The chunk ID (used for dedup) is based on the **plaintext hash** — identical chunks always deduplicate regardless of encryption.
 
-| Mode | Key location | Trade-off |
-|------|-------------|-----------|
-| `repokey-blake2` | In repo (encrypted with passphrase) | Only need passphrase to restore; BLAKE2b faster than SHA-256 |
-| `repokey` | Same, uses SHA-256 | Standard |
-| `keyfile` | Local file only (not in repo) | Most secure — attacker needs keyfile + repo. Must back up keyfile separately |
-| `none` | — | Don't use |
+| Mode             | Key location                        | Trade-off                                                                    |
+| ---------------- | ----------------------------------- | ---------------------------------------------------------------------------- |
+| `repokey-blake2` | In repo (encrypted with passphrase) | Only need passphrase to restore; BLAKE2b faster than SHA-256                 |
+| `repokey`        | Same, uses SHA-256                  | Standard                                                                     |
+| `keyfile`        | Local file only (not in repo)       | Most secure — attacker needs keyfile + repo. Must back up keyfile separately |
+| `none`           | —                                   | Don't use                                                                    |
 
 **Recommended:** `repokey-blake2` — passphrase stored in sops-nix (already encrypted by SSH host key via age).
 
 **What gets encrypted:**
+
 - All file content (AES-256-CTR)
 - All metadata (filenames, paths, timestamps, permissions, symlinks)
 - Chunk manifest
@@ -68,10 +71,10 @@ Someone with Storage Box access sees only opaque encrypted blobs — no filename
 
 **Encryption is NOT based on SSH keys.** Borg uses its own AES-256 key + passphrase. The two layers are separate:
 
-| Layer | Purpose | Mechanism |
-|-------|---------|-----------|
-| SSH key | Authenticates to Storage Box | `~/.ssh/` |
-| Borg passphrase | Encrypts backup content | sops-nix → `/run/secrets/borg-password` |
+| Layer           | Purpose                      | Mechanism                               |
+| --------------- | ---------------------------- | --------------------------------------- |
+| SSH key         | Authenticates to Storage Box | `~/.ssh/`                               |
+| Borg passphrase | Encrypts backup content      | sops-nix → `/run/secrets/borg-password` |
 
 The chain: `SSH host key → decrypts sops secret → reveals Borg passphrase → decrypts backup data`
 
@@ -79,19 +82,20 @@ This separation is better than using SSH keys directly — you can rotate either
 
 ### Borg vs Restic
 
-| | **BorgBackup** | **Restic** |
-|---|---|---|
-| Hetzner support | Explicitly listed in docs, port 23 | Works over SFTP (standard) |
-| NixOS module | `services.borgbackup.jobs` | `services.restic.backups` |
-| Deduplication | Fixed 2 MiB chunks | Variable ~1 MiB chunks |
-| Compression | zstd (excellent), lz4, zlib | None (relies on backend) |
-| Encryption | AES-256-CTR + HMAC-SHA256 | AES-256-GCM + scrypt KDF |
-| Memory use | Higher (~1GB+ for large repos) | Lower (~300-500 MB) |
-| Pruning | Slower (rewrites segments) | Fast (cheap snapshot deletion) |
-| Remote mount | No native mount | `restic mount` — browse live via FUSE |
-| Restore | `borg extract` (files or full) | `restic restore` or `restic mount` |
+|                 | **BorgBackup**                     | **Restic**                            |
+| --------------- | ---------------------------------- | ------------------------------------- |
+| Hetzner support | Explicitly listed in docs, port 23 | Works over SFTP (standard)            |
+| NixOS module    | `services.borgbackup.jobs`         | `services.restic.backups`             |
+| Deduplication   | Fixed 2 MiB chunks                 | Variable ~1 MiB chunks                |
+| Compression     | zstd (excellent), lz4, zlib        | None (relies on backend)              |
+| Encryption      | AES-256-CTR + HMAC-SHA256          | AES-256-GCM + scrypt KDF              |
+| Memory use      | Higher (~1GB+ for large repos)     | Lower (~300-500 MB)                   |
+| Pruning         | Slower (rewrites segments)         | Fast (cheap snapshot deletion)        |
+| Remote mount    | No native mount                    | `restic mount` — browse live via FUSE |
+| Restore         | `borg extract` (files or full)     | `restic restore` or `restic mount`    |
 
 **Why Borg for this setup:**
+
 - Compression matters over 1 Gbit/s link (BTRFS data is already zstd, but snapshot churn has redundancy)
 - Hetzner lists it as a first-class supported protocol
 - evo-x2 has 128 GB RAM — memory is irrelevant

@@ -25,31 +25,31 @@ Three work phases over a single day:
 
 ### Session 78 Execution (10 commits)
 
-| Commit | Description | Impact |
-|--------|-------------|--------|
+| Commit     | Description                                                           | Impact          |
+| ---------- | --------------------------------------------------------------------- | --------------- |
 | `bccf73c5` | Pin Docker image tags: twenty→v2.7.3, manifest→6.6.1, openseo→v0.0.15 | Reproducibility |
-| `bd14e13b` | Add forward-auth to `tasks.${domain}` via `protectedVHost` | Security |
-| `8801c2d7` | Add swap-critical alert rule (>80%) to SigNoz | Monitoring |
-| `b0f858e7` | Create `lib/ports.nix` — centralized port registry (26 ports) | Architecture |
-| `c027aa31` | Consolidate `HSA_OVERRIDE_GFX_VERSION` via `lib/rocm.nix` | DRY |
-| `bc98e09f` | Fix manifest CORS_ORIGIN + remove gpu-recovery dead code | Bug fix |
-| `7c1dd5a2` | Add `dockerImageTag` type that rejects `"latest"` at eval time | Type safety |
-| `3d1fbc93` | Add Gatus health checks for Hermes + EMEET PIXY | Monitoring |
-| `4824008b` | Consolidate voice-agents Caddy vhosts with TLS + forward-auth | Security |
-| `00137dcf` | Update AGENTS.md with new patterns | Documentation |
+| `bd14e13b` | Add forward-auth to `tasks.${domain}` via `protectedVHost`            | Security        |
+| `8801c2d7` | Add swap-critical alert rule (>80%) to SigNoz                         | Monitoring      |
+| `b0f858e7` | Create `lib/ports.nix` — centralized port registry (26 ports)         | Architecture    |
+| `c027aa31` | Consolidate `HSA_OVERRIDE_GFX_VERSION` via `lib/rocm.nix`             | DRY             |
+| `bc98e09f` | Fix manifest CORS_ORIGIN + remove gpu-recovery dead code              | Bug fix         |
+| `7c1dd5a2` | Add `dockerImageTag` type that rejects `"latest"` at eval time        | Type safety     |
+| `3d1fbc93` | Add Gatus health checks for Hermes + EMEET PIXY                       | Monitoring      |
+| `4824008b` | Consolidate voice-agents Caddy vhosts with TLS + forward-auth         | Security        |
+| `00137dcf` | Update AGENTS.md with new patterns                                    | Documentation   |
 
 ### Sessions 76–77 (8 commits)
 
-| Commit | Description | Impact |
-|--------|-------------|--------|
-| `6f0be6ca` | Blacklist serial8250 — eliminates 1m31s initrd timeout | Boot perf |
-| `f757cc0b` | Add gopls to earlyoom `--prefer` list | OOM targeting |
+| Commit     | Description                                                      | Impact                  |
+| ---------- | ---------------------------------------------------------------- | ----------------------- |
+| `6f0be6ca` | Blacklist serial8250 — eliminates 1m31s initrd timeout           | Boot perf               |
+| `f757cc0b` | Add gopls to earlyoom `--prefer` list                            | OOM targeting           |
 | `9f6c418b` | Flake lock mass update (25+ inputs) + earlyoom/watchdog rewrites | Deps + crash prevention |
-| `08c267ce` | display-watchdog: `systemctl --user -M` for niri restart | Fix system→user context |
-| `b6ce680f` | display-watchdog: pass PRIMARY_USER env var | Fix system→user context |
-| `c67277f3` | ZRAM swap 5%→10% (6.4→12.8 GiB) | Swap headroom |
-| `87109b85` | Homepage Docker memory constraints (V8 heap 192M + cgroup 384M) | Prevent node OOM |
-| `e2a88535` | BuildFlow vendorHash fix for updated deps | Build fix |
+| `08c267ce` | display-watchdog: `systemctl --user -M` for niri restart         | Fix system→user context |
+| `b6ce680f` | display-watchdog: pass PRIMARY_USER env var                      | Fix system→user context |
+| `c67277f3` | ZRAM swap 5%→10% (6.4→12.8 GiB)                                  | Swap headroom           |
+| `87109b85` | Homepage Docker memory constraints (V8 heap 192M + cgroup 384M)  | Prevent node OOM        |
+| `e2a88535` | BuildFlow vendorHash fix for updated deps                        | Build fix               |
 
 ### Session 79 — Jan Autostart Fix (undeployed)
 
@@ -202,14 +202,14 @@ FEATURES.md claims ZRAM is "50% of RAM (64GB)" — actual is 10% (~12.8 GB). 4 r
 
 ### 10. Service Hardening Inconsistencies
 
-| Service | Weakened Setting | Reason |
-|---------|-----------------|--------|
-| Hermes | `MemoryMax = "24G"`, `ProtectHome = false` | Filesystem access |
-| Voice Agents | `RestrictNamespaces = false`, `NoNewPrivileges = false` | Docker integration |
-| OpenSEO | `ProtectHome = false`, `NoNewPrivileges = false` | Unknown |
-| Immich (server+ML) | `ProtectHome = false`, `ProtectSystem = false` | Data access |
-| AI Stack (Ollama) | `ProtectHome = false`, `NoNewPrivileges = false` | GPU access |
-| Forgejo | `NoNewPrivileges = false` | Git operations |
+| Service            | Weakened Setting                                        | Reason             |
+| ------------------ | ------------------------------------------------------- | ------------------ |
+| Hermes             | `MemoryMax = "24G"`, `ProtectHome = false`              | Filesystem access  |
+| Voice Agents       | `RestrictNamespaces = false`, `NoNewPrivileges = false` | Docker integration |
+| OpenSEO            | `ProtectHome = false`, `NoNewPrivileges = false`        | Unknown            |
+| Immich (server+ML) | `ProtectHome = false`, `ProtectSystem = false`          | Data access        |
+| AI Stack (Ollama)  | `ProtectHome = false`, `NoNewPrivileges = false`        | GPU access         |
+| Forgejo            | `NoNewPrivileges = false`                               | Git operations     |
 
 ---
 
@@ -259,33 +259,33 @@ FEATURES.md claims ZRAM is "50% of RAM (64GB)" — actual is 10% (~12.8 GB). 4 r
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Priority | Task | Est. | Impact |
-|---|----------|------|------|--------|
-| 1 | **P0** | `just switch` + reboot — deploy ALL 19+ undeployed commits | 30m | Prevents repeat crash |
-| 2 | **P0** | Verify watchdog rewrites work after deploy | 10m | Confirms crash fix |
-| 3 | **P0** | Verify ZRAM increased to 10% after reboot | 2m | Confirms swap headroom |
-| 4 | **P0** | Verify Jan no longer auto-starts after reboot | 2m | Confirms skip_apps |
-| 5 | **P0** | Add `GOMEMLIMIT=1GiB` to gopls via Nix config | 15m | Caps gopls memory |
-| 6 | **P0** | Fix `nix fmt` / shfmt script damage — exclude `.sh` or fix config | 15m | Prevents silent breakage |
-| 7 | **P0** | Investigate service-health-check failures (every 15 min) | 20m | Stops alert spam |
-| 8 | **P1** | Configure secondary LLM provider for Hermes | 30m | Hermes resilience |
-| 9 | **P1** | Verify Hermes firecrawl/edge-tts/fal/exa at runtime | 15m | Confirms extras work |
-| 10 | **P1** | Hermes git remote access (SSH deploy key) | 30m | Repo access |
-| 11 | **P1** | Resolve port 3001 conflict (monitor365 vs openseo) | 10m | Prevents bind failure |
-| 12 | **P1** | Docker MemoryMax for SigNoz/Twenty (not just Homepage) | 20m | Prevents memory runaway |
-| 13 | **P1** | Investigate OpenSEO auth — can `local_auth` work? | 20m | Security |
-| 14 | **P1** | Move Forgejo admin password to sops | 15m | Security |
-| 15 | **P1** | Consolidate watchdog state management into shared lib | 45m | DRY, fewer bugs |
-| 16 | **P1** | Add memory/swap alerting to Gatus (80% mem, 50% swap) | 30m | Early warning |
-| 17 | **P2** | Fix FEATURES.md — ZRAM, boot time, phantom scripts | 15m | Doc accuracy |
-| 18 | **P2** | Update TODO_LIST.md with current state | 15m | Doc accuracy |
-| 19 | **P2** | Check SigNoz provision logs — verify dashboards/rules | 30m | Observability |
-| 20 | **P2** | Test Discord alert channel | 10m | Alerting verification |
-| 21 | **P2** | Deploy Dozzle at `logs.home.lan` | 45m | Real-time Docker logs |
-| 22 | **P3** | Flake inputs audit — 47 inputs, find stale | 2h | Dependency hygiene |
-| 23 | **P3** | Provision Pi 3 for DNS failover cluster | 4h | DNS resilience |
-| 24 | **P3** | Investigate boot time: 1m44s initrd (post-serial8250) | 60m | Faster reboots |
-| 25 | **P4** | Darwin config parity check | 2h | Cross-platform health |
+| #   | Priority | Task                                                              | Est. | Impact                   |
+| --- | -------- | ----------------------------------------------------------------- | ---- | ------------------------ |
+| 1   | **P0**   | `just switch` + reboot — deploy ALL 19+ undeployed commits        | 30m  | Prevents repeat crash    |
+| 2   | **P0**   | Verify watchdog rewrites work after deploy                        | 10m  | Confirms crash fix       |
+| 3   | **P0**   | Verify ZRAM increased to 10% after reboot                         | 2m   | Confirms swap headroom   |
+| 4   | **P0**   | Verify Jan no longer auto-starts after reboot                     | 2m   | Confirms skip_apps       |
+| 5   | **P0**   | Add `GOMEMLIMIT=1GiB` to gopls via Nix config                     | 15m  | Caps gopls memory        |
+| 6   | **P0**   | Fix `nix fmt` / shfmt script damage — exclude `.sh` or fix config | 15m  | Prevents silent breakage |
+| 7   | **P0**   | Investigate service-health-check failures (every 15 min)          | 20m  | Stops alert spam         |
+| 8   | **P1**   | Configure secondary LLM provider for Hermes                       | 30m  | Hermes resilience        |
+| 9   | **P1**   | Verify Hermes firecrawl/edge-tts/fal/exa at runtime               | 15m  | Confirms extras work     |
+| 10  | **P1**   | Hermes git remote access (SSH deploy key)                         | 30m  | Repo access              |
+| 11  | **P1**   | Resolve port 3001 conflict (monitor365 vs openseo)                | 10m  | Prevents bind failure    |
+| 12  | **P1**   | Docker MemoryMax for SigNoz/Twenty (not just Homepage)            | 20m  | Prevents memory runaway  |
+| 13  | **P1**   | Investigate OpenSEO auth — can `local_auth` work?                 | 20m  | Security                 |
+| 14  | **P1**   | Move Forgejo admin password to sops                               | 15m  | Security                 |
+| 15  | **P1**   | Consolidate watchdog state management into shared lib             | 45m  | DRY, fewer bugs          |
+| 16  | **P1**   | Add memory/swap alerting to Gatus (80% mem, 50% swap)             | 30m  | Early warning            |
+| 17  | **P2**   | Fix FEATURES.md — ZRAM, boot time, phantom scripts                | 15m  | Doc accuracy             |
+| 18  | **P2**   | Update TODO_LIST.md with current state                            | 15m  | Doc accuracy             |
+| 19  | **P2**   | Check SigNoz provision logs — verify dashboards/rules             | 30m  | Observability            |
+| 20  | **P2**   | Test Discord alert channel                                        | 10m  | Alerting verification    |
+| 21  | **P2**   | Deploy Dozzle at `logs.home.lan`                                  | 45m  | Real-time Docker logs    |
+| 22  | **P3**   | Flake inputs audit — 47 inputs, find stale                        | 2h   | Dependency hygiene       |
+| 23  | **P3**   | Provision Pi 3 for DNS failover cluster                           | 4h   | DNS resilience           |
+| 24  | **P3**   | Investigate boot time: 1m44s initrd (post-serial8250)             | 60m  | Faster reboots           |
+| 25  | **P4**   | Darwin config parity check                                        | 2h   | Cross-platform health    |
 
 ---
 
@@ -301,68 +301,68 @@ Additionally: `llama-server` (1 GiB, GPU-loaded from Jan) is still running from 
 
 ## System Vital Signs (Pre-Deploy)
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Branch** | master, up to date with origin | ✅ |
-| **Build** | `just test-fast` passes, zero warnings | ✅ |
-| **Undeployed commits** | 19+ (Sessions 76–79) | ⚠️ |
-| **.nix files** | 112 | — |
-| **Service modules** | 33 registered in flake.nix | — |
-| **Flake inputs** | 47 | — |
-| **SigNoz alert rules** | 17 (swap-critical added) | ✅ |
-| **Gatus endpoints** | 26 (Hermes + EMEET PIXY added) | ✅ |
-| **Docker tags pinned** | 3/3 (twenty, manifest, openseo) | ✅ |
-| **Port registry** | 26 ports, 1 conflict documented | ⚠️ |
-| **Security debt** | OpenSEO no auth, Forgejo plaintext, Authelia hardcoded | 🔴 |
+| Metric                 | Value                                                  | Status |
+| ---------------------- | ------------------------------------------------------ | ------ |
+| **Branch**             | master, up to date with origin                         | ✅     |
+| **Build**              | `just test-fast` passes, zero warnings                 | ✅     |
+| **Undeployed commits** | 19+ (Sessions 76–79)                                   | ⚠️     |
+| **.nix files**         | 112                                                    | —      |
+| **Service modules**    | 33 registered in flake.nix                             | —      |
+| **Flake inputs**       | 47                                                     | —      |
+| **SigNoz alert rules** | 17 (swap-critical added)                               | ✅     |
+| **Gatus endpoints**    | 26 (Hermes + EMEET PIXY added)                         | ✅     |
+| **Docker tags pinned** | 3/3 (twenty, manifest, openseo)                        | ✅     |
+| **Port registry**      | 26 ports, 1 conflict documented                        | ⚠️     |
+| **Security debt**      | OpenSEO no auth, Forgejo plaintext, Authelia hardcoded | 🔴     |
 
 ### Live Metrics (Session 79, 12:36)
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Uptime** | 6h 56m | 🟢 Stable |
-| **RAM** | 43/62 GiB (69%) | 🟡 Normal |
-| **Swap** | 9.4/13 GiB (72%) | 🟡 High |
-| **Disk** | 416/512 GiB (84%) | 🟡 Trending up |
-| **Load** | 1.65 | 🟢 Light |
-| **gopls** | 9 procs, ~5.8 GiB | 🟡 Top consumer |
-| **crush** | 12 procs, ~1.2 GiB | 🟢 |
-| **llama-server** | 1 proc, ~1 GiB | 🟡 (Jan, running) |
-| **helium** | 15 procs, ~1.3 GiB | 🟢 |
-| **Display** | connected, enabled, dpms=On | 🟢 |
-| **service-health-check** | Failing every 15 min | 🔴 |
+| Metric                   | Value                       | Status            |
+| ------------------------ | --------------------------- | ----------------- |
+| **Uptime**               | 6h 56m                      | 🟢 Stable         |
+| **RAM**                  | 43/62 GiB (69%)             | 🟡 Normal         |
+| **Swap**                 | 9.4/13 GiB (72%)            | 🟡 High           |
+| **Disk**                 | 416/512 GiB (84%)           | 🟡 Trending up    |
+| **Load**                 | 1.65                        | 🟢 Light          |
+| **gopls**                | 9 procs, ~5.8 GiB           | 🟡 Top consumer   |
+| **crush**                | 12 procs, ~1.2 GiB          | 🟢                |
+| **llama-server**         | 1 proc, ~1 GiB              | 🟡 (Jan, running) |
+| **helium**               | 15 procs, ~1.3 GiB          | 🟢                |
+| **Display**              | connected, enabled, dpms=On | 🟢                |
+| **service-health-check** | Failing every 15 min        | 🔴                |
 
 ---
 
 ## Services Status
 
-| Service | Enabled | Deployed | Issues |
-|---------|---------|----------|--------|
-| **Caddy** | ✅ | ✅ | All vhosts consolidated in caddy.nix |
-| **Forgejo** | ✅ | ✅ | Admin password in plaintext |
-| **Immich** | ✅ | ✅ | HW acceleration disabled |
-| **Authelia** | ✅ | ✅ | 2 OIDC clients only, hardcoded secrets |
-| **Homepage** | ✅ | ✅ | Memory fix committed, undeployed |
-| **SigNoz** | ✅ | ✅ | 17 rules, swap-critical added |
-| **Twenty** | ✅ | ✅ | Tag pinned to v2.7.3 |
-| **Voice Agents** | ✅ | ✅ | Caddy vhosts now protected |
-| **Hermes** | ✅ | ✅ | Git/sudo broken, tools untested, MemoryMax=24G |
-| **Ollama** | ✅ | ❌ No autostart | `wantedBy = []` — rationale unknown |
-| **Manifest** | ✅ | ✅ | Tag pinned to 6.6.1, CORS fixed |
-| **OpenSEO** | ✅ | ✅ | Tag pinned to v0.0.15, **no auth** |
-| **TaskChampion** | ✅ | ✅ | Forward-auth added, undeployed |
-| **Gatus** | ✅ | ✅ | 26 endpoints, Hermes + EMEET PIXY added |
-| **Monitor365** | ✅ | ✅ | Port 3001 conflict with openseo |
-| **Deer Flow** | ✅ | ✅ | Frontend 1.4 GB, no memory limit |
-| **DNS Blocker** | ✅ | ✅ | DoQ disabled (no ngtcp2) |
-| **Dual WAN** | ✅ | ✅ | Clean |
-| **Disk Monitor** | ✅ | ✅ | Clean |
-| **NVMe Health** | ✅ | ✅ | Hardcoded /dev/nvme0n1 |
-| **Display Manager** | ✅ | ✅ | Fix committed, undeployed |
-| **Niri** | ✅ | ✅ | gpu-recovery dead code removed |
-| **AI Models** | ✅ | ✅ | Clean |
-| **PhotoMap** | ❌ | — | Disabled (podman permissions) |
-| **Minecraft** | ❌ | — | Disabled |
-| **File Renamer** | ❌ | — | Disabled (Go 1.26.3 blocker) |
+| Service             | Enabled | Deployed        | Issues                                         |
+| ------------------- | ------- | --------------- | ---------------------------------------------- |
+| **Caddy**           | ✅      | ✅              | All vhosts consolidated in caddy.nix           |
+| **Forgejo**         | ✅      | ✅              | Admin password in plaintext                    |
+| **Immich**          | ✅      | ✅              | HW acceleration disabled                       |
+| **Authelia**        | ✅      | ✅              | 2 OIDC clients only, hardcoded secrets         |
+| **Homepage**        | ✅      | ✅              | Memory fix committed, undeployed               |
+| **SigNoz**          | ✅      | ✅              | 17 rules, swap-critical added                  |
+| **Twenty**          | ✅      | ✅              | Tag pinned to v2.7.3                           |
+| **Voice Agents**    | ✅      | ✅              | Caddy vhosts now protected                     |
+| **Hermes**          | ✅      | ✅              | Git/sudo broken, tools untested, MemoryMax=24G |
+| **Ollama**          | ✅      | ❌ No autostart | `wantedBy = []` — rationale unknown            |
+| **Manifest**        | ✅      | ✅              | Tag pinned to 6.6.1, CORS fixed                |
+| **OpenSEO**         | ✅      | ✅              | Tag pinned to v0.0.15, **no auth**             |
+| **TaskChampion**    | ✅      | ✅              | Forward-auth added, undeployed                 |
+| **Gatus**           | ✅      | ✅              | 26 endpoints, Hermes + EMEET PIXY added        |
+| **Monitor365**      | ✅      | ✅              | Port 3001 conflict with openseo                |
+| **Deer Flow**       | ✅      | ✅              | Frontend 1.4 GB, no memory limit               |
+| **DNS Blocker**     | ✅      | ✅              | DoQ disabled (no ngtcp2)                       |
+| **Dual WAN**        | ✅      | ✅              | Clean                                          |
+| **Disk Monitor**    | ✅      | ✅              | Clean                                          |
+| **NVMe Health**     | ✅      | ✅              | Hardcoded /dev/nvme0n1                         |
+| **Display Manager** | ✅      | ✅              | Fix committed, undeployed                      |
+| **Niri**            | ✅      | ✅              | gpu-recovery dead code removed                 |
+| **AI Models**       | ✅      | ✅              | Clean                                          |
+| **PhotoMap**        | ❌      | —               | Disabled (podman permissions)                  |
+| **Minecraft**       | ❌      | —               | Disabled                                       |
+| **File Renamer**    | ❌      | —               | Disabled (Go 1.26.3 blocker)                   |
 
 ---
 

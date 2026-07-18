@@ -19,6 +19,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 ## A) FULLY DONE ✅
 
 ### 1. nix-ssh-config Flake Architecture
+
 - Standalone flake at `github:LarsArtmann/nix-ssh-config`
 - Exposes: `homeManagerModules.ssh`, `nixosModules.ssh`, `sshKeys.lars`
 - Crypto constants defined in both modules: `pqKex`, `aeadCiphers`, `etmMacs`, `modernHostKeys`
@@ -27,6 +28,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Status**: ✅ Complete and published
 
 ### 2. SystemNix Consumption of nix-ssh-config
+
 - Flake input declared: `url = "github:LarsArtmann/nix-ssh-config"`
 - Darwin home.nix imports `nix-ssh-config.homeManagerModules.ssh` ✅
 - NixOS home.nix imports `nix-ssh-config.homeManagerModules.ssh` ✅
@@ -36,22 +38,26 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Status**: ✅ Code complete in committed version
 
 ### 3. Merge Conflict Resolution
+
 - All conflict markers from `50dd2ed` resolved across flake.nix, flake.lock, configuration.nix
 - Pre-commit hooks re-installed (were overridden by `buildflow`)
 - `check-merge-conflicts` hook now active and catching regressions
 - **Status**: ✅ All clean — `grep -rn "<<<<<<" --include="*.nix" .` returns zero
 
 ### 4. Ed25519 Key Generation
+
 - `~/.ssh/id_ed25519` and `id_ed25519.pub` exist (created 2026-04-04)
 - Old RSA keys removed from SSH directory
 - Public key published in nix-ssh-config repo
 - **Status**: ✅ Complete
 
 ### 5. NixOS Security Hardening (pre-existing)
+
 - AppArmor, Polkit, PAM (u2f + fprintd), fail2ban, ClamAV
 - **Status**: ✅ Configured (not verified on evo-x2)
 
 ### 6. Disk Space Recovery (this session)
+
 - Cleaned `~/Library/Caches/go-build` (5.7GB)
 - Cleaned `~/Library/Caches/pip` (17MB)
 - Ran `nix store gc` and `nix-collect-garbage`
@@ -64,6 +70,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 ## B) PARTIALLY DONE 🟡
 
 ### 1. SSH Config Deployment (THE CRITICAL BLOCKER)
+
 - **Code**: 100% complete in git (both repos)
 - **Deployment**: 0% — `just switch` has never succeeded with the new config
 - **Current `~/.ssh/config`**: OLD config, symlink to `/nix/store/dp5d1h1gm9s2pr7dsgdzb5cvmz46zvqv-home-manager-files/.ssh/config`
@@ -72,6 +79,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Status**: 🟡 90% done, blocked on deployment
 
 ### 2. Disk Space Management
+
 - Recovered ~2.5GB this session
 - Still at 3.2GB free on 229GB disk (99% full)
 - 127 system profile links (root-owned, can't delete without sudo)
@@ -79,6 +87,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Status**: 🟡 Ongoing — needs `sudo nix-collect-garbage -d` to clear system profiles
 
 ### 3. Pre-commit Hook Health
+
 - Hooks re-installed and working (caught configuration.nix regression)
 - `statix` warnings still present (not blocking)
 - `alejandra` formatting warnings present
@@ -90,18 +99,21 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 ## C) NOT STARTED ⬜
 
 ### 1. SSH Config Verification on evo-x2 (NixOS)
+
 - The NixOS target has never been deployed with the hardened config
 - Need to verify sshd config includes hardened crypto algorithms
 - Need to verify authorized keys work for SSH login
 - **Status**: ⬜ Not started (blocked on macOS deployment first)
 
 ### 2. SSH Key Deployment to GitHub
+
 - Ed25519 key generated but not verified as deployed to GitHub account
 - `ssh` command blocked in this environment, can't test directly
 - Need `git push` to verify SSH key works with GitHub
 - **Status**: ⬜ Not started
 
 ### 3. Crypto Constant Deduplication
+
 - `pqKex`, `aeadCiphers`, `etmMacs`, `modernHostKeys` defined in BOTH:
   - `nix-ssh-config/modules/home-manager/ssh.nix`
   - `nix-ssh-config/modules/nixos/ssh.nix`
@@ -109,11 +121,13 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Status**: ⬜ Not started (acknowledged technical debt)
 
 ### 4. SSH Key Rotation Documentation
+
 - No runbook for rotating SSH keys
 - No documentation on adding new key types
 - **Status**: ⬜ Not started
 
 ### 5. sops-nix Integration
+
 - sops-nix declared as input but secrets not decrypting
 - No `.sops.yaml` configuration
 - No encrypted secrets in repository
@@ -124,6 +138,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 ## D) TOTALLY FUCKED UP 💥
 
 ### 1. Disk Space Situation (CRITICAL)
+
 - **229GB disk at 99% capacity** — 3.2GB free
 - Has blocked ALL Nix builds across sessions 10-11
 - System profiles (127 generations) can't be cleaned without sudo
@@ -133,6 +148,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Fix**: `sudo nix-collect-garbage -d` (requires user action)
 
 ### 2. Staged configuration.nix Regression (CAUGHT)
+
 - The staging area had `configuration.nix` reverted to OLD `builtins.pathExists` pattern
 - This was from a previous session's bad merge resolution that got staged
 - The COMMITTED version is correct (`nix-ssh-config.sshKeys.lars`)
@@ -141,6 +157,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Prevention**: Pre-commit hooks now active, would have caught this
 
 ### 3. Multiple Session Waste from Merge Conflicts
+
 - Sessions 8-11 spent significant time on merge conflict fallout
 - Conflict markers were committed to master in `50dd2ed`
 - Pre-commit hooks were disabled (buildflow had overridden `.git/hooks/pre-commit`)
@@ -149,6 +166,7 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 - **Impact**: ~4 hours of AI session time wasted
 
 ### 4. flake.lock Corruption
+
 - flake.lock had merge conflict markers committed
 - Required full deletion and regeneration
 - `nix flake lock` regenerated to same valid state
@@ -180,33 +198,33 @@ The SSH key migration from RSA to Ed25519 is **architecturally complete but not 
 
 ## F) Top 25 Things We Should Get Done Next
 
-| # | Priority | Task | Effort | Status |
-|---|----------|------|--------|--------|
-| 1 | P0 | **Free disk space**: Run `sudo nix-collect-garbage -d` to clear 127 system generations | 2 min | Blocked on user |
-| 2 | P0 | **Deploy SSH config**: `just switch` once disk is free | 30 min | Blocked on #1 |
-| 3 | P0 | **Verify SSH deployment**: `cat ~/.ssh/config` must show KexAlgorithms, Ciphers, MACs | 1 min | Blocked on #2 |
-| 4 | P0 | **Test git push**: Verify Ed25519 key works with GitHub | 1 min | Blocked on #2 |
-| 5 | P0 | **Push all commits**: 4 commits ahead of origin | 1 min | Blocked on #4 |
-| 6 | P1 | **Deploy to evo-x2**: `sudo nixos-rebuild switch --flake .#evo-x2` on NixOS target | 30 min | Ready |
-| 7 | P1 | **Verify evo-x2 SSH**: Test SSH login to evo-x2 with Ed25519 key | 5 min | Blocked on #6 |
-| 8 | P1 | **Add GC to justfile**: `just clean-nix` recipe with `nix-collect-garbage -d` | 5 min | Ready |
-| 9 | P1 | **Add disk check to just switch**: Fail early if <5GB free | 5 min | Ready |
-| 10 | P1 | **Extract crypto constants**: Shared `constants.nix` in nix-ssh-config | 15 min | Ready |
-| 11 | P1 | **Add SSH verification recipe**: `just verify-ssh` checks deployed config | 10 min | Ready |
-| 12 | P2 | **Fix statix warnings**: Address pre-commit hook warnings | 15 min | Ready |
-| 13 | P2 | **Fix alejandra formatting**: Run `just format` and address warnings | 10 min | Ready |
-| 14 | P2 | **Set up sops-nix**: Configure `.sops.yaml`, create encrypted secrets | 30 min | Ready |
-| 15 | P2 | **Add GitHub Actions CI**: Basic `nix flake check` on push/PR | 20 min | Ready |
-| 16 | P2 | **Document SSH key rotation**: Runbook for adding/rotating keys | 15 min | Ready |
-| 17 | P2 | **Add home-manager SSH test**: Verify HM module renders correct config | 20 min | Ready |
-| 18 | P2 | **Clean up status reports**: 140+ status reports in docs/status/, archive old ones | 15 min | Ready |
-| 19 | P2 | **Add disk monitoring to just health**: Show disk usage with warning | 5 min | Ready |
-| 20 | P3 | **Set up branch protection**: Require CI on master | 10 min | Ready |
-| 21 | P3 | **Add pre-push hook**: Run `nix flake check --no-build` before push | 5 min | Ready |
-| 22 | P3 | **Document buildflow vs pre-commit**: Prevent future override conflicts | 10 min | Ready |
-| 23 | P3 | **Add launchd for weekly GC**: Automated disk cleanup | 15 min | Ready |
-| 24 | P3 | **Remove stale SSH comment**: `home-base.nix` line 12 stale comment (unstaged) | 1 min | Ready |
-| 25 | P3 | **Consolidate nix-ssh-config README**: Document architecture and usage | 15 min | Ready |
+| #   | Priority | Task                                                                                   | Effort | Status          |
+| --- | -------- | -------------------------------------------------------------------------------------- | ------ | --------------- |
+| 1   | P0       | **Free disk space**: Run `sudo nix-collect-garbage -d` to clear 127 system generations | 2 min  | Blocked on user |
+| 2   | P0       | **Deploy SSH config**: `just switch` once disk is free                                 | 30 min | Blocked on #1   |
+| 3   | P0       | **Verify SSH deployment**: `cat ~/.ssh/config` must show KexAlgorithms, Ciphers, MACs  | 1 min  | Blocked on #2   |
+| 4   | P0       | **Test git push**: Verify Ed25519 key works with GitHub                                | 1 min  | Blocked on #2   |
+| 5   | P0       | **Push all commits**: 4 commits ahead of origin                                        | 1 min  | Blocked on #4   |
+| 6   | P1       | **Deploy to evo-x2**: `sudo nixos-rebuild switch --flake .#evo-x2` on NixOS target     | 30 min | Ready           |
+| 7   | P1       | **Verify evo-x2 SSH**: Test SSH login to evo-x2 with Ed25519 key                       | 5 min  | Blocked on #6   |
+| 8   | P1       | **Add GC to justfile**: `just clean-nix` recipe with `nix-collect-garbage -d`          | 5 min  | Ready           |
+| 9   | P1       | **Add disk check to just switch**: Fail early if <5GB free                             | 5 min  | Ready           |
+| 10  | P1       | **Extract crypto constants**: Shared `constants.nix` in nix-ssh-config                 | 15 min | Ready           |
+| 11  | P1       | **Add SSH verification recipe**: `just verify-ssh` checks deployed config              | 10 min | Ready           |
+| 12  | P2       | **Fix statix warnings**: Address pre-commit hook warnings                              | 15 min | Ready           |
+| 13  | P2       | **Fix alejandra formatting**: Run `just format` and address warnings                   | 10 min | Ready           |
+| 14  | P2       | **Set up sops-nix**: Configure `.sops.yaml`, create encrypted secrets                  | 30 min | Ready           |
+| 15  | P2       | **Add GitHub Actions CI**: Basic `nix flake check` on push/PR                          | 20 min | Ready           |
+| 16  | P2       | **Document SSH key rotation**: Runbook for adding/rotating keys                        | 15 min | Ready           |
+| 17  | P2       | **Add home-manager SSH test**: Verify HM module renders correct config                 | 20 min | Ready           |
+| 18  | P2       | **Clean up status reports**: 140+ status reports in docs/status/, archive old ones     | 15 min | Ready           |
+| 19  | P2       | **Add disk monitoring to just health**: Show disk usage with warning                   | 5 min  | Ready           |
+| 20  | P3       | **Set up branch protection**: Require CI on master                                     | 10 min | Ready           |
+| 21  | P3       | **Add pre-push hook**: Run `nix flake check --no-build` before push                    | 5 min  | Ready           |
+| 22  | P3       | **Document buildflow vs pre-commit**: Prevent future override conflicts                | 10 min | Ready           |
+| 23  | P3       | **Add launchd for weekly GC**: Automated disk cleanup                                  | 15 min | Ready           |
+| 24  | P3       | **Remove stale SSH comment**: `home-base.nix` line 12 stale comment (unstaged)         | 1 min  | Ready           |
+| 25  | P3       | **Consolidate nix-ssh-config README**: Document architecture and usage                 | 15 min | Ready           |
 
 ---
 
@@ -221,6 +239,7 @@ The disk has 3.2GB free (99% full) and the system has 127 Nix profile generation
 ## Git State
 
 ### Unpushed Commits (4 ahead of origin/master):
+
 ```
 650d8c8 fix(nixos): simplify SSH authorized keys configuration
 e3fda1b docs: add comprehensive SSH extraction follow-up status report
@@ -229,13 +248,16 @@ cfe361b fix(nixos): correct SSH authorized keys path to use nix-ssh-config
 ```
 
 ### Staged Changes (ready to commit):
+
 - `docs/status/2026-04-04_05-47_FULL-AUDIT-STATUS.md` (new file, 331 lines)
 - `docs/status/2026-04-04_06-59_FULL-COMPREHENSIVE-STATUS.md` (new file, 363 lines)
 
 ### Unstaged Changes:
+
 - `docs/status/2026-04-04_05-47_SSH-EXTRACTION-FOLLOW-UP-STATUS.md` (whitespace fixes only)
 
 ### Fixed This Session:
+
 - Un-staged `configuration.nix` regression (was reverting to `builtins.pathExists`)
 - Recovered ~2.5GB disk space via cache cleanup and GC
 - Verified no merge conflict markers remain in any `.nix` file
@@ -244,6 +266,7 @@ cfe361b fix(nixos): correct SSH authorized keys path to use nix-ssh-config
 ---
 
 ## Currently Deployed SSH Config (OLD — NO hardening)
+
 ```
 Host github.com
   User git
@@ -275,6 +298,7 @@ Host *
 ```
 
 **Missing from deployed config** (will be added by `just switch`):
+
 - `KexAlgorithms mlkem768x25519-sha256,curve25519-sha256,curve25519-sha256@libssh.org,sntrup761x25519-sha512@openssh.com`
 - `Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com`
 - `MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com`

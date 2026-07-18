@@ -20,44 +20,46 @@ Session 61 was triggered by a **critical GPU memory exhaustion incident** that c
 
 ## System State (as of 21:13 CEST)
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **RAM** | 36G / 62G used (58%) | ⚠️ Elevated — 9.0G swap used (residual from OOM) |
-| **Swap** | 9.0G / 25G used (zram: 9G, disk: 0) | ⚠️ High — should drain with reboot |
-| **GPU VRAM** | 64 GiB total (68,719,476,736 bytes) | ✅ Healthy |
-| **Root disk** | 447G / 512G (90%) | ⚠️ Near capacity — 74G Nix store |
-| **/data disk** | 681G / 1.0T (67%) | ✅ Healthy |
-| **Coredumps** | 52 entries, 1.3G on disk | ⚠️ MaxUse=2G holding, but messy |
-| **Load** | 8.58 / 9.36 / 10.76 | ⚠️ Elevated — Ollama just ran models |
-| **Journal errors (1h)** | 3,118 | ⚠️ Mostly polkit-agent-helper (crash cascade artifacts) |
-| **Docker** | 11 containers running | ✅ All healthy |
-| **Ollama models** | 0 loaded | ✅ Clean (models evicted after crash) |
-| **Nix store** | 74G | ⚠️ GC recommended |
+| Metric                  | Value                               | Status                                                  |
+| ----------------------- | ----------------------------------- | ------------------------------------------------------- |
+| **RAM**                 | 36G / 62G used (58%)                | ⚠️ Elevated — 9.0G swap used (residual from OOM)        |
+| **Swap**                | 9.0G / 25G used (zram: 9G, disk: 0) | ⚠️ High — should drain with reboot                      |
+| **GPU VRAM**            | 64 GiB total (68,719,476,736 bytes) | ✅ Healthy                                              |
+| **Root disk**           | 447G / 512G (90%)                   | ⚠️ Near capacity — 74G Nix store                        |
+| **/data disk**          | 681G / 1.0T (67%)                   | ✅ Healthy                                              |
+| **Coredumps**           | 52 entries, 1.3G on disk            | ⚠️ MaxUse=2G holding, but messy                         |
+| **Load**                | 8.58 / 9.36 / 10.76                 | ⚠️ Elevated — Ollama just ran models                    |
+| **Journal errors (1h)** | 3,118                               | ⚠️ Mostly polkit-agent-helper (crash cascade artifacts) |
+| **Docker**              | 11 containers running               | ✅ All healthy                                          |
+| **Ollama models**       | 0 loaded                            | ✅ Clean (models evicted after crash)                   |
+| **Nix store**           | 74G                                 | ⚠️ GC recommended                                       |
 
 ### Active Docker Containers
-| Container | Status |
-|-----------|--------|
-| whisper-asr | Up ~1h |
-| mnfst-manifest-1 | Up ~1h (healthy) |
-| mnfst-postgres-1 | Up ~1h (healthy) |
-| twenty-server-1 | Up ~1h (healthy) |
-| twenty-worker-1 | Up ~1h |
-| twenty-db-1 | Up ~1h (healthy) |
-| twenty-redis-1 | Up ~1h (healthy) |
-| openseo-openseo-1 | Up ~1h |
-| deer-flow-nginx | Up ~1h |
-| deer-flow-gateway | Up ~1h |
-| deer-flow-frontend | Up ~1h |
+
+| Container          | Status           |
+| ------------------ | ---------------- |
+| whisper-asr        | Up ~1h           |
+| mnfst-manifest-1   | Up ~1h (healthy) |
+| mnfst-postgres-1   | Up ~1h (healthy) |
+| twenty-server-1    | Up ~1h (healthy) |
+| twenty-worker-1    | Up ~1h           |
+| twenty-db-1        | Up ~1h (healthy) |
+| twenty-redis-1     | Up ~1h (healthy) |
+| openseo-openseo-1  | Up ~1h           |
+| deer-flow-nginx    | Up ~1h           |
+| deer-flow-gateway  | Up ~1h           |
+| deer-flow-frontend | Up ~1h           |
 
 ### /data Storage Breakdown
-| Path | Size | Contents |
-|------|------|----------|
-| /data/models/ | 376G | Legacy AI models (pre-migration) |
-| /data/llamacpp-models/ | 142G | LLaMA.cpp standalone models |
-| /data/SteamLibrary/ | 99G | Steam games |
-| /data/ai/ | 80G | Centralized AI model storage |
-| /data/unsloth/ | 28G | Unsloth Studio workspace |
-| /data/ollama/ | 151M | Ollama model blobs |
+
+| Path                   | Size | Contents                         |
+| ---------------------- | ---- | -------------------------------- |
+| /data/models/          | 376G | Legacy AI models (pre-migration) |
+| /data/llamacpp-models/ | 142G | LLaMA.cpp standalone models      |
+| /data/SteamLibrary/    | 99G  | Steam games                      |
+| /data/ai/              | 80G  | Centralized AI model storage     |
+| /data/unsloth/         | 28G  | Unsloth Studio workspace         |
+| /data/ollama/          | 151M | Ollama model blobs               |
 
 ---
 
@@ -68,6 +70,7 @@ Session 61 was triggered by a **critical GPU memory exhaustion incident** that c
 **Root cause:** Ollama loaded two model runners simultaneously (gemma4 + sha256-2e35…) at 19:55:07. Each runner had `per_process_memory_fraction:0.95` = 95% of 73 GiB GPU = **138 GiB demand on 73 GiB pool**.
 
 **Timeline:**
+
 1. `19:55:07` — Ollama starts two runners, logs: `gpu memory available="72.7 GiB" free="73.1 GiB"`
 2. `19:56:00` — `amdgpu: [drm] *ERROR* Not enough memory for command submission!` (3×)
 3. `19:56:02` — Two kitty instances dump core (SIGABRT) — GPU context lost
@@ -84,6 +87,7 @@ Session 61 was triggered by a **critical GPU memory exhaustion incident** that c
 **Root cause:** Niri crashed again (second GPU event) → awww-daemon has no Wayland display → `unwrap()` panic → `Restart=always` causes **15 consecutive crashes** at ~70s intervals.
 
 **Timeline:**
+
 1. `20:29:55` — Two kitty instances dump core
 2. `20:29:57` — helium crashes (SIGTRAP + 3× SIGSEGV), niri crashes (SIGABRT)
 3. `20:29:58–20:46:42` — awww-daemon: 15× SIGABRT, all `unwrap_failed` in `main()`
@@ -109,81 +113,81 @@ Ollama runner 2 × 0.95 = 69.1 GiB  ← total: 138.2 GiB on 72.7 GiB GPU!
 
 ### Session 61 — Crash Forensics & GPU Architecture (this session)
 
-| # | Work | Commit | Impact |
-|---|------|--------|--------|
-| 1 | **Ollama GPU fraction: 0.95→0.45** — prevents dual-runner OOM (2×0.45=0.90 total) | `4b641e93` | Critical — eliminates root cause |
-| 2 | **ComfyUI GPU fraction: 0.95→0.50** — Ollama(45%)+ComfyUI(50%)=95% when both active | `4b641e93` | High — prevents contention |
-| 3 | **Remove system-wide PYTORCH_CUDA_ALLOC_CONF** — was giving every process 95% GPU cap | `4b641e93` | High — stops implicit GPU claiming |
-| 4 | **awww-daemon Wayland check** — ExecStartPre exits 1 if WAYLAND_DISPLAY not set | `23acb090` | Medium — prevents crash loop |
-| 5 | **awww-daemon StartLimitBurst: 5/120s→3/300s** — stops 15-crash loops | `23acb090` | Medium — limits cascade damage |
-| 6 | **awww-daemon hardening** — NoNewPrivileges, ProtectClock, ProtectHostname, LockPersonality | `93c63a97` | Low — defense in depth |
-| 7 | **AGENTS.md GPU budget docs** — per-service fraction table, design decisions, incident docs | `9ac7d18e` | Medium — prevents regression |
-| 8 | **Known Issues: 2 new entries** — Ollama dual-runner OOM + awww crash loop | `9ac7d18e` | Medium — institutional memory |
+| #   | Work                                                                                        | Commit     | Impact                             |
+| --- | ------------------------------------------------------------------------------------------- | ---------- | ---------------------------------- |
+| 1   | **Ollama GPU fraction: 0.95→0.45** — prevents dual-runner OOM (2×0.45=0.90 total)           | `4b641e93` | Critical — eliminates root cause   |
+| 2   | **ComfyUI GPU fraction: 0.95→0.50** — Ollama(45%)+ComfyUI(50%)=95% when both active         | `4b641e93` | High — prevents contention         |
+| 3   | **Remove system-wide PYTORCH_CUDA_ALLOC_CONF** — was giving every process 95% GPU cap       | `4b641e93` | High — stops implicit GPU claiming |
+| 4   | **awww-daemon Wayland check** — ExecStartPre exits 1 if WAYLAND_DISPLAY not set             | `23acb090` | Medium — prevents crash loop       |
+| 5   | **awww-daemon StartLimitBurst: 5/120s→3/300s** — stops 15-crash loops                       | `23acb090` | Medium — limits cascade damage     |
+| 6   | **awww-daemon hardening** — NoNewPrivileges, ProtectClock, ProtectHostname, LockPersonality | `93c63a97` | Low — defense in depth             |
+| 7   | **AGENTS.md GPU budget docs** — per-service fraction table, design decisions, incident docs | `9ac7d18e` | Medium — prevents regression       |
+| 8   | **Known Issues: 2 new entries** — Ollama dual-runner OOM + awww crash loop                  | `9ac7d18e` | Medium — institutional memory      |
 
 ### GPU Memory Budget (New Architecture)
 
-| Service | Fraction | Cap on 73 GiB GPU | Rationale |
-|---------|----------|-------------------|-----------|
-| Ollama (per runner) | 0.45 | ~33 GiB | Two runners × 0.45 = 90%, leaves 7 GiB for niri |
-| ComfyUI | 0.50 | ~36 GiB | Ollama(45%) + ComfyUI(50%) = 95% concurrent |
-| gpu-python | 0.95 (configurable) | ~69 GiB | Solo GPU use only; override with `GPU_MEM_FRACTION=0.8` |
+| Service             | Fraction            | Cap on 73 GiB GPU | Rationale                                               |
+| ------------------- | ------------------- | ----------------- | ------------------------------------------------------- |
+| Ollama (per runner) | 0.45                | ~33 GiB           | Two runners × 0.45 = 90%, leaves 7 GiB for niri         |
+| ComfyUI             | 0.50                | ~36 GiB           | Ollama(45%) + ComfyUI(50%) = 95% concurrent             |
+| gpu-python          | 0.95 (configurable) | ~69 GiB           | Solo GPU use only; override with `GPU_MEM_FRACTION=0.8` |
 
 ### Sessions 54–60 — Carried-Forward Completed Work
 
-| # | Work | Session |
-|---|------|---------|
-| 9 | Port DRY sprint — eliminated all hardcoded ports | 54 |
-| 10 | Boot performance sprint — 22s boot delay eliminated | 51 |
-| 11 | OpenSEO deployment — full service module | 52 |
-| 12 | Shared lib adoption — all 22 service modules migrated | 55 |
-| 13 | Boot diagnostics + desktop fixes | 55 |
-| 14 | DNS IPv6 outage fix — `do-ip6 = false` everywhere | 57 |
-| 15 | WiFi enablement — NetworkManager + iwd backend | 57 |
-| 16 | Dual-WAN with MPTCP | 58 |
-| 17 | GPU memory crisis response — TTM ceiling raised | 59 |
-| 18 | Architecture relocation sprint — 7 file moves | 60 |
+| #   | Work                                                  | Session |
+| --- | ----------------------------------------------------- | ------- |
+| 9   | Port DRY sprint — eliminated all hardcoded ports      | 54      |
+| 10  | Boot performance sprint — 22s boot delay eliminated   | 51      |
+| 11  | OpenSEO deployment — full service module              | 52      |
+| 12  | Shared lib adoption — all 22 service modules migrated | 55      |
+| 13  | Boot diagnostics + desktop fixes                      | 55      |
+| 14  | DNS IPv6 outage fix — `do-ip6 = false` everywhere     | 57      |
+| 15  | WiFi enablement — NetworkManager + iwd backend        | 57      |
+| 16  | Dual-WAN with MPTCP                                   | 58      |
+| 17  | GPU memory crisis response — TTM ceiling raised       | 59      |
+| 18  | Architecture relocation sprint — 7 file moves         | 60      |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Work | What's Done | What's Missing |
-|------|-------------|----------------|
-| **GPU fixes deployment** | All changes committed and pushed | `just switch` not yet run — changes are NOT live |
-| **Coredump cleanup** | Verified `MaxUse=2G` config working | 52 coredumps (1.3G) remain from today — will age out naturally |
-| **awww-daemon resilience** | Wayland check + tight burst limits + hardening | Upstream `unwrap()` panic in awww 0.12.0 not fixed (not our code) |
-| **Root disk space** | Identified 74G Nix store as main consumer | GC not run — `just clean` needed |
-| **Legacy model storage** | `/data/ai/` centralized dir created | `/data/models/` (376G) and `/data/llamacpp-models/` (142G) not migrated |
+| Work                       | What's Done                                    | What's Missing                                                          |
+| -------------------------- | ---------------------------------------------- | ----------------------------------------------------------------------- |
+| **GPU fixes deployment**   | All changes committed and pushed               | `just switch` not yet run — changes are NOT live                        |
+| **Coredump cleanup**       | Verified `MaxUse=2G` config working            | 52 coredumps (1.3G) remain from today — will age out naturally          |
+| **awww-daemon resilience** | Wayland check + tight burst limits + hardening | Upstream `unwrap()` panic in awww 0.12.0 not fixed (not our code)       |
+| **Root disk space**        | Identified 74G Nix store as main consumer      | GC not run — `just clean` needed                                        |
+| **Legacy model storage**   | `/data/ai/` centralized dir created            | `/data/models/` (376G) and `/data/llamacpp-models/` (142G) not migrated |
 
 ---
 
 ## c) NOT STARTED
 
-| # | Work | Priority | Why |
-|---|------|----------|-----|
-| 1 | **Deploy session 61 fixes** (`just switch`) | CRITICAL | GPU fixes are NOT live — Ollama still running old 95% cap |
-| 2 | **System reboot** | HIGH | 9.0G swap residual from OOM, clean slate needed |
-| 3 | **AI model migration** (`just ai-migrate`) | MEDIUM | 376G at `/data/models/` + 142G at `/data/llamacpp-models/` not moved to `/data/ai/` |
-| 4 | **Nix store GC** (`just clean`) | MEDIUM | 74G Nix store, root disk at 90% |
-| 5 | **DNS failover cluster** — Pi 3 provisioning | LOW | Module exists, hardware not provisioned |
-| 6 | **dbus-broker duplicate warnings** — 37 errors/hr | LOW | Cosmetic — duplicate D-Bus service files in system-path |
-| 7 | **ComfyUI off by default** — currently `enable = false` but has GPU fraction set | N/A | Pre-configured for when needed |
-| 8 | **Monitor Ollama model loading** — detect dual-runner scenarios | LOW | Would benefit from alerting |
-| 9 | **niri DRM health warnings** — `Error::DeviceMissing` spamming every 500ms | LOW | Non-fatal but noisy |
-| 10 | **dawrin (macOS) platform** — no changes this session | N/A | All work was NixOS-specific |
+| #   | Work                                                                             | Priority | Why                                                                                 |
+| --- | -------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| 1   | **Deploy session 61 fixes** (`just switch`)                                      | CRITICAL | GPU fixes are NOT live — Ollama still running old 95% cap                           |
+| 2   | **System reboot**                                                                | HIGH     | 9.0G swap residual from OOM, clean slate needed                                     |
+| 3   | **AI model migration** (`just ai-migrate`)                                       | MEDIUM   | 376G at `/data/models/` + 142G at `/data/llamacpp-models/` not moved to `/data/ai/` |
+| 4   | **Nix store GC** (`just clean`)                                                  | MEDIUM   | 74G Nix store, root disk at 90%                                                     |
+| 5   | **DNS failover cluster** — Pi 3 provisioning                                     | LOW      | Module exists, hardware not provisioned                                             |
+| 6   | **dbus-broker duplicate warnings** — 37 errors/hr                                | LOW      | Cosmetic — duplicate D-Bus service files in system-path                             |
+| 7   | **ComfyUI off by default** — currently `enable = false` but has GPU fraction set | N/A      | Pre-configured for when needed                                                      |
+| 8   | **Monitor Ollama model loading** — detect dual-runner scenarios                  | LOW      | Would benefit from alerting                                                         |
+| 9   | **niri DRM health warnings** — `Error::DeviceMissing` spamming every 500ms       | LOW      | Non-fatal but noisy                                                                 |
+| 10  | **dawrin (macOS) platform** — no changes this session                            | N/A      | All work was NixOS-specific                                                         |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| # | Issue | Severity | Status |
-|---|-------|----------|--------|
-| 1 | **Root disk at 90% (447G/512G)** | 🔴 CRITICAL | 74G Nix store + 518G total system. No cleanup run in days. GC is urgent. |
-| 2 | **Ollama model list empty** | 🟡 MEDIUM | All models evicted after crash. Need to re-pull commonly used models. |
-| 3 | **Swap at 9.0G with no active swap source** (zram carrying all of it) | 🟡 MEDIUM | Residual from OOM. zram is fast but wastes RAM. Reboot needed. |
-| 4 | **3,118 journal errors in last hour** | 🟡 MEDIUM | Mostly polkit-agent-helper and dbus-broker duplicates. Not alarming but noisy. |
-| 5 | **Legacy /data/models/ (376G) coexists with /data/ai/models/** | 🟠 HIGH | Wastes 376G on /data. Migration planned but not done. DO NOT rm — use `just ai-migrate`. |
-| 6 | **Fixes NOT deployed** — changes are in git only, not running system | 🔴 CRITICAL | `just switch` required immediately. |
+| #   | Issue                                                                 | Severity    | Status                                                                                   |
+| --- | --------------------------------------------------------------------- | ----------- | ---------------------------------------------------------------------------------------- |
+| 1   | **Root disk at 90% (447G/512G)**                                      | 🔴 CRITICAL | 74G Nix store + 518G total system. No cleanup run in days. GC is urgent.                 |
+| 2   | **Ollama model list empty**                                           | 🟡 MEDIUM   | All models evicted after crash. Need to re-pull commonly used models.                    |
+| 3   | **Swap at 9.0G with no active swap source** (zram carrying all of it) | 🟡 MEDIUM   | Residual from OOM. zram is fast but wastes RAM. Reboot needed.                           |
+| 4   | **3,118 journal errors in last hour**                                 | 🟡 MEDIUM   | Mostly polkit-agent-helper and dbus-broker duplicates. Not alarming but noisy.           |
+| 5   | **Legacy /data/models/ (376G) coexists with /data/ai/models/**        | 🟠 HIGH     | Wastes 376G on /data. Migration planned but not done. DO NOT rm — use `just ai-migrate`. |
+| 6   | **Fixes NOT deployed** — changes are in git only, not running system  | 🔴 CRITICAL | `just switch` required immediately.                                                      |
 
 ---
 
@@ -223,48 +227,48 @@ Ollama runner 2 × 0.95 = 69.1 GiB  ← total: 138.2 GiB on 72.7 GiB GPU!
 
 ### Immediate (do now)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **`just switch`** — deploy all GPU + awww fixes | CRITICAL | 5 min |
-| 2 | **Reboot** — clear 9G swap residual, start clean | HIGH | 2 min |
-| 3 | **`just clean`** — Nix GC, root disk at 90% | HIGH | 10 min |
+| #   | Task                                             | Impact   | Effort |
+| --- | ------------------------------------------------ | -------- | ------ |
+| 1   | **`just switch`** — deploy all GPU + awww fixes  | CRITICAL | 5 min  |
+| 2   | **Reboot** — clear 9G swap residual, start clean | HIGH     | 2 min  |
+| 3   | **`just clean`** — Nix GC, root disk at 90%      | HIGH     | 10 min |
 
 ### High Priority (this week)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 4 | **Pull commonly-used Ollama models** back | HIGH | 5 min |
-| 5 | **Run `just ai-migrate`** — move 376G legacy models → /data/ai/ | HIGH | 30 min |
-| 6 | **Add GPU memory monitoring** to Gatus (VRAM used/total) | HIGH | 30 min |
-| 7 | **Create incident runbook** for GPU OOM recovery | MEDIUM | 15 min |
-| 8 | **File upstream bug** for awww-daemon unwrap() panic | MEDIUM | 10 min |
+| #   | Task                                                            | Impact | Effort |
+| --- | --------------------------------------------------------------- | ------ | ------ |
+| 4   | **Pull commonly-used Ollama models** back                       | HIGH   | 5 min  |
+| 5   | **Run `just ai-migrate`** — move 376G legacy models → /data/ai/ | HIGH   | 30 min |
+| 6   | **Add GPU memory monitoring** to Gatus (VRAM used/total)        | HIGH   | 30 min |
+| 7   | **Create incident runbook** for GPU OOM recovery                | MEDIUM | 15 min |
+| 8   | **File upstream bug** for awww-daemon unwrap() panic            | MEDIUM | 10 min |
 
 ### Medium Priority (next 2 weeks)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 9 | **Standardize StartLimitBurst** into `lib/types.nix` presets | MEDIUM | 1h |
-| 10 | **Add `nix.gc` automatic timer** for root disk management | MEDIUM | 30 min |
-| 11 | **Lower coredump MaxUse** to 1G (from 2G) | LOW | 5 min |
-| 12 | **Fix polkit-agent crash loop** — add StartLimitBurst or PartOf | MEDIUM | 15 min |
-| 13 | **Clean up dbus-broker duplicate service files** | LOW | 30 min |
-| 14 | **Create GPU budget module** with validation (`services.gpu-budget`) | MEDIUM | 2h |
-| 15 | **Monitor Ollama concurrent runners** — alert when >1 active | MEDIUM | 1h |
+| #   | Task                                                                 | Impact | Effort |
+| --- | -------------------------------------------------------------------- | ------ | ------ |
+| 9   | **Standardize StartLimitBurst** into `lib/types.nix` presets         | MEDIUM | 1h     |
+| 10  | **Add `nix.gc` automatic timer** for root disk management            | MEDIUM | 30 min |
+| 11  | **Lower coredump MaxUse** to 1G (from 2G)                            | LOW    | 5 min  |
+| 12  | **Fix polkit-agent crash loop** — add StartLimitBurst or PartOf      | MEDIUM | 15 min |
+| 13  | **Clean up dbus-broker duplicate service files**                     | LOW    | 30 min |
+| 14  | **Create GPU budget module** with validation (`services.gpu-budget`) | MEDIUM | 2h     |
+| 15  | **Monitor Ollama concurrent runners** — alert when >1 active         | MEDIUM | 1h     |
 
 ### Lower Priority (backlog)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 16 | **Provision Pi 3** for DNS failover cluster | HIGH (resilience) | 2h (hardware) |
-| 17 | **Review niri DRM health warnings** (Error::DeviceMissing spam) | LOW | 1h |
-| 18 | **Review /data/llamacpp-models/** (142G) — migrate or deduplicate with /data/ai/models/gguf/ | MEDIUM | 1h |
-| 19 | **Audit all user services** for missing hardening (like awww was) | MEDIUM | 2h |
-| 20 | **Add `Compress=yes`** to coredump config | LOW | 5 min |
-| 21 | **Test GPU budget under load** — run Ollama + ComfyUI simultaneously | HIGH (validation) | 30 min |
-| 22 | **Review Darwin platform** — no changes in 3 sessions | LOW | 1h |
-| 23 | **Create Gatus endpoint for swap usage** (9G swap = warning) | LOW | 15 min |
-| 24 | **Document `OLLAMA_NUM_PARALLEL`** interaction with GPU budget | LOW | 10 min |
-| 25 | **Evaluate amdgpu TTM pool limit** — currently 112G ceiling from session 59 | LOW | 30 min |
+| #   | Task                                                                                         | Impact            | Effort        |
+| --- | -------------------------------------------------------------------------------------------- | ----------------- | ------------- |
+| 16  | **Provision Pi 3** for DNS failover cluster                                                  | HIGH (resilience) | 2h (hardware) |
+| 17  | **Review niri DRM health warnings** (Error::DeviceMissing spam)                              | LOW               | 1h            |
+| 18  | **Review /data/llamacpp-models/** (142G) — migrate or deduplicate with /data/ai/models/gguf/ | MEDIUM            | 1h            |
+| 19  | **Audit all user services** for missing hardening (like awww was)                            | MEDIUM            | 2h            |
+| 20  | **Add `Compress=yes`** to coredump config                                                    | LOW               | 5 min         |
+| 21  | **Test GPU budget under load** — run Ollama + ComfyUI simultaneously                         | HIGH (validation) | 30 min        |
+| 22  | **Review Darwin platform** — no changes in 3 sessions                                        | LOW               | 1h            |
+| 23  | **Create Gatus endpoint for swap usage** (9G swap = warning)                                 | LOW               | 15 min        |
+| 24  | **Document `OLLAMA_NUM_PARALLEL`** interaction with GPU budget                               | LOW               | 10 min        |
+| 25  | **Evaluate amdgpu TTM pool limit** — currently 112G ceiling from session 59                  | LOW               | 30 min        |
 
 ---
 
@@ -273,6 +277,7 @@ Ollama runner 2 × 0.95 = 69.1 GiB  ← total: 138.2 GiB on 72.7 GiB GPU!
 **Why did Ollama start two model runners simultaneously at 19:55:07?**
 
 The logs show:
+
 ```
 19:53:35 — ollama POST /api/generate (6.8s response — inference on one model)
 19:55:07 — "starting runner" (gemma4: token IDs...)
@@ -280,12 +285,13 @@ The logs show:
 ```
 
 I cannot determine from the logs alone whether:
+
 - Was this a **single API request** that triggered two model loads (e.g., tool-calling / multi-model pipeline)?
 - Was it **two concurrent requests** from two different clients (e.g., Crush + Hermes)?
 - Was it an **OLLAMA_NUM_PARALLEL=2** side-effect where the scheduler split into separate runners?
 - Was one a **keep-alive reload** of an existing model?
 
-The `OLLAMA_NUM_PARALLEL=2` setting controls concurrent *batches* within a single runner, not multiple runners. Two separate runners means two separate `ollama runner` processes — this is the multi-model scenario. But I can't tell from the GIN logs alone what triggered it.
+The `OLLAMA_NUM_PARALLEL=2` setting controls concurrent _batches_ within a single runner, not multiple runners. Two separate runners means two separate `ollama runner` processes — this is the multi-model scenario. But I can't tell from the GIN logs alone what triggered it.
 
 **Action needed:** Check Ollama's access logs or the application that made the API calls to determine if this was intentional multi-model usage or a scheduling bug. This matters because our new 0.45 fraction assumes two runners could exist — but if three could ever exist (0.45×3=135%), we'd still OOM.
 
@@ -302,35 +308,35 @@ Untracked: none
 
 ### Today's Commits (2026-05-10)
 
-| Time | Commit | Description |
-|------|--------|-------------|
-| ~15:21 | `d5e7e350` | fix(dns-blocker): disable IPv6 in Unbound |
-| ~15:21 | `b69e5928` | fix(justfile): add validate recipe |
-| ~15:21 | `431d44de` | fix(nix): lower connect-timeout |
-| ~15:21 | `b69e5928` | fix(dns): harden DNS monitoring |
-| ~15:21 | `d5e7e350` | feat(nixos/networking): enable NetworkManager for WiFi |
-| ~18:19 | `a121b268` | docs(status): session 58 |
-| ~18:19 | `a8320c2a` | feat(scripts): add mptcp-endpoint-manager |
-| ~18:19 | `aeb456a3` | fix(scripts): fix route-health-monitor regex |
-| ~18:19 | `d2823cb3` | feat(networking): add dual-wan module |
-| ~18:19 | `a295f383` | fix(dual-wan): correct serviceDefaults usage |
-| ~18:19 | `25b1fa84` | fix(dual-wan): add missing path |
-| ~20:52 | `ed57c383` | docs(status): session 59 |
-| ~20:52 | `95101f3d` | docs(agents): document lib/default.nix pattern |
-| ~20:52 | `7d8b2e1d` | refactor(lib): add default.nix single import |
-| ~20:52 | `b98f99a0` | refactor(modules): migrate 22 modules to lib/default.nix |
-| ~20:52 | `b9b02659` | refactor(scripts): extract shared lib.sh |
-| ~20:52 | `2eddaf47` | refactor(taskchampion): extract port option |
-| ~20:52 | `2e185493` | refactor: migrate deprecated dotfiles |
-| ~21:05 | `16d194ae` | docs(status): session 60 |
-| ~21:05 | `d88d80ca` | refactor(nixos/dns-blocker): migrate to flake-parts |
-| ~21:05 | `5da2a843` | chore(flake.lock): update lockfile |
-| ~21:05 | `62d5de0f` | perf(gpu): raise GTT/TTM ceiling to 112GB |
-| ~21:05 | `42e28ca0` | fix(gpu): reduce PyTorch fraction from 95% to 45% |
+| Time   | Commit     | Description                                               |
+| ------ | ---------- | --------------------------------------------------------- |
+| ~15:21 | `d5e7e350` | fix(dns-blocker): disable IPv6 in Unbound                 |
+| ~15:21 | `b69e5928` | fix(justfile): add validate recipe                        |
+| ~15:21 | `431d44de` | fix(nix): lower connect-timeout                           |
+| ~15:21 | `b69e5928` | fix(dns): harden DNS monitoring                           |
+| ~15:21 | `d5e7e350` | feat(nixos/networking): enable NetworkManager for WiFi    |
+| ~18:19 | `a121b268` | docs(status): session 58                                  |
+| ~18:19 | `a8320c2a` | feat(scripts): add mptcp-endpoint-manager                 |
+| ~18:19 | `aeb456a3` | fix(scripts): fix route-health-monitor regex              |
+| ~18:19 | `d2823cb3` | feat(networking): add dual-wan module                     |
+| ~18:19 | `a295f383` | fix(dual-wan): correct serviceDefaults usage              |
+| ~18:19 | `25b1fa84` | fix(dual-wan): add missing path                           |
+| ~20:52 | `ed57c383` | docs(status): session 59                                  |
+| ~20:52 | `95101f3d` | docs(agents): document lib/default.nix pattern            |
+| ~20:52 | `7d8b2e1d` | refactor(lib): add default.nix single import              |
+| ~20:52 | `b98f99a0` | refactor(modules): migrate 22 modules to lib/default.nix  |
+| ~20:52 | `b9b02659` | refactor(scripts): extract shared lib.sh                  |
+| ~20:52 | `2eddaf47` | refactor(taskchampion): extract port option               |
+| ~20:52 | `2e185493` | refactor: migrate deprecated dotfiles                     |
+| ~21:05 | `16d194ae` | docs(status): session 60                                  |
+| ~21:05 | `d88d80ca` | refactor(nixos/dns-blocker): migrate to flake-parts       |
+| ~21:05 | `5da2a843` | chore(flake.lock): update lockfile                        |
+| ~21:05 | `62d5de0f` | perf(gpu): raise GTT/TTM ceiling to 112GB                 |
+| ~21:05 | `42e28ca0` | fix(gpu): reduce PyTorch fraction from 95% to 45%         |
 | ~21:10 | `4b641e93` | fix(gpu): lower per-process memory fractions (root cause) |
-| ~21:10 | `23acb090` | fix(awww): prevent crash loop |
-| ~21:11 | `93c63a97` | harden(awww): add sandboxing |
-| ~21:12 | `9ac7d18e` | docs: GPU budget + incident docs |
+| ~21:10 | `23acb090` | fix(awww): prevent crash loop                             |
+| ~21:11 | `93c63a97` | harden(awww): add sandboxing                              |
+| ~21:12 | `9ac7d18e` | docs: GPU budget + incident docs                          |
 
 **27 commits today** across sessions 57–61.
 
@@ -338,15 +344,15 @@ Untracked: none
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Commits this session | 4 |
-| Files changed | 4 (ai-stack.nix, comfyui.nix, niri-wrapped.nix, AGENTS.md) |
-| Lines changed | +27 / -12 |
-| Coredumps analyzed | 24 |
-| Root causes identified | 2 (Ollama dual-runner OOM, awww unwrap panic) |
-| Services hardened | 1 (awww-daemon) |
-| Services fixed | 2 (Ollama GPU cap, awww-daemon crash loop) |
-| Incidents documented | 2 new Known Issues |
-| Time to root cause | ~10 min (Ollama logs), ~5 min (awww stack trace) |
-| Uncommitted changes | `flake.lock` (updated by flake check) |
+| Metric                 | Value                                                      |
+| ---------------------- | ---------------------------------------------------------- |
+| Commits this session   | 4                                                          |
+| Files changed          | 4 (ai-stack.nix, comfyui.nix, niri-wrapped.nix, AGENTS.md) |
+| Lines changed          | +27 / -12                                                  |
+| Coredumps analyzed     | 24                                                         |
+| Root causes identified | 2 (Ollama dual-runner OOM, awww unwrap panic)              |
+| Services hardened      | 1 (awww-daemon)                                            |
+| Services fixed         | 2 (Ollama GPU cap, awww-daemon crash loop)                 |
+| Incidents documented   | 2 new Known Issues                                         |
+| Time to root cause     | ~10 min (Ollama logs), ~5 min (awww stack trace)           |
+| Uncommitted changes    | `flake.lock` (updated by flake check)                      |

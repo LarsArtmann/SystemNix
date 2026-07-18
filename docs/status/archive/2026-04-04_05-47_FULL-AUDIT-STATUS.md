@@ -18,6 +18,7 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 ## A) FULLY DONE ✅
 
 ### 1. SSH Key Extraction to Standalone Flake (`573a244`)
+
 - **Status:** Architecture complete and correct
 - `nix-ssh-config` repo exposes `sshKeys` as flake output
 - SystemNix consumes via `nix-ssh-config.sshKeys.lars`
@@ -27,12 +28,14 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 - Published to `github:LarsArtmann/nix-ssh-config`
 
 ### 2. Merge Conflict Resolution (This Session)
+
 - **Status:** Fixed (unstaged, ready to commit)
 - Removed all conflict markers from `flake.nix`, `flake.lock`, `configuration.nix`
 - Resolved SSH keys to pure flake output: `nix-ssh-config.sshKeys.lars`
 - All files parse correctly: `nix-instantiate --parse` passes on all 3 files
 
 ### 3. NixOS Security Hardening
+
 - AppArmor enabled, Polkit auth agent, PAM for swaylock
 - fail2ban: SSH (3 retries/1hr ban) + Grafana (5 retries/1hr ban)
 - `ignoreip` correctly uses space-separated strings (fixed in `fcb7a82`)
@@ -40,9 +43,11 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 - 30+ security tool packages installed
 
 ### 4. SigNoz ClickHouse Cluster Name Fix (`bb6925d`)
+
 - Corrected from `"cluster"` to `"default"` in both config and preStart
 
 ### 5. AI/ML Stack Architecture
+
 - Ollama with ROCm at `/data/models/ollama`
 - Custom `llama-cpp-rocwmma` with rocWMMA + MFMA for Strix Halo
 - Unsloth Studio at `/data/unsloth` with Python 3.13 venv
@@ -50,21 +55,25 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 - GPU env vars: `HSA_OVERRIDE_GFX_VERSION=11.5.1`, `HSA_ENABLE_SDMA=0`
 
 ### 6. Cross-Platform Home Manager
+
 - `platforms/common/` shared modules: fish, starship, tmux, packages, fonts
 - Platform-specific overrides minimal and focused
 - ActivityWatch conditional: Linux only (`pkgs.stdenv.isLinux`)
 
 ### 7. DNS Blocker Architecture
+
 - Unbound + dnsblockd with 25 blocklists (~2.5M domains)
 - Multi-format processor: hosts, AdBlock, dnsmasq, plain domains
 - Custom Nix module + packages via flake overlays
 
 ### 8. Service Modules (Flake-Parts Dendritic Pattern)
+
 - 11+ service modules in `modules/nixos/services/`
 - Caddy, Gitea, Grafana, Homepage, Immich, Monitoring, PhotoMap, SigNoz, sops
 - Clean separation of concerns
 
 ### 9. Documentation
+
 - Comprehensive AGENTS.md with architecture, patterns, and workflows
 - 131+ status reports in `docs/status/`
 - ADRs for key decisions (home-manager, ZFS ban, etc.)
@@ -74,18 +83,21 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 ## B) PARTIALLY DONE 🟡
 
 ### 1. crush-config Integration
+
 - **Status:** Flake input defined in `flake.nix` as `github:LarsArtmann/crush-config`
 - **Missing:** NOT deployed via Home Manager (`home.file.".config/crush"` removed in `4da33dd`, not re-added)
 - **Impact:** `~/.config/crush` is NOT managed by Nix on any machine
 - **Fix:** Re-add `home.file.".config/crush".source = crush-config;` to both `darwin/home.nix` and `nixos/users/home.nix`
 
 ### 2. SigNoz Integration
+
 - **Status:** Architecture complete, builds not tested
 - **Issue:** Vendor hashes may be placeholders (`sha256-AAAA...`)
 - **Files:** `modules/nixos/services/signoz.nix`
 - **Action:** Resolve source/vendor hashes, test full build
 
 ### 3. sops-nix Secrets
+
 - **Status:** Module configured, secrets defined in `secrets.yaml` + `dnsblockd-certs.yaml`
 - **Issue:** Previously reported decryption failure at boot (`/run/secrets/` empty)
 - **Secrets managed:** grafana admin password, grafana secret key, gitea token, github token/user, dnsblockd CA cert/key, dnsblockd server cert/key
@@ -93,17 +105,20 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 - **Action needed:** Verify decryption works on evo-x2
 
 ### 4. nix-ssh-config CI/CD
+
 - **Status:** Published to GitHub, no automated testing
 - **Missing:** GitHub Actions, `nix flake check`, formatting validation
 - **Priority:** Medium
 
 ### 5. Desktop Environment (Niri)
+
 - **Status:** Niri compositor + SilentSDDM configured
 - Waybar, Dunst, Rofi, swaylock, wlogout, zellij all configured
 - Catppuccin Mocha theme across all components
 - **Missing:** Per-app window rules, keyboard shortcuts documentation
 
 ### 6. Monitoring Stack
+
 - **Status:** Grafana + Prometheus configured via flake modules
 - **Missing:** Custom dashboards incomplete, alerting not configured
 - SigNoz for observability but vendor hashes unresolved
@@ -113,29 +128,35 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 ## C) NOT STARTED ⏸️
 
 ### 1. Desktop Improvements (55 items from TODO_LIST.md)
+
 - Phase 1 (21 items): Config reloader, privacy/locking, productivity scripts
 - Phase 2 (21 items): Keyboard/input, audio/media, dev tools
 - Phase 3 (13 items): Backup/config, gaming, window rules, AI integration
 
 ### 2. PyTorch ROCm on NixOS
+
 - Not implemented — pip wheel with ROCm runtime needed
 - Options: Distrobox container, custom derivation, or pip venv
 
 ### 3. Type Safety System (Ghost Systems)
+
 - `core/Types.nix`, `State.nix`, `Validation.nix` exist but NOT imported
 - Module assertions not enabled
 - User config consolidation: split brain between platforms
 
 ### 4. Audit Daemon
+
 - Disabled due to NixOS 26.05 bug (#483085) — conflicts with AppArmor
 - Awaiting upstream fix
 
 ### 5. Private Cloud Infrastructure
+
 - `platforms/nixos/private-cloud/README.md` exists
 - Hetzner servers defined in SSH config (4 hosts)
 - No NixOS configurations for Hetzner servers
 
 ### 6. Automated Testing / CI
+
 - No GitHub Actions for SystemNix itself
 - No `nix flake check` in CI
 - No automated build verification
@@ -147,13 +168,14 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 ### 1. SSH Key Management Ping-Pong (5 commits, 3 regressions)
 
 **Timeline:**
-| Commit | SSH Key Method | Quality |
-|---|---|---|
-| `573a244` | `nix-ssh-config.sshKeys.lars` | ✅ Pure, correct |
-| `6ddb49e` | Hardcoded string | ❌ Regression |
-| `4da33dd` | Hardcoded string | ❌ Kept regression |
-| `50dd2ed` | Conflict markers | ❌ BROKEN |
-| `d43bbbd` | `builtins.pathExists` | ❌ WORST option chosen |
+
+| Commit    | SSH Key Method                | Quality                |
+| --------- | ----------------------------- | ---------------------- |
+| `573a244` | `nix-ssh-config.sshKeys.lars` | ✅ Pure, correct       |
+| `6ddb49e` | Hardcoded string              | ❌ Regression          |
+| `4da33dd` | Hardcoded string              | ❌ Kept regression     |
+| `50dd2ed` | Conflict markers              | ❌ BROKEN              |
+| `d43bbbd` | `builtins.pathExists`         | ❌ WORST option chosen |
 
 **Root cause:** The `6ddb49e` commit ("migrate paths") did too many things and regressed the SSH key. Then `d43bbbd` resolved the conflict from `50dd2ed` by choosing the WORST possible option — the impure `builtins.pathExists` pattern that `573a244` specifically eliminated.
 
@@ -161,21 +183,23 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 
 ### 2. crush-config Add → Remove → Add (3 commits wasted)
 
-| Commit | Action |
-|---|---|
-| `573a244` | Added as `github:LarsArtmann/crush-config` |
-| `6ddb49e` | Changed to `git+file:///home/lars/.config/crush` (local) |
+| Commit    | Action                                                     |
+| --------- | ---------------------------------------------------------- |
+| `573a244` | Added as `github:LarsArtmann/crush-config`                 |
+| `6ddb49e` | Changed to `git+file:///home/lars/.config/crush` (local)   |
 | `4da33dd` | Removed entirely from flake, lock, and both home.nix files |
-| `f2c9b18` | Re-added as `github:LarsArtmann/crush-config` |
+| `f2c9b18` | Re-added as `github:LarsArtmann/crush-config`              |
 
 **Impact:** Home Manager deployment lines (`home.file.".config/crush".source = crush-config`) were removed in `4da33dd` and never re-added. The flake input exists but does nothing.
 
 ### 3. Port 80 Conflict (Caddy vs dnsblockd)
+
 - **Issue:** Caddy binds `*:80` for HTTP→HTTPS redirect, dnsblockd needs port 80 for block pages
 - **Symptom:** dnsblockd crash-looping: "bind: address already in use"
 - **Status:** Unresolved
 
 ### 4. Static IP Configuration Mismatch
+
 - **Config:** `networking.useDHCP = false` with static IP `192.168.1.150`
 - **Reality:** System gets `192.168.1.161` via DHCP, dhcpcd.service still running
 - **Impact:** All `.lan` domains may point to wrong IP
@@ -186,32 +210,38 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 ## E) WHAT WE SHOULD IMPROVE 📈
 
 ### 1. Commit Hygiene
+
 - **One logical change per commit** — `6ddb49e` had 10+ unrelated changes (paths, SSH keys, nixpkgs channel, signoz, sops formatting, AI stack)
 - **Verify before committing** — `nix-instantiate --parse` should be run before every commit
 - **Check for conflict markers** — `just conflict-check` exists but wasn't used
 - **Smaller PRs** — mega-commits hide regressions
 
 ### 2. Pre-commit Hooks
+
 - Gitleaks exists but no Nix syntax validation
 - Add `nix-instantiate --parse` check to pre-commit
 - Add conflict marker detection (`grep -r "<<<<<<" *.nix`)
 
 ### 3. CI/CD Pipeline
+
 - No GitHub Actions for SystemNix
 - Should run: `nix flake check`, `nix-instantiate --parse`, `treefmt --check`
 - Prevent broken commits from reaching master
 
 ### 4. Documentation Staleness
+
 - 131+ status reports in `docs/status/` — many reference outdated patterns
 - AGENTS.md references crush-config deployment that was removed
 - Consider periodic cleanup or archival of old status reports
 
 ### 5. Architecture Consistency
+
 - Choose ONE SSH key approach and stick to it (`nix-ssh-config.sshKeys` is correct)
 - Choose ONE crush-config approach and stick to it (GitHub-based input + Home Manager deployment)
 - Document decisions in ADRs to prevent future ping-ponging
 
 ### 6. Testing on Target Machine
+
 - Most changes committed without verifying on evo-x2
 - `nixos-rebuild switch` should be the final verification step
 - Consider `nixos-rebuild build` as minimum before committing
@@ -264,6 +294,7 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 ### Why were the conflict markers in `50dd2ed` not detected before committing?
 
 **Context:**
+
 - Commit `50dd2ed` had `<<<<<<< Updated upstream` / `=======` / `>>>>>>> Stashed changes` in 3 files
 - `nix-instantiate --parse flake.nix` would have FAILED
 - `just conflict-check` recipe EXISTS in the justfile
@@ -274,6 +305,7 @@ Conducted a full audit of the last 10 commits (`68e1ef5`..`c6ce990`) to identify
 If we can't prevent broken commits from reaching master, we'll keep spending time fixing regressions instead of building features. The tools exist (`just conflict-check`, `nix-instantiate --parse`, pre-commit hooks) but weren't effective.
 
 **What I need to understand:**
+
 1. Were pre-commit hooks active at the time of `50dd2ed`?
 2. Was the commit made with `--no-verify`?
 3. Should we add a git `pre-commit` hook that runs `nix-instantiate --parse` on all changed `.nix` files?
@@ -281,6 +313,7 @@ If we can't prevent broken commits from reaching master, we'll keep spending tim
 
 **Proposed fix:**
 Add to `.pre-commit-config.yaml`:
+
 ```yaml
 - repo: local
   hooks:
@@ -300,18 +333,18 @@ Add to `.pre-commit-config.yaml`:
 
 ## Commit Audit Summary (Last 10 Commits)
 
-| # | Hash | Message | Quality |
-|---|------|---------|---------|
-| 1 | `c6ce990` | docs: SSH extraction follow-up status report | ✅ Clean |
-| 2 | `d43bbbd` | fix(nixos): correct SSH authorized keys path | ❌ Wrong fix — used `builtins.pathExists` |
-| 3 | `7e3171b` | docs(status): SSH migration session 10 report | ✅ Clean |
-| 4 | `c23da71` | chore(flake): update flake.lock | ✅ Clean |
-| 5 | `f2c9b18` | chore(flake): update inputs, remove duplicate crush-config | ✅ Clean |
-| 6 | `50dd2ed` | chore(config): update flake inputs | ❌ Merge conflict markers committed |
-| 7 | `4da33dd` | refactor: remove crush-config | ⚠️ Premature — re-added 2 commits later |
-| 8 | `fcb7a82` | fix(nixos): correct fail2ban ignoreip syntax | ✅ Correct fix |
-| 9 | `68e1ef5` | docs(status): remove trailing whitespace | ✅ Clean |
-| 10 | `bb6925d` | fix(nixos): correct ClickHouse cluster + fail2ban ignoreip | ⚠️ Wrong fail2ban syntax (fixed in #8) |
+| #   | Hash      | Message                                                    | Quality                                   |
+| --- | --------- | ---------------------------------------------------------- | ----------------------------------------- |
+| 1   | `c6ce990` | docs: SSH extraction follow-up status report               | ✅ Clean                                  |
+| 2   | `d43bbbd` | fix(nixos): correct SSH authorized keys path               | ❌ Wrong fix — used `builtins.pathExists` |
+| 3   | `7e3171b` | docs(status): SSH migration session 10 report              | ✅ Clean                                  |
+| 4   | `c23da71` | chore(flake): update flake.lock                            | ✅ Clean                                  |
+| 5   | `f2c9b18` | chore(flake): update inputs, remove duplicate crush-config | ✅ Clean                                  |
+| 6   | `50dd2ed` | chore(config): update flake inputs                         | ❌ Merge conflict markers committed       |
+| 7   | `4da33dd` | refactor: remove crush-config                              | ⚠️ Premature — re-added 2 commits later   |
+| 8   | `fcb7a82` | fix(nixos): correct fail2ban ignoreip syntax               | ✅ Correct fix                            |
+| 9   | `68e1ef5` | docs(status): remove trailing whitespace                   | ✅ Clean                                  |
+| 10  | `bb6925d` | fix(nixos): correct ClickHouse cluster + fail2ban ignoreip | ⚠️ Wrong fail2ban syntax (fixed in #8)    |
 
 **Score:** 5 clean, 2 wrong fixes, 1 premature removal, 1 merge conflict, 1 clean fix of a previous wrong fix
 
@@ -319,13 +352,13 @@ Add to `.pre-commit-config.yaml`:
 
 ## File Change Summary (This Session)
 
-| File | Change | Reason |
-|------|--------|--------|
-| `platforms/nixos/system/configuration.nix` | Replace `builtins.pathExists` with `nix-ssh-config.sshKeys.lars` | Fix SSH key regression |
-| `docs/status/2026-04-04_05-47_FULL-AUDIT-STATUS.md` | This report | Comprehensive audit |
+| File                                                | Change                                                           | Reason                 |
+| --------------------------------------------------- | ---------------------------------------------------------------- | ---------------------- |
+| `platforms/nixos/system/configuration.nix`          | Replace `builtins.pathExists` with `nix-ssh-config.sshKeys.lars` | Fix SSH key regression |
+| `docs/status/2026-04-04_05-47_FULL-AUDIT-STATUS.md` | This report                                                      | Comprehensive audit    |
 
 ---
 
-*Report generated: 2026-04-04 05:47 CEST*
-*Commit: c6ce990 (3 ahead of origin/master)*
-*SSH key fix: unstaged in working tree*
+_Report generated: 2026-04-04 05:47 CEST_
+_Commit: c6ce990 (3 ahead of origin/master)_
+_SSH key fix: unstaged in working tree_

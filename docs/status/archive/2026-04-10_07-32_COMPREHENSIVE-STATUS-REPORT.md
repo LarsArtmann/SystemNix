@@ -22,131 +22,131 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 
 ### Cross-Platform Shared (17 modules in `platforms/common/`)
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| `home-base.nix` | ✅ | Central HM config importing 14 program modules |
-| `core/nix-settings.nix` | ✅ | Nix daemon settings (both platforms) |
-| `environment/variables.nix` | ✅ | GOPATH, GOPRIVATE, session vars |
-| `preferences.nix` | ✅ | Shared preferences |
-| `packages/base.nix` | ✅ | 70+ packages (Essential, Dev, AI, GUI) |
-| `packages/fonts.nix` | ✅ | Cross-platform font management |
-| `programs/fish.nix` | ✅ | Fish shell config |
-| `programs/zsh.nix` | ✅ | Zsh config |
-| `programs/bash.nix` | ✅ | Bash config |
-| `programs/nushell.nix` | ✅ | Nushell config |
-| `programs/starship.nix` | ✅ | Prompt with Catppuccin, 50+ modules configured |
-| `programs/git.nix` | ✅ | Git config with aliases, delta, lfs |
-| `programs/tmux.nix` | ✅ | Tmux with Catppuccin theme |
-| `programs/fzf.nix` | ✅ | Fuzzy finder config |
-| `programs/pre-commit.nix` | ✅ | Pre-commit hooks |
-| `programs/keepassxc.nix` | ✅ | Password manager config |
-| `programs/chromium.nix` | ✅ | Browser with extensions, Catppuccin |
-| `programs/activitywatch.nix` | ✅ | Time tracking (fixed theme API) |
-| `programs/shell-aliases.nix` | ✅ | Shared aliases for all shells |
-| `programs/ublock-filters.nix` | ⚠️ | Installed but **disabled** (time parsing bug) |
+| Module                        | Status | Notes                                          |
+| ----------------------------- | ------ | ---------------------------------------------- |
+| `home-base.nix`               | ✅     | Central HM config importing 14 program modules |
+| `core/nix-settings.nix`       | ✅     | Nix daemon settings (both platforms)           |
+| `environment/variables.nix`   | ✅     | GOPATH, GOPRIVATE, session vars                |
+| `preferences.nix`             | ✅     | Shared preferences                             |
+| `packages/base.nix`           | ✅     | 70+ packages (Essential, Dev, AI, GUI)         |
+| `packages/fonts.nix`          | ✅     | Cross-platform font management                 |
+| `programs/fish.nix`           | ✅     | Fish shell config                              |
+| `programs/zsh.nix`            | ✅     | Zsh config                                     |
+| `programs/bash.nix`           | ✅     | Bash config                                    |
+| `programs/nushell.nix`        | ✅     | Nushell config                                 |
+| `programs/starship.nix`       | ✅     | Prompt with Catppuccin, 50+ modules configured |
+| `programs/git.nix`            | ✅     | Git config with aliases, delta, lfs            |
+| `programs/tmux.nix`           | ✅     | Tmux with Catppuccin theme                     |
+| `programs/fzf.nix`            | ✅     | Fuzzy finder config                            |
+| `programs/pre-commit.nix`     | ✅     | Pre-commit hooks                               |
+| `programs/keepassxc.nix`      | ✅     | Password manager config                        |
+| `programs/chromium.nix`       | ✅     | Browser with extensions, Catppuccin            |
+| `programs/activitywatch.nix`  | ✅     | Time tracking (fixed theme API)                |
+| `programs/shell-aliases.nix`  | ✅     | Shared aliases for all shells                  |
+| `programs/ublock-filters.nix` | ⚠️     | Installed but **disabled** (time parsing bug)  |
 
 ### macOS / Darwin (10 modules)
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| `default.nix` | ✅ | System config (nix-darwin + HM + Homebrew) |
-| `home.nix` | ✅ | HM config importing common/home-base.nix |
-| `environment.nix` | ✅ | Darwin environment |
-| `nix/settings.nix` | ✅ | Nix settings (sandbox disabled for macOS) |
-| `system/settings.nix` | ✅ | macOS system preferences |
-| `system/activation.nix` | ✅ | Post-activation scripts |
-| `services/launchagents.nix` | ✅ | ActivityWatch + Crush update agents |
-| `programs/chrome.nix` | ✅ | Chrome preferences |
-| `programs/shells.nix` | ✅ | Darwin shell aliases (darwin-rebuild) |
-| `security/keychain.nix` | ✅ | macOS Keychain integration |
-| `security/pam.nix` | ✅ | PAM configuration |
-| `networking/default.nix` | ✅ | Networking (Wake-on-LAN disabled) |
+| Module                      | Status | Notes                                      |
+| --------------------------- | ------ | ------------------------------------------ |
+| `default.nix`               | ✅     | System config (nix-darwin + HM + Homebrew) |
+| `home.nix`                  | ✅     | HM config importing common/home-base.nix   |
+| `environment.nix`           | ✅     | Darwin environment                         |
+| `nix/settings.nix`          | ✅     | Nix settings (sandbox disabled for macOS)  |
+| `system/settings.nix`       | ✅     | macOS system preferences                   |
+| `system/activation.nix`     | ✅     | Post-activation scripts                    |
+| `services/launchagents.nix` | ✅     | ActivityWatch + Crush update agents        |
+| `programs/chrome.nix`       | ✅     | Chrome preferences                         |
+| `programs/shells.nix`       | ✅     | Darwin shell aliases (darwin-rebuild)      |
+| `security/keychain.nix`     | ✅     | macOS Keychain integration                 |
+| `security/pam.nix`          | ✅     | PAM configuration                          |
+| `networking/default.nix`    | ✅     | Networking (Wake-on-LAN disabled)          |
 
 ### NixOS Desktop (15+ modules)
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| `desktop/niri-config.nix` | ✅ | Scrollable-tiling Wayland compositor |
-| `desktop/waybar.nix` | ✅ | Status bar (Catppuccin Mocha) |
-| `desktop/display-manager.nix` | ✅ | SDDM with silent-sddm theme |
-| `desktop/audio.nix` | ✅ | PipeWire + WirePlumber |
-| `desktop/ai-stack.nix` | ✅ | Ollama (optimized for multi-agent) |
-| `desktop/monitoring.nix` | ✅ | System monitoring tools |
-| `desktop/multi-wm.nix` | ✅ | Multi-window-manager support |
-| `desktop/security-hardening.nix` | ⚠️ | Partially done — auditd disabled (NixOS bug) |
-| `programs/rofi.nix` | ✅ | Launcher with Catppuccin grid theme |
-| `programs/swaylock.nix` | ✅ | Screen locker with blur |
-| `programs/wlogout.nix` | ✅ | Power menu |
-| `programs/zellij.nix` | ✅ | Terminal multiplexer |
-| `programs/yazi.nix` | ✅ | File manager with Catppuccin |
-| `programs/steam.nix` | ✅ | Gaming (GameMode + MangoHud) |
-| `programs/chrome.nix` | ✅ | Chrome preferences |
-| `programs/shells.nix` | ✅ | NixOS shell aliases |
-| `programs/niri-wrapped.nix` | ✅ | Niri keybinds via wrapper-modules |
+| Module                           | Status | Notes                                        |
+| -------------------------------- | ------ | -------------------------------------------- |
+| `desktop/niri-config.nix`        | ✅     | Scrollable-tiling Wayland compositor         |
+| `desktop/waybar.nix`             | ✅     | Status bar (Catppuccin Mocha)                |
+| `desktop/display-manager.nix`    | ✅     | SDDM with silent-sddm theme                  |
+| `desktop/audio.nix`              | ✅     | PipeWire + WirePlumber                       |
+| `desktop/ai-stack.nix`           | ✅     | Ollama (optimized for multi-agent)           |
+| `desktop/monitoring.nix`         | ✅     | System monitoring tools                      |
+| `desktop/multi-wm.nix`           | ✅     | Multi-window-manager support                 |
+| `desktop/security-hardening.nix` | ⚠️     | Partially done — auditd disabled (NixOS bug) |
+| `programs/rofi.nix`              | ✅     | Launcher with Catppuccin grid theme          |
+| `programs/swaylock.nix`          | ✅     | Screen locker with blur                      |
+| `programs/wlogout.nix`           | ✅     | Power menu                                   |
+| `programs/zellij.nix`            | ✅     | Terminal multiplexer                         |
+| `programs/yazi.nix`              | ✅     | File manager with Catppuccin                 |
+| `programs/steam.nix`             | ✅     | Gaming (GameMode + MangoHud)                 |
+| `programs/chrome.nix`            | ✅     | Chrome preferences                           |
+| `programs/shells.nix`            | ✅     | NixOS shell aliases                          |
+| `programs/niri-wrapped.nix`      | ✅     | Niri keybinds via wrapper-modules            |
 
 ### NixOS System (7 modules)
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| `system/configuration.nix` | ✅ | Main system entry |
-| `system/boot.nix` | ✅ | systemd-boot, kernel params, ZRAM |
-| `system/networking.nix` | ✅ | Static IP, firewall |
-| `system/dns-blocker-config.nix` | ✅ | Unbound + 25 blocklists (2.5M+ domains) |
-| `system/snapshots.nix` | ✅ | BTRFS + Timeshift |
-| `system/scheduled-tasks.nix` | ✅ | Crush provider updates, health checks |
-| `system/sudo.nix` | ✅ | Sudo configuration (⚠️ passwordless — security risk) |
+| Module                          | Status | Notes                                                |
+| ------------------------------- | ------ | ---------------------------------------------------- |
+| `system/configuration.nix`      | ✅     | Main system entry                                    |
+| `system/boot.nix`               | ✅     | systemd-boot, kernel params, ZRAM                    |
+| `system/networking.nix`         | ✅     | Static IP, firewall                                  |
+| `system/dns-blocker-config.nix` | ✅     | Unbound + 25 blocklists (2.5M+ domains)              |
+| `system/snapshots.nix`          | ✅     | BTRFS + Timeshift                                    |
+| `system/scheduled-tasks.nix`    | ✅     | Crush provider updates, health checks                |
+| `system/sudo.nix`               | ✅     | Sudo configuration (⚠️ passwordless — security risk) |
 
 ### NixOS Hardware (4 modules)
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| `hardware/amd-gpu.nix` | ✅ | AMD GPU (Vulkan, ROCm, VAAPI) |
-| `hardware/amd-npu.nix` | ✅ | AMD XDNA NPU driver |
-| `hardware/bluetooth.nix` | ✅ | Bluetooth config |
-| `hardware/hardware-configuration.nix` | ✅ | Auto-generated hardware config |
+| Module                                | Status | Notes                          |
+| ------------------------------------- | ------ | ------------------------------ |
+| `hardware/amd-gpu.nix`                | ✅     | AMD GPU (Vulkan, ROCm, VAAPI)  |
+| `hardware/amd-npu.nix`                | ✅     | AMD XDNA NPU driver            |
+| `hardware/bluetooth.nix`              | ✅     | Bluetooth config               |
+| `hardware/hardware-configuration.nix` | ✅     | Auto-generated hardware config |
 
 ### NixOS Infrastructure Services (10 modules)
 
-| Service | Status | Port | Domain | Notes |
-|---------|--------|------|--------|-------|
-| Caddy | ✅ | 80/443 | — | Reverse proxy, TLS via sops |
-| Authelia | ✅ | 9091 | auth.home.lan | SSO/forward auth |
-| Gitea | ✅ | 3000 | gitea.home.lan | Git hosting + GitHub mirror |
-| Immich | ✅ | 2283 | immich.home.lan | Photo/video management |
-| Homepage | ✅ | 8082 | dash.home.lan | Service dashboard |
-| PhotoMap | ✅ | 8050 | photomap.home.lan | AI photo exploration |
-| SigNoz | ✅ | 8080 | signoz.home.lan | Observability |
-| SOPS | ✅ | — | — | Secrets management (age-encrypted) |
-| Docker | ✅ | — | — | Container runtime (on /data) |
-| Gitea Repos | ✅ | — | — | GitHub → Gitea sync |
+| Service     | Status | Port   | Domain            | Notes                              |
+| ----------- | ------ | ------ | ----------------- | ---------------------------------- |
+| Caddy       | ✅     | 80/443 | —                 | Reverse proxy, TLS via sops        |
+| Authelia    | ✅     | 9091   | auth.home.lan     | SSO/forward auth                   |
+| Gitea       | ✅     | 3000   | gitea.home.lan    | Git hosting + GitHub mirror        |
+| Immich      | ✅     | 2283   | immich.home.lan   | Photo/video management             |
+| Homepage    | ✅     | 8082   | dash.home.lan     | Service dashboard                  |
+| PhotoMap    | ✅     | 8050   | photomap.home.lan | AI photo exploration               |
+| SigNoz      | ✅     | 8080   | signoz.home.lan   | Observability                      |
+| SOPS        | ✅     | —      | —                 | Secrets management (age-encrypted) |
+| Docker      | ✅     | —      | —                 | Container runtime (on /data)       |
+| Gitea Repos | ✅     | —      | —                 | GitHub → Gitea sync                |
 
 ### Tooling & DevEx
 
-| Item | Status | Notes |
-|------|--------|-------|
-| `flake.nix` | ✅ | 417 lines, flake-parts, 20 inputs, 4 overlays |
-| `justfile` | ✅ | 1,828 lines, 100+ recipes |
-| `AGENTS.md` | ✅ | Comprehensive agent guide |
-| Custom packages | ✅ | dnsblockd, dnsblockd-processor, modernize, aw-watcher-utilization, notification-tone |
-| Pre-commit hooks | ✅ | gitleaks, treefmt, deadnix, statix |
-| SSH config | ✅ | External flake input (nix-ssh-config) |
-| Crush config | ✅ | External flake input (crush-config) |
-| DNS blocker | ✅ | Unbound + dnsblockd, 25 blocklists, Quad9 DoT |
+| Item             | Status | Notes                                                                                |
+| ---------------- | ------ | ------------------------------------------------------------------------------------ |
+| `flake.nix`      | ✅     | 417 lines, flake-parts, 20 inputs, 4 overlays                                        |
+| `justfile`       | ✅     | 1,828 lines, 100+ recipes                                                            |
+| `AGENTS.md`      | ✅     | Comprehensive agent guide                                                            |
+| Custom packages  | ✅     | dnsblockd, dnsblockd-processor, modernize, aw-watcher-utilization, notification-tone |
+| Pre-commit hooks | ✅     | gitleaks, treefmt, deadnix, statix                                                   |
+| SSH config       | ✅     | External flake input (nix-ssh-config)                                                |
+| Crush config     | ✅     | External flake input (crush-config)                                                  |
+| DNS blocker      | ✅     | Unbound + dnsblockd, 25 blocklists, Quad9 DoT                                        |
 
 ---
 
 ## b) PARTIALLY DONE ⚠️
 
-| Item | What's Done | What's Missing | Priority |
-|------|-------------|----------------|----------|
-| **Security Hardening** | Kernel hardening params, AppArmor profile prepared, USBGuard not configured | Auditd disabled (NixOS bug #483085), AppArmor not enabled, IOMMU disabled | P1 |
-| **Authelia SSO** | Running, protecting 6 services via forward auth | Password hash in nix config (not sops), OIDC secrets are placeholders | P1-CRITICAL |
-| **DNS Blocker** | Fully functional, 25 blocklists, block page, stats | Blocklist hashes need periodic manual updates (3 commits in last week just for hash updates) | P3 |
-| **uBlock Filters** | Module exists, auto-update logic written | Disabled due to time parsing bug — needs debugging | P4 |
-| **Monitoring** | SigNoz for traces/metrics/logs, some Prometheus exporters | No alerting rules, no runbook, no Grafana dashboards (Prometheus was removed after internet loss incident) | P2 |
-| **Ollama** | Running, optimized for multi-agent workloads | No model pre-pulling, no GPU memory limits configured declaratively | P3 |
-| **Taskwarrior** | Package installed (`taskwarrior3` + `timewarrior`) | Zero configuration — no `.taskrc`, no sync, no reports, no Android integration | P2 |
-| **Cross-platform sync** | SSH config synced via flake input, Crush config synced | Taskwarrior not synced, no shared clipboard/notifications | P3 |
+| Item                    | What's Done                                                                 | What's Missing                                                                                             | Priority    |
+| ----------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ----------- |
+| **Security Hardening**  | Kernel hardening params, AppArmor profile prepared, USBGuard not configured | Auditd disabled (NixOS bug #483085), AppArmor not enabled, IOMMU disabled                                  | P1          |
+| **Authelia SSO**        | Running, protecting 6 services via forward auth                             | Password hash in nix config (not sops), OIDC secrets are placeholders                                      | P1-CRITICAL |
+| **DNS Blocker**         | Fully functional, 25 blocklists, block page, stats                          | Blocklist hashes need periodic manual updates (3 commits in last week just for hash updates)               | P3          |
+| **uBlock Filters**      | Module exists, auto-update logic written                                    | Disabled due to time parsing bug — needs debugging                                                         | P4          |
+| **Monitoring**          | SigNoz for traces/metrics/logs, some Prometheus exporters                   | No alerting rules, no runbook, no Grafana dashboards (Prometheus was removed after internet loss incident) | P2          |
+| **Ollama**              | Running, optimized for multi-agent workloads                                | No model pre-pulling, no GPU memory limits configured declaratively                                        | P3          |
+| **Taskwarrior**         | Package installed (`taskwarrior3` + `timewarrior`)                          | Zero configuration — no `.taskrc`, no sync, no reports, no Android integration                             | P2          |
+| **Cross-platform sync** | SSH config synced via flake input, Crush config synced                      | Taskwarrior not synced, no shared clipboard/notifications                                                  | P3          |
 
 ---
 
@@ -182,14 +182,14 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 
 ## d) TOTALLY FUCKED UP 💥
 
-| Item | Severity | Description | Status |
-|------|----------|-------------|--------|
-| **Authelia secrets in git** | 🔴 CRITICAL | Password hash + OIDC client secret in nix config tracked in git. If repo is public, these are immediately exploitable. Even if private, they're in git history forever. | Known, not fixed |
-| **Passwordless sudo** | 🔴 CRITICAL | Entire wheel group has NOPASSWD. Any process running as `lars` can instantly become root. Combined with browser exploits or malicious code, this is a full system compromise vector. | Known, not fixed |
-| **IOMMU disabled** | 🔴 CRITICAL | `amd_iommu=off` in kernel params. Prevents DMA protection, breaks VFIO for VMs, undermines kernel security. | Known, not fixed |
-| **DNS service ordering race** | 🟡 HIGH | During `nixos-rebuild switch`, Unbound may restart before Caddy is ready, causing transient DNS resolution failures. Documented but not fixed structurally. | Documented, workaround: rebuild again |
-| **Prometheus removal incident** | 🟡 HIGH | Prometheus was removed, caused complete internet loss due to dependency chain. Removed and not replaced — monitoring gap. | Known, monitoring gap |
-| **uBlock filter parsing** | 🟡 MEDIUM | `programs.ublock-filters.enable = false` due to time parsing issue. Feature exists but is broken. | Disabled, not investigated |
+| Item                            | Severity    | Description                                                                                                                                                                          | Status                                |
+| ------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| **Authelia secrets in git**     | 🔴 CRITICAL | Password hash + OIDC client secret in nix config tracked in git. If repo is public, these are immediately exploitable. Even if private, they're in git history forever.              | Known, not fixed                      |
+| **Passwordless sudo**           | 🔴 CRITICAL | Entire wheel group has NOPASSWD. Any process running as `lars` can instantly become root. Combined with browser exploits or malicious code, this is a full system compromise vector. | Known, not fixed                      |
+| **IOMMU disabled**              | 🔴 CRITICAL | `amd_iommu=off` in kernel params. Prevents DMA protection, breaks VFIO for VMs, undermines kernel security.                                                                          | Known, not fixed                      |
+| **DNS service ordering race**   | 🟡 HIGH     | During `nixos-rebuild switch`, Unbound may restart before Caddy is ready, causing transient DNS resolution failures. Documented but not fixed structurally.                          | Documented, workaround: rebuild again |
+| **Prometheus removal incident** | 🟡 HIGH     | Prometheus was removed, caused complete internet loss due to dependency chain. Removed and not replaced — monitoring gap.                                                            | Known, monitoring gap                 |
+| **uBlock filter parsing**       | 🟡 MEDIUM   | `programs.ublock-filters.enable = false` due to time parsing issue. Feature exists but is broken.                                                                                    | Disabled, not investigated            |
 
 ---
 
@@ -225,48 +225,48 @@ SystemNix is a **mature, production-grade** cross-platform Nix configuration man
 
 ### Priority 1 — Security (Do This Week)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | **Move Authelia secrets to sops** — Password hash + OIDC secret out of nix config | 1h | CRITICAL fix |
-| 2 | **Enable password sudo** — Remove NOPASSWD for wheel, require password | 30min | CRITICAL fix |
-| 3 | **Enable IOMMU** — Remove `amd_iommu=off` from kernel params, verify boot | 15min | CRITICAL fix |
-| 4 | **Fix Gitea token permissions** — `chmod 600` on token file | 5min | HIGH fix |
-| 5 | **Close SigNoz firewall ports** — Remove ClickHouse (9000) + Collector (4317/4318) from firewall | 10min | HIGH fix |
-| 6 | **Switch git credential helper to libsecret** — Replace plaintext `store` | 30min | HIGH fix |
-| 7 | **Close Steam firewall ports** — Remove unnecessary openings | 5min | HIGH fix |
+| #   | Task                                                                                             | Effort | Impact       |
+| --- | ------------------------------------------------------------------------------------------------ | ------ | ------------ |
+| 1   | **Move Authelia secrets to sops** — Password hash + OIDC secret out of nix config                | 1h     | CRITICAL fix |
+| 2   | **Enable password sudo** — Remove NOPASSWD for wheel, require password                           | 30min  | CRITICAL fix |
+| 3   | **Enable IOMMU** — Remove `amd_iommu=off` from kernel params, verify boot                        | 15min  | CRITICAL fix |
+| 4   | **Fix Gitea token permissions** — `chmod 600` on token file                                      | 5min   | HIGH fix     |
+| 5   | **Close SigNoz firewall ports** — Remove ClickHouse (9000) + Collector (4317/4318) from firewall | 10min  | HIGH fix     |
+| 6   | **Switch git credential helper to libsecret** — Replace plaintext `store`                        | 30min  | HIGH fix     |
+| 7   | **Close Steam firewall ports** — Remove unnecessary openings                                     | 5min   | HIGH fix     |
 
 ### Priority 2 — Taskwarrior + AI Integration (This Week)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 8 | **Enable `taskchampion-sync-server`** — New NixOS service module | 2h | New capability |
-| 9 | **Configure Caddy vhost** — `tasks.home.lan` → sync server | 30min | Access |
-| 10 | **Add DNS record** — `tasks` to Unbound local zone | 5min | Resolution |
-| 11 | **Home Manager Taskwarrior config** — Both platforms, reports, Catppuccin theme, sync settings | 1h | Usability |
-| 12 | **Define AI Agent task protocol** — Tags (`+agent`), UDAs (`source`, `priority`), workflow docs | 1h | Agent integration |
-| 13 | **Install TaskStrider on Android** — Connect to sync server | 15min | Mobile access |
-| 14 | **Add Taskwarrior to Homepage** — Dashboard entry | 10min | Visibility |
+| #   | Task                                                                                            | Effort | Impact            |
+| --- | ----------------------------------------------------------------------------------------------- | ------ | ----------------- |
+| 8   | **Enable `taskchampion-sync-server`** — New NixOS service module                                | 2h     | New capability    |
+| 9   | **Configure Caddy vhost** — `tasks.home.lan` → sync server                                      | 30min  | Access            |
+| 10  | **Add DNS record** — `tasks` to Unbound local zone                                              | 5min   | Resolution        |
+| 11  | **Home Manager Taskwarrior config** — Both platforms, reports, Catppuccin theme, sync settings  | 1h     | Usability         |
+| 12  | **Define AI Agent task protocol** — Tags (`+agent`), UDAs (`source`, `priority`), workflow docs | 1h     | Agent integration |
+| 13  | **Install TaskStrider on Android** — Connect to sync server                                     | 15min  | Mobile access     |
+| 14  | **Add Taskwarrior to Homepage** — Dashboard entry                                               | 10min  | Visibility        |
 
 ### Priority 3 — Monitoring & Reliability (Next Week)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 15 | **Configure SigNoz alerts** — Disk space, service down, OOM | 2h | Operational safety |
-| 16 | **Fix DNS rebuild race condition** — Add proper service ordering deps | 1h | Reliability |
-| 17 | **Create monitoring dashboards** — SigNoz or re-add Grafana | 3h | Observability |
-| 18 | **Automate blocklist hash updates** — Scheduled task or GitHub Action | 2h | Maintenance reduction |
-| 19 | **Test backup restore** — Verify BTRFS snapshot restore works | 1h | Disaster recovery |
+| #   | Task                                                                  | Effort | Impact                |
+| --- | --------------------------------------------------------------------- | ------ | --------------------- |
+| 15  | **Configure SigNoz alerts** — Disk space, service down, OOM           | 2h     | Operational safety    |
+| 16  | **Fix DNS rebuild race condition** — Add proper service ordering deps | 1h     | Reliability           |
+| 17  | **Create monitoring dashboards** — SigNoz or re-add Grafana           | 3h     | Observability         |
+| 18  | **Automate blocklist hash updates** — Scheduled task or GitHub Action | 2h     | Maintenance reduction |
+| 19  | **Test backup restore** — Verify BTRFS snapshot restore works         | 1h     | Disaster recovery     |
 
 ### Priority 4 — Cleanup & Quality (Ongoing)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 20 | **Archive old status docs** — Move 90+ files older than 2 weeks to archive/ | 15min | Repo cleanliness |
-| 21 | **Fix uBlock filter time parsing** — Debug and re-enable | 1h | Feature completion |
-| 22 | **Evaluate rootless Docker** — Test podman or rootless docker | 3h | Security |
-| 23 | **Add flake.lock auto-update** — GitHub Action with auto-PR | 2h | Maintenance |
-| 24 | **Write NixOS VM test for dnsblockd** — Smoke test the custom DNS stack | 2h | Regression prevention |
-| 25 | **Review and update AGENTS.md** — Reflect all changes since 2026-04-04 | 30min | Agent accuracy |
+| #   | Task                                                                        | Effort | Impact                |
+| --- | --------------------------------------------------------------------------- | ------ | --------------------- |
+| 20  | **Archive old status docs** — Move 90+ files older than 2 weeks to archive/ | 15min  | Repo cleanliness      |
+| 21  | **Fix uBlock filter time parsing** — Debug and re-enable                    | 1h     | Feature completion    |
+| 22  | **Evaluate rootless Docker** — Test podman or rootless docker               | 3h     | Security              |
+| 23  | **Add flake.lock auto-update** — GitHub Action with auto-PR                 | 2h     | Maintenance           |
+| 24  | **Write NixOS VM test for dnsblockd** — Smoke test the custom DNS stack     | 2h     | Regression prevention |
+| 25  | **Review and update AGENTS.md** — Reflect all changes since 2026-04-04      | 30min  | Agent accuracy        |
 
 ---
 
@@ -285,23 +285,23 @@ I cannot determine this from the codebase alone. The GitHub remote URL would tel
 
 ## Key Metrics Summary
 
-| Metric | Value |
-|--------|-------|
-| Total `.nix` files | 85 |
-| Total commits | 1,539 |
-| Commits since last audit (5 days) | 24 |
-| Flake inputs | 20+ |
-| Infrastructure services | 10 |
-| Caddy virtual hosts | 7 |
-| SOPS secrets | 13 |
-| DNS blocklists | 25+ (~2.5M domains) |
-| Shared program modules | 14 |
-| Justfile recipes | 100+ |
-| Status documents | 110 (8.8MB) |
-| Security findings | 4 CRITICAL, 5 HIGH, 8 MEDIUM, 6 LOW |
-| TODOs in codebase | 2 (both in security-hardening.nix) |
-| Disabled features | 2 (uBlock filters, auditd) |
-| Platforms | 2 (NixOS x86_64-linux, macOS aarch64-darwin) |
+| Metric                            | Value                                        |
+| --------------------------------- | -------------------------------------------- |
+| Total `.nix` files                | 85                                           |
+| Total commits                     | 1,539                                        |
+| Commits since last audit (5 days) | 24                                           |
+| Flake inputs                      | 20+                                          |
+| Infrastructure services           | 10                                           |
+| Caddy virtual hosts               | 7                                            |
+| SOPS secrets                      | 13                                           |
+| DNS blocklists                    | 25+ (~2.5M domains)                          |
+| Shared program modules            | 14                                           |
+| Justfile recipes                  | 100+                                         |
+| Status documents                  | 110 (8.8MB)                                  |
+| Security findings                 | 4 CRITICAL, 5 HIGH, 8 MEDIUM, 6 LOW          |
+| TODOs in codebase                 | 2 (both in security-hardening.nix)           |
+| Disabled features                 | 2 (uBlock filters, auditd)                   |
+| Platforms                         | 2 (NixOS x86_64-linux, macOS aarch64-darwin) |
 
 ---
 

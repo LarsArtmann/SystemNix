@@ -12,17 +12,17 @@
 
 ## 📊 QUICK METRICS DASHBOARD
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Nix Files** | 90 | ✅ Active |
-| **Documentation Files** | 400 | ✅ Comprehensive |
-| **Shell Scripts** | 48 | ✅ Functional |
-| **TODOs Completed** | 44 | ⚠️ Low |
-| **TODOs Pending** | 492 | 🔴 High |
-| **Darwin Modules** | 5 | ✅ Stable |
-| **NixOS Modules** | 6 | ✅ Functional |
-| **Common Modules** | 30 | ✅ Shared |
-| **Flake Check** | ⏱️ Running | 🟡 Pending |
+| Metric                  | Value      | Status           |
+| ----------------------- | ---------- | ---------------- |
+| **Nix Files**           | 90         | ✅ Active        |
+| **Documentation Files** | 400        | ✅ Comprehensive |
+| **Shell Scripts**       | 48         | ✅ Functional    |
+| **TODOs Completed**     | 44         | ⚠️ Low           |
+| **TODOs Pending**       | 492        | 🔴 High          |
+| **Darwin Modules**      | 5          | ✅ Stable        |
+| **NixOS Modules**       | 6          | ✅ Functional    |
+| **Common Modules**      | 30         | ✅ Shared        |
+| **Flake Check**         | ⏱️ Running | 🟡 Pending       |
 
 ---
 
@@ -83,6 +83,7 @@
 ### 1. NixOS evo-x2 Hardware Deployment (75% COMPLETE)
 
 **What's Working:**
+
 - System boots and Hyprland is operational
 - AMD GPU acceleration functional
 - SSH access configured (IP: 192.168.1.162)
@@ -90,6 +91,7 @@
 - Network configuration with dhcpcd
 
 **What's Missing:**
+
 - Bluetooth pairing with Nest Audio (configured but not tested)
 - AMD NPU (XRT) - disabled due to Boost 1.89.0 build failure
 - Full hardware-specific optimizations (WiFi 7, advanced audio)
@@ -97,23 +99,27 @@
 ### 2. File Organization Project (85% COMPLETE)
 
 **Completed:**
+
 - 12 files moved to proper directories
 - 6 shell scripts → scripts/ (moved from root→bin→scripts)
 - 2 Python files → dev/testing/
 - 4 docs → docs/archives/
 
 **Remaining:**
+
 - ~75+ markdown files still need review (per TODO_LIST.md)
 - Some root directory artifacts remain
 
 ### 3. Pre-Commit Hooks (90% COMPLETE)
 
 **Working:**
+
 - gitleaks detection active
 - trailing-whitespace auto-fix
 - Basic Nix syntax validation
 
 **Issues:**
+
 - statix warnings (W20, W04, W23) - linting
 - 6 potential secrets flagged for review
 - Full Nix evaluation takes significant time
@@ -124,6 +130,7 @@
 **Remaining:** 75+ files
 
 Key files still to review:
+
 - docs/evo-x2-install-guide.md (critical for deployment)
 - docs/DESKTOP-IMPROVEMENT-ROADMAP.md (21 high-priority items)
 - docs/strategy/2025-12-18_15-45_Step-4-Program-Integration-Strategy.md
@@ -131,11 +138,13 @@ Key files still to review:
 ### 5. Desktop Environment Polish (60% COMPLETE)
 
 **Done:**
+
 - Basic Hyprland config
 - Waybar with theme
 - Window rules for KeePassXC
 
 **Not Started:**
+
 - Config reloader hotkey
 - Privacy & locking features (7 items)
 - Productivity scripts (5 items)
@@ -166,6 +175,7 @@ Key files still to review:
 ### 3. Privacy & Locking Features (NOT STARTED)
 
 **7 High-Priority Items:**
+
 - Lock screen blur effect
 - Privacy mode (grayscale toggle)
 - Screenshot detection indicator
@@ -177,6 +187,7 @@ Key files still to review:
 ### 4. Productivity Scripts (NOT STARTED)
 
 **5 High-Priority Items:**
+
 - Quake Terminal dropdown (F12)
 - Screenshot + OCR
 - Color picker
@@ -186,6 +197,7 @@ Key files still to review:
 ### 5. Waybar Monitoring Modules (NOT STARTED)
 
 **5 Medium-Priority Items:**
+
 - GPU temperature (AMD)
 - CPU usage per-core
 - Memory usage
@@ -222,11 +234,13 @@ Key files still to review:
 ### 2. ⚠️ TODO Debt Explosion (CRITICAL)
 
 **Metrics:**
+
 - Completed: 44
 - Pending: 492
 - Ratio: 8.2% completion rate
 
 **Problem:**
+
 - TODOs accumulate faster than they are resolved
 - Many TODOs reference files that no longer exist
 - Priority levels not consistently applied
@@ -235,6 +249,7 @@ Key files still to review:
 ### 3. ⚠️ Documentation Rot (HIGH)
 
 **Issues:**
+
 - 75+ files marked "not read" may be outdated
 - Status reports from 2025 may not reflect current state
 - Architecture documents may reference removed systems
@@ -262,6 +277,7 @@ Key files still to review:
 
 **Problem:** 492 pending TODOs is unsustainable
 **Recommendations:**
+
 - Implement weekly TODO triage sessions
 - Archive TODOs older than 3 months (review first)
 - Convert recurring TODOs to automation
@@ -271,6 +287,7 @@ Key files still to review:
 
 **Problem:** Manual documentation maintenance doesn't scale
 **Recommendations:**
+
 - Auto-generate status reports from git history
 - Validate documentation freshness (last-updated timestamps)
 - Link TODOs to actual code locations
@@ -280,6 +297,7 @@ Key files still to review:
 
 **Problem:** Flake evaluation is slow
 **Recommendations:**
+
 - Use `just test-fast` for quick syntax checks
 - Cache evaluation results
 - Split large modules into smaller files
@@ -289,6 +307,7 @@ Key files still to review:
 
 **Problem:** No automated testing of actual configurations
 **Recommendations:**
+
 - CI/CD for `nix flake check`
 - VM-based NixOS tests
 - Dry-run deployment tests
@@ -298,6 +317,7 @@ Key files still to review:
 
 **Problem:** Darwin and NixOS configs diverge over time
 **Recommendations:**
+
 - Automated diff reporting between platforms
 - Shared test suite for both systems
 - Periodic consistency audits
@@ -306,6 +326,7 @@ Key files still to review:
 
 **Problem:** 6 potential secrets flagged by gitleaks
 **Recommendations:**
+
 - Review all flagged items
 - Move secrets to 1Password or similar
 - Implement sops-nix for encrypted secrets
@@ -418,12 +439,14 @@ Key files still to review:
 ## 🎯 SUCCESS METRICS
 
 **Current State:**
+
 - Commits/Week: 56 (excellent velocity)
 - TODO Completion Rate: 8.2% (needs improvement)
 - Documentation Coverage: 400 files (comprehensive)
 - Build Status: Functional with workarounds
 
 **Target State (30 Days):**
+
 - Commits/Week: Maintain 40+
 - TODO Completion Rate: 15%+
 - Documentation: 100% reviewed
@@ -431,5 +454,5 @@ Key files still to review:
 
 ---
 
-*Report generated by Crush AI Assistant*
-*Assisted-by: Crush via Crush <crush@charm.land>*
+_Report generated by Crush AI Assistant_
+_Assisted-by: Crush via Crush <crush@charm.land>_

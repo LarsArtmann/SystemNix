@@ -8,52 +8,52 @@
 
 ## a) FULLY DONE
 
-| # | What | Files | Verified |
-|---|------|-------|----------|
-| 1 | **Browser-policies module refactored** with typed `chromiumExtensions` submodule option (id, name, installationMode, toolbarPin) + `defaultInstallationMode` wildcard control | `modules/nixos/desktop/browser-policies.nix` | `nix flake check --no-build` passes |
-| 2 | **Removed redundant `ExtensionInstallForcelist`** — was duplicated by `ExtensionSettings` (the former is superseded by the latter) | `modules/nixos/desktop/browser-policies.nix` | Policy JSON no longer contains forcelist |
-| 3 | **Fixed missing `update_url`** — `force_installed` extensions require `update_url` in `ExtensionSettings`; without it, Chromium silently fails to install. Added `https://clients2.google.com/service/update2/crx` to every extension. | `modules/nixos/desktop/browser-policies.nix` | `nix eval` confirms `update_url` present |
-| 4 | **Confirmed Helium reads `/etc/chromium/policies/`** — Researched Chromium source (`policy_paths.cc`): the policy directory is a compile-time constant determined by `GOOGLE_CHROME_BRANDING`, which Helium doesn't set → defaults to `/etc/chromium/policies`. No separate `/etc/helium/policies/` needed. Policies already apply to both Chromium and Helium. | Research (chromium.googlesource.com) | Verified against live `/etc/chromium/policies/managed/` on evo-x2 |
-| 5 | **Found and read `legacy/My Chrome Plugins.txt`** — 19 active extensions across 4 categories (General, GitHub, YouTube, Unsure) + 19 disabled extensions | `legacy/My Chrome Plugins.txt` | Full inventory extracted |
-| 6 | **Looked up all 19 extension IDs** from Chrome Web Store (2 batches of agentic searches + 1 individual for 9gag post filter) | Chrome Web Store | IDs cross-referenced with official extension pages |
-| 7 | **Added all 20 extensions** (19 from txt + YouTube Shorts Blocker already present) to `configuration.nix`, organized by category with `ext id name` helper function | `platforms/nixos/system/configuration.nix` | `nix eval` confirms 21 policy entries (20 ext + `"*"` wildcard) |
-| 8 | **`nix flake check --no-build` passes** after all changes | — | Clean |
-| 9 | **`nix fmt` applied** — 24 files reformatted (mostly pre-existing dirty HTML files from other sessions, not our work) | — | Clean |
+| #   | What                                                                                                                                                                                                                                                                                                                                                            | Files                                        | Verified                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------- |
+| 1   | **Browser-policies module refactored** with typed `chromiumExtensions` submodule option (id, name, installationMode, toolbarPin) + `defaultInstallationMode` wildcard control                                                                                                                                                                                   | `modules/nixos/desktop/browser-policies.nix` | `nix flake check --no-build` passes                               |
+| 2   | **Removed redundant `ExtensionInstallForcelist`** — was duplicated by `ExtensionSettings` (the former is superseded by the latter)                                                                                                                                                                                                                              | `modules/nixos/desktop/browser-policies.nix` | Policy JSON no longer contains forcelist                          |
+| 3   | **Fixed missing `update_url`** — `force_installed` extensions require `update_url` in `ExtensionSettings`; without it, Chromium silently fails to install. Added `https://clients2.google.com/service/update2/crx` to every extension.                                                                                                                          | `modules/nixos/desktop/browser-policies.nix` | `nix eval` confirms `update_url` present                          |
+| 4   | **Confirmed Helium reads `/etc/chromium/policies/`** — Researched Chromium source (`policy_paths.cc`): the policy directory is a compile-time constant determined by `GOOGLE_CHROME_BRANDING`, which Helium doesn't set → defaults to `/etc/chromium/policies`. No separate `/etc/helium/policies/` needed. Policies already apply to both Chromium and Helium. | Research (chromium.googlesource.com)         | Verified against live `/etc/chromium/policies/managed/` on evo-x2 |
+| 5   | **Found and read `legacy/My Chrome Plugins.txt`** — 19 active extensions across 4 categories (General, GitHub, YouTube, Unsure) + 19 disabled extensions                                                                                                                                                                                                        | `legacy/My Chrome Plugins.txt`               | Full inventory extracted                                          |
+| 6   | **Looked up all 19 extension IDs** from Chrome Web Store (2 batches of agentic searches + 1 individual for 9gag post filter)                                                                                                                                                                                                                                    | Chrome Web Store                             | IDs cross-referenced with official extension pages                |
+| 7   | **Added all 20 extensions** (19 from txt + YouTube Shorts Blocker already present) to `configuration.nix`, organized by category with `ext id name` helper function                                                                                                                                                                                             | `platforms/nixos/system/configuration.nix`   | `nix eval` confirms 21 policy entries (20 ext + `"*"` wildcard)   |
+| 8   | **`nix flake check --no-build` passes** after all changes                                                                                                                                                                                                                                                                                                       | —                                            | Clean                                                             |
+| 9   | **`nix fmt` applied** — 24 files reformatted (mostly pre-existing dirty HTML files from other sessions, not our work)                                                                                                                                                                                                                                           | —                                            | Clean                                                             |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| # | What | Why partial |
-|---|------|-------------|
-| 1 | **Extension configuration module** | Module design and eval are done, but **NOT deployed or runtime-verified**. We don't know if all 20 extensions actually install in Helium. `chrome://policy` check is pending deploy. |
-| 2 | **`legacy/My Chrome Plugins.txt` migration** | 19 of 21 extensions from the file are added. **CRW-Extension** (GitHub release download, not Web Store CRX) was correctly excluded — enterprise policy `update_url` only works with Chrome Web Store. But this was not communicated to the user until asked. |
-| 3 | **Extension policy correctness** | `update_url` is now present, but we haven't verified whether **ungoogled-chromium (Helium)** actually fetches from `clients2.google.com`. ungoogled-chromium strips Google integration — it may silently ignore the `update_url` or need a different update mechanism. This is a **high-risk unknown**. |
+| #   | What                                         | Why partial                                                                                                                                                                                                                                                                                             |
+| --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Extension configuration module**           | Module design and eval are done, but **NOT deployed or runtime-verified**. We don't know if all 20 extensions actually install in Helium. `chrome://policy` check is pending deploy.                                                                                                                    |
+| 2   | **`legacy/My Chrome Plugins.txt` migration** | 19 of 21 extensions from the file are added. **CRW-Extension** (GitHub release download, not Web Store CRX) was correctly excluded — enterprise policy `update_url` only works with Chrome Web Store. But this was not communicated to the user until asked.                                            |
+| 3   | **Extension policy correctness**             | `update_url` is now present, but we haven't verified whether **ungoogled-chromium (Helium)** actually fetches from `clients2.google.com`. ungoogled-chromium strips Google integration — it may silently ignore the `update_url` or need a different update mechanism. This is a **high-risk unknown**. |
 
 ---
 
 ## c) NOT STARTED
 
-| # | What |
-|---|------|
-| 1 | **Deploy to evo-x2** and verify `chrome://policy` shows all 20 policies |
-| 2 | **Runtime-verify extensions actually install** — check extension toolbar in Helium |
-| 3 | **Verify uBlock Origin doesn't conflict with Helium's built-in uBO fork** (Helium ships with built-in ad blocker) |
-| 4 | **Add KeePassXC-Browser or Bitwarden** if password manager integration is needed (not in the old list but commonly needed) |
-| 5 | **macOS Helium wrapping** for privacy flags (still not done from previous session) |
-| 6 | **Consider `defaultInstallationMode = "blocked"`** for allowlist-only security (currently `"allowed"`) |
-| 7 | **Extension policy for Firefox** — Firefox uses a completely different policy mechanism (`policies.json` with `Extensions` key). Currently no Firefox extension management. |
-| 8 | **9gag Post Filter** is abandoned (dev archived repo, "THIS PROJECT IS DEAD"). May want to replace or remove. |
+| #   | What                                                                                                                                                                        |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Deploy to evo-x2** and verify `chrome://policy` shows all 20 policies                                                                                                     |
+| 2   | **Runtime-verify extensions actually install** — check extension toolbar in Helium                                                                                          |
+| 3   | **Verify uBlock Origin doesn't conflict with Helium's built-in uBO fork** (Helium ships with built-in ad blocker)                                                           |
+| 4   | **Add KeePassXC-Browser or Bitwarden** if password manager integration is needed (not in the old list but commonly needed)                                                  |
+| 5   | **macOS Helium wrapping** for privacy flags (still not done from previous session)                                                                                          |
+| 6   | **Consider `defaultInstallationMode = "blocked"`** for allowlist-only security (currently `"allowed"`)                                                                      |
+| 7   | **Extension policy for Firefox** — Firefox uses a completely different policy mechanism (`policies.json` with `Extensions` key). Currently no Firefox extension management. |
+| 8   | **9gag Post Filter** is abandoned (dev archived repo, "THIS PROJECT IS DEAD"). May want to replace or remove.                                                               |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| # | What | Impact | Fix |
-|---|------|--------|-----|
-| 1 | **`nix fmt` reformatted 24 pre-existing dirty files** | The `nix fmt` run touched HTML files in `docs/`, `flake.lock`, `immich.nix`, `signoz.nix` — files that were already modified by other sessions (shown in `git status` at conversation start). These are now mixed into our diff, making it hard to isolate our changes. | Should have committed our changes BEFORE running `nix fmt`, or used a more targeted formatting approach. These files need to be sorted out before commit. |
-| 2 | **Did not verify extension IDs are still valid on Chrome Web Store** | Several extensions from the 2018-2020 era txt file may have been removed from the Web Store. `force_installed` with a dead extension ID will cause a silent install failure — no error, just missing extension. The 9gag filter is confirmed abandoned. Others may be too. | Need to verify each ID resolves to a live Web Store page after deploy. |
-| 3 | **No investigation of ungoogled-chromium extension update behavior** | This is the biggest unknown. ungoogled-chromium intentionally removes Google integration. The `update_url = "https://clients2.google.com/service/update2/crx"` we're setting may be **silently stripped or ignored** by Helium. If so, `force_installed` extensions will never download. | Need to test after deploy — check if extensions actually appear. May need to manually install CRXs or use a different `update_url`. |
+| #   | What                                                                 | Impact                                                                                                                                                                                                                                                                                   | Fix                                                                                                                                                       |
+| --- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **`nix fmt` reformatted 24 pre-existing dirty files**                | The `nix fmt` run touched HTML files in `docs/`, `flake.lock`, `immich.nix`, `signoz.nix` — files that were already modified by other sessions (shown in `git status` at conversation start). These are now mixed into our diff, making it hard to isolate our changes.                  | Should have committed our changes BEFORE running `nix fmt`, or used a more targeted formatting approach. These files need to be sorted out before commit. |
+| 2   | **Did not verify extension IDs are still valid on Chrome Web Store** | Several extensions from the 2018-2020 era txt file may have been removed from the Web Store. `force_installed` with a dead extension ID will cause a silent install failure — no error, just missing extension. The 9gag filter is confirmed abandoned. Others may be too.               | Need to verify each ID resolves to a live Web Store page after deploy.                                                                                    |
+| 3   | **No investigation of ungoogled-chromium extension update behavior** | This is the biggest unknown. ungoogled-chromium intentionally removes Google integration. The `update_url = "https://clients2.google.com/service/update2/crx"` we're setting may be **silently stripped or ignored** by Helium. If so, `force_installed` extensions will never download. | Need to test after deploy — check if extensions actually appear. May need to manually install CRXs or use a different `update_url`.                       |
 
 ---
 
@@ -87,91 +87,91 @@
 
 ### Priority 1 — Verify what we built (CRITICAL)
 
-| # | Task |
-|---|------|
-| 1 | Deploy to evo-x2 |
-| 2 | Open `chrome://policy` in Helium — verify all 20 policies are listed |
-| 3 | Open `chrome://extensions` — verify extensions actually installed |
-| 4 | **Test if ungoogled-chromium fetches from `clients2.google.com`** — if not, `force_installed` silently fails |
-| 5 | Check if uBlock Origin conflicts with Helium's built-in uBO fork |
-| 6 | Verify each extension ID is live on Chrome Web Store (not removed) |
-| 7 | Test disabling a `force_installed` extension — should be impossible |
-| 8 | Test that user-installed (non-listed) extensions still work (default mode is `allowed`) |
+| #   | Task                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------ |
+| 1   | Deploy to evo-x2                                                                                             |
+| 2   | Open `chrome://policy` in Helium — verify all 20 policies are listed                                         |
+| 3   | Open `chrome://extensions` — verify extensions actually installed                                            |
+| 4   | **Test if ungoogled-chromium fetches from `clients2.google.com`** — if not, `force_installed` silently fails |
+| 5   | Check if uBlock Origin conflicts with Helium's built-in uBO fork                                             |
+| 6   | Verify each extension ID is live on Chrome Web Store (not removed)                                           |
+| 7   | Test disabling a `force_installed` extension — should be impossible                                          |
+| 8   | Test that user-installed (non-listed) extensions still work (default mode is `allowed`)                      |
 
 ### Priority 2 — Fix what's broken or unknown
 
-| # | Task |
-|---|------|
-| 9 | **Investigate ungoogled-chromium extension update mechanism** — does `update_url` work? Check chromium source patches |
-| 10 | If `update_url` doesn't work: bundle CRX files in Nix store, point `update_url` to `file://` path |
-| 11 | Remove 9gag Post Filter (dev archived, "THIS PROJECT IS DEAD") or replace with alternative |
-| 12 | Separate dirty `nix fmt` changes from our work (stash/commit separately) |
-| 13 | Add per-extension `updateUrl` option to the submodule |
-| 12 | Set dev tools (React DevTools, WhatFont) to `normal_installed` so they can be disabled |
-| 13 | Consider `defaultInstallationMode = "blocked"` for allowlist-only hardening |
+| #   | Task                                                                                                                  |
+| --- | --------------------------------------------------------------------------------------------------------------------- |
+| 9   | **Investigate ungoogled-chromium extension update mechanism** — does `update_url` work? Check chromium source patches |
+| 10  | If `update_url` doesn't work: bundle CRX files in Nix store, point `update_url` to `file://` path                     |
+| 11  | Remove 9gag Post Filter (dev archived, "THIS PROJECT IS DEAD") or replace with alternative                            |
+| 12  | Separate dirty `nix fmt` changes from our work (stash/commit separately)                                              |
+| 13  | Add per-extension `updateUrl` option to the submodule                                                                 |
+| 12  | Set dev tools (React DevTools, WhatFont) to `normal_installed` so they can be disabled                                |
+| 13  | Consider `defaultInstallationMode = "blocked"` for allowlist-only hardening                                           |
 
 ### Priority 3 — Extension module improvements
 
-| # | Task |
-|---|------|
-| 14 | Add per-extension `updateUrl` override option (not just hardcoded Google URL) |
-| 15 | Add extension policy documentation comment explaining the `update_url` + ungoogled-chromium risk |
-| 16 | Add Firefox extension management to the module (`programs.firefox.policies.Extensions`) |
-| 17 | Add a module option for Chrome Web Store update URL constant (avoid magic strings) |
-| 18 | Consider `ExtensionInstallSources` policy for allowing CRX installs from specific domains |
-| 19 | Add `BlockThirdPartyCookies` policy |
-| 20 | Add `HTTPSOnlyMode` policy |
-| 15 | Consider adding `RestoreOnStartup` policy (session restore via policy instead of flag) |
+| #   | Task                                                                                             |
+| --- | ------------------------------------------------------------------------------------------------ |
+| 14  | Add per-extension `updateUrl` override option (not just hardcoded Google URL)                    |
+| 15  | Add extension policy documentation comment explaining the `update_url` + ungoogled-chromium risk |
+| 16  | Add Firefox extension management to the module (`programs.firefox.policies.Extensions`)          |
+| 17  | Add a module option for Chrome Web Store update URL constant (avoid magic strings)               |
+| 18  | Consider `ExtensionInstallSources` policy for allowing CRX installs from specific domains        |
+| 19  | Add `BlockThirdPartyCookies` policy                                                              |
+| 20  | Add `HTTPSOnlyMode` policy                                                                       |
+| 15  | Consider adding `RestoreOnStartup` policy (session restore via policy instead of flag)           |
 
 ### Priority 4 — Helium wrapper improvements (from previous session)
 
-| # | Task |
-|---|------|
-| 21 | Test removing `--enable-zero-copy` (may eliminate hotplug crashes) |
-| 22 | Add `--disk-cache-dir` to tmpfs |
-| 23 | Configure Memory Saver enterprise policy (`PerformanceMultiStateModeEnabled`, etc.) |
-| 24 | Verify KeePassXC native messaging host path |
-| 25 | Measure memory before/after: `smem -P helium -k -s pss` |
+| #   | Task                                                                                |
+| --- | ----------------------------------------------------------------------------------- |
+| 21  | Test removing `--enable-zero-copy` (may eliminate hotplug crashes)                  |
+| 22  | Add `--disk-cache-dir` to tmpfs                                                     |
+| 23  | Configure Memory Saver enterprise policy (`PerformanceMultiStateModeEnabled`, etc.) |
+| 24  | Verify KeePassXC native messaging host path                                         |
+| 25  | Measure memory before/after: `smem -P helium -k -s pss`                             |
 
 ### Priority 5 — Broader browser hardening
 
-| # | Task |
-|---|------|
-| 26 | Review and apply relevant Chromium privacy policies (BackgroundModeEnabled, SafeBrowsing, etc.) |
-| 27 | Add `BrowserSignin` policy (disable Chrome Sync / Google signin — ungoogled should already handle this) |
-| 28 | Add `SyncDisabled` policy |
-| 29 | Add `ClearBrowsingDataOnExitList` policy |
-| 30 | Add `DefaultCookiesSetting`, `DefaultPopupsSetting` policies |
-| 31 | Review Firefox policies — currently only UI/gesture locks, no security policies |
-| 32 | Add Firefox `EnableTrackingProtection` policy |
-| 33 | Consider `Certificate Transparency` policy |
-| 34 | Consider `AutoSelectCertificateForUrls` if using client certs |
-| 35 | Review whether Helium's built-in privacy flags overlap with enterprise policies |
+| #   | Task                                                                                                    |
+| --- | ------------------------------------------------------------------------------------------------------- |
+| 26  | Review and apply relevant Chromium privacy policies (BackgroundModeEnabled, SafeBrowsing, etc.)         |
+| 27  | Add `BrowserSignin` policy (disable Chrome Sync / Google signin — ungoogled should already handle this) |
+| 28  | Add `SyncDisabled` policy                                                                               |
+| 29  | Add `ClearBrowsingDataOnExitList` policy                                                                |
+| 30  | Add `DefaultCookiesSetting`, `DefaultPopupsSetting` policies                                            |
+| 31  | Review Firefox policies — currently only UI/gesture locks, no security policies                         |
+| 32  | Add Firefox `EnableTrackingProtection` policy                                                           |
+| 33  | Consider `Certificate Transparency` policy                                                              |
+| 34  | Consider `AutoSelectCertificateForUrls` if using client certs                                           |
+| 35  | Review whether Helium's built-in privacy flags overlap with enterprise policies                         |
 
 ### Priority 6 — Documentation & housekeeping
 
-| # | Task |
-|---|------|
-| 36 | Update `FEATURES.md` browser policies line with new extension count and configurable module |
-| 37 | Update `AGENTS.md` with ungoogled-chromium `update_url` behavior (once verified) |
-| 38 | Delete or archive `legacy/My Chrome Plugins.txt` (now migrated to Nix config) |
-| 39 | Update Helium audit report (`docs/status/2026-07-09_08-48_*`) — mark browser-policies item as done |
-| 40 | Commit `configuration.nix` extension changes |
-| 41 | Verify the `nix fmt` collateral changes are intentional (HTML files, immich.nix, signoz.nix) |
-| 42 | Consider adding a deploy smoke test for browser policies (check `/etc/chromium/policies/managed/` exists with expected JSON) |
-| 43 | Add a Gatus health check for browser policy file existence |
-| 44 | Add `post-deploy-check` verification for extension policy JSON structure |
+| #   | Task                                                                                                                         |
+| --- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 36  | Update `FEATURES.md` browser policies line with new extension count and configurable module                                  |
+| 37  | Update `AGENTS.md` with ungoogled-chromium `update_url` behavior (once verified)                                             |
+| 38  | Delete or archive `legacy/My Chrome Plugins.txt` (now migrated to Nix config)                                                |
+| 39  | Update Helium audit report (`docs/status/2026-07-09_08-48_*`) — mark browser-policies item as done                           |
+| 40  | Commit `configuration.nix` extension changes                                                                                 |
+| 41  | Verify the `nix fmt` collateral changes are intentional (HTML files, immich.nix, signoz.nix)                                 |
+| 42  | Consider adding a deploy smoke test for browser policies (check `/etc/chromium/policies/managed/` exists with expected JSON) |
+| 43  | Add a Gatus health check for browser policy file existence                                                                   |
+| 44  | Add `post-deploy-check` verification for extension policy JSON structure                                                     |
 
 ### Priority 7 — Future enhancements
 
-| # | Theme |
-|---|-------|
-| 45 | Consider `chrome://flags` standardization via master_preferences or equivalent |
-| 46 | Consider policy-based DNS-over-HTTPS configuration for Helium (currently only Firefox has DoH disabled) |
-| 47 | Consider `QuicAllowed` policy |
-| 48 | Consider `URLBlocklist` / `URLAllowlist` policies for content filtering |
-| 49 | Evaluate extension sandboxing policies (`ExtensionContentVerification`) |
-| 50 | Consider `PasswordManagerEnabled` policy — disable Chrome's built-in password manager in favor of KeePassXC/Bitwarden |
+| #   | Theme                                                                                                                 |
+| --- | --------------------------------------------------------------------------------------------------------------------- |
+| 45  | Consider `chrome://flags` standardization via master_preferences or equivalent                                        |
+| 46  | Consider policy-based DNS-over-HTTPS configuration for Helium (currently only Firefox has DoH disabled)               |
+| 47  | Consider `QuicAllowed` policy                                                                                         |
+| 48  | Consider `URLBlocklist` / `URLAllowlist` policies for content filtering                                               |
+| 49  | Evaluate extension sandboxing policies (`ExtensionContentVerification`)                                               |
+| 50  | Consider `PasswordManagerEnabled` policy — disable Chrome's built-in password manager in favor of KeePassXC/Bitwarden |
 
 ---
 

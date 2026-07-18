@@ -50,38 +50,38 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS `
 
 ### Core Infrastructure Services (Enabled & Running)
 
-| Service | Module | Lines | Status |
-|---------|--------|-------|--------|
-| Caddy (reverse proxy) | `caddy.nix` | 153 | ✅ 10+ vhosts, TLS, forward auth, metrics |
-| Pocket ID (OIDC) | `pocket-id.nix` | 385 | ✅ Passkey auth, declarative provisioning |
-| oauth2-proxy | `oauth2-proxy.nix` | 107 | ✅ Forward-auth bridge Caddy ↔ Pocket ID |
-| SOPS secrets | `sops.nix` | 226 | ✅ Age-encrypted via SSH host key, 4 sops files |
-| Docker | `default-services.nix` | 53 | ✅ Auto-enable, weekly prune |
-| DNS Blocker | `dns-blocker.nix` | 353 | ✅ Unbound + dnsblockd + block page |
+| Service               | Module                 | Lines | Status                                          |
+| --------------------- | ---------------------- | ----- | ----------------------------------------------- |
+| Caddy (reverse proxy) | `caddy.nix`            | 153   | ✅ 10+ vhosts, TLS, forward auth, metrics       |
+| Pocket ID (OIDC)      | `pocket-id.nix`        | 385   | ✅ Passkey auth, declarative provisioning       |
+| oauth2-proxy          | `oauth2-proxy.nix`     | 107   | ✅ Forward-auth bridge Caddy ↔ Pocket ID        |
+| SOPS secrets          | `sops.nix`             | 226   | ✅ Age-encrypted via SSH host key, 4 sops files |
+| Docker                | `default-services.nix` | 53    | ✅ Auto-enable, weekly prune                    |
+| DNS Blocker           | `dns-blocker.nix`      | 353   | ✅ Unbound + dnsblockd + block page             |
 
 ### Self-Hosted Applications (Enabled & Running)
 
-| Service | Module | Lines | Status |
-|---------|--------|-------|--------|
-| Forgejo (Git forge) | `forgejo.nix` | 583 | ✅ SQLite, LFS, Actions runner, push mirrors |
-| Forgejo repos | `forgejo-repos.nix` | 310 | ✅ Declarative mirroring (2 repos) + daily timer |
-| Immich (photos) | `immich.nix` | 128 | ✅ PostgreSQL + Redis, VA-API transcoding, GPU ML |
-| SigNoz (observability) | `signoz.nix` | 705 | ✅ Traces/metrics/logs, ClickHouse, 7 alert rules |
-| Homepage Dashboard | `homepage.nix` | 373 | ✅ 6 categories, mkGroup/mkService pattern |
-| Twenty CRM | `twenty.nix` | 144 | ✅ Docker Compose, daily DB backup |
-| Hermes (AI gateway) | `hermes.nix` | 226 | ✅ Discord bot, cron, messaging |
-| Gatus (uptime) | `gatus-config.nix` | 323 | ✅ 30+ health checks |
-| OpenSEO | `openseo.nix` | 102 | ✅ SEO suite |
-| TaskChampion | `taskchampion.nix` | 82 | ✅ Taskwarrior sync |
-| Crush Daily | `crush-daily.nix` | 79 | ✅ AI-powered dev insights |
-| Monitor365 | `monitor365.nix` | 716 | ✅ Device monitoring, privacy-filtered collectors |
-| Disk Monitor | `disk-monitor.nix` | 134 | ✅ Daily growth alerts, BTRFS checks |
-| NVMe Health Monitor | `nvme-health-monitor.nix` | 198 | ✅ SSD health + temperature alerts |
-| Dozzle (Docker logs) | inline | — | ✅ Inline config (module eval issue workaround) |
-| Manifest (LLM router) | `manifest.nix` | 153 | ✅ AI cost optimization, auth-protected |
-| Overview (project dashboard) | flake-parts | — | ✅ Discovers git repos, shows activity |
-| Discord Sync | `discordsync.nix` | 80 | ✅ Discord channel sync |
-| Projects Automation | `projects-management-automation.nix` | 110 | ✅ AI commit messages, watches ~/projects |
+| Service                      | Module                               | Lines | Status                                            |
+| ---------------------------- | ------------------------------------ | ----- | ------------------------------------------------- |
+| Forgejo (Git forge)          | `forgejo.nix`                        | 583   | ✅ SQLite, LFS, Actions runner, push mirrors      |
+| Forgejo repos                | `forgejo-repos.nix`                  | 310   | ✅ Declarative mirroring (2 repos) + daily timer  |
+| Immich (photos)              | `immich.nix`                         | 128   | ✅ PostgreSQL + Redis, VA-API transcoding, GPU ML |
+| SigNoz (observability)       | `signoz.nix`                         | 705   | ✅ Traces/metrics/logs, ClickHouse, 7 alert rules |
+| Homepage Dashboard           | `homepage.nix`                       | 373   | ✅ 6 categories, mkGroup/mkService pattern        |
+| Twenty CRM                   | `twenty.nix`                         | 144   | ✅ Docker Compose, daily DB backup                |
+| Hermes (AI gateway)          | `hermes.nix`                         | 226   | ✅ Discord bot, cron, messaging                   |
+| Gatus (uptime)               | `gatus-config.nix`                   | 323   | ✅ 30+ health checks                              |
+| OpenSEO                      | `openseo.nix`                        | 102   | ✅ SEO suite                                      |
+| TaskChampion                 | `taskchampion.nix`                   | 82    | ✅ Taskwarrior sync                               |
+| Crush Daily                  | `crush-daily.nix`                    | 79    | ✅ AI-powered dev insights                        |
+| Monitor365                   | `monitor365.nix`                     | 716   | ✅ Device monitoring, privacy-filtered collectors |
+| Disk Monitor                 | `disk-monitor.nix`                   | 134   | ✅ Daily growth alerts, BTRFS checks              |
+| NVMe Health Monitor          | `nvme-health-monitor.nix`            | 198   | ✅ SSD health + temperature alerts                |
+| Dozzle (Docker logs)         | inline                               | —     | ✅ Inline config (module eval issue workaround)   |
+| Manifest (LLM router)        | `manifest.nix`                       | 153   | ✅ AI cost optimization, auth-protected           |
+| Overview (project dashboard) | flake-parts                          | —     | ✅ Discovers git repos, shows activity            |
+| Discord Sync                 | `discordsync.nix`                    | 80    | ✅ Discord channel sync                           |
+| Projects Automation          | `projects-management-automation.nix` | 110   | ✅ AI commit messages, watches ~/projects         |
 
 ### Desktop (Fully Functional)
 
@@ -133,44 +133,44 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS `
 
 ## b) PARTIALLY DONE
 
-| Area | What's Done | What's Missing |
-|------|-------------|----------------|
-| **Pocket ID email** | Admin user created, passkey auth works, declarative provisioning | No SMTP configured — email verification/login notifications disabled. SES infrastructure exists in `domains` repo |
-| **Hermes AI gateway** | Discord bot, cron, messaging, 4G memory limit | OpenAI API key not yet in sops (`hermes_openai_api_key` TODO in sops.nix), fallback model not set |
-| **Voice agents** | Docker ROCm pipeline exists, LiveKit + Whisper configured | Disabled (`enable = false`) — never deployed |
-| **Multi-WM (Sway)** | Module exists | Disabled — may have bitrot, untested |
-| **Nix sandbox (macOS)** | Everything else works | Explicitly disabled — macOS compatibility tradeoff |
-| **Dep graph commands** | Justfile recipes exist | Depends on `nix-visualize`, can be slow |
-| **Shared flake-parts template** | Created | Not pushed to `go-nix-helpers` yet |
+| Area                            | What's Done                                                      | What's Missing                                                                                                    |
+| ------------------------------- | ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Pocket ID email**             | Admin user created, passkey auth works, declarative provisioning | No SMTP configured — email verification/login notifications disabled. SES infrastructure exists in `domains` repo |
+| **Hermes AI gateway**           | Discord bot, cron, messaging, 4G memory limit                    | OpenAI API key not yet in sops (`hermes_openai_api_key` TODO in sops.nix), fallback model not set                 |
+| **Voice agents**                | Docker ROCm pipeline exists, LiveKit + Whisper configured        | Disabled (`enable = false`) — never deployed                                                                      |
+| **Multi-WM (Sway)**             | Module exists                                                    | Disabled — may have bitrot, untested                                                                              |
+| **Nix sandbox (macOS)**         | Everything else works                                            | Explicitly disabled — macOS compatibility tradeoff                                                                |
+| **Dep graph commands**          | Justfile recipes exist                                           | Depends on `nix-visualize`, can be slow                                                                           |
+| **Shared flake-parts template** | Created                                                          | Not pushed to `go-nix-helpers` yet                                                                                |
 
 ---
 
 ## c) NOT STARTED
 
-| Task | Notes | Priority |
-|------|-------|----------|
-| **Pocket ID SMTP via SES** | Full SMTP support in Pocket ID (`SMTP_HOST`, `SMTP_PORT`, etc.), SES infra in `domains` repo, just needs wiring | High |
-| **Raspberry Pi 3 DNS failover** | `rpi3/default.nix` exists, `dns-failover.nix` exists — hardware not provisioned | Medium |
-| **Hermes OpenAI fallback** | Just needs sops secret + model config | Medium |
-| **Shared flake-parts template push** | Created, needs push to `go-nix-helpers` | Low |
-| **File & Image Renamer** | Disabled: charm.land/fantasy@v0.25.0 requires Go 1.26.3, nixpkgs has 1.26.2 | Blocked on nixpkgs |
-| **PhotoMap** | Port conflict resolved (moved to 8051), still disabled — podman config permission issue | Low |
-| **AppArmor** | Commented out in `security-hardening.nix` | Low |
-| **DNS-over-QUIC** | Overlay disabled — unbound not compiled with ngtcp2, breaks binary cache (40+ min builds) | Low |
+| Task                                 | Notes                                                                                                           | Priority           |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------- | ------------------ |
+| **Pocket ID SMTP via SES**           | Full SMTP support in Pocket ID (`SMTP_HOST`, `SMTP_PORT`, etc.), SES infra in `domains` repo, just needs wiring | High               |
+| **Raspberry Pi 3 DNS failover**      | `rpi3/default.nix` exists, `dns-failover.nix` exists — hardware not provisioned                                 | Medium             |
+| **Hermes OpenAI fallback**           | Just needs sops secret + model config                                                                           | Medium             |
+| **Shared flake-parts template push** | Created, needs push to `go-nix-helpers`                                                                         | Low                |
+| **File & Image Renamer**             | Disabled: charm.land/fantasy@v0.25.0 requires Go 1.26.3, nixpkgs has 1.26.2                                     | Blocked on nixpkgs |
+| **PhotoMap**                         | Port conflict resolved (moved to 8051), still disabled — podman config permission issue                         | Low                |
+| **AppArmor**                         | Commented out in `security-hardening.nix`                                                                       | Low                |
+| **DNS-over-QUIC**                    | Overlay disabled — unbound not compiled with ngtcp2, breaks binary cache (40+ min builds)                       | Low                |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
-| Issue | Severity | Details |
-|-------|----------|---------|
-| **177 non-archived status reports** | 🟡 Medium | Massive docs/status/ bloat. Archive system exists but most reports are in the active directory. Makes finding current state harder. |
-| **Dozzle module eval bug** | 🟡 Medium | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Working around with inline config in configuration.nix. Root cause unknown. |
-| **Auditd blocked by NixOS bug** | 🟡 Medium | `security.auditd.enable` broken in NixOS 26.05 — upstream issue #483085. No workaround. |
-| **Monitor365 module is 716 lines** | 🟡 Code smell | Largest service module by far. Likely has extraction opportunities. |
-| **`file-and-image-renamer` blocked** | 🟡 Low | Disabled due to Go version mismatch (needs 1.26.3, nixpkgs has 1.26.2). Waiting on nixpkgs update. |
-| **DNS-over-QUIC disabled** | 🟢 Low | Would require custom unbound build, 40+ min compile. Not worth it. |
-| **Pocket ID provision — not yet deployed** | 🟢 Low | Admin email + API fixes committed in session 128-129 but not yet deployed to evo-x2. |
+| Issue                                      | Severity      | Details                                                                                                                                                                                        |
+| ------------------------------------------ | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **177 non-archived status reports**        | 🟡 Medium     | Massive docs/status/ bloat. Archive system exists but most reports are in the active directory. Makes finding current state harder.                                                            |
+| **Dozzle module eval bug**                 | 🟡 Medium     | Creating `modules/nixos/services/dozzle.nix` with options causes `nix flake check` failure while `nix eval` works. Working around with inline config in configuration.nix. Root cause unknown. |
+| **Auditd blocked by NixOS bug**            | 🟡 Medium     | `security.auditd.enable` broken in NixOS 26.05 — upstream issue #483085. No workaround.                                                                                                        |
+| **Monitor365 module is 716 lines**         | 🟡 Code smell | Largest service module by far. Likely has extraction opportunities.                                                                                                                            |
+| **`file-and-image-renamer` blocked**       | 🟡 Low        | Disabled due to Go version mismatch (needs 1.26.3, nixpkgs has 1.26.2). Waiting on nixpkgs update.                                                                                             |
+| **DNS-over-QUIC disabled**                 | 🟢 Low        | Would require custom unbound build, 40+ min compile. Not worth it.                                                                                                                             |
+| **Pocket ID provision — not yet deployed** | 🟢 Low        | Admin email + API fixes committed in session 128-129 but not yet deployed to evo-x2.                                                                                                           |
 
 ---
 
@@ -211,48 +211,48 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS `
 
 ### P0 — High Impact, Immediate
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Deploy session 128-129 changes to evo-x2** | All committed work is untested in prod | `just switch` |
-| 2 | **Wire Pocket ID SMTP via SES** | Email verification + login notifications | Small |
-| 3 | **Add SES SMTP credentials to sops** (`pocket-id.yaml`) | Unblocks email features | Manual |
-| 4 | **Archive status reports (pre-session 100)** | Reduces noise from 177 → ~30 files | Trivial |
-| 5 | **Verify all 30+ Gatus endpoints are healthy** | Confidence in prod state | `just verify` |
+| #   | Task                                                    | Impact                                   | Effort        |
+| --- | ------------------------------------------------------- | ---------------------------------------- | ------------- |
+| 1   | **Deploy session 128-129 changes to evo-x2**            | All committed work is untested in prod   | `just switch` |
+| 2   | **Wire Pocket ID SMTP via SES**                         | Email verification + login notifications | Small         |
+| 3   | **Add SES SMTP credentials to sops** (`pocket-id.yaml`) | Unblocks email features                  | Manual        |
+| 4   | **Archive status reports (pre-session 100)**            | Reduces noise from 177 → ~30 files       | Trivial       |
+| 5   | **Verify all 30+ Gatus endpoints are healthy**          | Confidence in prod state                 | `just verify` |
 
 ### P1 — High Impact, This Week
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 6 | **Wire Hermes OpenAI fallback** (sops secret + model config) | AI gateway resilience | Small |
-| 7 | **Push shared flake-parts template to `go-nix-helpers`** | Go ecosystem standardization | Small |
-| 8 | **Investigate Dozzle module eval bug** | Clean architecture, remove workaround | Medium |
-| 9 | **Split `monitor365.nix` into sub-modules** | Maintainability | Medium |
-| 10 | **Verify BTRFS snapshot health** (daily timer running, retention working) | Disaster recovery confidence | Trivial |
+| #   | Task                                                                      | Impact                                | Effort  |
+| --- | ------------------------------------------------------------------------- | ------------------------------------- | ------- |
+| 6   | **Wire Hermes OpenAI fallback** (sops secret + model config)              | AI gateway resilience                 | Small   |
+| 7   | **Push shared flake-parts template to `go-nix-helpers`**                  | Go ecosystem standardization          | Small   |
+| 8   | **Investigate Dozzle module eval bug**                                    | Clean architecture, remove workaround | Medium  |
+| 9   | **Split `monitor365.nix` into sub-modules**                               | Maintainability                       | Medium  |
+| 10  | **Verify BTRFS snapshot health** (daily timer running, retention working) | Disaster recovery confidence          | Trivial |
 
 ### P2 — Medium Impact, This Month
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 11 | **Provision Pi 3 for DNS failover cluster** | Network resilience | Medium |
-| 12 | **Split `signoz.nix` — extract alert rules + dashboards** | Maintainability | Medium |
-| 13 | **Split `forgejo.nix` — extract runner + federation config** | Maintainability | Medium |
-| 14 | **Enable AppArmor** (when NixOS bug fixed) | Security hardening | Small |
-| 15 | **Consider Nix flake migration for `domains` repo** | Infrastructure-as-code consistency | Large |
-| 16 | **Extract `scheduled-tasks.nix` sub-timers** | Code organization | Medium |
-| 17 | **Add `emailVerificationEnabled` option to Pocket ID module** | Declarative email config | Small |
+| #   | Task                                                          | Impact                             | Effort |
+| --- | ------------------------------------------------------------- | ---------------------------------- | ------ |
+| 11  | **Provision Pi 3 for DNS failover cluster**                   | Network resilience                 | Medium |
+| 12  | **Split `signoz.nix` — extract alert rules + dashboards**     | Maintainability                    | Medium |
+| 13  | **Split `forgejo.nix` — extract runner + federation config**  | Maintainability                    | Medium |
+| 14  | **Enable AppArmor** (when NixOS bug fixed)                    | Security hardening                 | Small  |
+| 15  | **Consider Nix flake migration for `domains` repo**           | Infrastructure-as-code consistency | Large  |
+| 16  | **Extract `scheduled-tasks.nix` sub-timers**                  | Code organization                  | Medium |
+| 17  | **Add `emailVerificationEnabled` option to Pocket ID module** | Declarative email config           | Small  |
 
 ### P3 — Nice to Have
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 18 | **Enable PhotoMap** (port conflict resolved) | Photo AI features | Medium |
-| 19 | **Re-enable file-and-image-renamer** (when Go 1.26.3 lands in nixpkgs) | Desktop automation | Waiting |
-| 20 | **Voice agents — evaluate if still needed** | Clean disabled code | Small |
-| 21 | **Multi-WM (Sway) — test or remove** | Reduce bitrot risk | Medium |
-| 22 | **DNS-over-QUIC — re-evaluate** | Privacy | Low priority |
-| 23 | **Add container image digests to all images in `lib/images.nix`** | Supply chain security | Small |
-| 24 | **Minecraft server — evaluate if still wanted** | Clean disabled code | Trivial |
-| 25 | **Consider consolidating `overview` into `homepage`** | Reduce service count | Large |
+| #   | Task                                                                   | Impact                | Effort       |
+| --- | ---------------------------------------------------------------------- | --------------------- | ------------ |
+| 18  | **Enable PhotoMap** (port conflict resolved)                           | Photo AI features     | Medium       |
+| 19  | **Re-enable file-and-image-renamer** (when Go 1.26.3 lands in nixpkgs) | Desktop automation    | Waiting      |
+| 20  | **Voice agents — evaluate if still needed**                            | Clean disabled code   | Small        |
+| 21  | **Multi-WM (Sway) — test or remove**                                   | Reduce bitrot risk    | Medium       |
+| 22  | **DNS-over-QUIC — re-evaluate**                                        | Privacy               | Low priority |
+| 23  | **Add container image digests to all images in `lib/images.nix`**      | Supply chain security | Small        |
+| 24  | **Minecraft server — evaluate if still wanted**                        | Clean disabled code   | Trivial      |
+| 25  | **Consider consolidating `overview` into `homepage`**                  | Reduce service count  | Large        |
 
 ---
 
@@ -261,6 +261,7 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS `
 **Do you already have SES SMTP credentials generated for `larsartmann.cloud`, or do we need to create them in AWS?**
 
 The `domains` repo has SES configured for `larsartmann.com` (eu-west-1 + us-east-1) with SPF/DKIM/DMARC records, and there's a Resend DKIM record for the `cloud` subdomain. But I can't tell if:
+
 - SES SMTP credentials already exist and are stored somewhere accessible
 - The Resend DKIM record means you've already chosen Resend over SES for `cloud`
 - We should create new SES credentials specifically for Pocket ID's SMTP needs
@@ -271,23 +272,23 @@ This is the single blocker for wiring Pocket ID email — once we know the SMTP 
 
 ## Project Stats at a Glance
 
-| Metric | Value |
-|--------|-------|
-| Total Nix LOC | ~16,500 |
-| Service modules | 40 |
-| Enabled services | 46 |
-| Disabled services | 4 |
-| Port definitions | 35 |
-| Pinned container images | 7 |
-| Custom packages | 5 |
-| Justfile recipes | 94 |
-| Lib helpers | 9 files |
-| Overlay packages | 25 |
-| Cross-platform programs | ~40 |
-| Status reports (active) | 177 |
-| Commits (last 48h) | 15 |
-| TODO/FIXME markers | 2 (both benign) |
-| Machines managed | 2 (NixOS + Darwin) |
+| Metric                  | Value              |
+| ----------------------- | ------------------ |
+| Total Nix LOC           | ~16,500            |
+| Service modules         | 40                 |
+| Enabled services        | 46                 |
+| Disabled services       | 4                  |
+| Port definitions        | 35                 |
+| Pinned container images | 7                  |
+| Custom packages         | 5                  |
+| Justfile recipes        | 94                 |
+| Lib helpers             | 9 files            |
+| Overlay packages        | 25                 |
+| Cross-platform programs | ~40                |
+| Status reports (active) | 177                |
+| Commits (last 48h)      | 15                 |
+| TODO/FIXME markers      | 2 (both benign)    |
+| Machines managed        | 2 (NixOS + Darwin) |
 
 ---
 

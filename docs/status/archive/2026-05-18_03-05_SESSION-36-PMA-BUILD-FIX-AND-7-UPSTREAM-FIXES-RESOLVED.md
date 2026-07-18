@@ -15,6 +15,7 @@ The blockers from Session 35 have been resolved. All 7 upstream build failures a
 ## a) FULLY DONE ✅
 
 ### 1.1 — Resolved PMA Build Failure (Session 35 Blocker)
+
 - **Root cause:** `project-discovery-sdk` still imported `go-composable-business-types/programminglanguage`, which was deleted upstream
 - **Fix:** Updated `project-discovery-sdk` to rev `f019f6f` which replaces `programminglanguage` types with plain `string`/`[]string`
 - **Scope creep discovered:** `go-output` also needed updating (v0.2.0 → v0.4.1) because PMA's code used `output.RenderTableData` / `output.RenderOptions`, added in `go-output` `4c1e905`
@@ -22,6 +23,7 @@ The blockers from Session 35 have been resolved. All 7 upstream build failures a
 - **Result:** PMA builds as 35.1 MB binary ✅
 
 ### 1.2 — Simplified PMA preparedSrc
+
 - Removed stale `sed` version-bump commands (go-filewatcher v0.2.0→0.2.1, go-composable-business-types v0.3.0→0.4.0, golang.org/x/time injection)
 - Removed duplicate `require` loop for go-output sub-modules (already in go.mod)
 - Added `testhelpers` to replace for loop (missing from original)
@@ -29,32 +31,33 @@ The blockers from Session 35 have been resolved. All 7 upstream build failures a
 - Removed `overrideModAttrs` + `go mod tidy` (no longer needed — preparedSrc is self-consistent)
 
 ### 1.3 — SystemNix Deployment Ready
+
 - Updated `flake.lock`: pma input now at `c0f31ff`, go-output at `4c1e905`, SDK at `f019f6f`
 - `nix flake check --all-systems --no-build` passes ✅
 - `nix build .#packages.x86_64-linux.projects-management-automation` succeeds ✅
 
 ### All 7 Upstream Fix Summary
 
-| Package | Issue | Fix Location | Fix Applied |
-|---------|-------|-------------|-------------|
-| todo-list-ai | Stale npmDepsHash | overlays/shared.nix | Updated hash |
-| go-structure-linter | Missing go-branded-id replace + go.sum | Upstream repo | 10 commits → added replace, merged go.sum, overrideModAttrs |
-| mr-sync | Already fixed at listed rev | flake.lock | No change needed |
-| hierarchical-errors | Stale vendorHash | Upstream repo | Updated vendorHash |
-| branching-flow | Stale vendorHash | Upstream repo | Updated vendorHash |
-| jscpd | Stale pnpm hash + missing lockfile injection | pkgs/jscpd.nix | Complete rewrite with makeWrapper + src wrapping |
-| projects-management-automation | programminglanguage deleted but SDK still imports it | Upstream + SystemNix | Updated SDK + go-output + simplified preparedSrc |
+| Package                        | Issue                                                | Fix Location         | Fix Applied                                                 |
+| ------------------------------ | ---------------------------------------------------- | -------------------- | ----------------------------------------------------------- |
+| todo-list-ai                   | Stale npmDepsHash                                    | overlays/shared.nix  | Updated hash                                                |
+| go-structure-linter            | Missing go-branded-id replace + go.sum               | Upstream repo        | 10 commits → added replace, merged go.sum, overrideModAttrs |
+| mr-sync                        | Already fixed at listed rev                          | flake.lock           | No change needed                                            |
+| hierarchical-errors            | Stale vendorHash                                     | Upstream repo        | Updated vendorHash                                          |
+| branching-flow                 | Stale vendorHash                                     | Upstream repo        | Updated vendorHash                                          |
+| jscpd                          | Stale pnpm hash + missing lockfile injection         | pkgs/jscpd.nix       | Complete rewrite with makeWrapper + src wrapping            |
+| projects-management-automation | programminglanguage deleted but SDK still imports it | Upstream + SystemNix | Updated SDK + go-output + simplified preparedSrc            |
 
 ---
 
 ## b) PARTIALLY DONE 🔄
 
-| Task | Status | Why Incomplete |
-|------|--------|----------------|
-| Session 35 execution plan (35 tasks) | ~8% complete | Session was interrupted; only Task 1.1 (PMA) resolved |
-| GitHub token config (~/.config/nix/nix.conf) | ✅ Done (Task 2.1) | Configured in Session 35 |
-| Darwin verification | ⏳ Not done | Need `nix flake check --system aarch64-darwin` from MacBook |
-| rpi3-dns verification | ⏳ Not done | Need `--system aarch64-linux` check |
+| Task                                         | Status             | Why Incomplete                                              |
+| -------------------------------------------- | ------------------ | ----------------------------------------------------------- |
+| Session 35 execution plan (35 tasks)         | ~8% complete       | Session was interrupted; only Task 1.1 (PMA) resolved       |
+| GitHub token config (~/.config/nix/nix.conf) | ✅ Done (Task 2.1) | Configured in Session 35                                    |
+| Darwin verification                          | ⏳ Not done        | Need `nix flake check --system aarch64-darwin` from MacBook |
+| rpi3-dns verification                        | ⏳ Not done        | Need `--system aarch64-linux` check                         |
 
 ---
 
@@ -63,12 +66,14 @@ The blockers from Session 35 have been resolved. All 7 upstream build failures a
 The remaining ~32 tasks from the comprehensive execution plan:
 
 ### Phase 2 (Infrastructure)
+
 - 2.4 — Update AGENTS.md with session 35/36 lessons (_local_deps pattern, overrideModAttrs, transitive go.sum merging)
 - 2.5 — Squash go-structure-linter 10 commits into 1-2 clean commits
 - 2.6 — Run vendor hash audit on all Go overlays
 - 2.7 — Add `just` recipes: `update-vendor-hashes`, `test-upstream-builds`
 
 ### Phase 3 (Patterns & Architecture)
+
 - 3.1 — Create `lib/prepared-source.nix` (`mkPreparedSource` helper)
 - 3.2 — Refactor go-structure-linter, branching-flow, mr-sync, projects-management-automation to use `mkPreparedSource`
 - 3.3 — Create `overrideModAttrs` helper pattern for `_local_deps` repos
@@ -80,6 +85,7 @@ The remaining ~32 tasks from the comprehensive execution plan:
 - 3.9 — Go.sum transitive merge audit
 
 ### Phase 4 (Long-term Hardening)
+
 - 4.1 — Write upstream fix playbook
 - 4.2 — Write session 35/36 case study
 - 4.3 — Set up cachix + substituters
@@ -174,15 +180,15 @@ nix build .#packages.x86_64-linux.projects-management-automation  # ✅
 
 ## Key Files Changed (Upstream)
 
-| Repo | Commits | Key Change |
-|------|---------|-----------|
+| Repo                             | Commits             | Key Change                                                 |
+| -------------------------------- | ------------------- | ---------------------------------------------------------- |
 | `projects-management-automation` | f94cbae7 → c0f31ffc | Fix nix build: update SDK, go-output, simplify preparedSrc |
-| `project-discovery-sdk` | 2cea9b6 → f019f6f | Remove programminglanguage dependency |
-| `go-output` | eb3449c → 4c1e905 | Add RenderTableData + dispatcher |
+| `project-discovery-sdk`          | 2cea9b6 → f019f6f   | Remove programminglanguage dependency                      |
+| `go-output`                      | eb3449c → 4c1e905   | Add RenderTableData + dispatcher                           |
 
 ## Key Files Changed (SystemNix)
 
-| File | Change |
-|------|--------|
-| `flake.lock` | Pma at c0f31ffc (was f94cbae7), go-output 4c1e905 (was eb3449c), SDK f019f6f (was 2cea9b6) |
-| `docs/status/2026-05-18_03-05_SESSION-36-PMA-BUILD-FIX-AND-SCALE-STATUS.md` | This document |
+| File                                                                        | Change                                                                                     |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `flake.lock`                                                                | Pma at c0f31ffc (was f94cbae7), go-output 4c1e905 (was eb3449c), SDK f019f6f (was 2cea9b6) |
+| `docs/status/2026-05-18_03-05_SESSION-36-PMA-BUILD-FIX-AND-SCALE-STATUS.md` | This document                                                                              |

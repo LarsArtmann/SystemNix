@@ -7,18 +7,18 @@ Practical guide to reproducing, debugging, and fixing the four bugs documented i
 
 ### Key files in `drivers/gpu/drm/amd/amdgpu/`
 
-| File | Purpose |
-|------|---------|
-| `isp_v4_1_1.c` | ISP v4.1.1 block — contains `isp_genpd_remove_device()` (Bug 1 crash site) |
-| `isp_v4_1_1.h` | ISP v4.1.1 header — struct definitions |
-| `isp_common.c` | Shared ISP functions |
-| `amdgpu_device.c` | `amdgpu_device_fini_hw()` — calls ip block fini chain |
-| `amdgpu_ip_block.c` | `amdgpu_ip_block_hw_fini()` — iterates IP blocks during teardown |
-| `smu_v14_0_0.c` | SMU v14.0.0 — power/frequency management (Bug 4) |
-| `smu_v14_0_0_pptable.c` | SMU power play table |
-| `amdgpu_reset.c` | GPU reset handling (Bug 3 — "reset done" but still broken) |
-| `amdgpu_drv.c` | Module parameters, `amdgpu_pci_probe()` / `amdgpu_pci_remove()` |
-| `kfd_device.c` | KFD (Kernel Fusion Driver) — the `Sending SIGBUS` message comes from here |
+| File                    | Purpose                                                                    |
+| ----------------------- | -------------------------------------------------------------------------- |
+| `isp_v4_1_1.c`          | ISP v4.1.1 block — contains `isp_genpd_remove_device()` (Bug 1 crash site) |
+| `isp_v4_1_1.h`          | ISP v4.1.1 header — struct definitions                                     |
+| `isp_common.c`          | Shared ISP functions                                                       |
+| `amdgpu_device.c`       | `amdgpu_device_fini_hw()` — calls ip block fini chain                      |
+| `amdgpu_ip_block.c`     | `amdgpu_ip_block_hw_fini()` — iterates IP blocks during teardown           |
+| `smu_v14_0_0.c`         | SMU v14.0.0 — power/frequency management (Bug 4)                           |
+| `smu_v14_0_0_pptable.c` | SMU power play table                                                       |
+| `amdgpu_reset.c`        | GPU reset handling (Bug 3 — "reset done" but still broken)                 |
+| `amdgpu_drv.c`          | Module parameters, `amdgpu_pci_probe()` / `amdgpu_pci_remove()`            |
+| `kfd_device.c`          | KFD (Kernel Fusion Driver) — the `Sending SIGBUS` message comes from here  |
 
 ### The crash call chain (Bug 1)
 
@@ -110,11 +110,13 @@ sudo insmod ./drivers/gpu/drm/amd/amdgpu/amdgpu.ko
 ### What the bytes mean
 
 The crash instruction bytes:
+
 ```
 Code: ... 55 53 48 8b 47 58 48 89 fb <48> 8b 6e b8
 ```
 
 The `<48> 8b 6e b8` is the faulting instruction. In x86-64:
+
 - `48` = REX.W prefix (64-bit operand)
 - `8b` = MOV r64, r/m64
 - `6e` = ModRM byte: rbp, [rsi+disp8]
@@ -247,12 +249,12 @@ cat /sys/kernel/debug/tracing/trace_pipe | grep cpu_frequency
 
 ### Key files for CPU freq on Strix Halo
 
-| File | Purpose |
-|------|---------|
-| `drivers/cpufreq/amd-pstate.c` | amd-pstate governor |
-| `drivers/cpufreq/amd-pstate-ut.c` | amd-pstate unit tests |
-| `arch/x86/kernel/acpi/cppc.c` | ACPI CPPC (Collaborative Processor Performance Control) |
-| `drivers/gpu/drm/amd/pm/swsmu/smu_v14_0_0.c` | SMU firmware interface |
+| File                                         | Purpose                                                 |
+| -------------------------------------------- | ------------------------------------------------------- |
+| `drivers/cpufreq/amd-pstate.c`               | amd-pstate governor                                     |
+| `drivers/cpufreq/amd-pstate-ut.c`            | amd-pstate unit tests                                   |
+| `arch/x86/kernel/acpi/cppc.c`                | ACPI CPPC (Collaborative Processor Performance Control) |
+| `drivers/gpu/drm/amd/pm/swsmu/smu_v14_0_0.c` | SMU firmware interface                                  |
 
 On Strix Halo, amd-pstate reads CPPC tables from ACPI, but the actual frequency
 control goes through the SMU firmware via SMU messages. If the amdgpu crash

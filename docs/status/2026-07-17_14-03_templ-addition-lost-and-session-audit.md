@@ -19,6 +19,7 @@
 ### My `templ` edit to `platforms/common/packages/base.nix` is GONE
 
 **Timeline:**
+
 1. Edited `base.nix` line 187: added `templ` to Go development section
 2. `git diff` confirmed the addition (verified in tool output)
 3. `git status --short` showed ONLY `platforms/common/packages/base.nix`
@@ -32,6 +33,7 @@
 ### Pre-existing uncommitted changes I did NOT author
 
 The conversation-start snapshot said "Status: clean", but the working tree currently has 4 modified files I never touched:
+
 - `AGENTS.md`
 - `modules/nixos/services/forgejo.nix`
 - `modules/nixos/services/homepage.nix`
@@ -43,13 +45,13 @@ Per the AGENTS.md safety rule ("NEVER revert changes you didn't author"), I left
 
 ## b) PARTIALLY DONE
 
-| Item | Status |
-|------|--------|
-| `templ` added to shared `base.nix` | Was done, then lost — needs redo |
-| `nix fmt` on `base.nix` | Not needed (alejandra confirmed formatting clean) |
-| Deploy (`nix run .#deploy`) | NOT started — templ is not live on either system |
-| Post-deploy smoke test | NOT started (no deploy) |
-| Verify `templ version` on live system | NOT started |
+| Item                                  | Status                                            |
+| ------------------------------------- | ------------------------------------------------- |
+| `templ` added to shared `base.nix`    | Was done, then lost — needs redo                  |
+| `nix fmt` on `base.nix`               | Not needed (alejandra confirmed formatting clean) |
+| Deploy (`nix run .#deploy`)           | NOT started — templ is not live on either system  |
+| Post-deploy smoke test                | NOT started (no deploy)                           |
+| Verify `templ version` on live system | NOT started                                       |
 
 ---
 

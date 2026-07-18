@@ -11,12 +11,12 @@ Standardized `flake.nix` for LarsArtmann Go projects using the Nix ecosystem sta
 
 ## Placeholders
 
-| Placeholder | What to put |
-|---|---|
-| `REPLACE_ME` | Repo name (e.g. `go-auto-upgrade`) |
-| `REPLACE_ME/internal/appversion` | Your version package import path |
-| `cmd/REPLACE_ME` | Path to your main package |
-| `vendorHash` | Leave as `""` for first build |
+| Placeholder                      | What to put                        |
+| -------------------------------- | ---------------------------------- |
+| `REPLACE_ME`                     | Repo name (e.g. `go-auto-upgrade`) |
+| `REPLACE_ME/internal/appversion` | Your version package import path   |
+| `cmd/REPLACE_ME`                 | Path to your main package          |
+| `vendorHash`                     | Leave as `""` for first build      |
 
 ## Stack
 
@@ -27,14 +27,14 @@ Standardized `flake.nix` for LarsArtmann Go projects using the Nix ecosystem sta
 
 ## Standard Outputs
 
-| Output | What |
-|---|---|
-| `packages.default` | The compiled binary |
-| `apps.default` | `nix run` support |
-| `apps.test` | `go test -race -v ./...` |
-| `apps.lint` | `golangci-lint run ./...` |
-| `devShells.default` | Full dev shell (go, gopls, linter) |
-| `devShells.ci` | Minimal CI shell |
-| `checks.build` | Build verification |
-| `checks.format` | Format verification |
-| `overlays.default` | Makes package available as `pkgs.<name>` |
+| Output              | What                                     |
+| ------------------- | ---------------------------------------- |
+| `packages.default`  | The compiled binary                      |
+| `apps.default`      | `nix run` support                        |
+| `apps.test`         | `go test -race -v ./...`                 |
+| `apps.lint`         | `golangci-lint run ./...`                |
+| `devShells.default` | Full dev shell (go, gopls, linter)       |
+| `devShells.ci`      | Minimal CI shell                         |
+| `checks.build`      | Build verification                       |
+| `checks.format`     | Format verification                      |
+| `overlays.default`  | Makes package available as `pkgs.<name>` |

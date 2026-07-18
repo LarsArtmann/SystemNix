@@ -23,21 +23,23 @@ evo-x2 is **stable and fully deployed**. The vendor hash cascade from session 82
 
 Replaced Timeshift with btrbk for root (`@`) subvolume:
 
-| Aspect | Before (Timeshift) | After (btrbk) |
-|--------|-------------------|---------------|
-| Tool | Timeshift (GUI tool, `--scripted` hack) | btrbk (native BTRFS, NixOS module) |
-| Config | `environment.etc` JSON — but NixOS makes `/etc` read-only | NixOS `services.btrbk` module — declarative |
-| Schedule | `schedule_daily = false` — never ran | Daily via systemd timer |
-| Pruning | Configured but never executed | 7d minimum, 14d + 4w policy |
-| Pre-deploy | None | `just switch` auto-snapshots root |
-| Freshness check | Custom `timeshift-verify` | Custom `btrfs-verify-snapshots` |
+| Aspect          | Before (Timeshift)                                        | After (btrbk)                               |
+| --------------- | --------------------------------------------------------- | ------------------------------------------- |
+| Tool            | Timeshift (GUI tool, `--scripted` hack)                   | btrbk (native BTRFS, NixOS module)          |
+| Config          | `environment.etc` JSON — but NixOS makes `/etc` read-only | NixOS `services.btrbk` module — declarative |
+| Schedule        | `schedule_daily = false` — never ran                      | Daily via systemd timer                     |
+| Pruning         | Configured but never executed                             | 7d minimum, 14d + 4w policy                 |
+| Pre-deploy      | None                                                      | `just switch` auto-snapshots root           |
+| Freshness check | Custom `timeshift-verify`                                 | Custom `btrfs-verify-snapshots`             |
 
 **Files changed:**
+
 - `platforms/nixos/system/snapshots.nix` — complete rewrite (122 → 86 lines)
 - `justfile` — added `snapshot`, `snapshot-list`, `snapshot-migrate-data`; `switch` now auto-snapshots
 - `AGENTS.md` — added BTRFS Snapshots section, `/data` toplevel gotcha, rollback procedure
 
 **Root cause analysis — why Timeshift never worked:**
+
 1. NixOS makes `/etc` read-only via `environment.etc` — config is generated at build time
 2. Timeshift writes to `/etc/timeshift/timeshift.json` at runtime to set `do_first_run: false`
 3. On NixOS, this write silently fails → `do_first_run` stays `true` → Timeshift waits for interactive GUI setup → never runs scheduled snapshots
@@ -61,17 +63,17 @@ All completed and pushed.
 
 ### 6. Pre-commit Hooks — 9 Active
 
-| Hook | Tool | Status |
-|------|------|--------|
-| gitleaks | Secret detection | ✅ |
-| trailing-whitespace | sed | ✅ |
-| deadnix | Dead Nix code | ✅ |
-| statix | Nix linter | ✅ |
-| alejandra | Nix formatter | ✅ |
-| nix-check | Flake validation | ✅ |
-| flake-lock-validate | JSON + merge conflict check | ✅ |
-| shellcheck | Shell script linting | ✅ |
-| check-merge-conflicts | Merge markers | ✅ |
+| Hook                  | Tool                        | Status |
+| --------------------- | --------------------------- | ------ |
+| gitleaks              | Secret detection            | ✅     |
+| trailing-whitespace   | sed                         | ✅     |
+| deadnix               | Dead Nix code               | ✅     |
+| statix                | Nix linter                  | ✅     |
+| alejandra             | Nix formatter               | ✅     |
+| nix-check             | Flake validation            | ✅     |
+| flake-lock-validate   | JSON + merge conflict check | ✅     |
+| shellcheck            | Shell script linting        | ✅     |
+| check-merge-conflicts | Merge markers               | ✅     |
 
 ---
 
@@ -82,12 +84,14 @@ All completed and pushed.
 **Problem:** `/data` is mounted as BTRFS toplevel (subvolid=5, no `subvol=` in `hardware-configuration.nix`). `btrfs subvolume snapshot` **cannot snapshot the toplevel** — this is a fundamental BTRFS limitation.
 
 **Current state:**
+
 - Root (`@`) has btrbk daily snapshots ✅
 - `/data` has NO snapshots ❌
 - Migration recipe `just snapshot-migrate-data` is ready but not yet executed
 - After migration: add second btrbk instance for `/data` in snapshots.nix
 
 **What `just snapshot-migrate-data` does:**
+
 1. Stops Docker and services using `/data`
 2. Mounts toplevel at `/mnt/btrfs-data-migrate`
 3. Creates `@data` subvolume
@@ -102,12 +106,12 @@ Gatus monitors 25+ endpoints. Still missing: Hermes, Monitor365, disk-monitor, n
 
 ### 3. Upstream Repo Cleanliness
 
-| Repo | Issue | Severity |
-|------|-------|----------|
-| library-policy | 18 dirty test files + 2 dirty source files | Medium |
-| mr-sync | 1 dirty status report | Low |
-| go-filewatcher | `flake.lock` nixpkgs drift | Low |
-| file-and-image-renamer | `flake.lock` + `flake.nix` dirty, service DISABLED | Medium |
+| Repo                   | Issue                                              | Severity |
+| ---------------------- | -------------------------------------------------- | -------- |
+| library-policy         | 18 dirty test files + 2 dirty source files         | Medium   |
+| mr-sync                | 1 dirty status report                              | Low      |
+| go-filewatcher         | `flake.lock` nixpkgs drift                         | Low      |
+| file-and-image-renamer | `flake.lock` + `flake.nix` dirty, service DISABLED | Medium   |
 
 ---
 
@@ -115,33 +119,33 @@ Gatus monitors 25+ endpoints. Still missing: Hermes, Monitor365, disk-monitor, n
 
 ### Infrastructure
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Centralize `mkPreparedSource.nix` into shared flake input | 30 min | Stop copy-pasting across 5+ Go repos |
-| 2 | Add `just verify-packages` recipe to build all Go packages after `flake.lock` updates | 15 min | **#1 defense** against stale vendor hashes |
-| 3 | GitHub Actions CI for all Go repos | 1-2 hrs | Catch build breakage before SystemNix |
-| 4 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 5 | `just update-vendor-hash` recipe (set `""`, build, extract `got:`) | 15 min | Automate tedious hash cycle |
+| #   | Task                                                                                  | Effort  | Impact                                     |
+| --- | ------------------------------------------------------------------------------------- | ------- | ------------------------------------------ |
+| 1   | Centralize `mkPreparedSource.nix` into shared flake input                             | 30 min  | Stop copy-pasting across 5+ Go repos       |
+| 2   | Add `just verify-packages` recipe to build all Go packages after `flake.lock` updates | 15 min  | **#1 defense** against stale vendor hashes |
+| 3   | GitHub Actions CI for all Go repos                                                    | 1-2 hrs | Catch build breakage before SystemNix      |
+| 4   | Pre-push hook to verify Go packages build                                             | 15 min  | Last line of defense                       |
+| 5   | `just update-vendor-hash` recipe (set `""`, build, extract `got:`)                    | 15 min  | Automate tedious hash cycle                |
 
 ### Services
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 6 | Execute `just snapshot-migrate-data` — convert /data to @data subvolume | 30 min | Enable /data snapshots |
-| 7 | Add btrbk instance for /data after migration | 10 min | Complete snapshot coverage |
-| 8 | Fix photomap podman permission issue and re-enable | 1 hr | Photo visualization from Immich |
-| 9 | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
-| 10 | Minecraft server `enable = false` — needs enabling if wanted | 5 min | |
+| #   | Task                                                                    | Effort | Impact                          |
+| --- | ----------------------------------------------------------------------- | ------ | ------------------------------- |
+| 6   | Execute `just snapshot-migrate-data` — convert /data to @data subvolume | 30 min | Enable /data snapshots          |
+| 7   | Add btrbk instance for /data after migration                            | 10 min | Complete snapshot coverage      |
+| 8   | Fix photomap podman permission issue and re-enable                      | 1 hr   | Photo visualization from Immich |
+| 9   | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2)        | 30 min | AI screenshot renaming          |
+| 10  | Minecraft server `enable = false` — needs enabling if wanted            | 5 min  |                                 |
 
 ### Documentation & Housekeeping
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 11 | Archive `docs/status/` — 115 files in root, 374 in archive (7.3 MB total) | 10 min | Clutter reduction |
-| 12 | Add version ldflags to library-policy production build | 5 min | Consistency |
-| 13 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA overrideModAttrs hack |
-| 14 | Add `go-error-family` follows to branching-flow input | 2 min | Dependency dedup |
-| 15 | D2 architecture diagram of Go dependency graph | 20 min | Visualize cascade chain |
+| #   | Task                                                                      | Effort | Impact                               |
+| --- | ------------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 11  | Archive `docs/status/` — 115 files in root, 374 in archive (7.3 MB total) | 10 min | Clutter reduction                    |
+| 12  | Add version ldflags to library-policy production build                    | 5 min  | Consistency                          |
+| 13  | Publish `branching-flow/pkg/stats` as proper Go module                    | 15 min | Eliminates PMA overrideModAttrs hack |
+| 14  | Add `go-error-family` follows to branching-flow input                     | 2 min  | Dependency dedup                     |
+| 15  | D2 architecture diagram of Go dependency graph                            | 20 min | Visualize cascade chain              |
 
 ---
 
@@ -156,6 +160,7 @@ Timeshift was installed and "configured" but its scheduled snapshots **never exe
 ### 2. /data Has NEVER Had Snapshots (PARTIALLY FIXED)
 
 The entire `/data` filesystem (827 GB — Docker volumes, AI models, Steam library, all service data) has never had a single snapshot. It's mounted as BTRFS toplevel (subvolid=5) which is fundamentally unsnapshottable. This means:
+
 - No rollback capability for Docker volumes
 - No rollback for AI model changes
 - No protection against accidental deletion
@@ -197,48 +202,48 @@ The entire `/data` filesystem (827 GB — Docker volumes, AI models, Steam libra
 
 ### Critical — Prevent Disaster
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 1 | Execute /data BTRFS migration (`just snapshot-migrate-data`) | 30 min | **827 GB with zero snapshots** |
-| 2 | Add btrbk instance for /data post-migration | 10 min | Complete snapshot coverage |
-| 3 | Add `just verify-packages` recipe | 15 min | **#1 defense** against stale vendor hashes |
-| 4 | GitHub Actions CI for Go repos | 1-2 hrs | Catch stale hashes at source |
-| 5 | Automate vendor hash discovery (`just update-vendor-hash`) | 15 min | Reduce 5-min manual cycle to 30 sec |
+| #   | Task                                                         | Effort  | Why                                        |
+| --- | ------------------------------------------------------------ | ------- | ------------------------------------------ |
+| 1   | Execute /data BTRFS migration (`just snapshot-migrate-data`) | 30 min  | **827 GB with zero snapshots**             |
+| 2   | Add btrbk instance for /data post-migration                  | 10 min  | Complete snapshot coverage                 |
+| 3   | Add `just verify-packages` recipe                            | 15 min  | **#1 defense** against stale vendor hashes |
+| 4   | GitHub Actions CI for Go repos                               | 1-2 hrs | Catch stale hashes at source               |
+| 5   | Automate vendor hash discovery (`just update-vendor-hash`)   | 15 min  | Reduce 5-min manual cycle to 30 sec        |
 
 ### High — Stability & Safety
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 6 | Centralize `mkPreparedSource.nix` | 30 min | Stop copy-pasting across repos |
-| 7 | Clean up `docs/status/` (archive ~100 old reports) | 10 min | 489 files is noise |
-| 8 | Add Gatus endpoints for Hermes, Monitor365, disk/nvme monitors | 15 min | Complete observability |
-| 9 | Clean up 17 stale SSH sessions | 5 min | Housekeeping |
-| 10 | Add snapshot count to `just disk-status` | 5 min | Visibility |
+| #   | Task                                                           | Effort | Why                            |
+| --- | -------------------------------------------------------------- | ------ | ------------------------------ |
+| 6   | Centralize `mkPreparedSource.nix`                              | 30 min | Stop copy-pasting across repos |
+| 7   | Clean up `docs/status/` (archive ~100 old reports)             | 10 min | 489 files is noise             |
+| 8   | Add Gatus endpoints for Hermes, Monitor365, disk/nvme monitors | 15 min | Complete observability         |
+| 9   | Clean up 17 stale SSH sessions                                 | 5 min  | Housekeeping                   |
+| 10  | Add snapshot count to `just disk-status`                       | 5 min  | Visibility                     |
 
 ### Medium — Upstream Hygiene
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 11 | Commit library-policy test refactoring | 5 min | 18 dirty files in active repo |
-| 12 | Commit mr-sync status report | 2 min | 1 dirty file |
-| 13 | Update go-filewatcher flake.lock | 2 min | nixpkgs drift |
-| 14 | Fix file-and-image-renamer Go 1.26.3 issue | 30 min | Service is disabled |
-| 15 | Fix photomap podman permissions | 1 hr | Service is disabled |
-| 16 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
-| 17 | Add version ldflags to library-policy | 5 min | Consistency |
+| #   | Task                                                   | Effort | Why                           |
+| --- | ------------------------------------------------------ | ------ | ----------------------------- |
+| 11  | Commit library-policy test refactoring                 | 5 min  | 18 dirty files in active repo |
+| 12  | Commit mr-sync status report                           | 2 min  | 1 dirty file                  |
+| 13  | Update go-filewatcher flake.lock                       | 2 min  | nixpkgs drift                 |
+| 14  | Fix file-and-image-renamer Go 1.26.3 issue             | 30 min | Service is disabled           |
+| 15  | Fix photomap podman permissions                        | 1 hr   | Service is disabled           |
+| 16  | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack           |
+| 17  | Add version ldflags to library-policy                  | 5 min  | Consistency                   |
 
 ### Lower — Polish & Future-proofing
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 18 | D2 architecture diagram of Go dependency graph | 20 min | Visualize cascade chain |
-| 19 | Add `go-error-family` follows to branching-flow input | 2 min | Dependency dedup |
-| 20 | Port-centric test (all `ports.*` unique) | 15 min | Prevent port conflicts |
-| 21 | Reduce flake inputs from 48 | 1-2 hrs | Simplify maintenance |
-| 22 | Darwin parity testing | Ongoing | d2 overlay hack is fragile |
-| 23 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 24 | rpi3-dns sops-nix with age identity from SSH host key | 15 min | Only TODO in codebase |
-| 25 | Minecraft server enable (if wanted) | 5 min | Low priority |
+| #   | Task                                                  | Effort  | Why                        |
+| --- | ----------------------------------------------------- | ------- | -------------------------- |
+| 18  | D2 architecture diagram of Go dependency graph        | 20 min  | Visualize cascade chain    |
+| 19  | Add `go-error-family` follows to branching-flow input | 2 min   | Dependency dedup           |
+| 20  | Port-centric test (all `ports.*` unique)              | 15 min  | Prevent port conflicts     |
+| 21  | Reduce flake inputs from 48                           | 1-2 hrs | Simplify maintenance       |
+| 22  | Darwin parity testing                                 | Ongoing | d2 overlay hack is fragile |
+| 23  | Pre-push hook to verify Go packages build             | 15 min  | Last line of defense       |
+| 24  | rpi3-dns sops-nix with age identity from SSH host key | 15 min  | Only TODO in codebase      |
+| 25  | Minecraft server enable (if wanted)                   | 5 min   | Low priority               |
 
 ---
 
@@ -247,6 +252,7 @@ The entire `/data` filesystem (827 GB — Docker volumes, AI models, Steam libra
 **#1: When should we execute `/data` migration?**
 
 The migration requires:
+
 - ~30 minutes of downtime (Docker stopped, all /data services offline)
 - No external backup exists for the 827 GB on /data
 - The migration itself is safe (just `mv` within same filesystem — instant, no copy) but has risk if interrupted (power loss during move)
@@ -258,15 +264,15 @@ The migration requires:
 
 ## System Configuration Summary
 
-| Aspect | Value |
-|--------|-------|
-| Flake inputs | 48 |
-| Go package overlays | 21 (15 shared + 6 Linux-only) |
-| Service modules | 30 in `serviceModules` |
-| Pre-commit hooks | 9 |
-| Scripts | 23 |
-| Status reports | 489 total (115 root + 374 archive, 7.3 MB) |
-| Disabled services | photomap, file-and-image-renamer, minecraft |
-| Code TODOs | 1 (rpi3 sops-nix) |
-| BTRFS scrub | Monthly (root + /data) |
-| BTRFS snapshots | Root only (daily via btrbk), /data: none |
+| Aspect              | Value                                       |
+| ------------------- | ------------------------------------------- |
+| Flake inputs        | 48                                          |
+| Go package overlays | 21 (15 shared + 6 Linux-only)               |
+| Service modules     | 30 in `serviceModules`                      |
+| Pre-commit hooks    | 9                                           |
+| Scripts             | 23                                          |
+| Status reports      | 489 total (115 root + 374 archive, 7.3 MB)  |
+| Disabled services   | photomap, file-and-image-renamer, minecraft |
+| Code TODOs          | 1 (rpi3 sops-nix)                           |
+| BTRFS scrub         | Monthly (root + /data)                      |
+| BTRFS snapshots     | Root only (daily via btrbk), /data: none    |

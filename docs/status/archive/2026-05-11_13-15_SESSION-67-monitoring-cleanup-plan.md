@@ -52,12 +52,14 @@ A table of 16 prioritized tasks across P0-P2 categories, estimated at ~91 minute
 ## b) PARTIALLY DONE
 
 ### Gatus Alerting
+
 - Investigated Gatus alerting options (ntfy, Discord webhook)
 - Found Discord webhook is the best fit (Hermes Discord bot already running)
 - **Blocked**: Requires a Discord webhook URL that must be created manually in Discord
 - The Gatus config is ready to accept an `alerting.discord` block once the URL is available
 
 ### SigNoz Alert Rules
+
 - SigNoz is collecting all metrics (GPU VRAM, disk, niri health, DNS)
 - Alert rules must be configured through the SigNoz web UI (not declaratively in Nix)
 - **Blocked**: Requires manual UI configuration — no API-driven rule creation available
@@ -68,38 +70,38 @@ A table of 16 prioritized tasks across P0-P2 categories, estimated at ~91 minute
 
 ### High Impact (should do next session)
 
-| # | Task | Category | Why |
-|---|------|----------|-----|
-| 1 | **Create Discord webhook → wire into Gatus alerting** | Monitoring | Makes 22 endpoints actually alert |
-| 2 | **Configure SigNoz alert rules** (GPU >85%, disk >90%, niri down) | Monitoring | Makes metrics actionable |
-| 3 | **Reboot system** (16h+ uptime since GPU OOM, fixes deployed but not activated) | Reliability | Activates all kernel param changes |
-| 4 | **Kernel update to 7.0.6** (`just update && just switch`) | Security | Dirty Frag CVE unfixed on 7.0.1 |
-| 5 | **BIOS investigation** — check AMD CBS/PBS menus for PPT/TDP controls | Performance | 130W ceiling is hardware-limited |
-| 6 | **Extract overlays from flake.nix** to `overlays/` directory (200+ lines) | Maintenance | Reduces flake.nix from 798 lines |
-| 7 | **Archive stale docs/** — 60+ top-level status files should move to archive/ | Maintenance | Clean docs tree |
-| 8 | **Test GPU recovery chain** — simulate DRM zombie, verify auto-reboot | Reliability | Defense-in-depth validation |
-| 9 | **Fix ComfyUI CHDIR failure** — comfyui-check-venv fails | Reliability | Service broken |
-| 10 | **Fix Polkit KDE agent** — Qt platform plugin init error | Desktop | Annoying popup |
+| #   | Task                                                                            | Category    | Why                                |
+| --- | ------------------------------------------------------------------------------- | ----------- | ---------------------------------- |
+| 1   | **Create Discord webhook → wire into Gatus alerting**                           | Monitoring  | Makes 22 endpoints actually alert  |
+| 2   | **Configure SigNoz alert rules** (GPU >85%, disk >90%, niri down)               | Monitoring  | Makes metrics actionable           |
+| 3   | **Reboot system** (16h+ uptime since GPU OOM, fixes deployed but not activated) | Reliability | Activates all kernel param changes |
+| 4   | **Kernel update to 7.0.6** (`just update && just switch`)                       | Security    | Dirty Frag CVE unfixed on 7.0.1    |
+| 5   | **BIOS investigation** — check AMD CBS/PBS menus for PPT/TDP controls           | Performance | 130W ceiling is hardware-limited   |
+| 6   | **Extract overlays from flake.nix** to `overlays/` directory (200+ lines)       | Maintenance | Reduces flake.nix from 798 lines   |
+| 7   | **Archive stale docs/** — 60+ top-level status files should move to archive/    | Maintenance | Clean docs tree                    |
+| 8   | **Test GPU recovery chain** — simulate DRM zombie, verify auto-reboot           | Reliability | Defense-in-depth validation        |
+| 9   | **Fix ComfyUI CHDIR failure** — comfyui-check-venv fails                        | Reliability | Service broken                     |
+| 10  | **Fix Polkit KDE agent** — Qt platform plugin init error                        | Desktop     | Annoying popup                     |
 
 ### Medium Impact
 
-| # | Task | Category |
-|---|------|----------|
-| 11 | Nix flake standardization (67 tasks across 9 Go repos) | DX |
-| 12 | Pi 3 DNS failover provisioning | Reliability |
-| 13 | Backup verification (test restores) | Reliability |
-| 14 | Deer Flow NixOS module | Features |
-| 15 | Fix Photomap (podman permissions) | Features |
-| 16 | NixOS VM tests for critical services | DX |
-| 17 | Centralize firewall ports | Maintenance |
-| 18 | Split signoz.nix (738 lines → sub-modules) | Maintenance |
-| 19 | Fix fzf.nix hardcoded color `#a6adc8` | Theme |
-| 20 | Document bare-metal disaster recovery | Reliability |
-| 21 | Add `just validate-scripts` (shellcheck) | DX |
-| 22 | Make `do-ip6` a dns-blocker module option | Maintenance |
-| 23 | Auto-detect GPU PCI address in gpu-recovery.sh | Reliability |
-| 24 | Add power estimation widget to waybar | Desktop |
-| 25 | Update FEATURES.md | Maintenance |
+| #   | Task                                                   | Category    |
+| --- | ------------------------------------------------------ | ----------- |
+| 11  | Nix flake standardization (67 tasks across 9 Go repos) | DX          |
+| 12  | Pi 3 DNS failover provisioning                         | Reliability |
+| 13  | Backup verification (test restores)                    | Reliability |
+| 14  | Deer Flow NixOS module                                 | Features    |
+| 15  | Fix Photomap (podman permissions)                      | Features    |
+| 16  | NixOS VM tests for critical services                   | DX          |
+| 17  | Centralize firewall ports                              | Maintenance |
+| 18  | Split signoz.nix (738 lines → sub-modules)             | Maintenance |
+| 19  | Fix fzf.nix hardcoded color `#a6adc8`                  | Theme       |
+| 20  | Document bare-metal disaster recovery                  | Reliability |
+| 21  | Add `just validate-scripts` (shellcheck)               | DX          |
+| 22  | Make `do-ip6` a dns-blocker module option              | Maintenance |
+| 23  | Auto-detect GPU PCI address in gpu-recovery.sh         | Reliability |
+| 24  | Add power estimation widget to waybar                  | Desktop     |
+| 25  | Update FEATURES.md                                     | Maintenance |
 
 ---
 
@@ -109,15 +111,15 @@ Nothing broken in this session. All changes validated and committed cleanly.
 
 ### Known Issues (pre-existing)
 
-| Issue | Status |
-|-------|--------|
-| ComfyUI check-venv CHDIR failure | Broken since session 59 |
-| Polkit KDE agent Qt error | Broken since session 59 |
-| Monitor365 disabled (high RAM) | Disabled since session 59 |
-| Photomap disabled (podman perms) | Disabled since session 62 |
-| 130W power ceiling | Hardware limit, no OS fix |
-| Zero alerting on 22 Gatus endpoints | Blocked on Discord webhook |
-| Zero SigNoz alert rules | Blocked on UI configuration |
+| Issue                               | Status                      |
+| ----------------------------------- | --------------------------- |
+| ComfyUI check-venv CHDIR failure    | Broken since session 59     |
+| Polkit KDE agent Qt error           | Broken since session 59     |
+| Monitor365 disabled (high RAM)      | Disabled since session 59   |
+| Photomap disabled (podman perms)    | Disabled since session 62   |
+| 130W power ceiling                  | Hardware limit, no OS fix   |
+| Zero alerting on 22 Gatus endpoints | Blocked on Discord webhook  |
+| Zero SigNoz alert rules             | Blocked on UI configuration |
 
 ---
 
@@ -153,16 +155,16 @@ Recommendation: Start with Discord webhook for Gatus (immediate value, zero new 
 
 ## System State
 
-| Metric | Value |
-|--------|-------|
-| Kernel | 7.0.1 (stable: 7.0.6) |
-| Generation | 313 (not deployed) |
-| Uptime | ~16h |
-| Root disk | 77% (115G free) |
-| Data disk | 70% (309G free) |
-| GPU VRAM | 22.5/64 GiB |
-| Swap | 10/25 GiB |
-| Git | Clean (ahead of origin by 2 commits) |
+| Metric     | Value                                |
+| ---------- | ------------------------------------ |
+| Kernel     | 7.0.1 (stable: 7.0.6)                |
+| Generation | 313 (not deployed)                   |
+| Uptime     | ~16h                                 |
+| Root disk  | 77% (115G free)                      |
+| Data disk  | 70% (309G free)                      |
+| GPU VRAM   | 22.5/64 GiB                          |
+| Swap       | 10/25 GiB                            |
+| Git        | Clean (ahead of origin by 2 commits) |
 
 ## Commits This Session
 

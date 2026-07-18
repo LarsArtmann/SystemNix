@@ -99,33 +99,33 @@
 
 ## F) Top 25 Things To Do Next
 
-| # | Priority | Task | Effort |
-|---|----------|------|--------|
-| 1 | P0 | Deploy to evo-x2: `nh os switch .` | 5m |
-| 2 | P0 | Verify service starts: `systemctl --user status file-and-image-renamer` | 2m |
-| 3 | P0 | Verify API key exists on evo-x2: `~/.zai_api_key` | 1m |
-| 4 | P1 | Fix project's own flake.nix (proxyVendor + postPatch + vendorHash) | 15m |
-| 5 | P1 | Add `vendor/` to `.gitignore` in file-and-image-renamer | 1m |
-| 6 | P1 | Test end-to-end: drop a screenshot on Desktop, verify rename | 5m |
-| 7 | P1 | Migrate API key to sops-nix (like hermes pattern) | 20m |
-| 8 | P2 | Push file-and-image-renamer to GitHub | 5m |
-| 9 | P2 | Push cmdguard to GitHub | 5m |
-| 10 | P2 | Push go-output to GitHub | 5m |
-| 11 | P2 | Switch flake inputs from `path:` to `github:` URLs | 10m |
-| 12 | P2 | Add `nix flake check` CI for file-and-image-renamer repo | 10m |
-| 13 | P2 | Create cross-platform home-manager module in SystemNix | 30m |
-| 14 | P3 | Wire health check into service-health-check script | 10m |
-| 15 | P3 | Add to homepage dashboard | 10m |
-| 16 | P3 | Add `file-renamer stats` cron job for daily stats reporting | 15m |
-| 17 | P3 | Add log rotation config (lumberjack already in Go deps) | 10m |
-| 18 | P3 | Add Prometheus metrics endpoint for the watcher | 30m |
-| 19 | P3 | Add `deadletter` alerting (notify on dead-letter queue growth) | 20m |
-| 20 | P4 | Add `compare` command as scheduled benchmark | 15m |
-| 21 | P4 | Document integration in project's NIX_INTEGRATION.md | 10m |
-| 22 | P4 | Update project AGENTS.md with SystemNix integration info | 5m |
-| 23 | P4 | Add nix integration test (nixosTest) | 30m |
-| 24 | P4 | Add desktop file entry for `file-renamer` GUI-less operation | 5m |
-| 25 | P4 | Explore hash database persistence across rebuilds | 15m |
+| #   | Priority | Task                                                                    | Effort |
+| --- | -------- | ----------------------------------------------------------------------- | ------ |
+| 1   | P0       | Deploy to evo-x2: `nh os switch .`                                      | 5m     |
+| 2   | P0       | Verify service starts: `systemctl --user status file-and-image-renamer` | 2m     |
+| 3   | P0       | Verify API key exists on evo-x2: `~/.zai_api_key`                       | 1m     |
+| 4   | P1       | Fix project's own flake.nix (proxyVendor + postPatch + vendorHash)      | 15m    |
+| 5   | P1       | Add `vendor/` to `.gitignore` in file-and-image-renamer                 | 1m     |
+| 6   | P1       | Test end-to-end: drop a screenshot on Desktop, verify rename            | 5m     |
+| 7   | P1       | Migrate API key to sops-nix (like hermes pattern)                       | 20m    |
+| 8   | P2       | Push file-and-image-renamer to GitHub                                   | 5m     |
+| 9   | P2       | Push cmdguard to GitHub                                                 | 5m     |
+| 10  | P2       | Push go-output to GitHub                                                | 5m     |
+| 11  | P2       | Switch flake inputs from `path:` to `github:` URLs                      | 10m    |
+| 12  | P2       | Add `nix flake check` CI for file-and-image-renamer repo                | 10m    |
+| 13  | P2       | Create cross-platform home-manager module in SystemNix                  | 30m    |
+| 14  | P3       | Wire health check into service-health-check script                      | 10m    |
+| 15  | P3       | Add to homepage dashboard                                               | 10m    |
+| 16  | P3       | Add `file-renamer stats` cron job for daily stats reporting             | 15m    |
+| 17  | P3       | Add log rotation config (lumberjack already in Go deps)                 | 10m    |
+| 18  | P3       | Add Prometheus metrics endpoint for the watcher                         | 30m    |
+| 19  | P3       | Add `deadletter` alerting (notify on dead-letter queue growth)          | 20m    |
+| 20  | P4       | Add `compare` command as scheduled benchmark                            | 15m    |
+| 21  | P4       | Document integration in project's NIX_INTEGRATION.md                    | 10m    |
+| 22  | P4       | Update project AGENTS.md with SystemNix integration info                | 5m     |
+| 23  | P4       | Add nix integration test (nixosTest)                                    | 30m    |
+| 24  | P4       | Add desktop file entry for `file-renamer` GUI-less operation            | 5m     |
+| 25  | P4       | Explore hash database persistence across rebuilds                       | 15m    |
 
 ---
 
@@ -139,13 +139,13 @@ The current integration uses `path:` flake inputs which break portability. If th
 
 ## Architecture Decisions Made
 
-| Decision | Rationale |
-|----------|-----------|
-| Path-based flake inputs | Temporary; works for dev machine, avoids blocking on GitHub publish |
-| `proxyVendor = true` | Required because `go mod vendor` chokes on replace directives pointing to nix store paths |
-| `postPatch` substituteInFile | Minimal, reliable approach to rewrite go.mod at build time |
-| Systemd user service (not system) | Matches monitor365 pattern; needs user session for Desktop access |
-| ZAI_API_KEY_FILE env var | Decouples key file path from service definition; future sops migration path |
+| Decision                          | Rationale                                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------------------------- |
+| Path-based flake inputs           | Temporary; works for dev machine, avoids blocking on GitHub publish                       |
+| `proxyVendor = true`              | Required because `go mod vendor` chokes on replace directives pointing to nix store paths |
+| `postPatch` substituteInFile      | Minimal, reliable approach to rewrite go.mod at build time                                |
+| Systemd user service (not system) | Matches monitor365 pattern; needs user session for Desktop access                         |
+| ZAI_API_KEY_FILE env var          | Decouples key file path from service definition; future sops migration path               |
 
 ## Files Changed
 

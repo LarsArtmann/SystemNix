@@ -21,20 +21,20 @@ security.sudo = {
 
 ## The Contenders
 
-| | **sudo** (Sudoers) | **doas** (OpenDoas) | **run0** (systemd) |
-|---|---|---|---|
-| Origin | Todd C. Miller | Ted Unangst (OpenBSD) | Lennart Poettering (systemd) |
-| Lines of Code | ~150,000+ | ~1,000 | Built into systemd |
-| Config | `/etc/sudoers` (DSL) | `/etc/doas.conf` (5-line) | No config (uses polkit) |
-| NixOS Module | `security.sudo` (mature) | `security.doas` (mature) | No native NixOS module yet |
-| CVE History | 100+ CVEs, including **Baron Samedit** (CVE-2021-3156: unauthenticated heap overflow → full root) | **Zero CVEs** (OpenBSD provenance) | N/A (too new for CVE history) |
-| Auth | PAM | PAM / BSD Auth | polkit (systemd) |
-| Passwordless | `NOPASSWD` flag | `nopass` flag | polkit rules |
-| Persistence | `timestamp_timeout` | `persist` (5 min) | polkit session |
-| Logging | syslog, verbose | syslog, minimal | journald |
-| Env handling | Complex (`env_keep`, `secure_path`, etc.) | Simple (`keepenv`, `setenv`) | Clean slate — must use `--setenv` |
-| PTY behavior | Same TTY | Same TTY | Allocates its own PTY |
-| Architecture | setuid binary | setuid binary | No setuid — D-Bus → polkit → systemd transient unit |
+|               | **sudo** (Sudoers)                                                                                | **doas** (OpenDoas)                | **run0** (systemd)                                  |
+| ------------- | ------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------------------------------------------- |
+| Origin        | Todd C. Miller                                                                                    | Ted Unangst (OpenBSD)              | Lennart Poettering (systemd)                        |
+| Lines of Code | ~150,000+                                                                                         | ~1,000                             | Built into systemd                                  |
+| Config        | `/etc/sudoers` (DSL)                                                                              | `/etc/doas.conf` (5-line)          | No config (uses polkit)                             |
+| NixOS Module  | `security.sudo` (mature)                                                                          | `security.doas` (mature)           | No native NixOS module yet                          |
+| CVE History   | 100+ CVEs, including **Baron Samedit** (CVE-2021-3156: unauthenticated heap overflow → full root) | **Zero CVEs** (OpenBSD provenance) | N/A (too new for CVE history)                       |
+| Auth          | PAM                                                                                               | PAM / BSD Auth                     | polkit (systemd)                                    |
+| Passwordless  | `NOPASSWD` flag                                                                                   | `nopass` flag                      | polkit rules                                        |
+| Persistence   | `timestamp_timeout`                                                                               | `persist` (5 min)                  | polkit session                                      |
+| Logging       | syslog, verbose                                                                                   | syslog, minimal                    | journald                                            |
+| Env handling  | Complex (`env_keep`, `secure_path`, etc.)                                                         | Simple (`keepenv`, `setenv`)       | Clean slate — must use `--setenv`                   |
+| PTY behavior  | Same TTY                                                                                          | Same TTY                           | Allocates its own PTY                               |
+| Architecture  | setuid binary                                                                                     | setuid binary                      | No setuid — D-Bus → polkit → systemd transient unit |
 
 ---
 
@@ -133,14 +133,14 @@ The config is `wheelNeedsPassword = false`. The entire authentication bypass att
 
 run0 uses these polkit action IDs (from `org.freedesktop.systemd1.policy`):
 
-| Action ID | Purpose |
-|-----------|---------|
-| `org.freedesktop.systemd1.manage-units` | Start/stop/restart systemd units |
-| `org.freedesktop.systemd1.manage-unit-files` | Enable/disable unit files |
-| `org.freedesktop.systemd1.reload-daemon` | Daemon reload |
-| `org.freedesktop.systemd1.set-environment` | Set systemd environment |
-| `org.freedesktop.systemd1.reply-password` | Password replies |
-| `org.freedesktop.systemd1.bypass-dump-ratelimit` | Dump rate limit bypass |
+| Action ID                                        | Purpose                          |
+| ------------------------------------------------ | -------------------------------- |
+| `org.freedesktop.systemd1.manage-units`          | Start/stop/restart systemd units |
+| `org.freedesktop.systemd1.manage-unit-files`     | Enable/disable unit files        |
+| `org.freedesktop.systemd1.reload-daemon`         | Daemon reload                    |
+| `org.freedesktop.systemd1.set-environment`       | Set systemd environment          |
+| `org.freedesktop.systemd1.reply-password`        | Password replies                 |
+| `org.freedesktop.systemd1.bypass-dump-ratelimit` | Dump rate limit bypass           |
 
 Current NixOS polkit config (`/etc/polkit-1/rules.d/10-nixos.rules`) only grants access for `org.opensuse.cupspkhelper.mechanism.all-edit` to wheel. No run0 rules exist.
 
@@ -169,11 +169,10 @@ Fix: A polkit rule granting wheel passwordless access:
 
 ```javascript
 // /etc/polkit-1/rules.d/20-run0-wheel.rules
-polkit.addRule(function(action, subject) {
-    if (action.id.indexOf("org.freedesktop.systemd1.") === 0 &&
-        subject.isInGroup("wheel")) {
-        return polkit.Result.YES;
-    }
+polkit.addRule(function (action, subject) {
+  if (action.id.indexOf("org.freedesktop.systemd1.") === 0 && subject.isInGroup("wheel")) {
+    return polkit.Result.YES;
+  }
 });
 ```
 
@@ -207,15 +206,15 @@ exec run0 --pipe --no-ask-password "${env_vars[@]}" "${args[@]}"
 
 The wrapper must perfectly emulate `sudo`'s CLI parsing or every call site breaks:
 
-| sudo flag | run0 equivalent | Notes |
-|-----------|----------------|-------|
-| `sudo <cmd>` | `run0 --pipe <cmd>` | Works |
-| `sudo -u user <cmd>` | `run0 --pipe -u user <cmd>` | Works |
-| `sudo -i` | `run0 --pipe -i` | run0 has `-i` (via-shell + chdir ~) |
-| `sudo -s` | `run0 --pipe --via-shell` | Different flag name |
-| `sudo -A` | No equivalent | run0 has no askpass support |
-| `sudo env FOO=bar cmd` | Must parse and convert to `--setenv` | Wrapper needed |
-| `sudo -n` (non-interactive) | `--no-ask-password` | Different flag |
+| sudo flag                   | run0 equivalent                      | Notes                               |
+| --------------------------- | ------------------------------------ | ----------------------------------- |
+| `sudo <cmd>`                | `run0 --pipe <cmd>`                  | Works                               |
+| `sudo -u user <cmd>`        | `run0 --pipe -u user <cmd>`          | Works                               |
+| `sudo -i`                   | `run0 --pipe -i`                     | run0 has `-i` (via-shell + chdir ~) |
+| `sudo -s`                   | `run0 --pipe --via-shell`            | Different flag name                 |
+| `sudo -A`                   | No equivalent                        | run0 has no askpass support         |
+| `sudo env FOO=bar cmd`      | Must parse and convert to `--setenv` | Wrapper needed                      |
+| `sudo -n` (non-interactive) | `--no-ask-password`                  | Different flag                      |
 
 #### Problem 5: Performance overhead
 
@@ -256,35 +255,35 @@ $sudo <package>/bin/<command> "$@"
 
 ### Affected NixOS modules (in nixpkgs)
 
-| Module | Usage |
-|--------|-------|
-| `services.web-apps.nextcloud` | `sudo -u nextcloud` CLI wrapper |
-| `services.web-apps.mastodon` | `sudo -u mastodon` for `tootctl` |
-| `services.web-apps.snipe-it` | `sudo -u <user>` for `artisan` |
-| `services.web-apps.pixelfed` | `sudo -u <user>` for `artisan` |
-| `services.web-apps.monica` | `sudo -u <user>` for CLI |
-| `services.web-apps.agorakit` | `sudo -u <user>` for `artisan` |
-| `services.web-apps.pretix` | `sudo -u pretix` with `--preserve-env` |
-| `services.web-apps.pretalx` | `sudo -u pretalx` with `--preserve-env` |
-| `services.web-apps.healthchecks` | `sudo -u healthchecks -E` |
-| `services.web-apps.gancio` | `sudo -u gancio` |
-| `services.web-apps.mediawiki` | `sudo -u <user> --` |
-| `services.web-apps.mediagoblin` | `sudo -u mediagoblin` |
-| `services.web-apps.glitchtip` | `sudo -E -u glitchtip` |
-| `services.web-apps.froide-govplan` | `sudo -u govplan` |
-| `services.web-apps.pdfding` | `sudo -E -u pdfding` |
-| `services.misc.paperless` | `sudo -u paperless -E` |
-| `services.misc.omnom` | `sudo -u omnom` |
-| `services.mail.mailman` | `sudo -u mailman` |
-| `services.monitoring.librenms` | `sudo -u librenms` (artisan + lnms) |
-| `services.security.crowdsec` | `sudo -u crowdsec` for `cscli` |
-| `services.networking.pihole-ftl` | `sudo -u pihole` |
-| `services.networking.kresd` | `sudo -u knot-resolver` |
-| `services.web-apps.libretranslate` | `sudo -u libretranslate --preserve-env` |
-| `services.web-apps.akkoma` | `sudo -u akkoma` for `pleroma_ctl` |
-| `services.development.zammad` | `sudo -u zammad` |
-| `services.backup.borgmatic` | `${pkgs.sudo}/bin/sudo -u <user>` (references package directly) |
-| `services.home-automation.homebridge` | `sudo -n systemctl restart homebridge` |
+| Module                                | Usage                                                           |
+| ------------------------------------- | --------------------------------------------------------------- |
+| `services.web-apps.nextcloud`         | `sudo -u nextcloud` CLI wrapper                                 |
+| `services.web-apps.mastodon`          | `sudo -u mastodon` for `tootctl`                                |
+| `services.web-apps.snipe-it`          | `sudo -u <user>` for `artisan`                                  |
+| `services.web-apps.pixelfed`          | `sudo -u <user>` for `artisan`                                  |
+| `services.web-apps.monica`            | `sudo -u <user>` for CLI                                        |
+| `services.web-apps.agorakit`          | `sudo -u <user>` for `artisan`                                  |
+| `services.web-apps.pretix`            | `sudo -u pretix` with `--preserve-env`                          |
+| `services.web-apps.pretalx`           | `sudo -u pretalx` with `--preserve-env`                         |
+| `services.web-apps.healthchecks`      | `sudo -u healthchecks -E`                                       |
+| `services.web-apps.gancio`            | `sudo -u gancio`                                                |
+| `services.web-apps.mediawiki`         | `sudo -u <user> --`                                             |
+| `services.web-apps.mediagoblin`       | `sudo -u mediagoblin`                                           |
+| `services.web-apps.glitchtip`         | `sudo -E -u glitchtip`                                          |
+| `services.web-apps.froide-govplan`    | `sudo -u govplan`                                               |
+| `services.web-apps.pdfding`           | `sudo -E -u pdfding`                                            |
+| `services.misc.paperless`             | `sudo -u paperless -E`                                          |
+| `services.misc.omnom`                 | `sudo -u omnom`                                                 |
+| `services.mail.mailman`               | `sudo -u mailman`                                               |
+| `services.monitoring.librenms`        | `sudo -u librenms` (artisan + lnms)                             |
+| `services.security.crowdsec`          | `sudo -u crowdsec` for `cscli`                                  |
+| `services.networking.pihole-ftl`      | `sudo -u pihole`                                                |
+| `services.networking.kresd`           | `sudo -u knot-resolver`                                         |
+| `services.web-apps.libretranslate`    | `sudo -u libretranslate --preserve-env`                         |
+| `services.web-apps.akkoma`            | `sudo -u akkoma` for `pleroma_ctl`                              |
+| `services.development.zammad`         | `sudo -u zammad`                                                |
+| `services.backup.borgmatic`           | `${pkgs.sudo}/bin/sudo -u <user>` (references package directly) |
+| `services.home-automation.homebridge` | `sudo -n systemctl restart homebridge`                          |
 
 These are **not optional** — they're the standard NixOS pattern for privilege-dropping CLI wrappers. Even if you don't use these services today, enabling any of them with `sudo` removed will silently break.
 
@@ -298,30 +297,30 @@ NixOS already has a module (`security/run0.nix`) that creates a shell script nam
 
 ### doas
 
-| Step | Effort | Risk |
-|------|--------|------|
-| Flip NixOS module options | 5 min | Zero |
-| Audit justfile for `sudo` → `doas` | 15 min | Low |
-| Audit scripts/ for `sudo` | 15 min | Low |
-| Audit modules/ for `sudo` (gitea-repos.nix) | 10 min | Medium |
-| Test every `just` command works with `doas` | 30 min | Medium |
+| Step                                                    | Effort | Risk   |
+| ------------------------------------------------------- | ------ | ------ |
+| Flip NixOS module options                               | 5 min  | Zero   |
+| Audit justfile for `sudo` → `doas`                      | 15 min | Low    |
+| Audit scripts/ for `sudo`                               | 15 min | Low    |
+| Audit modules/ for `sudo` (gitea-repos.nix)             | 10 min | Medium |
+| Test every `just` command works with `doas`             | 30 min | Medium |
 | Check for hardcoded `sudo` in NixOS module dependencies | 30 min | Medium |
-| Verify no tools break without `sudo` binary | 1 hour | High |
+| Verify no tools break without `sudo` binary             | 1 hour | High   |
 
 **Total: ~2.5 hours of careful work + testing**
 
 ### run0 (via sudo symlink + wrapper)
 
-| Step | Effort | Risk |
-|------|--------|------|
-| Write and test polkit rule | 30 min | Medium |
-| Write sudo-compat wrapper script | 2 hours | High |
-| Test every `just` command through wrapper | 1 hour | High |
-| Test embedded terminal (Crush) compatibility | 30 min | High |
-| Test SSH session compatibility | 30 min | High |
-| Test systemd service scripts (gitea-repos) | 30 min | High |
+| Step                                            | Effort   | Risk      |
+| ----------------------------------------------- | -------- | --------- |
+| Write and test polkit rule                      | 30 min   | Medium    |
+| Write sudo-compat wrapper script                | 2 hours  | High      |
+| Test every `just` command through wrapper       | 1 hour   | High      |
+| Test embedded terminal (Crush) compatibility    | 30 min   | High      |
+| Test SSH session compatibility                  | 30 min   | High      |
+| Test systemd service scripts (gitea-repos)      | 30 min   | High      |
 | Handle edge cases (env vars, exit codes, flags) | 2+ hours | Very High |
-| Add emergency fallback (keep sudo installed) | 30 min | Medium |
+| Add emergency fallback (keep sudo installed)    | 30 min   | Medium    |
 
 **Total: ~7+ hours, and the result is still fragile**
 

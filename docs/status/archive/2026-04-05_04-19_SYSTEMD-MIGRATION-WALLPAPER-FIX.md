@@ -34,6 +34,7 @@ Socket file '/run/user/1000/wayland-1-awww-daemon.sock' not found.
 **Before:** Spawned inline in `spawn-at-startup` with no restart on failure.
 
 **After:** `swayidle.service` — long-running daemon with `Restart=on-failure`.
+
 - 5 min idle → `swaylock -f`
 - 10 min idle → `systemctl suspend`
 - Before sleep → `swaylock -f`
@@ -60,22 +61,22 @@ A second kitty instance now opens at startup running `sudo btop` for system moni
 
 ### `spawn-at-startup` (Niri-managed, short-lived)
 
-| Entry | Purpose |
-|-------|---------|
-| `kitty` | Terminal |
+| Entry                          | Purpose        |
+| ------------------------------ | -------------- |
+| `kitty`                        | Terminal       |
 | `kitty -e fish -c "sudo btop"` | System monitor |
 
 Only interactive applications remain in `spawn-at-startup`. These are not daemons — they don't need restart or dependency management.
 
 ### `systemd.user.services` (Daemon lifecycle management)
 
-| Service | Type | Restart | Dependencies | Description |
-|---------|------|---------|-------------|-------------|
-| `awww-daemon` | `simple` | `on-failure` | `After=graphical-session.target` | Wallpaper daemon (socket at `$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY-awww-daemon.sock`) |
-| `awww-wallpaper` | `oneshot` | no | `Requires=awww-daemon.service`, `After=awww-daemon.service` | Picks random wallpaper from `/home/lars/projects/wallpapers/` on login |
-| `swayidle` | `simple` | `on-failure` | `After=graphical-session.target` | Idle management (lock at 5m, suspend at 10m) |
-| `cliphist` | `simple` | `on-failure` | `After=graphical-session.target` | Clipboard history via `wl-paste --watch cliphist store` |
-| `dunst` | `simple` | HM-managed | `After=graphical-session.target` | Notification daemon (managed by `services.dunst` in home.nix) |
+| Service          | Type      | Restart      | Dependencies                                                | Description                                                                       |
+| ---------------- | --------- | ------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `awww-daemon`    | `simple`  | `on-failure` | `After=graphical-session.target`                            | Wallpaper daemon (socket at `$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY-awww-daemon.sock`) |
+| `awww-wallpaper` | `oneshot` | no           | `Requires=awww-daemon.service`, `After=awww-daemon.service` | Picks random wallpaper from `/home/lars/projects/wallpapers/` on login            |
+| `swayidle`       | `simple`  | `on-failure` | `After=graphical-session.target`                            | Idle management (lock at 5m, suspend at 10m)                                      |
+| `cliphist`       | `simple`  | `on-failure` | `After=graphical-session.target`                            | Clipboard history via `wl-paste --watch cliphist store`                           |
+| `dunst`          | `simple`  | HM-managed   | `After=graphical-session.target`                            | Notification daemon (managed by `services.dunst` in home.nix)                     |
 
 All services use `PartOf=graphical-session.target` and `WantedBy=graphical-session.target` for clean start/stop with the desktop session.
 
@@ -83,13 +84,13 @@ All services use `PartOf=graphical-session.target` and `WantedBy=graphical-sessi
 
 ## Commit History (This Session)
 
-| Commit | Description |
-|--------|-------------|
+| Commit    | Description                                                                                    |
+| --------- | ---------------------------------------------------------------------------------------------- |
 | `1a415b1` | Add `awww-daemon` to startup (initial fix attempt — daemon spawned but client had no ordering) |
-| `b38f87e` | Wait for awww-daemon socket before wallpaper init (socket polling approach) |
-| `596c414` | Migrate awww-daemon and wallpaper to systemd user services (first systemd migration) |
-| `c730661` | Migrate swayidle/dunst/cliphist to systemd services (complete migration) |
-| `d5951ba` | Add btop with sudo to startup applications |
+| `b38f87e` | Wait for awww-daemon socket before wallpaper init (socket polling approach)                    |
+| `596c414` | Migrate awww-daemon and wallpaper to systemd user services (first systemd migration)           |
+| `c730661` | Migrate swayidle/dunst/cliphist to systemd services (complete migration)                       |
+| `d5951ba` | Add btop with sudo to startup applications                                                     |
 
 ---
 
@@ -116,8 +117,8 @@ All services use `PartOf=graphical-session.target` and `WantedBy=graphical-sessi
 
 ## Uncommitted Changes
 
-| File | Change |
-|------|--------|
+| File                                        | Change                                                     |
+| ------------------------------------------- | ---------------------------------------------------------- |
 | `platforms/nixos/programs/niri-wrapped.nix` | Added `kitty -e fish -c "sudo btop"` to `spawn-at-startup` |
 
 The monitoring.nix and sops.nix files shown in git status at session start had already been committed in a prior session.

@@ -15,20 +15,20 @@ The most critical unsolved issue is a **`nix-ssh-config` build error** (`duplica
 
 **Key numbers:**
 
-| Metric | Value |
-|--------|-------|
-| Nix files | 96 (12,211 lines) |
-| Go files | 19 (7,643 lines) |
-| Service modules | 27 |
-| Custom packages | 7 |
-| Total tasks tracked | 95 |
-| Tasks done | 62 (65%) |
-| Tasks blocked on evo-x2 | 25 (76% of remaining) |
-| Commits since Apr 24 | 67 |
-| Commits since Apr 20 | 167 |
-| Justfile recipes | 155 (1,935 lines) |
-| Git branch | `master` (clean, pushed) |
-| Binary cache hit ratio | 64% (fixed from 0% this week) |
+| Metric                  | Value                         |
+| ----------------------- | ----------------------------- |
+| Nix files               | 96 (12,211 lines)             |
+| Go files                | 19 (7,643 lines)              |
+| Service modules         | 27                            |
+| Custom packages         | 7                             |
+| Total tasks tracked     | 95                            |
+| Tasks done              | 62 (65%)                      |
+| Tasks blocked on evo-x2 | 25 (76% of remaining)         |
+| Commits since Apr 24    | 67                            |
+| Commits since Apr 20    | 167                           |
+| Justfile recipes        | 155 (1,935 lines)             |
+| Git branch              | `master` (clean, pushed)      |
+| Binary cache hit ratio  | 64% (fixed from 0% this week) |
 
 ---
 
@@ -37,12 +37,14 @@ The most critical unsolved issue is a **`nix-ssh-config` build error** (`duplica
 Tasks verified against actual code in this session. All evidence double-checked.
 
 ### P0 — CRITICAL (6/6 = 100%)
+
 - Git hygiene clean: no unpushed commits, no stashes, no stale remote branches
 - Status docs archived (132 in `docs/status/archive/`, 16 retained)
 - Status README.md rewritten (6 lines)
 - "29 modules" → correct count fixed across all docs
 
 ### P2 — RELIABILITY (11/11 = 100%)
+
 - All long-running services have `Restart=on-failure`
 - WatchdogSec=30 on caddy, gitea, authelia, taskchampion, hermes, homepage, immich, signoz, photomap (WatchdogSec=60 on comfyui, minecraft)
 - Dead let bindings, pager conflicts, font compatibility, udisks2 all verified
@@ -50,6 +52,7 @@ Tasks verified against actual code in this session. All evidence double-checked.
 - `meta.homepage` on emeet-pixyd (line 22)
 
 ### P3 — CODE QUALITY (9/9 = 100%)
+
 - Deadnix unused params fixed in all 12 service modules
 - Git ignores deduplicated
 - GPG program cross-platform conditional in git.nix:53-59
@@ -58,12 +61,14 @@ Tasks verified against actual code in this session. All evidence double-checked.
 - Unfree allowlist cleaned
 
 ### P4 — ARCHITECTURE (7/7 = 100%)
+
 - `lib/systemd.nix` shared hardening helper created
 - Preferences.nix wired to theming
 - Niri session restore converted to module options (sessionSaveInterval, maxSessionAgeDays, fallbackApps at niri-wrapped.nix:308-361)
 - All 4 enable-toggles batches applied (services, desktop, security, monitoring)
 
 ### P7 — TOOLING & CI (10/10 = 100%)
+
 - 3 GitHub Actions workflows (nix-check, go-test, flake-update)
 - Eval smoke tests fixed (no `|| true`)
 - Alejandra replacing nixpkgs-fmt
@@ -73,6 +78,7 @@ Tasks verified against actual code in this session. All evidence double-checked.
 - Taskwarrior daily backup timer in taskwarrior.nix:168
 
 ### P8 — DOCUMENTATION (5/5 = 100%)
+
 - README.md updated with all 13 services, DNS failover, commands
 - AGENTS.md DNS Failover Cluster section
 - ADR-005 for niri session restore design
@@ -80,12 +86,14 @@ Tasks verified against actual code in this session. All evidence double-checked.
 - CONTRIBUTING.md with patterns, hooks, architecture
 
 ### Proactive Cleanup (beyond original plan)
+
 - Removed 8 dead platform files (628 lines)
 - Fixed `{…}:` → `_:` anti-pattern in darwin/environment.nix
 - Fixed `pkgs.lib.mkForce` → `lib.mkForce` in ai-stack.nix
 - Cleaned dead imports in configuration.nix
 
 ### Cache Performance Fix (this week, commit `97bf8fd`, `b586ed0`)
+
 - Fixed 0% → 64% binary cache hit ratio
 - Removed redundant goOverlay (identical version, different derivation hash)
 - Disabled unboundDoQOverlay (cascaded to rebuild ffmpeg, linux, pipewire)
@@ -99,24 +107,25 @@ Tasks verified against actual code in this session. All evidence double-checked.
 
 ### P6 — SERVICES (9/15 = 60%)
 
-| Task | Status | What's Done | What's Left |
-|------|--------|-------------|-------------|
-| #56 ComfyUI hardcoded paths | ACCEPTABLE | Module options exist with defaults | Defaults are hardcoded to `/home/lars/` paths — designed for override |
-| #58 ComfyUI dedicated user | ACCEPTABLE | WatchdogSec + MemoryMax done | Runs as `lars` for GPU group access — acceptable tradeoff |
-| #62 Hermes health check | PENDING | Service runs, has WatchdogSec | Needs `/health` endpoint in Hermes codebase (external dep) |
-| #63 Hermes key_env migration | PENDING | Most providers use key_env | `mergeEnvScript` is redundant but low risk |
-| #65 SigNoz missing metrics | BLOCKED | Collector scraping node_exporter + cAdvisor | Need evo-x2 to verify 10 additional service metric endpoints |
-| #66 Authelia SMTP | BLOCKED | Authelia SSO running | SMTP credentials needed for notification emails |
+| Task                         | Status     | What's Done                                 | What's Left                                                           |
+| ---------------------------- | ---------- | ------------------------------------------- | --------------------------------------------------------------------- |
+| #56 ComfyUI hardcoded paths  | ACCEPTABLE | Module options exist with defaults          | Defaults are hardcoded to `/home/lars/` paths — designed for override |
+| #58 ComfyUI dedicated user   | ACCEPTABLE | WatchdogSec + MemoryMax done                | Runs as `lars` for GPU group access — acceptable tradeoff             |
+| #62 Hermes health check      | PENDING    | Service runs, has WatchdogSec               | Needs `/health` endpoint in Hermes codebase (external dep)            |
+| #63 Hermes key_env migration | PENDING    | Most providers use key_env                  | `mergeEnvScript` is redundant but low risk                            |
+| #65 SigNoz missing metrics   | BLOCKED    | Collector scraping node_exporter + cAdvisor | Need evo-x2 to verify 10 additional service metric endpoints          |
+| #66 Authelia SMTP            | BLOCKED    | Authelia SSO running                        | SMTP credentials needed for notification emails                       |
 
 ### P1 — SECURITY (3/7 = 43%)
 
-| Task | Status | What's Done | What's Left |
-|------|--------|-------------|-------------|
-| #9 Voice Agents digest | BLOCKED | Version-tagged `1.0.0` (not `latest`) | Pull SHA256 digest on evo-x2 |
-| #10 PhotoMap digest | BLOCKED | Version-tagged `1.0.0` (not `latest`) | Pull SHA256 digest on evo-x2 |
-| #11 VRRP auth | BLOCKED | dns-failover module has `authPassword` option | Move default to sops secret |
+| Task                   | Status  | What's Done                                   | What's Left                  |
+| ---------------------- | ------- | --------------------------------------------- | ---------------------------- |
+| #9 Voice Agents digest | BLOCKED | Version-tagged `1.0.0` (not `latest`)         | Pull SHA256 digest on evo-x2 |
+| #10 PhotoMap digest    | BLOCKED | Version-tagged `1.0.0` (not `latest`)         | Pull SHA256 digest on evo-x2 |
+| #11 VRRP auth          | BLOCKED | dns-failover module has `authPassword` option | Move default to sops secret  |
 
 ### DNS-over-QUIC
+
 - Feature disabled but code preserved in comments
 - Needs isolated approach (separate derivation, not global overlay)
 
@@ -125,45 +134,48 @@ Tasks verified against actual code in this session. All evidence double-checked.
 ## C) NOT STARTED ⬜
 
 ### P5 — DEPLOYMENT & VERIFICATION (0/13 = 0%)
+
 All 13 tasks require physical access to evo-x2:
 
-| # | Task | Est. |
-|---|------|------|
-| 41 | `just switch` — deploy all pending changes | 45m+ |
-| 42 | Verify Ollama works | 5m |
-| 43 | Verify Steam works | 5m |
-| 44 | Verify ComfyUI works | 5m |
-| 45 | Verify Caddy HTTPS block page | 3m |
-| 46 | Verify SigNoz collecting metrics/logs/traces | 5m |
-| 47 | Check Authelia SSO status | 3m |
-| 48 | Check PhotoMap service status | 3m |
-| 49 | Verify AMD NPU with test workload | 10m |
-| 50 | Build Pi 3 SD image | 30m+ |
-| 51 | Flash SD + boot Pi 3 | 15m |
-| 52 | Test DNS failover | 10m |
-| 53 | Configure LAN devices for DNS VIP | 10m |
+| #   | Task                                         | Est. |
+| --- | -------------------------------------------- | ---- |
+| 41  | `just switch` — deploy all pending changes   | 45m+ |
+| 42  | Verify Ollama works                          | 5m   |
+| 43  | Verify Steam works                           | 5m   |
+| 44  | Verify ComfyUI works                         | 5m   |
+| 45  | Verify Caddy HTTPS block page                | 3m   |
+| 46  | Verify SigNoz collecting metrics/logs/traces | 5m   |
+| 47  | Check Authelia SSO status                    | 3m   |
+| 48  | Check PhotoMap service status                | 3m   |
+| 49  | Verify AMD NPU with test workload            | 10m  |
+| 50  | Build Pi 3 SD image                          | 30m+ |
+| 51  | Flash SD + boot Pi 3                         | 15m  |
+| 52  | Test DNS failover                            | 10m  |
+| 53  | Configure LAN devices for DNS VIP            | 10m  |
 
 ### P9 — FUTURE / RESEARCH (2/12 investigated = 17%)
+
 All 10 uninvestigated tasks are research/architecture items with no immediate action:
 
-| # | Task | Category |
-|---|------|----------|
-| 86 | homeModules pattern for HM via flake-parts | ARCH |
-| 87 | Package ComfyUI as proper Nix derivation | ARCH |
-| 88 | Investigate lldap/Kanidm for unified auth | ARCH |
-| 89 | Migrate Pi 3 from linux-rpi to nixos-hardware | ARCH |
-| 91 | Add NixOS VM tests for critical services | TESTING |
-| 92 | Investigate binary cache (Cachix) | PERF |
-| 93 | Add Waybar module for session restore stats | FEATURE |
-| 94 | Add real-time save via niri event-stream | FEATURE |
-| 95 | Add integration tests for session restore | TESTING |
-| 96 | File nixpkgs issue for hipblaslt Tensile | UPSTREAM |
+| #   | Task                                          | Category |
+| --- | --------------------------------------------- | -------- |
+| 86  | homeModules pattern for HM via flake-parts    | ARCH     |
+| 87  | Package ComfyUI as proper Nix derivation      | ARCH     |
+| 88  | Investigate lldap/Kanidm for unified auth     | ARCH     |
+| 89  | Migrate Pi 3 from linux-rpi to nixos-hardware | ARCH     |
+| 91  | Add NixOS VM tests for critical services      | TESTING  |
+| 92  | Investigate binary cache (Cachix)             | PERF     |
+| 93  | Add Waybar module for session restore stats   | FEATURE  |
+| 94  | Add real-time save via niri event-stream      | FEATURE  |
+| 95  | Add integration tests for session restore     | TESTING  |
+| 96  | File nixpkgs issue for hipblaslt Tensile      | UPSTREAM |
 
 ### Service-Specific Blocked Tasks
-| # | Task | Blocker |
-|---|------|---------|
-| 67 | Immich backup restore test | Needs evo-x2 |
-| 68 | Twenty CRM backup restore test | Needs evo-x2 |
+
+| #   | Task                           | Blocker      |
+| --- | ------------------------------ | ------------ |
+| 67  | Immich backup restore test     | Needs evo-x2 |
+| 68  | Twenty CRM backup restore test | Needs evo-x2 |
 
 ---
 
@@ -173,17 +185,17 @@ All 10 uninvestigated tasks are research/architecture items with no immediate ac
 
 **Evidence claims that were wrong:**
 
-| What was claimed | Actual truth | Impact |
-|-----------------|-------------|--------|
-| P1-9: "latest tag in voice-agents.nix" | Version-tagged `1.0.0` — not `latest` | Inflated severity, wrong blocker description |
-| P1-10: "latest tag in photomap.nix" | Version-tagged `1.0.0` — not `latest` | Same |
-| P8: "6/6 DONE" | Only 5 tasks (79–83). Task #84 never existed | Wrong count, inflated done total |
-| P6: "11/15 DONE" | Only 7 done + 2 acceptable = 9 at most | Overstated by 2 tasks |
-| Summary: "60 done, 96 tasks, 63%" | Actually 95 tasks (no #84), 62 done, 65% | Wrong on every axis |
-| P2-18: "fonts.nix:6" | `packages/fonts.nix:6` (wrong directory) | Misleading reference |
-| P2-19: "configuration.nix:154" | Actually line 144 | Stale reference |
-| P7-76: "Removed LC_ALL and LC_CTYPE" | LC_CTYPE still exists in fish.nix:17 | False claim |
-| SigNoz: "lines 294-300" | Actually lines 287-298 | Stale reference |
+| What was claimed                       | Actual truth                                 | Impact                                       |
+| -------------------------------------- | -------------------------------------------- | -------------------------------------------- |
+| P1-9: "latest tag in voice-agents.nix" | Version-tagged `1.0.0` — not `latest`        | Inflated severity, wrong blocker description |
+| P1-10: "latest tag in photomap.nix"    | Version-tagged `1.0.0` — not `latest`        | Same                                         |
+| P8: "6/6 DONE"                         | Only 5 tasks (79–83). Task #84 never existed | Wrong count, inflated done total             |
+| P6: "11/15 DONE"                       | Only 7 done + 2 acceptable = 9 at most       | Overstated by 2 tasks                        |
+| Summary: "60 done, 96 tasks, 63%"      | Actually 95 tasks (no #84), 62 done, 65%     | Wrong on every axis                          |
+| P2-18: "fonts.nix:6"                   | `packages/fonts.nix:6` (wrong directory)     | Misleading reference                         |
+| P2-19: "configuration.nix:154"         | Actually line 144                            | Stale reference                              |
+| P7-76: "Removed LC_ALL and LC_CTYPE"   | LC_CTYPE still exists in fish.nix:17         | False claim                                  |
+| SigNoz: "lines 294-300"                | Actually lines 287-298                       | Stale reference                              |
 
 **Lesson:** Status documents must be verified against code, not copied from prior sessions.
 
@@ -245,33 +257,33 @@ All 10 uninvestigated tasks are research/architecture items with no immediate ac
 
 Ranked by impact and unblocked status.
 
-| # | Priority | Action | Est. | Blocked? | Category |
-|---|----------|--------|------|----------|----------|
-| 1 | 🔴 P0 | Fix `nix-ssh-config` duplicate `environment.etc` build error | 30m | Upstream | BLOCKER |
-| 2 | 🔴 P0 | `just switch` on evo-x2 — deploy all 67+ pending commits | 45m | evo-x2 | DEPLOY |
-| 3 | 🔴 P1 | Verify full build succeeds end-to-end after nix-ssh-config fix | 10m | #1 | VERIFY |
-| 4 | 🔴 P1 | Move Taskwarrior encryption to sops-nix (#7) | 10m | evo-x2 | SECURITY |
-| 5 | 🔴 P1 | Pin Docker digest for Voice Agents (#9) | 5m | evo-x2 | SECURITY |
-| 6 | 🔴 P1 | Pin Docker digest for PhotoMap (#10) | 5m | evo-x2 | SECURITY |
-| 7 | 🔴 P1 | Secure VRRP auth_pass with sops-nix (#11) | 8m | evo-x2 | SECURITY |
-| 8 | 🟡 P2 | Verify Ollama, Steam, ComfyUI, Caddy after deploy (#42-45) | 20m | evo-x2 | VERIFY |
-| 9 | 🟡 P2 | Verify SigNoz collecting metrics/logs/traces (#46) | 5m | evo-x2 | VERIFY |
-| 10 | 🟡 P2 | Check Authelia SSO + PhotoMap status (#47-48) | 6m | evo-x2 | VERIFY |
-| 11 | 🟡 P2 | Verify AMD NPU with test workload (#49) | 10m | evo-x2 | VERIFY |
-| 12 | 🟡 P2 | Create `just cache-check` command (dry-run + fetch ratio) | 20m | No | TOOLING |
-| 13 | 🟡 P2 | Document nixpkgs pinning + overlay safety policy in AGENTS.md | 15m | No | DOCS |
-| 14 | 🟡 P2 | Fix `with lib;` in signoz.nix, dnsblockd-processor, monitor365 | 5m | No | QUALITY |
-| 15 | 🟢 P3 | Isolate unbound DoQ into separate derivation (not global overlay) | 60m | No | ARCH |
-| 16 | 🟢 P3 | Build Pi 3 SD image + test DNS failover (#50-52) | 55m | evo-x2+Pi | DEPLOY |
-| 17 | 🟢 P3 | Hermes health check endpoint (#62) | 60m | Hermes | SERVICE |
-| 18 | 🟢 P3 | SigNoz missing metrics investigation (#65) | 30m | evo-x2 | OBSERV |
-| 19 | 🟢 P3 | Authelia SMTP notifications (#66) | 15m | SMTP creds | UX |
-| 20 | 🟢 P3 | Immich + Twenty backup restore tests (#67-68) | 30m | evo-x2 | RELIAB |
-| 21 | 🟢 P3 | Remove `disableTestsOverlay` when valkey test fixed upstream | 5m | Upstream | CLEANUP |
-| 22 | 🟢 P3 | Add `meta.mainProgram` to remaining custom packages | 10m | No | QUALITY |
-| 23 | 🔵 P4 | Investigate binary cache (Cachix) for custom packages (#92) | 60m | No | PERF |
-| 24 | 🔵 P4 | Add NixOS VM tests for critical services (#91) | 120m | No | TESTING |
-| 25 | 🔵 P4 | Add `just update-nixpkgs` that verifies Hydra cache hits | 30m | No | TOOLING |
+| #   | Priority | Action                                                            | Est. | Blocked?   | Category |
+| --- | -------- | ----------------------------------------------------------------- | ---- | ---------- | -------- |
+| 1   | 🔴 P0    | Fix `nix-ssh-config` duplicate `environment.etc` build error      | 30m  | Upstream   | BLOCKER  |
+| 2   | 🔴 P0    | `just switch` on evo-x2 — deploy all 67+ pending commits          | 45m  | evo-x2     | DEPLOY   |
+| 3   | 🔴 P1    | Verify full build succeeds end-to-end after nix-ssh-config fix    | 10m  | #1         | VERIFY   |
+| 4   | 🔴 P1    | Move Taskwarrior encryption to sops-nix (#7)                      | 10m  | evo-x2     | SECURITY |
+| 5   | 🔴 P1    | Pin Docker digest for Voice Agents (#9)                           | 5m   | evo-x2     | SECURITY |
+| 6   | 🔴 P1    | Pin Docker digest for PhotoMap (#10)                              | 5m   | evo-x2     | SECURITY |
+| 7   | 🔴 P1    | Secure VRRP auth_pass with sops-nix (#11)                         | 8m   | evo-x2     | SECURITY |
+| 8   | 🟡 P2    | Verify Ollama, Steam, ComfyUI, Caddy after deploy (#42-45)        | 20m  | evo-x2     | VERIFY   |
+| 9   | 🟡 P2    | Verify SigNoz collecting metrics/logs/traces (#46)                | 5m   | evo-x2     | VERIFY   |
+| 10  | 🟡 P2    | Check Authelia SSO + PhotoMap status (#47-48)                     | 6m   | evo-x2     | VERIFY   |
+| 11  | 🟡 P2    | Verify AMD NPU with test workload (#49)                           | 10m  | evo-x2     | VERIFY   |
+| 12  | 🟡 P2    | Create `just cache-check` command (dry-run + fetch ratio)         | 20m  | No         | TOOLING  |
+| 13  | 🟡 P2    | Document nixpkgs pinning + overlay safety policy in AGENTS.md     | 15m  | No         | DOCS     |
+| 14  | 🟡 P2    | Fix `with lib;` in signoz.nix, dnsblockd-processor, monitor365    | 5m   | No         | QUALITY  |
+| 15  | 🟢 P3    | Isolate unbound DoQ into separate derivation (not global overlay) | 60m  | No         | ARCH     |
+| 16  | 🟢 P3    | Build Pi 3 SD image + test DNS failover (#50-52)                  | 55m  | evo-x2+Pi  | DEPLOY   |
+| 17  | 🟢 P3    | Hermes health check endpoint (#62)                                | 60m  | Hermes     | SERVICE  |
+| 18  | 🟢 P3    | SigNoz missing metrics investigation (#65)                        | 30m  | evo-x2     | OBSERV   |
+| 19  | 🟢 P3    | Authelia SMTP notifications (#66)                                 | 15m  | SMTP creds | UX       |
+| 20  | 🟢 P3    | Immich + Twenty backup restore tests (#67-68)                     | 30m  | evo-x2     | RELIAB   |
+| 21  | 🟢 P3    | Remove `disableTestsOverlay` when valkey test fixed upstream      | 5m   | Upstream   | CLEANUP  |
+| 22  | 🟢 P3    | Add `meta.mainProgram` to remaining custom packages               | 10m  | No         | QUALITY  |
+| 23  | 🔵 P4    | Investigate binary cache (Cachix) for custom packages (#92)       | 60m  | No         | PERF     |
+| 24  | 🔵 P4    | Add NixOS VM tests for critical services (#91)                    | 120m | No         | TESTING  |
+| 25  | 🔵 P4    | Add `just update-nixpkgs` that verifies Hydra cache hits          | 30m  | No         | TOOLING  |
 
 ---
 
@@ -280,6 +292,7 @@ Ranked by impact and unblocked status.
 **Why does `nix flake update nixpkgs` NOT update the nixpkgs entry in flake.lock when using a branch ref?**
 
 This was observed during the cache investigation:
+
 - `flake.nix` had `nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable"` (branch ref)
 - `flake.lock` pinned nixpkgs to rev `46db2e0` (March 24)
 - `nix flake update` and `nix flake update nixpkgs` did NOT change the rev
@@ -287,6 +300,7 @@ This was observed during the cache investigation:
 - This caused zero cache hits because the evaluated rev had no Hydra-built binaries
 
 Hypotheses:
+
 1. Nix re-resolves branch refs at evaluation time, ignoring the lock file
 2. A corrupted local flake registry or Nix cache
 3. `accept-flace-config = true` affecting lock resolution
@@ -341,8 +355,8 @@ TOTAL          █████████████░░░░░░░  65%
 
 ## Files Modified This Session
 
-| File | Change |
-|------|--------|
+| File                              | Change                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `docs/status/MASTER_TODO_PLAN.md` | Corrected 10+ inaccuracies: P6 count 11→9, P8 count 6→5, totals 96→95, line refs, evidence claims |
 
 ## Session Context

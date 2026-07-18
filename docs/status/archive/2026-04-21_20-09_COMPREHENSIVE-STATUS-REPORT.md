@@ -10,24 +10,29 @@
 ## A) FULLY DONE
 
 ### Hermes WatchdogSec Bug Fix (THIS SESSION)
+
 - **Root cause:** `WatchdogSec=60` was set in `hermes.nix` but Hermes has **zero** `sd_notify` implementation — no `systemd.daemon` imports, no `WATCHDOG=1` keep-alives, no `NotifyAccess` config, service type is `simple` (not `notify`).
 - **Effect:** Without keep-alive pings, systemd would kill the Hermes process every 60 seconds and restart it in an infinite loop via `Restart=on-failure`.
 - **Fix:** Removed `WatchdogSec=60` from `modules/nixos/services/hermes.nix:102`. Hermes' own generated unit files confirm they don't include `WatchdogSec`.
 - **`RestartForceExitStatus=75` validated:** Confirmed Hermes explicitly uses exit code 75 (`EX_TEMPFAIL` from `sysexits.h`) as an IPC mechanism to request systemd restart after graceful drain/reload. The constant is defined in `gateway/restart.py` and set in `gateway/run.py`. This directive is correct and essential.
 
 ### Hermes AI Agent Gateway — Full Declarative Integration (Prior Sessions)
+
 - Flake input, NixOS module, HM systemd service, sops secrets, merge script, systemd hardening, AGENTS.md docs, justfile commands — all committed.
 - **Status:** Still NOT deployed (`just switch` not yet run).
 
 ### Statix W20 Fixes — All Clean
+
 - `signoz.nix`, `snapshots.nix` — merged repeated attribute keys. Project-wide `statix check` passes.
 
 ### SigNoz Observability Pipeline
+
 - Full stack: node_exporter, cAdvisor, OTel Collector, ClickHouse, Query Service
 - 7 alert rules (disk-full, cpu-sustained, memory-critical, service-down, gpu-thermal, dnsblockd-down, emeet-pixyd-down)
 - AMD GPU metrics via textfile collector, journald log ingestion for key services
 
 ### Sops Cleanup (Uncommitted)
+
 - Removed stale `restartUnits` from dnsblockd TLS secrets that referenced services incorrectly:
   - `dnsblockd_ca_cert`: removed `restartUnits = ["dnsblockd.service"]` (cert is a CA cert, not directly consumed by dnsblockd service restart)
   - `dnsblockd_ca_key`: removed `restartUnits = ["dnsblockd.service"]`
@@ -36,10 +41,12 @@
 - Refactored `livekit_keys` to use `mkSecrets` helper instead of inline block — consistent with other secret definitions.
 
 ### DNS Blocker IP Deletion Safety (Uncommitted)
+
 - `dnsblockd-del-ip` script now checks if the block IP is the only address on the interface before deleting it, preventing accidental removal of the primary/static IP.
 - Counts matching addresses with `ip -4 addr show` + grep; only deletes if count > 1.
 
 ### CI/CD
+
 - `nix-check.yml`: builds both platforms, statix/deadnix/alejandra, Go tests
 - `flake-update.yml`: weekly auto flake.lock update PRs
 - Pre-commit hooks: gitleaks, trailing whitespace, deadnix, statix, alejandra, nix flake check
@@ -49,14 +56,17 @@
 ## B) PARTIALLY DONE
 
 ### Hermes Deployment
+
 - Module is 100% coded and committed (with WatchdogSec fix now). Needs `just switch` to deploy.
 - Old imperative `nix profile install` still active. Needs `nix profile remove hermes-agent` after deploy.
 - Only ZAI provider migrated to `key_env`. Other providers in `config.yaml` may still use inline `api_key`.
 
 ### EMEET PIXY UI Improvements
+
 - Code changes done and working but uncommitted: `handlers.go` (CSP `unsafe-eval` for htmx), `app.js` (offline banner, reconnect, PTZ revert, loading states), `style.css` (offline/loading styles), `templates.templ` (removed redundant hx-on attribute).
 
 ### Sops + DNS Blocker Changes
+
 - Fixes are coded but uncommitted (see diffs above).
 
 ---
@@ -110,33 +120,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Priority | Task | Effort |
-|---|----------|------|--------|
-| 1 | **P0** | `just switch` to deploy Hermes declarative module (with WatchdogSec fix) | 5 min |
-| 2 | **P0** | `nix profile remove hermes-agent` cleanup | 1 min |
-| 3 | **P0** | Smoke test: verify hermes-gateway starts, Discord bot connects, cron jobs run | 10 min |
-| 4 | **P1** | Commit sops.nix + dns-blocker.nix + hermes.nix changes | 2 min |
-| 5 | **P1** | Commit emeet-pixyd UI resilience changes (4 files) | 2 min |
-| 6 | **P1** | Add `hermes-gateway.service` to SigNoz journald receiver units | 5 min |
-| 7 | **P1** | Add Hermes-down alert rule to SigNoz | 5 min |
-| 8 | **P1** | Migrate remaining Hermes providers to `key_env` in config.yaml | 10 min |
-| 9 | **P1** | Add sops-nix ordering dependency to Hermes HM service (`After=` for sops secrets) | 5 min |
-| 10 | **P2** | Make `~/.hermes/config.yaml` declarative via Home Manager | 15 min |
-| 11 | **P2** | Add Hermes status to SigNoz overview dashboard | 10 min |
-| 12 | **P2** | Investigate removing `unsafe-eval` from emeet-pixyd CSP | 20 min |
-| 13 | **P2** | Check if Hermes has a healthcheck/status endpoint we can monitor | 10 min |
-| 14 | **P2** | Run full `just test` (slow build validation) | 30 min |
-| 15 | **P2** | Prune old status reports from `docs/status/` | 5 min |
-| 16 | **P2** | Add flake.lock staleness alert (CI check or systemd timer) | 15 min |
-| 17 | **P3** | Audit Hermes cron jobs for correctness with declarative service | 10 min |
-| 18 | **P3** | Validate darwin config builds | 10 min |
-| 19 | **P3** | Add deployment rollback procedure to AGENTS.md | 10 min |
-| 20 | **P3** | Document Hermes cleanup steps in AGENTS.md | 5 min |
-| 21 | **P3** | Secrets audit: verify all 5 hermes sops keys are active | 10 min |
-| 22 | **P3** | Add `just hermes-health` command for quick status check | 5 min |
-| 23 | **P3** | Consider adding Hermes to Homepage dashboard | 10 min |
-| 24 | **P4** | Review Hermes `MemoryMax=4G` — monitor actual memory usage | ongoing |
-| 25 | **P4** | If Hermes adds `sd_notify`: re-add `WatchdogSec` with `Type=notify` + `NotifyAccess=all` | 10 min |
+| #   | Priority | Task                                                                                     | Effort  |
+| --- | -------- | ---------------------------------------------------------------------------------------- | ------- |
+| 1   | **P0**   | `just switch` to deploy Hermes declarative module (with WatchdogSec fix)                 | 5 min   |
+| 2   | **P0**   | `nix profile remove hermes-agent` cleanup                                                | 1 min   |
+| 3   | **P0**   | Smoke test: verify hermes-gateway starts, Discord bot connects, cron jobs run            | 10 min  |
+| 4   | **P1**   | Commit sops.nix + dns-blocker.nix + hermes.nix changes                                   | 2 min   |
+| 5   | **P1**   | Commit emeet-pixyd UI resilience changes (4 files)                                       | 2 min   |
+| 6   | **P1**   | Add `hermes-gateway.service` to SigNoz journald receiver units                           | 5 min   |
+| 7   | **P1**   | Add Hermes-down alert rule to SigNoz                                                     | 5 min   |
+| 8   | **P1**   | Migrate remaining Hermes providers to `key_env` in config.yaml                           | 10 min  |
+| 9   | **P1**   | Add sops-nix ordering dependency to Hermes HM service (`After=` for sops secrets)        | 5 min   |
+| 10  | **P2**   | Make `~/.hermes/config.yaml` declarative via Home Manager                                | 15 min  |
+| 11  | **P2**   | Add Hermes status to SigNoz overview dashboard                                           | 10 min  |
+| 12  | **P2**   | Investigate removing `unsafe-eval` from emeet-pixyd CSP                                  | 20 min  |
+| 13  | **P2**   | Check if Hermes has a healthcheck/status endpoint we can monitor                         | 10 min  |
+| 14  | **P2**   | Run full `just test` (slow build validation)                                             | 30 min  |
+| 15  | **P2**   | Prune old status reports from `docs/status/`                                             | 5 min   |
+| 16  | **P2**   | Add flake.lock staleness alert (CI check or systemd timer)                               | 15 min  |
+| 17  | **P3**   | Audit Hermes cron jobs for correctness with declarative service                          | 10 min  |
+| 18  | **P3**   | Validate darwin config builds                                                            | 10 min  |
+| 19  | **P3**   | Add deployment rollback procedure to AGENTS.md                                           | 10 min  |
+| 20  | **P3**   | Document Hermes cleanup steps in AGENTS.md                                               | 5 min   |
+| 21  | **P3**   | Secrets audit: verify all 5 hermes sops keys are active                                  | 10 min  |
+| 22  | **P3**   | Add `just hermes-health` command for quick status check                                  | 5 min   |
+| 23  | **P3**   | Consider adding Hermes to Homepage dashboard                                             | 10 min  |
+| 24  | **P4**   | Review Hermes `MemoryMax=4G` — monitor actual memory usage                               | ongoing |
+| 25  | **P4**   | If Hermes adds `sd_notify`: re-add `WatchdogSec` with `Type=notify` + `NotifyAccess=all` | 10 min  |
 
 ---
 
@@ -152,19 +162,19 @@ This can only be answered after `just switch` deploys the service and we can tes
 
 ## Uncommitted Changes (Working Tree)
 
-| File | Change | Description |
-|------|--------|-------------|
-| `modules/nixos/services/hermes.nix` | -1 line | Removed `WatchdogSec=60` (kill-restart loop bug) |
-| `modules/nixos/services/sops.nix` | -14/+8 lines | Removed stale `restartUnits` from dnsblockd certs; refactored livekit to use `mkSecrets` helper |
-| `platforms/nixos/modules/dns-blocker.nix` | +7/-1 lines | Guard IP deletion against removing primary/static address |
+| File                                      | Change       | Description                                                                                     |
+| ----------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/hermes.nix`       | -1 line      | Removed `WatchdogSec=60` (kill-restart loop bug)                                                |
+| `modules/nixos/services/sops.nix`         | -14/+8 lines | Removed stale `restartUnits` from dnsblockd certs; refactored livekit to use `mkSecrets` helper |
+| `platforms/nixos/modules/dns-blocker.nix` | +7/-1 lines  | Guard IP deletion against removing primary/static address                                       |
 
 ## Stashed Changes (Likely Stale)
 
-| Stash | Description |
-|-------|-------------|
-| `stash@{0}` | WIP: emeet-pixyd vendorHash after dependency fetch |
+| Stash       | Description                                         |
+| ----------- | --------------------------------------------------- |
+| `stash@{0}` | WIP: emeet-pixyd vendorHash after dependency fetch  |
 | `stash@{1}` | WIP: line ending normalization in SSH status report |
-| `stash@{2}` | WIP: Hyprland window rules 0.54 syntax update |
+| `stash@{2}` | WIP: Hyprland window rules 0.54 syntax update       |
 
 ## Recent Commits (Last 15)
 

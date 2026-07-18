@@ -13,16 +13,16 @@
 
 ## What a Migration Would Require
 
-| Step | Files / Systems Affected |
-|------|-------------------------|
-| Regenerate CA + server certs | New `dnsblockd` CA cert/key, re-issue all service certs, update `dnsblockd-certs.yaml` sops secrets |
-| DNS records | Unbound `local-data` on evo-x2 (`dns-blocker-config.nix`) + rpi3-dns (`platforms/nixos/rpi3/default.nix`) |
-| Caddy vhosts | `caddy.nix` uses `config.networking.domain` — one line (`networking.nix`), but all vhosts reload |
-| OAuth stack | Pocket ID client registrations, oauth2-proxy config, Immich/Forgejo OIDC callbacks |
-| Service configs | Gatus endpoints, Homepage links, Taskwarrior sync URL, Monitor365, Twenty CRM, Crush Daily, etc. |
-| Client devices | Browser bookmarks/cookies, Taskwarrior clients, mobile apps, saved passwords, SSH `known_hosts` |
-| CA trust | Re-import internal CA on every browser/OS that accesses services (`security.pki.certificates`) |
-| Documentation | README, AGENTS.md, runbooks, status reports (~100+ references across `docs/`) |
+| Step                         | Files / Systems Affected                                                                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Regenerate CA + server certs | New `dnsblockd` CA cert/key, re-issue all service certs, update `dnsblockd-certs.yaml` sops secrets       |
+| DNS records                  | Unbound `local-data` on evo-x2 (`dns-blocker-config.nix`) + rpi3-dns (`platforms/nixos/rpi3/default.nix`) |
+| Caddy vhosts                 | `caddy.nix` uses `config.networking.domain` — one line (`networking.nix`), but all vhosts reload          |
+| OAuth stack                  | Pocket ID client registrations, oauth2-proxy config, Immich/Forgejo OIDC callbacks                        |
+| Service configs              | Gatus endpoints, Homepage links, Taskwarrior sync URL, Monitor365, Twenty CRM, Crush Daily, etc.          |
+| Client devices               | Browser bookmarks/cookies, Taskwarrior clients, mobile apps, saved passwords, SSH `known_hosts`           |
+| CA trust                     | Re-import internal CA on every browser/OS that accesses services (`security.pki.certificates`)            |
+| Documentation                | README, AGENTS.md, runbooks, status reports (~100+ references across `docs/`)                             |
 
 ## Why It's Not Worth It Yet
 
@@ -46,6 +46,7 @@ If future-proofing is desired with minimal pain, register a real domain and use 
 ```
 
 This provides:
+
 - Public DNS fallback
 - No TLD delegation risk
 - Works with any resolver

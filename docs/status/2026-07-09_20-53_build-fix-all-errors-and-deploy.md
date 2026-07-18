@@ -8,16 +8,17 @@
 
 ## A) FULLY DONE
 
-| # | Fix | File(s) | Details |
-|---|-----|---------|---------|
-| 1 | **monitor365 TOML "unsupported unit type"** | Upstream `monitor365` repo: `nix/lib/settings.nix` | Root cause: `settingsToml` passed `logging`, `storage`, `metrics`, `otel` directly to `pkgs.formats.toml` without filtering null-valued fields (e.g. `logging.file` defaults to `null`, `otel` defaults to `null`). TOML has no null representation. Fix: wrapped entire `settingsToml` in `filterAttrsRecursive (_: v: v != null)`. Pushed commit `d42665a` to `master`, flake.lock updated |
-| 2 | **sops `monitor365_api_key` key not found** | `modules/nixos/services/sops.nix` | `monitor365.yaml` only had `cloud_auth_token` and `server_jwt_secret`, but `sops.nix` declared `monitor365_api_key` as a direct key. Fixed by splitting the server secrets block: `server_jwt_secret` via `mkSecrets`, `monitor365_api_key` via `mkKeyedSecrets` mapping to the `cloud_auth_token` key (same tenant key value per code comments) |
-| 3 | **nvme-health-monitor SC2034** (ShellCheck) | `modules/nixos/services/nvme-health-monitor.nix` | Removed unused `NUM_ERR_LOG` variable (line 53). ShellCheck in nixpkgs `writeShellApplication` treats warnings as build failures |
-| 4 | **signoz-provision SC2086** (ShellCheck) | `modules/nixos/services/signoz.nix` | Quoted `$rule_file` and `$dash_file` inside `$(basename ...)` — lines 427 and 439 |
-| 5 | **signoz-wrapper SC2155** (ShellCheck) | `modules/nixos/services/signoz.nix` | Split `export SIGNOZ_TOKENIZER_JWT_SECRET="$(cat ...)"` into separate declare + export to avoid masking return values |
-| 6 | **ollama `models` → `modelsDir`** (eval warning) | `modules/nixos/services/ai-stack.nix` | Renamed `models` to `modelsDir` (upstream nixpkgs renamed the option) |
+| #   | Fix                                              | File(s)                                            | Details                                                                                                                                                                                                                                                                                                                                                                                      |
+| --- | ------------------------------------------------ | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **monitor365 TOML "unsupported unit type"**      | Upstream `monitor365` repo: `nix/lib/settings.nix` | Root cause: `settingsToml` passed `logging`, `storage`, `metrics`, `otel` directly to `pkgs.formats.toml` without filtering null-valued fields (e.g. `logging.file` defaults to `null`, `otel` defaults to `null`). TOML has no null representation. Fix: wrapped entire `settingsToml` in `filterAttrsRecursive (_: v: v != null)`. Pushed commit `d42665a` to `master`, flake.lock updated |
+| 2   | **sops `monitor365_api_key` key not found**      | `modules/nixos/services/sops.nix`                  | `monitor365.yaml` only had `cloud_auth_token` and `server_jwt_secret`, but `sops.nix` declared `monitor365_api_key` as a direct key. Fixed by splitting the server secrets block: `server_jwt_secret` via `mkSecrets`, `monitor365_api_key` via `mkKeyedSecrets` mapping to the `cloud_auth_token` key (same tenant key value per code comments)                                             |
+| 3   | **nvme-health-monitor SC2034** (ShellCheck)      | `modules/nixos/services/nvme-health-monitor.nix`   | Removed unused `NUM_ERR_LOG` variable (line 53). ShellCheck in nixpkgs `writeShellApplication` treats warnings as build failures                                                                                                                                                                                                                                                             |
+| 4   | **signoz-provision SC2086** (ShellCheck)         | `modules/nixos/services/signoz.nix`                | Quoted `$rule_file` and `$dash_file` inside `$(basename ...)` — lines 427 and 439                                                                                                                                                                                                                                                                                                            |
+| 5   | **signoz-wrapper SC2155** (ShellCheck)           | `modules/nixos/services/signoz.nix`                | Split `export SIGNOZ_TOKENIZER_JWT_SECRET="$(cat ...)"` into separate declare + export to avoid masking return values                                                                                                                                                                                                                                                                        |
+| 6   | **ollama `models` → `modelsDir`** (eval warning) | `modules/nixos/services/ai-stack.nix`              | Renamed `models` to `modelsDir` (upstream nixpkgs renamed the option)                                                                                                                                                                                                                                                                                                                        |
 
 ### Verification
+
 - `nix flake check --no-build` — ✅ all checks passed
 - `nh os boot . -v --show-activation-logs --keep-going` — ✅ build succeeded, bootloader updated
 
@@ -26,7 +27,9 @@
 ## B) PARTIALLY DONE
 
 ### Uncommitted Changes
+
 All 6 fixes are **uncommitted** in the SystemNix working tree. The build used the working tree directly, so they took effect, but they need committing. Files changed:
+
 - `flake.lock` (monitor365 input updated)
 - `modules/nixos/services/ai-stack.nix`
 - `modules/nixos/services/monitor365.nix` (removed `activitywatch = null` lines that were already handled upstream)
@@ -35,6 +38,7 @@ All 6 fixes are **uncommitted** in the SystemNix working tree. The build used th
 - `modules/nixos/services/sops.nix`
 
 ### Upstream Fix Pushed Directly to `master`
+
 The monitor365 TOML fix (`d42665a`) was pushed directly to `monitor365` master without a PR. For a personal repo this is acceptable but a PR with CI would be better practice.
 
 ---
@@ -56,6 +60,7 @@ All fixes were applied correctly on the first or second attempt. The only rework
 ## E) WHAT WE SHOULD IMPROVE
 
 ### Process Improvements
+
 1. **Diagnose before fixing** — Initially removed `activitywatch = lib.mkDefault null` thinking it caused the TOML null. Should have evaluated the actual config value first (`nix eval`) to identify ALL null fields before making changes. Would have found `otel` and `logging.file` immediately.
 2. **Run `nix fmt` after changes** — Did not run `nix fmt` (treefmt + alejandra) after edits. Should be part of the fix workflow.
 3. **AGENTS.md not updated** — Discovered two significant new gotchas that belong in the Non-Obvious Gotchas table (see section E items below). Should have updated immediately per the memory protocol.
@@ -63,6 +68,7 @@ All fixes were applied correctly on the first or second attempt. The only rework
 5. **The sops key mapping is a workaround** — Mapping `monitor365_api_key` to the `cloud_auth_token` sops key works but is semantically muddy. The `monitor365.yaml` sops file should ideally have an explicit `monitor365_api_key` key, OR the code should use `cloud_auth_token` consistently. The comments in the file explain the shared-value design, but the naming inconsistency will confuse future readers.
 
 ### New Gotchas to Document in AGENTS.md
+
 6. **`pkgs.formats.toml` cannot serialize `null`** — Any Nix value that evaluates to `null` passed to a TOML generator will fail with "unsupported unit type" at build time. This is unlike JSON/YAML which handle null natively. Always wrap TOML config generation in `filterAttrsRecursive (_: v: v != null)` when submodule options have `null` defaults.
 7. **ShellCheck warnings are build failures in nixpkgs** — `pkgs.writeShellApplication` runs ShellCheck and treats ALL diagnostics (even `info` and `warning` level like SC2086, SC2155, SC2034) as fatal. This is stricter than most CI setups where only `error` fails the build.
 8. **monitor365 sops key naming** — `monitor365_api_key` sops secret maps to `cloud_auth_token` key in `monitor365.yaml`. Same value, different names — per the shared tenant-key design. Documented in `sops.nix` comments.
@@ -72,12 +78,14 @@ All fixes were applied correctly on the first or second attempt. The only rework
 ## F) THINGS WE SHOULD GET DONE NEXT (Prioritized)
 
 ### Immediate (before reboot)
+
 1. **Commit all SystemNix changes** — 6 files uncommitted, all verified working
 2. **Run `nix fmt`** — format the changes with treefmt/alejandra
 3. **Update AGENTS.md** — add the 3 new gotchas from section E
 4. **Clean up `/tmp/monitor365-fix`** — `trash /tmp/monitor365-fix`
 
 ### Short-term
+
 5. **Reboot to activate** — `nh os boot` only updates bootloader; reboot to make the new generation active
 6. **Run `nix run .#post-deploy-check` after reboot** — verify services are functional, not just alive
 7. **Verify monitor365 server/agent/desktop start correctly** — the dual-instance architecture is newly built; verify both system and desktop instances connect to the server
@@ -86,6 +94,7 @@ All fixes were applied correctly on the first or second attempt. The only rework
 10. **Verify nvme-health-monitor notifications** — the removed `NUM_ERR_LOG` variable was genuinely unused, but verify the script still monitors correctly
 
 ### Medium-term
+
 11. **Add a `monitor365_api_key` key explicitly to `monitor365.yaml`** — cleaner than the `cloud_auth_token` mapping workaround
 12. **Add a pre-commit/CI check for ShellCheck in all `writeShellApplication` calls** — catch SC2086/SC2155/SC2034 before they reach the build
 13. **Add a TOML null-safety helper** — `lib/` function that wraps `pkgs.formats.toml{}.generate` with `filterAttrsRecursive` to prevent "unsupported unit type" at the source
@@ -98,6 +107,7 @@ All fixes were applied correctly on the first or second attempt. The only rework
 20. **Document the `modelsDir` migration** — nixpkgs renamed `services.ollama.models` to `services.ollama.modelsDir`; check for other renamed options in the nixpkgs update
 
 ### Broader improvements
+
 21. **Automate `nix flake update && nh os boot` in a deploy script** — with pre-flight checks for common build failure patterns (sops keys, ShellCheck, TOML nulls)
 22. **Add a "flake update dry-run" helper** — evaluate the system after a flake update without building, to catch eval-time issues early
 23. **Consider `nh os switch` workflow instead of `boot`** — `switch` activates immediately (no reboot needed), though riskier
@@ -136,6 +146,7 @@ All fixes were applied correctly on the first or second attempt. The only rework
 ### 1. Should the sops `monitor365_api_key` workaround be permanent?
 
 The current fix maps `monitor365_api_key` to the `cloud_auth_token` key in `monitor365.yaml`. The code comments say they're the same value (shared tenant API key). But:
+
 - Should we instead add a dedicated `monitor365_api_key` key to `monitor365.yaml` with its own value?
 - Or rename the SystemNix references from `monitor365_api_key` to `cloud_auth_token` everywhere for consistency?
 - Or is the `mkKeyedSecrets` alias the intended long-term pattern?
@@ -145,6 +156,7 @@ I don't know the intended secret architecture — the dual-name design (`monitor
 ### 2. Were the browser policy removals intentional?
 
 The diff shows three browser policy files were REMOVED in this generation:
+
 - `etc-brave-policies-managed-default.json`
 - `etc-chromium-policies-managed-default.json`
 - `etc-opt-chrome-policies-managed-default.json`

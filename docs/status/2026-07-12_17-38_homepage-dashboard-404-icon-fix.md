@@ -67,22 +67,26 @@ Nothing in this session's work was incorrect. However:
 ## f) NEXT THINGS TO GET DONE (prioritized)
 
 ### P0 — Block deploy
+
 1. Fix discordsync `mkPreparedSource`: add missing `go-cqrs-lite/v3` sub-modules to flake inputs and deps map
 2. Alternatively: temporarily disable discordsync service to unblock deploy
 
 ### P1 — Verify this fix
+
 3. Deploy the homepage changes
 4. Verify icons load (no 404s) via browser dev tools or Caddy access log
 5. Run `nix run .#post-deploy-check`
 6. Verify Immich status dot is green (siteMonitor now points to correct endpoint)
 
 ### P2 — Investigate pre-existing failures
+
 7. `pocket-id.service` is failed (502 on auth.home.lan) — investigate
 8. `openseo.service` is failed (502 on seo.home.lan) — investigate
 9. `btrfs-health.service` is failed — investigate
 10. `nix-build-cleanup.service` is failed — investigate
 
 ### P3 — Homepage polish
+
 11. Audit remaining siteMonitor URLs for correctness (Forgejo, Gatus, Dozzle, Taskwarrior, etc.)
 12. Check if `mdi-file-rename-outline` (file renamer icon) actually resolves in the icon pack — uses Material Design Icon naming convention, not dashboard-icons convention
 13. Add missing icons for services that have no good match (LiveKit, Whisper, Twenty, Taskwarrior) — consider contributing upstream to `homarr-labs/dashboard-icons`
@@ -90,6 +94,7 @@ Nothing in this session's work was incorrect. However:
 15. Review the `quicklaunch` and `hideVersion` settings added by a prior session — verify they work as intended
 
 ### P4 — Code quality
+
 16. Extract icon validation into a flake check or pre-commit hook
 17. Make `enableLocalIcons = true` the default in the homepage module (not a per-call override)
 18. Add a CI step that curls all siteMonitor URLs after deploy
@@ -97,6 +102,7 @@ Nothing in this session's work was incorrect. However:
 20. Consider whether the homepage `MemoryMax = 384M` is still sufficient with `enableLocalIcons` (4276 files served from the Nix store via Next.js standalone)
 
 ### P5 — System health (observed but not investigated)
+
 21. Disk at 94-95% — chronic space pressure on this 723 GB drive
 22. 18 stale build sandboxes in `/nix/var/nix/builds`
 23. The working tree has uncommitted changes from a prior session — review and commit or discard

@@ -17,18 +17,20 @@ Successfully expanded SystemNix DNS blocking infrastructure from 15 to 25 blockl
 ## A) FULLY DONE ✅
 
 ### 1. Multi-Format Blocklist Processor Enhancement
+
 **File:** `pkgs/dnsblockd-processor/main.go`
 
-| Format | Pattern | Example | Status |
-|--------|---------|---------|--------|
-| AdBlock | `||domain.com^` | `||tracker.com^` | ✅ Implemented |
-| DNSMasq | `local=/domain.com/` | `local=/ads.com/` | ✅ Implemented |
-| DNSMasq | `address=/domain.com/` | `address=/malware.com/` | ✅ Implemented |
-| Hosts | `0.0.0.0 domain` | `0.0.0.0 ads.com` | ✅ Already Supported |
-| Hosts | `127.0.0.1 domain` | `127.0.0.1 tracker.com` | ✅ Already Supported |
-| Domain-Only | `domain.com` | `malware.com` | ✅ Implemented |
+| Format      | Pattern                | Example                 | Status               |
+| ----------- | ---------------------- | ----------------------- | -------------------- |
+| AdBlock     | `                      |                         | domain.com^`         | `   |     | tracker.com^` | ✅ Implemented |
+| DNSMasq     | `local=/domain.com/`   | `local=/ads.com/`       | ✅ Implemented       |
+| DNSMasq     | `address=/domain.com/` | `address=/malware.com/` | ✅ Implemented       |
+| Hosts       | `0.0.0.0 domain`       | `0.0.0.0 ads.com`       | ✅ Already Supported |
+| Hosts       | `127.0.0.1 domain`     | `127.0.0.1 tracker.com` | ✅ Already Supported |
+| Domain-Only | `domain.com`           | `malware.com`           | ✅ Implemented       |
 
 **Skip Directives Added:**
+
 - `#` - shell/hosts style comments
 - `!` - AdBlock style comments
 - `[` - Section headers (e.g., `[Adblock Plus]`)
@@ -36,24 +38,25 @@ Successfully expanded SystemNix DNS blocking infrastructure from 15 to 25 blockl
 
 ### 2. HaGeZi Blocklist Integration - 10 New Lists
 
-| # | Blocklist | Format | Domains | Purpose |
-|---|-----------|--------|---------|---------|
-| 5 | doh-vpn-proxy-bypass | dnsmasq | ~17,000 | DoH/VPN/TOR/Proxy bypass prevention |
-| 17 | gambling | dnsmasq | ~209,000 | Gambling site blocking |
-| 18 | nsfw | dnsmasq | ~76,000 | Adult content blocking |
-| 19 | social | dnsmasq | ~900 | Social media blocking |
-| 20 | anti-piracy | dnsmasq | ~12,000 | Piracy site blocking |
-| 21 | dyndns | dnsmasq | ~1,500 | Malicious dynamic DNS services |
-| 22 | hoster | dnsmasq | ~1,200 | Malicious hosting providers |
-| 23 | urlshortener | dnsmasq | ~10,000 | Link shortener blocking |
-| 24 | nosafesearch | dnsmasq | ~200 | Force safesearch on engines |
-| 25 | dga7 | domains | ~506,000 | DGA malware domains (7-day) |
+| #   | Blocklist            | Format  | Domains  | Purpose                             |
+| --- | -------------------- | ------- | -------- | ----------------------------------- |
+| 5   | doh-vpn-proxy-bypass | dnsmasq | ~17,000  | DoH/VPN/TOR/Proxy bypass prevention |
+| 17  | gambling             | dnsmasq | ~209,000 | Gambling site blocking              |
+| 18  | nsfw                 | dnsmasq | ~76,000  | Adult content blocking              |
+| 19  | social               | dnsmasq | ~900     | Social media blocking               |
+| 20  | anti-piracy          | dnsmasq | ~12,000  | Piracy site blocking                |
+| 21  | dyndns               | dnsmasq | ~1,500   | Malicious dynamic DNS services      |
+| 22  | hoster               | dnsmasq | ~1,200   | Malicious hosting providers         |
+| 23  | urlshortener         | dnsmasq | ~10,000  | Link shortener blocking             |
+| 24  | nosafesearch         | dnsmasq | ~200     | Force safesearch on engines         |
+| 25  | dga7                 | domains | ~506,000 | DGA malware domains (7-day)         |
 
 **Total New Domains:** ~834,000 (before deduplication with existing lists)
 
 ### 3. Hash Updates for Existing Lists
 
 7 existing HaGeZi blocklists had hash updates due to content refresh:
+
 - StevenBlack-everything
 - HaGeZi-ultimate
 - HaGeZi-tif
@@ -64,6 +67,7 @@ Successfully expanded SystemNix DNS blocking infrastructure from 15 to 25 blockl
 ### 4. Configuration Documentation Updates
 
 Updated `dns-blocker-config.nix` header comments:
+
 - Expanded coverage claim: ~1.9M → ~2.5M+ domains
 - Added new blocking categories documentation
 - Updated bypass prevention description
@@ -82,17 +86,20 @@ Updated `dns-blocker-config.nix` header comments:
 ## B) PARTIALLY DONE ⚠️
 
 ### 1. Most Abused TLDs Blocking
+
 **Status:** Identified but not implemented
 **Reason:** Requires Unbound RPZ (Response Policy Zone) format, not `local-data`
 
 The HaGeZi `spam-tlds` list uses TLD-wide patterns like `||.top^` which need `local-zone: ".top" static` in Unbound, not individual `local-data` entries. Current architecture processes domain lists into A-record redirects. RPZ support would require module-level changes.
 
 **Options for completion:**
+
 - Add RPZ include file alongside existing processor output
 - Extend processor to output RPZ format
 - Use Unbound's `local-zone` directive generation
 
 ### 2. Blocklist Hash Auto-Updater
+
 **Status:** Script exists but doesn't handle the new CDN URLs
 **File:** `platforms/nixos/scripts/blocklist-hash-updater`
 
@@ -103,10 +110,12 @@ The hash updater script parses existing blocklists from the config, but was desi
 ## C) NOT STARTED ❌
 
 ### 1. Newly Registered Domains (NRD) Full List
+
 **Size:** ~2.5M domains (7-day rolling window)
 **URL:** `domains/nrd7.txt`
 
 The full NRD list is extremely large and may cause:
+
 - Build-time memory pressure
 - Unbound configuration size issues
 - Runtime memory usage increase
@@ -114,17 +123,21 @@ The full NRD list is extremely large and may cause:
 **Recommendation:** Monitor DGA7 list effectiveness first. DGA7 (~506K) is a subset of NRD focused on algorithmically-generated domains, which catches most malware C2 traffic.
 
 ### 2. TIF Medium/Mini Variants
+
 **Purpose:** Smaller threat intelligence feeds for resource-constrained devices
 
 Current setup uses full TIF (~1M domains). For systems with less RAM, medium (~365K) or mini (~135K) variants could be offered as alternative options.
 
 ### 3. RPZ Format Support
+
 **Purpose:** Native Unbound RPZ for TLD blocking and zone-based policies
 
 ### 4. Dynamic List Selection
+
 **Idea:** Allow runtime toggling of categories (e.g., disable gambling block temporarily)
 
 ### 5. Metrics Integration
+
 **Idea:** Export block statistics to Prometheus/Grafana
 
 ---
@@ -241,6 +254,7 @@ Current setup uses full TIF (~1M domains). For systems with less RAM, medium (~3
 **Question:** What is the actual runtime memory impact of loading ~2.5M domains into Unbound on the target hardware (evo-x2 with AMD Ryzen AI Max+ 395 and 32GB RAM)?
 
 **Context:**
+
 - Theoretical: ~2.5M domains × ~50 bytes/domain = ~125MB raw data
 - Unbound overhead likely 2-3x = ~250-375MB estimated
 - But actual memory usage depends on:
@@ -250,18 +264,21 @@ Current setup uses full TIF (~1M domains). For systems with less RAM, medium (~3
   - DNSSEC validation overhead
 
 **Why I can't figure this out:**
+
 - I don't have access to runtime the actual hardware
 - Memory profiling requires `valgrind` or `massif` on the running system
 - The `unbound-control stats_noreset` shows cache stats but not blocklist memory
 - Build-time evaluation doesn't show runtime memory usage
 
 **What would help:**
+
 - Running `ps aux | grep unbound` after rebuild to check RSS/VSZ
 - Using `systemd-cgtop` to monitor service memory
 - Checking `cat /proc/$(pgrep unbound)/status | grep VmRSS`
 - Comparing memory before/after the expansion
 
 **Risk Assessment:**
+
 - Low risk on 32GB system
 - But if memory usage >1GB, could impact other services
 - No automatic monitoring in place to alert on excessive memory
@@ -283,15 +300,15 @@ Current setup uses full TIF (~1M domains). For systems with less RAM, medium (~3
 
 ### Blocklist Summary
 
-| Category | Lists | Est. Domains |
-|----------|-------|--------------|
-| Core (Ads/Trackers) | 3 | ~730K |
-| Native Telemetry | 11 | ~15K |
-| Threat Intelligence | 2 | ~1.1M |
-| Content Filtering | 4 | ~297K |
-| Infrastructure | 3 | ~28K |
-| Bypass Prevention | 2 | ~17K |
-| **Total** | **25** | **~2.5M** |
+| Category            | Lists  | Est. Domains |
+| ------------------- | ------ | ------------ |
+| Core (Ads/Trackers) | 3      | ~730K        |
+| Native Telemetry    | 11     | ~15K         |
+| Threat Intelligence | 2      | ~1.1M        |
+| Content Filtering   | 4      | ~297K        |
+| Infrastructure      | 3      | ~28K         |
+| Bypass Prevention   | 2      | ~17K         |
+| **Total**           | **25** | **~2.5M**    |
 
 ### URLs
 
@@ -310,10 +327,12 @@ Date:   Thu Apr 2 21:57:18 2026 +0200
 ```
 
 **Files Changed:**
+
 - `pkgs/dnsblockd-processor/main.go` (+47 lines)
 - `platforms/nixos/system/dns-blocker-config.nix` (+78 lines)
 
 **Impact:**
+
 - Processor: +110% lines (multi-format support)
 - Config: +220% blocklist entries (15 → 25)
 

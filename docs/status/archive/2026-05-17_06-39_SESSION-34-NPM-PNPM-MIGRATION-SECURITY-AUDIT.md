@@ -20,16 +20,17 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 
 ### npm → pnpm Migration (Session 34)
 
-| Item | Before | After | Status |
-|------|--------|-------|--------|
-| `pkgs/jscpd.nix` | `buildNpmPackage` + `npmDepsHash` + vendored `package-lock.json` | `fetchPnpmDeps` + `pnpmConfigHook` + vendored `pnpm-lock.yaml` | ✅ Migrated |
-| `ai-stack.nix` (unsloth frontend) | `${pkgs.nodejs_22}/bin/npm install/build` (3 calls) | `${pkgs.pnpm}/bin/pnpm install/build` (3 calls) | ✅ Migrated |
-| `base.nix` system packages | `nodejs` + `pnpm` installed | `pnpm` only (bun provides JS runtime) | ✅ Removed |
-| `justfile` clean recipe | `npm cache clean --force` | Removed (pnpm store prune retained) | ✅ Removed |
-| `buildNpmPackage` references | 1 (`jscpd.nix`) | 0 | ✅ Zero |
-| `nodejs` in buildInputs | `ai-stack.nix` (`nodejs_22`) | Replaced with `pnpm` | ✅ Removed |
+| Item                              | Before                                                           | After                                                          | Status      |
+| --------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- | ----------- |
+| `pkgs/jscpd.nix`                  | `buildNpmPackage` + `npmDepsHash` + vendored `package-lock.json` | `fetchPnpmDeps` + `pnpmConfigHook` + vendored `pnpm-lock.yaml` | ✅ Migrated |
+| `ai-stack.nix` (unsloth frontend) | `${pkgs.nodejs_22}/bin/npm install/build` (3 calls)              | `${pkgs.pnpm}/bin/pnpm install/build` (3 calls)                | ✅ Migrated |
+| `base.nix` system packages        | `nodejs` + `pnpm` installed                                      | `pnpm` only (bun provides JS runtime)                          | ✅ Removed  |
+| `justfile` clean recipe           | `npm cache clean --force`                                        | Removed (pnpm store prune retained)                            | ✅ Removed  |
+| `buildNpmPackage` references      | 1 (`jscpd.nix`)                                                  | 0                                                              | ✅ Zero     |
+| `nodejs` in buildInputs           | `ai-stack.nix` (`nodejs_22`)                                     | Replaced with `pnpm`                                           | ✅ Removed  |
 
 **Remaining npm (outside our control):**
+
 - `hermes.nix:22` — patches upstream hermes-agent's stale `npmDepsHash` via `fetchNpmDeps` (upstream build system, not ours)
 - `twenty.nix:55` — Docker container runs `yarn worker:prod` (upstream image, not ours)
 - `flake.lock` — `npm-lockfile-fix` transitive dependency (not directly referenced)
@@ -53,15 +54,15 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 
 ### Shared Library (`lib/`) — 100% Adopted
 
-| Helper | Adopted by | Coverage |
-|--------|-----------|----------|
-| `harden {}` | 21 services | 60% (remainder are config-only or use mkDockerService) |
-| `serviceDefaults {}` | 20 services | 57% |
-| `onFailure` | 17 services | 49% |
-| `serviceTypes.*` | 13 services | 37% |
-| `mkDockerService` | 5 services | 100% Docker services |
-| `mkStateDir` | 11 services | 100% services with tmpfiles |
-| `mkHttpCheck` | gatus-config.nix | 1 service |
+| Helper               | Adopted by       | Coverage                                               |
+| -------------------- | ---------------- | ------------------------------------------------------ |
+| `harden {}`          | 21 services      | 60% (remainder are config-only or use mkDockerService) |
+| `serviceDefaults {}` | 20 services      | 57%                                                    |
+| `onFailure`          | 17 services      | 49%                                                    |
+| `serviceTypes.*`     | 13 services      | 37%                                                    |
+| `mkDockerService`    | 5 services       | 100% Docker services                                   |
+| `mkStateDir`         | 11 services      | 100% services with tmpfiles                            |
+| `mkHttpCheck`        | gatus-config.nix | 1 service                                              |
 
 ### Service Module Architecture (35 modules)
 
@@ -79,37 +80,44 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 ## b) PARTIALLY DONE 🔶
 
 ### jscpd Package Build (pnpmDeps hash empty)
+
 - **Status:** Migrated to pnpm architecture but `hash = ""` in `pkgs/jscpd.nix`
 - **What's done:** `pnpm-lock.yaml` generated, `fetchPnpmDeps` + `pnpmConfigHook` wired, old `buildNpmPackage` + `package-lock.json` replaced
 - **What's missing:** First build will fail — paste the `got:` hash from error output
 - **Old files to clean up:** `pkgs/jscpd-package-lock.json` should be deleted with `trash`
 
 ### PhotoMap Service (disabled)
+
 - **Status:** Module exists at `modules/nixos/services/photomap.nix`, commented out in `configuration.nix`
 - **Reason:** Podman config permission issue
 - **Impact:** AI photo exploration service unavailable
 
 ### DNS Failover Cluster (rpi3-dns)
+
 - **Status:** Module exists (`dns-failover.nix`), Pi 3 image build defined in flake.nix, VRRP configured
 - **Blocker:** Pi 3 hardware not provisioned
 - **Also:** `dns-failover.nix` uses plaintext `authPassword` — needs migration to sops
 
 ### nix-colors Integration
+
 - **Status:** `nix-colors` flake input exists, `color-scheme.nix` module exists
 - **Remaining:** 17+ hardcoded colors across Waybar, Rofi, Swaylock, SDDM, Starship need migration to `colorScheme` variables
 - **Estimated effort:** ~6h
 
 ### ClamAV Anti-Virus
+
 - **Status:** Daemon + updater enabled, socket-activated
 - **Issue:** Boot ordering overridden (`wantedBy = lib.mkForce []`) — doesn't block `graphical.target`
 - **Impact:** AV scanning available on-demand, not actively scanning at boot
 
 ### AppArmor
+
 - **Status:** Explicitly disabled (`apparmor.enable = lib.mkDefault false`)
 - **Reason:** Not configured yet — needs profile generation
 - **Recommendation:** Start in "complain" mode to profile, then enforce
 
 ### auditd (Kernel Audit Logging)
+
 - **Status:** Blocked by NixOS 26.05 bug: https://github.com/NixOS/nixpkgs/issues/483085
 - **Impact:** No kernel-level audit trail for privileged operations
 
@@ -118,27 +126,33 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 ## c) NOT STARTED ⬜
 
 ### Incus VM/Container Isolation
+
 - Virtualization platform for workload isolation (browsers, AI experiments, untrusted code)
 - Would provide hardware-level isolation vs container-level
 - `virtualisation.incus` available in nixpkgs
 
 ### Secure Boot
+
 - No custom signing keys, no boot chain verification
 - Would prevent bootkit/rootkit attacks
 
 ### WireGuard VPN
+
 - `wireguard-tools` installed but no tunnel configured
 - Would provide encrypted remote access without port exposure
 
 ### Dozzle (Docker Log Viewer)
+
 - Listed in TODO_LIST.md as P3
 - Web UI for real-time Docker container log tailing
 
 ### Voice Agents Caddy Integration
+
 - Listed in TODO_LIST.md as P2
 - Caddy vHost not consolidated into caddy.nix pattern
 
 ### SigNoz Channel Routing
+
 - Listed in TODO_LIST.md as P2
 - Per-threshold routing (critical→Discord, warning→log) not configured
 
@@ -148,26 +162,29 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 
 ### Failed Systemd Services (5 system)
 
-| Service | Status | Likely Cause |
-|---------|--------|--------------|
-| `caddy.service` | **FAILED** | TLS cert issue, sops secret not decrypted, or config error |
-| `niri-health-metrics.service` | **FAILED** | Depends on niri compositor state; likely race condition on boot |
-| `service-health-check.service` | **FAILED** | Cascading from other service failures |
-| `timeshift-backup.service` | **FAILED** | Persistent failure across sessions 25, 28, 30, 33 |
-| `timeshift-verify.service` | **FAILED** | Related to timeshift-backup failure |
+| Service                        | Status     | Likely Cause                                                    |
+| ------------------------------ | ---------- | --------------------------------------------------------------- |
+| `caddy.service`                | **FAILED** | TLS cert issue, sops secret not decrypted, or config error      |
+| `niri-health-metrics.service`  | **FAILED** | Depends on niri compositor state; likely race condition on boot |
+| `service-health-check.service` | **FAILED** | Cascading from other service failures                           |
+| `timeshift-backup.service`     | **FAILED** | Persistent failure across sessions 25, 28, 30, 33               |
+| `timeshift-verify.service`     | **FAILED** | Related to timeshift-backup failure                             |
 
 ### Root Disk at 86% (72G free)
+
 - `/nix/store` is 89G — enormous, grows with each build
 - `/data` at 80% (206G free) — less critical but trending up
 - No automatic garbage collection scheduled
 - Each failed build adds ~5G
 
 ### jscpd Package Cannot Build
+
 - `pnpmDeps` hash is empty string — will fail on first build attempt
 - Currently broken since session 32
 - Blocking: `just hash-check` won't work until hash is resolved
 
 ### Timeshift Snapshots — Permanently Failed
+
 - Both `timeshift-backup` and `timeshift-verify` consistently fail
 - Has been failing across at least sessions 25, 28, 30, 33
 - Root cause unknown — likely BTRFS snapshot permission or config issue
@@ -214,53 +231,53 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 
 ### Priority 1: Critical Fixes (do immediately)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Fix jscpd pnpmDeps hash** — build, get `got:` hash, paste in | Unblocks jscpd package | 5 min |
-| 2 | **Investigate Caddy failure** — check logs, fix TLS/sops/config | Restores all reverse proxy | 30 min |
-| 3 | **Fix timeshift-backup/verify** — root cause 4-session persistent failure | Restores backup capability | 1h |
-| 4 | **Clean up root disk** — `nix-collect-garbage --delete-older-than 7d`, auto-GC config | Prevents disk exhaustion | 15 min |
-| 5 | **Trash `pkgs/jscpd-package-lock.json`** — dead npm lockfile | Cleanup | 1 min |
+| #   | Task                                                                                  | Impact                     | Effort |
+| --- | ------------------------------------------------------------------------------------- | -------------------------- | ------ |
+| 1   | **Fix jscpd pnpmDeps hash** — build, get `got:` hash, paste in                        | Unblocks jscpd package     | 5 min  |
+| 2   | **Investigate Caddy failure** — check logs, fix TLS/sops/config                       | Restores all reverse proxy | 30 min |
+| 3   | **Fix timeshift-backup/verify** — root cause 4-session persistent failure             | Restores backup capability | 1h     |
+| 4   | **Clean up root disk** — `nix-collect-garbage --delete-older-than 7d`, auto-GC config | Prevents disk exhaustion   | 15 min |
+| 5   | **Trash `pkgs/jscpd-package-lock.json`** — dead npm lockfile                          | Cleanup                    | 1 min  |
 
 ### Priority 2: Security Hardening (this week)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 6 | **Enable Incus** — `virtualisation.incus.enable = true`, preseed config, nftables | Workload isolation | 2h |
-| 7 | **Create Incus VM for browsers** — move helium to isolated VM | Contain browser exploits | 1h |
-| 8 | **Document `lib.mkForce false` justifications** — add comments to all 6 bypasses | Auditability | 30 min |
-| 9 | **Add fail2ban jails for Caddy + Gitea** — HTTP auth failures, API abuse | Protects web services | 30 min |
-| 10 | **Enable AppArmor in complain mode** — `apparmor.enable = true`, profile generation | MAC foundation | 2h |
+| #   | Task                                                                                | Impact                   | Effort |
+| --- | ----------------------------------------------------------------------------------- | ------------------------ | ------ |
+| 6   | **Enable Incus** — `virtualisation.incus.enable = true`, preseed config, nftables   | Workload isolation       | 2h     |
+| 7   | **Create Incus VM for browsers** — move helium to isolated VM                       | Contain browser exploits | 1h     |
+| 8   | **Document `lib.mkForce false` justifications** — add comments to all 6 bypasses    | Auditability             | 30 min |
+| 9   | **Add fail2ban jails for Caddy + Gitea** — HTTP auth failures, API abuse            | Protects web services    | 30 min |
+| 10  | **Enable AppArmor in complain mode** — `apparmor.enable = true`, profile generation | MAC foundation           | 2h     |
 
 ### Priority 3: Code Quality (this week)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 11 | **Update TODO_LIST.md** — reflect sessions 33-34 work | Accurate tracking | 15 min |
-| 12 | **Update AGENTS.md** — document npm→pnpm migration, remove nodejs references | Knowledge base accuracy | 20 min |
-| 13 | **Clean gitignore** — remove `npm-debug.log*` from git.nix | Cleanup | 2 min |
-| 14 | **Consolidate voice-agents Caddy vHost** — into caddy.nix pattern | Architecture consistency | 30 min |
-| 15 | **Add SigNoz per-threshold channel routing** — critical→Discord, warning→log | Alert quality | 1h |
+| #   | Task                                                                         | Impact                   | Effort |
+| --- | ---------------------------------------------------------------------------- | ------------------------ | ------ |
+| 11  | **Update TODO_LIST.md** — reflect sessions 33-34 work                        | Accurate tracking        | 15 min |
+| 12  | **Update AGENTS.md** — document npm→pnpm migration, remove nodejs references | Knowledge base accuracy  | 20 min |
+| 13  | **Clean gitignore** — remove `npm-debug.log*` from git.nix                   | Cleanup                  | 2 min  |
+| 14  | **Consolidate voice-agents Caddy vHost** — into caddy.nix pattern            | Architecture consistency | 30 min |
+| 15  | **Add SigNoz per-threshold channel routing** — critical→Discord, warning→log | Alert quality            | 1h     |
 
 ### Priority 4: Infrastructure (next 2 weeks)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 16 | **Configure automated Nix GC** — `nix.gc` with `dates = "weekly"` | Prevents disk bloat | 15 min |
-| 17 | **Fix niri-health-metrics race condition** — add proper ordering/dependencies | Clean health metrics | 30 min |
-| 18 | **Provision Pi 3 for DNS failover** — flash NixOS, wire as secondary DNS | HA DNS | 3h |
-| 19 | **Deploy Dozzle** — Docker log viewer at `logs.home.lan` | Observability gap | 1h |
-| 20 | **Set up WireGuard VPN** — encrypted remote access | Remote security | 2h |
+| #   | Task                                                                          | Impact               | Effort |
+| --- | ----------------------------------------------------------------------------- | -------------------- | ------ |
+| 16  | **Configure automated Nix GC** — `nix.gc` with `dates = "weekly"`             | Prevents disk bloat  | 15 min |
+| 17  | **Fix niri-health-metrics race condition** — add proper ordering/dependencies | Clean health metrics | 30 min |
+| 18  | **Provision Pi 3 for DNS failover** — flash NixOS, wire as secondary DNS      | HA DNS               | 3h     |
+| 19  | **Deploy Dozzle** — Docker log viewer at `logs.home.lan`                      | Observability gap    | 1h     |
+| 20  | **Set up WireGuard VPN** — encrypted remote access                            | Remote security      | 2h     |
 
 ### Priority 5: Long-term Architecture (next month)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 21 | **Migrate to nix-colors** — eliminate 17+ hardcoded colors | Theme consistency | 6h |
-| 22 | **Enable auditd** — when NixOS 26.05 bug is fixed | Forensic capability | 1h |
-| 23 | **Explore Secure Boot** — custom signing keys, boot chain verification | Boot security | 4h |
-| 24 | **Evaluate off-site backup** — B2/S3 for critical data | Disaster recovery | 3h |
-| 25 | **Create Incus VM for AI workloads** — isolate Ollama, ComfyUI, Unsloth | Contain AI GPU bugs | 2h |
+| #   | Task                                                                    | Impact              | Effort |
+| --- | ----------------------------------------------------------------------- | ------------------- | ------ |
+| 21  | **Migrate to nix-colors** — eliminate 17+ hardcoded colors              | Theme consistency   | 6h     |
+| 22  | **Enable auditd** — when NixOS 26.05 bug is fixed                       | Forensic capability | 1h     |
+| 23  | **Explore Secure Boot** — custom signing keys, boot chain verification  | Boot security       | 4h     |
+| 24  | **Evaluate off-site backup** — B2/S3 for critical data                  | Disaster recovery   | 3h     |
+| 25  | **Create Incus VM for AI workloads** — isolate Ollama, ComfyUI, Unsloth | Contain AI GPU bugs | 2h     |
 
 ---
 
@@ -274,6 +291,7 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 4. **DNS resolution failure** — Caddy can't resolve ACME or backend hosts
 
 **Action needed:** SSH into evo-x2 and run:
+
 ```bash
 journalctl -u caddy.service -n 50 --no-pager
 systemctl status caddy.service
@@ -283,36 +301,36 @@ systemctl status caddy.service
 
 ## Session Statistics
 
-| Metric | Value |
-|--------|-------|
-| Total commits (repo) | 2,393+ |
-| `.nix` files | 110 |
-| Lines of Nix | 14,462 |
-| Service modules | 35 |
-| Enabled services | 27 |
-| Failed services | 5 |
-| Flake inputs | 38 |
-| Shell scripts | 17 |
-| Root disk usage | 86% (72G free) |
-| `/data` disk usage | 80% (206G free) |
-| `/nix/store` size | 89G |
-| Memory usage | 74% (46G/62G) |
-| `buildNpmPackage` usage | 0 |
-| `nodejs` system package | Removed |
-| `harden{}` adoption | 100% of services with systemd |
+| Metric                  | Value                         |
+| ----------------------- | ----------------------------- |
+| Total commits (repo)    | 2,393+                        |
+| `.nix` files            | 110                           |
+| Lines of Nix            | 14,462                        |
+| Service modules         | 35                            |
+| Enabled services        | 27                            |
+| Failed services         | 5                             |
+| Flake inputs            | 38                            |
+| Shell scripts           | 17                            |
+| Root disk usage         | 86% (72G free)                |
+| `/data` disk usage      | 80% (206G free)               |
+| `/nix/store` size       | 89G                           |
+| Memory usage            | 74% (46G/62G)                 |
+| `buildNpmPackage` usage | 0                             |
+| `nodejs` system package | Removed                       |
+| `harden{}` adoption     | 100% of services with systemd |
 
 ---
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/ai-stack.nix` | npm → pnpm (3 calls), `nodejs_22` → `pnpm` |
-| `pkgs/jscpd.nix` | `buildNpmPackage` → `fetchPnpmDeps` + `pnpmConfigHook` |
-| `pkgs/jscpd-pnpm-lock.yaml` | **NEW** — vendored pnpm lockfile (replaces `jscpd-package-lock.json`) |
-| `platforms/common/packages/base.nix` | Removed `nodejs` from system packages |
-| `justfile` | Removed `npm cache clean --force` |
-| `pkgs/README.md` | Updated jscpd source description |
+| File                                  | Change                                                                |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `modules/nixos/services/ai-stack.nix` | npm → pnpm (3 calls), `nodejs_22` → `pnpm`                            |
+| `pkgs/jscpd.nix`                      | `buildNpmPackage` → `fetchPnpmDeps` + `pnpmConfigHook`                |
+| `pkgs/jscpd-pnpm-lock.yaml`           | **NEW** — vendored pnpm lockfile (replaces `jscpd-package-lock.json`) |
+| `platforms/common/packages/base.nix`  | Removed `nodejs` from system packages                                 |
+| `justfile`                            | Removed `npm cache clean --force`                                     |
+| `pkgs/README.md`                      | Updated jscpd source description                                      |
 
 ---
 

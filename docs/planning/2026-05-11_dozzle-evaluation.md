@@ -11,13 +11,13 @@ Dozzle is a lightweight, real-time web-based Docker and Kubernetes log viewer. I
 
 ## Technical Profile
 
-| Aspect | Details |
-|--------|---------|
-| Image size | ~7 MB compressed |
-| Backend | Go 1.26, chi router, Docker/Moby SDK, K8s client-go, gRPC (agent mode) |
-| Frontend | Vue 3, Vite 8, Tailwind 4, DaisyUI, xterm.js, CodeMirror, Pinia, DuckDB-WASM |
-| Auth | File-based users + forward proxy (Authelia compatible) |
-| Deployment | Single Docker container, Docker Compose, or Swarm service |
+| Aspect     | Details                                                                      |
+| ---------- | ---------------------------------------------------------------------------- |
+| Image size | ~7 MB compressed                                                             |
+| Backend    | Go 1.26, chi router, Docker/Moby SDK, K8s client-go, gRPC (agent mode)       |
+| Frontend   | Vue 3, Vite 8, Tailwind 4, DaisyUI, xterm.js, CodeMirror, Pinia, DuckDB-WASM |
+| Auth       | File-based users + forward proxy (Authelia compatible)                       |
+| Deployment | Single Docker container, Docker Compose, or Swarm service                    |
 
 ## Features
 
@@ -49,18 +49,19 @@ Dozzle is a lightweight, real-time web-based Docker and Kubernetes log viewer. I
 
 ## Comparison with SigNoz
 
-| | SigNoz | Dozzle |
-|---|---|---|
-| Logs | Historical, searchable, aggregated | Live streaming, real-time |
-| Use case | Alerting, analysis, debugging over time | "What's happening right now" on a container |
-| Storage | ClickHouse (persistent) | None (ephemeral) |
-| Scope | Full observability (metrics, traces, logs) | Container log tailing only |
+|          | SigNoz                                     | Dozzle                                      |
+| -------- | ------------------------------------------ | ------------------------------------------- |
+| Logs     | Historical, searchable, aggregated         | Live streaming, real-time                   |
+| Use case | Alerting, analysis, debugging over time    | "What's happening right now" on a container |
+| Storage  | ClickHouse (persistent)                    | None (ephemeral)                            |
+| Scope    | Full observability (metrics, traces, logs) | Container log tailing only                  |
 
 ## Fit for SystemNix
 
 Dozzle fills a different niche than SigNoz — real-time log tailing vs. historical analysis and alerting. They are complementary, not competing.
 
 **Integration path:**
+
 - Add as a Docker container in the existing stack
 - Mount `docker.sock`, place behind Caddy at `logs.home.lan`
 - Protect with Authelia forward auth (already supported by Dozzle)

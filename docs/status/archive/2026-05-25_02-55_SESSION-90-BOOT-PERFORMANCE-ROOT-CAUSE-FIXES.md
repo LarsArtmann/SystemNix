@@ -20,16 +20,16 @@ The boot breakdown was: firmware 33s + loader 4s + kernel 2s + **initrd 2m 34s**
 
 ## System Health Snapshot
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| RAM | 46/62 GiB used (74%) | ⚠️ Elevated |
-| Swap | 8.5/16 GiB used (53%) | ⚠️ High for 1h uptime |
-| Root disk | 504/512 GB used (100%) | 🔴 **CRITICAL** |
-| /data disk | 854/1024 GB used (84%) | ⚠️ Growing |
-| Load avg | 4.28 / 5.79 / 12.95 | ⚠️ Elevated |
-| OOM kills this boot | 0 | ✅ (fixed in session 89) |
-| Boot time | 4m 22s | 🔴 (fixes pending deploy) |
-| last boot (normal) | 32s | ✅ (boot -1, -2) |
+| Metric              | Value                  | Status                    |
+| ------------------- | ---------------------- | ------------------------- |
+| RAM                 | 46/62 GiB used (74%)   | ⚠️ Elevated               |
+| Swap                | 8.5/16 GiB used (53%)  | ⚠️ High for 1h uptime     |
+| Root disk           | 504/512 GB used (100%) | 🔴 **CRITICAL**           |
+| /data disk          | 854/1024 GB used (84%) | ⚠️ Growing                |
+| Load avg            | 4.28 / 5.79 / 12.95    | ⚠️ Elevated               |
+| OOM kills this boot | 0                      | ✅ (fixed in session 89)  |
+| Boot time           | 4m 22s                 | 🔴 (fixes pending deploy) |
+| last boot (normal)  | 32s                    | ✅ (boot -1, -2)          |
 
 ---
 
@@ -39,25 +39,25 @@ The boot breakdown was: firmware 33s + loader 4s + kernel 2s + **initrd 2m 34s**
 
 Full breakdown of 4m 22s boot with timestamps from `journalctl -b -o short-precise`:
 
-| Phase | Time | What Happened |
-|-------|------|---------------|
-| Firmware | 33.1s | BIOS POST — likely AMI firmware, no user control |
-| Loader (systemd-boot) | 3.9s | Normal |
-| Kernel | 1.8s | Fast |
-| Initrd | 2m 33.7s | **BUG: sops GPG agent hang (2m 12s of this)** |
-| Userspace → graphical.target | 1m 9.7s | **BUG: Docker + 12 services blocking desktop** |
-| **Total** | **4m 22.3s** | |
+| Phase                        | Time         | What Happened                                    |
+| ---------------------------- | ------------ | ------------------------------------------------ |
+| Firmware                     | 33.1s        | BIOS POST — likely AMI firmware, no user control |
+| Loader (systemd-boot)        | 3.9s         | Normal                                           |
+| Kernel                       | 1.8s         | Fast                                             |
+| Initrd                       | 2m 33.7s     | **BUG: sops GPG agent hang (2m 12s of this)**    |
+| Userspace → graphical.target | 1m 9.7s      | **BUG: Docker + 12 services blocking desktop**   |
+| **Total**                    | **4m 22.3s** |                                                  |
 
 **Historical comparison of initrd-nixos-activation wall clock time:**
 
-| Boot | Date | Wall Clock | Notes |
-|------|------|-----------|-------|
-| -5 | May 21 | 1m 32s | GPG hang |
-| -4 | May 22 | 1m 28s | GPG hang |
-| -3 | May 23 | 18.3s | Normal |
-| -2 | May 24 05:23 | 20.0s | Normal |
-| -1 | May 24 23:30 | 17.8s | Normal |
-| **0** | **May 25** | **2m 13s** | **GPG hang (this boot)** |
+| Boot  | Date         | Wall Clock | Notes                    |
+| ----- | ------------ | ---------- | ------------------------ |
+| -5    | May 21       | 1m 32s     | GPG hang                 |
+| -4    | May 22       | 1m 28s     | GPG hang                 |
+| -3    | May 23       | 18.3s      | Normal                   |
+| -2    | May 24 05:23 | 20.0s      | Normal                   |
+| -1    | May 24 23:30 | 17.8s      | Normal                   |
+| **0** | **May 25**   | **2m 13s** | **GPG hang (this boot)** |
 
 The hang is intermittent — sops-install-secrets imports `/etc/ssh/ssh_host_rsa_key` as a GPG key, spawning gpg-agent. Sometimes it finishes in 18s, sometimes 2+ minutes. The fix (disabling GPG import) eliminates the randomness entirely.
 
@@ -67,6 +67,7 @@ The hang is intermittent — sops-install-secrets imports `/etc/ssh/ssh_host_rsa
 **Change:** Added `gnupg.sshKeyPaths = [];`
 
 Verified against sops-nix source (Mic92/sops-nix `modules/sops/default.nix`):
+
 - `gnupg.sshKeyPaths` is a valid option (type `listOf path`, default `[]`)
 - The option is passed to `sops-install-secrets` via the manifest JSON as `sshKeyPaths`
 - Setting it to `[]` prevents any GPG key import
@@ -78,6 +79,7 @@ Verified against sops-nix source (Mic92/sops-nix `modules/sops/default.nix`):
 ### 3. Docker Service Target Migration — Committed ✅
 
 **Files changed:**
+
 - `lib/docker.nix` — `mkDockerService` default target: `graphical.target` → `multi-user.target`
 - `modules/nixos/services/default.nix` — Docker daemon itself: `graphical.target` → `multi-user.target`
 - `modules/nixos/services/dns-blocker.nix` — dnsblockd service target
@@ -88,6 +90,7 @@ Verified against sops-nix source (Mic92/sops-nix `modules/sops/default.nix`):
 **Why:** `graphical.target` is the desktop startup target. Docker containers are backend services — the desktop should not wait for them. `multi-user.target` is reached before `graphical.target` and is the correct target for system services.
 
 **Critical chain before fix:**
+
 ```
 graphical.target @46.315s
 └─whisper-asr.service @34.178s +12.136s
@@ -101,6 +104,7 @@ graphical.target @46.315s
 ### 4. voice-agents Disabled + Dependents Gated — Committed ✅
 
 **Files changed:**
+
 - `platforms/nixos/system/configuration.nix` — `voice-agents.enable = false`
 - `modules/nixos/services/caddy.nix` — `voice.*` and `whisper.*` vHosts wrapped in `lib.optionalAttrs config.services.voice-agents.enable`
 - `modules/nixos/services/gatus-config.nix` — Whisper ASR and LiveKit endpoints wrapped in `lib.optionals config.services.voice-agents.enable`
@@ -129,6 +133,7 @@ The `card*` wildcard matched child devices (card1-DP-1, card1-DP-2, card1-HDMI-A
 ### 8. AGENTS.md Updated — Committed ✅
 
 Added three new gotchas to the Non-Obvious Gotchas table:
+
 - Docker services target convention (`multi-user.target` not `graphical.target`)
 - sops GPG key import (`gnupg.sshKeyPaths = []`)
 - GPU udev rule (`card[0-9]` not `card*`)
@@ -140,6 +145,7 @@ Added three new gotchas to the Non-Obvious Gotchas table:
 ### 1. Boot Fix NOT Deployed
 
 All fixes are committed and pushed, but `just switch` has NOT been run. The current boot still has:
+
 - 2m 34s initrd (sops GPG hang)
 - 1m 10s userspace (Docker blocking graphical.target)
 - 4m 22s total boot time
@@ -151,6 +157,7 @@ All fixes are committed and pushed, but `just switch` has NOT been run. The curr
 Root disk remains at 504/512 GB (2.5 GB free). Session 89 triggered OOM cascade that killed journald. No cleanup has been done this session. This is the **#1 systemic risk** — if the root disk fills completely, the system becomes inoperable.
 
 Potential space recovery:
+
 - `nix-collect-garbage --delete-older-than 1d` (risky — may hang on full disk)
 - `journalctl --vacuum-size=100M` (safe — journals can be large)
 - Docker image cleanup (`docker system prune`)
@@ -184,6 +191,7 @@ Potential space recovery:
 ### 1. sops GPG Import — Was Broken for Months
 
 The sops-install-secrets GPG hang has been intermittently causing 2+ minute boot delays for **months** (evidence: boots -4, -5 on May 21-22 also had 1m 28s+ initrd). This was never caught because:
+
 - It's intermittent — some boots are 18s, some 2m+
 - The `systemd-analyze blame` output doesn't show it clearly (the time is in `initrd-switch-root` not a named service)
 - Requires `journalctl -b -o short-precise` with exact timestamp analysis to spot the gap
@@ -203,6 +211,7 @@ This is the third consecutive status report flagging root disk at 100%. No meani
 ## E) WHAT WE SHOULD IMPROVE 🔧
 
 ### Code Quality
+
 1. **Service target convention should be enforced** — Add a NixOS module assertion that `wantedBy` for Docker-based services is never `graphical.target`. This prevents future regressions.
 2. **sops configuration should be minimal** — Only `age.sshKeyPaths` should be set; `gnupg.sshKeyPaths = []` should be the default in our config to prevent future similar issues.
 3. **Prometheus textfile scripts need null safety everywhere** — The signoz extract() pattern should be extracted into a shared helper or at minimum documented as a gotcha.
@@ -210,6 +219,7 @@ This is the third consecutive status report flagging root disk at 100%. No meani
 5. **Gatus endpoints should use the same pattern** — Endpoints should reference the service's enable flag, not be hardcoded.
 
 ### Operational
+
 6. **Boot time monitoring** — Add a Gatus endpoint or timer that tracks boot time and alerts when it exceeds 60s.
 7. **Disk space monitoring** — Root disk at 100% should trigger an immediate alert, not wait for manual checking.
 8. **Status report bloat** — 155 status reports in `docs/status/`. Most should be in `archive/`. Current ones should be limited to last 5-10 sessions.
@@ -221,33 +231,33 @@ This is the third consecutive status report flagging root disk at 100%. No meani
 
 Sorted by impact × effort (highest first):
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | **Deploy all boot fixes** (`just switch` + reboot) | 🔴 Critical | 5min | Deploy |
-| 2 | **Root disk cleanup** — garbage collect, journal vacuum, docker prune | 🔴 Critical | 30min | Ops |
-| 3 | **Verify boot time** after deploy (target: <45s) | 🔴 Critical | 5min | Verify |
-| 4 | **Fix monitor365-server** user service failures | 🟡 High | 1h | Bug |
-| 5 | **Fix activitywatch-watcher** service failure | 🟡 High | 30min | Bug |
-| 6 | **Fix oauth2-proxy** intermittent startup failure | 🟡 High | 1h | Bug |
-| 7 | **Set `vm.overcommit_memory = 1`** for Redis | 🟡 High | 5min | Config |
-| 8 | **Archive old status reports** (keep last 10) | 🟡 Medium | 15min | Housekeeping |
-| 9 | **Add disk space alert** to Gatus | 🟡 Medium | 30min | Monitoring |
-| 10 | **Add boot time tracking** (systemd-analyze in timer) | 🟡 Medium | 30min | Monitoring |
-| 11 | **Fix dnsblockd-cert-import** user service failure | 🟡 Medium | 30min | Bug |
-| 12 | **Run /data BTRFS migration** (`just snapshot-migrate-data`) | 🟡 Medium | 1h | Ops |
-| 13 | **Enforce service target convention** via NixOS assertion | 🟢 Low | 30min | Code quality |
-| 14 | **Auto-gate Caddy vHosts** behind service enable flags | 🟢 Low | 2h | Refactor |
-| 15 | **Auto-gate Gatus endpoints** behind service enable flags | 🟢 Low | 1h | Refactor |
-| 16 | **Fix IPv6 tempaddr errors** on Docker veths | 🟢 Low | 30min | Config |
-| 17 | **Investigate firmware 33s** — check BIOS fast boot options | 🟢 Low | 15min | Perf |
-| 18 | **Pi 3 DNS hardware provisioning** | 🟢 Low | 4h+ | Infra |
-| 19 | **Redis authentication** — set a password | 🟢 Low | 15min | Security |
-| 20 | **Photomap service** — verify/test status | 🟢 Low | 1h | Verify |
-| 21 | **Steam module** — verify/test status | 🟢 Low | 30min | Verify |
-| 22 | **Clean up `docs/adr/`** — ADR-005 has duplicate naming | 🟢 Low | 15min | Housekeeping |
-| 23 | **Bluetooth hci0 wmt error** — investigate RTL driver issue | 🟢 Low | 2h | Bug |
-| 24 | **SigNoz container DNS timing** — psql "db" host resolution on first start | 🟢 Low | 1h | Bug |
-| 25 | **Pre-commit hook staging behavior** — investigate auto-staging all changes | 🟢 Low | 1h | Tooling |
+| #   | Task                                                                        | Impact      | Effort | Category     |
+| --- | --------------------------------------------------------------------------- | ----------- | ------ | ------------ |
+| 1   | **Deploy all boot fixes** (`just switch` + reboot)                          | 🔴 Critical | 5min   | Deploy       |
+| 2   | **Root disk cleanup** — garbage collect, journal vacuum, docker prune       | 🔴 Critical | 30min  | Ops          |
+| 3   | **Verify boot time** after deploy (target: <45s)                            | 🔴 Critical | 5min   | Verify       |
+| 4   | **Fix monitor365-server** user service failures                             | 🟡 High     | 1h     | Bug          |
+| 5   | **Fix activitywatch-watcher** service failure                               | 🟡 High     | 30min  | Bug          |
+| 6   | **Fix oauth2-proxy** intermittent startup failure                           | 🟡 High     | 1h     | Bug          |
+| 7   | **Set `vm.overcommit_memory = 1`** for Redis                                | 🟡 High     | 5min   | Config       |
+| 8   | **Archive old status reports** (keep last 10)                               | 🟡 Medium   | 15min  | Housekeeping |
+| 9   | **Add disk space alert** to Gatus                                           | 🟡 Medium   | 30min  | Monitoring   |
+| 10  | **Add boot time tracking** (systemd-analyze in timer)                       | 🟡 Medium   | 30min  | Monitoring   |
+| 11  | **Fix dnsblockd-cert-import** user service failure                          | 🟡 Medium   | 30min  | Bug          |
+| 12  | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                | 🟡 Medium   | 1h     | Ops          |
+| 13  | **Enforce service target convention** via NixOS assertion                   | 🟢 Low      | 30min  | Code quality |
+| 14  | **Auto-gate Caddy vHosts** behind service enable flags                      | 🟢 Low      | 2h     | Refactor     |
+| 15  | **Auto-gate Gatus endpoints** behind service enable flags                   | 🟢 Low      | 1h     | Refactor     |
+| 16  | **Fix IPv6 tempaddr errors** on Docker veths                                | 🟢 Low      | 30min  | Config       |
+| 17  | **Investigate firmware 33s** — check BIOS fast boot options                 | 🟢 Low      | 15min  | Perf         |
+| 18  | **Pi 3 DNS hardware provisioning**                                          | 🟢 Low      | 4h+    | Infra        |
+| 19  | **Redis authentication** — set a password                                   | 🟢 Low      | 15min  | Security     |
+| 20  | **Photomap service** — verify/test status                                   | 🟢 Low      | 1h     | Verify       |
+| 21  | **Steam module** — verify/test status                                       | 🟢 Low      | 30min  | Verify       |
+| 22  | **Clean up `docs/adr/`** — ADR-005 has duplicate naming                     | 🟢 Low      | 15min  | Housekeeping |
+| 23  | **Bluetooth hci0 wmt error** — investigate RTL driver issue                 | 🟢 Low      | 2h     | Bug          |
+| 24  | **SigNoz container DNS timing** — psql "db" host resolution on first start  | 🟢 Low      | 1h     | Bug          |
+| 25  | **Pre-commit hook staging behavior** — investigate auto-staging all changes | 🟢 Low      | 1h     | Tooling      |
 
 ---
 
@@ -269,26 +279,26 @@ The root partition is 512 GB with 504 GB used and only 2.5 GB free. This has per
 
 ## Commits This Session
 
-| Commit | Description |
-|--------|-------------|
+| Commit     | Description                                                                       |
+| ---------- | --------------------------------------------------------------------------------- |
 | `914d7c86` | fix: service target, GPU udev, sops GPG, signoz null safety, disable voice-agents |
-| `11b3e83a` | fix(voice-agents): gate caddy vHosts and gatus endpoints behind enable flag |
+| `11b3e83a` | fix(voice-agents): gate caddy vHosts and gatus endpoints behind enable flag       |
 
 ---
 
 ## Files Modified This Session
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/sops.nix` | Added `gnupg.sshKeyPaths = []` |
-| `lib/docker.nix` | Changed `wantedBy` from `graphical.target` to `multi-user.target` |
-| `modules/nixos/services/default.nix` | Docker daemon target: `graphical.target` → `multi-user.target` |
-| `modules/nixos/services/dns-blocker.nix` | dnsblockd target: `graphical.target` → `multi-user.target` |
-| `modules/nixos/services/hermes.nix` | hermes target: `graphical.target` → `multi-user.target` |
-| `modules/nixos/services/homepage.nix` | homepage target: `graphical.target` → `multi-user.target` |
-| `modules/nixos/services/signoz.nix` | signoz/cadvisor/collector targets + nvme extract() null safety |
-| `platforms/nixos/hardware/amd-gpu.nix` | udev rule: `card*` → `card[0-9]` |
-| `platforms/nixos/system/configuration.nix` | `voice-agents.enable = false` |
-| `modules/nixos/services/caddy.nix` | Gate voice/whisper vHosts behind `voice-agents.enable` |
-| `modules/nixos/services/gatus-config.nix` | Gate Whisper/LiveKit endpoints behind `voice-agents.enable` |
-| `AGENTS.md` | Added 3 new gotchas to Non-Obvious Gotchas table |
+| File                                       | Change                                                            |
+| ------------------------------------------ | ----------------------------------------------------------------- |
+| `modules/nixos/services/sops.nix`          | Added `gnupg.sshKeyPaths = []`                                    |
+| `lib/docker.nix`                           | Changed `wantedBy` from `graphical.target` to `multi-user.target` |
+| `modules/nixos/services/default.nix`       | Docker daemon target: `graphical.target` → `multi-user.target`    |
+| `modules/nixos/services/dns-blocker.nix`   | dnsblockd target: `graphical.target` → `multi-user.target`        |
+| `modules/nixos/services/hermes.nix`        | hermes target: `graphical.target` → `multi-user.target`           |
+| `modules/nixos/services/homepage.nix`      | homepage target: `graphical.target` → `multi-user.target`         |
+| `modules/nixos/services/signoz.nix`        | signoz/cadvisor/collector targets + nvme extract() null safety    |
+| `platforms/nixos/hardware/amd-gpu.nix`     | udev rule: `card*` → `card[0-9]`                                  |
+| `platforms/nixos/system/configuration.nix` | `voice-agents.enable = false`                                     |
+| `modules/nixos/services/caddy.nix`         | Gate voice/whisper vHosts behind `voice-agents.enable`            |
+| `modules/nixos/services/gatus-config.nix`  | Gate Whisper/LiveKit endpoints behind `voice-agents.enable`       |
+| `AGENTS.md`                                | Added 3 new gotchas to Non-Obvious Gotchas table                  |

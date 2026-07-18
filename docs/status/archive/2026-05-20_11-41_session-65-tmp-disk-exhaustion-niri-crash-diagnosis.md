@@ -12,6 +12,7 @@
 Niri crashed twice within ~15 minutes. Root cause: **`/tmp` disk exhaustion** — 59 GB of stale nix build caches (2011 `go-build*` directories + hundreds of `nix-shell.*` dirs) filled the root partition to 88%, causing I/O contention that destabilized the compositor. Additionally, **three services are in crash loops** since the last reboot: whisper-asr (missing `/var/lib/whisper-asr`), monitor365 (broken env var), and hermes (failed to start). Swap is at 75% utilization (9.9/13 GiB), and system load is elevated (25.83).
 
 Two fixes committed and pushed:
+
 1. `boot.tmp.cleanOnBoot = true` — wipes `/tmp` on every boot
 2. `ollama.wantedBy = lib.mkForce []` — prevents Ollama from auto-starting at boot (eliminates unnecessary GPU VRAM reservation)
 
@@ -23,52 +24,52 @@ Two fixes committed and pushed:
 
 ### Resources
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Root disk `/` | 436G / 512G (88%) | **WARNING** — /tmp eating 62 GB |
-| Data disk `/data` | 827G / 1.0T (81%) | OK |
-| `/boot` | 165M / 2.0G (9%) | OK |
-| RAM | 48G used / 62G total | High — 77% |
-| Swap | 9.9G used / 13G total | **WARNING** — 75% swap |
-| Load avg | 25.83 / 22.06 / 18.97 | **ELEVATED** |
-| Processes | 7004 | High |
-| `/tmp` | 62 GB (2017 go-build dirs) | **CRITICAL** |
+| Metric            | Value                      | Status                          |
+| ----------------- | -------------------------- | ------------------------------- |
+| Root disk `/`     | 436G / 512G (88%)          | **WARNING** — /tmp eating 62 GB |
+| Data disk `/data` | 827G / 1.0T (81%)          | OK                              |
+| `/boot`           | 165M / 2.0G (9%)           | OK                              |
+| RAM               | 48G used / 62G total       | High — 77%                      |
+| Swap              | 9.9G used / 13G total      | **WARNING** — 75% swap          |
+| Load avg          | 25.83 / 22.06 / 18.97      | **ELEVATED**                    |
+| Processes         | 7004                       | High                            |
+| `/tmp`            | 62 GB (2017 go-build dirs) | **CRITICAL**                    |
 
 ### Major Space Consumers
 
-| Path | Size | Notes |
-|------|------|-------|
-| `/nix/store` | 88 GB | Normal for this config |
-| `/tmp` | 62 GB | **Stale build caches — needs cleanup** |
-| `~/projects` | 90 GB | Development work |
-| `~/.cache` | 52 GB | HuggingFace, Go, browser caches |
-| `~/go` | 11 GB | GOPATH (should be mostly empty — Go tools moved to Nix) |
-| `~/.npm` | 1.5 GB | Node.js caches |
-| `~/.cargo` | 1.7 GB | Rust caches |
-| `~/.local/share/Trash` | 1.6 GB | Pending trash |
-| `/data/models` | 461 GB | AI models (persistent) |
-| `/data/llamacpp-models` | 165 GB | llama.cpp models |
-| `/data/ai` | 119 GB | Centralized AI storage |
-| `/data/SteamLibrary` | 99 GB | Games |
+| Path                    | Size   | Notes                                                   |
+| ----------------------- | ------ | ------------------------------------------------------- |
+| `/nix/store`            | 88 GB  | Normal for this config                                  |
+| `/tmp`                  | 62 GB  | **Stale build caches — needs cleanup**                  |
+| `~/projects`            | 90 GB  | Development work                                        |
+| `~/.cache`              | 52 GB  | HuggingFace, Go, browser caches                         |
+| `~/go`                  | 11 GB  | GOPATH (should be mostly empty — Go tools moved to Nix) |
+| `~/.npm`                | 1.5 GB | Node.js caches                                          |
+| `~/.cargo`              | 1.7 GB | Rust caches                                             |
+| `~/.local/share/Trash`  | 1.6 GB | Pending trash                                           |
+| `/data/models`          | 461 GB | AI models (persistent)                                  |
+| `/data/llamacpp-models` | 165 GB | llama.cpp models                                        |
+| `/data/ai`              | 119 GB | Centralized AI storage                                  |
+| `/data/SteamLibrary`    | 99 GB  | Games                                                   |
 
 ### Services in Crash Loop (Since Boot)
 
-| Service | Error | Impact | Severity |
-|---------|-------|--------|----------|
-| **whisper-asr** | `/var/lib/whisper-asr: No such file or directory` — mount namespacing fails | ASR unavailable, **10s crash loop spamming journal** | **HIGH** — retrying every 10s |
-| **monitor365** | `Invalid environment variable name: XDG_RUNTIME_DIR/monitor365/config.toml` | Monitoring agent down | MEDIUM |
-| **hermes** | Failed to start (messaging gateway) | Discord bot offline | HIGH |
-| **dnsblockd-cert-import** | Failed (user service) | NSS cert import failed | LOW |
+| Service                   | Error                                                                       | Impact                                               | Severity                      |
+| ------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------- | ----------------------------- |
+| **whisper-asr**           | `/var/lib/whisper-asr: No such file or directory` — mount namespacing fails | ASR unavailable, **10s crash loop spamming journal** | **HIGH** — retrying every 10s |
+| **monitor365**            | `Invalid environment variable name: XDG_RUNTIME_DIR/monitor365/config.toml` | Monitoring agent down                                | MEDIUM                        |
+| **hermes**                | Failed to start (messaging gateway)                                         | Discord bot offline                                  | HIGH                          |
+| **dnsblockd-cert-import** | Failed (user service)                                                       | NSS cert import failed                               | LOW                           |
 
 ### Niri Crash Timeline
 
-| Time | Event |
-|------|-------|
-| 04:53:48 | Niri received SIGTERM (previous boot, ran 1d 9h 12m) |
-| 04:55:35 | System rebooted, niri started fresh |
-| 04:56:01 | swayidle inhibit lock expired → system suspended |
-| 05:01:26 | System resumed (from suspend), niri restarted |
-| ~05:08 | User reports niri "crashed again" — likely the accumulated /tmp pressure |
+| Time     | Event                                                                    |
+| -------- | ------------------------------------------------------------------------ |
+| 04:53:48 | Niri received SIGTERM (previous boot, ran 1d 9h 12m)                     |
+| 04:55:35 | System rebooted, niri started fresh                                      |
+| 04:56:01 | swayidle inhibit lock expired → system suspended                         |
+| 05:01:26 | System resumed (from suspend), niri restarted                            |
+| ~05:08   | User reports niri "crashed again" — likely the accumulated /tmp pressure |
 
 The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). They were SIGTERM-driven stops caused by system suspend/reboot cycles, exacerbated by disk I/O from the 62 GB `/tmp` cache.
 
@@ -77,6 +78,7 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 ## a) FULLY DONE
 
 ### Infrastructure & Core Services
+
 - **NixOS config** — 35 service modules registered in `serviceModules`, all imported unconditionally
 - **Cross-platform flake** — Darwin + NixOS + rpi3-dns, shared via `platforms/common/`
 - **Overlay system** — 12 shared + 6 Linux-only overlays, all using `mkPackageOverlay` helper
@@ -88,11 +90,13 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 - **GPU defense** — Multi-layer: `OLLAMA_MAX_LOADED_MODELS=1`, GPU overhead reservation, OOM priorities, niri DRM healthcheck, GPU recovery script
 
 ### Session 65 Specific
+
 - **`boot.tmp.cleanOnBoot = true`** committed and pushed — wipes `/tmp` on every boot
 - **`ollama.wantedBy = lib.mkForce []`** committed and pushed — no more Ollama auto-start
 - **Niri crash diagnosis** — confirmed SIGTERM (not GPU/DRM), traced to suspend cycle + disk I/O
 
 ### Desktop
+
 - **Niri** — running, stable (current uptime ~6h 40m)
 - **Waybar** — running
 - **EMEET PIXY** — camera daemon with auto-tracking, privacy mode, call detection
@@ -101,6 +105,7 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 - **Catppuccin Mocha** — universal theme across all apps
 
 ### Recent Sessions (58-64)
+
 - **Session 58-60** — Complete Gitea→Forgejo migration (DNS, Caddy, Authelia, runner, password, WatchdogSec bugs all fixed)
 - **Session 61** — Forgejo runner root cause fix (escapeSystemdPath, inline token generation)
 - **Session 62** — Flake update + dual-platform build fixes
@@ -111,14 +116,14 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 
 ## b) PARTIALLY DONE
 
-| Item | Status | What's Missing |
-|------|--------|----------------|
-| **rpi3-dns cluster** | Config exists, Pi 3 imaged | Pi not provisioned at remote site; needs sops + age identity; VRRP not tested live |
-| **Dual-WAN failover** | Module + scripts complete, works on evo-x2 | WiFi interface naming was buggy (now fixed); not stress-tested under real ISP failure |
-| **DNS failover (VRRP)** | Module written, keepalived config ready | Two-node cluster can't be tested until Pi 3 is provisioned |
-| **Lockfile dedup** | 123→93 nodes (24.4% reduction) | 23 remaining duplicate Go private repo nodes (require upstream changes) |
-| **~/go cleanup** | Go tools moved to Nix overlays | `~/go` still 11 GB — likely stale module caches, GOPATH remnants |
-| **Monitor365** | Package + overlay + module exists | Service in crash loop (broken XDG_RUNTIME_DIR env var in module) |
+| Item                    | Status                                     | What's Missing                                                                        |
+| ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| **rpi3-dns cluster**    | Config exists, Pi 3 imaged                 | Pi not provisioned at remote site; needs sops + age identity; VRRP not tested live    |
+| **Dual-WAN failover**   | Module + scripts complete, works on evo-x2 | WiFi interface naming was buggy (now fixed); not stress-tested under real ISP failure |
+| **DNS failover (VRRP)** | Module written, keepalived config ready    | Two-node cluster can't be tested until Pi 3 is provisioned                            |
+| **Lockfile dedup**      | 123→93 nodes (24.4% reduction)             | 23 remaining duplicate Go private repo nodes (require upstream changes)               |
+| **~/go cleanup**        | Go tools moved to Nix overlays             | `~/go` still 11 GB — likely stale module caches, GOPATH remnants                      |
+| **Monitor365**          | Package + overlay + module exists          | Service in crash loop (broken XDG_RUNTIME_DIR env var in module)                      |
 
 ---
 
@@ -140,12 +145,12 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 
 ## d) TOTALLY FUCKED UP
 
-| Issue | Severity | Details |
-|-------|----------|---------|
-| **whisper-asr 10s crash loop** | **CRITICAL** | Missing `/var/lib/whisper-asr` → mount namespacing fails → systemd retries every 10s → **spamming journal with errors every 10 seconds**. This is actively degrading system performance and filling logs. Needs immediate tmpfiles rule or service disable. |
-| **Swap at 75%** | **HIGH** | 9.9 GB of 13 GB swap used. With 128 GB RAM, this means memory pressure is extreme. Likely from Docker containers + AI workloads + CompyUI/Ollama remnants. Combined with disk I/O from `/tmp`, this is the root cause of sluggishness. |
-| **Load average 25.83** | **HIGH** | On a 16-core CPU, this means significant queuing. The whisper-asr crash loop, disk I/O, and swap thrashing are all contributing. |
-| **Ollama `wantedBy = []` pushed but NOT deployed** | **MEDIUM** | The fix is in the repo but not active on the running system. Next `just switch` will apply it. |
+| Issue                                              | Severity     | Details                                                                                                                                                                                                                                                     |
+| -------------------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **whisper-asr 10s crash loop**                     | **CRITICAL** | Missing `/var/lib/whisper-asr` → mount namespacing fails → systemd retries every 10s → **spamming journal with errors every 10 seconds**. This is actively degrading system performance and filling logs. Needs immediate tmpfiles rule or service disable. |
+| **Swap at 75%**                                    | **HIGH**     | 9.9 GB of 13 GB swap used. With 128 GB RAM, this means memory pressure is extreme. Likely from Docker containers + AI workloads + CompyUI/Ollama remnants. Combined with disk I/O from `/tmp`, this is the root cause of sluggishness.                      |
+| **Load average 25.83**                             | **HIGH**     | On a 16-core CPU, this means significant queuing. The whisper-asr crash loop, disk I/O, and swap thrashing are all contributing.                                                                                                                            |
+| **Ollama `wantedBy = []` pushed but NOT deployed** | **MEDIUM**   | The fix is in the repo but not active on the running system. Next `just switch` will apply it.                                                                                                                                                              |
 
 ---
 
@@ -182,48 +187,48 @@ The niri "crashes" were NOT GPU/DRM failures (no amdgpu errors, no OOM kills). T
 
 ### Immediate (This Session)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Clean `/tmp` now** — remove 62 GB stale build caches | Frees 12% root disk instantly | 1 min |
-| 2 | **Fix whisper-asr crash loop** — add tmpfiles rule for `/var/lib/whisper-asr` | Stops journal spam, reduces I/O | 5 min |
-| 3 | **Fix monitor365 env var** — correct the broken `XDG_RUNTIME_DIR` config path | Service stops crashing | 10 min |
-| 4 | **Investigate Hermes startup failure** — check logs, fix root cause | Discord bot comes back online | 15 min |
-| 5 | **Deploy pending changes** — `just switch` to activate boot.tmp.cleanOnBoot + ollama wantedBy | Both fixes take effect | 5 min |
+| #   | Task                                                                                          | Impact                          | Effort |
+| --- | --------------------------------------------------------------------------------------------- | ------------------------------- | ------ |
+| 1   | **Clean `/tmp` now** — remove 62 GB stale build caches                                        | Frees 12% root disk instantly   | 1 min  |
+| 2   | **Fix whisper-asr crash loop** — add tmpfiles rule for `/var/lib/whisper-asr`                 | Stops journal spam, reduces I/O | 5 min  |
+| 3   | **Fix monitor365 env var** — correct the broken `XDG_RUNTIME_DIR` config path                 | Service stops crashing          | 10 min |
+| 4   | **Investigate Hermes startup failure** — check logs, fix root cause                           | Discord bot comes back online   | 15 min |
+| 5   | **Deploy pending changes** — `just switch` to activate boot.tmp.cleanOnBoot + ollama wantedBy | Both fixes take effect          | 5 min  |
 
 ### Short Term (Next Session)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 6 | **Clean `~/go` (11 GB)** — audit and remove stale GOPATH/module caches | Recovers disk space | 10 min |
-| 7 | **Audit `~/.cache` (52 GB)** — clean HuggingFace, Go, browser caches | Major space recovery | 15 min |
-| 8 | **Consolidate `/data/models` → `/data/ai/models`** — check if ai-migrate was run | Eliminates potential duplication (461+119 GB) | 30 min |
-| 9 | **Fix dnsblockd-cert-import user service** — NSS cert import failing since boot | Browser trust for *.home.lan | 10 min |
-| 10 | **Add disk space monitoring** — gatus check for root disk > 85% | Early warning before exhaustion | 15 min |
+| #   | Task                                                                             | Impact                                        | Effort |
+| --- | -------------------------------------------------------------------------------- | --------------------------------------------- | ------ |
+| 6   | **Clean `~/go` (11 GB)** — audit and remove stale GOPATH/module caches           | Recovers disk space                           | 10 min |
+| 7   | **Audit `~/.cache` (52 GB)** — clean HuggingFace, Go, browser caches             | Major space recovery                          | 15 min |
+| 8   | **Consolidate `/data/models` → `/data/ai/models`** — check if ai-migrate was run | Eliminates potential duplication (461+119 GB) | 30 min |
+| 9   | **Fix dnsblockd-cert-import user service** — NSS cert import failing since boot  | Browser trust for *.home.lan                  | 10 min |
+| 10  | **Add disk space monitoring** — gatus check for root disk > 85%                  | Early warning before exhaustion               | 15 min |
 
 ### Medium Term
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 11 | **Provision Pi 3 at remote site** — physical deployment + sops enrollment | DNS failover cluster goes live | 1-2 hours on-site |
-| 12 | **Lockfile dedup phase 3** — upstream changes for Go private repo shared inputs | 23 fewer lock nodes, faster eval | Requires upstream PRs |
-| 13 | **Archive old status reports** — move pre-session-60 to `archive/` | Cleaner docs directory | 5 min |
-| 14 | **Evaluate `/tmp` as tmpfs** — benchmark nix build performance on tmpfs vs disk | Faster builds, automatic cleanup | 1 hour testing |
-| 15 | **Docker storage audit** — verify all Docker data is on `/data/docker`, not root | Prevent root disk surprises | 15 min |
-| 16 | **Automated vendor hash updates** — script that detects stale hashes and updates | Reduces manual cascade fixing | 2 hours |
-| 17 | **whisper-asr module hardening** — add proper StateDirectory, Restart=on-failure with delay | Prevents future crash loops | 20 min |
-| 18 | **AGENTS.md update** — add whisper-asr/monitor365/hermes crash loop findings | Future sessions avoid same debugging | 10 min |
+| #   | Task                                                                                        | Impact                               | Effort                |
+| --- | ------------------------------------------------------------------------------------------- | ------------------------------------ | --------------------- |
+| 11  | **Provision Pi 3 at remote site** — physical deployment + sops enrollment                   | DNS failover cluster goes live       | 1-2 hours on-site     |
+| 12  | **Lockfile dedup phase 3** — upstream changes for Go private repo shared inputs             | 23 fewer lock nodes, faster eval     | Requires upstream PRs |
+| 13  | **Archive old status reports** — move pre-session-60 to `archive/`                          | Cleaner docs directory               | 5 min                 |
+| 14  | **Evaluate `/tmp` as tmpfs** — benchmark nix build performance on tmpfs vs disk             | Faster builds, automatic cleanup     | 1 hour testing        |
+| 15  | **Docker storage audit** — verify all Docker data is on `/data/docker`, not root            | Prevent root disk surprises          | 15 min                |
+| 16  | **Automated vendor hash updates** — script that detects stale hashes and updates            | Reduces manual cascade fixing        | 2 hours               |
+| 17  | **whisper-asr module hardening** — add proper StateDirectory, Restart=on-failure with delay | Prevents future crash loops          | 20 min                |
+| 18  | **AGENTS.md update** — add whisper-asr/monitor365/hermes crash loop findings                | Future sessions avoid same debugging | 10 min                |
 
 ### Longer Term / Strategic
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 19 | **Cross-remote builds** — Darwin offloads to evo-x2 | Solves MacBook Air disk exhaustion | 3 hours setup |
-| 20 | **Unified backup strategy** — automated BTRFS snapshots for critical data | Disaster recovery | 4 hours |
-| 21 | **IPv6 support** — evo-x2 has link-local only, Unbound `do-ip6=false` workaround in place | Future-proof networking | 2 hours |
-| 22 | **Secrets rotation** — rotate sops keys, age identities | Security hygiene | 1 hour |
-| 23 | **Test rpi3-dns build** — verify `nixosConfigurations.rpi3-dns` still builds | Ensure Pi 3 image is current | 10 min |
-| 24 | **Service dependency graph** — document which services depend on which | Troubleshooting, startup ordering | 2 hours |
-| 25 | **Performance baseline** — record boot time, service start times, eval time | Detect regressions | 1 hour |
+| #   | Task                                                                                      | Impact                             | Effort        |
+| --- | ----------------------------------------------------------------------------------------- | ---------------------------------- | ------------- |
+| 19  | **Cross-remote builds** — Darwin offloads to evo-x2                                       | Solves MacBook Air disk exhaustion | 3 hours setup |
+| 20  | **Unified backup strategy** — automated BTRFS snapshots for critical data                 | Disaster recovery                  | 4 hours       |
+| 21  | **IPv6 support** — evo-x2 has link-local only, Unbound `do-ip6=false` workaround in place | Future-proof networking            | 2 hours       |
+| 22  | **Secrets rotation** — rotate sops keys, age identities                                   | Security hygiene                   | 1 hour        |
+| 23  | **Test rpi3-dns build** — verify `nixosConfigurations.rpi3-dns` still builds              | Ensure Pi 3 image is current       | 10 min        |
+| 24  | **Service dependency graph** — document which services depend on which                    | Troubleshooting, startup ordering  | 2 hours       |
+| 25  | **Performance baseline** — record boot time, service start times, eval time               | Detect regressions                 | 1 hour        |
 
 ---
 
@@ -276,7 +281,7 @@ c376e9ce docs(usb-verification): add SanDisk Ultra Fit 128GB verification report
 
 ## Session 65 Commits
 
-| Commit | Description |
-|--------|-------------|
+| Commit     | Description                                                              |
+| ---------- | ------------------------------------------------------------------------ |
 | `65feb2e0` | `fix(boot): enable boot.tmp.cleanOnBoot to prevent /tmp disk exhaustion` |
-| `df410cdc` | `fix(ai-stack): disable ollama auto-start at boot via wantedBy` |
+| `df410cdc` | `fix(ai-stack): disable ollama auto-start at boot via wantedBy`          |

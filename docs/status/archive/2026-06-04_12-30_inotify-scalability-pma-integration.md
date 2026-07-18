@@ -24,17 +24,18 @@ The `projects-management-automation` service was broken — it watches `/home/la
 
 All 7 planned items from the inotify scalability improvement plan:
 
-| # | Item | API | Status |
-|---|------|-----|--------|
-| W1 | `.gitignore`-aware walk filtering | `WithGitignore(true)` (default) | ✅ Shipped |
-| W2 | Graceful ENOSPC handling | `tryAddPath()` — continues on failure | ✅ Shipped |
-| W3 | Path-level exclusions | `WithExcludePaths(paths...)` | ✅ Shipped |
-| W4 | Batched watch registration | 1000-dir batches with `Gosched()` | ✅ Shipped |
-| W5 | Inotify budget awareness | `WithMaxWatches(n)` + auto-detect from `/proc` | ✅ Shipped |
-| W6 | `Remove()` subdirectory cleanup | Cleans subtree watches | ✅ Shipped |
-| W7 | `Reset()` method | Preserves config, resets state | ✅ Shipped |
+| #   | Item                              | API                                            | Status     |
+| --- | --------------------------------- | ---------------------------------------------- | ---------- |
+| W1  | `.gitignore`-aware walk filtering | `WithGitignore(true)` (default)                | ✅ Shipped |
+| W2  | Graceful ENOSPC handling          | `tryAddPath()` — continues on failure          | ✅ Shipped |
+| W3  | Path-level exclusions             | `WithExcludePaths(paths...)`                   | ✅ Shipped |
+| W4  | Batched watch registration        | 1000-dir batches with `Gosched()`              | ✅ Shipped |
+| W5  | Inotify budget awareness          | `WithMaxWatches(n)` + auto-detect from `/proc` | ✅ Shipped |
+| W6  | `Remove()` subdirectory cleanup   | Cleans subtree watches                         | ✅ Shipped |
+| W7  | `Reset()` method                  | Preserves config, resets state                 | ✅ Shipped |
 
 Bonus features shipped in v2.2.0:
+
 - `WithSelfHeal(interval)` — auto-retries failed watch registrations
 - `WithContentHashing()` — SHA-256 in `Event.Hash`
 - `PrometheusCollector` — zero-dependency Prometheus metrics
@@ -151,48 +152,48 @@ However, there are two pre-existing issues worth noting:
 
 ### Immediate (this session / next deploy)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Commit & deploy SystemNix changes (`just switch`) | 5min | Fixes PMA |
-| 2 | Verify PMA watch count after deploy | 5min | Confirmation |
-| 3 | Update SystemNix AGENTS.md with inotify/excludePaths notes | 10min | Documentation |
-| 4 | Stop PMA and run go-filewatcher full test suite to confirm green | 5min | Confidence |
+| #   | Task                                                             | Effort | Impact        |
+| --- | ---------------------------------------------------------------- | ------ | ------------- |
+| 1   | Commit & deploy SystemNix changes (`just switch`)                | 5min   | Fixes PMA     |
+| 2   | Verify PMA watch count after deploy                              | 5min   | Confirmation  |
+| 3   | Update SystemNix AGENTS.md with inotify/excludePaths notes       | 10min  | Documentation |
+| 4   | Stop PMA and run go-filewatcher full test suite to confirm green | 5min   | Confidence    |
 
 ### Short-term (this week)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 5 | Add PMA systemd health check for watch budget > 90% | 1h | Alerting |
-| 6 | Wire PMA watch errors into `notify-failure@` pattern | 30min | Observability |
-| 7 | Fix PMA BDD test timeout (test binary in PATH) | 2h | CI green |
-| 8 | Add `excludePaths` to PMA docs/examples | 30min | Documentation |
-| 9 | Benchmark go-filewatcher with gitignore enabled vs disabled | 1h | Performance data |
+| #   | Task                                                        | Effort | Impact           |
+| --- | ----------------------------------------------------------- | ------ | ---------------- |
+| 5   | Add PMA systemd health check for watch budget > 90%         | 1h     | Alerting         |
+| 6   | Wire PMA watch errors into `notify-failure@` pattern        | 30min  | Observability    |
+| 7   | Fix PMA BDD test timeout (test binary in PATH)              | 2h     | CI green         |
+| 8   | Add `excludePaths` to PMA docs/examples                     | 30min  | Documentation    |
+| 9   | Benchmark go-filewatcher with gitignore enabled vs disabled | 1h     | Performance data |
 
 ### Medium-term (next 2 weeks)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 10 | Refactor PMA to watch per-repo instead of `~/projects` monolith | 4h | Massive scalability |
-| 11 | Add `.gitignore` pre-scanning to go-filewatcher (load before walk) | 3h | Correctness |
-| 12 | Replace PMA `matchesPattern` with `filepath.Match` or `doublestar` | 1h | Proper glob semantics |
-| 13 | Add trie-based path exclusion to go-filewatcher for O(log n) lookups | 2h | Performance |
-| 14 | Implement lazy/on-demand watching in go-filewatcher | 4h | Eventual full solution |
-| 15 | Add Windows inotify equivalent limits to `WithMaxWatches` | 2h | Cross-platform |
-| 16 | Create PMA Grafana/dashboard for watch metrics | 2h | Observability |
+| #   | Task                                                                 | Effort | Impact                 |
+| --- | -------------------------------------------------------------------- | ------ | ---------------------- |
+| 10  | Refactor PMA to watch per-repo instead of `~/projects` monolith      | 4h     | Massive scalability    |
+| 11  | Add `.gitignore` pre-scanning to go-filewatcher (load before walk)   | 3h     | Correctness            |
+| 12  | Replace PMA `matchesPattern` with `filepath.Match` or `doublestar`   | 1h     | Proper glob semantics  |
+| 13  | Add trie-based path exclusion to go-filewatcher for O(log n) lookups | 2h     | Performance            |
+| 14  | Implement lazy/on-demand watching in go-filewatcher                  | 4h     | Eventual full solution |
+| 15  | Add Windows inotify equivalent limits to `WithMaxWatches`            | 2h     | Cross-platform         |
+| 16  | Create PMA Grafana/dashboard for watch metrics                       | 2h     | Observability          |
 
 ### Longer-term (next month)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 17 | Extract go-filewatcher's walk engine as a pluggable interface | 3h | Testability |
-| 18 | Add go-filewatcher godoc examples for all public API | 2h | Documentation |
-| 19 | Implement dead letter queue for dropped events | 3h | Reliability |
-| 20 | Add fuzz testing to go-filewatcher | 2h | Robustness |
-| 21 | Migrate PMA to use `FilterGitignore()` at event level too | 1h | Belt-and-suspenders |
-| 22 | Add go-filewatcher benchmark regression in CI | 1h | Performance guard |
-| 23 | Write ADR for per-repo vs monolith watching in PMA | 1h | Architecture clarity |
-| 24 | Review and close stale TODO_LIST.md items in go-filewatcher | 1h | Housekeeping |
-| 25 | Investigate fsnotify v2 API changes for go-filewatcher | 2h | Future-proofing |
+| #   | Task                                                          | Effort | Impact               |
+| --- | ------------------------------------------------------------- | ------ | -------------------- |
+| 17  | Extract go-filewatcher's walk engine as a pluggable interface | 3h     | Testability          |
+| 18  | Add go-filewatcher godoc examples for all public API          | 2h     | Documentation        |
+| 19  | Implement dead letter queue for dropped events                | 3h     | Reliability          |
+| 20  | Add fuzz testing to go-filewatcher                            | 2h     | Robustness           |
+| 21  | Migrate PMA to use `FilterGitignore()` at event level too     | 1h     | Belt-and-suspenders  |
+| 22  | Add go-filewatcher benchmark regression in CI                 | 1h     | Performance guard    |
+| 23  | Write ADR for per-repo vs monolith watching in PMA            | 1h     | Architecture clarity |
+| 24  | Review and close stale TODO_LIST.md items in go-filewatcher   | 1h     | Housekeeping         |
+| 25  | Investigate fsnotify v2 API changes for go-filewatcher        | 2h     | Future-proofing      |
 
 ---
 
@@ -201,12 +202,14 @@ However, there are two pre-existing issues worth noting:
 **Why is PMA watching `~/projects` as a single monolithic path instead of per-repo?**
 
 With 278 git repos, each with its own `.gitignore` and typically <500 directories, watching individual repos would:
+
 - Use ~3k total watches (vs 76k)
 - Get perfect `.gitignore` coverage per repo
 - Allow enabling/disabling per project
 - Make `excludePaths` unnecessary
 
 The current approach seems like a deliberate design choice, but I can't determine if it was:
+
 - A) Intentional — simpler config, one watcher, single event stream
 - B) An oversight — per-repo wasn't considered
 - C) A limitation — PMA needs cross-project event ordering
@@ -217,30 +220,30 @@ This matters because it determines whether item #10 (refactor to per-repo) is wo
 
 ## Files Changed This Session
 
-| Repo | File | Change |
-|------|------|--------|
-| go-filewatcher | `docs/planning/2026-06-03_inotify-scalability-improvement-plan.html` | Created — 1349-line HTML plan |
-| PMA | `internal/service/watcher/watcher.go` | Added ExcludePaths, SelfHealInterval, upgraded Stats |
-| PMA | `internal/service/config/config.go` | Added ExcludePaths, SelfHealInterval fields + defaults |
-| PMA | `internal/service/service.go` | Wired new config to watcher |
-| PMA | `nix/module.nix` | Added excludePaths option + YAML generation |
-| PMA | `docs/feedback/2026-06-03_go-filewatcher-v2.2.0-upgrade.md` | Created — upgrade instructions |
-| SystemNix | `flake.lock` | Updated PMA input |
-| SystemNix | `platforms/nixos/system/configuration.nix` | Added excludePaths for forks/archived |
+| Repo           | File                                                                 | Change                                                 |
+| -------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
+| go-filewatcher | `docs/planning/2026-06-03_inotify-scalability-improvement-plan.html` | Created — 1349-line HTML plan                          |
+| PMA            | `internal/service/watcher/watcher.go`                                | Added ExcludePaths, SelfHealInterval, upgraded Stats   |
+| PMA            | `internal/service/config/config.go`                                  | Added ExcludePaths, SelfHealInterval fields + defaults |
+| PMA            | `internal/service/service.go`                                        | Wired new config to watcher                            |
+| PMA            | `nix/module.nix`                                                     | Added excludePaths option + YAML generation            |
+| PMA            | `docs/feedback/2026-06-03_go-filewatcher-v2.2.0-upgrade.md`          | Created — upgrade instructions                         |
+| SystemNix      | `flake.lock`                                                         | Updated PMA input                                      |
+| SystemNix      | `platforms/nixos/system/configuration.nix`                           | Added excludePaths for forks/archived                  |
 
 ---
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Repos touched | 3 (go-filewatcher, PMA, SystemNix) |
-| go-filewatcher commits reviewed | ~50 (v2.1.0 → v2.2.0 diff) |
-| PMA commits this session | 41 |
-| Planned work items | 7 |
-| Shipped work items | 7/7 (100%) |
-| Bonus features shipped | 6 (self-heal, Prometheus, OTel, backoff, content hash, filter metadata) |
-| Expected inotify reduction | 76k → ~3-8k (~95% reduction) |
-| go-filewatcher tests | Unit: ✅ / Integration: ❌ (environmental — inotify exhaustion) |
-| PMA tests | 9/10 packages pass / BDD tests: ❌ (pre-existing timeout) |
-| SystemNix `test-fast` | ✅ All checks passed |
+| Metric                          | Value                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------- |
+| Repos touched                   | 3 (go-filewatcher, PMA, SystemNix)                                      |
+| go-filewatcher commits reviewed | ~50 (v2.1.0 → v2.2.0 diff)                                              |
+| PMA commits this session        | 41                                                                      |
+| Planned work items              | 7                                                                       |
+| Shipped work items              | 7/7 (100%)                                                              |
+| Bonus features shipped          | 6 (self-heal, Prometheus, OTel, backoff, content hash, filter metadata) |
+| Expected inotify reduction      | 76k → ~3-8k (~95% reduction)                                            |
+| go-filewatcher tests            | Unit: ✅ / Integration: ❌ (environmental — inotify exhaustion)         |
+| PMA tests                       | 9/10 packages pass / BDD tests: ❌ (pre-existing timeout)               |
+| SystemNix `test-fast`           | ✅ All checks passed                                                    |

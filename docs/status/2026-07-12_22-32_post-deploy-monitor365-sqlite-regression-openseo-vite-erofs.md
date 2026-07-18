@@ -53,6 +53,7 @@ Cannot deploy or check running services. `sudo` and `systemctl` are both blocked
 ### 2. openseo fix is untested at runtime
 
 The `.vite-temp` fix addresses the specific error in the log, but:
+
 - Vite may need other writable paths (cache dirs, etc.) not yet discovered
 - The pnpm symlink chain (`.pnpm/pkg@version/node_modules/pkg`) through the real-dir wrapper is untested — Vite's module resolution traversing these might hit EROFS elsewhere
 - The `--host 127.0.0.1` flag means Vite's HTTP server binds correctly, but the config-loading phase is where the crash happens
@@ -118,29 +119,29 @@ I ran `--dry-run` which confirms eval but not compilation. If the vendorHash cha
 
 ## f) Up to 50 things to get done next
 
-| # | Priority | Task |
-|---|----------|------|
-| 1 | **P0** | Deploy the fixes: `nix run .#deploy` |
-| 2 | **P0** | Reset start-limit: `sudo systemctl reset-failed openseo monitor365-server` before deploy |
-| 3 | **P0** | Revert the 25 unrelated HTML formatting changes from `nix fmt` |
-| 4 | **P0** | Verify openseo starts: `curl -sf http://localhost:${port}/` after deploy |
-| 5 | **P0** | Verify monitor365-server starts: `curl -sf http://localhost:3001/health` after deploy |
-| 6 | **P0** | Verify auth.home.lan (Pocket ID) is alive and serving the login page |
-| 7 | **P1** | Run `nix run .#post-deploy-check` to verify all functional outcomes |
-| 8 | **P1** | Update AGENTS.md with openseo `.vite-temp` EROFS gotcha |
-| 9 | **P1** | Update AGENTS.md monitor365 entry to note the re-regression (revCount 2228+ still broken) |
-| 10 | **P1** | Investigate Vite `cacheDir` / `VITE_CACHE_DIR` env var as a cleaner openseo fix |
-| 11 | **P1** | Add monitor365 revCount guard to pre-deploy-check script |
-| 11 | **P1** | Check if upstream monitor365 has fixed `CREATE SEQUENCE` — if so, update + test |
-| 12 | **P2** | Consider tagging monitor365 in upstream and pinning to a tag instead of master |
-| 13 | **P2** | Add openseo to the post-deploy-check functional smoke test |
-| 14 | **P2** | Verify Gatus sent Discord alerts for openseo/monitor365 outage (or investigate why not) |
-| 15 | **P2** | Check if any OTHER flake inputs bumped in `3f968a98` are also silently broken |
-| 16 | **P2** | Commit the fixes with a detailed message |
-| 17 | **P3** | Investigate openseo using `symlinkJoin` or `buildEnv` for node_modules instead of shell script |
-| 18 | **P3** | Add a CI check that `nix flake update` doesn't regress known-bad inputs |
-| 19 | **P3** | Document the "flake input bulk update is dangerous" pattern in AGENTS.md or CONTRIBUTING.md |
-| 20 | **P3** | Consider a flake-parts module that warns on known-bad input revisions |
+| #   | Priority | Task                                                                                           |
+| --- | -------- | ---------------------------------------------------------------------------------------------- |
+| 1   | **P0**   | Deploy the fixes: `nix run .#deploy`                                                           |
+| 2   | **P0**   | Reset start-limit: `sudo systemctl reset-failed openseo monitor365-server` before deploy       |
+| 3   | **P0**   | Revert the 25 unrelated HTML formatting changes from `nix fmt`                                 |
+| 4   | **P0**   | Verify openseo starts: `curl -sf http://localhost:${port}/` after deploy                       |
+| 5   | **P0**   | Verify monitor365-server starts: `curl -sf http://localhost:3001/health` after deploy          |
+| 6   | **P0**   | Verify auth.home.lan (Pocket ID) is alive and serving the login page                           |
+| 7   | **P1**   | Run `nix run .#post-deploy-check` to verify all functional outcomes                            |
+| 8   | **P1**   | Update AGENTS.md with openseo `.vite-temp` EROFS gotcha                                        |
+| 9   | **P1**   | Update AGENTS.md monitor365 entry to note the re-regression (revCount 2228+ still broken)      |
+| 10  | **P1**   | Investigate Vite `cacheDir` / `VITE_CACHE_DIR` env var as a cleaner openseo fix                |
+| 11  | **P1**   | Add monitor365 revCount guard to pre-deploy-check script                                       |
+| 11  | **P1**   | Check if upstream monitor365 has fixed `CREATE SEQUENCE` — if so, update + test                |
+| 12  | **P2**   | Consider tagging monitor365 in upstream and pinning to a tag instead of master                 |
+| 13  | **P2**   | Add openseo to the post-deploy-check functional smoke test                                     |
+| 14  | **P2**   | Verify Gatus sent Discord alerts for openseo/monitor365 outage (or investigate why not)        |
+| 15  | **P2**   | Check if any OTHER flake inputs bumped in `3f968a98` are also silently broken                  |
+| 16  | **P2**   | Commit the fixes with a detailed message                                                       |
+| 17  | **P3**   | Investigate openseo using `symlinkJoin` or `buildEnv` for node_modules instead of shell script |
+| 18  | **P3**   | Add a CI check that `nix flake update` doesn't regress known-bad inputs                        |
+| 19  | **P3**   | Document the "flake input bulk update is dangerous" pattern in AGENTS.md or CONTRIBUTING.md    |
+| 20  | **P3**   | Consider a flake-parts module that warns on known-bad input revisions                          |
 
 ---
 

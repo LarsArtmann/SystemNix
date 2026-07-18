@@ -18,35 +18,35 @@ Both file-and-image-renamer and monitor365 upstream flakes were fixed and their 
 
 ### Upstream Flake Fixes
 
-| Project | Issue | Fix | Build Status |
-|---------|-------|-----|-------------|
-| file-and-image-renamer | Placeholder vendorHash, no SSH inputs, no src filtering, no postPatch for go-output sub-modules | Added `cmdguard-src` + `go-output-src` as flake inputs, src filtering, `postPatch` with require+replace for cmdguard + go-output + 4 sub-modules (enum/escape/sort/table), proxyVendor, overlay | ✅ Builds |
-| monitor365 | `linux/videodev2.h` not found (missing bindgen include paths) | Added `linuxHeaders` to nativeBuildInputs, `BINDGEN_EXTRA_CLANG_ARGS` with glibc/kernel/clang include paths, `doCheck = false`, overlay | ✅ Builds |
-| monitor365 (Rust) | `ExposeSecret` trait not in scope in `crates/server/src/config.rs` | Added `use secrecy::ExposeSecret` | ✅ Fixed |
+| Project                | Issue                                                                                           | Fix                                                                                                                                                                                             | Build Status |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| file-and-image-renamer | Placeholder vendorHash, no SSH inputs, no src filtering, no postPatch for go-output sub-modules | Added `cmdguard-src` + `go-output-src` as flake inputs, src filtering, `postPatch` with require+replace for cmdguard + go-output + 4 sub-modules (enum/escape/sort/table), proxyVendor, overlay | ✅ Builds    |
+| monitor365             | `linux/videodev2.h` not found (missing bindgen include paths)                                   | Added `linuxHeaders` to nativeBuildInputs, `BINDGEN_EXTRA_CLANG_ARGS` with glibc/kernel/clang include paths, `doCheck = false`, overlay                                                         | ✅ Builds    |
+| monitor365 (Rust)      | `ExposeSecret` trait not in scope in `crates/server/src/config.rs`                              | Added `use secrecy::ExposeSecret`                                                                                                                                                               | ✅ Fixed     |
 
 ### SystemNix Overlay Migration
 
-| Before | After |
-|--------|-------|
+| Before                                                                                                                                                  | After                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | `file-and-image-renamer-src` (flake=false) + `cmdguard-src` (flake=false) + `go-output-src` (flake=false) → 3 inputs, 1 local overlay, 1 local pkg file | `file-and-image-renamer` (full flake, follows nixpkgs) → 1 input, upstream overlay |
-| `monitor365-src` (flake=false) → 1 input, 1 local overlay with cleanSourceWith, 1 local pkg file | `monitor365` (full flake, follows nixpkgs) → 1 input, upstream overlay |
+| `monitor365-src` (flake=false) → 1 input, 1 local overlay with cleanSourceWith, 1 local pkg file                                                        | `monitor365` (full flake, follows nixpkgs) → 1 input, upstream overlay             |
 
 ### Dead Code Removed
 
-| File | Lines Removed | Reason |
-|------|--------------|--------|
-| `pkgs/file-and-image-renamer.nix` | 67 | Delegated to upstream overlay |
-| `pkgs/monitor365.nix` | 53 | Delegated to upstream overlay |
-| `lib/go-output-submodules.nix` | 11 | Only consumer was file-and-image-renamer — now upstream |
+| File                              | Lines Removed | Reason                                                  |
+| --------------------------------- | ------------- | ------------------------------------------------------- |
+| `pkgs/file-and-image-renamer.nix` | 67            | Delegated to upstream overlay                           |
+| `pkgs/monitor365.nix`             | 53            | Delegated to upstream overlay                           |
+| `lib/go-output-submodules.nix`    | 11            | Only consumer was file-and-image-renamer — now upstream |
 
 ### From Session 70 (Included in This Commit)
 
-| Change | File |
-|--------|------|
-| Discord alerts on 15 Gatus endpoints | `gatus-config.nix` |
-| SigNoz alert rules (GPU VRAM, niri compositor, disk space) | `signoz.nix` |
-| `hardenUser` helper for user systemd services | `lib/default.nix`, `lib/user-harden.nix` |
-| monitor365 service hardened with `hardenUser` | `monitor365.nix` |
+| Change                                                     | File                                     |
+| ---------------------------------------------------------- | ---------------------------------------- |
+| Discord alerts on 15 Gatus endpoints                       | `gatus-config.nix`                       |
+| SigNoz alert rules (GPU VRAM, niri compositor, disk space) | `signoz.nix`                             |
+| `hardenUser` helper for user systemd services              | `lib/default.nix`, `lib/user-harden.nix` |
+| monitor365 service hardened with `hardenUser`              | `monitor365.nix`                         |
 
 ### Verification
 
@@ -59,35 +59,35 @@ Both file-and-image-renamer and monitor365 upstream flakes were fixed and their 
 
 **Go/Rust Tooling (12/12 wired via upstream overlays):**
 
-| Project | Overlay Type | In SystemNix |
-|---------|-------------|-------------|
-| library-policy | upstream | ✅ shared |
-| BuildFlow | upstream | ✅ shared |
-| go-auto-upgrade | upstream | ✅ shared |
-| go-structure-linter | upstream | ✅ shared |
-| branching-flow | upstream | ✅ shared |
-| art-dupl | upstream | ✅ shared |
-| golangci-lint-auto-configure | bridge | ✅ shared |
-| mr-sync | bridge | ✅ shared |
-| hierarchical-errors | bridge | ✅ shared |
-| todo-list-ai | hybrid (hash patch) | ✅ shared |
-| dnsblockd | upstream | ✅ Linux-only |
-| emeet-pixyd | upstream | ✅ Linux-only |
-| monitor365 | upstream | ✅ Linux-only |
-| file-and-image-renamer | upstream | ✅ Linux-only |
+| Project                      | Overlay Type        | In SystemNix  |
+| ---------------------------- | ------------------- | ------------- |
+| library-policy               | upstream            | ✅ shared     |
+| BuildFlow                    | upstream            | ✅ shared     |
+| go-auto-upgrade              | upstream            | ✅ shared     |
+| go-structure-linter          | upstream            | ✅ shared     |
+| branching-flow               | upstream            | ✅ shared     |
+| art-dupl                     | upstream            | ✅ shared     |
+| golangci-lint-auto-configure | bridge              | ✅ shared     |
+| mr-sync                      | bridge              | ✅ shared     |
+| hierarchical-errors          | bridge              | ✅ shared     |
+| todo-list-ai                 | hybrid (hash patch) | ✅ shared     |
+| dnsblockd                    | upstream            | ✅ Linux-only |
+| emeet-pixyd                  | upstream            | ✅ Linux-only |
+| monitor365                   | upstream            | ✅ Linux-only |
+| file-and-image-renamer       | upstream            | ✅ Linux-only |
 
 **SystemNix Infrastructure:**
 
-| Metric | Count |
-|--------|-------|
-| NixOS service modules | 35 |
-| Flake inputs | 38 (was 40, removed 4 src inputs, added 2 full flakes) |
-| Local packages in `pkgs/` | 5 (was 9 → 7 → 5) |
-| Go local packages in `pkgs/` | **0** (was 5) |
-| Upstream overlay packages | 14 |
-| Total packages exposed | 23 |
-| nixosModules exposed | 34 |
-| lib/ shared helpers | 3 (systemd, service-defaults, types, rocm — go-output-submodules removed) |
+| Metric                       | Count                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| NixOS service modules        | 35                                                                        |
+| Flake inputs                 | 38 (was 40, removed 4 src inputs, added 2 full flakes)                    |
+| Local packages in `pkgs/`    | 5 (was 9 → 7 → 5)                                                         |
+| Go local packages in `pkgs/` | **0** (was 5)                                                             |
+| Upstream overlay packages    | 14                                                                        |
+| Total packages exposed       | 23                                                                        |
+| nixosModules exposed         | 34                                                                        |
+| lib/ shared helpers          | 3 (systemd, service-defaults, types, rocm — go-output-submodules removed) |
 
 ---
 
@@ -111,17 +111,17 @@ Upstream defines `overlays.default` inside `eachDefaultSystem`, creating per-sys
 
 ### Remaining Wish List (Deprioritized)
 
-| Task | Impact | Effort | Priority |
-|------|--------|--------|----------|
-| Wire PMA into SystemNix | Low (no server need) | Medium | Low |
-| Wire go-finding as standalone input | Low (transitive dep) | Trivial | Low |
-| Shared `preparedSrc` helper across all Go flakes | Medium (DX) | Medium | Low |
-| Migrate all Go flakes to flake-parts | Medium (standardization) | Medium | Low |
-| CI workflows for `nix build` on all repos | High (regression catch) | Low | Low |
-| Create flake template for new Go projects | Medium (DX) | Low | Low |
-| Remove `go.work` from PMA | Low | Trivial | Low |
-| Tag go-finding v0.4.0 | Medium | Trivial | Low |
-| Fix golangci-lint-auto-configure upstream overlay | Low (cosmetic) | Trivial | Low |
+| Task                                              | Impact                   | Effort  | Priority |
+| ------------------------------------------------- | ------------------------ | ------- | -------- |
+| Wire PMA into SystemNix                           | Low (no server need)     | Medium  | Low      |
+| Wire go-finding as standalone input               | Low (transitive dep)     | Trivial | Low      |
+| Shared `preparedSrc` helper across all Go flakes  | Medium (DX)              | Medium  | Low      |
+| Migrate all Go flakes to flake-parts              | Medium (standardization) | Medium  | Low      |
+| CI workflows for `nix build` on all repos         | High (regression catch)  | Low     | Low      |
+| Create flake template for new Go projects         | Medium (DX)              | Low     | Low      |
+| Remove `go.work` from PMA                         | Low                      | Trivial | Low      |
+| Tag go-finding v0.4.0                             | Medium                   | Trivial | Low      |
+| Fix golangci-lint-auto-configure upstream overlay | Low (cosmetic)           | Trivial | Low      |
 
 ---
 
@@ -202,6 +202,7 @@ First attempt only added `replace` directives for go-output sub-modules without 
 **Should netwatch get an upstream flake with overlay to complete the "zero local compiled packages" goal?**
 
 Currently `pkgs/` has 5 files:
+
 - `jscpd.nix` — Node.js, always needs local pkg (npm lockfile)
 - `modernize.nix` — fetches from golang.org/x/tools, always needs local pkg
 - `aw-watcher-utilization.nix` — Python, fetched from GitHub fork
@@ -214,18 +215,18 @@ Of these 5, only netwatch is a LarsArtmann project that could provide its own ov
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Root disk (`/`) | 80% used (101 GB free) | ⚠️ Clean needed |
-| Data disk (`/data`) | 80% used (206 GB free) | ⚠️ Watch |
-| Go/Rust projects wired | 14/14 | ✅ All via upstream overlays |
-| Go local packages in pkgs/ | 0 | ✅ Zero |
-| SystemNix `test-fast` | Passes (both platforms) | ✅ |
-| Dead `pkgs/` files | 0 | ✅ Clean |
-| Dead flake inputs | 0 | ✅ Clean |
-| Dead lib/ helpers | 0 | ✅ Clean (go-output-submodules removed) |
-| Bridge overlays | 3 | 🔧 Workaround for upstream bugs |
-| Flake inputs | 38 (down from 40) | ✅ Net reduction |
+| Metric                     | Value                   | Status                                  |
+| -------------------------- | ----------------------- | --------------------------------------- |
+| Root disk (`/`)            | 80% used (101 GB free)  | ⚠️ Clean needed                         |
+| Data disk (`/data`)        | 80% used (206 GB free)  | ⚠️ Watch                                |
+| Go/Rust projects wired     | 14/14                   | ✅ All via upstream overlays            |
+| Go local packages in pkgs/ | 0                       | ✅ Zero                                 |
+| SystemNix `test-fast`      | Passes (both platforms) | ✅                                      |
+| Dead `pkgs/` files         | 0                       | ✅ Clean                                |
+| Dead flake inputs          | 0                       | ✅ Clean                                |
+| Dead lib/ helpers          | 0                       | ✅ Clean (go-output-submodules removed) |
+| Bridge overlays            | 3                       | 🔧 Workaround for upstream bugs         |
+| Flake inputs               | 38 (down from 40)       | ✅ Net reduction                        |
 
 ---
 

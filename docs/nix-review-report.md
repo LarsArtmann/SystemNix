@@ -26,6 +26,7 @@ pkgs.writeText "homepage-services.yaml" (lib.concatStringsSep "\n" groups);
 **Problem:** A custom YAML emitter built from string concatenation. No quoting, no type handling, indentation-sensitive. Any value containing a `:` or newline breaks silently.
 
 **Fix:** Use `(pkgs.formats.yaml {}).generate` over a structured attrset:
+
 ```nix
 (pkgs.formats.yaml {}).generate "homepage-services.yaml" {
   services = [
@@ -37,16 +38,17 @@ pkgs.writeText "homepage-services.yaml" (lib.concatStringsSep "\n" groups);
 
 ### 1b. YAML compose files via `writeText` + manual interpolation — 4 files
 
-| File | Lines | YAML Content |
-|------|-------|-------------|
-| `twenty.nix:29-106` | 77 lines | docker-compose.yml with `${...}` Nix + `''${...}` shell escaping |
-| `manifest.nix:19-106` | 87 lines | docker-compose.yml with JS healthcheck embedded |
-| `voice-agents.nix:21-40` | 19 lines | docker-compose.whisper-asr.yml |
-| `openseo.nix:15-51` | 36 lines | docker-compose.yml |
+| File                     | Lines    | YAML Content                                                     |
+| ------------------------ | -------- | ---------------------------------------------------------------- |
+| `twenty.nix:29-106`      | 77 lines | docker-compose.yml with `${...}` Nix + `''${...}` shell escaping |
+| `manifest.nix:19-106`    | 87 lines | docker-compose.yml with JS healthcheck embedded                  |
+| `voice-agents.nix:21-40` | 19 lines | docker-compose.whisper-asr.yml                                   |
+| `openseo.nix:15-51`      | 36 lines | docker-compose.yml                                               |
 
 **Problem:** Manual YAML string assembly with indentation, escaping `''${` for env-var passthrough, and no structural validation.
 
 **Fix:** Build a Nix attrset and serialize with `builtins.toJSON` (docker-compose accepts JSON) or `lib.generators.toYAML {}`:
+
 ```nix
 composeFile = pkgs.writeText "twenty-docker-compose.yml" (
   builtins.toJSON {
@@ -101,6 +103,7 @@ templates."forgejo-sync.env".content = ''
 ```
 
 **Fix:** Use `lib.generators.toKeyValue {}`:
+
 ```nix
 content = lib.generators.toKeyValue {} {
   FORGEJO_TOKEN = config.sops.placeholder.forgejo_token;
@@ -118,7 +121,8 @@ dnsblockdConfigFile = pkgs.writeText "dnsblockd-config.yaml" (
 );
 ```
 
-**Fix:** Put `categories_file` *inside* the generator attrset conditionally:
+**Fix:** Put `categories_file` _inside_ the generator attrset conditionally:
+
 ```nix
 lib.generators.toYAML {} ({
   listen_addr = cfg.blockIP;
@@ -144,14 +148,15 @@ The `harden` and `serviceDefaults` helpers emit `mkDefault`-tagged values. The `
 
 ### Affected files:
 
-| File | Line(s) | Pattern |
-|------|---------|---------|
-| `gatus-config.nix` | 539-559 | `harden {...} // serviceDefaults {...} // {...}` |
-| `hermes.nix` | 229-263 | `{...} // serviceDefaults {...} // harden {...}` |
-| `twenty.nix` | 179-185 | `harden {...} // { Type = "oneshot"; ... }` |
-| `immich.nix` | 76-92 | `harden {...} // serviceDefaults {}` (3 instances) |
+| File               | Line(s) | Pattern                                            |
+| ------------------ | ------- | -------------------------------------------------- |
+| `gatus-config.nix` | 539-559 | `harden {...} // serviceDefaults {...} // {...}`   |
+| `hermes.nix`       | 229-263 | `{...} // serviceDefaults {...} // harden {...}`   |
+| `twenty.nix`       | 179-185 | `harden {...} // { Type = "oneshot"; ... }`        |
+| `immich.nix`       | 76-92   | `harden {...} // serviceDefaults {}` (3 instances) |
 
 **Fix:**
+
 ```nix
 # BEFORE (broken priority)
 serviceConfig = harden { MemoryMax = "512M"; } // serviceDefaults {} // { ... };
@@ -188,11 +193,13 @@ checkScript = ''
 ```
 
 **Problems:**
+
 1. 123 lines of shell as an interpolated Nix string — untestable, unlintable
 2. JSON output requested (`-o json`) then parsed with `grep -oP` regex — fragile, breaks on nested keys
 3. Runtime deps (`nvme`, `jq`) not declared via `runtimeInputs`
 
 **Fix:** Move to `scripts/nvme-health-check.sh`, load via `builtins.readFile`, pass config via environment variables. Add `jq` to runtime deps and parse properly:
+
 ```bash
 CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning')
 ```
@@ -200,6 +207,7 @@ CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning')
 ### 3b. 70-line embedded shell script — `disk-monitor.nix:14-85`
 
 Same pattern. Also uses `lib.concatStringsSep " "` for unsafe shell array generation:
+
 ```nix
 THRESHOLDS=(${lib.concatStringsSep " " (map toString cfg.thresholds)})
 MOUNT_POINTS=(${lib.concatStringsSep " " cfg.fileSystems})
@@ -279,6 +287,7 @@ script = ''
 ## Category 4: Deep Relative Imports `import ../../../lib/default.nix lib` (MEDIUM)
 
 **Present in ~20+ module files.** Every service module begins with:
+
 ```nix
 inherit (import ../../../lib/default.nix lib) harden serviceDefaults ports ...;
 ```
@@ -324,10 +333,12 @@ system.activationScripts."hermes-setup" = lib.stringAfter [...] ''
 ```
 
 **Fix:** Use `systemd.tmpfiles.rules` with the existing `mkStateDir` helper:
+
 ```nix
 systemd.tmpfiles.rules = map (d: "d ${cfg.stateDir}/${d} 2770 ${cfg.user} ${cfg.group} -")
   ["sessions" "skills" "memories" "cron" "cache" "logs/curator" "workspace"];
 ```
+
 (Isolate the `setfacl` grant into a small oneshot unit if it's genuinely needed.)
 
 ### 5b. `discordsync.nix:81-88`
@@ -359,12 +370,12 @@ system.activationScripts.home-manager-profile-dirs = ''
 
 ### 6a. Hardcoded `/home/${cfg.user}/...` in option defaults — 4 files
 
-| File | Line(s) | Code |
-|------|---------|------|
-| `file-and-image-renamer.nix` | 27, 40, 65 | `default = "/home/${cfg.user}/Desktop"` |
-| `monitor365.nix` | 72 | `default = "/home/${primaryUser}/.local/share/monitor365"` |
-| `homepage.nix` | 14 | `stateDir = "/var/lib/homepage-dashboard"` |
-| `forgejo.nix` | 505 | `stateDir = "/var/lib/forgejo"` |
+| File                         | Line(s)    | Code                                                       |
+| ---------------------------- | ---------- | ---------------------------------------------------------- |
+| `file-and-image-renamer.nix` | 27, 40, 65 | `default = "/home/${cfg.user}/Desktop"`                    |
+| `monitor365.nix`             | 72         | `default = "/home/${primaryUser}/.local/share/monitor365"` |
+| `homepage.nix`               | 14         | `stateDir = "/var/lib/homepage-dashboard"`                 |
+| `forgejo.nix`                | 505        | `stateDir = "/var/lib/forgejo"`                            |
 
 **Fix:** Derive from the user record: `"${config.users.users.${cfg.user}.home}/Desktop"`
 
@@ -390,11 +401,11 @@ default = "noreply@cloud.larsartmann.com";
 
 ## Category 7: `with pkgs;` in Package Lists (LOW)
 
-| File | Line(s) |
-|------|---------|
-| `configuration.nix` | 124, 177 |
-| `ai-stack.nix` | 96 |
-| `security-hardening.nix` | 64 |
+| File                     | Line(s)  |
+| ------------------------ | -------- |
+| `configuration.nix`      | 124, 177 |
+| `ai-stack.nix`           | 96       |
+| `security-hardening.nix` | 64       |
 
 **Problem:** `with pkgs;` makes variable sources unclear and silently shadows on name collision.
 
@@ -468,16 +479,16 @@ The module defines no options of its own — relies entirely on upstream `config
 
 ## Summary by Impact
 
-| Priority | Pattern | Files | Effort |
-|----------|---------|-------|--------|
+| Priority | Pattern                                              | Files                                                                                        | Effort                                |
+| -------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------- |
 | **HIGH** | Manual YAML/JSON/XML via `writeText` + string interp | homepage, twenty, manifest, voice-agents, openseo, minecraft, signoz, dns-blocker, pocket-id | Medium — convert each to `generators` |
-| **HIGH** | `//` on `serviceConfig` breaks `mkForce` priority | gatus, hermes, twenty, immich | Low — wrap in `mkMerge [...]` |
-| **HIGH** | Shell scripts embedded in Nix strings | nvme-health-monitor (123 lines), disk-monitor (70 lines), signoz (70 lines) | Medium — extract to script files |
-| **MED** | `activationScripts` for mkdir/chown | hermes, discordsync, configuration | Low — convert to `tmpfiles.rules` |
-| **MED** | Hardcoded `/home/` paths in defaults | file-and-image-renamer, monitor365, homepage, configuration, pocket-id | Low — derive from user record |
-| **MED** | `with pkgs;` in lists | configuration, ai-stack, security-hardening | Low — add explicit prefixes |
-| **LOW** | Deep relative imports (documented as deliberate) | ~20+ files | High — requires flake.lib restructure |
-| **LOW** | Misc (grep JSON, raw iptables, duplicated strings) | nvme, minecraft, security-hardening | Low |
+| **HIGH** | `//` on `serviceConfig` breaks `mkForce` priority    | gatus, hermes, twenty, immich                                                                | Low — wrap in `mkMerge [...]`         |
+| **HIGH** | Shell scripts embedded in Nix strings                | nvme-health-monitor (123 lines), disk-monitor (70 lines), signoz (70 lines)                  | Medium — extract to script files      |
+| **MED**  | `activationScripts` for mkdir/chown                  | hermes, discordsync, configuration                                                           | Low — convert to `tmpfiles.rules`     |
+| **MED**  | Hardcoded `/home/` paths in defaults                 | file-and-image-renamer, monitor365, homepage, configuration, pocket-id                       | Low — derive from user record         |
+| **MED**  | `with pkgs;` in lists                                | configuration, ai-stack, security-hardening                                                  | Low — add explicit prefixes           |
+| **LOW**  | Deep relative imports (documented as deliberate)     | ~20+ files                                                                                   | High — requires flake.lib restructure |
+| **LOW**  | Misc (grep JSON, raw iptables, duplicated strings)   | nvme, minecraft, security-hardening                                                          | Low                                   |
 
 ## What's Done Well
 

@@ -9,14 +9,14 @@
 
 ## Incident Timeline
 
-| Time | Event |
-|------|-------|
-| Mar 31 18:43 | Generation 172 built and applied (WORKING) |
-| Mar 31 20:39 | Generation 173 built - nixpkgs bumped from `20260328.b63fe7f` to `20260330.15c6719` |
-| Apr 1 00:09 - 03:16 | Generations 174-177 built - sops-nix cert migration commits |
-| Apr 2 08:46 | Generation 178 built and applied (BROKE DNS) |
-| Apr 2 09:42 | Rolled back to generation 172 (DNS partially restored) |
-| Apr 2 11:32 | Dynamic IP detection fix committed (gen 548b872) |
+| Time                | Event                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------- |
+| Mar 31 18:43        | Generation 172 built and applied (WORKING)                                          |
+| Mar 31 20:39        | Generation 173 built - nixpkgs bumped from `20260328.b63fe7f` to `20260330.15c6719` |
+| Apr 1 00:09 - 03:16 | Generations 174-177 built - sops-nix cert migration commits                         |
+| Apr 2 08:46         | Generation 178 built and applied (BROKE DNS)                                        |
+| Apr 2 09:42         | Rolled back to generation 172 (DNS partially restored)                              |
+| Apr 2 11:32         | Dynamic IP detection fix committed (gen 548b872)                                    |
 
 ---
 
@@ -36,13 +36,13 @@ Between gen 172 and gen 178, the following commits migrated dnsblockd certificat
 
 ### What Changed
 
-| Component | Gen 172 (Working) | Gen 178 (Broken) |
-|-----------|-------------------|-------------------|
-| dnsblockd CA cert | `/nix/store/.../dnsblockd-ca.crt` | `/run/secrets/dnsblockd_ca_cert` |
-| dnsblockd CA key | `/nix/store/.../dnsblockd-ca.key` | `/run/secrets/dnsblockd_ca_key` |
+| Component         | Gen 172 (Working)                     | Gen 178 (Broken)                     |
+| ----------------- | ------------------------------------- | ------------------------------------ |
+| dnsblockd CA cert | `/nix/store/.../dnsblockd-ca.crt`     | `/run/secrets/dnsblockd_ca_cert`     |
+| dnsblockd CA key  | `/nix/store/.../dnsblockd-ca.key`     | `/run/secrets/dnsblockd_ca_key`      |
 | Caddy server cert | `/nix/store/.../dnsblockd-server.crt` | `/run/secrets/dnsblockd_server_cert` |
-| Caddy server key | `/nix/store/.../dnsblockd-server.key` | `/run/secrets/dnsblockd_server_key` |
-| dnsblockd blockIP | `192.168.1.163` (hardcoded) | `192.168.1.150` (hardcoded, WRONG) |
+| Caddy server key  | `/nix/store/.../dnsblockd-server.key` | `/run/secrets/dnsblockd_server_key`  |
+| dnsblockd blockIP | `192.168.1.163` (hardcoded)           | `192.168.1.150` (hardcoded, WRONG)   |
 
 ### Why It Broke
 
@@ -73,18 +73,18 @@ dhcpcd:        Enabled in systemd (despite networking.dhcpcd.enable = false)
 
 ### Active Services & Ports
 
-| Port | Service | Status | Notes |
-|------|---------|--------|-------|
-| :53 | Unbound | Running | DNS resolution works |
-| :80 | Caddy | Running | Binds to `*:80` - conflicts with dnsblockd |
-| :443 | Caddy | Running | HTTPS reverse proxy for .lan domains |
-| :22 | SSH | Running | |
-| :3000 | Gitea | Running | |
-| :2283 | Immich | Running | |
-| :3001 | Grafana | Running | |
-| :8082 | Homepage | Running | |
-| :8050 | Photomap | Running | |
-| :9090 | dnsblockd stats | Intermittent | Crashes every ~4 seconds |
+| Port  | Service         | Status       | Notes                                      |
+| ----- | --------------- | ------------ | ------------------------------------------ |
+| :53   | Unbound         | Running      | DNS resolution works                       |
+| :80   | Caddy           | Running      | Binds to `*:80` - conflicts with dnsblockd |
+| :443  | Caddy           | Running      | HTTPS reverse proxy for .lan domains       |
+| :22   | SSH             | Running      |                                            |
+| :3000 | Gitea           | Running      |                                            |
+| :2283 | Immich          | Running      |                                            |
+| :3001 | Grafana         | Running      |                                            |
+| :8082 | Homepage        | Running      |                                            |
+| :8050 | Photomap        | Running      |                                            |
+| :9090 | dnsblockd stats | Intermittent | Crashes every ~4 seconds                   |
 
 ### dnsblockd Crash Loop (restart counter at 1908+)
 
@@ -103,6 +103,7 @@ server error: listen tcp 192.168.1.163:80: bind: address already in use
 ### 1. Static IP Not Applied (CRITICAL)
 
 `networking.nix` sets `useDHCP = false` and static IP `192.168.1.150`, but:
+
 - System gets IP `192.168.1.161` via DHCP
 - `dhcpcd.service` is enabled in `multi-user.target.wants`
 - `dhcpcd` lease file exists at `/var/lib/dhcpcd/eno1.lease`
@@ -125,6 +126,7 @@ server error: listen tcp 192.168.1.163:80: bind: address already in use
 ### 4. DNS Local Domains Point to Wrong IP (MEDIUM)
 
 Unbound `local-data` in dns-blocker-config.nix hardcodes `192.168.1.150`:
+
 ```
 immich.lan -> 192.168.1.150 (actual IP is .161)
 gitea.lan -> 192.168.1.150 (actual IP is .161)
@@ -234,12 +236,14 @@ photomap.lan -> 192.168.1.150 (actual IP is .161)
 **Why are sops-nix secrets not being decrypted at boot?**
 
 The configuration appears correct:
+
 - `sops.age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"]` - key exists
 - `sops.defaultSopsFile` points to valid `secrets.yaml`
 - `dnsblockd-certs.yaml` exists with encrypted secrets
 - `sops-nix.nixosModules.sops` is imported in the flake
 
 But `/run/secrets.d/25/` is completely empty. This could be:
+
 - The SSH host key doesn't match the age identity used to encrypt the secrets
 - The sops files were encrypted with a different key
 - sops-nix service ordering issue (secrets decrypted after services start)
@@ -251,8 +255,8 @@ But `/run/secrets.d/25/` is completely empty. This could be:
 
 ## Files Modified This Session
 
-| File | Change | Status |
-|------|--------|--------|
+| File                                      | Change                                          | Status              |
+| ----------------------------------------- | ----------------------------------------------- | ------------------- |
 | `platforms/nixos/modules/dns-blocker.nix` | Added `detectIPScript` for runtime IP detection | Committed (548b872) |
 
 ---

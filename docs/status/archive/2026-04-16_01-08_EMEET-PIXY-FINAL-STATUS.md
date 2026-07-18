@@ -20,6 +20,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 ## A) FULLY DONE
 
 ### Session 1 — Initial Build (commits: 45e4865 → d918cbd)
+
 - [x] Complete Go daemon from scratch — call detection, HID control, auto-management
 - [x] NixOS module — udev rules, user systemd service, configurable options
 - [x] Waybar integration — camera state indicator with Catppuccin Mocha styling
@@ -32,6 +33,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 - [x] 10 justfile `cam-*` recipes
 
 ### Session 2 — Hardening & Type Refactor (commits: 8dbfafa → a26bfad)
+
 - [x] **Structured logging with `slog`** — leveled logging (debug/info/warn/error) with key-value pairs
 - [x] **Socket permissions 0600** — user-only access (was 0666)
 - [x] **Systemd watchdog** — `WatchdogSec=30` + `sdNotify(WATCHDOG=1)` every poll cycle
@@ -46,6 +48,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 - [x] 20 tests (was 13), all race-clean
 
 ### Session 3 — Bidirectional HID State Querying (commit: 6d000cd)
+
 - [x] **`hidSendRecv`** — bidirectional HID write+read with 500ms timeout
   - Opens hidraw in O_RDWR mode
   - Goroutine-based read with channel + select timeout
@@ -68,10 +71,12 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 ## B) PARTIALLY DONE
 
 ### OBS Integration
+
 - **Status:** OBS Studio installed with virtual camera support. No automated lifecycle.
 - **Remaining:** Needs obs-websocket plugin + Go WebSocket client for auto-start/stop.
 
 ### HID State Querying — Awaiting Real Hardware Test
+
 - **Status:** Code is complete and will work if the camera responds on the HID interrupt IN endpoint. If it doesn't respond, the daemon gracefully falls back to fire-and-forget (zero regression).
 - **Remaining:** Needs `just switch` + `just cam-logs` on real hardware to confirm camera responses. If `hidSendRecv` times out, `slog.Debug` will show "tracking query failed: no HID response" — this is fine, just means the camera doesn't respond to queries.
 
@@ -103,6 +108,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 **Nothing is broken.** All builds pass, all 27 tests pass with race detector, `go vet` clean, `nix flake check` passes, all pre-commit hooks pass.
 
 ### Lessons Learned (All 3 Sessions)
+
 - **`cleanSourceWith` with `lib` vs `prev.lib`** — Overlay context uses `prev.lib`, not `lib`. `replace_all` accidentally changed dnsblockd filters.
 - **State race condition** — Initial implementation had zero synchronization. Caught in review, fixed with `sync.Mutex`.
 - **OBS-cli doesn't exist** — Removed OBS auto-start/stop entirely.
@@ -115,17 +121,20 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 ## E) WHAT WE SHOULD IMPROVE
 
 ### Code Quality
+
 1. **`wpctl status` parsing** — `findPixySource()` parses human-readable output. Could break on wireplumber updates. Consider PipeWire D-Bus or Go bindings.
 2. **Command type** — `handleCommand` uses string parsing. Typed `Command` struct would be cleaner.
 3. **golangci-lint stale cache** — 22+ false-positive errcheck warnings from the LSP. Not a real issue but confusing during development.
 
 ### Architecture
+
 4. **Watchdog in autoManage loop** — `sdNotify("WATCHDOG=1")` fires after `autoManage()` returns. If HID write blocks, watchdog won't fire. Should use separate goroutine.
 5. **Socket listener error recovery** — If listener goroutine exits, daemon runs but can't receive commands. Should handle fatal listener errors.
 6. **PID file** — Could prevent multiple instances if started manually.
 7. **Config file** — No `/etc/emeet-pixyd.toml` for persistent settings.
 
 ### Reliability
+
 8. **HID response format** — Byte offsets are educated guesses based on protocol analysis. Need real hardware test to confirm.
 9. **Periodic sync** — Currently only syncs on startup + manual command. Could sync every N poll cycles.
 
@@ -134,12 +143,14 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 ## F) TOP #25 THINGS TO DO NEXT
 
 ### Priority 1 — Verify on Real Hardware
+
 1. **`just switch` and check `just cam-logs`** — verify HID querying works with actual PIXY camera
 2. **Test `just cam-sync`** — confirm state sync detects physical button presses
 3. **Check startup sync logs** — verify daemon queries camera state on boot
 4. **Test notifications** — confirm `notify-send` works in Wayland session
 
 ### Priority 2 — Reliability
+
 5. **Separate watchdog goroutine** — decouple from `autoManage()` blocking
 6. **PID file** — prevent multiple daemon instances
 7. **Socket listener error recovery** — restart listener on fatal errors
@@ -147,6 +158,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 9. **Periodic state sync** — sync every 30 poll cycles (1 minute) to catch physical button presses
 
 ### Priority 3 — UX Polish
+
 10. **Niri keybind** — `Mod+P` for privacy toggle
 11. **Rofi camera menu** — all camera options in a discoverable menu
 12. **`--help` / man page** — proper flag parsing with usage text
@@ -154,6 +166,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 14. **Audio cycling indicator** — notification showing which mode was selected
 
 ### Priority 4 — OBS Integration (proper)
+
 15. **Install `obs-websocket` plugin** — NixOS package
 16. **Configure OBS WebSocket credentials** — via sops-nix
 17. **Implement OBS WebSocket client in Go** — `StartVirtualCam`/`StopVirtualCam`
@@ -161,6 +174,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 19. **Document OBS setup** — step-by-step video pipeline
 
 ### Priority 5 — Advanced Features
+
 20. **PTZ preset save/recall** — named camera positions
 21. **Screen lock integration** — auto-privacy when swaylock engages
 22. **Auto anti-flicker** — detect locale or probe power line frequency
@@ -175,6 +189,7 @@ The EMEET PIXY webcam management system is **production-ready**. Over 3 sessions
 **Does the PIXY actually respond to HID reads on Linux, and if so, what is the exact response format?**
 
 We implemented `hidSendRecv` with educated guesses about byte offsets in the response. The protocol was reverse-engineered from USB captures on a Windows VM:
+
 - Tracking QRY `09 01 01 01` → we assume response byte[8] = mode
 - Audio QRY `09 05 00 04` → we assume response byte[8] = mode
 - Gesture QRY `09 04 02 01 ...` → we assume response last byte = on/off
@@ -209,35 +224,35 @@ a468dbe fix(emeet-pixy): use path instead of environment.PATH to avoid conflict
 
 ## Validation Results
 
-| Check | Result |
-|-------|--------|
-| `go vet ./...` | PASS |
-| `go test -race ./...` | PASS (27 tests, race clean) |
-| `go build` | PASS |
-| `nix flake check` | PASS (verified via pre-commit hooks) |
-| gitleaks | PASS |
-| deadnix | PASS |
-| statix | PASS |
-| alejandra | PASS |
+| Check                 | Result                               |
+| --------------------- | ------------------------------------ |
+| `go vet ./...`        | PASS                                 |
+| `go test -race ./...` | PASS (27 tests, race clean)          |
+| `go build`            | PASS                                 |
+| `nix flake check`     | PASS (verified via pre-commit hooks) |
+| gitleaks              | PASS                                 |
+| deadnix               | PASS                                 |
+| statix                | PASS                                 |
+| alejandra             | PASS                                 |
 
 ## File Inventory
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `pkgs/emeet-pixyd/main.go` | 980 | Go daemon (config, types, HID, call detection, IPC, notifications, state querying) |
-| `pkgs/emeet-pixyd/main_test.go` | 464 | 27 tests with race detector |
-| `pkgs/emeet-pixyd/go.mod` | 3 | Go module (zero dependencies) |
-| `pkgs/emeet-pixyd.nix` | 28 | buildGoModule derivation + symlink |
-| `platforms/nixos/hardware/emeet-pixy.nix` | 74 | NixOS module (udev, systemd, tmpfiles) |
-| `platforms/nixos/desktop/waybar.nix` | ~344 | Camera state module (modified section) |
-| `flake.nix` | ~475 | Overlay + perSystem package |
-| `justfile` | ~1940 | 11 `cam-*` recipes |
-| `AGENTS.md` | ~315 | Documentation section |
+| File                                      | Lines | Purpose                                                                            |
+| ----------------------------------------- | ----- | ---------------------------------------------------------------------------------- |
+| `pkgs/emeet-pixyd/main.go`                | 980   | Go daemon (config, types, HID, call detection, IPC, notifications, state querying) |
+| `pkgs/emeet-pixyd/main_test.go`           | 464   | 27 tests with race detector                                                        |
+| `pkgs/emeet-pixyd/go.mod`                 | 3     | Go module (zero dependencies)                                                      |
+| `pkgs/emeet-pixyd.nix`                    | 28    | buildGoModule derivation + symlink                                                 |
+| `platforms/nixos/hardware/emeet-pixy.nix` | 74    | NixOS module (udev, systemd, tmpfiles)                                             |
+| `platforms/nixos/desktop/waybar.nix`      | ~344  | Camera state module (modified section)                                             |
+| `flake.nix`                               | ~475  | Overlay + perSystem package                                                        |
+| `justfile`                                | ~1940 | 11 `cam-*` recipes                                                                 |
+| `AGENTS.md`                               | ~315  | Documentation section                                                              |
 
 ## Session Timeline
 
-| Session | Date | Commits | Focus | Lines Added |
-|---------|------|---------|-------|-------------|
-| 1 — Build | 2026-04-15 | 8 | Initial daemon, NixOS module, Waybar, tests | ~1,050 |
-| 2 — Harden | 2026-04-15 | 4 | slog, Config, type methods, watchdog, notifications | ~260 |
-| 3 — Query | 2026-04-16 | 2 | Bidirectional HID, state sync, parseHIDResponse | ~279 |
+| Session    | Date       | Commits | Focus                                               | Lines Added |
+| ---------- | ---------- | ------- | --------------------------------------------------- | ----------- |
+| 1 — Build  | 2026-04-15 | 8       | Initial daemon, NixOS module, Waybar, tests         | ~1,050      |
+| 2 — Harden | 2026-04-15 | 4       | slog, Config, type methods, watchdog, notifications | ~260        |
+| 3 — Query  | 2026-04-16 | 2       | Bidirectional HID, state sync, parseHIDResponse     | ~279        |

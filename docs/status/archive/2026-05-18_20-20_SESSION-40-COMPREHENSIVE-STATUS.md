@@ -23,32 +23,33 @@ SystemNix is in **good operational shape** with active development since Session
 
 ### Core Infrastructure
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| flake.nix architecture | ✅ | flake-parts modular, 35 service modules, 3 system configs |
-| NixOS evo-x2 evaluation | ✅ | `nix flake check --no-build` passes cleanly |
-| NixOS rpi3-dns build | ✅ | SD image evaluates and builds |
-| Darwin evaluation | ✅ | `nix flake check --all-systems --no-build` passes |
-| Cross-platform Home Manager | ✅ | 15 shared program modules |
-| `just test-fast` | ✅ | Syntax-only validation passes |
-| Code cleanliness | ✅ | Zero TODO/FIXME/HACK/XXX across all 111 .nix files |
+| Component                   | Status | Details                                                   |
+| --------------------------- | ------ | --------------------------------------------------------- |
+| flake.nix architecture      | ✅     | flake-parts modular, 35 service modules, 3 system configs |
+| NixOS evo-x2 evaluation     | ✅     | `nix flake check --no-build` passes cleanly               |
+| NixOS rpi3-dns build        | ✅     | SD image evaluates and builds                             |
+| Darwin evaluation           | ✅     | `nix flake check --all-systems --no-build` passes         |
+| Cross-platform Home Manager | ✅     | 15 shared program modules                                 |
+| `just test-fast`            | ✅     | Syntax-only validation passes                             |
+| Code cleanliness            | ✅     | Zero TODO/FIXME/HACK/XXX across all 111 .nix files        |
 
 ### Commits Since Session 39 (4 commits)
 
-| Commit | Description | Impact |
-|--------|-------------|--------|
-| `cdfe6c07` | flake.lock update — 15 inputs upgraded (home-manager, nix-darwin, nUR, +11 private repos) | Latest upstream versions |
-| `cdfe6c07` | `XDG_PROJECTS_DIR` → `PROJECTS` rename | Fixes HM deprecation warning |
-| `cdfe6c07` | Inline `lib.sh` state persistence into `display-watchdog.sh` and `niri-drm-healthcheck.sh` | Reduces external dependency |
-| `5aefb100` | Install `netwatch` in `linuxUtilities` | Resolves Session 38/39 open question |
-| `974b5075` | Add `unbound.service` and `sops-nix.service` dependencies to Docker services and Hermes | Fixes startup ordering race conditions |
-| `5f6e346a` | Session 39 status report | Documentation |
+| Commit     | Description                                                                                | Impact                                 |
+| ---------- | ------------------------------------------------------------------------------------------ | -------------------------------------- |
+| `cdfe6c07` | flake.lock update — 15 inputs upgraded (home-manager, nix-darwin, nUR, +11 private repos)  | Latest upstream versions               |
+| `cdfe6c07` | `XDG_PROJECTS_DIR` → `PROJECTS` rename                                                     | Fixes HM deprecation warning           |
+| `cdfe6c07` | Inline `lib.sh` state persistence into `display-watchdog.sh` and `niri-drm-healthcheck.sh` | Reduces external dependency            |
+| `5aefb100` | Install `netwatch` in `linuxUtilities`                                                     | Resolves Session 38/39 open question   |
+| `974b5075` | Add `unbound.service` and `sops-nix.service` dependencies to Docker services and Hermes    | Fixes startup ordering race conditions |
+| `5f6e346a` | Session 39 status report                                                                   | Documentation                          |
 
 ### Service Dependency Fixes (Commit `974b5075`)
 
 **Problem solved:** Docker-based services and Hermes were starting before local DNS resolver (unbound) and secrets decryption (sops-nix) were ready, causing DNS resolution failures and missing secrets at initialization.
 
 **Changes:**
+
 - `lib/docker.nix` (`mkDockerServiceFactory`): Added `unbound.service` to `after[]` and `wants[]` for both main docker-compose service and image-pull oneshot
 - `modules/nixos/services/hermes.nix`: Added `sops-nix.service` and `unbound.service` to `after[]` and `wants[]`
 
@@ -67,45 +68,45 @@ SystemNix is in **good operational shape** with active development since Session
 
 ## b) PARTIALLY DONE 🔄
 
-| Item | What's Done | What's Missing |
-|------|-------------|----------------|
-| **SSH config migration** | `matchBlocks` + `extraOptions` still used | Home Manager now warns these are deprecated; must migrate to `programs.ssh.settings` |
-| **mkPreparedSource v2** | Created, 4+ repos migrated | SystemNix itself doesn't consume it |
-| **Darwin build verification** | Evaluates via flake check | Full `nix build` not run from MacBook |
-| **photomap** | Module exists | Disabled with podman permission issue; dead commented code |
-| **Voice agents** | Module enabled | Whisper ROCm pipeline may need runtime verification |
-| **Status report archive** | 57+ reports | No automatic cleanup policy |
+| Item                          | What's Done                               | What's Missing                                                                       |
+| ----------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------ |
+| **SSH config migration**      | `matchBlocks` + `extraOptions` still used | Home Manager now warns these are deprecated; must migrate to `programs.ssh.settings` |
+| **mkPreparedSource v2**       | Created, 4+ repos migrated                | SystemNix itself doesn't consume it                                                  |
+| **Darwin build verification** | Evaluates via flake check                 | Full `nix build` not run from MacBook                                                |
+| **photomap**                  | Module exists                             | Disabled with podman permission issue; dead commented code                           |
+| **Voice agents**              | Module enabled                            | Whisper ROCm pipeline may need runtime verification                                  |
+| **Status report archive**     | 57+ reports                               | No automatic cleanup policy                                                          |
 
 ---
 
 ## c) NOT STARTED ❌
 
-| Item | Why It Matters |
-|------|----------------|
+| Item                                                | Why It Matters                                               |
+| --------------------------------------------------- | ------------------------------------------------------------ |
 | **SSH config migration to `programs.ssh.settings`** | Home-manager now emits 4 deprecation warnings on every build |
-| **Raspberry Pi 3 hardware provisioning** | No backup DNS node |
-| **Cachix binary cache** | Rebuilds compile from scratch |
-| **CI/CD for `nix flake check`** | No automated checks on push |
-| **Dependency graph visualization** | Manual vendor hash updates when deps change |
-| **Automated vendor hash updater** | Still manual: set `""`, build, grep, paste |
-| **SigNoz per-threshold alert routing** | All alerts to same channel |
-| **Distributed Darwin builds** | MacBook disk at 90-95% |
-| **AppArmor enablement** | Currently `mkDefault false` |
-| **Auditd re-enablement** | Blocked by nixpkgs #483085 |
+| **Raspberry Pi 3 hardware provisioning**            | No backup DNS node                                           |
+| **Cachix binary cache**                             | Rebuilds compile from scratch                                |
+| **CI/CD for `nix flake check`**                     | No automated checks on push                                  |
+| **Dependency graph visualization**                  | Manual vendor hash updates when deps change                  |
+| **Automated vendor hash updater**                   | Still manual: set `""`, build, grep, paste                   |
+| **SigNoz per-threshold alert routing**              | All alerts to same channel                                   |
+| **Distributed Darwin builds**                       | MacBook disk at 90-95%                                       |
+| **AppArmor enablement**                             | Currently `mkDefault false`                                  |
+| **Auditd re-enablement**                            | Blocked by nixpkgs #483085                                   |
 
 ---
 
 ## d) TOTALLY FUCKED UP! 🔥
 
-| Issue | Severity | Details |
-|-------|----------|---------|
-| **System load average: 26.41** | 🔴 HIGH | 8+ Crush AI processes running simultaneously + ClickHouse consuming 8.3% CPU. System is severely overloaded. Memory at 49Gi/62Gi used. |
+| Issue                                     | Severity  | Details                                                                                                                                                                         |
+| ----------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **System load average: 26.41**            | 🔴 HIGH   | 8+ Crush AI processes running simultaneously + ClickHouse consuming 8.3% CPU. System is severely overloaded. Memory at 49Gi/62Gi used.                                          |
 | **Home Manager SSH deprecation warnings** | 🟡 MEDIUM | 4 new warnings since home-manager upgrade: `programs.ssh.matchBlocks` and `.extraOptions` deprecated. Must migrate to `programs.ssh.settings.*` using upstream directive names. |
-| **Root disk at 86%** | 🟡 MEDIUM | 424G/512G used. Only 73G free. Nix store is ~90G. |
-| **/data disk at 81%** | 🟡 MEDIUM | 827G/1T used. AI models, Docker, Immich consuming space. |
-| **Nixpkgs x86_64-darwin deprecation** | 🟡 MEDIUM | Nixpkgs 26.05 is last release supporting x86_64-darwin. Signals ecosystem decline. |
-| **rpi3-dns unprovisioned** | 🟡 MEDIUM | DNS failover cluster theoretical only. Single point of failure. |
-| **Status report accumulation** | 🟡 LOW | 57+ reports without cleanup policy. |
+| **Root disk at 86%**                      | 🟡 MEDIUM | 424G/512G used. Only 73G free. Nix store is ~90G.                                                                                                                               |
+| **/data disk at 81%**                     | 🟡 MEDIUM | 827G/1T used. AI models, Docker, Immich consuming space.                                                                                                                        |
+| **Nixpkgs x86_64-darwin deprecation**     | 🟡 MEDIUM | Nixpkgs 26.05 is last release supporting x86_64-darwin. Signals ecosystem decline.                                                                                              |
+| **rpi3-dns unprovisioned**                | 🟡 MEDIUM | DNS failover cluster theoretical only. Single point of failure.                                                                                                                 |
+| **Status report accumulation**            | 🟡 LOW    | 57+ reports without cleanup policy.                                                                                                                                             |
 
 ---
 
@@ -144,33 +145,33 @@ SystemNix is in **good operational shape** with active development since Session
 
 ## f) Top #25 Things We Should Get Done Next! 🎯
 
-| # | Task | Why | Effort | Impact |
-|---|------|-----|--------|--------|
-| 1 | **Migrate SSH config to `programs.ssh.settings`** | 4 HM deprecation warnings on every build | 15 min | Medium |
-| 2 | **Investigate system overload (load 26.41)** | 8 Crush processes consuming CPU | 10 min | High |
-| 3 | **Run `just clean` on evo-x2** | Disk at 86% — prevent build failures | 10 min | High |
-| 4 | **Disk cleanup /data** | 81% full — AI models consuming space | 15 min | High |
-| 5 | **Archive status reports >2 weeks** | 57+ reports accumulating | 10 min | Low |
-| 6 | **Verify Darwin build from MacBook** | Latent issues since Session 36 | 30 min | High |
-| 7 | **Set up Cachix** | Massive rebuild time savings | 2 hours | Very High |
-| 8 | **GitHub Actions CI** | Prevent breakage on push | 1 hour | Very High |
-| 9 | **photomap decision** | Fix, enable, or remove | 10 min | Medium |
-| 10 | **Create `mk-pnpm-package.nix` helper** | Reuse jscpd pattern | 1 hour | Medium |
-| 11 | **Write upstream fix playbook** | Document vendor hash cascade | 30 min | Medium |
-| 12 | **Go.sum transitive merge audit** | Prevent cascade failures | 1 hour | High |
-| 13 | **Dependency graph visualization** | Auto-detect stale hashes | 2 hours | High |
-| 14 | **Automated vendor hash updater** | One command for all updates | 3 hours | Very High |
-| 15 | **rpi3-dns hardware provisioning** | Eliminate DNS SPOF | Hardware | High |
-| 16 | **SigNoz per-threshold routing** | Critical→DM, warning→channel | 1 hour | Medium |
-| 17 | **Distributed Darwin builds** | MacBook disk at 90-95% | 2 hours | High |
-| 18 | **Migrate justfile → flake.nix** | AGENTS.md policy | 4 hours | Low |
-| 19 | **Standardize ADR numbering** | Consistency | 15 min | Low |
-| 20 | **AppArmor enablement** | Currently disabled | 2 hours | Medium |
-| 21 | **Auditd re-enablement** | Track nixpkgs #483085 | Ongoing | Medium |
-| 22 | **Consolidate voice-agents Caddy vHost** | Consistency | 30 min | Low |
-| 23 | **Move dns-failover authPassword to sops** | Plaintext password | 30 min | Medium |
-| 24 | **Add per-service health check endpoints** | Self-reporting beyond Gatus | 3 hours | Medium |
-| 25 | **Contribute jscpd upstream fix** | Give back to nixpkgs | 2 hours | Low |
+| #   | Task                                              | Why                                      | Effort   | Impact    |
+| --- | ------------------------------------------------- | ---------------------------------------- | -------- | --------- |
+| 1   | **Migrate SSH config to `programs.ssh.settings`** | 4 HM deprecation warnings on every build | 15 min   | Medium    |
+| 2   | **Investigate system overload (load 26.41)**      | 8 Crush processes consuming CPU          | 10 min   | High      |
+| 3   | **Run `just clean` on evo-x2**                    | Disk at 86% — prevent build failures     | 10 min   | High      |
+| 4   | **Disk cleanup /data**                            | 81% full — AI models consuming space     | 15 min   | High      |
+| 5   | **Archive status reports >2 weeks**               | 57+ reports accumulating                 | 10 min   | Low       |
+| 6   | **Verify Darwin build from MacBook**              | Latent issues since Session 36           | 30 min   | High      |
+| 7   | **Set up Cachix**                                 | Massive rebuild time savings             | 2 hours  | Very High |
+| 8   | **GitHub Actions CI**                             | Prevent breakage on push                 | 1 hour   | Very High |
+| 9   | **photomap decision**                             | Fix, enable, or remove                   | 10 min   | Medium    |
+| 10  | **Create `mk-pnpm-package.nix` helper**           | Reuse jscpd pattern                      | 1 hour   | Medium    |
+| 11  | **Write upstream fix playbook**                   | Document vendor hash cascade             | 30 min   | Medium    |
+| 12  | **Go.sum transitive merge audit**                 | Prevent cascade failures                 | 1 hour   | High      |
+| 13  | **Dependency graph visualization**                | Auto-detect stale hashes                 | 2 hours  | High      |
+| 14  | **Automated vendor hash updater**                 | One command for all updates              | 3 hours  | Very High |
+| 15  | **rpi3-dns hardware provisioning**                | Eliminate DNS SPOF                       | Hardware | High      |
+| 16  | **SigNoz per-threshold routing**                  | Critical→DM, warning→channel             | 1 hour   | Medium    |
+| 17  | **Distributed Darwin builds**                     | MacBook disk at 90-95%                   | 2 hours  | High      |
+| 18  | **Migrate justfile → flake.nix**                  | AGENTS.md policy                         | 4 hours  | Low       |
+| 19  | **Standardize ADR numbering**                     | Consistency                              | 15 min   | Low       |
+| 20  | **AppArmor enablement**                           | Currently disabled                       | 2 hours  | Medium    |
+| 21  | **Auditd re-enablement**                          | Track nixpkgs #483085                    | Ongoing  | Medium    |
+| 22  | **Consolidate voice-agents Caddy vHost**          | Consistency                              | 30 min   | Low       |
+| 23  | **Move dns-failover authPassword to sops**        | Plaintext password                       | 30 min   | Medium    |
+| 24  | **Add per-service health check endpoints**        | Self-reporting beyond Gatus              | 3 hours  | Medium    |
+| 25  | **Contribute jscpd upstream fix**                 | Give back to nixpkgs                     | 2 hours  | Low       |
 
 ---
 
@@ -185,6 +186,7 @@ SystemNix is in **good operational shape** with active development since Session
 - Load average: 26.41 (1-min) / 10.66 (5-min) / 8.26 (15-min)
 
 **I cannot determine if this is:**
+
 - (a) Normal user behavior — intentionally running multiple Crush sessions
 - (b) A bug — Crush spawning duplicate processes unexpectedly
 - (c) A runaway test/build — the `go test` at 166% CPU may be the culprit
@@ -196,22 +198,22 @@ SystemNix is in **good operational shape** with active development since Session
 
 ## System Metrics
 
-| Metric | Value | Δ from Session 39 |
-|--------|-------|-------------------|
-| `.nix` files | 111 | — |
-| Service modules | 35 | — |
-| Overlay packages (building) | 17 | — |
-| Enabled services on evo-x2 | 40 | — |
-| Disabled services | 2 | — |
-| Flake inputs (direct) | 30 | — |
-| Flake inputs (transitive) | 137 | — |
-| Total commits | 2420 | +5 |
-| Status reports | 57+ | +1 (this one) |
-| Root disk usage | 86% (424G/512G) | — |
-| /data disk usage | 81% (827G/1T) | — |
-| Memory used | 49Gi / 62Gi | +6Gi |
-| Load average | 26.41 / 10.66 / 8.26 | +21.17 |
-| Uptime | 2 days 4:46 | +31 min |
+| Metric                      | Value                | Δ from Session 39 |
+| --------------------------- | -------------------- | ----------------- |
+| `.nix` files                | 111                  | —                 |
+| Service modules             | 35                   | —                 |
+| Overlay packages (building) | 17                   | —                 |
+| Enabled services on evo-x2  | 40                   | —                 |
+| Disabled services           | 2                    | —                 |
+| Flake inputs (direct)       | 30                   | —                 |
+| Flake inputs (transitive)   | 137                  | —                 |
+| Total commits               | 2420                 | +5                |
+| Status reports              | 57+                  | +1 (this one)     |
+| Root disk usage             | 86% (424G/512G)      | —                 |
+| /data disk usage            | 81% (827G/1T)        | —                 |
+| Memory used                 | 49Gi / 62Gi          | +6Gi              |
+| Load average                | 26.41 / 10.66 / 8.26 | +21.17            |
+| Uptime                      | 2 days 4:46          | +31 min           |
 
 ## Key Verification Commands
 
@@ -224,12 +226,12 @@ nix build .#nixosConfigurations.rpi3-dns.config.system.build.sdImage  # ✅ buil
 
 ## Changes This Session
 
-| Commit | Change |
-|--------|--------|
+| Commit     | Change                                                                      |
+| ---------- | --------------------------------------------------------------------------- |
 | `cdfe6c07` | flake.lock update (15 inputs) + XDG_PROJECTS_DIR→PROJECTS + lib.sh inlining |
-| `5aefb100` | netwatch installed in linuxUtilities |
-| `974b5075` | unbound/sops-nix service dependencies for Docker services and Hermes |
-| `5f6e346a` | Session 39 status report |
+| `5aefb100` | netwatch installed in linuxUtilities                                        |
+| `974b5075` | unbound/sops-nix service dependencies for Docker services and Hermes        |
+| `5f6e346a` | Session 39 status report                                                    |
 
 ---
 

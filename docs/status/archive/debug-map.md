@@ -28,11 +28,11 @@ CASCADE: everything downstream fails
 
 ## What Was Broken (commit chain)
 
-| Commit | What it did | What it broke |
-|--------|------------|---------------|
-| `9e09f07` | Disabled authelia, grafana, immich modules | Left sops.nix, caddy.nix, homepage.nix, monitoring.nix referencing disabled services |
-| `55b3b72` | Re-enabled authelia/immich, removed grafana | sops secrets still missing from secrets.yaml → build fails |
-| `0f1aa83` | Commented out authelia/immich/photomap to make build pass | Nuked half the infrastructure instead of fixing the root cause |
+| Commit    | What it did                                               | What it broke                                                                        |
+| --------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `9e09f07` | Disabled authelia, grafana, immich modules                | Left sops.nix, caddy.nix, homepage.nix, monitoring.nix referencing disabled services |
+| `55b3b72` | Re-enabled authelia/immich, removed grafana               | sops secrets still missing from secrets.yaml → build fails                           |
+| `0f1aa83` | Commented out authelia/immich/photomap to make build pass | Nuked half the infrastructure instead of fixing the root cause                       |
 
 ## What I Fixed
 
@@ -61,13 +61,13 @@ CASCADE: everything downstream fails
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
+| File                                            | Change                                            |
+| ----------------------------------------------- | ------------------------------------------------- |
 | `platforms/nixos/secrets/authelia-secrets.yaml` | **NEW** — encrypted secrets for authelia + immich |
-| `modules/nixos/services/sops.nix` | Authelia/immich secrets point to new file |
-| `flake.nix` | All service imports and nixosModules re-enabled |
-| `modules/nixos/services/caddy.nix` | auth.lan and immich.lan vhosts restored |
-| `modules/nixos/services/monitoring.nix` | authelia scrape job restored |
+| `modules/nixos/services/sops.nix`               | Authelia/immich secrets point to new file         |
+| `flake.nix`                                     | All service imports and nixosModules re-enabled   |
+| `modules/nixos/services/caddy.nix`              | auth.lan and immich.lan vhosts restored           |
+| `modules/nixos/services/monitoring.nix`         | authelia scrape job restored                      |
 
 ## Deploy
 

@@ -8,14 +8,14 @@
 
 ## Executive Summary
 
-| Metric | Value | Status |
-|-------|-------|--------|
-| **Git Status** | Clean | ✅ No uncommitted changes |
-| **Last Commit** | c0825a5 | feat(cron): add cross-platform scheduled tasks |
-| **Flake Check** | Passed | ✅ All checks pass |
-| **Nix Files** | 50+ | Active configuration |
-| **Documentation** | 749 MD files | Comprehensive |
-| **Platform Support** | macOS + NixOS | ✅ Cross-platform |
+| Metric               | Value         | Status                                         |
+| -------------------- | ------------- | ---------------------------------------------- |
+| **Git Status**       | Clean         | ✅ No uncommitted changes                      |
+| **Last Commit**      | c0825a5       | feat(cron): add cross-platform scheduled tasks |
+| **Flake Check**      | Passed        | ✅ All checks pass                             |
+| **Nix Files**        | 50+           | Active configuration                           |
+| **Documentation**    | 749 MD files  | Comprehensive                                  |
+| **Platform Support** | macOS + NixOS | ✅ Cross-platform                              |
 
 ---
 
@@ -26,6 +26,7 @@
 **Commit**: `c0825a5` - feat(cron): add cross-platform scheduled tasks for Crush AI provider updates
 
 **macOS Implementation** (`platforms/darwin/services/launchagents.nix`):
+
 - Added LaunchAgent: `com.larsartmann.crush-update-providers.plist`
 - Schedule: Daily at midnight (00:00)
 - Executable: `/run/current-system/sw/bin/crush update-providers`
@@ -35,6 +36,7 @@
 - Mechanism: launchd (Darwin's native service manager)
 
 **NixOS Implementation** (`platforms/nixos/system/scheduled-tasks.nix`):
+
 - Created new module: `scheduled-tasks.nix`
 - systemd timer: `crush-update-providers.timer`
   - OnCalendar: "00:00" (daily at midnight)
@@ -46,36 +48,39 @@
   - Output: systemd journal (both stdout and stderr)
 
 **Configuration Integration**:
+
 - Imported `scheduled-tasks.nix` into `platforms/nixos/system/configuration.nix`
 - Placement: After `snapshots.nix`, before `sudo.nix`
 
 ### 2. Recent Commits (Last 30 Days)
 
-| Commit | Description | Status |
-|--------|-------------|--------|
-| c0825a5 | Cross-platform scheduled tasks for Crush | ✅ Complete |
-| 52d7429 | Add lake.lock for reproducible builds | ✅ Complete |
-| 82c1657 | Accept ssh-rsa signatures for OpenSSH 10.2 | ✅ Complete |
-| 7cfbc9d | Add lake.lock for reproducible builds | ✅ Complete |
-| 3c8eb3b | Comprehensive project status update | ✅ Complete |
-| dbb3c1b | jscpd integration status report | ✅ Complete |
-| 9b3f676 | flake.lock conflict prevention | ✅ Complete |
-| 4296010 | BuildFlow and oxfmt configuration fix | ✅ Complete |
-| 4064496 | wl-clip-persist for Wayland clipboard | ✅ Complete |
+| Commit  | Description                                   | Status      |
+| ------- | --------------------------------------------- | ----------- |
+| c0825a5 | Cross-platform scheduled tasks for Crush      | ✅ Complete |
+| 52d7429 | Add lake.lock for reproducible builds         | ✅ Complete |
+| 82c1657 | Accept ssh-rsa signatures for OpenSSH 10.2    | ✅ Complete |
+| 7cfbc9d | Add lake.lock for reproducible builds         | ✅ Complete |
+| 3c8eb3b | Comprehensive project status update           | ✅ Complete |
+| dbb3c1b | jscpd integration status report               | ✅ Complete |
+| 9b3f676 | flake.lock conflict prevention                | ✅ Complete |
+| 4296010 | BuildFlow and oxfmt configuration fix         | ✅ Complete |
+| 4064496 | wl-clip-persist for Wayland clipboard         | ✅ Complete |
 | 772280c | SSH key path correction, NPU disabled for XRT | ✅ Complete |
-| 63f06ae | jscpd function to shell alias refactor | ✅ Complete |
-| 2e2c8ad | KeePassXC Hyprland window rule | ✅ Complete |
-| 7b5817b | AMD XDNA NPU driver support | ✅ Complete |
+| 63f06ae | jscpd function to shell alias refactor        | ✅ Complete |
+| 2e2c8ad | KeePassXC Hyprland window rule                | ✅ Complete |
+| 7b5817b | AMD XDNA NPU driver support                   | ✅ Complete |
 
 ### 3. Platform Architecture
 
 **Cross-Platform Consistency**:
+
 - Both platforms execute identical command: `crush update-providers`
 - Both execute daily at midnight (00:00 local time)
 - Both maintain persistent logs (Darwin: files, NixOS: journal)
 - Platform-appropriate scheduling mechanisms (launchd vs systemd)
 
 **Module Structure**:
+
 ```
 platforms/
 ├── common/           # Shared across platforms (~80% code reuse)
@@ -98,11 +103,13 @@ platforms/
 ### 1. TODO Management (CRITICAL)
 
 **Status**: 492 pending TODOs identified (from previous status reports)
+
 - **TODOs Completed**: 44 (8.2% completion rate)
 - **TODOs Pending**: 492
 - **Files with TODOs**: Multiple status files reference TODO management
 
 **Issues**:
+
 - TODOs accumulate faster than resolved
 - Many TODOs reference files that no longer exist
 - Some TODOs are >1 year old
@@ -113,17 +120,20 @@ platforms/
 ### 2. Documentation Review
 
 **Status**: 75+ markdown files still need review
+
 - **Total .md files**: 749
 - **Files reviewed**: ~25 (as of last update)
 - **Files remaining**: 75+
 
 **Files Read (No TODOs Found)**:
+
 - `pkgs/README.md`
 - `docs/monitoring-comparison-matrix.md`
 - `docs/nix-file-graph.md`
 - `docs/crush-final-summary-report.md`
 
 **Files with TODOs to Address**:
+
 - `docs/GITHUB-ISSUES-RECOMMENDATIONS-REMAINING.md` - 36 TODOs
 - `docs/sddm-configuration-report.md` - 17 TODOs
 - `docs/crush-advanced-build-strategies.md` - 13 TODOs
@@ -132,6 +142,7 @@ platforms/
 ### 3. Pre-commit Hook Issues
 
 **Status**: Identified but not fully resolved
+
 - **gitleaks**: 6 potential secrets detected (requires review)
 - **statix**: Nix linting warnings
   - W20: Repeated keys
@@ -145,31 +156,31 @@ platforms/
 
 ### 1. NixOS-Specific Enhancements
 
-| Task | Priority | Notes |
-|------|----------|-------|
-| NPU driver optimization | P2 | AMD XDNA support added, needs testing |
-| Hyprland 0.54 migration | P2 | Config fixes applied, needs verification |
-| Waybar UTF-8 fixes | P2 | Applied, needs testing |
-| Lockscreen configuration | P2 | Desktop issues identified |
-| Vulkan GPU acceleration | P2 | Ollama Vulkan fix applied |
+| Task                     | Priority | Notes                                    |
+| ------------------------ | -------- | ---------------------------------------- |
+| NPU driver optimization  | P2       | AMD XDNA support added, needs testing    |
+| Hyprland 0.54 migration  | P2       | Config fixes applied, needs verification |
+| Waybar UTF-8 fixes       | P2       | Applied, needs testing                   |
+| Lockscreen configuration | P2       | Desktop issues identified                |
+| Vulkan GPU acceleration  | P2       | Ollama Vulkan fix applied                |
 
 ### 2. Infrastructure Improvements
 
-| Task | Priority | Notes |
-|------|----------|-------|
-| TODO triage automation | P1 | Critical - 492 TODOs pending |
-| Documentation cleanup | P2 | 75+ files need review |
-| Secret management audit | P1 | 6 gitleaks findings |
-| Statix warning fixes | P2 | Nix linting issues |
+| Task                    | Priority | Notes                        |
+| ----------------------- | -------- | ---------------------------- |
+| TODO triage automation  | P1       | Critical - 492 TODOs pending |
+| Documentation cleanup   | P2       | 75+ files need review        |
+| Secret management audit | P1       | 6 gitleaks findings          |
+| Statix warning fixes    | P2       | Nix linting issues           |
 
 ### 3. Feature Requests (From TODO_LIST.md)
 
-| Task | Priority | Notes |
-|------|----------|-------|
-| Review programs.nix for TODOs | P3 | Low priority |
-| Review core.nix for TODOs | P3 | Low priority |
-| Review system.nix for TODOs | P3 | Low priority |
-| Complete TODOs in configuration files | P3 | Low priority |
+| Task                                  | Priority | Notes        |
+| ------------------------------------- | -------- | ------------ |
+| Review programs.nix for TODOs         | P3       | Low priority |
+| Review core.nix for TODOs             | P3       | Low priority |
+| Review system.nix for TODOs           | P3       | Low priority |
+| Complete TODOs in configuration files | P3       | Low priority |
 
 ---
 
@@ -178,6 +189,7 @@ platforms/
 ### None Currently Identified
 
 **Good News**: No critical failures or broken configurations detected.
+
 - Flake check passes
 - Git status clean
 - Recent commits stable
@@ -251,48 +263,48 @@ platforms/
 
 ### Priority 0 (Critical - Do Now)
 
-| # | Task | File/Location | Estimated Time |
-|---|------|---------------|----------------|
-| 1 | Review gitleaks findings | Run: `gitleaks detect --verbose` | 30 min |
-| 2 | Fix statix W20 warnings | Nix files | 1 hour |
-| 3 | Start TODO triage process | TODO_LIST.md | 1 hour |
-| 4 | Verify scheduled tasks work | launchagents.nix, scheduled-tasks.nix | 30 min |
+| #   | Task                        | File/Location                         | Estimated Time |
+| --- | --------------------------- | ------------------------------------- | -------------- |
+| 1   | Review gitleaks findings    | Run: `gitleaks detect --verbose`      | 30 min         |
+| 2   | Fix statix W20 warnings     | Nix files                             | 1 hour         |
+| 3   | Start TODO triage process   | TODO_LIST.md                          | 1 hour         |
+| 4   | Verify scheduled tasks work | launchagents.nix, scheduled-tasks.nix | 30 min         |
 
 ### Priority 1 (High - This Week)
 
-| # | Task | File/Location | Estimated Time |
-|---|------|---------------|----------------|
-| 5 | Review docs/GITHUB-ISSUES-RECOMMENDATIONS-REMAINING.md | 36 TODOs | 2 hours |
-| 6 | Fix statix W04 warnings | Nix files | 1 hour |
-| 7 | Fix statix W23 warnings | Nix files | 30 min |
-| 8 | Test NixOS scheduled task manually | `systemctl start crush-update-providers` | 15 min |
-| 9 | Review 10 oldest TODOs | TODO-STATUS.md | 1 hour |
-| 10 | Archive completed status reports | docs/status/ | 30 min |
+| #   | Task                                                   | File/Location                            | Estimated Time |
+| --- | ------------------------------------------------------ | ---------------------------------------- | -------------- |
+| 5   | Review docs/GITHUB-ISSUES-RECOMMENDATIONS-REMAINING.md | 36 TODOs                                 | 2 hours        |
+| 6   | Fix statix W04 warnings                                | Nix files                                | 1 hour         |
+| 7   | Fix statix W23 warnings                                | Nix files                                | 30 min         |
+| 8   | Test NixOS scheduled task manually                     | `systemctl start crush-update-providers` | 15 min         |
+| 9   | Review 10 oldest TODOs                                 | TODO-STATUS.md                           | 1 hour         |
+| 10  | Archive completed status reports                       | docs/status/                             | 30 min         |
 
 ### Priority 2 (Medium - This Month)
 
-| # | Task | File/Location | Estimated Time |
-|---|------|---------------|----------------|
-| 11 | Review docs/sddm-configuration-report.md | 17 TODOs | 1 hour |
-| 12 | Review docs/crush-advanced-build-strategies.md | 13 TODOs | 1 hour |
-| 13 | Test NPU driver on evo-x2 | AMD XDNA | 2 hours |
-| 14 | Verify Hyprland 0.54 config works | hyprland.nix | 1 hour |
-| 15 | Test Ollama Vulkan acceleration | ollama config | 1 hour |
+| #   | Task                                           | File/Location | Estimated Time |
+| --- | ---------------------------------------------- | ------------- | -------------- |
+| 11  | Review docs/sddm-configuration-report.md       | 17 TODOs      | 1 hour         |
+| 12  | Review docs/crush-advanced-build-strategies.md | 13 TODOs      | 1 hour         |
+| 13  | Test NPU driver on evo-x2                      | AMD XDNA      | 2 hours        |
+| 14  | Verify Hyprland 0.54 config works              | hyprland.nix  | 1 hour         |
+| 15  | Test Ollama Vulkan acceleration                | ollama config | 1 hour         |
 
 ### Priority 3 (Low - This Quarter)
 
-| # | Task | File/Location | Estimated Time |
-|---|------|---------------|----------------|
-| 16 | Review programs.nix TODOs | platforms/common/programs/ | 2 hours |
-| 17 | Review core.nix TODOs | platforms/common/core/ | 2 hours |
-| 18 | Review system.nix TODOs | platforms/nixos/system/ | 2 hours |
-| 19 | Consolidate status reports | docs/status/ | 3 hours |
-| 20 | Update AGENTS.md with new patterns | AGENTS.md | 1 hour |
-| 21 | Review 50 markdown files | docs/ | 4 hours |
-| 22 | Create documentation index | docs/README.md | 1 hour |
-| 23 | Implement automated TODO tracking | scripts/ | 3 hours |
-| 24 | Test Waybar UTF-8 fixes | waybar.nix | 30 min |
-| 25 | Verify lockscreen configuration | hyprland.nix | 30 min |
+| #   | Task                               | File/Location              | Estimated Time |
+| --- | ---------------------------------- | -------------------------- | -------------- |
+| 16  | Review programs.nix TODOs          | platforms/common/programs/ | 2 hours        |
+| 17  | Review core.nix TODOs              | platforms/common/core/     | 2 hours        |
+| 18  | Review system.nix TODOs            | platforms/nixos/system/    | 2 hours        |
+| 19  | Consolidate status reports         | docs/status/               | 3 hours        |
+| 20  | Update AGENTS.md with new patterns | AGENTS.md                  | 1 hour         |
+| 21  | Review 50 markdown files           | docs/                      | 4 hours        |
+| 22  | Create documentation index         | docs/README.md             | 1 hour         |
+| 23  | Implement automated TODO tracking  | scripts/                   | 3 hours        |
+| 24  | Test Waybar UTF-8 fixes            | waybar.nix                 | 30 min         |
+| 25  | Verify lockscreen configuration    | hyprland.nix               | 30 min         |
 
 ---
 
@@ -301,11 +313,13 @@ platforms/
 ### Question: What is the source of the 492 pending TODOs?
 
 **Context**:
+
 - Multiple status reports reference "492 pending TODOs"
 - TODO_LIST.md shows 125 micro-tasks and multiple files with TODOs
 - Completion rate is only 8.2% (44 completed)
 
 **What I Need to Know**:
+
 1. **Are these 492 TODOs in code files or documentation?**
    - If in code: Need to grep all .nix, .sh, .ts, .go files
    - If in docs: Need to review 75+ markdown files
@@ -321,11 +335,13 @@ platforms/
    - Categorized TODOs (P0/P1/P2/P3)?
 
 **Why This Matters**:
+
 - 492 TODOs is unsustainable
 - Without understanding the source, triage is impossible
 - Current 8.2% completion rate suggests systemic issues
 
 **Proposed Investigation**:
+
 ```bash
 # Count TODOs by type
 grep -r "TODO:" --include="*.nix" | wc -l
@@ -359,12 +375,12 @@ grep -r "FIXME:" --include="*.nix" | wc -l
 
 ### Files Modified
 
-| File | Change | Lines |
-|------|--------|-------|
-| `platforms/darwin/services/launchagents.nix` | Added crush-update-providers LaunchAgent | +33 |
-| `platforms/nixos/system/scheduled-tasks.nix` | Created new module | +25 |
-| `platforms/nixos/system/configuration.nix` | Added import | +1 |
-| `flake.lock` | Updated homebrew-cask | ~auto |
+| File                                         | Change                                   | Lines |
+| -------------------------------------------- | ---------------------------------------- | ----- |
+| `platforms/darwin/services/launchagents.nix` | Added crush-update-providers LaunchAgent | +33   |
+| `platforms/nixos/system/scheduled-tasks.nix` | Created new module                       | +25   |
+| `platforms/nixos/system/configuration.nix`   | Added import                             | +1    |
+| `flake.lock`                                 | Updated homebrew-cask                    | ~auto |
 
 ### Commit Details
 
@@ -380,16 +396,16 @@ c0825a5 feat(cron): add cross-platform scheduled tasks for Crush AI provider upd
 
 ## System Health Indicators
 
-| Indicator | Status | Notes |
-|-----------|--------|-------|
-| Git Clean | ✅ | No uncommitted changes |
-| Flake Check | ✅ | All outputs valid |
-| Build Status | ✅ | No failures |
-| Cross-Platform | ✅ | macOS + NixOS supported |
-| Documentation | ⚠️ | 75+ files need review |
-| TODO Management | 🔴 | 492 pending, 8.2% complete |
-| Security | ⚠️ | 6 gitleaks findings |
-| Code Quality | ⚠️ | statix warnings |
+| Indicator       | Status | Notes                      |
+| --------------- | ------ | -------------------------- |
+| Git Clean       | ✅     | No uncommitted changes     |
+| Flake Check     | ✅     | All outputs valid          |
+| Build Status    | ✅     | No failures                |
+| Cross-Platform  | ✅     | macOS + NixOS supported    |
+| Documentation   | ⚠️     | 75+ files need review      |
+| TODO Management | 🔴     | 492 pending, 8.2% complete |
+| Security        | ⚠️     | 6 gitleaks findings        |
+| Code Quality    | ⚠️     | statix warnings            |
 
 ---
 

@@ -12,12 +12,12 @@ Major progress on **self-hosted infrastructure** with Gitea Git service and DNS 
 
 ### Key Achievements This Session
 
-| Achievement | Status | Impact |
-|-------------|--------|--------|
-| Gitea self-hosted Git service | ✅ Complete | Full GitHub mirror with sync |
-| DNS blocker enhancements | ✅ Complete | Category icons, stats, reporting |
-| YouTube frontend research | ✅ Complete | 4 alternatives documented |
-| GitHub sync automation | ✅ Complete | Every 6 hours via systemd timer |
+| Achievement                   | Status      | Impact                           |
+| ----------------------------- | ----------- | -------------------------------- |
+| Gitea self-hosted Git service | ✅ Complete | Full GitHub mirror with sync     |
+| DNS blocker enhancements      | ✅ Complete | Category icons, stats, reporting |
+| YouTube frontend research     | ✅ Complete | 4 alternatives documented        |
+| GitHub sync automation        | ✅ Complete | Every 6 hours via systemd timer  |
 
 ---
 
@@ -28,6 +28,7 @@ Major progress on **self-hosted infrastructure** with Gitea Git service and DNS 
 **File:** `platforms/nixos/services/gitea.nix` (348 lines)
 
 **Features Implemented:**
+
 - Full Gitea instance with SQLite backend
 - Git LFS support enabled
 - Automatic weekly backups
@@ -41,6 +42,7 @@ Major progress on **self-hosted infrastructure** with Gitea Git service and DNS 
   - `gitea-setup` - Setup helper with status check
 
 **Configuration Highlights:**
+
 ```nix
 services.gitea = {
   enable = true;
@@ -64,6 +66,7 @@ services.gitea = {
 ```
 
 **Systemd Timer:**
+
 ```nix
 systemd.timers.gitea-github-sync = {
   timerConfig = {
@@ -79,6 +82,7 @@ systemd.timers.gitea-github-sync = {
 **File:** `platforms/nixos/modules/dns-blocker.nix`
 
 **Recent Improvements:**
+
 - Added category icons for visual identification
 - False positive reporting system
 - Enhanced statistics page
@@ -91,6 +95,7 @@ systemd.timers.gitea-github-sync = {
 - Removed temp allowlist from unbound include (using write mode for tmpfiles)
 
 **Blocklist Categories:**
+
 - Advertising
 - Tracking
 - Malware
@@ -104,12 +109,14 @@ systemd.timers.gitea-github-sync = {
 **File:** `docs/research/youtube-frontend-alternatives.md` (252 lines)
 
 **Alternatives Documented:**
+
 1. **Invidious** - Privacy-focused, no ads, no tracking
 2. **Piped** - Modern UI, no Google connections
 3. **FreeTube** - Desktop app, subscriptions backup
 4. **CloudTube** - Lightweight, proxy support
 
 **Comparison Matrix:**
+
 - Privacy features
 - UI/UX comparison
 - Self-hosting difficulty
@@ -137,11 +144,13 @@ f8932fe docs: add YouTube frontend alternatives research
 ### 1. Gitea Initial Setup
 
 **What's Done:**
+
 - Service configuration complete
 - Sync scripts working
 - Systemd timer configured
 
 **What's Pending:**
+
 - Initial admin account creation
 - Gitea token generation
 - GitHub token setup
@@ -151,11 +160,13 @@ f8932fe docs: add YouTube frontend alternatives research
 ### 2. DNS Blocker Testing
 
 **What's Done:**
+
 - Configuration updated
 - New blocklists added
 - Stats page enhanced
 
 **What's Pending:**
+
 - False positive reporting UI testing
 - Category icon display verification
 - Performance impact measurement
@@ -164,6 +175,7 @@ f8932fe docs: add YouTube frontend alternatives research
 ### 3. Niri-Wrapped Testing
 
 **Status:** Still needs testing on actual x86_64-linux hardware
+
 - Configuration extracted
 - Package builds successfully
 - Not yet deployed to evo-x2
@@ -210,11 +222,13 @@ f8932fe docs: add YouTube frontend alternatives research
 ### 1. Session Interruption Recovery
 
 **What Happened:**
+
 - Previous session was interrupted
 - Had to rebuild context from scratch
 - Lost some intermediate work context
 
 **Recovery:**
+
 - Successfully reconstructed status from git history
 - Identified all recent changes
 - No data loss, just context loss
@@ -225,39 +239,39 @@ f8932fe docs: add YouTube frontend alternatives research
 
 ### 1. Gitea Improvements
 
-| Issue | Priority | Solution |
-|-------|----------|----------|
-| Single-user only | MEDIUM | Add LDAP/org support |
-| No HTTPS | MEDIUM | Add reverse proxy with TLS |
-| SQLite limitation | LOW | Migrate to PostgreSQL |
-| No CI/CD | MEDIUM | Add Gitea Actions or Drone |
+| Issue             | Priority | Solution                   |
+| ----------------- | -------- | -------------------------- |
+| Single-user only  | MEDIUM   | Add LDAP/org support       |
+| No HTTPS          | MEDIUM   | Add reverse proxy with TLS |
+| SQLite limitation | LOW      | Migrate to PostgreSQL      |
+| No CI/CD          | MEDIUM   | Add Gitea Actions or Drone |
 
 ### 2. DNS Blocker Improvements
 
-| Issue | Priority | Solution |
-|-------|----------|----------|
-| No per-device profiles | HIGH | Add user-specific configs |
-| Basic stats | MEDIUM | Enhanced analytics dashboard |
-| No time-based blocking | MEDIUM | Add schedule support |
-| Manual false positive | MEDIUM | Web UI for reporting |
+| Issue                  | Priority | Solution                     |
+| ---------------------- | -------- | ---------------------------- |
+| No per-device profiles | HIGH     | Add user-specific configs    |
+| Basic stats            | MEDIUM   | Enhanced analytics dashboard |
+| No time-based blocking | MEDIUM   | Add schedule support         |
+| Manual false positive  | MEDIUM   | Web UI for reporting         |
 
 ### 3. Documentation Gaps
 
-| Gap | Action |
-|-----|--------|
-| Gitea setup guide | Document token creation, first sync |
-| DNS blocker admin guide | Explain categories, reporting |
-| Troubleshooting | Common issues and solutions |
-| Backup/restore | Gitea backup automation |
+| Gap                     | Action                              |
+| ----------------------- | ----------------------------------- |
+| Gitea setup guide       | Document token creation, first sync |
+| DNS blocker admin guide | Explain categories, reporting       |
+| Troubleshooting         | Common issues and solutions         |
+| Backup/restore          | Gitea backup automation             |
 
 ### 4. Testing Infrastructure
 
-| Missing | Priority |
-|---------|----------|
-| Gitea integration tests | HIGH |
-| DNS blocker validation | HIGH |
-| End-to-end sync tests | MEDIUM |
-| Performance benchmarks | LOW |
+| Missing                 | Priority |
+| ----------------------- | -------- |
+| Gitea integration tests | HIGH     |
+| DNS blocker validation  | HIGH     |
+| End-to-end sync tests   | MEDIUM   |
+| Performance benchmarks  | LOW      |
 
 ---
 
@@ -265,53 +279,53 @@ f8932fe docs: add YouTube frontend alternatives research
 
 ### Immediate (This Week)
 
-| # | Task | Effort | Impact | Priority |
-|---|------|--------|--------|----------|
-| 1 | Complete Gitea initial setup on evo-x2 | 1h | HIGH | P0 |
-| 2 | Create Gitea credentials and run first sync | 30m | HIGH | P0 |
-| 3 | Test DNS blocker false positive reporting | 1h | MEDIUM | P1 |
-| 4 | Deploy niri-wrapped to evo-x2 | 2h | HIGH | P1 |
-| 5 | Document Gitea setup process | 1h | MEDIUM | P2 |
+| #   | Task                                        | Effort | Impact | Priority |
+| --- | ------------------------------------------- | ------ | ------ | -------- |
+| 1   | Complete Gitea initial setup on evo-x2      | 1h     | HIGH   | P0       |
+| 2   | Create Gitea credentials and run first sync | 30m    | HIGH   | P0       |
+| 3   | Test DNS blocker false positive reporting   | 1h     | MEDIUM | P1       |
+| 4   | Deploy niri-wrapped to evo-x2               | 2h     | HIGH   | P1       |
+| 5   | Document Gitea setup process                | 1h     | MEDIUM | P2       |
 
 ### Short-term (This Sprint)
 
-| # | Task | Effort | Impact | Priority |
-|---|------|--------|--------|----------|
-| 6 | Add HTTPS to Gitea (reverse proxy) | 2h | HIGH | P1 |
-| 7 | Implement per-device DNS filtering profiles | 4h | HIGH | P1 |
-| 8 | Add Gitea CI/CD (Actions or Drone) | 4h | MEDIUM | P2 |
-| 9 | Create DNS blocker admin dashboard | 3h | MEDIUM | P2 |
-| 10 | Self-host Invidious YouTube frontend | 2h | MEDIUM | P2 |
+| #   | Task                                        | Effort | Impact | Priority |
+| --- | ------------------------------------------- | ------ | ------ | -------- |
+| 6   | Add HTTPS to Gitea (reverse proxy)          | 2h     | HIGH   | P1       |
+| 7   | Implement per-device DNS filtering profiles | 4h     | HIGH   | P1       |
+| 8   | Add Gitea CI/CD (Actions or Drone)          | 4h     | MEDIUM | P2       |
+| 9   | Create DNS blocker admin dashboard          | 3h     | MEDIUM | P2       |
+| 10  | Self-host Invidious YouTube frontend        | 2h     | MEDIUM | P2       |
 
 ### Medium-term (This Month)
 
-| # | Task | Effort | Impact | Priority |
-|---|------|--------|--------|----------|
-| 11 | Migrate Gitea to PostgreSQL | 2h | LOW | P3 |
-| 12 | Add Matrix chat server | 4h | MEDIUM | P2 |
-| 13 | Deploy Immich photo backup | 2h | MEDIUM | P2 |
-| 14 | Add time-based DNS blocking | 3h | MEDIUM | P2 |
-| 15 | Create unified dashboard (Homarr/Homepage) | 3h | LOW | P3 |
+| #   | Task                                       | Effort | Impact | Priority |
+| --- | ------------------------------------------ | ------ | ------ | -------- |
+| 11  | Migrate Gitea to PostgreSQL                | 2h     | LOW    | P3       |
+| 12  | Add Matrix chat server                     | 4h     | MEDIUM | P2       |
+| 13  | Deploy Immich photo backup                 | 2h     | MEDIUM | P2       |
+| 14  | Add time-based DNS blocking                | 3h     | MEDIUM | P2       |
+| 15  | Create unified dashboard (Homarr/Homepage) | 3h     | LOW    | P3       |
 
 ### Long-term (This Quarter)
 
-| # | Task | Effort | Impact | Priority |
-|---|------|--------|--------|----------|
-| 16 | Deploy Jellyfin media server | 2h | MEDIUM | P2 |
-| 17 | Add Paperless-ngx document management | 2h | MEDIUM | P2 |
-| 18 | Implement automated Gitea backups | 2h | HIGH | P1 |
-| 19 | Create comprehensive monitoring | 4h | MEDIUM | P2 |
-| 20 | Add VPN (WireGuard/Headscale) | 3h | MEDIUM | P2 |
+| #   | Task                                  | Effort | Impact | Priority |
+| --- | ------------------------------------- | ------ | ------ | -------- |
+| 16  | Deploy Jellyfin media server          | 2h     | MEDIUM | P2       |
+| 17  | Add Paperless-ngx document management | 2h     | MEDIUM | P2       |
+| 18  | Implement automated Gitea backups     | 2h     | HIGH   | P1       |
+| 19  | Create comprehensive monitoring       | 4h     | MEDIUM | P2       |
+| 20  | Add VPN (WireGuard/Headscale)         | 3h     | MEDIUM | P2       |
 
 ### Ongoing/Maintenance
 
-| # | Task | Effort | Impact | Priority |
-|---|------|--------|--------|----------|
-| 21 | Weekly Gitea mirror verification | 15m/wk | HIGH | P1 |
-| 22 | Update DNS blocklists | 15m/wk | MEDIUM | P2 |
-| 23 | Review false positive reports | 30m/wk | MEDIUM | P2 |
-| 24 | Security updates for self-hosted services | 1h/wk | HIGH | P1 |
-| 25 | Performance monitoring and optimization | 1h/wk | LOW | P3 |
+| #   | Task                                      | Effort | Impact | Priority |
+| --- | ----------------------------------------- | ------ | ------ | -------- |
+| 21  | Weekly Gitea mirror verification          | 15m/wk | HIGH   | P1       |
+| 22  | Update DNS blocklists                     | 15m/wk | MEDIUM | P2       |
+| 23  | Review false positive reports             | 30m/wk | MEDIUM | P2       |
+| 24  | Security updates for self-hosted services | 1h/wk  | HIGH   | P1       |
+| 25  | Performance monitoring and optimization   | 1h/wk  | LOW    | P3       |
 
 ---
 
@@ -321,11 +335,13 @@ f8932fe docs: add YouTube frontend alternatives research
 
 **Context:**
 We're now running multiple self-hosted services (Gitea, DNS blocker, future services) that require secrets:
+
 - Gitea: `GITEA_TOKEN`, `GITHUB_TOKEN`
 - Future: Database passwords, API keys, TLS certificates
 - DNS blocker: Could need API keys for external services
 
 **What I've tried:**
+
 1. **Environment files** - Currently using `~/.config/gitea-sync.env` read at runtime
    - Pros: Simple, works now
    - Cons: Not declarative, manual setup required
@@ -339,18 +355,21 @@ We're now running multiple self-hosted services (Gitea, DNS blocker, future serv
    - Cons: Overkill for homelab, resource heavy
 
 **What I need to understand:**
+
 - What's the best practice for NixOS homelab secrets?
 - How do we balance security with simplicity?
 - Should secrets be in the repo (encrypted) or outside?
 - How do we rotate secrets without rebuilds?
 
 **Why it matters:**
+
 - Gitea sync currently requires manual credential setup
 - Future services will multiply this problem
 - Security best practices needed for external-facing services
 - Want to avoid hardcoded secrets in config
 
 **Possible approaches:**
+
 1. **sops-nix** - Use Mozilla sops with age encryption
 2. **agenix** - Simple age-based secret management
 3. **pass** - Password store integration
@@ -366,29 +385,29 @@ Which secret management approach best fits our "declarative infrastructure" phil
 
 ### File Statistics
 
-| Category | Count |
-|----------|-------|
-| Total Nix files | 98 |
-| flake.nix lines | 349 |
-| AGENTS.md lines | 1,199 |
-| Scripts | 52 |
-| Services | 3 (gitea, ssh, default) |
+| Category        | Count                   |
+| --------------- | ----------------------- |
+| Total Nix files | 98                      |
+| flake.nix lines | 349                     |
+| AGENTS.md lines | 1,199                   |
+| Scripts         | 52                      |
+| Services        | 3 (gitea, ssh, default) |
 
 ### Package Status
 
-| System | Packages |
-|--------|----------|
-| aarch64-darwin | aw-watcher-utilization, modernize |
-| x86_64-linux | aw-watcher-utilization, modernize, niri-wrapped |
+| System         | Packages                                        |
+| -------------- | ----------------------------------------------- |
+| aarch64-darwin | aw-watcher-utilization, modernize               |
+| x86_64-linux   | aw-watcher-utilization, modernize, niri-wrapped |
 
 ### Self-Hosted Services
 
-| Service | Status | Notes |
-|---------|--------|-------|
-| Gitea | ✅ Configured | Needs initial setup |
-| DNS Blocker | ✅ Active | Enhanced with new features |
-| ActivityWatch | ✅ Working | Both platforms |
-| Netdata | ✅ Working | System monitoring |
+| Service       | Status        | Notes                      |
+| ------------- | ------------- | -------------------------- |
+| Gitea         | ✅ Configured | Needs initial setup        |
+| DNS Blocker   | ✅ Active     | Enhanced with new features |
+| ActivityWatch | ✅ Working    | Both platforms             |
+| Netdata       | ✅ Working    | System monitoring          |
 
 ### Recent Changes (Last 5 Commits)
 

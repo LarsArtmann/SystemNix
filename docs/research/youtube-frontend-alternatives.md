@@ -8,11 +8,11 @@
 
 ## Options Overview
 
-| Option | NixOS Support | Maintenance | Features | YT Blocking Resistance | Resource Usage |
-|--------|---------------|-------------|----------|------------------------|----------------|
-| **Invidious** | Excellent | Medium | Basic | Poor | Low (Crystal binary) |
-| **Piped** | None | High | Full | Better | High (Java + containers) |
-| **FreeTube** | Desktop only | Low | Full | Medium | Medium (Electron) |
+| Option        | NixOS Support | Maintenance | Features | YT Blocking Resistance | Resource Usage           |
+| ------------- | ------------- | ----------- | -------- | ---------------------- | ------------------------ |
+| **Invidious** | Excellent     | Medium      | Basic    | Poor                   | Low (Crystal binary)     |
+| **Piped**     | None          | High        | Full     | Better                 | High (Java + containers) |
+| **FreeTube**  | Desktop only  | Low         | Full     | Medium                 | Medium (Electron)        |
 
 ---
 
@@ -23,6 +23,7 @@
 **License:** AGPL-3.0
 
 ### Pros
+
 - Native NixOS module: `services.invidious.enable = true`
 - Single binary, lightweight
 - No JavaScript required (works without JS)
@@ -31,6 +32,7 @@
 - Simple single-container deployment
 
 ### Cons
+
 - YouTube actively blocks instances (only 3 public instances remain)
 - Known instability (requires hourly restarts)
 - No SponsorBlock integration
@@ -65,6 +67,7 @@ services.postgresql = {
 ```
 
 ### Resource Requirements
+
 - RAM: ~200-500MB
 - CPU: Low
 - Storage: ~1GB (including PostgreSQL)
@@ -78,6 +81,7 @@ services.postgresql = {
 **License:** AGPL-3.0
 
 ### Pros
+
 - SponsorBlock integration
 - Return YouTube Dislike support
 - Better YouTube blocking resistance (federated architecture)
@@ -86,6 +90,7 @@ services.postgresql = {
 - Multiple instances can share load
 
 ### Cons
+
 - No NixOS module (requires Podman/Docker)
 - Complex multi-container setup (4+ containers)
 - Java backend = higher RAM usage
@@ -105,6 +110,7 @@ services.postgresql = {
 ```
 
 ### Resource Requirements
+
 - RAM: ~1-2GB
 - CPU: Medium
 - Storage: ~5GB
@@ -118,6 +124,7 @@ services.postgresql = {
 **License:** AGPL-3.0
 
 ### Pros
+
 - Native desktop application
 - Works offline (local database)
 - Privacy-focused (no telemetry)
@@ -126,6 +133,7 @@ services.postgresql = {
 - Return YouTube Dislike built-in
 
 ### Cons
+
 - Desktop app only (no web interface)
 - Not self-hostable as a service
 - Depends on external Invidious/Piped instances
@@ -201,12 +209,14 @@ func buildRedirectURL(blockedURL string) string {
 ### Primary: Invidious
 
 **Reasoning:**
+
 1. Native NixOS support = easy deployment
 2. Lightweight = low resource usage
 3. Simple architecture = less maintenance
 4. Good enough for personal use
 
 **Mitigation for downsides:**
+
 - Set up cron job to restart Invidious every hour
 - Monitor for YouTube blocking, switch to Piped if needed
 - Use with VPN to reduce IP blocking risk
@@ -214,6 +224,7 @@ func buildRedirectURL(blockedURL string) string {
 ### Fallback: Piped
 
 If Invidious proves too unstable:
+
 1. Deploy via Podman quadlet
 2. Higher resource usage but better resilience
 3. More features (SponsorBlock, Dislikes)

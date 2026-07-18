@@ -29,12 +29,12 @@ Three bugs fixed:
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `platforms/nixos/desktop/ai-stack.nix` | Switch to ollama-vulkan, fix parallelism |
-| `dev/testing/benchmark_glm_flash_all.py` | Fix prompt, keep_alive, timing extraction |
-| `dev/testing/benchmark_glm_flash_findings.md` | New: root cause analysis and learnings |
-| `dev/testing/glm_flash_benchmark_results.json` | Updated with second run data |
+| File                                           | Change                                    |
+| ---------------------------------------------- | ----------------------------------------- |
+| `platforms/nixos/desktop/ai-stack.nix`         | Switch to ollama-vulkan, fix parallelism  |
+| `dev/testing/benchmark_glm_flash_all.py`       | Fix prompt, keep_alive, timing extraction |
+| `dev/testing/benchmark_glm_flash_findings.md`  | New: root cause analysis and learnings    |
+| `dev/testing/glm_flash_benchmark_results.json` | Updated with second run data              |
 
 ## Verification
 

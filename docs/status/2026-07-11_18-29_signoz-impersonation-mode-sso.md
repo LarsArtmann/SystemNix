@@ -21,6 +21,7 @@
 #### Change 1: SigNoz impersonation mode (`signoz.nix:316-340`)
 
 Replaced the JWT secret wrapper with impersonation env vars. Root password is persisted to a file (generated once on first boot, reused on restart):
+
 ```
 SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true
 SIGNOZ_IDENTN_TOKENIZER_ENABLED=false
@@ -35,6 +36,7 @@ SIGNOZ_USER_ROOT_PASSWORD="$(cat $ROOT_PW_FILE)"
 #### Change 2: Caddy unconditional forward-auth (`caddy.nix:135-144`)
 
 Replaced `protectedVHost "signoz"` (which had LAN bypass) with custom vHost applying `forwardAuth` to ALL requests:
+
 ```nix
 "signoz.${domain}" = {
   extraConfig = ''
@@ -72,6 +74,7 @@ Added functional check that verifies impersonation mode is active via `curl loca
 Was: `export SIGNOZ_USER_ROOT_PASSWORD="$(openssl rand -base64 48)"` ran on every `ExecStart`, generating a new password each restart. The root user provisioning runs at startup only; on restart the password would differ from the provisioned one.
 
 **Fix applied:** Password now persisted to `${dataDir}/root-password` — generated once on first boot, reused on every restart:
+
 ```bash
 ROOT_PW_FILE="${cfg.settings.queryService.dataDir}/root-password"
 if [ ! -f "$ROOT_PW_FILE" ]; then
@@ -93,27 +96,27 @@ Was: `siteMonitor = svcUrl "signoz"` pointed to `https://signoz.${domain}`, whic
 
 ## What Is DONE
 
-| Item | Status | Notes |
-|------|--------|-------|
-| Impersonation mode env vars | DONE | Root password persisted to file (BUG 1 fixed) |
-| Caddy unconditional forward-auth | DONE | No LAN bypass — all traffic through Pocket ID |
-| Homepage siteMonitor | DONE | Points to localhost (BUG 2 fixed) |
-| Post-deploy impersonation check | DONE | Added to `post-deploy-check.sh` |
-| AGENTS.md documentation | DONE | Layer 2+ tier, gotcha entries updated |
-| `nix fmt` | DONE | All changed files formatted cleanly |
-| Syntax validation | PASSES | Both `.nix` files parse via `nix-instantiate --parse` |
-| `nix flake check --no-build` | BLOCKED | Pre-existing `snapshots.nix:98` syntax error (not our change) |
+| Item                             | Status  | Notes                                                         |
+| -------------------------------- | ------- | ------------------------------------------------------------- |
+| Impersonation mode env vars      | DONE    | Root password persisted to file (BUG 1 fixed)                 |
+| Caddy unconditional forward-auth | DONE    | No LAN bypass — all traffic through Pocket ID                 |
+| Homepage siteMonitor             | DONE    | Points to localhost (BUG 2 fixed)                             |
+| Post-deploy impersonation check  | DONE    | Added to `post-deploy-check.sh`                               |
+| AGENTS.md documentation          | DONE    | Layer 2+ tier, gotcha entries updated                         |
+| `nix fmt`                        | DONE    | All changed files formatted cleanly                           |
+| Syntax validation                | PASSES  | Both `.nix` files parse via `nix-instantiate --parse`         |
+| `nix flake check --no-build`     | BLOCKED | Pre-existing `snapshots.nix:98` syntax error (not our change) |
 
 ---
 
 ## What Was NOT STARTED
 
 1. **`verify-deployment.sh` update** — Script uses hardcoded `localhost:8080` (works with impersonation) but doesn't verify impersonation mode is active
-3. **Firewall hardening for localhost:8080** — With impersonation mode, ANY local process has full admin access to SigNoz on `localhost:8080` with zero auth. Previously needed a password. Should consider iptables/nftables rule restricting to Caddy + signoz-provision
-4. **Defense-in-depth YAML config** — The impersonation settings are env vars only. If someone runs the binary directly (bypassing the wrapper), defaults apply (tokenizer=true, impersonation=false). Could set them in `signoz.yaml` too
-5. **ClickHouse memory reduction** — Original question about making ClickHouse lighter was answered but not implemented. `MemoryMax=4G` unchanged
-6. **Stale `/var/lib/signoz/jwt-secret` cleanup** — The old JWT secret file persists on disk, no longer used. Dead weight
-7. **Stale `/var/lib/signoz/discord-webhook.url` in verify-deployment.sh** — Pre-existing bug: provisioning service doesn't create this file (reads from sops directly), but verify-deployment.sh checks for it (line 108). Always shows "missing" warning
+2. **Firewall hardening for localhost:8080** — With impersonation mode, ANY local process has full admin access to SigNoz on `localhost:8080` with zero auth. Previously needed a password. Should consider iptables/nftables rule restricting to Caddy + signoz-provision
+3. **Defense-in-depth YAML config** — The impersonation settings are env vars only. If someone runs the binary directly (bypassing the wrapper), defaults apply (tokenizer=true, impersonation=false). Could set them in `signoz.yaml` too
+4. **ClickHouse memory reduction** — Original question about making ClickHouse lighter was answered but not implemented. `MemoryMax=4G` unchanged
+5. **Stale `/var/lib/signoz/jwt-secret` cleanup** — The old JWT secret file persists on disk, no longer used. Dead weight
+6. **Stale `/var/lib/signoz/discord-webhook.url` in verify-deployment.sh** — Pre-existing bug: provisioning service doesn't create this file (reads from sops directly), but verify-deployment.sh checks for it (line 108). Always shows "missing" warning
 
 ---
 
@@ -196,17 +199,17 @@ evo-x2 has 128 GB physical RAM (94 GB visible). The chronic memory pressure docu
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/signoz.nix` | Impersonation mode env vars (header comment + ExecStart wrapper with persistent root password) |
-| `modules/nixos/services/caddy.nix` | SigNoz vHost: unconditional forward-auth, no LAN bypass (line 135-144) |
-| `modules/nixos/services/homepage.nix` | siteMonitor changed to localhost:port (was external URL) |
-| `scripts/post-deploy-check.sh` | Added SigNoz impersonation mode verification check |
-| `AGENTS.md` | Layer 2+ SSO tier, impersonation mode gotcha, updated OIDC entries |
+| File                                  | Change                                                                                         |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `modules/nixos/services/signoz.nix`   | Impersonation mode env vars (header comment + ExecStart wrapper with persistent root password) |
+| `modules/nixos/services/caddy.nix`    | SigNoz vHost: unconditional forward-auth, no LAN bypass (line 135-144)                         |
+| `modules/nixos/services/homepage.nix` | siteMonitor changed to localhost:port (was external URL)                                       |
+| `scripts/post-deploy-check.sh`        | Added SigNoz impersonation mode verification check                                             |
+| `AGENTS.md`                           | Layer 2+ SSO tier, impersonation mode gotcha, updated OIDC entries                             |
 
 ## Files NOT Changed (Pre-existing Issues)
 
-| File | Issue |
-|------|-------|
-| `scripts/verify-deployment.sh:101` | Hardcoded port 8080 (pre-existing, works but fragile) |
-| `platforms/nixos/system/snapshots.nix:98` | Pre-existing syntax error blocks `nix flake check` |
+| File                                      | Issue                                                 |
+| ----------------------------------------- | ----------------------------------------------------- |
+| `scripts/verify-deployment.sh:101`        | Hardcoded port 8080 (pre-existing, works but fragile) |
+| `platforms/nixos/system/snapshots.nix:98` | Pre-existing syntax error blocks `nix flake check`    |

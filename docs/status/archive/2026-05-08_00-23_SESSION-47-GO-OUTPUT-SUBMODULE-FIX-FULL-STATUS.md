@@ -36,16 +36,17 @@ done
 **Key learning:** Go workspace sub-modules with separate `go.mod` files need BOTH `require` and `replace` directives in downstream consumers. The `replace` alone isn't enough — Go needs the `require` to know the module exists in the dependency graph.
 
 **Files changed:**
+
 - `pkgs/file-and-image-renamer.nix` — Added sub-module `require`+`replace` loop
 - `flake.lock` — Updated go-output-src (rev 238), emeet-pixyd (rev 123), monitor365 (rev 681), NUR, homebrew-cask
 
 ### 2. Shared Lib Adoption (Session 46 — Still Clean)
 
-| Helper | Modules Using |
-|--------|--------------|
-| `harden {}` | 18 modules (all systemd services) |
-| `serviceDefaults {}` | 17 modules |
-| `serviceTypes.servicePort` | 8 modules |
+| Helper                                | Modules Using                       |
+| ------------------------------------- | ----------------------------------- |
+| `harden {}`                           | 18 modules (all systemd services)   |
+| `serviceDefaults {}`                  | 17 modules                          |
+| `serviceTypes.servicePort`            | 8 modules                           |
 | `serviceTypes.systemdServiceIdentity` | 3 modules (hermes, gatus, authelia) |
 
 ### 3. DNS CA System-Wide Trust (Session 46)
@@ -56,37 +57,37 @@ CA cert embedded in `security.pki.certificates` in `dns-blocker-config.nix`. All
 
 All foundational services are production-stable:
 
-| Service | Status | Notes |
-|---------|--------|-------|
-| Caddy (reverse proxy) | ✅ Running | TLS via sops, all `*.home.lan` domains |
-| Authelia (SSO) | ✅ Running | Forward auth on protected services |
-| Gitea (git hosting) | ✅ Running | GitHub mirror sync (2 repos) |
-| Immich (photos) | ✅ Running | PostgreSQL + ML pipeline |
-| Homepage (dashboard) | ✅ Running | Service overview |
-| SigNoz (observability) | ✅ Running | ClickHouse + OTel Collector |
-| Gatus (health checks) | ✅ Running | 15 endpoints monitored |
-| TaskChampion (task sync) | ✅ Running | Cross-platform (NixOS, macOS, Android) |
-| Hermes (AI gateway) | ✅ Running | Discord bot, cron scheduler |
-| Manifest (LLM router) | ✅ Running | Cost-optimized AI model routing |
-| Twenty CRM | ✅ Running | Customer relationship management |
-| Voice Agents | ✅ Running | LiveKit + Whisper ASR |
-| ComfyUI (image gen) | ✅ Running | Persistent GPU model |
-| Minecraft | ✅ Running | LAN-only, whitelisted |
-| DNS (Unbound + dnsblockd) | ✅ Running | 2.5M+ domains blocked |
-| Ollama (LLM inference) | ✅ Running | GPU-accelerated, memory-limited |
-| Sops-nix (secrets) | ✅ Running | age-encrypted via SSH host key |
+| Service                   | Status     | Notes                                  |
+| ------------------------- | ---------- | -------------------------------------- |
+| Caddy (reverse proxy)     | ✅ Running | TLS via sops, all `*.home.lan` domains |
+| Authelia (SSO)            | ✅ Running | Forward auth on protected services     |
+| Gitea (git hosting)       | ✅ Running | GitHub mirror sync (2 repos)           |
+| Immich (photos)           | ✅ Running | PostgreSQL + ML pipeline               |
+| Homepage (dashboard)      | ✅ Running | Service overview                       |
+| SigNoz (observability)    | ✅ Running | ClickHouse + OTel Collector            |
+| Gatus (health checks)     | ✅ Running | 15 endpoints monitored                 |
+| TaskChampion (task sync)  | ✅ Running | Cross-platform (NixOS, macOS, Android) |
+| Hermes (AI gateway)       | ✅ Running | Discord bot, cron scheduler            |
+| Manifest (LLM router)     | ✅ Running | Cost-optimized AI model routing        |
+| Twenty CRM                | ✅ Running | Customer relationship management       |
+| Voice Agents              | ✅ Running | LiveKit + Whisper ASR                  |
+| ComfyUI (image gen)       | ✅ Running | Persistent GPU model                   |
+| Minecraft                 | ✅ Running | LAN-only, whitelisted                  |
+| DNS (Unbound + dnsblockd) | ✅ Running | 2.5M+ domains blocked                  |
+| Ollama (LLM inference)    | ✅ Running | GPU-accelerated, memory-limited        |
+| Sops-nix (secrets)        | ✅ Running | age-encrypted via SSH host key         |
 
 ### 5. NixOS Desktop Stack
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Niri (Wayland compositor) | ✅ Running | BindsTo→Wants patched |
-| SDDM (login) | ✅ Running | Silent theme, Catppuccin Mocha |
-| Waybar (status bar) | ✅ Running | hwmon fix, Catppuccin Mocha |
-| Rofi (launcher) | ✅ Running | calc + emoji plugins |
-| Niri Session Manager | ✅ Running | Window save/restore on boot |
-| EMEET PIXY webcam | ✅ Running | Auto-tracking, privacy mode |
-| Wallpaper (awww) | ✅ Running | Self-healing daemon recovery |
+| Component                 | Status     | Notes                          |
+| ------------------------- | ---------- | ------------------------------ |
+| Niri (Wayland compositor) | ✅ Running | BindsTo→Wants patched          |
+| SDDM (login)              | ✅ Running | Silent theme, Catppuccin Mocha |
+| Waybar (status bar)       | ✅ Running | hwmon fix, Catppuccin Mocha    |
+| Rofi (launcher)           | ✅ Running | calc + emoji plugins           |
+| Niri Session Manager      | ✅ Running | Window save/restore on boot    |
+| EMEET PIXY webcam         | ✅ Running | Auto-tracking, privacy mode    |
+| Wallpaper (awww)          | ✅ Running | Self-healing daemon recovery   |
 
 ### 6. Cross-Platform Home Manager
 
@@ -101,17 +102,17 @@ Both macOS and NixOS import `common/home-base.nix` with 14 shared program module
 
 ### 8. Custom Packages (9 total)
 
-| Package | Language | Status |
-|---------|----------|--------|
-| `aw-watcher-utilization` | Python | ✅ |
-| `file-and-image-renamer` | Go | ✅ (fixed this session) |
-| `golangci-lint-auto-configure` | Go | ✅ |
-| `jscpd` | Node.js | ✅ |
-| `modernize` | Go | ✅ |
-| `monitor365` | Rust | ✅ (disabled service) |
-| `mr-sync` | Go | ✅ |
-| `netwatch` | Rust | ✅ |
-| `openaudible` | AppImage | ✅ |
+| Package                        | Language | Status                  |
+| ------------------------------ | -------- | ----------------------- |
+| `aw-watcher-utilization`       | Python   | ✅                      |
+| `file-and-image-renamer`       | Go       | ✅ (fixed this session) |
+| `golangci-lint-auto-configure` | Go       | ✅                      |
+| `jscpd`                        | Node.js  | ✅                      |
+| `modernize`                    | Go       | ✅                      |
+| `monitor365`                   | Rust     | ✅ (disabled service)   |
+| `mr-sync`                      | Go       | ✅                      |
+| `netwatch`                     | Rust     | ✅                      |
+| `openaudible`                  | AppImage | ✅                      |
 
 Plus external flake inputs: `dnsblockd` (Go), `emeet-pixyd` (Go), `todo-list-ai` (Go)
 
@@ -124,14 +125,15 @@ Plus external flake inputs: `dnsblockd` (Go), `emeet-pixyd` (Go), `todo-list-ai`
 **Monitored (15):** Caddy, Authelia, Gitea, Homepage, Immich, SigNoz, Manifest, TaskChampion, Twenty, Ollama, ComfyUI, Node Exporter, cAdvisor, DNS Resolver, DNS Blocker
 
 **Missing (6):**
-| Service | Port | Reason |
-|---------|------|--------|
-| Whisper ASR | 7860 | Not added (Docker container) |
-| LiveKit | 7880 | Not added (Docker container) |
-| Hermes | N/A (Discord bot) | No HTTP health endpoint |
-| Minecraft | 25565 | Not HTTP (game protocol) |
-| EMEET PIXY | 8090/metrics | Not added |
-| Docker daemon | /var/run/docker.sock | Not added |
+
+| Service       | Port                 | Reason                       |
+| ------------- | -------------------- | ---------------------------- |
+| Whisper ASR   | 7860                 | Not added (Docker container) |
+| LiveKit       | 7880                 | Not added (Docker container) |
+| Hermes        | N/A (Discord bot)    | No HTTP health endpoint      |
+| Minecraft     | 25565                | Not HTTP (game protocol)     |
+| EMEET PIXY    | 8090/metrics         | Not added                    |
+| Docker daemon | /var/run/docker.sock | Not added                    |
 
 ### 2. `serviceTypes.servicePort` — 8/11 candidates
 
@@ -204,6 +206,7 @@ Root filesystem was at 90% (52GB free of 512GB) in session 46. **No cleanup has 
 ### 3. Go Workspace Sub-Module Pattern — Fragile
 
 The fix in this session exposed a fragility: any Go project that depends on `go-output` needs to know about ALL its sub-modules and add `require`+`replace` directives for each. If `go-output` adds a new sub-module tomorrow, ALL downstream Nix packages break until patched. This applies to:
+
 - `file-and-image-renamer` (depends on `go-output` via `cmdguard`)
 - `golangci-lint-auto-configure` (if it uses `go-output`)
 - `dnsblockd` (if it uses `go-output`)
@@ -258,33 +261,33 @@ The `dns-failover.nix` module and `rpi3-dns` NixOS config exist but Pi 3 hardwar
 
 ## F) Top #25 Things We Should Get Done Next
 
-| # | Priority | Task | Impact | Effort |
-|---|----------|------|--------|--------|
-| 1 | **P0** | **Run `just clean`** — disk at ~90%, imminent build failure risk | Critical | 5 min |
-| 2 | **P0** | **Deploy the fix** — `just switch` to apply file-and-image-renamer fix | Critical | 10 min |
-| 3 | **P0** | **Configure Gatus alerting** (Discord webhook) | High | 15 min |
-| 4 | P1 | **Add automated Nix GC timer** (weekly, 7d threshold) | High | 15 min |
-| 5 | P1 | **Add whisper-asr + livekit Gatus endpoints** | Medium | 10 min |
-| 6 | P1 | **Create ADR-001: Go workspace sub-module Nix pattern** | Medium | 20 min |
-| 7 | P1 | **Extract Go sub-module helper function** for `go-output` | Medium | 20 min |
-| 8 | P1 | **Archive old status docs** — keep latest 3, archive rest | Low | 10 min |
-| 9 | P2 | **Create `serviceDefaultsUser` variant** (no mkForce) | Low | 15 min |
-| 10 | P2 | **Add Docker health check** to service-health-check script | Medium | 10 min |
-| 11 | P2 | **Fix photomap podman permissions** — investigate and fix | Medium | 1 hour |
-| 12 | P2 | **Add `status.home.lan` link** to Homepage dashboard | Low | 10 min |
-| 13 | P2 | **Create ADR-002: GPU headroom for niri (memory fraction)** | Low | 15 min |
-| 14 | P2 | **Clean up stale DNS cert files** in `platforms/nixos/secrets/` | Low | 5 min |
-| 15 | P2 | **Add disk-monitor → auto-cleanup integration** at 85% | Medium | 30 min |
-| 16 | P3 | **Consolidate flake.nix overlays** to separate file | Medium | 30 min |
-| 17 | P3 | **Refactor signoz port options** to top-level serviceTypes | Low | 20 min |
-| 18 | P3 | **BTRFS snapshot health verification** — Timeshift monitoring | Medium | 30 min |
-| 19 | P3 | **Backup restorability test** — verify Immich or Gitea backup | Medium | 30 min |
-| 20 | P3 | **Pi 3 DNS failover provisioning** — build and flash SD card | High | 2 hours |
-| 21 | P3 | **Docker module hardening** — add `harden {}` to default.nix | Low | 10 min |
-| 22 | P4 | **Add `just doctor` command** — comprehensive system diagnostics | Low | 30 min |
-| 23 | P4 | **Evaluate `deploy.rs`** for remote Pi 3 deployment | Medium | 1 hour |
-| 24 | P4 | **Add SigNoz alerts** for disk, service failures, OOM | Medium | 1 hour |
-| 25 | P4 | **Create ADR-003: DNS CA embedding strategy** | Low | 15 min |
+| #   | Priority | Task                                                                   | Impact   | Effort  |
+| --- | -------- | ---------------------------------------------------------------------- | -------- | ------- |
+| 1   | **P0**   | **Run `just clean`** — disk at ~90%, imminent build failure risk       | Critical | 5 min   |
+| 2   | **P0**   | **Deploy the fix** — `just switch` to apply file-and-image-renamer fix | Critical | 10 min  |
+| 3   | **P0**   | **Configure Gatus alerting** (Discord webhook)                         | High     | 15 min  |
+| 4   | P1       | **Add automated Nix GC timer** (weekly, 7d threshold)                  | High     | 15 min  |
+| 5   | P1       | **Add whisper-asr + livekit Gatus endpoints**                          | Medium   | 10 min  |
+| 6   | P1       | **Create ADR-001: Go workspace sub-module Nix pattern**                | Medium   | 20 min  |
+| 7   | P1       | **Extract Go sub-module helper function** for `go-output`              | Medium   | 20 min  |
+| 8   | P1       | **Archive old status docs** — keep latest 3, archive rest              | Low      | 10 min  |
+| 9   | P2       | **Create `serviceDefaultsUser` variant** (no mkForce)                  | Low      | 15 min  |
+| 10  | P2       | **Add Docker health check** to service-health-check script             | Medium   | 10 min  |
+| 11  | P2       | **Fix photomap podman permissions** — investigate and fix              | Medium   | 1 hour  |
+| 12  | P2       | **Add `status.home.lan` link** to Homepage dashboard                   | Low      | 10 min  |
+| 13  | P2       | **Create ADR-002: GPU headroom for niri (memory fraction)**            | Low      | 15 min  |
+| 14  | P2       | **Clean up stale DNS cert files** in `platforms/nixos/secrets/`        | Low      | 5 min   |
+| 15  | P2       | **Add disk-monitor → auto-cleanup integration** at 85%                 | Medium   | 30 min  |
+| 16  | P3       | **Consolidate flake.nix overlays** to separate file                    | Medium   | 30 min  |
+| 17  | P3       | **Refactor signoz port options** to top-level serviceTypes             | Low      | 20 min  |
+| 18  | P3       | **BTRFS snapshot health verification** — Timeshift monitoring          | Medium   | 30 min  |
+| 19  | P3       | **Backup restorability test** — verify Immich or Gitea backup          | Medium   | 30 min  |
+| 20  | P3       | **Pi 3 DNS failover provisioning** — build and flash SD card           | High     | 2 hours |
+| 21  | P3       | **Docker module hardening** — add `harden {}` to default.nix           | Low      | 10 min  |
+| 22  | P4       | **Add `just doctor` command** — comprehensive system diagnostics       | Low      | 30 min  |
+| 23  | P4       | **Evaluate `deploy.rs`** for remote Pi 3 deployment                    | Medium   | 1 hour  |
+| 24  | P4       | **Add SigNoz alerts** for disk, service failures, OOM                  | Medium   | 1 hour  |
+| 25  | P4       | **Create ADR-003: DNS CA embedding strategy**                          | Low      | 15 min  |
 
 ---
 
@@ -306,87 +309,87 @@ This directly affects whether `just clean` alone will solve the problem or if we
 
 ## System Metrics
 
-| Metric | Value |
-|--------|-------|
-| NixOS Channel | 26.05 (Yarara) |
-| Nix Version | 2.34.6 |
-| Service Modules | 32 |
-| Enabled Services | 29 of 32 (monitor365 disabled, photomap disabled, dns-failover pending) |
-| Health Check Coverage | 15 Gatus endpoints + 27 service-health-check |
-| Custom Packages | 9 (local) + 3 (external flake inputs) |
-| Flake Inputs | 35 |
-| Pre-commit Hooks | 6 (all passing) |
-| Root Disk Usage | ~90% (52GB free, last checked session 46) |
-| Platform | x86_64-linux (evo-x2, AMD Ryzen AI Max+ 395, 128GB RAM) |
-| Shared Libs | 4 (`systemd.nix`, `service-defaults.nix`, `types.nix`, `rocm.nix`) |
-| Cross-Platform Programs | 14 (shared via `common/home-base.nix`) |
-| NixOS Desktop Modules | 12 (desktop, programs, hardware) |
-| Scripts | 10 (health, DNS, GPU, wallpaper, etc.) |
-| Sops Secrets | 8 files (authelia, dnsblockd, hermes, manifest, voice-agents, main) |
+| Metric                  | Value                                                                   |
+| ----------------------- | ----------------------------------------------------------------------- |
+| NixOS Channel           | 26.05 (Yarara)                                                          |
+| Nix Version             | 2.34.6                                                                  |
+| Service Modules         | 32                                                                      |
+| Enabled Services        | 29 of 32 (monitor365 disabled, photomap disabled, dns-failover pending) |
+| Health Check Coverage   | 15 Gatus endpoints + 27 service-health-check                            |
+| Custom Packages         | 9 (local) + 3 (external flake inputs)                                   |
+| Flake Inputs            | 35                                                                      |
+| Pre-commit Hooks        | 6 (all passing)                                                         |
+| Root Disk Usage         | ~90% (52GB free, last checked session 46)                               |
+| Platform                | x86_64-linux (evo-x2, AMD Ryzen AI Max+ 395, 128GB RAM)                 |
+| Shared Libs             | 4 (`systemd.nix`, `service-defaults.nix`, `types.nix`, `rocm.nix`)      |
+| Cross-Platform Programs | 14 (shared via `common/home-base.nix`)                                  |
+| NixOS Desktop Modules   | 12 (desktop, programs, hardware)                                        |
+| Scripts                 | 10 (health, DNS, GPU, wallpaper, etc.)                                  |
+| Sops Secrets            | 8 files (authelia, dnsblockd, hermes, manifest, voice-agents, main)     |
 
 ---
 
 ## Service Module Audit
 
-| Module | Enabled | `harden` | `serviceDefaults` | `serviceTypes` | Notes |
-|--------|---------|----------|-------------------|----------------|-------|
-| ai-models | ✅ | — | — | — | tmpfiles only |
-| ai-stack | ✅ | ✅ | ✅ | — | ollama + gpu-python |
-| audio | ✅ | — | — | — | pipewire config |
-| authelia | ✅ | ✅ | ✅ | ✅ | SSO forward auth |
-| caddy | ✅ | ✅ | ✅ | — | reverse proxy (uses nixpkgs module port) |
-| chromium-policies | ✅ | — | — | — | policy config only |
-| comfyui | ✅ | ✅ | ✅ | ✅ | GPU image gen |
-| default (Docker) | ✅ | — | — | — | daemon + prune timer |
-| disk-monitor | ✅ | ✅ | — | — | desktop notifications |
-| display-manager | ✅ | — | — | — | SDDM config |
-| dns-failover | ❌ | — | — | — | pending Pi 3 hardware |
-| file-and-image-renamer | ✅ | — | — | — | user service (HM), fixed this session |
-| gatus-config | ✅ | ✅ | ✅ | ✅ | 15 endpoints |
-| gitea | ✅ | ✅ | ✅ | — | uses nixpkgs HTTP_PORT |
-| gitea-repos | ✅ | ✅ | ✅ | — | mirror sync |
-| hermes | ✅ | ✅ | ✅ | ✅ | Discord AI gateway |
-| homepage | ✅ | ✅ | ✅ | ✅ | service dashboard |
-| immich | ✅ | ✅ | ✅ | — | uses nixpkgs module |
-| manifest | ✅ | ✅ | ✅ | ✅ | LLM router |
-| minecraft | ✅ | ✅ | ✅ | ✅ | LAN server |
-| monitor365 | ❌ | — | — | — | disabled (high RAM) |
-| monitoring | ✅ | — | — | — | node_exporter, cadvisor |
-| multi-wm | ✅ | — | — | — | window manager helpers |
-| niri-config | ✅ | — | — | — | compositor (patched unit) |
-| photomap | ❌ | — | — | — | disabled (podman perms) |
-| security-hardening | ✅ | ✅ | — | — | kernel params, watchdog |
-| signoz | ✅ | ✅ | ✅ | — | nested port options |
-| sops | ✅ | — | — | — | secret decryption |
-| steam | ✅ | — | — | — | gaming config |
-| taskchampion | ✅ | ✅ | ✅ | — | task sync server |
-| twenty | ✅ | ✅ | ✅ | ✅ | CRM |
-| voice-agents | ✅ | ✅ | ✅ | — | Docker (LiveKit + Whisper) |
+| Module                 | Enabled | `harden` | `serviceDefaults` | `serviceTypes` | Notes                                    |
+| ---------------------- | ------- | -------- | ----------------- | -------------- | ---------------------------------------- |
+| ai-models              | ✅      | —        | —                 | —              | tmpfiles only                            |
+| ai-stack               | ✅      | ✅       | ✅                | —              | ollama + gpu-python                      |
+| audio                  | ✅      | —        | —                 | —              | pipewire config                          |
+| authelia               | ✅      | ✅       | ✅                | ✅             | SSO forward auth                         |
+| caddy                  | ✅      | ✅       | ✅                | —              | reverse proxy (uses nixpkgs module port) |
+| chromium-policies      | ✅      | —        | —                 | —              | policy config only                       |
+| comfyui                | ✅      | ✅       | ✅                | ✅             | GPU image gen                            |
+| default (Docker)       | ✅      | —        | —                 | —              | daemon + prune timer                     |
+| disk-monitor           | ✅      | ✅       | —                 | —              | desktop notifications                    |
+| display-manager        | ✅      | —        | —                 | —              | SDDM config                              |
+| dns-failover           | ❌      | —        | —                 | —              | pending Pi 3 hardware                    |
+| file-and-image-renamer | ✅      | —        | —                 | —              | user service (HM), fixed this session    |
+| gatus-config           | ✅      | ✅       | ✅                | ✅             | 15 endpoints                             |
+| gitea                  | ✅      | ✅       | ✅                | —              | uses nixpkgs HTTP_PORT                   |
+| gitea-repos            | ✅      | ✅       | ✅                | —              | mirror sync                              |
+| hermes                 | ✅      | ✅       | ✅                | ✅             | Discord AI gateway                       |
+| homepage               | ✅      | ✅       | ✅                | ✅             | service dashboard                        |
+| immich                 | ✅      | ✅       | ✅                | —              | uses nixpkgs module                      |
+| manifest               | ✅      | ✅       | ✅                | ✅             | LLM router                               |
+| minecraft              | ✅      | ✅       | ✅                | ✅             | LAN server                               |
+| monitor365             | ❌      | —        | —                 | —              | disabled (high RAM)                      |
+| monitoring             | ✅      | —        | —                 | —              | node_exporter, cadvisor                  |
+| multi-wm               | ✅      | —        | —                 | —              | window manager helpers                   |
+| niri-config            | ✅      | —        | —                 | —              | compositor (patched unit)                |
+| photomap               | ❌      | —        | —                 | —              | disabled (podman perms)                  |
+| security-hardening     | ✅      | ✅       | —                 | —              | kernel params, watchdog                  |
+| signoz                 | ✅      | ✅       | ✅                | —              | nested port options                      |
+| sops                   | ✅      | —        | —                 | —              | secret decryption                        |
+| steam                  | ✅      | —        | —                 | —              | gaming config                            |
+| taskchampion           | ✅      | ✅       | ✅                | —              | task sync server                         |
+| twenty                 | ✅      | ✅       | ✅                | ✅             | CRM                                      |
+| voice-agents           | ✅      | ✅       | ✅                | —              | Docker (LiveKit + Whisper)               |
 
 ---
 
 ## Session Flow
 
-| Time | Action |
-|------|--------|
-| 23:55 | User reported file-and-image-renamer build failure (go-output sub-modules) |
-| 23:57 | Diagnosed: go-output split into workspace sub-modules (enum, escape, table, sort) |
+| Time  | Action                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------- |
+| 23:55 | User reported file-and-image-renamer build failure (go-output sub-modules)                  |
+| 23:57 | Diagnosed: go-output split into workspace sub-modules (enum, escape, table, sort)           |
 | 00:00 | First attempt: add `replace` directives only → `go mod tidy` needed (no network in sandbox) |
-| 00:03 | Second attempt: `go mod tidy` in postPatch → HOME/GOCACHE permission errors |
-| 00:05 | Third attempt: add both `require` + `replace` for each sub-module → ✅ build succeeds |
-| 00:08 | Verified: `nix build .#file-and-image-renamer` succeeds, vendorHash unchanged |
-| 00:12 | Status report requested — comprehensive audit |
-| 00:15 | Scanned all 32 service modules, 9 packages, 14 programs, 4 lib helpers |
-| 00:20 | Writing comprehensive status report |
+| 00:03 | Second attempt: `go mod tidy` in postPatch → HOME/GOCACHE permission errors                 |
+| 00:05 | Third attempt: add both `require` + `replace` for each sub-module → ✅ build succeeds       |
+| 00:08 | Verified: `nix build .#file-and-image-renamer` succeeds, vendorHash unchanged               |
+| 00:12 | Status report requested — comprehensive audit                                               |
+| 00:15 | Scanned all 32 service modules, 9 packages, 14 programs, 4 lib helpers                      |
+| 00:20 | Writing comprehensive status report                                                         |
 
 ---
 
 ## Files Modified This Session
 
-| File | Change |
-|------|--------|
-| `pkgs/file-and-image-renamer.nix` | Added `require`+`replace` loop for go-output sub-modules (enum, escape, table, sort) |
-| `flake.lock` | Updated: go-output-src (237→238), emeet-pixyd (121→123), monitor365 (668→681), NUR, homebrew-cask |
+| File                              | Change                                                                                            |
+| --------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `pkgs/file-and-image-renamer.nix` | Added `require`+`replace` loop for go-output sub-modules (enum, escape, table, sort)              |
+| `flake.lock`                      | Updated: go-output-src (237→238), emeet-pixyd (121→123), monitor365 (668→681), NUR, homebrew-cask |
 
 ---
 

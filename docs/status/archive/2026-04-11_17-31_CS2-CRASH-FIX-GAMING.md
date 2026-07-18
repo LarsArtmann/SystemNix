@@ -6,11 +6,11 @@ Counter-Strike (CS2) was crashing on NixOS running Niri (Wayland) with AMD Ryzen
 
 ## Root Causes Identified
 
-| # | Issue | Severity | File |
-|---|-------|----------|------|
-| 1 | `MESA_VK_WSI_PRESENT_MODE = "fifo"` forced VSync on all Vulkan apps globally | **High** | `platforms/nixos/hardware/amd-gpu.nix:30` |
-| 2 | No Niri window rules for Steam/CS2 — games hit the 0.95 opacity rule and tiling conflicts | **High** | `platforms/nixos/programs/niri-wrapped.nix` |
-| 3 | No gamescope launch wrapper for CS2 | **Medium** | Steam launch options |
+| #   | Issue                                                                                     | Severity   | File                                        |
+| --- | ----------------------------------------------------------------------------------------- | ---------- | ------------------------------------------- |
+| 1   | `MESA_VK_WSI_PRESENT_MODE = "fifo"` forced VSync on all Vulkan apps globally              | **High**   | `platforms/nixos/hardware/amd-gpu.nix:30`   |
+| 2   | No Niri window rules for Steam/CS2 — games hit the 0.95 opacity rule and tiling conflicts | **High**   | `platforms/nixos/programs/niri-wrapped.nix` |
+| 3   | No gamescope launch wrapper for CS2                                                       | **Medium** | Steam launch options                        |
 
 ### Cause 1: Global VSync
 

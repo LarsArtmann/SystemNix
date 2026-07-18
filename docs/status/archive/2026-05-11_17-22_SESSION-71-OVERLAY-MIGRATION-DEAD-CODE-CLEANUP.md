@@ -18,16 +18,16 @@ Migrated `golangci-lint-auto-configure` and `mr-sync` from local `pkgs/` definit
 
 ### Overlay Migration (3 projects migrated)
 
-| Project | Before | After | Change |
-|---------|--------|-------|--------|
+| Project                      | Before                                 | After                             | Change                         |
+| ---------------------------- | -------------------------------------- | --------------------------------- | ------------------------------ |
 | golangci-lint-auto-configure | Local `pkgs/*.nix` + `-src` inputs (2) | Full flake input + bridge overlay | Removed 82 lines, 2 inputs → 1 |
-| mr-sync | Local `pkgs/*.nix` + `-src` input | Full flake input + bridge overlay | Removed 23 lines, 1 input → 1 |
-| hierarchical-errors | Not wired | Full flake input + bridge overlay | Added as new package |
+| mr-sync                      | Local `pkgs/*.nix` + `-src` input      | Full flake input + bridge overlay | Removed 23 lines, 1 input → 1  |
+| hierarchical-errors          | Not wired                              | Full flake input + bridge overlay | Added as new package           |
 
 ### Upstream Fix
 
-| Project | Fix | Status |
-|---------|-----|--------|
+| Project | Fix                                                                                                    | Status            |
+| ------- | ------------------------------------------------------------------------------------------------------ | ----------------- |
 | mr-sync | Stale `vendorHash` in `package.nix` → updated to `sha256-5NUJF/ugm9RLzgfM2TZRrlNVO8d2u9/IMWlWIk+Su1k=` | ✅ Fixed & builds |
 
 ### Documentation Updated
@@ -52,32 +52,32 @@ Migrated `golangci-lint-auto-configure` and `mr-sync` from local `pkgs/` definit
 
 ### Go Tooling Ecosystem (10/10 wired in SystemNix)
 
-| Project | Flake Input | Overlay | Package Exposed |
-|---------|-------------|---------|-----------------|
-| library-policy | ✅ | ✅ upstream | ✅ |
-| BuildFlow | ✅ | ✅ upstream | ✅ |
-| go-auto-upgrade | ✅ | ✅ upstream | ✅ |
-| go-structure-linter | ✅ | ✅ upstream | ✅ |
-| branching-flow | ✅ | ✅ upstream | ✅ |
-| art-dupl | ✅ | ✅ upstream | ✅ |
-| golangci-lint-auto-configure | ✅ | ✅ bridge | ✅ |
-| mr-sync | ✅ | ✅ bridge | ✅ |
-| hierarchical-errors | ✅ | ✅ bridge | ✅ |
-| todo-list-ai | ✅ | ✅ hybrid (hash patch) | ✅ |
+| Project                      | Flake Input | Overlay                | Package Exposed |
+| ---------------------------- | ----------- | ---------------------- | --------------- |
+| library-policy               | ✅          | ✅ upstream            | ✅              |
+| BuildFlow                    | ✅          | ✅ upstream            | ✅              |
+| go-auto-upgrade              | ✅          | ✅ upstream            | ✅              |
+| go-structure-linter          | ✅          | ✅ upstream            | ✅              |
+| branching-flow               | ✅          | ✅ upstream            | ✅              |
+| art-dupl                     | ✅          | ✅ upstream            | ✅              |
+| golangci-lint-auto-configure | ✅          | ✅ bridge              | ✅              |
+| mr-sync                      | ✅          | ✅ bridge              | ✅              |
+| hierarchical-errors          | ✅          | ✅ bridge              | ✅              |
+| todo-list-ai                 | ✅          | ✅ hybrid (hash patch) | ✅              |
 
 ### SystemNix Infrastructure Totals
 
-| Metric | Count |
-|--------|-------|
-| NixOS service modules | 35 |
-| Flake inputs | 40 |
-| Local packages in `pkgs/` | 7 |
-| Upstream overlay packages | 10 |
-| Total packages exposed | 20 (14 shared + 6 Linux-only) |
-| nixosModules exposed | 34 |
-| lib/ shared helpers | 4 (systemd, service-defaults, types, rocm) |
-| Common program modules | 14 |
-| Lock file nodes | 115 |
+| Metric                    | Count                                      |
+| ------------------------- | ------------------------------------------ |
+| NixOS service modules     | 35                                         |
+| Flake inputs              | 40                                         |
+| Local packages in `pkgs/` | 7                                          |
+| Upstream overlay packages | 10                                         |
+| Total packages exposed    | 20 (14 shared + 6 Linux-only)              |
+| nixosModules exposed      | 34                                         |
+| lib/ shared helpers       | 4 (systemd, service-defaults, types, rocm) |
+| Common program modules    | 14                                         |
+| Lock file nodes           | 115                                        |
 
 ---
 
@@ -103,30 +103,30 @@ SystemNix's `todoListAiOverlay` patches upstream's stale `outputHash` for bun de
 
 ### Upstream Flakes That Need Fixing (before SystemNix can delegate)
 
-| Project | Issue | Fix Needed | Effort |
-|---------|-------|-----------|--------|
-| **file-and-image-renamer** | Has a `flake.nix` but it fails: private deps fetched via HTTPS (no SSH), no preparedSrc | Add SSH inputs + preparedSrc pattern like BuildFlow | Medium |
-| **monitor365** | Has a `flake.nix` but it fails: `linux/videodev2.h` not found (missing `libv4l` build dep) | Add `buildInputs = [ pkgs.libv4l ]` or similar | Low |
-| **todo-list-ai** | SystemNix patches upstream's stale bun hash | Upstream should fix `outputHash` in their flake | Low |
-| **golangci-lint-auto-configure** | `overlays.default` inside `eachDefaultSystem` → per-system keys | Move overlay outside `eachDefaultSystem` | Low |
+| Project                          | Issue                                                                                      | Fix Needed                                          | Effort |
+| -------------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------- | ------ |
+| **file-and-image-renamer**       | Has a `flake.nix` but it fails: private deps fetched via HTTPS (no SSH), no preparedSrc    | Add SSH inputs + preparedSrc pattern like BuildFlow | Medium |
+| **monitor365**                   | Has a `flake.nix` but it fails: `linux/videodev2.h` not found (missing `libv4l` build dep) | Add `buildInputs = [ pkgs.libv4l ]` or similar      | Low    |
+| **todo-list-ai**                 | SystemNix patches upstream's stale bun hash                                                | Upstream should fix `outputHash` in their flake     | Low    |
+| **golangci-lint-auto-configure** | `overlays.default` inside `eachDefaultSystem` → per-system keys                            | Move overlay outside `eachDefaultSystem`            | Low    |
 
 ### Not Wired into SystemNix Yet
 
-| Project | Why Not | Priority |
-|---------|--------|----------|
-| PMA | Not cloned locally; heavy (10 private deps); no urgent server need | Low |
-| go-finding | Library only, used as transitive dep via replace directives | Low |
+| Project    | Why Not                                                            | Priority |
+| ---------- | ------------------------------------------------------------------ | -------- |
+| PMA        | Not cloned locally; heavy (10 private deps); no urgent server need | Low      |
+| go-finding | Library only, used as transitive dep via replace directives        | Low      |
 
 ### Wishlist (Unchanged from Session 70)
 
-| Task | Impact | Effort |
-|------|--------|--------|
-| Shared `preparedSrc` helper across all Go flakes | High (eliminates 50% boilerplate) | Medium |
-| Migrate all Go flakes to flake-parts | Medium (standardization) | Medium |
-| CI workflows for `nix build` on all repos | High (catch regressions) | Low |
-| Create flake template for new Go projects | Medium (DX improvement) | Low |
-| Remove `go.work` from PMA | Low (go.mod is now self-consistent) | Low |
-| Tag go-finding v0.4.0 (includes analysis/ subpackage) | Medium (eliminates local replace) | Low |
+| Task                                                  | Impact                              | Effort |
+| ----------------------------------------------------- | ----------------------------------- | ------ |
+| Shared `preparedSrc` helper across all Go flakes      | High (eliminates 50% boilerplate)   | Medium |
+| Migrate all Go flakes to flake-parts                  | Medium (standardization)            | Medium |
+| CI workflows for `nix build` on all repos             | High (catch regressions)            | Low    |
+| Create flake template for new Go projects             | Medium (DX improvement)             | Low    |
+| Remove `go.work` from PMA                             | Low (go.mod is now self-consistent) | Low    |
+| Tag go-finding v0.4.0 (includes analysis/ subpackage) | Medium (eliminates local replace)   | Low    |
 
 ---
 
@@ -236,24 +236,24 @@ bridgeOverlay = flakeInput: pkgName: _final: prev: {
 
 ## Commits This Session
 
-| Commit | Description |
-|--------|-------------|
-| `a6cd7555` | `fix(monitoring): wire onFailure to 9 services, fix flake overlay references` |
+| Commit     | Description                                                                       |
+| ---------- | --------------------------------------------------------------------------------- |
+| `a6cd7555` | `fix(monitoring): wire onFailure to 9 services, fix flake overlay references`     |
 | `3dac3f9d` | `chore(deps): migrate golangci-lint-auto-configure and mr-sync to flake overlays` |
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Root disk (`/`) | 80% used (101 GB free) | ⚠️ Watch |
-| Data disk (`/data`) | 78% used (232 GB free) | ✅ OK |
-| Go projects wired | 10/10 | ✅ |
-| Go projects building via overlay | 10/10 | ✅ |
-| SystemNix `test-fast` | Passes (both platforms) | ✅ |
-| Dead `pkgs/` files | 0 | ✅ Clean |
-| Dead flake inputs | 0 | ✅ Clean |
-| Flakes needing upstream fix | 3 (file-and-image-renamer, monitor365, todo-list-ai) | 🔧 In progress |
-| Upstream overlay bugs | 1 (golangci-lint-auto-configure eachDefaultSystem) | 🔧 Low priority |
+| Metric                           | Value                                                | Status          |
+| -------------------------------- | ---------------------------------------------------- | --------------- |
+| Root disk (`/`)                  | 80% used (101 GB free)                               | ⚠️ Watch        |
+| Data disk (`/data`)              | 78% used (232 GB free)                               | ✅ OK           |
+| Go projects wired                | 10/10                                                | ✅              |
+| Go projects building via overlay | 10/10                                                | ✅              |
+| SystemNix `test-fast`            | Passes (both platforms)                              | ✅              |
+| Dead `pkgs/` files               | 0                                                    | ✅ Clean        |
+| Dead flake inputs                | 0                                                    | ✅ Clean        |
+| Flakes needing upstream fix      | 3 (file-and-image-renamer, monitor365, todo-list-ai) | 🔧 In progress  |
+| Upstream overlay bugs            | 1 (golangci-lint-auto-configure eachDefaultSystem)   | 🔧 Low priority |
 
 ---
 

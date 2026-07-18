@@ -84,9 +84,9 @@ AuthorizedKeysFile %h/.ssh/authorized_keys /etc/ssh/authorized_keys.d/%u
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `platforms/nixos/hardware/amd-npu.nix` | `enable = false` (workaround for XRT build) |
+| File                                       | Change                                             |
+| ------------------------------------------ | -------------------------------------------------- |
+| `platforms/nixos/hardware/amd-npu.nix`     | `enable = false` (workaround for XRT build)        |
 | `platforms/nixos/system/configuration.nix` | Fixed SSH key path to `../../../ssh-keys/lars.pub` |
 
 ## Open Items

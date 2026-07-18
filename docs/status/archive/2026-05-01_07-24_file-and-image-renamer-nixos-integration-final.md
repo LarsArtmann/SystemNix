@@ -51,22 +51,22 @@
 
 ### Commits Made
 
-| Repo | SHA | Message |
-|------|-----|---------|
-| SystemNix | `569a37a` | `feat(nixos): integrate file-and-image-renamer as NixOS service on evo-x2` |
-| SystemNix | `fccef1b` | `refactor(flake): switch file-and-image-renamer inputs from path: to SSH URLs` |
-| file-and-image-renamer | `9e70d94` | `chore(config): enable vendor directory in .gitignore` |
+| Repo                   | SHA       | Message                                                                        |
+| ---------------------- | --------- | ------------------------------------------------------------------------------ |
+| SystemNix              | `569a37a` | `feat(nixos): integrate file-and-image-renamer as NixOS service on evo-x2`     |
+| SystemNix              | `fccef1b` | `refactor(flake): switch file-and-image-renamer inputs from path: to SSH URLs` |
+| file-and-image-renamer | `9e70d94` | `chore(config): enable vendor directory in .gitignore`                         |
 
 ### Files Created/Modified (SystemNix)
 
-| File | Status | Lines |
-|------|--------|-------|
-| `pkgs/file-and-image-renamer.nix` | NEW | 60 |
-| `modules/nixos/services/file-and-image-renamer.nix` | NEW | 120 |
-| `flake.nix` | Modified | +29 |
-| `flake.lock` | Modified | +75 |
-| `platforms/nixos/system/configuration.nix` | Modified | +5 |
-| `docs/status/2026-05-01_02-40_...md` | NEW | 159 |
+| File                                                | Status   | Lines |
+| --------------------------------------------------- | -------- | ----- |
+| `pkgs/file-and-image-renamer.nix`                   | NEW      | 60    |
+| `modules/nixos/services/file-and-image-renamer.nix` | NEW      | 120   |
+| `flake.nix`                                         | Modified | +29   |
+| `flake.lock`                                        | Modified | +75   |
+| `platforms/nixos/system/configuration.nix`          | Modified | +5    |
+| `docs/status/2026-05-01_02-40_...md`                | NEW      | 159   |
 
 ---
 
@@ -142,33 +142,33 @@
 
 ## F) Top 25 Things To Do Next
 
-| # | Priority | Task | Effort | Repo |
-|---|----------|------|--------|------|
-| 1 | P0 | Deploy: `nh os switch .` on evo-x2 | 5m | SystemNix |
-| 2 | P0 | Verify service: `systemctl --user status file-and-image-renamer` | 2m | evo-x2 |
-| 3 | P0 | Verify API key exists: `cat ~/.zai_api_key` on evo-x2 | 1m | evo-x2 |
-| 4 | P0 | End-to-end test: drop screenshot on Desktop, verify rename | 5m | evo-x2 |
-| 5 | P1 | Push SystemNix to GitHub (4 commits ahead) | 2m | SystemNix |
-| 6 | P1 | Push file-and-image-renamer to GitHub (1 commit ahead) | 2m | fir |
-| 7 | P1 | Fix project's own flake.nix (proxyVendor + postPatch + vendorHash) | 15m | fir |
-| 8 | P1 | Migrate API key to sops-nix (hermes pattern) | 20m | SystemNix |
-| 9 | P2 | Update project NIX_INTEGRATION.md with SSH URL pattern | 10m | fir |
-| 10 | P2 | Update project AGENTS.md with nix integration info | 5m | fir |
-| 11 | P2 | Fix project's nix-check.yml CI workflow | 15m | fir |
-| 12 | P2 | Create cross-platform home-manager module in SystemNix | 30m | SystemNix |
-| 13 | P3 | Wire `file-renamer health` into service-health-check script | 10m | SystemNix |
-| 14 | P3 | Add file-and-image-renamer to homepage dashboard | 10m | SystemNix |
-| 15 | P3 | Add daily `file-renamer stats` cron/timer | 15m | SystemNix |
-| 16 | P3 | Add log rotation config for watcher | 10m | SystemNix |
-| 17 | P3 | Add Prometheus metrics endpoint for watcher | 30m | fir |
-| 18 | P3 | Add deadletter alerting (dunst/hermes notification) | 20m | SystemNix |
-| 19 | P4 | Add nixosTest integration test | 30m | SystemNix |
-| 20 | P4 | Add desktop file entry for file-renamer | 5m | fir |
-| 21 | P4 | Explore hash database persistence across rebuilds | 15m | SystemNix |
-| 22 | P4 | Add `file-renamer compare` as scheduled benchmark | 15m | SystemNix |
-| 23 | P4 | Consolidate project flake.nix modules with SystemNix's | 30m | both |
-| 24 | P4 | Add XDG mime association for screenshot files | 5m | SystemNix |
-| 25 | P4 | Document nix integration in SystemNix README | 10m | SystemNix |
+| #   | Priority | Task                                                               | Effort | Repo      |
+| --- | -------- | ------------------------------------------------------------------ | ------ | --------- |
+| 1   | P0       | Deploy: `nh os switch .` on evo-x2                                 | 5m     | SystemNix |
+| 2   | P0       | Verify service: `systemctl --user status file-and-image-renamer`   | 2m     | evo-x2    |
+| 3   | P0       | Verify API key exists: `cat ~/.zai_api_key` on evo-x2              | 1m     | evo-x2    |
+| 4   | P0       | End-to-end test: drop screenshot on Desktop, verify rename         | 5m     | evo-x2    |
+| 5   | P1       | Push SystemNix to GitHub (4 commits ahead)                         | 2m     | SystemNix |
+| 6   | P1       | Push file-and-image-renamer to GitHub (1 commit ahead)             | 2m     | fir       |
+| 7   | P1       | Fix project's own flake.nix (proxyVendor + postPatch + vendorHash) | 15m    | fir       |
+| 8   | P1       | Migrate API key to sops-nix (hermes pattern)                       | 20m    | SystemNix |
+| 9   | P2       | Update project NIX_INTEGRATION.md with SSH URL pattern             | 10m    | fir       |
+| 10  | P2       | Update project AGENTS.md with nix integration info                 | 5m     | fir       |
+| 11  | P2       | Fix project's nix-check.yml CI workflow                            | 15m    | fir       |
+| 12  | P2       | Create cross-platform home-manager module in SystemNix             | 30m    | SystemNix |
+| 13  | P3       | Wire `file-renamer health` into service-health-check script        | 10m    | SystemNix |
+| 14  | P3       | Add file-and-image-renamer to homepage dashboard                   | 10m    | SystemNix |
+| 15  | P3       | Add daily `file-renamer stats` cron/timer                          | 15m    | SystemNix |
+| 16  | P3       | Add log rotation config for watcher                                | 10m    | SystemNix |
+| 17  | P3       | Add Prometheus metrics endpoint for watcher                        | 30m    | fir       |
+| 18  | P3       | Add deadletter alerting (dunst/hermes notification)                | 20m    | SystemNix |
+| 19  | P4       | Add nixosTest integration test                                     | 30m    | SystemNix |
+| 20  | P4       | Add desktop file entry for file-renamer                            | 5m     | fir       |
+| 21  | P4       | Explore hash database persistence across rebuilds                  | 15m    | SystemNix |
+| 22  | P4       | Add `file-renamer compare` as scheduled benchmark                  | 15m    | SystemNix |
+| 23  | P4       | Consolidate project flake.nix modules with SystemNix's             | 30m    | both      |
+| 24  | P4       | Add XDG mime association for screenshot files                      | 5m     | SystemNix |
+| 25  | P4       | Document nix integration in SystemNix README                       | 10m    | SystemNix |
 
 ---
 

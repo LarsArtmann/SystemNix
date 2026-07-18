@@ -4,13 +4,13 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 
 ## Packages
 
-| Package | Language | Platform | Description |
-|---------|----------|----------|-------------|
-| [jscpd](#jscpd) | Node.js | All | Copy/paste detector for source code |
-| [govalid](#govalid) | Go | All | Go validation code generator |
-| [aw-watcher-utilization](#aw-watcher-utilization) | Python | All | ActivityWatch system utilization watcher |
-| [netwatch](#netwatch) | Rust | Linux | Real-time network diagnostics TUI |
-| [openaudible](#openaudible) | AppImage | Linux | Audible audiobook manager |
+| Package                                           | Language | Platform | Description                              |
+| ------------------------------------------------- | -------- | -------- | ---------------------------------------- |
+| [jscpd](#jscpd)                                   | Node.js  | All      | Copy/paste detector for source code      |
+| [govalid](#govalid)                               | Go       | All      | Go validation code generator             |
+| [aw-watcher-utilization](#aw-watcher-utilization) | Python   | All      | ActivityWatch system utilization watcher |
+| [netwatch](#netwatch)                             | Rust     | Linux    | Real-time network diagnostics TUI        |
+| [openaudible](#openaudible)                       | AppImage | Linux    | Audible audiobook manager                |
 
 > **Note:** The following tools are provided via upstream flake input overlays — no local package file needed:
 > dnsblockd, emeet-pixyd, monitor365, file-and-image-renamer, golangci-lint-auto-configure,

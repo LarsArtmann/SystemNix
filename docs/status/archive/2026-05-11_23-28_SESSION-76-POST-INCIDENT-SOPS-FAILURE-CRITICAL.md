@@ -14,23 +14,23 @@
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Kernel** | Linux 7.0.1 | OK |
-| **NixOS** | 26.05.20260423.01fbdee (unstable) | OK |
-| **Nix** | 2.34.6 | OK |
-| **Uptime** | 47 min (3rd boot today) | WARN |
-| **Load** | 1.16, 3.85, 5.10 | High (recovering) |
-| **Memory** | 36G/62G used (61%) | OK |
-| **Swap** | 9.1G/25G used (36%) | Elevated |
-| **Root disk** | 80% used, 99G free of 512G | WARN |
-| **Data disk** | 80% used, 206G free of 1.0T | WARN |
-| **Nix store** | 94G | Needs clean |
-| **GPU (AMD)** | Active, niri running | OK |
-| **DNS (Unbound)** | Active | OK |
-| **DNS Blocker (dnsblockd)** | Crashed (no secrets) | CRITICAL |
-| **Compositor (Niri)** | Running | OK |
-| **Sops secrets** | NONE DECRYPTED | **CRITICAL** |
+| Metric                      | Value                             | Status            |
+| --------------------------- | --------------------------------- | ----------------- |
+| **Kernel**                  | Linux 7.0.1                       | OK                |
+| **NixOS**                   | 26.05.20260423.01fbdee (unstable) | OK                |
+| **Nix**                     | 2.34.6                            | OK                |
+| **Uptime**                  | 47 min (3rd boot today)           | WARN              |
+| **Load**                    | 1.16, 3.85, 5.10                  | High (recovering) |
+| **Memory**                  | 36G/62G used (61%)                | OK                |
+| **Swap**                    | 9.1G/25G used (36%)               | Elevated          |
+| **Root disk**               | 80% used, 99G free of 512G        | WARN              |
+| **Data disk**               | 80% used, 206G free of 1.0T       | WARN              |
+| **Nix store**               | 94G                               | Needs clean       |
+| **GPU (AMD)**               | Active, niri running              | OK                |
+| **DNS (Unbound)**           | Active                            | OK                |
+| **DNS Blocker (dnsblockd)** | Crashed (no secrets)              | CRITICAL          |
+| **Compositor (Niri)**       | Running                           | OK                |
+| **Sops secrets**            | NONE DECRYPTED                    | **CRITICAL**      |
 
 ---
 
@@ -38,105 +38,105 @@
 
 ### Boot 1: May 10 20:10 — CRASHED (~26 hours uptime)
 
-| Time | Event |
-|------|-------|
-| May 10 20:11 | **Boot completes.** sops secrets decrypt successfully (gatus-env has `owner = "gatus"` — this was the OLD config) |
-| May 10 20:11 | Caddy starts but hits **WatchdogSec=30 timeout** → SIGABRT. TLS cert maintenance (`certmagic.(*Cache).maintainAssets`) hangs |
-| May 10 20:11-20:12 | Caddy restart loop (3x watchdog → start-limit-hit). Recovers after cooldown |
-| May 10 20:30+ | Niri starts spamming `Error::DeviceMissing` at ~8/second — 410,014 total errors over 26 hours |
-| May 11 11:17-11:49 | Caddy watchdog crash cycle repeats (3x SIGABRT → start-limit-hit → cooldown → repeat) |
-| May 11 20:11 | Memory pressure: `mem avail: 4146 of 43118 MiB (9.62%)` — earlyoom threshold approached |
-| May 11 22:00-22:21 | Caddy watchdog crash cycle intensifies (8 SIGABRTs in 21 min) |
-| May 11 22:31 | User initiates `just switch` (builds generation 316 with sops fix) |
-| May 11 22:32 | **Manual reboot** to apply new generation |
+| Time               | Event                                                                                                                        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
+| May 10 20:11       | **Boot completes.** sops secrets decrypt successfully (gatus-env has `owner = "gatus"` — this was the OLD config)            |
+| May 10 20:11       | Caddy starts but hits **WatchdogSec=30 timeout** → SIGABRT. TLS cert maintenance (`certmagic.(*Cache).maintainAssets`) hangs |
+| May 10 20:11-20:12 | Caddy restart loop (3x watchdog → start-limit-hit). Recovers after cooldown                                                  |
+| May 10 20:30+      | Niri starts spamming `Error::DeviceMissing` at ~8/second — 410,014 total errors over 26 hours                                |
+| May 11 11:17-11:49 | Caddy watchdog crash cycle repeats (3x SIGABRT → start-limit-hit → cooldown → repeat)                                        |
+| May 11 20:11       | Memory pressure: `mem avail: 4146 of 43118 MiB (9.62%)` — earlyoom threshold approached                                      |
+| May 11 22:00-22:21 | Caddy watchdog crash cycle intensifies (8 SIGABRTs in 21 min)                                                                |
+| May 11 22:31       | User initiates `just switch` (builds generation 316 with sops fix)                                                           |
+| May 11 22:32       | **Manual reboot** to apply new generation                                                                                    |
 
 ### Boot 2: May 11 22:32 — FAILED (8 minutes)
 
-| Time | Event |
-|------|-------|
-| 22:32 | Boot starts with generation 316 |
-| 22:32 | **sops-install-secrets FAILS:** `failed to lookup user 'gatus': user: unknown user gatus` |
-| 22:32 | **ALL secrets missing:** `/run/secrets/` is empty |
+| Time        | Event                                                                                                                 |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| 22:32       | Boot starts with generation 316                                                                                       |
+| 22:32       | **sops-install-secrets FAILS:** `failed to lookup user 'gatus': user: unknown user gatus`                             |
+| 22:32       | **ALL secrets missing:** `/run/secrets/` is empty                                                                     |
 | 22:32-22:40 | Every secret-dependent service crashes in cascade (Caddy, ClickHouse, Authelia, Immich, LiveKit, Gatus, Hermes, etc.) |
-| 22:40 | **Manual reboot** again |
+| 22:40       | **Manual reboot** again                                                                                               |
 
 ### Boot 3: May 11 22:41 — CURRENT (47 min uptime)
 
-| Time | Event |
-|------|-------|
-| 22:41 | Same generation 316 boots |
-| 22:41 | **Same sops failure:** `failed to lookup user 'gatus': user: unknown user gatus` |
-| 22:41 | `/run/secrets/` is **EMPTY** — zero secrets decrypted |
-| 22:41-23:20 | All secret-dependent services in permanent crash loop |
-| 23:16 | User attempted `just switch` to rebuild + apply — Caddy briefly started but hit watchdog timeout again |
-| 23:17+ | ClickHouse: `Failed to set up mount namespacing: /var/log/clickhouse-server: No such file or directory` — log dir missing |
+| Time        | Event                                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 22:41       | Same generation 316 boots                                                                                                 |
+| 22:41       | **Same sops failure:** `failed to lookup user 'gatus': user: unknown user gatus`                                          |
+| 22:41       | `/run/secrets/` is **EMPTY** — zero secrets decrypted                                                                     |
+| 22:41-23:20 | All secret-dependent services in permanent crash loop                                                                     |
+| 23:16       | User attempted `just switch` to rebuild + apply — Caddy briefly started but hit watchdog timeout again                    |
+| 23:17+      | ClickHouse: `Failed to set up mount namespacing: /var/log/clickhouse-server: No such file or directory` — log dir missing |
 
 ---
 
 ## a) FULLY DONE
 
-| Area | Details |
-|------|---------|
-| **Cross-platform flake** | Darwin + NixOS shared config (~80% via `platforms/common/`) |
-| **Niri compositor** | Running, wrapped config, session manager, wallpaper self-healing, DRM healthcheck |
-| **GPU defense** | OLLAMA_MAX_LOADED_MODELS=1, GPU overhead reservation, per-service memory fractions, OOMScoreAdjust |
-| **GPU recovery** | Unbind/rebind script, auto-reboot on failure, consecutive DRM error counter |
-| **DNS stack** | Unbound + dnsblockd, 2.5M+ domains blocked, Quad9 DoT upstream (when secrets work) |
-| **Overlay architecture** | Extracted to `overlays/` directory, shared + linux-only separation |
-| **Service hardening** | All services use `harden{}` from shared lib, 100% adoption |
-| **Shared lib** | `lib/` with systemd.nix, user-harden.nix, service-defaults.nix, types.nix, rocm.nix, mkGraphicalUserService |
-| **Taskwarrior sync** | Zero-config cross-platform sync via TaskChampion, deterministic client IDs |
-| **AI model storage** | Centralized `/data/ai/` structure, all services reference `services.ai-models.paths` |
-| **Observability design** | SigNoz pipeline (node_exporter, cAdvisor, journald, OTLP) — built but currently broken |
-| **Health monitoring** | Gatus with 26+ endpoints, Discord alerting — designed but currently broken |
-| **EMEET PIXY webcam** | Full daemon with auto-tracking, Waybar integration, HID state sync |
-| **Catppuccin Mocha** | Universal theme across all apps, terminals, bars, login screen |
-| **Justfile task runner** | 50+ commands for all operations, grouped by category |
-| **Quality tooling** | treefmt + alejandra + deadnix + shellcheck + statix integrated |
-| **Justfile-based build** | No raw nixos-rebuild, all operations via `just` |
-| **Caddy port references** | All ports derived from service module options, never hardcoded |
-| **Sops fix committed** | `d663dc2e` — changed gatus-env owner from "gatus" to "root" (but not yet applied) |
+| Area                      | Details                                                                                                     |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Cross-platform flake**  | Darwin + NixOS shared config (~80% via `platforms/common/`)                                                 |
+| **Niri compositor**       | Running, wrapped config, session manager, wallpaper self-healing, DRM healthcheck                           |
+| **GPU defense**           | OLLAMA_MAX_LOADED_MODELS=1, GPU overhead reservation, per-service memory fractions, OOMScoreAdjust          |
+| **GPU recovery**          | Unbind/rebind script, auto-reboot on failure, consecutive DRM error counter                                 |
+| **DNS stack**             | Unbound + dnsblockd, 2.5M+ domains blocked, Quad9 DoT upstream (when secrets work)                          |
+| **Overlay architecture**  | Extracted to `overlays/` directory, shared + linux-only separation                                          |
+| **Service hardening**     | All services use `harden{}` from shared lib, 100% adoption                                                  |
+| **Shared lib**            | `lib/` with systemd.nix, user-harden.nix, service-defaults.nix, types.nix, rocm.nix, mkGraphicalUserService |
+| **Taskwarrior sync**      | Zero-config cross-platform sync via TaskChampion, deterministic client IDs                                  |
+| **AI model storage**      | Centralized `/data/ai/` structure, all services reference `services.ai-models.paths`                        |
+| **Observability design**  | SigNoz pipeline (node_exporter, cAdvisor, journald, OTLP) — built but currently broken                      |
+| **Health monitoring**     | Gatus with 26+ endpoints, Discord alerting — designed but currently broken                                  |
+| **EMEET PIXY webcam**     | Full daemon with auto-tracking, Waybar integration, HID state sync                                          |
+| **Catppuccin Mocha**      | Universal theme across all apps, terminals, bars, login screen                                              |
+| **Justfile task runner**  | 50+ commands for all operations, grouped by category                                                        |
+| **Quality tooling**       | treefmt + alejandra + deadnix + shellcheck + statix integrated                                              |
+| **Justfile-based build**  | No raw nixos-rebuild, all operations via `just`                                                             |
+| **Caddy port references** | All ports derived from service module options, never hardcoded                                              |
+| **Sops fix committed**    | `d663dc2e` — changed gatus-env owner from "gatus" to "root" (but not yet applied)                           |
 
 ---
 
 ## b) PARTIALLY DONE
 
-| Area | Status | Blocker |
-|------|--------|---------|
-| **SigNoz observability** | Built from source, all components defined, alert rules + dashboards committed | **Down** — ClickHouse can't start (missing `/var/log/clickhouse-server`), secrets missing |
-| **Gatus health checks** | 26+ endpoints defined, Discord alerting, SQLite storage | **Down** — sops secrets missing, environmentFile can't load |
-| **Hermes AI gateway** | Installed, system user, state dirs, sops templates | **Down** — sops secrets missing |
-| **Authelia SSO** | Full config with OIDC, forward auth on Caddy | **Down** — sops secrets missing |
-| **Immich photo management** | Docker-based, OAuth integration | **Down** — sops secrets missing (credentials fail) |
-| **OpenSEO** | Docker-compose wrapper, DataForSEO integration | **Down** — sops secrets missing |
-| **Caddy reverse proxy** | TLS with dnsblockd certs, all service vhosts defined | **Down** — sops secrets missing + watchdog timeout pattern |
-| **Twenty CRM** | Docker-compose, running but unreachable | Running but Caddy can't proxy |
-| **Manifest LLM router** | Docker-compose, running but unreachable | Running but Caddy can't proxy |
-| **dnsblockd** | Active but crashing every 60s | sops secrets missing |
-| **niri-health-metrics** | Script works, prometheus textfile collector | Permission denied writing to textfile dir |
-| **rpi3-dns** | NixOS config committed, flake builds | **Not provisioned** — Pi 3 hardware not set up |
-| **DNS failover (Keepalived)** | Module written, VRRP config ready | **Blocked** by rpi3-dns provisioning |
-| **ClickHouse** | Part of SigNoz stack, built from source | `/var/log/clickhouse-server` missing — tmpfiles rule not creating it |
+| Area                          | Status                                                                        | Blocker                                                                                   |
+| ----------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **SigNoz observability**      | Built from source, all components defined, alert rules + dashboards committed | **Down** — ClickHouse can't start (missing `/var/log/clickhouse-server`), secrets missing |
+| **Gatus health checks**       | 26+ endpoints defined, Discord alerting, SQLite storage                       | **Down** — sops secrets missing, environmentFile can't load                               |
+| **Hermes AI gateway**         | Installed, system user, state dirs, sops templates                            | **Down** — sops secrets missing                                                           |
+| **Authelia SSO**              | Full config with OIDC, forward auth on Caddy                                  | **Down** — sops secrets missing                                                           |
+| **Immich photo management**   | Docker-based, OAuth integration                                               | **Down** — sops secrets missing (credentials fail)                                        |
+| **OpenSEO**                   | Docker-compose wrapper, DataForSEO integration                                | **Down** — sops secrets missing                                                           |
+| **Caddy reverse proxy**       | TLS with dnsblockd certs, all service vhosts defined                          | **Down** — sops secrets missing + watchdog timeout pattern                                |
+| **Twenty CRM**                | Docker-compose, running but unreachable                                       | Running but Caddy can't proxy                                                             |
+| **Manifest LLM router**       | Docker-compose, running but unreachable                                       | Running but Caddy can't proxy                                                             |
+| **dnsblockd**                 | Active but crashing every 60s                                                 | sops secrets missing                                                                      |
+| **niri-health-metrics**       | Script works, prometheus textfile collector                                   | Permission denied writing to textfile dir                                                 |
+| **rpi3-dns**                  | NixOS config committed, flake builds                                          | **Not provisioned** — Pi 3 hardware not set up                                            |
+| **DNS failover (Keepalived)** | Module written, VRRP config ready                                             | **Blocked** by rpi3-dns provisioning                                                      |
+| **ClickHouse**                | Part of SigNoz stack, built from source                                       | `/var/log/clickhouse-server` missing — tmpfiles rule not creating it                      |
 
 ---
 
 ## c) NOT STARTED
 
-| Area | Notes |
-|------|-------|
-| **rpi3-dns provisioning** | Pi 3 hardware not yet provisioned, image not flashed |
-| **DNS failover cluster** | Blocked by rpi3-dns |
-| **Automated backup rotation** | No offsite backup strategy for photos, databases |
-| **MacBook Air config sync** | Darwin side not tested recently |
-| **Terraform/OpenTofu infra-as-code** | No declarative cloud resource management |
-| **VPN gateway** | No WireGuard/Tailscale for remote access |
-| **Mail server** | Not considered |
-| **CI/CD pipeline** | No automated testing on push (just manual `just test`) |
-| **Disaster recovery plan** | No documented recovery procedure for total failure |
-| **Security audit** | No formal penetration testing or vulnerability scanning |
-| **Bandwidth monitoring** | No network traffic analysis beyond node_exporter |
-| **Log retention policy** | No defined rotation/cleanup for service logs |
-| **Multi-arch cache** | No binary cache for aarch64-linux builds |
+| Area                                 | Notes                                                   |
+| ------------------------------------ | ------------------------------------------------------- |
+| **rpi3-dns provisioning**            | Pi 3 hardware not yet provisioned, image not flashed    |
+| **DNS failover cluster**             | Blocked by rpi3-dns                                     |
+| **Automated backup rotation**        | No offsite backup strategy for photos, databases        |
+| **MacBook Air config sync**          | Darwin side not tested recently                         |
+| **Terraform/OpenTofu infra-as-code** | No declarative cloud resource management                |
+| **VPN gateway**                      | No WireGuard/Tailscale for remote access                |
+| **Mail server**                      | Not considered                                          |
+| **CI/CD pipeline**                   | No automated testing on push (just manual `just test`)  |
+| **Disaster recovery plan**           | No documented recovery procedure for total failure      |
+| **Security audit**                   | No formal penetration testing or vulnerability scanning |
+| **Bandwidth monitoring**             | No network traffic analysis beyond node_exporter        |
+| **Log retention policy**             | No defined rotation/cleanup for service logs            |
+| **Multi-arch cache**                 | No binary cache for aarch64-linux builds                |
 
 ---
 
@@ -145,6 +145,7 @@
 ### CRITICAL: Sops-nix Complete Failure (ROOT CAUSE)
 
 **What:** `sops-install-secrets` fails at boot with:
+
 ```
 failed to lookup user 'gatus': user: unknown user gatus
 ```
@@ -160,6 +161,7 @@ failed to lookup user 'gatus': user: unknown user gatus
 ### CRITICAL: ClickHouse Missing Log Directory
 
 **What:** ClickHouse fails with:
+
 ```
 Failed to set up mount namespacing: /var/log/clickhouse-server: No such file or directory
 ```
@@ -175,6 +177,7 @@ Failed to set up mount namespacing: /var/log/clickhouse-server: No such file or 
 **Pattern:** Caddy starts → hangs on TLS cert maintenance (`certmagic.(*Cache).maintainAssets`) → watchdog kills it after 30s → restart → repeat.
 
 **Root cause:** When dnsblockd TLS certs are available, Caddy tries to maintain them but hangs. Possible causes:
+
 1. DNS resolution failure (dnsblockd is down → *.home.lan resolves nowhere)
 2. TLS cert storage corruption
 3. Caddy + internal TLS for home.lan is not a good fit (certmagic expects ACME)
@@ -231,33 +234,33 @@ Failed to set up mount namespacing: /var/log/clickhouse-server: No such file or 
 
 ## f) Top 25 Things We Should Get Done Next
 
-| # | Priority | Task | Impact |
-|---|----------|------|--------|
-| 1 | **P0** | **Apply `just switch` to activate sops fix + reboot** | Recovers ALL services |
-| 2 | **P0** | **Fix ClickHouse `/var/log/clickhouse-server` missing** | Recovers SigNoz observability |
-| 3 | **P0** | **Fix niri-health-metrics textfile permissions** | Recovers niri health metrics |
-| 4 | **P0** | **Investigate Caddy watchdog timeout — increase or remove WatchdogSec** | Stops Caddy crash loop |
-| 5 | **P1** | Audit ALL sops secrets for initrd-time user existence | Prevents future sops failures |
-| 6 | **P1** | Add boot-time secret validation check (is `/run/secrets/` populated?) | Early detection |
-| 7 | **P1** | Fix niri DeviceMissing spam — investigate if fixable upstream | Reduces log noise 99% |
-| 8 | **P1** | Clean Nix store: `nix-collect-garbage -d` + lower retention | Reclaims ~30-40G |
-| 9 | **P1** | Replace whisper-asr Docker image (37.5G!) with lighter alternative | Reclaims disk |
-| 10 | **P2** | Add systemd hardening for ClickHouse (LogsDirectory tmpfiles rule) | Proper fix for ClickHouse |
-| 11 | **P2** | Write disaster recovery doc (total failure → recovery steps) | Operational resilience |
-| 12 | **P2** | Add minimal boot-time health check (independent of Gatus/secrets) | Alerting during sops failures |
-| 13 | **P2** | Configure journal size limits and rate limiting for niri | Prevents disk fill |
-| 14 | **P2** | Test Darwin (macOS) config sync | Cross-platform integrity |
-| 15 | **P3** | Evaluate Caddy TLS architecture — manual cert loading vs certmagic | Architectural improvement |
-| 16 | **P3** | Add service dependency gating (don't start X until Y is healthy) | Graceful degradation |
-| 17 | **P3** | Provision rpi3-dns hardware + flash NixOS image | DNS failover foundation |
-| 18 | **P3** | Enable DNS failover (Keepalived VRRP) with rpi3-dns | High-availability DNS |
-| 19 | **P3** | Add automated backup rotation for databases + photos | Data safety |
-| 20 | **P4** | Set up CI/CD pipeline (GitHub Actions) for flake checks | Prevent broken deploys |
-| 21 | **P4** | Add offsite backup strategy (S3/B2/Restic) | Disaster recovery |
-| 22 | **P4** | WireGuard/Tailscale VPN for remote access | Remote management |
-| 23 | **P4** | Build multi-arch binary cache (aarch64-linux) | Faster Pi builds |
-| 24 | **P4** | Security audit: port scan, vulnerability scan, firewall review | Security posture |
-| 25 | **P4** | Formalize log retention and cleanup policy | Operational hygiene |
+| #   | Priority | Task                                                                    | Impact                        |
+| --- | -------- | ----------------------------------------------------------------------- | ----------------------------- |
+| 1   | **P0**   | **Apply `just switch` to activate sops fix + reboot**                   | Recovers ALL services         |
+| 2   | **P0**   | **Fix ClickHouse `/var/log/clickhouse-server` missing**                 | Recovers SigNoz observability |
+| 3   | **P0**   | **Fix niri-health-metrics textfile permissions**                        | Recovers niri health metrics  |
+| 4   | **P0**   | **Investigate Caddy watchdog timeout — increase or remove WatchdogSec** | Stops Caddy crash loop        |
+| 5   | **P1**   | Audit ALL sops secrets for initrd-time user existence                   | Prevents future sops failures |
+| 6   | **P1**   | Add boot-time secret validation check (is `/run/secrets/` populated?)   | Early detection               |
+| 7   | **P1**   | Fix niri DeviceMissing spam — investigate if fixable upstream           | Reduces log noise 99%         |
+| 8   | **P1**   | Clean Nix store: `nix-collect-garbage -d` + lower retention             | Reclaims ~30-40G              |
+| 9   | **P1**   | Replace whisper-asr Docker image (37.5G!) with lighter alternative      | Reclaims disk                 |
+| 10  | **P2**   | Add systemd hardening for ClickHouse (LogsDirectory tmpfiles rule)      | Proper fix for ClickHouse     |
+| 11  | **P2**   | Write disaster recovery doc (total failure → recovery steps)            | Operational resilience        |
+| 12  | **P2**   | Add minimal boot-time health check (independent of Gatus/secrets)       | Alerting during sops failures |
+| 13  | **P2**   | Configure journal size limits and rate limiting for niri                | Prevents disk fill            |
+| 14  | **P2**   | Test Darwin (macOS) config sync                                         | Cross-platform integrity      |
+| 15  | **P3**   | Evaluate Caddy TLS architecture — manual cert loading vs certmagic      | Architectural improvement     |
+| 16  | **P3**   | Add service dependency gating (don't start X until Y is healthy)        | Graceful degradation          |
+| 17  | **P3**   | Provision rpi3-dns hardware + flash NixOS image                         | DNS failover foundation       |
+| 18  | **P3**   | Enable DNS failover (Keepalived VRRP) with rpi3-dns                     | High-availability DNS         |
+| 19  | **P3**   | Add automated backup rotation for databases + photos                    | Data safety                   |
+| 20  | **P4**   | Set up CI/CD pipeline (GitHub Actions) for flake checks                 | Prevent broken deploys        |
+| 21  | **P4**   | Add offsite backup strategy (S3/B2/Restic)                              | Disaster recovery             |
+| 22  | **P4**   | WireGuard/Tailscale VPN for remote access                               | Remote management             |
+| 23  | **P4**   | Build multi-arch binary cache (aarch64-linux)                           | Faster Pi builds              |
+| 24  | **P4**   | Security audit: port scan, vulnerability scan, firewall review          | Security posture              |
+| 25  | **P4**   | Formalize log retention and cleanup policy                              | Operational hygiene           |
 
 ---
 
@@ -279,33 +282,33 @@ The sops manifest runs from initrd (`initrd-nixos-activation-start`), so a `swit
 
 ## Service Status Matrix
 
-| Service | Status | Uptime | Issues |
-|---------|--------|--------|--------|
-| Niri (compositor) | **RUNNING** | 47 min | DeviceMissing spam (non-critical) |
-| Waybar | **RUNNING** | 47 min | OK |
-| Docker daemon | **RUNNING** | 47 min | OK |
-| Unbound DNS | **RUNNING** | 47 min | OK |
-| node_exporter | **RUNNING** | 47 min | OK |
-| cAdvisor | **RUNNING** | 47 min | OK |
-| amdgpu-metrics | **RUNNING** | 47 min | OK |
-| Gitea | **RUNNING** | 47 min | OK (no sops deps) |
-| Twenty (Docker) | **RUNNING** | 47 min | Unreachable (Caddy down) |
-| Manifest (Docker) | **RUNNING** | 3 min | Unreachable (Caddy down) |
-| OpenSEO (Docker) | **RUNNING** | 4 min | Unreachable (Caddy down) |
-| Whisper ASR (Docker) | **RUNNING** | 47 min | OK |
-| Deer-flow (Docker) | **RUNNING** | 47 min | OK |
-| Caddy | **CRASH LOOP** | — | Watchdog timeout + no secrets |
-| ClickHouse | **CRASH LOOP** | — | Missing `/var/log/clickhouse-server` + no secrets |
-| Authelia | **START-LIMIT** | — | No sops secrets |
-| Immich | **CRASH LOOP** | — | No sops secrets (credentials) |
-| LiveKit | **CRASH LOOP** | — | No sops secrets (credentials) |
-| Gatus | **CRASH LOOP** | — | No sops env file |
-| Hermes | **START-LIMIT** | — | No sops secrets |
-| SigNoz (query) | **DOWN** | — | ClickHouse dependency |
-| SigNoz (collector) | **TIMEOUT** | — | ClickHouse dependency |
-| dnsblockd | **CRASH LOOP** | — | No sops secrets (waits 60s, then dies) |
-| niri-health-metrics | **CRASH LOOP** | — | Permission denied on textfile |
-| signoz-provision | **FAILED** | — | SigNoz dependency |
+| Service              | Status          | Uptime | Issues                                            |
+| -------------------- | --------------- | ------ | ------------------------------------------------- |
+| Niri (compositor)    | **RUNNING**     | 47 min | DeviceMissing spam (non-critical)                 |
+| Waybar               | **RUNNING**     | 47 min | OK                                                |
+| Docker daemon        | **RUNNING**     | 47 min | OK                                                |
+| Unbound DNS          | **RUNNING**     | 47 min | OK                                                |
+| node_exporter        | **RUNNING**     | 47 min | OK                                                |
+| cAdvisor             | **RUNNING**     | 47 min | OK                                                |
+| amdgpu-metrics       | **RUNNING**     | 47 min | OK                                                |
+| Gitea                | **RUNNING**     | 47 min | OK (no sops deps)                                 |
+| Twenty (Docker)      | **RUNNING**     | 47 min | Unreachable (Caddy down)                          |
+| Manifest (Docker)    | **RUNNING**     | 3 min  | Unreachable (Caddy down)                          |
+| OpenSEO (Docker)     | **RUNNING**     | 4 min  | Unreachable (Caddy down)                          |
+| Whisper ASR (Docker) | **RUNNING**     | 47 min | OK                                                |
+| Deer-flow (Docker)   | **RUNNING**     | 47 min | OK                                                |
+| Caddy                | **CRASH LOOP**  | —      | Watchdog timeout + no secrets                     |
+| ClickHouse           | **CRASH LOOP**  | —      | Missing `/var/log/clickhouse-server` + no secrets |
+| Authelia             | **START-LIMIT** | —      | No sops secrets                                   |
+| Immich               | **CRASH LOOP**  | —      | No sops secrets (credentials)                     |
+| LiveKit              | **CRASH LOOP**  | —      | No sops secrets (credentials)                     |
+| Gatus                | **CRASH LOOP**  | —      | No sops env file                                  |
+| Hermes               | **START-LIMIT** | —      | No sops secrets                                   |
+| SigNoz (query)       | **DOWN**        | —      | ClickHouse dependency                             |
+| SigNoz (collector)   | **TIMEOUT**     | —      | ClickHouse dependency                             |
+| dnsblockd            | **CRASH LOOP**  | —      | No sops secrets (waits 60s, then dies)            |
+| niri-health-metrics  | **CRASH LOOP**  | —      | Permission denied on textfile                     |
+| signoz-provision     | **FAILED**      | —      | SigNoz dependency                                 |
 
 **Services running:** 12 | **Services broken:** 13 | **Recovery rate:** 48%
 
@@ -313,13 +316,13 @@ The sops manifest runs from initrd (`initrd-nixos-activation-start`), so a `swit
 
 ## Disk Space Concern
 
-| Path | Used | Free | Total | Note |
-|------|------|------|-------|------|
-| `/` | 394G | 99G | 512G | 80% — needs Nix GC |
-| `/data` | 819G | 206G | 1.0T | 80% — Docker heavy |
-| `/nix/store` | 94G | — | — | 316 generations |
-| Whisper Docker | 37.5G | — | — | Single image! |
-| Docker images total | ~50G | — | — | Major consumer |
+| Path                | Used  | Free | Total | Note               |
+| ------------------- | ----- | ---- | ----- | ------------------ |
+| `/`                 | 394G  | 99G  | 512G  | 80% — needs Nix GC |
+| `/data`             | 819G  | 206G | 1.0T  | 80% — Docker heavy |
+| `/nix/store`        | 94G   | —    | —     | 316 generations    |
+| Whisper Docker      | 37.5G | —    | —     | Single image!      |
+| Docker images total | ~50G  | —    | —     | Major consumer     |
 
 ---
 
@@ -333,4 +336,4 @@ The sops.nix in the working tree has the fix applied (owner = "root"), matching 
 
 ---
 
-*Report generated by Crush AI — Session 76*
+_Report generated by Crush AI — Session 76_

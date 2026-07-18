@@ -34,12 +34,12 @@
 
 **No option simultaneously satisfies all four constraints:** latest kernel (Strix Halo), ZFS-class filesystem features, NixOS declarative config, and no DKMS lag. Every path requires sacrificing something.
 
-| If you refuse to give up... | Then your only option is... | And you accept... |
-|---|---|---|
-| **NixOS declarative config** + **latest kernel** | NixOS + BTRFS or ext4 | BTRFS pain or no CoW features |
-| **NixOS declarative config** + **ZFS-class FS** | NixOS + ZFS or BCacheFS | DKMS kernel lag (stuck on 6.18 LTS) |
-| **Native ZFS** + **no DKMS** | FreeBSD | No Strix Halo support, no declarative config |
-| **Latest kernel** + **no BTRFS** | NixOS + ext4 | No snapshots, no checksums, no CoW |
+| If you refuse to give up...                      | Then your only option is... | And you accept...                            |
+| ------------------------------------------------ | --------------------------- | -------------------------------------------- |
+| **NixOS declarative config** + **latest kernel** | NixOS + BTRFS or ext4       | BTRFS pain or no CoW features                |
+| **NixOS declarative config** + **ZFS-class FS**  | NixOS + ZFS or BCacheFS     | DKMS kernel lag (stuck on 6.18 LTS)          |
+| **Native ZFS** + **no DKMS**                     | FreeBSD                     | No Strix Halo support, no declarative config |
+| **Latest kernel** + **no BTRFS**                 | NixOS + ext4                | No snapshots, no checksums, no CoW           |
 
 **The cruelest irony:** BCacheFS was in-tree (solving everything) until September 2025, when it was ejected from the kernel for interpersonal conflict — not technical reasons. It is now DKMS-only, just like ZFS.
 
@@ -93,12 +93,12 @@ Metadata,DUP:       34.42 GiB / 37.70 GiB (91.31%)
 
 On the Lexar NQ790 (QLC NVMe), `discard=async` caused 253 ms discard latencies. The NVMe controller spent most of its time on internal garbage collection:
 
-| Metric | TRIM active | TRIM idle |
-|--------|-------------|-----------|
-| d_await (discard) | **253 ms each** | — |
-| discard/s | **86** | 0 |
-| r_await | **22 ms** | 0.5 ms |
-| BTRFS max commit | **17,779 ms (17.7 s)** | — |
+| Metric            | TRIM active            | TRIM idle |
+| ----------------- | ---------------------- | --------- |
+| d_await (discard) | **253 ms each**        | —         |
+| discard/s         | **86**                 | 0         |
+| r_await           | **22 ms**              | 0.5 ms    |
+| BTRFS max commit  | **17,779 ms (17.7 s)** | —         |
 
 86 TRIM ops/sec x 253 ms each = the controller was saturated. Under build load, this spiraled until the system froze. 73-second gap in journal logs = hard reset. Root filesystem needed tree-log replay on mount = dirty unclean shutdown.
 
@@ -190,34 +190,35 @@ One person carried NixBSD. When they moved on, it died. The scope is essentially
 
 systemd is not "an init system." It's a tight coupled userspace suite bound to **Linux-kernel-specific APIs**:
 
-| systemd subsystem | Linux API used | BSD equivalent | Portable? |
-|---|---|---|---|
-| Service lifecycle / resource control | **cgroups v1/v2** | None (jails are different) | No |
-| Isolation (PrivateNetwork, PrivateTmp) | **namespaces** | `jail` / `vnet` (different API) | No |
-| File tracking for services | **fanotify** | None equivalent | No |
-| Device hotplug | **netlink / udev / kobject** | `devd` / `devfs` | No |
-| Syscall filtering | **seccomp-bpf** | `pledge()` (OpenBSD only, different) | No |
-| Resource accounting | **/sys/fs/cgroup** | None | No |
-| Event loop core | **epoll** | **kqueue** | Different API |
-| Timer events | **timerfd** | **kqueue EVFILT_TIMER** | Different API |
+| systemd subsystem                      | Linux API used               | BSD equivalent                       | Portable?     |
+| -------------------------------------- | ---------------------------- | ------------------------------------ | ------------- |
+| Service lifecycle / resource control   | **cgroups v1/v2**            | None (jails are different)           | No            |
+| Isolation (PrivateNetwork, PrivateTmp) | **namespaces**               | `jail` / `vnet` (different API)      | No            |
+| File tracking for services             | **fanotify**                 | None equivalent                      | No            |
+| Device hotplug                         | **netlink / udev / kobject** | `devd` / `devfs`                     | No            |
+| Syscall filtering                      | **seccomp-bpf**              | `pledge()` (OpenBSD only, different) | No            |
+| Resource accounting                    | **/sys/fs/cgroup**           | None                                 | No            |
+| Event loop core                        | **epoll**                    | **kqueue**                           | Different API |
+| Timer events                           | **timerfd**                  | **kqueue EVFILT_TIMER**              | Different API |
 
 Porting systemd to BSD would require:
+
 1. Rewriting the cgroup manager (the heart of unit tracking)
 2. Replacing namespace isolation with `jail`/`vnet`
 3. Swapping udev for devd
 4. Rewriting the event loop (epoll to kqueue)
 5. Reimplementing seccomp-bpf filtering
 
-This is effectively writing a new init system that merely *resembles* systemd. It will never happen.
+This is effectively writing a new init system that merely _resembles_ systemd. It will never happen.
 
 ### What Each BSD Uses Instead
 
-| BSD | Init System | Notes |
-|-----|-------------|-------|
-| FreeBSD | `rc.d` | BSD-style rc scripts, parallel startup |
-| OpenBSD | `rc.d` + `rcscripts` | Heavily simplified |
-| NetBSD | `rc.d` | Traditional |
-| DragonFly BSD | `rc.d` | Traditional |
+| BSD           | Init System          | Notes                                  |
+| ------------- | -------------------- | -------------------------------------- |
+| FreeBSD       | `rc.d`               | BSD-style rc scripts, parallel startup |
+| OpenBSD       | `rc.d` + `rcscripts` | Heavily simplified                     |
+| NetBSD        | `rc.d`               | Traditional                            |
+| DragonFly BSD | `rc.d`               | Traditional                            |
 
 ---
 
@@ -225,15 +226,15 @@ This is effectively writing a new init system that merely *resembles* systemd. I
 
 OpenRC was created by **Roy Marples**, a **NetBSD developer**. Designed for portability from day one — one of the only modern init systems with genuine cross-platform DNA.
 
-| Distro | Default? | Notes |
-|--------|----------|-------|
-| **Gentoo** | Yes (origin) | OpenRC was born here |
-| **Alpine Linux** | Yes | Musl-based, container/embedded world |
-| **Artix Linux** | Yes | Arch without systemd |
-| **Funtoo** | Yes | Gentoo derivative (winding down) |
-| **Calculate Linux** | Yes | Gentoo derivative |
-| **Void Linux** | Optional | Default is runit |
-| **FreeBSD** | Optional (ports) | Not default |
+| Distro              | Default?         | Notes                                |
+| ------------------- | ---------------- | ------------------------------------ |
+| **Gentoo**          | Yes (origin)     | OpenRC was born here                 |
+| **Alpine Linux**    | Yes              | Musl-based, container/embedded world |
+| **Artix Linux**     | Yes              | Arch without systemd                 |
+| **Funtoo**          | Yes              | Gentoo derivative (winding down)     |
+| **Calculate Linux** | Yes              | Gentoo derivative                    |
+| **Void Linux**      | Optional         | Default is runit                     |
+| **FreeBSD**         | Optional (ports) | Not default                          |
 
 **Verdict:** Irrelevant to the NixOS/ZFS/Strix Halo tension. NixOS's 1000+ modules only speak systemd. Even if OpenRC ran perfectly on NixOS (it doesn't), every module would need rewriting.
 
@@ -294,7 +295,7 @@ Jun 2026  │1.38.6 │ ██████████████████�
 Future    │1.38.7 │ 🔧 Rust in kernel module (planned)
 ```
 
-The bcachefs.org website now states: *"We're shipping as a DKMS module now. (Like ZFS!)."*
+The bcachefs.org website now states: _"We're shipping as a DKMS module now. (Like ZFS!)."_
 
 ### Why This Matters for evo-x2
 
@@ -315,13 +316,13 @@ BCacheFS's **only advantage** over ZFS was being in-tree — guaranteeing it com
 
 ### In-tree vs Out-of-tree
 
-| | In-tree | Out-of-tree (DKMS) |
-|---|---|---|
-| **Source location** | Inside kernel source tree | Separate repository |
-| **Compilation** | Automatic when kernel is built/updated | Triggered by DKMS hook after kernel update |
-| **Version match** | Always guaranteed by definition | Must recompile against new headers |
-| **Kernel lag risk** | None | Days to weeks for upstream patch |
-| **Examples** | BTRFS, ext4, XFS | ZFS, BCacheFS (since 6.18), VirtualBox |
+|                     | In-tree                                | Out-of-tree (DKMS)                         |
+| ------------------- | -------------------------------------- | ------------------------------------------ |
+| **Source location** | Inside kernel source tree              | Separate repository                        |
+| **Compilation**     | Automatic when kernel is built/updated | Triggered by DKMS hook after kernel update |
+| **Version match**   | Always guaranteed by definition        | Must recompile against new headers         |
+| **Kernel lag risk** | None                                   | Days to weeks for upstream patch           |
+| **Examples**        | BTRFS, ext4, XFS                       | ZFS, BCacheFS (since 6.18), VirtualBox     |
 
 ### The DKMS cycle on every kernel update
 
@@ -370,11 +371,11 @@ RS(n, k) = n total chunks, k data chunks, survive losing any (n-k) chunks.
 
 ### BCacheFS erasure coding vs traditional RAID vs ZFS RAIDZ
 
-| | Traditional RAID 5/6 | BCacheFS erasure coding | ZFS RAIDZ |
-|---|---|---|---|
-| Write hole | **Yes** (dangerous) | **No** — replicates first, stripes in background | No |
-| Per-file granularity | No (whole disk) | **Yes** — can mix replicated and erasure-coded files | No (whole vdev) |
-| Background restriping | No | **Yes** — write is replicated, then striped async | No |
+|                       | Traditional RAID 5/6 | BCacheFS erasure coding                              | ZFS RAIDZ       |
+| --------------------- | -------------------- | ---------------------------------------------------- | --------------- |
+| Write hole            | **Yes** (dangerous)  | **No** — replicates first, stripes in background     | No              |
+| Per-file granularity  | No (whole disk)      | **Yes** — can mix replicated and erasure-coded files | No (whole vdev) |
+| Background restriping | No                   | **Yes** — write is replicated, then striped async    | No              |
 
 **Note for evo-x2:** This is a single-NVMe system. Erasure coding / RAIDZ requires multiple devices. This feature is irrelevant unless evo-x2 gets additional storage.
 
@@ -384,37 +385,37 @@ RS(n, k) = n total chunks, k data chunks, survive losing any (n-k) chunks.
 
 ### Core filesystem capabilities
 
-| Feature | **BCacheFS** | **ZFS (OpenZFS)** | **BTRFS** | **ext4** |
-|---------|-------------|-------------------|-----------|----------|
-| **In mainline kernel** | No (removed 6.18) | No (CDDL license) | **Yes** | **Yes** |
-| **DKMS required** | Yes (since 6.18) | Yes (always) | **No** | **No** |
-| **Kernel lag risk** | Moderate (new DKMS) | High | **None** | **None** |
-| **Maturity** | ~4 years | 20 years | 17 years | 30+ years |
-| **License** | GPL2 | CDDL (GPL-incompatible) | GPL2 | GPL2 |
-| **COW (copy-on-write)** | Yes | Yes | Yes | No |
-| **Checksumming** | CRC-32C, CRC-64 | Fletcher-2/4, SHA-256 | CRC-32C | No |
-| **Compression** | LZ4, gzip, zstd | LZ4, gzip, zstd, ZLE | zstd, lzo, zlib | No |
-| **Native encryption** | Yes (ChaCha20+Poly1305) | Yes (AES-256-GCM, ChaCha20) | No (needs LUKS) | No |
-| **Snapshots** | Yes | Yes | Yes | No |
-| **Multi-device pools** | Yes | Yes (vdevs) | Yes (limited) | No |
-| **Parity/erasure coding** | Reed-Solomon | RAIDZ1/2/3 | No (RAID 5/6 dangerous) | No |
-| **Deduplication** | No (roadmap) | Yes (memory-heavy) | No | No |
-| **Send / receive** | No (roadmap) | Yes (incremental) | Yes | No |
-| **Scrub / self-healing** | Yes | Yes (mature) | Yes | No |
-| **Subvolumes** | Yes (snapshots) | No (datasets) | Yes (native) | No |
-| **Reflinks** | Yes | No | Yes | No |
-| **Swap file support** | No | Yes (on zvol) | Yes | Yes |
-| **Max filesystem size** | Petabyte-scale (tested) | 256 ZiB (theoretical) | 16 EiB | 1 RiB |
+| Feature                   | **BCacheFS**            | **ZFS (OpenZFS)**           | **BTRFS**               | **ext4**  |
+| ------------------------- | ----------------------- | --------------------------- | ----------------------- | --------- |
+| **In mainline kernel**    | No (removed 6.18)       | No (CDDL license)           | **Yes**                 | **Yes**   |
+| **DKMS required**         | Yes (since 6.18)        | Yes (always)                | **No**                  | **No**    |
+| **Kernel lag risk**       | Moderate (new DKMS)     | High                        | **None**                | **None**  |
+| **Maturity**              | ~4 years                | 20 years                    | 17 years                | 30+ years |
+| **License**               | GPL2                    | CDDL (GPL-incompatible)     | GPL2                    | GPL2      |
+| **COW (copy-on-write)**   | Yes                     | Yes                         | Yes                     | No        |
+| **Checksumming**          | CRC-32C, CRC-64         | Fletcher-2/4, SHA-256       | CRC-32C                 | No        |
+| **Compression**           | LZ4, gzip, zstd         | LZ4, gzip, zstd, ZLE        | zstd, lzo, zlib         | No        |
+| **Native encryption**     | Yes (ChaCha20+Poly1305) | Yes (AES-256-GCM, ChaCha20) | No (needs LUKS)         | No        |
+| **Snapshots**             | Yes                     | Yes                         | Yes                     | No        |
+| **Multi-device pools**    | Yes                     | Yes (vdevs)                 | Yes (limited)           | No        |
+| **Parity/erasure coding** | Reed-Solomon            | RAIDZ1/2/3                  | No (RAID 5/6 dangerous) | No        |
+| **Deduplication**         | No (roadmap)            | Yes (memory-heavy)          | No                      | No        |
+| **Send / receive**        | No (roadmap)            | Yes (incremental)           | Yes                     | No        |
+| **Scrub / self-healing**  | Yes                     | Yes (mature)                | Yes                     | No        |
+| **Subvolumes**            | Yes (snapshots)         | No (datasets)               | Yes (native)            | No        |
+| **Reflinks**              | Yes                     | No                          | Yes                     | No        |
+| **Swap file support**     | No                      | Yes (on zvol)               | Yes                     | Yes       |
+| **Max filesystem size**   | Petabyte-scale (tested) | 256 ZiB (theoretical)       | 16 EiB                  | 1 RiB     |
 
 ### SystemNix-specific BTRFS pain: do alternatives solve them?
 
-| Issue | BCacheFS | ZFS | BTRFS (current) |
-|-------|----------|-----|-------|
-| Metadata ENOSPC crash | No (different allocator) | No | **YES** — 2 hard resets (`AGENTS.md:188`) |
-| `discard=async` I/O death | No (different discard path) | Configurable | **YES** — 1 hard reset (`AGENTS.md:211`) |
-| CoW space reclamation | Direct freeing | Direct freeing | **BROKEN** — snapshots hold refs (`AGENTS.md:186`) |
-| Toplevel subvolume corruption | N/A | N/A | **YES** — 23.5M errors (`AGENTS.md:117`) |
-| df blind to chunk allocation | No | No (zpool list is accurate) | **YES** — monitoring was blind (`AGENTS.md:188`) |
+| Issue                         | BCacheFS                    | ZFS                         | BTRFS (current)                                    |
+| ----------------------------- | --------------------------- | --------------------------- | -------------------------------------------------- |
+| Metadata ENOSPC crash         | No (different allocator)    | No                          | **YES** — 2 hard resets (`AGENTS.md:188`)          |
+| `discard=async` I/O death     | No (different discard path) | Configurable                | **YES** — 1 hard reset (`AGENTS.md:211`)           |
+| CoW space reclamation         | Direct freeing              | Direct freeing              | **BROKEN** — snapshots hold refs (`AGENTS.md:186`) |
+| Toplevel subvolume corruption | N/A                         | N/A                         | **YES** — 23.5M errors (`AGENTS.md:117`)           |
+| df blind to chunk allocation  | No                          | No (zpool list is accurate) | **YES** — monitoring was blind (`AGENTS.md:188`)   |
 
 ---
 
@@ -422,20 +423,20 @@ RS(n, k) = n total chunks, k data chunks, survive losing any (n-k) chunks.
 
 ### OpenZFS
 
-| | Value |
-|---|---|
-| **Latest release** | **2.4.3** (12 June 2026) |
-| **Linux kernel range** | **4.18 — 7.0** |
-| **FreeBSD** | 13.3+, 14.0+ |
+|                         | Value                          |
+| ----------------------- | ------------------------------ |
+| **Latest release**      | **2.4.3** (12 June 2026)       |
+| **Linux kernel range**  | **4.18 — 7.0**                 |
+| **FreeBSD**             | 13.3+, 14.0+                   |
 | **Active LTS branches** | 2.3.x, 2.2.x (also maintained) |
 
 ### On NixOS / nixpkgs unstable
 
-| Package | Version | Notes |
-|---------|---------|-------|
-| `zfs` / `zfs_2_4` | 2.4.3 | Default/stable, includes dedup corruption patch (#18366) |
-| `zfs_unstable` | 2.4.3 | Currently identical to stable |
-| `zfs_2_3` | 2.3.5 | **Deprecated** — snapshot bugs (#484627) |
+| Package           | Version | Notes                                                    |
+| ----------------- | ------- | -------------------------------------------------------- |
+| `zfs` / `zfs_2_4` | 2.4.3   | Default/stable, includes dedup corruption patch (#18366) |
+| `zfs_unstable`    | 2.4.3   | Currently identical to stable                            |
+| `zfs_2_3`         | 2.3.5   | **Deprecated** — snapshot bugs (#484627)                 |
 
 ### Known issues on NixOS
 
@@ -453,17 +454,17 @@ RS(n, k) = n total chunks, k data chunks, survive losing any (n-k) chunks.
 
 **Source:** [kernel.org](https://www.kernel.org/), verified 2026-07-11
 
-| Channel | Version | Date | ZFS 2.4.3 support? |
-|---------|---------|------|---------------------|
-| **mainline** | **7.2-rc2** | 2026-07-06 | No |
-| **stable** | **7.1.3** | 2026-07-04 | No |
-| stable (EOL) | 7.0.14 | 2026-06-27 | Yes (but EOL) |
+| Channel      | Version     | Date       | ZFS 2.4.3 support?  |
+| ------------ | ----------- | ---------- | ------------------- |
+| **mainline** | **7.2-rc2** | 2026-07-06 | No                  |
+| **stable**   | **7.1.3**   | 2026-07-04 | No                  |
+| stable (EOL) | 7.0.14      | 2026-06-27 | Yes (but EOL)       |
 | **longterm** | **6.18.38** | 2026-07-04 | **Yes** (safe zone) |
-| longterm | 6.12.95 | 2026-07-04 | Yes |
-| longterm | 6.6.144 | 2026-07-04 | Yes |
-| longterm | 6.1.177 | 2026-07-04 | Yes |
-| longterm | 5.15.211 | 2026-07-04 | Yes |
-| longterm | 5.10.260 | 2026-07-04 | Yes |
+| longterm     | 6.12.95     | 2026-07-04 | Yes                 |
+| longterm     | 6.6.144     | 2026-07-04 | Yes                 |
+| longterm     | 6.1.177     | 2026-07-04 | Yes                 |
+| longterm     | 5.15.211    | 2026-07-04 | Yes                 |
+| longterm     | 5.10.260    | 2026-07-04 | Yes                 |
 
 ### The real ZFS compatibility gap
 
@@ -533,18 +534,18 @@ The mitigation (`MemoryHigh=56G; MemoryMax=64G` in `boot.nix`) is tuned against 
 
 ## 14. Gentoo vs NixOS
 
-| | **Gentoo** | **NixOS** |
-|---|---|---|
-| **Core philosophy** | Compile everything from source, tune to hardware | Declarative reproducible systems from single config |
-| **Config model** | Imperative — `make.conf`, USE flags, `eselect` | Declarative — `configuration.nix` / `flake.nix`, pure functions |
-| **State** | Mutable. You change things in place. System drifts. | Immutable. Generations. Change a file and rebuild. |
-| **Source vs binary** | Source-first (binpkgs exist but secondary) | Binary-first (cache), source as fallback |
-| **Rollback** | No native rollback. Restore from backup. | Generations — instant rollback to any previous config |
-| **Reproducibility** | "I think I can rebuild this" | `nixos-rebuild` from same flake = identical system |
-| **Init system** | OpenRC (default) or systemd (optional) | systemd (hard requirement) |
-| **Kernel flexibility** | Total — `genkernel` or fully manual | Good — `linuxPackages_latest`, custom kernel configs |
-| **ZFS** | No friction | DKMS, kernel lag |
-| **Filesystem opinion** | None — use whatever | BTRFS/ext4 easy, ZFS/BCacheFS harder |
+|                        | **Gentoo**                                          | **NixOS**                                                       |
+| ---------------------- | --------------------------------------------------- | --------------------------------------------------------------- |
+| **Core philosophy**    | Compile everything from source, tune to hardware    | Declarative reproducible systems from single config             |
+| **Config model**       | Imperative — `make.conf`, USE flags, `eselect`      | Declarative — `configuration.nix` / `flake.nix`, pure functions |
+| **State**              | Mutable. You change things in place. System drifts. | Immutable. Generations. Change a file and rebuild.              |
+| **Source vs binary**   | Source-first (binpkgs exist but secondary)          | Binary-first (cache), source as fallback                        |
+| **Rollback**           | No native rollback. Restore from backup.            | Generations — instant rollback to any previous config           |
+| **Reproducibility**    | "I think I can rebuild this"                        | `nixos-rebuild` from same flake = identical system              |
+| **Init system**        | OpenRC (default) or systemd (optional)              | systemd (hard requirement)                                      |
+| **Kernel flexibility** | Total — `genkernel` or fully manual                 | Good — `linuxPackages_latest`, custom kernel configs            |
+| **ZFS**                | No friction                                         | DKMS, kernel lag                                                |
+| **Filesystem opinion** | None — use whatever                                 | BTRFS/ext4 easy, ZFS/BCacheFS harder                            |
 
 ### Where Gentoo wins for Strix Halo
 
@@ -564,26 +565,26 @@ The mitigation (`MemoryHigh=56G; MemoryMax=64G` in `boot.nix`) is tuned against 
 
 ## 15. Risk Assessment Matrix
 
-| Option | Kernel lag risk | Data loss risk | Boot failure risk | Config drift risk | Monitoring blind spots |
-|--------|----------------|----------------|-------------------|-------------------|----------------------|
-| **NixOS + BTRFS** (current) | **None** | **HIGH** (documented) | Medium (ENOSPC) | None | **Yes** (df vs chunk alloc) |
-| **NixOS + ZFS** | **HIGH** (stuck on 6.18) | Low | Medium (encrypted boot) | None | No (zpool list accurate) |
-| **NixOS + BCacheFS** | Medium (new DKMS) | Medium (young FS) | **HIGH** (multi-device bugs) | None | Unknown |
-| **NixOS + ext4** | **None** | Low (no CoW corruption) | Low | None | N/A |
-| **FreeBSD + ZFS** | None (native) | Low | Low | **HIGH** (no declarative) | No |
-| **Gentoo + ZFS** | Medium (DKMS) | Low | Medium | **HIGH** (imperative) | No |
+| Option                      | Kernel lag risk          | Data loss risk          | Boot failure risk            | Config drift risk         | Monitoring blind spots      |
+| --------------------------- | ------------------------ | ----------------------- | ---------------------------- | ------------------------- | --------------------------- |
+| **NixOS + BTRFS** (current) | **None**                 | **HIGH** (documented)   | Medium (ENOSPC)              | None                      | **Yes** (df vs chunk alloc) |
+| **NixOS + ZFS**             | **HIGH** (stuck on 6.18) | Low                     | Medium (encrypted boot)      | None                      | No (zpool list accurate)    |
+| **NixOS + BCacheFS**        | Medium (new DKMS)        | Medium (young FS)       | **HIGH** (multi-device bugs) | None                      | Unknown                     |
+| **NixOS + ext4**            | **None**                 | Low (no CoW corruption) | Low                          | None                      | N/A                         |
+| **FreeBSD + ZFS**           | None (native)            | Low                     | Low                          | **HIGH** (no declarative) | No                          |
+| **Gentoo + ZFS**            | Medium (DKMS)            | Low                     | Medium                       | **HIGH** (imperative)     | No                          |
 
 ---
 
 ## 16. Migration Complexity Ratings
 
-| From BTRFS to... | Downtime | Data migration | Config rewrite | Risk | Estimated effort |
-|---|---|---|---|---|---|
-| **ZFS** | Hours | `zfs send`/`recv` or `rsync` | Moderate (filesystem modules) | Medium | 1-2 days |
-| **BCacheFS** | Hours | `rsync` (no send/recv) | Moderate | **High** (multi-device bugs) | 1-2 days + testing |
-| **ext4** | Hours | `rsync` | Low (simpler) | Low | 0.5-1 day |
-| **FreeBSD + ZFS** | **Days** | Network transfer | **Complete rewrite** | **Extreme** | Weeks+ |
-| **Gentoo** | **Days** | Network transfer | **Complete rewrite** | **Extreme** | Weeks+ |
+| From BTRFS to...  | Downtime | Data migration               | Config rewrite                | Risk                         | Estimated effort   |
+| ----------------- | -------- | ---------------------------- | ----------------------------- | ---------------------------- | ------------------ |
+| **ZFS**           | Hours    | `zfs send`/`recv` or `rsync` | Moderate (filesystem modules) | Medium                       | 1-2 days           |
+| **BCacheFS**      | Hours    | `rsync` (no send/recv)       | Moderate                      | **High** (multi-device bugs) | 1-2 days + testing |
+| **ext4**          | Hours    | `rsync`                      | Low (simpler)                 | Low                          | 0.5-1 day          |
+| **FreeBSD + ZFS** | **Days** | Network transfer             | **Complete rewrite**          | **Extreme**                  | Weeks+             |
+| **Gentoo**        | **Days** | Network transfer             | **Complete rewrite**          | **Extreme**                  | Weeks+             |
 
 ---
 
@@ -630,18 +631,18 @@ START
 
 ### Weighted scoring for evo-x2 specifically
 
-| Criterion | Weight | BTRFS | ZFS | BCacheFS | ext4 | FreeBSD+ZFS |
-|-----------|--------|-------|-----|----------|------|-------------|
-| Latest kernel support | 10/10 | 10 | 3 | 6 | 10 | 0 |
-| NixOS declarative | 10/10 | 10 | 10 | 10 | 10 | 0 |
-| Filesystem reliability | 8/10 | 3 | 10 | 5 | 8 | 10 |
-| No DKMS dependency | 7/10 | 10 | 2 | 4 | 10 | 10 |
-| Snapshot/backup features | 6/10 | 8 | 10 | 8 | 0 | 10 |
-| Migration effort (lower=better) | 5/10 | 10 | 4 | 3 | 8 | 0 |
-| Maturity/proven | 5/10 | 7 | 10 | 3 | 10 | 10 |
-| **Weighted total** | | **442** | **326** | **322** | **410** | **200** |
+| Criterion                       | Weight | BTRFS   | ZFS     | BCacheFS | ext4    | FreeBSD+ZFS |
+| ------------------------------- | ------ | ------- | ------- | -------- | ------- | ----------- |
+| Latest kernel support           | 10/10  | 10      | 3       | 6        | 10      | 0           |
+| NixOS declarative               | 10/10  | 10      | 10      | 10       | 10      | 0           |
+| Filesystem reliability          | 8/10   | 3       | 10      | 5        | 8       | 10          |
+| No DKMS dependency              | 7/10   | 10      | 2       | 4        | 10      | 10          |
+| Snapshot/backup features        | 6/10   | 8       | 10      | 8        | 0       | 10          |
+| Migration effort (lower=better) | 5/10   | 10      | 4       | 3        | 8       | 0           |
+| Maturity/proven                 | 5/10   | 7       | 10      | 3        | 10      | 10          |
+| **Weighted total**              |        | **442** | **326** | **322**  | **410** | **200**     |
 
-*Scoring: each criterion scored 0-10, multiplied by weight, summed.*
+_Scoring: each criterion scored 0-10, multiplied by weight, summed._
 
 **Interpretation:** BTRFS scores highest **only because** it's the only option that satisfies both "latest kernel" and "NixOS declarative" with full weight. The filesystem reliability score drags it down severely. Ext4 is surprisingly competitive as a "boring but reliable" option.
 
@@ -652,21 +653,25 @@ START
 For each option to become clearly viable:
 
 ### NixOS + ZFS becomes viable when...
+
 - OpenZFS adds support for kernel 7.x (currently maxes at 7.0/EOL'd)
 - **OR** Strix Halo hardware stabilizes enough that 6.18 LTS is sufficient
 - **OR** AMD backports critical Strix Halo fixes to 6.18 LTS (unlikely for NPU/GPU)
 
 ### NixOS + BCacheFS becomes viable when...
+
 - BCacheFS matures further (2-3 more years of production testing)
 - Multi-device boot race conditions are fixed in NixOS ([#451418](https://github.com/NixOS/nixpkgs/issues/451418), [#316396](https://github.com/NixOS/nixpkgs/issues/316396))
 - `send/receive` is implemented (currently on roadmap)
 - **OR** BCacheFS is re-merged into the mainline kernel (unlikely given the Torvalds/Overstreet conflict)
 
 ### FreeBSD + ZFS becomes viable when...
+
 - FreeBSD adds Strix Halo support (GFX1151, DCN 3.5.1, XDNA NPU) — **extremely unlikely** given AMD's BSD driver situation
 - **AND** someone builds a declarative config layer for FreeBSD (NixBSD revival or equivalent)
 
 ### NixOS + BTRFS becomes tolerable when...
+
 - SystemNix's BTRFS monitoring stack (btrfs-health.nix, Gatus, DMS widget) catches all ENOSPC conditions before they crash
 - `/data` is migrated off BTRFS toplevel to a proper subvolume with snapshots
 - `discard=async` stays removed (done)
@@ -674,6 +679,7 @@ For each option to become clearly viable:
 - **But:** the fundamental df-vs-chunk-allocation blindness and metadata ratchet are BTRFS design issues, not fixable
 
 ### BCacheFS gets re-merged into mainline when...
+
 - Kent Overstreet and Linus Torvalds resolve their conflict (Torvalds said "we're done")
 - **OR** a new maintainer takes over BCacheFS with different working relationships
 - **OR** the kernel community develops a framework for maintained out-of-tree filesystems with guaranteed API stability (no such framework exists)

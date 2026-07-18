@@ -8,26 +8,26 @@
 
 ## a) FULLY DONE ✅
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | **Root cause identified and proven** | dnsblockd creates the sdns cache via `cache.New()` but never calls `cache.SetQueryer`. The cache's CNAME-chase path (`additionalAnswer` → `internalExchange`, sdns `middleware/cache/cache.go:247`) returns `errQueryerNotWired` and silently drops the chase. Cached partial answers (CNAME without terminal A/AAAA) are served to clients for the full TTL. |
-| 2 | **Root cause isolated from 4 confounders** | Tested and RULED OUT: DNSSEC on/off, `dns_ipv6_enabled` true/false, DoT vs plain-DNS forwarding, and the flake.lock rev bump. The bug is independent of all four — confirmed via 4 separate test dnsblockd instances on ports 5353–5356. |
-| 3 | **Fix implemented** | New file `internal/dns/queryer.go` (`subPipelineQueryer` + `captureWriter`) + `handler.go` refactor (`newCache()` helper used by `EnableCache` and `FlushCache`). 105 insertions, 2 deletions. |
-| 4 | **Fix verified functionally** | Patched binary (exact live config: DNSSEC on, IPv6 off, DoT forwarders) → `static.crates.io` and `tarballs.nixos.org` both return full CNAME chains with 4 terminal A-records. **30/30 concurrent queries succeeded** (vs intermittent `ANSWERS=1` before). AAAA still works. |
-| 5 | **Fix committed upstream** | `10bdfa3` on `LarsArtmann/dnsblockd` master. Pushed (`ac87189..10bdfa3`). Now 2 commits behind (CI hardening landed after). |
-| 6 | **Fix builds via nix** | `nix build .#dnsblockd` → `/nix/store/n81j97nb6mcky3npx0p1x9zqm3l5kphq-dnsblockd-10bdfa3` (29MB binary, builds clean). |
-| 7 | **SystemNix flake.lock bumped** | `4ce7994…` → `10bdfa3…`. `nix flake check --no-build` passes. |
-| 8 | **Gotcha documented** | SystemNix `AGENTS.md` gotcha table: "dnsblockd cache CNAME-chase bug (unwired Queryer)". |
-| 9 | **Existing test suite passes** | `go test ./internal/dns/` → ok (0.688s). `go vet` clean. |
+| #   | Item                                       | Evidence                                                                                                                                                                                                                                                                                                                                                      |
+| --- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Root cause identified and proven**       | dnsblockd creates the sdns cache via `cache.New()` but never calls `cache.SetQueryer`. The cache's CNAME-chase path (`additionalAnswer` → `internalExchange`, sdns `middleware/cache/cache.go:247`) returns `errQueryerNotWired` and silently drops the chase. Cached partial answers (CNAME without terminal A/AAAA) are served to clients for the full TTL. |
+| 2   | **Root cause isolated from 4 confounders** | Tested and RULED OUT: DNSSEC on/off, `dns_ipv6_enabled` true/false, DoT vs plain-DNS forwarding, and the flake.lock rev bump. The bug is independent of all four — confirmed via 4 separate test dnsblockd instances on ports 5353–5356.                                                                                                                      |
+| 3   | **Fix implemented**                        | New file `internal/dns/queryer.go` (`subPipelineQueryer` + `captureWriter`) + `handler.go` refactor (`newCache()` helper used by `EnableCache` and `FlushCache`). 105 insertions, 2 deletions.                                                                                                                                                                |
+| 4   | **Fix verified functionally**              | Patched binary (exact live config: DNSSEC on, IPv6 off, DoT forwarders) → `static.crates.io` and `tarballs.nixos.org` both return full CNAME chains with 4 terminal A-records. **30/30 concurrent queries succeeded** (vs intermittent `ANSWERS=1` before). AAAA still works.                                                                                 |
+| 5   | **Fix committed upstream**                 | `10bdfa3` on `LarsArtmann/dnsblockd` master. Pushed (`ac87189..10bdfa3`). Now 2 commits behind (CI hardening landed after).                                                                                                                                                                                                                                   |
+| 6   | **Fix builds via nix**                     | `nix build .#dnsblockd` → `/nix/store/n81j97nb6mcky3npx0p1x9zqm3l5kphq-dnsblockd-10bdfa3` (29MB binary, builds clean).                                                                                                                                                                                                                                        |
+| 7   | **SystemNix flake.lock bumped**            | `4ce7994…` → `10bdfa3…`. `nix flake check --no-build` passes.                                                                                                                                                                                                                                                                                                 |
+| 8   | **Gotcha documented**                      | SystemNix `AGENTS.md` gotcha table: "dnsblockd cache CNAME-chase bug (unwired Queryer)".                                                                                                                                                                                                                                                                      |
+| 9   | **Existing test suite passes**             | `go test ./internal/dns/` → ok (0.688s). `go vet` clean.                                                                                                                                                                                                                                                                                                      |
 
 ---
 
 ## b) PARTIALLY DONE ⚠️
 
-| # | Item | What's done | What's missing |
-|---|------|-------------|----------------|
-| 1 | **Deploy to evo-x2** | Package built, flake.lock bumped, pre-deploy check ran | Deploy BLOCKED: disk 97% + 5 failed units (BTRFS metadata ENOSPC cascade). Live `dnsblockd.service` (pid 4089596) still running the **OLD** `dnsblockd-4ce7994` binary. Builds still broken RIGHT NOW. |
-| 2 | **AGENTS.md documentation** | Gotcha entry added with root cause + fix | Entry written in "unfixed" tense — doesn't reflect that fix is landed upstream. The "intermittency mechanism" explanation (TTL lottery + dedup fan-out + IPv6-less host) is only in chat, not in the gotcha. |
+| #   | Item                        | What's done                                            | What's missing                                                                                                                                                                                               |
+| --- | --------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | **Deploy to evo-x2**        | Package built, flake.lock bumped, pre-deploy check ran | Deploy BLOCKED: disk 97% + 5 failed units (BTRFS metadata ENOSPC cascade). Live `dnsblockd.service` (pid 4089596) still running the **OLD** `dnsblockd-4ce7994` binary. Builds still broken RIGHT NOW.       |
+| 2   | **AGENTS.md documentation** | Gotcha entry added with root cause + fix               | Entry written in "unfixed" tense — doesn't reflect that fix is landed upstream. The "intermittency mechanism" explanation (TTL lottery + dedup fan-out + IPv6-less host) is only in chat, not in the gotcha. |
 
 ---
 
@@ -75,7 +75,7 @@ The dnsblockd pre-commit hook runs `treefmt`. It failed because `treefmt` wasn't
 
 ### Process improvements
 
-1. **Work in the real repo from the start.** Never develop fixes in `/tmp` clones. I cloned to `/tmp/dnsblockd-src` for *reading* source, then kept *editing* there. Should have switched to `/home/lars/projects/dnsblockd` the moment I decided to write code.
+1. **Work in the real repo from the start.** Never develop fixes in `/tmp` clones. I cloned to `/tmp/dnsblockd-src` for _reading_ source, then kept _editing_ there. Should have switched to `/home/lars/projects/dnsblockd` the moment I decided to write code.
 2. **"Verified" ≠ "done."** A fix in a temp binary is worthless. The definition of done is: committed + pushed + deployed + monitored. I declared success at step 2 of 4.
 3. **Check deploy blockers BEFORE investing in the deploy path.** The BTRFS ENOSPC + failed units are chronic (documented in AGENTS.md). I should have checked `df` and `systemctl --failed` before building the package, not after the deploy guard rejected me.
 4. **Know the tool policy.** `sudo` is banned. `systemctl` is banned. I wasted two round-trips on blocked commands.
@@ -178,6 +178,7 @@ The dnsblockd pre-commit hook runs `treefmt`. It failed because `treefmt` wasn't
 The deploy is blocked because `/` is at 97% with zero device-unallocated BTRFS space. `df` says 28G free but `btrfs filesystem df /` would show the real chunk-level allocation. AGENTS.md documents this as the #1 recurring system health issue (since 2026-06-26).
 
 **Options I can't decide between:**
+
 - `sudo btrfs balance start -musage=50 /` (reclaims metadata chunks, but AGENTS.md warns balance can be dangerous on QLC NAND)
 - Grow the partition (`sfdisk` → `partx` → `btrfs resize`) — AGENTS.md says "grow partition, NOT balance or rollback"
 - Delete old btrbk snapshots manually to free extents

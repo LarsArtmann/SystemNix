@@ -191,6 +191,7 @@ The `nix-gc` timer exists and is gated by `btrfs-health.nix` (aborts when device
 ### 2. Should we move Docker off BTRFS or move BTRFS off this system?
 
 The structural problem is clear: BTRFS + Docker overlay2 + Nix store = metadata death spiral. Two paths:
+
 - **Pragmatic:** Move Docker data-root to `/data` (separate BTRFS, 375 GB free), mark `/nix/store` nocow, keep BTRFS for snapshots. Buys time but doesn't fix the architectural mismatch.
 - **Strategic:** Reformat root as ext4 (lose snapshots) or ZFS (gain better space management, lose macOS compat). Major migration but solves the root cause permanently.
 

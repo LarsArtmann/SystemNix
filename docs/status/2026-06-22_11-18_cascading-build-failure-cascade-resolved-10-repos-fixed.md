@@ -48,14 +48,14 @@ wire them into the flake.nix `deps` map and `subModules` list.
 
 `go-cqrs-lite` underwent major changes that no consumer had migrated to:
 
-| Change | Impact |
-|--------|--------|
-| `errorfamily.Compose` removed from `go-error-family` | `event.Compose()`, `command.Compose()`, `query.Compose()` broke |
-| `memory/v2` module moved to `storage/memory/v2` | crush-daily, discordsync imports broke |
-| `memory.NewMemoryBus()` removed → `watermill.NewEventBus()` | crush-daily's bus setup broke |
-| `projection/v2` module entirely deleted (ADR-0030) | discordsync fully broken (uses `projection.Runner`) |
-| `Decider.Fold` field renamed to `Decider.Apply` | crush-daily struct literal broke |
-| `projection/v2` removed → `stack.Materialize` + `watermill.CatchUpSubscriber` | discordsync needs full rewrite of projection layer |
+| Change                                                                        | Impact                                                          |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| `errorfamily.Compose` removed from `go-error-family`                          | `event.Compose()`, `command.Compose()`, `query.Compose()` broke |
+| `memory/v2` module moved to `storage/memory/v2`                               | crush-daily, discordsync imports broke                          |
+| `memory.NewMemoryBus()` removed → `watermill.NewEventBus()`                   | crush-daily's bus setup broke                                   |
+| `projection/v2` module entirely deleted (ADR-0030)                            | discordsync fully broken (uses `projection.Runner`)             |
+| `Decider.Fold` field renamed to `Decider.Apply`                               | crush-daily struct literal broke                                |
+| `projection/v2` removed → `stack.Materialize` + `watermill.CatchUpSubscriber` | discordsync needs full rewrite of projection layer              |
 
 **Affected:** crush-daily (3 API breaks), discordsync (projection deleted), overview (transitive sub-module)
 
@@ -63,17 +63,17 @@ wire them into the flake.nix `deps` map and `subModules` list.
 
 ## a) FULLY DONE ✅
 
-| # | Repo | What was done | Commits |
-|---|------|--------------|---------|
-| 1 | **go-cqrs-lite** | Replaced `errorfamily.Compose` → `errors.Join` in event/, command/, query/ | 1 |
-| 2 | **crush-daily** | Migrated `memory/v2` → `storage/memory/v2` + `watermill/v2`; renamed `Fold` → `Apply`; updated vendorHash | 3 |
-| 3 | **overview** | Added `gogenfilter` dep; fixed go-cqrs-lite subModules (`memory/v2` → `storage/memory/v2`); fixed `SimpleNav` templ calls; fixed `Page` int→uint casts; updated vendorHash | 4 |
-| 4 | **projects-management-automation** | Added `cmdguard`, `samber-do-auditlog` deps + self sub-modules (`pkg/coreutils`, `pkg/domain`); stripped relative-path replaces; updated vendorHash | 3 |
-| 5 | **go-auto-upgrade** | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0; updated vendorHash | 2 |
-| 6 | **file-and-image-renamer** | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0 + sqlite v1.53.0; updated vendorHash | 2 |
-| 7 | **BuildFlow** | Updated stale vendorHash | 1 |
-| 8 | **mr-sync** | Unpinned `samber-do-auditlog` from v0.1.0 tag → master; updated vendorHash twice | 3 |
-| 9 | **SystemNix** | Updated flake.lock for all repos; disabled discordsync temporarily; committed | 1 |
+| #   | Repo                               | What was done                                                                                                                                                              | Commits |
+| --- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| 1   | **go-cqrs-lite**                   | Replaced `errorfamily.Compose` → `errors.Join` in event/, command/, query/                                                                                                 | 1       |
+| 2   | **crush-daily**                    | Migrated `memory/v2` → `storage/memory/v2` + `watermill/v2`; renamed `Fold` → `Apply`; updated vendorHash                                                                  | 3       |
+| 3   | **overview**                       | Added `gogenfilter` dep; fixed go-cqrs-lite subModules (`memory/v2` → `storage/memory/v2`); fixed `SimpleNav` templ calls; fixed `Page` int→uint casts; updated vendorHash | 4       |
+| 4   | **projects-management-automation** | Added `cmdguard`, `samber-do-auditlog` deps + self sub-modules (`pkg/coreutils`, `pkg/domain`); stripped relative-path replaces; updated vendorHash                        | 3       |
+| 5   | **go-auto-upgrade**                | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0; updated vendorHash                                                                                                          | 2       |
+| 6   | **file-and-image-renamer**         | Upgraded `samber-do-auditlog` v0.2.0 → v0.3.0 + sqlite v1.53.0; updated vendorHash                                                                                         | 2       |
+| 7   | **BuildFlow**                      | Updated stale vendorHash                                                                                                                                                   | 1       |
+| 8   | **mr-sync**                        | Unpinned `samber-do-auditlog` from v0.1.0 tag → master; updated vendorHash twice                                                                                           | 3       |
+| 9   | **SystemNix**                      | Updated flake.lock for all repos; disabled discordsync temporarily; committed                                                                                              | 1       |
 
 **Total: 20 commits across 9 repos, all pushed to GitHub**
 
@@ -94,11 +94,13 @@ leader election, health, distributed runner). ADR-0030 splits it into:
 2. **`stack.Materialize[V, K]`** — materialization layer (typed event → view handler)
 
 **What was done:**
+
 - go-cqrs-lite was updated to fix `errorfamily.Compose`
 - flake.lock was updated to point at the fixed go-cqrs-lite
 - Service was **disabled** in configuration.nix with a TODO comment
 
 **What remains:**
+
 - Full migration of DiscordSync's projection layer to Watermill router + Materialize
 - Re-enable service after migration
 
@@ -106,13 +108,13 @@ leader election, health, distributed runner). ADR-0030 splits it into:
 
 ## c) NOT STARTED ❌
 
-| Item | Description |
-|------|-------------|
-| DiscordSync ADR-0030 migration | Replace `projection.Runner` with `watermill.CatchUpSubscriber` + `stack.Materialize` |
-| DiscordSync `turso/v2` migration | `turso/` module was also deleted, moved to `storage/turso/` |
-| `just switch` deployment | Build passes but config hasn't been activated on evo-x2 yet |
-| `just test-fast` validation | Syntax check hasn't been run (though full build passed) |
-| AGENTS.md update | Should document the go-cqrs-lite module migration for future sessions |
+| Item                             | Description                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------ |
+| DiscordSync ADR-0030 migration   | Replace `projection.Runner` with `watermill.CatchUpSubscriber` + `stack.Materialize` |
+| DiscordSync `turso/v2` migration | `turso/` module was also deleted, moved to `storage/turso/`                          |
+| `just switch` deployment         | Build passes but config hasn't been activated on evo-x2 yet                          |
+| `just test-fast` validation      | Syntax check hasn't been run (though full build passed)                              |
+| AGENTS.md update                 | Should document the go-cqrs-lite module migration for future sessions                |
 
 ---
 
@@ -231,44 +233,54 @@ and members at human-Discord speeds, not microservice-throughput speeds.
 ## Commits Made This Session (22 total, all pushed)
 
 ### go-cqrs-lite (1 commit)
+
 - `e9a3081a` fix: replace removed errorfamily.Compose with stdlib errors.Join
 
 ### crush-daily (3 commits)
+
 - `bc477f1` fix: migrate from removed memory/v2 to storage/memory/v2 + watermill/v2
 - `42031d5` fix(nix): update vendorHash after memory→storage/memory migration
 - `9e8e962` fix: rename Decider.Fold to Decider.Apply for go-cqrs-lite API change
 
 ### overview (4 commits)
+
 - `aa90a5c` fix(nix): add gogenfilter dep and update vendorHash
 - `f76cbf7` fix(nix): fix go-cqrs-lite subModules — remove memory/v2, add storage/memory/v2
 - `5f648e0` fix(nix): update vendorHash after go-cqrs-lite subModules fix
 - `cd037d8` fix: update SimpleNav calls and Page type casts for templ-components API
 
 ### projects-management-automation (3 commits)
+
 - `00c8de52` fix(nix): add missing cmdguard, samber-do-auditlog deps and self sub-modules
 - `7a41598e` fix(nix): strip relative-path replaces to avoid conflicts with subModules
 - `0867927d` fix(nix): update vendorHash after adding missing deps
 
 ### go-auto-upgrade (2 commits)
+
 - `6362dbb` fix(deps): upgrade samber-do-auditlog to v0.3.0, update vendorHash
 - `4aa54a1` fix(nix): update vendorHash for samber-do-auditlog v0.3.0
 
 ### file-and-image-renamer (2 commits)
+
 - `307f6d0` fix(deps): upgrade samber-do-auditlog to v0.3.0 and sqlite to v1.53.0
 - `64d7705` fix(nix): update vendorHash for samber-do-auditlog v0.3.0 + sqlite v1.53.0
 
 ### BuildFlow (1 commit)
+
 - `1a86d8af` fix(nix): update vendorHash after dependency changes
 
 ### mr-sync (3 commits)
+
 - `77a05b3` fix(nix): update vendorHash after dependency changes
 - `ca246dc` fix(nix): update samber-do-auditlog from v0.1.0 tag to master
 - `f12fe75` fix(nix): update vendorHash for samber-do-auditlog master
 
 ### DiscordSync (1 commit — pushed but service disabled)
+
 - `5514e8d` fix(nix): update go-cqrs-lite and reset vendorHash
 
 ### SystemNix (1 commit)
+
 - `a0f90c19` fix: resolve cascading build failures across 10+ Go repos
 
 ---
@@ -281,6 +293,7 @@ EXIT CODE: 0
 ```
 
 All pre-commit hooks passed:
+
 - ✅ gitleaks (no secrets)
 - ✅ deadnix (no dead code)
 - ✅ statix (no antipatterns)

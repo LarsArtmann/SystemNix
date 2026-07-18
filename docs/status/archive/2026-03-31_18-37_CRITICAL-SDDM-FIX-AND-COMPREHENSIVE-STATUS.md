@@ -19,94 +19,101 @@
 ## A) FULLY DONE ✅ (Working & Complete)
 
 ### Desktop Environment
-| Item | Status | Details |
-|------|--------|---------|
-| Niri compositor | ✅ | Fully migrated from Hyprland, working with scrollable-tiling |
-| SDDM display manager | ✅ | sugar-dark theme configured and active |
-| Waybar status bar | ✅ | Catppuccin-themed, Niri workspaces integrated |
-| Kitty terminal | ✅ | Primary terminal, TV-friendly font size (16pt) |
-| Foot terminal | ✅ | Lightweight Wayland backup terminal |
-| Rofi launcher | ✅ | drun mode with Catppuccin theme |
-| wlogout power menu | ✅ | Power off, reboot, suspend, lock actions |
-| Dunst notifications | ✅ | Full Catppuccin theming, overlay layer |
-| Cliphist clipboard | ✅ | History + waybar integration |
-| Screenshot tools | ✅ | grimblast, niri native screenshots |
+
+| Item                 | Status | Details                                                      |
+| -------------------- | ------ | ------------------------------------------------------------ |
+| Niri compositor      | ✅     | Fully migrated from Hyprland, working with scrollable-tiling |
+| SDDM display manager | ✅     | sugar-dark theme configured and active                       |
+| Waybar status bar    | ✅     | Catppuccin-themed, Niri workspaces integrated                |
+| Kitty terminal       | ✅     | Primary terminal, TV-friendly font size (16pt)               |
+| Foot terminal        | ✅     | Lightweight Wayland backup terminal                          |
+| Rofi launcher        | ✅     | drun mode with Catppuccin theme                              |
+| wlogout power menu   | ✅     | Power off, reboot, suspend, lock actions                     |
+| Dunst notifications  | ✅     | Full Catppuccin theming, overlay layer                       |
+| Cliphist clipboard   | ✅     | History + waybar integration                                 |
+| Screenshot tools     | ✅     | grimblast, niri native screenshots                           |
 
 ### System Services
-| Item | Status | Details |
-|------|--------|---------|
-| DNS Blocker | ✅ | unbound + block page, temp allowlist via socket |
-| ActivityWatch | ✅ | Time tracking + aw-watcher-utilization (CPU/RAM/disk/network) |
-| Immich | ✅ | Self-hosted photo management, working |
-| Gitea | ✅ | GitHub repo mirroring, declarative setup |
-| Caddy | ✅ | Reverse proxy for local domains |
-| AMD GPU support | ✅ | ROCm, gaming, acceleration |
-| AMD NPU support | ✅ | XDNA driver loaded |
-| BTRFS Snapshots | ✅ | Timeshift automated |
-| SSH hardening | ✅ | Key-only auth, secure ciphers |
+
+| Item            | Status | Details                                                       |
+| --------------- | ------ | ------------------------------------------------------------- |
+| DNS Blocker     | ✅     | unbound + block page, temp allowlist via socket               |
+| ActivityWatch   | ✅     | Time tracking + aw-watcher-utilization (CPU/RAM/disk/network) |
+| Immich          | ✅     | Self-hosted photo management, working                         |
+| Gitea           | ✅     | GitHub repo mirroring, declarative setup                      |
+| Caddy           | ✅     | Reverse proxy for local domains                               |
+| AMD GPU support | ✅     | ROCm, gaming, acceleration                                    |
+| AMD NPU support | ✅     | XDNA driver loaded                                            |
+| BTRFS Snapshots | ✅     | Timeshift automated                                           |
+| SSH hardening   | ✅     | Key-only auth, secure ciphers                                 |
 
 ### Cross-Platform
-| Item | Status | Details |
-|------|--------|---------|
-| Home Manager | ✅ | Shared modules for Fish, Starship, Tmux |
-| Fish shell | ✅ | Cross-platform aliases, nixup/nixbuild/nixcheck |
-| Starship prompt | ✅ | Consistent on macOS + NixOS |
-| Tmux | ✅ | 24h color, SystemNix session template |
+
+| Item            | Status | Details                                         |
+| --------------- | ------ | ----------------------------------------------- |
+| Home Manager    | ✅     | Shared modules for Fish, Starship, Tmux         |
+| Fish shell      | ✅     | Cross-platform aliases, nixup/nixbuild/nixcheck |
+| Starship prompt | ✅     | Consistent on macOS + NixOS                     |
+| Tmux            | ✅     | 24h color, SystemNix session template           |
 
 ### Security
-| Item | Status | Details |
-|------|--------|---------|
-| Secrets management | ✅ | sops-nix with age encryption |
-| Swaylock PAM | ✅ | PAM service configured |
-| Firewall | ✅ | nftables base configuration |
-| Chrome policies | ✅ | Extension management declarative |
+
+| Item               | Status | Details                          |
+| ------------------ | ------ | -------------------------------- |
+| Secrets management | ✅     | sops-nix with age encryption     |
+| Swaylock PAM       | ✅     | PAM service configured           |
+| Firewall           | ✅     | nftables base configuration      |
+| Chrome policies    | ✅     | Extension management declarative |
 
 ---
 
 ## B) PARTIALLY DONE 🟡 (Working but Incomplete)
 
-| Item | Status | What's Done | What's Missing |
-|------|--------|-------------|----------------|
-| **Wallpaper rotation** | 🟡 | swww spawns at startup with random wallpaper | No timer/cycling; hardcoded path in 2 places |
-| **Swaylock theming** | 🟡 | PAM configured, binary available | No Home Manager module config (no Catppuccin theme) |
-| **Idle management** | 🟡 | swayidle package installed | Not configured in Niri spawn-at-startup |
-| **Monitoring** | 🟡 | Netdata + Prometheus + Grafana + ntopng all running | Over-engineered; should consolidate to 2 tools max |
-| **Multi-WM** | 🟡 | Sway as backup WM | Not really needed now that Niri is stable |
-| **Niri reload** | 🟡 | Can run `niri msg action reload-config` | No `just reload` recipe for convenience |
+| Item                   | Status | What's Done                                         | What's Missing                                      |
+| ---------------------- | ------ | --------------------------------------------------- | --------------------------------------------------- |
+| **Wallpaper rotation** | 🟡     | swww spawns at startup with random wallpaper        | No timer/cycling; hardcoded path in 2 places        |
+| **Swaylock theming**   | 🟡     | PAM configured, binary available                    | No Home Manager module config (no Catppuccin theme) |
+| **Idle management**    | 🟡     | swayidle package installed                          | Not configured in Niri spawn-at-startup             |
+| **Monitoring**         | 🟡     | Netdata + Prometheus + Grafana + ntopng all running | Over-engineered; should consolidate to 2 tools max  |
+| **Multi-WM**           | 🟡     | Sway as backup WM                                   | Not really needed now that Niri is stable           |
+| **Niri reload**        | 🟡     | Can run `niri msg action reload-config`             | No `just reload` recipe for convenience             |
 
 ---
 
 ## C) NOT STARTED ❌ (Planned but Not Implemented)
 
-| Item | Priority | Why It Matters |
-|------|----------|----------------|
-| **DNS-over-HTTPS** | Medium | unbound uses plain DNS; DoH would add privacy |
-| **Immich ML on NPU** | Medium | AMD NPU available but Immich uses CPU for ML |
-| **Automated flake updates** | Low | No scheduled task for `nix flake update` |
-| **Niri binary cache** | Low | No cachix for faster Niri builds |
-| **Git push reminder** | Low | No hook warns when >3 commits ahead |
-| **Pre-push commit count hook** | Low | Same as above |
-| **Just recipe for niri reload** | Medium | Convenience for config iteration |
+| Item                            | Priority | Why It Matters                                |
+| ------------------------------- | -------- | --------------------------------------------- |
+| **DNS-over-HTTPS**              | Medium   | unbound uses plain DNS; DoH would add privacy |
+| **Immich ML on NPU**            | Medium   | AMD NPU available but Immich uses CPU for ML  |
+| **Automated flake updates**     | Low      | No scheduled task for `nix flake update`      |
+| **Niri binary cache**           | Low      | No cachix for faster Niri builds              |
+| **Git push reminder**           | Low      | No hook warns when >3 commits ahead           |
+| **Pre-push commit count hook**  | Low      | Same as above                                 |
+| **Just recipe for niri reload** | Medium   | Convenience for config iteration              |
 
 ---
 
 ## D) TOTALLY FUCKED UP ❌❌❌ (Critical Issues - NOW FIXED)
 
-| Item | Severity | What Happened | Fix Applied |
-|------|----------|---------------|-------------|
+| Item                     | Severity    | What Happened                                                     | Fix Applied                                                                        |
+| ------------------------ | ----------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | **SDDM default session** | 🔴 CRITICAL | SDDM started but showed no session selector; black screen on boot | Added `services.displayManager.defaultSession = "niri";` to display-manager.nix:26 |
 
 ### The Bug
+
 **Root Cause:** `display-manager.nix` configured SDDM with theme and packages, but never specified which session to auto-start. Without `defaultSession`, SDDM waits for manual selection that wasn't visible.
 
 **Impact:** Complete desktop failure - user couldn't access graphical session after boot.
 
 **Fix:** One line addition:
+
 ```nix
 services.displayManager.defaultSession = "niri";
 ```
 
 **Verification:**
+
 ```bash
 sudo nixos-rebuild switch --flake .#evo-x2
 # Reboot or: sudo systemctl restart display-manager
@@ -117,18 +124,21 @@ sudo nixos-rebuild switch --flake .#evo-x2
 ## E) WHAT WE SHOULD IMPROVE 📈 (Recommendations)
 
 ### High Priority (Do These Next)
+
 1. **Add dunst to Niri spawn-at-startup** - Dunst is configured but not auto-started; add to `niri-wrapped.nix` spawn-at-startup
 2. **Configure swayidle** - Idle dim/lock/suspend not working since hypridle removal; add swayidle to spawn-at-startup with config
 3. **Extract wallpaper path to variable** - Currently hardcoded in niri-wrapped.nix lines 17 and 189; create `wallpaperDir` variable
 4. **Add niri reload just recipe** - Convenience command for rapid config iteration
 
 ### Medium Priority (This Week)
+
 5. **Consolidate monitoring stack** - Netdata + Prometheus + Grafana + ntopng is overkill; pick Netdata + one other
 6. **Theme swaylock** - Add Home Manager swaylock module with Catppuccin theme
 7. **Add wallpaper keybinds** - Mod+Shift+W for next, Mod+Ctrl+W for previous (like old Hyprland config)
 8. **Configure DNS-over-HTTPS** - unbound currently uses plain DNS upstreams
 
 ### Low Priority (Nice to Have)
+
 9. **Remove Sway backup WM** - Now that Niri is stable, multi-wm.nix is unnecessary
 10. **Delete orphaned regreet.css** - File exists but no longer referenced after SDDM switch
 11. **Add automated flake updates** - Scheduled task like existing crush update-providers
@@ -173,11 +183,13 @@ sudo nixos-rebuild switch --flake .#evo-x2
 **Observation:** Dunst is configured via Home Manager (`services.dunst.enable = true`) with full Catppuccin theming. It's NOT listed in `niri-wrapped.nix` `spawn-at-startup`, yet notifications appear to work.
 
 **What I Know:**
+
 - Home Manager creates a systemd user service for dunst
 - Niri doesn't necessarily start user services on launch
 - The user is running Home Manager, so the service should start
 
 **What I Don't Know:**
+
 - Does Home Manager auto-start dunst via systemd on graphical session entry?
 - Is there a race condition where dunst might not be ready when first notification fires?
 - Should dunst be explicitly added to `spawn-at-startup` for reliability?
@@ -186,6 +198,7 @@ sudo nixos-rebuild switch --flake .#evo-x2
 If dunst relies on systemd user services auto-starting, it might fail in edge cases (first notification after boot, before systemd activates the service). Explicit `spawn-at-startup` would be more reliable.
 
 **Request for User:** Can you verify:
+
 1. After a fresh boot, does the first notification appear immediately or with delay?
 2. What's the output of: `systemctl --user status dunst` after login?
 3. Does adding dunst to spawn-at-startup cause any issues (double instances)?
@@ -216,6 +229,7 @@ e2a246e feat(gitea-repos): add declarative GitHub repo mirroring with sops-nix
 **Result:** ✅ PASS (warning: aarch64-darwin incompatible, expected)
 
 **Configuration Status:**
+
 - `nixosConfigurations.evo-x2`: ✅ Evaluates successfully
 - `darwinConfigurations.Lars-MacBook-Air`: ✅ Evaluates successfully
 - All flake outputs: ✅ Valid
@@ -225,29 +239,32 @@ e2a246e feat(gitea-repos): add declarative GitHub repo mirroring with sops-nix
 ## PLATFORM STATUS
 
 ### NixOS (evo-x2 - AMD Ryzen AI Max+ 395)
-| Component | Status |
-|-----------|--------|
-| Boot | ✅ systemd-boot + BTRFS |
-| Display | ✅ Niri (now with defaultSession fix) |
-| Audio | ✅ PipeWire + pavucontrol |
-| Networking | ✅ NetworkManager + unbound DNS |
-| GPU | ✅ ROCm acceleration |
-| NPU | ✅ XDNA driver loaded |
-| Home Manager | ✅ User config active |
+
+| Component    | Status                                |
+| ------------ | ------------------------------------- |
+| Boot         | ✅ systemd-boot + BTRFS               |
+| Display      | ✅ Niri (now with defaultSession fix) |
+| Audio        | ✅ PipeWire + pavucontrol             |
+| Networking   | ✅ NetworkManager + unbound DNS       |
+| GPU          | ✅ ROCm acceleration                  |
+| NPU          | ✅ XDNA driver loaded                 |
+| Home Manager | ✅ User config active                 |
 
 ### macOS (Lars-MacBook-Air - Apple Silicon)
-| Component | Status |
-|-----------|--------|
-| nix-darwin | ✅ Building successfully |
-| Home Manager | ✅ Shared modules working |
-| ActivityWatch | ✅ LaunchAgent managed |
-| Touch ID sudo | ✅ Enabled |
+
+| Component     | Status                    |
+| ------------- | ------------------------- |
+| nix-darwin    | ✅ Building successfully  |
+| Home Manager  | ✅ Shared modules working |
+| ActivityWatch | ✅ LaunchAgent managed    |
+| Touch ID sudo | ✅ Enabled                |
 
 ---
 
 ## ACTION ITEMS FOR USER
 
 1. **APPLY CRITICAL FIX NOW:**
+
    ```bash
    cd ~/projects/SystemNix
    sudo nixos-rebuild switch --flake .#evo-x2

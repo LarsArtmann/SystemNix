@@ -124,11 +124,11 @@
    - v0.3.0: CI/CD for both platforms
 
 5. **Package Mapping**
-   | macOS (Homebrew) | NixOS (nixpkgs) | Migration Effort |
-   |------------------|-----------------|------------------|
-   | activitywatch | pkgs.activitywatch | LOW ✅ |
-   | sublime-text | pkgs.sublime4 | LOW ✅ |
-   | jetbrains-toolbox | pkgs.jetbrains.\* | LOW ✅ |
+   | macOS (Homebrew)  | NixOS (nixpkgs)    | Migration Effort |
+   | ----------------- | ------------------ | ---------------- |
+   | activitywatch     | pkgs.activitywatch | LOW ✅           |
+   | sublime-text      | pkgs.sublime4      | LOW ✅           |
+   | jetbrains-toolbox | pkgs.jetbrains.\*  | LOW ✅           |
 
 **Critical Insight:**
 **All current Homebrew casks exist in nixpkgs for NixOS.**

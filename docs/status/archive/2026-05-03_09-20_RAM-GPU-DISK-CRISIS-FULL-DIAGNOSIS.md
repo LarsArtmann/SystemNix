@@ -40,65 +40,66 @@ GPU GTT "used":        22.4 GB  (= actual system RAM locked by GPU driver)
 
 Full memory reconciliation using `/proc/meminfo`, `/proc/vmstat` nr_ counters, DRM fdinfo, ZRAM stats, and BIOS e820 map:
 
-| Category | RAM | % of 64 GB |
-|----------|-----|------------|
-| **AMD GPU GTT (TTM pages)** | **22.4 GB** | **35.0%** |
-| Anonymous (processes) | 12.3 GB | 19.2% |
-| File cache | 11.4 GB | 17.8% |
-| ZRAM compressed swap storage | 5.4 GB | 8.4% |
-| Slab (kernel caches) | 5.0 GB | 7.8% |
-| Struct page memmap | 1.1 GB | 1.7% |
-| Free | 4.5 GB | 7.0% |
-| Other kernel (stacks, PT, etc) | 0.7 GB | 1.1% |
+| Category                       | RAM         | % of 64 GB |
+| ------------------------------ | ----------- | ---------- |
+| **AMD GPU GTT (TTM pages)**    | **22.4 GB** | **35.0%**  |
+| Anonymous (processes)          | 12.3 GB     | 19.2%      |
+| File cache                     | 11.4 GB     | 17.8%      |
+| ZRAM compressed swap storage   | 5.4 GB      | 8.4%       |
+| Slab (kernel caches)           | 5.0 GB      | 7.8%       |
+| Struct page memmap             | 1.1 GB      | 1.7%       |
+| Free                           | 4.5 GB      | 7.0%       |
+| Other kernel (stacks, PT, etc) | 0.7 GB      | 1.1%       |
 
 **Unaccounted 16.2 GB = AMD GPU TTM pages** (allocated from system RAM by the driver but not tracked in standard /proc/meminfo categories). Verified by matching GTT used (22.4 GB) minus kernel_file_pages (6.1 GB) = 16.3 GB ≈ unaccounted (16.2 GB).
 
 ### 2. Root Cause Analysis — Disk Crisis
 
-| Partition | Size | Used | Free | Use% |
-|-----------|------|------|------|------|
-| `/` (nvme0n1p6) | 512 GB | 430 GB | 73 GB | 86% |
-| `/data` (nvme0n1p8) | 800 GB | 590 GB | 210 GB | 74% |
+| Partition           | Size   | Used   | Free   | Use% |
+| ------------------- | ------ | ------ | ------ | ---- |
+| `/` (nvme0n1p6)     | 512 GB | 430 GB | 73 GB  | 86%  |
+| `/data` (nvme0n1p8) | 800 GB | 590 GB | 210 GB | 74%  |
 
 **`/data` breakdown:**
-| Path | Size | Notes |
-|------|------|-------|
-| `/data/models` | 322 GB | Video/LLM models (Ollama 107GB, Wan 84GB, LTX 45GB, Hunyuan 36GB, Wan2.2 32GB, llm 19GB) |
-| `/data/llamacpp-models` | 142 GB | GGUF models (UniGenDet 56GB, BAGEL 28GB, Qwen 22GB, Gemma 19GB, Qwen27 17GB) |
-| `/data/SteamLibrary` | 99 GB | Steam games |
-| `/data/unsloth` | 28 GB | AI workspace (duplicate of /var/lib/unsloth?) |
-| `/data/testfile` | 4 GB | Orphaned test file |
-| `/data/ollama` | 151 MB | Ollama data |
-| `/data/ai` | 151 MB | AI models dir |
+
+| Path                    | Size   | Notes                                                                                    |
+| ----------------------- | ------ | ---------------------------------------------------------------------------------------- |
+| `/data/models`          | 322 GB | Video/LLM models (Ollama 107GB, Wan 84GB, LTX 45GB, Hunyuan 36GB, Wan2.2 32GB, llm 19GB) |
+| `/data/llamacpp-models` | 142 GB | GGUF models (UniGenDet 56GB, BAGEL 28GB, Qwen 22GB, Gemma 19GB, Qwen27 17GB)             |
+| `/data/SteamLibrary`    | 99 GB  | Steam games                                                                              |
+| `/data/unsloth`         | 28 GB  | AI workspace (duplicate of /var/lib/unsloth?)                                            |
+| `/data/testfile`        | 4 GB   | Orphaned test file                                                                       |
+| `/data/ollama`          | 151 MB | Ollama data                                                                              |
+| `/data/ai`              | 151 MB | AI models dir                                                                            |
 
 ### 3. Cleanups Completed This Session
 
-| Action | Freed |
-|--------|-------|
-| HuggingFace cache (`/data/cache/huggingface/`) | **118 GB** |
-| `perf.data` | **629 MB** |
-| Ollama COMGR cache | **160 MB** |
-| Killed Hermes `generate_happy_girl.py` (2.6 GB RAM, 20% CPU) | **2.6 GB RAM** |
+| Action                                                        | Freed          |
+| ------------------------------------------------------------- | -------------- |
+| HuggingFace cache (`/data/cache/huggingface/`)                | **118 GB**     |
+| `perf.data`                                                   | **629 MB**     |
+| Ollama COMGR cache                                            | **160 MB**     |
+| Killed Hermes `generate_happy_girl.py` (2.6 GB RAM, 20% CPU)  | **2.6 GB RAM** |
 | Killed golangci-lint (compiling sqlite3, 400 MB RAM, 98% CPU) | **400 MB RAM** |
-| Killed duplicate gopls telemetry instances (14 processes) | **~1 GB RAM** |
-| Killed stuck aw-watcher-window-wayland (21% CPU) | **60 MB RAM** |
+| Killed duplicate gopls telemetry instances (14 processes)     | **~1 GB RAM**  |
+| Killed stuck aw-watcher-window-wayland (21% CPU)              | **60 MB RAM**  |
 
 ### 4. Process Memory Audit
 
-| Process Group | RSS | Swap | Instances | Notes |
-|---------------|-----|------|-----------|-------|
-| gopls | 1.65 GB | ~1 GB | 13 | Go LSP across 10 projects |
-| llama-server | 947 MB | 204 MB | 1 | Jan AI, gemma-4-26B model |
-| crush | 941 MB | — | ~8 | AI assistant instances |
-| clickhouse | 724 MB | 309 MB | 1 | SigNoz DB |
-| sshd | 443 MB | — | many | SSH sessions |
-| helium | ~400 MB | ~800 MB | 10 | Browser renderer processes |
-| python3.12/13 | 444 MB | 529 MB | — | Various services |
-| java (Minecraft) | 248 MB | 1.1 GB | 1 | Game server |
-| dnsblockd | 228 MB | — | 1 | DNS block page |
-| rust-analyzer | 2 MB | **4.6 GB** | 1 | Fully swapped out, idle |
-| unbound | 16 MB | **1.5 GB** | 1 | DNS resolver, mostly swapped |
-| clamd | 7 MB | **968 MB** | 1 | Antivirus, fully swapped |
+| Process Group    | RSS     | Swap       | Instances | Notes                        |
+| ---------------- | ------- | ---------- | --------- | ---------------------------- |
+| gopls            | 1.65 GB | ~1 GB      | 13        | Go LSP across 10 projects    |
+| llama-server     | 947 MB  | 204 MB     | 1         | Jan AI, gemma-4-26B model    |
+| crush            | 941 MB  | —          | ~8        | AI assistant instances       |
+| clickhouse       | 724 MB  | 309 MB     | 1         | SigNoz DB                    |
+| sshd             | 443 MB  | —          | many      | SSH sessions                 |
+| helium           | ~400 MB | ~800 MB    | 10        | Browser renderer processes   |
+| python3.12/13    | 444 MB  | 529 MB     | —         | Various services             |
+| java (Minecraft) | 248 MB  | 1.1 GB     | 1         | Game server                  |
+| dnsblockd        | 228 MB  | —          | 1         | DNS block page               |
+| rust-analyzer    | 2 MB    | **4.6 GB** | 1         | Fully swapped out, idle      |
+| unbound          | 16 MB   | **1.5 GB** | 1         | DNS resolver, mostly swapped |
+| clamd            | 7 MB    | **968 MB** | 1         | Antivirus, fully swapped     |
 
 ### 5. Kernel Boot Parameters Documented
 
@@ -109,15 +110,16 @@ amd_iommu=on root=fstab loglevel=4 lsm=landlock,yama,bpf
 ```
 
 Key problematic params:
+
 - `amdgpu.gttsize=131072` → allows GTT up to **128 GB** (2× total physical RAM!)
 - `amdgpu.ttm.pages_limit=31457280` → allows **120 GB** TTM pages (nearly 2× physical RAM)
 
 ### 6. ZRAM/Swap State Documented
 
-| Device | Type | Size | Used | Compression |
-|--------|------|------|------|-------------|
-| /dev/zram0 | zstd | 31.2 GB | 15.3 GB data → 3.8 GB physical | 3.8:1 |
-| /dev/nvme0n1p2 | partition | 10 GB | 36.7 MB | — |
+| Device         | Type      | Size    | Used                           | Compression |
+| -------------- | --------- | ------- | ------------------------------ | ----------- |
+| /dev/zram0     | zstd      | 31.2 GB | 15.3 GB data → 3.8 GB physical | 3.8:1       |
+| /dev/nvme0n1p2 | partition | 10 GB   | 36.7 MB                        | —           |
 
 ZRAM is doing the heavy lifting. Physical swap partition is virtually unused.
 
@@ -199,6 +201,7 @@ Change "128GB" to "64GB LPDDR5x (8×8 GB)". This affects all capacity planning a
 ### 3. Process Resource Limits
 
 No memory limits on services. Add `MemoryMax` for:
+
 - ClickHouse: 1 GB cap
 - Minecraft: 2 GB cap
 - Hermes: 1 GB cap
@@ -263,6 +266,7 @@ Services like ClamAV (968 MB swap), Minecraft (1.1 GB swap), rust-analyzer (4.6 
 **What is the minimum GTT allocation the AMD Ryzen AI Max+ 395 APU actually needs for your daily workload (Niri compositor, Helium browser, occasional gaming, AI inference)?**
 
 The GPU GTT is at 22.4 GB, but I can't determine if this is:
+
 - **(a)** The driver pre-allocating an address space reserve (would work fine with 8 GB)
 - **(b)** The display compositor + browser + apps actually needing that much mapped GPU memory
 

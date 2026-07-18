@@ -12,12 +12,12 @@
 
 Every service module now has an explicit `services.<name>.enable` toggle gated with `lib.mkIf`. All are activated in `configuration.nix`.
 
-| Batch | Commit | Modules | Option Names |
-|-------|--------|---------|--------------|
-| P4-37 | `bcfe724` | sops, caddy, gitea, immich | `sops-config`, `caddy`, `gitea`, `immich` |
-| P4-38 | `02b8474` | authelia, photomap, homepage, taskchampion | `authelia-config`, `photomap`, `homepage`, `taskchampion-config` |
+| Batch | Commit    | Modules                                                 | Option Names                                                                   |
+| ----- | --------- | ------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| P4-37 | `bcfe724` | sops, caddy, gitea, immich                              | `sops-config`, `caddy`, `gitea`, `immich`                                      |
+| P4-38 | `02b8474` | authelia, photomap, homepage, taskchampion              | `authelia-config`, `photomap`, `homepage`, `taskchampion-config`               |
 | P4-39 | `eb02fcc` | display-manager, audio, niri-config, security-hardening | `display-manager-config`, `audio-config`, `niri-desktop`, `security-hardening` |
-| P4-40 | `8dd8ccc` | monitoring, multi-wm, chromium-policies, steam | `monitoring-tools`, `multi-wm`, `chromium-policies`, `steam-config` |
+| P4-40 | `8dd8ccc` | monitoring, multi-wm, chromium-policies, steam          | `monitoring-tools`, `multi-wm`, `chromium-policies`, `steam-config`            |
 
 **Key pattern:** Modules wrapping nixpkgs service options (where we also set `enable = true`) use a custom `-config` suffixed option to avoid infinite recursion. Modules for services without nixpkgs option conflicts use the natural name.
 
@@ -25,11 +25,11 @@ Every service module now has an explicit `services.<name>.enable` toggle gated w
 
 Three workflow files created in `.github/workflows/`:
 
-| Workflow | Trigger | Purpose |
-|----------|---------|---------|
-| `nix-check.yml` | push/PR to master | `nix flake check --no-build` |
-| `go-test.yml` | push/PR (Go paths) | `go vet` + `go test -race` for emeet-pixyd; `go vet` + `go build` for dnsblockd-processor |
-| `flake-update.yml` | Weekly Monday 06:00 UTC | `nix flake update` + auto PR via `peter-evans/create-pull-request` |
+| Workflow           | Trigger                 | Purpose                                                                                   |
+| ------------------ | ----------------------- | ----------------------------------------------------------------------------------------- |
+| `nix-check.yml`    | push/PR to master       | `nix flake check --no-build`                                                              |
+| `go-test.yml`      | push/PR (Go paths)      | `go vet` + `go test -race` for emeet-pixyd; `go vet` + `go build` for dnsblockd-processor |
+| `flake-update.yml` | Weekly Monday 06:00 UTC | `nix flake update` + auto PR via `peter-evans/create-pull-request`                        |
 
 ---
 
@@ -43,11 +43,11 @@ Three workflow files created in `.github/workflows/`:
 
 ## MASTER_TODO_PLAN Progress
 
-| Tasks | Status |
-|-------|--------|
-| P4-37 through P4-40 (4 tasks) | ✅ Complete |
-| P7-69, P7-70, P7-71 (3 tasks) | ✅ Complete |
-| **7 tasks completed this session** | |
+| Tasks                              | Status      |
+| ---------------------------------- | ----------- |
+| P4-37 through P4-40 (4 tasks)      | ✅ Complete |
+| P7-69, P7-70, P7-71 (3 tasks)      | ✅ Complete |
+| **7 tasks completed this session** |             |
 
 ---
 

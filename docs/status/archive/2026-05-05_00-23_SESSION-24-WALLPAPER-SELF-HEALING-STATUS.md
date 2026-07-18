@@ -54,28 +54,28 @@ Session 24 diagnosed and fixed the **recurring wallpaper failure** — a 4-sessi
 
 ### evo-x2 Deployment
 
-| Aspect | Status | Why |
-|--------|--------|-----|
-| Build passes | ✅ `just test-fast` clean | All changes evaluate |
-| `just switch` applied | ❓ Unknown | User may not have switched since session 22 |
-| Wallpaper actually displaying | ❓ Unknown | Need graphical session to verify |
-| Crash recovery tested | ❌ Not tested | SysRq, watchdog, pstore untested in production |
-| Swappiness + ZRAM tuning | ❌ Not committed | Was planned in session 23 (swappiness 30→10, ZRAM 15→25%) |
+| Aspect                        | Status                    | Why                                                       |
+| ----------------------------- | ------------------------- | --------------------------------------------------------- |
+| Build passes                  | ✅ `just test-fast` clean | All changes evaluate                                      |
+| `just switch` applied         | ❓ Unknown                | User may not have switched since session 22               |
+| Wallpaper actually displaying | ❓ Unknown                | Need graphical session to verify                          |
+| Crash recovery tested         | ❌ Not tested             | SysRq, watchdog, pstore untested in production            |
+| Swappiness + ZRAM tuning      | ❌ Not committed          | Was planned in session 23 (swappiness 30→10, ZRAM 15→25%) |
 
 ### Master TODO Plan (estimated ~68%, up from 65%)
 
-| Category | Done | Total | % | Notes |
-|----------|------|-------|---|-------|
-| P0 CRITICAL | 6 | 6 | 100% | Crash recovery, pstore, GPU recovery |
-| P1 SECURITY | 3 | 7 | 43% | sops, Docker digests, VRRP auth blocked |
-| P2 RELIABILITY | 12 | 11 | 100%+ | Wallpaper self-healing added |
-| P3 CODE QUALITY | 9 | 9 | 100% | lib/ extraction, harden() adoption |
-| P4 ARCHITECTURE | 7 | 7 | 100% | flake-parts, overlays consolidated |
-| P5 DEPLOY/VERIFY | 0 | 13 | 0% | All need evo-x2 manual verification |
-| P6 SERVICES | 10 | 15 | 67% | Hermes health, SigNoz metrics remaining |
-| P7 TOOLING/CI | 10 | 10 | 100% | wallpaper-status, library-policy |
-| P8 CLEANUP | 2 | 4 | 50% | Dead code removed, docs still messy |
-| P9 FUTURE | 2 | 12 | 17% | Research items |
+| Category         | Done | Total | %     | Notes                                   |
+| ---------------- | ---- | ----- | ----- | --------------------------------------- |
+| P0 CRITICAL      | 6    | 6     | 100%  | Crash recovery, pstore, GPU recovery    |
+| P1 SECURITY      | 3    | 7     | 43%   | sops, Docker digests, VRRP auth blocked |
+| P2 RELIABILITY   | 12   | 11    | 100%+ | Wallpaper self-healing added            |
+| P3 CODE QUALITY  | 9    | 9     | 100%  | lib/ extraction, harden() adoption      |
+| P4 ARCHITECTURE  | 7    | 7     | 100%  | flake-parts, overlays consolidated      |
+| P5 DEPLOY/VERIFY | 0    | 13    | 0%    | All need evo-x2 manual verification     |
+| P6 SERVICES      | 10   | 15    | 67%   | Hermes health, SigNoz metrics remaining |
+| P7 TOOLING/CI    | 10   | 10    | 100%  | wallpaper-status, library-policy        |
+| P8 CLEANUP       | 2    | 4     | 50%   | Dead code removed, docs still messy     |
+| P9 FUTURE        | 2    | 12    | 17%   | Research items                          |
 
 ---
 
@@ -200,33 +200,33 @@ Session 24 diagnosed and fixed the **recurring wallpaper failure** — a 4-sessi
 
 ## f) Top #25 Next Actions
 
-| # | Action | Impact | Effort | Est. |
-|---|--------|--------|--------|------|
-| 1 | **`just switch` on evo-x2** — deploy all session 22-24 changes | Critical | Trivial | 10min |
-| 2 | **Verify wallpaper self-healing** — `just wallpaper-status`, then kill daemon, verify auto-recovery | High | Trivial | 2min |
-| 3 | **Commit swappiness + ZRAM tuning** (30→10, 15→25%) from session 23 | Medium | Trivial | 2min |
-| 4 | **Extract wallpaper to own module** (`platforms/nixos/programs/wallpaper.nix`) | Medium | Low | 15min |
-| 5 | **Add `ExecStartPost` socket check** to awww-daemon | Medium | Trivial | 5min |
-| 6 | **Use `serviceDefaults` for awww-daemon** | Low | Trivial | 2min |
-| 7 | **Pin Docker image digests** (whisper, photomap) | High | Low | 15min |
-| 8 | **Add `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops | High | Low | 10min |
-| 9 | **Update Gitea GitHub mirror token** | High | Trivial | 2min |
-| 10 | **Disk usage audit** — find large dirs on root and /data | Medium | Low | 10min |
-| 11 | **Nix GC + Docker prune timer** | Medium | Low | 15min |
-| 12 | **Archive 75 status docs** — move to `docs/status/archive/2026-05/` | Low | Trivial | 5min |
-| 13 | **Verify SigNoz dashboards/alerts** | Medium | Low | 10min |
-| 14 | **Verify crash recovery stack** — test SysRq REISUB, watchdog, pstore | High | Medium | 15min |
-| 15 | **Create `lib/systemd/health-check.nix`** shared curl helper | Medium | Low | 10min |
-| 16 | **Swap audit** — 12GB seems high, investigate | Medium | Low | 10min |
-| 17 | **BTRFS scrub timer** for data integrity | Medium | Low | 10min |
-| 18 | **Hermes health check endpoint** | Medium | Low | 10min |
-| 19 | **Update homepage dashboard** for new/changed services | Low | Low | 10min |
-| 20 | **Test Caddy TLS cert renewal** | Medium | Low | 5min |
-| 21 | **Build Pi 3 SD image** for DNS failover | High | High | 30min+ |
-| 22 | **Migrate Taskwarrior encryption to sops** | Medium | Low | 10min |
-| 23 | **Secure VRRP auth_pass with sops** | Medium | Low | 8min |
-| 24 | **Create TODO_LIST.md** from existing docs | Medium | Medium | 20min |
-| 25 | **Verify AMD NPU workload** (XDNA driver) | Medium | Low | 5min |
+| #   | Action                                                                                              | Impact   | Effort  | Est.   |
+| --- | --------------------------------------------------------------------------------------------------- | -------- | ------- | ------ |
+| 1   | **`just switch` on evo-x2** — deploy all session 22-24 changes                                      | Critical | Trivial | 10min  |
+| 2   | **Verify wallpaper self-healing** — `just wallpaper-status`, then kill daemon, verify auto-recovery | High     | Trivial | 2min   |
+| 3   | **Commit swappiness + ZRAM tuning** (30→10, 15→25%) from session 23                                 | Medium   | Trivial | 2min   |
+| 4   | **Extract wallpaper to own module** (`platforms/nixos/programs/wallpaper.nix`)                      | Medium   | Low     | 15min  |
+| 5   | **Add `ExecStartPost` socket check** to awww-daemon                                                 | Medium   | Trivial | 5min   |
+| 6   | **Use `serviceDefaults` for awww-daemon**                                                           | Low      | Trivial | 2min   |
+| 7   | **Pin Docker image digests** (whisper, photomap)                                                    | High     | Low     | 15min  |
+| 8   | **Add `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops                                                      | High     | Low     | 10min  |
+| 9   | **Update Gitea GitHub mirror token**                                                                | High     | Trivial | 2min   |
+| 10  | **Disk usage audit** — find large dirs on root and /data                                            | Medium   | Low     | 10min  |
+| 11  | **Nix GC + Docker prune timer**                                                                     | Medium   | Low     | 15min  |
+| 12  | **Archive 75 status docs** — move to `docs/status/archive/2026-05/`                                 | Low      | Trivial | 5min   |
+| 13  | **Verify SigNoz dashboards/alerts**                                                                 | Medium   | Low     | 10min  |
+| 14  | **Verify crash recovery stack** — test SysRq REISUB, watchdog, pstore                               | High     | Medium  | 15min  |
+| 15  | **Create `lib/systemd/health-check.nix`** shared curl helper                                        | Medium   | Low     | 10min  |
+| 16  | **Swap audit** — 12GB seems high, investigate                                                       | Medium   | Low     | 10min  |
+| 17  | **BTRFS scrub timer** for data integrity                                                            | Medium   | Low     | 10min  |
+| 18  | **Hermes health check endpoint**                                                                    | Medium   | Low     | 10min  |
+| 19  | **Update homepage dashboard** for new/changed services                                              | Low      | Low     | 10min  |
+| 20  | **Test Caddy TLS cert renewal**                                                                     | Medium   | Low     | 5min   |
+| 21  | **Build Pi 3 SD image** for DNS failover                                                            | High     | High    | 30min+ |
+| 22  | **Migrate Taskwarrior encryption to sops**                                                          | Medium   | Low     | 10min  |
+| 23  | **Secure VRRP auth_pass with sops**                                                                 | Medium   | Low     | 8min   |
+| 24  | **Create TODO_LIST.md** from existing docs                                                          | Medium   | Medium  | 20min  |
+| 25  | **Verify AMD NPU workload** (XDNA driver)                                                           | Medium   | Low     | 5min   |
 
 ---
 
@@ -241,6 +241,7 @@ Home Manager has `systemd.user.startServices` (default: `sd-switch` or `true` in
 **Impact:** Every user-service change (wallpaper, waybar, cliphist, session restore) requires either `systemctl --user restart <service>` or a full logout/login. This is the exact reason the wallpaper "didn't work" across Sessions 14, 23, and 24.
 
 **Options I see:**
+
 1. Add `home.activation.reloadSystemd` or similar to force user service restarts after switch
 2. Add a `just post-switch` recipe that restarts known user services
 3. Investigate whether `sd-switch` is actually running and what it does
@@ -250,18 +251,18 @@ Home Manager has `systemd.user.startServices` (default: `sd-switch` or `true` in
 
 ## Current System State
 
-|| Area | Status | Detail |
-|------|--------|--------|--------|
-| NixOS build | ✅ Clean | `just test-fast` passes |
-| Git | 2 ahead of origin | About to push |
-| Root disk | ⚠️ 88% (434G/512G) | 62G free — needs audit |
-| /data disk | ⚠️ 74% (590G/800G) | 210G free — improved from 86% |
-| RAM | 54G/62G used | 8G available |
-| Swap | 12G/41G | Elevated — investigate |
-| System services (19+) | ✅ Running | Per session 23 |
-| Wallpaper (awww-daemon) | ❓ Unknown | SSH session — can't verify graphical state |
-| Crash recovery stack | ✅ In config | Not tested in production |
-| 31 service modules | ✅ All evaluate | `just test-fast` clean |
+|                         | Area               | Status                                     | Detail |
+| ----------------------- | ------------------ | ------------------------------------------ | ------ |
+| NixOS build             | ✅ Clean           | `just test-fast` passes                    |
+| Git                     | 2 ahead of origin  | About to push                              |
+| Root disk               | ⚠️ 88% (434G/512G) | 62G free — needs audit                     |
+| /data disk              | ⚠️ 74% (590G/800G) | 210G free — improved from 86%              |
+| RAM                     | 54G/62G used       | 8G available                               |
+| Swap                    | 12G/41G            | Elevated — investigate                     |
+| System services (19+)   | ✅ Running         | Per session 23                             |
+| Wallpaper (awww-daemon) | ❓ Unknown         | SSH session — can't verify graphical state |
+| Crash recovery stack    | ✅ In config       | Not tested in production                   |
+| 31 service modules      | ✅ All evaluate    | `just test-fast` clean                     |
 
 ---
 

@@ -31,6 +31,7 @@ Configuration is automatically synchronized using the `sublime-text-sync.sh` scr
 ## Restoration
 
 To restore configuration on a new system:
+
 ```bash
 ./scripts/sublime-text-sync.sh --import
 ```
@@ -38,6 +39,7 @@ To restore configuration on a new system:
 ## Manual Sync
 
 To manually export current configuration:
+
 ```bash
 ./scripts/sublime-text-sync.sh --export
 ```

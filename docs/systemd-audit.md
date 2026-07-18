@@ -8,34 +8,34 @@ _May 2026 — conversation-driven audit of systemd's role in SystemNix_
 
 systemd is not an init system. It's ~1.3M lines of C (~46MB of source) implementing an operating system within the operating system:
 
-| Component | What it does |
-|-----------|-------------|
-| PID 1 | Process management (init) |
-| journald | Centralized logging |
-| udevd | Device management (`/dev`, hotplug) |
-| logind | User sessions, seats, suspend |
-| tmpfiles | Declarative directory/file creation at boot |
-| resolved | DNS resolver (caching, DNS-over-TLS) |
-| networkd | Network interface management |
-| homed | Encrypted home directories |
-| timesyncd | NTP client |
-| machined | Container/VM registration |
-| oomd | Out-of-memory killer |
-| portabled | Portable service images |
-| sysext | System extension images |
-| bootloader | EFI stub generator |
-| repart | Disk partitioning |
+| Component  | What it does                                |
+| ---------- | ------------------------------------------- |
+| PID 1      | Process management (init)                   |
+| journald   | Centralized logging                         |
+| udevd      | Device management (`/dev`, hotplug)         |
+| logind     | User sessions, seats, suspend               |
+| tmpfiles   | Declarative directory/file creation at boot |
+| resolved   | DNS resolver (caching, DNS-over-TLS)        |
+| networkd   | Network interface management                |
+| homed      | Encrypted home directories                  |
+| timesyncd  | NTP client                                  |
+| machined   | Container/VM registration                   |
+| oomd       | Out-of-memory killer                        |
+| portabled  | Portable service images                     |
+| sysext     | System extension images                     |
+| bootloader | EFI stub generator                          |
+| repart     | Disk partitioning                           |
 
 **Comparison:**
 
-| Project | Approx LoC |
-|---------|-----------|
-| systemd | ~1.3M (C core) |
-| Linux kernel | ~15M (x86_64 relevant) |
-| GNU coreutils | ~70K |
-| OpenRC | ~15K |
-| runit | ~6K |
-| s6 | ~30K |
+| Project       | Approx LoC             |
+| ------------- | ---------------------- |
+| systemd       | ~1.3M (C core)         |
+| Linux kernel  | ~15M (x86_64 relevant) |
+| GNU coreutils | ~70K                   |
+| OpenRC        | ~15K                   |
+| runit         | ~6K                    |
+| s6            | ~30K                   |
 
 systemd is roughly **100x larger than OpenRC** and **200x larger than runit**.
 
@@ -58,17 +58,17 @@ The concern isn't any single feature. It's that systemd becomes the **only conve
 
 ## What's Actually Running on evo-x2
 
-| Component | Status | Can avoid? | Notes |
-|-----------|--------|------------|-------|
-| PID 1 (init) | Running | No | Core — manages all services |
-| journald | Running | No | All service logging goes through it |
-| udevd | Running | No | Device hotplug, `/dev` management — emeet-pixy relies on udev rules |
-| logind | Running | No | Graphical sessions, seat allocation — niri depends on it |
-| tmpfiles | Running | Trivially yes | Could use `activationScripts` or `postBootCommands` instead |
-| resolved | **Disabled** ✓ | Done | Would conflict with unbound on port 53 |
-| networkd | **Not used** | Already not using it | Using legacy `networking.interfaces` with static IP |
-| homed | **Not used** | Already not using it | Using sops-nix + age for secrets |
-| timesyncd | **Not used** | Already not using it | Using `services.ntp` or chrony |
+| Component    | Status         | Can avoid?           | Notes                                                               |
+| ------------ | -------------- | -------------------- | ------------------------------------------------------------------- |
+| PID 1 (init) | Running        | No                   | Core — manages all services                                         |
+| journald     | Running        | No                   | All service logging goes through it                                 |
+| udevd        | Running        | No                   | Device hotplug, `/dev` management — emeet-pixy relies on udev rules |
+| logind       | Running        | No                   | Graphical sessions, seat allocation — niri depends on it            |
+| tmpfiles     | Running        | Trivially yes        | Could use `activationScripts` or `postBootCommands` instead         |
+| resolved     | **Disabled** ✓ | Done                 | Would conflict with unbound on port 53                              |
+| networkd     | **Not used**   | Already not using it | Using legacy `networking.interfaces` with static IP                 |
+| homed        | **Not used**   | Already not using it | Using sops-nix + age for secrets                                    |
+| timesyncd    | **Not used**   | Already not using it | Using `services.ntp` or chrony                                      |
 
 ### The Four You Can't Remove
 
@@ -81,6 +81,7 @@ init, journald, udevd, logind — these are the substrate NixOS is built on. Eve
 Both resolved and unbound want port 53. Having both active causes intermittent resolution failures.
 
 `platforms/nixos/system/networking.nix:67`:
+
 ```nix
 services.resolved.enable = false;  # Disable systemd-resolved to prevent DNS conflicts
 ```
@@ -115,6 +116,7 @@ systemd.tmpfiles.rules = [
 Format: `type path mode user group age`
 
 Alternatives that don't use tmpfiles:
+
 - `systemd.activationScripts` — arbitrary bash at boot
 - `boot.postBootCommands` — NixOS-native bash
 - `ExecStartPre` in the service that needs the directory
@@ -127,14 +129,14 @@ Alternatives that don't use tmpfiles:
 
 For evo-x2 (single interface, static IP), both are equivalent. networkd advantages only matter for complex setups.
 
-| Aspect | Legacy | networkd |
-|--------|--------|----------|
-| Config mechanism | Shell scripts (`ip addr add`) | `.network`/`.netdev` unit files |
-| Boot parallelism | After networking target | Parallel with other systemd units |
-| Complex topologies | Manual hacks | Native (VLANs, bonds, bridges) |
-| Hotplug reconfigure | Manual restart | `networkctl reconfigure` |
-| Debugging | `ip addr`, `ip route` | `networkctl status` |
-| Status for evo-x2 | Perfectly fine | No meaningful gain |
+| Aspect              | Legacy                        | networkd                          |
+| ------------------- | ----------------------------- | --------------------------------- |
+| Config mechanism    | Shell scripts (`ip addr add`) | `.network`/`.netdev` unit files   |
+| Boot parallelism    | After networking target       | Parallel with other systemd units |
+| Complex topologies  | Manual hacks                  | Native (VLANs, bonds, bridges)    |
+| Hotplug reconfigure | Manual restart                | `networkctl reconfigure`          |
+| Debugging           | `ip addr`, `ip route`         | `networkctl status`               |
+| Status for evo-x2   | Perfectly fine                | No meaningful gain                |
 
 **Verdict:** Single static IP = legacy is fine. Ten interfaces with VLANs and bonds = networkd is clearly better.
 
@@ -142,13 +144,13 @@ For evo-x2 (single interface, static IP), both are equivalent. networkd advantag
 
 ## Realistic Alternatives to systemd on NixOS
 
-| Option | Viability | Tradeoff |
-|--------|-----------|----------|
-| NixOS as-is, minimize systemd | Fully viable today | Best pragmatic choice — use dedicated tools for everything systemd offers |
-| NixOS with `systemd.enable = false` | Doesn't exist | Would require rewriting thousands of nixpkgs modules |
-| NixBSD | Experimental | FreeBSD-based Nix with its own init — very early |
-| Guix System | Viable alternative | GNU Shepherd init, but different language/ecosystem |
-| Non-Nix distro with alt init | Viable but painful | Artix (runit/s6/OpenRC), Alpine (OpenRC), Devuan (sysvinit) — lose Nix |
+| Option                              | Viability          | Tradeoff                                                                  |
+| ----------------------------------- | ------------------ | ------------------------------------------------------------------------- |
+| NixOS as-is, minimize systemd       | Fully viable today | Best pragmatic choice — use dedicated tools for everything systemd offers |
+| NixOS with `systemd.enable = false` | Doesn't exist      | Would require rewriting thousands of nixpkgs modules                      |
+| NixBSD                              | Experimental       | FreeBSD-based Nix with its own init — very early                          |
+| Guix System                         | Viable alternative | GNU Shepherd init, but different language/ecosystem                       |
+| Non-Nix distro with alt init        | Viable but painful | Artix (runit/s6/OpenRC), Alpine (OpenRC), Devuan (sysvinit) — lose Nix    |
 
 ---
 

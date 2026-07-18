@@ -21,44 +21,44 @@ The project is in a **stable, documentation-heavy phase** with clear next steps 
 
 ### Infrastructure (Unchanged — Production Stable)
 
-| Component | Status | Since |
-|-----------|--------|-------|
-| **85 `.nix` files** across 2 platforms | ✅ | 2025+ |
-| **10 infrastructure services** (Caddy, Authelia, Gitea, Immich, Homepage, PhotoMap, SigNoz, SOPS, Docker, Gitea Repos) | ✅ | 2026-03+ |
-| **7 Caddy vhosts** (auth, immich, gitea, dash, photomap, unsloth, signoz) | ✅ | 2026-03+ |
-| **25 DNS blocklists** (~2.5M domains, Unbound + dnsblockd) | ✅ | 2026-03+ |
-| **17 shared program modules** (Fish, Zsh, Bash, Nushell, Starship, Git, tmux, FZF, KeePassXC, Chromium, ActivityWatch, etc.) | ✅ | 2025+ |
-| **Cross-platform packages** (70+ in base.nix) | ✅ | 2025+ |
-| **1,828-line justfile** with 100+ recipes | ✅ | 2025+ |
-| **Pre-commit hooks** (gitleaks, treefmt, deadnix, statix, alejandra) | ✅ | 2026-03+ |
-| **BTRFS snapshots** (root zstd, /data zstd:3) | ✅ | 2026-02+ |
-| **SOPS secrets** (13 secrets, age-encrypted via SSH host key) | ✅ | 2026-03+ |
-| **Steam gaming** (GameMode, MangoHud, Gamescope) | ✅ | 2026-04-05 |
-| **Desktop environment** (Niri + Waybar + SDDM + Catppuccin Mocha everywhere) | ✅ | 2026-04-01+ |
-| **Ollama** (optimized for multi-agent coding workloads) | ✅ | 2026-04-09 |
+| Component                                                                                                                    | Status | Since       |
+| ---------------------------------------------------------------------------------------------------------------------------- | ------ | ----------- |
+| **85 `.nix` files** across 2 platforms                                                                                       | ✅     | 2025+       |
+| **10 infrastructure services** (Caddy, Authelia, Gitea, Immich, Homepage, PhotoMap, SigNoz, SOPS, Docker, Gitea Repos)       | ✅     | 2026-03+    |
+| **7 Caddy vhosts** (auth, immich, gitea, dash, photomap, unsloth, signoz)                                                    | ✅     | 2026-03+    |
+| **25 DNS blocklists** (~2.5M domains, Unbound + dnsblockd)                                                                   | ✅     | 2026-03+    |
+| **17 shared program modules** (Fish, Zsh, Bash, Nushell, Starship, Git, tmux, FZF, KeePassXC, Chromium, ActivityWatch, etc.) | ✅     | 2025+       |
+| **Cross-platform packages** (70+ in base.nix)                                                                                | ✅     | 2025+       |
+| **1,828-line justfile** with 100+ recipes                                                                                    | ✅     | 2025+       |
+| **Pre-commit hooks** (gitleaks, treefmt, deadnix, statix, alejandra)                                                         | ✅     | 2026-03+    |
+| **BTRFS snapshots** (root zstd, /data zstd:3)                                                                                | ✅     | 2026-02+    |
+| **SOPS secrets** (13 secrets, age-encrypted via SSH host key)                                                                | ✅     | 2026-03+    |
+| **Steam gaming** (GameMode, MangoHud, Gamescope)                                                                             | ✅     | 2026-04-05  |
+| **Desktop environment** (Niri + Waybar + SDDM + Catppuccin Mocha everywhere)                                                 | ✅     | 2026-04-01+ |
+| **Ollama** (optimized for multi-agent coding workloads)                                                                      | ✅     | 2026-04-09  |
 
 ### Documentation Done Today (2026-04-10)
 
-| Item | Commit | Description |
-|------|--------|-------------|
-| Comprehensive status report | `a36c694` | Full project audit with sections a-g (this report series) |
-| Status report whitespace fix | `fbc6e63` | Trailing whitespace normalization |
-| Migration proposal | `4d264af` | 939-line proposal to increase declarative coverage from 65% to 85% |
-| Migration proposal whitespace | `6b7e159` | Trailing whitespace fix |
+| Item                          | Commit    | Description                                                        |
+| ----------------------------- | --------- | ------------------------------------------------------------------ |
+| Comprehensive status report   | `a36c694` | Full project audit with sections a-g (this report series)          |
+| Status report whitespace fix  | `fbc6e63` | Trailing whitespace normalization                                  |
+| Migration proposal            | `4d264af` | 939-line proposal to increase declarative coverage from 65% to 85% |
+| Migration proposal whitespace | `6b7e159` | Trailing whitespace fix                                            |
 
 ---
 
 ## b) PARTIALLY DONE ⚠️
 
-| Item | What's Done | What's Missing | Blocked? |
-|------|-------------|----------------|----------|
-| **Security hardening** | Kernel params hardened, AppArmor prepared, USBGuard designed | Auditd disabled (NixOS bug #483085), AppArmor not enabled | Partially — upstream bug |
-| **Authelia SSO** | Running, protecting 6 vhosts, OIDC for Immich + Gitea | Password hash in nix config, OIDC client secret hash in nix config | No — just needs migration to sops |
-| **DNS Blocker** | Fully functional, 25 blocklists, block pages, stats API | Hash updates are manual (3 commits/week just for hash bumps) | No — needs automation |
-| **Monitoring** | SigNoz running (traces/metrics/logs) | No alerting rules, no dashboards, no runbooks | No |
-| **Taskwarrior** | Package installed (`taskwarrior3` + `timewarrior`) | Zero config — no .taskrc, no sync, no reports, no Android | No — architecture designed, not implemented |
-| **uBlock Filters** | Module exists, auto-update logic written | Disabled due to time parsing bug | No — needs debugging |
-| **Migration proposal** | 939-line analysis completed | Zero implementation started | No — proposal only |
+| Item                   | What's Done                                                  | What's Missing                                                     | Blocked?                                    |
+| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------ | ------------------------------------------- |
+| **Security hardening** | Kernel params hardened, AppArmor prepared, USBGuard designed | Auditd disabled (NixOS bug #483085), AppArmor not enabled          | Partially — upstream bug                    |
+| **Authelia SSO**       | Running, protecting 6 vhosts, OIDC for Immich + Gitea        | Password hash in nix config, OIDC client secret hash in nix config | No — just needs migration to sops           |
+| **DNS Blocker**        | Fully functional, 25 blocklists, block pages, stats API      | Hash updates are manual (3 commits/week just for hash bumps)       | No — needs automation                       |
+| **Monitoring**         | SigNoz running (traces/metrics/logs)                         | No alerting rules, no dashboards, no runbooks                      | No                                          |
+| **Taskwarrior**        | Package installed (`taskwarrior3` + `timewarrior`)           | Zero config — no .taskrc, no sync, no reports, no Android          | No — architecture designed, not implemented |
+| **uBlock Filters**     | Module exists, auto-update logic written                     | Disabled due to time parsing bug                                   | No — needs debugging                        |
+| **Migration proposal** | 939-line analysis completed                                  | Zero implementation started                                        | No — proposal only                          |
 
 ---
 
@@ -102,14 +102,14 @@ The project is in a **stable, documentation-heavy phase** with clear next steps 
 
 ## d) TOTALLY FUCKED UP 💥
 
-| # | Item | Severity | Root Cause | Status |
-|---|------|----------|------------|--------|
-| 1 | **Authelia secrets in git** | 🔴 CRITICAL | Password hash + OIDC secret in `pkgs.writeText` in authelia.nix, tracked in git history forever. If repo is public → immediately exploitable. | Known, not fixed |
-| 2 | **SigNoz firewall wide open** | 🔴 HIGH | ClickHouse (9000), HTTP (8123), OTLP (4317/4318) all open on firewall. All services are behind Caddy — these ports serve no purpose being open. | Known, trivial fix, not done |
-| 3 | **Gitea token world-readable** | 🟡 HIGH | Token file at `/var/lib/gitea/.admin-token.env` has mode 644. Any user/process on the machine can read the Gitea admin API token. | Known, 1-line fix, not done |
-| 4 | **DNS rebuild race condition** | 🟡 HIGH | During `nixos-rebuild switch`, Unbound may restart before dependent services are ready, causing transient DNS failures. | Documented, not fixed structurally |
-| 5 | **uBlock filters broken** | 🟠 MEDIUM | `programs.ublock-filters.enable = false` — time parsing issue. Feature written but non-functional. | Disabled since implementation |
-| 6 | **Git credential plaintext** | 🟠 MEDIUM | `credential.helper = "store"` — passwords stored in plaintext in `~/.git-credentials`. Should use libsecret or KeePassXC. | Known, needs D-Bus secret service |
+| #   | Item                           | Severity    | Root Cause                                                                                                                                      | Status                             |
+| --- | ------------------------------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| 1   | **Authelia secrets in git**    | 🔴 CRITICAL | Password hash + OIDC secret in `pkgs.writeText` in authelia.nix, tracked in git history forever. If repo is public → immediately exploitable.   | Known, not fixed                   |
+| 2   | **SigNoz firewall wide open**  | 🔴 HIGH     | ClickHouse (9000), HTTP (8123), OTLP (4317/4318) all open on firewall. All services are behind Caddy — these ports serve no purpose being open. | Known, trivial fix, not done       |
+| 3   | **Gitea token world-readable** | 🟡 HIGH     | Token file at `/var/lib/gitea/.admin-token.env` has mode 644. Any user/process on the machine can read the Gitea admin API token.               | Known, 1-line fix, not done        |
+| 4   | **DNS rebuild race condition** | 🟡 HIGH     | During `nixos-rebuild switch`, Unbound may restart before dependent services are ready, causing transient DNS failures.                         | Documented, not fixed structurally |
+| 5   | **uBlock filters broken**      | 🟠 MEDIUM   | `programs.ublock-filters.enable = false` — time parsing issue. Feature written but non-functional.                                              | Disabled since implementation      |
+| 6   | **Git credential plaintext**   | 🟠 MEDIUM   | `credential.helper = "store"` — passwords stored in plaintext in `~/.git-credentials`. Should use libsecret or KeePassXC.                       | Known, needs D-Bus secret service  |
 
 ---
 
@@ -141,53 +141,53 @@ The project is in a **stable, documentation-heavy phase** with clear next steps 
 
 ### Priority 1 — Trivial Security Fixes (< 5 minutes each)
 
-| # | Task | Effort | Impact | File |
-|---|------|--------|--------|------|
-| 1 | **Close SigNoz firewall ports** | 30s | HIGH | `modules/nixos/services/signoz.nix` — delete the `networking.firewall.allowedTCPPorts` block |
-| 2 | **Fix Gitea token permissions** | 30s | HIGH | `modules/nixos/services/gitea.nix` — change `chmod 644` to `chmod 600` |
-| 3 | **Close Steam firewall** | 30s | LOW | `platforms/nixos/programs/steam.nix` — set `localNetworkGameTransfers.openFirewall = false` |
+| #   | Task                            | Effort | Impact | File                                                                                         |
+| --- | ------------------------------- | ------ | ------ | -------------------------------------------------------------------------------------------- |
+| 1   | **Close SigNoz firewall ports** | 30s    | HIGH   | `modules/nixos/services/signoz.nix` — delete the `networking.firewall.allowedTCPPorts` block |
+| 2   | **Fix Gitea token permissions** | 30s    | HIGH   | `modules/nixos/services/gitea.nix` — change `chmod 644` to `chmod 600`                       |
+| 3   | **Close Steam firewall**        | 30s    | LOW    | `platforms/nixos/programs/steam.nix` — set `localNetworkGameTransfers.openFirewall = false`  |
 
 ### Priority 2 — Taskwarrior Full Integration (2-4 hours total)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 4 | Create `modules/nixos/services/taskchampion.nix` service module | 30min | New capability |
-| 5 | Add to `flake.nix` imports + nixosModules | 10min | Wiring |
-| 6 | Add DNS record `tasks` to Unbound local zone | 2min | Resolution |
-| 7 | Add Caddy vhost `tasks.home.lan` → `localhost:10222` | 10min | Access |
-| 8 | Add Homepage entry under "Productivity" group | 5min | Visibility |
-| 9 | Create `platforms/common/programs/taskwarrior.nix` (Home Manager) | 45min | Cross-platform config |
-| 10 | Import taskwarrior.nix in `home-base.nix` | 2min | Wiring |
-| 11 | Define AI Agent task protocol (tags, UDAs, docs) | 30min | Agent integration |
-| 12 | Install TaskStrider on Android, connect to sync server | 15min | Mobile access |
-| 13 | Test sync across NixOS → macOS → Android | 15min | Verification |
+| #   | Task                                                              | Effort | Impact                |
+| --- | ----------------------------------------------------------------- | ------ | --------------------- |
+| 4   | Create `modules/nixos/services/taskchampion.nix` service module   | 30min  | New capability        |
+| 5   | Add to `flake.nix` imports + nixosModules                         | 10min  | Wiring                |
+| 6   | Add DNS record `tasks` to Unbound local zone                      | 2min   | Resolution            |
+| 7   | Add Caddy vhost `tasks.home.lan` → `localhost:10222`              | 10min  | Access                |
+| 8   | Add Homepage entry under "Productivity" group                     | 5min   | Visibility            |
+| 9   | Create `platforms/common/programs/taskwarrior.nix` (Home Manager) | 45min  | Cross-platform config |
+| 10  | Import taskwarrior.nix in `home-base.nix`                         | 2min   | Wiring                |
+| 11  | Define AI Agent task protocol (tags, UDAs, docs)                  | 30min  | Agent integration     |
+| 12  | Install TaskStrider on Android, connect to sync server            | 15min  | Mobile access         |
+| 13  | Test sync across NixOS → macOS → Android                          | 15min  | Verification          |
 
 ### Priority 3 — Security Hardening (1-2 hours)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 14 | Move Authelia users_database.yml to sops template | 45min | CRITICAL fix |
-| 15 | Move Authelia OIDC client secret to sops | 30min | CRITICAL fix |
-| 16 | Switch git credential helper to libsecret | 30min | MEDIUM fix |
-| 17 | Evaluate rootless Docker / podman migration | 2h | HIGH fix |
+| #   | Task                                              | Effort | Impact       |
+| --- | ------------------------------------------------- | ------ | ------------ |
+| 14  | Move Authelia users_database.yml to sops template | 45min  | CRITICAL fix |
+| 15  | Move Authelia OIDC client secret to sops          | 30min  | CRITICAL fix |
+| 16  | Switch git credential helper to libsecret         | 30min  | MEDIUM fix   |
+| 17  | Evaluate rootless Docker / podman migration       | 2h     | HIGH fix     |
 
 ### Priority 4 — Monitoring & Reliability (2-4 hours)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 18 | Configure SigNoz alerting (disk, services, OOM) | 2h | Operational safety |
-| 19 | Fix DNS rebuild race condition | 1h | Reliability |
-| 20 | Create SigNoz dashboards for services | 2h | Observability |
-| 21 | Automate blocklist hash updates | 2h | Maintenance reduction |
-| 22 | Test BTRFS snapshot restore | 1h | Disaster recovery confidence |
+| #   | Task                                            | Effort | Impact                       |
+| --- | ----------------------------------------------- | ------ | ---------------------------- |
+| 18  | Configure SigNoz alerting (disk, services, OOM) | 2h     | Operational safety           |
+| 19  | Fix DNS rebuild race condition                  | 1h     | Reliability                  |
+| 20  | Create SigNoz dashboards for services           | 2h     | Observability                |
+| 21  | Automate blocklist hash updates                 | 2h     | Maintenance reduction        |
+| 22  | Test BTRFS snapshot restore                     | 1h     | Disaster recovery confidence |
 
 ### Priority 5 — Cleanup & Quality (Ongoing)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 23 | Archive 90+ old status docs to `docs/status/archive/` | 15min | Repo cleanliness |
-| 24 | Fix uBlock filter time parsing bug | 1h | Feature completion |
-| 25 | Update AGENTS.md to reflect all changes | 30min | Agent accuracy |
+| #   | Task                                                  | Effort | Impact             |
+| --- | ----------------------------------------------------- | ------ | ------------------ |
+| 23  | Archive 90+ old status docs to `docs/status/archive/` | 15min  | Repo cleanliness   |
+| 24  | Fix uBlock filter time parsing bug                    | 1h     | Feature completion |
+| 25  | Update AGENTS.md to reflect all changes               | 30min  | Agent accuracy     |
 
 ---
 
@@ -206,19 +206,19 @@ This is the same question from the previous report. It remains unanswered and it
 
 ## Session Activity Log (2026-04-10)
 
-| Time | Event |
-|------|-------|
-| 07:32 | Comprehensive status report written and committed (`a36c694`) |
-| 07:42 | Status report updated with whitespace fixes (`fbc6e63`) |
-| ~08:00 | Taskwarrior sync architecture research and proposal presented to user |
-| ~08:30 | User asked to execute all planned changes |
-| ~08:35 | Agent read all 8+ target files, analyzed each change for safety |
+| Time   | Event                                                                                                                                              |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 07:32  | Comprehensive status report written and committed (`a36c694`)                                                                                      |
+| 07:42  | Status report updated with whitespace fixes (`fbc6e63`)                                                                                            |
+| ~08:00 | Taskwarrior sync architecture research and proposal presented to user                                                                              |
+| ~08:30 | User asked to execute all planned changes                                                                                                          |
+| ~08:35 | Agent read all 8+ target files, analyzed each change for safety                                                                                    |
 | ~08:45 | **Agent correctly identified that IOMMU and passwordless sudo are DELIBERATE choices**, not bugs. Refused to "fix" them without user confirmation. |
-| ~08:50 | User challenged the decision on IOMMU and passwordless sudo |
-| ~09:04 | Status report whitespace fix committed (`fbc6e63`) — another agent |
-| 09:12 | Migration proposal whitespace fix committed (`6b7e159`) — another agent |
-| ~09:15 | User requested this second comprehensive status report |
-| 09:24 | **This report written** |
+| ~08:50 | User challenged the decision on IOMMU and passwordless sudo                                                                                        |
+| ~09:04 | Status report whitespace fix committed (`fbc6e63`) — another agent                                                                                 |
+| 09:12  | Migration proposal whitespace fix committed (`6b7e159`) — another agent                                                                            |
+| ~09:15 | User requested this second comprehensive status report                                                                                             |
+| 09:24  | **This report written**                                                                                                                            |
 
 ### Key Takeaway from This Session
 
@@ -230,15 +230,15 @@ The session produced extensive analysis and planning but **zero Nix configuratio
 
 ## Key Metrics
 
-| Metric | Value | Change Since 07:32 |
-|--------|-------|--------------------|
-| Total `.nix` files | 85 | No change |
-| Total commits | 1,543 | +4 (all docs) |
-| Infrastructure services | 10 | No change |
-| Caddy virtual hosts | 7 | No change |
-| SOPS secrets | 13 | No change |
-| DNS blocklists | 25+ | No change |
-| Status documents | 111 | +1 (migration proposal) |
-| Security findings resolved | 0/23 | No change |
-| Taskwarrior config lines | 0 | No change |
-| Actual Nix changes today | 0 | — |
+| Metric                     | Value | Change Since 07:32      |
+| -------------------------- | ----- | ----------------------- |
+| Total `.nix` files         | 85    | No change               |
+| Total commits              | 1,543 | +4 (all docs)           |
+| Infrastructure services    | 10    | No change               |
+| Caddy virtual hosts        | 7     | No change               |
+| SOPS secrets               | 13    | No change               |
+| DNS blocklists             | 25+   | No change               |
+| Status documents           | 111   | +1 (migration proposal) |
+| Security findings resolved | 0/23  | No change               |
+| Taskwarrior config lines   | 0     | No change               |
+| Actual Nix changes today   | 0     | —                       |

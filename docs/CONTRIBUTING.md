@@ -58,18 +58,18 @@ SystemNix/
 
 Installed via `pre-commit install`. All hooks must pass before merge:
 
-| Hook | Purpose |
-|------|---------|
-| gitleaks | Detect committed secrets |
-| trailing-whitespace | Clean trailing spaces |
-| deadnix | Find dead/unused Nix code |
-| statix | Detect Nix antipatterns (20+ rules) |
-| alejandra | Enforce Nix formatting |
-| nix-check | Full `nix flake check --no-build` |
-| flake-lock-validate | Validate lockfile integrity |
-| shellcheck | Shell script linting |
-| check-merge-conflicts | Catch unresolved markers |
-| protect-home-audit | Warn when `harden {}` + `/home` lacks `ProtectHome = false` |
+| Hook                  | Purpose                                                     |
+| --------------------- | ----------------------------------------------------------- |
+| gitleaks              | Detect committed secrets                                    |
+| trailing-whitespace   | Clean trailing spaces                                       |
+| deadnix               | Find dead/unused Nix code                                   |
+| statix                | Detect Nix antipatterns (20+ rules)                         |
+| alejandra             | Enforce Nix formatting                                      |
+| nix-check             | Full `nix flake check --no-build`                           |
+| flake-lock-validate   | Validate lockfile integrity                                 |
+| shellcheck            | Shell script linting                                        |
+| check-merge-conflicts | Catch unresolved markers                                    |
+| protect-home-audit    | Warn when `harden {}` + `/home` lacks `ProtectHome = false` |
 
 ### Auto-fix Commands
 
@@ -137,6 +137,7 @@ _: {
 Place cross-platform config in `platforms/common/`. Both platforms import `common/home-base.nix`, which pulls in program modules from `common/programs/`.
 
 Platform differences use:
+
 ```nix
 if pkgs.stdenv.isLinux then "..." else "..."
 ```
@@ -162,6 +163,7 @@ Never wrap config in `lib.mkIf config.services.<nixpkg-option>.enable` AND set a
 ### Systemd Hardening
 
 Use the shared `lib/systemd.nix` harden function for consistent security:
+
 ```nix
 serviceConfig =
   harden {
@@ -178,6 +180,7 @@ All secrets managed via sops-nix with age encryption. See `modules/nixos/service
 ### Native OIDC vs Forward-Auth
 
 SystemNix has two SSO layers:
+
 - **Layer 1 — Native OIDC**: Apps integrate directly with Pocket ID (Forgejo, Immich, Gatus). Caddy uses plain `reverse_proxy`.
 - **Layer 2 — oauth2-proxy forward-auth**: Apps without native auth; Caddy uses `protectedVHost`.
 
@@ -186,6 +189,7 @@ Never put a native-OIDC service behind `protectedVHost` — it causes a double-a
 ## Documentation
 
 When you learn something non-obvious, update the relevant doc immediately:
+
 - `AGENTS.md` — AI assistant guide, conventions, gotchas
 - `FEATURES.md` — Feature inventory and status
 - `ROADMAP.md` — Long-term direction

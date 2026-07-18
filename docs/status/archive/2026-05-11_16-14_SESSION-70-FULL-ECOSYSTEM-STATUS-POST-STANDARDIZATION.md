@@ -16,17 +16,17 @@ All 9 Go tooling projects build successfully. SystemNix passes `just test-fast`.
 
 ### Go Tooling Ecosystem (9/9 build)
 
-| Project | Flake Type | Builds | Has Overlay | Wired in SystemNix |
-|---------|-----------|--------|-------------|-------------------|
-| library-policy | flake-parts | ✅ | ✅ | ✅ |
-| BuildFlow | flake-utils + preparedSrc | ✅ | ✅ | ✅ |
-| go-auto-upgrade | flake-utils + preparedSrc | ✅ | ✅ | ✅ |
-| go-structure-linter | manual forAllSystems + preparedSrc | ✅ | ✅ | ✅ |
-| branching-flow | flake-utils + preparedSrc | ✅ | ✅ | ✅ |
-| golangci-lint-auto-configure | flake-utils + proxyVendor | ✅ | ✅ | ✅ |
-| art-dupl | manual forAllSystems + vendor swap | ✅ | ✅ | ✅ |
-| PMA | flake-utils + preparedSrc (10 deps) | ✅ | ✅ | ❌ (not wired yet) |
-| hierarchical-errors | flake-utils + preparedSrc | ✅ | ✅ | ❌ (not wired yet) |
+| Project                      | Flake Type                          | Builds | Has Overlay | Wired in SystemNix |
+| ---------------------------- | ----------------------------------- | ------ | ----------- | ------------------ |
+| library-policy               | flake-parts                         | ✅     | ✅          | ✅                 |
+| BuildFlow                    | flake-utils + preparedSrc           | ✅     | ✅          | ✅                 |
+| go-auto-upgrade              | flake-utils + preparedSrc           | ✅     | ✅          | ✅                 |
+| go-structure-linter          | manual forAllSystems + preparedSrc  | ✅     | ✅          | ✅                 |
+| branching-flow               | flake-utils + preparedSrc           | ✅     | ✅          | ✅                 |
+| golangci-lint-auto-configure | flake-utils + proxyVendor           | ✅     | ✅          | ✅                 |
+| art-dupl                     | manual forAllSystems + vendor swap  | ✅     | ✅          | ✅                 |
+| PMA                          | flake-utils + preparedSrc (10 deps) | ✅     | ✅          | ❌ (not wired yet) |
+| hierarchical-errors          | flake-utils + preparedSrc           | ✅     | ✅          | ❌ (not wired yet) |
 
 ### SystemNix Infrastructure
 
@@ -53,10 +53,10 @@ All 9 Go tooling projects build successfully. SystemNix passes `just test-fast`.
 
 Two `pkgs/` files are **dead code** — the upstream projects now have their own flakes with overlays that SystemNix already uses:
 
-| Dead `pkgs/` file | Redundant because | Status |
-|-------------------|------------------|--------|
+| Dead `pkgs/` file                       | Redundant because                                                                    | Status             |
+| --------------------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
 | `pkgs/golangci-lint-auto-configure.nix` | Upstream has overlay, SystemNix uses `golangci-lint-auto-configure.overlays.default` | ❌ Not removed yet |
-| `pkgs/mr-sync.nix` | Upstream has overlay, SystemNix uses `mr-sync.overlays.default` | ❌ Not removed yet |
+| `pkgs/mr-sync.nix`                      | Upstream has overlay, SystemNix uses `mr-sync.overlays.default`                      | ❌ Not removed yet |
 
 Corresponding dead flake inputs (`golangci-lint-auto-configure-src`, `go-finding-src`, `mr-sync-src`) are still declared but unused by the overlay path.
 
@@ -70,29 +70,29 @@ SystemNix's `todoListAiOverlay` patches upstream's stale `outputHash` for bun de
 
 ### Upstream Flakes That Need Fixing (before SystemNix can delegate)
 
-| Project | Issue | Fix Needed |
-|---------|-------|-----------|
-| **file-and-image-renamer** | Has a `flake.nix` but it fails: private deps fetched via HTTPS (no SSH), no preparedSrc | Add SSH inputs + preparedSrc pattern like BuildFlow |
-| **monitor365** | Has a `flake.nix` but it fails: `linux/videodev2.h` not found (missing `libv4l` build dep) | Add `buildInputs = [ pkgs.libv4l ]` or similar |
-| **todo-list-ai** | SystemNix patches upstream's stale bun hash | Upstream should fix `outputHash` in their flake |
+| Project                    | Issue                                                                                      | Fix Needed                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| **file-and-image-renamer** | Has a `flake.nix` but it fails: private deps fetched via HTTPS (no SSH), no preparedSrc    | Add SSH inputs + preparedSrc pattern like BuildFlow |
+| **monitor365**             | Has a `flake.nix` but it fails: `linux/videodev2.h` not found (missing `libv4l` build dep) | Add `buildInputs = [ pkgs.libv4l ]` or similar      |
+| **todo-list-ai**           | SystemNix patches upstream's stale bun hash                                                | Upstream should fix `outputHash` in their flake     |
 
 ### Not Wired into SystemNix Yet
 
-| Project | Why Not | Priority |
-|---------|--------|----------|
-| PMA | Builds but heavy (10 private deps); no urgent need on server | Low |
-| hierarchical-errors | Just got flake; trivial to wire | Medium |
+| Project             | Why Not                                                      | Priority |
+| ------------------- | ------------------------------------------------------------ | -------- |
+| PMA                 | Builds but heavy (10 private deps); no urgent need on server | Low      |
+| hierarchical-errors | Just got flake; trivial to wire                              | Medium   |
 
 ### Wishlist
 
-| Task | Impact | Effort |
-|------|--------|--------|
-| Shared `preparedSrc` helper across all Go flakes | High (eliminates 50% boilerplate) | Medium |
-| Migrate all Go flakes to flake-parts | Medium (standardization) | Medium |
-| CI workflows for `nix build` on all repos | High (catch regressions) | Low |
-| Create flake template for new Go projects | Medium (DX improvement) | Low |
-| Remove `go.work` from PMA | Low (go.mod is now self-consistent) | Low |
-| Tag go-finding v0.4.0 (includes analysis/ subpackage) | Medium (eliminates local replace) | Low |
+| Task                                                  | Impact                              | Effort |
+| ----------------------------------------------------- | ----------------------------------- | ------ |
+| Shared `preparedSrc` helper across all Go flakes      | High (eliminates 50% boilerplate)   | Medium |
+| Migrate all Go flakes to flake-parts                  | Medium (standardization)            | Medium |
+| CI workflows for `nix build` on all repos             | High (catch regressions)            | Low    |
+| Create flake template for new Go projects             | Medium (DX improvement)             | Low    |
+| Remove `go.work` from PMA                             | Low (go.mod is now self-consistent) | Low    |
+| Tag go-finding v0.4.0 (includes analysis/ subpackage) | Medium (eliminates local replace)   | Low    |
 
 ---
 
@@ -182,15 +182,15 @@ Currently this helper generates `require`+`replace` directives for go-output's 4
 
 ## System Health
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Root disk (`/`) | 80% used (103 GB free) | ⚠️ Watch |
-| Data disk (`/data`) | 73% used (280 GB free) | ✅ OK |
-| Go projects building | 9/9 | ✅ |
-| SystemNix `test-fast` | Passes | ✅ |
-| Dead `pkgs/` files | 2 | ⚠️ Cleanup needed |
-| Dead flake inputs | 3 (`*-src` for golangci-lint-auto-configure, go-finding, mr-sync) | ⚠️ Cleanup needed |
-| Flakes needing upstream fix | 2 (file-and-image-renamer, monitor365) | 🔧 In progress |
+| Metric                      | Value                                                             | Status            |
+| --------------------------- | ----------------------------------------------------------------- | ----------------- |
+| Root disk (`/`)             | 80% used (103 GB free)                                            | ⚠️ Watch          |
+| Data disk (`/data`)         | 73% used (280 GB free)                                            | ✅ OK             |
+| Go projects building        | 9/9                                                               | ✅                |
+| SystemNix `test-fast`       | Passes                                                            | ✅                |
+| Dead `pkgs/` files          | 2                                                                 | ⚠️ Cleanup needed |
+| Dead flake inputs           | 3 (`*-src` for golangci-lint-auto-configure, go-finding, mr-sync) | ⚠️ Cleanup needed |
+| Flakes needing upstream fix | 2 (file-and-image-renamer, monitor365)                            | 🔧 In progress    |
 
 ---
 

@@ -23,34 +23,34 @@ evo-x2 **hard-crashed** at 01:39 CEST on May 25 due to an OOM cascade triggered 
 
 Full chain reconstructed from journal logs across 5 boots:
 
-| Time | Event |
-|------|-------|
-| 00:22 | First OOM — `llama-server` killed by earlyoom |
-| 01:32–01:33 | Massive OOM wave — 35 `node`, 10 `python3`, 2 `python` killed |
-| 01:33–01:38 | **42 `helium` processes** finally killed (too late) |
-| 01:37:39 | `systemd-journald` watchdog timeout (3 min limit) |
-| 01:38:07 | **`systemd-journald` SIGABRT** — coredump (OOM during `manager_find_journal`) |
-| 01:38:29–32 | Final OOM wave — earlyoom killing everything |
-| 01:38:38 | niri detects DRM zombie, attempts restart |
-| 01:39:36 | earlyoom: `"Failed to kill process"` — unrecoverable |
-| 01:39:45 | **System death** — boot -1 ends |
-| 01:42:36 | Next boot (boot 0) starts |
-| 01:45:44 | `oauth2-proxy` fails again (pre-existing, not crash-related) |
+| Time        | Event                                                                         |
+| ----------- | ----------------------------------------------------------------------------- |
+| 00:22       | First OOM — `llama-server` killed by earlyoom                                 |
+| 01:32–01:33 | Massive OOM wave — 35 `node`, 10 `python3`, 2 `python` killed                 |
+| 01:33–01:38 | **42 `helium` processes** finally killed (too late)                           |
+| 01:37:39    | `systemd-journald` watchdog timeout (3 min limit)                             |
+| 01:38:07    | **`systemd-journald` SIGABRT** — coredump (OOM during `manager_find_journal`) |
+| 01:38:29–32 | Final OOM wave — earlyoom killing everything                                  |
+| 01:38:38    | niri detects DRM zombie, attempts restart                                     |
+| 01:39:36    | earlyoom: `"Failed to kill process"` — unrecoverable                          |
+| 01:39:45    | **System death** — boot -1 ends                                               |
+| 01:42:36    | Next boot (boot 0) starts                                                     |
+| 01:45:44    | `oauth2-proxy` fails again (pre-existing, not crash-related)                  |
 
 **Root cause:** Helium binary name (`helium`) didn't match earlyoom's `--prefer` regex (`chrome|chromium`). Electron processes were invisible to earlyoom's priority targeting until it was too late.
 
 ### 2. earlyoom Prefer List Fix — Code Complete
 
-| File | Change |
-|------|--------|
+| File                                  | Change                                       |
+| ------------------------------------- | -------------------------------------------- |
 | `platforms/nixos/system/boot.nix:177` | Added `helium\|electron` to `--prefer` regex |
 
 Now earlyoom will kill browser processes first (highest RSS) instead of system services.
 
 ### 3. MemoryHigh Throttling — Code Complete
 
-| File | Change |
-|------|--------|
+| File                   | Change                                                     |
+| ---------------------- | ---------------------------------------------------------- |
 | `lib/systemd.nix:4,25` | Added `MemoryHigh = "80%"` default to `harden {}` function |
 
 Services now get throttled at 80% of their MemoryMax before hitting the hard kill boundary. This gives them a chance to recover (GC, cache drop) instead of sudden termination.
@@ -59,13 +59,13 @@ Services now get throttled at 80% of their MemoryMax before hitting the hard kil
 
 From sessions 87-88, already committed but not yet deployed:
 
-| Fix | File | Commit |
-|-----|------|--------|
-| Docker services → `multi-user.target` | `lib/docker.nix`, `modules/nixos/services/default.nix` | Uncommitted |
-| All services → `multi-user.target` | `dns-blocker.nix`, `hermes.nix`, `homepage.nix`, `signoz.nix` | Uncommitted |
-| sops GPG key import fix | `modules/nixos/services/sops.nix` | Uncommitted |
-| GPU udev rule fix | `platforms/nixos/hardware/amd-gpu.nix` | Uncommitted |
-| Signoz NVMe SMART null safety | `modules/nixos/services/signoz.nix` | Uncommitted |
+| Fix                                   | File                                                          | Commit      |
+| ------------------------------------- | ------------------------------------------------------------- | ----------- |
+| Docker services → `multi-user.target` | `lib/docker.nix`, `modules/nixos/services/default.nix`        | Uncommitted |
+| All services → `multi-user.target`    | `dns-blocker.nix`, `hermes.nix`, `homepage.nix`, `signoz.nix` | Uncommitted |
+| sops GPG key import fix               | `modules/nixos/services/sops.nix`                             | Uncommitted |
+| GPU udev rule fix                     | `platforms/nixos/hardware/amd-gpu.nix`                        | Uncommitted |
+| Signoz NVMe SMART null safety         | `modules/nixos/services/signoz.nix`                           | Uncommitted |
 
 ### 5. mkPreparedSource Centralization — DONE (Previous Session)
 
@@ -110,33 +110,33 @@ All 12 modified files pass `just test-fast` but need `just switch` to apply:
 
 ### Critical Infrastructure
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Free root disk space (28 GB unsloth, 4 GB journal) | 30 min | **IMMINENT RISK** — 2.7 GB free on 512 GB |
-| 2 | Execute /data BTRFS migration | 30 min | 827 GB unprotected |
-| 3 | Add btrbk instance for /data | 10 min | Complete snapshot coverage |
-| 4 | Add `just verify-packages` recipe | 15 min | Defense against stale vendor hashes |
-| 5 | GitHub Actions CI for Go repos | 1-2 hrs | Catch breakage at source |
+| #   | Task                                               | Effort  | Impact                                    |
+| --- | -------------------------------------------------- | ------- | ----------------------------------------- |
+| 1   | Free root disk space (28 GB unsloth, 4 GB journal) | 30 min  | **IMMINENT RISK** — 2.7 GB free on 512 GB |
+| 2   | Execute /data BTRFS migration                      | 30 min  | 827 GB unprotected                        |
+| 3   | Add btrbk instance for /data                       | 10 min  | Complete snapshot coverage                |
+| 4   | Add `just verify-packages` recipe                  | 15 min  | Defense against stale vendor hashes       |
+| 5   | GitHub Actions CI for Go repos                     | 1-2 hrs | Catch breakage at source                  |
 
 ### Service Fixes
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 6 | Fix oauth2-proxy (cookie_secret wrong size — 21 bytes, needs 16/24/32) | 30 min | Forward auth down |
-| 7 | Fix dnsblockd CA cert import (exit 127 — missing tool) | 15 min | HTTPS block page |
-| 8 | Fix photomap podman permissions | 1 hr | Disabled service |
-| 9 | Fix file-and-image-renamer (Go 1.26.3 blocked) | 30 min | Disabled service |
-| 10 | Investigate Jan AI llama-server respawn loop | 30 min | Spawns ~1.2 GB process every 1-3 min |
+| #   | Task                                                                   | Effort | Impact                               |
+| --- | ---------------------------------------------------------------------- | ------ | ------------------------------------ |
+| 6   | Fix oauth2-proxy (cookie_secret wrong size — 21 bytes, needs 16/24/32) | 30 min | Forward auth down                    |
+| 7   | Fix dnsblockd CA cert import (exit 127 — missing tool)                 | 15 min | HTTPS block page                     |
+| 8   | Fix photomap podman permissions                                        | 1 hr   | Disabled service                     |
+| 9   | Fix file-and-image-renamer (Go 1.26.3 blocked)                         | 30 min | Disabled service                     |
+| 10  | Investigate Jan AI llama-server respawn loop                           | 30 min | Spawns ~1.2 GB process every 1-3 min |
 
 ### Housekeeping
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 11 | Archive `docs/status/` — 120 files | 10 min | Clutter |
-| 12 | Clean 3 stale Timeshift doc refs | 5 min | Stale docs |
-| 13 | Automate vendor hash updates | 15 min | DX improvement |
-| 14 | Commit upstream repo dirty states | 10 min | Repo hygiene |
-| 15 | D2 architecture diagram | 20 min | Visualization |
+| #   | Task                               | Effort | Impact         |
+| --- | ---------------------------------- | ------ | -------------- |
+| 11  | Archive `docs/status/` — 120 files | 10 min | Clutter        |
+| 12  | Clean 3 stale Timeshift doc refs   | 5 min  | Stale docs     |
+| 13  | Automate vendor hash updates       | 15 min | DX improvement |
+| 14  | Commit upstream repo dirty states  | 10 min | Repo hygiene   |
+| 15  | D2 architecture diagram            | 20 min | Visualization  |
 
 ---
 
@@ -147,6 +147,7 @@ All 12 modified files pass `just test-fast` but need `just switch` to apply:
 **Impact:** Hard crash requiring reboot. journald corrupted. PostgreSQL dirty recovery. Docker containers uncleanly stopped. Two boots crashed in 2 hours.
 
 **Cause chain:**
+
 1. Helium browser (Electron) spawns dozens of renderer processes
 2. earlyoom `--prefer` regex didn't include `helium` or `electron`
 3. earlyoom killed `node`, `python3`, `python` first (they're in prefer list)
@@ -160,6 +161,7 @@ All 12 modified files pass `just test-fast` but need `just switch` to apply:
 ### 2. Root Disk 100% Full — 2.7 GB Free
 
 **This is the NEXT crash vector.** When root fills completely:
+
 - Nix builds fail (no temp space)
 - `nix-daemon` crashes (already happened in boot -1: `SIGABRT`)
 - Journal can't write → same cascade as OOM crash
@@ -167,13 +169,13 @@ All 12 modified files pass `just test-fast` but need `just switch` to apply:
 
 **Top consumers:**
 
-| Path | Size | Actionable |
-|------|------|-----------|
-| `/var/lib/unsloth` | 28 GB | **DELETE** — unused AI training data |
-| `/nix/store` | 101 GB | `nix-collect-garbage` after deploy |
-| `/var/log/journal` | 4 GB | Already limited to 4 GB max (config correct) |
-| `/var/lib/systemd` | 814 MB | Normal |
-| `/home/lars/projects` | 161 GB | On root partition — major consumer |
+| Path                  | Size   | Actionable                                   |
+| --------------------- | ------ | -------------------------------------------- |
+| `/var/lib/unsloth`    | 28 GB  | **DELETE** — unused AI training data         |
+| `/nix/store`          | 101 GB | `nix-collect-garbage` after deploy           |
+| `/var/log/journal`    | 4 GB   | Already limited to 4 GB max (config correct) |
+| `/var/lib/systemd`    | 814 MB | Normal                                       |
+| `/home/lars/projects` | 161 GB | On root partition — major consumer           |
 
 ### 3. Jan AI llama-server Memory Leak/Respawn Loop
 
@@ -216,48 +218,48 @@ Currently 8.3 GB swap used with only 8 GB free RAM. System is running hot. Load 
 
 ### Critical — Prevent Next Crash
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 1 | **Free root disk**: delete `/var/lib/unsloth` (28 GB), `nix-collect-garbage` | 30 min | 2.7 GB free = imminent disk-full crash |
-| 2 | **Deploy all pending changes**: `just switch` | 5 min | OOM fix + MemoryHigh not yet active |
-| 3 | Fix Jan AI llama-server respawn loop | 30 min | ~1.2 GB per spawn, potential OOM trigger |
-| 4 | Fix oauth2-proxy cookie_secret (21 bytes → 32 bytes) | 15 min | Forward auth down for all services |
+| #   | Task                                                                         | Effort | Why                                      |
+| --- | ---------------------------------------------------------------------------- | ------ | ---------------------------------------- |
+| 1   | **Free root disk**: delete `/var/lib/unsloth` (28 GB), `nix-collect-garbage` | 30 min | 2.7 GB free = imminent disk-full crash   |
+| 2   | **Deploy all pending changes**: `just switch`                                | 5 min  | OOM fix + MemoryHigh not yet active      |
+| 3   | Fix Jan AI llama-server respawn loop                                         | 30 min | ~1.2 GB per spawn, potential OOM trigger |
+| 4   | Fix oauth2-proxy cookie_secret (21 bytes → 32 bytes)                         | 15 min | Forward auth down for all services       |
 
 ### High — Close Open Gaps
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 5 | Execute /data BTRFS migration | 30 min | 827 GB with zero snapshots |
-| 6 | Add btrbk instance for /data | 10 min | Complete snapshot coverage |
-| 7 | Add `just verify-packages` recipe | 15 min | #1 defense against vendor hash cascade |
-| 8 | Fix dnsblockd CA cert import (exit 127) | 15 min | HTTPS block page broken |
-| 9 | GitHub Actions CI for Go repos | 1-2 hrs | Catch stale hashes at source |
-| 10 | Automate vendor hash updates | 15 min | Reduce 5-min manual cycle |
+| #   | Task                                    | Effort  | Why                                    |
+| --- | --------------------------------------- | ------- | -------------------------------------- |
+| 5   | Execute /data BTRFS migration           | 30 min  | 827 GB with zero snapshots             |
+| 6   | Add btrbk instance for /data            | 10 min  | Complete snapshot coverage             |
+| 7   | Add `just verify-packages` recipe       | 15 min  | #1 defense against vendor hash cascade |
+| 8   | Fix dnsblockd CA cert import (exit 127) | 15 min  | HTTPS block page broken                |
+| 9   | GitHub Actions CI for Go repos          | 1-2 hrs | Catch stale hashes at source           |
+| 10  | Automate vendor hash updates            | 15 min  | Reduce 5-min manual cycle              |
 
 ### Medium — Upstream & Polish
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 11 | Clean `docs/status/` — archive old reports | 10 min | 120 files is noise |
-| 12 | Fix 3 stale Timeshift doc references | 5 min | Stale information |
-| 13 | Add user-level cgroup memory limits (helium, jan) | 30 min | Prevent user OOM |
-| 14 | Unbound DNS health check / auto-restart | 15 min | DNS failures cascade to everything |
-| 15 | Disable or fix statix LSP | 5 min | Constant 30s timeout cycles |
-| 16 | Complete Gatus coverage (Hermes, Monitor365, disk/nvme) | 15 min | Observability gaps |
-| 17 | Commit library-policy test refactoring | 5 min | 18 dirty files |
-| 18 | Fix photomap podman permissions | 1 hr | Disabled service |
-| 19 | Fix file-and-image-renamer Go 1.26.3 issue | 30 min | Disabled service |
-| 20 | Update go-filewatcher flake.lock | 2 min | nixpkgs drift |
+| #   | Task                                                    | Effort | Why                                |
+| --- | ------------------------------------------------------- | ------ | ---------------------------------- |
+| 11  | Clean `docs/status/` — archive old reports              | 10 min | 120 files is noise                 |
+| 12  | Fix 3 stale Timeshift doc references                    | 5 min  | Stale information                  |
+| 13  | Add user-level cgroup memory limits (helium, jan)       | 30 min | Prevent user OOM                   |
+| 14  | Unbound DNS health check / auto-restart                 | 15 min | DNS failures cascade to everything |
+| 15  | Disable or fix statix LSP                               | 5 min  | Constant 30s timeout cycles        |
+| 16  | Complete Gatus coverage (Hermes, Monitor365, disk/nvme) | 15 min | Observability gaps                 |
+| 17  | Commit library-policy test refactoring                  | 5 min  | 18 dirty files                     |
+| 18  | Fix photomap podman permissions                         | 1 hr   | Disabled service                   |
+| 19  | Fix file-and-image-renamer Go 1.26.3 issue              | 30 min | Disabled service                   |
+| 20  | Update go-filewatcher flake.lock                        | 2 min  | nixpkgs drift                      |
 
 ### Lower — Future-proofing
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 21 | Move `/home` to `/data` partition | 1 hr | Root disk pressure (161 GB projects) |
-| 22 | D2 architecture diagram of Go dependency graph | 20 min | Visualize cascade chain |
-| 23 | Port-centric test (all `ports.*` unique) | 15 min | Prevent port conflicts |
-| 24 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 25 | Reduce flake inputs from 48 | 1-2 hrs | Simplify maintenance |
+| #   | Task                                           | Effort  | Why                                  |
+| --- | ---------------------------------------------- | ------- | ------------------------------------ |
+| 21  | Move `/home` to `/data` partition              | 1 hr    | Root disk pressure (161 GB projects) |
+| 22  | D2 architecture diagram of Go dependency graph | 20 min  | Visualize cascade chain              |
+| 23  | Port-centric test (all `ports.*` unique)       | 15 min  | Prevent port conflicts               |
+| 24  | Pre-push hook to verify Go packages build      | 15 min  | Last line of defense                 |
+| 25  | Reduce flake inputs from 48                    | 1-2 hrs | Simplify maintenance                 |
 
 ---
 
@@ -278,38 +280,38 @@ The system has **2.7 GB free** and this directory holds **28 GB**. Deleting it w
 
 ## System Health Snapshot
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| RAM | 46 GB / 62 GB (74%) | ⚠️ High |
-| Swap | 8.3 GB / 16 GB (52%) | ⚠️ Under pressure |
-| Root disk | 504 GB / 512 GB (100%) | 🔴 **CRITICAL** |
-| /data disk | 854 GB / 1.0 TB (84%) | ⚠️ Watch |
-| Load avg | 6.09 / 13.60 / 30.36 | ⚠️ Declining |
-| Uptime | 47 min | ✅ Recovered |
-| Docker containers | 11 running | ✅ All healthy |
-| BTRFS snapshots (root) | Daily via btrbk | ✅ Active |
-| BTRFS snapshots (/data) | None | ❌ Unprotected |
-| earlyoom prefer fix | Code ready, NOT deployed | ⚠️ |
-| MemoryHigh throttling | Code ready, NOT deployed | ⚠️ |
-| oauth2-proxy | Down (cookie_secret wrong size) | ❌ |
-| dnsblockd cert import | Exit 127 | ❌ |
-| Jan AI version | 0.7.5 (current) | ✅ Up to date |
-| Helium browser | 0.12.4.1 | ✅ Running |
-| Jan llama-server | Spawning every 1-3 min | ⚠️ Memory concern |
+| Metric                  | Value                           | Status            |
+| ----------------------- | ------------------------------- | ----------------- |
+| RAM                     | 46 GB / 62 GB (74%)             | ⚠️ High           |
+| Swap                    | 8.3 GB / 16 GB (52%)            | ⚠️ Under pressure |
+| Root disk               | 504 GB / 512 GB (100%)          | 🔴 **CRITICAL**   |
+| /data disk              | 854 GB / 1.0 TB (84%)           | ⚠️ Watch          |
+| Load avg                | 6.09 / 13.60 / 30.36            | ⚠️ Declining      |
+| Uptime                  | 47 min                          | ✅ Recovered      |
+| Docker containers       | 11 running                      | ✅ All healthy    |
+| BTRFS snapshots (root)  | Daily via btrbk                 | ✅ Active         |
+| BTRFS snapshots (/data) | None                            | ❌ Unprotected    |
+| earlyoom prefer fix     | Code ready, NOT deployed        | ⚠️                |
+| MemoryHigh throttling   | Code ready, NOT deployed        | ⚠️                |
+| oauth2-proxy            | Down (cookie_secret wrong size) | ❌                |
+| dnsblockd cert import   | Exit 127                        | ❌                |
+| Jan AI version          | 0.7.5 (current)                 | ✅ Up to date     |
+| Helium browser          | 0.12.4.1                        | ✅ Running        |
+| Jan llama-server        | Spawning every 1-3 min          | ⚠️ Memory concern |
 
 ---
 
 ## Configuration Summary
 
-| Aspect | Value |
-|--------|-------|
-| Flake inputs | 48 |
-| Go package overlays | 21 |
-| Service modules | 30 |
-| Pre-commit hooks | 9 |
-| Scripts | 23 |
-| Status reports | 121 total (120 root + archive) |
-| Disabled services | photomap, file-and-image-renamer, minecraft |
-| Failed services | oauth2-proxy, dnsblockd-cert-import |
-| Code TODOs | 1 (rpi3 sops-nix) |
-| Uncommitted changes | 12 files (this session + session 87-88) |
+| Aspect              | Value                                       |
+| ------------------- | ------------------------------------------- |
+| Flake inputs        | 48                                          |
+| Go package overlays | 21                                          |
+| Service modules     | 30                                          |
+| Pre-commit hooks    | 9                                           |
+| Scripts             | 23                                          |
+| Status reports      | 121 total (120 root + archive)              |
+| Disabled services   | photomap, file-and-image-renamer, minecraft |
+| Failed services     | oauth2-proxy, dnsblockd-cert-import         |
+| Code TODOs          | 1 (rpi3 sops-nix)                           |
+| Uncommitted changes | 12 files (this session + session 87-88)     |

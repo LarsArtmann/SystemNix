@@ -63,13 +63,13 @@ One of two systemd services defined by the `dual-wan` module (`modules/nixos/ser
 
 ## Lessons Learned
 
-| Lesson | Detail |
-|--------|--------|
-| `--offline` hides errors | Only use for the build/fetch phase. Suppresses eval-time errors needed to diagnose activation failures. |
-| `nh` swallows unit-level activation errors | Run `sudo /run/current-system/bin/switch-to-configuration test` directly to see the failing unit by name. |
-| Reboot resolves stale-generation conflicts | If the running system is out of sync with source config (units referenced but never started), a reboot resyncs cleanly. |
-| `route-health-monitor` is aggressive | 2s probe timeout + 2-failure threshold = 4s to failover off a healthy ethernet link. Needs carrier validation before declaring ISP dead. |
-| `detect_initial_mode` preserves broken state | Failover state is sticky across restarts. If failback threshold isn't met, system stays on WiFi indefinitely. |
+| Lesson                                       | Detail                                                                                                                                   |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `--offline` hides errors                     | Only use for the build/fetch phase. Suppresses eval-time errors needed to diagnose activation failures.                                  |
+| `nh` swallows unit-level activation errors   | Run `sudo /run/current-system/bin/switch-to-configuration test` directly to see the failing unit by name.                                |
+| Reboot resolves stale-generation conflicts   | If the running system is out of sync with source config (units referenced but never started), a reboot resyncs cleanly.                  |
+| `route-health-monitor` is aggressive         | 2s probe timeout + 2-failure threshold = 4s to failover off a healthy ethernet link. Needs carrier validation before declaring ISP dead. |
+| `detect_initial_mode` preserves broken state | Failover state is sticky across restarts. If failback threshold isn't met, system stays on WiFi indefinitely.                            |
 
 ## Current State
 

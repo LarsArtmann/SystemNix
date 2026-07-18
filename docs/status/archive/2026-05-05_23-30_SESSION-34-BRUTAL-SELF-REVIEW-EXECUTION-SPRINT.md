@@ -13,6 +13,7 @@
 Session 34 was a **READ → UNDERSTAND → RESEARCH → REFLECT → EXECUTE** session. Read all prior status reports (sessions 28–33), performed a brutal 11-question self-review, identified the **#1 most dangerous pattern** (port split-brain between caddy and service modules), then executed 7 atomic commits fixing it along with other cleanup.
 
 **7 commits produced this session**, all pushed to master. Combined with session 33's deploy, the system now has:
+
 - **Zero hardcoded port numbers in caddy.nix** (was 8)
 - **8/30 modules using `serviceDefaults{}`** (was 5/30)
 - **`primaryUser` used in tmpfiles/activation scripts** (was hardcoded `"lars"`)
@@ -250,6 +251,7 @@ Session 34 was a **READ → UNDERSTAND → RESEARCH → REFLECT → EXECUTE** se
 The `harden()` function uses `lib.mkDefault` (priority 1000) for all parameters. This means any NixOS module that sets the same field at default priority (100) silently overrides our hardening. For Caddy we worked around it with `//` merge, but Ollama's `harden { NoNewPrivileges = false; }` is **completely ineffective** — the deployed config shows `true`.
 
 Options:
+
 1. **Add `priority` parameter** to `harden()` — callers choose `mkOverride 200` vs `mkForce`
 2. **Switch default to `mkOverride 200`** — stronger than `mkDefault` but still overridable
 3. **Use `mkForce` for all** — always wins, but callers can't override with `//` merge

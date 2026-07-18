@@ -19,15 +19,16 @@ The SystemNix repository simplification initiative has successfully removed **2,
 
 ## a) FULLY DONE ✅
 
-| Task | Files/Lines | Commit |
-|------|-------------|--------|
-| Move docs/guides/ → docs/ | 4 files | 278925d |
-| Move root markdown to docs/ | 5 files, 1096 lines | 1843582 |
-| Remove unused modules | 8 files, 1017 lines | f00a86d |
-| Remove duplicate ublock script | 1 file, 358 lines | ef62af3 |
-| **TOTAL REMOVED** | **18 files, 2,471+ lines** | - |
+| Task                           | Files/Lines                | Commit  |
+| ------------------------------ | -------------------------- | ------- |
+| Move docs/guides/ → docs/      | 4 files                    | 278925d |
+| Move root markdown to docs/    | 5 files, 1096 lines        | 1843582 |
+| Remove unused modules          | 8 files, 1017 lines        | f00a86d |
+| Remove duplicate ublock script | 1 file, 358 lines          | ef62af3 |
+| **TOTAL REMOVED**              | **18 files, 2,471+ lines** | -       |
 
 ### Specific Items Completed:
+
 1. ✅ `docs/guides/` consolidated into `docs/` (4 files: KEYCHAIN-BIOMETRIC-AUTHENTICATION.md, NIX-COLORS-USER-GUIDE.md, NIX-DUPLICATION-TOOLS.md, TV-CURSOR-SIZE-FIX-HYPRLAND.md)
 2. ✅ Root-level docs moved to `docs/` (5 files: CRUSH-UPDATE-GUIDE.md, HARDCORE_REVIEW.md, PARTS.md, PROJECT_SPLIT_EXECUTIVE_REPORT.md, README.test.md)
 3. ✅ `platforms/common/errors/` removed (entire framework: ErrorManagement.nix + 5 modules)
@@ -41,28 +42,28 @@ The SystemNix repository simplification initiative has successfully removed **2,
 
 ## b) PARTIALLY DONE 🟡
 
-| Area | Status | Notes |
-|------|--------|-------|
+| Area                        | Status       | Notes                                                                        |
+| --------------------------- | ------------ | ---------------------------------------------------------------------------- |
 | Documentation consolidation | 90% complete | guides/ merged, root files moved; status/ and archive/ kept per user request |
-| Script deduplication | 10% complete | 1 duplicate removed; 50+ scripts need audit for overlaps |
-| Patch review | 0% complete | 10 patches exist, need audit for relevance |
-| dotfiles cleanup | 5% complete | Manual scripts exist; Nix-managed where possible |
+| Script deduplication        | 10% complete | 1 duplicate removed; 50+ scripts need audit for overlaps                     |
+| Patch review                | 0% complete  | 10 patches exist, need audit for relevance                                   |
+| dotfiles cleanup            | 5% complete  | Manual scripts exist; Nix-managed where possible                             |
 
 ---
 
 ## c) NOT STARTED ⏸️
 
-| Task | Priority | Impact |
-|------|----------|--------|
-| Scope Go 1.26 overlay to specific packages | **CRITICAL** | Currently affects ALL Go packages globally (lines 103-111, 160-163 in flake.nix) |
-| Remove duplicate nixpkgs.config declarations | Medium | May exist in multiple platform files |
-| Consolidate overlapping scripts | Medium | cleanup/optimize/health/benchmark variants |
-| Review patches/ directory | Low-Medium | 10 patches need relevance audit |
-| Audit 51 scripts for dead code | Medium | Many may be unused or have justfile equivalents |
-| Truncate justfile (1778 lines) | Low | Could split into modules |
-| Add root file prevention mechanism | Low | Prevent future root-level markdown |
-| Remove ActivityWatch manual scripts | Low | Should be Nix-managed only |
-| Archive old docs/status/ files | User decision | 128 current + 132 archived files |
+| Task                                         | Priority      | Impact                                                                           |
+| -------------------------------------------- | ------------- | -------------------------------------------------------------------------------- |
+| Scope Go 1.26 overlay to specific packages   | **CRITICAL**  | Currently affects ALL Go packages globally (lines 103-111, 160-163 in flake.nix) |
+| Remove duplicate nixpkgs.config declarations | Medium        | May exist in multiple platform files                                             |
+| Consolidate overlapping scripts              | Medium        | cleanup/optimize/health/benchmark variants                                       |
+| Review patches/ directory                    | Low-Medium    | 10 patches need relevance audit                                                  |
+| Audit 51 scripts for dead code               | Medium        | Many may be unused or have justfile equivalents                                  |
+| Truncate justfile (1778 lines)               | Low           | Could split into modules                                                         |
+| Add root file prevention mechanism           | Low           | Prevent future root-level markdown                                               |
+| Remove ActivityWatch manual scripts          | Low           | Should be Nix-managed only                                                       |
+| Archive old docs/status/ files               | User decision | 128 current + 132 archived files                                                 |
 
 ---
 
@@ -133,33 +134,33 @@ The SystemNix repository simplification initiative has successfully removed **2,
 
 ## f) TOP 25 THINGS TO GET DONE NEXT 🎯
 
-| Rank | Task | Effort | Impact | Category |
-|------|------|--------|--------|----------|
-| 1 | Scope Go overlay to modernize only | 30m | **HIGH** | Critical |
-| 2 | Audit scripts/cleanup.sh vs storage-cleanup.sh | 15m | Medium | Deduplication |
-| 3 | Audit scripts/optimize.sh vs optimize-system.sh | 15m | Medium | Deduplication |
-| 4 | Review patches/0001-feat-add-UI-feedback*.patch | 10m | Low | Cleanup |
-| 5 | Check if patch 1589-events-go-only.patch still needed | 10m | Low | Cleanup |
-| 6 | Verify patches 2019-2181 are still relevant | 20m | Low | Cleanup |
-| 7 | Remove unused scripts with justfile equivalents | 45m | Medium | Scripts |
-| 8 | Truncate justfile - extract devShells section | 60m | Medium | Organization |
-| 9 | Add git hook to prevent root-level markdown | 20m | Low | Prevention |
-| 10 | Document which scripts are deprecated | 30m | Medium | Docs |
-| 11 | Review ActivityWatch manual scripts | 15m | Low | Dotfiles |
-| 12 | Check SublimeText manual setup | 10m | Low | Dotfiles |
-| 13 | Audit ublock-origin manual scripts | 10m | Low | Dotfiles |
-| 14 | Consolidate benchmark variants | 30m | Medium | Scripts |
-| 15 | Consolidate health-check variants | 30m | Medium | Scripts |
-| 16 | Add script usage metrics | 45m | Low | Observability |
-| 17 | Review NixOS-specific scripts for Darwin | 20m | Low | Portability |
-| 18 | Create scripts/README.md with purpose docs | 30m | Low | Documentation |
-| 19 | Archive docs/status/ files older than 6 months | 20m | Medium | Docs |
-| 20 | Remove docs/archive/status/ from repo | 15m | Medium | Cleanup |
-| 21 | Split justfile into functional modules | 90m | Medium | Organization |
-| 22 | Add script deprecation warnings | 30m | Low | UX |
-| 23 | Create script-to-just mapping | 30m | Low | Documentation |
-| 24 | Review and remove empty directories | 10m | Low | Cleanup |
-| 25 | Final repository size audit | 15m | Low | Metrics |
+| Rank | Task                                                  | Effort | Impact   | Category      |
+| ---- | ----------------------------------------------------- | ------ | -------- | ------------- |
+| 1    | Scope Go overlay to modernize only                    | 30m    | **HIGH** | Critical      |
+| 2    | Audit scripts/cleanup.sh vs storage-cleanup.sh        | 15m    | Medium   | Deduplication |
+| 3    | Audit scripts/optimize.sh vs optimize-system.sh       | 15m    | Medium   | Deduplication |
+| 4    | Review patches/0001-feat-add-UI-feedback*.patch       | 10m    | Low      | Cleanup       |
+| 5    | Check if patch 1589-events-go-only.patch still needed | 10m    | Low      | Cleanup       |
+| 6    | Verify patches 2019-2181 are still relevant           | 20m    | Low      | Cleanup       |
+| 7    | Remove unused scripts with justfile equivalents       | 45m    | Medium   | Scripts       |
+| 8    | Truncate justfile - extract devShells section         | 60m    | Medium   | Organization  |
+| 9    | Add git hook to prevent root-level markdown           | 20m    | Low      | Prevention    |
+| 10   | Document which scripts are deprecated                 | 30m    | Medium   | Docs          |
+| 11   | Review ActivityWatch manual scripts                   | 15m    | Low      | Dotfiles      |
+| 12   | Check SublimeText manual setup                        | 10m    | Low      | Dotfiles      |
+| 13   | Audit ublock-origin manual scripts                    | 10m    | Low      | Dotfiles      |
+| 14   | Consolidate benchmark variants                        | 30m    | Medium   | Scripts       |
+| 15   | Consolidate health-check variants                     | 30m    | Medium   | Scripts       |
+| 16   | Add script usage metrics                              | 45m    | Low      | Observability |
+| 17   | Review NixOS-specific scripts for Darwin              | 20m    | Low      | Portability   |
+| 18   | Create scripts/README.md with purpose docs            | 30m    | Low      | Documentation |
+| 19   | Archive docs/status/ files older than 6 months        | 20m    | Medium   | Docs          |
+| 20   | Remove docs/archive/status/ from repo                 | 15m    | Medium   | Cleanup       |
+| 21   | Split justfile into functional modules                | 90m    | Medium   | Organization  |
+| 22   | Add script deprecation warnings                       | 30m    | Low      | UX            |
+| 23   | Create script-to-just mapping                         | 30m    | Low      | Documentation |
+| 24   | Review and remove empty directories                   | 10m    | Low      | Cleanup       |
+| 25   | Final repository size audit                           | 15m    | Low      | Metrics       |
 
 **Estimated total effort:** ~12 hours
 **High-impact quick wins:** Items 1-6 (~2 hours)
@@ -173,6 +174,7 @@ The SystemNix repository simplification initiative has successfully removed **2,
 **Question:** What is the CORRECT way to scope the Go 1.26 overlay so it ONLY affects the `modernize` package without breaking other Go tools?
 
 **Current State (lines 103-111, 160-163 in flake.nix):**
+
 ```nix
 goOverlay = final: prev: {
   go = prev.go_1_26.overrideAttrs (oldAttrs: {
@@ -190,18 +192,21 @@ overlays = [ goOverlay awWatcherOverlay ];
 **Problem:** This affects ALL Go packages in the system. The `modernize` tool needs Go 1.26, but `gopls`, `golangci-lint`, etc. should use default Go.
 
 **What I've Considered:**
+
 1. Create a separate `modernize-go` package that uses `buildGo126Module` directly
 2. Override Go only in `modernize` package definition
 3. Use `pkgs.buildPackages.go_1_26` for modernize only
 4. Remove overlay entirely and use `go_1_26` attribute where needed
 
 **Why I'm Uncertain:**
+
 - Don't know if `buildGo126Module` exists in current nixpkgs
 - Don't know if removing overlay will break modernize build
 - Don't know the proper Nix pattern for per-package Go version overrides
 - The modernize.nix file references `pkgs.go` - would need to change to `pkgs.go_1_26`
 
 **I need specific guidance on:**
+
 1. Which approach is idiomatic Nix?
 2. Does `buildGo126Module` exist or do we need a different approach?
 3. Will changing this break the modernize build?
@@ -211,16 +216,16 @@ overlays = [ goOverlay awWatcherOverlay ];
 
 ## REPOSITORY METRICS
 
-| Metric | Value | Change |
-|--------|-------|--------|
-| Total size | 469MB | - |
-| Nix files | 93 | - |
-| Script files | 51 | -1 |
-| Documentation files | 417 | -4 |
-| Status reports | 128 current + 132 archived | - |
-| Justfile lines | 1,778 | - |
-| TODO/FIXME markers | 3 | - |
-| Patches | 10 | - |
+| Metric              | Value                      | Change |
+| ------------------- | -------------------------- | ------ |
+| Total size          | 469MB                      | -      |
+| Nix files           | 93                         | -      |
+| Script files        | 51                         | -1     |
+| Documentation files | 417                        | -4     |
+| Status reports      | 128 current + 132 archived | -      |
+| Justfile lines      | 1,778                      | -      |
+| TODO/FIXME markers  | 3                          | -      |
+| Patches             | 10                         | -      |
 
 ---
 
@@ -252,5 +257,5 @@ a883215 feat(flake): enable NUR overlay and allow unfree packages
 
 ---
 
-*Report generated: 2026-03-30 11:59*
-*💘 Generated with Crush*
+_Report generated: 2026-03-30 11:59_
+_💘 Generated with Crush_

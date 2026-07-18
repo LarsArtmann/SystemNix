@@ -22,6 +22,7 @@
 ### 2. `cmdguard` Broken Imports (FIXED + PUSHED)
 
 `cmdguard` referenced deleted functions:
+
 - `output.MermaidFlowchartRenderer` → renamed to `graph.MermaidFromTableData`
 - `output.D2FromTableData` → moved to `d2.D2FromTableData`
 - `output.DOTFromTableData` → moved to `graph.DOTFromTableData`
@@ -33,24 +34,26 @@
 ### 3. All 6 Downstream Go Repos Updated (FIXED + PUSHED)
 
 Every repo using `cmdguard` or `go-output` sub-modules needed:
+
 - `go.mod` updated with `go-output/d2` + `go-output/graph` dependencies
 - `flake.nix` `subModules` or replace-loop updated to include `d2` + `graph`
 - Internal `vendorHash` recalculated
 
-| Repo | Changes | Commit |
-|------|---------|--------|
-| `go-auto-upgrade` | `go.mod` + `flake.nix` replace loop (d2, graph added) | `86c9081` |
-| `mr-sync` | `go.mod` + `flake.nix` subModules + `package.nix` vendorHash | `a5bf426` |
-| `go-structure-linter` | `go.mod` + `flake.nix` subModules + vendorHash | `8a8653d` |
-| `BuildFlow` | `go.mod` + `flake.nix` subModules + vendorHash | `b269ebf` |
-| `projects-management-automation` | `go.mod` + `flake.nix` subModules + vendorHash | `2d34a35` |
-| `golangci-lint-auto-configure` | `go.mod` + `flake.nix` vendorHash | `1b965e5` |
+| Repo                             | Changes                                                      | Commit    |
+| -------------------------------- | ------------------------------------------------------------ | --------- |
+| `go-auto-upgrade`                | `go.mod` + `flake.nix` replace loop (d2, graph added)        | `86c9081` |
+| `mr-sync`                        | `go.mod` + `flake.nix` subModules + `package.nix` vendorHash | `a5bf426` |
+| `go-structure-linter`            | `go.mod` + `flake.nix` subModules + vendorHash               | `8a8653d` |
+| `BuildFlow`                      | `go.mod` + `flake.nix` subModules + vendorHash               | `b269ebf` |
+| `projects-management-automation` | `go.mod` + `flake.nix` subModules + vendorHash               | `2d34a35` |
+| `golangci-lint-auto-configure`   | `go.mod` + `flake.nix` vendorHash                            | `1b965e5` |
 
 Also `hierarchical-errors` vendorHash confirmed unchanged: `f0f1600`.
 
 ### 4. SystemNix Overlay Cleanup (DONE)
 
 **All `vendorHash` overrides removed from `overlays/shared.nix`.** Each repo now manages its own `vendorHash` internally. The 4 overrides that were removed:
+
 - `hierarchical-errors`: was `sha256-Q9i+2iW0...`
 - `mr-sync`: was `sha256-T2IVldw0...`
 - `buildflow`: was `sha256-Jsi00lEl...`
@@ -75,6 +78,7 @@ All 262 derivations built successfully. 6.1 GiB swap usage is elevated from the 
 ### 1. AGENTS.md Not Updated
 
 `AGENTS.md` should document:
+
 - The `subModules` pattern for `go-output` repos (must include `d2` + `graph`)
 - The fact that `vendorHash` overrides are no longer in SystemNix
 - The `go-output` sub-module external consumption fix
@@ -140,48 +144,48 @@ The user explicitly asked to "remove all vendorHash overrides" which forced the 
 
 ### Critical (Do Soon)
 
-| # | Task | Why |
-|---|------|-----|
-| 1 | **`just switch`** to deploy the new configuration | Built but not activated — reboot needed |
-| 2 | **Update `AGENTS.md`** with sub-modules pattern and vendorHash ownership | Future sessions need this context |
-| 3 | **Tag `go-output/graph` and `go-output/d2`** with `v0.1.0` | Pseudo-versions are fragile |
-| 4 | **`/data` BTRFS migration** (`just snapshot-migrate-data`) | 89% full, no snapshots possible |
-| 5 | **Monitor swap usage** post-deploy — 6.1 GiB is elevated | May indicate memory leak or OOM risk |
+| #   | Task                                                                     | Why                                     |
+| --- | ------------------------------------------------------------------------ | --------------------------------------- |
+| 1   | **`just switch`** to deploy the new configuration                        | Built but not activated — reboot needed |
+| 2   | **Update `AGENTS.md`** with sub-modules pattern and vendorHash ownership | Future sessions need this context       |
+| 3   | **Tag `go-output/graph` and `go-output/d2`** with `v0.1.0`               | Pseudo-versions are fragile             |
+| 4   | **`/data` BTRFS migration** (`just snapshot-migrate-data`)               | 89% full, no snapshots possible         |
+| 5   | **Monitor swap usage** post-deploy — 6.1 GiB is elevated                 | May indicate memory leak or OOM risk    |
 
 ### High Impact (Do This Week)
 
-| # | Task | Why |
-|---|------|-----|
-| 6 | **Add CI to `go-output`** that builds sub-modules without `replace` | Prevents this exact class of bug |
-| 7 | **Darwin build verification** (`just test-fast` on macOS) | Cross-platform regressions are invisible until deploy |
-| 8 | **`just test` (full build check)** on NixOS | Only syntax check was run |
-| 9 | **Deprecation policy for `go-output` public API** | `MermaidFlowchartRenderer` deletion broke consumers |
-| 10 | **Create dependency graph** of Go repos → `cmdguard`/`go-output` | Makes cascade prediction possible |
+| #   | Task                                                                | Why                                                   |
+| --- | ------------------------------------------------------------------- | ----------------------------------------------------- |
+| 6   | **Add CI to `go-output`** that builds sub-modules without `replace` | Prevents this exact class of bug                      |
+| 7   | **Darwin build verification** (`just test-fast` on macOS)           | Cross-platform regressions are invisible until deploy |
+| 8   | **`just test` (full build check)** on NixOS                         | Only syntax check was run                             |
+| 9   | **Deprecation policy for `go-output` public API**                   | `MermaidFlowchartRenderer` deletion broke consumers   |
+| 10  | **Create dependency graph** of Go repos → `cmdguard`/`go-output`    | Makes cascade prediction possible                     |
 
 ### Important (Do Eventually)
 
-| # | Task | Why |
-|---|------|-----|
-| 11 | **`rpi3-dns` build verification** | Different overlay set, may have issues |
-| 12 | **Review `nix-amd-npu`** — last updated April 8 | Stale input, possibly broken |
-| 13 | **NixOS 26.05 → 26.11 tracking** | Currently on unstable, watch for breaking changes |
-| 14 | **Audit all `flake = false` inputs** for correctness | Some may need updates |
-| 15 | **`sops-nix` secrets rotation audit** | Last major rotation unknown |
-| 16 | **Unbound `do-ip6 = false`** — ensure new instances get it | Documented gotcha, easy to miss |
-| 17 | **Ollama GPU headroom check** — `OLLAMA_GPU_OVERHEAD=8589934592` | Verify compositor stability after deploy |
-| 18 | **Homebrew inputs audit** — `homebrew-bundle` from April 2025 | Very stale |
-| 19 | **`niri-session-manager`** — last updated July 2025 | Check if upstream has fixes |
-| 20 | **SigNoz build time optimization** | Built from source (Go 1.25), takes significant time |
+| #   | Task                                                             | Why                                                 |
+| --- | ---------------------------------------------------------------- | --------------------------------------------------- |
+| 11  | **`rpi3-dns` build verification**                                | Different overlay set, may have issues              |
+| 12  | **Review `nix-amd-npu`** — last updated April 8                  | Stale input, possibly broken                        |
+| 13  | **NixOS 26.05 → 26.11 tracking**                                 | Currently on unstable, watch for breaking changes   |
+| 14  | **Audit all `flake = false` inputs** for correctness             | Some may need updates                               |
+| 15  | **`sops-nix` secrets rotation audit**                            | Last major rotation unknown                         |
+| 16  | **Unbound `do-ip6 = false`** — ensure new instances get it       | Documented gotcha, easy to miss                     |
+| 17  | **Ollama GPU headroom check** — `OLLAMA_GPU_OVERHEAD=8589934592` | Verify compositor stability after deploy            |
+| 18  | **Homebrew inputs audit** — `homebrew-bundle` from April 2025    | Very stale                                          |
+| 19  | **`niri-session-manager`** — last updated July 2025              | Check if upstream has fixes                         |
+| 20  | **SigNoz build time optimization**                               | Built from source (Go 1.25), takes significant time |
 
 ### Nice to Have
 
-| # | Task | Why |
-|---|------|-----|
-| 21 | **`just update-and-build` recipe** | One-command flake update + build cycle |
-| 22 | **Auto-detect `subModules` in `mkPreparedSource`** | Eliminates manual sub-module lists |
-| 23 | **Monitor365 check** — verify uptime monitoring is reporting | Service was rebuilt, verify it's working |
-| 24 | **DNS blocker effectiveness audit** | Verify blocklists are current |
-| 25 | **Consider `GOWORK` instead of `_local_deps` + `mkPreparedSource`** | Go workspace is the native solution for multi-module dev |
+| #   | Task                                                                | Why                                                      |
+| --- | ------------------------------------------------------------------- | -------------------------------------------------------- |
+| 21  | **`just update-and-build` recipe**                                  | One-command flake update + build cycle                   |
+| 22  | **Auto-detect `subModules` in `mkPreparedSource`**                  | Eliminates manual sub-module lists                       |
+| 23  | **Monitor365 check** — verify uptime monitoring is reporting        | Service was rebuilt, verify it's working                 |
+| 24  | **DNS blocker effectiveness audit**                                 | Verify blocklists are current                            |
+| 25  | **Consider `GOWORK` instead of `_local_deps` + `mkPreparedSource`** | Go workspace is the native solution for multi-module dev |
 
 ---
 

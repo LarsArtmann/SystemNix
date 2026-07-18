@@ -8,15 +8,15 @@ Companion to `quickshell-nixos-vision.html`.
 
 ## TL;DR — Seven Patterns Found
 
-| # | Pattern | Complexity | Example repo | When to use |
-|---|---------|-----------|--------------|-------------|
-| 1 | **Upstream-module consumer** | Lowest | `EdenEast/nyx` + DankMaterialShell | Adopting a shell that ships its own HM module |
-| 2 | **Dotfiles wrapper** | Low | `soymou/illogical-flake` wrapping end-4 | Installing a shell that has no Nix story |
-| 3 | **Pure wrapper** | Low | `noctalia-shell` (now in nixpkgs!) | Packaging a QML-only shell config |
-| 4 | **HM module author** | Medium | `caelestia-dots/shell` | Building a shell to distribute to others |
-| 5 | **CMake plugin build** | High | `caelestia-dots/shell` | Shell needs a custom C++ QML plugin |
-| 6 | **withModules extension** | Low | `liixini/skwd-wall` | Adding Qt modules (qtsvg, qt5compat) to Quickshell |
-| 7 | **Single-purpose app** | Low | `Ronin-CK/HyprQuickFrame` | One Quickshell tool, not a full shell |
+| #   | Pattern                      | Complexity | Example repo                            | When to use                                        |
+| --- | ---------------------------- | ---------- | --------------------------------------- | -------------------------------------------------- |
+| 1   | **Upstream-module consumer** | Lowest     | `EdenEast/nyx` + DankMaterialShell      | Adopting a shell that ships its own HM module      |
+| 2   | **Dotfiles wrapper**         | Low        | `soymou/illogical-flake` wrapping end-4 | Installing a shell that has no Nix story           |
+| 3   | **Pure wrapper**             | Low        | `noctalia-shell` (now in nixpkgs!)      | Packaging a QML-only shell config                  |
+| 4   | **HM module author**         | Medium     | `caelestia-dots/shell`                  | Building a shell to distribute to others           |
+| 5   | **CMake plugin build**       | High       | `caelestia-dots/shell`                  | Shell needs a custom C++ QML plugin                |
+| 6   | **withModules extension**    | Low        | `liixini/skwd-wall`                     | Adding Qt modules (qtsvg, qt5compat) to Quickshell |
+| 7   | **Single-purpose app**       | Low        | `Ronin-CK/HyprQuickFrame`               | One Quickshell tool, not a full shell              |
 
 **For SystemNix: Pattern 1 (consumer) → then Pattern 4 (author).** Start by consuming DankMaterialShell's upstream module like EdenEast/nyx does. Graduate to your own HM module once the SystemNix-native widgets are ready.
 
@@ -73,6 +73,7 @@ Shells need `brightnessctl`, `wl-clipboard`, `cliphist`, `ddcutil`, `networkmana
 This is the closest existing analog to what SystemNix wants: a niri dotfiles repo consuming a mature Quickshell shell.
 
 **flake.nix input:**
+
 ```nix
 dankMaterialShell = {
   url = "github:AvengeMedia/DankMaterialShell/stable";
@@ -83,6 +84,7 @@ dankMaterialShell = {
 Note: `quickshell` is NOT a direct input — it enters transitively through DMS's own flake.lock. This reduces your input count.
 
 **Consumer module** (`modules/home/services/dms/default.nix`):
+
 ```nix
 {
   config, inputs, lib, ...
@@ -108,6 +110,7 @@ Note: `quickshell` is NOT a direct input — it enters transitively through DMS'
 ```
 
 **Gating on niri** (`modules/home/desktop/niri/default.nix`):
+
 ```nix
 config = lib.mkIf config.my.home.desktop.niri.enable {
   # ... niri config ...
@@ -139,6 +142,7 @@ config = lib.mkIf config.my.home.desktop.niri.enable {
 end-4's dots-hyprland is the most visually acclaimed Quickshell config but ships as Arch-focused dotfiles, not a Nix flake. illogical-flake bridges this:
 
 **flake.nix:**
+
 ```nix
 inputs = {
   quickshell = {
@@ -220,6 +224,7 @@ stdenvNoCC.mkDerivation {
 ```
 
 **Key details:**
+
 - `stdenvNoCC` — no C compiler needed, just copying files
 - `qt6.wrapQtAppsHook` + `preFixup qtWrapperArgs` — the Nix-native way to wrap Qt apps with env vars (better than raw `makeWrapper`)
 - `ln -s ${quickshell}/bin/qs` — the binary is just a symlink to `qs`
@@ -292,6 +297,7 @@ in {
 ```
 
 **Critical details:**
+
 - `config.wayland.systemd.target` — this comes from niri-flake/HM and resolves to `niri.service` (or `graphical-session.target`). This is how you bind the shell to the compositor lifecycle.
 - `Type = "exec"` — not `simple`, not `notify`. The `exec` type is correct for Quickshell.
 - `X-Restart-Triggers` — restarts the shell when the config file changes! This gives you `home-manager switch` → shell restarts with new config. Important for the iteration loop.
@@ -335,6 +341,7 @@ stdenv.mkDerivation {
 ```
 
 **Notable tricks:**
+
 - `substituteInPlace` for PAM — patches `pam_fprintd.so` to point at the NixOS system path. If SystemNix builds a lock screen with fingerprint auth, this pattern is needed.
 - `makeFontsConf` — creates a fontconfig file bundling the shell's fonts (material-symbols, rubik, nerd-fonts). Keeps font discovery deterministic.
 - `passthru = { inherit plugin extras; }` — exposes sub-derivations for the devShell.
@@ -413,22 +420,22 @@ packages = forAllSystems (pkgs: {
 
 ### Shells (Quickshell configs)
 
-| Shell | Repo | Nix story | Compositor | Maturity |
-|-------|------|-----------|------------|----------|
-| **Caelestia** | `caelestia-dots/shell` | Own flake + HM module + CMake | Hyprland | High (v1.0.0) |
-| **Illogical-Impulse** (end-4) | `end-4/dots-hyprland` | Via `illogical-flake` wrapper | Hyprland | Highest (most cloned) |
-| **DankMaterialShell** | `AvengeMedia/DankMaterialShell` | Own flake + HM module + Go core | Hyprland + Niri | High (v1.4.4, Fedora RPM) |
-| **noctalia-shell** | `noctalia-dev/noctalia-shell` | **In nixpkgs!** | Niri-first | Medium-High |
-| **iNiR** | `snowarch/iNiR` | Unknown (no flake found) | Niri-native | Medium |
-| **blxshell** | `binarylinuxx/dots` | Own flake | Hyprland | Medium |
-| **Zephyr** | `flickowoa/zephyr` | Unknown | Hyprland | Medium |
+| Shell                         | Repo                            | Nix story                       | Compositor      | Maturity                  |
+| ----------------------------- | ------------------------------- | ------------------------------- | --------------- | ------------------------- |
+| **Caelestia**                 | `caelestia-dots/shell`          | Own flake + HM module + CMake   | Hyprland        | High (v1.0.0)             |
+| **Illogical-Impulse** (end-4) | `end-4/dots-hyprland`           | Via `illogical-flake` wrapper   | Hyprland        | Highest (most cloned)     |
+| **DankMaterialShell**         | `AvengeMedia/DankMaterialShell` | Own flake + HM module + Go core | Hyprland + Niri | High (v1.4.4, Fedora RPM) |
+| **noctalia-shell**            | `noctalia-dev/noctalia-shell`   | **In nixpkgs!**                 | Niri-first      | Medium-High               |
+| **iNiR**                      | `snowarch/iNiR`                 | Unknown (no flake found)        | Niri-native     | Medium                    |
+| **blxshell**                  | `binarylinuxx/dots`             | Own flake                       | Hyprland        | Medium                    |
+| **Zephyr**                    | `flickowoa/zephyr`              | Unknown                         | Hyprland        | Medium                    |
 
 ### Tools (single-purpose Quickshell apps)
 
-| Tool | Repo | What it does |
-|------|------|-------------|
-| **HyprQuickFrame** | `Ronin-CK/HyprQuickFrame` | Screenshot annotation |
-| **skwd-wall** | `liixini/skwd-wall` | Wallpaper selector with Matugen |
+| Tool               | Repo                      | What it does                    |
+| ------------------ | ------------------------- | ------------------------------- |
+| **HyprQuickFrame** | `Ronin-CK/HyprQuickFrame` | Screenshot annotation           |
+| **skwd-wall**      | `liixini/skwd-wall`       | Wallpaper selector with Matugen |
 
 ### Niri IPC integration layer
 

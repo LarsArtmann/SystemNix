@@ -6,21 +6,21 @@ Adds a Bull Board dashboard to Immich at `/admin/queues`, exposing all 18 BullMQ
 
 ## Files
 
-| File | Purpose |
-|------|---------|
+| File                      | Purpose                                  |
+| ------------------------- | ---------------------------------------- |
 | `immich-bull-board.patch` | Git patch against upstream Immich v2.6.3 |
-| `immich.nix` | NixOS module (needs modification) |
+| `immich.nix`              | NixOS module (needs modification)        |
 
 ## Patch Contents
 
-| Changed file | Change |
-|-------------|--------|
-| `server/package.json` | Added `@bull-board/api`, `@bull-board/nestjs`, `@bull-board/express` |
-| `pnpm-lock.yaml` | Updated lockfile for new dependencies |
-| `server/src/modules/bull-board.module.ts` | **New** — NestJS module registering all 18 queues |
-| `server/src/middleware/bull-board-auth.middleware.ts` | **New** — admin-only auth middleware |
-| `server/src/app.module.ts` | Import `ImmichBullBoardModule` into `ApiModule` |
-| `server/src/constants.ts` | Added `/admin/queues` to `excludePaths` |
+| Changed file                                          | Change                                                               |
+| ----------------------------------------------------- | -------------------------------------------------------------------- |
+| `server/package.json`                                 | Added `@bull-board/api`, `@bull-board/nestjs`, `@bull-board/express` |
+| `pnpm-lock.yaml`                                      | Updated lockfile for new dependencies                                |
+| `server/src/modules/bull-board.module.ts`             | **New** — NestJS module registering all 18 queues                    |
+| `server/src/middleware/bull-board-auth.middleware.ts` | **New** — admin-only auth middleware                                 |
+| `server/src/app.module.ts`                            | Import `ImmichBullBoardModule` into `ApiModule`                      |
+| `server/src/constants.ts`                             | Added `/admin/queues` to `excludePaths`                              |
 
 ## Step 1 — Patch Already Saved
 
@@ -168,12 +168,12 @@ Navigate to `https://<your-immich-domain>/admin/queues`. Requires admin login (A
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| Patch fails to apply | Upstream Immich version may have drifted — regenerate the patch from the fork |
-| Helmet CSP blocks the UI | Exclude `/admin/queues` from Helmet middleware in `app.common.ts` |
-| Blank page / 401 loop | Ensure you're logged in as an admin user |
-| pnpmDeps hash mismatch after Immich update | Delete the hash, rebuild, paste the new one |
+| Problem                                    | Fix                                                                           |
+| ------------------------------------------ | ----------------------------------------------------------------------------- |
+| Patch fails to apply                       | Upstream Immich version may have drifted — regenerate the patch from the fork |
+| Helmet CSP blocks the UI                   | Exclude `/admin/queues` from Helmet middleware in `app.common.ts`             |
+| Blank page / 401 loop                      | Ensure you're logged in as an admin user                                      |
+| pnpmDeps hash mismatch after Immich update | Delete the hash, rebuild, paste the new one                                   |
 
 ## Updating the Patch
 

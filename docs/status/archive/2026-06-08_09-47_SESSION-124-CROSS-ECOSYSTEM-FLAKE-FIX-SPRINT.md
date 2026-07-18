@@ -16,16 +16,16 @@ The user attempted `nix flake update -v && nh os boot . -v` which failed due to 
 
 ### 1. Fixed 8 Upstream Repositories (all pushed to master/fork)
 
-| Repo | Commit | Root Cause | Fix |
-|------|--------|------------|-----|
-| `art-dupl` | `9772d8b` | Duplicate `checks.build` (dot-notation + attrset) | Merged into single `checks` attrset |
-| `branching-flow` | `70d2a53` | `goPkg` undefined + `checks.format` outside `perSystem` | Added `goPkg = pkgs.go_1_26`, moved checks into perSystem |
-| `crush-config` | `c031f05` | Duplicate `checks` + `nixfmt.enable` (wrong path) | Consolidated checks, fixed to `programs.nixfmt.enable`, removed invalid `self` arg |
-| `go-structure-linter` | `b32aa65` | `goPkg` undefined + duplicate checks | Used `pkgs.go_1_26` directly, merged checks |
-| `golangci-lint-auto-configure` | `014c3f6` | `checks.format/checks.build` outside `perSystem` | Moved into perSystem checks attrset |
-| `mr-sync` | `6de046b` | `goPkg` undefined + duplicate checks + `_prev` overlay bug | Fixed all three |
-| `todo-list-ai` | `5e9705e` | `checks.format` outside `perSystem` + `nixfmt.enable` | Removed external checks, fixed treefmt path |
-| `treefmt-full-flake` | `d286160` | `checks.format` referencing undefined `self` | Removed (treefmt `flakeCheck` auto-creates it) |
+| Repo                           | Commit    | Root Cause                                                 | Fix                                                                                |
+| ------------------------------ | --------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `art-dupl`                     | `9772d8b` | Duplicate `checks.build` (dot-notation + attrset)          | Merged into single `checks` attrset                                                |
+| `branching-flow`               | `70d2a53` | `goPkg` undefined + `checks.format` outside `perSystem`    | Added `goPkg = pkgs.go_1_26`, moved checks into perSystem                          |
+| `crush-config`                 | `c031f05` | Duplicate `checks` + `nixfmt.enable` (wrong path)          | Consolidated checks, fixed to `programs.nixfmt.enable`, removed invalid `self` arg |
+| `go-structure-linter`          | `b32aa65` | `goPkg` undefined + duplicate checks                       | Used `pkgs.go_1_26` directly, merged checks                                        |
+| `golangci-lint-auto-configure` | `014c3f6` | `checks.format/checks.build` outside `perSystem`           | Moved into perSystem checks attrset                                                |
+| `mr-sync`                      | `6de046b` | `goPkg` undefined + duplicate checks + `_prev` overlay bug | Fixed all three                                                                    |
+| `todo-list-ai`                 | `5e9705e` | `checks.format` outside `perSystem` + `nixfmt.enable`      | Removed external checks, fixed treefmt path                                        |
+| `treefmt-full-flake`           | `d286160` | `checks.format` referencing undefined `self`               | Removed (treefmt `flakeCheck` auto-creates it)                                     |
 
 ### 2. Three Recurring Anti-Patterns Identified
 
@@ -46,6 +46,7 @@ All inputs evaluate cleanly. `nix flake check --no-build` passes.
 ### 5. Staged Discordsync Integration (Pre-existing Work)
 
 The following were already on-disk but uncommitted from a prior session:
+
 - `flake.nix`: discordsync flake input
 - `modules/nixos/services/discordsync.nix`: NixOS module
 - `modules/nixos/services/sops.nix`: discordsync secrets + env template
@@ -58,10 +59,10 @@ The following were already on-disk but uncommitted from a prior session:
 
 The build fails but **these failures existed BEFORE this session's changes** (verified by stashing flake.lock and testing old lock):
 
-| Issue | Root Cause | Severity |
-|-------|-----------|----------|
-| `project-meta` inconsistent vendoring | `project-discovery-sdk` bumped v0.4.0→v0.5.1 upstream, vendor/modules.txt stale | **BLOCKING** |
-| sops manifest validation | `openai_api_key` not found in `hermes.yaml` secret | **BLOCKING** (old lock too) |
+| Issue                                 | Root Cause                                                                      | Severity                    |
+| ------------------------------------- | ------------------------------------------------------------------------------- | --------------------------- |
+| `project-meta` inconsistent vendoring | `project-discovery-sdk` bumped v0.4.0→v0.5.1 upstream, vendor/modules.txt stale | **BLOCKING**                |
+| sops manifest validation              | `openai_api_key` not found in `hermes.yaml` secret                              | **BLOCKING** (old lock too) |
 
 Both are pre-existing and unrelated to the 8 flake fixes.
 
@@ -96,23 +97,30 @@ Both old and new flake.lock fail `nh os boot`. The system hasn't had a clean bui
 ## E) WHAT WE SHOULD IMPROVE 🔧
 
 ### 1. Prevent `checks` Outside `perSystem`
+
 Add a lint check or CI gate that catches `checks.*` defined at module level in flake-parts. Pattern: `checks\.format|checks\.build` outside a `perSystem` block.
 
 ### 2. Standardize `goPkg` Pattern
+
 Create a shared helper or convention: `goPkg = pkgs.go_1_26;` should always be defined in `perSystem`'s `let` block, not at module level. Document in AGENTS.md or a shared template.
 
 ### 3. treefmt `programs.*` Namespace
+
 The correct path is `programs.nixfmt.enable`, not `nixfmt.enable`. Multiple repos had this wrong. Consider a lint or template.
 
 ### 4. Gitignore vs Sops Secrets
+
 The `secrets*` pattern in `.gitignore` blocks `platforms/nixos/secrets/`. Either:
+
 - Add `!platforms/nixos/secrets/` exception, or
 - Document that sops files need `git add -f`
 
 ### 5. CI for Private Repos
+
 None of these breakages would have been caught by CI since the repos lack CI pipelines that run `nix flake check`. Adding `checks = { build = ...; format = ...; }` to each repo helps but only if CI runs.
 
 ### 6. Dep Cache / Vendor Hash Automation
+
 The `project-discovery-sdk` vendoring issue shows that when upstream Go deps change, the Nix vendorHash becomes stale silently. Consider a daily/weekly CI job that sets `vendorHash = ""` and checks if the build still works.
 
 ---
@@ -169,6 +177,7 @@ The `project-discovery-sdk` vendoring issue shows that when upstream Go deps cha
 **Is `project-discovery-sdk` supposed to be bumped from v0.4.0 to v0.5.1 in project-meta's go.mod?**
 
 The vendor inconsistency shows `project-discovery-sdk` at v0.4.0 in vendor but v0.5.1 in go.mod. I cannot determine whether:
+
 - Someone updated `go.mod` to v0.5.1 intentionally and forgot `go mod vendor`, OR
 - The `mkPreparedSource` `subModules` list needs updating for new v0.5.1 submodules (e.g., `cache`, `enrichment/repoinfo`)
 
@@ -179,6 +188,7 @@ This requires domain knowledge about what changed in project-discovery-sdk betwe
 ## Files Changed This Session
 
 ### SystemNix (staged, not yet committed)
+
 - `flake.lock` — Updated all inputs
 - `flake.nix` — Added discordsync input (from prior session)
 - `modules/nixos/services/sops.nix` — Added discordsync secrets (from prior session)
@@ -186,6 +196,7 @@ This requires domain knowledge about what changed in project-discovery-sdk betwe
 - `platforms/nixos/secrets/crush-daily.yaml` — New sops secret (force-added)
 
 ### External Repos (all committed and pushed)
+
 - `art-dupl`, `branching-flow`, `crush-config`, `go-structure-linter`, `golangci-lint-auto-configure`, `mr-sync`, `todo-list-ai`, `treefmt-full-flake`
 
 ---

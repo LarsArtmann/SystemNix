@@ -17,25 +17,25 @@ An extraordinary day of engineering. **14 sessions** in ~21 hours transformed Sy
 
 ## Session Timeline
 
-| Time | Session | Focus | Key Outcome |
-|------|---------|-------|-------------|
-| 03:05 | S36 Part 1 | PMA build fix + 7 upstream failures | All 7 broken packages fixed |
-| 10:05 | S36 Part 2 | Verification checkpoint | Confirmed clean state |
-| 14:43 | S36 Final | Deployment + buildflow cascade | Deployed, `mkPreparedSource` created |
-| 14:59 | S37 | Comprehensive ecosystem audit | 17/17 packages building, 136 transitive inputs flagged |
-| 18:07 | S38 | ComfyUI removal + mkPreparedSource v2 | ComfyUI disabled, 4 repos migrated |
-| 18:34 | S39 | Version string fix (5 repos) | `0.0.0-` prefix for nh compatibility |
-| 18:59 | S39b | Full status update | tor-browser restored |
-| 20:20 | S40 | Systemd dependency fixes | unbound/sops-nix ordering, netwatch installed |
-| 20:51 | S41 | LAN firewall + SSH deprecation fix | `trustedInterfaces`, matchBlocks→settings |
-| 21:14 | S42 | Security audit (5 findings) | monitor365, unsloth, Authelia, Gitea, Twenty flagged |
-| 21:33 | S43 | monitor365 sops migration | Plaintext secrets → sops-nix templates |
-| 21:50 | S44 | Full status with 204 features | 186/204 functional (91%) |
-| 22:25 | S45 | vendorHash cascade (7 repos) | Fixed stale hashes, proxyVendor pattern |
-| 22:36 | S46 | Nix eval memory optimization | 137→121 lock nodes, ~10-16GB saved |
-| 22:59 | S47 | Comprehensive + nix-colors removal | 121→94 nodes, VRRP→sops, wireshark dedup |
-| 23:36 | S48 | Lockfile dedup phase 2 | flake-utils/systems/treefmt-nix follows |
-| 00:01 | S49 | Go shared lib dedup + VRRP auto-provision | 94→73 nodes (47% total reduction) |
+| Time  | Session    | Focus                                     | Key Outcome                                            |
+| ----- | ---------- | ----------------------------------------- | ------------------------------------------------------ |
+| 03:05 | S36 Part 1 | PMA build fix + 7 upstream failures       | All 7 broken packages fixed                            |
+| 10:05 | S36 Part 2 | Verification checkpoint                   | Confirmed clean state                                  |
+| 14:43 | S36 Final  | Deployment + buildflow cascade            | Deployed, `mkPreparedSource` created                   |
+| 14:59 | S37        | Comprehensive ecosystem audit             | 17/17 packages building, 136 transitive inputs flagged |
+| 18:07 | S38        | ComfyUI removal + mkPreparedSource v2     | ComfyUI disabled, 4 repos migrated                     |
+| 18:34 | S39        | Version string fix (5 repos)              | `0.0.0-` prefix for nh compatibility                   |
+| 18:59 | S39b       | Full status update                        | tor-browser restored                                   |
+| 20:20 | S40        | Systemd dependency fixes                  | unbound/sops-nix ordering, netwatch installed          |
+| 20:51 | S41        | LAN firewall + SSH deprecation fix        | `trustedInterfaces`, matchBlocks→settings              |
+| 21:14 | S42        | Security audit (5 findings)               | monitor365, unsloth, Authelia, Gitea, Twenty flagged   |
+| 21:33 | S43        | monitor365 sops migration                 | Plaintext secrets → sops-nix templates                 |
+| 21:50 | S44        | Full status with 204 features             | 186/204 functional (91%)                               |
+| 22:25 | S45        | vendorHash cascade (7 repos)              | Fixed stale hashes, proxyVendor pattern                |
+| 22:36 | S46        | Nix eval memory optimization              | 137→121 lock nodes, ~10-16GB saved                     |
+| 22:59 | S47        | Comprehensive + nix-colors removal        | 121→94 nodes, VRRP→sops, wireshark dedup               |
+| 23:36 | S48        | Lockfile dedup phase 2                    | flake-utils/systems/treefmt-nix follows                |
+| 00:01 | S49        | Go shared lib dedup + VRRP auto-provision | 94→73 nodes (47% total reduction)                      |
 
 ---
 
@@ -46,6 +46,7 @@ An extraordinary day of engineering. **14 sessions** in ~21 hours transformed Sy
 **Problem:** 7 of 17 overlay packages had broken builds due to a cascading dependency chain failure. `go-output` deleted its `programminglanguage` package, which broke `project-discovery-sdk`, which broke `projects-management-automation`. Then `vendorHash` staleness cascaded through 6 more repos.
 
 **Resolution:**
+
 - Updated `project-discovery-sdk` + `go-output` + PMA overlay chain
 - Fixed stale `vendorHash` across emeet-pixyd, file-and-image-renamer, golangci-lint-auto-configure, mr-sync, branching-flow, library-policy, go-auto-upgrade
 - Standardized `proxyVendor = true` + `preBuild = "go mod tidy"` pattern for `_local_deps` repos
@@ -59,15 +60,16 @@ An extraordinary day of engineering. **14 sessions** in ~21 hours transformed Sy
 
 **Findings & Resolution:**
 
-| Finding | Severity | Resolution |
-|---------|----------|------------|
-| monitor365 plaintext `authToken`/`jwtSecret` in `/nix/store` | 🔴 HIGH | ✅ Migrated to sops-nix (S43) |
-| unsloth-studio zero hardening | 🔴 HIGH | 🔓 Open (service disabled) |
-| Authelia OIDC `client_secret` as bcrypt hash | 🟡 MEDIUM | 🔓 Open |
-| Gitea admin password in plaintext | 🟡 MEDIUM | 🔓 Open |
-| Twenty secrets outside central `sops.nix` | 🟡 MEDIUM | 🔓 Open |
+| Finding                                                      | Severity  | Resolution                    |
+| ------------------------------------------------------------ | --------- | ----------------------------- |
+| monitor365 plaintext `authToken`/`jwtSecret` in `/nix/store` | 🔴 HIGH   | ✅ Migrated to sops-nix (S43) |
+| unsloth-studio zero hardening                                | 🔴 HIGH   | 🔓 Open (service disabled)    |
+| Authelia OIDC `client_secret` as bcrypt hash                 | 🟡 MEDIUM | 🔓 Open                       |
+| Gitea admin password in plaintext                            | 🟡 MEDIUM | 🔓 Open                       |
+| Twenty secrets outside central `sops.nix`                    | 🟡 MEDIUM | 🔓 Open                       |
 
 **Additional security work:**
+
 - VRRP `authPassword` moved from plaintext to sops (S47) with auto-provisioning activation script (S49)
 - LAN firewall relaxed via `trustedInterfaces = ["eno1"]` (S41)
 - SSH deprecation warnings eliminated via upstream `nix-ssh-config` migration (S41)
@@ -78,16 +80,17 @@ An extraordinary day of engineering. **14 sessions** in ~21 hours transformed Sy
 
 **Progression:**
 
-| Session | Lock Nodes | Change | Estimated Memory Saved |
-|---------|:----------:|--------|:----------------------:|
-| S45 baseline | 137 | — | — |
-| S46 | 121 | flake-parts + nixpkgs follows | ~10-16 GB |
-| S47 | 94 | flake-utils + nix-colors removal + systems + treefmt-nix | ~5-8 GB |
-| S48 | 94 | (documentation + follows audit only) | 0 |
-| S49 | **73** | 6 shared Go library inputs + follows | ~2-4 GB |
-| **Total** | **137→73** | **47% reduction** | **~17-28 GB** |
+| Session      | Lock Nodes | Change                                                   | Estimated Memory Saved |
+| ------------ | :--------: | -------------------------------------------------------- | :--------------------: |
+| S45 baseline |    137     | —                                                        |           —            |
+| S46          |    121     | flake-parts + nixpkgs follows                            |       ~10-16 GB        |
+| S47          |     94     | flake-utils + nix-colors removal + systems + treefmt-nix |        ~5-8 GB         |
+| S48          |     94     | (documentation + follows audit only)                     |           0            |
+| S49          |   **73**   | 6 shared Go library inputs + follows                     |        ~2-4 GB         |
+| **Total**    | **137→73** | **47% reduction**                                        |     **~17-28 GB**      |
 
 **Key changes:**
+
 - Added `inputs.flake-parts.follows` to 8 inputs
 - Added `inputs.nixpkgs.follows` to crush-config (was pulling its own nixpkgs)
 - Added `flake-utils`, `systems`, `treefmt-nix` as shared top-level inputs with follows
@@ -117,43 +120,43 @@ An extraordinary day of engineering. **14 sessions** in ~21 hours transformed Sy
 
 ## Metrics at End of Day
 
-| Metric | Value |
-|--------|-------|
-| `.nix` files | 111 |
-| Service modules | 35 (32 enabled, 3 disabled) |
-| Overlay packages building | 17/17 |
-| Cross-platform programs | 14 |
-| Shell scripts | 17 |
-| Lock nodes | 73 (from 137, 47% reduction) |
-| Sops secrets | 15+ across 7 files, 7 templates |
-| Gatus endpoints | 26+ |
-| Flake inputs (root) | 47 |
-| Commits today | ~20+ |
-| `nix flake check` | ✅ PASSING |
-| TODO/FIXME/HACK/XXX | 0 |
-| Evaluation warnings | 1 (upstream `hostPlatform`) |
-| Root disk usage | 86-88% |
-| /data disk usage | 81% |
-| CPU cores | 32 |
-| Memory | 62 GiB total |
+| Metric                    | Value                           |
+| ------------------------- | ------------------------------- |
+| `.nix` files              | 111                             |
+| Service modules           | 35 (32 enabled, 3 disabled)     |
+| Overlay packages building | 17/17                           |
+| Cross-platform programs   | 14                              |
+| Shell scripts             | 17                              |
+| Lock nodes                | 73 (from 137, 47% reduction)    |
+| Sops secrets              | 15+ across 7 files, 7 templates |
+| Gatus endpoints           | 26+                             |
+| Flake inputs (root)       | 47                              |
+| Commits today             | ~20+                            |
+| `nix flake check`         | ✅ PASSING                      |
+| TODO/FIXME/HACK/XXX       | 0                               |
+| Evaluation warnings       | 1 (upstream `hostPlatform`)     |
+| Root disk usage           | 86-88%                          |
+| /data disk usage          | 81%                             |
+| CPU cores                 | 32                              |
+| Memory                    | 62 GiB total                    |
 
 ---
 
 ## Known Issues (Open at End of Day)
 
-| Issue | Severity | Status |
-|-------|----------|--------|
-| unsloth-studio zero hardening | 🔴 HIGH | Open (service disabled) |
-| whisper-asr.service failure | 🟡 MEDIUM | Pre-existing, not investigated |
-| photomap disabled (podman perms) | 🟡 MEDIUM | Not investigated |
-| Authelia OIDC client_secret not sops | 🟡 MEDIUM | Open |
-| Gitea admin password plaintext | 🟡 MEDIUM | Open |
-| Twenty secrets outside central sops | 🟡 MEDIUM | Open |
-| `hostPlatform` deprecation warning | 🟡 LOW | Upstream nixpkgs, auto-generated file |
-| ollama/engine binary collision | ⚪ NOISE | Cosmetic |
-| Pi 3 DNS failover unprovisioned | — | Hardware-blocked |
-| Darwin disk 90-95% full | — | Hardware constraint |
-| `gogenfilter_2` lockfile duplicate | LOW | Controllable, needs PMA upstream change |
+| Issue                                | Severity  | Status                                  |
+| ------------------------------------ | --------- | --------------------------------------- |
+| unsloth-studio zero hardening        | 🔴 HIGH   | Open (service disabled)                 |
+| whisper-asr.service failure          | 🟡 MEDIUM | Pre-existing, not investigated          |
+| photomap disabled (podman perms)     | 🟡 MEDIUM | Not investigated                        |
+| Authelia OIDC client_secret not sops | 🟡 MEDIUM | Open                                    |
+| Gitea admin password plaintext       | 🟡 MEDIUM | Open                                    |
+| Twenty secrets outside central sops  | 🟡 MEDIUM | Open                                    |
+| `hostPlatform` deprecation warning   | 🟡 LOW    | Upstream nixpkgs, auto-generated file   |
+| ollama/engine binary collision       | ⚪ NOISE  | Cosmetic                                |
+| Pi 3 DNS failover unprovisioned      | —         | Hardware-blocked                        |
+| Darwin disk 90-95% full              | —         | Hardware constraint                     |
+| `gogenfilter_2` lockfile duplicate   | LOW       | Controllable, needs PMA upstream change |
 
 ---
 

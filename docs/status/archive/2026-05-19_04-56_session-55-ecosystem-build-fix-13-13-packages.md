@@ -56,21 +56,21 @@ These packages built correctly once stale cached derivations were cleared during
 
 ## Build Matrix (ALL 13/13 ✅)
 
-| Package | Status | Notes |
-|---------|--------|-------|
-| art-dupl | ✅ | Cache cleared, gogenfilter v3 |
-| go-auto-upgrade | ✅ | Upstream preparedSrc fix |
-| mr-sync | ✅ | Builds fine (was stale cache) |
-| buildflow | ✅ | Upstream vendorHash update |
-| library-policy | ✅ | |
-| dnsblockd | ✅ | |
-| monitor365 | ✅ | |
-| go-structure-linter | ✅ | |
-| hierarchical-errors | ✅ | |
-| branching-flow | ✅ | |
-| file-and-image-renamer | ✅ | |
-| golangci-lint-auto-configure | ✅ | |
-| todo-list-ai | ✅ | node_modules hash update |
+| Package                      | Status | Notes                         |
+| ---------------------------- | ------ | ----------------------------- |
+| art-dupl                     | ✅     | Cache cleared, gogenfilter v3 |
+| go-auto-upgrade              | ✅     | Upstream preparedSrc fix      |
+| mr-sync                      | ✅     | Builds fine (was stale cache) |
+| buildflow                    | ✅     | Upstream vendorHash update    |
+| library-policy               | ✅     |                               |
+| dnsblockd                    | ✅     |                               |
+| monitor365                   | ✅     |                               |
+| go-structure-linter          | ✅     |                               |
+| hierarchical-errors          | ✅     |                               |
+| branching-flow               | ✅     |                               |
+| file-and-image-renamer       | ✅     |                               |
+| golangci-lint-auto-configure | ✅     |                               |
+| todo-list-ai                 | ✅     | node_modules hash update      |
 
 ---
 
@@ -113,6 +113,7 @@ These packages built correctly once stale cached derivations were cleared during
 ### Nothing catastrophic this session!
 
 The only "waste" was attempting multiple approaches for go-auto-upgrade before finding the correct one:
+
 1. ❌ Tried `goAutoUpgradeOverlay` in SystemNix `overlays/shared.nix` (can't override preparedSrc installPhase with network)
 2. ❌ Tried `go mod tidy` in preparedSrc installPhase (no DNS in Nix sandbox)
 3. ❌ Tried removing `require` directives only (still fails because testhelpers missing)
@@ -135,33 +136,33 @@ The `overlays/shared.nix` was reverted to its clean state (no goAutoUpgradeOverl
 
 ## f) Top #25 Things to Get Done Next
 
-| # | Priority | Task | Impact |
-|---|----------|------|--------|
-| 1 | P0 | Run `just switch` to deploy the 13/13 build fix to evo-x2 | Build finally works |
-| 2 | P0 | Run `just test-fast` to validate full NixOS config evaluates | CI gate |
-| 3 | P1 | Merge art-dupl `fork` → `master`, update `flake.nix` to `ref = "master"` | Tech debt |
-| 4 | P1 | Migrate go-auto-upgrade to `mkPreparedSource.nix` pattern | Prevent go.mod bugs |
-| 5 | P1 | Add overlay package build check to `just test` recipe | Catch stale hashes early |
-| 6 | P1 | Fix 3 art-dupl BDD test failures in stats_command_test.go | Test quality |
-| 7 | P1 | Provision Pi 3 for DNS failover cluster | HA DNS |
-| 8 | P2 | Add automated vendorHash staleness detection to CI | Prevention |
-| 9 | P2 | Clean up stale Nix store paths (`just clean` improvements) | Disk space |
-| 10 | P2 | Run `just health` for full system health check | Monitoring |
-| 11 | P2 | Verify Forgejo push mirrors are working post-migration | Backup |
-| 12 | P2 | Set up Gatus alerts for all newly fixed services | Observability |
-| 13 | P2 | Review and update AGENTS.md with go-auto-upgrade preparedSrc pattern | Documentation |
-| 14 | P2 | Test full `nixosConfigurations.evo-x2` build (not just packages) | Complete validation |
-| 15 | P2 | Check disk space and run `just clean` if needed (86% used) | Maintenance |
-| 16 | P3 | Investigate `hostPlatform` deprecation warning in eval | Warning cleanup |
-| 17 | P3 | Add `usb-diagnostic.sh` to tracked scripts or remove it | Cleanup |
-| 18 | P3 | Review hermes-agent npmDeps hash staleness | Build reliability |
-| 19 | P3 | Consider distributed builds to evo-x2 for Darwin (90-95% disk) | Cross-platform |
-| 20 | P3 | Add lockfile node count to `just check` output | Monitoring |
-| 21 | P3 | Investigate projects-management-automation eval issue (attribute not found) | Completeness |
-| 22 | P4 | Create `mkPreparedSource` as a shared flake input across all repos | DRY |
-| 23 | P4 | Add `go mod tidy` pre-commit hook to all Go repos | Prevention |
-| 24 | P4 | Document the `_local_deps` pattern in a shared Go template reference | Documentation |
-| 25 | P4 | Consider nixpkgs `hostPlatform` → `stdenv.hostPlatform` migration | Deprecation |
+| #   | Priority | Task                                                                        | Impact                   |
+| --- | -------- | --------------------------------------------------------------------------- | ------------------------ |
+| 1   | P0       | Run `just switch` to deploy the 13/13 build fix to evo-x2                   | Build finally works      |
+| 2   | P0       | Run `just test-fast` to validate full NixOS config evaluates                | CI gate                  |
+| 3   | P1       | Merge art-dupl `fork` → `master`, update `flake.nix` to `ref = "master"`    | Tech debt                |
+| 4   | P1       | Migrate go-auto-upgrade to `mkPreparedSource.nix` pattern                   | Prevent go.mod bugs      |
+| 5   | P1       | Add overlay package build check to `just test` recipe                       | Catch stale hashes early |
+| 6   | P1       | Fix 3 art-dupl BDD test failures in stats_command_test.go                   | Test quality             |
+| 7   | P1       | Provision Pi 3 for DNS failover cluster                                     | HA DNS                   |
+| 8   | P2       | Add automated vendorHash staleness detection to CI                          | Prevention               |
+| 9   | P2       | Clean up stale Nix store paths (`just clean` improvements)                  | Disk space               |
+| 10  | P2       | Run `just health` for full system health check                              | Monitoring               |
+| 11  | P2       | Verify Forgejo push mirrors are working post-migration                      | Backup                   |
+| 12  | P2       | Set up Gatus alerts for all newly fixed services                            | Observability            |
+| 13  | P2       | Review and update AGENTS.md with go-auto-upgrade preparedSrc pattern        | Documentation            |
+| 14  | P2       | Test full `nixosConfigurations.evo-x2` build (not just packages)            | Complete validation      |
+| 15  | P2       | Check disk space and run `just clean` if needed (86% used)                  | Maintenance              |
+| 16  | P3       | Investigate `hostPlatform` deprecation warning in eval                      | Warning cleanup          |
+| 17  | P3       | Add `usb-diagnostic.sh` to tracked scripts or remove it                     | Cleanup                  |
+| 18  | P3       | Review hermes-agent npmDeps hash staleness                                  | Build reliability        |
+| 19  | P3       | Consider distributed builds to evo-x2 for Darwin (90-95% disk)              | Cross-platform           |
+| 20  | P3       | Add lockfile node count to `just check` output                              | Monitoring               |
+| 21  | P3       | Investigate projects-management-automation eval issue (attribute not found) | Completeness             |
+| 22  | P4       | Create `mkPreparedSource` as a shared flake input across all repos          | DRY                      |
+| 23  | P4       | Add `go mod tidy` pre-commit hook to all Go repos                           | Prevention               |
+| 24  | P4       | Document the `_local_deps` pattern in a shared Go template reference        | Documentation            |
+| 25  | P4       | Consider nixpkgs `hostPlatform` → `stdenv.hostPlatform` migration           | Deprecation              |
 
 ---
 
@@ -170,6 +171,7 @@ The `overlays/shared.nix` was reverted to its clean state (no goAutoUpgradeOverl
 **How should `go mod tidy` work in `buildGoModule` with `proxyVendor = true` and `overrideModAttrs`?**
 
 The current pattern is:
+
 1. `overrideModAttrs.preBuild = "go mod tidy"` runs in the go-modules derivation (has network)
 2. Go-modules produces vendor directory
 3. Main build copies vendor and builds
@@ -182,14 +184,14 @@ But the main build's go.mod/go.sum (from preparedSrc) doesn't match the tidied v
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `flake.lock` | Updated `go-auto-upgrade` → `64db2da`, `buildflow` → `03596a4` |
-| `overlays/shared.nix` | Updated `todoListAiFixedHash` to `sha256-LBN8P0S...` |
+| File                  | Change                                                         |
+| --------------------- | -------------------------------------------------------------- |
+| `flake.lock`          | Updated `go-auto-upgrade` → `64db2da`, `buildflow` → `03596a4` |
+| `overlays/shared.nix` | Updated `todoListAiFixedHash` to `sha256-LBN8P0S...`           |
 
 ## Upstream Commits Pushed
 
-| Repo | Commit | Description |
-|------|--------|-------------|
+| Repo            | Commit    | Description                                                            |
+| --------------- | --------- | ---------------------------------------------------------------------- |
 | go-auto-upgrade | `64db2da` | fix(flake): use go mod edit for replace directives and add testhelpers |
-| BuildFlow | `03596a4` | chore(flake): update vendorHash for go-output dependency changes |
+| BuildFlow       | `03596a4` | chore(flake): update vendorHash for go-output dependency changes       |

@@ -24,22 +24,24 @@ mkPackageOverlay = input: name: overrides:
 
 **7 packages fixed with correct vendorHash:**
 
-| Package | Overlay File | Hash (got) |
-|---------|-------------|------------|
-| hierarchical-errors | shared.nix | `sha256-imjTscWHsv2zw7OegiTiDHoKWSCM/Lamff5nzYrECEE=` |
-| mr-sync | shared.nix | `sha256-ewYNWIETjxKwINzdbwWNmL6+CQsNvxLR7CZqtsb9xA0=` |
-| buildflow | shared.nix | `sha256-W63V4gnt2itUo8etknSuyjRtMvut/7bU1kxhqOiReBM=` |
-| go-structure-linter | shared.nix | `sha256-rG/RiwyqV4Mhko/axWyj/LakrZ8eumyDBPr0tzX5jlI=` |
-| projects-management-automation | shared.nix | `sha256-lv0xp20Z6tpqVQPa6RxRPvUMDIRCRqXlAme57pg5owI=` |
-| file-and-image-renamer | linux.nix | `sha256-FdABe/wPpG1f1hiKwqqFJGYOtw8wD1n93aXWDHhJ3Hk=` |
-| dnsblockd | linux.nix | {} (no override needed) |
+| Package                        | Overlay File | Hash (got)                                            |
+| ------------------------------ | ------------ | ----------------------------------------------------- |
+| hierarchical-errors            | shared.nix   | `sha256-imjTscWHsv2zw7OegiTiDHoKWSCM/Lamff5nzYrECEE=` |
+| mr-sync                        | shared.nix   | `sha256-ewYNWIETjxKwINzdbwWNmL6+CQsNvxLR7CZqtsb9xA0=` |
+| buildflow                      | shared.nix   | `sha256-W63V4gnt2itUo8etknSuyjRtMvut/7bU1kxhqOiReBM=` |
+| go-structure-linter            | shared.nix   | `sha256-rG/RiwyqV4Mhko/axWyj/LakrZ8eumyDBPr0tzX5jlI=` |
+| projects-management-automation | shared.nix   | `sha256-lv0xp20Z6tpqVQPa6RxRPvUMDIRCRqXlAme57pg5owI=` |
+| file-and-image-renamer         | linux.nix    | `sha256-FdABe/wPpG1f1hiKwqqFJGYOtw8wD1n93aXWDHhJ3Hk=` |
+| dnsblockd                      | linux.nix    | {} (no override needed)                               |
 
 **Additional changes:**
+
 - All `mkPackageOverlay` calls updated to explicit `{}` when no overrides needed (was implicit before)
 - `file-and-image-renamer` switched from raw `.overlays.default` to `mkPackageOverlay` for consistency
 - AGENTS.md updated with new `mkPackageOverlay` signature and usage patterns
 
 **Verification:**
+
 - NixOS (`evo-x2`) full build: PASSED (0 hash mismatches)
 - Darwin evaluation: PASSED (`nix eval` returns true)
 - `nix flake check --no-build`: ALL CHECKS PASSED
@@ -47,10 +49,10 @@ mkPackageOverlay = input: name: overrides:
 
 ### Recent Sessions (Context from git log)
 
-| Commit | Description |
-|--------|-------------|
-| `d1ab93bb` | fix: resolve dual-platform build breakage from nix flake update |
-| `dd9ba72a` | fix(forgejo): runner token — eliminate separate service, fix escapeSystemdPath mismatch |
+| Commit     | Description                                                                                 |
+| ---------- | ------------------------------------------------------------------------------------------- |
+| `d1ab93bb` | fix: resolve dual-platform build breakage from nix flake update                             |
+| `dd9ba72a` | fix(forgejo): runner token — eliminate separate service, fix escapeSystemdPath mismatch     |
 | `255900c4` | fix(forgejo): use RuntimeDirectory for runner token — fix permission and hardening conflict |
 
 ---
@@ -61,16 +63,17 @@ mkPackageOverlay = input: name: overrides:
 
 **Status:** Patched locally via `overrideAttrs`, but the ROOT CAUSE remains — 7 upstream repos have stale `vendorHash` values in their own `flake.nix`:
 
-| Repo | Needs `vendorHash` update in upstream |
-|------|------|
-| hierarchical-errors | YES — still has old hash |
-| mr-sync | YES — still has old hash |
-| buildflow | YES — still has old hash |
-| go-structure-linter | YES — still has old hash |
-| projects-management-automation | YES — still has old hash |
-| file-and-image-renamer | YES — still has old hash |
+| Repo                           | Needs `vendorHash` update in upstream |
+| ------------------------------ | ------------------------------------- |
+| hierarchical-errors            | YES — still has old hash              |
+| mr-sync                        | YES — still has old hash              |
+| buildflow                      | YES — still has old hash              |
+| go-structure-linter            | YES — still has old hash              |
+| projects-management-automation | YES — still has old hash              |
+| file-and-image-renamer         | YES — still has old hash              |
 
 **Impact:** SystemNix builds fine with the overlay overrides, but:
+
 1. Other consumers of these repos (standalone) will hit the same hash mismatch
 2. Every `nix flake update` may introduce MORE stale hashes
 3. The overlay overrides become stale themselves when upstream eventually fixes their hashes — then we'd have WRONG hashes in our overrides
@@ -78,6 +81,7 @@ mkPackageOverlay = input: name: overrides:
 ### AGENTS.md Documentation
 
 The `mkPackageOverlay` section is updated, but the broader documentation may need:
+
 - Cross-reference the vendorHash override pattern from the "Critical Rules & Gotchas" section
 - Update the "Active overlays" section to reflect the new calling convention
 
@@ -92,6 +96,7 @@ Branch is 1 commit ahead of `origin/master` (commit `d1ab93bb`). The current ses
 ### Upstream Repo Fixes
 
 None of the 6 upstream repos have been updated with correct `vendorHash` values. This requires:
+
 1. Clone each repo
 2. Set `vendorHash = ""` in each repo's `flake.nix`
 3. Build to get the correct hash
@@ -135,6 +140,7 @@ Spent significant time trying `.override { vendorHash = "..."; }` (which failed 
 ### 1. Upstream Repo vendorHash Hygiene
 
 **Fix the root cause.** Each upstream Go repo should:
+
 - Use `vendorHash = ""` during development (forces hash computation)
 - Have CI that verifies the hash is correct on every push
 - Or use a `postPatch` that runs `go mod tidy` + auto-computes the hash
@@ -142,6 +148,7 @@ Spent significant time trying `.override { vendorHash = "..."; }` (which failed 
 ### 2. Automated vendorHash Detection
 
 Create a script (e.g., `scripts/check-vendor-hashes.sh`) that:
+
 1. Runs `nix build` for each Go package overlay
 2. Detects hash mismatches automatically
 3. Extracts the correct `got:` hash
@@ -151,6 +158,7 @@ Create a script (e.g., `scripts/check-vendor-hashes.sh`) that:
 ### 3. Reduce Private Go Repo Dependency Count
 
 Each private Go repo that uses `_local_deps` pattern is a vector for hash mismatches. Consider:
+
 - Publishing some repos publicly (reduces `_local_deps` complexity)
 - Merging tightly-coupled repos (go-output + go-branded-id + gogenfilter could be one repo)
 - Using a shared Go module proxy
@@ -158,12 +166,14 @@ Each private Go repo that uses `_local_deps` pattern is a vector for hash mismat
 ### 4. Lockfile Hygiene Monitoring
 
 After the session 48/49 dedup work reduced lock nodes from 137 → 93, we should maintain this:
+
 - Add a CI check that warns when lock nodes exceed a threshold
 - Auto-detect new duplicate nixpkgs/flake-parts instantiations
 
 ### 5. Better Error Reporting
 
 The 16 cascading NixOS build errors from 2 root hash mismatches is unacceptable. Consider:
+
 - A pre-build check script that validates all Go overlay vendor hashes
 - `nom` output filtering to highlight root causes vs cascading failures
 
@@ -218,6 +228,7 @@ The 16 cascading NixOS build errors from 2 root hash mismatches is unacceptable.
 **Should we keep fixing vendorHash locally via overlay overrides, or mandate that every upstream private Go repo must have a correct vendorHash before we bump its flake lock?**
 
 The tradeoff:
+
 - **Local overrides:** Fast fix, works now, but creates a shadow layer of hashes that will itself become stale when upstream repos update
 - **Upstream mandate:** Slower (requires updating 6 repos), but SystemNix stays clean and the overlays remain simple pass-throughs
 
@@ -227,19 +238,19 @@ The AGENTS.md currently says "Never override vendorHash from outside a package" 
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files changed | 4 |
-| Lines changed | +25 / -18 |
-| Build time | ~3 min (incremental) |
-| Packages fixed | 7 |
-| Root cause | Stale vendorHash in 6 upstream repos |
-| Build status before | 16 errors, completely broken |
-| Build status after | Clean, all checks passed |
-| Commits to push | 2 (existing + this session) |
-| Lock file nodes | 72 |
-| Flake inputs | 47 |
-| nixpkgs pin | `01fbdee` (2026-04-23) |
+| Metric              | Value                                |
+| ------------------- | ------------------------------------ |
+| Files changed       | 4                                    |
+| Lines changed       | +25 / -18                            |
+| Build time          | ~3 min (incremental)                 |
+| Packages fixed      | 7                                    |
+| Root cause          | Stale vendorHash in 6 upstream repos |
+| Build status before | 16 errors, completely broken         |
+| Build status after  | Clean, all checks passed             |
+| Commits to push     | 2 (existing + this session)          |
+| Lock file nodes     | 72                                   |
+| Flake inputs        | 47                                   |
+| nixpkgs pin         | `01fbdee` (2026-04-23)               |
 
 ---
 

@@ -10,33 +10,39 @@
 ## a) FULLY DONE
 
 ### 1. Root cause identified: `discard=async` destroying I/O performance
+
 - Continuous TRIM on QLC NAND causes **253ms per discard operation**, 86 ops/sec
 - BTRFS commit stalls of **17.7 seconds** on root filesystem
 - Under nix build load, I/O queue depth hit 71 → system freeze → hardware watchdog reset (30s timeout)
 - Confirmed via `iostat`: when TRIM stops, `r_await` drops from 22ms to 0.5ms (44x improvement)
 
 ### 2. Confirmed: System hard-crashed (not graceful reboot)
+
 - Previous boot logs stop abruptly at 06:57:30 (mid-watchdog-heartbeat)
 - 73-second gap before next boot = hard reset via SP5100 TCO timer
 - Root filesystem needed **tree-log replay** = dirty shutdown
 - No pstore entries = system froze before kernel could panic
 
 ### 3. Confirmed: `nh os boot` does NOT reboot or switch
+
 - `nh os boot --help`: "Build the new configuration and make it the boot default"
 - The **nix build** I/O load was the trigger, not activation or reboot
 - `fstrim.enable = true` was already set in `configuration.nix:296` — root filesystem never had `discard=async` and relied solely on fstrim
 
 ### 4. Fix applied to `hardware-configuration.nix`
+
 - **Removed `discard=async`** from `/data` (BTRFS, `nvme0n1p8`)
 - **Removed `discard`** from `/rust-cache` (ext4, `nvme0n1p9`)
 - Added explanatory comments on both referencing the investigation report
 - `fstrim.enable = true` already present in `configuration.nix:296` — covers all filesystems weekly
 
 ### 5. Flake validation passed
+
 - `nix flake check --no-build` — all checks passed
 - `mkFilesystem` validation guard in `lib/filesystems.nix` still happy (no dangerous options remaining)
 
 ### 6. Status report from investigation written
+
 - `docs/status/2026-07-08_08-38_NVME-DISCARD-ASYNC-IO-CHOKE-INVESTIGATION.md`
 
 ---
@@ -44,11 +50,13 @@
 ## b) PARTIALLY DONE
 
 ### I/O fix — config changed but NOT deployed
+
 - `hardware-configuration.nix` edited, flake check passes
 - **Change requires deploy OR reboot to take effect** — mount options are baked into systemd mount units at activation time
 - Current running system still has `discard=async` active on `/data` and `discard` on `/rust-cache`
 
 ### BTRFS corruption assessment — identified but not remediated
+
 - **91,561 csum failures** in the crash boot (boot -1), zero in all other boots
 - All returned same wrong checksum `0x8941f998` = NVMe controller returned garbage under pressure
 - Device stats counter persists at `corrupt 3603676277` across reboots
@@ -73,10 +81,12 @@
 ## d) TOTALLY FUCKED UP — Honest Self-Criticism
 
 ### 1. Initial response was generic, useless speculation
+
 **What I said:** "The remote host stopped responding... likely causes: crash, network interruption, NAT timeout, sshd died"
 **Reality:** I had `journalctl` and `iostat` available and used neither. Presented 4 theories as a list instead of investigating. The user had to explicitly tell me to read the logs.
 
 ### 2. Blamed BTRFS ENOSPC / disk fullness — WRONG TWICE
+
 **First attempt:** "btrfs-gc-guard caught /data at 2% device-unallocated — that caused the corruption"
 **Reality:** The user corrected me — 341 GiB free, 283 GiB unallocated. The 2% warning was from a **different boot** (Jul 07 17:17). I conflated boots.
 
@@ -84,18 +94,22 @@
 **Reality:** The user was right every time. I ignored their direct testimony.
 
 ### 3. Wasted time on unrelated `/data` space analysis
+
 **What I did:** 4 tool calls analyzing AI model dedup, HuggingFace cache, duplicate models
 **Reality:** Completely unrelated to the SSH disconnect. Went down a rabbit hole.
 
 ### 4. Ran `iostat` last instead of first
+
 **What I should have done:** `iostat -x nvme0n1 1 3` immediately after seeing "system froze/disconnected"
 **What I did:** 15+ journal queries before finally running the one command that immediately revealed the problem (253ms discard latency)
 
 ### 5. Claimed 91K corruption blocks were "new" without verifying
+
 **What I said:** Implied the corruption was fresh and accumulating
 **Reality:** When the user challenged me, I checked and found zero csum failures in boots -2 through -5. The corruption was isolated to boot -1. The device stats counter is cumulative/persistent, so I cannot tell if those blocks were corrupted in that boot or pre-existing.
 
 ### 6. Didn't listen to the user
+
 The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on LAN). I spent 3 responses blaming BTRFS corruption and disk space instead of investigating what `nh os boot` actually does (heavy I/O build) and what that I/O would reveal (`iostat`).
 
 ---
@@ -103,6 +117,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 ## e) WHAT WE SHOULD IMPROVE
 
 ### Process / Behavior
+
 1. **Run `iostat` FIRST** for "system slow/crashed/disconnected" reports — before journal diving. Disk I/O is the #1 cause of system freezes on this hardware.
 2. **Listen to the user's trigger** — if they say "I ran X and then Y happened," investigate X first
 3. **Never present theories as facts** — early responses were stated with false confidence
@@ -110,6 +125,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 5. **Don't go down rabbit holes** — the `/data` space analysis was completely unrelated
 
 ### Technical
+
 1. **Deploy the fix** — the config change is useless until activated
 2. **Verify I/O improvement post-deploy** — need before/after `iostat` comparison
 3. **Run BTRFS scrub** to assess corruption extent on `/data`
@@ -126,6 +142,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Critical (P0 — do today)
+
 1. **Deploy the `discard=async` fix** — `nix run .#deploy` or `nh os switch`
 2. Verify I/O latency after deploy — `iostat -x nvme0n1 1 5` (expect sub-millisecond)
 3. Run `sudo smartctl -a /dev/nvme0n1` — check media errors, wear, spare blocks
@@ -136,6 +153,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 8. Check Lexar NQ790 firmware update availability (current: `QBC838R010854P220C`)
 
 ### High Priority (P1 — this week)
+
 9. Add `discard=async` QLC gotcha to AGENTS.md non-obvious gotchas table
 10. Clean stale nix build sandboxes (`/nix/var/nix/builds/` — 10 dirs, some from Jul 1-4)
 11. Deduplicate AI models on `/data` (~280G reclaimable)
@@ -148,6 +166,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 18. Check if `/rust-cache` (ext4) also benefited from removing `discard`
 
 ### Medium Priority (P2 — this month)
+
 19. Add I/O latency monitoring to Gatus/Prometheus (node-exporter textfile or custom)
 20. Add BTRFS device stats monitoring (alert on corrupt counter increase)
 21. Add SMART metrics collection to nvme-metrics service
@@ -167,6 +186,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 35. Review whether `compress=zstd:3` adds too much CPU overhead during heavy I/O (consider `zstd:1`)
 
 ### Lower Priority (P3 — when time permits)
+
 36. Consider BTRFS RAID1 for `/data` with a second NVMe
 37. Review kernel 7.1.3 BTRFS changes for performance regressions
 38. Consider switching root from BTRFS to ext4 (eliminate CoW for nix store)
@@ -190,6 +210,7 @@ The user told me the trigger (`nh os boot`) and the symptom (SSH disconnect on L
 ### 1. Is the Lexar NQ790 physically failing, or is this purely a `discard=async` software issue?
 
 I cannot run `sudo smartctl -a /dev/nvme0n1` to check:
+
 - Media and data integrity errors
 - Available spare blocks (below threshold = drive dying)
 - Percentage used / wear level
@@ -201,6 +222,7 @@ The 91K csum errors with identical wrong checksum suggest the controller returne
 ### 2. Should we deploy now (risky — same I/O conditions) or wait for a manual `fstrim` + reboot?
 
 The config change requires a deploy or reboot to take effect. But:
+
 - Deploying runs `nh os switch`, which does a nix build (heavy I/O) — the exact thing that triggered the crash
 - The current system still has `discard=async` active
 - A safer path might be: manually run `sudo fstrim -v /data` to clear the TRIM backlog, then reboot (which activates the new mount options without a build)

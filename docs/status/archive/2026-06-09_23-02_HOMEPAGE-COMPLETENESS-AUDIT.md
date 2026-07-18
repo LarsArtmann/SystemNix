@@ -14,16 +14,16 @@ All enabled services with web UIs are now represented on the Homepage dashboard.
 
 **Tiles added this session:**
 
-| Tile | Category | Conditional? | Health Check |
-|------|----------|-------------|-------------|
-| Gatus | Monitoring | `gatusEnabled` | `status.home.lan` |
-| Dozzle | Monitoring | `dozzleEnabled` | `logs.home.lan` |
-| Crush Daily | AI | `crushDailyEnabled` | `daily.home.lan/api/health` |
-| Monitor365 | Monitoring | `monitor365Enabled` | `monitor.home.lan` |
-| Hermes | Infrastructure | `hermesEnabled` | status dot only (no web UI) |
-| LiveKit | AI | `voiceAgentsEnabled` | `voice.home.lan` |
-| Whisper ASR | AI | `voiceAgentsEnabled` | `whisper.home.lan` |
-| PhotoMap | Media | `photomapEnabled` | `localhost:8051` |
+| Tile        | Category       | Conditional?         | Health Check                |
+| ----------- | -------------- | -------------------- | --------------------------- |
+| Gatus       | Monitoring     | `gatusEnabled`       | `status.home.lan`           |
+| Dozzle      | Monitoring     | `dozzleEnabled`      | `logs.home.lan`             |
+| Crush Daily | AI             | `crushDailyEnabled`  | `daily.home.lan/api/health` |
+| Monitor365  | Monitoring     | `monitor365Enabled`  | `monitor.home.lan`          |
+| Hermes      | Infrastructure | `hermesEnabled`      | status dot only (no web UI) |
+| LiveKit     | AI             | `voiceAgentsEnabled` | `voice.home.lan`            |
+| Whisper ASR | AI             | `voiceAgentsEnabled` | `whisper.home.lan`          |
+| PhotoMap    | Media          | `photomapEnabled`    | `localhost:8051`            |
 
 **Architecture changes:**
 
@@ -42,6 +42,7 @@ All enabled services with web UIs are now represented on the Homepage dashboard.
 5. **AGENTS.md documentation**: Added "Homepage Tile Pattern" section with the `when` helper convention and category list.
 
 **Files modified (this session):**
+
 - `modules/nixos/services/homepage.nix` — +61 lines (conditional tiles, new category)
 - `modules/nixos/services/caddy.nix` — +3 lines (monitor vhost)
 - `modules/nixos/services/gatus-config.nix` — +21 lines (3 new checks, group fix)
@@ -49,14 +50,14 @@ All enabled services with web UIs are now represented on the Homepage dashboard.
 
 ### Final Homepage Layout
 
-| Category | Tiles | Guarded Tiles |
-|----------|-------|---------------|
-| Infrastructure | Pocket ID, Caddy, Unbound DNS, PostgreSQL, Redis, **Hermes** | Hermes |
-| Media | Immich, DNS Blocker, **PhotoMap** | PhotoMap |
-| Development | Forgejo | — |
-| AI | **Crush Daily**, **Manifest**, **Ollama**, **LiveKit**, **Whisper ASR** | All 5 |
-| Monitoring | **Gatus**, **SigNoz**, **Dozzle**, Node Exporter, cAdvisor, dnsblockd, EMEET PIXY, **Monitor365** | Gatus, SigNoz, Dozzle, cAdvisor, Monitor365 |
-| Productivity | **Twenty CRM**, Taskwarrior, Homepage, OpenSEO | Twenty |
+| Category       | Tiles                                                                                             | Guarded Tiles                               |
+| -------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Infrastructure | Pocket ID, Caddy, Unbound DNS, PostgreSQL, Redis, **Hermes**                                      | Hermes                                      |
+| Media          | Immich, DNS Blocker, **PhotoMap**                                                                 | PhotoMap                                    |
+| Development    | Forgejo                                                                                           | —                                           |
+| AI             | **Crush Daily**, **Manifest**, **Ollama**, **LiveKit**, **Whisper ASR**                           | All 5                                       |
+| Monitoring     | **Gatus**, **SigNoz**, **Dozzle**, Node Exporter, cAdvisor, dnsblockd, EMEET PIXY, **Monitor365** | Gatus, SigNoz, Dozzle, cAdvisor, Monitor365 |
+| Productivity   | **Twenty CRM**, Taskwarrior, Homepage, OpenSEO                                                    | Twenty                                      |
 
 **Bold** = new or restructured. Total: 25 tiles across 6 categories.
 
@@ -68,15 +69,15 @@ All enabled services with web UIs are now represented on the Homepage dashboard.
 
 These are staged but uncommitted changes from earlier work that were NOT part of this session:
 
-| File | Nature | Status |
-|------|--------|--------|
-| `pocket-id.nix` | +301 lines — Declarative provisioning (admin user, OIDC clients, avatar) | Uncommitted |
-| `oauth2-proxy.nix` | Client secret path from provision vs sops | Uncommitted |
-| `immich.nix` | Client secret path from provision vs sops, service ordering | Uncommitted |
-| `sops.nix` | Minor change | Uncommitted |
-| `configuration.nix` | Pocket ID provision config, other changes | Uncommitted |
-| `justfile` | Simplified `auth-bootstrap` recipe (removed manual client steps) | Uncommitted |
-| `docs/status/2026-06-09_22-52_COMPREHENSIVE-MASTER-STATUS.md` | Previous status report | Untracked |
+| File                                                          | Nature                                                                   | Status      |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------ | ----------- |
+| `pocket-id.nix`                                               | +301 lines — Declarative provisioning (admin user, OIDC clients, avatar) | Uncommitted |
+| `oauth2-proxy.nix`                                            | Client secret path from provision vs sops                                | Uncommitted |
+| `immich.nix`                                                  | Client secret path from provision vs sops, service ordering              | Uncommitted |
+| `sops.nix`                                                    | Minor change                                                             | Uncommitted |
+| `configuration.nix`                                           | Pocket ID provision config, other changes                                | Uncommitted |
+| `justfile`                                                    | Simplified `auth-bootstrap` recipe (removed manual client steps)         | Uncommitted |
+| `docs/status/2026-06-09_22-52_COMPREHENSIVE-MASTER-STATUS.md` | Previous status report                                                   | Untracked   |
 
 These need a separate commit — they represent the Pocket ID declarative provisioning feature.
 
@@ -114,33 +115,33 @@ Nothing broken this session. Everything builds clean.
 
 ## f) Top 25 Things We Should Get Done Next
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | Commit Pocket ID provisioning changes (6 files, +301 lines) | HIGH — uncommitted feature work | 5min |
-| 2 | Add Photomap Caddy vHost (`photomap.home.lan`) | MED — completeness | 10min |
-| 3 | Make Homepage empty categories fully conditional | MED — edge case polish | 15min |
-| 4 | Add `/healthz` endpoint to Hermes (Go binary) | MED — monitoring completeness | 30min |
-| 5 | Run `just switch` to deploy all changes to evo-x2 | HIGH — get it live | 15min |
-| 6 | Verify Homepage renders correctly with all tiles | HIGH — visual confirmation | 5min |
-| 7 | Verify Gatus shows all new health checks green | HIGH — monitoring validation | 5min |
-| 8 | Add Gatus health checks for Forgejo Repos (systemd check) | LOW — background service | 10min |
-| 9 | Archive old status reports (100+ in docs/status/) | LOW — housekeeping | 10min |
-| 10 | Update `docs/status/` naming convention doc | LOW — consistency | 5min |
-| 11 | Add Homepage widget for GPU utilization | MED — at-a-glance system health | 15min |
-| 12 | Add Homepage widget for Docker container count | MED — operational awareness | 10min |
-| 13 | Review all Gatus endpoints match Homepage `siteMonitor` URLs | MED — consistency audit | 15min |
-| 14 | Add Monitor365 to DNS (Unbound local zone) | MED — `monitor.home.lan` resolution | 5min |
-| 15 | Verify TLS cert works for `monitor.home.lan` | MED — Caddy cert coverage | 5min |
-| 16 | Add `lib/ports.nix` entry for any hardcoded ports remaining | LOW — centralization | 15min |
-| 17 | Consider Homepage integration with Gatus API (status badges) | LOW — enhanced monitoring | 30min |
-| 18 | Review `justfile` for stale recipes referencing removed services | LOW — cleanup | 10min |
-| 19 | Push all commits to origin | MED — backup/sharing | 2min |
-| 20 | Add NixOS VM test for Homepage rendering (smoke test) | LOW — CI coverage | 60min |
-| 21 | Audit all Caddy vHosts have corresponding Homepage tiles | MED — coverage audit | 10min |
-| 22 | Audit all Homepage tiles have corresponding Gatus checks | MED — monitoring audit | 10min |
-| 23 | Add Discordsync monitoring (process check via Gatus) | LOW — completeness | 10min |
-| 24 | Review and update `docs/DOMAIN_LANGUAGE.md` if stale | LOW — documentation | 15min |
-| 25 | Verify `just test` (full build) still passes | MED — full validation | 30min |
+| #   | Task                                                             | Impact                              | Effort |
+| --- | ---------------------------------------------------------------- | ----------------------------------- | ------ |
+| 1   | Commit Pocket ID provisioning changes (6 files, +301 lines)      | HIGH — uncommitted feature work     | 5min   |
+| 2   | Add Photomap Caddy vHost (`photomap.home.lan`)                   | MED — completeness                  | 10min  |
+| 3   | Make Homepage empty categories fully conditional                 | MED — edge case polish              | 15min  |
+| 4   | Add `/healthz` endpoint to Hermes (Go binary)                    | MED — monitoring completeness       | 30min  |
+| 5   | Run `just switch` to deploy all changes to evo-x2                | HIGH — get it live                  | 15min  |
+| 6   | Verify Homepage renders correctly with all tiles                 | HIGH — visual confirmation          | 5min   |
+| 7   | Verify Gatus shows all new health checks green                   | HIGH — monitoring validation        | 5min   |
+| 8   | Add Gatus health checks for Forgejo Repos (systemd check)        | LOW — background service            | 10min  |
+| 9   | Archive old status reports (100+ in docs/status/)                | LOW — housekeeping                  | 10min  |
+| 10  | Update `docs/status/` naming convention doc                      | LOW — consistency                   | 5min   |
+| 11  | Add Homepage widget for GPU utilization                          | MED — at-a-glance system health     | 15min  |
+| 12  | Add Homepage widget for Docker container count                   | MED — operational awareness         | 10min  |
+| 13  | Review all Gatus endpoints match Homepage `siteMonitor` URLs     | MED — consistency audit             | 15min  |
+| 14  | Add Monitor365 to DNS (Unbound local zone)                       | MED — `monitor.home.lan` resolution | 5min   |
+| 15  | Verify TLS cert works for `monitor.home.lan`                     | MED — Caddy cert coverage           | 5min   |
+| 16  | Add `lib/ports.nix` entry for any hardcoded ports remaining      | LOW — centralization                | 15min  |
+| 17  | Consider Homepage integration with Gatus API (status badges)     | LOW — enhanced monitoring           | 30min  |
+| 18  | Review `justfile` for stale recipes referencing removed services | LOW — cleanup                       | 10min  |
+| 19  | Push all commits to origin                                       | MED — backup/sharing                | 2min   |
+| 20  | Add NixOS VM test for Homepage rendering (smoke test)            | LOW — CI coverage                   | 60min  |
+| 21  | Audit all Caddy vHosts have corresponding Homepage tiles         | MED — coverage audit                | 10min  |
+| 22  | Audit all Homepage tiles have corresponding Gatus checks         | MED — monitoring audit              | 10min  |
+| 23  | Add Discordsync monitoring (process check via Gatus)             | LOW — completeness                  | 10min  |
+| 24  | Review and update `docs/DOMAIN_LANGUAGE.md` if stale             | LOW — documentation                 | 15min  |
+| 25  | Verify `just test` (full build) still passes                     | MED — full validation               | 30min  |
 
 ---
 
@@ -149,6 +150,7 @@ Nothing broken this session. Everything builds clean.
 **Should I commit the Pocket ID provisioning changes (pocket-id.nix +301 lines, oauth2-proxy, immich, sops, configuration.nix, justfile) in the SAME commit as the homepage work, or as a separate commit?**
 
 These are logically separate features:
+
 - Commit A: Homepage completeness audit (my work this session)
 - Commit B: Pocket ID declarative provisioning (previous session's work)
 

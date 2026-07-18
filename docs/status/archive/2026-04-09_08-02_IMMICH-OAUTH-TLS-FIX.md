@@ -23,8 +23,8 @@ The Authelia side was fine (forward-auth worked, OIDC discovery worked from the 
 
 **Fix:** Added `environment.NODE_TLS_REJECT_UNAUTHORIZED = "0"` to the Immich service config in `modules/nixos/services/immich.nix:22`.
 
-| File | Change |
-|------|--------|
+| File                                | Change                                                 |
+| ----------------------------------- | ------------------------------------------------------ |
 | `modules/nixos/services/immich.nix` | Added `environment.NODE_TLS_REJECT_UNAUTHORIZED = "0"` |
 
 ### Authelia Email Investigation
@@ -47,11 +47,11 @@ Nothing partially done.
 
 ## C) NOT STARTED ⬜
 
-| Item | Notes |
-|------|-------|
-| Deploy with `just switch` | Fix is code-complete but not yet applied to the running system |
-| SMTP/email for Authelia | Notifier still writes to file. Would need a mail relay (e.g. Postfix relayhost, or external SMTP like Sendgrid/Mailgun) |
-| Internal CA in system trust store | Cleaner alternative to `NODE_TLS_REJECT_UNAUTHORIZED=0`. Would fix all services at once |
+| Item                              | Notes                                                                                                                   |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Deploy with `just switch`         | Fix is code-complete but not yet applied to the running system                                                          |
+| SMTP/email for Authelia           | Notifier still writes to file. Would need a mail relay (e.g. Postfix relayhost, or external SMTP like Sendgrid/Mailgun) |
+| Internal CA in system trust store | Cleaner alternative to `NODE_TLS_REJECT_UNAUTHORIZED=0`. Would fix all services at once                                 |
 
 ---
 
@@ -73,14 +73,14 @@ Nothing blown up this session.
 
 ## F) Top Things to Do Next
 
-| # | Priority | Item | Effort |
-|---|----------|------|--------|
-| 1 | P0 | Run `just switch` to deploy the Immich fix | 5 min |
-| 2 | P1 | Add internal CA to system trust store (`security.pki.certificateFiles`) | Low |
-| 3 | P1 | Remove `NODE_TLS_REJECT_UNAUTHORIZED=0` once CA is trusted | Trivial |
-| 4 | P2 | Verify Gitea OAuth works (same cert chain) | Low |
-| 5 | P2 | Configure Authelia SMTP notifier for real emails | Medium |
-| 6 | P3 | Check other OIDC clients for same TLS trust issue | Low |
+| #   | Priority | Item                                                                    | Effort  |
+| --- | -------- | ----------------------------------------------------------------------- | ------- |
+| 1   | P0       | Run `just switch` to deploy the Immich fix                              | 5 min   |
+| 2   | P1       | Add internal CA to system trust store (`security.pki.certificateFiles`) | Low     |
+| 3   | P1       | Remove `NODE_TLS_REJECT_UNAUTHORIZED=0` once CA is trusted              | Trivial |
+| 4   | P2       | Verify Gitea OAuth works (same cert chain)                              | Low     |
+| 5   | P2       | Configure Authelia SMTP notifier for real emails                        | Medium  |
+| 6   | P3       | Check other OIDC clients for same TLS trust issue                       | Low     |
 
 ---
 

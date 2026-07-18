@@ -15,19 +15,21 @@
 
 **Solution:** Created 4 separate BTRFS subvolumes, mounted via Nix `fileSystems` with automount. These are excluded from btrbk snapshots of `@`.
 
-| Subvolume | Mount Point | Size Excluded |
-|-----------|------------|---------------|
-| `@cache-home` | `/home/lars/.cache` | ~40 GB |
-| `@go` | `/home/lars/go` | ~9.1 GB |
-| `@npm` | `/home/lars/.npm` | ~2.8 GB |
-| `@cargo` | `/home/lars/.cargo` | ~1.6 GB |
+| Subvolume     | Mount Point         | Size Excluded |
+| ------------- | ------------------- | ------------- |
+| `@cache-home` | `/home/lars/.cache` | ~40 GB        |
+| `@go`         | `/home/lars/go`     | ~9.1 GB       |
+| `@npm`        | `/home/lars/.npm`   | ~2.8 GB       |
+| `@cargo`      | `/home/lars/.cargo` | ~1.6 GB       |
 
 **Verification (post-`just switch`):**
+
 - All 4 mounts active: ✅
 - `/proc/mounts` confirms correct `subvol=/@...` mappings
 - New pre-deploy snapshot (2026-05-30T100703) has only **59 MB exclusive** vs. previous 85-203 GB — fix is working
 
 **Files changed:**
+
 - `platforms/nixos/system/snapshots.nix` — added `cacheSubvolumes`, `cacheFileSystems`, merged `fileSystems` block
 - `docs/planning/btrfs-snapshot-bloat-fix.html` — execution plan document
 
@@ -38,6 +40,7 @@ Deleted stale snapshot `@.20260527T0000` (69.49 GB exclusive). Disk usage droppe
 ### 3. Build & Validation Pipeline
 
 All pre-commit hooks passed:
+
 - gitleaks ✅
 - deadnix ✅
 - statix ✅
@@ -99,6 +102,7 @@ This service is failing continuously. Needs investigation. Likely related to the
 ### 2. ClickHouse Data Location Mystery
 
 `/var/lib/clickhouse` reports as **8.0K** in current `du` output, down from 21 GB earlier in the session. Either:
+
 - Data moved to a different path
 - ClickHouse was reconfigured or restarted
 - BTRFS subvolume restructuring caused path confusion
@@ -108,12 +112,14 @@ This service is failing continuously. Needs investigation. Likely related to the
 ### 3. Missing /var/lib Directories
 
 Earlier session showed:
+
 - `/var/lib/gitea.pre-forgejo-migration` (19 GB)
 - `/var/lib/immich` (15 GB)
 - `/var/lib/forgejo` (15 GB)
 - `/var/lib/clickhouse` (21 GB)
 
 Current `du -sh /var/lib/*` shows **none of these**. They may be:
+
 - On separate mounts/subvolumes
 - Temporarily unavailable
 - Relocated by recent config changes
@@ -148,33 +154,33 @@ The data partition is also nearly full. AI models, container images, or other la
 
 ## f) Top #25 Things We Should Get Done Next
 
-| # | Task | Impact | Effort | Priority |
-|---|------|--------|--------|----------|
-| 1 | **Fix `disk-monitor.service` failure** | High | 15 min | 🔴 Critical |
-| 2 | **Verify ClickHouse data integrity** | High | 10 min | 🔴 Critical |
-| 3 | **Verify /var/lib/{immich,forgejo,clickhouse} data** | High | 15 min | 🔴 Critical |
-| 4 | **Add ClickHouse system log TTLs** | Medium | 30 min | 🟡 High |
-| 5 | **Reduce btrbk retention to 7d 1w** | Medium | 5 min | 🟡 High |
-| 6 | **Add `just snapshot-gc` recipe** | Medium | 20 min | 🟡 High |
-| 7 | **Migrate to Disko for declarative subvolumes** | High | 3 hr | 🟡 High |
-| 8 | **Clean up Gitea pre-migration (19 GB)** | Low | 5 min | 🟢 Medium |
-| 9 | **Add `/data` BTRFS subvolume + snapshot** | Medium | 1 hr | 🟢 Medium |
-| 10 | **Journal vacuum automation** | Low | 15 min | 🟢 Medium |
-| 11 | **Add `just cache-subvol-create` recipe** | Low | 15 min | 🟢 Medium |
-| 12 | **Document cache subvolume setup in AGENTS.md** | Low | 10 min | 🟢 Medium |
-| 13 | **Monitor /data usage (93%)** | Medium | 10 min | 🟢 Medium |
-| 14 | **Add pre-deploy nix-collect-garbage** | Medium | 20 min | 🟢 Medium |
-| 15 | **SigNoz alert rule for disk usage** | Low | 30 min | 🔵 Low |
-| 16 | **BTRFS compression audit** | Low | 30 min | 🔵 Low |
-| 17 | **Add `@snapshots` subvolume for btrbk** | Low | 1 hr | 🔵 Low |
-| 18 | **Remove old `.pre-subvol` backups** | Low | 5 min | 🔵 Low |
-| 19 | **Add `ensure-btrfs-subvolumes` to `just test`** | Low | 30 min | 🔵 Low |
-| 20 | **Audit all cache dirs for additional subvolumes** | Low | 20 min | 🔵 Low |
-| 21 | **Add `.local/share` as subvolume candidate** | Low | 30 min | 🔵 Low |
-| 22 | **Review Docker image pruning policy** | Low | 15 min | 🔵 Low |
-| 23 | **Add `OLLAMA_MAX_LOADED_MODELS=1` enforcement** | Low | 10 min | 🔵 Low |
-| 24 | **Document rollback procedure in AGENTS.md** | Low | 15 min | 🔵 Low |
-| 25 | **Add snapshot size alerting to btrbk** | Low | 30 min | 🔵 Low |
+| #   | Task                                                 | Impact | Effort | Priority    |
+| --- | ---------------------------------------------------- | ------ | ------ | ----------- |
+| 1   | **Fix `disk-monitor.service` failure**               | High   | 15 min | 🔴 Critical |
+| 2   | **Verify ClickHouse data integrity**                 | High   | 10 min | 🔴 Critical |
+| 3   | **Verify /var/lib/{immich,forgejo,clickhouse} data** | High   | 15 min | 🔴 Critical |
+| 4   | **Add ClickHouse system log TTLs**                   | Medium | 30 min | 🟡 High     |
+| 5   | **Reduce btrbk retention to 7d 1w**                  | Medium | 5 min  | 🟡 High     |
+| 6   | **Add `just snapshot-gc` recipe**                    | Medium | 20 min | 🟡 High     |
+| 7   | **Migrate to Disko for declarative subvolumes**      | High   | 3 hr   | 🟡 High     |
+| 8   | **Clean up Gitea pre-migration (19 GB)**             | Low    | 5 min  | 🟢 Medium   |
+| 9   | **Add `/data` BTRFS subvolume + snapshot**           | Medium | 1 hr   | 🟢 Medium   |
+| 10  | **Journal vacuum automation**                        | Low    | 15 min | 🟢 Medium   |
+| 11  | **Add `just cache-subvol-create` recipe**            | Low    | 15 min | 🟢 Medium   |
+| 12  | **Document cache subvolume setup in AGENTS.md**      | Low    | 10 min | 🟢 Medium   |
+| 13  | **Monitor /data usage (93%)**                        | Medium | 10 min | 🟢 Medium   |
+| 14  | **Add pre-deploy nix-collect-garbage**               | Medium | 20 min | 🟢 Medium   |
+| 15  | **SigNoz alert rule for disk usage**                 | Low    | 30 min | 🔵 Low      |
+| 16  | **BTRFS compression audit**                          | Low    | 30 min | 🔵 Low      |
+| 17  | **Add `@snapshots` subvolume for btrbk**             | Low    | 1 hr   | 🔵 Low      |
+| 18  | **Remove old `.pre-subvol` backups**                 | Low    | 5 min  | 🔵 Low      |
+| 19  | **Add `ensure-btrfs-subvolumes` to `just test`**     | Low    | 30 min | 🔵 Low      |
+| 20  | **Audit all cache dirs for additional subvolumes**   | Low    | 20 min | 🔵 Low      |
+| 21  | **Add `.local/share` as subvolume candidate**        | Low    | 30 min | 🔵 Low      |
+| 22  | **Review Docker image pruning policy**               | Low    | 15 min | 🔵 Low      |
+| 23  | **Add `OLLAMA_MAX_LOADED_MODELS=1` enforcement**     | Low    | 10 min | 🔵 Low      |
+| 24  | **Document rollback procedure in AGENTS.md**         | Low    | 15 min | 🔵 Low      |
+| 25  | **Add snapshot size alerting to btrbk**              | Low    | 30 min | 🔵 Low      |
 
 ---
 
@@ -183,6 +189,7 @@ The data partition is also nearly full. AI models, container images, or other la
 **Where did the 52 GB of /var/lib data go?**
 
 At 09:42, `du -sh /var/lib/*` showed:
+
 - `clickhouse` = 21 GB
 - `gitea.pre-forgejo-migration` = 19 GB
 - `immich` = 15 GB
@@ -190,18 +197,21 @@ At 09:42, `du -sh /var/lib/*` showed:
 - `containers` = 4.8 GB
 
 At 11:24, the same command shows:
+
 - `clickhouse` = 8.0K
 - The other large directories are **missing entirely**
 
 Total missing: ~52+ GB.
 
 **Possible explanations:**
+
 1. **Different mount namespace** — The `du` command is running in a context where these paths are masked
 2. **BTRFS subvolume restructuring** — The cache subvolume changes somehow affected other mounts
 3. **Services reconfigured** — `just switch` may have changed mount points for these services
 4. **Data loss** — Unlikely but needs ruling out
 
 **Why I can't figure it out:**
+
 - Cannot run `sudo` to inspect `/var/lib` deeply
 - Cannot run `btrfs subvolume list` (needs root)
 - Cannot inspect systemd mount units for these services
@@ -209,6 +219,7 @@ Total missing: ~52+ GB.
 
 **What I need:**
 Run as root or with sudo:
+
 ```bash
 btrfs subvolume list /mnt/btrfs-root
 systemctl status clickhouse immich forgejo
@@ -221,16 +232,16 @@ mount | grep -E 'clickhouse|immich|forgejo'
 
 ## Session Summary
 
-| Metric | Before | After | Delta |
-|--------|--------|-------|-------|
-| Disk usage (/) | 507 GB (100%) | 438 GB (89%) | **-69 GB** |
-| Snapshots | 7 (285 GB exclusive) | 3 (~322 GB exclusive) | **-4 snapshots** |
-| Cache in @ subvolume | ~54 GB duplicated | 0 GB (excluded) | **-54 GB/day** |
-| Pre-deploy exclusive | 85-203 GB | 59 MB | **-99.9%** |
-| Mount status | Broken | All 4 active | **Fixed** |
+| Metric               | Before               | After                 | Delta            |
+| -------------------- | -------------------- | --------------------- | ---------------- |
+| Disk usage (/)       | 507 GB (100%)        | 438 GB (89%)          | **-69 GB**       |
+| Snapshots            | 7 (285 GB exclusive) | 3 (~322 GB exclusive) | **-4 snapshots** |
+| Cache in @ subvolume | ~54 GB duplicated    | 0 GB (excluded)       | **-54 GB/day**   |
+| Pre-deploy exclusive | 85-203 GB            | 59 MB                 | **-99.9%**       |
+| Mount status         | Broken               | All 4 active          | **Fixed**        |
 
 **The cache subvolume fix is working. The pre-deploy snapshot dropping from 85+ GB to 59 MB proves it.**
 
 ---
 
-*Generated: 2026-05-30 11:24 CEST | Session 111 | Crush:glm-5.1*
+_Generated: 2026-05-30 11:24 CEST | Session 111 | Crush:glm-5.1_

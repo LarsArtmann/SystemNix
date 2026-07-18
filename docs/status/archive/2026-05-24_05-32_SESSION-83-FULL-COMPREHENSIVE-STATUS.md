@@ -20,12 +20,12 @@ evo-x2 is **fully deployed and stable**. The vendor hash cascade from session 82
 
 All 5 stale vendor hashes fixed, built, deployed, and pushed:
 
-| Package | Status | Pushed |
-|---------|--------|--------|
-| buildflow | ✅ `sha256-Jsi00lEl...` | ✅ Upstream + overlay |
-| mr-sync | ✅ `sha256-T2IVldw0...` | ✅ Overlay |
-| go-structure-linter | ✅ `sha256-nfbz9ZOv...` | ✅ Overlay |
-| branching-flow | ✅ `sha256-ORJwNCRS...` | ✅ Upstream + overlay |
+| Package                      | Status                  | Pushed                |
+| ---------------------------- | ----------------------- | --------------------- |
+| buildflow                    | ✅ `sha256-Jsi00lEl...` | ✅ Upstream + overlay |
+| mr-sync                      | ✅ `sha256-T2IVldw0...` | ✅ Overlay            |
+| go-structure-linter          | ✅ `sha256-nfbz9ZOv...` | ✅ Overlay            |
+| branching-flow               | ✅ `sha256-ORJwNCRS...` | ✅ Upstream + overlay |
 | golangci-lint-auto-configure | ✅ `sha256-VeOlYERM...` | ✅ Upstream + overlay |
 
 ### 2. go-filewatcher Module Path Fix (Root Cause)
@@ -66,13 +66,13 @@ All 5 stale vendor hashes fixed, built, deployed, and pushed:
 
 ### 1. Upstream Repo Cleanliness
 
-| Repo | Issue | Severity |
-|------|-------|----------|
-| library-policy | 18 dirty test files + 2 dirty source files (test refactoring) | Medium — uncommitted work |
-| mr-sync | 1 dirty status report | Low — housekeeping |
-| go-filewatcher | `flake.lock` nixpkgs drift | Low — non-functional |
+| Repo                   | Issue                                                         | Severity                            |
+| ---------------------- | ------------------------------------------------------------- | ----------------------------------- |
+| library-policy         | 18 dirty test files + 2 dirty source files (test refactoring) | Medium — uncommitted work           |
+| mr-sync                | 1 dirty status report                                         | Low — housekeeping                  |
+| go-filewatcher         | `flake.lock` nixpkgs drift                                    | Low — non-functional                |
 | file-and-image-renamer | `flake.lock` + `flake.nix` dirty, deleted `jscpd-report.json` | Medium — service is DISABLED anyway |
-| go-structure-linter | `internal/rules/.gitignore` | Low — unrelated |
+| go-structure-linter    | `internal/rules/.gitignore`                                   | Low — unrelated                     |
 
 ### 2. Gatus Health Checks — Partial Coverage
 
@@ -89,31 +89,31 @@ Timeshift is installed but `schedule_daily` is `false` — no automated snapshot
 
 ### Infrastructure
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Centralize `mkPreparedSource.nix` into shared flake input | 30 min | Stop copy-pasting across 5+ Go repos |
-| 2 | Add `just verify-packages` recipe to build all Go packages after `flake.lock` updates | 15 min | Prevent cascading vendor hash failures |
-| 3 | GitHub Actions CI for all Go repos | 1-2 hrs | Catch build breakage before it hits SystemNix |
-| 4 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 5 | `just update-vendor-hash` recipe (set `""`, build, extract `got:`) | 15 min | Automate the tedious hash cycle |
+| #   | Task                                                                                  | Effort  | Impact                                        |
+| --- | ------------------------------------------------------------------------------------- | ------- | --------------------------------------------- |
+| 1   | Centralize `mkPreparedSource.nix` into shared flake input                             | 30 min  | Stop copy-pasting across 5+ Go repos          |
+| 2   | Add `just verify-packages` recipe to build all Go packages after `flake.lock` updates | 15 min  | Prevent cascading vendor hash failures        |
+| 3   | GitHub Actions CI for all Go repos                                                    | 1-2 hrs | Catch build breakage before it hits SystemNix |
+| 4   | Pre-push hook to verify Go packages build                                             | 15 min  | Last line of defense                          |
+| 5   | `just update-vendor-hash` recipe (set `""`, build, extract `got:`)                    | 15 min  | Automate the tedious hash cycle               |
 
 ### Services
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 6 | Fix photomap podman permission issue and re-enable | 1 hr | Photo visualization from Immich |
-| 7 | Fix file-and-image-renamer (Go 1.26.3 dep blocked by nixpkgs Go 1.26.2) | 30 min | AI screenshot renaming |
-| 8 | Minecraft server currently `enable = false` | 5 min | Just needs enabling if wanted |
+| #   | Task                                                                    | Effort | Impact                          |
+| --- | ----------------------------------------------------------------------- | ------ | ------------------------------- |
+| 6   | Fix photomap podman permission issue and re-enable                      | 1 hr   | Photo visualization from Immich |
+| 7   | Fix file-and-image-renamer (Go 1.26.3 dep blocked by nixpkgs Go 1.26.2) | 30 min | AI screenshot renaming          |
+| 8   | Minecraft server currently `enable = false`                             | 5 min  | Just needs enabling if wanted   |
 
 ### Documentation & Housekeeping
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 9 | Archive `docs/status/` — 114 files + 374 in archive (7.2 MB total) | 10 min | Housekeeping |
-| 10 | Add version ldflags to library-policy production build | 5 min | Consistency with other repos |
-| 11 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA overrideModAttrs hack |
-| 12 | Add `go-error-family` follows to branching-flow input | 2 min | Dependency dedup |
-| 13 | D2 architecture diagram of Go dependency graph | 20 min | Visualize the cascade chain |
+| #   | Task                                                               | Effort | Impact                               |
+| --- | ------------------------------------------------------------------ | ------ | ------------------------------------ |
+| 9   | Archive `docs/status/` — 114 files + 374 in archive (7.2 MB total) | 10 min | Housekeeping                         |
+| 10  | Add version ldflags to library-policy production build             | 5 min  | Consistency with other repos         |
+| 11  | Publish `branching-flow/pkg/stats` as proper Go module             | 15 min | Eliminates PMA overrideModAttrs hack |
+| 12  | Add `go-error-family` follows to branching-flow input              | 2 min  | Dependency dedup                     |
+| 13  | D2 architecture diagram of Go dependency graph                     | 20 min | Visualize the cascade chain          |
 
 ---
 
@@ -166,48 +166,48 @@ Session 82 had 5 sequential vendor hash failures discovered one-at-a-time becaus
 
 ### Critical — Prevent Another Cascade
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 1 | Add `just verify-packages` recipe | 15 min | **#1 defense** against stale vendor hashes |
-| 2 | Add GitHub Actions CI to Go repos | 1-2 hrs | Catch stale hashes at source |
-| 3 | Automate vendor hash discovery (`just update-vendor-hash`) | 15 min | Reduce 5-min manual cycle to 30 sec |
+| #   | Task                                                       | Effort  | Why                                        |
+| --- | ---------------------------------------------------------- | ------- | ------------------------------------------ |
+| 1   | Add `just verify-packages` recipe                          | 15 min  | **#1 defense** against stale vendor hashes |
+| 2   | Add GitHub Actions CI to Go repos                          | 1-2 hrs | Catch stale hashes at source               |
+| 3   | Automate vendor hash discovery (`just update-vendor-hash`) | 15 min  | Reduce 5-min manual cycle to 30 sec        |
 
 ### High — Stability & Safety
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 4 | Enable BTRFS snapshot scheduling | 5 min | Rollback safety net for bad deploys |
-| 5 | Centralize `mkPreparedSource.nix` | 30 min | Stop copy-pasting across repos |
-| 6 | Clean up `docs/status/` (archive old reports) | 10 min | 488 files is noise |
-| 7 | Add Gatus endpoints for Hermes, Monitor365, disk/nvme monitors | 15 min | Complete observability coverage |
-| 8 | Clean up 17 stale SSH sessions | 5 min | Housekeeping |
+| #   | Task                                                           | Effort | Why                                 |
+| --- | -------------------------------------------------------------- | ------ | ----------------------------------- |
+| 4   | Enable BTRFS snapshot scheduling                               | 5 min  | Rollback safety net for bad deploys |
+| 5   | Centralize `mkPreparedSource.nix`                              | 30 min | Stop copy-pasting across repos      |
+| 6   | Clean up `docs/status/` (archive old reports)                  | 10 min | 488 files is noise                  |
+| 7   | Add Gatus endpoints for Hermes, Monitor365, disk/nvme monitors | 15 min | Complete observability coverage     |
+| 8   | Clean up 17 stale SSH sessions                                 | 5 min  | Housekeeping                        |
 
 ### Medium — Upstream Hygiene
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 9 | Commit library-policy test refactoring | 5 min | 18 dirty files in active repo |
-| 10 | Commit mr-sync status report | 2 min | 1 dirty file |
-| 11 | Update go-filewatcher flake.lock | 2 min | nixpkgs drift |
-| 12 | Fix file-and-image-renamer Go 1.26.3 issue | 30 min | Service is disabled |
-| 13 | Fix photomap podman permissions | 1 hr | Service is disabled |
-| 14 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
-| 15 | Add version ldflags to library-policy | 5 min | Consistency |
+| #   | Task                                                   | Effort | Why                           |
+| --- | ------------------------------------------------------ | ------ | ----------------------------- |
+| 9   | Commit library-policy test refactoring                 | 5 min  | 18 dirty files in active repo |
+| 10  | Commit mr-sync status report                           | 2 min  | 1 dirty file                  |
+| 11  | Update go-filewatcher flake.lock                       | 2 min  | nixpkgs drift                 |
+| 12  | Fix file-and-image-renamer Go 1.26.3 issue             | 30 min | Service is disabled           |
+| 13  | Fix photomap podman permissions                        | 1 hr   | Service is disabled           |
+| 14  | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack           |
+| 15  | Add version ldflags to library-policy                  | 5 min  | Consistency                   |
 
 ### Lower — Polish & Future-proofing
 
-| # | Task | Effort | Why |
-|---|------|--------|-----|
-| 16 | Run `just test` (full build) on SystemNix | 20 min | More thorough than test-fast |
-| 17 | Create D2 architecture diagram of Go dep graph | 20 min | Visualize cascade chain |
-| 18 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 19 | Audit all scripts for any remaining reboot/shutdown calls | 10 min | Paranoid check |
-| 20 | Add `go-error-family` follows to branching-flow | 2 min | Dependency dedup |
-| 21 | Reduce flake input count where possible | 30 min | Faster eval |
-| 22 | Add `just smoke-test` to verify all binaries run | 10 min | Post-deploy validation |
-| 23 | Update AGENTS.md with portal-niri pattern | 5 min | Documentation |
-| 24 | Test Darwin config (`darwin-rebuild build`) | 10 min | Cross-platform parity |
-| 25 | Investigate niri session manager stale session cleanup | 20 min | Prevent session accumulation |
+| #   | Task                                                      | Effort | Why                          |
+| --- | --------------------------------------------------------- | ------ | ---------------------------- |
+| 16  | Run `just test` (full build) on SystemNix                 | 20 min | More thorough than test-fast |
+| 17  | Create D2 architecture diagram of Go dep graph            | 20 min | Visualize cascade chain      |
+| 18  | Pre-push hook to verify Go packages build                 | 15 min | Last line of defense         |
+| 19  | Audit all scripts for any remaining reboot/shutdown calls | 10 min | Paranoid check               |
+| 20  | Add `go-error-family` follows to branching-flow           | 2 min  | Dependency dedup             |
+| 21  | Reduce flake input count where possible                   | 30 min | Faster eval                  |
+| 22  | Add `just smoke-test` to verify all binaries run          | 10 min | Post-deploy validation       |
+| 23  | Update AGENTS.md with portal-niri pattern                 | 5 min  | Documentation                |
+| 24  | Test Darwin config (`darwin-rebuild build`)               | 10 min | Cross-platform parity        |
+| 25  | Investigate niri session manager stale session cleanup    | 20 min | Prevent session accumulation |
 
 ---
 
@@ -218,6 +218,7 @@ Session 82 had 5 sequential vendor hash failures discovered one-at-a-time becaus
 Currently `just test-fast` runs `nix flake check --no-build` which only validates Nix evaluation — it does NOT catch vendor hash mismatches. The cascade in session 82 proved this is dangerous.
 
 Options:
+
 1. **Add `just verify-packages`** — explicit step, runs all Go builds (~5 min), user runs when needed
 2. **Add to `just test`** — always builds all packages, but makes `just test` take 5+ minutes longer
 3. **Pre-push hook** — automatic, but adds latency to every push
@@ -230,79 +231,81 @@ Options:
 ## System State
 
 ### NixOS evo-x2
-| Component | Status | Version/Detail |
-|-----------|--------|----------------|
-| OS | ✅ Deployed | NixOS 26.05.20260523.3d8f0f3 |
-| Kernel | ✅ Running | 6.x (systemd-boot) |
-| Go | ✅ 1.26.3 | Updated from 1.26.2 |
-| Compositor | ✅ niri | Wayland scrollable-tiling |
-| Portal | ✅ Fixed | `["niri" "gtk"]` — no more wlr crashes |
-| Watchdog | ✅ Safe | No auto-reboot, CRITICAL log only |
-| Firewall | ✅ Active | 22, 53, 80, 443 TCP + 53, 853 UDP |
-| DNS | ✅ Running | Unbound + dnsblockd (53/853) |
-| Caddy | ✅ Reverse proxy | 12 vhosts behind Authelia |
-| GPU | ✅ AMD | Ryzen AI Max+ Strix Halo, ROCm, RADV |
-| BTRFS | ⚠️ No auto-snapshots | Timeshift installed but not scheduled |
-| Dual-WAN | ✅ Running | MPTCP + route health monitor |
-| Smartd | ✅ Enabled | Auto-detect, daily/weekly checks |
+
+| Component  | Status               | Version/Detail                         |
+| ---------- | -------------------- | -------------------------------------- |
+| OS         | ✅ Deployed          | NixOS 26.05.20260523.3d8f0f3           |
+| Kernel     | ✅ Running           | 6.x (systemd-boot)                     |
+| Go         | ✅ 1.26.3            | Updated from 1.26.2                    |
+| Compositor | ✅ niri              | Wayland scrollable-tiling              |
+| Portal     | ✅ Fixed             | `["niri" "gtk"]` — no more wlr crashes |
+| Watchdog   | ✅ Safe              | No auto-reboot, CRITICAL log only      |
+| Firewall   | ✅ Active            | 22, 53, 80, 443 TCP + 53, 853 UDP      |
+| DNS        | ✅ Running           | Unbound + dnsblockd (53/853)           |
+| Caddy      | ✅ Reverse proxy     | 12 vhosts behind Authelia              |
+| GPU        | ✅ AMD               | Ryzen AI Max+ Strix Halo, ROCm, RADV   |
+| BTRFS      | ⚠️ No auto-snapshots | Timeshift installed but not scheduled  |
+| Dual-WAN   | ✅ Running           | MPTCP + route health monitor           |
+| Smartd     | ✅ Enabled           | Auto-detect, daily/weekly checks       |
 
 ### Services (34 modules in serviceModules)
 
-| Service | Enabled | Notes |
-|---------|---------|-------|
-| Forgejo | ✅ | Port 3000, SOPS secrets, repo mirroring |
-| Immich | ✅ | VA-API transcoding, machine-learning |
-| Caddy | ✅ | 12 vhosts, Authelia forward-auth |
-| Authelia | ✅ | Port 9091, SOPS-managed |
-| SigNoz | ✅ | v0.117.1, ClickHouse + OTel (built from source) |
-| Twenty CRM | ✅ | Port 3200, Docker Compose |
-| Homepage | ✅ | Port 8082 |
-| TaskChampion | ✅ | Port 10222 |
-| Manifest | ✅ | Port 2099 |
-| Gatus | ✅ | Port 9110, 25+ endpoints, Discord alerts |
-| OpenSEO | ✅ | Port 3002 |
-| Monitor365 | ✅ | Port 3001, server + agent |
-| Hermes | ✅ | AI gateway, Discord/Telegram/Anthropic/Firecrawl/edge-tts/fal/exa |
-| Voice Agents | ✅ | LiveKit + Whisper (ROCm Docker) |
-| Ollama | ✅ | GPU fraction 0.45, max 1 loaded model |
-| AI Models | ✅ | Centralized `/data/ai/` storage |
-| Disk Monitor | ✅ | Desktop notifications at thresholds |
-| NVMe Health | ✅ | SSD health monitoring |
-| DNS Blocker | ✅ | dnsblockd, unbound, block page |
-| Dual-WAN | ✅ | MPTCP ECMP + route health |
-| Browser Policies | ✅ | Chromium managed policies |
-| Steam | ✅ | Proton enabled |
-| Display Manager | ✅ | SDDM + SilentSDDM theme |
-| Niri | ✅ | Session manager + config |
-| Audio | ✅ | PipeWire |
-| Security Hardening | ✅ | Systemd sandboxing |
-| SOPS | ✅ | Age-encrypted secrets |
-| Forgejo Repos | ✅ | Auto-sync dnsblockd, BuildFlow |
-| **Photomap** | ❌ | podman permission issue |
-| **File Renamer** | ❌ | Go 1.26.3 dep vs nixpkgs 1.26.2 |
-| **Minecraft** | ❌ | Explicitly disabled |
+| Service            | Enabled | Notes                                                             |
+| ------------------ | ------- | ----------------------------------------------------------------- |
+| Forgejo            | ✅      | Port 3000, SOPS secrets, repo mirroring                           |
+| Immich             | ✅      | VA-API transcoding, machine-learning                              |
+| Caddy              | ✅      | 12 vhosts, Authelia forward-auth                                  |
+| Authelia           | ✅      | Port 9091, SOPS-managed                                           |
+| SigNoz             | ✅      | v0.117.1, ClickHouse + OTel (built from source)                   |
+| Twenty CRM         | ✅      | Port 3200, Docker Compose                                         |
+| Homepage           | ✅      | Port 8082                                                         |
+| TaskChampion       | ✅      | Port 10222                                                        |
+| Manifest           | ✅      | Port 2099                                                         |
+| Gatus              | ✅      | Port 9110, 25+ endpoints, Discord alerts                          |
+| OpenSEO            | ✅      | Port 3002                                                         |
+| Monitor365         | ✅      | Port 3001, server + agent                                         |
+| Hermes             | ✅      | AI gateway, Discord/Telegram/Anthropic/Firecrawl/edge-tts/fal/exa |
+| Voice Agents       | ✅      | LiveKit + Whisper (ROCm Docker)                                   |
+| Ollama             | ✅      | GPU fraction 0.45, max 1 loaded model                             |
+| AI Models          | ✅      | Centralized `/data/ai/` storage                                   |
+| Disk Monitor       | ✅      | Desktop notifications at thresholds                               |
+| NVMe Health        | ✅      | SSD health monitoring                                             |
+| DNS Blocker        | ✅      | dnsblockd, unbound, block page                                    |
+| Dual-WAN           | ✅      | MPTCP ECMP + route health                                         |
+| Browser Policies   | ✅      | Chromium managed policies                                         |
+| Steam              | ✅      | Proton enabled                                                    |
+| Display Manager    | ✅      | SDDM + SilentSDDM theme                                           |
+| Niri               | ✅      | Session manager + config                                          |
+| Audio              | ✅      | PipeWire                                                          |
+| Security Hardening | ✅      | Systemd sandboxing                                                |
+| SOPS               | ✅      | Age-encrypted secrets                                             |
+| Forgejo Repos      | ✅      | Auto-sync dnsblockd, BuildFlow                                    |
+| **Photomap**       | ❌      | podman permission issue                                           |
+| **File Renamer**   | ❌      | Go 1.26.3 dep vs nixpkgs 1.26.2                                   |
+| **Minecraft**      | ❌      | Explicitly disabled                                               |
 
 ### Upstream Repos (15 total)
 
-| Repo | Language | Branch | Dirty | Status |
-|------|----------|--------|-------|--------|
-| buildflow | Go | master | Clean | ✅ Pushed |
-| go-filewatcher | Go | master | flake.lock | ✅ /v2 fix deployed |
-| go-structure-linter | Go | master | .gitignore | ✅ |
-| branching-flow | Go | master | Clean | ✅ vendorHash fixed |
-| golangci-lint-auto-configure | Go | master | Clean | ✅ vendorHash fixed |
-| projects-management-automation | Go | master | Clean | ✅ |
-| library-policy | Go | master | 20 files | ⚠️ Test refactoring uncommitted |
-| mr-sync | Go | master | 1 status doc | ✅ |
-| go-auto-upgrade | Go | master | Clean | ✅ |
-| art-dupl | Go | fork | Clean | ✅ |
-| dnsblockd | Go | master | Clean | ✅ |
-| file-and-image-renamer | Go | master | 3 files | ⚠️ Disabled in config |
-| hierarchical-errors | Go | master | Clean | ✅ |
-| monitor365 | Rust | master | Clean | ✅ |
-| emeet-pixyd | Go | master | Clean | ✅ |
+| Repo                           | Language | Branch | Dirty        | Status                          |
+| ------------------------------ | -------- | ------ | ------------ | ------------------------------- |
+| buildflow                      | Go       | master | Clean        | ✅ Pushed                       |
+| go-filewatcher                 | Go       | master | flake.lock   | ✅ /v2 fix deployed             |
+| go-structure-linter            | Go       | master | .gitignore   | ✅                              |
+| branching-flow                 | Go       | master | Clean        | ✅ vendorHash fixed             |
+| golangci-lint-auto-configure   | Go       | master | Clean        | ✅ vendorHash fixed             |
+| projects-management-automation | Go       | master | Clean        | ✅                              |
+| library-policy                 | Go       | master | 20 files     | ⚠️ Test refactoring uncommitted |
+| mr-sync                        | Go       | master | 1 status doc | ✅                              |
+| go-auto-upgrade                | Go       | master | Clean        | ✅                              |
+| art-dupl                       | Go       | fork   | Clean        | ✅                              |
+| dnsblockd                      | Go       | master | Clean        | ✅                              |
+| file-and-image-renamer         | Go       | master | 3 files      | ⚠️ Disabled in config           |
+| hierarchical-errors            | Go       | master | Clean        | ✅                              |
+| monitor365                     | Rust     | master | Clean        | ✅                              |
+| emeet-pixyd                    | Go       | master | Clean        | ✅                              |
 
 ### macOS Lars-MacBook-Air (aarch64-darwin)
+
 - ✅ nix-darwin + Home Manager
 - ✅ Shared packages, fonts, themes with NixOS
 - ⚠️ d2 overlay hack (re-instantiates with stubs)
@@ -313,15 +316,15 @@ Options:
 
 ## Deployment History (Recent)
 
-| Time | Commit | Action |
-|------|--------|--------|
+| Time  | Commit     | Action                                              |
+| ----- | ---------- | --------------------------------------------------- |
 | 05:29 | `21ac978f` | `nh os switch` — portal fix deployed ✅ zero errors |
-| 04:57 | `95393fb5` | Status report committed |
-| 04:xx | `150ed288` | golangci-lint-auto-configure vendor hash |
-| 04:xx | `a65bbdc2` | branching-flow vendor hash |
-| 04:xx | `e5ed623f` | All stale vendor hashes + go-filewatcher fix |
-| 04:xx | `5f21660f` | buildflow vendor hash |
-| 04:xx | `e7b591c5` | Watchdog auto-reboot removed |
+| 04:57 | `95393fb5` | Status report committed                             |
+| 04:xx | `150ed288` | golangci-lint-auto-configure vendor hash            |
+| 04:xx | `a65bbdc2` | branching-flow vendor hash                          |
+| 04:xx | `e5ed623f` | All stale vendor hashes + go-filewatcher fix        |
+| 04:xx | `5f21660f` | buildflow vendor hash                               |
+| 04:xx | `e7b591c5` | Watchdog auto-reboot removed                        |
 
 ---
 

@@ -33,6 +33,7 @@
 **Status:** All code changes done. Unbound removed entirely — dnsblockd is the sole DNS resolver on :53 with embedded sdns. Rollback: `git switch` to pre-migration commit + `nix run .#deploy`.
 
 **Completed:**
+
 - [x] Added NixOS options: `dnsForwarders`, `localRecords`, `localZones`, `allowedNetworks`, `dnsIPv6Enabled`, `dnsReloadInterval` to `dns-blocker.nix`
 - [x] Generate dnsblockd YAML with `dns_enabled: true` + all DNS config fields
 - [x] Removed all unbound config (services.unbound, systemd.services.unbound, unboundIncludeFile)
@@ -48,6 +49,7 @@
 - [x] Removed stale unbound test from `tests/default.nix`
 
 **Pending deploy & validate:**
+
 - [ ] `nix flake check --no-build` + `nix eval`
 - [ ] Deploy to evo-x2
 - [ ] `dig @127.0.0.1 forgejo.home.lan.` → server IP (local records)

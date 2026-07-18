@@ -20,6 +20,7 @@ Major maintenance session: migrated nixpkgs from a pinned commit to `nixpkgs-uns
 **After:** `github:NixOS/nixpkgs/nixpkgs-unstable` (resolves to 2026-05-15)
 
 **Impact:**
+
 - Kernel: **7.0.1 → 7.0.8** (fixes Dirty Frag CVE, 7-version jump)
 - NixOS release: 26.05 (unchanged)
 - Massive rebuild: ~1000+ derivations
@@ -34,6 +35,7 @@ Major maintenance session: migrated nixpkgs from a pinned commit to `nixpkgs-uns
 **After:** `v2026.5.16` (rev `a91a57fa5a13d516c38b07a141a9ce8a3daabeb0`)
 
 **Fix required:** Updated `fixedHash` in `modules/nixos/services/hermes.nix:17`
+
 - Old: `sha256-MLcLhjTF6dgdvNBtJWzo8Nh19eNh/ZitD2b07nm61Tc=`
 - New: `sha256-9r1EYQ600gNXOnNXwakorpEk7hS/FPxZVbB2JksrhYs=`
 
@@ -42,6 +44,7 @@ Major maintenance session: migrated nixpkgs from a pinned commit to `nixpkgs-uns
 ### 3. Breakage Fixes from Nixpkgs Update
 
 #### a) `systemd.coredump.extraConfig` removed
+
 **File:** `platforms/nixos/system/boot.nix`
 
 Nixpkgs 2026-05-15 replaced `systemd.coredump.extraConfig` (string) with `systemd.coredump.settings.Coredump` (structured attrs).
@@ -65,21 +68,26 @@ coredump.settings.Coredump = {
 ```
 
 #### b) jscpd pnpm deps hash stale
+
 **File:** `pkgs/jscpd.nix`
 
 New nixpkgs → newer pnpm fetcher → different hash.
+
 - Old: `sha256-W/O1e8RkDLLsV9zxgrr3rQhMyjxIF2YLLDOjQE75sO8=`
 - New: `sha256-Mlax/TNyx2TkMiZKOvo1Z661hww3T2YH0dQ8cwAQjDc=`
 
 #### c) llama-cpp rocwmma architecture incompatibility
+
 **File:** `modules/nixos/services/ai-stack.nix`
 
 rocwmma 7.2.3 in new nixpkgs fails with:
+
 ```
 error: static assertion failed: Unsupported architecture
 ```
 
 **Fix:** Removed rocwmma integration from llama-cpp build:
+
 - Removed `rocwmma` from `buildInputs`
 - Removed `-DGGML_HIP_ROCWMMA_FATTN=ON` cmake flag
 - Removed `postPatch` that injected rocwmma include path
@@ -100,18 +108,18 @@ error: static assertion failed: Unsupported architecture
 
 ## Build Status
 
-| Platform | Status |
-|----------|--------|
-| evo-x2 (NixOS) | ✅ `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes |
-| Lars-MacBook-Air (Darwin) | ⚠️ Not tested (remote only) |
+| Platform                  | Status                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------- |
+| evo-x2 (NixOS)            | ✅ `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel` passes |
+| Lars-MacBook-Air (Darwin) | ⚠️ Not tested (remote only)                                                     |
 
 ---
 
 ## Kernel Version
 
-| Before | After |
-|--------|-------|
-| 7.0.1 | **7.0.8** |
+| Before | After     |
+| ------ | --------- |
+| 7.0.1  | **7.0.8** |
 
 Dirty Frag CVE (2026-04-28) now fixed.
 

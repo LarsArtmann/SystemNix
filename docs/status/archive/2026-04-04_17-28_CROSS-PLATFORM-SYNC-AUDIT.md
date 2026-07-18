@@ -16,6 +16,7 @@ The SystemNix project has achieved a solid cross-platform architecture with ~80%
 ## A) FULLY DONE ✅
 
 ### Cross-Platform Architecture
+
 - **Home Manager shared modules** — `platforms/common/home-base.nix` properly imports all shared program configs
 - **Git configuration** — Single source in `common/programs/git.nix` with aliases, signing, LFS, git-town, and ignores
 - **Shell parity** — Fish, Zsh, Bash all use `shell-aliases.nix` for shared aliases with platform-specific `lib.mkAfter` overrides
@@ -34,6 +35,7 @@ The SystemNix project has achieved a solid cross-platform architecture with ~80%
 - **Crush AI config** — Deployed via flake input to both platforms via `home.file`
 
 ### NixOS-Specific (Complete)
+
 - Niri scrollable-tiling compositor with declarative config
 - Waybar status bar with Catppuccin Mocha theme
 - Kitty + Foot terminals with Catppuccin themes
@@ -50,6 +52,7 @@ The SystemNix project has achieved a solid cross-platform architecture with ~80%
 - SDDM display manager with SilentSDDM theme
 
 ### Darwin-Specific (Complete)
+
 - TouchID PAM for sudo with tmux reattach
 - Keychain auto-lock (5 min inactivity)
 - LaunchAgents: ActivityWatch, SublimeText sync, Crush update, aw-watcher-utilization
@@ -63,6 +66,7 @@ The SystemNix project has achieved a solid cross-platform architecture with ~80%
 ## B) PARTIALLY DONE ⚠️
 
 ### 1. SSH Host Configuration
+
 - **Status:** NixOS has 6 hosts, macOS has 2 hosts
 - **What works:** Both platforms have `onprem` and `evo-x2`
 - **What's missing:** macOS lacks `private-cloud-hetzner-0` through `private-cloud-hetzner-3`
@@ -70,12 +74,14 @@ The SystemNix project has achieved a solid cross-platform architecture with ~80%
 - **Fix:** Extract SSH hosts to common module or duplicate in Darwin home.nix
 
 ### 2. Chrome Policy Management
+
 - **Status:** Both platforms force-install YT Shorts Blocker with similar security policies
 - **What's different:** NixOS has `RestoreOnStartup`, `BookmarkBarEnabled`, `DefaultBrowserSettingEnabled`
 - **Darwin gap:** Policy file at `/etc/chrome/policies/managed/` requires manual `sudo chrome-apply-policies`
 - **Impact:** Darwin Chrome policies may not be consistently applied
 
 ### 3. Cross-Platform Tool Availability
+
 - **gitui** (terminal git TUI) — NixOS only
 - **signal-desktop** — NixOS only (may be intentional — no macOS Nix package)
 - **zed-editor** — NixOS only (may be intentional — desktop Linux)
@@ -86,6 +92,7 @@ The SystemNix project has achieved a solid cross-platform architecture with ~80%
 ## C) NOT STARTED ❌
 
 ### Potential Improvements Not Yet Addressed
+
 1. **Common color scheme module** — Both platforms define identical `colorScheme`/`colorSchemeLib` options
 2. **SSH hosts consolidation** — No shared SSH host list exists
 3. **Darwin shells.nix cleanup** — Double-imports of `fish.nix` and `bash.nix` that are already in `home-base.nix`
@@ -138,53 +145,53 @@ The working tree is clean, no merge conflicts exist, and the last build was succ
 
 ### Priority 1: Fix Unintended Drift (High Impact, Low Effort)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Add Hetzner SSH hosts to macOS `home.nix` or extract to common | 15min | High |
-| 2 | Remove Darwin Go overlay from `darwin/default.nix` (redundant with flake.nix) | 5min | Medium |
-| 3 | Fix Darwin `shells.nix` double-imports of fish.nix and bash.nix | 5min | Medium |
-| 4 | Remove `jq` from NixOS `home.packages` (duplicate of base.nix) | 2min | Low |
-| 5 | Reconcile `allowUnfree` — remove dead `allowUnfreePredicate` or enforce curated list | 10min | Medium |
+| #   | Task                                                                                 | Effort | Impact |
+| --- | ------------------------------------------------------------------------------------ | ------ | ------ |
+| 1   | Add Hetzner SSH hosts to macOS `home.nix` or extract to common                       | 15min  | High   |
+| 2   | Remove Darwin Go overlay from `darwin/default.nix` (redundant with flake.nix)        | 5min   | Medium |
+| 3   | Fix Darwin `shells.nix` double-imports of fish.nix and bash.nix                      | 5min   | Medium |
+| 4   | Remove `jq` from NixOS `home.packages` (duplicate of base.nix)                       | 2min   | Low    |
+| 5   | Reconcile `allowUnfree` — remove dead `allowUnfreePredicate` or enforce curated list | 10min  | Medium |
 
 ### Priority 2: Consolidation & Deduplication
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 6 | Extract `colorScheme`/`colorSchemeLib` options to common module | 20min | Medium |
-| 7 | Move `gitui` from NixOS-only to `common/packages/base.nix` | 5min | Low |
-| 8 | Create common SSH hosts list (or use nix-ssh-config for all hosts) | 30min | High |
-| 9 | Audit NixOS `home.packages` for other tools that should be cross-platform | 20min | Medium |
-| 10 | Unify Chrome policy configuration approach across platforms | 30min | Medium |
+| #   | Task                                                                      | Effort | Impact |
+| --- | ------------------------------------------------------------------------- | ------ | ------ |
+| 6   | Extract `colorScheme`/`colorSchemeLib` options to common module           | 20min  | Medium |
+| 7   | Move `gitui` from NixOS-only to `common/packages/base.nix`                | 5min   | Low    |
+| 8   | Create common SSH hosts list (or use nix-ssh-config for all hosts)        | 30min  | High   |
+| 9   | Audit NixOS `home.packages` for other tools that should be cross-platform | 20min  | Medium |
+| 10  | Unify Chrome policy configuration approach across platforms               | 30min  | Medium |
 
 ### Priority 3: Architecture Improvements
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 11 | Add CI check for cross-platform config drift (automated sync audit) | 2hr | High |
-| 12 | Extract Darwin Chrome policies from etc to proper nix-darwin module | 1hr | Medium |
-| 13 | Move signal-desktop to common packages (if macOS Nix package available) | 15min | Low |
-| 14 | Standardize terminal multiplexer (zellij vs tmux — both installed on NixOS) | 30min | Medium |
-| 15 | Add statix + deadnix to CI pipeline for automated Nix linting | 1hr | Medium |
+| #   | Task                                                                        | Effort | Impact |
+| --- | --------------------------------------------------------------------------- | ------ | ------ |
+| 11  | Add CI check for cross-platform config drift (automated sync audit)         | 2hr    | High   |
+| 12  | Extract Darwin Chrome policies from etc to proper nix-darwin module         | 1hr    | Medium |
+| 13  | Move signal-desktop to common packages (if macOS Nix package available)     | 15min  | Low    |
+| 14  | Standardize terminal multiplexer (zellij vs tmux — both installed on NixOS) | 30min  | Medium |
+| 15  | Add statix + deadnix to CI pipeline for automated Nix linting               | 1hr    | Medium |
 
 ### Priority 4: Quality of Life
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 16 | Create `just sync-audit` command to run this analysis on demand | 1hr | High |
-| 17 | Add NixOS-only packages to `linuxUtilities` instead of `home.packages` | 20min | Low |
-| 18 | Document all intentional platform differences in AGENTS.md | 30min | Medium |
-| 19 | Verify Darwin Chrome policies are actually applied (test) | 15min | Medium |
-| 20 | Add shell alias `ssh-hetzner` as cross-platform alternative to named hosts | 10min | Low |
+| #   | Task                                                                       | Effort | Impact |
+| --- | -------------------------------------------------------------------------- | ------ | ------ |
+| 16  | Create `just sync-audit` command to run this analysis on demand            | 1hr    | High   |
+| 17  | Add NixOS-only packages to `linuxUtilities` instead of `home.packages`     | 20min  | Low    |
+| 18  | Document all intentional platform differences in AGENTS.md                 | 30min  | Medium |
+| 19  | Verify Darwin Chrome policies are actually applied (test)                  | 15min  | Medium |
+| 20  | Add shell alias `ssh-hetzner` as cross-platform alternative to named hosts | 10min  | Low    |
 
 ### Priority 5: Long-term
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 21 | Migrate darwin/default.nix to use flake-parts perSystem like NixOS | 3hr | Medium |
-| 22 | Create home-manager test harness for cross-platform validation | 4hr | High |
-| 23 | Investigate nix-darwin native Chrome policy support | 1hr | Medium |
-| 24 | Consider merging darwin/nixos shell init into common with conditionals | 2hr | Medium |
-| 25 | Build NixOS config from macOS (remote deploy testing) | 2hr | Medium |
+| #   | Task                                                                   | Effort | Impact |
+| --- | ---------------------------------------------------------------------- | ------ | ------ |
+| 21  | Migrate darwin/default.nix to use flake-parts perSystem like NixOS     | 3hr    | Medium |
+| 22  | Create home-manager test harness for cross-platform validation         | 4hr    | High   |
+| 23  | Investigate nix-darwin native Chrome policy support                    | 1hr    | Medium |
+| 24  | Consider merging darwin/nixos shell init into common with conditionals | 2hr    | Medium |
+| 25  | Build NixOS config from macOS (remote deploy testing)                  | 2hr    | Medium |
 
 ---
 
@@ -193,10 +200,12 @@ The working tree is clean, no merge conflicts exist, and the last build was succ
 **#1: Should the Hetzner SSH hosts be accessible from your MacBook?**
 
 The 4 Hetzner servers (`private-cloud-hetzner-0` through `3`) are only in the NixOS config. I cannot determine if this is:
+
 - **Intentional** — You only SSH to Hetzner from evo-x2 (jump host pattern)
 - **An oversight** — You want direct access from macOS too
 
 This determines whether to:
+
 - (a) Add them to Darwin's SSH config
 - (b) Extract to a shared module
 - (c) Leave as NixOS-only

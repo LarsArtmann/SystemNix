@@ -15,18 +15,21 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 ## A) FULLY DONE ✅
 
 ### 1. Repository Creation & Structure
+
 - **Location**: `~/projects/nix-ssh-config/`
 - **Initialized**: Git repository with proper `.gitignore`
 - **Structure**: Standard Nix flake layout with `modules/`, `ssh-keys/`, `scripts/` directories
 - **Committed**: 2 commits with proper messages
 
 ### 2. Flake Configuration
+
 - **flake.nix**: Complete with inputs (nixpkgs, home-manager, treefmt-full-flake)
 - **Outputs**: Exports `homeManagerModules.ssh`, `nixosModules.ssh`
 - **Formatting**: Integrated treefmt-full-flake for consistent code style
 - **Testing**: Evaluates successfully with `nix flake check`
 
 ### 3. Home Manager Module (SSH Client)
+
 - **File**: `modules/home-manager/ssh.nix`
 - **Features**:
   - Cross-platform configuration (Darwin + Linux)
@@ -38,6 +41,7 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 - **Options**: 6 configurable options (enable, user, hosts, extraIncludes, enableOrbstack, enableColima)
 
 ### 4. NixOS Module (SSH Server)
+
 - **File**: `modules/nixos/ssh.nix`
 - **Features**:
   - Hardened OpenSSH configuration
@@ -49,11 +53,13 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 - **Security**: Password auth disabled, root login disabled, key-only auth
 
 ### 5. Documentation
+
 - **README.md**: Comprehensive with usage examples, module reference, security defaults
 - **Inline comments**: Extensive documentation in module files
 - **Commit messages**: Detailed, conventional commit format
 
 ### 6. SystemNix Integration
+
 - **flake.nix**: Added nix-ssh-config as flake input
 - **Darwin config** (`platforms/darwin/home.nix`): Imports Home Manager module, defines hosts
 - **NixOS Home** (`platforms/nixos/users/home.nix`): Imports module with Linux-specific hosts
@@ -62,22 +68,26 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 - **flake.lock**: Updated with new input
 
 ### 7. Cleanup
+
 - **Deleted**: `platforms/common/programs/ssh.nix` (114 lines)
 - **Deleted**: `modules/nixos/services/ssh.nix` (71 lines)
 - **Total lines removed**: ~185 lines from SystemNix
 
 ### 8. Testing & Validation
+
 - ✅ `just test-fast` passes on SystemNix
 - ✅ NixOS configuration evaluates successfully
 - ✅ Darwin configuration evaluates successfully
 - ✅ No eval errors or assertion failures
 
 ### 9. Configuration Migration
+
 - **Hosts migrated**: onprem, evo-x2, github.com, private-cloud-hetzner-[0-3]
 - **Settings preserved**: All SSH hardening, connection pooling, keepalive settings
 - **Platform detection**: Properly handles Darwin vs Linux hosts
 
 ### 10. Additional Fixes
+
 - Fixed `fail2ban.daemonConfig` → `fail2ban.daemonSettings` (NixOS option rename)
 - Added fail2ban jail configuration for SSH protection
 
@@ -86,18 +96,21 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 ## B) PARTIALLY DONE 🟡
 
 ### 1. SSH Key Management
+
 - **Status**: Public keys copied, but private key workflow not documented
 - **Current**: `ssh-keys/lars.pub` exists in new repo
 - **Gap**: No automated key rotation or distribution mechanism
 - **Recommendation**: Document key setup process, consider sops-nix integration
 
 ### 2. Justfile Commands
+
 - **Status**: `ssh-setup` command still references old structure
 - **Current**: Creates `~/.ssh/sockets` directory
 - **Gap**: No commands for managing new modular config
 - **Recommendation**: Update justfile to include SSH module helpers
 
 ### 3. Cross-Repository Workflow
+
 - **Status**: Local file URL works for development
 - **Current**: `url = "git+file:///Users/larsartmann/projects/nix-ssh-config"`
 - **Gap**: Need GitHub publishing for true reusability
@@ -108,28 +121,33 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 ## C) NOT STARTED ⏸️
 
 ### 1. CI/CD Pipeline
+
 - **Status**: No GitHub Actions or automated testing
 - **Need**: Nix flake check, formatting validation, module tests
 - **Priority**: Medium - before public release
 
 ### 2. Version Tagging
+
 - **Status**: No version tags or releases
 - **Need**: Semantic versioning (v1.0.0) for stable API
 - **Priority**: Low - can use git revisions for now
 
 ### 3. Additional SSH Features
+
 - **Certificate-based auth**: Not implemented
 - **SSH CA support**: Not implemented
 - **Match blocks for different networks**: Not implemented
 - **Priority**: Low - current config sufficient for immediate needs
 
 ### 4. Documentation Improvements
+
 - **API docs**: No auto-generated option documentation
 - **Video tutorial**: No walkthrough content
 - **Migration guide**: No guide for users of old SystemNix SSH
 - **Priority**: Low - README is comprehensive
 
 ### 5. Integration with Other Tools
+
 - **Secret management**: No sops-nix integration
 - **Key signing**: No GPG/SSH key signing setup
 - **Priority**: Low - can be added later
@@ -139,6 +157,7 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 ## D) TOTALLY FUCKED UP ❌
 
 ### 1. Nothing Critical
+
 - **Assessment**: No major issues or broken functionality
 - **All tests pass**: `just test-fast` successful
 - **Build status**: Clean evaluation
@@ -146,12 +165,14 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 ### Minor Issues (Non-Critical)
 
 #### A. Flake URL in SystemNix
+
 - **Issue**: Uses local file path (`file:///Users/larsartmann/...`)
 - **Impact**: Only works on local machine
 - **Fix**: Change to `github:LarsArtmann/nix-ssh-config` after publishing
 - **Severity**: Low (development only)
 
 #### B. SSH Key Path in NixOS Config
+
 - **Issue**: References both old and new paths for authorized keys
 - **Location**: `platforms/nixos/system/configuration.nix:80-84`
 - **Code**:
@@ -173,6 +194,7 @@ Successfully extracted SSH configuration from SystemNix monolith into a reusable
 ### 1. Architecture Improvements
 
 #### Modular SSH Key Management
+
 ```nix
 # Current: Static file paths
 # Improved: Configurable key sources
@@ -184,6 +206,7 @@ ssh-config.authorizedKeys.sources = [
 ```
 
 #### Per-Host SSH Config Profiles
+
 ```nix
 # Currently: Single hosts attrset
 # Could be: Profiles for different environments
@@ -196,11 +219,13 @@ ssh-config.profiles = {
 ### 2. Security Enhancements
 
 #### Certificate Authority Support
+
 - Implement SSH CA for internal hosts
 - Auto-renewal of certificates
 - Host certificate verification
 
 #### FIDO2/U2F Key Integration
+
 - Native support for hardware security keys
 - Touch-to-authenticate workflows
 - Per-host key preferences
@@ -208,6 +233,7 @@ ssh-config.profiles = {
 ### 3. Developer Experience
 
 #### Interactive Host Setup
+
 ```bash
 just ssh-add-host    # Interactive wizard for adding new hosts
 just ssh-list-hosts  # Pretty-print configured hosts
@@ -215,6 +241,7 @@ just ssh-test        # Test connectivity to all configured hosts
 ```
 
 #### Auto-Configuration Discovery
+
 - Scan local network for SSH servers
 - Suggest host configurations based on DNS records
 - Import from cloud provider APIs (AWS, Hetzner)
@@ -222,6 +249,7 @@ just ssh-test        # Test connectivity to all configured hosts
 ### 4. Testing & Quality
 
 #### Module Tests
+
 ```nix
 # Test all module options evaluate
 # Test host configurations are valid
@@ -229,6 +257,7 @@ just ssh-test        # Test connectivity to all configured hosts
 ```
 
 #### Integration Tests
+
 - Spin up VM with SSH server
 - Test client can connect
 - Verify hardening settings applied
@@ -236,6 +265,7 @@ just ssh-test        # Test connectivity to all configured hosts
 ### 5. Documentation
 
 #### Visual Architecture Diagram
+
 ```
 ┌─────────────────────────────────────┐
 │         nix-ssh-config              │
@@ -397,6 +427,7 @@ just ssh-test        # Test connectivity to all configured hosts
 ### Question: How should we handle SSH private keys in a declarative, reproducible, yet secure manner?
 
 **Context**:
+
 - Public keys are in the repo (fine)
 - Private keys should NOT be in the repo (security risk)
 - Current approach: Manual key generation and distribution
@@ -437,6 +468,7 @@ just ssh-test        # Test connectivity to all configured hosts
 A concrete recommendation on which approach to implement, with trade-offs clearly explained, and ideally a working example or proof-of-concept.
 
 **Why This Matters**:
+
 - Blocks full automation of SSH setup
 - Security-critical component
 - Needs to work across macOS and NixOS
@@ -446,22 +478,23 @@ A concrete recommendation on which approach to implement, with trade-offs clearl
 
 ## Metrics
 
-| Metric | Value |
-|--------|-------|
-| Lines Added (nix-ssh-config) | ~500 |
-| Lines Removed (SystemNix) | ~185 |
-| Net Reduction | ~315 lines |
-| Files Created | 7 |
-| Files Deleted | 2 |
-| Commits | 2 (nix-ssh-config) |
-| Test Status | ✅ PASS |
-| Eval Status | ✅ PASS |
+| Metric                       | Value              |
+| ---------------------------- | ------------------ |
+| Lines Added (nix-ssh-config) | ~500               |
+| Lines Removed (SystemNix)    | ~185               |
+| Net Reduction                | ~315 lines         |
+| Files Created                | 7                  |
+| Files Deleted                | 2                  |
+| Commits                      | 2 (nix-ssh-config) |
+| Test Status                  | ✅ PASS            |
+| Eval Status                  | ✅ PASS            |
 
 ---
 
 ## Conclusion
 
 SSH extraction is **COMPLETE and SUCCESSFUL**. The new `nix-ssh-config` flake is:
+
 - ✅ Modular and reusable
 - ✅ Well-documented
 - ✅ Type-safe

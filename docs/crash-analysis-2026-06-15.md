@@ -15,22 +15,22 @@ The system experienced a **hard freeze** caused by a **disk exhaustion + concurr
 
 ## Timeline
 
-| Time (CEST) | Event |
-|-------------|-------|
-| 08:04:01 | First Docker ENOSPC error (early warning sign) |
-| 11:21:16 | `session-318.scope` exits — peaked at **5 GB** RAM |
-| 11:20:49 | `session-308.scope` exits — peaked at **5.1 GB** RAM |
-| 11:31:35 | Docker ENOSPC errors go persistent — root FS is full |
-| 11:39:48 | Memory pressure begins — journald flushing caches every few seconds |
-| 11:40:08 | `session-224.scope` exits — had peaked at **18.8 GB** RAM (largest consumer) |
-| 11:43:02 | **Manual: `sudo btrfs balance start -dusage=70 -musage=50 /`** |
-| 11:43:09 | BTRFS balance kernel thread starts relocating block groups |
-| 11:44:26 | **Manual: `sudo nix-collect-garbage --delete-older-than 6d`** (concurrent!) |
-| 11:44:29 | Memory metrics check taking **3.163s** (normally <200ms) — system thrashing |
-| 11:44:48 | `amdgpu-metrics.service` taking **6.694s** wall clock (normally <3s) |
-| ~11:45:49 | **Last journal entry** — hard freeze, no OOM logged, no panic logged |
-| 11:47:02 | System reboots (balance auto-resumes) |
-| 11:50:26 | BTRFS balance completes with status 0 |
+| Time (CEST) | Event                                                                        |
+| ----------- | ---------------------------------------------------------------------------- |
+| 08:04:01    | First Docker ENOSPC error (early warning sign)                               |
+| 11:21:16    | `session-318.scope` exits — peaked at **5 GB** RAM                           |
+| 11:20:49    | `session-308.scope` exits — peaked at **5.1 GB** RAM                         |
+| 11:31:35    | Docker ENOSPC errors go persistent — root FS is full                         |
+| 11:39:48    | Memory pressure begins — journald flushing caches every few seconds          |
+| 11:40:08    | `session-224.scope` exits — had peaked at **18.8 GB** RAM (largest consumer) |
+| 11:43:02    | **Manual: `sudo btrfs balance start -dusage=70 -musage=50 /`**               |
+| 11:43:09    | BTRFS balance kernel thread starts relocating block groups                   |
+| 11:44:26    | **Manual: `sudo nix-collect-garbage --delete-older-than 6d`** (concurrent!)  |
+| 11:44:29    | Memory metrics check taking **3.163s** (normally <200ms) — system thrashing  |
+| 11:44:48    | `amdgpu-metrics.service` taking **6.694s** wall clock (normally <3s)         |
+| ~11:45:49   | **Last journal entry** — hard freeze, no OOM logged, no panic logged         |
+| 11:47:02    | System reboots (balance auto-resumes)                                        |
+| 11:50:26    | BTRFS balance completes with status 0                                        |
 
 ---
 
@@ -112,18 +112,22 @@ The balance freed almost nothing — it rearranged blocks but couldn't reclaim m
 ### Immediate (prevent recurrence)
 
 1. **Docker cleanup** — remove unused images, stopped containers, build cache:
+
    ```bash
    docker system prune -a          # images + stopped containers + build cache (NOT volumes)
    docker builder prune -a         # build cache only (often the biggest hidden hog)
    ```
+
    **Do NOT pass `--volumes`** — named volumes hold persistent state (Postgres/ClickHouse/Forgejo/Pocket-ID). `--volumes` would destroy data, not reclaim junk.
 
 2. **Nix garbage collection** — run ALONE, never concurrent with balance or other heavy I/O:
+
    ```bash
    nix-collect-garbage --delete-older-than 7d
    ```
 
 3. **Journal vacuum** — reduce persistent journal size:
+
    ```bash
    journalctl --vacuum-size=2G
    ```
@@ -136,11 +140,11 @@ The balance freed almost nothing — it rearranged blocks but couldn't reclaim m
 
 ### Process Discipline
 
-| Rule | Why |
-|------|-----|
-| **Never run `btrfs balance` on a full filesystem** | Balance needs free space to relocate blocks. On a 97%+ full FS, it cannot progress and may wedge the system. Free space first (GC, prune, vacuum), THEN balance if needed. |
-| **Never run two reclamation operations concurrently** | Each operation is I/O-intensive. Running them simultaneously causes thrashing, especially under memory pressure. |
-| **Monitor disk usage proactively** | At 90%+, stop and reclaim before hitting ENOSPC. The `disk-monitor.service` was running but not alerting aggressively enough. |
+| Rule                                                  | Why                                                                                                                                                                        |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Never run `btrfs balance` on a full filesystem**    | Balance needs free space to relocate blocks. On a 97%+ full FS, it cannot progress and may wedge the system. Free space first (GC, prune, vacuum), THEN balance if needed. |
+| **Never run two reclamation operations concurrently** | Each operation is I/O-intensive. Running them simultaneously causes thrashing, especially under memory pressure.                                                           |
+| **Monitor disk usage proactively**                    | At 90%+, stop and reclaim before hitting ENOSPC. The `disk-monitor.service` was running but not alerting aggressively enough.                                              |
 
 ### Systemic Fixes to Consider
 
@@ -167,4 +171,4 @@ The balance freed almost nothing — it rearranged blocks but couldn't reclaim m
 
 ---
 
-*Analysis performed 2026-06-15 17:20 CEST, ~5.5 hours after the crash.*
+_Analysis performed 2026-06-15 17:20 CEST, ~5.5 hours after the crash._

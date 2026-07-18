@@ -18,11 +18,13 @@
 2. **Identified root cause via git archaeology** — Found commit `900b8712` (May 3) that removed 22 Go tool inputs including buildflow. But further investigation showed buildflow WAS re-added to `flake.nix` (line 296) and `lars-packages.nix` (line 17) with the new flake-input pattern (real flake inputs, not `flake = false` src + overlays). The flake input exists, `lars-packages.nix` references it, and it's in `flake.lock`. So the wiring was correct — the problem was the build itself.
 
 3. **Found the build failure** — `nix log` on the buildflow derivation showed:
+
    ```
    imports encoding/json/jsontext: build constraints exclude all Go files
    imports encoding/json/v2: build constraints exclude all Go files
    FAIL github.com/larsartmann/buildflow/cmd/buildflow [setup failed]
    ```
+
    But `buildGoModule`'s `buildGoDir` function catches the "build constraints exclude all Go files" error and treats it as non-fatal (returns 0). So the build "succeeded" with exit code 0, but produced zero binaries.
 
 4. **Identified the GOEXPERIMENT gap** — `encoding/json/v2` and `encoding/json/jsontext` exist in Go 1.26.4's stdlib but are behind `//go:build goexperiment.jsonv2`. They require `GOEXPERIMENT=jsonv2` to be set in the environment. BuildFlow's flake.nix had `env = { GOEXPERIMENT = "jsonv2"; }` in the `buildGoModule` call, but **nixpkgs' `buildGoModule` only forwards known Go env vars** (`CGO_ENABLED`, `GOWORK`, `GOFLAGS`, `GOTOOLCHAIN`, `GO111MODULE`, `GOARCH`, `GOOS`). Arbitrary env attrs like `GOEXPERIMENT` are silently dropped — they never reach the build sandbox.
@@ -97,48 +99,48 @@
 
 ## f) Up to 50 Things to Get Done Next
 
-| #  | Priority | Task | Impact |
-|----|----------|------|--------|
-| 1  | P0 | **Fix `post-deploy-check.sh` path in deploy script** — smoke test is non-functional, silent failures go undetected | Critical safety net |
-| 2  | P0 | **Add binary-existence assertion to deploy smoke test** — verify `buildflow` and other critical binaries exist in `/run/current-system/sw/bin/` after deploy | Catches silent empty outputs |
-| 3  | P0 | **Update SystemNix AGENTS.md** — document `buildGoModule` env attr filtering gotcha (only known Go env vars forwarded; use `preBuild` export for others) | Prevents repeat |
-| 4  | P0 | **Update BuildFlow AGENTS.md** — document `GOEXPERIMENT=jsonv2` requirement for all Go commands | Prevents repeat |
-| 5  | P1 | **Compute real `vendorHash` for 5 new `*-bin` packages in BuildFlow** — currently `lib.fakeHash`, will fail on first build | Unblock external tool packages |
-| 6  | P1 | **Verify `env.GOPROXY`/`env.GOPRIVATE` in 5 `*-bin` packages actually work** — likely silently dropped by `buildGoModule` same as `GOEXPERIMENT` | Prevents silent build failures |
-| 7  | P1 | **Update BuildFlow pre-commit hook generator** — the `buildflow precommit install` command should include `export GOEXPERIMENT=jsonv2` in generated hooks | Prevents re-introduction |
-| 8  | P1 | **Commit remaining BuildFlow working tree changes** — 12 modified files (nix-checker, vendor inconsistency, external tools) are uncommitted user work | User decision |
-| 9  | P1 | **Run `nix flake check --no-build` on SystemNix** — verify no eval regressions from the flake.lock update | Validation |
-| 10 | P1 | **Run `nix flake check --no-build` on BuildFlow** — verify no eval regressions from the flake.nix changes | Validation |
-| 11 | P2 | **Audit all `buildGoModule` calls in SystemNix and BuildFlow** — check for other `env` attrs that are silently dropped | Preventive |
-| 12 | P2 | **Add a post-build check to SystemNix deploy** — verify that all packages in `larsPackages` produce non-empty `$out/bin/` | Defense in depth |
-| 13 | P2 | **Track Go 1.27 release** — when `encoding/json/v2` graduates from experiment, remove `GOEXPERIMENT` flag | Future cleanup |
-| 14 | P2 | **Verify all 13 `larsPackages` tools are actually installed** — run `nix-store --query --requisites /run/current-system` and check each tool's binary exists | Catch other silent failures |
-| 15 | P2 | **Check if `go-auto-upgrade` builds** — it's in `lars-packages.nix` and was removed in `900b8712` but re-added later; verify it actually produces a binary | Same class of bug |
-| 16 | P2 | **Check if `library-policy` builds** — same concern as above | Same class of bug |
-| 17 | P2 | **Check if `md-go-validator` builds** — same concern as above | Same class of bug |
-| 18 | P2 | **Check if `project-meta` builds** — same concern | Same class of bug |
-| 19 | P2 | **Check if `projects-management-automation` builds** — same concern | Same class of bug |
-| 20 | P2 | **Check if `go-structure-linter` builds** — same concern | Same class of bug |
-| 21 | P2 | **Check if `hierarchical-errors` builds** — same concern | Same class of bug |
-| 22 | P2 | **Document `buildGoDir` silent-swallow behavior in SystemNix AGENTS.md** — nixpkgs catches "build constraints exclude all Go files" and treats as non-fatal | Awareness |
-| 23 | P2 | **Add `GOEXPERIMENT=jsonv2` to SystemNix devShell** — if any SystemNix Go tool needs json/v2 | Preventive |
-| 24 | P3 | **Consider a `goTools` overlay helper** — centralize `GOEXPERIMENT` and other env exports for all LarsArtmann Go tool `buildGoModule` calls | DRY |
-| 25 | P3 | **Add a CI check that all `larsPackages` produce non-empty outputs** — catch silent build failures automatically | Automation |
-| 26 | P3 | **Consider adding `GOEXPERIMENT` to `buildGoModule`'s known env vars upstream** — file a nixpkgs PR to forward `GOEXPERIMENT` | Ecosystem improvement |
-| 27 | P3 | **Update BuildFlow `flake.nix` `*-bin` packages to use `preBuild` export for `GOPROXY`/`GOPRIVATE`** — same fix pattern as `GOEXPERIMENT` | Preventive |
-| 28 | P3 | **Add `go.mod` `toolchain` directive to BuildFlow** — explicitly pin the Go version to avoid mismatched toolchain downloads | Reproducibility |
-| 29 | P3 | **Verify `nix fmt` passes on both repos** — treefmt + alejandra on SystemNix, BuildFlow's formatter on BuildFlow | Code quality |
-| 30 | P3 | **Push SystemNix commit to origin** — `8603e730` is local-only; push when ready | Sync |
-| 31 | P3 | **Consider `GOEXPERIMENT` in Standup-Killer** — Standup-Killer's `go.work` includes modules that may import json/v2; verify its build works | Cross-project |
-| 32 | P3 | **Audit the 22 tools removed in commit `900b8712`** — verify which were re-added and which are still missing; determine if any should be restored | Completeness |
-| 33 | P3 | **Add `GOEXPERIMENT=jsonv2` to `go.work` workspace `go` directive** — Go workspace may need experiment flag at workspace level | Correctness |
-| 34 | P3 | **Check if `templ` build tool needs `GOEXPERIMENT`** — templ generates Go code that might use json/v2 | Preventive |
-| 35 | P4 | **Document the chicken-and-egg problem** — BuildFlow's pre-commit hook requires `buildflow` to be installed, but `buildflow` can't be installed until it builds; document the `--no-verify` bootstrap path | Onboarding |
-| 36 | P4 | **Consider a `buildflow` health check in Gatus** — verify buildflow is installed and functional via a system-level check | Monitoring |
-| 37 | P4 | **Review BuildFlow's `preparedSrc` and `mkPreparedSource`** — ensure GOEXPERIMENT is passed through the source preparation phase | Correctness |
-| 38 | P4 | **Check if `go mod tidy` in `preBuild` actually needs `GOEXPERIMENT`** — it might not, since tidy resolves modules not build tags | Precision |
-| 39 | P4 | **Consider nixpkgs `buildGoModule` `allowGoReference`** — not related to this fix but worth reviewing for LarsArtmann tools that need to reference Go's source | Future |
-| 40 | P4 | **Verify Darwin build of buildflow** — `lars-packages.nix` filters by system; check if buildflow builds on `aarch64-darwin` | Cross-platform |
+| #   | Priority | Task                                                                                                                                                                                                       | Impact                         |
+| --- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1   | P0       | **Fix `post-deploy-check.sh` path in deploy script** — smoke test is non-functional, silent failures go undetected                                                                                         | Critical safety net            |
+| 2   | P0       | **Add binary-existence assertion to deploy smoke test** — verify `buildflow` and other critical binaries exist in `/run/current-system/sw/bin/` after deploy                                               | Catches silent empty outputs   |
+| 3   | P0       | **Update SystemNix AGENTS.md** — document `buildGoModule` env attr filtering gotcha (only known Go env vars forwarded; use `preBuild` export for others)                                                   | Prevents repeat                |
+| 4   | P0       | **Update BuildFlow AGENTS.md** — document `GOEXPERIMENT=jsonv2` requirement for all Go commands                                                                                                            | Prevents repeat                |
+| 5   | P1       | **Compute real `vendorHash` for 5 new `*-bin` packages in BuildFlow** — currently `lib.fakeHash`, will fail on first build                                                                                 | Unblock external tool packages |
+| 6   | P1       | **Verify `env.GOPROXY`/`env.GOPRIVATE` in 5 `*-bin` packages actually work** — likely silently dropped by `buildGoModule` same as `GOEXPERIMENT`                                                           | Prevents silent build failures |
+| 7   | P1       | **Update BuildFlow pre-commit hook generator** — the `buildflow precommit install` command should include `export GOEXPERIMENT=jsonv2` in generated hooks                                                  | Prevents re-introduction       |
+| 8   | P1       | **Commit remaining BuildFlow working tree changes** — 12 modified files (nix-checker, vendor inconsistency, external tools) are uncommitted user work                                                      | User decision                  |
+| 9   | P1       | **Run `nix flake check --no-build` on SystemNix** — verify no eval regressions from the flake.lock update                                                                                                  | Validation                     |
+| 10  | P1       | **Run `nix flake check --no-build` on BuildFlow** — verify no eval regressions from the flake.nix changes                                                                                                  | Validation                     |
+| 11  | P2       | **Audit all `buildGoModule` calls in SystemNix and BuildFlow** — check for other `env` attrs that are silently dropped                                                                                     | Preventive                     |
+| 12  | P2       | **Add a post-build check to SystemNix deploy** — verify that all packages in `larsPackages` produce non-empty `$out/bin/`                                                                                  | Defense in depth               |
+| 13  | P2       | **Track Go 1.27 release** — when `encoding/json/v2` graduates from experiment, remove `GOEXPERIMENT` flag                                                                                                  | Future cleanup                 |
+| 14  | P2       | **Verify all 13 `larsPackages` tools are actually installed** — run `nix-store --query --requisites /run/current-system` and check each tool's binary exists                                               | Catch other silent failures    |
+| 15  | P2       | **Check if `go-auto-upgrade` builds** — it's in `lars-packages.nix` and was removed in `900b8712` but re-added later; verify it actually produces a binary                                                 | Same class of bug              |
+| 16  | P2       | **Check if `library-policy` builds** — same concern as above                                                                                                                                               | Same class of bug              |
+| 17  | P2       | **Check if `md-go-validator` builds** — same concern as above                                                                                                                                              | Same class of bug              |
+| 18  | P2       | **Check if `project-meta` builds** — same concern                                                                                                                                                          | Same class of bug              |
+| 19  | P2       | **Check if `projects-management-automation` builds** — same concern                                                                                                                                        | Same class of bug              |
+| 20  | P2       | **Check if `go-structure-linter` builds** — same concern                                                                                                                                                   | Same class of bug              |
+| 21  | P2       | **Check if `hierarchical-errors` builds** — same concern                                                                                                                                                   | Same class of bug              |
+| 22  | P2       | **Document `buildGoDir` silent-swallow behavior in SystemNix AGENTS.md** — nixpkgs catches "build constraints exclude all Go files" and treats as non-fatal                                                | Awareness                      |
+| 23  | P2       | **Add `GOEXPERIMENT=jsonv2` to SystemNix devShell** — if any SystemNix Go tool needs json/v2                                                                                                               | Preventive                     |
+| 24  | P3       | **Consider a `goTools` overlay helper** — centralize `GOEXPERIMENT` and other env exports for all LarsArtmann Go tool `buildGoModule` calls                                                                | DRY                            |
+| 25  | P3       | **Add a CI check that all `larsPackages` produce non-empty outputs** — catch silent build failures automatically                                                                                           | Automation                     |
+| 26  | P3       | **Consider adding `GOEXPERIMENT` to `buildGoModule`'s known env vars upstream** — file a nixpkgs PR to forward `GOEXPERIMENT`                                                                              | Ecosystem improvement          |
+| 27  | P3       | **Update BuildFlow `flake.nix` `*-bin` packages to use `preBuild` export for `GOPROXY`/`GOPRIVATE`** — same fix pattern as `GOEXPERIMENT`                                                                  | Preventive                     |
+| 28  | P3       | **Add `go.mod` `toolchain` directive to BuildFlow** — explicitly pin the Go version to avoid mismatched toolchain downloads                                                                                | Reproducibility                |
+| 29  | P3       | **Verify `nix fmt` passes on both repos** — treefmt + alejandra on SystemNix, BuildFlow's formatter on BuildFlow                                                                                           | Code quality                   |
+| 30  | P3       | **Push SystemNix commit to origin** — `8603e730` is local-only; push when ready                                                                                                                            | Sync                           |
+| 31  | P3       | **Consider `GOEXPERIMENT` in Standup-Killer** — Standup-Killer's `go.work` includes modules that may import json/v2; verify its build works                                                                | Cross-project                  |
+| 32  | P3       | **Audit the 22 tools removed in commit `900b8712`** — verify which were re-added and which are still missing; determine if any should be restored                                                          | Completeness                   |
+| 33  | P3       | **Add `GOEXPERIMENT=jsonv2` to `go.work` workspace `go` directive** — Go workspace may need experiment flag at workspace level                                                                             | Correctness                    |
+| 34  | P3       | **Check if `templ` build tool needs `GOEXPERIMENT`** — templ generates Go code that might use json/v2                                                                                                      | Preventive                     |
+| 35  | P4       | **Document the chicken-and-egg problem** — BuildFlow's pre-commit hook requires `buildflow` to be installed, but `buildflow` can't be installed until it builds; document the `--no-verify` bootstrap path | Onboarding                     |
+| 36  | P4       | **Consider a `buildflow` health check in Gatus** — verify buildflow is installed and functional via a system-level check                                                                                   | Monitoring                     |
+| 37  | P4       | **Review BuildFlow's `preparedSrc` and `mkPreparedSource`** — ensure GOEXPERIMENT is passed through the source preparation phase                                                                           | Correctness                    |
+| 38  | P4       | **Check if `go mod tidy` in `preBuild` actually needs `GOEXPERIMENT`** — it might not, since tidy resolves modules not build tags                                                                          | Precision                      |
+| 39  | P4       | **Consider nixpkgs `buildGoModule` `allowGoReference`** — not related to this fix but worth reviewing for LarsArtmann tools that need to reference Go's source                                             | Future                         |
+| 40  | P4       | **Verify Darwin build of buildflow** — `lars-packages.nix` filters by system; check if buildflow builds on `aarch64-darwin`                                                                                | Cross-platform                 |
 
 ---
 

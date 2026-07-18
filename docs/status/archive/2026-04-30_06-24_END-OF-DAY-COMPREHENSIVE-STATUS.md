@@ -20,11 +20,11 @@
 
 ### Session 4 — Niri BindsTo Kill Incident (3 commits)
 
-| Commit | What |
-|--------|------|
+| Commit    | What                                                                                            |
+| --------- | ----------------------------------------------------------------------------------------------- |
 | `a83c0e0` | Fix niri: Replace `BindsTo=graphical-session.target` with `PartOf` + add `Restart` + `WantedBy` |
-| `0807492` | Session 4 status report |
-| `0643e63` | Fix niri: `Restart=on-failure` → `Restart=always` + `StartLimitBurst=3` |
+| `0807492` | Session 4 status report                                                                         |
+| `0643e63` | Fix niri: `Restart=on-failure` → `Restart=always` + `StartLimitBurst=3`                         |
 
 **Root cause:** Upstream niri.service uses `BindsTo=graphical-session.target`. When `just switch` rewrites the unit, systemd stops niri, the target goes down, and `BindsTo` prevents restart. User dumped to TTY with no recovery.
 
@@ -32,31 +32,31 @@
 
 ### Session 5 — Cleanup & Hardening Sprint (12 commits)
 
-| Commit | What | Impact |
-|--------|------|--------|
-| `682edef` | Remove dev/testing/, download_glm_model.py, tools/ | -1005 lines |
-| `682edef` | Refactor flake.nix: sharedOverlays, sharedHomeManagerConfig, sharedHomeManagerSpecialArgs | -40 lines duplication |
-| `682edef` | Extract hardcoded IPs → `networking.local` module options | 6 IPs → 1 file |
-| `682edef` | justfile: `rm` → `trash` in cleanup recipes | Safety |
-| `0643e63` | alejandra formatting across 9 files | Formatting |
-| `950230e` | Add `lib/systemd/service-defaults.nix` | Reusable defaults |
-| `950230e` | Wire serviceDefaults into photomap.nix | Proof of concept |
-| `41624b8` | Rewrite health-check.sh (cross-platform) | -523 lines, +165 lines |
-| `b7ad89b` | Delete 8 dead macOS-only scripts | -2959 lines |
-| `b7ad89b` | Trim justfile health recipe (47 → 1 line) | -46 lines |
-| `ec98c7d` | Update AGENTS.md | Documentation |
-| `34030fa` | Remove stale staged doc | Cleanup |
+| Commit    | What                                                                                      | Impact                 |
+| --------- | ----------------------------------------------------------------------------------------- | ---------------------- |
+| `682edef` | Remove dev/testing/, download_glm_model.py, tools/                                        | -1005 lines            |
+| `682edef` | Refactor flake.nix: sharedOverlays, sharedHomeManagerConfig, sharedHomeManagerSpecialArgs | -40 lines duplication  |
+| `682edef` | Extract hardcoded IPs → `networking.local` module options                                 | 6 IPs → 1 file         |
+| `682edef` | justfile: `rm` → `trash` in cleanup recipes                                               | Safety                 |
+| `0643e63` | alejandra formatting across 9 files                                                       | Formatting             |
+| `950230e` | Add `lib/systemd/service-defaults.nix`                                                    | Reusable defaults      |
+| `950230e` | Wire serviceDefaults into photomap.nix                                                    | Proof of concept       |
+| `41624b8` | Rewrite health-check.sh (cross-platform)                                                  | -523 lines, +165 lines |
+| `b7ad89b` | Delete 8 dead macOS-only scripts                                                          | -2959 lines            |
+| `b7ad89b` | Trim justfile health recipe (47 → 1 line)                                                 | -46 lines              |
+| `ec98c7d` | Update AGENTS.md                                                                          | Documentation          |
+| `34030fa` | Remove stale staged doc                                                                   | Cleanup                |
 
 ### Historical — 100% Complete Categories (62/95 total tasks)
 
-| Priority | Category | Done | Total |
-|----------|----------|------|-------|
-| P0 | Critical | 6 | 6 ✅ |
-| P2 | Reliability | 11 | 11 ✅ |
-| P3 | Code Quality | 9 | 9 ✅ |
-| P4 | Architecture | 7 | 7 ✅ |
-| P7 | Tooling & CI | 10 | 10 ✅ |
-| P8 | Documentation | 5 | 5 ✅ |
+| Priority | Category      | Done | Total |
+| -------- | ------------- | ---- | ----- |
+| P0       | Critical      | 6    | 6 ✅  |
+| P2       | Reliability   | 11   | 11 ✅ |
+| P3       | Code Quality  | 9    | 9 ✅  |
+| P4       | Architecture  | 7    | 7 ✅  |
+| P7       | Tooling & CI  | 10   | 10 ✅ |
+| P8       | Documentation | 5    | 5 ✅  |
 
 ---
 
@@ -68,23 +68,23 @@
 
 ### P1 — SECURITY (3/7 = 43%)
 
-| # | Task | Blocker |
-|---|------|---------|
-| 7 | Move Taskwarrior encryption to sops-nix | Needs evo-x2 |
-| 9 | Pin Docker digest for Voice Agents | Needs evo-x2 |
-| 10 | Pin Docker digest for PhotoMap | Needs evo-x2 |
-| 11 | Secure VRRP auth_pass with sops-nix | Needs evo-x2 |
+| #   | Task                                    | Blocker      |
+| --- | --------------------------------------- | ------------ |
+| 7   | Move Taskwarrior encryption to sops-nix | Needs evo-x2 |
+| 9   | Pin Docker digest for Voice Agents      | Needs evo-x2 |
+| 10  | Pin Docker digest for PhotoMap          | Needs evo-x2 |
+| 11  | Secure VRRP auth_pass with sops-nix     | Needs evo-x2 |
 
 ### P6 — SERVICES (9/15 = 60%)
 
-| # | Task | Blocker |
-|---|------|---------|
-| 62 | Hermes health check endpoint | Needs Hermes code |
-| 63 | Hermes key_env migration | Low risk |
-| 65 | SigNoz missing metrics | Needs evo-x2 |
-| 66 | Authelia SMTP notifications | Needs SMTP credentials |
-| 67 | Immich backup restore test | Needs evo-x2 |
-| 68 | Twenty backup restore test | Needs evo-x2 |
+| #   | Task                         | Blocker                |
+| --- | ---------------------------- | ---------------------- |
+| 62  | Hermes health check endpoint | Needs Hermes code      |
+| 63  | Hermes key_env migration     | Low risk               |
+| 65  | SigNoz missing metrics       | Needs evo-x2           |
+| 66  | Authelia SMTP notifications  | Needs SMTP credentials |
+| 67  | Immich backup restore test   | Needs evo-x2           |
+| 68  | Twenty backup restore test   | Needs evo-x2           |
 
 ### P9 — FUTURE (2/12 = 17%)
 
@@ -98,21 +98,21 @@ Investigated: #85 (just test race), #90 (SSH config migration). Remaining 10 are
 
 ALL 13 tasks require evo-x2 physical access. **This is the #1 blocker for the entire project.**
 
-| # | Task | Est. |
-|---|------|------|
-| 41 | `just switch` — deploy all pending changes | 45m+ |
-| 42 | Verify Ollama works | 5m |
-| 43 | Verify Steam works | 5m |
-| 44 | Verify ComfyUI works | 5m |
-| 45 | Verify Caddy HTTPS block page | 3m |
-| 46 | Verify SigNoz collecting metrics/logs/traces | 5m |
-| 47 | Check Authelia SSO status | 3m |
-| 48 | Check PhotoMap service status | 3m |
-| 49 | Verify AMD NPU with test workload | 10m |
-| 50 | Build Pi 3 SD image | 30m+ |
-| 51 | Flash SD + boot Pi 3 | 15m |
-| 52 | Test DNS failover | 10m |
-| 53 | Configure LAN devices for DNS VIP | 10m |
+| #   | Task                                         | Est. |
+| --- | -------------------------------------------- | ---- |
+| 41  | `just switch` — deploy all pending changes   | 45m+ |
+| 42  | Verify Ollama works                          | 5m   |
+| 43  | Verify Steam works                           | 5m   |
+| 44  | Verify ComfyUI works                         | 5m   |
+| 45  | Verify Caddy HTTPS block page                | 3m   |
+| 46  | Verify SigNoz collecting metrics/logs/traces | 5m   |
+| 47  | Check Authelia SSO status                    | 3m   |
+| 48  | Check PhotoMap service status                | 3m   |
+| 49  | Verify AMD NPU with test workload            | 10m  |
+| 50  | Build Pi 3 SD image                          | 30m+ |
+| 51  | Flash SD + boot Pi 3                         | 15m  |
+| 52  | Test DNS failover                            | 10m  |
+| 53  | Configure LAN devices for DNS VIP            | 10m  |
 
 ---
 
@@ -123,6 +123,7 @@ ALL 13 tasks require evo-x2 physical access. **This is the #1 blocker for the en
 **The incident that started it all.** `just switch` killed niri and it didn't restart. User was on a TTY with no GUI. Root cause: `BindsTo=graphical-session.target` in upstream niri.service.
 
 **Timeline:**
+
 1. `04:22:01` — flake.lock update bumps niri package path
 2. `nixos-rebuild switch` rewrites `niri.service`
 3. systemd SIGTERMs niri, `graphical-session.target` goes down
@@ -132,13 +133,13 @@ ALL 13 tasks require evo-x2 physical access. **This is the #1 blocker for the en
 
 ### Session 5 — Self-Inflicted Wounds (all caught)
 
-| Issue | Root Cause | Fix |
-|-------|-----------|-----|
-| `((PASS++))` kills bash script under `set -e` | Returns 1 when counter is 0 | Changed to `PASS=$((PASS+1))` |
-| Wrote health-check.sh 3 times | File modification timestamp blocked write | Used `trash` + fresh write |
-| Committed cleanup + network refactor together | Staged files mixed with unstaged | Acceptable |
-| `nix fmt` formatted 7 extra files | Formatter touches everything | Included in niri commit, no logic changes |
-| Stale status doc staged from interrupted session | Previous session left file staged | Committed deletion |
+| Issue                                            | Root Cause                                | Fix                                       |
+| ------------------------------------------------ | ----------------------------------------- | ----------------------------------------- |
+| `((PASS++))` kills bash script under `set -e`    | Returns 1 when counter is 0               | Changed to `PASS=$((PASS+1))`             |
+| Wrote health-check.sh 3 times                    | File modification timestamp blocked write | Used `trash` + fresh write                |
+| Committed cleanup + network refactor together    | Staged files mixed with unstaged          | Acceptable                                |
+| `nix fmt` formatted 7 extra files                | Formatter touches everything              | Included in niri commit, no logic changes |
+| Stale status doc staged from interrupted session | Previous session left file staged         | Committed deletion                        |
 
 ### Pattern
 
@@ -148,16 +149,16 @@ Every session introduces 1-3 regressions. The niri incident was the most severe 
 
 ## E) WHAT WE SHOULD IMPROVE 📈
 
-| # | Area | Problem | Proposed Fix |
-|---|------|---------|-------------|
-| 1 | **Deploy cadence** | 66+ commits undeployed. 8 failed services. | Deploy ASAP. Consider SSH remote deploy. |
-| 2 | **serviceDefaults migration** | 9 services still have manual Restart/WatchdogSec | Incremental migration — 5 min per service |
-| 3 | **Niri unit patch fragility** | `builtins.replaceStrings` silently fails if upstream changes | Add assertion that verifies BindsTo was found and replaced |
-| 4 | **No integration testing** | Zero NixOS VM tests | Add `makeTest` for at least one critical service |
-| 5 | **Health check depth** | Missing: Ollama, Docker, BTRFS scrub, ZRAM swap | Extend health-check.sh with service-specific checks |
-| 6 | **CI gap** | CI doesn't run `just health` | Add to GitHub Actions for NixOS-specific validation |
-| 7 | **Direnv profile corruption** | Silently breaks dev environment (happened session 3) | Add periodic `.direnv/flake-profile` check to health check |
-| 8 | **Secret management** | 4 items still plaintext | sops migration for Taskwarrior, VRRP, Docker digests |
+| #   | Area                          | Problem                                                      | Proposed Fix                                               |
+| --- | ----------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------- |
+| 1   | **Deploy cadence**            | 66+ commits undeployed. 8 failed services.                   | Deploy ASAP. Consider SSH remote deploy.                   |
+| 2   | **serviceDefaults migration** | 9 services still have manual Restart/WatchdogSec             | Incremental migration — 5 min per service                  |
+| 3   | **Niri unit patch fragility** | `builtins.replaceStrings` silently fails if upstream changes | Add assertion that verifies BindsTo was found and replaced |
+| 4   | **No integration testing**    | Zero NixOS VM tests                                          | Add `makeTest` for at least one critical service           |
+| 5   | **Health check depth**        | Missing: Ollama, Docker, BTRFS scrub, ZRAM swap              | Extend health-check.sh with service-specific checks        |
+| 6   | **CI gap**                    | CI doesn't run `just health`                                 | Add to GitHub Actions for NixOS-specific validation        |
+| 7   | **Direnv profile corruption** | Silently breaks dev environment (happened session 3)         | Add periodic `.direnv/flake-profile` check to health check |
+| 8   | **Secret management**         | 4 items still plaintext                                      | sops migration for Taskwarrior, VRRP, Docker digests       |
 
 ---
 
@@ -165,33 +166,33 @@ Every session introduces 1-3 regressions. The niri incident was the most severe 
 
 Ordered by urgency × impact × feasibility:
 
-| # | Task | Category | Est. | Blocker? |
-|---|------|----------|------|----------|
-| **1** | **Deploy on evo-x2** — `just switch` (fixes 8 failed services + niri kill bug) | P5-DEPLOY | 45m | **Needs evo-x2** |
-| **2** | **Verify niri survives** a second `just switch` | P5-VERIFY | 2m | Needs deploy |
-| **3** | **Verify Ollama** works after rebuild | P5-VERIFY | 5m | Needs evo-x2 |
-| **4** | **Verify SigNoz** collecting metrics/logs/traces | P5-VERIFY | 5m | Needs evo-x2 |
-| **5** | **Move Taskwarrior encryption to sops** | P1-SECURITY | 10m | Needs evo-x2 |
-| **6** | **Pin Docker digests** (Voice Agents + PhotoMap) | P1-SECURITY | 10m | Needs evo-x2 |
-| **7** | **Secure VRRP auth_pass** with sops-nix | P1-SECURITY | 8m | Needs evo-x2 |
-| **8** | **Migrate 9 services to serviceDefaults** | REFACTOR | 45m | None |
-| **9** | **Add niri unit patch assertion** | RELIABILITY | 15m | None |
-| **10** | **Add `just health` to CI** | P7-TOOLING | 15m | None |
-| **11** | **Verify ComfyUI** after rebuild | P5-VERIFY | 5m | Needs evo-x2 |
-| **12** | **Verify Steam** after rebuild | P5-VERIFY | 5m | Needs evo-x2 |
-| **13** | **Verify Caddy HTTPS** block page | P5-VERIFY | 3m | Needs evo-x2 |
-| **14** | **Check Authelia SSO** status | P5-VERIFY | 3m | Needs evo-x2 |
-| **15** | **Verify AMD NPU** with test workload | P5-VERIFY | 10m | Needs evo-x2 |
-| **16** | **Build Pi 3 SD image** | P5-DEPLOY | 30m | Needs Pi 3 |
-| **17** | **Flash SD + boot Pi 3** | P5-DEPLOY | 15m | Needs Pi 3 |
-| **18** | **Test DNS failover** | P5-VERIFY | 10m | Needs Pi 3 |
-| **19** | **Hermes health check** endpoint | P6-SERVICE | 30m | Needs Hermes code |
-| **20** | **SigNoz missing metrics** | P6-SERVICE | 30m | Needs evo-x2 |
-| **21** | **Add NixOS VM test** for one critical service | P9-TESTING | 2h | Research |
-| **22** | **Add Waybar session restore stats** | P9-FEATURE | 1h | None |
-| **23** | **Create homeModules pattern** for HM via flake-parts | P9-ARCH | 2h | Research |
-| **24** | **Binary cache (Cachix)** | P9-PERF | 1h | Research |
-| **25** | **Configure LAN devices for DNS VIP** | P5-DEPLOY | 10m | Network access |
+| #      | Task                                                                           | Category    | Est. | Blocker?          |
+| ------ | ------------------------------------------------------------------------------ | ----------- | ---- | ----------------- |
+| **1**  | **Deploy on evo-x2** — `just switch` (fixes 8 failed services + niri kill bug) | P5-DEPLOY   | 45m  | **Needs evo-x2**  |
+| **2**  | **Verify niri survives** a second `just switch`                                | P5-VERIFY   | 2m   | Needs deploy      |
+| **3**  | **Verify Ollama** works after rebuild                                          | P5-VERIFY   | 5m   | Needs evo-x2      |
+| **4**  | **Verify SigNoz** collecting metrics/logs/traces                               | P5-VERIFY   | 5m   | Needs evo-x2      |
+| **5**  | **Move Taskwarrior encryption to sops**                                        | P1-SECURITY | 10m  | Needs evo-x2      |
+| **6**  | **Pin Docker digests** (Voice Agents + PhotoMap)                               | P1-SECURITY | 10m  | Needs evo-x2      |
+| **7**  | **Secure VRRP auth_pass** with sops-nix                                        | P1-SECURITY | 8m   | Needs evo-x2      |
+| **8**  | **Migrate 9 services to serviceDefaults**                                      | REFACTOR    | 45m  | None              |
+| **9**  | **Add niri unit patch assertion**                                              | RELIABILITY | 15m  | None              |
+| **10** | **Add `just health` to CI**                                                    | P7-TOOLING  | 15m  | None              |
+| **11** | **Verify ComfyUI** after rebuild                                               | P5-VERIFY   | 5m   | Needs evo-x2      |
+| **12** | **Verify Steam** after rebuild                                                 | P5-VERIFY   | 5m   | Needs evo-x2      |
+| **13** | **Verify Caddy HTTPS** block page                                              | P5-VERIFY   | 3m   | Needs evo-x2      |
+| **14** | **Check Authelia SSO** status                                                  | P5-VERIFY   | 3m   | Needs evo-x2      |
+| **15** | **Verify AMD NPU** with test workload                                          | P5-VERIFY   | 10m  | Needs evo-x2      |
+| **16** | **Build Pi 3 SD image**                                                        | P5-DEPLOY   | 30m  | Needs Pi 3        |
+| **17** | **Flash SD + boot Pi 3**                                                       | P5-DEPLOY   | 15m  | Needs Pi 3        |
+| **18** | **Test DNS failover**                                                          | P5-VERIFY   | 10m  | Needs Pi 3        |
+| **19** | **Hermes health check** endpoint                                               | P6-SERVICE  | 30m  | Needs Hermes code |
+| **20** | **SigNoz missing metrics**                                                     | P6-SERVICE  | 30m  | Needs evo-x2      |
+| **21** | **Add NixOS VM test** for one critical service                                 | P9-TESTING  | 2h   | Research          |
+| **22** | **Add Waybar session restore stats**                                           | P9-FEATURE  | 1h   | None              |
+| **23** | **Create homeModules pattern** for HM via flake-parts                          | P9-ARCH     | 2h   | Research          |
+| **24** | **Binary cache (Cachix)**                                                      | P9-PERF     | 1h   | Research          |
+| **25** | **Configure LAN devices for DNS VIP**                                          | P5-DEPLOY   | 10m  | Network access    |
 
 ---
 
@@ -257,35 +258,35 @@ Summary: 1 failed, 1 warnings, 20 passed
 
 ## Codebase Inventory
 
-| Category | Count |
-|----------|-------|
-| Nix files | 97 |
-| Service modules | 28 |
-| Custom packages | 12 |
-| Scripts (live) | 7 |
-| Common programs | 14 |
-| ADRs | 5 |
-| CI workflows | 3 |
-| Flake inputs | 22 |
-| Justfile recipes | ~80 |
-| Justfile lines | 1,939 |
+| Category         | Count |
+| ---------------- | ----- |
+| Nix files        | 97    |
+| Service modules  | 28    |
+| Custom packages  | 12    |
+| Scripts (live)   | 7     |
+| Common programs  | 14    |
+| ADRs             | 5     |
+| CI workflows     | 3     |
+| Flake inputs     | 22    |
+| Justfile recipes | ~80   |
+| Justfile lines   | 1,939 |
 
 ---
 
 ## Session Stats
 
-| Metric | Value |
-|--------|-------|
-| Sessions today | 5 |
-| Commits today | 13 |
-| Commits since Apr 27 | 66 |
-| Total commits | 1,901 |
-| Net lines today | +241 / -3596 |
-| Tasks done / total | 62 / 95 (65%) |
-| Build status | ✅ passing |
-| Deployment status | ⬜ NOT deployed (8 failed services) |
-| Working tree | Clean |
-| Sync with origin | ✅ up to date |
+| Metric               | Value                               |
+| -------------------- | ----------------------------------- |
+| Sessions today       | 5                                   |
+| Commits today        | 13                                  |
+| Commits since Apr 27 | 66                                  |
+| Total commits        | 1,901                               |
+| Net lines today      | +241 / -3596                        |
+| Tasks done / total   | 62 / 95 (65%)                       |
+| Build status         | ✅ passing                          |
+| Deployment status    | ⬜ NOT deployed (8 failed services) |
+| Working tree         | Clean                               |
+| Sync with origin     | ✅ up to date                       |
 
 ---
 

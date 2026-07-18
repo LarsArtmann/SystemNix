@@ -9,11 +9,13 @@
 ## A) Fully Done
 
 ### Original tasks (prior session — verified correct)
+
 1. **Go 1.26.1 overlay removal** — Removed Darwin-only Go pin, now uses nixpkgs default
 2. **Niri session scripts extracted** — ~300 lines of inline shell → `scripts/niri-session-save.sh` + `scripts/niri-session-restore.sh` with template injection
 3. **Justfile ghost cleanup** — Removed ~315 lines of dead recipes (netdata, ntopng, better-claude, keychain, tmux-save/restore, perf-full-analysis, automation-setup)
 
 ### Self-audit fixes (this session)
+
 4. **`rm -rf` → `trash`** — All clean recipes now use `trash` instead of `rm -rf` (3 commits)
 5. **Platform guards** — Fixed `activitywatch` recipe (macOS-only), removed dead `tmux-save`/`tmux-restore`
 6. **Keychain ghost recipes removed** — 13 recipes (~100 lines) referencing non-existent keychain tools
@@ -27,6 +29,7 @@
 14. **dep-graph platform fix** — Uses `xdg-open` on Linux for graph viewing
 
 ### Commits (this session)
+
 ```
 4a760da refactor(flake): consolidate perSystem overlays to reference shared lists
 64604ec feat(lib): add shared types library, adopt harden in file-and-image-renamer
@@ -47,43 +50,45 @@ c180e17 docs(agents): update niri session and Go overlay docs
 
 ## B) Partially Done
 
-| Item | Status | Notes |
-|------|--------|-------|
-| `harden` adoption across all services | 12/30 modules | 10 already used it, 2 fixed this session. 18 remain but many are acceptable (services without system-level systemd units) |
-| `serviceDefaults` adoption | Partial | Only used in ~6 services. Not all services need it (e.g., docker-based services) |
-| `lib/types.nix` adoption | 1 consumer (hermes.nix) | Pattern proven, can be incrementally adopted |
+| Item                                  | Status                  | Notes                                                                                                                     |
+| ------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `harden` adoption across all services | 12/30 modules           | 10 already used it, 2 fixed this session. 18 remain but many are acceptable (services without system-level systemd units) |
+| `serviceDefaults` adoption            | Partial                 | Only used in ~6 services. Not all services need it (e.g., docker-based services)                                          |
+| `lib/types.nix` adoption              | 1 consumer (hermes.nix) | Pattern proven, can be incrementally adopted                                                                              |
 
 ---
 
 ## C) Not Started
 
-| Item | Impact | Effort | Notes |
-|------|--------|--------|-------|
-| Adopt `serviceTypes` in remaining 20+ service modules | Medium | Low (mechanical) | Each module replaces repeated user/group/port option definitions |
-| Justfile split into `import` files or migration to Nix apps | High | Medium | 1600 lines / 134 recipes is unwieldy |
-| Audit all service modules for `harden` + `serviceDefaults` | Medium | Medium | 18 modules don't use `harden`, but many are Docker/HM services where it doesn't apply |
-| NixOS tests for custom modules | High | High | Zero automated NixOS tests exist |
-| Template validation for niri session scripts | Low | Low | Could add `buildPhase` check that template vars resolve |
+| Item                                                        | Impact | Effort           | Notes                                                                                 |
+| ----------------------------------------------------------- | ------ | ---------------- | ------------------------------------------------------------------------------------- |
+| Adopt `serviceTypes` in remaining 20+ service modules       | Medium | Low (mechanical) | Each module replaces repeated user/group/port option definitions                      |
+| Justfile split into `import` files or migration to Nix apps | High   | Medium           | 1600 lines / 134 recipes is unwieldy                                                  |
+| Audit all service modules for `harden` + `serviceDefaults`  | Medium | Medium           | 18 modules don't use `harden`, but many are Docker/HM services where it doesn't apply |
+| NixOS tests for custom modules                              | High   | High             | Zero automated NixOS tests exist                                                      |
+| Template validation for niri session scripts                | Low    | Low              | Could add `buildPhase` check that template vars resolve                               |
 
 ---
 
 ## D) Fucked Up
 
-| Issue | Impact | Fix |
-|-------|--------|-----|
-| Hermes service owns `.git/index` | Git operations fail for user `lars` | `git read-tree HEAD` rebuilds index. Root cause: Hermes gitea-sync likely runs `git` in this repo |
-| Missed `rm -rf` in initial cleanup | Safety violation | Found 3 more instances, all fixed now |
+| Issue                              | Impact                              | Fix                                                                                               |
+| ---------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Hermes service owns `.git/index`   | Git operations fail for user `lars` | `git read-tree HEAD` rebuilds index. Root cause: Hermes gitea-sync likely runs `git` in this repo |
+| Missed `rm -rf` in initial cleanup | Safety violation                    | Found 3 more instances, all fixed now                                                             |
 
 ---
 
 ## E) Improve
 
 ### Architecture improvements made this session
+
 1. **`lib/types.nix`** — First step toward shared type constructors. Follows `lib/systemd.nix` pattern (function + inherit from lib).
 2. **Overlay single source of truth** — `sharedOverlays` and `linuxOnlyOverlays` are now the canonical lists, referenced everywhere.
 3. **Shellcheck in CI** — `scripts/` directory now has automated shell script linting.
 
 ### Patterns to continue
+
 - `lib/` functions: pure Nix functions that return attrsets. Callers use `import ../../../lib/types.nix { inherit lib; }`.
 - Template injection for shell scripts: `builtins.readFile` + `builtins.replaceStrings` keeps scripts testable outside Nix.
 

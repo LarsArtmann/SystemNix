@@ -93,33 +93,33 @@ Lars reported `lars@192.168.1.150` had no internet. Diagnosed via SSH-based diag
 
 ## f) Top 25 Things to Do Next
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | `just switch` on evo-x2 to apply dual-WAN fix | Critical | 5min |
-| 2 | Verify ECMP failover works with WiFi + ethernet | Critical | 15min |
-| 3 | Remove 9.9.9.9 from `nameservers` (resolvconf regression) | High | 2min |
-| 4 | Add `just internet-diagnostic` recipe to justfile | Medium | 2min |
-| 5 | Add `ExecStartPre` interface validation to dual-WAN services | High | 15min |
-| 6 | Auto-detect WiFi interface name instead of hardcoding | High | 30min |
-| 7 | Add dual-WAN gotcha to AGENTS.md | Medium | 5min |
-| 8 | Deploy to evo-x2 + verify all services (TODO P1) | Critical | 30min |
-| 9 | Test Discord alert channel via SigNoz | High | 10min |
-| 10 | Add per-threshold SigNoz channel routing | Medium | 1h |
-| 11 | Move `dns-failover.nix` authPassword to sops | Medium | 30min |
-| 12 | Consolidate voice-agents Caddy vHost | Low | 30min |
-| 13 | Provision Pi 3 for DNS failover cluster | High | 2h |
-| 14 | Wire Pi 3 as secondary DNS in dns-failover.nix | High | 1h |
-| 15 | nix-colors integration (~17 hardcoded colors) | Low | 6h |
-| 16 | Deploy Dozzle for Docker log tailing | Low | 2h |
-| 17 | Compute real `vendorHash` for BuildFlow | Medium | 30min |
-| 18 | Compute real `vendorHash` for PMA | Medium | 30min |
-| 19 | Convert go-auto-upgrade `path:` inputs to SSH URLs | Low | 30min |
-| 20 | Create shared flake-parts Go template | Low | 4h |
-| 21 | Create `flake.nix` for hierarchical-errors | Low | 1h |
-| 22 | Remove unused UDP 853 from firewall (DoQ disabled) | Low | 2min |
-| 23 | Add Gatus ECMP route health endpoint | Medium | 30min |
-| 24 | Add route-health-monitor journal logging verification | Low | 15min |
-| 25 | Clean up diagnostic script — add to justfile dns-diagnostics | Low | 10min |
+| #   | Task                                                         | Impact   | Effort |
+| --- | ------------------------------------------------------------ | -------- | ------ |
+| 1   | `just switch` on evo-x2 to apply dual-WAN fix                | Critical | 5min   |
+| 2   | Verify ECMP failover works with WiFi + ethernet              | Critical | 15min  |
+| 3   | Remove 9.9.9.9 from `nameservers` (resolvconf regression)    | High     | 2min   |
+| 4   | Add `just internet-diagnostic` recipe to justfile            | Medium   | 2min   |
+| 5   | Add `ExecStartPre` interface validation to dual-WAN services | High     | 15min  |
+| 6   | Auto-detect WiFi interface name instead of hardcoding        | High     | 30min  |
+| 7   | Add dual-WAN gotcha to AGENTS.md                             | Medium   | 5min   |
+| 8   | Deploy to evo-x2 + verify all services (TODO P1)             | Critical | 30min  |
+| 9   | Test Discord alert channel via SigNoz                        | High     | 10min  |
+| 10  | Add per-threshold SigNoz channel routing                     | Medium   | 1h     |
+| 11  | Move `dns-failover.nix` authPassword to sops                 | Medium   | 30min  |
+| 12  | Consolidate voice-agents Caddy vHost                         | Low      | 30min  |
+| 13  | Provision Pi 3 for DNS failover cluster                      | High     | 2h     |
+| 14  | Wire Pi 3 as secondary DNS in dns-failover.nix               | High     | 1h     |
+| 15  | nix-colors integration (~17 hardcoded colors)                | Low      | 6h     |
+| 16  | Deploy Dozzle for Docker log tailing                         | Low      | 2h     |
+| 17  | Compute real `vendorHash` for BuildFlow                      | Medium   | 30min  |
+| 18  | Compute real `vendorHash` for PMA                            | Medium   | 30min  |
+| 19  | Convert go-auto-upgrade `path:` inputs to SSH URLs           | Low      | 30min  |
+| 20  | Create shared flake-parts Go template                        | Low      | 4h     |
+| 21  | Create `flake.nix` for hierarchical-errors                   | Low      | 1h     |
+| 22  | Remove unused UDP 853 from firewall (DoQ disabled)           | Low      | 2min   |
+| 23  | Add Gatus ECMP route health endpoint                         | Medium   | 30min  |
+| 24  | Add route-health-monitor journal logging verification        | Low      | 15min  |
+| 25  | Clean up diagnostic script — add to justfile dns-diagnostics | Low      | 10min  |
 
 ---
 
@@ -138,10 +138,10 @@ If it's transient, `dual-wan.enable` should probably be `false` and we should re
 
 ## Files Changed
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/dual-wan.nix` | Fix WiFi interface default: `wlp195s0` → `wlan0` |
-| `scripts/internet-diagnostic.sh` | New: comprehensive internet connectivity diagnostic script |
+| File                                  | Change                                                     |
+| ------------------------------------- | ---------------------------------------------------------- |
+| `modules/nixos/services/dual-wan.nix` | Fix WiFi interface default: `wlp195s0` → `wlan0`           |
+| `scripts/internet-diagnostic.sh`      | New: comprehensive internet connectivity diagnostic script |
 
 ## Diagnostic Output (from evo-x2 at 23:11 CEST)
 
@@ -157,6 +157,7 @@ Route health monitor: active (no ECMP decisions logged — was querying wrong in
 ## Internet Status
 
 **Working as of 23:11 CEST.** The original outage was likely caused by:
+
 1. Router WAN/ISP temporary disruption
 2. resolvconf reordering 9.9.9.9 before 127.0.0.1 (no local DNS resolution)
 3. Reboot at 22:41 resolved the transient issue

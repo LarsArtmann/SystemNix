@@ -6,18 +6,18 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 
 ## What You Get
 
-| Category | Tools & Services |
-|----------|-----------------|
-| **Languages** | Go 1.26, Node.js, Bun, Python 3.13, Rust |
-| **Cloud & Infra** | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker |
-| **Development** | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij |
-| **Desktop (NixOS)** | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Sway (backup WM), Rofi (Sway fallback only) |
-| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI |
-| **AI/ML** | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver |
-| **Security** | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS) |
-| **Monitoring** | SigNoz (18 alert rules, 9 dashboards), Gatus (52+ health checks), ActivityWatch |
-| **Networking** | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), 2.5M+ blocked domains |
-| **Storage** | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub |
+| Category                 | Tools & Services                                                                                                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Languages**            | Go 1.26, Node.js, Bun, Python 3.13, Rust                                                                                                                              |
+| **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                    |
+| **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                           |
+| **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Sway (backup WM), Rofi (Sway fallback only) |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI                                                                                 |
+| **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                       |
+| **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                             |
+| **Monitoring**           | SigNoz (18 alert rules, 9 dashboards), Gatus (52+ health checks), ActivityWatch                                                                                       |
+| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), 2.5M+ blocked domains                                                                |
+| **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                |
 
 ## Quick Start
 
@@ -41,10 +41,10 @@ nix flake check --no-build  # Validate configuration syntax
 
 ### Target Systems
 
-| System | Hardware | Configuration | Command |
-|--------|----------|--------------|---------|
+| System                   | Hardware                           | Configuration                | Command            |
+| ------------------------ | ---------------------------------- | ---------------------------- | ------------------ |
 | macOS (Lars-MacBook-Air) | Apple Silicon, 24GB RAM, 256GB SSD | `flake.nix#Lars-MacBook-Air` | `nix run .#deploy` |
-| NixOS (evo-x2) | AMD Ryzen AI Max+ 395, 128GB RAM | `flake.nix#evo-x2` | `nix run .#deploy` |
+| NixOS (evo-x2)           | AMD Ryzen AI Max+ 395, 128GB RAM   | `flake.nix#evo-x2`           | `nix run .#deploy` |
 
 ## Architecture
 
@@ -80,30 +80,30 @@ SystemNix/
 
 All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (52+ health checks) + SigNoz (18 alert rules, 9 dashboards):
 
-| Service | Port | URL | Description |
-|---------|------|-----|-------------|
-| **Caddy** | 443 | `*.home.lan` | Reverse proxy with sops-managed TLS certs |
-| **Immich** | 2283 | `immich.home.lan` | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML) |
-| **Forgejo** | 3000 | `forgejo.home.lan` | Self-hosted Git forge with GitHub mirror sync & Actions |
-| **SigNoz** | 4317, 4318, 8080 | `signoz.home.lan` | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards |
-| **Homepage** | 8082 | `dash.home.lan` | Service overview dashboard |
-| **Pocket ID** | 1411 | `auth.home.lan` | Passkey-based SSO/IDP + oauth2-proxy forward auth |
-| **Hermes** | — | — | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM) |
-| **Twenty CRM** | 3200 | `crm.home.lan` | Self-hosted CRM (Docker Compose: PostgreSQL + Redis) |
-| **Voice Agents** | 7880 | — | AI voice agents (Docker: LiveKit + Whisper ASR with ROCm) |
-| **TaskChampion** | 10222 | `tasks.home.lan` | Taskwarrior sync server (cross-platform + Android) |
-| **Manifest** | 2099 | `manifest.home.lan` | Smart LLM router for AI agents (cost optimization) |
-| **Overview** | 8083 | — | Local project dashboard (git repo discovery, stats, activity) |
-| **Dozzle** | 8084 | `logs.home.lan` | Real-time Docker container log viewer |
-| **Monitor365** | 3001 | `monitor.home.lan` | Device monitoring agent + server dashboard |
-| **OpenSEO** | 3002 | `seo.home.lan` | Self-hosted SEO suite (rank tracking, keyword research) |
-| **Crush Daily** | 8081 | `daily.home.lan` | AI-powered development insights from Crush databases |
-| **PMA** | — | — | Projects Management Automation (AI commit messages, repo discovery) |
-| **Dual-WAN** | — | — | MPTCP dual-WAN with route health monitoring |
-| **Gatus** | 9110 | `status.home.lan` | Health check monitoring with Discord alerts |
-| **DNS Blocker** | 53, 8050 | — | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked |
-| **Mullvad VPN** | — | — | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf) |
-| **DiscordSync** | — | — | Continuous Discord channel backup bot |
+| Service          | Port             | URL                 | Description                                                                                         |
+| ---------------- | ---------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
+| **Caddy**        | 443              | `*.home.lan`        | Reverse proxy with sops-managed TLS certs                                                           |
+| **Immich**       | 2283             | `immich.home.lan`   | Self-hosted Google Photos alternative (PostgreSQL + Redis + ML)                                     |
+| **Forgejo**      | 3000             | `forgejo.home.lan`  | Self-hosted Git forge with GitHub mirror sync & Actions                                             |
+| **SigNoz**       | 4317, 4318, 8080 | `signoz.home.lan`   | Observability: traces, metrics, logs + node_exporter + cAdvisor, 6 dashboards                       |
+| **Homepage**     | 8082             | `dash.home.lan`     | Service overview dashboard                                                                          |
+| **Pocket ID**    | 1411             | `auth.home.lan`     | Passkey-based SSO/IDP + oauth2-proxy forward auth                                                   |
+| **Hermes**       | —                | —                   | AI agent gateway (Discord bot, cron scheduler, multi-provider LLM)                                  |
+| **Twenty CRM**   | 3200             | `crm.home.lan`      | Self-hosted CRM (Docker Compose: PostgreSQL + Redis)                                                |
+| **Voice Agents** | 7880             | —                   | AI voice agents (Docker: LiveKit + Whisper ASR with ROCm)                                           |
+| **TaskChampion** | 10222            | `tasks.home.lan`    | Taskwarrior sync server (cross-platform + Android)                                                  |
+| **Manifest**     | 2099             | `manifest.home.lan` | Smart LLM router for AI agents (cost optimization)                                                  |
+| **Overview**     | 8083             | —                   | Local project dashboard (git repo discovery, stats, activity)                                       |
+| **Dozzle**       | 8084             | `logs.home.lan`     | Real-time Docker container log viewer                                                               |
+| **Monitor365**   | 3001             | `monitor.home.lan`  | Device monitoring agent + server dashboard                                                          |
+| **OpenSEO**      | 3002             | `seo.home.lan`      | Self-hosted SEO suite (rank tracking, keyword research)                                             |
+| **Crush Daily**  | 8081             | `daily.home.lan`    | AI-powered development insights from Crush databases                                                |
+| **PMA**          | —                | —                   | Projects Management Automation (AI commit messages, repo discovery)                                 |
+| **Dual-WAN**     | —                | —                   | MPTCP dual-WAN with route health monitoring                                                         |
+| **Gatus**        | 9110             | `status.home.lan`   | Health check monitoring with Discord alerts                                                         |
+| **DNS Blocker**  | 53, 8050         | —                   | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked |
+| **Mullvad VPN**  | —                | —                   | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                               |
+| **DiscordSync**  | —                | —                   | Continuous Discord channel backup bot                                                               |
 
 ### DNS Blocking
 
@@ -125,15 +125,15 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 
 ## NixOS Hardware (evo-x2)
 
-| Component | Configuration |
-|-----------|--------------|
-| **CPU** | AMD Ryzen AI Max+ 395 (Strix Halo), amd_pstate=guided |
-| **GPU** | AMD integrated (amdgpu), Mesa latest, ROCm compute stack |
-| **NPU** | AMD XDNA via nix-amd-npu, XRT runtime |
-| **Memory** | 128GB physical (~94 GiB visible after GPU VRAM carveout), ZRAM swap (~16 GiB), tuned for AI/ML workloads |
-| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily) |
-| **Boot** | systemd-boot (50 generations), latest Linux kernel |
-| **Network** | Realtek 2.5G Ethernet, MediaTek WiFi |
+| Component   | Configuration                                                                                            |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| **CPU**     | AMD Ryzen AI Max+ 395 (Strix Halo), amd_pstate=guided                                                    |
+| **GPU**     | AMD integrated (amdgpu), Mesa latest, ROCm compute stack                                                 |
+| **NPU**     | AMD XDNA via nix-amd-npu, XRT runtime                                                                    |
+| **Memory**  | 128GB physical (~94 GiB visible after GPU VRAM carveout), ZRAM swap (~16 GiB), tuned for AI/ML workloads |
+| **Storage** | BTRFS root (zstd) + `/data` (zstd:3), btrbk snapshots (daily)                                            |
+| **Boot**    | systemd-boot (50 generations), latest Linux kernel                                                       |
+| **Network** | Realtek 2.5G Ethernet, MediaTek WiFi                                                                     |
 
 ## Essential Commands
 
@@ -164,49 +164,50 @@ scripts/status-report.sh     # Comprehensive system status
 
 Shared across macOS and NixOS via `platforms/common/programs/`:
 
-| Program | Configuration |
-|---------|--------------|
-| **Fish** | Primary shell, shared aliases, carapace completions, 5000 history |
-| **Zsh** | Secondary shell with autosuggestions, syntax highlighting |
-| **Starship** | Prompt with Catppuccin Mocha, performance-optimized |
-| **Git** | GPG signing, SSH insteadOf HTTPS, git-town integration |
-| **tmux** | Catppuccin theme, resurrect plugin, SystemNix dev session |
-| **FZF** | Ripgrep integration, reverse layout |
-| **KeePassXC** | Browser integration (Chromium + Helium) |
-| **Chromium** | Enterprise policies, YouTube Shorts Blocker, HTTPS-only |
+| Program       | Configuration                                                     |
+| ------------- | ----------------------------------------------------------------- |
+| **Fish**      | Primary shell, shared aliases, carapace completions, 5000 history |
+| **Zsh**       | Secondary shell with autosuggestions, syntax highlighting         |
+| **Starship**  | Prompt with Catppuccin Mocha, performance-optimized               |
+| **Git**       | GPG signing, SSH insteadOf HTTPS, git-town integration            |
+| **tmux**      | Catppuccin theme, resurrect plugin, SystemNix dev session         |
+| **FZF**       | Ripgrep integration, reverse layout                               |
+| **KeePassXC** | Browser integration (Chromium + Helium)                           |
+| **Chromium**  | Enterprise policies, YouTube Shorts Blocker, HTTPS-only           |
 
 ## Flake Inputs
 
 56 inputs — key ones below:
 
-| Input | Purpose |
-|-------|---------|
-| `nixpkgs` | Package collection (unstable) |
-| `nix-darwin` | macOS system management |
-| `home-manager` | Cross-platform user configuration |
-| `flake-parts` | Modular flake architecture |
-| `niri` | Scrollable-tiling Wayland compositor |
-| `nix-homebrew` | Declarative Homebrew management (macOS) |
-| `sops-nix` | Secrets management with age encryption |
-| `nix-amd-npu` | AMD NPU (XDNA) driver |
-| `nix-ssh-config` | Shared SSH configuration |
-| `crush-config` | AI assistant configuration |
-| `hermes-agent` | AI agent gateway (Discord bot) |
-| `silent-sddm` | SDDM theme with Catppuccin support |
-| `signoz-src` | SigNoz observability source (built from source) |
-| `signoz-collector-src` | SigNoz OTel collector source |
-| `dnsblockd` | Custom DNS blocker (Go) |
-| `treefmt-full-flake` | Code formatting (alejandra + more) |
-| `nixos-hardware` | Hardware-specific NixOS modules |
-| `helium` | Helium browser (macOS) |
-| `nur` | Nix User Repository |
-| `wallpapers-src` | Wallpaper collection |
+| Input                  | Purpose                                         |
+| ---------------------- | ----------------------------------------------- |
+| `nixpkgs`              | Package collection (unstable)                   |
+| `nix-darwin`           | macOS system management                         |
+| `home-manager`         | Cross-platform user configuration               |
+| `flake-parts`          | Modular flake architecture                      |
+| `niri`                 | Scrollable-tiling Wayland compositor            |
+| `nix-homebrew`         | Declarative Homebrew management (macOS)         |
+| `sops-nix`             | Secrets management with age encryption          |
+| `nix-amd-npu`          | AMD NPU (XDNA) driver                           |
+| `nix-ssh-config`       | Shared SSH configuration                        |
+| `crush-config`         | AI assistant configuration                      |
+| `hermes-agent`         | AI agent gateway (Discord bot)                  |
+| `silent-sddm`          | SDDM theme with Catppuccin support              |
+| `signoz-src`           | SigNoz observability source (built from source) |
+| `signoz-collector-src` | SigNoz OTel collector source                    |
+| `dnsblockd`            | Custom DNS blocker (Go)                         |
+| `treefmt-full-flake`   | Code formatting (alejandra + more)              |
+| `nixos-hardware`       | Hardware-specific NixOS modules                 |
+| `helium`               | Helium browser (macOS)                          |
+| `nur`                  | Nix User Repository                             |
+| `wallpapers-src`       | Wallpaper collection                            |
 
 Color schemes are defined locally in `platforms/common/theme.nix` (not via a flake input).
 
 ## CI/CD
 
 GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/PR to master (Ubuntu runner):
+
 - **Flake evaluation**: `nix flake check --no-build --all-systems`
 - **Package builds**: `jscpd`, `govalid`, `aw-watcher-utilization`
 - **Statix**: Nix anti-pattern linting
@@ -216,6 +217,7 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/P
 ### Pre-commit Hooks
 
 10 hooks configured via `.pre-commit-config.yaml`:
+
 - **gitleaks** — secret detection
 - **alejandra** — Nix formatting
 - **deadnix** — dead code detection
@@ -229,14 +231,14 @@ GitHub Actions workflow (`.github/workflows/nix-check.yml`) runs on every push/P
 
 ## Documentation
 
-| Guide | Description |
-|-------|-------------|
-| [AGENTS.md](./AGENTS.md) | AI assistant guide and project conventions |
-| [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md) | Contributor setup, style, and verification commands |
-| [Architecture Decisions](./docs/architecture/) | ADRs for key design choices |
-| [Project Status](./docs/status/) | Development status reports |
-| [Troubleshooting](./docs/troubleshooting/) | Common issues and solutions |
-| [Architecture Diagrams](./docs/architecture-understanding/) | Mermaid diagram collection |
+| Guide                                                       | Description                                         |
+| ----------------------------------------------------------- | --------------------------------------------------- |
+| [AGENTS.md](./AGENTS.md)                                    | AI assistant guide and project conventions          |
+| [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)              | Contributor setup, style, and verification commands |
+| [Architecture Decisions](./docs/architecture/)              | ADRs for key design choices                         |
+| [Project Status](./docs/status/)                            | Development status reports                          |
+| [Troubleshooting](./docs/troubleshooting/)                  | Common issues and solutions                         |
+| [Architecture Diagrams](./docs/architecture-understanding/) | Mermaid diagram collection                          |
 
 ## Troubleshooting
 
@@ -272,6 +274,7 @@ scripts/dns-diagnostics.sh  # Full DNS diagnostics
 See [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md) for the full contributor guide, style rules, and verification commands.
 
 Quick checklist:
+
 1. Make changes in `platforms/common/` for cross-platform config
 2. Use platform-specific directories for platform differences
 3. Run `nix flake check --no-build` before committing

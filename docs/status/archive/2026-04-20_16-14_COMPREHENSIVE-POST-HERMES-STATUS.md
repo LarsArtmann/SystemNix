@@ -10,6 +10,7 @@
 ## A) FULLY DONE
 
 ### Hermes AI Agent Gateway — Full Declarative Integration
+
 - **Flake input** (`hermes-agent` from `github:NousResearch/hermes-agent`) locked in `flake.lock`
 - **NixOS module** (`modules/nixos/services/hermes.nix`): options (`enable`, `user`, `home`, `restartSec`, `timeoutStopSec`), system packages (`hermesPkg` + `libopus`), tmpfiles rules for `~/.hermes/` directory structure
 - **Home Manager systemd service**: declarative `hermes-gateway` user service with `ExecStartPre` merge script that merges sops-rendered secrets into writable `~/.hermes/.env` (Hermes needs write access for `save_env_value()`)
@@ -22,11 +23,13 @@
 - **Status**: Module committed and pushed. NOT YET DEPLOYED (`just switch` not run).
 
 ### Statix W20 Fixes — All Clean
+
 - **`signoz.nix`**: Merged repeated `environment.etc` keys into single attribute set. Merged repeated `systemd.*` keys (`tmpfiles.rules`, `services.amdgpu-metrics`, `timers.amdgpu-metrics`) into single `systemd = { ... }` block. Zero statix warnings.
 - **`snapshots.nix`**: Merged 4 separate `systemd.*` blocks (`timers.timeshift-backup`, `services.timeshift-backup`, `services.timeshift-verify`, `timers.timeshift-verify`) into single `systemd = { ... }` block. Preserved BTRFS autoScrub. Zero statix warnings.
 - **Project-wide**: `statix check` passes on all Nix files.
 
 ### SigNoz Observability Pipeline
+
 - Full stack: node_exporter, cAdvisor, OTel Collector, ClickHouse, Query Service
 - Alert rules: disk-full, cpu-sustained, memory-critical, service-down, gpu-thermal, dnsblockd-down, emeet-pixyd-down
 - Dashboard: signoz-overview.json
@@ -35,10 +38,12 @@
 - All components enabled by default, individually toggleable
 
 ### SigNoz Alert Rules
+
 - 7 alert rules covering: disk space, CPU, memory, systemd failures, GPU thermal, dnsblockd health, emeet-pixyd health
 - Provisioned declaratively via `signoz-provision` oneshot service
 
 ### EMEET PIXY Daemon — UI Resilience (Uncommitted)
+
 - `app.js`: offline banner with animated dot, exponential backoff stream reconnect (3s→30s), PTZ slider revert-on-failure, button loading states, request dedup, timeout handling
 - `style.css`: `.offline-banner`, `.offline-dot` (pulsing), `.btn-loading` styles
 - `handlers.go`: CSP header relaxed with `unsafe-eval` for htmx
@@ -46,6 +51,7 @@
 - **Status**: Working locally, NOT committed
 
 ### CI/CD
+
 - `nix-check.yml`: builds both platforms, runs statix/deadnix/alejandra, Go tests for emeet-pixyd
 - `flake-update.yml`: weekly auto flake.lock update PRs
 - Pre-commit hooks: gitleaks, trailing whitespace, deadnix, statix, alejandra, nix flake check
@@ -55,11 +61,13 @@
 ## B) PARTIALLY DONE
 
 ### Hermes Deployment
+
 - Module is 100% coded and committed. Needs `just switch` to deploy.
 - Old imperative `nix profile install` still active (`hermes-agent 0.10.0` at `/nix/store/jay476c1...`). Needs `nix profile remove hermes-agent` after deploy.
 - Only `key_env` migrated for ZAI provider. Other providers in `config.yaml` may still use inline `api_key` instead of `key_env`.
 
 ### EMEET PIXY UI Improvements
+
 - Code changes are done and working but uncommitted. 4 files modified: `handlers.go`, `app.js`, `style.css`, `templates.templ`.
 
 ---
@@ -105,33 +113,33 @@
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Priority | Task | Effort |
-|---|----------|------|--------|
-| 1 | **P0** | `just switch` to deploy Hermes declarative module | 5 min |
-| 2 | **P0** | `nix profile remove hermes-agent` cleanup | 1 min |
-| 3 | **P0** | Smoke test: verify hermes-gateway starts, Discord bot connects, cron jobs run | 10 min |
-| 4 | **P1** | Commit emeet-pixyd UI resilience changes (4 files) | 2 min |
-| 5 | **P1** | Add `hermes-gateway.service` to SigNoz journald receiver units | 5 min |
-| 6 | **P1** | Add Hermes-down alert rule to SigNoz | 5 min |
-| 7 | **P1** | Migrate remaining Hermes providers to `key_env` in config.yaml | 10 min |
-| 8 | **P1** | Add sops-nix ordering dependency to Hermes HM service | 5 min |
-| 9 | **P2** | Make `~/.hermes/config.yaml` declarative via Home Manager | 15 min |
-| 10 | **P2** | Add Hermes status to SigNoz overview dashboard | 10 min |
-| 11 | **P2** | Investigate removing `unsafe-eval` from emeet-pixyd CSP | 20 min |
-| 12 | **P2** | Add Hermes healthcheck endpoint monitoring (if available) | 10 min |
-| 13 | **P2** | Run full `just test` (slow build validation) to verify everything | 30 min |
-| 14 | **P2** | Prune old status reports from `docs/status/archive/` | 5 min |
-| 15 | **P2** | Add flake.lock staleness alert (CI check or systemd timer) | 15 min |
-| 16 | **P3** | Audit Hermes cron jobs for correctness with declarative service | 10 min |
-| 17 | **P3** | Validate darwin config builds (`just test-fast` equivalent for macOS) | 10 min |
-| 18 | **P3** | Add deployment rollback procedure to AGENTS.md | 10 min |
-| 19 | **P3** | Document Hermes cleanup steps in AGENTS.md | 5 min |
-| 20 | **P3** | Secrets audit: verify all 5 hermes sops keys are active | 10 min |
-| 21 | **P3** | Add `just hermes-health` command for quick status check | 5 min |
-| 22 | **P3** | Consider adding Hermes to Homepage dashboard | 10 min |
-| 23 | **P4** | Review Hermes `MemoryMax=4G` — is 4GB appropriate? Monitor actual usage | ongoing |
-| 24 | **P4** | Add WatchdogSec handler — what should Hermes do on watchdog timeout? | 10 min |
-| 25 | **P4** | Consider adding Hermes metrics endpoint for SigNoz scraping | 30 min |
+| #   | Priority | Task                                                                          | Effort  |
+| --- | -------- | ----------------------------------------------------------------------------- | ------- |
+| 1   | **P0**   | `just switch` to deploy Hermes declarative module                             | 5 min   |
+| 2   | **P0**   | `nix profile remove hermes-agent` cleanup                                     | 1 min   |
+| 3   | **P0**   | Smoke test: verify hermes-gateway starts, Discord bot connects, cron jobs run | 10 min  |
+| 4   | **P1**   | Commit emeet-pixyd UI resilience changes (4 files)                            | 2 min   |
+| 5   | **P1**   | Add `hermes-gateway.service` to SigNoz journald receiver units                | 5 min   |
+| 6   | **P1**   | Add Hermes-down alert rule to SigNoz                                          | 5 min   |
+| 7   | **P1**   | Migrate remaining Hermes providers to `key_env` in config.yaml                | 10 min  |
+| 8   | **P1**   | Add sops-nix ordering dependency to Hermes HM service                         | 5 min   |
+| 9   | **P2**   | Make `~/.hermes/config.yaml` declarative via Home Manager                     | 15 min  |
+| 10  | **P2**   | Add Hermes status to SigNoz overview dashboard                                | 10 min  |
+| 11  | **P2**   | Investigate removing `unsafe-eval` from emeet-pixyd CSP                       | 20 min  |
+| 12  | **P2**   | Add Hermes healthcheck endpoint monitoring (if available)                     | 10 min  |
+| 13  | **P2**   | Run full `just test` (slow build validation) to verify everything             | 30 min  |
+| 14  | **P2**   | Prune old status reports from `docs/status/archive/`                          | 5 min   |
+| 15  | **P2**   | Add flake.lock staleness alert (CI check or systemd timer)                    | 15 min  |
+| 16  | **P3**   | Audit Hermes cron jobs for correctness with declarative service               | 10 min  |
+| 17  | **P3**   | Validate darwin config builds (`just test-fast` equivalent for macOS)         | 10 min  |
+| 18  | **P3**   | Add deployment rollback procedure to AGENTS.md                                | 10 min  |
+| 19  | **P3**   | Document Hermes cleanup steps in AGENTS.md                                    | 5 min   |
+| 20  | **P3**   | Secrets audit: verify all 5 hermes sops keys are active                       | 10 min  |
+| 21  | **P3**   | Add `just hermes-health` command for quick status check                       | 5 min   |
+| 22  | **P3**   | Consider adding Hermes to Homepage dashboard                                  | 10 min  |
+| 23  | **P4**   | Review Hermes `MemoryMax=4G` — is 4GB appropriate? Monitor actual usage       | ongoing |
+| 24  | **P4**   | Add WatchdogSec handler — what should Hermes do on watchdog timeout?          | 10 min  |
+| 25  | **P4**   | Consider adding Hermes metrics endpoint for SigNoz scraping                   | 30 min  |
 
 ---
 
@@ -147,12 +155,12 @@ I cannot determine this without access to the Hermes documentation or testing th
 
 ## Uncommitted Changes
 
-| File | Status | Description |
-|------|--------|-------------|
-| `pkgs/emeet-pixyd/handlers.go` | Modified | CSP header: added `unsafe-eval` for htmx |
-| `pkgs/emeet-pixyd/static/app.js` | Modified | Offline banner, stream reconnect, PTZ revert, button loading, request dedup, timeout |
-| `pkgs/emeet-pixyd/static/style.css` | Modified | `.offline-banner`, `.offline-dot`, `.btn-loading` styles |
-| `pkgs/emeet-pixyd/templates.templ` | Modified | Removed redundant `hx-on::do-action` body attribute |
+| File                                | Status   | Description                                                                          |
+| ----------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| `pkgs/emeet-pixyd/handlers.go`      | Modified | CSP header: added `unsafe-eval` for htmx                                             |
+| `pkgs/emeet-pixyd/static/app.js`    | Modified | Offline banner, stream reconnect, PTZ revert, button loading, request dedup, timeout |
+| `pkgs/emeet-pixyd/static/style.css` | Modified | `.offline-banner`, `.offline-dot`, `.btn-loading` styles                             |
+| `pkgs/emeet-pixyd/templates.templ`  | Modified | Removed redundant `hx-on::do-action` body attribute                                  |
 
 ## Recent Commits (Today)
 

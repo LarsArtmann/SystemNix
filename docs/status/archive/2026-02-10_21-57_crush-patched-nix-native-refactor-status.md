@@ -494,13 +494,14 @@ These files were corrupted during copy or original download, causing patch appli
 ### Priority 2: Decision Making
 
 6. **Create approach comparison matrix:**
-   | Criterion | fetchpatch | Nix-native | Winner |
-   |-----------|------------|------------|--------|
-   | Simplicity | High | Low | fetchpatch |
-   | Reliability | High | Medium | fetchpatch |
-   | Convention | Standard | More native | Nix-native |
-   | Maintenance | Low | Medium | fetchpatch |
-   | Automation | Manual | Scripted | Nix-native |
+
+   | Criterion   | fetchpatch | Nix-native  | Winner     |
+   | ----------- | ---------- | ----------- | ---------- |
+   | Simplicity  | High       | Low         | fetchpatch |
+   | Reliability | High       | Medium      | fetchpatch |
+   | Convention  | Standard   | More native | Nix-native |
+   | Maintenance | Low        | Medium      | fetchpatch |
+   | Automation  | Manual     | Scripted    | Nix-native |
 
 7. **Evaluate nixpkgs conventions:**
    - Search nixpkgs for patched Go packages

@@ -13,9 +13,10 @@
 This session performed **deep research** into why OOM protection on evo-x2 has been unreliable, produced a comprehensive analysis document, and verified that the systemd-oomd migration (already committed in `059765b6`) is correct and builds cleanly.
 
 Key findings:
+
 1. **earlyoom was slow to respond on this system** — its AND-logic swap threshold (`freeSwapThreshold = 10`) combined with `swappiness = 1` meant the system had to be in extreme distress before earlyoom would fire. With `swappiness = 1`, the kernel delays swapping aggressively, so swap stays ~90% free under normal pressure. Only when memory is critically exhausted does the kernel begin swapping to ZRAM (12.8 GB pool fills fast), at which point earlyoom would eventually trigger — but by then the system is already thrashing and may kill the wrong process (source: `lowmem_sig()` in earlyoom `main.c` uses `&&` for both conditions)
 2. **earlyoom is blind to GPU allocations** — GTT-mapped memory consumed by Ollama/hermes via ROCm is invisible to `/proc/meminfo` MemAvailable
-3. **systemd-oomd's PSI approach** measures process stalling (the *symptom*) rather than free RAM (the *cause*), making it work on unified memory systems regardless of GTT
+3. **systemd-oomd's PSI approach** measures process stalling (the _symptom_) rather than free RAM (the _cause_), making it work on unified memory systems regardless of GTT
 4. **nvtop 176 GiB** is VRAM + GTT double-counting — cosmetic, not misconfiguration
 5. **3 services had no MemoryMax** — pocket-id, monitor365-agent, monitor365-server — now fixed
 
@@ -23,13 +24,13 @@ Key findings:
 
 ## System Health Snapshot
 
-| Metric | Session 91 | Session 92 | Notes |
-|--------|-----------|-----------|-------|
-| OOM defense | earlyoom (slow response) + MemoryMax | systemd-oomd + MemoryMax | ✅ Improved |
-| Services w/o MemoryMax | 3 long-running | 0 | ✅ Fixed |
-| Build status | Passing | Passing | ✅ Clean |
-| Root disk | 53% (235 GB free) | Not re-checked | — |
-| /data disk | 89% (118 GB free) | Not re-checked | — |
+| Metric                 | Session 91                           | Session 92               | Notes       |
+| ---------------------- | ------------------------------------ | ------------------------ | ----------- |
+| OOM defense            | earlyoom (slow response) + MemoryMax | systemd-oomd + MemoryMax | ✅ Improved |
+| Services w/o MemoryMax | 3 long-running                       | 0                        | ✅ Fixed    |
+| Build status           | Passing                              | Passing                  | ✅ Clean    |
+| Root disk              | 53% (235 GB free)                    | Not re-checked           | —           |
+| /data disk             | 89% (118 GB free)                    | Not re-checked           | —           |
 
 ---
 
@@ -49,38 +50,38 @@ Wrote comprehensive analysis: `docs/status/2026-05-25_OOM-STRATEGY-DEEP-DIVE.md`
 
 The migration was already committed by a prior session. This session independently arrived at the same changes and confirmed correctness:
 
-| Change | File | Status |
-|--------|------|--------|
-| Remove earlyoom | `boot.nix` | ✅ Already committed |
-| Enable systemd-oomd (3 slices) | `boot.nix` | ✅ Already committed |
-| Add MemoryMax to pocket-id (512M) | `pocket-id.nix` | ✅ Already committed |
-| Add MemoryMax to monitor365-agent (256M) | `monitor365.nix` | ✅ Already committed |
-| Add MemoryMax to monitor365-server (256M) | `monitor365.nix` | ✅ Already committed |
-| Update OOM crash chain gotcha in AGENTS.md | `AGENTS.md` | ✅ Changed this session |
-| Update `vm.panic_on_oom` comment | `boot.nix` | ✅ Already committed |
+| Change                                     | File             | Status                  |
+| ------------------------------------------ | ---------------- | ----------------------- |
+| Remove earlyoom                            | `boot.nix`       | ✅ Already committed    |
+| Enable systemd-oomd (3 slices)             | `boot.nix`       | ✅ Already committed    |
+| Add MemoryMax to pocket-id (512M)          | `pocket-id.nix`  | ✅ Already committed    |
+| Add MemoryMax to monitor365-agent (256M)   | `monitor365.nix` | ✅ Already committed    |
+| Add MemoryMax to monitor365-server (256M)  | `monitor365.nix` | ✅ Already committed    |
+| Update OOM crash chain gotcha in AGENTS.md | `AGENTS.md`      | ✅ Changed this session |
+| Update `vm.panic_on_oom` comment           | `boot.nix`       | ✅ Already committed    |
 
 ### 3. Full Service Memory Limit Audit — Complete
 
 Audited all 39 systemd services across 36 service modules:
 
-| Status | Count | Services |
-|--------|-------|----------|
-| Has MemoryMax via `harden {}` | 33 | All hardened services |
-| Had NO MemoryMax → NOW FIXED | 3 | pocket-id, monitor365-agent, monitor365-server |
-| No MemoryMax — acceptable (oneshot) | 3 | signoz-provision, forgejo-generate-token, immich-db-backup |
+| Status                              | Count | Services                                                   |
+| ----------------------------------- | ----- | ---------------------------------------------------------- |
+| Has MemoryMax via `harden {}`       | 33    | All hardened services                                      |
+| Had NO MemoryMax → NOW FIXED        | 3     | pocket-id, monitor365-agent, monitor365-server             |
+| No MemoryMax — acceptable (oneshot) | 3     | signoz-provision, forgejo-generate-token, immich-db-backup |
 
 **Memory budget analysis** (top consumers):
 
-| Service | MemoryMax | % of 128 GB |
-|---------|-----------|-------------|
-| ollama | 32 GB | 25% |
-| hermes | 24 GB | 19% |
-| whisper-asr | 8 GB | 6% |
-| clickhouse | 4 GB | 3% |
-| immich-ml | 4 GB | 3% |
-| minecraft | 4 GB | 3% |
-| Everything else | ≤ 2 GB each | <2% each |
-| **Total if all at max** | **~80 GB** | **63%** |
+| Service                 | MemoryMax   | % of 128 GB |
+| ----------------------- | ----------- | ----------- |
+| ollama                  | 32 GB       | 25%         |
+| hermes                  | 24 GB       | 19%         |
+| whisper-asr             | 8 GB        | 6%          |
+| clickhouse              | 4 GB        | 3%          |
+| immich-ml               | 4 GB        | 3%          |
+| minecraft               | 4 GB        | 3%          |
+| Everything else         | ≤ 2 GB each | <2% each    |
+| **Total if all at max** | **~80 GB**  | **63%**     |
 
 ### 4. Build Validation — Passed ✅
 
@@ -93,6 +94,7 @@ Audited all 39 systemd services across 36 service modules:
 ### 1. systemd-oomd Deployed but Not Verified Live
 
 Changes are committed and build passes, but `just switch` has not been run. Need to verify:
+
 - `systemctl status systemd-oomd` — should show active
 - `cat /sys/fs/cgroup/-.slice/memory.pressure_level` or PSI files — should be readable
 - `systemd-analyze cat-config systemd/oomd.conf.d/` — NixOS should have generated drop-in with slice monitoring
@@ -100,6 +102,7 @@ Changes are committed and build passes, but `just switch` has not been run. Need
 ### 2. OOM Strategy Document Written but Recommendations Not Fully Implemented
 
 `docs/status/2026-05-25_OOM-STRATEGY-DEEP-DIVE.md` recommends 6 changes. 5/6 are done. Remaining:
+
 - Reduce `OLLAMA_GPU_OVERHEAD` from 8 GB → 4 GB (optional optimization, not critical)
 
 ---
@@ -150,7 +153,7 @@ The OOM crash chain from session 89 (Helium spawned 42 processes, killed journal
 
 ### 2. No Unified Memory Awareness in Any Tool
 
-The fundamental problem: **no userspace OOM tool understands AMD Strix Halo's unified memory architecture**. GPU allocations via GTT consume physical RAM but don't appear in `/proc/meminfo` MemAvailable. earlyoom sees "plenty of free RAM" while the GPU has actually eaten 60+ GB. systemd-oomd's PSI approach is the best available mitigation — it detects the *effect* (processes stalling) regardless of the *cause* (RAM invisible to MemAvailable). But even PSI can't prevent the initial allocation burst.
+The fundamental problem: **no userspace OOM tool understands AMD Strix Halo's unified memory architecture**. GPU allocations via GTT consume physical RAM but don't appear in `/proc/meminfo` MemAvailable. earlyoom sees "plenty of free RAM" while the GPU has actually eaten 60+ GB. systemd-oomd's PSI approach is the best available mitigation — it detects the _effect_ (processes stalling) regardless of the _cause_ (RAM invisible to MemAvailable). But even PSI can't prevent the initial allocation burst.
 
 ### 3. 828 GB of AI Models With No Deduplication
 
@@ -187,33 +190,33 @@ Three separate model directories exist with likely heavy duplication. No audit h
 
 Sorted by impact × effort (highest first):
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | **Deploy all pending changes** (`just switch`) — activates BFQ + systemd-oomd | 🔴 Critical | 5min | Deploy |
-| 2 | **Verify systemd-oomd is working** — check PSI files, test with stress | 🔴 Critical | 15min | Verify |
-| 3 | **Consolidate AI model directories** — deduplicate 828 GB across 3 dirs | 🔴 Critical | 2h | Ops |
-| 4 | **Add Docker global log limits** — prevent unbounded container log growth | 🔴 Critical | 15min | Config |
-| 5 | **Add SigNoz/ClickHouse retention policy** — TTL on all tables | 🟡 High | 1h | Config |
-| 6 | **Clean caches** — `~/.cache/pip` (6.3G), goimports (4G), etc. | 🟡 High | 5min | Ops |
-| 7 | **Fix monitor365-server** user service failures | 🟡 High | 1h | Bug |
-| 8 | **Fix activitywatch-watcher** service failure | 🟡 High | 30min | Bug |
-| 9 | **Fix oauth2-proxy** intermittent startup failure | 🟡 High | 1h | Bug |
-| 10 | **Set `vm.overcommit_memory = 1`** for Redis | 🟡 High | 5min | Config |
-| 11 | **Run /data BTRFS migration** (`just snapshot-migrate-data`) | 🟡 Medium | 1h | Ops |
-| 12 | **Add disk space alerting** to Gatus | 🟡 Medium | 30min | Monitoring |
-| 13 | **Add PSI/IO pressure metrics** via node-exporter textfile | 🟡 Medium | 30min | Monitoring |
-| 14 | **Add boot time tracking** (systemd-analyze in timer) | 🟡 Medium | 30min | Monitoring |
-| 15 | **Fix dnsblockd-cert-import** user service failure | 🟡 Medium | 30min | Bug |
-| 16 | **Archive old status reports** (125+ files → keep last 10) | 🟢 Low | 15min | Housekeeping |
-| 17 | **Enforce service target convention** via NixOS assertion | 🟢 Low | 30min | Code quality |
-| 18 | **Auto-gate Caddy vHosts** behind service enable flags | 🟢 Low | 2h | Refactor |
-| 19 | **Auto-gate Gatus endpoints** behind service enable flags | 🟢 Low | 1h | Refactor |
-| 20 | **Fix IPv6 tempaddr errors** on Docker veths | 🟢 Low | 30min | Config |
-| 21 | **Investigate firmware 33s** — check BIOS fast boot options | 🟢 Low | 15min | Perf |
-| 22 | **Redis authentication** — set a password | 🟢 Low | 15min | Security |
-| 23 | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`) | 🟢 Low | 5min | Config |
-| 24 | **Pi 3 DNS hardware provisioning** | 🟢 Low | 4h+ | Infra |
-| 25 | **Bluetooth hci0 wmt error** — investigate RTL driver issue | 🟢 Low | 2h | Bug |
+| #   | Task                                                                          | Impact      | Effort | Category     |
+| --- | ----------------------------------------------------------------------------- | ----------- | ------ | ------------ |
+| 1   | **Deploy all pending changes** (`just switch`) — activates BFQ + systemd-oomd | 🔴 Critical | 5min   | Deploy       |
+| 2   | **Verify systemd-oomd is working** — check PSI files, test with stress        | 🔴 Critical | 15min  | Verify       |
+| 3   | **Consolidate AI model directories** — deduplicate 828 GB across 3 dirs       | 🔴 Critical | 2h     | Ops          |
+| 4   | **Add Docker global log limits** — prevent unbounded container log growth     | 🔴 Critical | 15min  | Config       |
+| 5   | **Add SigNoz/ClickHouse retention policy** — TTL on all tables                | 🟡 High     | 1h     | Config       |
+| 6   | **Clean caches** — `~/.cache/pip` (6.3G), goimports (4G), etc.                | 🟡 High     | 5min   | Ops          |
+| 7   | **Fix monitor365-server** user service failures                               | 🟡 High     | 1h     | Bug          |
+| 8   | **Fix activitywatch-watcher** service failure                                 | 🟡 High     | 30min  | Bug          |
+| 9   | **Fix oauth2-proxy** intermittent startup failure                             | 🟡 High     | 1h     | Bug          |
+| 10  | **Set `vm.overcommit_memory = 1`** for Redis                                  | 🟡 High     | 5min   | Config       |
+| 11  | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                  | 🟡 Medium   | 1h     | Ops          |
+| 12  | **Add disk space alerting** to Gatus                                          | 🟡 Medium   | 30min  | Monitoring   |
+| 13  | **Add PSI/IO pressure metrics** via node-exporter textfile                    | 🟡 Medium   | 30min  | Monitoring   |
+| 14  | **Add boot time tracking** (systemd-analyze in timer)                         | 🟡 Medium   | 30min  | Monitoring   |
+| 15  | **Fix dnsblockd-cert-import** user service failure                            | 🟡 Medium   | 30min  | Bug          |
+| 16  | **Archive old status reports** (125+ files → keep last 10)                    | 🟢 Low      | 15min  | Housekeeping |
+| 17  | **Enforce service target convention** via NixOS assertion                     | 🟢 Low      | 30min  | Code quality |
+| 18  | **Auto-gate Caddy vHosts** behind service enable flags                        | 🟢 Low      | 2h     | Refactor     |
+| 19  | **Auto-gate Gatus endpoints** behind service enable flags                     | 🟢 Low      | 1h     | Refactor     |
+| 20  | **Fix IPv6 tempaddr errors** on Docker veths                                  | 🟢 Low      | 30min  | Config       |
+| 21  | **Investigate firmware 33s** — check BIOS fast boot options                   | 🟢 Low      | 15min  | Perf         |
+| 22  | **Redis authentication** — set a password                                     | 🟢 Low      | 15min  | Security     |
+| 23  | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`) | 🟢 Low      | 5min   | Config       |
+| 24  | **Pi 3 DNS hardware provisioning**                                            | 🟢 Low      | 4h+    | Infra        |
+| 25  | **Bluetooth hci0 wmt error** — investigate RTL driver issue                   | 🟢 Low      | 2h     | Bug          |
 
 ---
 
@@ -222,6 +225,7 @@ Sorted by impact × effort (highest first):
 **Is the combined MemoryMax budget of ~80 GB (63% of RAM) sustainable?**
 
 Ollama (32 GB) + hermes (24 GB) alone = 56 GB. If both run at peak, that's 44% of total RAM. With OLLAMA_GPU_OVERHEAD at 8 GB and vm.min_free_kbytes at 2 GB, the system has:
+
 - 128 GB total
 - −2 GB kernel reserve
 - −8 GB GPU overhead
@@ -234,17 +238,17 @@ This is tight but workable. But if a third heavy service starts (e.g., ComfyUI a
 
 ## Session Timeline
 
-| Time | Action |
-|------|--------|
-| 04:00 | User asks why earlyoom is hard to configure |
-| 04:05 | Deep research: kernel OOM killer, earlyoom, systemd-oomd, unified memory |
-| 04:15 | Full service memory limit audit (39 services) |
-| 04:20 | nvtop 176 GiB mystery solved (VRAM + GTT double-counting) |
-| 04:25 | User asks: can we replace earlyoom with systemd-oomd? |
-| 04:30 | User confirms: remove earlyoom, setup systemd-oomd |
-| 04:32 | Implement: remove earlyoom, add systemd-oomd, add MemoryMax to 3 services |
-| 04:33 | Build fails — `systemd.oomd` in wrong attrset (services vs systemd) |
-| 04:34 | Fix and build passes |
-| 04:34 | Discover all changes already committed in `059765b6` — only AGENTS.md is new |
-| 04:35 | Status report written |
-| 04:50 | **Correction**: "earlyoom was effectively disabled" claim was an oversimplification — earlyoom would trigger in true crisis, but late. Updated report with accurate analysis from source code review of `lowmem_sig()`.
+| Time  | Action                                                                                                                                                                                                                  |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 04:00 | User asks why earlyoom is hard to configure                                                                                                                                                                             |
+| 04:05 | Deep research: kernel OOM killer, earlyoom, systemd-oomd, unified memory                                                                                                                                                |
+| 04:15 | Full service memory limit audit (39 services)                                                                                                                                                                           |
+| 04:20 | nvtop 176 GiB mystery solved (VRAM + GTT double-counting)                                                                                                                                                               |
+| 04:25 | User asks: can we replace earlyoom with systemd-oomd?                                                                                                                                                                   |
+| 04:30 | User confirms: remove earlyoom, setup systemd-oomd                                                                                                                                                                      |
+| 04:32 | Implement: remove earlyoom, add systemd-oomd, add MemoryMax to 3 services                                                                                                                                               |
+| 04:33 | Build fails — `systemd.oomd` in wrong attrset (services vs systemd)                                                                                                                                                     |
+| 04:34 | Fix and build passes                                                                                                                                                                                                    |
+| 04:34 | Discover all changes already committed in `059765b6` — only AGENTS.md is new                                                                                                                                            |
+| 04:35 | Status report written                                                                                                                                                                                                   |
+| 04:50 | **Correction**: "earlyoom was effectively disabled" claim was an oversimplification — earlyoom would trigger in true crisis, but late. Updated report with accurate analysis from source code review of `lowmem_sig()`. |

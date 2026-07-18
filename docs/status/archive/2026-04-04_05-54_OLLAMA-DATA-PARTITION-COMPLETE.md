@@ -17,6 +17,7 @@ Successfully configured Ollama to use models stored on the `/data` partition ins
 ### ✅ FULLY DONE
 
 #### 1. Data Partition Migration
+
 - **Location:** `/data/models/ollama/`
 - **Size:** ~44GB of AI models migrated from root partition
 - **Structure:**
@@ -26,6 +27,7 @@ Successfully configured Ollama to use models stored on the `/data` partition ins
   - `.cache/` - Runtime cache
 
 #### 2. Ollama Service Configuration
+
 **File:** `platforms/nixos/desktop/ai-stack.nix`
 
 ```nix
@@ -46,13 +48,16 @@ services.ollama = {
 ```
 
 #### 3. Permission Fix Service
+
 Created `ollama-permissions.service` that:
+
 - Runs at boot before Ollama starts
 - Fixes ownership to `ollama:ollama` (UID 61547)
 - Sets proper permissions (755 for dirs, 644 for files)
 - Handles edge cases where directories were owned by `nobody`
 
 #### 4. Ollama 0.20.0 Upgrade
+
 **Critical:** Upgraded from 0.19.0 to 0.20.0 for Gemma 4 architecture support.
 
 ```nix
@@ -68,16 +73,18 @@ ollama-rocm-0_20 = pkgs.ollama-rocm.overrideAttrs (old: rec {
 ```
 
 #### 5. Code Refactoring
+
 Grouped all systemd services under single `systemd = { services = { ... }; };` block to resolve statix linting warnings.
 
 #### 6. Models Verified Working
-| Model | Size | Status |
-|-------|------|--------|
-| llama3.2:1b | 1.2GB | ✅ Working |
-| gemma4-e2b-it | 3.5GB | ✅ Working (0.20.0) |
-| gemma4-e4b-it | 5.4GB | ✅ Working (0.20.0) |
-| gemma4-26b-a4b-it | 17GB | ✅ Working (0.20.0) |
-| gemma4-31b-it | 19GB | ✅ Working (0.20.0) |
+
+| Model             | Size  | Status              |
+| ----------------- | ----- | ------------------- |
+| llama3.2:1b       | 1.2GB | ✅ Working          |
+| gemma4-e2b-it     | 3.5GB | ✅ Working (0.20.0) |
+| gemma4-e4b-it     | 5.4GB | ✅ Working (0.20.0) |
+| gemma4-26b-a4b-it | 17GB  | ✅ Working (0.20.0) |
+| gemma4-31b-it     | 19GB  | ✅ Working (0.20.0) |
 
 ---
 
@@ -125,18 +132,19 @@ active
 
 ### 💥 ISSUES RESOLVED
 
-| Issue | Cause | Fix |
-|-------|-------|-----|
-| Models not found | Wrong path `/data/ollama` vs `/data/models/ollama` | Corrected `home` path |
-| Permission denied | Directories owned by `nobody:nogroup` | `ollama-permissions` service |
-| Gemma 4 not supported | Ollama 0.19.0 lacked architecture | Upgraded to 0.20.0 |
-| Statix warnings | Repeated `systemd.services` keys | Grouped under single block |
+| Issue                 | Cause                                              | Fix                          |
+| --------------------- | -------------------------------------------------- | ---------------------------- |
+| Models not found      | Wrong path `/data/ollama` vs `/data/models/ollama` | Corrected `home` path        |
+| Permission denied     | Directories owned by `nobody:nogroup`              | `ollama-permissions` service |
+| Gemma 4 not supported | Ollama 0.19.0 lacked architecture                  | Upgraded to 0.20.0           |
+| Statix warnings       | Repeated `systemd.services` keys                   | Grouped under single block   |
 
 ---
 
 ## 📊 Current System State
 
 ### Directory Structure
+
 ```
 /data/models/ollama/
 ├── blobs/           # 11 blob files, 44GB total
@@ -146,11 +154,13 @@ active
 ```
 
 ### Service Status
+
 - `ollama.service`: ✅ Active (running)
 - `ollama-permissions.service`: ✅ Active (exited cleanly)
 - Port 11434: ✅ Listening on 127.0.0.1
 
 ### GPU Acceleration
+
 - Backend: ROCm (ollama-rocm-0_20)
 - GPU: AMD Radeon 8060S Graphics (gfx1151)
 - VRAM: 192GB unified memory
@@ -212,6 +222,7 @@ active
 ## 📝 Changelog
 
 ### 2026-04-04 05:54
+
 - Fixed Ollama data partition configuration
 - Upgraded to Ollama 0.20.0 for Gemma 4 support
 - Added permission fix service

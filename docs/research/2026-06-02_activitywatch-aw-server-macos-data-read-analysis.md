@@ -21,38 +21,38 @@ Your SSD is fine.
 
 ### Process State (observed live)
 
-| Metric | Value |
-|--------|-------|
-| PID | 1342 |
-| Uptime | 24 days, 3h, 25m |
-| CPU time | 30h:08m (1808 minutes) |
-| Threads | 4 |
-| RSS | ~28 MB |
-| VSZ | ~35 GB (virtual, not physical) |
-| Open DB handles | 16 |
+| Metric          | Value                          |
+| --------------- | ------------------------------ |
+| PID             | 1342                           |
+| Uptime          | 24 days, 3h, 25m               |
+| CPU time        | 30h:08m (1808 minutes)         |
+| Threads         | 4                              |
+| RSS             | ~28 MB                         |
+| VSZ             | ~35 GB (virtual, not physical) |
+| Open DB handles | 16                             |
 
 ### Database State
 
-| Metric | Value |
-|--------|-------|
-| File | `~/Library/Application Support/activitywatch/aw-server/peewee-sqlite.v2.db` |
-| Size | **6.2 GB** |
-| Pages | 1,608,849 |
-| Free pages | 0 (database is 100% utilized) |
-| WAL file | 8.0 MB |
-| Journal mode | WAL |
-| Page size | 4,096 bytes |
-| Cache size | 2,000 pages (**~8 MB**) |
-| `mmap_size` | **0 (disabled)** |
+| Metric       | Value                                                                       |
+| ------------ | --------------------------------------------------------------------------- |
+| File         | `~/Library/Application Support/activitywatch/aw-server/peewee-sqlite.v2.db` |
+| Size         | **6.2 GB**                                                                  |
+| Pages        | 1,608,849                                                                   |
+| Free pages   | 0 (database is 100% utilized)                                               |
+| WAL file     | 8.0 MB                                                                      |
+| Journal mode | WAL                                                                         |
+| Page size    | 4,096 bytes                                                                 |
+| Cache size   | 2,000 pages (**~8 MB**)                                                     |
+| `mmap_size`  | **0 (disabled)**                                                            |
 
 ### Table Sizes
 
-| Table | Rows |
-|-------|------|
-| `eventmodel` | 2,181,580 |
-| `eventmodel_archive` | 990,598 |
-| `bucketmodel` | 11 |
-| **Total events** | **3,172,178** |
+| Table                | Rows          |
+| -------------------- | ------------- |
+| `eventmodel`         | 2,181,580     |
+| `eventmodel_archive` | 990,598       |
+| `bucketmodel`        | 11            |
+| **Total events**     | **3,172,178** |
 
 ### SQLite Schema (eventmodel)
 
@@ -76,11 +76,13 @@ CREATE INDEX "eventmodel_timestamp" ON "eventmodel" ("timestamp");
 ### 1. macOS "Data Read" Is Logical, Not Physical
 
 On macOS, Activity Monitor's "Data Read" counter increments for **every byte passed through `read()`**, regardless of whether the data comes from:
+
 - Physical SSD NAND
 - Filesystem cache (RAM)
 - Memory-mapped pages
 
 Linux separates this into:
+
 - `rchar` — total logical bytes read
 - `read_bytes` — actual physical disk I/O
 
@@ -123,11 +125,11 @@ This is a read-heavy query path that repeatedly fetches the same database pages.
 
 **No.** Check these instead:
 
-| Check | Command | Expected Result |
-|-------|---------|---------------|
-| Data Written | Activity Monitor "Data Written" column | Should be much smaller (MB–GB range) |
-| SMART TBW | `smartctl -a /dev/disk0` (if available) | Far below drive rated TBW |
-| Physical I/O | `iotop -C` (or `fs_usage`) | Nowhere near 82 TB |
+| Check        | Command                                 | Expected Result                      |
+| ------------ | --------------------------------------- | ------------------------------------ |
+| Data Written | Activity Monitor "Data Written" column  | Should be much smaller (MB–GB range) |
+| SMART TBW    | `smartctl -a /dev/disk0` (if available) | Far below drive rated TBW            |
+| Physical I/O | `iotop -C` (or `fs_usage`)              | Nowhere near 82 TB                   |
 
 The 82 TB figure is an accounting artifact. The actual bytes written to NAND are negligible.
 

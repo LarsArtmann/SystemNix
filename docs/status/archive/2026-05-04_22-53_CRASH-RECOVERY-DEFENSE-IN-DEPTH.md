@@ -14,73 +14,80 @@ System required a **hard power cut** because Hermes's `anime-comic-pipeline` (Py
 ## a) FULLY DONE
 
 ### Crash Recovery Defense-in-Depth (this session)
+
 All 6 layers implemented in `platforms/nixos/system/boot.nix`:
 
-| # | Layer | Setting | Effect |
-|---|-------|---------|--------|
-| 1 | Keyboard recovery | `kernel.sysrq = 1` | Alt+SysRq+REISUB emergency reboot now works (was `16` = sync-only) |
-| 2 | Kernel panic auto-reboot | `kernel.panic = 30` | Reboots 30s after panic (was `0` = hang forever) |
-| 3 | Soft lockup panic | `kernel.softlockup_panic = 1` | Reboots on CPU stuck in kernel with interrupts disabled |
-| 4 | Hung task panic | `kernel.hung_task_panic = 1` | Reboots after 120s of tasks stuck in D state |
-| 5 | Hardware watchdog | `watchdogd` (SP5100 TCO) | Hard reset if completely unresponsive for 30s (pet every 10s) |
-| 6 | GPU self-recovery | `amdgpu.gpu_recovery=1` | Driver attempts GPU reset on hang instead of staying dead |
+| #   | Layer                    | Setting                       | Effect                                                             |
+| --- | ------------------------ | ----------------------------- | ------------------------------------------------------------------ |
+| 1   | Keyboard recovery        | `kernel.sysrq = 1`            | Alt+SysRq+REISUB emergency reboot now works (was `16` = sync-only) |
+| 2   | Kernel panic auto-reboot | `kernel.panic = 30`           | Reboots 30s after panic (was `0` = hang forever)                   |
+| 3   | Soft lockup panic        | `kernel.softlockup_panic = 1` | Reboots on CPU stuck in kernel with interrupts disabled            |
+| 4   | Hung task panic          | `kernel.hung_task_panic = 1`  | Reboots after 120s of tasks stuck in D state                       |
+| 5   | Hardware watchdog        | `watchdogd` (SP5100 TCO)      | Hard reset if completely unresponsive for 30s (pet every 10s)      |
+| 6   | GPU self-recovery        | `amdgpu.gpu_recovery=1`       | Driver attempts GPU reset on hang instead of staying dead          |
 
 Also: `kernel.watchdog_thresh = 20` (raised from 10 to avoid GPU compute false positives), `vm.panic_on_oom = 0` (earlyoom handles OOM, don't double-panic).
 
 ### Awww Wallpaper Daemon Hardening (this session)
+
 - Relaxed restart limits: `StartLimitBurst = 5` (from 10), `StartLimitIntervalSec = 120` (from 60)
 - Replaced `BindsTo` → `Wants` for wallpaper-setter (BindsTo killed it when daemon restarted)
 - Increased retry loops: 30 → 60 attempts, `RestartSec = 5s` (from 3s)
 
 ### AGENTS.md Updated
+
 - Documented GPU hang recovery in Known Issues table
 - All 6 defense layers described with reference to `boot.nix`
 
 ### Master TODO Plan Progress: 65% (62/95 tasks)
 
-| Category | Done | Total | % |
-|----------|------|-------|---|
-| P0 CRITICAL | 6 | 6 | 100% |
-| P1 SECURITY | 3 | 7 | 43% |
-| P2 RELIABILITY | 11 | 11 | 100% |
-| P3 CODE QUALITY | 9 | 9 | 100% |
-| P4 ARCHITECTURE | 7 | 7 | 100% |
-| P5 DEPLOY/VERIFY | 0 | 13 | 0% |
-| P6 SERVICES | 9 | 15 | 60% |
-| P7 TOOLING/CI | 10 | 10 | 100% |
-| P8 DOCS | 5 | 5 | 100% |
-| P9 FUTURE | 2 | 12 | 17% |
+| Category         | Done | Total | %    |
+| ---------------- | ---- | ----- | ---- |
+| P0 CRITICAL      | 6    | 6     | 100% |
+| P1 SECURITY      | 3    | 7     | 43%  |
+| P2 RELIABILITY   | 11   | 11    | 100% |
+| P3 CODE QUALITY  | 9    | 9     | 100% |
+| P4 ARCHITECTURE  | 7    | 7     | 100% |
+| P5 DEPLOY/VERIFY | 0    | 13    | 0%   |
+| P6 SERVICES      | 9    | 15    | 60%  |
+| P7 TOOLING/CI    | 10   | 10    | 100% |
+| P8 DOCS          | 5    | 5     | 100% |
+| P9 FUTURE        | 2    | 12    | 17%  |
 
 ### Recent Sessions (last 2 weeks)
 
-| Session | What |
-|---------|------|
-| 22 | jscpd promoted to system package, full code audit |
-| 21 | systemd watchdog massacre fix, deep cleanup/architecture improvements |
-| 20 | Go overlay removal, niri script extraction, justfile ghost cleanup |
-| 19 | DNS privacy overhaul — recursive resolution, root hints |
-| 18 | Rust target cleanup hardening, disk monitor |
-| 15-17 | Dead code audit, flake migration (path: → git+ssh:), Pareto planning |
-| 13-14 | Post-reboot service recovery, systemd hardening standardization |
-| 10-12 | Go tool packaging (18 CLI tools), build fixes, emeet-pixyd extraction |
+| Session | What                                                                  |
+| ------- | --------------------------------------------------------------------- |
+| 22      | jscpd promoted to system package, full code audit                     |
+| 21      | systemd watchdog massacre fix, deep cleanup/architecture improvements |
+| 20      | Go overlay removal, niri script extraction, justfile ghost cleanup    |
+| 19      | DNS privacy overhaul — recursive resolution, root hints               |
+| 18      | Rust target cleanup hardening, disk monitor                           |
+| 15-17   | Dead code audit, flake migration (path: → git+ssh:), Pareto planning  |
+| 13-14   | Post-reboot service recovery, systemd hardening standardization       |
+| 10-12   | Go tool packaging (18 CLI tools), build fixes, emeet-pixyd extraction |
 
 ---
 
 ## b) PARTIALLY DONE
 
 ### Hermes AI Gateway
+
 - **Working:** System service, sops secrets, restart policy, GPU access, state migration, Xiaomi MiMo provider
 - **Missing:** Health check endpoint (#62), full key_env migration (#63), MemoryMax=4G (may be too low for PyTorch/ROCm workloads)
 
 ### SigNoz Observability
+
 - **Working:** Full stack (ClickHouse + OTel Collector + Query Service), node_exporter, cAdvisor, journald receiver
 - **Missing:** Metric endpoint verification for 10 services (#65), Authelia SMTP notifications (#66)
 
 ### Niri Session Save/Restore
+
 - **Working:** 60s timer saves windows/workspaces/kitty state, restores on startup with workspace-aware placement
 - **Missing:** Real-time save via niri event-stream (#94), integration tests (#95), Waybar stats module (#93)
 
 ### DNS Infrastructure
+
 - **Working:** Unbound recursive resolver, 2.5M+ blocked domains, dnsblockd block page, `.home.lan` records
 - **Missing:** Pi 3 failover node not provisioned, VRRP auth in plaintext (#11)
 
@@ -88,42 +95,49 @@ Also: `kernel.watchdog_thresh = 20` (raised from 10 to avoid GPU compute false p
 
 ## c) NOT STARTED
 
-| Task | Priority | Why Not Started |
-|------|----------|----------------|
-| P5: Deploy all pending changes to evo-x2 | HIGH | Requires `just switch` — user decision |
-| P5: Verify Ollama/Steam/ComfyUI/Caddy/SigNoz/Authelia/PhotoMap post-rebuild | HIGH | Blocked on `just switch` |
-| P5: Build Pi 3 SD image + flash + boot | MEDIUM | Hardware not provisioned |
-| P1: Move Taskwarrior encryption to sops (#7) | MEDIUM | Needs evo-x2 for sops secret creation |
-| P1: Pin Docker digests for Voice Agents + PhotoMap (#9, #10) | MEDIUM | Needs evo-x2 to pull SHA256 digests |
-| P1: Secure VRRP auth_pass with sops (#11) | MEDIUM | Needs evo-x2 for sops secret |
-| P6: Hermes health check endpoint (#62) | LOW | Needs Hermes upstream changes |
-| P6: SigNoz missing metrics (#65) | LOW | Needs metric endpoint verification |
-| P6: Authelia SMTP notifications (#66) | LOW | Needs SMTP credentials |
-| P9: All 10 future/research tasks (#86-96) | LOW | Future planning items |
+| Task                                                                        | Priority | Why Not Started                        |
+| --------------------------------------------------------------------------- | -------- | -------------------------------------- |
+| P5: Deploy all pending changes to evo-x2                                    | HIGH     | Requires `just switch` — user decision |
+| P5: Verify Ollama/Steam/ComfyUI/Caddy/SigNoz/Authelia/PhotoMap post-rebuild | HIGH     | Blocked on `just switch`               |
+| P5: Build Pi 3 SD image + flash + boot                                      | MEDIUM   | Hardware not provisioned               |
+| P1: Move Taskwarrior encryption to sops (#7)                                | MEDIUM   | Needs evo-x2 for sops secret creation  |
+| P1: Pin Docker digests for Voice Agents + PhotoMap (#9, #10)                | MEDIUM   | Needs evo-x2 to pull SHA256 digests    |
+| P1: Secure VRRP auth_pass with sops (#11)                                   | MEDIUM   | Needs evo-x2 for sops secret           |
+| P6: Hermes health check endpoint (#62)                                      | LOW      | Needs Hermes upstream changes          |
+| P6: SigNoz missing metrics (#65)                                            | LOW      | Needs metric endpoint verification     |
+| P6: Authelia SMTP notifications (#66)                                       | LOW      | Needs SMTP credentials                 |
+| P9: All 10 future/research tasks (#86-96)                                   | LOW      | Future planning items                  |
 
 ---
 
 ## d) TOTALLY FUCKED UP
 
 ### Root Partition 88% Full (512GB)
+
 `/` is at 433G/512G — only **62GB free**. `/nix/store` alone is 92GB. This is the **#1 infrastructure risk**. Old generations, docker images, and build artifacts are consuming space.
 
 ### Hermes anime-comic-pipeline GPU Crash
+
 Hermes's PyTorch/ROCm pipeline SIGSEGV'd in `libamdhip64.so` → GPU driver hang → full desktop freeze → hard power cut. The fix is defense-in-depth (done), but the **root cause** (unstable PyTorch + ROCm + HIP stack on Strix Halo) is NOT fixed. It will crash again.
 
 ### AMD GPU Metrics Broken
+
 `amdgpu.prom` has empty `node_amdgpu_gpu_busy_percent` value — `node_exporter` errors on every scrape cycle (every 30s). The metrics collector script is outputting malformed data.
 
 ### ClamAV Freshclam Failed
+
 `clamav-freshclam.service` is in failed state. Virus database updater not running.
 
 ### Whisper ASR Container Crash-Looping
+
 Docker container `whisper-asr` is `Restarting (2) 5 seconds ago` — stuck in a crash loop.
 
 ### Memory Pressure After Reboot (17 min uptime)
+
 Already at **60GB/62GB used** with **25GB swap consumed**. That's extreme for a fresh boot. Hermes + PyTorch + ROCm are likely the culprits. The `MemoryMax = 4G` on hermes service may not cover the anime-comic-pipeline venv which loads PyTorch + ROCm libraries.
 
 ### service-health-check.service Failed
+
 Health check service itself is failing — ironic and means service degradation goes undetected.
 
 ---
@@ -145,33 +159,33 @@ Health check service itself is failing — ironic and means service degradation 
 
 ## f) Top 25 Things We Should Get Done Next
 
-| # | Task | Priority | Est. | Impact |
-|---|------|----------|------|--------|
-| 1 | `just switch` — deploy crash recovery + all pending changes | P0 | 45m | **All fixes are code-only until deployed** |
-| 2 | Nix generation cleanup — `nix-collect-garbage -d` + docker system prune | P0 | 15m | Recover 50-100GB on root partition |
-| 3 | Fix AMD GPU metrics (`amdgpu.prom` empty value) | P1 | 15m | Stop 30s error spam, restore GPU monitoring |
-| 4 | Fix `service-health-check.service` | P1 | 10m | Restore service degradation detection |
-| 5 | Investigate whisper-asr crash loop | P1 | 15m | Stop container restart spam |
-| 6 | Fix or remove clamav-freshclam | P1 | 5m | Eliminate failed service noise |
-| 7 | Increase Hermes MemoryMax from 4G → 8G (PyTorch/ROCm) | P1 | 5m | Prevent OOM kills during ML workloads |
-| 8 | Verify crash recovery works: test SysRq, watchdogd status | P1 | 10m | Confirm the entire reason for this session |
-| 9 | Pin Docker image digests for Voice Agents + PhotoMap (#9, #10) | P1 | 10m | Supply chain security |
-| 10 | Move Taskwarrior encryption secret to sops (#7) | P1 | 10m | Remove hardcoded secrets |
-| 11 | Secure VRRP auth_pass with sops (#11) | P1 | 10m | Remove plaintext passwords |
-| 12 | Verify Ollama works post-rebuild (#42) | P2 | 5m | Core AI infrastructure |
-| 13 | Verify ComfyUI works post-rebuild (#44) | P2 | 5m | Image generation |
-| 14 | Verify SigNoz collecting metrics/logs/traces (#46) | P2 | 5m | Observability |
-| 15 | Verify Caddy HTTPS block page (#45) | P2 | 3m | DNS stack integrity |
-| 16 | Check PhotoMap service status (#48) | P2 | 3m | Photo management |
-| 17 | Add Hermes health check endpoint (#62) | P2 | 30m | Service reliability |
-| 18 | Add SigNoz missing metrics for 10 services (#65) | P2 | 60m | Full observability coverage |
-| 19 | Build Pi 3 SD image (#50) | P2 | 30m+ | DNS failover cluster |
-| 20 | Fix root partition sizing — move more to /data | P2 | 30m | Long-term disk health |
-| 21 | Create TODO_LIST.md from all docs | P3 | 15m | Project tracking |
-| 22 | Add real-time niri session save via event-stream (#94) | P3 | 60m | Better crash recovery |
-| 23 | Investigate GPU compute/display isolation (cgroups) | P3 | 120m | Prevent GPU crash cascading |
-| 24 | Add Waybar module for session restore stats (#93) | P3 | 30m | Desktop UX |
-| 25 | Investigate binary cache (Cachix) for faster rebuilds (#92) | P3 | 60m | Developer experience |
+| #   | Task                                                                    | Priority | Est. | Impact                                      |
+| --- | ----------------------------------------------------------------------- | -------- | ---- | ------------------------------------------- |
+| 1   | `just switch` — deploy crash recovery + all pending changes             | P0       | 45m  | **All fixes are code-only until deployed**  |
+| 2   | Nix generation cleanup — `nix-collect-garbage -d` + docker system prune | P0       | 15m  | Recover 50-100GB on root partition          |
+| 3   | Fix AMD GPU metrics (`amdgpu.prom` empty value)                         | P1       | 15m  | Stop 30s error spam, restore GPU monitoring |
+| 4   | Fix `service-health-check.service`                                      | P1       | 10m  | Restore service degradation detection       |
+| 5   | Investigate whisper-asr crash loop                                      | P1       | 15m  | Stop container restart spam                 |
+| 6   | Fix or remove clamav-freshclam                                          | P1       | 5m   | Eliminate failed service noise              |
+| 7   | Increase Hermes MemoryMax from 4G → 8G (PyTorch/ROCm)                   | P1       | 5m   | Prevent OOM kills during ML workloads       |
+| 8   | Verify crash recovery works: test SysRq, watchdogd status               | P1       | 10m  | Confirm the entire reason for this session  |
+| 9   | Pin Docker image digests for Voice Agents + PhotoMap (#9, #10)          | P1       | 10m  | Supply chain security                       |
+| 10  | Move Taskwarrior encryption secret to sops (#7)                         | P1       | 10m  | Remove hardcoded secrets                    |
+| 11  | Secure VRRP auth_pass with sops (#11)                                   | P1       | 10m  | Remove plaintext passwords                  |
+| 12  | Verify Ollama works post-rebuild (#42)                                  | P2       | 5m   | Core AI infrastructure                      |
+| 13  | Verify ComfyUI works post-rebuild (#44)                                 | P2       | 5m   | Image generation                            |
+| 14  | Verify SigNoz collecting metrics/logs/traces (#46)                      | P2       | 5m   | Observability                               |
+| 15  | Verify Caddy HTTPS block page (#45)                                     | P2       | 3m   | DNS stack integrity                         |
+| 16  | Check PhotoMap service status (#48)                                     | P2       | 3m   | Photo management                            |
+| 17  | Add Hermes health check endpoint (#62)                                  | P2       | 30m  | Service reliability                         |
+| 18  | Add SigNoz missing metrics for 10 services (#65)                        | P2       | 60m  | Full observability coverage                 |
+| 19  | Build Pi 3 SD image (#50)                                               | P2       | 30m+ | DNS failover cluster                        |
+| 20  | Fix root partition sizing — move more to /data                          | P2       | 30m  | Long-term disk health                       |
+| 21  | Create TODO_LIST.md from all docs                                       | P3       | 15m  | Project tracking                            |
+| 22  | Add real-time niri session save via event-stream (#94)                  | P3       | 60m  | Better crash recovery                       |
+| 23  | Investigate GPU compute/display isolation (cgroups)                     | P3       | 120m | Prevent GPU crash cascading                 |
+| 24  | Add Waybar module for session restore stats (#93)                       | P3       | 30m  | Desktop UX                                  |
+| 25  | Investigate binary cache (Cachix) for faster rebuilds (#92)             | P3       | 60m  | Developer experience                        |
 
 ---
 
@@ -209,8 +223,8 @@ SysRq:      NOT YET ACTIVE (pending just switch)
 
 ## Changed Files (this session)
 
-| File | Changes |
-|------|---------|
-| `platforms/nixos/system/boot.nix` | +28 lines: kernel crash recovery sysctls, watchdogd, amdgpu.gpu_recovery |
-| `platforms/nixos/programs/niri-wrapped.nix` | Awww daemon: relaxed restart limits, BindsTo→Wants, retry increases |
-| `AGENTS.md` | GPU hang recovery documented in Known Issues |
+| File                                        | Changes                                                                  |
+| ------------------------------------------- | ------------------------------------------------------------------------ |
+| `platforms/nixos/system/boot.nix`           | +28 lines: kernel crash recovery sysctls, watchdogd, amdgpu.gpu_recovery |
+| `platforms/nixos/programs/niri-wrapped.nix` | Awww daemon: relaxed restart limits, BindsTo→Wants, retry increases      |
+| `AGENTS.md`                                 | GPU hang recovery documented in Known Issues                             |

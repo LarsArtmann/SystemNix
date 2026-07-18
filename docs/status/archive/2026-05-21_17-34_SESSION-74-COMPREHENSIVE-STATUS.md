@@ -19,17 +19,18 @@ Boot performance reduced from **2m 13s → 58s** (deployed, verified). Additiona
 
 ### Boot Performance Crisis (Sessions 71–73)
 
-| What | Before | After | Savings |
-|------|--------|-------|---------|
-| `systemd-tmpfiles-setup` | 44.9s | 303ms | **44.6s** |
-| Total boot time | 2m 13s | 58s (deployed) | **75s** |
-| Unbound preStart (committed) | ~4s | ~0s | **4s** |
-| Hermes fixPermissions (committed) | ~18s | ~0s (fast-path) | **18s** |
-| **Expected final boot** | **2m 13s** | **~35s** | **~98s** |
+| What                              | Before     | After           | Savings   |
+| --------------------------------- | ---------- | --------------- | --------- |
+| `systemd-tmpfiles-setup`          | 44.9s      | 303ms           | **44.6s** |
+| Total boot time                   | 2m 13s     | 58s (deployed)  | **75s**   |
+| Unbound preStart (committed)      | ~4s        | ~0s             | **4s**    |
+| Hermes fixPermissions (committed) | ~18s       | ~0s (fast-path) | **18s**   |
+| **Expected final boot**           | **2m 13s** | **~35s**        | **~98s**  |
 
 **Root cause:** `/tmp` on BTRFS accumulated stale Chromium/SDDM sockets. `systemd-tmpfiles-setup` traversed all of them serially on every boot.
 
 **Fixes applied:**
+
 1. `boot.tmp.useTmpfs = true` — `/tmp` is now tmpfs, fresh every boot (**deployed, verified**)
 2. `systemd.services.unbound.preStart` override — skip `unbound-anchor` network fetch (**committed, not deployed**)
 3. Hermes `fixPermissionsScript` fast-path — check top-level dir owner/mode before expensive recursive chown (**committed, not deployed**)
@@ -37,6 +38,7 @@ Boot performance reduced from **2m 13s → 58s** (deployed, verified). Additiona
 ### Service Target Restructuring (Session 73)
 
 Moved from `multi-user.target` → `graphical.target`:
+
 - `hermes` (AI assistant)
 - `homepage-dashboard` (web dashboard)
 - `dnsblockd` (DNS blocker)
@@ -45,6 +47,7 @@ Moved from `multi-user.target` → `graphical.target`:
 - `docker` daemon itself
 
 **NOT moved** (correctly kept on `multi-user.target`):
+
 - `dual-wan` (network infrastructure)
 - `unbound` (DNS resolver)
 - Other network-critical services
@@ -75,13 +78,13 @@ Moved from `multi-user.target` → `graphical.target`:
 
 ### Boot Optimization Stack
 
-| Fix | Status | Deployed? |
-|-----|--------|-----------|
-| `/tmp` as tmpfs | ✅ Committed & deployed | ✅ Yes |
-| Unbound preStart override | ✅ Committed | ❌ No |
-| Hermes fast-path perms | ✅ Committed | ❌ No |
-| Service target restructuring | ✅ Committed | ❌ No |
-| ComfyUI deletion | ✅ Committed | ❌ No |
+| Fix                          | Status                  | Deployed? |
+| ---------------------------- | ----------------------- | --------- |
+| `/tmp` as tmpfs              | ✅ Committed & deployed | ✅ Yes    |
+| Unbound preStart override    | ✅ Committed            | ❌ No     |
+| Hermes fast-path perms       | ✅ Committed            | ❌ No     |
+| Service target restructuring | ✅ Committed            | ❌ No     |
+| ComfyUI deletion             | ✅ Committed            | ❌ No     |
 
 **All code is correct and committed. Just needs `just switch` + reboot.**
 
@@ -100,6 +103,7 @@ Identified as needed since Session 72. Still not run. Disk has gone from 82% →
 ### Hermes Python Dependencies
 
 From TODO_LIST.md Priority 0 — NOT addressed:
+
 - `firecrawl` for web_search tool (pip unavailable in Nix)
 - `edge-tts` for TTS
 - `fal` for image generation
@@ -108,16 +112,19 @@ From TODO_LIST.md Priority 0 — NOT addressed:
 - SSH deploy key for Hermes git sandbox access
 
 ### Documentation & Tooling
+
 - `nix-colors` integration (wire to Home Manager, migrate 17+ hardcoded colors)
 - Deploy Dozzle for Docker log tailing at `logs.home.lan`
 - Create `just status` command for automated status generation
 
 ### External Repos
+
 - Convert `go-auto-upgrade` `path:` inputs to SSH URLs
 - Create shared flake-parts template (mkGoPackage, checks, devshells)
 - Flake inputs audit (47 inputs, some may be stale/unused)
 
 ### Hardware
+
 - Provision Pi 3 for DNS failover cluster
 - Wire Pi 3 as secondary DNS
 
@@ -127,17 +134,18 @@ From TODO_LIST.md Priority 0 — NOT addressed:
 
 ### System Memory Pressure — CRITICAL
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| **Swap usage** | 13Gi / 13Gi (99.3%) | 🔴 FULL |
-| **Load average** | 23.12 / 19.43 / 14.35 | 🔴 CRITICAL |
-| **RAM used** | 35Gi / 62Gi (56%) | 🟡 Moderate |
-| **Disk** | 425Gi / 512Gi (86%) | 🟡 High |
-| **Nix GC eligible** | 7,848 paths | 🟡 Overdue |
+| Metric              | Value                 | Status      |
+| ------------------- | --------------------- | ----------- |
+| **Swap usage**      | 13Gi / 13Gi (99.3%)   | 🔴 FULL     |
+| **Load average**    | 23.12 / 19.43 / 14.35 | 🔴 CRITICAL |
+| **RAM used**        | 35Gi / 62Gi (56%)     | 🟡 Moderate |
+| **Disk**            | 425Gi / 512Gi (86%)   | 🟡 High     |
+| **Nix GC eligible** | 7,848 paths           | 🟡 Overdue  |
 
 The swap being 99.3% full with load average 23 on a 16-core machine means something is aggressively consuming memory. This has worsened from 9.2Gi swap (Session 72) to 13Gi (now). **Root cause unknown — needs investigation.**
 
 Likely culprits:
+
 - Ollama GPU model holding system RAM fallback
 - Docker containers (voice-agents, twenty, etc.) leaking memory
 - SigNoz ClickHouse consuming growing memory
@@ -166,33 +174,33 @@ Likely culprits:
 
 ## F) TOP 25 THINGS TO DO NEXT
 
-| # | Task | Impact | Effort | Status |
-|---|------|--------|--------|--------|
-| 1 | **Deploy committed changes + reboot** | 🔴 Critical | 5min | Committed |
-| 2 | **Verify boot time drops to ~35s** | 🔴 Critical | 2min | Waiting |
-| 3 | **Run Nix store GC** (`nix store gc`) | 🔴 High | 5min | Ready |
-| 4 | **Investigate swap exhaustion** (13Gi/13Gi) | 🔴 High | 30min | Not started |
-| 5 | **Git push 1 commit to origin** | 🟡 Medium | 1min | Ready |
-| 6 | **Identify memory hogs** (`smem`, `ps --sort=-rss`) | 🔴 High | 15min | Not started |
-| 7 | **Configure `nix.gc` automatic** | 🟡 Medium | 10min | Not started |
-| 8 | **Add `just deploy` recipe** (nh workaround) | 🟡 Medium | 10min | Not started |
-| 9 | **Fix Hermes Python deps** (firecrawl, edge-tts, fal) | 🟡 Medium | 1h | Not started |
-| 10 | **Verify unbound preStart** (no anchor fetch in journal) | 🟡 Medium | 2min | Waiting |
-| 11 | **Verify hermes fast-path** (no perms fix in journal) | 🟡 Medium | 2min | Waiting |
-| 12 | **Configure SigNoz alert routing** (critical→Discord) | 🟡 Medium | 30min | Not started |
-| 13 | **Test Discord alert channel** | 🟡 Medium | 5min | Not started |
-| 14 | **Check SigNoz provision logs** (dashboards, rules) | 🟡 Medium | 5min | Not started |
-| 15 | **Verify Gatus endpoints** (status.home.lan) | 🟡 Medium | 5min | Not started |
-| 16 | **Update TODO_LIST.md** (10+ days stale) | 🟢 Low | 15min | Not started |
-| 17 | **Audit flake inputs** (47 inputs, find stale ones) | 🟢 Low | 1h | Not started |
-| 18 | **Consolidate status reports** (97 files → archive old) | 🟢 Low | 15min | Not started |
-| 19 | **Deploy Dozzle** (Docker log tailing) | 🟢 Low | 30min | Planned |
-| 20 | **Integrate nix-colors** (17+ hardcoded colors) | 🟢 Low | 6h | Not started |
-| 21 | **Provision Pi 3 DNS failover** | 🟢 Low | 2h | Not started |
-| 22 | **Add memory/swap alerting** to SigNoz/Gatus | 🟡 Medium | 30min | Not started |
-| 23 | **Audit Docker container memory** limits | 🟡 Medium | 20min | Not started |
-| 24 | **Create `just status` command** | 🟢 Low | 30min | Not started |
-| 25 | **Convert go-auto-upgrade path: inputs to SSH** | 🟢 Low | 15min | Not started |
+| #   | Task                                                     | Impact      | Effort | Status      |
+| --- | -------------------------------------------------------- | ----------- | ------ | ----------- |
+| 1   | **Deploy committed changes + reboot**                    | 🔴 Critical | 5min   | Committed   |
+| 2   | **Verify boot time drops to ~35s**                       | 🔴 Critical | 2min   | Waiting     |
+| 3   | **Run Nix store GC** (`nix store gc`)                    | 🔴 High     | 5min   | Ready       |
+| 4   | **Investigate swap exhaustion** (13Gi/13Gi)              | 🔴 High     | 30min  | Not started |
+| 5   | **Git push 1 commit to origin**                          | 🟡 Medium   | 1min   | Ready       |
+| 6   | **Identify memory hogs** (`smem`, `ps --sort=-rss`)      | 🔴 High     | 15min  | Not started |
+| 7   | **Configure `nix.gc` automatic**                         | 🟡 Medium   | 10min  | Not started |
+| 8   | **Add `just deploy` recipe** (nh workaround)             | 🟡 Medium   | 10min  | Not started |
+| 9   | **Fix Hermes Python deps** (firecrawl, edge-tts, fal)    | 🟡 Medium   | 1h     | Not started |
+| 10  | **Verify unbound preStart** (no anchor fetch in journal) | 🟡 Medium   | 2min   | Waiting     |
+| 11  | **Verify hermes fast-path** (no perms fix in journal)    | 🟡 Medium   | 2min   | Waiting     |
+| 12  | **Configure SigNoz alert routing** (critical→Discord)    | 🟡 Medium   | 30min  | Not started |
+| 13  | **Test Discord alert channel**                           | 🟡 Medium   | 5min   | Not started |
+| 14  | **Check SigNoz provision logs** (dashboards, rules)      | 🟡 Medium   | 5min   | Not started |
+| 15  | **Verify Gatus endpoints** (status.home.lan)             | 🟡 Medium   | 5min   | Not started |
+| 16  | **Update TODO_LIST.md** (10+ days stale)                 | 🟢 Low      | 15min  | Not started |
+| 17  | **Audit flake inputs** (47 inputs, find stale ones)      | 🟢 Low      | 1h     | Not started |
+| 18  | **Consolidate status reports** (97 files → archive old)  | 🟢 Low      | 15min  | Not started |
+| 19  | **Deploy Dozzle** (Docker log tailing)                   | 🟢 Low      | 30min  | Planned     |
+| 20  | **Integrate nix-colors** (17+ hardcoded colors)          | 🟢 Low      | 6h     | Not started |
+| 21  | **Provision Pi 3 DNS failover**                          | 🟢 Low      | 2h     | Not started |
+| 22  | **Add memory/swap alerting** to SigNoz/Gatus             | 🟡 Medium   | 30min  | Not started |
+| 23  | **Audit Docker container memory** limits                 | 🟡 Medium   | 20min  | Not started |
+| 24  | **Create `just status` command**                         | 🟢 Low      | 30min  | Not started |
+| 25  | **Convert go-auto-upgrade path: inputs to SSH**          | 🟢 Low      | 15min  | Not started |
 
 ---
 
@@ -201,6 +209,7 @@ Likely culprits:
 **What is consuming 13Gi of swap space?**
 
 The system has 62Gi RAM with only 35Gi used (56%), yet swap is completely full at 13Gi/13Gi. This doesn't make sense with normal memory behavior — something is either:
+
 1. Allocating huge amounts and getting swapped out
 2. Memory fragmentation preventing pages from being reclaimed
 3. A GPU workload (Ollama/ROCm) pinning system RAM
@@ -208,6 +217,7 @@ The system has 62Gi RAM with only 35Gi used (56%), yet swap is completely full a
 I cannot run `systemctl`, `htop`, or process inspection tools from this environment. This requires interactive terminal access to diagnose with `smem -t`, `ps aux --sort=-rss | head -20`, or `cat /proc/*/smaps | grep Swap`.
 
 **Recommended investigation:**
+
 ```bash
 smem -t -s swap          # Sort processes by swap usage
 ps aux --sort=-rss | head -20  # Top memory consumers
@@ -218,19 +228,19 @@ docker stats --no-stream      # Docker container memory
 
 ## Repository State
 
-| Metric | Value |
-|--------|-------|
-| Branch | `master` |
-| Ahead of origin | 1 commit |
-| Uncommitted changes | None (clean) |
-| `just test-fast` | ✅ PASS |
-| Service modules | 35 |
-| Flake inputs | 47 |
-| `.nix` files | 112 files, 14,949 lines |
-| Disk usage | 86% (425Gi/512Gi) |
-| Nix GC eligible | 7,848 paths |
-| Swap | 99.3% full (13Gi/13Gi) |
-| Load average | 23.12 / 19.43 / 14.35 |
+| Metric              | Value                   |
+| ------------------- | ----------------------- |
+| Branch              | `master`                |
+| Ahead of origin     | 1 commit                |
+| Uncommitted changes | None (clean)            |
+| `just test-fast`    | ✅ PASS                 |
+| Service modules     | 35                      |
+| Flake inputs        | 47                      |
+| `.nix` files        | 112 files, 14,949 lines |
+| Disk usage          | 86% (425Gi/512Gi)       |
+| Nix GC eligible     | 7,848 paths             |
+| Swap                | 99.3% full (13Gi/13Gi)  |
+| Load average        | 23.12 / 19.43 / 14.35   |
 
 ## Commit History (May 20–21)
 

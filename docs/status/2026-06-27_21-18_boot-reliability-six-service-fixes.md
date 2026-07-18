@@ -10,14 +10,14 @@
 
 A full boot/shutdown log audit found the system **boots cleanly at the kernel level** (no OOM, no WDT reset, no NVMe/FS errors) and **shuts down cleanly** (boot −1 was a normal `systemd-reboot`). The reliability problems are all **service-startup failures**: 6 root-caused, **5 fixed in this session** (1 blocked on an upstream bug). All fixes pass `nix flake check --no-build` + full evo-x2 system eval. **Deploy pending.**
 
-| Metric | Value |
-|--------|-------|
-| Boot-to-graphical-target | 2m 18s (userspace) · 4m 53s total |
+| Metric                    | Value                                             |
+| ------------------------- | ------------------------------------------------- |
+| Boot-to-graphical-target  | 2m 18s (userspace) · 4m 53s total                 |
 | Failed services this boot | 7 (5 now fixed, 1 upstream-blocked, 1 self-heals) |
-| Disk: root (`/`) | 535G / 723G (75%) |
-| Disk: `/data` | 631G / 1.1T (61%) |
-| `/nix` store | 118G |
-| Enabled service modules | ~29 |
+| Disk: root (`/`)          | 535G / 723G (75%)                                 |
+| Disk: `/data`             | 631G / 1.1T (61%)                                 |
+| `/nix` store              | 118G                                              |
+| Enabled service modules   | ~29                                               |
 
 ---
 
@@ -51,30 +51,30 @@ A full boot/shutdown log audit found the system **boots cleanly at the kernel le
 
 ## b) PARTIALLY DONE ⚠️
 
-| Area | Status | What remains |
-|------|--------|--------------|
-| **Monitoring stack (SigNoz)** | The query service + signoz-provision cascade-failed on the stale lock. Now self-healing. | **Deploy** to activate. signoz-provision will succeed once signoz starts cleanly. |
-| **Monitor365** | Agent + server ExecStart fixed. | **Deploy** required. The TODO_LIST noted an earlier "Rust panic (Axum)" root cause — that is now superseded; the current failure is purely the CLI/env issues fixed above. |
-| **OAuth2-proxy** | Failed once at boot (credential-mount race) then **recovered** on retry — now serving 200s to Gatus. | No action needed; consider it transient. |
-| **DNS failover cluster** | `dns-failover` (keepalived VRRP) module is ready; rpi3 config exists. | Hardware not provisioned; dual-wan disabled. See "Not Started". |
-| **DiscordSync** | Reactivated, integrated into monitoring. | **Upstream migration bug blocks it** (see TOTALLY FUCKED UP). |
-| **Hermes** | Nix wiring done, Otel fixed, SMTP wired. | Manual steps blocked: OpenAI key in sops, SSH deploy key, fallback model set. |
-| **Validation** | `nix flake check --no-build` + full evo-x2 eval **pass**. | No live deploy verification yet this session. |
+| Area                          | Status                                                                                               | What remains                                                                                                                                                               |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Monitoring stack (SigNoz)** | The query service + signoz-provision cascade-failed on the stale lock. Now self-healing.             | **Deploy** to activate. signoz-provision will succeed once signoz starts cleanly.                                                                                          |
+| **Monitor365**                | Agent + server ExecStart fixed.                                                                      | **Deploy** required. The TODO_LIST noted an earlier "Rust panic (Axum)" root cause — that is now superseded; the current failure is purely the CLI/env issues fixed above. |
+| **OAuth2-proxy**              | Failed once at boot (credential-mount race) then **recovered** on retry — now serving 200s to Gatus. | No action needed; consider it transient.                                                                                                                                   |
+| **DNS failover cluster**      | `dns-failover` (keepalived VRRP) module is ready; rpi3 config exists.                                | Hardware not provisioned; dual-wan disabled. See "Not Started".                                                                                                            |
+| **DiscordSync**               | Reactivated, integrated into monitoring.                                                             | **Upstream migration bug blocks it** (see TOTALLY FUCKED UP).                                                                                                              |
+| **Hermes**                    | Nix wiring done, Otel fixed, SMTP wired.                                                             | Manual steps blocked: OpenAI key in sops, SSH deploy key, fallback model set.                                                                                              |
+| **Validation**                | `nix flake check --no-build` + full evo-x2 eval **pass**.                                            | No live deploy verification yet this session.                                                                                                                              |
 
 ---
 
 ## c) NOT STARTED 📋
 
-| Item | Notes |
-|------|-------|
-| **Deploy the 6 fixes** | `nix run .#deploy` not yet run this session. |
-| **Cloud/off-site backup** | No BorgBackup to Hetzner StorageBox. Single point of failure for all `/data`. |
+| Item                                  | Notes                                                                                                |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Deploy the 6 fixes**                | `nix run .#deploy` not yet run this session.                                                         |
+| **Cloud/off-site backup**             | No BorgBackup to Hetzner StorageBox. Single point of failure for all `/data`.                        |
 | **BTRFS `/data` subvolume migration** | `/data` is BTRFS toplevel (subvolid=5), cannot be snapshotted. Needs ~1h downtime + USB rescue boot. |
-| **Firewall deny-by-default** | NixOS allows all inbound; Docker punches its own holes. |
-| **Auditd enablement** | Blocked on NixOS 26.05 bug #483085. |
-| **AppArmor enablement** | `mkDefault false` in security-hardening.nix. |
-| **Monitor365 agent→server auth** | No authentication — anyone on LAN can POST data. |
-| **Disabled service triage** | voice-agents (keep disabled), minecraft (seasonal), photomap (remove). |
+| **Firewall deny-by-default**          | NixOS allows all inbound; Docker punches its own holes.                                              |
+| **Auditd enablement**                 | Blocked on NixOS 26.05 bug #483085.                                                                  |
+| **AppArmor enablement**               | `mkDefault false` in security-hardening.nix.                                                         |
+| **Monitor365 agent→server auth**      | No authentication — anyone on LAN can POST data.                                                     |
+| **Disabled service triage**           | voice-agents (keep disabled), minecraft (seasonal), photomap (remove).                               |
 
 ---
 
@@ -119,33 +119,33 @@ The TODO_LIST (`Updated 2026-06-25`) records the monitor365-server root cause as
 
 Ranked by impact × effort (Pareto):
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | **Deploy the 6 boot fixes** (`nix run .#deploy`) | 🔴 Critical | XS |
-| 2 | **Fix DiscordSync migration SQL** (upstream `CREATE INDEX` bug) | 🔴 Critical | S |
-| 3 | **Verify signoz + signoz-provision self-heal post-deploy** | 🔴 High | XS |
-| 4 | **Verify monitor365 agent + server start post-deploy** | 🔴 High | XS |
-| 5 | **Verify xdg-document-portal + activitywatch post-deploy** | 🟠 Medium | XS |
-| 6 | **Set up BorgBackup to Hetzner StorageBox** (off-site DR) | 🔴 Critical | M |
-| 7 | **BTRFS `/data` subvolume migration** (snapshot protection) | 🔴 High | L |
-| 8 | **Fix network-dependent service ordering** (`.device` units) | 🟠 High | M |
-| 9 | **Reduce signoz-provision boot tail** (2min → target <30s) | 🟠 Medium | M |
-| 10 | **Hermes manual steps** (OpenAI key, SSH deploy key, fallback model) | 🟠 Medium | S |
-| 11 | **Firewall deny-by-default** + explicit allowlist | 🟠 High | M |
-| 12 | **Bind Immich to localhost** (remove `0.0.0.0` + openFirewall) | 🟡 Security | XS |
-| 13 | **Monitor365 agent→server auth** | 🟡 Security | M |
-| 14 | **Remove photomap** (decided — podman perm issue, niche) | 🟢 Low | XS |
-| 15 | **Audit disk: `/nix` at 118G** — run `nix-collect-garbage -d` | 🟠 Medium | S |
-| 16 | **Split large modules** (monitor365 716L, signoz 705L, forgejo 583L) | 🟢 Low | L |
-| 17 | **Upstream: nixpkgs `aw-watcher-utilization` poetry-core PR** | 🟢 Low | S |
-| 18 | **Upstream: HM ActivityWatch watcher deps PR** | 🟢 Low | S |
-| 19 | **Add post-boot `no-failed-services` assertion** to deploy checks | 🟠 Medium | S |
-| 20 | **Auditd enablement** (re-check NixOS bug #483085 status) | 🟡 Security | S |
-| 21 | **AppArmor enablement** | 🟡 Security | M |
-| 22 | **Provision Pi 3** for DNS failover cluster (hardware needed) | 🟢 Low | L |
-| 23 | **Jan llama-server respawn investigation** (spawns new proc every 1-3min) | 🟠 Medium | M |
-| 24 | **Extract dnsblockd to standalone repo** (~930 lines embedded Go) | 🟢 Low | L |
-| 25 | **Darwin HM parity** (blocked by 256GB disk constraint) | 🟢 Low | L |
+| #   | Task                                                                      | Impact      | Effort |
+| --- | ------------------------------------------------------------------------- | ----------- | ------ |
+| 1   | **Deploy the 6 boot fixes** (`nix run .#deploy`)                          | 🔴 Critical | XS     |
+| 2   | **Fix DiscordSync migration SQL** (upstream `CREATE INDEX` bug)           | 🔴 Critical | S      |
+| 3   | **Verify signoz + signoz-provision self-heal post-deploy**                | 🔴 High     | XS     |
+| 4   | **Verify monitor365 agent + server start post-deploy**                    | 🔴 High     | XS     |
+| 5   | **Verify xdg-document-portal + activitywatch post-deploy**                | 🟠 Medium   | XS     |
+| 6   | **Set up BorgBackup to Hetzner StorageBox** (off-site DR)                 | 🔴 Critical | M      |
+| 7   | **BTRFS `/data` subvolume migration** (snapshot protection)               | 🔴 High     | L      |
+| 8   | **Fix network-dependent service ordering** (`.device` units)              | 🟠 High     | M      |
+| 9   | **Reduce signoz-provision boot tail** (2min → target <30s)                | 🟠 Medium   | M      |
+| 10  | **Hermes manual steps** (OpenAI key, SSH deploy key, fallback model)      | 🟠 Medium   | S      |
+| 11  | **Firewall deny-by-default** + explicit allowlist                         | 🟠 High     | M      |
+| 12  | **Bind Immich to localhost** (remove `0.0.0.0` + openFirewall)            | 🟡 Security | XS     |
+| 13  | **Monitor365 agent→server auth**                                          | 🟡 Security | M      |
+| 14  | **Remove photomap** (decided — podman perm issue, niche)                  | 🟢 Low      | XS     |
+| 15  | **Audit disk: `/nix` at 118G** — run `nix-collect-garbage -d`             | 🟠 Medium   | S      |
+| 16  | **Split large modules** (monitor365 716L, signoz 705L, forgejo 583L)      | 🟢 Low      | L      |
+| 17  | **Upstream: nixpkgs `aw-watcher-utilization` poetry-core PR**             | 🟢 Low      | S      |
+| 18  | **Upstream: HM ActivityWatch watcher deps PR**                            | 🟢 Low      | S      |
+| 19  | **Add post-boot `no-failed-services` assertion** to deploy checks         | 🟠 Medium   | S      |
+| 20  | **Auditd enablement** (re-check NixOS bug #483085 status)                 | 🟡 Security | S      |
+| 21  | **AppArmor enablement**                                                   | 🟡 Security | M      |
+| 22  | **Provision Pi 3** for DNS failover cluster (hardware needed)             | 🟢 Low      | L      |
+| 23  | **Jan llama-server respawn investigation** (spawns new proc every 1-3min) | 🟠 Medium   | M      |
+| 24  | **Extract dnsblockd to standalone repo** (~930 lines embedded Go)         | 🟢 Low      | L      |
+| 25  | **Darwin HM parity** (blocked by 256GB disk constraint)                   | 🟢 Low      | L      |
 
 ---
 
@@ -153,7 +153,7 @@ Ranked by impact × effort (Pareto):
 
 **Should I dig into the `github:LarsArtmann/DiscordSync` source to fix the turso `CREATE INDEX: guild_id` migration bug, or disable DiscordSync until you patch it upstream?**
 
-The migration failure (`turso: error: Parse error: Error: invalid expression in CREATE INDEX: guild_id`) is definitively an **upstream application bug** — not a Nix config issue. DiscordSync is a private LarsArtmann repo, so I *could* attempt the fix, but I need to know:
+The migration failure (`turso: error: Parse error: Error: invalid expression in CREATE INDEX: guild_id`) is definitively an **upstream application bug** — not a Nix config issue. DiscordSync is a private LarsArtmann repo, so I _could_ attempt the fix, but I need to know:
 
 - Is this a recent schema change you're mid-flight on (i.e. is the migration intentionally not yet valid)?
 - Do you want me to read the DiscordSync migration files and propose/apply the SQL fix, or is DiscordSync low-priority and I should just disable it cleanly to stop the crash-loop noise?
@@ -164,13 +164,13 @@ This is the one thing blocking an otherwise-clean service startup picture, and t
 
 ## Files Changed This Session
 
-| File | Change |
-|------|--------|
-| `modules/nixos/services/signoz.nix` | + ExecStartPre (`signoz-clear-migration-lock`) |
-| `modules/nixos/services/monitor365.nix` | agent `%t` specifier; server dropped invalid `--config` |
-| `modules/nixos/services/dns-blocker.nix` | `path = [pkgs.nss.tools pkgs.coreutils]` |
-| `platforms/common/programs/activitywatch.nix` | + `Restart=on-failure` on wayland watcher |
-| `platforms/nixos/system/configuration.nix` | + `security.wrappers.fusermount3`; conflict resolved |
-| `AGENTS.md` | + 6 gotcha entries |
+| File                                          | Change                                                  |
+| --------------------------------------------- | ------------------------------------------------------- |
+| `modules/nixos/services/signoz.nix`           | + ExecStartPre (`signoz-clear-migration-lock`)          |
+| `modules/nixos/services/monitor365.nix`       | agent `%t` specifier; server dropped invalid `--config` |
+| `modules/nixos/services/dns-blocker.nix`      | `path = [pkgs.nss.tools pkgs.coreutils]`                |
+| `platforms/common/programs/activitywatch.nix` | + `Restart=on-failure` on wayland watcher               |
+| `platforms/nixos/system/configuration.nix`    | + `security.wrappers.fusermount3`; conflict resolved    |
+| `AGENTS.md`                                   | + 6 gotcha entries                                      |
 
 **Validation:** `nix flake check --no-build` ✅ · `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` ✅

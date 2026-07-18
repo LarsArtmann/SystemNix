@@ -20,14 +20,14 @@ SystemNix is a production-stable cross-platform Nix configuration managing **mac
 
 ### Health Status
 
-| Check | Status | Notes |
-|-------|--------|-------|
-| Git Status | Clean | Up to date with origin |
-| Health Check | Pass | All tools available, shell clean |
-| Darwin Flake | Pass | Evaluates correctly |
-| NixOS Flake | **FAIL** | Build error in evo-x2 config |
-| Pre-commit | Pass | No leaks detected |
-| Project Size | 491M | Reasonable |
+| Check        | Status   | Notes                            |
+| ------------ | -------- | -------------------------------- |
+| Git Status   | Clean    | Up to date with origin           |
+| Health Check | Pass     | All tools available, shell clean |
+| Darwin Flake | Pass     | Evaluates correctly              |
+| NixOS Flake  | **FAIL** | Build error in evo-x2 config     |
+| Pre-commit   | Pass     | No leaks detected                |
+| Project Size | 491M     | Reasonable                       |
 
 ---
 
@@ -35,47 +35,47 @@ SystemNix is a production-stable cross-platform Nix configuration managing **mac
 
 ### Core Infrastructure
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Nix Flake Architecture | Done | flake-parts, 14 inputs, dual-platform |
-| macOS Configuration | Done | nix-darwin, Home Manager, nix-homebrew |
-| Home Manager Integration | Done | ~80% code sharing via platforms/common/ |
-| Just Task Runner | Done | 1,626 lines, ~80+ recipes |
-| Pre-commit Hooks | Done | gitleaks, trailing whitespace |
-| Shell Configuration | Done | Fish/Zsh/Bash/Nushell all configured |
+| Component                | Status | Details                                 |
+| ------------------------ | ------ | --------------------------------------- |
+| Nix Flake Architecture   | Done   | flake-parts, 14 inputs, dual-platform   |
+| macOS Configuration      | Done   | nix-darwin, Home Manager, nix-homebrew  |
+| Home Manager Integration | Done   | ~80% code sharing via platforms/common/ |
+| Just Task Runner         | Done   | 1,626 lines, ~80+ recipes               |
+| Pre-commit Hooks         | Done   | gitleaks, trailing whitespace           |
+| Shell Configuration      | Done   | Fish/Zsh/Bash/Nushell all configured    |
 
 ### Desktop Environment (NixOS - evo-x2)
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Hyprland | Done | 505-line config, 0.54.2 compatible |
-| Niri | Done | Scrollable-tiling compositor added Mar 17 |
-| Waybar | Done | 637-line config, tiered coloring |
-| SDDM | Done | Display manager configured |
-| PipeWire Audio | Done | pamixer, volume controls |
-| AMD GPU | Done | RDNA 3.5, ROCm, direct_scanout |
-| Security | Done | GNOME Keyring, firewall |
+| Component      | Status | Details                                   |
+| -------------- | ------ | ----------------------------------------- |
+| Hyprland       | Done   | 505-line config, 0.54.2 compatible        |
+| Niri           | Done   | Scrollable-tiling compositor added Mar 17 |
+| Waybar         | Done   | 637-line config, tiered coloring          |
+| SDDM           | Done   | Display manager configured                |
+| PipeWire Audio | Done   | pamixer, volume controls                  |
+| AMD GPU        | Done   | RDNA 3.5, ROCm, direct_scanout            |
+| Security       | Done   | GNOME Keyring, firewall                   |
 
 ### Development Tools
 
-| Tool | Status | Notes |
-|------|--------|-------|
-| Go 1.26.1 | Done | Full toolchain: gopls, golangci-lint, gofumpt, delve |
-| TypeScript/Bun | Done | bun, vtsls, esbuild |
-| Docker/K8s | Done | docker, docker-compose, kubectl, k9s |
-| Terraform/GCP | Done | Infrastructure tools |
-| Taskwarrior | Done | Time tracking integration |
+| Tool           | Status | Notes                                                |
+| -------------- | ------ | ---------------------------------------------------- |
+| Go 1.26.1      | Done   | Full toolchain: gopls, golangci-lint, gofumpt, delve |
+| TypeScript/Bun | Done   | bun, vtsls, esbuild                                  |
+| Docker/K8s     | Done   | docker, docker-compose, kubectl, k9s                 |
+| Terraform/GCP  | Done   | Infrastructure tools                                 |
+| Taskwarrior    | Done   | Time tracking integration                            |
 
 ### Browser & Security
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Brave Config | Done | Extension management, GPU args |
-| Chrome Policies | Done | Both platforms, HTTPS-only |
-| YouTube Shorts Blocker | Done | Forced install via policy |
-| KeePassXC | Done | Helium native messaging host |
-| ActivityWatch | Done | Both platforms with utilization watcher |
-| Gitleaks | Done | Zero leaks |
+| Component              | Status | Notes                                   |
+| ---------------------- | ------ | --------------------------------------- |
+| Brave Config           | Done   | Extension management, GPU args          |
+| Chrome Policies        | Done   | Both platforms, HTTPS-only              |
+| YouTube Shorts Blocker | Done   | Forced install via policy               |
+| KeePassXC              | Done   | Helium native messaging host            |
+| ActivityWatch          | Done   | Both platforms with utilization watcher |
+| Gitleaks               | Done   | Zero leaks                              |
 
 ---
 
@@ -83,12 +83,13 @@ SystemNix is a production-stable cross-platform Nix configuration managing **mac
 
 ### NixOS Configuration (evo-x2)
 
-| Issue | Status | Impact |
-|-------|--------|--------|
-| Flake Evaluation Error | **BLOCKING** | Cannot build/deploy NixOS |
-| Root Cause | Unknown | Error in nixosConfigurations.evo-x2 evaluation |
+| Issue                  | Status       | Impact                                         |
+| ---------------------- | ------------ | ---------------------------------------------- |
+| Flake Evaluation Error | **BLOCKING** | Cannot build/deploy NixOS                      |
+| Root Cause             | Unknown      | Error in nixosConfigurations.evo-x2 evaluation |
 
 **Error Details:**
+
 ```
 error: … while checking NixOS configuration 'nixosConfigurations.evo-x2'
 … while calling anonymous lambda at lib/attrsets.nix:1707:17
@@ -99,19 +100,19 @@ This is a **critical blocker** preventing NixOS deployments.
 
 ### Documentation Consolidation
 
-| Task | Status | Notes |
-|------|--------|-------|
-| TODO_LIST.md | Outdated | Last updated 2026-02-10 |
-| 445+ TODOs | Not verified | Need status check against actual code |
-| 75+ .md files | Unread | In TODO_LIST.md queue |
+| Task          | Status       | Notes                                 |
+| ------------- | ------------ | ------------------------------------- |
+| TODO_LIST.md  | Outdated     | Last updated 2026-02-10               |
+| 445+ TODOs    | Not verified | Need status check against actual code |
+| 75+ .md files | Unread       | In TODO_LIST.md queue                 |
 
 ### Browser Extension System
 
-| Component | Status | Notes |
-|-----------|--------|-------|
-| Chromium Extension Management | Done | 449 lines added |
-| Chrome Policies | Done | Both platforms |
-| uBlock Origin Config | Partial | Module exists but temporarily disabled |
+| Component                     | Status  | Notes                                  |
+| ----------------------------- | ------- | -------------------------------------- |
+| Chromium Extension Management | Done    | 449 lines added                        |
+| Chrome Policies               | Done    | Both platforms                         |
+| uBlock Origin Config          | Partial | Module exists but temporarily disabled |
 
 ---
 
@@ -144,26 +145,29 @@ This is a **critical blocker** preventing NixOS deployments.
 
 ### Critical Issues
 
-| Issue | Severity | Status | Impact |
-|-------|----------|--------|--------|
+| Issue                              | Severity | Status     | Impact                     |
+| ---------------------------------- | -------- | ---------- | -------------------------- |
 | **NixOS Flake Evaluation Failure** | CRITICAL | Unresolved | Cannot build/deploy evo-x2 |
-| **TODO_LIST.md Severely Outdated** | HIGH | Unresolved | 6+ weeks stale |
+| **TODO_LIST.md Severely Outdated** | HIGH     | Unresolved | 6+ weeks stale             |
 
 ### NixOS Error Analysis
 
 The flake check fails at:
+
 ```
 lib/attrsets.nix:1707:17 - anonymous lambda
 lib/attrsets.nix:1712:13 - head builtin
 ```
 
 **Likely Causes:**
+
 1. Empty list in `zipAttrsWith` operation
 2. Missing required attribute in NixOS configuration
 3. Invalid module merge (conflicting definitions)
 4. Recent commit introduced breaking change
 
 **Recent Changes to Investigate:**
+
 - `963d40f` - refactor(keepassxc): split native messaging manifests
 - `9639f83` - refactor(passwords): simplify KeePassXC config
 - `70b3a53` - refactor: improve health script accuracy
@@ -272,6 +276,7 @@ lib/attrsets.nix:1712:13 - head builtin
 ### Question #1: What is the root cause of the NixOS flake evaluation error?
 
 **Context:**
+
 ```
 error: … while checking NixOS configuration 'nixosConfigurations.evo-x2'
 … while calling anonymous lambda at lib/attrsets.nix:1707:17
@@ -279,12 +284,14 @@ error: … while checking NixOS configuration 'nixosConfigurations.evo-x2'
 ```
 
 **Why I Cannot Resolve This:**
+
 1. Error occurs in Nixpkgs library code, not project code
 2. Stack trace truncated - no indication which module/attribute fails
 3. Recent commits modified `keepassxc.nix` but error may be unrelated
 4. No access to NixOS machine for testing
 
 **Required Investigation:**
+
 1. Run `nixos-rebuild build --flake .#evo-x2 --show-trace -vv` for full stack
 2. Check `platforms/nixos/` for recent breaking changes
 3. Verify all module imports are valid
@@ -297,18 +304,18 @@ This should be the **immediate priority** before any other work. The NixOS confi
 
 ## Metrics Summary
 
-| Metric | Value | Trend |
-|--------|-------|-------|
-| Total Commits | 1,059 | +3 today |
-| Nix Files | 89 | Stable |
-| Nix Lines | 8,409 | Stable |
-| Shell Scripts | 53 | Stable |
-| Markdown Files | 386 | Growing |
-| TODO Items | 445+ | Unverified |
-| Health Check | Pass | Stable |
-| Darwin Build | Pass | Stable |
-| NixOS Build | **FAIL** | **Broken** |
-| Security Leaks | 0 | Clean |
+| Metric         | Value    | Trend      |
+| -------------- | -------- | ---------- |
+| Total Commits  | 1,059    | +3 today   |
+| Nix Files      | 89       | Stable     |
+| Nix Lines      | 8,409    | Stable     |
+| Shell Scripts  | 53       | Stable     |
+| Markdown Files | 386      | Growing    |
+| TODO Items     | 445+     | Unverified |
+| Health Check   | Pass     | Stable     |
+| Darwin Build   | Pass     | Stable     |
+| NixOS Build    | **FAIL** | **Broken** |
+| Security Leaks | 0        | Clean      |
 
 ---
 

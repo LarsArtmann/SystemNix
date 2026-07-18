@@ -7,11 +7,13 @@ Instead of waiting for nixpkgs-unstable to update (which can take days/weeks), w
 ### What Changed
 
 **Before (nixpkgs unstable):**
+
 - Crush v0.49.0 (4 versions behind)
 - Updates only when nixpkgs maintainers merge
 - Can lag by days or weeks
 
 **After (NUR):**
+
 - Crush v0.53.0 (same day as release!)
 - Directly from Charm's NUR repository
 - Updates within hours of release
@@ -75,16 +77,16 @@ When a new Crush version drops:
 
 ## Why This Is Better
 
-| Method | Lag Time | Maintenance |
-|--------|----------|-------------|
-| nixpkgs-unstable | Days to weeks | Manual PRs required |
-| NUR (this solution) | Hours | Automated by Charm team |
-| Building from source | Immediate | You maintain it |
+| Method               | Lag Time      | Maintenance             |
+| -------------------- | ------------- | ----------------------- |
+| nixpkgs-unstable     | Days to weeks | Manual PRs required     |
+| NUR (this solution)  | Hours         | Automated by Charm team |
+| Building from source | Immediate     | You maintain it         |
 
 NUR gives you the best of both worlds: **bleeding-edge updates** with **zero maintenance**!
 
 ---
 
-*Last updated: March 27, 2026*
-*Current NUR Crush: v0.53.0*
-*Previous nixpkgs Crush: v0.49.0*
+_Last updated: March 27, 2026_
+_Current NUR Crush: v0.53.0_
+_Previous nixpkgs Crush: v0.49.0_

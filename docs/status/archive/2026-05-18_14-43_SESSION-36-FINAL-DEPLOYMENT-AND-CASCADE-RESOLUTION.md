@@ -16,27 +16,30 @@ All 7 upstream build failures from Session 35 are resolved AND deployed. The `pr
 
 ### Upstream Build Failures (7/7 Resolved)
 
-| Package | Issue | Fix | Status |
-|---------|-------|-----|--------|
-| todo-list-ai | Stale npmDepsHash | Updated hash in overlays/shared.nix | ✅ |
-| go-structure-linter | Missing go-branded-id replace + go.sum | 10 commits upstream: replace directive, merged transitive go.sum, overrideModAttrs, vendorHash | ✅ |
-| mr-sync | Already correct at listed rev | No change needed | ✅ |
-| hierarchical-errors | Stale vendorHash | Updated upstream | ✅ |
-| branching-flow | Stale vendorHash | Updated upstream | ✅ |
-| jscpd | Stale pnpm hash + missing lockfile injection | Complete rewrite with makeWrapper + src wrapping | ✅ |
-| projects-management-automation | `programminglanguage` deleted but SDK still imports it | Updated SDK to f019f6f, go-output to 4c1e905, simplified preparedSrc, published testhelpers tag | ✅ |
+| Package                        | Issue                                                  | Fix                                                                                             | Status |
+| ------------------------------ | ------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | ------ |
+| todo-list-ai                   | Stale npmDepsHash                                      | Updated hash in overlays/shared.nix                                                             | ✅     |
+| go-structure-linter            | Missing go-branded-id replace + go.sum                 | 10 commits upstream: replace directive, merged transitive go.sum, overrideModAttrs, vendorHash  | ✅     |
+| mr-sync                        | Already correct at listed rev                          | No change needed                                                                                | ✅     |
+| hierarchical-errors            | Stale vendorHash                                       | Updated upstream                                                                                | ✅     |
+| branching-flow                 | Stale vendorHash                                       | Updated upstream                                                                                | ✅     |
+| jscpd                          | Stale pnpm hash + missing lockfile injection           | Complete rewrite with makeWrapper + src wrapping                                                | ✅     |
+| projects-management-automation | `programminglanguage` deleted but SDK still imports it | Updated SDK to f019f6f, go-output to 4c1e905, simplified preparedSrc, published testhelpers tag | ✅     |
 
 ### Deployment
+
 - `nh os boot .` completed successfully ✅
 - Bootloader configuration updated
 - System size: 41.3 GiB → 41.1 GiB (-280 MiB)
 
 ### Cross-Platform Verification
+
 - `nix flake check --all-systems --no-build` passes ✅
 - `just test-upstream-builds`: 17/17 packages OK ✅
 - rpi3-dns (aarch64-linux) build: completed successfully ✅
 
 ### Tooling & Documentation
+
 - `just test-upstream-builds` recipe added ✅
 - `just update-vendor-hashes` recipe added ✅
 - `lib/prepared-source.nix` created (mkPreparedSource helper) ✅
@@ -48,10 +51,10 @@ All 7 upstream build failures from Session 35 are resolved AND deployed. The `pr
 
 ## b) PARTIALLY DONE 🔄
 
-| Task | Status | Why |
-|------|--------|-----|
-| Darwin build verification | ⏳ Pending MacBook access | Need `nix build .#darwinConfigurations.Lars-MacBook-Air.system` from MacBook |
-| `just switch` post-deployment | ⏳ Optional | `nh os boot` already applied config; `just switch` would re-apply if needed |
+| Task                          | Status                    | Why                                                                          |
+| ----------------------------- | ------------------------- | ---------------------------------------------------------------------------- |
+| Darwin build verification     | ⏳ Pending MacBook access | Need `nix build .#darwinConfigurations.Lars-MacBook-Air.system` from MacBook |
+| `just switch` post-deployment | ⏳ Optional               | `nh os boot` already applied config; `just switch` would re-apply if needed  |
 
 ---
 
@@ -60,10 +63,12 @@ All 7 upstream build failures from Session 35 are resolved AND deployed. The `pr
 Remaining tasks from the Session 35 execution plan:
 
 ### Phase 2
+
 - 2.5 — Squash go-structure-linter 10 commits into 1-2 clean commits
 - 2.6 — Run vendor hash audit (manually done instead via `just update-vendor-hashes`)
 
 ### Phase 3
+
 - 3.2 — Refactor 4 repos to use `mkPreparedSource` helper
 - 3.3 — Create `overrideModAttrs` helper pattern
 - 3.4 — Create `mk-pnpm-package.nix` (reusable jscpd pattern)
@@ -73,6 +78,7 @@ Remaining tasks from the Session 35 execution plan:
 - 3.9 — Go.sum transitive merge audit
 
 ### Phase 4
+
 - 4.1 — Write upstream fix playbook
 - 4.2 — Write session 35/36 case study
 - 4.3 — Set up cachix + substituters
@@ -144,6 +150,7 @@ However, one issue discovered: the `go-output v0.4` update cascaded stale vendor
 The `just update-vendor-hashes` recipe checks each package with `nix build .#pkg --no-link`. If the derivation was previously evaluated with a DIFFERENT flake.lock state, the old derivation may still be in the store, causing `nix build` to return "OK" without re-evaluating. This made the recipe miss the `buildflow` stale hash.
 
 Possible solutions:
+
 1. Use `--rebuild` flag (doesn't exist for `nix build`)
 2. Use `nix build --no-cache` (doesn't exist)
 3. Use `nix derivation show` and compare hashes
@@ -166,20 +173,20 @@ nix build .#nixosConfigurations.rpi3-dns...     # ✅ Built
 
 ## Key Commits (This Session)
 
-| Commit | Description |
-|--------|-------------|
-| `02dad270` | Update buildflow — verified all 17 upstream builds pass |
-| `51df9426` | Update buildflow input — fix stale vendorHash |
-| `438befb6` | Add just recipes, mkPreparedSource helper, ADR-005 |
-| `b379076c` | AGENTS.md: add _local_deps pattern documentation |
-| `c328098a` | BuildFlow upstream: fix vendorHash + testhelpers |
+| Commit     | Description                                                    |
+| ---------- | -------------------------------------------------------------- |
+| `02dad270` | Update buildflow — verified all 17 upstream builds pass        |
+| `51df9426` | Update buildflow input — fix stale vendorHash                  |
+| `438befb6` | Add just recipes, mkPreparedSource helper, ADR-005             |
+| `b379076c` | AGENTS.md: add _local_deps pattern documentation               |
+| `c328098a` | BuildFlow upstream: fix vendorHash + testhelpers               |
 | `c0f31ffc` | PMA upstream: fix nix build, update deps, simplify preparedSrc |
 
 ## Upstream Repos Modified
 
-| Repo | Commits | Key Change |
-|------|---------|-----------|
+| Repo                             | Commits             | Key Change                                                        |
+| -------------------------------- | ------------------- | ----------------------------------------------------------------- |
 | `projects-management-automation` | f94cbae7 → c0f31ffc | Fix nix build: SDK update, go-output bump, simplified preparedSrc |
-| `project-discovery-sdk` | 2cea9b6 → f019f6f | Remove programminglanguage dependency |
-| `go-output` | eb3449c → 4c1e905 | Add RenderTableData + testhelpers tag |
-| `BuildFlow` | 71e5b93c → c328098a | Fix vendorHash + testhelpers sub-module |
+| `project-discovery-sdk`          | 2cea9b6 → f019f6f   | Remove programminglanguage dependency                             |
+| `go-output`                      | eb3449c → 4c1e905   | Add RenderTableData + testhelpers tag                             |
+| `BuildFlow`                      | 71e5b93c → c328098a | Fix vendorHash + testhelpers sub-module                           |

@@ -4,12 +4,12 @@ ActivityPub-based federation for self-hosted software forges — "Mastodon for c
 
 ## Protocols
 
-| Protocol | Role |
-|----------|------|
-| **ActivityPub** | Transport layer (same as Mastodon, PeerTube) |
-| **ForgeFed** | W3C extension defining forge-specific activities (issues, PRs, repos, patches) |
-| **WebFinger** | Actor discovery (`@user@forge.example.com`) |
-| **F3** | Friendly Forge Format — data portability between incompatible forges |
+| Protocol        | Role                                                                           |
+| --------------- | ------------------------------------------------------------------------------ |
+| **ActivityPub** | Transport layer (same as Mastodon, PeerTube)                                   |
+| **ForgeFed**    | W3C extension defining forge-specific activities (issues, PRs, repos, patches) |
+| **WebFinger**   | Actor discovery (`@user@forge.example.com`)                                    |
+| **F3**          | Friendly Forge Format — data portability between incompatible forges           |
 
 ## Current Status (May 2025)
 
@@ -33,15 +33,15 @@ Active development, funded by Codeberg e.V. Early features shipping, core collab
 
 ## Roadmap (2025)
 
-| Phase | Feature | Status |
-|-------|---------|--------|
-| 1 | Federated stars | Done |
-| 2 | Federated unstars | In progress |
-| 3 | Follow users across instances | In progress |
-| 4 | Open issues on remote repos | Planned |
-| 5 | Federated PRs / patches | Planned |
-| 6 | Instance blocking & moderation | Planned |
-| 7 | F3 data portability | Planned |
+| Phase | Feature                        | Status      |
+| ----- | ------------------------------ | ----------- |
+| 1     | Federated stars                | Done        |
+| 2     | Federated unstars              | In progress |
+| 3     | Follow users across instances  | In progress |
+| 4     | Open issues on remote repos    | Planned     |
+| 5     | Federated PRs / patches        | Planned     |
+| 6     | Instance blocking & moderation | Planned     |
+| 7     | F3 data portability            | Planned     |
 
 ## Architecture
 

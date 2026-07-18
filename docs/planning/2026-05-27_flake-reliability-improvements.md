@@ -10,7 +10,7 @@
 
 **Problem:** `just switch` runs `nh os switch` directly with no pre-check. A single stale `todoListAiFixedHash` in `overlays/shared.nix` cascaded into a full NixOS build failure (~3 min wasted).
 
-**Fix:** Add a hash-check gate to `just switch` before the `nh os switch` / `darwin-rebuild` step. If any package has a stale hash, abort *before* the build starts. Reuse existing `just hash-check`.
+**Fix:** Add a hash-check gate to `just switch` before the `nh os switch` / `darwin-rebuild` step. If any package has a stale hash, abort _before_ the build starts. Reuse existing `just hash-check`.
 
 **Impact:** Prevents the most common class of build failure (stale vendorHash / npmDepsHash).
 
@@ -21,6 +21,7 @@
 **Problem:** `overlays/shared.nix` manually manages a fixed-output derivation for bun `node_modules` with a hardcoded `todoListAiFixedHash` (line 44). Every upstream `bun install` dependency change silently breaks SystemNix.
 
 **Fix:** Two options:
+
 - **A (preferred):** Have the upstream `todo-list-ai` repo's own flake handle bun deps internally. SystemNix uses `mkPackageOverlay` like all other packages — hash managed upstream, not here.
 - **B (quick):** Keep the current pattern but add `todo-list-ai` to `just hash-check` (it may already be there) and ensure the error message is clear.
 
@@ -30,11 +31,12 @@
 
 ### 3. Remove hardcoded `vendorHash` overrides from `linux.nix`
 
-**Problem:** `overlays/linux.nix` passes `vendorHash` overrides to `mkPackageOverlay` for `dnsblockd` and `file-and-image-renamer`. The vendor hash is managed *in SystemNix* rather than *in the upstream repo's flake*. Any upstream Go dep change silently breaks.
+**Problem:** `overlays/linux.nix` passes `vendorHash` overrides to `mkPackageOverlay` for `dnsblockd` and `file-and-image-renamer`. The vendor hash is managed _in SystemNix_ rather than _in the upstream repo's flake_. Any upstream Go dep change silently breaks.
 
 **Fix:** Remove the `vendorHash` overrides from `linux.nix`. Ensure upstream repos manage their own hashes in their own `flake.nix`. This is already documented as an anti-pattern in AGENTS.md for `file-and-image-renamer`.
 
 **Affected packages:**
+
 - `dnsblockd` — `vendorHash = "sha256-FFcULtnmNhIJr392vRYGqZ+lvW300HWvzQoEJZj8pWw="`
 - `file-and-image-renamer` — `vendorHash = "sha256-of+ynTDQ5ahN+6vJFM9mrNNE3je4bCnLaF3O2j0Zo88="`
 
@@ -47,6 +49,7 @@
 **Problem:** No `.github/workflows`, no `.pre-commit-config.yaml`, no CI at all. Any push to master triggers nothing. `just test-fast` / `just hash-check` / `just test-upstream-builds` exist but rely on manual execution.
 
 **Fix:** Add:
+
 - `.pre-commit-config.yaml` with `nix flake check --no-build` (runs `just test-fast` equivalent)
 - GitHub Actions workflow that runs `just test-fast` + `just hash-check` on PRs/pushes
 - Note: Private Go repos (`git+ssh://`) won't be buildable in GitHub Actions without SSH keys. CI should at minimum run syntax checks + Nix linting (statix, deadnix).
@@ -99,13 +102,13 @@ assert lib.assertMsg
 
 ## Priority Matrix
 
-| # | Improvement | Effort | Impact | Priority |
-|---|-------------|--------|--------|----------|
-| 1 | Hash-check gate on `just switch` | Low | High | P0 |
-| 2 | Move todo-list-ai FOD upstream | Medium | High | P0 |
-| 5 | `just test-hashes` command | Low | Medium | P1 |
-| 7 | Port collision assertion | Low | Medium | P1 |
-| 3 | Remove linux.nix vendorHash overrides | Medium | Medium | P1 |
-| 4 | Pre-commit + CI | Medium | High | P2 |
-| 6 | Auto-discover service modules | Medium | Medium | P2 |
-| 8 | Darwin overlay isolation | Low | Low | P3 |
+| #   | Improvement                           | Effort | Impact | Priority |
+| --- | ------------------------------------- | ------ | ------ | -------- |
+| 1   | Hash-check gate on `just switch`      | Low    | High   | P0       |
+| 2   | Move todo-list-ai FOD upstream        | Medium | High   | P0       |
+| 5   | `just test-hashes` command            | Low    | Medium | P1       |
+| 7   | Port collision assertion              | Low    | Medium | P1       |
+| 3   | Remove linux.nix vendorHash overrides | Medium | Medium | P1       |
+| 4   | Pre-commit + CI                       | Medium | High   | P2       |
+| 6   | Auto-discover service modules         | Medium | Medium | P2       |
+| 8   | Darwin overlay isolation              | Low    | Low    | P3       |

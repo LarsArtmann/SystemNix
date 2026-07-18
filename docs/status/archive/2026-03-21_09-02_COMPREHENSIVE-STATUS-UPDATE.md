@@ -8,12 +8,12 @@
 
 ## Executive Summary
 
-| Metric | Status |
-|--------|--------|
-| **Flake Evaluation** | ✅ PASSING |
-| **Git Working Tree** | ✅ CLEAN |
-| **Last Commit** | ✅ COMMITTED |
-| **Branch** | master (synced with origin) |
+| Metric               | Status                      |
+| -------------------- | --------------------------- |
+| **Flake Evaluation** | ✅ PASSING                  |
+| **Git Working Tree** | ✅ CLEAN                    |
+| **Last Commit**      | ✅ COMMITTED                |
+| **Branch**           | master (synced with origin) |
 
 ---
 
@@ -21,27 +21,27 @@
 
 ### a) Fully Done ✅
 
-| Item | Status | Details |
-|------|--------|---------|
-| jscpd Integration | ✅ DONE | Added to devShell via bunx alias |
-| jscpd Research | ✅ DONE | Confirmed not in nixpkgs |
-| Broken Reference Cleanup | ✅ DONE | Removed nodePackages.jscpd from base.nix |
-| jscpd Verification | ✅ DONE | v4.0.8 runs successfully |
-| Status Report Created | ✅ DONE | docs/status/2026-03-21_08-22_JSCPD-INTEGRATION-COMPLETE.md |
-| Changes Committed | ✅ DONE | Commit dbb3c1b |
+| Item                     | Status  | Details                                                    |
+| ------------------------ | ------- | ---------------------------------------------------------- |
+| jscpd Integration        | ✅ DONE | Added to devShell via bunx alias                           |
+| jscpd Research           | ✅ DONE | Confirmed not in nixpkgs                                   |
+| Broken Reference Cleanup | ✅ DONE | Removed nodePackages.jscpd from base.nix                   |
+| jscpd Verification       | ✅ DONE | v4.0.8 runs successfully                                   |
+| Status Report Created    | ✅ DONE | docs/status/2026-03-21_08-22_JSCPD-INTEGRATION-COMPLETE.md |
+| Changes Committed        | ✅ DONE | Commit dbb3c1b                                             |
 
 ### b) Partially Done
 
-| Item | Status | Notes |
-|------|--------|-------|
+| Item              | Status  | Notes                                       |
+| ----------------- | ------- | ------------------------------------------- |
 | System-wide jscpd | PARTIAL | Available in devShell only, not system-wide |
 
 ### c) Not Started
 
-| Item | Priority | Notes |
-|------|----------|-------|
-| just jscpd recipe | LOW | Could add for convenience |
-| jscpd in pre-commit | LOW | Future CI enhancement |
+| Item                | Priority | Notes                     |
+| ------------------- | -------- | ------------------------- |
+| just jscpd recipe   | LOW      | Could add for convenience |
+| jscpd in pre-commit | LOW      | Future CI enhancement     |
 
 ### d) Totally Fucked Up
 
@@ -53,32 +53,32 @@ NONE
 
 ### Nix Configuration
 
-| Check | Status |
-|-------|--------|
-| Flake evaluates | ✅ YES |
-| nix-instantiate | ✅ PASS |
-| nix flake metadata | ✅ PASS |
-| flake.lock | ✅ LOCKED |
+| Check              | Status    |
+| ------------------ | --------- |
+| Flake evaluates    | ✅ YES    |
+| nix-instantiate    | ✅ PASS   |
+| nix flake metadata | ✅ PASS   |
+| flake.lock         | ✅ LOCKED |
 
 ### Git Status
 
-| Check | Status |
-|-------|--------|
-| Working tree | CLEAN |
-| Branch | master |
-| Ahead of origin | 0 |
-| Total commits | 1096 |
+| Check           | Status |
+| --------------- | ------ |
+| Working tree    | CLEAN  |
+| Branch          | master |
+| Ahead of origin | 0      |
+| Total commits   | 1096   |
 
 ### Development Tools
 
-| Tool | Available |
-|------|-----------|
-| just | ✅ Available |
-| nix develop | ✅ Works |
-| bun | ✅ Available |
-| go 1.26.1 | ✅ Pinned |
-| golangci-lint | ✅ Available |
-| pre-commit | ✅ Configured |
+| Tool          | Available     |
+| ------------- | ------------- |
+| just          | ✅ Available  |
+| nix develop   | ✅ Works      |
+| bun           | ✅ Available  |
+| go 1.26.1     | ✅ Pinned     |
+| golangci-lint | ✅ Available  |
+| pre-commit    | ✅ Configured |
 
 ---
 
@@ -132,6 +132,7 @@ NONE
 ### Question: Why does `nix develop --command` bypass shellHook but piping works?
 
 **Observation:**
+
 ```bash
 # FAILS:
 nix develop .#default --command 'jscpd --version'
@@ -145,6 +146,7 @@ echo 'jscpd --version' | nix develop .#default
 **Expected:** Both should execute shellHook (which sets up jscpd alias)
 
 **What I've tried:**
+
 - Tested with function vs alias
 - Verified shellHook exists in flake.nix
 - Confirmed bun is available in devShell
@@ -152,6 +154,7 @@ echo 'jscpd --version' | nix develop .#default
 **Hypothesis:** The `--command` flag might bypass interactive shell initialization entirely
 
 **Research needed:**
+
 - Nix shellHook lifecycle with --command flag
 - How nix develop handles non-interactive vs interactive modes
 - Possible workaround without using pipe

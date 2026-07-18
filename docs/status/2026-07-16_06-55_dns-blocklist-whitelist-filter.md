@@ -13,6 +13,7 @@
 **Problem:** The `whitelist` in `platforms/common/dns-blocklists.nix` was only consumed by `dnsblockd process` (build-time) for `mapping.json` generation. The runtime DNS resolver loaded raw blocklist files via `dns_blocklists` config key with **zero whitelist filtering**. So `discord.com` was blocked at runtime despite being whitelisted.
 
 **Root cause chain:**
+
 1. `fetchedBlocklists` in `dns-blocker.nix` fetched raw blocklist files via `pkgs.fetchurl`
 2. These raw files were passed to both `processedBlocklist` (build-time processor) AND `blocklistPaths` (runtime `dns_blocklists` config key)
 3. The build-time processor DID respect the whitelist (line 164-167 of processor.go: `if inWhitelist { return }`)
@@ -24,9 +25,11 @@
 ### 2. Build-Time Blocklist Filter — COMPLETE
 
 **Files changed:**
+
 - `modules/nixos/services/dns-blocker.nix` — Added a Python-based filter derivation factory
 
 **Implementation:**
+
 - `fetchedRawBlocklists` — fetches raw blocklist files (renamed from `fetchedBlocklists`)
 - `whitelistFileForFilter` — writes the whitelist to a text file for the filter script
 - `filterScript` — Python script (`pkgs.writeText`) that:
@@ -63,6 +66,7 @@ Added comprehensive domain coverage:
 ### 5. Pre-existing Changes Found (Not Authored This Session)
 
 The git diff shows two changes that were already present before this session:
+
 - `modules/nixos/services/_signoz-alerts.nix` — Added `dnsblockd-crashes.json` alert rule
 - `modules/nixos/services/gatus-config.nix` — Added `[BODY].jsonpath.dnsRunning == true` condition to DNS blocker health check
 
@@ -91,6 +95,7 @@ The rpi3-dns host also imports `dns-blocklists.nix`. The filter applies to it to
 ### 1. AGENTS.md Update
 
 The `dns-blocker.nix` module now has a significant new mechanism (build-time whitelist filter). AGENTS.md should document:
+
 - The whitelist is now effective at runtime via build-time filtering
 - The filter walks parent domains (suffix matching)
 - Adding a domain to the whitelist strips it AND all subdomains from all 23 blocklists
@@ -124,6 +129,7 @@ Changes are uncommitted.
 ### 2. Toplevel Build Failure Misdiagnosis Sequence
 
 **What happened:** The toplevel build failed. I initially tried to build sub-components to isolate the failure, but went down several wrong paths:
+
 - Tried `nix build .#nixosConfigurations.evo-x2.config.services.dns-blocker.fetchedBlocklists` — failed because `fetchedBlocklists` is a `let` binding, not an option
 - Tried `nix eval` with various attr paths — all failed for the same reason
 - Tried `nix-instantiate --eval` to access module internals — failed because module `let` bindings aren't exposed
@@ -161,6 +167,7 @@ Changes are uncommitted.
 ## f) Next 50 Things To Do
 
 #### Immediate (Block deploy)
+
 1. **Rebuild with expanded whitelist** — verify the 22 Discord domains are all stripped from the filtered HaGeZi-social blocklist
 2. **Commit all changes** — dns-blocker.nix, dns-blocklists.nix, _signoz-alerts.nix, gatus-config.nix, flake.lock
 3. **Deploy to evo-x2** — `nix run .#deploy`
@@ -169,6 +176,7 @@ Changes are uncommitted.
 6. **Run post-deploy smoke test** — `nix run .#post-deploy-check`
 
 #### DNS Blocklist Filter Improvements
+
 7. **Add a Nix-level test** that asserts `discord.com` is absent from the filtered HaGeZi-social output
 8. **Consolidate 23 filter derivations into one batch** — single `runCommand` that filters all blocklists
 9. **Add `dns_whitelist` config key to dnsblockd upstream** — proper runtime whitelist support
@@ -178,6 +186,7 @@ Changes are uncommitted.
 13. **Add a `nix run .#dns-whitelist-report` command** — shows what's in the whitelist and what it filters
 
 #### AGENTS.md / Documentation
+
 14. **Update AGENTS.md** with the build-time whitelist filter mechanism
 15. **Document that the whitelist now affects runtime** — this is a behavior change from the prior session
 16. **Document the parent-domain walking behavior** — `discord.com` strips `*.discord.com`
@@ -186,6 +195,7 @@ Changes are uncommitted.
 19. **Document the cbor2/remarshal/gatus pre-existing build failure** in AGENTS.md gotchas
 
 #### DNS Architecture
+
 20. **Fix `cache.nixos.org` DNS resolution** — currently fails (pre-existing, not caused by this change)
 21. **Deploy rpi3-dns with DoT forwarders** — configured but not deployed
 22. **Investigate oauth2-proxy startup race** — DNS timing issue during activation
@@ -194,6 +204,7 @@ Changes are uncommitted.
 25. **Consider replacing HaGeZi-social with a more targeted list** — blocks Mastodon, Bluesky, LinkedIn, Discord, Reddit
 
 #### Monitoring & Alerting
+
 26. **Add Gatus check for discord.com resolution** — verify DNS allowlist works post-deploy
 27. **Add Gatus check for linkedin.com resolution**
 28. **Extend post-deploy-check.sh** to test whitelisted domain resolution
@@ -201,12 +212,14 @@ Changes are uncommitted.
 30. **Add a periodic DNS resolution test** — cron/timer that resolves key domains and alerts on failure
 
 #### Pre-existing Build Issues
+
 31. **Fix `python3.14-cbor2-5.8.0` build failure** — blocks gatus.yaml generation, prevents toplevel build
 32. **Investigate remarshal dependency chain** — remarshal depends on cbor2
 33. **Consider pinning Python 3.13 for remarshal/cbor2** — overlay override
 34. **Check if nixpkgs unstable has fixed cbor2** — may be a transient issue
 
 #### Code Quality
+
 35. **Extract the filter script to `scripts/dns-blocker-filter.py`** — currently inline in the Nix module
 36. **Add type annotations to the Python filter script**
 37. **Add unit tests for `extract_domain()` and `is_whitelisted()`** — test all blocklist formats
@@ -215,6 +228,7 @@ Changes are uncommitted.
 40. **Review whether `processorArgs` / `processedBlocklist` still needs the whitelist file** — the filtered files are already clean
 
 #### Deployment & Operations
+
 41. **Run `nix fmt`** to ensure treefmt/alejandra formatting passes
 42. **Update flake.lock** if any inputs changed during this session
 43. **Consider adding `dns-blocklists.nix` to `restartTriggers`** — ensure dnsblockd restarts when whitelist changes
@@ -222,6 +236,7 @@ Changes are uncommitted.
 45. **Add a rollback plan** — if the filter breaks DNS, how to quickly revert
 
 #### Security Review
+
 46. **Verify the filter doesn't weaken blocking** — ensure only whitelisted domains are stripped
 47. **Audit the whitelist for over-permissive entries** — `akamaihd.net` is very broad
 48. **Review whether `linkedin.cn` should be whitelisted** — Chinese LinkedIn may have different privacy implications

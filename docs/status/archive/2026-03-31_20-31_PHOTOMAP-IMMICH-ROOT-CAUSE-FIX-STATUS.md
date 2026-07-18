@@ -15,15 +15,16 @@
 
 **Root causes identified and fixed:**
 
-| Root Cause | Impact | Fix |
-|---|---|---|
-| Only `upload/` mounted, not `library/` | Immich migrates processed photos to `library/` via storage templates — those were invisible to PhotoMapAI | Added `library/` as separate read-only mount |
-| No `config.yaml` provided | PhotoMapAI requires a YAML config defining albums with `image_paths` — empty config dir meant zero albums | Declarative `config.yaml` generated via `pkgs.writeText`, symlinked via tmpfiles |
-| `photomap_index` mounted inside `/Pictures/upload/` | Index volume nested inside Immich's directory tree — pollution risk, permission issues, breaks read-only guarantee | Separate `/Pictures/index` writable volume outside Immich tree |
+| Root Cause                                          | Impact                                                                                                             | Fix                                                                              |
+| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| Only `upload/` mounted, not `library/`              | Immich migrates processed photos to `library/` via storage templates — those were invisible to PhotoMapAI          | Added `library/` as separate read-only mount                                     |
+| No `config.yaml` provided                           | PhotoMapAI requires a YAML config defining albums with `image_paths` — empty config dir meant zero albums          | Declarative `config.yaml` generated via `pkgs.writeText`, symlinked via tmpfiles |
+| `photomap_index` mounted inside `/Pictures/upload/` | Index volume nested inside Immich's directory tree — pollution risk, permission issues, breaks read-only guarantee | Separate `/Pictures/index` writable volume outside Immich tree                   |
 
 **Commit:** `76de011` — `feat(photomap): refactor container configuration with read-only volumes and declarative config`
 
 **Current `photomap.nix` architecture:**
+
 - **Volumes:**
   - `/var/lib/immich/upload` → `/Pictures/upload:ro` (read-only)
   - `/var/lib/immich/library` → `/Pictures/library:ro` (read-only)
@@ -81,6 +82,7 @@
 ### 8. DNS Blocker `.lan` Domain Filtering (unstaged)
 
 Three files modified to skip `.lan` domains in the DNS blocker pipeline:
+
 - `pkgs/dns-blocklist.nix` — Nix blocklist parser skips `.lan` suffix
 - `pkgs/dnsblockd-processor/main.go` — Go processor skips `.lan` domains
 - `platforms/nixos/programs/dnsblockd/main.go` — Added `isLANDomain()` helper, returns 403 for `.lan` in block handler
@@ -189,6 +191,7 @@ Three files modified to skip `.lan` domains in the DNS blocker pipeline:
 ### 1. Refactor `photomap.nix` to Use ContainerService Type System
 
 The type system was built (`d20d18c`) but never applied. `photomap.nix` should be the first consumer:
+
 - Replace raw `virtualisation.oci-containers` with `mkContainerService`
 - Automatic tmpfiles generation
 - Type-safe health checks and dependency management
@@ -196,6 +199,7 @@ The type system was built (`d20d18c`) but never applied. `photomap.nix` should b
 ### 2. Immich Library Directory Verification
 
 Before deploying, SSH into evo-x2 and verify:
+
 ```bash
 ls -la /var/lib/immich/
 ls -la /var/lib/immich/library/
@@ -209,6 +213,7 @@ If `library/` doesn't exist or is empty, the Immich storage template migration h
 ### 3. Add `.gitignore` Rules for Compiled Binaries
 
 Add patterns to prevent accidental commits:
+
 ```
 pkgs/dnsblockd-processor/dnsblockd-processor
 platforms/nixos/programs/dnsblockd/dnsblockd
@@ -217,6 +222,7 @@ platforms/nixos/programs/dnsblockd/dnsblockd
 ### 4. PhotoMapAI Image Watching / Auto-Refresh
 
 Currently PhotoMapAI scans images once. When new photos are added to Immich, PhotoMapAI won't know. Options:
+
 - Cron job to trigger re-indexing via PhotoMapAI API
 - Immich webhook → PhotoMapAI re-scan
 - Periodic systemd timer
@@ -224,16 +230,19 @@ Currently PhotoMapAI scans images once. When new photos are added to Immich, Pho
 ### 5. PhotoMapAI + Immich Embedding Sharing
 
 Long-term: Skip PhotoMapAI's CLIP embedding entirely. Extract Immich's existing embeddings from PostgreSQL:
+
 ```sql
 SELECT a."id", a."originalPath", e."embedding"
 FROM assets a
 JOIN smart_search e ON a."id" = e."assetId";
 ```
+
 Feed these directly to a custom UMAP visualizer or PhotoMapAI (if it supports pre-computed embeddings).
 
 ### 6. HuggingFace Whitelist Verification
 
 HuggingFace CDN domains were whitelisted in the DNS blocker for CLIP model download:
+
 - `huggingface.co`, `cdn-lfs.huggingface.co`, `cdn-lfs-us-1.huggingface.co`
 - Not verified that PhotoMapAI's model download actually works through the DNS blocker
 - First container start will reveal if additional domains are needed
@@ -286,12 +295,14 @@ HuggingFace CDN domains were whitelisted in the DNS blocker for CLIP model downl
 **Does `/var/lib/immich/library/` actually exist and contain photos on evo-x2?**
 
 This is critical because:
+
 - If Immich's **storage template migration** hasn't been enabled/run, ALL photos remain in `upload/` and `library/` is empty or nonexistent
 - Our fix mounts both `upload/` and `library/` — but `library/` being empty is fine (PhotoMapAI scans both)
 - However, if `library/` doesn't exist as a directory, the Docker volume mount will create an empty directory, which is harmless but indicates the mount is unnecessary until migration runs
 - Conversely, if ALL photos have been migrated to `library/` and `upload/` is empty, then our original config was missing the actual photo location entirely
 
 **Recommendation:** Before deploying, SSH into evo-x2 and run:
+
 ```bash
 ls -la /var/lib/immich/
 du -sh /var/lib/immich/upload/ /var/lib/immich/library/ 2>/dev/null

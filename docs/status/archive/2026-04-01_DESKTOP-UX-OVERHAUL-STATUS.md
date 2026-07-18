@@ -11,19 +11,20 @@
 
 ### 1. Rofi — Grid Launcher (adi1090x Type 3 Style 1)
 
-| File | Change |
-|------|--------|
+| File                                | Change                                                                                                         |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `platforms/nixos/programs/rofi.nix` | Complete rewrite: 5×3 icon grid, 56px icons, Catppuccin Mocha colors, rounded corners, vertical element layout |
 
 **Keybindings:** `Mod+D` and `Mod+Space`
 
 ### 2. Waybar — Minimal Restyle
 
-| File | Change |
-|------|--------|
+| File                                 | Change                                                   |
+| ------------------------------------ | -------------------------------------------------------- |
 | `platforms/nixos/desktop/waybar.nix` | Removed 7 redundant modules, flat styling, weather added |
 
 **Removed modules:**
+
 - `idle_inhibitor` (eye button — useless on desktop)
 - `custom/netbandwidth` (duplicate IP info with `network`)
 - `custom/gpu` (duplicate temp with `temperature`)
@@ -40,64 +41,64 @@
 
 ### 3. Swaylock — Blur + Catppuccin
 
-| File | Change |
-|------|--------|
+| File                                    | Change                                                                             |
+| --------------------------------------- | ---------------------------------------------------------------------------------- |
 | `platforms/nixos/programs/swaylock.nix` | NEW: swaylock-effects with gaussian blur, vignette, clock, Catppuccin Mocha colors |
-| `platforms/nixos/desktop/multi-wm.nix` | Changed `swaylock` → `swaylock-effects` |
+| `platforms/nixos/desktop/multi-wm.nix`  | Changed `swaylock` → `swaylock-effects`                                            |
 
 ### 4. Yazi — Terminal File Manager
 
-| File | Change |
-|------|--------|
+| File                                | Change                                                                                       |
+| ----------------------------------- | -------------------------------------------------------------------------------------------- |
 | `platforms/nixos/programs/yazi.nix` | NEW: Catppuccin Mocha theme, image/video preview deps, smart open rules, vim-like navigation |
-| `platforms/nixos/users/home.nix` | Added import + package |
+| `platforms/nixos/users/home.nix`    | Added import + package                                                                       |
 
 **Keybindings added to yazi:** `<C-c>` copy, `<C-x>` cut, `<C-v>` paste, `<C-s>` search, `g h/p/c` quick nav
 
 ### 5. Dunst — Notification Restyle
 
-| File | Change |
-|------|--------|
+| File                                      | Change                                                                                      |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------- |
 | `platforms/nixos/users/home.nix` (inline) | Glass-morphism, semi-transparent, repositioned top-right, smaller icons, cleaner separators |
 
 ### 6. Niri Keybindings — New Shortcuts
 
-| Key | Action | File |
-|-----|--------|------|
-| `F11` | Toggle fullscreen | `niri-wrapped.nix:218` |
-| `Mod+F11` | Screenshot screen → swappy + clipboard | `niri-wrapped.nix:221` |
-| `Mod+Shift+F11` | Screenshot area → swappy + clipboard | `niri-wrapped.nix:220` |
-| `Mod+Ctrl+F11` | Screenshot monitor → swappy + clipboard | `niri-wrapped.nix:222` |
-| `Mod+Space` | App launcher (rofi) | `niri-wrapped.nix:203` |
-| `Mod+C` | Clipboard history (cliphist + rofi) | `niri-wrapped.nix:204` |
-| `Mod+.` | Emoji picker (rofi-emoji) | `niri-wrapped.nix:205` |
-| `Mod+Shift+C` | Calculator (rofi-calc) | `niri-wrapped.nix:206` |
-| `Mod+Shift+N` | Notification history (dunstctl + rofi) | `niri-wrapped.nix:207` |
-| `Mod+Z` | Zed editor | `niri-wrapped.nix:208` |
-| `Mod+Shift+F` | Floating file manager (yazi in kitty) | `niri-wrapped.nix:209` |
-| `Mod+Shift+/` | Show keybinding list | `niri-wrapped.nix:204` |
+| Key             | Action                                  | File                   |
+| --------------- | --------------------------------------- | ---------------------- |
+| `F11`           | Toggle fullscreen                       | `niri-wrapped.nix:218` |
+| `Mod+F11`       | Screenshot screen → swappy + clipboard  | `niri-wrapped.nix:221` |
+| `Mod+Shift+F11` | Screenshot area → swappy + clipboard    | `niri-wrapped.nix:220` |
+| `Mod+Ctrl+F11`  | Screenshot monitor → swappy + clipboard | `niri-wrapped.nix:222` |
+| `Mod+Space`     | App launcher (rofi)                     | `niri-wrapped.nix:203` |
+| `Mod+C`         | Clipboard history (cliphist + rofi)     | `niri-wrapped.nix:204` |
+| `Mod+.`         | Emoji picker (rofi-emoji)               | `niri-wrapped.nix:205` |
+| `Mod+Shift+C`   | Calculator (rofi-calc)                  | `niri-wrapped.nix:206` |
+| `Mod+Shift+N`   | Notification history (dunstctl + rofi)  | `niri-wrapped.nix:207` |
+| `Mod+Z`         | Zed editor                              | `niri-wrapped.nix:208` |
+| `Mod+Shift+F`   | Floating file manager (yazi in kitty)   | `niri-wrapped.nix:209` |
+| `Mod+Shift+/`   | Show keybinding list                    | `niri-wrapped.nix:204` |
 
 ### 7. Niri Window Rules
 
-| Rule | Change |
-|------|--------|
-| Terminal opacity | `0.95` transparency on tiled windows |
-| Floating class | `floating` app-id opens centered, 50%×70% |
-| Terminal widths | kitty/foot/helium default to 75% column width |
+| Rule             | Change                                        |
+| ---------------- | --------------------------------------------- |
+| Terminal opacity | `0.95` transparency on tiled windows          |
+| Floating class   | `floating` app-id opens centered, 50%×70%     |
+| Terminal widths  | kitty/foot/helium default to 75% column width |
 
 ### 8. Monitor Brightness — DDC/CI
 
-| File | Change |
-|------|--------|
-| `platforms/nixos/system/boot.nix` | Added `i2c-dev` kernel module |
-| `platforms/nixos/system/configuration.nix` | Added `i2c` group to user |
-| `platforms/nixos/users/home.nix` | Added `ddcutil` package |
+| File                                        | Change                                                      |
+| ------------------------------------------- | ----------------------------------------------------------- |
+| `platforms/nixos/system/boot.nix`           | Added `i2c-dev` kernel module                               |
+| `platforms/nixos/system/configuration.nix`  | Added `i2c` group to user                                   |
+| `platforms/nixos/users/home.nix`            | Added `ddcutil` package                                     |
 | `platforms/nixos/programs/niri-wrapped.nix` | Brightness keys use `ddcutil` with `brightnessctl` fallback |
 
 ### 9. Zed Editor — Configuration
 
-| File | Change |
-|------|--------|
+| File                                         | Change                                                                                     |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------ |
 | `platforms/nixos/programs/zed/settings.json` | NEW: Catppuccin Mocha theme, vim mode, JetBrainsMono, 14pt font, inline blame, inlay hints |
 
 ### 10. New Packages
@@ -116,27 +117,27 @@
 
 ### Critical
 
-| # | Bug | Impact | File | Fix |
-|---|-----|--------|------|-----|
-| 1 | **`wl-clipboard` removed from home.nix** | Clipboard completely broken — `wl-copy`/`wl-paste` missing | `home.nix:132-135` | Restore `wl-clipboard` package |
-| 2 | **Screenshots use `tee >()`** | Process substitution is bash-only, niri spawns with `sh -c` | `niri-wrapped.nix:220-222` | Use temp file approach instead |
+| #   | Bug                                      | Impact                                                      | File                       | Fix                            |
+| --- | ---------------------------------------- | ----------------------------------------------------------- | -------------------------- | ------------------------------ |
+| 1   | **`wl-clipboard` removed from home.nix** | Clipboard completely broken — `wl-copy`/`wl-paste` missing  | `home.nix:132-135`         | Restore `wl-clipboard` package |
+| 2   | **Screenshots use `tee >()`**            | Process substitution is bash-only, niri spawns with `sh -c` | `niri-wrapped.nix:220-222` | Use temp file approach instead |
 
 ### Minor
 
-| # | Bug | Impact | File | Fix |
-|---|-----|--------|------|-----|
-| 3 | **`bemoji` redundant** | `rofi-emoji` includes its own emoji database | `home.nix:135` | Remove `bemoji` |
-| 4 | **Zed settings not wired** | `settings.json` exists but Home Manager doesn't deploy it to `~/.config/zed/` | `programs/zed/settings.json` | Add `xdg.configFile` or HM zed module |
+| #   | Bug                        | Impact                                                                        | File                         | Fix                                   |
+| --- | -------------------------- | ----------------------------------------------------------------------------- | ---------------------------- | ------------------------------------- |
+| 3   | **`bemoji` redundant**     | `rofi-emoji` includes its own emoji database                                  | `home.nix:135`               | Remove `bemoji`                       |
+| 4   | **Zed settings not wired** | `settings.json` exists but Home Manager doesn't deploy it to `~/.config/zed/` | `programs/zed/settings.json` | Add `xdg.configFile` or HM zed module |
 
 ---
 
 ## C. NOT DONE (intentionally skipped)
 
-| Item | Reason |
-|------|--------|
-| Idle toggle (`Mod+Shift+I`) | **Too dangerous** — killing swayidle would permanently break auto-lock. Needs proper toggle approach. |
-| System menu (rofi wifi/bt/audio) | **Too complex** for marginal value. pavucontrol, blueman already accessible via app launcher. |
-| Wallpaper rotation timer | Not yet implemented. Would need a systemd user timer cycling swww every 30min. |
+| Item                             | Reason                                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Idle toggle (`Mod+Shift+I`)      | **Too dangerous** — killing swayidle would permanently break auto-lock. Needs proper toggle approach. |
+| System menu (rofi wifi/bt/audio) | **Too complex** for marginal value. pavucontrol, blueman already accessible via app launcher.         |
+| Wallpaper rotation timer         | Not yet implemented. Would need a systemd user timer cycling swww every 30min.                        |
 
 ---
 

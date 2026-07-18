@@ -457,11 +457,13 @@ just ssh-keys-rotate    # Rotate keys across all hosts
 ### Question: Should the NixOS SSH server module consume keys directly from the `sshKeys` flake output, or should it remain decoupled?
 
 **Context**:
+
 - Currently `nix-ssh-config` exposes `sshKeys` as a flake output
 - The consumer (`configuration.nix`) manually bridges: `authorizedKeys.keys = [ nix-ssh-config.sshKeys.lars ]`
 - The NixOS module (`modules/nixos/ssh.nix`) has its own `authorizedKeysFiles` option but doesn't know about `sshKeys`
 
 **Option A: Keep decoupled (current)**
+
 ```nix
 # nix-ssh-config: Just exposes keys
 sshKeys = { lars = "..."; };
@@ -469,24 +471,28 @@ sshKeys = { lars = "..."; };
 # SystemNix: Manual bridging
 authorizedKeys.keys = [ nix-ssh-config.sshKeys.lars ];
 ```
+
 - ✅ Module is pure, no flake-specific coupling
 - ✅ Keys can come from anywhere (not just this flake)
 - ❌ Consumer has to know about both the module and the flake output
 - ❌ Boilerplate at every consumption site
 
 **Option B: Module accepts flake output directly**
+
 ```nix
 # nix-ssh-config: Module option
 services.ssh-server.authorizedKeys = [ "lars" ]; # references sshKeys by name
 
 # Internally resolves: sshKeys.${name}
 ```
+
 - ✅ Less boilerplate at consumption sites
 - ✅ Single source of truth for key names
 - ❌ Module needs access to `sshKeys` — circular dependency risk
 - ❌ Couples the module to its own flake's output structure
 
 **Option C: Separate "profile" module that bridges both**
+
 ```nix
 # nix-ssh-config: Profile module
 # Combines sshKeys + ssh-server into a unified interface
@@ -495,6 +501,7 @@ services.ssh-profiles.default = {
   server = { enable = true; allowUsers = [ "lars" ]; };
 };
 ```
+
 - ✅ Clean separation of concerns
 - ✅ Easy to use
 - ❌ More abstraction layers
@@ -508,29 +515,29 @@ services.ssh-profiles.default = {
 
 ## Metrics
 
-| Metric | Before | After |
-|--------|--------|-------|
-| SSH key source | 2 relative paths | 1 flake output |
-| Runtime path checks | 2x `builtins.pathExists` | 0 |
-| File reads | 2x `builtins.readFile` | 0 (handled by flake) |
-| Pure evaluation compatible | No (relative paths) | Yes |
-| Single source of truth | No (duplicated keys) | Yes (`nix-ssh-config`) |
-| Files deleted | — | `ssh-keys/lars.pub` |
-| Eval verification | — | ✅ Passes |
+| Metric                     | Before                   | After                  |
+| -------------------------- | ------------------------ | ---------------------- |
+| SSH key source             | 2 relative paths         | 1 flake output         |
+| Runtime path checks        | 2x `builtins.pathExists` | 0                      |
+| File reads                 | 2x `builtins.readFile`   | 0 (handled by flake)   |
+| Pure evaluation compatible | No (relative paths)      | Yes                    |
+| Single source of truth     | No (duplicated keys)     | Yes (`nix-ssh-config`) |
+| Files deleted              | —                        | `ssh-keys/lars.pub`    |
+| Eval verification          | —                        | ✅ Passes              |
 
 ---
 
 ## Files Changed
 
-| File | Change | Reason |
-|------|--------|--------|
-| `nix-ssh-config/flake.nix` | Added `sshKeys` output | Expose keys as flake attribute |
-| `SystemNix/flake.nix` | Added `nix-ssh-config` to NixOS specialArgs | Pass to system config |
-| `SystemNix/flake.nix` | Changed `crush-config` URL to GitHub | Works on any machine |
-| `SystemNix/flake.lock` | Updated lock | New nix-ssh-config revision |
-| `platforms/nixos/system/configuration.nix` | Pure flake output key consumption | Eliminate path fragility |
-| `ssh-keys/lars.pub` | Deleted | Duplicate, now in nix-ssh-config |
-| `AGENTS.md` | Updated crush-config docs | Reflect GitHub URL |
+| File                                       | Change                                      | Reason                           |
+| ------------------------------------------ | ------------------------------------------- | -------------------------------- |
+| `nix-ssh-config/flake.nix`                 | Added `sshKeys` output                      | Expose keys as flake attribute   |
+| `SystemNix/flake.nix`                      | Added `nix-ssh-config` to NixOS specialArgs | Pass to system config            |
+| `SystemNix/flake.nix`                      | Changed `crush-config` URL to GitHub        | Works on any machine             |
+| `SystemNix/flake.lock`                     | Updated lock                                | New nix-ssh-config revision      |
+| `platforms/nixos/system/configuration.nix` | Pure flake output key consumption           | Eliminate path fragility         |
+| `ssh-keys/lars.pub`                        | Deleted                                     | Duplicate, now in nix-ssh-config |
+| `AGENTS.md`                                | Updated crush-config docs                   | Reflect GitHub URL               |
 
 ---
 

@@ -43,6 +43,7 @@ New `btrfs-inventory` flake app. Lists all subvolumes, snapshots, and mount poin
 **File:** `AGENTS.md`
 
 Updated three paragraphs:
+
 - Subvolume layout: removed "NOT snapshotted" for `/data`
 - Snapshots: documented `/data` btrbk instance, pre-deploy automation
 - Scrub: updated from "NOT alerted" to "Prometheus metrics + Gatus Discord alert"
@@ -81,18 +82,18 @@ Updated three paragraphs:
 
 ## C) NOT STARTED (intentionally skipped — not NixOS config)
 
-| Task | Why skipped |
-|------|-------------|
-| T01: `smartctl -a` SMART check | Operational task, not NixOS config |
-| T02: `btrfs scrub start /data` | Operational task, not NixOS config |
-| T03: `btrfs scrub start /` | Operational task, not NixOS config |
-| T04: Document scrub results | Requires T02/T03 results first |
-| T07-T09: Remote backup (btrbk target + SSH) | Requires actual backup target infrastructure (Hetzner StorageBox) |
-| T14: compsize baseline measurement | Operational task |
-| T16: DMS compression widget | QML development, separate concern |
-| T17-T21: Documentation (layout ref, disaster recovery, subvolume migration, Disko spec) | Pure docs, user said "I care about NixOS configurations" |
-| T23: btrfs usage baseline | Operational task |
-| T24: Update TODO_LIST.md | Not done — should have been |
+| Task                                                                                    | Why skipped                                                       |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| T01: `smartctl -a` SMART check                                                          | Operational task, not NixOS config                                |
+| T02: `btrfs scrub start /data`                                                          | Operational task, not NixOS config                                |
+| T03: `btrfs scrub start /`                                                              | Operational task, not NixOS config                                |
+| T04: Document scrub results                                                             | Requires T02/T03 results first                                    |
+| T07-T09: Remote backup (btrbk target + SSH)                                             | Requires actual backup target infrastructure (Hetzner StorageBox) |
+| T14: compsize baseline measurement                                                      | Operational task                                                  |
+| T16: DMS compression widget                                                             | QML development, separate concern                                 |
+| T17-T21: Documentation (layout ref, disaster recovery, subvolume migration, Disko spec) | Pure docs, user said "I care about NixOS configurations"          |
+| T23: btrfs usage baseline                                                               | Operational task                                                  |
+| T24: Update TODO_LIST.md                                                                | Not done — should have been                                       |
 
 ---
 
@@ -122,6 +123,7 @@ AGENTS.md was updated but TODO_LIST.md was not. The BTRFS tasks from the Pareto 
 ### E1: Fix BUG 1 + BUG 5 — Add CAP_SYS_ADMIN to btrfs-health + btrfs-compsize
 
 The `harden {}` function defaults `CapabilityBoundingSet = ""`. BTRFS ioctls (`scrub`, `qgroup`, `filesystem usage`) need `CAP_SYS_ADMIN`. The existing `btrfs filesystem usage` in `btrfsChunkCheck` apparently works (it was deployed before this session), which suggests either:
+
 - It doesn't need CAP_SYS_ADMIN (reads from sysfs, not ioctl), OR
 - The existing btrfs-health service was already silently failing on some metrics
 
@@ -138,6 +140,7 @@ Either add a `btrfs quota enable` oneshot, or remove the qgroup metrics block si
 ### E4: Test on the actual system
 
 After deploying, verify:
+
 ```bash
 # Check that metrics are actually produced
 cat /var/lib/prometheus-node-exporter/textfile_collectors/btrfs.prom | grep scrub
@@ -157,6 +160,7 @@ Currently only snapshots `@` (root subvolume). Should also snapshot `/data` for 
 ## F) Next 50 things to get done
 
 ### Critical (fix what's broken)
+
 1. Add `CapabilityBoundingSet = "CAP_SYS_ADMIN"` to btrfs-health service
 2. Add `CapabilityBoundingSet = "CAP_SYS_ADMIN"` to btrfs-compsize service
 3. Fix compsize awk parsing (drop byte metrics or parse suffixes)
@@ -165,6 +169,7 @@ Currently only snapshots `@` (root subvolume). Should also snapshot `/data` for 
 6. Verify Gatus scrub health check doesn't false-positive on first deploy
 
 ### High priority (from Pareto plan Tier 1-2)
+
 7. Run `sudo btrfs scrub start /` (operational)
 8. Run `sudo btrfs scrub start /data` (operational)
 9. Run `sudo smartctl -a /dev/nvme0n1` (operational)
@@ -177,6 +182,7 @@ Currently only snapshots `@` (root subvolume). Should also snapshot `/data` for 
 16. Verify pre-deploy snapshot doesn't break deploy.sh flow
 
 ### Medium priority (monitoring + efficiency)
+
 17. Add Gatus compression ratio endpoint (after compsize metrics work)
 18. Add Gatus BTRFS unallocated space alert (threshold-based, not just presence check)
 19. Add Gatus BTRFS metadata utilization alert (threshold-based)
@@ -187,6 +193,7 @@ Currently only snapshots `@` (root subvolume). Should also snapshot `/data` for 
 24. Monitor btrfs-compsize execution time (should not exceed timer interval)
 
 ### Documentation (Tier 4)
+
 25. Write `docs/reference/btrfs-layout.md` (T17)
 26. Write `docs/troubleshooting/btrfs-disaster-recovery.md` (T18)
 27. Write `@nix` subvolume migration procedure (T19)
@@ -199,6 +206,7 @@ Currently only snapshots `@` (root subvolume). Should also snapshot `/data` for 
 34. Write runbook for "Gatus BTRFS Chunk Health alert received"
 
 ### Hardening + robustness
+
 35. Add `StartLimitBurst` / `StartLimitIntervalSec` to btrfs-compsize
 36. Consider separate textfile collector per metric group (isolation)
 37. Add lockfile to compsize script (prevent overlapping runs on huge filesystems)
@@ -209,6 +217,7 @@ Currently only snapshots `@` (root subvolume). Should also snapshot `/data` for 
 42. Add Prometheus alert for "scrub hasn't completed in 35 days" (monthly + buffer)
 
 ### Architecture improvements
+
 43. Consider splitting btrfs-health.nix into separate files per concern (chunk, scrub, compsize)
 44. Extract scrub status parsing into its own writeShellApplication (reusable)
 45. Consider using `btrfs device stats` for additional error metrics
@@ -240,15 +249,15 @@ Both open questions resolved. All critical bugs fixed.
 
 Analyzed `fs/btrfs/ioctl.c` (torvalds/linux) directly. Each ioctl has an explicit `capable(CAP_SYS_ADMIN)` check at function entry — no guessing needed:
 
-| btrfs-progs command | Kernel function | `CAP_SYS_ADMIN` check | Line (torvalds/linux) |
-|---------------------|-----------------|----------------------|----------------------|
-| `btrfs filesystem usage` | `btrfs_ioctl_fs_info` | **NO** | ioctl.c:2680 |
-| `btrfs scrub status` | `btrfs_ioctl_scrub_progress` | **YES** (`if (!capable(CAP_SYS_ADMIN)) return -EPERM`) | ioctl.c:3118 |
-| `btrfs scrub start` | `btrfs_ioctl_scrub` | **YES** | ioctl.c:3058 |
-| `btrfs scrub cancel` | `btrfs_ioctl_scrub_cancel` | **YES** | ioctl.c:3106 |
-| `btrfs qgroup show` | `btrfs_ioctl_tree_search` | **YES** | ioctl.c:1681 |
-| `btrfs quota enable` | `btrfs_ioctl_quota_ctl` | **YES** | ioctl.c:3627 |
-| `compsize` | `BTRFS_IOC_FS_INFO` | **NO** (uses `btrfs_ioctl_fs_info`) | ioctl.c:2680 |
+| btrfs-progs command      | Kernel function              | `CAP_SYS_ADMIN` check                                  | Line (torvalds/linux) |
+| ------------------------ | ---------------------------- | ------------------------------------------------------ | --------------------- |
+| `btrfs filesystem usage` | `btrfs_ioctl_fs_info`        | **NO**                                                 | ioctl.c:2680          |
+| `btrfs scrub status`     | `btrfs_ioctl_scrub_progress` | **YES** (`if (!capable(CAP_SYS_ADMIN)) return -EPERM`) | ioctl.c:3118          |
+| `btrfs scrub start`      | `btrfs_ioctl_scrub`          | **YES**                                                | ioctl.c:3058          |
+| `btrfs scrub cancel`     | `btrfs_ioctl_scrub_cancel`   | **YES**                                                | ioctl.c:3106          |
+| `btrfs qgroup show`      | `btrfs_ioctl_tree_search`    | **YES**                                                | ioctl.c:1681          |
+| `btrfs quota enable`     | `btrfs_ioctl_quota_ctl`      | **YES**                                                | ioctl.c:3627          |
+| `compsize`               | `BTRFS_IOC_FS_INFO`          | **NO** (uses `btrfs_ioctl_fs_info`)                    | ioctl.c:2680          |
 
 **Conclusion:** The existing `btrfs filesystem usage` metrics have been working correctly all along — `btrfs_ioctl_fs_info` has no capability check. The new scrub metrics would have silently failed without `CAP_SYS_ADMIN`.
 
@@ -259,6 +268,7 @@ Analyzed `fs/btrfs/ioctl.c` (torvalds/linux) directly. Each ioctl has an explici
 User decision: quotas stay disabled on QLC NAND. The metadata overhead from qgroup accounting is not worth per-subvolume tracking on I/O-sensitive hardware. If the NVMe is upgraded to TLC/MLC, quotas should be enabled and qgroup metrics re-added.
 
 **Action taken:**
+
 - Removed the entire qgroup metrics block (HELP/TYPE headers + `btrfs qgroup show` + awk parsing) from `btrfs-health-metrics`
 - Documented in `AGENTS.md` under a new **"BTRFS quotas (qgroups)"** paragraph: NOT enabled, with a note to re-enable on a TLC/MLC NVMe upgrade. Git history for `btrfs_qgroup_referenced_bytes` will surface the removed code when needed
 
@@ -284,15 +294,15 @@ The `-b` flag means `--binary` (KiB/MiB/GiB suffixes), NOT raw bytes. The awk wa
 
 ### Summary of audit → fix mapping
 
-| Audit item | Status | What changed |
-|------------|--------|--------------|
-| Q1 (CAP_SYS_ADMIN) | **RESOLVED** | Kernel source confirmed: `filesystem usage` = NO, `scrub` = YES, `qgroup` = YES, `compsize` = NO. Added `CAP_SYS_ADMIN` to both services. |
-| Q2 (quotas) | **RESOLVED** | NOT enabling. Removed qgroup metrics. Documented in AGENTS.md. Re-enable on TLC/MLC upgrade. |
-| BUG 1 (CAP_SYS_ADMIN on btrfs-health) | **FIXED** | `CapabilityBoundingSet = "CAP_SYS_ADMIN"` |
-| BUG 2 (quotas not enabled) | **RESOLVED** | Moot — quotas intentionally disabled, qgroup metrics removed |
-| BUG 3 (scrub awk fragility) | **ACCEPTED** | Low risk. Patterns cover btrfs-progs stable output. Worst case: false zero on exotic error formats. |
-| BUG 4 (compsize -b suffix) | **FIXED** | Dropped byte metrics, kept ratio only, removed `-b` flag |
-| BUG 5 (CAP_SYS_ADMIN on compsize) | **FIXED** | `CapabilityBoundingSet = "CAP_SYS_ADMIN"` (defense-in-depth) |
+| Audit item                            | Status       | What changed                                                                                                                              |
+| ------------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Q1 (CAP_SYS_ADMIN)                    | **RESOLVED** | Kernel source confirmed: `filesystem usage` = NO, `scrub` = YES, `qgroup` = YES, `compsize` = NO. Added `CAP_SYS_ADMIN` to both services. |
+| Q2 (quotas)                           | **RESOLVED** | NOT enabling. Removed qgroup metrics. Documented in AGENTS.md. Re-enable on TLC/MLC upgrade.                                              |
+| BUG 1 (CAP_SYS_ADMIN on btrfs-health) | **FIXED**    | `CapabilityBoundingSet = "CAP_SYS_ADMIN"`                                                                                                 |
+| BUG 2 (quotas not enabled)            | **RESOLVED** | Moot — quotas intentionally disabled, qgroup metrics removed                                                                              |
+| BUG 3 (scrub awk fragility)           | **ACCEPTED** | Low risk. Patterns cover btrfs-progs stable output. Worst case: false zero on exotic error formats.                                       |
+| BUG 4 (compsize -b suffix)            | **FIXED**    | Dropped byte metrics, kept ratio only, removed `-b` flag                                                                                  |
+| BUG 5 (CAP_SYS_ADMIN on compsize)     | **FIXED**    | `CapabilityBoundingSet = "CAP_SYS_ADMIN"` (defense-in-depth)                                                                              |
 
 ---
 
@@ -317,6 +327,7 @@ Two non-BTRFS instances remain in desktop config (`niri-config.nix:104`, `niri-w
 AGENTS.md mandates `startLimitBurst = 5; startLimitIntervalSec = 300;` on all services. Neither `btrfs-health` nor `btrfs-compsize` had them. Additionally, `compsize` walks the entire BTRFS extent tree and can hang on a broken filesystem — it had no `TimeoutStartSec`.
 
 **Fix:**
+
 - Added `startLimitBurst = 5; startLimitIntervalSec = 300;` to both `btrfs-health` and `btrfs-compsize`
 - Added `TimeoutStartSec = 120;` to `btrfs-compsize` (120s ceiling on extent-tree walk)
 - Verified all three resolve via `nix eval`
@@ -332,6 +343,7 @@ User decided pre-deploy snapshots are unnecessary — btrbk daily snapshots at 2
 **File:** `TODO_LIST.md`
 
 Three BTRFS task descriptions updated to reflect current status:
+
 - Scrub task: notes that monitoring infrastructure is complete (metrics + Gatus alerting)
 - `/data` subvolume migration: notes btrbk snapshot protection now exists (daily 23:30, 14d+4w)
 - Stale `post-deploy-check.sh` path fix: removed (deploy.sh already uses `nix run .#post-deploy-check`)

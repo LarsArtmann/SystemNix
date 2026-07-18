@@ -18,6 +18,7 @@ Fixed dnsblockd OTel semconv schema conflict that prevented startup. Fixed herme
 ### 1. dnsblockd OTel Schema Conflict Fix
 
 **Problem:** `dnsblockd.service` crash-looped with:
+
 ```
 ERROR: conflicting Schema URL: https://opentelemetry.io/schemas/1.40.0 and https://opentelemetry.io/schemas/1.26.0
 ```
@@ -27,6 +28,7 @@ ERROR: conflicting Schema URL: https://opentelemetry.io/schemas/1.40.0 and https
 **Fix:** Changed import from `semconv/v1.26.0` → `semconv/v1.40.0` in dnsblockd upstream. Also updated vendorHash for the Nix build.
 
 **Commits upstream:**
+
 - `713df8c` — semconv fix
 - `a0b1879` — vendorHash update
 
@@ -39,6 +41,7 @@ ERROR: conflicting Schema URL: https://opentelemetry.io/schemas/1.40.0 and https
 **Result:** `/home/hermes` had 9.6MB of fresh empty state, not the 1.3GB from `/home/lars/.hermes`.
 
 **Fix:** Changed the check to verify `state.db` exists AND is > 1MB (indicating real data):
+
 ```bash
 if [ -f "$NEW/state.db" ] && [ "$(stat -c%s "$NEW/state.db")" -gt 1048576 ]; then
 ```
@@ -65,6 +68,7 @@ nh os boot . -v                           → ✅ added to bootloader
 - `/var/lib/hermes` — 4KB empty shell. **Safe to delete.**
 
 User action needed:
+
 ```bash
 trash /home/lars/.hermes
 sudo trash /var/lib/hermes
@@ -105,33 +109,33 @@ The original migration script was broken from the start — `tmpfiles.rules` cre
 
 ## F) Top 25 Things We Should Get Done Next
 
-| # | Priority | Task | Impact | Effort |
-|---|----------|------|--------|--------|
-| 1 | P0 | **Trash `/home/lars/.hermes`** — 1.3GB freed | Cleanup | 1min |
-| 2 | P0 | **Trash `/var/lib/hermes`** — 4KB freed | Cleanup | 1min |
-| 3 | P0 | **Commit hermes migration fix** — uncommitted change | Git | 1min |
-| 4 | P1 | **Verify hermes Discord bot responds** — test end-to-end | Verification | 5min |
-| 5 | P1 | **Test hermes voice playback** — join Discord voice channel | Verification | 5min |
-| 6 | P1 | **Run `just health`** — full system health check | Monitoring | 5min |
-| 7 | P1 | **Update AGENTS.md with migration fix pattern** — document the state.db > 1MB trick | Docs | 10min |
-| 8 | P2 | **Add hermes state verification to justfile** — `just hermes-verify` checks state.db size, file count | DX | 15min |
-| 9 | P2 | **Reorder tmpfiles vs migration** — make migration run before tmpfiles creates subdirs | Code quality | 30min |
-| 10 | P2 | **Add migration verification step** — post-migration du/sha256 check | Reliability | 15min |
-| 11 | P2 | **Update status report from earlier session** — note that migration was silently broken | Docs | 5min |
-| 12 | P2 | **Run `just format`** — ensure all Nix files are formatted | Hygiene | 2min |
-| 13 | P2 | **Check all buildGoModule packages for similar issues** — dnsblockd, netwatch, monitor365 | Reliability | 30min |
-| 14 | P3 | **Push all commits to origin** — `git push` | Git | 1min |
-| 15 | P3 | **Add `GOFLAGS` documentation to AGENTS.md** — how proxyVendor interacts with -mod=vendor | Docs | 10min |
-| 16 | P3 | **Document dontFixup + modPostBuild pattern** — for other Go packages needing go mod tidy | Docs | 10min |
-| 17 | P3 | **Audit all services for ProtectHome conflicts** — any with stateDir in /home/ | Security | 15min |
-| 18 | P3 | **Create `lib/buildGoModule.nix` helper** — extract go mod tidy pattern | DX | 30min |
-| 19 | P3 | **Add hermes to SigNoz monitoring** — OTel traces/metrics from hermes | Observability | 30min |
-| 20 | P3 | **Fix dnsblockd dependabot vulnerability** — check the high-severity alert | Security | 15min |
-| 21 | P4 | **Add hermes service to homepage dashboard** — show status on home.lan | UX | 15min |
-| 22 | P4 | **Add `just hermes-backup` command** — backup state.db | DX | 15min |
-| 23 | P4 | **Consider `ProtectHome = "read-only"` for hermes** — less permissive than false | Security | 10min |
-| 24 | P4 | **Add dnsblockd TLS handshake error to ignore list** — client offered unsupported versions is noise | Observability | 5min |
-| 25 | P4 | **Review all systemd service hardening** — ensure no ProtectHome conflicts elsewhere | Security | 30min |
+| #   | Priority | Task                                                                                                  | Impact        | Effort |
+| --- | -------- | ----------------------------------------------------------------------------------------------------- | ------------- | ------ |
+| 1   | P0       | **Trash `/home/lars/.hermes`** — 1.3GB freed                                                          | Cleanup       | 1min   |
+| 2   | P0       | **Trash `/var/lib/hermes`** — 4KB freed                                                               | Cleanup       | 1min   |
+| 3   | P0       | **Commit hermes migration fix** — uncommitted change                                                  | Git           | 1min   |
+| 4   | P1       | **Verify hermes Discord bot responds** — test end-to-end                                              | Verification  | 5min   |
+| 5   | P1       | **Test hermes voice playback** — join Discord voice channel                                           | Verification  | 5min   |
+| 6   | P1       | **Run `just health`** — full system health check                                                      | Monitoring    | 5min   |
+| 7   | P1       | **Update AGENTS.md with migration fix pattern** — document the state.db > 1MB trick                   | Docs          | 10min  |
+| 8   | P2       | **Add hermes state verification to justfile** — `just hermes-verify` checks state.db size, file count | DX            | 15min  |
+| 9   | P2       | **Reorder tmpfiles vs migration** — make migration run before tmpfiles creates subdirs                | Code quality  | 30min  |
+| 10  | P2       | **Add migration verification step** — post-migration du/sha256 check                                  | Reliability   | 15min  |
+| 11  | P2       | **Update status report from earlier session** — note that migration was silently broken               | Docs          | 5min   |
+| 12  | P2       | **Run `just format`** — ensure all Nix files are formatted                                            | Hygiene       | 2min   |
+| 13  | P2       | **Check all buildGoModule packages for similar issues** — dnsblockd, netwatch, monitor365             | Reliability   | 30min  |
+| 14  | P3       | **Push all commits to origin** — `git push`                                                           | Git           | 1min   |
+| 15  | P3       | **Add `GOFLAGS` documentation to AGENTS.md** — how proxyVendor interacts with -mod=vendor             | Docs          | 10min  |
+| 16  | P3       | **Document dontFixup + modPostBuild pattern** — for other Go packages needing go mod tidy             | Docs          | 10min  |
+| 17  | P3       | **Audit all services for ProtectHome conflicts** — any with stateDir in /home/                        | Security      | 15min  |
+| 18  | P3       | **Create `lib/buildGoModule.nix` helper** — extract go mod tidy pattern                               | DX            | 30min  |
+| 19  | P3       | **Add hermes to SigNoz monitoring** — OTel traces/metrics from hermes                                 | Observability | 30min  |
+| 20  | P3       | **Fix dnsblockd dependabot vulnerability** — check the high-severity alert                            | Security      | 15min  |
+| 21  | P4       | **Add hermes service to homepage dashboard** — show status on home.lan                                | UX            | 15min  |
+| 22  | P4       | **Add `just hermes-backup` command** — backup state.db                                                | DX            | 15min  |
+| 23  | P4       | **Consider `ProtectHome = "read-only"` for hermes** — less permissive than false                      | Security      | 10min  |
+| 24  | P4       | **Add dnsblockd TLS handshake error to ignore list** — client offered unsupported versions is noise   | Observability | 5min   |
+| 25  | P4       | **Review all systemd service hardening** — ensure no ProtectHome conflicts elsewhere                  | Security      | 30min  |
 
 ---
 
@@ -153,18 +157,18 @@ e44721f chore(deps): update flake.inputs monitor365-src and nix-community/NUR to
 
 ## Files Changed This Session (continued)
 
-| File | Change |
-|------|--------|
+| File                                | Change                                                       |
+| ----------------------------------- | ------------------------------------------------------------ |
 | `modules/nixos/services/hermes.nix` | Migration script: check state.db size > 1MB instead of ls -A |
-| `flake.lock` | dnsblockd pinned to a0b1879 (OTel fix + vendorHash) |
+| `flake.lock`                        | dnsblockd pinned to a0b1879 (OTel fix + vendorHash)          |
 
 ## System State
 
-| Component | Status |
-|-----------|--------|
-| Hermes | ✅ Running, migration completed (1.3GB state migrated) |
-| dnsblockd | ✅ Running, no OTel errors |
-| golangci-lint-auto-configure | ✅ Builds successfully |
-| Full pipeline | ✅ update → check → build → switch → boot all pass |
-| Old state dirs | ⚠️ `/home/lars/.hermes` (1.3GB) + `/var/lib/hermes` (4KB) — safe to trash |
-| Uncommitted changes | ⚠️ `modules/nixos/services/hermes.nix` — migration fix |
+| Component                    | Status                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| Hermes                       | ✅ Running, migration completed (1.3GB state migrated)                    |
+| dnsblockd                    | ✅ Running, no OTel errors                                                |
+| golangci-lint-auto-configure | ✅ Builds successfully                                                    |
+| Full pipeline                | ✅ update → check → build → switch → boot all pass                        |
+| Old state dirs               | ⚠️ `/home/lars/.hermes` (1.3GB) + `/var/lib/hermes` (4KB) — safe to trash |
+| Uncommitted changes          | ⚠️ `modules/nixos/services/hermes.nix` — migration fix                    |

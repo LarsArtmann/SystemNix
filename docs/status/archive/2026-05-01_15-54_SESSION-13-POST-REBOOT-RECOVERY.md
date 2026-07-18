@@ -11,25 +11,25 @@
 
 ### Service Recovery (6 crashed services → 0)
 
-| Service | Root Cause | Fix |
-|---------|-----------|-----|
-| **Caddy** | `bind` directive inside `servers {}` (invalid Caddy syntax) + `WatchdogSec=30` killing process during certmagic TLS init | Config already fixed pre-reboot; removed `WatchdogSec` entirely |
-| **SigNoz** | `ProtectSystem=strict` from hardening lib blocked mmap writes to `/var/lib/signoz/queries.active` → panic | Changed to `ProtectSystem=full`; added `--max-time --retry` to ExecStartPost health check |
-| **Authelia** | ExecStartPost `curl` had no timeout → hung forever → systemd 90s timeout killed service | Added `--max-time 3 --retry 30 --retry-delay 1 --retry-all-errors` |
-| **Photomap** | Podman blocked by hardening: `ProtectHome=true` → can't read containers.conf, `RestrictNamespaces=true` → can't clone namespaces, `NoNewPrivileges=true` → can't write uid_map, `CapabilityBoundingSet=""` → no capabilities | Removed hardening entirely — podman containers provide their own isolation |
-| **Whisper ASR** | Docker image tag `beecave/insanely-fast-whisper-rocm:1.0.0` doesn't exist on Docker Hub | Changed to `:main` |
-| **Twenty CRM** | Image `twentycrm/twenty:0.16.2` removed from Docker Hub (project jumped to v2.x) | Changed to `:latest` (already cached locally) |
+| Service         | Root Cause                                                                                                                                                                                                                   | Fix                                                                                       |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Caddy**       | `bind` directive inside `servers {}` (invalid Caddy syntax) + `WatchdogSec=30` killing process during certmagic TLS init                                                                                                     | Config already fixed pre-reboot; removed `WatchdogSec` entirely                           |
+| **SigNoz**      | `ProtectSystem=strict` from hardening lib blocked mmap writes to `/var/lib/signoz/queries.active` → panic                                                                                                                    | Changed to `ProtectSystem=full`; added `--max-time --retry` to ExecStartPost health check |
+| **Authelia**    | ExecStartPost `curl` had no timeout → hung forever → systemd 90s timeout killed service                                                                                                                                      | Added `--max-time 3 --retry 30 --retry-delay 1 --retry-all-errors`                        |
+| **Photomap**    | Podman blocked by hardening: `ProtectHome=true` → can't read containers.conf, `RestrictNamespaces=true` → can't clone namespaces, `NoNewPrivileges=true` → can't write uid_map, `CapabilityBoundingSet=""` → no capabilities | Removed hardening entirely — podman containers provide their own isolation                |
+| **Whisper ASR** | Docker image tag `beecave/insanely-fast-whisper-rocm:1.0.0` doesn't exist on Docker Hub                                                                                                                                      | Changed to `:main`                                                                        |
+| **Twenty CRM**  | Image `twentycrm/twenty:0.16.2` removed from Docker Hub (project jumped to v2.x)                                                                                                                                             | Changed to `:latest` (already cached locally)                                             |
 
 ### Systemic Fixes
 
-| Fix | Files | Impact |
-|-----|-------|--------|
-| **StartLimitIntervalSec** moved from `[Service]` to `[Unit]` | 14 service files across modules/ and platforms/ | Prevents systemd config warnings; correct semantics |
-| **lib/systemd.nix** `RestrictNamespaces` made configurable | 1 file | Was hardcoded `true`, blocking podman/container services |
-| **lib/systemd.nix** `NoNewPrivileges` made configurable | 1 file | Was hardcoded `true`, blocking podman user namespace setup |
-| **lib/systemd.nix** default `ProtectSystem` changed `strict` → `full` | 1 file | Prevents future read-only filesystem crashes for services that need `/var` writes |
-| **Ollama** `DynamicUser` disabled, runs as `lars:users` | ai-stack.nix | Dynamic UID couldn't write to `/data/ai/models/ollama` owned by lars |
-| **Home Manager** Jan data symlink mkdir | home.nix | `~/.config/Jan/` parent dir didn't exist at first boot |
+| Fix                                                                   | Files                                           | Impact                                                                            |
+| --------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------- |
+| **StartLimitIntervalSec** moved from `[Service]` to `[Unit]`          | 14 service files across modules/ and platforms/ | Prevents systemd config warnings; correct semantics                               |
+| **lib/systemd.nix** `RestrictNamespaces` made configurable            | 1 file                                          | Was hardcoded `true`, blocking podman/container services                          |
+| **lib/systemd.nix** `NoNewPrivileges` made configurable               | 1 file                                          | Was hardcoded `true`, blocking podman user namespace setup                        |
+| **lib/systemd.nix** default `ProtectSystem` changed `strict` → `full` | 1 file                                          | Prevents future read-only filesystem crashes for services that need `/var` writes |
+| **Ollama** `DynamicUser` disabled, runs as `lars:users`               | ai-stack.nix                                    | Dynamic UID couldn't write to `/data/ai/models/ollama` owned by lars              |
+| **Home Manager** Jan data symlink mkdir                               | home.nix                                        | `~/.config/Jan/` parent dir didn't exist at first boot                            |
 
 ### Final State: 19/19 services running, 0 failures
 
@@ -97,33 +97,33 @@ Nothing currently broken. The session started with 6 services in crash loops (80
 
 Sorted by (impact × urgency) / effort:
 
-| # | Action | Impact | Effort | Est. |
-|---|--------|--------|--------|------|
-| 1 | **Pin Docker images by digest** (whisper, twenty, photomap) | High | Low | 15min |
-| 2 | **Add SIGNOZ_TOKENIZER_JWT_SECRET** via sops | High | Low | 10min |
-| 3 | **Create `lib/systemd/podman.nix`** hardening profile | Medium | Low | 10min |
-| 4 | **Create `lib/systemd/health-check.nix`** shared curl helper | Medium | Low | 10min |
-| 5 | **Update Gitea GitHub mirror token** | High | Trivial | 2min |
-| 6 | **Nix GC + Docker image prune timer** | Medium | Low | 15min |
-| 7 | **Audit disk usage** — find large dirs/files | Medium | Low | 10min |
-| 8 | **Verify Twenty CRM v2.x data integrity** | Medium | Medium | 20min |
-| 9 | **Verify SigNoz dashboards/alerts** provisioned correctly | Medium | Low | 10min |
-| 10 | **Add signoz alert for service crash loops** | Medium | Medium | 15min |
-| 11 | **Update homepage dashboard** for new services | Low | Low | 10min |
-| 12 | **Test Caddy TLS cert renewal** | Medium | Low | 5min |
-| 13 | **Verify whisper-asr GPU passthrough** working | Medium | Low | 5min |
-| 14 | **Add backup verification** for twenty DB | Medium | Low | 5min |
-| 15 | **Review swap usage** — 11GB seems high | Low | Low | 10min |
-| 16 | **Add systemd watchdog** for services that support sd_notify (caddy, gitea) | Medium | Medium | 15min |
-| 17 | **Consolidate StartLimitBurst/IntervalSec** into serviceDefaults | Low | Low | 10min |
-| 18 | **Add emeet-pixyd** to signoz-collector scrape config | Low | Trivial | 5min |
-| 19 | **Create integration test** for hardening lib | High | High | 30min |
-| 20 | **Niri session restore test** | Medium | Low | 5min |
-| 21 | **Audit all sops secrets** — check for rotation needs | Medium | Medium | 20min |
-| 22 | **Add `services.*.enable` guards** for all services | Low | Low | 15min |
-| 23 | **Document hardening profiles** in AGENTS.md | Low | Low | 10min |
-| 24 | **BTRFS scrub timer** for data integrity | Medium | Low | 10min |
-| 25 | **Consider podman rootless** migration from Docker | High | High | 60min |
+| #   | Action                                                                      | Impact | Effort  | Est.  |
+| --- | --------------------------------------------------------------------------- | ------ | ------- | ----- |
+| 1   | **Pin Docker images by digest** (whisper, twenty, photomap)                 | High   | Low     | 15min |
+| 2   | **Add SIGNOZ_TOKENIZER_JWT_SECRET** via sops                                | High   | Low     | 10min |
+| 3   | **Create `lib/systemd/podman.nix`** hardening profile                       | Medium | Low     | 10min |
+| 4   | **Create `lib/systemd/health-check.nix`** shared curl helper                | Medium | Low     | 10min |
+| 5   | **Update Gitea GitHub mirror token**                                        | High   | Trivial | 2min  |
+| 6   | **Nix GC + Docker image prune timer**                                       | Medium | Low     | 15min |
+| 7   | **Audit disk usage** — find large dirs/files                                | Medium | Low     | 10min |
+| 8   | **Verify Twenty CRM v2.x data integrity**                                   | Medium | Medium  | 20min |
+| 9   | **Verify SigNoz dashboards/alerts** provisioned correctly                   | Medium | Low     | 10min |
+| 10  | **Add signoz alert for service crash loops**                                | Medium | Medium  | 15min |
+| 11  | **Update homepage dashboard** for new services                              | Low    | Low     | 10min |
+| 12  | **Test Caddy TLS cert renewal**                                             | Medium | Low     | 5min  |
+| 13  | **Verify whisper-asr GPU passthrough** working                              | Medium | Low     | 5min  |
+| 14  | **Add backup verification** for twenty DB                                   | Medium | Low     | 5min  |
+| 15  | **Review swap usage** — 11GB seems high                                     | Low    | Low     | 10min |
+| 16  | **Add systemd watchdog** for services that support sd_notify (caddy, gitea) | Medium | Medium  | 15min |
+| 17  | **Consolidate StartLimitBurst/IntervalSec** into serviceDefaults            | Low    | Low     | 10min |
+| 18  | **Add emeet-pixyd** to signoz-collector scrape config                       | Low    | Trivial | 5min  |
+| 19  | **Create integration test** for hardening lib                               | High   | High    | 30min |
+| 20  | **Niri session restore test**                                               | Medium | Low     | 5min  |
+| 21  | **Audit all sops secrets** — check for rotation needs                       | Medium | Medium  | 20min |
+| 22  | **Add `services.*.enable` guards** for all services                         | Low    | Low     | 15min |
+| 23  | **Document hardening profiles** in AGENTS.md                                | Low    | Low     | 10min |
+| 24  | **BTRFS scrub timer** for data integrity                                    | Medium | Low     | 10min |
+| 25  | **Consider podman rootless** migration from Docker                          | High   | High    | 60min |
 
 ---
 
@@ -139,10 +139,10 @@ Caddy is built as `Type=notify` by NixOS and is documented to support sd_notify.
 
 ## Commits This Session
 
-| SHA | Message |
-|-----|---------|
+| SHA       | Message                                                                                    |
+| --------- | ------------------------------------------------------------------------------------------ |
 | `4a2eab1` | fix(services): post-reboot recovery — fix 6 crashed services and systemic hardening issues |
-| `827cfac` | refactor(systemd): change default ProtectSystem to full, fix niri user service limits |
+| `827cfac` | refactor(systemd): change default ProtectSystem to full, fix niri user service limits      |
 
 ## Files Changed This Session
 

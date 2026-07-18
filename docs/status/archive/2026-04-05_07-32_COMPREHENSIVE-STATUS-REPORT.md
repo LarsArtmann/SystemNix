@@ -3,6 +3,7 @@
 **Session Date:** 2026-04-05 07:32:32
 **Branch:** master
 **Last 5 Commits:**
+
 ```
 6668f40 fix(nixos): enable HTTPS for Gitea by updating ROOT_URL protocol
 8b997ff fix(nixos): update Authelia session redirect URL from home to dash subdomain
@@ -15,23 +16,23 @@ a7e3b00 docs(reports): add eCapture TLS capture integration assessment with NOT 
 
 ## A) FULLY DONE ✅
 
-| Item | Status | Details |
-|------|--------|---------|
-| AppArmor disabled | ✅ Already done | `apparmor.enable = false` in `security-hardening.nix:41` — was set in commit `a7e3b00` |
-| Prometheus removal | ✅ Complete | No remaining `prometheus` references in any `.nix` file |
-| `*.lan` → `*.home.lan` migration | ✅ Complete | All 35 domain references use correct format |
-| AppArmor comment cleanup | ✅ Done this session | Removed stale "AppArmor conflicts" references from audit TODOs |
-| eCapture evaluation | ✅ Done | NOT RECOMMENDED verdict documented in `docs/reports/` |
-| DeepFlow evaluation | ✅ Done | Report in `docs/reports/` |
-| Nix syntax validation | ✅ Passes | `just test-fast` passes cleanly |
-| Coroot evaluation report | ✅ Written | Staged: `docs/reports/coroot-evaluation.md` |
+| Item                             | Status               | Details                                                                                |
+| -------------------------------- | -------------------- | -------------------------------------------------------------------------------------- |
+| AppArmor disabled                | ✅ Already done      | `apparmor.enable = false` in `security-hardening.nix:41` — was set in commit `a7e3b00` |
+| Prometheus removal               | ✅ Complete          | No remaining `prometheus` references in any `.nix` file                                |
+| `*.lan` → `*.home.lan` migration | ✅ Complete          | All 35 domain references use correct format                                            |
+| AppArmor comment cleanup         | ✅ Done this session | Removed stale "AppArmor conflicts" references from audit TODOs                         |
+| eCapture evaluation              | ✅ Done              | NOT RECOMMENDED verdict documented in `docs/reports/`                                  |
+| DeepFlow evaluation              | ✅ Done              | Report in `docs/reports/`                                                              |
+| Nix syntax validation            | ✅ Passes            | `just test-fast` passes cleanly                                                        |
+| Coroot evaluation report         | ✅ Written           | Staged: `docs/reports/coroot-evaluation.md`                                            |
 
 ---
 
 ## B) PARTIALLY DONE 🔶
 
-| Item | Status | What's Left |
-|------|--------|-------------|
+| Item                       | Status  | What's Left                                                                   |
+| -------------------------- | ------- | ----------------------------------------------------------------------------- |
 | Audit daemon re-enablement | Blocked | 2 TODOs in `security-hardening.nix` — blocked by upstream NixOS bug (#483085) |
 
 ---
@@ -40,27 +41,27 @@ a7e3b00 docs(reports): add eCapture TLS capture integration assessment with NOT 
 
 ### Critical Issues Found During Audit
 
-| # | Issue | Priority | File |
-|---|-------|----------|------|
-| 1 | **Duplicate fail2ban config** — conflicting settings in `configuration.nix` and `security-hardening.nix` | 🔴 CRITICAL | `configuration.nix:154-178`, `security-hardening.nix:58-88` |
-| 2 | **Orphaned Grafana fail2ban jail** — Grafana never deployed, jail watches non-existent log file | 🔴 CRITICAL | `security-hardening.nix:78-86` |
-| 3 | **Dead package** — `pkgs/superfile.nix` has `vendorHash = null` and is unreferenced | 🔴 CRITICAL | `pkgs/superfile.nix` |
-| 4 | **Duplicate packages** — `gnupg`, `foot`, `zellij`, `swappy`, `jq`, `wl-clipboard`, `rofi`, `cliphist` defined in multiple places | 🟡 HIGH | Multiple files |
-| 5 | **Duplicate Go overlay** — defined in `flake.nix` AND `platforms/darwin/default.nix` | 🟡 HIGH | `flake.nix:139-147`, `darwin/default.nix:66-82` |
-| 6 | **Unused `nix-visualize` specialArg** — passed to both platforms but never used in modules | 🟡 HIGH | `flake.nix` |
-| 7 | **Stale commented imports** in `configuration.nix` referencing removed services | 🟢 LOW | `configuration.nix:21-29` |
-| 8 | **Orphaned `ssh-banner` file** — exists but never referenced | 🟢 LOW | `platforms/nixos/users/ssh-banner` |
-| 9 | **Outdated justfile text** — "Go 1.26rc2" should be "Go 1.26.1" | 🟢 LOW | `justfile:1078` |
-| 10 | **Stale monitoring recipes** — netdata/ntopng recipes for macOS LaunchAgents | 🟢 LOW | `justfile:866-916` |
-| 11 | **Orphaned `better-claude` recipes** — reference non-existent package | 🟢 LOW | `justfile:1296-1323` |
-| 12 | **Overlapping system monitors** — `bottom`, `btop`, `htop` all installed | 🟢 LOW | `base.nix:104-107` |
+| #   | Issue                                                                                                                             | Priority    | File                                                        |
+| --- | --------------------------------------------------------------------------------------------------------------------------------- | ----------- | ----------------------------------------------------------- |
+| 1   | **Duplicate fail2ban config** — conflicting settings in `configuration.nix` and `security-hardening.nix`                          | 🔴 CRITICAL | `configuration.nix:154-178`, `security-hardening.nix:58-88` |
+| 2   | **Orphaned Grafana fail2ban jail** — Grafana never deployed, jail watches non-existent log file                                   | 🔴 CRITICAL | `security-hardening.nix:78-86`                              |
+| 3   | **Dead package** — `pkgs/superfile.nix` has `vendorHash = null` and is unreferenced                                               | 🔴 CRITICAL | `pkgs/superfile.nix`                                        |
+| 4   | **Duplicate packages** — `gnupg`, `foot`, `zellij`, `swappy`, `jq`, `wl-clipboard`, `rofi`, `cliphist` defined in multiple places | 🟡 HIGH     | Multiple files                                              |
+| 5   | **Duplicate Go overlay** — defined in `flake.nix` AND `platforms/darwin/default.nix`                                              | 🟡 HIGH     | `flake.nix:139-147`, `darwin/default.nix:66-82`             |
+| 6   | **Unused `nix-visualize` specialArg** — passed to both platforms but never used in modules                                        | 🟡 HIGH     | `flake.nix`                                                 |
+| 7   | **Stale commented imports** in `configuration.nix` referencing removed services                                                   | 🟢 LOW      | `configuration.nix:21-29`                                   |
+| 8   | **Orphaned `ssh-banner` file** — exists but never referenced                                                                      | 🟢 LOW      | `platforms/nixos/users/ssh-banner`                          |
+| 9   | **Outdated justfile text** — "Go 1.26rc2" should be "Go 1.26.1"                                                                   | 🟢 LOW      | `justfile:1078`                                             |
+| 10  | **Stale monitoring recipes** — netdata/ntopng recipes for macOS LaunchAgents                                                      | 🟢 LOW      | `justfile:866-916`                                          |
+| 11  | **Orphaned `better-claude` recipes** — reference non-existent package                                                             | 🟢 LOW      | `justfile:1296-1323`                                        |
+| 12  | **Overlapping system monitors** — `bottom`, `btop`, `htop` all installed                                                          | 🟢 LOW      | `base.nix:104-107`                                          |
 
 ---
 
 ## D) TOTALLY FUCKED UP 💥
 
-| Item | What Happened | Impact |
-|------|---------------|--------|
+| Item                            | What Happened                                                                                                                                                                                                                          | Impact                                                                                        |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | AppArmor disable (this session) | I edited `security-hardening.nix` to set `apparmor.enable = false` and updated comments — but the file **already had** `apparmor.enable = false` from commit `a7e3b00`. My edit was a no-op. I wasted time re-doing work already done. | Zero impact on config, but wasted session time. Lesson: check committed state before editing. |
 
 ---

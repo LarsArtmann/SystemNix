@@ -6,12 +6,12 @@
 
 **Build status:** `just test-fast` passes. `statix` clean. `deadnix` clean.
 
-| Severity | Count | Themes |
-|----------|-------|--------|
-| 🔴 Critical | 3 | Undefined systemd target, secret in nix store, misnested sops template |
-| 🟠 High | 10 | Hardcoded secrets/domains, dead code in overlay helper, massive doc bloat, cross-platform duplication |
-| 🟡 Medium | 18 | Missing hardening/onFailure/startLimits, large files, hardcoded values, stale code |
-| 🟢 Low | 12 | Dead scripts, IDE files in git, minor inconsistencies |
+| Severity    | Count | Themes                                                                                                |
+| ----------- | ----- | ----------------------------------------------------------------------------------------------------- |
+| 🔴 Critical | 3     | Undefined systemd target, secret in nix store, misnested sops template                                |
+| 🟠 High     | 10    | Hardcoded secrets/domains, dead code in overlay helper, massive doc bloat, cross-platform duplication |
+| 🟡 Medium   | 18    | Missing hardening/onFailure/startLimits, large files, hardcoded values, stale code                    |
+| 🟢 Low      | 12    | Dead scripts, IDE files in git, minor inconsistencies                                                 |
 
 ---
 
@@ -139,32 +139,32 @@ These store paths break on any rebuild. The scripts themselves are dead code (no
 
 ### M1-M7: Missing systemd hardening/onFailure/startLimits
 
-| Service | Missing | File |
-|---------|---------|------|
-| `dnsblockd` | `onFailure` | `dns-blocker.nix:249` |
-| `mptcp-endpoint-manager` | `onFailure`, `startLimitBurst` | `dual-wan.nix:132` |
-| `route-health-monitor` | `onFailure`, `startLimitBurst` | `dual-wan.nix:155` |
-| `immich-server` | `onFailure` | `immich.nix:66` |
-| `immich-machine-learning` | `onFailure` | `immich.nix:75` |
-| `clickhouse` | `startLimitBurst` | `signoz.nix:240` |
-| `signoz-provision` | `harden`, runs as root | `signoz.nix:286` |
-| `gitea-runner-*` | `harden` | `forgejo.nix:559` |
+| Service                   | Missing                        | File                  |
+| ------------------------- | ------------------------------ | --------------------- |
+| `dnsblockd`               | `onFailure`                    | `dns-blocker.nix:249` |
+| `mptcp-endpoint-manager`  | `onFailure`, `startLimitBurst` | `dual-wan.nix:132`    |
+| `route-health-monitor`    | `onFailure`, `startLimitBurst` | `dual-wan.nix:155`    |
+| `immich-server`           | `onFailure`                    | `immich.nix:66`       |
+| `immich-machine-learning` | `onFailure`                    | `immich.nix:75`       |
+| `clickhouse`              | `startLimitBurst`              | `signoz.nix:240`      |
+| `signoz-provision`        | `harden`, runs as root         | `signoz.nix:286`      |
+| `gitea-runner-*`          | `harden`                       | `forgejo.nix:559`     |
 
 ### M8: Files over 350 lines that should be split
 
-| File | Lines | Recommendation |
-|------|-------|----------------|
-| `flake.nix` | 769 | Extract input declarations to `flake/inputs.nix` |
-| `monitor365.nix` | 716 | Split config/options/systemd |
-| `signoz.nix` | 705 | Split package builds/options/provisioning |
-| `forgejo.nix` | 583 | Extract scripts to separate files |
-| `home.nix` (nixos) | 544 | Split terminals/zed/dunst/GTK |
-| `niri-wrapped.nix` | 520 | Split keybinds/window-rules/services |
-| `waybar.nix` | 474 | Split into modules per bar section |
-| `pocket-id.nix` | 474 | Extract provisioning script |
-| `scheduled-tasks.nix` | 466 | Extract inline scripts to files |
-| `minecraft.nix` | 453 | Extract 250 lines of options.txt to data |
-| `yazi.nix` | 446 | Extract init.lua to separate file |
+| File                  | Lines | Recommendation                                   |
+| --------------------- | ----- | ------------------------------------------------ |
+| `flake.nix`           | 769   | Extract input declarations to `flake/inputs.nix` |
+| `monitor365.nix`      | 716   | Split config/options/systemd                     |
+| `signoz.nix`          | 705   | Split package builds/options/provisioning        |
+| `forgejo.nix`         | 583   | Extract scripts to separate files                |
+| `home.nix` (nixos)    | 544   | Split terminals/zed/dunst/GTK                    |
+| `niri-wrapped.nix`    | 520   | Split keybinds/window-rules/services             |
+| `waybar.nix`          | 474   | Split into modules per bar section               |
+| `pocket-id.nix`       | 474   | Extract provisioning script                      |
+| `scheduled-tasks.nix` | 466   | Extract inline scripts to files                  |
+| `minecraft.nix`       | 453   | Extract 250 lines of options.txt to data         |
+| `yazi.nix`            | 446   | Extract init.lua to separate file                |
 
 ### M9: Hardcoded values that should be options or shared constants
 
@@ -235,43 +235,55 @@ Only 2 test cases exist (boot, dns-blocking). 0 tests for any of the 30+ custom 
 ## 🟢 Low Issues
 
 ### L1: `legacy/` directory — 20 dead files (100KB)
+
 Old dotfiles, iTerm2 profile, Chrome plugins list, sublime config. None referenced by Nix config.
 
 ### L2: `.idea/` directory — 11 files tracked in git
+
 IDE-specific config. Should be fully gitignored, not partially.
 
 ### L3: Empty `reports/` directory
+
 Created but never used.
 
 ### L4: Dead scripts (10+ files)
+
 `check-firewall.sh`, `check-mullvad-nft.sh`, `diagnose-mullvad.sh`, `disk-diagnostic.sh`, `usb-diagnostic.sh`, `commit-tag-push.py`, `fix-versions.py`, `prefetch-crates.py`, `update-vendor-hash.sh` — none wired into justfile/flake/systemd.
 
 ### L5: Stale TODO in `sops.nix:110`
+
 ```nix
 # hermes_openai_api_key = "openai_api_key"; # TODO: add openai_api_key to hermes.yaml sops secret
 ```
 
 ### L6: `security-hardening.nix:57` — hardcoded `onFailure` literal
+
 Duplicates `["notify-failure@%n.service"]` instead of importing from lib.
 
 ### L7: `monitor365.nix:529` — misleading `pkgs.monitor365-server or pkgs.monitor365`
+
 `pkgs.monitor365-server` doesn't exist in nixpkgs. Always falls back.
 
 ### L8: Template uses anti-pattern it warns about
+
 `templates/go-flake-parts/flake.nix:51` uses `self.shortRev or self.dirtyRev or "dev"`.
 
 ### L9: `auto-optimise-store` set redundantly in rpi3
+
 `rpi3/default.nix:199` duplicates setting from imported `nix-settings.nix:34`.
 
 ### L10: Package duplication (HM `programs.*.enable` + explicit package list)
+
 - `zellij` — enabled in module AND in `base.nix:261`
 - `yazi` — enabled in module AND in `home.nix:289`
 - `rofi-calc`/`rofi-emoji` — used as plugins AND standalone packages
 
 ### L11: Hardcoded nix store path in scripts
+
 3 scripts reference `/nix/store/a7sf90yc74dha1bcj2wx6hh3w10qf19z-nftables-1.1.6/bin/nft`.
 
 ### L12: `darwinConfig` path stale
+
 `darwin/system/activation.nix:61` points to `~/.nixpkgs/darwin-configuration.nix` but flake is at `~/projects/SystemNix`.
 
 ---
@@ -294,43 +306,43 @@ Duplicates `["notify-failure@%n.service"]` instead of importing from lib.
 
 ### 🔴 1% → 51% Impact (Do First)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | Define `systemd.targets.signoz` in signoz.nix | 2min | Services auto-start |
-| 2 | Move VRRP password to sops secret | 15min | Security fix |
-| 3 | Fix `pma-env` sops template nesting | 5min | PMA works without Hermes |
-| 4 | Fix `mkPackageOverlay` dead code | 2min | Code clarity |
-| 5 | Fix `gatus-env` sops gate (signoz→gatus-config) | 5min | Gatus works without SigNoz |
-| 6 | Fix `discordsync.nix` Restart override | 5min | Correct restart behavior |
+| #   | Task                                            | Effort | Impact                     |
+| --- | ----------------------------------------------- | ------ | -------------------------- |
+| 1   | Define `systemd.targets.signoz` in signoz.nix   | 2min   | Services auto-start        |
+| 2   | Move VRRP password to sops secret               | 15min  | Security fix               |
+| 3   | Fix `pma-env` sops template nesting             | 5min   | PMA works without Hermes   |
+| 4   | Fix `mkPackageOverlay` dead code                | 2min   | Code clarity               |
+| 5   | Fix `gatus-env` sops gate (signoz→gatus-config) | 5min   | Gatus works without SigNoz |
+| 6   | Fix `discordsync.nix` Restart override          | 5min   | Correct restart behavior   |
 
 ### 🟠 4% → 64% Impact (Do Second)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 7 | Move zellij.nix, yazi.nix to `common/programs/` | 20min | Correct layering |
-| 8 | Extract Zed config to `common/programs/zed.nix` | 20min | Remove 70-line duplication |
-| 9 | Add `monitor365` port to `ports.nix` | 10min | Fix port collision |
-| 10 | Add missing `onFailure` to 6 services | 30min | Failure notifications |
-| 11 | Add missing `startLimitBurst` to 3 services | 10min | Prevent crash loops |
-| 12 | Delete old status reports (keep last 20) | 15min | -14MB repo bloat |
-| 13 | Move `legacy/` to git history (delete) | 5min | Remove dead code |
-| 14 | Add `.idea/` to `.gitignore`, untrack | 5min | Remove IDE noise |
-| 15 | Delete dead scripts | 10min | Remove confusion |
+| #   | Task                                            | Effort | Impact                     |
+| --- | ----------------------------------------------- | ------ | -------------------------- |
+| 7   | Move zellij.nix, yazi.nix to `common/programs/` | 20min  | Correct layering           |
+| 8   | Extract Zed config to `common/programs/zed.nix` | 20min  | Remove 70-line duplication |
+| 9   | Add `monitor365` port to `ports.nix`            | 10min  | Fix port collision         |
+| 10  | Add missing `onFailure` to 6 services           | 30min  | Failure notifications      |
+| 11  | Add missing `startLimitBurst` to 3 services     | 10min  | Prevent crash loops        |
+| 12  | Delete old status reports (keep last 20)        | 15min  | -14MB repo bloat           |
+| 13  | Move `legacy/` to git history (delete)          | 5min   | Remove dead code           |
+| 14  | Add `.idea/` to `.gitignore`, untrack           | 5min   | Remove IDE noise           |
+| 15  | Delete dead scripts                             | 10min  | Remove confusion           |
 
 ### 🟡 20% → 80% Impact (Do Third)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 16 | Extract shared constants (timezone, domain, stateVersion) | 30min | DRY config |
-| 17 | Make Pocket-ID SMTP configurable | 20min | Flexibility |
-| 18 | Harden `signoz-provision` and `gitea-runner` | 30min | Security |
-| 19 | Move hardcoded image SHAs to `lib/images.nix` | 15min | Centralized pinning |
-| 20 | Fix `home.stateVersion` mismatch | 5min | Consistency |
-| 21 | Add `harden` to `twenty-fix-collation` | 5min | Security |
-| 22 | Migrate tests to `make-test.nix` | 10min | Future-proof |
-| 23 | Add package build to CI | 30min | Catch build breaks |
-| 24 | Fix `EDITOR`/`VISUAL` inconsistency | 5min | Consistency |
-| 25 | Unify DNS subdomain lists between failover nodes | 15min | Correct failover |
+| #   | Task                                                      | Effort | Impact              |
+| --- | --------------------------------------------------------- | ------ | ------------------- |
+| 16  | Extract shared constants (timezone, domain, stateVersion) | 30min  | DRY config          |
+| 17  | Make Pocket-ID SMTP configurable                          | 20min  | Flexibility         |
+| 18  | Harden `signoz-provision` and `gitea-runner`              | 30min  | Security            |
+| 19  | Move hardcoded image SHAs to `lib/images.nix`             | 15min  | Centralized pinning |
+| 20  | Fix `home.stateVersion` mismatch                          | 5min   | Consistency         |
+| 21  | Add `harden` to `twenty-fix-collation`                    | 5min   | Security            |
+| 22  | Migrate tests to `make-test.nix`                          | 10min  | Future-proof        |
+| 23  | Add package build to CI                                   | 30min  | Catch build breaks  |
+| 24  | Fix `EDITOR`/`VISUAL` inconsistency                       | 5min   | Consistency         |
+| 25  | Unify DNS subdomain lists between failover nodes          | 15min  | Correct failover    |
 
 ---
 

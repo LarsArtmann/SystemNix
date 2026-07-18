@@ -16,6 +16,7 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 ## A) FULLY DONE ✅
 
 ### 1. Crush Config Integration (Today's Work)
+
 - **Flake input added** — `crush-config` declared in `flake.nix`
 - **GitHub-based URL** — `github:LarsArtmann/crush-config` (not local file://)
 - **Home Manager deployment** — Single-line symlink for entire directory
@@ -23,6 +24,7 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 - **Documentation** — AGENTS.md updated with crush-config section
 
 ### 2. SSH Key Refactoring (Just Completed)
+
 - **Eliminated `builtins.pathExists`** — No more impure path checking
 - **Flake-native SSH keys** — `nix-ssh-config.sshKeys.lars` output
 - **Single source of truth** — Keys now live only in nix-ssh-config repo
@@ -30,6 +32,7 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 - **Pure evaluation** — No runtime path existence checks
 
 ### 3. Core Infrastructure (Previously Done)
+
 - **Niri compositor** with SilentSDDM display manager
 - **DNS blocker** with unbound + dnsblockd (25 blocklists, ~2.5M domains)
 - **Multi-format blocklist processor** (hosts, AdBlock, dnsmasq, plain domains)
@@ -38,6 +41,7 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 - **AMD Strix Halo optimizations**: rocWMMA, GPU DPM, IOMMU disabled
 
 ### 4. Architecture Improvements
+
 - **Dendritic pattern migration** — 11 service modules in flake-parts
 - **SSH extraction** to standalone `nix-ssh-config` flake
 - **Go 1.26.1 overlay** for consistent Go version
@@ -48,24 +52,28 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 ## B) PARTIALLY DONE 🟡
 
 ### 1. SigNoz Integration
+
 - **Status:** Architecture complete, builds not tested
 - **Issue:** Vendor hashes are fake/placeholders (`sha256-AAAA...`)
 - **Files:** `modules/nixos/services/signoz.nix`
 - **Action needed:** Resolve source hashes, vendor hashes, frontend build
 
 ### 2. sops-nix Secrets (CRITICAL ISSUE)
+
 - **Status:** Module configured but secrets not decrypting at boot
 - **Issue:** `/run/secrets/` empty despite correct configuration
 - **Impact:** DNS/Caddy certificate migration blocked
 - **Action needed:** Debug age key matching, verify encryption keys
 
 ### 3. Unsloth Studio GPU
+
 - **Status:** Service deployed, GPU detection fixed in latest commit
 - **Previous issue:** `torch.cuda.is_available()` returned False
 - **Fix applied:** ROCm libraries in LD_LIBRARY_PATH
 - **Verification needed:** Confirm GPU detection works after rebuild
 
 ### 4. nix-ssh-config Publishing
+
 - **Status:** Functional but uses local file:// URL
 - **Current:** `url = "git+file:///Users/larsartmann/projects/nix-ssh-config"`
 - **Action needed:** Push to GitHub, update to `github:LarsArtmann/nix-ssh-config`
@@ -75,20 +83,24 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 ## C) NOT STARTED ⏸️
 
 ### 1. Desktop Improvements (55 items from TODO_LIST.md)
+
 - **Phase 1 (21 items):** Config reloader, privacy/locking, productivity scripts
 - **Phase 2 (21 items):** Keyboard/input, audio/media, dev tools
 - **Phase 3 (13 items):** Backup/config, gaming, window rules, AI integration
 
 ### 2. Security Hardening
+
 - **Audit daemon:** Disabled due to AppArmor conflicts (NixOS bug #483085)
 - **Bluetooth setup:** Kernel modules configured but not paired/verified
 
 ### 3. Nix Architecture (Ghost Systems)
+
 - **Type safety system:** core/Types.nix, State.nix, Validation.nix not imported
 - **Module assertions:** Not enabled
 - **User config consolidation:** Split brain between platforms
 
 ### 4. PyTorch ROCm on NixOS
+
 - **Status:** Not implemented - pip wheel with ROCm runtime needed
 - **Options:** Distrobox container, custom derivation, or pip venv
 
@@ -97,6 +109,7 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 ## D) TOTALLY FUCKED UP ❌
 
 ### 1. sops-nix Secret Decryption Failure (CRITICAL)
+
 - **Impact:** Full DNS outage on 2026-04-02, rollback required
 - **Symptom:** `/run/secrets/` completely empty at boot
 - **Root cause:** Secrets migrated from Nix store to `/run/secrets/` but decryption fails
@@ -104,18 +117,21 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 - **Status:** DNS currently working on rolled-back generation (store paths)
 
 ### 2. Port 80 Conflict (CRITICAL)
+
 - **Conflict:** Caddy binds to `*:80` for HTTP→HTTPS redirect, dnsblockd needs port 80 for block pages
 - **Symptom:** dnsblockd crash-looping: "bind: address already in use"
 - **Current:** dnsblockd has restart counter at 1908+
 - **Fix needed:** Caddy reverse-proxy to dnsblockd, or different port strategy
 
 ### 3. Static IP Configuration Lie (HIGH)
+
 - **Config:** `networking.useDHCP = false` with static IP `192.168.1.150`
 - **Reality:** System gets `192.168.1.161` via DHCP, dhcpcd.service still running
 - **Impact:** All .lan domains point to wrong IP (192.168.1.150 vs actual 192.168.1.161)
 - **Files:** `platforms/nixos/system/networking.nix`, `dns-blocker-config.nix`
 
 ### 4. DNS Blocker IP Mismatch (HIGH)
+
 - **Issue:** `blockIP = "192.168.1.150"` in dns-blocker-config.nix doesn't match actual IP
 - **Impact:** Block pages unreachable, dnsblockd crash-looping
 - **Fix:** Dynamic IP detection committed but not deployed
@@ -125,26 +141,31 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 ## E) WHAT WE SHOULD IMPROVE 📈
 
 ### 1. Pre-Deploy Verification
+
 - Add smoke tests for service dependencies before `nixos-rebuild switch`
 - Verify `/run/secrets/*` paths exist before deploying sops-dependent services
 - Add `systemd-analyze verify` for service configuration validation
 
 ### 2. Monitoring & Alerting
+
 - Add systemd watchdog to dnsblockd (`WatchdogSec=30`)
 - Monitor for persistent service failures (crash loops)
 - Alert on DNS resolution failures
 
 ### 3. Secret Management Process
+
 - Document sops-nix checklist: (1) edit secrets.yaml, (2) verify decryption, (3) declare in sops.nix
 - Create `just sops-add-secret` recipe for safe secret addition
 - Never migrate from static paths to dynamic paths without verification
 
 ### 4. Network Configuration
+
 - Fix static IP or fully embrace DHCP with reservation documentation
 - Document all service ports in single reference doc
 - Add network interface assertions to fail build if IP doesn't match
 
 ### 5. Code Quality
+
 - Auto-discover SSH keys from directory in nix-ssh-config
 - Clean up stale documentation references (old `ssh-keys/` paths)
 - Fix eval warnings (deprecated `system` parameter - already fixed)
@@ -194,6 +215,7 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 ### Why are sops-nix secrets not being decrypted at boot?
 
 **Context:**
+
 - `sops.age.sshKeyPaths = ["/etc/ssh/ssh_host_ed25519_key"]` — key exists on disk
 - `sops.defaultSopsFile` points to valid `secrets.yaml` in repo
 - `dnsblockd-certs.yaml` exists with encrypted secrets
@@ -201,18 +223,21 @@ This report captures the state of SystemNix after integrating `crush-config` as 
 - `/run/secrets.d/25/` is completely empty after boot
 
 **Possible causes:**
+
 1. SSH host key doesn't match the age identity used to encrypt secrets
 2. sops files were encrypted with a different key than the host's SSH key
 3. sops-nix service ordering issue (secrets decrypted after services start)
 4. Silent failure in sops-nix decryption that doesn't show in logs
 
 **What I've tried:**
+
 - Verified SSH host key exists at `/etc/ssh/ssh_host_ed25519_key`
 - Confirmed `sops-nix.nixosModules.sops` is imported in flake.nix
 - Checked that `secrets.yaml` and `dnsblockd-certs.yaml` exist in the repository
 
 **What I need:**
 Access to the machine with `sops --decrypt` and the age/SSH keys to verify:
+
 - Does `sops --decrypt secrets.yaml` work with the host's SSH key?
 - Does the age public key derived from `/etc/ssh/ssh_host_ed25519_key` match what was used to encrypt the files?
 - Are there any systemd journal entries showing sops-nix decryption failures?
@@ -226,13 +251,13 @@ This blocks the entire certificate migration (dnsblockd CA/cert, Caddy TLS). Wit
 
 ### What Was Done Today
 
-| File | Change |
-|------|--------|
-| `flake.nix` | Added `crush-config` input with `github:LarsArtmann/crush-config` |
-| `flake.nix` | Added `crush-config` to `extraSpecialArgs` for both platforms |
-| `platforms/darwin/home.nix` | Added `home.file.".config/crush".source = crush-config;` |
-| `platforms/nixos/users/home.nix` | Added `home.file.".config/crush".source = crush-config;` |
-| `AGENTS.md` | Added comprehensive crush-config documentation section |
+| File                             | Change                                                            |
+| -------------------------------- | ----------------------------------------------------------------- |
+| `flake.nix`                      | Added `crush-config` input with `github:LarsArtmann/crush-config` |
+| `flake.nix`                      | Added `crush-config` to `extraSpecialArgs` for both platforms     |
+| `platforms/darwin/home.nix`      | Added `home.file.".config/crush".source = crush-config;`          |
+| `platforms/nixos/users/home.nix` | Added `home.file.".config/crush".source = crush-config;`          |
+| `AGENTS.md`                      | Added comprehensive crush-config documentation section            |
 
 ### Architecture
 
@@ -262,6 +287,7 @@ just update && just switch
 ### Key Design Decision
 
 **Why GitHub instead of local file://?**
+
 - Local file path creates circular dependency: flake reads from `~/.config/crush`, then tries to symlink `~/.config/crush` → nix store
 - GitHub-based workflow separates source (editable git repo) from deployment (nix store)
 - Enables editing without immediate rebuild, proper version control, and cross-machine sync
@@ -271,6 +297,7 @@ just update && just switch
 ## SSH Key Refactoring Details
 
 ### Before (Impure)
+
 ```nix
 lib.optional (builtins.pathExists ../../../ssh-keys/lars.pub)
   (builtins.readFile ../../../ssh-keys/lars.pub)
@@ -279,11 +306,13 @@ lib.optional (builtins.pathExists ../../../ssh-keys/lars.pub)
 ```
 
 ### After (Pure)
+
 ```nix
 authorizedKeys.keys = [ nix-ssh-config.sshKeys.lars ]
 ```
 
 ### Benefits
+
 - No runtime path existence checks — fails at eval time if key missing
 - No relative path fragility — immune to directory restructuring
 - No duplication — single source of truth in nix-ssh-config repo
@@ -320,5 +349,5 @@ nix build --dry-run .#nixosConfigurations.evo-x2.config.system.build.toplevel
 
 ---
 
-*Report generated: 2026-04-04 00:57:08 CEST*
-*Commit: 573a244e2a193c8785a0d45121ee619900007280*
+_Report generated: 2026-04-04 00:57:08 CEST_
+_Commit: 573a244e2a193c8785a0d45121ee619900007280_

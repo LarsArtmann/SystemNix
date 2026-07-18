@@ -13,6 +13,7 @@ Your Ollama setup is using the **GPU (Radeon 8060S Graphics)** via the **Vulkan 
 ## Hardware Configuration
 
 **Your System: GMKtec EVO-X2**
+
 - **CPU/APU**: AMD Ryzen AI Max+ 395 (Strix Halo, gfx1100)
 - **GPU**: Radeon 8060S Graphics (Integrated)
 - **NPU**: AMD Strix Halo Neural Processing Unit (PCI 1022:17f0)
@@ -27,12 +28,14 @@ Your Ollama setup is using the **GPU (Radeon 8060S Graphics)** via the **Vulkan 
 **Device: Radeon 8060S Graphics (RADV STRIX_HALO)**
 
 Evidence from Ollama logs:
+
 ```
 ggml_vulkan: Found 1 Vulkan devices:
 0 = Radeon 8060S Graphics (RADV STRIX_HALO) (radv)
 ```
 
 **Memory Allocation (Latest Inference):**
+
 ```
 device=Vulkan0 size="18.9 GiB"   # Model weights on GPU
 device=Vulkan0 size="510.0 MiB"   # KV cache on GPU
@@ -40,9 +43,11 @@ device=Vulkan0 size="279.6 MiB"   # Compute graph on GPU
 ```
 
 **Layer Offloading:**
+
 ```
 GPULayers=30[ID:00000000-c500-0000-0000-000000000000 Layers:30(17..46)]
 ```
+
 - 30 out of 48 layers on GPU (layers 17-46)
 - 18 layers on CPU (fallback for memory management)
 - This is intentional - Ollama optimizes based on available VRAM
@@ -50,11 +55,13 @@ GPULayers=30[ID:00000000-c500-0000-0000-000000000000 Layers:30(17..46)]
 ### NPU Status: ❌ NOT IN USE
 
 **Hardware Present:** ✅
+
 ```
 c6:00.1 Signal processing controller: AMD Strix Halo Neural Processing Unit [1022:17f0]
 ```
 
 **Driver Status:** ❌ NOT LOADED
+
 ```
 # No NPU device nodes:
 ls /dev/accel/accel*
@@ -66,6 +73,7 @@ lsmod | grep -iE 'amdxna|amd_npu'
 ```
 
 **Ollama Support:** ❌ NPU NOT SUPPORTED
+
 - Ollama only supports: CPU, Vulkan (GPU), CUDA (NVIDIA), ROCm (AMD GPU)
 - NPU support: NOT AVAILABLE in Ollama or llama.cpp
 
@@ -80,6 +88,7 @@ journalctl -u ollama --no-pager -n 100 | grep -iE 'vulkan|device|gpu|layer'
 ```
 
 **What to look for:**
+
 - `device=Vulkan0` → GPU is being used
 - `GPULayers=N` → N layers offloaded to GPU
 - `model weights device=Vulkan0` → Model weights on GPU
@@ -91,6 +100,7 @@ journalctl -u ollama --no-pager -n 100 | grep -iE 'vulkan|device|gpu|layer'
 ```
 
 This shows:
+
 - Current VRAM usage
 - GPU allocation from Ollama logs
 - Layer distribution between GPU and CPU
@@ -106,6 +116,7 @@ crush run -m "ollama/glm-4.7-flash:latest" "Explain quantum computing"
 ```
 
 This will show:
+
 - Memory allocation changes during inference
 - GPU vs CPU layer distribution
 - Performance metrics (tokens/sec)
@@ -140,21 +151,22 @@ This will show:
 
 ## GPU vs NPU Performance Comparison
 
-| Aspect | GPU (Vulkan) | NPU (XDNA) |
-|--------|--------------|------------|
-| **Status** | ✅ Working | ❌ Driver not installed |
-| **Maturity** | Excellent | Early/Experimental |
-| **Model Support** | Broad (llama.cpp) | Limited (ONNX only) |
-| **Performance** | 12-15 tokens/sec | Unknown (likely slower) |
-| **Software Stack** | Mature | Experimental |
-| **Nix Support** | ✅ Native | ❌ Requires custom driver |
-| **Memory Access** | 95GB GPU VRAM | NPU-specific memory |
+| Aspect             | GPU (Vulkan)      | NPU (XDNA)                |
+| ------------------ | ----------------- | ------------------------- |
+| **Status**         | ✅ Working        | ❌ Driver not installed   |
+| **Maturity**       | Excellent         | Early/Experimental        |
+| **Model Support**  | Broad (llama.cpp) | Limited (ONNX only)       |
+| **Performance**    | 12-15 tokens/sec  | Unknown (likely slower)   |
+| **Software Stack** | Mature            | Experimental              |
+| **Nix Support**    | ✅ Native         | ❌ Requires custom driver |
+| **Memory Access**  | 95GB GPU VRAM     | NPU-specific memory       |
 
 ---
 
 ## Current Performance
 
 **Test Results (glm-4.7-flash-q8-fixed):**
+
 ```
 ✅ Inference completed successfully
    Tokens generated: 564
@@ -163,11 +175,13 @@ This will show:
 ```
 
 **Memory Usage:**
+
 - GPU (Vulkan0): 18.9 GB weights + 510 MB KV cache
 - CPU: 10.8 GB weights + 289 MB KV cache
 - Total: ~30 GB model loaded
 
 **Layer Distribution:**
+
 - GPU: 30 layers (62.5%)
 - CPU: 18 layers (37.5%)
 - Hybrid approach optimizes for memory constraints
@@ -204,27 +218,35 @@ This will show:
 I've created several scripts to help you monitor GPU usage:
 
 ### 1. Check NPU Status
+
 ```bash
 /home/lars/Setup-Mac/scripts/check-npu-status.sh
 ```
+
 Shows NPU hardware presence, driver status, and explains why it's not being used.
 
 ### 2. Check GPU Status
+
 ```bash
 /home/lars/Setup-Mac/scripts/check-gpu-status.sh
 ```
+
 Shows current GPU utilization, VRAM usage, and Ollama device allocation.
 
 ### 3. Test Ollama GPU Usage
+
 ```bash
 /home/lars/Setup-Mac/scripts/test-ollama-gpu.sh
 ```
+
 Runs a test inference and monitors GPU activity in real-time.
 
 ### 4. Monitor GPU Live
+
 ```bash
 /home/lars/Setup-Mac/scripts/monitor-gpu-live.sh
 ```
+
 Continuous monitoring of GPU activity (run while making requests).
 
 ---
@@ -252,5 +274,5 @@ For now, the GPU (Vulkan) setup is optimal for your system.
 
 ---
 
-*Generated: 2026-03-18*
-*System: GMKtec EVO-X2, AMD Ryzen AI Max+ 395 (Strix Halo)*
+_Generated: 2026-03-18_
+_System: GMKtec EVO-X2, AMD Ryzen AI Max+ 395 (Strix Halo)_

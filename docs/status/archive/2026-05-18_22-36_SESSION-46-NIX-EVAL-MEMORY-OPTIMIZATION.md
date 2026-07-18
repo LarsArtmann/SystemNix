@@ -26,29 +26,30 @@ Deep audit of `flake.lock` revealed **massive dependency duplication** causing ~
 Analyzed the entire `flake.lock` (137 nodes, 39 direct inputs) to trace all nixpkgs, flake-parts, and systems duplication chains.
 
 **Findings:**
-| Metric | Before | After |
-|--------|--------|-------|
-| Lock nodes | 137 | 121 |
-| Full nixpkgs instances | 5 (4 unique commits) | 2 |
-| nixpkgs-lib instances | 7 | 2 |
-| flake-parts instances | 10 (6 unique revs) | 1 |
-| systems instances | 11 | 11 (unchanged) |
-| perSystem systems | 3 | 2 |
+
+| Metric                 | Before               | After          |
+| ---------------------- | -------------------- | -------------- |
+| Lock nodes             | 137                  | 121            |
+| Full nixpkgs instances | 5 (4 unique commits) | 2              |
+| nixpkgs-lib instances  | 7                    | 2              |
+| flake-parts instances  | 10 (6 unique revs)   | 1              |
+| systems instances      | 11                   | 11 (unchanged) |
+| perSystem systems      | 3                    | 2              |
 
 ### 2. Added `inputs.flake-parts.follows = "flake-parts"` to 8 Inputs
 
 Each unfollowed flake-parts input was pulling its own flake-parts + nixpkgs-lib dependency tree:
 
-| Input | Type | Impact |
-|-------|------|--------|
-| `crush-config` | Private (SSH) | Also added `nixpkgs.follows` — was pulling its own full nixpkgs checkout |
-| `treefmt-full-flake` | Own repo | Also added `nixpkgs.follows` — lock had stale direct reference |
-| `hermes-agent` | External | flake-parts only |
-| `dnsblockd` | Private (SSH) | flake-parts only |
-| `library-policy` | Private (SSH) | flake-parts only |
-| `file-and-image-renamer` | Private (SSH) | flake-parts only |
-| `nix-amd-npu` | External | flake-parts only |
-| `nur` | External | flake-parts only |
+| Input                    | Type          | Impact                                                                   |
+| ------------------------ | ------------- | ------------------------------------------------------------------------ |
+| `crush-config`           | Private (SSH) | Also added `nixpkgs.follows` — was pulling its own full nixpkgs checkout |
+| `treefmt-full-flake`     | Own repo      | Also added `nixpkgs.follows` — lock had stale direct reference           |
+| `hermes-agent`           | External      | flake-parts only                                                         |
+| `dnsblockd`              | Private (SSH) | flake-parts only                                                         |
+| `library-policy`         | Private (SSH) | flake-parts only                                                         |
+| `file-and-image-renamer` | Private (SSH) | flake-parts only                                                         |
+| `nix-amd-npu`            | External      | flake-parts only                                                         |
+| `nur`                    | External      | flake-parts only                                                         |
 
 ### 3. Added `inputs.nixpkgs.follows = "nixpkgs"` to `crush-config`
 
@@ -86,6 +87,7 @@ After fixing follows, removed 2 orphaned nodes (`flake-parts_6`, `nixpkgs_2`) th
 **Status:** ~10-16GB saved. Remaining ~25-28GB is structural.
 
 **What's left (requires deeper architectural changes):**
+
 - The flake still instantiates nixpkgs **5 separate times** (2 perSystem + 3 configs)
 - Each instantiation evaluates ~100K package definitions with overlays
 - To go below 20GB would require splitting into separate Darwin/NixOS flakes
@@ -101,6 +103,7 @@ After fixing follows, removed 2 orphaned nodes (`flake-parts_6`, `nixpkgs_2`) th
 ### 1. Deploy & Verify on evo-x2
 
 The changes exist only in the local git repo and need `git pull && just test-fast && just switch` on evo-x2 to verify:
+
 - Evaluation memory is reduced
 - All 3 systems build correctly (darwin, evo-x2, rpi3-dns)
 - No regressions from follows changes
@@ -108,6 +111,7 @@ The changes exist only in the local git repo and need `git pull && just test-fas
 ### 2. Investigate evo-x2 DNS Failure
 
 User reported no DNS on evo-x2. Possible causes:
+
 - Unbound crashed after lock change?
 - dnsblockd misconfigured?
 - Network stack issue?
@@ -140,6 +144,7 @@ All changes passed syntax validation (`nix-instantiate --parse flake.nix` OK) an
 ### 1. Automated Lockfile Hygiene Check
 
 Create a CI/hook that detects:
+
 - Inputs missing `inputs.nixpkgs.follows = "nixpkgs"`
 - Inputs missing `inputs.flake-parts.follows = "flake-parts"`
 - Orphaned lock nodes
@@ -150,6 +155,7 @@ This would have caught the 40GB problem at introduction time.
 ### 2. Follows Propagation Bug in Nix
 
 `nix flake lock --update-input <name>` does NOT re-resolve `follows` declarations for existing lock entries. If you add a new `follows` to `flake.nix`, you must:
+
 1. Manually edit `flake.lock` to replace the direct reference with `["nixpkgs"]`
 2. Run `nix flake lock` to clean up orphans
 
@@ -172,11 +178,13 @@ Niri's `nixpkgs-stable` dependency adds a full extra nixpkgs checkout. Investiga
 ## F) Top 25 Things to Do Next
 
 ### Critical (P0)
+
 1. **Deploy to evo-x2** — `git pull && just test-fast && just switch` to verify memory reduction
 2. **Fix evo-x2 DNS** — Investigate why DNS is down on the NixOS machine
 3. **Verify rpi3-dns build** — `nix build .#nixosConfigurations.rpi3-dns.config.system.build.toplevel` still works after perSystem change
 
 ### High (P1)
+
 4. **Create lockfile hygiene check** — Add `checks.nix` or pre-commit hook that flags missing follows
 5. **Run `just test` on evo-x2** — Full build validation with optimized lock
 6. **Measure actual evaluation memory** — Compare `just test-fast` RSS before/after on evo-x2
@@ -184,6 +192,7 @@ Niri's `nixpkgs-stable` dependency adds a full extra nixpkgs checkout. Investiga
 8. **Check all private repos follow flake-parts** — Verify dnsblockd, library-policy, file-and-image-renamer upstream flakes actually have flake-parts input
 
 ### Medium (P2)
+
 9. **Add `--option eval-cache true` to justfile** — Enable evaluation caching
 10. **Profile SigNoz build memory** — 583-line module built from source, likely expensive
 11. **Audit `systems` instances** — Still 11 copies, some may follow each other
@@ -193,6 +202,7 @@ Niri's `nixpkgs-stable` dependency adds a full extra nixpkgs checkout. Investiga
 15. **Split Darwin overlays** — Darwin doesn't need 14 shared overlays, only the ones it actually uses
 
 ### Low (P3)
+
 16. **Create `nix-eval-memory` diagnostic script** — Wrapper that profiles `nix-instantiate --eval` memory
 17. **Investigate remote builds** — Offload Darwin builds to evo-x2 to avoid disk exhaustion
 18. **Add `nix.path` to NixOS config** — Pin `/nix/var/nix/profiles/per-user/root/channels` to flake
@@ -211,6 +221,7 @@ Niri's `nixpkgs-stable` dependency adds a full extra nixpkgs checkout. Investiga
 **What is the actual current evaluation memory on evo-x2?**
 
 I cannot SSH from this workstation (blocked by tool policy). To confirm the optimization:
+
 1. Before pulling: run `just test-fast` and note the peak RSS of the `nix-instantiate` process (check with `ps -o rss` or `/usr/bin/time -v`)
 2. After pulling: run again and compare
 
@@ -220,11 +231,11 @@ The estimate of ~25-28GB remaining is based on architectural analysis (5 nixpkgs
 
 ## Files Changed
 
-| File | Changes |
-|------|---------|
-| `flake.nix` | +8 `inputs.flake-parts.follows`, +1 `inputs.nixpkgs.follows` (crush-config), removed `aarch64-linux` from systems |
-| `flake.lock` | 137 → 121 nodes (-16), removed 9 duplicate flake-parts, 3 duplicate nixpkgs, 5 nixpkgs-lib |
-| `AGENTS.md` | +47 lines: new "Nix Evaluation Memory Optimization" section, updated 3 gotcha entries, updated Flake Inputs table |
+| File         | Changes                                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `flake.nix`  | +8 `inputs.flake-parts.follows`, +1 `inputs.nixpkgs.follows` (crush-config), removed `aarch64-linux` from systems |
+| `flake.lock` | 137 → 121 nodes (-16), removed 9 duplicate flake-parts, 3 duplicate nixpkgs, 5 nixpkgs-lib                        |
+| `AGENTS.md`  | +47 lines: new "Nix Evaluation Memory Optimization" section, updated 3 gotcha entries, updated Flake Inputs table |
 
 ## Diff Summary
 

@@ -22,11 +22,13 @@
 **Root cause:** `WatchdogSec` was set in `lib/systemd/service-defaults.nix` (default 30s, later 60s) and individually on services via `mkForce "30"`. None of these services implement `sd_notify()`.
 
 **Services that were CRASH-LOOPING:**
+
 - **Hermes** (Python) — Killed every 30s at epoll_wait event loop. Completely non-functional.
 - **ComfyUI** (Python) — Killed every 60s after loading models. Crash-looping.
 - **TaskChampion** (Rust/tokio) — Killed every 30s at epoll_wait. 80+ restarts logged.
 
 **Services with LATENT time bomb (would crash under load):**
+
 - SigNoz query service (Go, no sd_notify)
 - SigNoz OTel collector (Go, no sd_notify)
 - cadvisor (Go, no sd_notify)
@@ -37,6 +39,7 @@
 - EMEET PIXY daemon (Go)
 
 **Services correctly using WatchdogSec (KEPT):**
+
 - Caddy (`Type=notify`, implements sd_notify)
 - Gitea (`Type=notify`, implements sd_notify)
 
@@ -76,13 +79,13 @@ Added `WatchdogSec / sd_notify Rules` section to AGENTS.md documenting which ser
 
 The comprehensive audit revealed several pre-existing issues that are documented but not fixed:
 
-| Issue | Severity | Status |
-|-------|----------|--------|
-| Hermes skill file PermissionError | Medium | Not investigated |
-| ComfyUI venv path missing | High (ComfyUI down) | Not investigated |
-| prometheus-node-exporter amdgpu.prom parse error | Low | Not investigated |
-| cadvisor containers.json missing | Low | Expected with podman |
-| Gitea mirror sync auth failure | Low | Expected (GitHub token issue) |
+| Issue                                            | Severity            | Status                        |
+| ------------------------------------------------ | ------------------- | ----------------------------- |
+| Hermes skill file PermissionError                | Medium              | Not investigated              |
+| ComfyUI venv path missing                        | High (ComfyUI down) | Not investigated              |
+| prometheus-node-exporter amdgpu.prom parse error | Low                 | Not investigated              |
+| cadvisor containers.json missing                 | Low                 | Expected with podman          |
+| Gitea mirror sync auth failure                   | Low                 | Expected (GitHub token issue) |
 
 ---
 
@@ -111,6 +114,7 @@ Hermes gets `PermissionError: [Errno 13] Permission denied: '/home/hermes/skills
 ### 1. lib/systemd/service-defaults.nix Was a Trap
 
 The shared defaults function was designed to DRY up service config, but it included `WatchdogSec`, `StartLimitBurst`, and `StartLimitIntervalSec` — all of which were either:
+
 - **Toxic** (WatchdogSec kills services without sd_notify)
 - **Misplaced** (StartLimit* goes in [Unit] not [Service], was silently ignored)
 
@@ -152,48 +156,48 @@ During the session, the pre-commit hook caused a `fatal: cannot lock ref 'HEAD'`
 
 ### Critical (Services Down or Degraded)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 1 | Fix Hermes skill file PermissionError — investigate `/home/hermes/skills/` ownership | High | Low |
-| 2 | Fix ComfyUI venv path — `/home/lars/projects/anime-comic-pipeline/venv/` missing | High | Low |
-| 3 | Fix prometheus-node-exporter amdgpu.prom empty values | Medium | Low |
+| #   | Task                                                                                 | Impact | Effort |
+| --- | ------------------------------------------------------------------------------------ | ------ | ------ |
+| 1   | Fix Hermes skill file PermissionError — investigate `/home/hermes/skills/` ownership | High   | Low    |
+| 2   | Fix ComfyUI venv path — `/home/lars/projects/anime-comic-pipeline/venv/` missing     | High   | Low    |
+| 3   | Fix prometheus-node-exporter amdgpu.prom empty values                                | Medium | Low    |
 
 ### High Priority (Architecture / Reliability)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 4 | Refactor `serviceDefaults` into a proper NixOS module with correct section placement | High | Medium |
-| 5 | Consolidate all services to use `serviceDefaults` (14 services still inline) | Medium | Medium |
-| 6 | Add `just health` check that validates no systemd "Unknown key" warnings | Medium | Low |
-| 7 | Add pre-commit check for WatchdogSec on non-notify services | Medium | Low |
-| 8 | Fix Gitea mirror sync authentication (GitHub token rotation) | Medium | Low |
+| #   | Task                                                                                 | Impact | Effort |
+| --- | ------------------------------------------------------------------------------------ | ------ | ------ |
+| 4   | Refactor `serviceDefaults` into a proper NixOS module with correct section placement | High   | Medium |
+| 5   | Consolidate all services to use `serviceDefaults` (14 services still inline)         | Medium | Medium |
+| 6   | Add `just health` check that validates no systemd "Unknown key" warnings             | Medium | Low    |
+| 7   | Add pre-commit check for WatchdogSec on non-notify services                          | Medium | Low    |
+| 8   | Fix Gitea mirror sync authentication (GitHub token rotation)                         | Medium | Low    |
 
 ### Medium Priority (Tech Debt / Quality)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 9 | Remove `Restart = lib.mkForce "on-failure"` when it matches default — cleanup copy-paste | Low | Low |
-| 10 | Audit all `mkForce` uses — remove those that match defaults | Low | Low |
-| 11 | Standardize `startLimitBurst`/`startLimitIntervalSec` across all services (some have none, some have 3/60, some 5/300, some 5/600) | Low | Low |
-| 12 | Add systemd service unit tests — verify generated .service files have no warnings | Low | Medium |
-| 13 | Move cadvisor `NoNewPrivileges = false` override to a comment explaining WHY | Low | Low |
-| 14 | Fix Hermes deprecated MESSAGING_CWD .env warning | Low | Low |
-| 15 | Fix Hermes `GATEWAY_ALLOW_ALL_USERS` — move from .env to Environment (already partially done) | Low | Low |
+| #   | Task                                                                                                                               | Impact | Effort |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 9   | Remove `Restart = lib.mkForce "on-failure"` when it matches default — cleanup copy-paste                                           | Low    | Low    |
+| 10  | Audit all `mkForce` uses — remove those that match defaults                                                                        | Low    | Low    |
+| 11  | Standardize `startLimitBurst`/`startLimitIntervalSec` across all services (some have none, some have 3/60, some 5/300, some 5/600) | Low    | Low    |
+| 12  | Add systemd service unit tests — verify generated .service files have no warnings                                                  | Low    | Medium |
+| 13  | Move cadvisor `NoNewPrivileges = false` override to a comment explaining WHY                                                       | Low    | Low    |
+| 14  | Fix Hermes deprecated MESSAGING_CWD .env warning                                                                                   | Low    | Low    |
+| 15  | Fix Hermes `GATEWAY_ALLOW_ALL_USERS` — move from .env to Environment (already partially done)                                      | Low    | Low    |
 
 ### Lower Priority (Improvements / Nice-to-Have)
 
-| # | Task | Impact | Effort |
-|---|------|--------|--------|
-| 16 | Investigate cadvisor `containers.json` missing — podman socket vs docker socket | Low | Medium |
-| 17 | Add SigNoz alert for services entering crash-loop (start-limit-hit) | Medium | Medium |
-| 18 | Create `just services-health` command that checks all managed services | Medium | Low |
-| 19 | Document all services with their sd_notify status in AGENTS.md table | Low | Low |
-| 20 | Add `Type = "notify"` comment to Caddy/Gitea serviceConfig for clarity | Low | Low |
-| 21 | Review all hardened services for missing library paths (like Hermes opus issue pattern) | Low | Medium |
-| 22 | Investigate Authelia Go service — does it support sd_notify? Could add WatchdogSec back if yes | Low | Low |
-| 23 | Add `just watchdog-audit` command that checks all services for sd_notify compatibility | Low | Low |
-| 24 | Create service module template with correct section placement | Low | Low |
-| 25 | Update flake.nix overlays to use shared lib types for service config | Low | Medium |
+| #   | Task                                                                                           | Impact | Effort |
+| --- | ---------------------------------------------------------------------------------------------- | ------ | ------ |
+| 16  | Investigate cadvisor `containers.json` missing — podman socket vs docker socket                | Low    | Medium |
+| 17  | Add SigNoz alert for services entering crash-loop (start-limit-hit)                            | Medium | Medium |
+| 18  | Create `just services-health` command that checks all managed services                         | Medium | Low    |
+| 19  | Document all services with their sd_notify status in AGENTS.md table                           | Low    | Low    |
+| 20  | Add `Type = "notify"` comment to Caddy/Gitea serviceConfig for clarity                         | Low    | Low    |
+| 21  | Review all hardened services for missing library paths (like Hermes opus issue pattern)        | Low    | Medium |
+| 22  | Investigate Authelia Go service — does it support sd_notify? Could add WatchdogSec back if yes | Low    | Low    |
+| 23  | Add `just watchdog-audit` command that checks all services for sd_notify compatibility         | Low    | Low    |
+| 24  | Create service module template with correct section placement                                  | Low    | Low    |
+| 25  | Update flake.nix overlays to use shared lib types for service config                           | Low    | Medium |
 
 ---
 
@@ -202,6 +206,7 @@ During the session, the pre-commit hook caused a `fatal: cannot lock ref 'HEAD'`
 **Why is Hermes writing to `/home/hermes/skills/` when `stateDir` is `/var/lib/hermes`?**
 
 The module defines `stateDir = "/var/lib/hermes"` and sets `HOME = cfg.stateDir` in the Environment. But the PermissionError shows Hermes trying to write to `/home/hermes/skills/github/github-auth/.SKILL.md.tmp.*`. Neither `/home/hermes/` nor `/home/hermes/skills/` exist as real directories (`find` shows nothing inside them). The Hermes binary may have a hardcoded path or a separate config pointing to `/home/hermes`. I cannot determine this without:
+
 1. Reading the Hermes source code to find where it resolves the skills directory
 2. Checking if there's a `config.yaml` in the state dir that overrides paths
 3. Understanding if `/home/hermes` is the system user's `$HOME` from `users.users.hermes.home`
@@ -210,20 +215,20 @@ The module defines `stateDir = "/var/lib/hermes"` and sets `HOME = cfg.stateDir`
 
 ## Session Commits
 
-| Commit | Description |
-|--------|-------------|
-| `2f68153` | fix(systemd): remove WatchdogSec from service-defaults |
-| `0909f06` | fix(hermes): remove WatchdogSec — service doesn't support sd_notify |
-| `2a7eac3` | fix(comfyui): remove WatchdogSec — Python app doesn't support sd_notify |
+| Commit    | Description                                                                 |
+| --------- | --------------------------------------------------------------------------- |
+| `2f68153` | fix(systemd): remove WatchdogSec from service-defaults                      |
+| `0909f06` | fix(hermes): remove WatchdogSec — service doesn't support sd_notify         |
+| `2a7eac3` | fix(comfyui): remove WatchdogSec — Python app doesn't support sd_notify     |
 | `9198775` | fix(taskchampion): remove WatchdogSec — crash-looping from watchdog timeout |
-| `7056155` | fix(signoz): remove WatchdogSec from all SigNoz services |
-| `3d64bb6` | fix: remove WatchdogSec from services without sd_notify support |
-| `f43a28a` | fix(caddy): use default_bind instead of servers block bind |
-| `d815a2c` | docs: add WatchdogSec/sd_notify rules to AGENTS.md |
-| `d9109f1` | fix(systemd): move StartLimitBurst/StartLimitIntervalSec to [Unit] section |
-| `1e28690` | fix(justfile): platform-aware file opener in dep-graph, trash for clean |
-| `3a4b1cd` | fix(justfile): replace remaining rm -rf with trash |
-| `d147edd` | fix(caddy): use config.networking.local.subnet instead of hardcoded IP |
+| `7056155` | fix(signoz): remove WatchdogSec from all SigNoz services                    |
+| `3d64bb6` | fix: remove WatchdogSec from services without sd_notify support             |
+| `f43a28a` | fix(caddy): use default_bind instead of servers block bind                  |
+| `d815a2c` | docs: add WatchdogSec/sd_notify rules to AGENTS.md                          |
+| `d9109f1` | fix(systemd): move StartLimitBurst/StartLimitIntervalSec to [Unit] section  |
+| `1e28690` | fix(justfile): platform-aware file opener in dep-graph, trash for clean     |
+| `3a4b1cd` | fix(justfile): replace remaining rm -rf with trash                          |
+| `d147edd` | fix(caddy): use config.networking.local.subnet instead of hardcoded IP      |
 
 ---
 

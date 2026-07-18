@@ -18,21 +18,21 @@ The P0 security items from the previous report remain unaddressed — no `just s
 
 ## Codebase Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total lines (Nix + Go) | ~19,400 |
-| NixOS service modules | 18 (flake-parts) |
-| Common program modules | 16 |
-| Custom packages (pkgs/) | 9 |
-| Flake inputs | 20 |
-| Git commits (last 24h) | 19 |
-| Status reports (total) | 238 |
-| Status reports (active) | 31 |
-| Status reports (archived) | 207 |
-| Git stashes | 0 (clean) |
-| Working tree | Clean |
-| Ahead of origin/master | 0 (in sync) |
-| Last flake update | ~69 min ago |
+| Metric                    | Value            |
+| ------------------------- | ---------------- |
+| Total lines (Nix + Go)    | ~19,400          |
+| NixOS service modules     | 18 (flake-parts) |
+| Common program modules    | 16               |
+| Custom packages (pkgs/)   | 9                |
+| Flake inputs              | 20               |
+| Git commits (last 24h)    | 19               |
+| Status reports (total)    | 238              |
+| Status reports (active)   | 31               |
+| Status reports (archived) | 207              |
+| Git stashes               | 0 (clean)        |
+| Working tree              | Clean            |
+| Ahead of origin/master    | 0 (in sync)      |
+| Last flake update         | ~69 min ago      |
 
 ---
 
@@ -91,19 +91,19 @@ The P0 security items from the previous report remain unaddressed — no `just s
 
 ## B) PARTIALLY DONE
 
-| Item | Status | What's Missing |
-|------|--------|----------------|
-| **Hermes gateway** | Service active | State shows empty `{}` — Discord bot connectivity unconfirmed |
-| **SigNoz JWT secret** | `SIGNOZ_TOKENIZER_JWT_SECRET` | Not set — critical error logged on every restart |
-| **Gitea GitHub sync** | Service runs | **FAILED** — token rejected: "invalid username, password or token" |
-| **Voice agents** | Module defined | Status unknown — no runtime verification |
-| **Minecraft server** | Module defined | Status unknown — no runtime verification |
-| **Monitor365** | Package built | `enable = false` — intentionally disabled |
-| **EMEET PIXY daemon** | Package built | **NOT RUNNING** — daemon down |
-| **TaskChampion client** | Sync server running | Client not configured — "Client ID: not set", "Sync configuration: Not configured" |
-| **Unsloth Studio** | Module defined | Conditional enablement — status unverified |
-| **Twenty CRM** | Module defined | Image pinned — status unverified |
-| **Security hardening** | Good baseline | No LUKS, no TPM2, no fwupd, no kernel sysctls, auditd disabled |
+| Item                    | Status                        | What's Missing                                                                     |
+| ----------------------- | ----------------------------- | ---------------------------------------------------------------------------------- |
+| **Hermes gateway**      | Service active                | State shows empty `{}` — Discord bot connectivity unconfirmed                      |
+| **SigNoz JWT secret**   | `SIGNOZ_TOKENIZER_JWT_SECRET` | Not set — critical error logged on every restart                                   |
+| **Gitea GitHub sync**   | Service runs                  | **FAILED** — token rejected: "invalid username, password or token"                 |
+| **Voice agents**        | Module defined                | Status unknown — no runtime verification                                           |
+| **Minecraft server**    | Module defined                | Status unknown — no runtime verification                                           |
+| **Monitor365**          | Package built                 | `enable = false` — intentionally disabled                                          |
+| **EMEET PIXY daemon**   | Package built                 | **NOT RUNNING** — daemon down                                                      |
+| **TaskChampion client** | Sync server running           | Client not configured — "Client ID: not set", "Sync configuration: Not configured" |
+| **Unsloth Studio**      | Module defined                | Conditional enablement — status unverified                                         |
+| **Twenty CRM**          | Module defined                | Image pinned — status unverified                                                   |
+| **Security hardening**  | Good baseline                 | No LUKS, no TPM2, no fwupd, no kernel sysctls, auditd disabled                     |
 
 ---
 
@@ -144,17 +144,17 @@ The P0 security items from the previous report remain unaddressed — no `just s
 
 ## D) TOTALLY FUCKED UP
 
-| Item | Severity | Details |
-|------|----------|---------|
-| **EMEET PIXY daemon not running** | **HIGH** | Camera daemon down. Users lose auto face-tracking, privacy toggle, call detection. |
-| **Gitea GitHub sync completely broken** | **MEDIUM** | Token rejected on both repos — "invalid username, password or token". Repos falling out of sync. |
-| **No disk encryption** | **CRITICAL** | Root + /data plain btrfs. Physical access = immediate full compromise. |
-| **Passwordless sudo** | **HIGH** | `wheelNeedsPassword = false` + browser on same account = trivial privilege escalation |
-| **Boot editor open** | **HIGH** | `systemd-boot` editor allows `init=/bin/sh` at boot screen |
-| **SigNoz JWT secret missing** | **MEDIUM** | Critical error logged every restart |
-| **Hermes state empty** | **MEDIUM** | `hermes gateway status` returns `{}` — bot may not be connected |
-| **auditd blocked** | **MEDIUM** | NixOS 26.05 bug prevents audit rules from loading |
-| **Firmware updates disabled** | **MEDIUM** | `fwupd` not enabled — unpatched BIOS/UEFI vulnerabilities |
+| Item                                    | Severity     | Details                                                                                          |
+| --------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------ |
+| **EMEET PIXY daemon not running**       | **HIGH**     | Camera daemon down. Users lose auto face-tracking, privacy toggle, call detection.               |
+| **Gitea GitHub sync completely broken** | **MEDIUM**   | Token rejected on both repos — "invalid username, password or token". Repos falling out of sync. |
+| **No disk encryption**                  | **CRITICAL** | Root + /data plain btrfs. Physical access = immediate full compromise.                           |
+| **Passwordless sudo**                   | **HIGH**     | `wheelNeedsPassword = false` + browser on same account = trivial privilege escalation            |
+| **Boot editor open**                    | **HIGH**     | `systemd-boot` editor allows `init=/bin/sh` at boot screen                                       |
+| **SigNoz JWT secret missing**           | **MEDIUM**   | Critical error logged every restart                                                              |
+| **Hermes state empty**                  | **MEDIUM**   | `hermes gateway status` returns `{}` — bot may not be connected                                  |
+| **auditd blocked**                      | **MEDIUM**   | NixOS 26.05 bug prevents audit rules from loading                                                |
+| **Firmware updates disabled**           | **MEDIUM**   | `fwupd` not enabled — unpatched BIOS/UEFI vulnerabilities                                        |
 
 ---
 
@@ -192,33 +192,33 @@ The P0 security items from the previous report remain unaddressed — no `just s
 
 ## F) TOP 25 NEXT ACTIONS
 
-| # | Priority | Action | Effort | Impact |
-|---|----------|--------|--------|--------|
-| 1 | **P0** | **`just switch`** — Apply DoQ + unbound rebuild with libngtcp2/nghttp3 | Medium | High — activates DoQ feature |
-| 2 | **P0** | **Restart EMEET PIXY daemon** — `systemctl --user restart emeet-pixyd` | Low | High — camera UX regression |
-| 3 | **P0** | **Fix Gitea GitHub sync token** — Regenerate/verify token in sops | Low | Medium — repos broken |
-| 4 | **P0** | **Enable LUKS + TPM2 auto-unlock** — Full disk encryption, TPM-bound | High | Critical — closes physical attack surface |
-| 5 | **P0** | **`boot.loader.systemd-boot.editor = false`** — One line | Low | High — prevents `init=/bin/sh` |
-| 6 | **P0** | **`services.fwupd.enable = true`** — Firmware updates | Low | High — patches firmware CVEs |
-| 7 | **P0** | **Kernel security sysctls** — `kptr_restrict=2`, `dmesg_restrict=1`, `rp_filter=1` | Low | Medium — standard hardening |
-| 8 | **P0** | **Set `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops + `just switch` | Low | Medium — removes critical log spam |
-| 9 | **P1** | **Re-evaluate `wheelNeedsPassword = false`** — `true` with `timestampTimeout = 30` | Low | Medium — closes privilege escalation |
-| 10 | **P1** | **TaskChampion client setup** — `just task-setup` on all devices | Low | Medium — zero device sync |
-| 11 | **P1** | **Verify Hermes runtime** — Confirm Discord bot connected, cron jobs | Low | Medium — AI gateway unverified |
-| 12 | **P1** | **Verify Twenty CRM** — Check `/app/python` error resolved | Low | Low — or disable |
-| 13 | **P1** | **Verify Unsloth Studio** — Confirm restart loop resolved | Low | Low — or disable |
-| 14 | **P2** | **Add `StartLimitBurst` to all services** — Audit after 150+ restart incidents | Low | Medium — prevents restart loops |
-| 15 | **P2** | **Add disk space alerting** — SigNoz alert for root >85% | Low | Medium — root at ~81% |
-| 16 | **P2** | **Update AGENTS.md** — 19 days behind, missing DoQ/hermes/voice-agents | Medium | Medium — AI agent accuracy |
-| 17 | **P2** | **Auto-archive status reports** — Keep last 10, move older to archive | Low | Low — prevent bloat |
-| 18 | **P2** | **Prune `docs/` top-level files** — Delete/archive stale analysis docs | Medium | Low — repo cleanliness |
-| 19 | **P3** | **Validate Darwin build** — Ensure macOS config still builds | Low | Medium — cross-platform health |
-| 20 | **P3** | **Fix amdxdna NPU driver** — SVA bind failure ret -19 | Hard | Medium — NPU unusable |
-| 21 | **P3** | **Monitor auditd NixOS bug** — Re-enable when [#483085](https://github.com/NixOS/nixpkgs/issues/483085) fixed | Low | Medium — audit trail |
-| 22 | **P3** | **Flake.lock staleness alerting** — Automated check for inputs >30 days | Medium | Low — dependency freshness |
-| 23 | **P3** | **Hermes SigNoz monitoring** — Add journald ingestion + dashboard | Medium | Medium — observability gap |
-| 24 | **P3** | **Hermes config.yaml declarative** — Managed `/var/lib/hermes/config.yaml` | Medium | Medium — config consistency |
-| 25 | **P3** | **Add NixOS VM tests** — Smoke tests for caddy, immich, signoz | High | High — regression prevention |
+| #   | Priority | Action                                                                                                        | Effort | Impact                                    |
+| --- | -------- | ------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------------- |
+| 1   | **P0**   | **`just switch`** — Apply DoQ + unbound rebuild with libngtcp2/nghttp3                                        | Medium | High — activates DoQ feature              |
+| 2   | **P0**   | **Restart EMEET PIXY daemon** — `systemctl --user restart emeet-pixyd`                                        | Low    | High — camera UX regression               |
+| 3   | **P0**   | **Fix Gitea GitHub sync token** — Regenerate/verify token in sops                                             | Low    | Medium — repos broken                     |
+| 4   | **P0**   | **Enable LUKS + TPM2 auto-unlock** — Full disk encryption, TPM-bound                                          | High   | Critical — closes physical attack surface |
+| 5   | **P0**   | **`boot.loader.systemd-boot.editor = false`** — One line                                                      | Low    | High — prevents `init=/bin/sh`            |
+| 6   | **P0**   | **`services.fwupd.enable = true`** — Firmware updates                                                         | Low    | High — patches firmware CVEs              |
+| 7   | **P0**   | **Kernel security sysctls** — `kptr_restrict=2`, `dmesg_restrict=1`, `rp_filter=1`                            | Low    | Medium — standard hardening               |
+| 8   | **P0**   | **Set `SIGNOZ_TOKENIZER_JWT_SECRET`** via sops + `just switch`                                                | Low    | Medium — removes critical log spam        |
+| 9   | **P1**   | **Re-evaluate `wheelNeedsPassword = false`** — `true` with `timestampTimeout = 30`                            | Low    | Medium — closes privilege escalation      |
+| 10  | **P1**   | **TaskChampion client setup** — `just task-setup` on all devices                                              | Low    | Medium — zero device sync                 |
+| 11  | **P1**   | **Verify Hermes runtime** — Confirm Discord bot connected, cron jobs                                          | Low    | Medium — AI gateway unverified            |
+| 12  | **P1**   | **Verify Twenty CRM** — Check `/app/python` error resolved                                                    | Low    | Low — or disable                          |
+| 13  | **P1**   | **Verify Unsloth Studio** — Confirm restart loop resolved                                                     | Low    | Low — or disable                          |
+| 14  | **P2**   | **Add `StartLimitBurst` to all services** — Audit after 150+ restart incidents                                | Low    | Medium — prevents restart loops           |
+| 15  | **P2**   | **Add disk space alerting** — SigNoz alert for root >85%                                                      | Low    | Medium — root at ~81%                     |
+| 16  | **P2**   | **Update AGENTS.md** — 19 days behind, missing DoQ/hermes/voice-agents                                        | Medium | Medium — AI agent accuracy                |
+| 17  | **P2**   | **Auto-archive status reports** — Keep last 10, move older to archive                                         | Low    | Low — prevent bloat                       |
+| 18  | **P2**   | **Prune `docs/` top-level files** — Delete/archive stale analysis docs                                        | Medium | Low — repo cleanliness                    |
+| 19  | **P3**   | **Validate Darwin build** — Ensure macOS config still builds                                                  | Low    | Medium — cross-platform health            |
+| 20  | **P3**   | **Fix amdxdna NPU driver** — SVA bind failure ret -19                                                         | Hard   | Medium — NPU unusable                     |
+| 21  | **P3**   | **Monitor auditd NixOS bug** — Re-enable when [#483085](https://github.com/NixOS/nixpkgs/issues/483085) fixed | Low    | Medium — audit trail                      |
+| 22  | **P3**   | **Flake.lock staleness alerting** — Automated check for inputs >30 days                                       | Medium | Low — dependency freshness                |
+| 23  | **P3**   | **Hermes SigNoz monitoring** — Add journald ingestion + dashboard                                             | Medium | Medium — observability gap                |
+| 24  | **P3**   | **Hermes config.yaml declarative** — Managed `/var/lib/hermes/config.yaml`                                    | Medium | Medium — config consistency               |
+| 25  | **P3**   | **Add NixOS VM tests** — Smoke tests for caddy, immich, signoz                                                | High   | High — regression prevention              |
 
 ---
 
@@ -235,48 +235,54 @@ Also: **What's the current Gitea GitHub token status?** The sync script reports 
 ## Files Changed Since Last Report (2 commits, ~69 min)
 
 ### b5d4b42 — feat(unbound): enable DNS-over-QUIC (DoQ) via libngtcp2 + libnghttp3 overlay
+
 ```
 4 files changed, 29 insertions(+), 1 deletion(-)
 ```
+
 - `flake.nix` — unboundDoQOverlay: adds ngtcp2 + nghttp3 to buildInputs, --with-libngtcp2/--with-libnghttp3 to configureFlags
 - `platforms/nixos/modules/dns-blocker.nix` — doqPort option (default 853), quic-port in unbound settings
 - `platforms/nixos/system/dns-blocker-config.nix` — doqPort = 853
 - `platforms/nixos/system/networking.nix` — UDP 853 in firewall.allowedUDPPorts
 
 ### 017005c — chore(jetbrains): add JetBrains IDEA to Linux packages
+
 ```
 1 file changed, 1 insertion(+), 1 deletion(-)
 ```
+
 - `flake.nix` — Added JetBrains IDEA to Linux packages list
 
 ### auto-format (via nix fmt on commit hook)
+
 ```
 11 files changed, 156 insertions(+), 148 deletions(-)
 ```
+
 - alejandra formatted 56 files across the repo (11 actually changed)
 
 ---
 
 ## Appendix: Service Module Inventory
 
-| Module | Path | Status |
-|--------|------|--------|
-| Authelia | `modules/nixos/services/authelia.nix` | ✅ Running |
-| Caddy | `modules/nixos/services/caddy.nix` | ✅ Running |
-| Default Services (Docker) | `modules/nixos/services/default.nix` | ✅ Running |
-| Gitea | `modules/nixos/services/gitea.nix` | ✅ Running |
-| Gitea Repos | `modules/nixos/services/gitea-repos.nix` | ❌ Sync broken |
-| Hermes | `modules/nixos/services/hermes.nix` | ⚠️ State empty |
-| Homepage | `modules/nixos/services/homepage.nix` | ✅ Running |
-| Immich | `modules/nixos/services/immich.nix` | ✅ Running |
-| Minecraft | `modules/nixos/services/minecraft.nix` | ⚠️ Unverified |
-| Monitor365 | `modules/nixos/services/monitor365.nix` | Disabled |
-| Photomap | `modules/nixos/services/photomap.nix` | ✅ Running |
-| SigNoz | `modules/nixos/services/signoz.nix` | ⚠️ JWT missing |
-| Sops | `modules/nixos/services/sops.nix` | ✅ Running |
-| TaskChampion | `modules/nixos/services/taskchampion.nix` | ⚠️ Client unconf |
-| Twenty | `modules/nixos/services/twenty.nix` | ⚠️ Unverified |
-| Voice Agents | `modules/nixos/services/voice-agents.nix` | ⚠️ Unverified |
+| Module                    | Path                                      | Status           |
+| ------------------------- | ----------------------------------------- | ---------------- |
+| Authelia                  | `modules/nixos/services/authelia.nix`     | ✅ Running       |
+| Caddy                     | `modules/nixos/services/caddy.nix`        | ✅ Running       |
+| Default Services (Docker) | `modules/nixos/services/default.nix`      | ✅ Running       |
+| Gitea                     | `modules/nixos/services/gitea.nix`        | ✅ Running       |
+| Gitea Repos               | `modules/nixos/services/gitea-repos.nix`  | ❌ Sync broken   |
+| Hermes                    | `modules/nixos/services/hermes.nix`       | ⚠️ State empty   |
+| Homepage                  | `modules/nixos/services/homepage.nix`     | ✅ Running       |
+| Immich                    | `modules/nixos/services/immich.nix`       | ✅ Running       |
+| Minecraft                 | `modules/nixos/services/minecraft.nix`    | ⚠️ Unverified    |
+| Monitor365                | `modules/nixos/services/monitor365.nix`   | Disabled         |
+| Photomap                  | `modules/nixos/services/photomap.nix`     | ✅ Running       |
+| SigNoz                    | `modules/nixos/services/signoz.nix`       | ⚠️ JWT missing   |
+| Sops                      | `modules/nixos/services/sops.nix`         | ✅ Running       |
+| TaskChampion              | `modules/nixos/services/taskchampion.nix` | ⚠️ Client unconf |
+| Twenty                    | `modules/nixos/services/twenty.nix`       | ⚠️ Unverified    |
+| Voice Agents              | `modules/nixos/services/voice-agents.nix` | ⚠️ Unverified    |
 
 **Legend:** ✅ Running/Stable | ⚠️ Needs Verification | ❌ Broken | Disabled = Module defined but `enable = false`
 
@@ -284,23 +290,23 @@ Also: **What's the current Gitea GitHub token status?** The sync script reports 
 
 ## Appendix: Custom Package Inventory
 
-| Package | Path | Version | Status |
-|---------|------|---------|--------|
-| aw-watcher-utilization | `pkgs/aw-watcher-utilization.nix` | 1.2.2 | ✅ Built |
-| dnsblockd | `pkgs/dnsblockd.nix` | 0.1.0 | ✅ Built |
-| dnsblockd-processor | `pkgs/dnsblockd-processor/` | 0.1.0 | ✅ Built |
-| emeet-pixyd | `pkgs/emeet-pixyd/` | 0.2.0 | ✅ Built, ❌ Not running |
-| jscpd | `pkgs/jscpd.nix` | 4.0.9 | ✅ Built |
-| JetBrains IDEA | `flake.nix` | Latest | ✅ Added this hour |
-| modernize | `pkgs/modernize.nix` | unstable | ✅ Built |
-| monitor365 | `pkgs/monitor365.nix` | 0.1.0 | ✅ Built, disabled |
-| openaudible | `pkgs/openaudible.nix` | Latest | ✅ Built |
-| signoz | `signoz-src` | 0.117.1 | ✅ Built |
-| signoz-otel-collector | `signoz-collector-src` | 0.144.2 | ✅ Built |
-| signoz-schema-migrator | `signoz-collector-src` | 0.144.2 | ✅ Built |
+| Package                | Path                              | Version  | Status                   |
+| ---------------------- | --------------------------------- | -------- | ------------------------ |
+| aw-watcher-utilization | `pkgs/aw-watcher-utilization.nix` | 1.2.2    | ✅ Built                 |
+| dnsblockd              | `pkgs/dnsblockd.nix`              | 0.1.0    | ✅ Built                 |
+| dnsblockd-processor    | `pkgs/dnsblockd-processor/`       | 0.1.0    | ✅ Built                 |
+| emeet-pixyd            | `pkgs/emeet-pixyd/`               | 0.2.0    | ✅ Built, ❌ Not running |
+| jscpd                  | `pkgs/jscpd.nix`                  | 4.0.9    | ✅ Built                 |
+| JetBrains IDEA         | `flake.nix`                       | Latest   | ✅ Added this hour       |
+| modernize              | `pkgs/modernize.nix`              | unstable | ✅ Built                 |
+| monitor365             | `pkgs/monitor365.nix`             | 0.1.0    | ✅ Built, disabled       |
+| openaudible            | `pkgs/openaudible.nix`            | Latest   | ✅ Built                 |
+| signoz                 | `signoz-src`                      | 0.117.1  | ✅ Built                 |
+| signoz-otel-collector  | `signoz-collector-src`            | 0.144.2  | ✅ Built                 |
+| signoz-schema-migrator | `signoz-collector-src`            | 0.144.2  | ✅ Built                 |
 
 ---
 
-*Report generated: 2026-04-23 06:07*
-*Reporter: Crush AI Agent via CLI*
-*Waiting for instructions on next priority actions.*
+_Report generated: 2026-04-23 06:07_
+_Reporter: Crush AI Agent via CLI_
+_Waiting for instructions on next priority actions._

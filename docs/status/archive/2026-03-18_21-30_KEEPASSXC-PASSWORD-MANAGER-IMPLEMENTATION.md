@@ -17,6 +17,7 @@ Successfully implemented a comprehensive password management solution using KeeP
 ### 1. Research & Design (COMPLETED)
 
 **Key Findings:**
+
 - Helium browser intentionally disables built-in password manager via `disable-password-manager.patch`
 - Helium supports Chromium extensions, including KeePassXC-Browser
 - Helium uses custom user data directory: `net.imput.helium` (reverse-domain notation)
@@ -26,6 +27,7 @@ Successfully implemented a comprehensive password management solution using KeeP
 - Home Manager's `nativeMessagingHosts` expects manifests at `$out/etc/chromium/`
 
 **Design Decisions:**
+
 - Use KeePassXC (offline-first, no cloud, cross-platform)
 - Create wrapper derivation to provide Chromium manifests for Brave
 - Manual manifest placement for Helium (non-standard path)
@@ -39,6 +41,7 @@ Successfully implemented a comprehensive password management solution using KeeP
 #### File: `platforms/common/programs/keepassxc.nix`
 
 **Features:**
+
 - ✅ KeePassXC enabled with Home Manager module
 - ✅ Wrapper derivation `keepassxc-with-chromium-manifests` providing Chromium native messaging manifests
 - ✅ Manual manifest placement for Helium browser (macOS + Linux paths)
@@ -46,6 +49,7 @@ Successfully implemented a comprehensive password management solution using KeeP
 - ✅ `Browser.UpdateBinaryPath = false` to prevent conflicts with HM
 
 **Technical Details:**
+
 ```nix
 # Wrapper using symlinkJoin + postBuild to add Chromium manifests
 keepassxcWithChromiumManifests = pkgs.symlinkJoin {
@@ -59,6 +63,7 @@ keepassxcWithChromiumManifests = pkgs.symlinkJoin {
 ```
 
 **Why this approach:**
+
 - `symlinkJoin` is cleaner than `runCommandLocal` for this use case
 - Separate `chromiumManifest` derivation avoids eval-time cycles
 - HM's `programs.keepassxc.nativeMessagingHosts` auto-registers for Brave/Chromium
@@ -68,6 +73,7 @@ keepassxcWithChromiumManifests = pkgs.symlinkJoin {
 #### File: `platforms/nixos/desktop/hyprland.nix`
 
 **Added:**
+
 ```nix
 "workspace 6, match:class ^(org.keepassxc.KeePassXC)$"
 ```
@@ -79,6 +85,7 @@ KeePassXC assigned to workspace 6 (security/system tools).
 #### File: `platforms/common/programs/shell-aliases.nix`
 
 **Added:**
+
 ```nix
 kop = "keepassxc &";
 ```
@@ -90,6 +97,7 @@ Quick alias to launch KeePassXC from any shell (Fish, Zsh, Bash).
 #### File: `TODO_LIST.md`
 
 **Updated:**
+
 - Changed `- [ ] **[MEDIUM]** Add password manager` to `- [x] **[MEDIUM]** Add password manager`
 - Added comment: `# Done: KeePassXC with Helium native messaging`
 
@@ -160,12 +168,12 @@ Linux: ~/.config/net.imput.helium/NativeMessagingHosts/
 
 ## Files Modified
 
-| File | Changes |
-|------|---------|
-| `platforms/common/programs/keepassxc.nix` | NEW - KeePassXC with native messaging configuration |
-| `platforms/nixos/desktop/hyprland.nix` | +1 line - KeePassXC workspace rule |
-| `platforms/common/programs/shell-aliases.nix` | +3 lines - kop alias |
-| `TODO_LIST.md` | 1 line changed - marked task complete |
+| File                                          | Changes                                             |
+| --------------------------------------------- | --------------------------------------------------- |
+| `platforms/common/programs/keepassxc.nix`     | NEW - KeePassXC with native messaging configuration |
+| `platforms/nixos/desktop/hyprland.nix`        | +1 line - KeePassXC workspace rule                  |
+| `platforms/common/programs/shell-aliases.nix` | +3 lines - kop alias                                |
+| `TODO_LIST.md`                                | 1 line changed - marked task complete               |
 
 **Total commits:** 5 (including initial implementation, fixes, and improvements)
 
@@ -206,16 +214,16 @@ Considered AliasVault as an alternative (see comparison below). While AliasVault
 
 ### KeePassXC vs AliasVault Comparison
 
-| Feature | KeePassXC | AliasVault |
-|---------|-----------|------------|
-| Open Source | ✅ GPL | ✅ AGPL |
-| Self-hosted | ❌ (local file) | ✅ (Docker) |
-| Email Aliases | ❌ | ✅ Built-in |
-| Browser Extension | ✅ | ✅ |
-| Mobile Apps | ⚠️ Third-party | ✅ Native |
-| Sync | ⚠️ File-based | ✅ Cloud/Self-host |
-| Server Required | ❌ | ✅ |
-| Identity Gen | ❌ | ✅ |
+| Feature           | KeePassXC       | AliasVault         |
+| ----------------- | --------------- | ------------------ |
+| Open Source       | ✅ GPL          | ✅ AGPL            |
+| Self-hosted       | ❌ (local file) | ✅ (Docker)        |
+| Email Aliases     | ❌              | ✅ Built-in        |
+| Browser Extension | ✅              | ✅                 |
+| Mobile Apps       | ⚠️ Third-party  | ✅ Native          |
+| Sync              | ⚠️ File-based   | ✅ Cloud/Self-host |
+| Server Required   | ❌              | ✅                 |
+| Identity Gen      | ❌              | ✅                 |
 
 **Verdict:** KeePassXC for offline simplicity; AliasVault for integrated email aliasing.
 
@@ -241,4 +249,3 @@ Considered AliasVault as an alternative (see comparison below). While AliasVault
 ---
 
 **Status:** ✅ COMPLETE - Password manager fully implemented and tested.
-

@@ -17,75 +17,75 @@ The Gitea→Forgejo migration is **100% code-complete and deployed**. Three post
 
 ### Forgejo Migration (Sessions 52–60) — COMPLETE
 
-| Component | Status | Details |
-|-----------|--------|---------|
-| Module code (`forgejo.nix`) | ✅ | 535 lines, LTS package, Actions runner, admin auto-setup |
-| Repo mirroring (`forgejo-repos.nix`) | ✅ | 302 lines, declarative mirroring, daily sync |
-| Data migration | ✅ | `/var/lib/gitea` → `/var/lib/forgejo`, SQLite intact |
-| Sops key rename | ✅ | `gitea_token` → `forgejo_token` via migration script |
-| DNS subdomain | ✅ | `forgejo.home.lan` — Caddy, Authelia, Homepage, Unbound all updated |
-| OIDC integration | ✅ | Authelia client `forgejo` with correct callback URL |
-| Gatus health check | ✅ | `/api/v1/version` endpoint monitored |
-| SigNoz log collection | ✅ | `forgejo.service` in journald receiver |
-| Federation | ✅ | `federation.ENABLED = true` |
-| Push mirrors | ✅ | Forgejo→GitHub auto-sync for owned repos |
-| Runner package | ✅ | `pkgs.forgejo-runner` v12.9.0 (cache hit) |
-| Tmpfiles Z rule | ✅ | Recursive ownership fix for migrated state dir |
-| Old modules deleted | ✅ | `gitea.nix` and `gitea-repos.nix` removed |
-| WatchdogSec bug | ✅ | Removed `WatchdogSec=30` — Forgejo sends READY=1 only, not WATCHDOG=1 |
-| Runner token auto-recovery | ✅ | Removed stale-file short-circuit — always regenerates on boot |
-| Health check script | ✅ | Updated 34 service names, added missing services |
-| Stale references | ✅ | README.md (4), FEATURES.md (1), service-defaults.nix (1), AGENTS.md (3) all fixed |
-| Documentation | ✅ | Migration doc, federation doc, AGENTS.md gotchas, status reports |
+| Component                            | Status | Details                                                                           |
+| ------------------------------------ | ------ | --------------------------------------------------------------------------------- |
+| Module code (`forgejo.nix`)          | ✅     | 535 lines, LTS package, Actions runner, admin auto-setup                          |
+| Repo mirroring (`forgejo-repos.nix`) | ✅     | 302 lines, declarative mirroring, daily sync                                      |
+| Data migration                       | ✅     | `/var/lib/gitea` → `/var/lib/forgejo`, SQLite intact                              |
+| Sops key rename                      | ✅     | `gitea_token` → `forgejo_token` via migration script                              |
+| DNS subdomain                        | ✅     | `forgejo.home.lan` — Caddy, Authelia, Homepage, Unbound all updated               |
+| OIDC integration                     | ✅     | Authelia client `forgejo` with correct callback URL                               |
+| Gatus health check                   | ✅     | `/api/v1/version` endpoint monitored                                              |
+| SigNoz log collection                | ✅     | `forgejo.service` in journald receiver                                            |
+| Federation                           | ✅     | `federation.ENABLED = true`                                                       |
+| Push mirrors                         | ✅     | Forgejo→GitHub auto-sync for owned repos                                          |
+| Runner package                       | ✅     | `pkgs.forgejo-runner` v12.9.0 (cache hit)                                         |
+| Tmpfiles Z rule                      | ✅     | Recursive ownership fix for migrated state dir                                    |
+| Old modules deleted                  | ✅     | `gitea.nix` and `gitea-repos.nix` removed                                         |
+| WatchdogSec bug                      | ✅     | Removed `WatchdogSec=30` — Forgejo sends READY=1 only, not WATCHDOG=1             |
+| Runner token auto-recovery           | ✅     | Removed stale-file short-circuit — always regenerates on boot                     |
+| Health check script                  | ✅     | Updated 34 service names, added missing services                                  |
+| Stale references                     | ✅     | README.md (4), FEATURES.md (1), service-defaults.nix (1), AGENTS.md (3) all fixed |
+| Documentation                        | ✅     | Migration doc, federation doc, AGENTS.md gotchas, status reports                  |
 
 ### Bugs Fixed This Session (3)
 
-| # | Bug | Impact | Fix | Commit |
-|---|-----|--------|-----|--------|
-| 1 | `WatchdogSec=30` on forgejo.service | **Critical** — Forgejo would be killed every 30s after startup. Sends READY=1 but NOT WATCHDOG=1. | Removed `WatchdogSec` from forgejo.nix | `b63ceca0` |
-| 2 | Stale Gitea token file blocks runner | Runner fails because old Gitea-era token persists at `/var/lib/forgejo/.runner-token`. Service skips regeneration when file exists. | Removed `[ -f "$TOKEN_FILE" ] && exit 0` — always regenerate | `e0728ece` |
-| 3 | Health check references dead `gitea` service | Script checks `gitea` which doesn't exist → guaranteed failure every 15 minutes. Also checked disabled services, missed 9 enabled ones. | Rewrote with 34 correct service names | `b22abfe7` |
+| #   | Bug                                          | Impact                                                                                                                                  | Fix                                                          | Commit     |
+| --- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ | ---------- |
+| 1   | `WatchdogSec=30` on forgejo.service          | **Critical** — Forgejo would be killed every 30s after startup. Sends READY=1 but NOT WATCHDOG=1.                                       | Removed `WatchdogSec` from forgejo.nix                       | `b63ceca0` |
+| 2   | Stale Gitea token file blocks runner         | Runner fails because old Gitea-era token persists at `/var/lib/forgejo/.runner-token`. Service skips regeneration when file exists.     | Removed `[ -f "$TOKEN_FILE" ] && exit 0` — always regenerate | `e0728ece` |
+| 3   | Health check references dead `gitea` service | Script checks `gitea` which doesn't exist → guaranteed failure every 15 minutes. Also checked disabled services, missed 9 enabled ones. | Rewrote with 34 correct service names                        | `b22abfe7` |
 
 ### Project Infrastructure — All Healthy
 
-| Component | Status | Count/Details |
-|-----------|--------|---------------|
-| NixOS service modules | ✅ | 36 modules, 6,794 lines, 30 enabled |
-| Custom overlays | ✅ | 21 packages (15 shared + 6 Linux), all building |
-| Shared lib helpers | ✅ | 12 functions (harden, mkDockerServiceFactory, mkPreparedSource, etc.) |
-| Cross-platform programs | ✅ | 15 modules (Fish, Zsh, Bash, Starship, Git, tmux, etc.) |
-| Justfile | ✅ | 69 recipes in 9 categories |
-| Pre-commit hooks | ✅ | 9 hooks (gitleaks, deadnix, statix, alejandra, shellcheck, etc.) |
-| Flake inputs | ✅ | 47 inputs, 72 lock nodes |
-| Custom packages | ✅ | 5 (jscpd, govalid, netwatch, openaudible, aw-watcher-utilization) |
-| Operational scripts | ✅ | 19 (DNS, GPU recovery, health, wallpaper, dual-WAN) |
-| Darwin config | ✅ | 13 .nix files, MacBook Air aarch64-darwin |
-| RPi3 config | ✅ | DNS failover module ready, hardware not provisioned |
+| Component               | Status | Count/Details                                                         |
+| ----------------------- | ------ | --------------------------------------------------------------------- |
+| NixOS service modules   | ✅     | 36 modules, 6,794 lines, 30 enabled                                   |
+| Custom overlays         | ✅     | 21 packages (15 shared + 6 Linux), all building                       |
+| Shared lib helpers      | ✅     | 12 functions (harden, mkDockerServiceFactory, mkPreparedSource, etc.) |
+| Cross-platform programs | ✅     | 15 modules (Fish, Zsh, Bash, Starship, Git, tmux, etc.)               |
+| Justfile                | ✅     | 69 recipes in 9 categories                                            |
+| Pre-commit hooks        | ✅     | 9 hooks (gitleaks, deadnix, statix, alejandra, shellcheck, etc.)      |
+| Flake inputs            | ✅     | 47 inputs, 72 lock nodes                                              |
+| Custom packages         | ✅     | 5 (jscpd, govalid, netwatch, openaudible, aw-watcher-utilization)     |
+| Operational scripts     | ✅     | 19 (DNS, GPU recovery, health, wallpaper, dual-WAN)                   |
+| Darwin config           | ✅     | 13 .nix files, MacBook Air aarch64-darwin                             |
+| RPi3 config             | ✅     | DNS failover module ready, hardware not provisioned                   |
 
 ---
 
 ## B) PARTIALLY DONE 🔧
 
-| Item | What's Left | Blocker |
-|------|-------------|---------|
-| Forgejo push mirrors | Configured but never tested end-to-end — push a commit, verify it reaches GitHub | Need to test manually |
-| DNS failover cluster | Module (`dns-failover.nix`) complete, Pi 3 not provisioned | Hardware — Pi 3 needs sops + age identity setup |
+| Item                 | What's Left                                                                      | Blocker                                         |
+| -------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Forgejo push mirrors | Configured but never tested end-to-end — push a commit, verify it reaches GitHub | Need to test manually                           |
+| DNS failover cluster | Module (`dns-failover.nix`) complete, Pi 3 not provisioned                       | Hardware — Pi 3 needs sops + age identity setup |
 
 ---
 
 ## C) NOT STARTED ⏳
 
-| # | Item | Priority | Notes |
-|---|------|----------|-------|
-| 1 | Pi 3 hardware provisioning | MED | DNS failover cluster needs physical setup |
-| 2 | Forgejo federation testing | LOW | Federation enabled, no ActivityPub interactions tested |
-| 3 | Hardcoded port extraction (voice-agents, signoz, homepage) | MED | 5 hardcoded `localhost:PORT` refs should use module options |
-| 4 | `scripts/lib.sh` missing `set -euo pipefail` | LOW | Safety flags for library file |
-| 5 | `scripts/usb-diagnostic.sh` unquoted variables | LOW | `$pid` and array expansions |
-| 6 | `assets/avatar.png` 4.2MB in git | LOW | Should use Git LFS or compress |
-| 7 | Archive old docs (350+ files, many historical) | LOW | Move 2025 status reports to archive/ |
-| 8 | Fix dead image link in `nix-visualize-integration.md` | LOW | References gitignored PNG |
-| 9 | Post-switch health check automation | MED | Add to justfile for automatic deploy verification |
+| #   | Item                                                       | Priority | Notes                                                       |
+| --- | ---------------------------------------------------------- | -------- | ----------------------------------------------------------- |
+| 1   | Pi 3 hardware provisioning                                 | MED      | DNS failover cluster needs physical setup                   |
+| 2   | Forgejo federation testing                                 | LOW      | Federation enabled, no ActivityPub interactions tested      |
+| 3   | Hardcoded port extraction (voice-agents, signoz, homepage) | MED      | 5 hardcoded `localhost:PORT` refs should use module options |
+| 4   | `scripts/lib.sh` missing `set -euo pipefail`               | LOW      | Safety flags for library file                               |
+| 5   | `scripts/usb-diagnostic.sh` unquoted variables             | LOW      | `$pid` and array expansions                                 |
+| 6   | `assets/avatar.png` 4.2MB in git                           | LOW      | Should use Git LFS or compress                              |
+| 7   | Archive old docs (350+ files, many historical)             | LOW      | Move 2025 status reports to archive/                        |
+| 8   | Fix dead image link in `nix-visualize-integration.md`      | LOW      | References gitignored PNG                                   |
+| 9   | Post-switch health check automation                        | MED      | Add to justfile for automatic deploy verification           |
 
 ---
 
@@ -154,33 +154,33 @@ The Gitea→Forgejo migration is **100% code-complete and deployed**. Three post
 
 ## F) TOP 25 THINGS TO DO NEXT 🎯
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | **Deploy to evo-x2** (`just switch`) | CRITICAL | 1min | Deploy |
-| 2 | **Verify all services active** after deploy | HIGH | 2min | Verify |
-| 3 | **Test Forgejo web UI** — login, browse repos | HIGH | 5min | Verify |
-| 4 | **Test push mirrors** — push a commit, verify GitHub sync | HIGH | 10min | Verify |
-| 5 | **Verify runner connects** — `systemctl is-active gitea-runner-evo-x2` | HIGH | 1min | Verify |
-| 6 | **Remove old backup** `/var/lib/gitea.pre-forgejo-migration` | MED | 1min | Cleanup |
-| 7 | **Extract LiveKit port** to module option in `voice-agents.nix` | MED | 15min | Code quality |
-| 8 | **Extract hardcoded ports** in `signoz.nix` (2019, 8090) | MED | 15min | Code quality |
-| 9 | **Extract hardcoded port** in `homepage.nix` (8090) | MED | 5min | Code quality |
-| 10 | **Add post-switch health check** to justfile | MED | 30min | Automation |
-| 11 | **Archive migration doc** `docs/migration-gitea-to-forgejo.md` | LOW | 2min | Docs |
-| 12 | **Add `set -euo pipefail`** to `scripts/lib.sh` | LOW | 2min | Code quality |
-| 13 | **Fix unquoted variables** in `scripts/usb-diagnostic.sh` | LOW | 5min | Code quality |
-| 14 | **Compress avatar.png** or move to Git LFS | LOW | 5min | Repo hygiene |
-| 15 | **Provision Pi 3** for DNS failover cluster | MED | 2hr | Infra |
-| 16 | **Archive old status docs** (2025 reports → archive/) | LOW | 10min | Docs |
-| 17 | **Add Forgejo backup verification** to justfile | MED | 15min | Reliability |
-| 18 | **Test Forgejo federation** with another instance | LOW | 1hr | Features |
-| 19 | **Review Gatus endpoint coverage** — any missing? | MED | 15min | Monitoring |
-| 20 | **Update AGENTS.md** — remove resolved Gitea gotchas | LOW | 10min | Docs |
-| 21 | **Add repo count metric** to Gatus for Forgejo | LOW | 15min | Monitoring |
-| 22 | **Test dual-WAN failover** with Forgejo active | MED | 20min | Reliability |
-| 23 | **Audit tmpfiles rules** for correctness | LOW | 15min | Code quality |
-| 24 | **Fix dead image link** in `nix-visualize-integration.md` | LOW | 5min | Docs |
-| 25 | **Consider Forgejo email notifications** for push mirror failures | LOW | 30min | Features |
+| #   | Task                                                                   | Impact   | Effort | Category     |
+| --- | ---------------------------------------------------------------------- | -------- | ------ | ------------ |
+| 1   | **Deploy to evo-x2** (`just switch`)                                   | CRITICAL | 1min   | Deploy       |
+| 2   | **Verify all services active** after deploy                            | HIGH     | 2min   | Verify       |
+| 3   | **Test Forgejo web UI** — login, browse repos                          | HIGH     | 5min   | Verify       |
+| 4   | **Test push mirrors** — push a commit, verify GitHub sync              | HIGH     | 10min  | Verify       |
+| 5   | **Verify runner connects** — `systemctl is-active gitea-runner-evo-x2` | HIGH     | 1min   | Verify       |
+| 6   | **Remove old backup** `/var/lib/gitea.pre-forgejo-migration`           | MED      | 1min   | Cleanup      |
+| 7   | **Extract LiveKit port** to module option in `voice-agents.nix`        | MED      | 15min  | Code quality |
+| 8   | **Extract hardcoded ports** in `signoz.nix` (2019, 8090)               | MED      | 15min  | Code quality |
+| 9   | **Extract hardcoded port** in `homepage.nix` (8090)                    | MED      | 5min   | Code quality |
+| 10  | **Add post-switch health check** to justfile                           | MED      | 30min  | Automation   |
+| 11  | **Archive migration doc** `docs/migration-gitea-to-forgejo.md`         | LOW      | 2min   | Docs         |
+| 12  | **Add `set -euo pipefail`** to `scripts/lib.sh`                        | LOW      | 2min   | Code quality |
+| 13  | **Fix unquoted variables** in `scripts/usb-diagnostic.sh`              | LOW      | 5min   | Code quality |
+| 14  | **Compress avatar.png** or move to Git LFS                             | LOW      | 5min   | Repo hygiene |
+| 15  | **Provision Pi 3** for DNS failover cluster                            | MED      | 2hr    | Infra        |
+| 16  | **Archive old status docs** (2025 reports → archive/)                  | LOW      | 10min  | Docs         |
+| 17  | **Add Forgejo backup verification** to justfile                        | MED      | 15min  | Reliability  |
+| 18  | **Test Forgejo federation** with another instance                      | LOW      | 1hr    | Features     |
+| 19  | **Review Gatus endpoint coverage** — any missing?                      | MED      | 15min  | Monitoring   |
+| 20  | **Update AGENTS.md** — remove resolved Gitea gotchas                   | LOW      | 10min  | Docs         |
+| 21  | **Add repo count metric** to Gatus for Forgejo                         | LOW      | 15min  | Monitoring   |
+| 22  | **Test dual-WAN failover** with Forgejo active                         | MED      | 20min  | Reliability  |
+| 23  | **Audit tmpfiles rules** for correctness                               | LOW      | 15min  | Code quality |
+| 24  | **Fix dead image link** in `nix-visualize-integration.md`              | LOW      | 5min   | Docs         |
+| 25  | **Consider Forgejo email notifications** for push mirror failures      | LOW      | 30min  | Features     |
 
 ---
 
@@ -198,41 +198,41 @@ The fix (`b63ceca0`) was deployed in the first `nh os switch` output the user sh
 
 ## Session Timeline
 
-| Session | Summary | Key Commits |
-|---------|---------|-------------|
-| 49 | NVMe monitoring, comprehensive audit | `10063d70`, `5f55d56e` |
-| 50-51 | NVMe deployment, VRRP sops fix, GC tuning | `7a20bb39`, `9429579c` |
-| 52 | Forgejo Phase 1 (code migration), gogenfilter dedup | `d3a7f3fb`, `4fab77f7` |
-| 53 | Comprehensive status, Forgejo audit | `cc7bc502` |
-| 54 | gogenfilter v3 migration, ecosystem fix | `54bf3d90`, `04f0d813` |
-| 55 | Ecosystem build fix — 13/13 packages | — |
-| 56 | art-dupl stats fix, branch migration | `df13983a`, `629a61d6` |
-| 57 | Unsloth removal, DNS module extraction | `e69fe17e`, `4cc0a208` |
-| 58 | Forgejo Phase 2 (data migration), subdomain rename, service fixes | `04e9cced`, `949191b9` |
-| 59 | Forgejo admin password fix | `4b59f143`, `c1632618` |
-| **60** | **WatchdogSec fix, runner token fix, health check fix, comprehensive audit** | `b63ceca0`, `b22abfe7`, `e0728ece` |
+| Session | Summary                                                                      | Key Commits                        |
+| ------- | ---------------------------------------------------------------------------- | ---------------------------------- |
+| 49      | NVMe monitoring, comprehensive audit                                         | `10063d70`, `5f55d56e`             |
+| 50-51   | NVMe deployment, VRRP sops fix, GC tuning                                    | `7a20bb39`, `9429579c`             |
+| 52      | Forgejo Phase 1 (code migration), gogenfilter dedup                          | `d3a7f3fb`, `4fab77f7`             |
+| 53      | Comprehensive status, Forgejo audit                                          | `cc7bc502`                         |
+| 54      | gogenfilter v3 migration, ecosystem fix                                      | `54bf3d90`, `04f0d813`             |
+| 55      | Ecosystem build fix — 13/13 packages                                         | —                                  |
+| 56      | art-dupl stats fix, branch migration                                         | `df13983a`, `629a61d6`             |
+| 57      | Unsloth removal, DNS module extraction                                       | `e69fe17e`, `4cc0a208`             |
+| 58      | Forgejo Phase 2 (data migration), subdomain rename, service fixes            | `04e9cced`, `949191b9`             |
+| 59      | Forgejo admin password fix                                                   | `4b59f143`, `c1632618`             |
+| **60**  | **WatchdogSec fix, runner token fix, health check fix, comprehensive audit** | `b63ceca0`, `b22abfe7`, `e0728ece` |
 
 ## Project Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total commits | 2,497 |
-| Commits today | 40 |
-| Total .nix files | ~106 |
+| Metric               | Value              |
+| -------------------- | ------------------ |
+| Total commits        | 2,497              |
+| Commits today        | 40                 |
+| Total .nix files     | ~106               |
 | Service module lines | 6,794 (36 modules) |
-| Flake inputs | 47 (72 lock nodes) |
-| Overlay packages | 21 |
-| Justfile recipes | 69 |
-| Scripts | 19 |
-| Pre-commit hooks | 9 |
-| Working tree | Clean |
-| Unpushed commits | 0 |
+| Flake inputs         | 47 (72 lock nodes) |
+| Overlay packages     | 21                 |
+| Justfile recipes     | 69                 |
+| Scripts              | 19                 |
+| Pre-commit hooks     | 9                  |
+| Working tree         | Clean              |
+| Unpushed commits     | 0                  |
 
 ## Commits This Session
 
-| Commit | Message | Files |
-|--------|---------|-------|
-| `b63ceca0` | `fix(forgejo): remove dangerous WatchdogSec and clean up stale Gitea references` | 5 files, +11 -10 |
-| `5943d171` | `docs(status): Session 60 — Forgejo WatchdogSec bug fix + comprehensive project audit` | 1 file, +224 |
-| `b22abfe7` | `fix(health-check): update service-health-check for post-Forgejo migration` | 1 file, +15 -8 |
-| `e0728ece` | `fix(forgejo): always regenerate runner registration token on boot` | 1 file, +2 -4 |
+| Commit     | Message                                                                                | Files            |
+| ---------- | -------------------------------------------------------------------------------------- | ---------------- |
+| `b63ceca0` | `fix(forgejo): remove dangerous WatchdogSec and clean up stale Gitea references`       | 5 files, +11 -10 |
+| `5943d171` | `docs(status): Session 60 — Forgejo WatchdogSec bug fix + comprehensive project audit` | 1 file, +224     |
+| `b22abfe7` | `fix(health-check): update service-health-check for post-Forgejo migration`            | 1 file, +15 -8   |
+| `e0728ece` | `fix(forgejo): always regenerate runner registration token on boot`                    | 1 file, +2 -4    |

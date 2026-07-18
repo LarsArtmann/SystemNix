@@ -8,13 +8,13 @@
 
 ## Why Migrate?
 
-| Reason | Detail |
-|--------|--------|
-| Governance | Forgejo is community-governed (Codeberg e.V.); Gitea is for-profit |
-| License | Forgejo = GPLv3 (fully free); Gitea = MIT + proprietary add-ons |
-| Security | Forgejo patches available to everyone; Gitea advance notice for paying customers |
-| Future | Federation (ActivityPub/ForgeFed) — cross-instance issues/PRs |
-| Compatibility | Drop-in replacement — same API, same data format, same config keys |
+| Reason        | Detail                                                                           |
+| ------------- | -------------------------------------------------------------------------------- |
+| Governance    | Forgejo is community-governed (Codeberg e.V.); Gitea is for-profit               |
+| License       | Forgejo = GPLv3 (fully free); Gitea = MIT + proprietary add-ons                  |
+| Security      | Forgejo patches available to everyone; Gitea advance notice for paying customers |
+| Future        | Federation (ActivityPub/ForgeFed) — cross-instance issues/PRs                    |
+| Compatibility | Drop-in replacement — same API, same data format, same config keys               |
 
 ---
 
@@ -22,44 +22,44 @@
 
 ### Files that reference Gitea (must change)
 
-| File | What | Change needed |
-|------|------|---------------|
-| `modules/nixos/services/gitea.nix` | Main module (554 lines) | **Rewrite** → `forgejo.nix` |
-| `modules/nixos/services/gitea-repos.nix` | Declarative repo mirroring (313 lines) | **Rewrite** → `forgejo-repos.nix` |
-| `modules/nixos/services/caddy.nix:67` | `gitea.${domain}` virtual host | Change subdomain + port reference |
-| `modules/nixos/services/authelia.nix:198-203` | OIDC client `client_id = "gitea"` | Update client ID + callback URL |
-| `modules/nixos/services/homepage.nix:116-120` | Dashboard entry | Update URL + icon |
-| `modules/nixos/services/gatus-config.nix:58-61` | Health check | Update port reference |
-| `modules/nixos/services/signoz.nix:536` | Log collection `gitea.service` | Update unit name |
-| `modules/nixos/services/sops.nix:41-45` | Secrets `restartUnits` | Update service names |
-| `modules/nixos/services/sops.nix:129-137` | Template `gitea-sync.env` | Rename template |
-| `platforms/nixos/system/dns-blocker-config.nix:55` | DNS A record `"gitea"` | Change subdomain |
-| `platforms/nixos/rpi3/default.nix:144` | DNS A record `"gitea"` | Change subdomain |
-| `platforms/nixos/system/configuration.nix:126` | `gitea.enable = true` | Switch to forgejo |
-| `platforms/nixos/system/configuration.nix:267-274` | `gitea-repos` config | Switch to forgejo-repos |
-| `flake.nix:358-364` | serviceModules entries | Replace gitea → forgejo |
-| `justfile:454-463` | `gitea-sync-repos`, `gitea-update-token` | Rename recipes |
-| `AGENTS.md` | Documentation references | Update module name, commands |
+| File                                               | What                                     | Change needed                     |
+| -------------------------------------------------- | ---------------------------------------- | --------------------------------- |
+| `modules/nixos/services/gitea.nix`                 | Main module (554 lines)                  | **Rewrite** → `forgejo.nix`       |
+| `modules/nixos/services/gitea-repos.nix`           | Declarative repo mirroring (313 lines)   | **Rewrite** → `forgejo-repos.nix` |
+| `modules/nixos/services/caddy.nix:67`              | `gitea.${domain}` virtual host           | Change subdomain + port reference |
+| `modules/nixos/services/authelia.nix:198-203`      | OIDC client `client_id = "gitea"`        | Update client ID + callback URL   |
+| `modules/nixos/services/homepage.nix:116-120`      | Dashboard entry                          | Update URL + icon                 |
+| `modules/nixos/services/gatus-config.nix:58-61`    | Health check                             | Update port reference             |
+| `modules/nixos/services/signoz.nix:536`            | Log collection `gitea.service`           | Update unit name                  |
+| `modules/nixos/services/sops.nix:41-45`            | Secrets `restartUnits`                   | Update service names              |
+| `modules/nixos/services/sops.nix:129-137`          | Template `gitea-sync.env`                | Rename template                   |
+| `platforms/nixos/system/dns-blocker-config.nix:55` | DNS A record `"gitea"`                   | Change subdomain                  |
+| `platforms/nixos/rpi3/default.nix:144`             | DNS A record `"gitea"`                   | Change subdomain                  |
+| `platforms/nixos/system/configuration.nix:126`     | `gitea.enable = true`                    | Switch to forgejo                 |
+| `platforms/nixos/system/configuration.nix:267-274` | `gitea-repos` config                     | Switch to forgejo-repos           |
+| `flake.nix:358-364`                                | serviceModules entries                   | Replace gitea → forgejo           |
+| `justfile:454-463`                                 | `gitea-sync-repos`, `gitea-update-token` | Rename recipes                    |
+| `AGENTS.md`                                        | Documentation references                 | Update module name, commands      |
 
 ### Data on disk
 
-| Path | Contents | Size estimate |
-|------|----------|---------------|
-| `/var/lib/gitea/` | SQLite DB + repos + LFS + logs | 1-5 GB |
-| `/var/lib/gitea/gitea.db` | SQLite database | 10-100 MB |
-| `/var/lib/gitea/repositories/` | Mirrored Git repos | Bulk of space |
-| `/var/lib/gitea/lfs/` | LFS objects | Varies |
-| `/var/lib/gitea/.admin-password` | Auto-generated admin pass | Small |
-| `/var/lib/gitea/.admin-token.env` | API token | Small |
-| `/var/lib/gitea/.runner-token` | Actions runner token | Small |
+| Path                              | Contents                       | Size estimate |
+| --------------------------------- | ------------------------------ | ------------- |
+| `/var/lib/gitea/`                 | SQLite DB + repos + LFS + logs | 1-5 GB        |
+| `/var/lib/gitea/gitea.db`         | SQLite database                | 10-100 MB     |
+| `/var/lib/gitea/repositories/`    | Mirrored Git repos             | Bulk of space |
+| `/var/lib/gitea/lfs/`             | LFS objects                    | Varies        |
+| `/var/lib/gitea/.admin-password`  | Auto-generated admin pass      | Small         |
+| `/var/lib/gitea/.admin-token.env` | API token                      | Small         |
+| `/var/lib/gitea/.runner-token`    | Actions runner token           | Small         |
 
 ### Secrets in sops
 
-| Key | Used by |
-|-----|---------|
-| `gitea_token` | API access for sync scripts |
-| `github_token` | GitHub API for mirroring |
-| `github_user` | GitHub username |
+| Key            | Used by                     |
+| -------------- | --------------------------- |
+| `gitea_token`  | API access for sync scripts |
+| `github_token` | GitHub API for mirroring    |
+| `github_user`  | GitHub username             |
 
 These don't need to change — Forgejo API tokens are generated fresh.
 
@@ -70,11 +70,13 @@ These don't need to change — Forgejo API tokens are generated fresh.
 ### Subdomain Decision
 
 **Option A: Keep `gitea.home.lan`** (recommended for simplicity)
+
 - Zero DNS changes, zero Authelia client changes
 - Bookmark compatibility
 - Just change the backend service
 
 **Option B: Change to `git.home.lan` or `forgejo.home.lan`**
+
 - Cleaner naming but requires DNS + Authelia + homepage updates
 - More disruptive, no real benefit for a personal instance
 
@@ -83,11 +85,13 @@ These don't need to change — Forgejo API tokens are generated fresh.
 ### State Directory Decision
 
 **Option A: Migrate `/var/lib/gitea` → `/var/lib/forgejo`** (recommended)
+
 - Clean — matches Forgejo conventions
 - Requires `mv` + chown during migration window
 - The Forgejo nixpkgs module creates `forgejo:forgejo` user/group
 
 **Option B: Point Forgejo at `/var/lib/gitea`**
+
 - No data migration needed
 - But confusing naming, and user/group mismatch (`gitea` vs `forgejo`)
 
@@ -111,20 +115,21 @@ systemctl start gitea
 
 Port `gitea.nix` to use `services.forgejo` module options. Key differences:
 
-| Gitea | Forgejo |
-|-------|---------|
-| `services.gitea.package = pkgs.gitea` | `services.forgejo.package = pkgs.forgejo-lts` |
-| `services.gitea.stateDir = "/var/lib/gitea"` | `services.forgejo.stateDir = "/var/lib/forgejo"` |
-| User `gitea:gitea` | User `forgejo:forgejo` |
-| `services.gitea.settings.*` | `services.forgejo.settings.*` (identical keys) |
-| CLI: `gitea admin user ...` | CLI: `forgejo admin user ...` (identical subcommands) |
-| `services.gitea-actions-runner` | Same package works (Forgejo Actions is API-compatible) |
+| Gitea                                        | Forgejo                                                |
+| -------------------------------------------- | ------------------------------------------------------ |
+| `services.gitea.package = pkgs.gitea`        | `services.forgejo.package = pkgs.forgejo-lts`          |
+| `services.gitea.stateDir = "/var/lib/gitea"` | `services.forgejo.stateDir = "/var/lib/forgejo"`       |
+| User `gitea:gitea`                           | User `forgejo:forgejo`                                 |
+| `services.gitea.settings.*`                  | `services.forgejo.settings.*` (identical keys)         |
+| CLI: `gitea admin user ...`                  | CLI: `forgejo admin user ...` (identical subcommands)  |
+| `services.gitea-actions-runner`              | Same package works (Forgejo Actions is API-compatible) |
 
 Config keys in `settings` are **identical** — Forgejo reads the same `app.ini` format.
 
 ### Step 1.3: Write `modules/nixos/services/forgejo-repos.nix`
 
 Port `gitea-repos.nix` with:
+
 - `config.services.forgejo.settings.server.HTTP_PORT` instead of gitea
 - Service names changed from `gitea-*` to `forgejo-*`
 - API URL remains `http://localhost:<port>` (same API v1)
@@ -148,6 +153,7 @@ Subdomain stays `gitea.home.lan` (Option A).
 ### Step 1.5: Update flake.nix serviceModules
 
 Replace the two gitea entries with forgejo entries:
+
 ```nix
 { path = ./modules/nixos/services/forgejo.nix; module = "forgejo"; }
 { path = ./modules/nixos/services/forgejo-repos.nix; module = "forgejo-repos"; }
@@ -156,6 +162,7 @@ Replace the two gitea entries with forgejo entries:
 ### Step 1.6: Update justfile
 
 Rename recipes:
+
 ```just
 forgejo-sync-repos:   # was gitea-sync-repos
 forgejo-update-token: # was gitea-update-token
@@ -201,6 +208,7 @@ just switch
 ```
 
 This will:
+
 1. Create `forgejo:forgejo` user/group
 2. Set up `forgejo.service` systemd unit
 3. Start Forgejo on the same port (3000)
@@ -238,6 +246,7 @@ curl -s -H "Authorization: token $TOKEN" http://localhost:3000/api/v1/admin/cron
 ### Step 2.6: Regenerate tokens
 
 The old Gitea tokens won't work with the new Forgejo instance. Need to:
+
 1. Generate new API token: `forgejo admin user generate-access-token ...`
 2. Generate new runner token: `forgejo actions generate-runner-token`
 3. These are auto-generated by the token services on first start
@@ -253,13 +262,14 @@ GitHub ──mirror──► Forgejo (pull only, every 30 min)
 ```
 
 Problems with one-way mirrors:
+
 - Can't push to GitHub from local instance
 - Changes on Forgejo side get overwritten on next sync
 - No bidirectional collaboration
 
 ### Recommended Sync Strategy
 
-**For repos you own (LarsArtmann/*):**
+**For repos you own (LarsArtmann/\*):**
 
 ```
 Forgejo (primary) ──push mirror──► GitHub (visibility/backup)
@@ -306,13 +316,13 @@ This ensures every push to Forgejo automatically appears on GitHub.
 
 ### Sync safety guarantees
 
-| Concern | Mitigation |
-|---------|------------|
-| Data loss | Full backup before migration; SQLite dump |
-| Token expiry | GitHub tokens stored in sops; auto-refresh via `gh auth token` |
-| Mirror conflicts | Owned repos = push mirror (Forgejo→GitHub); third-party = pull mirror (GitHub→Forgejo) |
-| Rollback | Keep `gitea.nix` + `gitea-repos.nix` until migration verified; `just rollback` restores previous generation |
-| API compatibility | Forgejo API v1 = Gitea API v1; all scripts work unchanged |
+| Concern           | Mitigation                                                                                                  |
+| ----------------- | ----------------------------------------------------------------------------------------------------------- |
+| Data loss         | Full backup before migration; SQLite dump                                                                   |
+| Token expiry      | GitHub tokens stored in sops; auto-refresh via `gh auth token`                                              |
+| Mirror conflicts  | Owned repos = push mirror (Forgejo→GitHub); third-party = pull mirror (GitHub→Forgejo)                      |
+| Rollback          | Keep `gitea.nix` + `gitea-repos.nix` until migration verified; `just rollback` restores previous generation |
+| API compatibility | Forgejo API v1 = Gitea API v1; all scripts work unchanged                                                   |
 
 ---
 
@@ -366,6 +376,7 @@ Total rollback time: ~5 minutes. Data is safe — Forgejo doesn't modify the DB 
 ## Execution Checklist
 
 ### Phase 1 (prep, no downtime)
+
 - [ ] Create full backup of `/var/lib/gitea`
 - [ ] Write `modules/nixos/services/forgejo.nix` (port from gitea.nix)
 - [ ] Write `modules/nixos/services/forgejo-repos.nix` (port from gitea-repos.nix)
@@ -384,6 +395,7 @@ Total rollback time: ~5 minutes. Data is safe — Forgejo doesn't modify the DB 
 - [ ] Commit Phase 1 changes
 
 ### Phase 2 (migration, ~30 min downtime)
+
 - [ ] Stop all gitea services
 - [ ] Create pre-migration backup
 - [ ] Move `/var/lib/gitea` → `/var/lib/forgejo`
@@ -398,6 +410,7 @@ Total rollback time: ~5 minutes. Data is safe — Forgejo doesn't modify the DB 
 - [ ] Commit Phase 2 (any hotfixes)
 
 ### Phase 3 (cleanup, after verification)
+
 - [ ] Remove old `gitea.nix` and `gitea-repos.nix`
 - [ ] Remove backup data
 - [ ] Update AGENTS.md

@@ -20,16 +20,16 @@ evo-x2 has recovered significantly since the OOM cascade in session 89. Root dis
 
 ## System Health Snapshot
 
-| Metric | S89 (OOM crash) | S91 (recovery) | Current | Trend |
-|--------|-----------------|----------------|---------|-------|
-| RAM | 44/62 GiB (71%) | 19/62 GiB (31%) | ~20/62 GiB | ✅ Stable |
-| Swap | 8.4/16 GiB (51%) | 2.6/16 GiB (16%) | ~3/16 GiB | ✅ Healthy |
-| Root disk | 504/512 GB (100%) | 258/512 GB (53%) | ~260/512 GB | ✅ Recovered |
-| /data disk | 854/1024 GB (84%) | 906/1024 GB (89%) | ~910/1024 GB | ⚠️ Growing |
-| Load avg | 5.35 / 8.19 / 22.95 | 1.84 | ~2 | ✅ Normal |
-| Boot time | 4m 22s | ~30s (post-fix) | ~30s | ✅ Fixed |
-| IO scheduler | [none] | BFQ | BFQ | ✅ Fixed |
-| OOM protection | earlyoom (broken) | systemd-oomd | systemd-oomd | ✅ Fixed |
+| Metric         | S89 (OOM crash)     | S91 (recovery)    | Current      | Trend        |
+| -------------- | ------------------- | ----------------- | ------------ | ------------ |
+| RAM            | 44/62 GiB (71%)     | 19/62 GiB (31%)   | ~20/62 GiB   | ✅ Stable    |
+| Swap           | 8.4/16 GiB (51%)    | 2.6/16 GiB (16%)  | ~3/16 GiB    | ✅ Healthy   |
+| Root disk      | 504/512 GB (100%)   | 258/512 GB (53%)  | ~260/512 GB  | ✅ Recovered |
+| /data disk     | 854/1024 GB (84%)   | 906/1024 GB (89%) | ~910/1024 GB | ⚠️ Growing   |
+| Load avg       | 5.35 / 8.19 / 22.95 | 1.84              | ~2           | ✅ Normal    |
+| Boot time      | 4m 22s              | ~30s (post-fix)   | ~30s         | ✅ Fixed     |
+| IO scheduler   | [none]              | BFQ               | BFQ          | ✅ Fixed     |
+| OOM protection | earlyoom (broken)   | systemd-oomd      | systemd-oomd | ✅ Fixed     |
 
 ---
 
@@ -70,13 +70,13 @@ Replaced earlyoom with systemd-oomd across all slices. Added MemoryMax to 3 unbo
 
 ### 4. Session 89-90 Fixes — Complete & Committed
 
-| Fix | Status |
-|-----|--------|
-| Docker target migration (graphical → multi-user) | ✅ Committed |
-| sops GPG key import hang (`gnupg.sshKeyPaths = []`) | ✅ Committed |
-| GPU udev rule (`card[0-9]` not `card*`) | ✅ Committed |
-| voice-agents disabled + dependents gated | ✅ Committed |
-| NVMe SMART null safety in SigNoz | ✅ Committed |
+| Fix                                                         | Status       |
+| ----------------------------------------------------------- | ------------ |
+| Docker target migration (graphical → multi-user)            | ✅ Committed |
+| sops GPG key import hang (`gnupg.sshKeyPaths = []`)         | ✅ Committed |
+| GPU udev rule (`card[0-9]` not `card*`)                     | ✅ Committed |
+| voice-agents disabled + dependents gated                    | ✅ Committed |
+| NVMe SMART null safety in SigNoz                            | ✅ Committed |
 | Helium+electron in earlyoom prefer (now superseded by oomd) | ✅ Committed |
 
 ### 5. BFQ I/O Scheduler — Deployed (Session 91)
@@ -97,18 +97,19 @@ Added gotchas for Pocket ID bootstrap workflow and Caddy `handle_path` behavior.
 
 ### 1. oauth2-proxy — Code Fixed, Manual Setup Required
 
-| Component | Status |
-|-----------|--------|
-| Pocket ID service | ✅ Running, healthy |
-| Caddy routing bug | ✅ Fixed (handle_path → handle) |
-| sops secrets | ❌ **Placeholder values** — never replaced |
-| Pocket ID admin account | ❌ **Never created** — `/setup` never visited |
-| OIDC client for oauth2-proxy | ❌ **Never created** in Pocket ID UI |
-| OIDC client for Immich | ❌ **Never created** in Pocket ID UI |
-| oauth2-proxy service | ❌ Fails on start (invalid client secret) |
-| Forward-auth for all protected vHosts | ❌ Returns 401 for external access |
+| Component                             | Status                                        |
+| ------------------------------------- | --------------------------------------------- |
+| Pocket ID service                     | ✅ Running, healthy                           |
+| Caddy routing bug                     | ✅ Fixed (handle_path → handle)               |
+| sops secrets                          | ❌ **Placeholder values** — never replaced    |
+| Pocket ID admin account               | ❌ **Never created** — `/setup` never visited |
+| OIDC client for oauth2-proxy          | ❌ **Never created** in Pocket ID UI          |
+| OIDC client for Immich                | ❌ **Never created** in Pocket ID UI          |
+| oauth2-proxy service                  | ❌ Fails on start (invalid client secret)     |
+| Forward-auth for all protected vHosts | ❌ Returns 401 for external access            |
 
 **What's needed (human steps on evo-x2):**
+
 1. `just switch` (deploy Caddy fix + MemoryMax)
 2. Visit `https://auth.home.lan/setup` → create admin passkey
 3. In Pocket ID admin → create "oauth2-proxy" client with callback `https://auth.home.lan/oauth2/callback`
@@ -127,6 +128,7 @@ Missing coverage for: Hermes, Monitor365, disk-monitor, nvme-health-monitor.
 ### 4. Pocket ID OTel Metrics — Broken
 
 Three issues:
+
 - `node_exporter` permission errors on `/run/credentials/pocket-id.service` mountpoint
 - OTel collector HTTP vs HTTPS mismatch when scraping
 - Pocket ID tries to POST metrics to `https://localhost:4318` but gets HTTP response
@@ -141,52 +143,52 @@ BuildFlow (+10 commits), go-output updates since last commit. Unstaged in workin
 
 ### Broken Services
 
-| # | Issue | Effort | Impact |
-|---|-------|--------|--------|
-| 1 | monitor365-server user service — repeated `exit-code` failures | 30 min | Monitoring |
-| 2 | activitywatch-watcher service — `exit-code` on boot | 15 min | Time tracking |
-| 3 | dnsblockd-cert-import user service — NSS cert import fails | 15 min | Cert trust |
-| 4 | Redis `vm.overcommit_memory = 1` warning — every boot | 5 min | Log noise |
-| 5 | SigNoz ClickHouse `psql: could not translate host name "db"` — DNS race on first start | 15 min | Observability |
-| 6 | Redis authentication warning — "does not require authentication" | 10 min | Security |
-| 7 | Bluetooth `hci0: Failed to send wmt func ctrl (-22)` — every boot | 30 min | Hardware |
-| 8 | IPv6 tempaddr errors on Docker veth interfaces | 15 min | Log noise |
-| 9 | Docker global log limits — unbounded container log growth | 10 min | Disk safety |
-| 10 | SigNoz/ClickHouse retention policy — no TTL, grows unbounded | 15 min | Disk safety |
+| #   | Issue                                                                                  | Effort | Impact        |
+| --- | -------------------------------------------------------------------------------------- | ------ | ------------- |
+| 1   | monitor365-server user service — repeated `exit-code` failures                         | 30 min | Monitoring    |
+| 2   | activitywatch-watcher service — `exit-code` on boot                                    | 15 min | Time tracking |
+| 3   | dnsblockd-cert-import user service — NSS cert import fails                             | 15 min | Cert trust    |
+| 4   | Redis `vm.overcommit_memory = 1` warning — every boot                                  | 5 min  | Log noise     |
+| 5   | SigNoz ClickHouse `psql: could not translate host name "db"` — DNS race on first start | 15 min | Observability |
+| 6   | Redis authentication warning — "does not require authentication"                       | 10 min | Security      |
+| 7   | Bluetooth `hci0: Failed to send wmt func ctrl (-22)` — every boot                      | 30 min | Hardware      |
+| 8   | IPv6 tempaddr errors on Docker veth interfaces                                         | 15 min | Log noise     |
+| 9   | Docker global log limits — unbounded container log growth                              | 10 min | Disk safety   |
+| 10  | SigNoz/ClickHouse retention policy — no TTL, grows unbounded                           | 15 min | Disk safety   |
 
 ### Infrastructure Tasks
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 11 | Execute `just snapshot-migrate-data` + btrbk for /data | 30 min | Snapshot coverage |
-| 12 | `just verify-packages` recipe — build all Go packages after flake.lock updates | 15 min | **#1 defense** against vendor hash drift |
-| 13 | GitHub Actions CI for all Go repos | 1-2 hrs | Catch breakage upstream |
-| 14 | Pre-push hook to verify Go packages build | 15 min | Last line of defense |
-| 15 | `just update-vendor-hash` recipe (set `""`, build, extract `got:`) | 15 min | Automate hash cycle |
-| 16 | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS) | 15 min | Stop error spam |
-| 17 | Fix node_exporter pocket-id credentials mountpoint error | 10 min | Stop error spam |
-| 18 | Reclaim ~38 GB unused partitions (p1, p3, p4, p5) | 30 min | Disk space |
-| 19 | Firmware 33s optimization via BIOS settings | 15 min | Boot time |
+| #   | Task                                                                           | Effort  | Impact                                   |
+| --- | ------------------------------------------------------------------------------ | ------- | ---------------------------------------- |
+| 11  | Execute `just snapshot-migrate-data` + btrbk for /data                         | 30 min  | Snapshot coverage                        |
+| 12  | `just verify-packages` recipe — build all Go packages after flake.lock updates | 15 min  | **#1 defense** against vendor hash drift |
+| 13  | GitHub Actions CI for all Go repos                                             | 1-2 hrs | Catch breakage upstream                  |
+| 14  | Pre-push hook to verify Go packages build                                      | 15 min  | Last line of defense                     |
+| 15  | `just update-vendor-hash` recipe (set `""`, build, extract `got:`)             | 15 min  | Automate hash cycle                      |
+| 16  | Fix Pocket ID OTel metrics endpoint (HTTP vs HTTPS)                            | 15 min  | Stop error spam                          |
+| 17  | Fix node_exporter pocket-id credentials mountpoint error                       | 10 min  | Stop error spam                          |
+| 18  | Reclaim ~38 GB unused partitions (p1, p3, p4, p5)                              | 30 min  | Disk space                               |
+| 19  | Firmware 33s optimization via BIOS settings                                    | 15 min  | Boot time                                |
 
 ### Service Improvements
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 20 | Fix photomap podman permission issue and re-enable | 1 hr | Photo visualization |
-| 21 | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
-| 22 | Configure secondary LLM provider for Hermes (OpenRouter/OpenAI) | 30 min | GLM-5.1 fallback |
-| 23 | Minecraft server enable decision | 5 min | Optional |
-| 24 | Steam module — verify it works | 15 min | Gaming |
-| 25 | Pi 3 DNS provisioning — hardware not yet provisioned | 2 hrs | DNS failover |
+| #   | Task                                                             | Effort | Impact                 |
+| --- | ---------------------------------------------------------------- | ------ | ---------------------- |
+| 20  | Fix photomap podman permission issue and re-enable               | 1 hr   | Photo visualization    |
+| 21  | Fix file-and-image-renamer (Go 1.26.3 blocked by nixpkgs 1.26.2) | 30 min | AI screenshot renaming |
+| 22  | Configure secondary LLM provider for Hermes (OpenRouter/OpenAI)  | 30 min | GLM-5.1 fallback       |
+| 23  | Minecraft server enable decision                                 | 5 min  | Optional               |
+| 24  | Steam module — verify it works                                   | 15 min | Gaming                 |
+| 25  | Pi 3 DNS provisioning — hardware not yet provisioned             | 2 hrs  | DNS failover           |
 
 ### Documentation & Housekeeping
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 26 | Archive `docs/status/` — 126 files, most should be archived | 10 min | Clutter |
-| 27 | Update TODO_LIST.md and FEATURES.md to current state | 15 min | Accuracy |
-| 28 | D2 architecture diagram of Go dependency graph | 20 min | Visualization |
-| 29 | Publish `branching-flow/pkg/stats` as proper Go module | 15 min | Eliminates PMA hack |
+| #   | Task                                                        | Effort | Impact              |
+| --- | ----------------------------------------------------------- | ------ | ------------------- |
+| 26  | Archive `docs/status/` — 126 files, most should be archived | 10 min | Clutter             |
+| 27  | Update TODO_LIST.md and FEATURES.md to current state        | 15 min | Accuracy            |
+| 28  | D2 architecture diagram of Go dependency graph              | 20 min | Visualization       |
+| 29  | Publish `branching-flow/pkg/stats` as proper Go module      | 15 min | Eliminates PMA hack |
 
 ---
 
@@ -244,33 +246,33 @@ ClickHouse stores all traces/metrics/logs with no TTL. At current ingestion rate
 
 ## F) TOP #25 THINGS WE SHOULD GET DONE NEXT
 
-| # | Priority | Task | Effort | Why |
-|---|----------|------|--------|-----|
-| 1 | 🔴 P0 | **Bootstrap Pocket ID admin + OIDC clients** (on evo-x2) | 15 min | Unblocks forward-auth for ALL 9 protected services |
-| 2 | 🔴 P0 | **Deploy pending changes** (`just switch`) | 10 min | Caddy fix, MemoryMax, oomd — all committed but not deployed |
-| 3 | 🔴 P0 | **Add `just verify-packages` recipe** | 15 min | Defense against vendor hash cascade (happened 3x) |
-| 4 | 🔴 P0 | **Docker log limits** (`log-opts.max-size` + `max-file`) | 10 min | Prevent container logs from filling root disk |
-| 5 | 🟡 P1 | **Execute `just snapshot-migrate-data`** | 30 min | Enable /data snapshots (827 GB unsnapshottable) |
-| 6 | 🟡 P1 | **SigNoz/ClickHouse TTL retention policy** | 15 min | Prevent unbounded disk growth |
-| 7 | 🟡 P1 | **Fix monitor365-server service failures** | 30 min | Monitoring reliability |
-| 8 | 🟡 P1 | **GitHub Actions CI for Go repos** (at least top 5) | 1-2 hrs | Catch build failures before SystemNix |
-| 9 | 🟡 P1 | **Add Gatus endpoints for Hermes + Monitor365** | 15 min | Complete health check coverage |
-| 10 | 🟡 P1 | **Fix Pocket ID OTel metrics** (HTTP vs HTTPS) | 15 min | Stop error spam in logs |
-| 11 | 🟡 P1 | **Reclaim ~38 GB unused partitions** | 30 min | Disk space recovery |
-| 12 | 🟢 P2 | **Fix activitywatch-watcher service** | 15 min | Time tracking |
-| 13 | 🟢 P2 | **Fix dnsblockd-cert-import service** | 15 min | Cert trust chain |
-| 14 | 🟢 P2 | **Redis `vm.overcommit_memory = 1` + auth** | 10 min | Stop warnings |
-| 15 | 🟢 P2 | **Fix SigNoz ClickHouse DNS race** | 15 min | First-start reliability |
-| 16 | 🟢 P2 | **Archive docs/status/** (126 → ~20 files) | 10 min | Clutter reduction |
-| 17 | 🟢 P2 | **Write Pocket ID provision script** (declarative OIDC clients) | 1 hr | GitOps auth stack |
-| 18 | 🟢 P2 | **Update TODO_LIST.md + FEATURES.md** | 15 min | Documentation accuracy |
-| 19 | 🟢 P2 | **Fix IPv6 tempaddr errors on veth** | 15 min | Log noise reduction |
-| 20 | 🟢 P2 | **Add sops placeholder assertion** (NixOS check) | 15 min | Prevent placeholder deploys |
-| 21 | 🔵 P3 | **Configure secondary LLM for Hermes** | 30 min | GLM-5.1 fallback |
-| 22 | 🔵 P3 | **Fix photomap podman permissions** | 1 hr | Photo visualization |
-| 23 | 🔵 P3 | **Pi 3 DNS provisioning** | 2 hrs | DNS failover cluster |
-| 24 | 🔵 P3 | **D2 architecture diagram** | 20 min | System visualization |
-| 25 | 🔵 P3 | **BIOS firmware optimization** (33s → ?) | 15 min | Boot time improvement |
+| #   | Priority | Task                                                            | Effort  | Why                                                         |
+| --- | -------- | --------------------------------------------------------------- | ------- | ----------------------------------------------------------- |
+| 1   | 🔴 P0    | **Bootstrap Pocket ID admin + OIDC clients** (on evo-x2)        | 15 min  | Unblocks forward-auth for ALL 9 protected services          |
+| 2   | 🔴 P0    | **Deploy pending changes** (`just switch`)                      | 10 min  | Caddy fix, MemoryMax, oomd — all committed but not deployed |
+| 3   | 🔴 P0    | **Add `just verify-packages` recipe**                           | 15 min  | Defense against vendor hash cascade (happened 3x)           |
+| 4   | 🔴 P0    | **Docker log limits** (`log-opts.max-size` + `max-file`)        | 10 min  | Prevent container logs from filling root disk               |
+| 5   | 🟡 P1    | **Execute `just snapshot-migrate-data`**                        | 30 min  | Enable /data snapshots (827 GB unsnapshottable)             |
+| 6   | 🟡 P1    | **SigNoz/ClickHouse TTL retention policy**                      | 15 min  | Prevent unbounded disk growth                               |
+| 7   | 🟡 P1    | **Fix monitor365-server service failures**                      | 30 min  | Monitoring reliability                                      |
+| 8   | 🟡 P1    | **GitHub Actions CI for Go repos** (at least top 5)             | 1-2 hrs | Catch build failures before SystemNix                       |
+| 9   | 🟡 P1    | **Add Gatus endpoints for Hermes + Monitor365**                 | 15 min  | Complete health check coverage                              |
+| 10  | 🟡 P1    | **Fix Pocket ID OTel metrics** (HTTP vs HTTPS)                  | 15 min  | Stop error spam in logs                                     |
+| 11  | 🟡 P1    | **Reclaim ~38 GB unused partitions**                            | 30 min  | Disk space recovery                                         |
+| 12  | 🟢 P2    | **Fix activitywatch-watcher service**                           | 15 min  | Time tracking                                               |
+| 13  | 🟢 P2    | **Fix dnsblockd-cert-import service**                           | 15 min  | Cert trust chain                                            |
+| 14  | 🟢 P2    | **Redis `vm.overcommit_memory = 1` + auth**                     | 10 min  | Stop warnings                                               |
+| 15  | 🟢 P2    | **Fix SigNoz ClickHouse DNS race**                              | 15 min  | First-start reliability                                     |
+| 16  | 🟢 P2    | **Archive docs/status/** (126 → ~20 files)                      | 10 min  | Clutter reduction                                           |
+| 17  | 🟢 P2    | **Write Pocket ID provision script** (declarative OIDC clients) | 1 hr    | GitOps auth stack                                           |
+| 18  | 🟢 P2    | **Update TODO_LIST.md + FEATURES.md**                           | 15 min  | Documentation accuracy                                      |
+| 19  | 🟢 P2    | **Fix IPv6 tempaddr errors on veth**                            | 15 min  | Log noise reduction                                         |
+| 20  | 🟢 P2    | **Add sops placeholder assertion** (NixOS check)                | 15 min  | Prevent placeholder deploys                                 |
+| 21  | 🔵 P3    | **Configure secondary LLM for Hermes**                          | 30 min  | GLM-5.1 fallback                                            |
+| 22  | 🔵 P3    | **Fix photomap podman permissions**                             | 1 hr    | Photo visualization                                         |
+| 23  | 🔵 P3    | **Pi 3 DNS provisioning**                                       | 2 hrs   | DNS failover cluster                                        |
+| 24  | 🔵 P3    | **D2 architecture diagram**                                     | 20 min  | System visualization                                        |
+| 25  | 🔵 P3    | **BIOS firmware optimization** (33s → ?)                        | 15 min  | Boot time improvement                                       |
 
 ---
 
@@ -279,6 +281,7 @@ ClickHouse stores all traces/metrics/logs with no TTL. At current ingestion rate
 **Has `just switch` been run on evo-x2 since session 89's fixes were committed?**
 
 The boot.nix (systemd-oomd replacing earlyoom), caddy.nix (handle_path → handle), pocket-id.nix (MemoryMax), and all other session 89-92 fixes are committed to git but I cannot determine from this machine whether they've been deployed to the running system. If not deployed:
+
 - Boot time is still 4m 22s (sops GPG hang)
 - systemd-oomd is not active (earlyoom still running, but effectively disabled as documented)
 - The Caddy OAuth2 routing fix is not live

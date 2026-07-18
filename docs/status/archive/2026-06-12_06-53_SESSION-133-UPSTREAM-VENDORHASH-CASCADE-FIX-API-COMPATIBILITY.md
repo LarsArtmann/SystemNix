@@ -11,31 +11,31 @@
 
 ### SystemNix Changes (4 files, +241/-99 lines)
 
-| File | Change |
-|------|--------|
-| `overlays/shared.nix` | Restored `mkTidyOverride` pattern for `library-policy` and `mr-sync` (need `proxyVendor` + `go mod tidy`); reverted all packages back to `mkPackageOverlay` after upstream overlay cascade failures; updated `go-auto-upgrade` vendorHash |
-| `flake.nix` | Removed `cmdguard.follows` for `mr-sync`; removed ALL `follows` except `nixpkgs` for `projects-management-automation` |
-| `flake.lock` | Updated 12+ flake inputs to latest upstream revisions |
-| `modules/nixos/services/twenty.nix` | Fixed shellcheck SC2034: `for i in` → `for _ in` |
+| File                                | Change                                                                                                                                                                                                                                    |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `overlays/shared.nix`               | Restored `mkTidyOverride` pattern for `library-policy` and `mr-sync` (need `proxyVendor` + `go mod tidy`); reverted all packages back to `mkPackageOverlay` after upstream overlay cascade failures; updated `go-auto-upgrade` vendorHash |
+| `flake.nix`                         | Removed `cmdguard.follows` for `mr-sync`; removed ALL `follows` except `nixpkgs` for `projects-management-automation`                                                                                                                     |
+| `flake.lock`                        | Updated 12+ flake inputs to latest upstream revisions                                                                                                                                                                                     |
+| `modules/nixos/services/twenty.nix` | Fixed shellcheck SC2034: `for i in` → `for _ in`                                                                                                                                                                                          |
 
 ### Upstream Repos Fixed (all committed & pushed)
 
-| Repo | Fix | Commit |
-|------|-----|--------|
-| `art-dupl` | Updated stale vendorHash | `75d5a76` |
-| `dnsblockd` | Updated vendorHash in `nix/vendor-hash.nix` | `9a27371` |
-| `emeet-pixyd` | Updated vendorHash in BOTH `flake.nix` AND `package.nix` | `f7346cb` |
-| `go-structure-linter` | Updated vendorHash | `965b9d2` |
-| `hierarchical-errors` | Updated vendorHash | `7b8a5e0` |
-| `library-policy` | Updated vendorHash in `nix/packages/default.nix` | `5158530` |
-| `mr-sync` | Updated vendorHash in `package.nix` | `83df8d4` |
-| `project-meta` | Updated vendorHash | `4f7440c` |
-| `file-and-image-renamer` | Updated vendorHash | `89fe38f` |
-| `BuildFlow` | Updated go-output + go-structure-linter flake inputs | `3f607ca` |
-| `go-auto-upgrade` | Bumped go-output to v0.9.0; added `plantuml` sub-module replace; adapted `MustNewCommand` → `NewCommand` API change | `b152e5c` |
-| `DiscordSync` | Added missing `projection/v2` to go-cqrs-lite subModules; updated vendorHash | `8cff9ca` |
-| `go-finding` | Restored `Severity.Badge()` and `Severity.Emoji()` methods accidentally removed in `1fdd80e` | `7642edc` |
-| `projects-management-automation` | Force-pushed back to `39aedca` (pre-API-break revision) | `39aedca` |
+| Repo                             | Fix                                                                                                                 | Commit    |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | --------- |
+| `art-dupl`                       | Updated stale vendorHash                                                                                            | `75d5a76` |
+| `dnsblockd`                      | Updated vendorHash in `nix/vendor-hash.nix`                                                                         | `9a27371` |
+| `emeet-pixyd`                    | Updated vendorHash in BOTH `flake.nix` AND `package.nix`                                                            | `f7346cb` |
+| `go-structure-linter`            | Updated vendorHash                                                                                                  | `965b9d2` |
+| `hierarchical-errors`            | Updated vendorHash                                                                                                  | `7b8a5e0` |
+| `library-policy`                 | Updated vendorHash in `nix/packages/default.nix`                                                                    | `5158530` |
+| `mr-sync`                        | Updated vendorHash in `package.nix`                                                                                 | `83df8d4` |
+| `project-meta`                   | Updated vendorHash                                                                                                  | `4f7440c` |
+| `file-and-image-renamer`         | Updated vendorHash                                                                                                  | `89fe38f` |
+| `BuildFlow`                      | Updated go-output + go-structure-linter flake inputs                                                                | `3f607ca` |
+| `go-auto-upgrade`                | Bumped go-output to v0.9.0; added `plantuml` sub-module replace; adapted `MustNewCommand` → `NewCommand` API change | `b152e5c` |
+| `DiscordSync`                    | Added missing `projection/v2` to go-cqrs-lite subModules; updated vendorHash                                        | `8cff9ca` |
+| `go-finding`                     | Restored `Severity.Badge()` and `Severity.Emoji()` methods accidentally removed in `1fdd80e`                        | `7642edc` |
+| `projects-management-automation` | Force-pushed back to `39aedca` (pre-API-break revision)                                                             | `39aedca` |
 
 ---
 
@@ -82,6 +82,7 @@ The entire `repo.overlays.default` migration (commit `e98a37bc`) from session 13
 ### cmdguard v2.6.0 API Break
 
 `cmdguard` commit `c8d86c8` removed ALL `Must*` panic-inducing functions (`MustNewCommand`, `MustNewCLI`, `MustAddCommand`, `MustNewParentCommand`). This broke 3 repos:
+
 - `go-auto-upgrade` (fixed: adapted to `NewCommand` error-returning API)
 - `mr-sync` (workaround: removed `cmdguard.follows`)
 - `projects-management-automation` (workaround: removed ALL `follows`)
@@ -172,6 +173,7 @@ Should SystemNix override upstream repo dependencies via `follows` (current appr
 The current "follow everything" approach means every nixpkgs or Go dep update in SystemNix potentially breaks 10+ upstream repo builds. But it also ensures consistency — all repos use the same `go-finding`, `go-output`, etc.
 
 **The tradeoff:**
+
 - **Follow everything** → consistent deps, but fragile (any dep change cascades to all consumers)
 - **Follow nothing (except nixpkgs)** → stable builds, but potential version skew across repos
 - **Follow selectively** → best of both, but requires manual curation

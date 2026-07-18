@@ -20,16 +20,16 @@ The `/data` partition is now the concern at **89% (118 GB free)**, driven by AI 
 
 ## System Health Snapshot
 
-| Metric | Session 90 | Session 91 | Delta |
-|--------|-----------|-----------|-------|
-| RAM used | 46/62 GiB (74%) | 19/62 GiB (31%) | ✅ −43 GiB |
-| Swap used | 8.5/16 GiB (53%) | 2.6/16 GiB (16%) | ✅ −5.9 GiB |
-| Root disk | 504/512 GB (100%) | 258/512 GB (53%) | ✅ −246 GB |
-| /data disk | 854/1024 GB (84%) | 906/1024 GB (89%) | ⚠️ +52 GB |
-| Load avg | 4.28 / 5.79 / 12.95 | 1.84 / 1.49 / 1.99 | ✅ Normalized |
-| OOM kills | 0 | 0 | ✅ Clean |
-| IO scheduler | `[none]` | `[none]` (BFQ pending deploy) | ⚠️ Fix ready |
-| Boot time | 4m 22s | Unknown (likely ~50s) | ✅ Improved |
+| Metric       | Session 90          | Session 91                    | Delta         |
+| ------------ | ------------------- | ----------------------------- | ------------- |
+| RAM used     | 46/62 GiB (74%)     | 19/62 GiB (31%)               | ✅ −43 GiB    |
+| Swap used    | 8.5/16 GiB (53%)    | 2.6/16 GiB (16%)              | ✅ −5.9 GiB   |
+| Root disk    | 504/512 GB (100%)   | 258/512 GB (53%)              | ✅ −246 GB    |
+| /data disk   | 854/1024 GB (84%)   | 906/1024 GB (89%)             | ⚠️ +52 GB     |
+| Load avg     | 4.28 / 5.79 / 12.95 | 1.84 / 1.49 / 1.99            | ✅ Normalized |
+| OOM kills    | 0                   | 0                             | ✅ Clean      |
+| IO scheduler | `[none]`            | `[none]` (BFQ pending deploy) | ⚠️ Fix ready  |
+| Boot time    | 4m 22s              | Unknown (likely ~50s)         | ✅ Improved   |
 
 ---
 
@@ -39,18 +39,18 @@ The `/data` partition is now the concern at **89% (118 GB free)**, driven by AI 
 
 Root partition recovered from 100% (2.5 GB free) → 53% (235 GB free). **246 GB freed.** The cleanup happened between sessions — exact actions unclear but the result is clear:
 
-| Consumer | Session 90 Size | Session 91 Size | Freed |
-|----------|----------------|----------------|-------|
-| `/home/lars/projects` | 159 GB | 115 GB | −44 GB |
-| `/nix/store` | 101 GB | 102 GB | −1 GB (stable) |
-| Jan AI (`~/.local/share/Jan`) | 51 GB | 161 MB | **−50.8 GB** |
-| unsloth (`/var/lib/unsloth`) | 28 GB | 28 GB | 0 (moved to /data) |
-| `~/.cache` | 27 GB | 25 GB | −2 GB |
-| `~/go` | 13 GB | 13 GB | 0 |
-| Trash | 7.5 GB | 8.8 MB | **−7.5 GB** |
-| `/var/log` | 4.1 GB | — | Reduced |
-| Steam | 5.1 GB | — | Reduced |
-| activitywatch | 3.8 GB | — | Reduced |
+| Consumer                      | Session 90 Size | Session 91 Size | Freed              |
+| ----------------------------- | --------------- | --------------- | ------------------ |
+| `/home/lars/projects`         | 159 GB          | 115 GB          | −44 GB             |
+| `/nix/store`                  | 101 GB          | 102 GB          | −1 GB (stable)     |
+| Jan AI (`~/.local/share/Jan`) | 51 GB           | 161 MB          | **−50.8 GB**       |
+| unsloth (`/var/lib/unsloth`)  | 28 GB           | 28 GB           | 0 (moved to /data) |
+| `~/.cache`                    | 27 GB           | 25 GB           | −2 GB              |
+| `~/go`                        | 13 GB           | 13 GB           | 0                  |
+| Trash                         | 7.5 GB          | 8.8 MB          | **−7.5 GB**        |
+| `/var/log`                    | 4.1 GB          | —               | Reduced            |
+| Steam                         | 5.1 GB          | —               | Reduced            |
+| activitywatch                 | 3.8 GB          | —               | Reduced            |
 
 **Biggest wins:** Jan AI models deleted (~51 GB), trash emptied (~7.5 GB), projects cleaned (~44 GB).
 
@@ -60,42 +60,44 @@ Investigated "disk always at 99% IO" complaint. Found the system had **no I/O sc
 
 **Top I/O consumers by cumulative read_bytes (live measurement):**
 
-| Process | read_bytes | write_bytes | Pattern |
-|---------|-----------|-------------|---------|
-| crush (PID 32181) | **93.6 GB** | 11 MB | Indexing/analysis — bulk reader |
-| python3.13 | **19.8 GB** | 98 KB | Batch processing |
-| crush (PID 21359) | **17.9 GB** | 47 MB | Background agent |
-| crush (PID 22013) | **6.7 GB** | 35 MB | Background agent |
-| aw-server | **5.5 GB** | 53 MB | Activity tracking — continuous |
-| crush (PID 33354) | **4.4 GB** | 38 MB | Background agent |
-| helium | **4.3 GB** | 99 MB | Electron app — continuous |
-| gopls | **3.4 GB** | 3.8 MB | Go LSP — on-demand |
-| electron | **2.4 GB** | 794 KB | Background |
-| `.trash-wrapped` | 482 MB | **1.2 GB** | Trash management |
-| crush (PID 30195) | 3.1 GB | 214 MB | Background agent |
+| Process           | read_bytes  | write_bytes | Pattern                         |
+| ----------------- | ----------- | ----------- | ------------------------------- |
+| crush (PID 32181) | **93.6 GB** | 11 MB       | Indexing/analysis — bulk reader |
+| python3.13        | **19.8 GB** | 98 KB       | Batch processing                |
+| crush (PID 21359) | **17.9 GB** | 47 MB       | Background agent                |
+| crush (PID 22013) | **6.7 GB**  | 35 MB       | Background agent                |
+| aw-server         | **5.5 GB**  | 53 MB       | Activity tracking — continuous  |
+| crush (PID 33354) | **4.4 GB**  | 38 MB       | Background agent                |
+| helium            | **4.3 GB**  | 99 MB       | Electron app — continuous       |
+| gopls             | **3.4 GB**  | 3.8 MB      | Go LSP — on-demand              |
+| electron          | **2.4 GB**  | 794 KB      | Background                      |
+| `.trash-wrapped`  | 482 MB      | **1.2 GB**  | Trash management                |
+| crush (PID 30195) | 3.1 GB      | 214 MB      | Background agent                |
 
 **Key finding:** Without a scheduler, bulk readers (crush indexing 93 GB, python at 20 GB) get equal priority as niri compositor, terminal, and interactive apps.
 
 ### 3. BFQ I/O Scheduler Configuration — Committed ✅
 
 **Files changed:**
+
 - `platforms/nixos/system/boot.nix` — Added `"bfq"` to `kernelModules`
 - `platforms/nixos/hardware/amd-gpu.nix` — Added udev rules for BFQ scheduler
 
 **Why BFQ over alternatives:**
 
-| Scheduler | Available | Verdict |
-|-----------|-----------|---------|
-| none (current) | ✅ | No intelligence, treats all I/O equally |
-| mq-deadline | ✅ | Per-request deadline guarantees, good for databases |
-| kyber | ✅ | Queue depth throttling, best for fast unconstrained NVMe |
-| bfq | ✅ (module) | Per-process fair bandwidth, interactive I/O priority |
+| Scheduler      | Available   | Verdict                                                  |
+| -------------- | ----------- | -------------------------------------------------------- |
+| none (current) | ✅          | No intelligence, treats all I/O equally                  |
+| mq-deadline    | ✅          | Per-request deadline guarantees, good for databases      |
+| kyber          | ✅          | Queue depth throttling, best for fast unconstrained NVMe |
+| bfq            | ✅ (module) | Per-process fair bandwidth, interactive I/O priority     |
 
 **BFQ selected because:** Desktop workstation with mixed workload (databases + containers + compilation + interactive). BFQ detects interactive I/O patterns and prioritizes them over bulk writers. This is exactly the use case — ClickHouse bulk-inserting metrics should NOT have equal priority with the compositor rendering the desktop.
 
 **Fallback:** If `bfq` module fails to load (e.g. kernel update removes it), the `ATTR{queue/scheduler}="bfq"` udev write silently fails, and the kernel keeps its default (`mq-deadline`). No breakage.
 
 **Kernel verification:**
+
 ```
 CONFIG_IOSCHED_BFQ=m          # Available as module
 CONFIG_BFQ_GROUP_IOSCHED=y    # cgroup-aware bandwidth control
@@ -121,30 +123,30 @@ Changes committed but `just switch` not yet run. Current scheduler remains `[non
 
 Root went from 100% → 53%. But `/data` went from 84% → 89% (+52 GB). Main `/data` consumers:
 
-| Path | Size | Notes |
-|------|------|-------|
-| `/data/models` | 481 GB | AI model files |
-| `/data/llamacpp-models` | 207 GB | llama.cpp model files |
-| `/data/ai` | 145 GB | Ollama + other AI data |
-| `/data/SteamLibrary` | 99 GB | Steam games |
-| `/data/unsloth` | 28 GB | ML training data (moved from /var/lib) |
+| Path                    | Size   | Notes                                  |
+| ----------------------- | ------ | -------------------------------------- |
+| `/data/models`          | 481 GB | AI model files                         |
+| `/data/llamacpp-models` | 207 GB | llama.cpp model files                  |
+| `/data/ai`              | 145 GB | Ollama + other AI data                 |
+| `/data/SteamLibrary`    | 99 GB  | Steam games                            |
+| `/data/unsloth`         | 28 GB  | ML training data (moved from /var/lib) |
 
 **Total AI models: 828 GB** on a 1 TB partition. This is unsustainable — `/data` will hit 100% if more models are downloaded.
 
 ### 3. Cache Bloat — Partially Cleaned
 
-| Cache | Size | Safe to Clear? |
-|-------|------|----------------|
-| `~/.cache/pip` | 6.3 GB | ✅ Fully safe |
-| `~/.cache/goimports` | 4.0 GB | ✅ Fully safe |
-| `~/.cache/nix` | 2.9 GB | ✅ Fully safe |
-| `~/.cache/.bun` | 2.3 GB | ✅ Fully safe |
-| `~/.cache/gopls` | 1.8 GB | ✅ Fully safe |
-| `~/.cache/puppeteer` | 1.2 GB | ✅ Fully safe |
-| `~/.cache/mozilla` | 1.1 GB | ⚠️ Browser cache |
-| `~/.cache/golangci-lint` | 909 MB | ✅ Fully safe |
-| `~/.cache/net.imput.helium` | 859 MB | ⚠️ App cache |
-| **Total** | **~25 GB** | |
+| Cache                       | Size       | Safe to Clear?   |
+| --------------------------- | ---------- | ---------------- |
+| `~/.cache/pip`              | 6.3 GB     | ✅ Fully safe    |
+| `~/.cache/goimports`        | 4.0 GB     | ✅ Fully safe    |
+| `~/.cache/nix`              | 2.9 GB     | ✅ Fully safe    |
+| `~/.cache/.bun`             | 2.3 GB     | ✅ Fully safe    |
+| `~/.cache/gopls`            | 1.8 GB     | ✅ Fully safe    |
+| `~/.cache/puppeteer`        | 1.2 GB     | ✅ Fully safe    |
+| `~/.cache/mozilla`          | 1.1 GB     | ⚠️ Browser cache |
+| `~/.cache/golangci-lint`    | 909 MB     | ✅ Fully safe    |
+| `~/.cache/net.imput.helium` | 859 MB     | ⚠️ App cache     |
+| **Total**                   | **~25 GB** |                  |
 
 ---
 
@@ -183,6 +185,7 @@ Root went from 100% → 53%. But `/data` went from 84% → 89% (+52 GB). Main `/
 ### 1. No I/O Scheduler Was Configured — Since Day One
 
 The system has been running with `[none]` (noop) I/O scheduler on the NVMe drive since initial setup. This means:
+
 - Every service's I/O was treated with equal priority
 - ClickHouse bulk writes had the same priority as mouse cursor rendering
 - `nix-optimise` deduplicating 101 GB store had the same priority as opening a terminal
@@ -193,6 +196,7 @@ This explains the constant "99% I/O" feeling. The fix (BFQ) is ready but not dep
 ### 2. /data at 89% With 828 GB of AI Models
 
 Three separate AI model directories exist:
+
 - `/data/models` (481 GB)
 - `/data/llamacpp-models` (207 GB)
 - `/data/ai` (145 GB)
@@ -242,33 +246,33 @@ SigNoz ingests metrics, traces, and logs continuously but has **no TTL or retent
 
 Sorted by impact × effort (highest first):
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | **Deploy BFQ scheduler** (`just switch` + verify) | 🔴 Critical | 5min | Deploy |
-| 2 | **Consolidate AI model directories** — deduplicate `/data/models`, `/data/llamacpp-models`, `/data/ai` | 🔴 Critical | 2h | Ops |
-| 3 | **Add Docker global log limits** — prevent unbounded container log growth | 🔴 Critical | 15min | Config |
-| 4 | **Add SigNoz/ClickHouse retention policy** — TTL on all tables | 🟡 High | 1h | Config |
-| 5 | **Clean caches** — `~/.cache/pip` (6.3G), `goimports` (4G), `go-build`, `gopls` | 🟡 High | 5min | Ops |
-| 6 | **Fix monitor365-server** user service failures | 🟡 High | 1h | Bug |
-| 7 | **Fix activitywatch-watcher** service failure | 🟡 High | 30min | Bug |
-| 8 | **Fix oauth2-proxy** intermittent startup failure | 🟡 High | 1h | Bug |
-| 9 | **Set `vm.overcommit_memory = 1`** for Redis | 🟡 High | 5min | Config |
-| 10 | **Run /data BTRFS migration** (`just snapshot-migrate-data`) | 🟡 Medium | 1h | Ops |
-| 11 | **Add disk space alerting** to Gatus | 🟡 Medium | 30min | Monitoring |
-| 12 | **Add IO pressure metrics** via node-exporter textfile | 🟡 Medium | 30min | Monitoring |
-| 13 | **Add boot time tracking** (systemd-analyze in timer) | 🟡 Medium | 30min | Monitoring |
-| 14 | **Fix dnsblockd-cert-import** user service failure | 🟡 Medium | 30min | Bug |
-| 15 | **Archive old status reports** (keep last 10, archive rest) | 🟢 Low | 15min | Housekeeping |
-| 16 | **Enforce service target convention** via NixOS assertion | 🟢 Low | 30min | Code quality |
-| 17 | **Auto-gate Caddy vHosts** behind service enable flags | 🟢 Low | 2h | Refactor |
-| 18 | **Auto-gate Gatus endpoints** behind service enable flags | 🟢 Low | 1h | Refactor |
-| 19 | **Fix IPv6 tempaddr errors** on Docker veths | 🟢 Low | 30min | Config |
-| 20 | **Investigate firmware 33s** — check BIOS fast boot options | 🟢 Low | 15min | Perf |
-| 21 | **Redis authentication** — set a password | 🟢 Low | 15min | Security |
-| 22 | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`) | 🟢 Low | 5min | Config |
-| 23 | **Pi 3 DNS hardware provisioning** | 🟢 Low | 4h+ | Infra |
-| 24 | **Bluetooth hci0 wmt error** — investigate RTL driver issue | 🟢 Low | 2h | Bug |
-| 25 | **SigNoz container DNS timing** — psql "db" host resolution on first start | 🟢 Low | 1h | Bug |
+| #   | Task                                                                                                   | Impact      | Effort | Category     |
+| --- | ------------------------------------------------------------------------------------------------------ | ----------- | ------ | ------------ |
+| 1   | **Deploy BFQ scheduler** (`just switch` + verify)                                                      | 🔴 Critical | 5min   | Deploy       |
+| 2   | **Consolidate AI model directories** — deduplicate `/data/models`, `/data/llamacpp-models`, `/data/ai` | 🔴 Critical | 2h     | Ops          |
+| 3   | **Add Docker global log limits** — prevent unbounded container log growth                              | 🔴 Critical | 15min  | Config       |
+| 4   | **Add SigNoz/ClickHouse retention policy** — TTL on all tables                                         | 🟡 High     | 1h     | Config       |
+| 5   | **Clean caches** — `~/.cache/pip` (6.3G), `goimports` (4G), `go-build`, `gopls`                        | 🟡 High     | 5min   | Ops          |
+| 6   | **Fix monitor365-server** user service failures                                                        | 🟡 High     | 1h     | Bug          |
+| 7   | **Fix activitywatch-watcher** service failure                                                          | 🟡 High     | 30min  | Bug          |
+| 8   | **Fix oauth2-proxy** intermittent startup failure                                                      | 🟡 High     | 1h     | Bug          |
+| 9   | **Set `vm.overcommit_memory = 1`** for Redis                                                           | 🟡 High     | 5min   | Config       |
+| 10  | **Run /data BTRFS migration** (`just snapshot-migrate-data`)                                           | 🟡 Medium   | 1h     | Ops          |
+| 11  | **Add disk space alerting** to Gatus                                                                   | 🟡 Medium   | 30min  | Monitoring   |
+| 12  | **Add IO pressure metrics** via node-exporter textfile                                                 | 🟡 Medium   | 30min  | Monitoring   |
+| 13  | **Add boot time tracking** (systemd-analyze in timer)                                                  | 🟡 Medium   | 30min  | Monitoring   |
+| 14  | **Fix dnsblockd-cert-import** user service failure                                                     | 🟡 Medium   | 30min  | Bug          |
+| 15  | **Archive old status reports** (keep last 10, archive rest)                                            | 🟢 Low      | 15min  | Housekeeping |
+| 16  | **Enforce service target convention** via NixOS assertion                                              | 🟢 Low      | 30min  | Code quality |
+| 17  | **Auto-gate Caddy vHosts** behind service enable flags                                                 | 🟢 Low      | 2h     | Refactor     |
+| 18  | **Auto-gate Gatus endpoints** behind service enable flags                                              | 🟢 Low      | 1h     | Refactor     |
+| 19  | **Fix IPv6 tempaddr errors** on Docker veths                                                           | 🟢 Low      | 30min  | Config       |
+| 20  | **Investigate firmware 33s** — check BIOS fast boot options                                            | 🟢 Low      | 15min  | Perf         |
+| 21  | **Redis authentication** — set a password                                                              | 🟢 Low      | 15min  | Security     |
+| 22  | **fstrim redundancy** — remove fstrim for /data (already has `discard=async`)                          | 🟢 Low      | 5min   | Config       |
+| 23  | **Pi 3 DNS hardware provisioning**                                                                     | 🟢 Low      | 4h+    | Infra        |
+| 24  | **Bluetooth hci0 wmt error** — investigate RTL driver issue                                            | 🟢 Low      | 2h     | Bug          |
+| 25  | **SigNoz container DNS timing** — psql "db" host resolution on first start                             | 🟢 Low      | 1h     | Bug          |
 
 ---
 
@@ -277,6 +281,7 @@ Sorted by impact × effort (highest first):
 **What happened between session 90 and 91 to free 246 GB on root?**
 
 Root went from 504/512 GB (100%) to 258/512 GB (53%). The biggest single contributor was Jan AI models going from 51 GB → 161 MB. But I don't know:
+
 - Who/what triggered the cleanup?
 - Was it manual intervention or automated?
 - What exactly was deleted beyond Jan AI and trash?
@@ -308,15 +313,15 @@ zram0        6.2G  swap   [SWAP]              (compressed RAM swap)
 
 ## Commits This Session
 
-| Commit | Description |
-|--------|-------------|
+| Commit    | Description                                                   |
+| --------- | ------------------------------------------------------------- |
 | (pending) | feat(io): configure BFQ I/O scheduler for NVMe responsiveness |
 
 ---
 
 ## Files Modified This Session
 
-| File | Change |
-|------|--------|
-| `platforms/nixos/system/boot.nix` | Added `"bfq"` to `kernelModules` |
+| File                                   | Change                                                     |
+| -------------------------------------- | ---------------------------------------------------------- |
+| `platforms/nixos/system/boot.nix`      | Added `"bfq"` to `kernelModules`                           |
 | `platforms/nixos/hardware/amd-gpu.nix` | Added udev rules for BFQ scheduler on NVMe + block devices |

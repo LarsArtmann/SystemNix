@@ -23,9 +23,9 @@ Removed Prometheus monitoring stack (superseded by SigNoz). Identified and fixed
 
 **Port 9090 conflict between Prometheus and dnsblockd:**
 
-| Service | Port | File |
-|---------|------|------|
-| Prometheus | `9090` | `modules/nixos/services/monitoring.nix:7` |
+| Service         | Port   | File                                               |
+| --------------- | ------ | -------------------------------------------------- |
+| Prometheus      | `9090` | `modules/nixos/services/monitoring.nix:7`          |
 | dnsblockd stats | `9090` | `platforms/nixos/system/dns-blocker-config.nix:24` |
 
 Both services tried to bind to port 9090 during simultaneous restart. dnsblockd lost the race, which broke the DNS block page server. Combined with the unbound restart window, the system lost all DNS resolution (primary nameserver is `127.0.0.1`).
@@ -38,12 +38,12 @@ Prometheus was added before dnsblockd existed. When dnsblockd was configured wit
 
 ### Prometheus Removal (superseded by SigNoz)
 
-| File | Change |
-|------|--------|
+| File                                    | Change                                                   |
+| --------------------------------------- | -------------------------------------------------------- |
 | `modules/nixos/services/monitoring.nix` | **Deleted** — Prometheus + node/postgres/redis exporters |
-| `flake.nix:180` | Removed `./modules/nixos/services/monitoring.nix` import |
-| `flake.nix:403` | Removed `inputs.self.nixosModules.monitoring` module |
-| `modules/nixos/services/homepage.nix` | Removed Prometheus + Node Exporter dashboard entries |
+| `flake.nix:180`                         | Removed `./modules/nixos/services/monitoring.nix` import |
+| `flake.nix:403`                         | Removed `inputs.self.nixosModules.monitoring` module     |
+| `modules/nixos/services/homepage.nix`   | Removed Prometheus + Node Exporter dashboard entries     |
 
 ### What Was Removed
 
@@ -59,27 +59,27 @@ SigNoz now handles all observability (traces, metrics, logs) via ClickHouse back
 
 No remaining conflicts. All 22 ports uniquely assigned:
 
-| Port | Service |
-|------|---------|
-| 22 | SSH |
-| 53 | DNS (Unbound) |
-| 80/443 | Caddy + dnsblockd block page |
-| 2283 | Immich |
-| 3000 | Gitea |
-| 4317/4318 | SigNoz OTel Collector (gRPC/HTTP) |
-| 8050 | PhotoMap |
-| 8080 | SigNoz Query Service |
-| 8082 | Homepage Dashboard |
-| 8123 | ClickHouse HTTP |
-| 8443 | DNS Blocker TLS stats |
-| 8888 | Unsloth Studio |
-| 9000 | ClickHouse native |
-| 9090 | dnsblockd stats (was conflicting with Prometheus) |
-| 9091 | Authelia SSO |
-| 9181 | ClickHouse ZooKeeper |
-| 9234 | ClickHouse Keeper Raft |
-| 9959 | Authelia metrics |
-| 11434 | Ollama |
+| Port      | Service                                           |
+| --------- | ------------------------------------------------- |
+| 22        | SSH                                               |
+| 53        | DNS (Unbound)                                     |
+| 80/443    | Caddy + dnsblockd block page                      |
+| 2283      | Immich                                            |
+| 3000      | Gitea                                             |
+| 4317/4318 | SigNoz OTel Collector (gRPC/HTTP)                 |
+| 8050      | PhotoMap                                          |
+| 8080      | SigNoz Query Service                              |
+| 8082      | Homepage Dashboard                                |
+| 8123      | ClickHouse HTTP                                   |
+| 8443      | DNS Blocker TLS stats                             |
+| 8888      | Unsloth Studio                                    |
+| 9000      | ClickHouse native                                 |
+| 9090      | dnsblockd stats (was conflicting with Prometheus) |
+| 9091      | Authelia SSO                                      |
+| 9181      | ClickHouse ZooKeeper                              |
+| 9234      | ClickHouse Keeper Raft                            |
+| 9959      | Authelia metrics                                  |
+| 11434     | Ollama                                            |
 
 ## Recommendations
 

@@ -46,29 +46,29 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS d
 
 ### Infrastructure Services (Running)
 
-| Service | Status | Notes |
-|---------|--------|-------|
-| Caddy (reverse proxy) | ✅ | 10+ vhosts, TLS via sops, forward auth, metrics |
-| Pocket ID (OIDC) | ✅ | Passkey auth, declarative provisioning (committed, pending deploy) |
-| oauth2-proxy | ✅ | Forward-auth bridge Caddy ↔ Pocket ID |
-| SOPS secrets | ✅ | Age-encrypted via SSH host key, 4 sops files |
-| Forgejo (Git forge) | ✅ | SQLite, LFS, Actions runner, federation, push mirrors |
-| Forgejo repos | ✅ | Declarative mirroring + daily timer |
-| SigNoz (observability) | ✅ | Traces/metrics/logs, ClickHouse, 7 alert rules |
-| Homepage Dashboard | ✅ | Catppuccin Mocha, 6 categories, mkGroup/mkService |
-| Immich (photos) | ✅ | PostgreSQL + Redis + ML, VA-API transcoding, GPU ML |
-| Twenty CRM | ✅ | Docker Compose, daily DB backup |
-| TaskChampion | ✅ | Taskwarrior sync, TLS via Caddy |
-| Gatus (uptime) | ✅ | 30+ health checks, status page |
-| Hermes (AI gateway) | ✅ | Discord bot, cron, messaging, 4G memory limit |
-| Dozzle (Docker logs) | ✅ | Inline config (module causes eval issue) |
-| OpenSEO | ✅ | SEO suite, Caddy vhost |
-| Crush Daily | ✅ | AI-powered dev insights |
-| Monitor365 | ✅ | Device monitoring, ActivityWatch integration |
-| DNS Blocker | ✅ | Unbound + stats API + block page |
-| Default Services | ✅ | Docker auto-enable, weekly prune |
-| Disk Monitor | ✅ | Daily growth alerts, BTRFS checks |
-| NVMe Health Monitor | ✅ | SSD health + temperature alerts |
+| Service                | Status | Notes                                                              |
+| ---------------------- | ------ | ------------------------------------------------------------------ |
+| Caddy (reverse proxy)  | ✅     | 10+ vhosts, TLS via sops, forward auth, metrics                    |
+| Pocket ID (OIDC)       | ✅     | Passkey auth, declarative provisioning (committed, pending deploy) |
+| oauth2-proxy           | ✅     | Forward-auth bridge Caddy ↔ Pocket ID                              |
+| SOPS secrets           | ✅     | Age-encrypted via SSH host key, 4 sops files                       |
+| Forgejo (Git forge)    | ✅     | SQLite, LFS, Actions runner, federation, push mirrors              |
+| Forgejo repos          | ✅     | Declarative mirroring + daily timer                                |
+| SigNoz (observability) | ✅     | Traces/metrics/logs, ClickHouse, 7 alert rules                     |
+| Homepage Dashboard     | ✅     | Catppuccin Mocha, 6 categories, mkGroup/mkService                  |
+| Immich (photos)        | ✅     | PostgreSQL + Redis + ML, VA-API transcoding, GPU ML                |
+| Twenty CRM             | ✅     | Docker Compose, daily DB backup                                    |
+| TaskChampion           | ✅     | Taskwarrior sync, TLS via Caddy                                    |
+| Gatus (uptime)         | ✅     | 30+ health checks, status page                                     |
+| Hermes (AI gateway)    | ✅     | Discord bot, cron, messaging, 4G memory limit                      |
+| Dozzle (Docker logs)   | ✅     | Inline config (module causes eval issue)                           |
+| OpenSEO                | ✅     | SEO suite, Caddy vhost                                             |
+| Crush Daily            | ✅     | AI-powered dev insights                                            |
+| Monitor365             | ✅     | Device monitoring, ActivityWatch integration                       |
+| DNS Blocker            | ✅     | Unbound + stats API + block page                                   |
+| Default Services       | ✅     | Docker auto-enable, weekly prune                                   |
+| Disk Monitor           | ✅     | Daily growth alerts, BTRFS checks                                  |
+| NVMe Health Monitor    | ✅     | SSD health + temperature alerts                                    |
 
 ### Desktop (Fully Functional)
 
@@ -87,14 +87,14 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS d
 
 ### Session 129 Commits (This Session)
 
-| Commit | Description |
-|--------|-------------|
-| `f679b8fb` | `fix(caddy)` — manifest vhost: raw reverse_proxy → `protectedVHost` (forward auth) |
+| Commit     | Description                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `f679b8fb` | `fix(caddy)` — manifest vhost: raw reverse_proxy → `protectedVHost` (forward auth)             |
 | `21ce65fb` | `fix(pocket-id)` — API header casing, URL encoding, race conditions, removed deprecated fields |
-| `109b6d3e` | `chore(pocket-id)` — admin email `.com` → `.cloud` |
-| `78b52da0` | `refactor(homepage)` — mkGroup/mkService + ALLOWED_HOSTS + cache dir + dead `when` removed |
-| `d0bf0347` | `feat(packages)` — add QDirStat for GUI disk space visualization |
-| `eef194c2` | `fix(boot)` — disable NVMe APST to eliminate 2m50s device detection delay |
+| `109b6d3e` | `chore(pocket-id)` — admin email `.com` → `.cloud`                                             |
+| `78b52da0` | `refactor(homepage)` — mkGroup/mkService + ALLOWED_HOSTS + cache dir + dead `when` removed     |
+| `d0bf0347` | `feat(packages)` — add QDirStat for GUI disk space visualization                               |
+| `eef194c2` | `fix(boot)` — disable NVMe APST to eliminate 2m50s device detection delay                      |
 
 ---
 
@@ -134,21 +134,21 @@ SystemNix is a cross-platform Nix configuration managing **2 machines** (NixOS d
 
 ## c) NOT STARTED
 
-| Item | Priority | Blocker |
-|------|----------|---------|
-| Pi 3 DNS failover provisioning | Low | Hardware not available |
-| Pi 3 wiring as secondary DNS | Low | Depends on Pi 3 |
-| `/data` BTRFS subvolume migration | Medium | Requires downtime + testing |
-| Hermes fallback LLM provider (OpenRouter) | Medium | Manual: add API key to sops |
-| Hermes SSH deploy key installation | Medium | Manual: install private key + add to GitHub |
-| Boot time verification (target ~35s) | Low | Requires reboot |
-| SigNoz provision log verification | Low | Requires `just switch` + curl |
-| Discord alert channel test | Low | Requires webhook secret on evo-x2 |
-| Gatus endpoint health verification | Low | Requires deploy + curl |
-| Auditd enablement | Low | Blocked on NixOS 26.05 bug (nixpkgs#483085) |
-| Home Manager Darwin parity | Low | Disk constraint on MacBook Air |
-| Jan llama-server respawn leak fix | Low | Not a systemd service — needs upstream fix or wrapper |
-| Swap cleanup (17/19 GiB with 70Gi RAM free) | Low | `swapoff -a && swapon -a` |
+| Item                                        | Priority | Blocker                                               |
+| ------------------------------------------- | -------- | ----------------------------------------------------- |
+| Pi 3 DNS failover provisioning              | Low      | Hardware not available                                |
+| Pi 3 wiring as secondary DNS                | Low      | Depends on Pi 3                                       |
+| `/data` BTRFS subvolume migration           | Medium   | Requires downtime + testing                           |
+| Hermes fallback LLM provider (OpenRouter)   | Medium   | Manual: add API key to sops                           |
+| Hermes SSH deploy key installation          | Medium   | Manual: install private key + add to GitHub           |
+| Boot time verification (target ~35s)        | Low      | Requires reboot                                       |
+| SigNoz provision log verification           | Low      | Requires `just switch` + curl                         |
+| Discord alert channel test                  | Low      | Requires webhook secret on evo-x2                     |
+| Gatus endpoint health verification          | Low      | Requires deploy + curl                                |
+| Auditd enablement                           | Low      | Blocked on NixOS 26.05 bug (nixpkgs#483085)           |
+| Home Manager Darwin parity                  | Low      | Disk constraint on MacBook Air                        |
+| Jan llama-server respawn leak fix           | Low      | Not a systemd service — needs upstream fix or wrapper |
+| Swap cleanup (17/19 GiB with 70Gi RAM free) | Low      | `swapoff -a && swapon -a`                             |
 
 ---
 
@@ -177,6 +177,7 @@ The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. Suspecte
 **Status:** Committed (`eef194c2`), **pending deploy + reboot** to verify.
 
 **Untried alternatives if APST wasn't the cause:**
+
 - Move `nvme` from `availableKernelModules` to `kernelModules` (eager loading)
 - GMKtec BIOS firmware update
 - Hardware replacement (different NVMe drive)
@@ -217,54 +218,54 @@ The GMKtec EVO-X2 NVMe device takes 2m50s to be detected by the kernel. Suspecte
 
 ### Critical (Deploy & Verify)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 1 | **Deploy session 129 changes** (`just switch`) and verify Pocket ID provision works | 15min | HIGH — confirms auth fixes |
-| 2 | **Test Pocket ID provision end-to-end** after deploy: admin user, OIDC clients, avatar | 10min | HIGH — validates 3 sessions of work |
-| 3 | ~~Regenerate Discordsync Discord bot token~~ **DONE** — token regenerated | — | — |
-| 4 | **Run `just verify`** post-deploy to check all services | 5min | MEDIUM — catches regressions |
+| #   | Task                                                                                   | Effort | Impact                              |
+| --- | -------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
+| 1   | **Deploy session 129 changes** (`just switch`) and verify Pocket ID provision works    | 15min  | HIGH — confirms auth fixes          |
+| 2   | **Test Pocket ID provision end-to-end** after deploy: admin user, OIDC clients, avatar | 10min  | HIGH — validates 3 sessions of work |
+| 3   | ~~Regenerate Discordsync Discord bot token~~ **DONE** — token regenerated              | —      | —                                   |
+| 4   | **Run `just verify`** post-deploy to check all services                                | 5min   | MEDIUM — catches regressions        |
 
 ### High Value (Security & Resilience)
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 5 | **Migrate `/data` to BTRFS subvolume** — `just snapshot-migrate-data` | 30min | HIGH — enables snapshots for Docker/Immich/AI data |
-| 6 | **Add swap-pressure Gatus alert** — alert when swap > 50% with RAM > 50% free | 15min | MEDIUM — catches stale process leaks |
-| 7 | **Add periodic swap cleanup timer** — `swapoff -a && swapon -a` weekly | 10min | LOW — prevents swap accumulation |
-| 8 | **Add Homepage `mkGroup`/`mkService` output test** — compare YAML before/after | 15min | MEDIUM — verifies refactor correctness |
-| 9 | ~~Investigate NVMe boot delay~~ **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | — | — |
-| 9a | **Reboot evo-x2** and verify NVMe detection with `systemd-analyze blame \| grep nvme` | 5min | HIGH — confirms 2m50s fix |
+| #   | Task                                                                                                                  | Effort | Impact                                             |
+| --- | --------------------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------- |
+| 5   | **Migrate `/data` to BTRFS subvolume** — `just snapshot-migrate-data`                                                 | 30min  | HIGH — enables snapshots for Docker/Immich/AI data |
+| 6   | **Add swap-pressure Gatus alert** — alert when swap > 50% with RAM > 50% free                                         | 15min  | MEDIUM — catches stale process leaks               |
+| 7   | **Add periodic swap cleanup timer** — `swapoff -a && swapon -a` weekly                                                | 10min  | LOW — prevents swap accumulation                   |
+| 8   | **Add Homepage `mkGroup`/`mkService` output test** — compare YAML before/after                                        | 15min  | MEDIUM — verifies refactor correctness             |
+| 9   | ~~Investigate NVMe boot delay~~ **FIX COMMITTED** — `nvme_core.default_ps_max_latency_us=0` (pending deploy + reboot) | —      | —                                                  |
+| 9a  | **Reboot evo-x2** and verify NVMe detection with `systemd-analyze blame \| grep nvme`                                 | 5min   | HIGH — confirms 2m50s fix                          |
 
 ### Architecture & Quality
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 10 | **Add service-level NixOS VM tests** — start with Forgejo, Immich, Pocket ID | 2hr | HIGH — catches regressions before deploy |
-| 11 | **Investigate Dozzle module eval failure** — root cause the `nix flake check` issue | 30min | LOW — enables proper module pattern |
-| 12 | **Create Hermes setup automation** — `just hermes-setup` for API key + SSH key | 20min | MEDIUM — eliminates manual sops edits |
-| 13 | **Archive old status reports** — move pre-June reports to `docs/status/archive/` | 10min | LOW — cleans up repo |
-| 14 | **Add per-service `startLimitBurst`** audit — ensure all services have crash-loop protection | 20min | MEDIUM — prevents OOM cascades |
-| 15 | **Centralize Caddy vhost pattern** — all vhosts use `protectedVHost` or `vHost` helper | 15min | LOW — consistency |
+| #   | Task                                                                                         | Effort | Impact                                   |
+| --- | -------------------------------------------------------------------------------------------- | ------ | ---------------------------------------- |
+| 10  | **Add service-level NixOS VM tests** — start with Forgejo, Immich, Pocket ID                 | 2hr    | HIGH — catches regressions before deploy |
+| 11  | **Investigate Dozzle module eval failure** — root cause the `nix flake check` issue          | 30min  | LOW — enables proper module pattern      |
+| 12  | **Create Hermes setup automation** — `just hermes-setup` for API key + SSH key               | 20min  | MEDIUM — eliminates manual sops edits    |
+| 13  | **Archive old status reports** — move pre-June reports to `docs/status/archive/`             | 10min  | LOW — cleans up repo                     |
+| 14  | **Add per-service `startLimitBurst`** audit — ensure all services have crash-loop protection | 20min  | MEDIUM — prevents OOM cascades           |
+| 15  | **Centralize Caddy vhost pattern** — all vhosts use `protectedVHost` or `vHost` helper       | 15min  | LOW — consistency                        |
 
 ### Features & Enhancements
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 16 | **Re-enable file-and-image-renamer** when Go 1.26.3 lands in nixpkgs | 5min | MEDIUM — AI file renaming |
-| 17 | **Add btdu** for BTRFS-aware disk analysis (recommended in this session) | 5min | LOW — accurate Btrfs space reporting |
-| 18 | **Add compsize** for Btrfs compression ratio reporting | 5min | LOW — compression visibility |
-| 19 | **Fix PhotoMap podman permissions** — investigate and re-enable | 30min | LOW — AI photo visualization |
-| 20 | **Add auditd** when NixOS 26.05 bug is resolved | 5min | LOW — security compliance |
-| 21 | **Darwin cleanup strategy** — automated GC + build cache management | 60min | MEDIUM — prevents disk exhaustion |
+| #   | Task                                                                     | Effort | Impact                               |
+| --- | ------------------------------------------------------------------------ | ------ | ------------------------------------ |
+| 16  | **Re-enable file-and-image-renamer** when Go 1.26.3 lands in nixpkgs     | 5min   | MEDIUM — AI file renaming            |
+| 17  | **Add btdu** for BTRFS-aware disk analysis (recommended in this session) | 5min   | LOW — accurate Btrfs space reporting |
+| 18  | **Add compsize** for Btrfs compression ratio reporting                   | 5min   | LOW — compression visibility         |
+| 19  | **Fix PhotoMap podman permissions** — investigate and re-enable          | 30min  | LOW — AI photo visualization         |
+| 20  | **Add auditd** when NixOS 26.05 bug is resolved                          | 5min   | LOW — security compliance            |
+| 21  | **Darwin cleanup strategy** — automated GC + build cache management      | 60min  | MEDIUM — prevents disk exhaustion    |
 
 ### Documentation
 
-| # | Task | Effort | Impact |
-|---|------|--------|--------|
-| 22 | **Update FEATURES.md** — last updated 2026-06-03, missing session 129 changes | 15min | MEDIUM — accurate feature inventory |
-| 23 | **Update TODO_LIST.md** — mark session 129 items, add new verification tasks | 10min | MEDIUM — accurate task tracking |
-| 24 | **Create Pocket ID API reference** — document discovered endpoints and auth model | 30min | MEDIUM — prevents future API confusion |
-| 25 | **Update AGENTS.md** with session 129 learnings (ALLOWED_HOSTS, mkGroup/mkService pattern) | 10min | LOW — helps future sessions |
+| #   | Task                                                                                       | Effort | Impact                                 |
+| --- | ------------------------------------------------------------------------------------------ | ------ | -------------------------------------- |
+| 22  | **Update FEATURES.md** — last updated 2026-06-03, missing session 129 changes              | 15min  | MEDIUM — accurate feature inventory    |
+| 23  | **Update TODO_LIST.md** — mark session 129 items, add new verification tasks               | 10min  | MEDIUM — accurate task tracking        |
+| 24  | **Create Pocket ID API reference** — document discovered endpoints and auth model          | 30min  | MEDIUM — prevents future API confusion |
+| 25  | **Update AGENTS.md** with session 129 learnings (ALLOWED_HOSTS, mkGroup/mkService pattern) | 10min  | LOW — helps future sessions            |
 
 ---
 
@@ -301,17 +302,17 @@ Working Tree:    CLEAN
 
 ## Session Timeline
 
-| Session | Date | Key Changes |
-|---------|------|-------------|
-| 120 | Jun 8 | Deduplication sprint, port centralization, nix-colors migration |
-| 121 | Jun 8 | Color migration completion, Darwin parity |
-| 122 | Jun 8 | TODO completion sprint |
-| 123 | Jun 8 | Comprehensive status post-execution |
-| 124 | Jun 8 | Cross-ecosystem flake fix sprint |
-| 125 | Jun 9 | Go migration completion audit |
-| 126 | Jun 9 | Vendor hash cascade + follow-deps fix |
-| 127 | Jun 9 | Pocket ID declarative provisioning, Homepage dynamic tiles |
-| 128 | Jun 10 | Post-GPU-crash cascade fix (sops, SigNoz, watchdog, hardening) |
+| Session | Date       | Key Changes                                                                        |
+| ------- | ---------- | ---------------------------------------------------------------------------------- |
+| 120     | Jun 8      | Deduplication sprint, port centralization, nix-colors migration                    |
+| 121     | Jun 8      | Color migration completion, Darwin parity                                          |
+| 122     | Jun 8      | TODO completion sprint                                                             |
+| 123     | Jun 8      | Comprehensive status post-execution                                                |
+| 124     | Jun 8      | Cross-ecosystem flake fix sprint                                                   |
+| 125     | Jun 9      | Go migration completion audit                                                      |
+| 126     | Jun 9      | Vendor hash cascade + follow-deps fix                                              |
+| 127     | Jun 9      | Pocket ID declarative provisioning, Homepage dynamic tiles                         |
+| 128     | Jun 10     | Post-GPU-crash cascade fix (sops, SigNoz, watchdog, hardening)                     |
 | **129** | **Jun 10** | **Manifest auth, Pocket ID API fixes, Homepage refactor, QDirStat, NVMe APST fix** |
 
 ---

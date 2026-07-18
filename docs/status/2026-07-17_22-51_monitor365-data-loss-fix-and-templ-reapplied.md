@@ -7,17 +7,17 @@
 
 ## a) FULLY DONE
 
-| # | Item | Verification |
-|---|------|-------------|
-| 1 | **Root cause identified** — Bootstrap bypassed event sourcing entirely (direct CRUD `db.create_tenant`), and `TenantCreated` events didn't carry `api_key`, so projection replay hardcoded `''` | Full source trace through 8 files: domain_event.rs, tenant_projection.rs, bootstrap/mod.rs, tenant_command_handler.rs, decider/mod.rs, tenant.rs, domain_event/mod.rs, aggregate_queries.rs |
-| 2 | **Fix implemented in monitor365 source** — 4 changes across 14 files | `cargo check` passes; `cargo test -p monitor365-server` = 545 passed, 0 failed |
-| 3 | **Fix committed and pushed** — `58ae68d03` on origin/master | `git log origin/master` confirms |
-| 4 | **Flake lock updated** — SystemNix points to `58ae68d03` | `flake.lock` nodes.monitor365.locked.rev = `58ae68d03...` |
-| 5 | **DuckDB-deletion workaround removed** from SystemNix monitor365.nix | Verified: no `preStart` rm, no `duckdb` references in the module |
-| 6 | **AGENTS.md updated** — desync entry now documents the proper source fix | `git diff AGENTS.md` shows updated row |
-| 7 | **templ re-applied** to `platforms/common/packages/base.nix` | `nix eval` confirms `templ-0.3.1020` on both evo-x2 and Darwin |
-| 8 | **Bootstrap re-sync logic** — bootstrap now re-syncs api_key from configured secret on EVERY startup, not just first boot | Source: `auto_bootstrap` calls `rotate_tenant_api_key` when tenants exist |
-| 9 | **Backward compatibility** — old `TenantCreated` events (without `api_key`) deserialize as `None` via `#[serde(default)]` | serde attribute on the field |
+| #   | Item                                                                                                                                                                                            | Verification                                                                                                                                                                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Root cause identified** — Bootstrap bypassed event sourcing entirely (direct CRUD `db.create_tenant`), and `TenantCreated` events didn't carry `api_key`, so projection replay hardcoded `''` | Full source trace through 8 files: domain_event.rs, tenant_projection.rs, bootstrap/mod.rs, tenant_command_handler.rs, decider/mod.rs, tenant.rs, domain_event/mod.rs, aggregate_queries.rs |
+| 2   | **Fix implemented in monitor365 source** — 4 changes across 14 files                                                                                                                            | `cargo check` passes; `cargo test -p monitor365-server` = 545 passed, 0 failed                                                                                                              |
+| 3   | **Fix committed and pushed** — `58ae68d03` on origin/master                                                                                                                                     | `git log origin/master` confirms                                                                                                                                                            |
+| 4   | **Flake lock updated** — SystemNix points to `58ae68d03`                                                                                                                                        | `flake.lock` nodes.monitor365.locked.rev = `58ae68d03...`                                                                                                                                   |
+| 5   | **DuckDB-deletion workaround removed** from SystemNix monitor365.nix                                                                                                                            | Verified: no `preStart` rm, no `duckdb` references in the module                                                                                                                            |
+| 6   | **AGENTS.md updated** — desync entry now documents the proper source fix                                                                                                                        | `git diff AGENTS.md` shows updated row                                                                                                                                                      |
+| 7   | **templ re-applied** to `platforms/common/packages/base.nix`                                                                                                                                    | `nix eval` confirms `templ-0.3.1020` on both evo-x2 and Darwin                                                                                                                              |
+| 8   | **Bootstrap re-sync logic** — bootstrap now re-syncs api_key from configured secret on EVERY startup, not just first boot                                                                       | Source: `auto_bootstrap` calls `rotate_tenant_api_key` when tenants exist                                                                                                                   |
+| 9   | **Backward compatibility** — old `TenantCreated` events (without `api_key`) deserialize as `None` via `#[serde(default)]`                                                                       | serde attribute on the field                                                                                                                                                                |
 
 ### The fix details (commit `58ae68d03`)
 
@@ -33,12 +33,12 @@
 
 ## b) PARTIALLY DONE
 
-| # | Item | What Remains |
-|---|------|-------------|
-| 1 | **SystemNix changes committed** | NOT committed — `AGENTS.md` and `base.nix` are uncommitted in working tree |
-| 2 | **Deploy** | NOT started — the fix is in source and flake lock, but not built or deployed to the running system |
-| 3 | **Post-deploy verification** | NOT started — need to confirm monitor365 agent connects, api_key persists across restart, and monitoring history survives |
-| 4 | **Production data migration** | Unknown — the existing DuckDB file on evo-x2 may still have a tenant with `api_key = ''`. The bootstrap re-sync should fix it on next start, but this is unverified |
+| #   | Item                            | What Remains                                                                                                                                                        |
+| --- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **SystemNix changes committed** | NOT committed — `AGENTS.md` and `base.nix` are uncommitted in working tree                                                                                          |
+| 2   | **Deploy**                      | NOT started — the fix is in source and flake lock, but not built or deployed to the running system                                                                  |
+| 3   | **Post-deploy verification**    | NOT started — need to confirm monitor365 agent connects, api_key persists across restart, and monitoring history survives                                           |
+| 4   | **Production data migration**   | Unknown — the existing DuckDB file on evo-x2 may still have a tenant with `api_key = ''`. The bootstrap re-sync should fix it on next start, but this is unverified |
 
 ---
 
@@ -60,6 +60,7 @@
 ### 1. No regression test for the exact bug I fixed
 
 **This is the biggest failure.** I fixed a data-loss bug caused by projection replay, but I did NOT write a test that:
+
 1. Bootstraps a tenant (via `auto_bootstrap`)
 2. Triggers `check_and_rebuild_projections` (the actual trigger: devices table empty + domain_events has data)
 3. Verifies `tenants.api_key` is NOT `''` after the rebuild
@@ -81,6 +82,7 @@ I added `#[serde(default)]` for backward compat, but I didn't write a test that 
 ### 5. The `emit_tenant_created_event` uses `Plan::Free` hardcoded
 
 In `bootstrap/mod.rs`, the `emit_tenant_created_event` function hardcodes `Plan::Free`:
+
 ```rust
 let event = DomainEvent::TenantCreated {
     ...
@@ -88,6 +90,7 @@ let event = DomainEvent::TenantCreated {
     ...
 };
 ```
+
 But `create_tenant_admin_and_magic_link` also passes `Plan::Free` to `db.create_tenant`. If someone changes one without the other, the event and the CRUD row will disagree on the plan. This should use the same plan variable.
 
 ### 6. Didn't clean up the 25 stale HTML formatting files
@@ -222,44 +225,45 @@ The root cause is fixed at the source level (commit `58ae68d03`), 545 tests pass
 
 ### What was fixed after this report
 
-| Item from report | Status | How it was resolved |
-|-----------------|--------|---------------------|
-| **P0-1: Regression test** | DONE | Added `test_perform_init_emits_tenant_created_event` in `bootstrap_init_tests.rs` + 3 new tests (regression, backward-compat deserialization, round-trip) |
-| **P0-2: Backward-compat test** | DONE | Added backward-compat deserialization test with old JSON payload (no `api_key` field) |
-| **P0-3: API-created tenant gap** | DONE | Commit `6e6537082` — `TenantCommand::Create` and `TenantEvent::Created` now carry `api_key_hash: Option<ApiKeyHash>`. Threaded through `tenant_command_handler` → `DomainEvent::TenantCreated` with `#[serde(rename = "api_key")]` for JSON compat |
-| **P0-4: Deploy** | DONE | 3 production deploys completed. 21/21 post-deploy checks PASS |
-| **P0-5: Production api_key** | VERIFIED via logs | Bootstrap log confirms "appended missing TenantCreated event" + "re-synced api_key from configured secret". Agent connected successfully |
-| **P1-7: Clippy** | DONE | Zero warnings on `-p monitor365-server -p monitor365-db` |
-| **P1-8: BDD tests** | DONE | 112 scenarios pass (18 features, 892 steps) |
-| **P1-12: Centralize api_key hashing** | VERIFIED | Already centralized — `ApiKeyHash::from_key()` in `db/src/lib.rs` is the single source. All three paths (bootstrap, API handler, auth verification) call it. No inline SHA-256 anywhere |
-| **P1-13: Hardcoded Plan::Free** | DONE | `emit_tenant_created_event` now accepts `Plan` parameter. Both bootstrap paths pass the actual plan from the tenant record |
-| **P2-18: DuckDB Binder Error** | DONE | Commits `6582b2766` + `664debdee`: `CAST(now() AS TIMESTAMP)`, `GREATEST()` instead of nested `MAX()`, `CAST(timestamp AS TIMESTAMP)` for VARCHAR, strict `GROUP BY` |
-| **P3-39: Scope treefmt to .nix only** | DONE | Pre-commit hook now calls `alejandra` directly on staged `.nix` files only. No more treefmt whole-project damage. `nix fmt` remains as manual command |
-| **`perform_init` path** | DONE (this session) | Added `emit_tenant_created_event` call after CRUD in `perform_init`. Same class of bug as bootstrap. Regression test added |
+| Item from report                      | Status              | How it was resolved                                                                                                                                                                                                                                |
+| ------------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **P0-1: Regression test**             | DONE                | Added `test_perform_init_emits_tenant_created_event` in `bootstrap_init_tests.rs` + 3 new tests (regression, backward-compat deserialization, round-trip)                                                                                          |
+| **P0-2: Backward-compat test**        | DONE                | Added backward-compat deserialization test with old JSON payload (no `api_key` field)                                                                                                                                                              |
+| **P0-3: API-created tenant gap**      | DONE                | Commit `6e6537082` — `TenantCommand::Create` and `TenantEvent::Created` now carry `api_key_hash: Option<ApiKeyHash>`. Threaded through `tenant_command_handler` → `DomainEvent::TenantCreated` with `#[serde(rename = "api_key")]` for JSON compat |
+| **P0-4: Deploy**                      | DONE                | 3 production deploys completed. 21/21 post-deploy checks PASS                                                                                                                                                                                      |
+| **P0-5: Production api_key**          | VERIFIED via logs   | Bootstrap log confirms "appended missing TenantCreated event" + "re-synced api_key from configured secret". Agent connected successfully                                                                                                           |
+| **P1-7: Clippy**                      | DONE                | Zero warnings on `-p monitor365-server -p monitor365-db`                                                                                                                                                                                           |
+| **P1-8: BDD tests**                   | DONE                | 112 scenarios pass (18 features, 892 steps)                                                                                                                                                                                                        |
+| **P1-12: Centralize api_key hashing** | VERIFIED            | Already centralized — `ApiKeyHash::from_key()` in `db/src/lib.rs` is the single source. All three paths (bootstrap, API handler, auth verification) call it. No inline SHA-256 anywhere                                                            |
+| **P1-13: Hardcoded Plan::Free**       | DONE                | `emit_tenant_created_event` now accepts `Plan` parameter. Both bootstrap paths pass the actual plan from the tenant record                                                                                                                         |
+| **P2-18: DuckDB Binder Error**        | DONE                | Commits `6582b2766` + `664debdee`: `CAST(now() AS TIMESTAMP)`, `GREATEST()` instead of nested `MAX()`, `CAST(timestamp AS TIMESTAMP)` for VARCHAR, strict `GROUP BY`                                                                               |
+| **P3-39: Scope treefmt to .nix only** | DONE                | Pre-commit hook now calls `alejandra` directly on staged `.nix` files only. No more treefmt whole-project damage. `nix fmt` remains as manual command                                                                                              |
+| **`perform_init` path**               | DONE (this session) | Added `emit_tenant_created_event` call after CRUD in `perform_init`. Same class of bug as bootstrap. Regression test added                                                                                                                         |
 
 ### Strong typing introduced
 
 The `api_key_hash` field is now typed as `ApiKeyHash` (a `#[serde(transparent)]` newtype wrapping `String`), making it impossible to accidentally put plaintext where a hash belongs. This is threaded through:
+
 - `DomainEvent::TenantCreated.api_key_hash: Option<ApiKeyHash>` (with `#[serde(rename = "api_key")]` for JSON backward compat)
 - `TenantCommand::Create.api_key_hash: Option<ApiKeyHash>`
 - `TenantEvent::Created.api_key_hash: Option<ApiKeyHash>`
 
 ### Upstream commits (monitor365)
 
-| Commit | Description |
-|--------|-------------|
-| `58ae68d03` | Bootstrap: emit `TenantCreated` with SHA-256 hash |
-| `6e6537082` | API path: thread `ApiKeyHash` through command/event model |
-| `6582b2766` | DuckDB: `CAST(now() AS TIMESTAMP)` + `GREATEST()` |
-| `664debdee` | DuckDB: `CAST(timestamp AS TIMESTAMP)` + strict `GROUP BY` |
-| (pending) | `perform_init` emits `TenantCreated` event + regression test |
+| Commit      | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| `58ae68d03` | Bootstrap: emit `TenantCreated` with SHA-256 hash            |
+| `6e6537082` | API path: thread `ApiKeyHash` through command/event model    |
+| `6582b2766` | DuckDB: `CAST(now() AS TIMESTAMP)` + `GREATEST()`            |
+| `664debdee` | DuckDB: `CAST(timestamp AS TIMESTAMP)` + strict `GROUP BY`   |
+| (pending)   | `perform_init` emits `TenantCreated` event + regression test |
 
 ### SystemNix commits
 
-| Commit | Description |
-|--------|-------------|
+| Commit     | Description                                             |
+| ---------- | ------------------------------------------------------- |
 | `d5719019` | templ added, monitor365 flake lock, pre-commit hook fix |
-| `572f3fa9` | Flake lock → DuckDB fix 1 |
-| `14c0278a` | Flake lock → DuckDB fix 2 |
-| `ad4062ee` | AGENTS.md: DuckDB SQL compat + pre-commit hook entries |
-| `7ceecf04` | Old status report annotated with resolution |
+| `572f3fa9` | Flake lock → DuckDB fix 1                               |
+| `14c0278a` | Flake lock → DuckDB fix 2                               |
+| `ad4062ee` | AGENTS.md: DuckDB SQL compat + pre-commit hook entries  |
+| `7ceecf04` | Old status report annotated with resolution             |

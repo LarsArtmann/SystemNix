@@ -26,14 +26,14 @@
 
 ### SystemNix integration — 5 files changed
 
-| File | Change |
-|------|--------|
-| `flake.nix:356-362` | Added `overview` input via `git+ssh://git@github.com/LarsArtmann/overview?ref=master` with `nixpkgs` and `flake-parts` follows |
-| `flake.nix:399` | Added `overview` to `outputs` function parameters |
-| `flake.nix:688` | Added `inputs.overview.nixosModules.default` to evo-x2 NixOS modules |
-| `overlays/linux.nix` | Added `overview` dependency + `overview.overlays.default` to Linux overlays |
-| `lib/ports.nix` | Added `overview = 8083` (avoids conflict: crush-daily=8081, dozzle=8084) |
-| `platforms/nixos/system/configuration.nix` | Enabled `services.overview` with port 8083, searchPaths `/home/lars/projects`, logLevel `info` |
+| File                                       | Change                                                                                                                         |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `flake.nix:356-362`                        | Added `overview` input via `git+ssh://git@github.com/LarsArtmann/overview?ref=master` with `nixpkgs` and `flake-parts` follows |
+| `flake.nix:399`                            | Added `overview` to `outputs` function parameters                                                                              |
+| `flake.nix:688`                            | Added `inputs.overview.nixosModules.default` to evo-x2 NixOS modules                                                           |
+| `overlays/linux.nix`                       | Added `overview` dependency + `overview.overlays.default` to Linux overlays                                                    |
+| `lib/ports.nix`                            | Added `overview = 8083` (avoids conflict: crush-daily=8081, dozzle=8084)                                                       |
+| `platforms/nixos/system/configuration.nix` | Enabled `services.overview` with port 8083, searchPaths `/home/lars/projects`, logLevel `info`                                 |
 
 ### Verified runtime configuration
 
@@ -64,6 +64,7 @@ All configuration is committed and verified via `nix flake check --no-build`, bu
 ### vendorHash still placeholder in overview
 
 The overview `flake.nix` still has `vendorHash = "sha256-AAA..."`. This works because:
+
 - The overlay uses `overview.overlays.default` which pulls the pre-built package from the overview flake
 - The overview flake's `buildGoModule` uses `proxyVendor = true` which may or may not work with the placeholder
 
@@ -88,6 +89,7 @@ If `nix build` of the overview package fails due to vendorHash, the entire Syste
 ### Nothing is fucked up!
 
 This integration went cleanly:
+
 - `nix flake check --no-build` passes
 - All systemd service config verified via `nix eval`
 - Environment variables correctly mapped from module options
@@ -112,33 +114,33 @@ The only risk is the placeholder vendorHash in overview — if it doesn't build,
 
 ## f) Top #25 Things We Should Get Done Next!
 
-| # | Task | Impact | Effort | Where |
-|---|------|--------|--------|-------|
-| 1 | Deploy with `nh os switch` to evo-x2 | 🔴 Critical | Small | SystemNix |
-| 2 | Fix vendorHash in overview flake.nix | 🔴 Critical | Medium | Overview |
-| 3 | Verify overview service starts and responds after deploy | 🟠 High | Small | SystemNix |
-| 4 | Add Caddy virtualHost for `overview.home.lan` | 🟠 High | Small | SystemNix |
-| 5 | Add overview to Homepage dashboard services | 🟠 High | Small | SystemNix |
-| 6 | Add Gatus health check for overview `/health` | 🟠 High | Small | SystemNix |
-| 7 | Add SSE + metrics endpoints to overview README endpoint table | 🟡 Medium | Small | Overview |
-| 8 | Update README with all env vars (logLevel, logFormat, etc.) | 🟡 Medium | Small | Overview |
-| 9 | Add missing env vars to overview README config table | 🟡 Medium | Small | Overview |
-| 10 | Write NixOS integration test for overview service | 🟡 Medium | Medium | SystemNix |
-| 11 | Add SSE handler tests (0% coverage) | 🟡 Medium | Small | Overview |
-| 12 | Add metrics handler tests (0% coverage) | 🟡 Medium | Small | Overview |
-| 13 | Add discovery cache sync/stop tests | 🟡 Medium | Medium | Overview |
-| 14 | Add `checks.lint` to overview flake.nix | 🟡 Medium | Small | Overview |
-| 15 | Switch overview CI to use Nix devShell | 🟡 Medium | Small | Overview |
-| 16 | Consolidate duplicate systems/treefmt-nix in lock file | 🟡 Medium | Small | SystemNix |
-| 17 | Archive old status reports (keep latest 3) | 🔵 Low | Small | Overview |
-| 18 | Add Docker/OCI image via `dockerTools` | 🔵 Low | Medium | Overview |
-| 19 | Add Home Manager module for overview | 🔵 Low | Medium | Overview |
-| 20 | Add Cachix binary cache for overview | 🔵 Low | Small | Overview |
-| 21 | Rate limiting on `/api/*` endpoints | 🔵 Low | Small | Overview |
-| 22 | Add CHANGELOG.md to overview | 🔵 Low | Small | Overview |
-| 23 | Accessibility audit (keyboard nav, ARIA) | 🔵 Low | Medium | Overview |
-| 24 | Performance regression CI gate on benchmarks | 🔵 Low | Medium | Overview |
-| 25 | Explore WebSocket alternative to SSE | ⚪ Nice-to-have | Large | Overview |
+| #   | Task                                                          | Impact          | Effort | Where     |
+| --- | ------------------------------------------------------------- | --------------- | ------ | --------- |
+| 1   | Deploy with `nh os switch` to evo-x2                          | 🔴 Critical     | Small  | SystemNix |
+| 2   | Fix vendorHash in overview flake.nix                          | 🔴 Critical     | Medium | Overview  |
+| 3   | Verify overview service starts and responds after deploy      | 🟠 High         | Small  | SystemNix |
+| 4   | Add Caddy virtualHost for `overview.home.lan`                 | 🟠 High         | Small  | SystemNix |
+| 5   | Add overview to Homepage dashboard services                   | 🟠 High         | Small  | SystemNix |
+| 6   | Add Gatus health check for overview `/health`                 | 🟠 High         | Small  | SystemNix |
+| 7   | Add SSE + metrics endpoints to overview README endpoint table | 🟡 Medium       | Small  | Overview  |
+| 8   | Update README with all env vars (logLevel, logFormat, etc.)   | 🟡 Medium       | Small  | Overview  |
+| 9   | Add missing env vars to overview README config table          | 🟡 Medium       | Small  | Overview  |
+| 10  | Write NixOS integration test for overview service             | 🟡 Medium       | Medium | SystemNix |
+| 11  | Add SSE handler tests (0% coverage)                           | 🟡 Medium       | Small  | Overview  |
+| 12  | Add metrics handler tests (0% coverage)                       | 🟡 Medium       | Small  | Overview  |
+| 13  | Add discovery cache sync/stop tests                           | 🟡 Medium       | Medium | Overview  |
+| 14  | Add `checks.lint` to overview flake.nix                       | 🟡 Medium       | Small  | Overview  |
+| 15  | Switch overview CI to use Nix devShell                        | 🟡 Medium       | Small  | Overview  |
+| 16  | Consolidate duplicate systems/treefmt-nix in lock file        | 🟡 Medium       | Small  | SystemNix |
+| 17  | Archive old status reports (keep latest 3)                    | 🔵 Low          | Small  | Overview  |
+| 18  | Add Docker/OCI image via `dockerTools`                        | 🔵 Low          | Medium | Overview  |
+| 19  | Add Home Manager module for overview                          | 🔵 Low          | Medium | Overview  |
+| 20  | Add Cachix binary cache for overview                          | 🔵 Low          | Small  | Overview  |
+| 21  | Rate limiting on `/api/*` endpoints                           | 🔵 Low          | Small  | Overview  |
+| 22  | Add CHANGELOG.md to overview                                  | 🔵 Low          | Small  | Overview  |
+| 23  | Accessibility audit (keyboard nav, ARIA)                      | 🔵 Low          | Medium | Overview  |
+| 24  | Performance regression CI gate on benchmarks                  | 🔵 Low          | Medium | Overview  |
+| 25  | Explore WebSocket alternative to SSE                          | ⚪ Nice-to-have | Large  | Overview  |
 
 ---
 
@@ -149,6 +151,7 @@ The only risk is the placeholder vendorHash in overview — if it doesn't build,
 The service binds to `0.0.0.0:8083` (all interfaces) by default, which means it's reachable from any device on the network. Since overview discovers local project data (file paths, git repos, commit SHAs, code stats), this exposes information about all projects in `/home/lars/projects` to anyone on the LAN.
 
 Options:
+
 1. **LAN-accessible via Caddy** — Convenient, consistent with other services. Add `overview.home.lan` virtualHost.
 2. **Localhost only** — Bind to `127.0.0.1:8083`, access via SSH tunnel or directly on the machine. More secure for project data.
 3. **LAN-accessible but behind Pocket-ID auth** — Most secure, consistent with auth pattern used by other services.

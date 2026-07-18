@@ -8,9 +8,11 @@
 ## 🚨 CRITICAL: Issue #132 - Deploy & Validate EVO-X2 NixOS Configuration
 
 ### Summary
+
 Deploy production-ready NixOS configuration on GMKtec EVO-X2 (AMD Ryzen AI Max+ 395) to complete cross-platform development environment.
 
 ### Current Status
+
 - ✅ Configuration complete in `dotfiles/nixos/configuration.nix`
 - ✅ Flake integration with `evo-x2` target
 - ✅ Hardware optimization configured (CPU, GPU, storage, memory)
@@ -28,12 +30,14 @@ Deploy production-ready NixOS configuration on GMKtec EVO-X2 (AMD Ryzen AI Max+ 
 ### Action Plan
 
 #### Week 1: Preparation & Deployment
+
 1. **Hardware Verification** (2 hours)
    - Confirm EVO-X2 availability
    - Prepare bootable USB with NixOS
    - Backup existing data
 
 2. **Configuration Validation** (2 hours)
+
    ```bash
    # Pre-deployment checks
    nix flake check --target evo-x2
@@ -54,7 +58,9 @@ Deploy production-ready NixOS configuration on GMKtec EVO-X2 (AMD Ryzen AI Max+ 
    ```
 
 #### Week 2: Validation & Testing
+
 5. **Hardware Verification** (3-4 hours)
+
    ```bash
    # CPU validation
    lscpu | grep "Model name"
@@ -84,11 +90,11 @@ Deploy production-ready NixOS configuration on GMKtec EVO-X2 (AMD Ryzen AI Max+ 
 
 ### Blockers & Solutions
 
-| Blocker | Solution | Timeline |
-|----------|----------|----------|
-| Hardware not received | Use QEMU virtualization for testing | 1 week |
-| Driver issues | Research AMD Ryzen GPU drivers | 2 weeks |
-| Configuration conflicts | Incremental deployment, rollback ready | 1 week |
+| Blocker                 | Solution                               | Timeline |
+| ----------------------- | -------------------------------------- | -------- |
+| Hardware not received   | Use QEMU virtualization for testing    | 1 week   |
+| Driver issues           | Research AMD Ryzen GPU drivers         | 2 weeks  |
+| Configuration conflicts | Incremental deployment, rollback ready | 1 week   |
 
 ---
 
@@ -106,10 +112,12 @@ Deploy production-ready NixOS configuration on GMKtec EVO-X2 (AMD Ryzen AI Max+ 
 ### Dependencies
 
 **Must Complete Before:**
+
 - Issue #122 (Fix Nix Testing Pipeline) - for safe testing
 - Issue #131 (Performance Baselines) - for validation metrics
 
 **Enables:**
+
 - Issue #133 (Advanced Network Configuration) - NixOS networking
 - Issue #134 (Isolated Program Modules) - ZFS features
 - Issue #130 (RISC-V Support) - cross-platform testing
@@ -119,6 +127,7 @@ Deploy production-ready NixOS configuration on GMKtec EVO-X2 (AMD Ryzen AI Max+ 
 ### Estimated Effort
 
 **Total:** 20-30 hours (2-3 weeks)
+
 - Preparation: 4 hours
 - Deployment: 6 hours
 - Testing: 10 hours
@@ -164,9 +173,11 @@ just network-status    # Verify networking
 ## 📊 COMPREHENSIVE: Issue #131 - Establish Performance Baselines & Regression Detection
 
 ### Summary
+
 Complete comprehensive performance baseline establishment for cross-platform development environment to enable optimization tracking and regression detection.
 
 ### Current Status
+
 - ✅ Shell startup benchmarking (`just benchmark-shells`)
 - ✅ Performance monitoring tools (ActivityWatch, Netdata)
 - ✅ System health checks (`just health`)
@@ -186,6 +197,7 @@ Complete comprehensive performance baseline establishment for cross-platform dev
 #### Phase 1: Core Baselines (Week 1 - High Priority)
 
 1. **Shell Performance Baseline** (2 hours)
+
    ```bash
    # Measure shell startup times
    just benchmark-shells
@@ -196,6 +208,7 @@ Complete comprehensive performance baseline establishment for cross-platform dev
    ```
 
 2. **System Performance Baseline** (2 hours)
+
    ```bash
    # CPU, memory, disk, network benchmarks
    hyperfine 'git status'
@@ -206,6 +219,7 @@ Complete comprehensive performance baseline establishment for cross-platform dev
    ```
 
 3. **Development Tool Performance** (2 hours)
+
    ```bash
    # Measure build times
    time go build ./test-project
@@ -236,6 +250,7 @@ Complete comprehensive performance baseline establishment for cross-platform dev
 #### Phase 2: Automated Regression Detection (Week 2 - High Priority)
 
 5. **Implement Just Commands** (3 hours)
+
    ```bash
    # Add to justfile
    baseline-establish:
@@ -283,6 +298,7 @@ Complete comprehensive performance baseline establishment for cross-platform dev
 ### Estimated Effort
 
 **Total:** 12-16 hours (2-3 weeks)
+
 - Phase 1 (Baselines): 6 hours
 - Phase 2 (Automation): 5 hours
 - Phase 3 (Cross-Platform): 5 hours
@@ -292,10 +308,12 @@ Complete comprehensive performance baseline establishment for cross-platform dev
 ### Dependencies
 
 **Requires:**
+
 - Issue #132 (EVO-X2 Deployment) - for NixOS baseline
 - Issue #122 (Fix Testing) - for automated baseline establishment
 
 **Enables:**
+
 - Issue #134 (Program Modules) - measure performance impact
 - Issue #125 (Dynamic Library Management) - performance validation
 - Issue #104 (Wrapper Optimization) - performance measurement
@@ -305,9 +323,11 @@ Complete comprehensive performance baseline establishment for cross-platform dev
 ## 🔵 MEDIUM: Issue #130 - Add Comprehensive RISC-V Support to NixOS Configurations
 
 ### Summary
+
 Add RISC-V architecture support to NixOS configurations for deployment on RISC-V hardware and virtualization environments.
 
 ### Current Status
+
 - ✅ flake.nix supports multiple systems (aarch64-darwin, x86_64-linux)
 - ❌ No RISC-V architecture support
 - ❌ No RISC-V specific configurations
@@ -333,6 +353,7 @@ Add RISC-V architecture support to NixOS configurations for deployment on RISC-V
 ### If Implementing (Future)
 
 #### Research Phase (Week 1)
+
 1. **Document Current NixOS RISC-V Support** (4 hours)
    - Check NixOS wiki: https://nixos.wiki/wiki/RISC-V
    - Review Nixpkgs RISC-V support
@@ -344,7 +365,9 @@ Add RISC-V architecture support to NixOS configurations for deployment on RISC-V
    - Test core packages (git, curl, bash)
 
 #### Implementation Phase (Week 2-3)
+
 3. **Add RISC-V Target to Flake** (2 hours)
+
    ```nix
    systems = ["aarch64-darwin" "x86_64-linux" "riscv64-linux"];
 
@@ -355,6 +378,7 @@ Add RISC-V architecture support to NixOS configurations for deployment on RISC-V
    ```
 
 4. **Create RISC-V Specific Configurations** (6 hours)
+
    ```nix
    # platforms/riscv/system/configuration.nix
    {
@@ -390,6 +414,7 @@ Add RISC-V architecture support to NixOS configurations for deployment on RISC-V
 ### Estimated Effort
 
 **Total:** 20-24 hours (3-4 weeks)
+
 - Research: 8 hours
 - Implementation: 12 hours
 - Testing: 4 hours
@@ -408,9 +433,11 @@ Add RISC-V architecture support to NixOS configurations for deployment on RISC-V
 ## 🟡 MEDIUM: Issue #125 - Enhance Dynamic Library Management System
 
 ### Summary
+
 Enhance existing wrapper system with automatic library dependency detection, enhanced macOS-specific dynamic library management, and migration guides from Homebrew.
 
 ### Current Status
+
 - ✅ Advanced wrapper system exists (`dotfiles/nix/wrappers/`)
 - ✅ Template-based wrapper generation
 - ✅ GUI and CLI application support
@@ -431,6 +458,7 @@ Enhance existing wrapper system with automatic library dependency detection, enh
 #### Phase 1: Enhanced Wrappers (Week 1 - High Impact)
 
 1. **Add Automatic Library Detection** (4 hours)
+
    ```bash
    # Create wrapper helper function
    # Add to dotfiles/nix/wrappers/lib/detect-deps.sh
@@ -444,6 +472,7 @@ Enhance existing wrapper system with automatic library dependency detection, enh
    ```
 
 2. **Create Enhanced Wrapper Template** (3 hours)
+
    ```nix
    # dotfiles/nix/wrappers/templates/dynamic-library.nix
    { pkgs, appName, binaryPath, libraries ? [] }:
@@ -465,23 +494,28 @@ Enhance existing wrapper system with automatic library dependency detection, enh
 #### Phase 2: Documentation & Migration (Week 2 - Medium Impact)
 
 4. **Homebrew Migration Guide** (3 hours)
+
    ```markdown
    # docs/migration/homebrew-to-nix.md
+
    ## Common Homebrew Packages → Nix Equivalents
 
-   | Homebrew | Nix | Notes |
-   |-----------|------|-------|
+   | Homebrew             | Nix     | Notes           |
+   | -------------------- | ------- | --------------- |
    | brew install python3 | python3 | Version matches |
-   | brew install node | nodejs | Use nodejs |
+   | brew install node    | nodejs  | Use nodejs      |
    ```
 
 5. **Troubleshooting Guide** (2 hours)
    ```markdown
    # docs/troubleshooting/dynamic-libraries.md
+
    ## Common Issues
 
    ### dylib not found
+
    ### Wrong architecture error
+
    ### System Integrity Protection conflicts
    ```
 
@@ -513,6 +547,7 @@ Enhance existing wrapper system with automatic library dependency detection, enh
 ### Estimated Effort
 
 **Total:** 20-24 hours (3-4 weeks)
+
 - Phase 1 (Enhancements): 8 hours
 - Phase 2 (Documentation): 5 hours
 - Phase 3 (Testing): 7 hours
@@ -522,6 +557,7 @@ Enhance existing wrapper system with automatic library dependency detection, enh
 ### Dependencies
 
 **Related to:**
+
 - Issue #134 (Program Modules) - could integrate dynamic library management
 - Issue #97 (Wrapper Library) - performance optimization
 - Issue #105 (Wrapper Documentation) - comprehensive docs
@@ -531,9 +567,11 @@ Enhance existing wrapper system with automatic library dependency detection, enh
 ## 🚨 CRITICAL: Issue #122 - Fix Nix Testing Pipeline
 
 ### Summary
+
 Fix `just test` command which currently requires sudo privileges, blocking automated testing workflows.
 
 ### Current Status
+
 - ❌ `just test` fails - needs sudo for `darwin-rebuild check`
 - ❌ No non-privileged validation method
 - ❌ Cannot safely validate configuration changes
@@ -556,6 +594,7 @@ test:
 ```
 
 **Problem:**
+
 - `darwin-rebuild check` requires root privileges
 - Security policy: Cannot use sudo in automated workflows
 - No alternative validation method available
@@ -565,6 +604,7 @@ test:
 ### Recommended Solution: Use Build-Only Testing (Option 3)
 
 **Why Option 3 (Build-Only):**
+
 - ✅ No sudo required
 - ✅ Tests actual build process
 - ✅ More comprehensive than `nix flake check`
@@ -573,6 +613,7 @@ test:
 - ✅ Fast (no system changes)
 
 **Alternative Options Considered:**
+
 - Option 1 (`nix flake check`): Less comprehensive
 - Option 2 (Two-stage): More complex, still needs sudo for final check
 
@@ -679,6 +720,7 @@ jobs:
 ### Estimated Effort
 
 **Total:** 30 minutes (immediate fix)
+
 - Update justfile: 5 minutes
 - Add pre-commit hook: 10 minutes
 - Verify: 5 minutes
@@ -689,12 +731,14 @@ jobs:
 ### Dependencies
 
 **Blocks:**
+
 - Issue #132 (EVO-X2 Deployment) - need safe testing
 - Issue #131 (Performance Baselines) - need validation
 - Issue #134 (Program Modules) - need testing
 - **ALL** Nix configuration work
 
 **Enables:**
+
 - Safe development practices
 - Automated validation
 - CI/CD integration
@@ -741,40 +785,38 @@ jobs:
 ### Next Actions
 
 **This Week:**
+
 1. ✅ Fix Issue #122 (30 minutes) - Unblock testing
 2. ✅ Review Issue #132 requirements (1 hour) - Plan deployment
 
-**Next Week:**
-3. ✅ Start Issue #132 deployment (4-6 hours) - Base installation
-4. ✅ Continue Issue #132 (4-6 hours) - Complete deployment
+**Next Week:** 3. ✅ Start Issue #132 deployment (4-6 hours) - Base installation 4. ✅ Continue Issue #132 (4-6 hours) - Complete deployment
 
-**Following Weeks:**
-5. ✅ Complete Issue #132 (10-12 hours) - Validation
-6. ✅ Start Issue #131 (6 hours) - Baseline establishment
-7. ✅ Start Issue #133 Phase 1 (4-6 hours) - VPN integration
+**Following Weeks:** 5. ✅ Complete Issue #132 (10-12 hours) - Validation 6. ✅ Start Issue #131 (6 hours) - Baseline establishment 7. ✅ Start Issue #133 Phase 1 (4-6 hours) - VPN integration
 
 ---
 
 ### Risk Assessment
 
-| Issue | Risk | Impact | Mitigation |
-|--------|-------|---------|------------|
-| #122 | Test not comprehensive | Medium | Add `test-full` for thorough checks |
-| #132 | Hardware driver issues | High | Research drivers, have alternatives |
-| #131 | Baseline becomes outdated | Low | Regular re-baselining |
-| #133 | WiFi 7 not available | High | Defer WiFi 7, focus on VPN/VLAN |
-| #125 | Wrapper performance impact | Low | Benchmark before/after |
-| #130 | RISC-V packages unavailable | Low | Research package coverage |
+| Issue | Risk                        | Impact | Mitigation                          |
+| ----- | --------------------------- | ------ | ----------------------------------- |
+| #122  | Test not comprehensive      | Medium | Add `test-full` for thorough checks |
+| #132  | Hardware driver issues      | High   | Research drivers, have alternatives |
+| #131  | Baseline becomes outdated   | Low    | Regular re-baselining               |
+| #133  | WiFi 7 not available        | High   | Defer WiFi 7, focus on VPN/VLAN     |
+| #125  | Wrapper performance impact  | Low    | Benchmark before/after              |
+| #130  | RISC-V packages unavailable | Low    | Research package coverage           |
 
 ---
 
 ### Resource Requirements
 
 **Hardware:**
+
 - Issue #132: EVO-X2 hardware needed
 - Issue #130: RISC-V board (optional)
 
 **Software:**
+
 - Issue #122: None (just command fix)
 - Issue #131: Benchmarking tools (hyperfine, iperf3)
 - Issue #133: VPN server (WireGuard, OpenVPN)

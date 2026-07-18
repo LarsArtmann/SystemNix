@@ -20,6 +20,7 @@ Unsloth Studio's chat feature failed because `llama-server` binary was not disco
 **Problem:** Unsloth Studio's `_find_llama_server_binary()` (in `studio/backend/core/inference/llama_cpp.py`) searched 8 locations in priority order and failed at every one. The Nix-installed `llama-server` at `/run/current-system/sw/bin/llama-server` was visible to user shells but NOT to the `unsloth-studio` systemd service, which had a minimal PATH of only `git` and `python313`.
 
 **Fix applied:**
+
 - Added `llama-cpp-rocwmma` to `systemd.services.unsloth-studio.path` — enables `shutil.which("llama-server")` fallback (priority 7 in Unsloth's search)
 - Set `LLAMA_SERVER_PATH = "${llama-cpp-rocwmma}/bin/llama-server"` env var — direct path bypass, highest priority (priority 1 in Unsloth's search)
 
@@ -28,11 +29,13 @@ Unsloth Studio's chat feature failed because `llama-server` binary was not disco
 ### 2. ROCm GPU Runtime Environment for Unsloth Studio
 
 **Problem:** The `ollama` service had three critical ROCm environment variables (`HSA_OVERRIDE_GFX_VERSION=11.5.1`, `ROCBLAS_USE_HIPBLASLT=1`, `HSA_ENABLE_SDMA=0`) but `unsloth-studio` had **none of them**. Without these, `llama-server` built with ROCm support would either:
+
 - Fail to detect the AMD Strix Halo GPU (gfx1151) → fall back to CPU
 - Hit SDMA bugs on gfx11 APUs → crash or hang
 - Miss HIPBLASLt optimizations → degraded performance
 
 **Fix applied:**
+
 - Injected shared `rocmEnv` attrset into `unsloth-studio.environment` via Nix attr merge (`rocmEnv // { ... }`)
 - All three GPU vars now present in both `ollama` and `unsloth-studio` services
 
@@ -43,6 +46,7 @@ Unsloth Studio's chat feature failed because `llama-server` binary was not disco
 **Problem:** `LD_LIBRARY_PATH` in the unsloth-studio service was missing `rocm-runtime` and `rocm-comgr`, which are runtime dependencies of `llama-cpp-rocwmma` for JIT kernel compilation and ROCm device management.
 
 **Fix applied:**
+
 - Added `rocmPackages.rocm-runtime` and `rocmPackages.rocm-comgr` to shared `rocmRuntimeLibs` list
 - Used `lib.makeLibraryPath rocmRuntimeLibs` in the service environment
 
@@ -53,6 +57,7 @@ Unsloth Studio's chat feature failed because `llama-server` binary was not disco
 **Problem:** ROCm env vars and library paths were duplicated between ollama config and unsloth-studio config. Adding them to unsloth-studio would have tripled the duplication (ollama + unsloth-studio + sessionVariables).
 
 **Fix applied:**
+
 - Extracted `rocmEnv` attrset: `{ ROCBLAS_USE_HIPBLASLT, HSA_OVERRIDE_GFX_VERSION, HSA_ENABLE_SDMA }`
 - Extracted `rocmRuntimeLibs` list: 8 ROCm/C++ runtime library packages
 - Both defined once in `let` bindings, consumed by `services.ollama.environmentVariables` and `systemd.services.unsloth-studio.environment`
@@ -63,6 +68,7 @@ Unsloth Studio's chat feature failed because `llama-server` binary was not disco
 ### 5. Verification
 
 All changes verified:
+
 - `nix eval` confirms `HSA_OVERRIDE_GFX_VERSION = "11.5.1"` in unsloth-studio
 - `nix eval` confirms `LLAMA_SERVER_PATH` points to correct ROCm binary
 - `nix eval` confirms `rocm-runtime` and `rocm-comgr` in `LD_LIBRARY_PATH`
@@ -80,6 +86,7 @@ All changes verified:
 ### 2. Pre-commit Hook Warnings (Pre-existing)
 
 The pre-commit hook (`statix`) flagged warnings in **other files** that predate this session:
+
 - `flake.nix:257` — repeated `nixpkgs` key (W20)
 - `flake.nix:332` — repeated `nixpkgs` key (W20)
 - `modules/nixos/services/signoz.nix:41` — assignment instead of inherit (W03)
@@ -98,6 +105,7 @@ The config changes have NOT been deployed to the machine yet. Needs `sudo nixos-
 ### 2. Unsloth Chat End-to-End Test
 
 After deploy, need to:
+
 1. Open Unsloth Studio at http://127.0.0.1:8888
 2. Load a GGUF model
 3. Start a chat conversation
@@ -124,6 +132,7 @@ The original bug was straightforward — missing binary in service PATH + missin
 ### 1. Pattern: Service Environment Parity Checklist
 
 When a new systemd service needs GPU access, there should be a checklist:
+
 - [ ] ROCm env vars (from `rocmEnv`)
 - [ ] ROCm runtime libs in `LD_LIBRARY_PATH` (from `rocmRuntimeLibs`)
 - [ ] Binary in `path`
@@ -201,12 +210,14 @@ Neither `ollama` nor `unsloth-studio` have health checks or monitoring. If `llam
 **Does the Unsloth Studio chat feature actually work end-to-end after these fixes?**
 
 I can verify the Nix config evaluates correctly and that all env vars/binaries are in the right places. But I cannot:
+
 1. Deploy the config to evo-x2 (requires `sudo nixos-rebuild switch`)
 2. Open Unsloth Studio in a browser
 3. Load a GGUF model and start a chat
 4. Verify `llama-server` spawns with ROCm GPU acceleration
 
 The user must perform these steps. If `llama-server` still fails after deploy, the next debug step is:
+
 ```bash
 journalctl -u unsloth-studio -f
 # Then trigger chat in the UI
@@ -216,17 +227,17 @@ journalctl -u unsloth-studio -f
 
 ## Commits Made This Session
 
-| Commit | Description |
-|--------|-------------|
-| `5c2ea34` | Add shared `rocmEnv` and `rocmRuntimeLibs` let bindings |
+| Commit    | Description                                                        |
+| --------- | ------------------------------------------------------------------ |
+| `5c2ea34` | Add shared `rocmEnv` and `rocmRuntimeLibs` let bindings            |
 | `cf9a51a` | Restructure systemd services + inject ROCm env into unsloth-studio |
 
 ---
 
 ## Files Changed
 
-| File | Changes |
-|------|---------|
+| File                                   | Changes                                                                                                                                        |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `platforms/nixos/desktop/ai-stack.nix` | Added `rocmEnv`, `rocmRuntimeLibs`, `llama-cpp-rocwmma` in path, `LLAMA_SERVER_PATH`, ROCm env vars in unsloth-studio, deduplicated ollama env |
 
 ---

@@ -183,6 +183,7 @@
 ### 1. Why didn't Gatus send a Discord alert when Pocket ID went down?
 
 Gatus has a health check for Pocket ID (`http://localhost:1411/healthz`, status 204, Discord alert configured). Pocket ID was down for over 24 hours (crashed Jul 11 13:51, not fixed until Jul 12 19:12). Either:
+
 - Gatus itself was also down or broken
 - The Discord webhook is misconfigured
 - The alert fired but was missed/ignored

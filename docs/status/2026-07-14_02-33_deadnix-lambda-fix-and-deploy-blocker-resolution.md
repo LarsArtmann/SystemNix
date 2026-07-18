@@ -23,29 +23,29 @@ The user ran `nix flake update && nh os switch .` which hit a deploy blocker (`s
 
 **Fix:** Added `...` to both lambda patterns to accept (and ignore) extra attributes.
 
-| File | Line | Fix |
-|------|------|-----|
-| `tests/default.nix:1-4` | Added `...` after `system,` | `flake.nix` can pass `pkgs`, `lib` safely |
-| `lib/filesystems.nix:83-87` | Added `...` after `validFsTypes,` | `builtins.filter` can pass `desc` safely |
+| File                        | Line                              | Fix                                       |
+| --------------------------- | --------------------------------- | ----------------------------------------- |
+| `tests/default.nix:1-4`     | Added `...` after `system,`       | `flake.nix` can pass `pkgs`, `lib` safely |
+| `lib/filesystems.nix:83-87` | Added `...` after `validFsTypes,` | `builtins.filter` can pass `desc` safely  |
 
 ### 2. Full Audit of All 12 deadnix-Modified Files
 
 Systematically reviewed every file touched by deadnix:repair to confirm no other breakage:
 
-| File | deadnix Change | Safe? | Why |
-|------|---------------|-------|-----|
-| `modules/nixos/services/default-services.nix` | Removed `pkgs` | ✅ | Has `...` — module pattern |
-| `modules/nixos/services/dozzle.nix` | Removed `pkgs` | ✅ | Has `...` — module pattern |
-| `modules/nixos/services/sops.nix` | Removed `pkgs` | ✅ | Has `...` — module pattern |
-| `platforms/common/programs/zed.nix` | Changed to `_:` | ✅ | Only called with attrs pattern |
-| `platforms/darwin/default.nix` | Removed `config, lib` | ✅ | Has `...` — module pattern |
-| `platforms/darwin/home.nix` | Removed `colorScheme, lib, pkgs` | ✅ | Has `...` — HM module pattern |
-| `platforms/nixos/desktop/niri-wrapped.nix` | Removed `config` | ✅ | Has `...` — module pattern |
-| `platforms/nixos/desktop/quickshell.nix` | Removed `colorScheme` | ✅ | Has `...` — module pattern |
-| `platforms/nixos/system/btrfs-health.nix` | Removed `config` | ✅ | Has `...` — module pattern |
-| `templates/go-flake-parts/flake.nix` | Removed `go-nix-helpers, system` | ✅ | Both have `...` |
-| **`tests/default.nix`** | Removed `pkgs, lib` | ❌ FIXED | No `...` — plain function |
-| **`lib/filesystems.nix`** | Removed `desc` | ❌ FIXED | No `...` — filter predicate |
+| File                                          | deadnix Change                   | Safe?    | Why                            |
+| --------------------------------------------- | -------------------------------- | -------- | ------------------------------ |
+| `modules/nixos/services/default-services.nix` | Removed `pkgs`                   | ✅       | Has `...` — module pattern     |
+| `modules/nixos/services/dozzle.nix`           | Removed `pkgs`                   | ✅       | Has `...` — module pattern     |
+| `modules/nixos/services/sops.nix`             | Removed `pkgs`                   | ✅       | Has `...` — module pattern     |
+| `platforms/common/programs/zed.nix`           | Changed to `_:`                  | ✅       | Only called with attrs pattern |
+| `platforms/darwin/default.nix`                | Removed `config, lib`            | ✅       | Has `...` — module pattern     |
+| `platforms/darwin/home.nix`                   | Removed `colorScheme, lib, pkgs` | ✅       | Has `...` — HM module pattern  |
+| `platforms/nixos/desktop/niri-wrapped.nix`    | Removed `config`                 | ✅       | Has `...` — module pattern     |
+| `platforms/nixos/desktop/quickshell.nix`      | Removed `colorScheme`            | ✅       | Has `...` — module pattern     |
+| `platforms/nixos/system/btrfs-health.nix`     | Removed `config`                 | ✅       | Has `...` — module pattern     |
+| `templates/go-flake-parts/flake.nix`          | Removed `go-nix-helpers, system` | ✅       | Both have `...`                |
+| **`tests/default.nix`**                       | Removed `pkgs, lib`              | ❌ FIXED | No `...` — plain function      |
+| **`lib/filesystems.nix`**                     | Removed `desc`                   | ❌ FIXED | No `...` — filter predicate    |
 
 ### 3. Verification
 
@@ -56,6 +56,7 @@ Systematically reviewed every file touched by deadnix:repair to confirm no other
 ### 4. AGENTS.md Gotcha Documented
 
 Added a new entry to the Non-Obvious Gotchas table documenting the deadnix `--fix` trap, explaining:
+
 - deadnix removes unused params but doesn't add `...` when removing ALL named params
 - Safe for modules with `...`, dangerous for local functions and non-module callers
 - References the `buildflow --fix` deadnix:repair step as the trigger
@@ -71,6 +72,7 @@ The system config now **evaluates** cleanly, but has NOT been **deployed** (`nh 
 ### Uncommitted Changes
 
 Three files are modified but uncommitted:
+
 - `lib/filesystems.nix` (+1 line)
 - `tests/default.nix` (+1 line)
 - `AGENTS.md` (+1 line: gotcha)
@@ -126,12 +128,14 @@ I verified the fixes and confirmed evaluation passes, but did NOT commit them. T
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (Block deploy or data loss)
+
 1. **Commit the 3 uncommitted fix files** (`tests/default.nix`, `lib/filesystems.nix`, `AGENTS.md`)
 2. **Run `nh os switch .` or `nix run .#deploy`** to actually deploy the updated system
 3. **Run `nix run .#post-deploy-check`** after deploy to verify functional outcomes
 4. **Verify monitor365 graphical collection status** — is the graphical-helper module wired up? If not, monitor365 has NO graphical collectors (screenshots, active window tracking)
 
 ### Short-term (This week)
+
 5. **Push upstream monitor365 commit `9b709d83`** (adds `displayUser`) OR wire up `graphical-helper-module.nix` — pick one approach for graphical collection
 6. **Verify all 13 updated flake inputs build successfully** — `nix build .#buildflow`, `nix build .#discordsync`, etc.
 7. **Check if `emeet-pixyd` (updated to `45307d9`) and `go-branded-id` (updated to `ed5ee4b`) have breaking changes** — buildflow's second run (paste_2.txt) pulled even newer commits
@@ -142,6 +146,7 @@ I verified the fixes and confirmed evaluation passes, but did NOT commit them. T
 12. **Split commit `83608262` into logical commits** — displayUser removal, flake update, deadnix cleanup, treefmt (if not already pushed; if pushed, document for future)
 
 ### Medium-term (This month)
+
 13. **Wire up monitor365 graphical-helper module** if `displayUser` approach is abandoned
 14. **Add `vendorHash = ""` probe builds** for all updated Go inputs to catch hash mismatches before deploy
 15. **Create a `nix flake update --check` wrapper** that updates, evals, and reports before committing the lock file
@@ -157,6 +162,7 @@ I verified the fixes and confirmed evaluation passes, but did NOT commit them. T
 25. **Review the 27 modified HTML docs files** — these have large diffs (6844 insertions, 4140 deletions) that predate this session; are they intentional?
 
 ### Long-term (Backlog)
+
 26. **Push unpushed upstream commits** across all LarsArtmann repos to prevent flake update surprises
 27. **Add CI for `nix flake check`** on push to master
 28. **Document the buildflow nix-checker false-positive bug** upstream
@@ -199,14 +205,14 @@ The committed `83608262` has `emeet-pixyd` at `a9fc43c` and `go-branded-id` at `
 
 ## Session Metrics
 
-| Metric | Value |
-|--------|-------|
-| Files fixed | 2 (`tests/default.nix`, `lib/filesystems.nix`) |
-| Files documented | 1 (`AGENTS.md`) |
-| Lines changed | +3 (all insertions) |
-| Eval before fix | ❌ `function called with unexpected argument` |
-| Eval after fix | ✅ all checks passed |
-| Deploy status | ⏳ Not deployed (uncommitted + untested build) |
-| Root cause identified | ✅ deadnix:repair removes params without `...` |
-| All deadnix-modified files audited | ✅ 12/12 reviewed |
-| Time to fix | ~5 minutes (after 5 min analysis) |
+| Metric                             | Value                                          |
+| ---------------------------------- | ---------------------------------------------- |
+| Files fixed                        | 2 (`tests/default.nix`, `lib/filesystems.nix`) |
+| Files documented                   | 1 (`AGENTS.md`)                                |
+| Lines changed                      | +3 (all insertions)                            |
+| Eval before fix                    | ❌ `function called with unexpected argument`  |
+| Eval after fix                     | ✅ all checks passed                           |
+| Deploy status                      | ⏳ Not deployed (uncommitted + untested build) |
+| Root cause identified              | ✅ deadnix:repair removes params without `...` |
+| All deadnix-modified files audited | ✅ 12/12 reviewed                              |
+| Time to fix                        | ~5 minutes (after 5 min analysis)              |
