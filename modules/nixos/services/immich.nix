@@ -59,6 +59,15 @@ _: {
           };
         };
 
+        # Immich's redis defaults to a unix socket only (port 0), which the
+        # Gatus tcp://127.0.0.1:<port> health check cannot reach. Enable a
+        # localhost-only TCP listener IN ADDITION to the socket: immich still
+        # connects over the (faster) unix socket via REDIS_SOCKET, while Gatus
+        # can verify the cache is actually accepting connections. Redis listens
+        # on both transports natively when both are configured.
+        services.immich.redis.port = ports.redis;
+        services.redis.servers.immich.bind = lib.mkForce "127.0.0.1";
+
         users.users.immich.extraGroups = [
           "video"
           "render"

@@ -161,10 +161,15 @@ _: {
       # Whitelist file (used by dnsblockd process for mapping.json generation)
       whitelistFile = pkgs.writeText "dns-blocker-whitelist.txt" (lib.concatLines cfg.whitelist);
 
-      # Build processor arguments: blocklist-file name pairs
+      # Build processor arguments: blocklist-file name pairs.
+      # NOTE: bl.file is the derivation OUTPUT (a directory) from filterBlocklist;
+      # the actual hosts file lives at $out/${name} inside it. Pointing at the
+      # directory silently yielded 0 entries (dnsblockd could not read a dir as a
+      # hosts file), so mapping.json came out empty {} and runtime blocking was
+      # inactive. Always reference the file inside the dir.
       processorArgs = lib.concatStringsSep " " (
         lib.concatMap (bl: [
-          (toString bl.file)
+          (toString "${bl.file}/${bl.name}")
           bl.name
         ]) fetchedBlocklists
       );
@@ -188,7 +193,9 @@ _: {
 
       # Blocklist file paths for dnsblockd's native DNS blocklist loader.
       # When tempAllowAll is true, pass an empty list so nothing is blocked.
-      blocklistPaths = if cfg.tempAllowAll then [ ] else map (bl: toString bl.file) fetchedBlocklists;
+      # Reference the file INSIDE the filtered derivation dir (see processorArgs
+      # note above) — passing the dir itself loads 0 entries.
+      blocklistPaths = if cfg.tempAllowAll then [ ] else map (bl: toString "${bl.file}/${bl.name}") fetchedBlocklists;
 
       # Sops secret paths and generated YAML config — in outer scope so that
       # restartTriggers can reference the config file, forcing a service restart

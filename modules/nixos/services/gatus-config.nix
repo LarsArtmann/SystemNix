@@ -191,7 +191,7 @@ _: {
               {
                 name = "Redis";
                 group = "Infrastructure";
-                url = "tcp://127.0.0.1:6379";
+                url = "tcp://127.0.0.1:${toString ports.redis}";
                 interval = "60s";
                 conditions = [ "[CONNECTED] == true" ];
                 alerts = discordAlert "Redis down — Immich ML pipeline and caching broken";
@@ -233,17 +233,6 @@ _: {
                   "[RESPONSE_TIME] < 1000"
                 ];
                 alerts = discordAlert "Twenty CRM down — customer data unavailable";
-              })
-              (mkHttpCheck {
-                name = "Ollama";
-                group = "AI";
-                url = "http://localhost:${toString config.services.ollama.port}/api/tags";
-                interval = "60s";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[RESPONSE_TIME] < 2000"
-                ];
-                alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
               })
               (mkHttpCheck {
                 name = "Node Exporter";
@@ -330,6 +319,24 @@ _: {
                   "[RESPONSE_TIME] < 3000"
                 ];
                 alerts = discordAlert "External HTTPS connectivity lost — server cannot reach the internet";
+              })
+            ]
+            # Ollama is only meaningful when the AI stack is enabled. ai-stack sets
+            # ollama to WantedBy multi-user.target, so when enabled it runs
+            # persistently (unloading idle models via OLLAMA_KEEP_ALIVE). When
+            # ai-stack is disabled, this check is omitted rather than reporting a
+            # permanent false-negative.
+            ++ lib.optionals (config.services.ai-stack.enable or false) [
+              (mkHttpCheck {
+                name = "Ollama";
+                group = "AI";
+                url = "http://localhost:${toString config.services.ollama.port}/api/tags";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 2000"
+                ];
+                alerts = discordAlert "Ollama LLM inference down — local AI unavailable";
               })
             ]
             ++ lib.optionals config.services.voice-agents.enable [
@@ -425,7 +432,7 @@ _: {
                 interval = "60s";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] == pat(*monitor365*)"
+                  "[BODY] == pat(*collector_events_collected*)"
                 ];
                 alerts = discordAlert "Monitor365 system agent down — headless device telemetry collector not running";
               })

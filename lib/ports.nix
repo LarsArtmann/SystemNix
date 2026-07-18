@@ -14,6 +14,7 @@
     homepage = 8082;
 
     immich = 2283;
+    redis = 6379;
 
     manifest = 2099;
 

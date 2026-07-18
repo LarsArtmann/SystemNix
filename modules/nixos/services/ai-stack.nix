@@ -72,7 +72,12 @@ _: {
         };
 
         systemd.services.ollama = {
-          wantedBy = lib.mkForce [ ];
+          # Let nixpkgs' default WantedBy=multi-user.target apply. The prior
+          # `wantedBy = lib.mkForce []` suppressed it, making an enabled service
+          # silently never start — every deploy left ollama dead with no log
+          # entries, a pure split-brain against the Gatus check that expects it.
+          # Models still unload after OLLAMA_KEEP_ALIVE; the service stays up so
+          # /api/tags is always reachable.
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           serviceConfig = lib.mkMerge [
