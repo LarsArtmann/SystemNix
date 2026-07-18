@@ -26,6 +26,18 @@
           home = "/home/${primaryUser}";
           environmentFile = sopsEnvPath;
         };
+
+        # The upstream NixOS module sets Type=notify + WatchdogSec=30s (commit
+        # 6cdf05e5 "enable systemd notify"), but the Go binary never calls
+        # sd_notify(READY=1). Result: systemd waits the full TimeoutStartSec
+        # (90s), times out, kills the service, Restart=on-failure cycles it
+        # forever. Override to Type=exec so systemd considers it started once
+        # execve succeeds. WatchdogSec is inert without READY=1, zeroed for
+        # clarity. Remove this override once upstream adds sd_notify support.
+        systemd.services.projects-management-automation.serviceConfig = {
+          Type = lib.mkForce "exec";
+          WatchdogSec = lib.mkForce "0";
+        };
       };
     };
 }
