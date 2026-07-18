@@ -78,6 +78,8 @@ _: {
           page=$((page + 1))
         done
 
+        FAILED=0
+
         while IFS='|' read -r name clone_url private description; do
           [[ -z "$name" ]] && continue
 
@@ -90,9 +92,17 @@ _: {
             continue
           fi
 
+          # Clear any orphan git dir left by an interrupted migrate (past OOM/crash).
+          # This is safe: the GET above confirmed the repo has NO DB record, so the
+          # endpoint can only touch unadopted on-disk dirs, never a registered repo.
+          # 204 = orphan deleted, 404 = no orphan existed (normal for never-migrated repos).
+          curl -s -o /dev/null -X DELETE \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            "$FORGEJO_URL/api/v1/admin/unadopted/$FORGEJO_OWNER/$name"
+
           echo "→ Mirroring: $name"
 
-          curl -s -X POST \
+          code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             -H "Content-Type: application/json" \
             "$FORGEJO_URL/api/v1/repos/migrate" \
@@ -118,11 +128,13 @@ _: {
                 releases: true,
                 milestones: true,
                 service: "git"
-              }')" 2>/dev/null && {
+              }')")
+
+          if [[ "$code" == "200" || "$code" == "201" ]]; then
             echo "  ✓ Created mirror: $name"
 
             echo "  → Setting up push mirror to GitHub: $name"
-            curl -s -X POST \
+            pmirror=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
               -H "Authorization: token $FORGEJO_TOKEN" \
               -H "Content-Type: application/json" \
               "$FORGEJO_URL/api/v1/repos/$FORGEJO_OWNER/$name/push_mirrors" \
@@ -131,12 +143,22 @@ _: {
                 '{
                   remote_address: $remote,
                   sync_on_commit: true
-                }')" 2>/dev/null || echo "  ⚠ Push mirror setup failed (may already exist)"
-          } || echo "  ✗ Failed: $name"
+                }')")
+            if [[ "$pmirror" != "200" && "$pmirror" != "201" ]]; then
+              echo "  ⚠ Push mirror setup HTTP $pmirror (may already exist)"
+            fi
+          else
+            echo "  ✗ Failed (HTTP $code): $name"
+            FAILED=$((FAILED + 1))
+          fi
         done < "$REPOS_FILE"
-        count=$(wc -l < "$REPOS_FILE")
 
-        echo "✓ Done! $count repos processed"
+        count=$(wc -l < "$REPOS_FILE")
+        echo "✓ Done! $count repos processed, $FAILED failed"
+
+        if [[ "$FAILED" -gt 0 ]]; then
+          exit 1
+        fi
       '';
     };
 

@@ -49,6 +49,7 @@ _: {
         echo "Repos to check: ''${#REPOS[@]}"
         echo ""
 
+        FAILED=0
         for repo_url in "''${REPOS[@]}"; do
           repo_name=$(basename "$repo_url" .git)
           echo "Processing: $repo_name"
@@ -76,6 +77,14 @@ _: {
           clone_url=$(echo "$repo_info" | jq -r '.clone_url')
 
           echo "  → Creating mirror in Forgejo..."
+
+          # Clear any orphan git dir left by an interrupted migrate (see forgejo.nix
+          # for the full rationale). Safe: the existence check above confirmed no
+          # DB record, so only unadopted on-disk dirs can be affected.
+          curl -s -o /dev/null -X DELETE \
+            -H "Authorization: token $FORGEJO_TOKEN" \
+            "$FORGEJO_URL/api/v1/admin/unadopted/$FORGEJO_OWNER/$repo_name"
+
           result=$(curl -s -X POST \
             -H "Authorization: token $FORGEJO_TOKEN" \
             -H "Content-Type: application/json" \
@@ -121,11 +130,16 @@ _: {
           else
             error_msg=$(echo "$result" | jq -r '.message // "Unknown error"')
             echo "  ✗ Failed: $error_msg"
+            FAILED=$((FAILED + 1))
           fi
         done
 
         echo ""
-        echo "=== Done ==="
+        echo "=== Done: $FAILED failed ==="
+
+        if [[ "$FAILED" -gt 0 ]]; then
+          exit 1
+        fi
       '';
     };
 
