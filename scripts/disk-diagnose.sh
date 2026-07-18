@@ -17,7 +17,6 @@ BTRFS_END_SECTOR=$((P8_START_SECTOR + BTRFS_SIZE_SECTORS))
 RED='\033[0;31m'
 GRN='\033[0;32m'
 YLW='\033[0;33m'
-BLU='\033[0;34m'
 CYN='\033[0;36m'
 BLD='\033[1m'
 NC='\033[0m'
@@ -32,8 +31,10 @@ part_exists() { [ -b "${DISK}p$1" ]; }
 part_start() { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo "N/A"; }
 part_size() { cat "/sys/block/nvme0n1/nvme0n1p$1/size" 2>/dev/null || echo "N/A"; }
 part_end() {
-  local s=$(part_start "$1")
-  local z=$(part_size "$1")
+  local s
+  s=$(part_start "$1")
+  local z
+  z=$(part_size "$1")
   [ "$s" = "N/A" ] && echo "N/A" || echo $((s + z))
 }
 part_mounts() { findmnt --source "${DISK}p$1" --output TARGET --noheadings 2>/dev/null | tr '\n' ' ' || echo "—"; }
@@ -165,7 +166,7 @@ sudo btrfs filesystem df /data 2>/dev/null | sed 's/^/  /' || echo "  (unable to
 
 echo ""
 echo "Data readability:"
-if ENTRIES=$(ls /data 2>/dev/null | wc -l) && [ "$ENTRIES" -gt 0 ]; then
+if ENTRIES=$(find /data -mindepth 1 -maxdepth 1 2>/dev/null | wc -l) && [ "$ENTRIES" -gt 0 ]; then
   echo -e "${GRN}  ✓ /data is readable (${ENTRIES} top-level entries)${NC}"
 else
   echo -e "${RED}  ✗ /data is empty or unreadable — possible severe corruption${NC}"

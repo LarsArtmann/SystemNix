@@ -56,11 +56,11 @@ echo ""
 echo "=== Per-Process I/O (top writers) ==="
 echo "PID  COMM           WRITE_KB  READ_KB"
 for pid in /proc/[0-9]*; do
-  pname=$(cat "$pid/comm" 2>/dev/null || continue)
-  w=$(awk '/write_bytes/{print $2}' "$pid/io" 2>/dev/null || continue)
-  r=$(awk '/read_bytes/{print $2}' "$pid/io" 2>/dev/null || continue)
+  pname=$(cat "$pid/comm" 2>/dev/null) || continue
+  w=$(awk '/write_bytes/{print $2}' "$pid/io" 2>/dev/null) || continue
+  r=$(awk '/read_bytes/{print $2}' "$pid/io" 2>/dev/null) || continue
   if [ "$w" -gt 1000000 ] 2>/dev/null || [ "$r" -gt 1000000 ] 2>/dev/null; then
-    echo "$(basename $pid)  $pname  $((w / 1024))  $((r / 1024))"
+    echo "$(basename "$pid")  $pname  $((w / 1024))  $((r / 1024))"
   fi
 done | sort -t' ' -k3 -n -r | head -20
 echo ""
@@ -72,8 +72,8 @@ read2=$(cat /sys/block/sda/stat)
 echo "Before: $read1"
 echo "After:  $read2"
 
-f1=($read1)
-f2=($read2)
+read -ra f1 <<< "$read1"
+read -ra f2 <<< "$read2"
 echo ""
 echo "  Reads completed:     ${f1[0]} → ${f2[0]} (delta: $((f2[0] - f1[0])))"
 echo "  Sectors read:        ${f1[2]} → ${f2[2]} (delta: $((f2[2] - f1[2])) sectors = $(((f2[2] - f1[2]) * 512 / 1024 / 1024)) MB)"

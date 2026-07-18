@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Automated Shell Alias Test Script
 # Verifies ADR-002 cross-shell alias implementation
-# Usage: ./scripts/test-shell-aliases.sh [--interactive]
+# Usage: ./scripts/test-shell-aliases.sh
 
 set -euo pipefail
 
@@ -12,19 +12,11 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Test configuration
-INTERACTIVE=false
-if [[ ${1:-} == "--interactive" ]]; then
-  INTERACTIVE=true
-  echo -e "${BLUE}Running in interactive mode${NC}"
-fi
-
 # Define expected aliases
 COMMON_ALIASES=("l" "t" "gs" "gd" "ga" "gc" "gp" "gl")
 DARWIN_ALIASES=("nixup" "nixbuild" "nixcheck")
 
 # Shell config file paths
-FISH_CONFIG="$HOME/.config/fish/config.fish"
 ZSH_CONFIG="$HOME/.config/zsh/.zshrc"
 BASH_CONFIG="$HOME/.bashrc"
 BASH_ALT_CONFIG="$HOME/.bash_profile"

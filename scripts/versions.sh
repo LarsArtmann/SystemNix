@@ -29,10 +29,8 @@ packages=(
 # Detect platform
 if [[ "$(uname)" == "Darwin" ]]; then
   eval_attr="nixosConfigurations" # won't work on Darwin for most
-  system="aarch64-darwin"
 else
   eval_attr="nixosConfigurations.evo-x2.pkgs"
-  system="x86_64-linux"
 fi
 
 printf "%-40s %-12s %-12s\n" "PACKAGE" "VERSION" "LOCKED REV"

@@ -16,7 +16,8 @@ update_custom_filters() {
   log "Checking for filter list updates..."
 
   # Add timestamp to filter files
-  local timestamp=$(date +%Y%m%d)
+  local timestamp
+  timestamp=$(date +%Y%m%d)
 
   # Update version in custom filters
   if [[ -f "$FILTERS_DIR/custom-filters.txt" ]]; then

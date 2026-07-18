@@ -25,7 +25,8 @@ backup_chrome() {
 
 # Firefox backup
 backup_firefox() {
-  local firefox_profile=$(find "$HOME/Library/Application Support/Firefox/Profiles" -name "*.default*" -type d | head -1)
+  local firefox_profile
+  firefox_profile=$(find "$HOME/Library/Application Support/Firefox/Profiles" -name "*.default*" -type d | head -1)
   if [[ -n $firefox_profile && -d $firefox_profile ]]; then
     log "Backing up Firefox uBlock Origin settings..."
     mkdir -p "$BACKUP_DIR/firefox-$TIMESTAMP"

@@ -70,7 +70,7 @@ echo "Report saved:   ${REPORT}"
 if [ "$CORRUPTED" -gt 0 ]; then
   echo ""
   log "${BLD}Damaged files:${NC}"
-  cat "$REPORT" | while IFS=$'\t' read -r path size human; do
+  cat "$REPORT" | while IFS=$'\t' read -r path _ human; do
     echo -e "  ${RED}✗${NC} ${path} (${human})"
   done
 fi

@@ -6,7 +6,6 @@
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 DIM='\033[2m'
 BOLD='\033[1m'
 NC='\033[0m'
@@ -40,7 +39,6 @@ section() {
 }
 
 summary() {
-  local total=$((_PASS + _FAIL + _WARN))
   echo ""
   if [[ $_FAIL -eq 0 ]]; then
     echo -e "${GREEN}${BOLD}All ${_PASS} checks passed${NC}${_WARN:+ ($_WARN warnings)}"
