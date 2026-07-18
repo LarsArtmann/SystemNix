@@ -417,7 +417,11 @@ _: {
                 interval = "60s";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY].jsonpath.realtime != connected (0 devices)"
+                  # Gatus 5.36.0's [BODY].jsonpath is broken — use pat() instead.
+                  # Match "connected (N devices)" where N >= 1. The pat() placeholder
+                  # matches any text, so this verifies the realtime field shows at
+                  # least one connected device (the agent).
+                  "[BODY] == pat(*connected (?[1-9]* devices)*)"
                 ];
                 alerts = discordAlert "Monitor365 agent not connected to server — API key desync or agent crash";
               })
@@ -463,6 +467,10 @@ _: {
                 group = "Monitoring";
                 url = "http://localhost:${toString ports.emeet-pixyd}/metrics";
                 interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*emeet*)"
+                ];
                 alerts = discordAlert "EMEET PIXY daemon down — webcam auto-management broken";
               })
               (mkHttpCheck {
