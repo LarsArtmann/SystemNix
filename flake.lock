@@ -449,11 +449,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784361422,
-        "narHash": "sha256-R+EJkm2AQpkmvMRF4VLhMN7XC+MJaQDa2SD2IEhRfnQ=",
+        "lastModified": 1784399107,
+        "narHash": "sha256-4ZPegfa/k7oeKNvTyzpQi5xUmBR36Jwnbhq+nOantvs=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "16adac8ef09c27526f875ebdebebeb06935e95db",
+        "rev": "38223164ed39f8f9eb206a59fde9f774d29c925e",
         "type": "github"
       },
       "original": {
@@ -1779,11 +1779,11 @@
     "go-finding_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1784360682,
-        "narHash": "sha256-I0AhW5PQZKAE1p+qnNIfN1X/IKuqtUXSj6MEMnoLvMA=",
+        "lastModified": 1784399147,
+        "narHash": "sha256-MLjuWrqGMIpDZLJ38V+J0rODVe385SB3q8J1QKfcy3A=",
         "owner": "LarsArtmann",
         "repo": "go-finding",
-        "rev": "b011eea09a2e24bac6917d872707675a4c942d50",
+        "rev": "c7777ed145dde4663440958b425f50493ea006a3",
         "type": "github"
       },
       "original": {
@@ -2498,11 +2498,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1784336211,
-        "narHash": "sha256-JrbsRQXYeNnVr5DFzwq4BgXsPKhWPlJ65fSU01gicSQ=",
+        "lastModified": 1784399268,
+        "narHash": "sha256-Te72QRj4FfYLQvxx/+tEfy8oFAfHms71uyUPJ+lV3PE=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "02a6e874f67800891b5a549297219ed6f3ce0f2f",
+        "rev": "f11be93e0409f8159eb8c501416f4bd3516c4270",
         "type": "github"
       },
       "original": {
@@ -3139,11 +3139,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784398306,
-        "narHash": "sha256-Jjk+Kh3RZ8bxmGGVFecGJ81GShF+547+bNaZgaw9/wI=",
+        "lastModified": 1784399027,
+        "narHash": "sha256-cSNdjV1R84rbfEB8RyG98QyZui58FsHNupyqCaxnei0=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "fa45d96471bf0dffa93e8bbcb3bf6b1538f2eb2e",
+        "rev": "b248ab5af31ff444faf402c49d8bfcef80e163b0",
         "type": "github"
       },
       "original": {
@@ -3394,11 +3394,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784353400,
-        "narHash": "sha256-QhMZhp7xc7bnlt24hFuOhLJ9m7YBI776m2GM5yAqvyE=",
+        "lastModified": 1784398991,
+        "narHash": "sha256-0gZzKnbbcKT1FrmEBhKCgURtv1uPXKtb1R7O67dHu94=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "126c1e0a6463e64960048fc4851d6b270f6f472b",
+        "rev": "861d9b506f821c4f35cca80ca43699a8a3017063",
         "type": "github"
       },
       "original": {

@@ -72,8 +72,8 @@ read2=$(cat /sys/block/sda/stat)
 echo "Before: $read1"
 echo "After:  $read2"
 
-read -ra f1 <<< "$read1"
-read -ra f2 <<< "$read2"
+read -ra f1 <<<"$read1"
+read -ra f2 <<<"$read2"
 echo ""
 echo "  Reads completed:     ${f1[0]} → ${f2[0]} (delta: $((f2[0] - f1[0])))"
 echo "  Sectors read:        ${f1[2]} → ${f2[2]} (delta: $((f2[2] - f1[2])) sectors = $(((f2[2] - f1[2]) * 512 / 1024 / 1024)) MB)"
