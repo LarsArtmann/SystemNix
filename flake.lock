@@ -2785,11 +2785,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1784354896,
-        "narHash": "sha256-uE08ACbFuu26ZHuYqh8XYzIgkpUKwj5Mai4If8kWcz0=",
+        "lastModified": 1784358836,
+        "narHash": "sha256-dtt6eoE15XhsuXSbA891tOSUOGzpDSm0eeqNG+HgP0Y=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "b40ed0c98aae56070ec8c05a69429a3004386b2a",
+        "rev": "ebb26a0bd55c10b2223116bb07f59cc0e107c32a",
         "type": "github"
       },
       "original": {
@@ -3586,11 +3586,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784216271,
-        "narHash": "sha256-bvaxxdk7mmMQ88AuXQGTUtk+PcUujHpgxqpryqTWvTU=",
+        "lastModified": 1784350408,
+        "narHash": "sha256-OstzLWL5t7Xe14xEC6GIMJCp0PrYNTSA0El7GG2av88=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "1f69c7203034a4a974d7a4eac0f19b54af30804d",
+        "rev": "3c38e1e1ba9c8d7030f7b5a801398ea7d8a6fdc0",
         "type": "github"
       },
       "original": {
