@@ -1,20 +1,21 @@
-{ pkgs, ... }: {
+{pkgs, ...}: {
   programs.git = {
     enable = true;
     lfs.enable = true;
 
-    # SSH signing — fully declarative (key managed by nix-ssh-config)
-    signing.format = "ssh";
+    # SSH signing via HM's structured option — sets user.signingKey, commit/tag.gpgSign,
+    # gpg.format, and gpg.ssh.program. Do NOT use settings.signing: it writes an invalid
+    # [signing] section that git ignores (leaving user.signingKey unset).
+    signing = {
+      format = "ssh";
+      key = "~/.ssh/id_ed25519.pub";
+      signByDefault = true;
+    };
 
     settings = {
       user = {
         name = "Lars Artmann";
         email = "git@lars.software";
-      };
-
-      signing = {
-        key = "~/.ssh/id_ed25519.pub";
-        signByDefault = true;
       };
 
       core = {
@@ -25,9 +26,6 @@
         quotePath = false;
         editor = "code --wait";
       };
-
-      commit.gpgsign = true;
-      tag.gpgsign = true;
 
       "gpg.ssh" = {
         allowedSignersFile = "~/.ssh/allowed_signers";
@@ -80,7 +78,9 @@
 
       credential = {
         helper =
-          if pkgs.stdenv.isDarwin then "osxkeychain" else "${pkgs.gitFull}/bin/git-credential-libsecret";
+          if pkgs.stdenv.isDarwin
+          then "osxkeychain"
+          else "${pkgs.gitFull}/bin/git-credential-libsecret";
       };
 
       "coderabbit" = {
