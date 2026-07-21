@@ -128,6 +128,8 @@ check_local "Overview" "8083" "/" "200" "<html" 2>/dev/null || true
 check_local "Monitor365 API" "3001" "/health" "200" 2>/dev/null || true
 check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
 
+check_local "File Renamer" "8086" "/status" "200" "" 2>/dev/null || true
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="
@@ -205,6 +207,24 @@ if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null
   fi
 else
   echo -e "${YELLOW}SKIP${NC} Monitor365 server not reachable on localhost:3001"
+  SKIP=$((SKIP + 1))
+fi
+
+# File Renamer: dashboard must show accumulated history, not a split-brain empty fork.
+# The watcher and health service MUST share the same state files. A 200 with
+# total_operations: 0 on a system that's been renaming for weeks means split-brain
+# (watcher writing to ~/.renamer-history.json, dashboard reading dataDir/history.json).
+if renamer_status=$(curl -s --max-time 5 "http://localhost:8086/status" 2>/dev/null); then
+  total_ops=$(echo "$renamer_status" | grep -oE '"total_operations":[0-9]+' | grep -oE '[0-9]+$' || echo "0")
+  if [ "$total_ops" -gt 0 ] 2>/dev/null; then
+    echo -e "${GREEN}PASS${NC} File Renamer dashboard has real history ($total_ops operations)"
+    PASS=$((PASS + 1))
+  else
+    echo -e "${YELLOW}WARN${NC} File Renamer dashboard shows 0 operations — possible split-brain or fresh install"
+    SKIP=$((SKIP + 1))
+  fi
+else
+  echo -e "${YELLOW}SKIP${NC} File Renamer dashboard not reachable on localhost:8086"
   SKIP=$((SKIP + 1))
 fi
 
