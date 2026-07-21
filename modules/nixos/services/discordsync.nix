@@ -87,7 +87,13 @@
           environment = {
             # Preserve subdir layout (upstream uses dataDir root).
             ATTACHMENT_STORAGE_PATH = lib.mkForce "${cfg.dataDir}/attachments";
-          } // lib.optionalAttrs (cfg.gcsBucket != null) {
+            # OTel traces → local SigNoz OTLP/HTTP collector. The binary
+            # installs a noop tracer when this is unset. otlptracehttp.WithEndpoint
+            # expects host:port WITHOUT scheme — the SDK constructs the full URL
+            # internally (http://<endpoint>/v1/traces). WithInsecure() = plain HTTP.
+            OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
+          }
+          // lib.optionalAttrs (cfg.gcsBucket != null) {
             GCS_BUCKET = cfg.gcsBucket;
             GOOGLE_APPLICATION_CREDENTIALS = config.sops.secrets.discordsync_gcs_credentials.path;
           };
@@ -95,10 +101,13 @@
           serviceConfig = lib.mkMerge [
             {
               ExecStartPre = "+${lib.getExe waitDnsReady}";
-              # Correct /readyz gate (upstream's is malformed — see healthCheck).
-              ExecStartPost = [
-                "${pkgs.curl}/bin/curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 10 http://${cfg.apiAddr}/readyz"
-              ];
+              # NO ExecStartPost readiness gate: the API server binds in a
+              # goroutine AFTER thumb-hash backfill completes (3139+ attachments
+              # at ~7/sec = 5-11 min). ExecStartPost runs immediately after
+              # ExecStart, so any /readyz probe during backfill kills the
+              # service via systemd timeout → crash loop. Health monitoring is
+              # delegated to Gatus (60s interval) which correctly handles the
+              # startup delay. See AGENTS.md "DiscordSync API startup race".
             }
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.
@@ -112,10 +121,7 @@
         # (Upstream creates dataDir only — the subdir is a SystemNix convention.)
         system.activationScripts."discordsync-setup" =
           lib.stringAfter
-            (
-              [ "users" ]
-              ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets"
-            )
+            ([ "users" ] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets")
             ''
               mkdir -p ${cfg.dataDir}/attachments
               chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}

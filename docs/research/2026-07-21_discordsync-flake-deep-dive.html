@@ -875,9 +875,10 @@
           <h1>DiscordSync <code>flake.nix</code> — Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
             Is SystemNix consuming the DiscordSync flake superbly? The binary is used well, but
-            SystemNix ignores the flake's <code>nixosModules.default</code> and
-            <code>overlays.default</code> outputs &mdash; hand-rolling a 160-line module that
-            duplicates every option and has already drifted. Three runtime capabilities sit dark.
+            SystemNix ignores the flake's
+            <code>nixosModules.default</code> and <code>overlays.default</code> outputs &mdash;
+            hand-rolling a 160-line module that duplicates every option and has already drifted.
+            Three runtime capabilities sit dark.
           </p>
           <div class="meta">
             <span class="tag amber">Pinned rev: <code>9c640075</code></span>
@@ -1061,14 +1062,15 @@
               duplicated
             </h3>
             <div class="where">
-              SystemNix <code>modules/nixos/services/discordsync.nix:1-160</code> vs upstream
+              SystemNix
+              <code>modules/nixos/services/discordsync.nix:1-160</code> vs upstream
               <code>nixos-module.nix:1-220</code>; upstream flake export at
               <code>flake.nix:554</code>
             </div>
             <p>
               DiscordSync's <code>flake.nix</code> line 554 exports
-              <code>flake.nixosModules.default = import ./nixos-module.nix;</code> &mdash; a
-              complete NixOS module declaring <code>enable</code>, <code>package</code>,
+              <code>flake.nixosModules.default = import ./nixos-module.nix;</code>
+              &mdash; a complete NixOS module declaring <code>enable</code>, <code>package</code>,
               <code>user</code>, <code>group</code>, <code>discordTokenFile</code>,
               <code>backend</code>, <code>databasePath</code>, <code>tursoUrl</code>,
               <code>tursoAuthTokenFile</code>, <code>backfillOnStartup</code>, <code>apiAddr</code>,
@@ -1137,14 +1139,15 @@
               >Missed Opportunity &middot; Medium-high impact</span
             >
             <h3>
-              OTel tracing unused &mdash; SigNoz runs on <code>127.0.0.1:4318</code>, tracer is a
-              no-op
+              OTel tracing unused &mdash; SigNoz runs on
+              <code>127.0.0.1:4318</code>, tracer is a no-op
             </h3>
             <div class="where">
               SystemNix <code>discordsync.nix:129-139</code> (Environment list &mdash; no
               <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>); upstream
               <code>cmd/discordsync/init.go:356-367</code> reads it; SigNoz collector at
-              <code>signoz.nix:827</code> binds <code>127.0.0.1:4318</code>
+              <code>signoz.nix:827</code> binds
+              <code>127.0.0.1:4318</code>
             </div>
             <p>
               DiscordSync's <code>initObservability()</code> reads
@@ -1158,14 +1161,16 @@
               DiscordSync is exactly the service where traces pay off: long-lived gateway
               connection, backfill workers with crash-resume checkpoints, projection workers,
               attachment downloads with retry, and GCS reconciliation. Today, incident diagnosis
-              relies on <code>journalctl</code> log greps. With traces, a stuck backfill or a
-              projection-lag spike would be a click in SigNoz.
+              relies on
+              <code>journalctl</code> log greps. With traces, a stuck backfill or a projection-lag
+              spike would be a click in SigNoz.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
-              Add one line to the <code>Environment</code> list. The <code>harden {}</code>
-              <code>RestrictAddressFamilies = [ AF_INET AF_INET6 ]</code> permits localhost sockets,
-              so no capability change is needed.
+              Add one line to the <code>Environment</code> list. The
+              <code>harden {}</code>
+              <code>RestrictAddressFamilies = [ AF_INET AF_INET6 ]</code>
+              permits localhost sockets, so no capability change is needed.
             </div>
             <pre><code>Environment = [
   "DB_BACKEND=turso-sync"
@@ -1221,12 +1226,14 @@
               >Partially Used &middot; Medium impact (silent data loss risk)</span
             >
             <h3>
-              Health monitoring hits shallow <code>/healthz</code>, not deep <code>/readyz</code>
+              Health monitoring hits shallow <code>/healthz</code>, not deep
+              <code>/readyz</code>
             </h3>
             <div class="where">
               SystemNix <code>gatus-config.nix:643</code> polls <code>/healthz</code>; upstream
               <code>nixos-module.nix:217</code> ExecStartPost polls <code>/readyz</code>; binary
-              distinction documented in <code>internal/api/server_test.go:135-158</code>
+              distinction documented in
+              <code>internal/api/server_test.go:135-158</code>
             </div>
             <p>
               DiscordSync exposes two health endpoints with deliberately different semantics:
@@ -1238,8 +1245,8 @@
               30s).
             </p>
             <p>
-              SystemNix's Gatus check and Homepage site-monitor both hit <code>/healthz</code>. This
-              means the
+              SystemNix's Gatus check and Homepage site-monitor both hit
+              <code>/healthz</code>. This means the
               <strong
                 >&ldquo;DiscordSync backup bot down&rdquo; Discord alert only fires on process
                 death</strong
@@ -1280,16 +1287,17 @@ serviceConfig.ExecStartPost =
             </h3>
             <div class="where">
               SystemNix <code>discordsync.nix</code> (not set); upstream
-              <code>internal/config/config.go:121-124</code> (<code>WebhookURL</code>); SystemNix
-              already holds <code>discord_alert_webhook_url</code> in sops
-              (<code>sops.nix:176</code>)
+              <code>internal/config/config.go:121-124</code>
+              (<code>WebhookURL</code>); SystemNix already holds
+              <code>discord_alert_webhook_url</code> in sops (<code>sops.nix:176</code>)
             </div>
             <p>
               The binary posts a JSON payload to a Discord/Slack-compatible webhook on every gateway
               disconnect and reconnect. SystemNix already has a Discord webhook URL in sops (used by
               Gatus). Today, a gateway disconnect is only noticed via the 60-second Gatus poll
-              &mdash; and only if Issue&nbsp;4 is fixed so the check uses <code>/readyz</code>. With
-              the webhook wired, the bot self-pushes an alert within seconds of the event.
+              &mdash; and only if Issue&nbsp;4 is fixed so the check uses
+              <code>/readyz</code>. With the webhook wired, the bot self-pushes an alert within
+              seconds of the event.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
@@ -1309,15 +1317,16 @@ serviceConfig.ExecStartPost =
             <div class="where">
               SystemNix <code>discordsync.nix:20</code>
               (<code>inputs.discordsync.packages.${system}.default</code>); upstream
-              <code>flake.nix:550-552</code> exposes <code>overlays.default</code>
+              <code>flake.nix:550-552</code> exposes
+              <code>overlays.default</code>
             </div>
             <p>
-              Upstream exports an overlay that injects <code>pkgs.discordsync</code>. SystemNix
-              reaches across the input boundary directly. Both work, but the overlay is the
-              idiomatic consumption pattern: it lets any module reference
-              <code>pkgs.discordsync</code> without threading <code>inputs</code> through, and it
-              composes with <code>mkLarsPackages</code>. Low impact on its own; becomes relevant if
-              Issue&nbsp;1 is addressed (the upstream module uses
+              Upstream exports an overlay that injects
+              <code>pkgs.discordsync</code>. SystemNix reaches across the input boundary directly.
+              Both work, but the overlay is the idiomatic consumption pattern: it lets any module
+              reference <code>pkgs.discordsync</code> without threading <code>inputs</code> through,
+              and it composes with <code>mkLarsPackages</code>. Low impact on its own; becomes
+              relevant if Issue&nbsp;1 is addressed (the upstream module uses
               <code>lib.mkPackageOption pkgs "discordsync"</code>, which resolves through the
               overlay).
             </p>

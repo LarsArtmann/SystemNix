@@ -3,7 +3,8 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   inherit (import ../../../lib/default.nix lib) harden onFailure;
   rootDevice = config.fileSystems."/".device;
   primaryUser = config.users.primaryUser;
@@ -15,56 +16,50 @@
     "@cargo" = "/home/${primaryUser}/.cargo";
   };
 
-  cacheFileSystems =
-    lib.mapAttrs' (subvol: mountPoint: {
-      name = mountPoint;
-      value = {
-        device = rootDevice;
-        fsType = "btrfs";
-        options = [
-          "subvol=${subvol}"
-          "compress=zstd"
-          "noatime"
-          "noauto"
-          "x-systemd.automount"
-          "x-systemd.idle-timeout=10min"
-        ];
-      };
-    })
-    cacheSubvolumes;
+  cacheFileSystems = lib.mapAttrs' (subvol: mountPoint: {
+    name = mountPoint;
+    value = {
+      device = rootDevice;
+      fsType = "btrfs";
+      options = [
+        "subvol=${subvol}"
+        "compress=zstd"
+        "noatime"
+        "noauto"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=10min"
+      ];
+    };
+  }) cacheSubvolumes;
 
   # Rust projects whose target/ dirs should live on ext4 (/rust-cache)
   # instead of BTRFS — avoids COW fragmentation from 85K+ small files
   # and keeps them out of btrbk snapshots.
-  rustCacheProjects = ["monitor365"];
+  rustCacheProjects = [ "monitor365" ];
 
-  rustCacheDirs =
-    builtins.map (
-      p: "d /rust-cache/${p} 0755 ${primaryUser} users -"
-    )
-    rustCacheProjects;
+  rustCacheDirs = builtins.map (
+    p: "d /rust-cache/${p} 0755 ${primaryUser} users -"
+  ) rustCacheProjects;
 
-  rustCacheLinks =
-    builtins.map (
-      p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}"
-    )
-    rustCacheProjects;
-in {
-  fileSystems =
-    {
-      "/mnt/btrfs-root" = {
-        device = rootDevice;
-        fsType = "btrfs";
-        options = [
-          "noatime"
-          "compress=zstd"
-          "noauto"
-          "x-systemd.automount"
-          "x-systemd.idle-timeout=10min"
-        ];
-      };
-    }
-    // cacheFileSystems;
+  rustCacheLinks = builtins.map (
+    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}"
+  ) rustCacheProjects;
+in
+{
+  fileSystems = {
+    "/mnt/btrfs-root" = {
+      device = rootDevice;
+      fsType = "btrfs";
+      options = [
+        "noatime"
+        "compress=zstd"
+        "noauto"
+        "x-systemd.automount"
+        "x-systemd.idle-timeout=10min"
+      ];
+    };
+  }
+  // cacheFileSystems;
 
   services = {
     btrbk.instances."root" = {
@@ -79,7 +74,7 @@ in {
         snapshot_preserve = "14d 4w";
         volume."/mnt/btrfs-root" = {
           snapshot_dir = "/mnt/btrfs-root/.snapshots";
-          subvolume."@" = {};
+          subvolume."@" = { };
         };
       };
     };
@@ -96,7 +91,7 @@ in {
         snapshot_preserve = "14d 4w";
         volume."/data" = {
           snapshot_dir = "/data/.snapshots";
-          subvolume."." = {};
+          subvolume."." = { };
         };
       };
     };
@@ -112,23 +107,26 @@ in {
   };
 
   systemd = {
-    tmpfiles.rules = rustCacheDirs ++ rustCacheLinks ++ [
-      # btrbk-data needs /data/.snapshots to exist before it can create
-      # snapshot subvolumes. Without this, btrbk-data fails with
-      # "Failed to fetch subvolume detail for snapshot_dir".
-      "d /data/.snapshots 0755 root root -"
-    ];
+    tmpfiles.rules =
+      rustCacheDirs
+      ++ rustCacheLinks
+      ++ [
+        # btrbk-data needs /data/.snapshots to exist before it can create
+        # snapshot subvolumes. Without this, btrbk-data fails with
+        # "Failed to fetch subvolume detail for snapshot_dir".
+        "d /data/.snapshots 0755 root root -"
+      ];
 
     services."btrfs-verify-snapshots" = {
       description = "Verify BTRFS snapshot freshness";
       inherit onFailure;
-      path = [pkgs.coreutils];
+      path = [ pkgs.coreutils ];
       serviceConfig = lib.mkMerge [
-        (harden {})
+        (harden { })
         {
           Type = "oneshot";
           ProtectSystem = "true";
-          ReadWritePaths = [];
+          ReadWritePaths = [ ];
         }
       ];
       script = ''
@@ -180,7 +178,7 @@ in {
         Persistent = true;
         RandomizedDelaySec = "1h";
       };
-      wantedBy = ["timers.target"];
+      wantedBy = [ "timers.target" ];
     };
   };
 }
