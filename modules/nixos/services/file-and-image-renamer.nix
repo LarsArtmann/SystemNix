@@ -124,6 +124,14 @@ _: {
               StandardError = "journal";
               Environment = [
                 "DEAD_LETTER_PATH=${cfg.dataDir}/dead-letter.json"
+                # Redirect history + hashdb state into the writable dataDir.
+                # The health service runs under `ProtectHome = "read-only"` with
+                # only dataDir in ReadWritePaths. Without these overrides the
+                # binary defaults to ~/.renamer-history.json and
+                # ~/.file-renamer-hashes.db, init fails, initServiceOrWarn
+                # returns nil, and handlers nil-deref → HTTP 500.
+                "HISTORY_FILE_PATH=${cfg.dataDir}/history.json"
+                "HASHDB_PATH=${cfg.dataDir}/hashes.db"
               ];
             };
           wantedBy = [ "multi-user.target" ];
