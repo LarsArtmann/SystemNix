@@ -442,6 +442,13 @@ in {
       # Monitor365 server (dashboard + API) runs on the same machine
       monitor365-server = {
         enable = lib.mkDefault true;
+        # DuckDB is the sole store on local-only BTRFS (#1 data-loss risk).
+        # Local nightly backup is the prerequisite for any future offsite sync.
+        backup = {
+          enable = lib.mkDefault true;
+          schedule = lib.mkDefault "*-*-* 03:00:00";
+          keep = lib.mkDefault 7;
+        };
         bootstrap = {
           tenantName = lib.mkDefault "LarsArtmann";
           adminEmail = lib.mkDefault "lars@larsartmann.cloud";
