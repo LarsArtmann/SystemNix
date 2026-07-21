@@ -60,5 +60,7 @@
     discordsync-api = 8085;
 
     file-and-image-renamer-health = 8086;
+
+    qmd = 8181;
   };
 }

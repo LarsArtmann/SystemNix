@@ -232,6 +232,11 @@ let
       govalid # Type-safe struct validation code generator
       gotools # Go tools (goimports, etc.)
 
+      # On-device markdown search engine (BM25 + vector + LLM reranking).
+      # Used both as CLI (`qmd search ...`) and as the long-lived
+      # `qmd mcp --http` server managed by `modules/nixos/services/qmd.nix`.
+      qmd
+
       # Wallpaper management tools (Linux-only)
       imagemagick # Image manipulation for wallpaper management
     ]

@@ -7,6 +7,7 @@ Custom Nix package definitions used across SystemNix. All packages are built via
 | Package                                           | Language | Platform | Description                              |
 | ------------------------------------------------- | -------- | -------- | ---------------------------------------- |
 | [jscpd](#jscpd)                                   | Node.js  | All      | Copy/paste detector for source code      |
+| [qmd](#qmd)                                       | Node.js  | All      | On-device markdown hybrid search engine  |
 | [govalid](#govalid)                               | Go       | All      | Go validation code generator             |
 | [aw-watcher-utilization](#aw-watcher-utilization) | Python   | All      | ActivityWatch system utilization watcher |
 | [netwatch](#netwatch)                             | Rust     | Linux    | Real-time network diagnostics TUI        |
@@ -33,6 +34,16 @@ Copy/paste detector for programming source code — finds duplicated code across
 - **Source:** `jscpd.nix` (pnpm package, vendored lockfile in `jscpd-pnpm-lock.yaml`)
 - **Platform:** All platforms
 - **Install:** Available in devShell via `nix develop`
+
+### qmd
+
+Query Markup Documents — on-device hybrid search engine for markdown notes. Combines SQLite FTS5 (BM25), vector embeddings via node-llama-cpp, and LLM reranking — all local, no API keys. Exposes both a CLI (`qmd search`, `qmd query`, `qmd get`) and an MCP server (stdio + HTTP).
+
+- **Source:** `qmd.nix` (npm package `@tobilu/qmd`, pnpm FOD)
+- **Platform:** All platforms (x86_64-linux, aarch64-linux, x86_64-darwin, aarch64-darwin)
+- **CLI:** Installed system-wide via `base.nix` — `qmd --help` after deploy
+- **Service:** `modules/nixos/services/qmd-config.nix` runs `qmd mcp --http` as a user systemd service on `127.0.0.1:8181`. Connect MCP clients to `http://localhost:8181/mcp`. CPU-only by default.
+- **Index:** `~/.cache/qmd/index.sqlite` (FTS5 + sqlite-vec vectors). Models cached in `~/.cache/qmd/models/`.
 
 ### aw-watcher-utilization
 

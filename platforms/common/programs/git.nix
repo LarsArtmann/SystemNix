@@ -27,7 +27,13 @@
         editor = "code --wait";
       };
 
-      "gpg.ssh" = {
+      # MUST use nested form (gpg.ssh), NOT dotted-key form ("gpg.ssh").
+      # The signing module writes gpg.ssh.program (nested); gitFlattenAttrs in
+      # toGitINI flattens it to dotted key "gpg.ssh". If settings also uses
+      # "gpg.ssh" (dotted), gitFlattenAttrs' `//` shallow-merge drops one key.
+      # Nested form lets mkMerge deep-merge gpg.ssh.{program,allowedSignersFile}
+      # BEFORE flattening, so both survive.
+      gpg.ssh = {
         allowedSignersFile = "~/.ssh/allowed_signers";
       };
 

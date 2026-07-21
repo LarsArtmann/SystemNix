@@ -661,6 +661,22 @@ _: {
                 ];
                 alerts = discordAlert "File and Image Renamer health dashboard down — screenshot renaming may be stuck";
               })
+            ]
+            ++ lib.optionals (config.services.qmd-config.enable or false) [
+              (mkHttpCheck {
+                name = "qmd MCP HTTP Server";
+                group = "Productivity";
+                # qmd mcp --http exposes GET /health with uptime JSON. Slower
+                # interval: the server streams long-lived requests and 5min
+                # polls keep it warm without flooding the journal.
+                url = "http://localhost:${toString ports.qmd}/health";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alerts = discordAlert "qmd MCP HTTP server down — AI agents (Crush, Claude) cannot search local markdown until it restarts. Check: systemctl --user status qmd-mcp on the primary user's session.";
+              })
             ];
         };
       };

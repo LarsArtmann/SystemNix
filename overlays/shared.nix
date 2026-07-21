@@ -40,6 +40,10 @@
   })
 
   (_final: prev: {
+    qmd = prev.callPackage ../pkgs/qmd.nix { };
+  })
+
+  (_final: prev: {
     govalid = prev.callPackage ../pkgs/govalid.nix { };
   })
 

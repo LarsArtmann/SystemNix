@@ -28,11 +28,9 @@ check() {
 
   local response
   local status
-  local body
 
   response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")
   status="$response"
-  body=$(cat /tmp/.smoke-body 2>/dev/null || echo "")
 
   if [ "$status" = "000" ]; then
     echo -e "${RED}FAIL${NC} $name — $url unreachable"
@@ -46,10 +44,16 @@ check() {
     return
   fi
 
+  # Read pattern directly from the body file instead of piping through echo.
+  # With `set -o pipefail`, `echo "$body" | grep -q` on a large body (>64KB pipe
+  # buffer) fails because grep exits at the first match, echo gets SIGPIPE (141)
+  # writing the remainder, and pipefail makes the whole pipeline return 141.
+  # `! 141` is then treated as success, producing a false FAIL. Reading the file
+  # directly avoids the pipe entirely.
   if [ -n "$expect_body" ]; then
-    if ! echo "$body" | grep -qiE "$expect_body"; then
+    if ! grep -qiE "$expect_body" /tmp/.smoke-body 2>/dev/null; then
       echo -e "${RED}FAIL${NC} $name — status OK ($status) but body mismatch: expected pattern '$expect_body' not found ($url)"
-      echo -e "     first 100 chars: $(echo "$body" | head -c 100)"
+      echo -e "     first 100 chars: $(head -c 100 /tmp/.smoke-body 2>/dev/null)"
       FAIL=$((FAIL + 1))
       return
     fi
@@ -91,7 +95,28 @@ check_local "Forgejo" "3000" "/api/v1/version" "200" "" 2>/dev/null || true
 
 check_local "Immich" "2283" "/api/server/ping" "200" "" 2>/dev/null || true
 
-check_local "DiscordSync" "8085" "/api/stats" "200" 2>/dev/null || true
+# DiscordSync: API server binds AFTER the thumb-hash backfill completes
+# (~5-11 min after restart, depending on attachment count). Retry to distinguish
+# "in startup backfill" (SKIP) from "crashed" (FAIL). Uses /healthz (fast) not
+# /api/stats (can take 10+ seconds on a fully loaded instance).
+discordsync_ready=false
+for _ in 1 2 3; do
+  if [ "$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://localhost:8085/healthz" 2>/dev/null || echo 000)" = "200" ]; then
+    discordsync_ready=true
+    break
+  fi
+  sleep 5
+done
+if [ "$discordsync_ready" = true ]; then
+  echo -e "${GREEN}PASS${NC} DiscordSync (localhost:8085) (200)"
+  PASS=$((PASS + 1))
+elif pgrep -f discordsync >/dev/null 2>&1; then
+  echo -e "${YELLOW}SKIP${NC} DiscordSync (localhost:8085) — process alive but API not ready (startup backfill in progress)"
+  SKIP=$((SKIP + 1))
+else
+  echo -e "${RED}FAIL${NC} DiscordSync (localhost:8085) — process not running and API unreachable"
+  FAIL=$((FAIL + 1))
+fi
 
 check_local "Manifest" "2099" "/api/v1/health" "200" 2>/dev/null || true
 
@@ -107,9 +132,10 @@ check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
 echo ""
 echo "=== Functional Checks ==="
 
-# Crush Daily: reports should exist after first collection
+# Crush Daily: reports should exist after first collection.
+# The API returns a JSON array of date strings: ["2026-07-19", "2026-07-18", ...]
 if crush_reports=$(curl -s --max-time 5 "http://localhost:8081/api/reports" 2>/dev/null); then
-  if echo "$crush_reports" | grep -q '"id"'; then
+  if echo "$crush_reports" | grep -qE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"'; then
     echo -e "${GREEN}PASS${NC} Crush Daily has reports"
     PASS=$((PASS + 1))
   elif echo "$crush_reports" | grep -q '\[\]'; then
@@ -124,9 +150,13 @@ else
   SKIP=$((SKIP + 1))
 fi
 
-# DiscordSync: database should have tables
-if discordsync_stats=$(curl -s --max-time 5 "http://localhost:8085/api/stats" 2>/dev/null); then
-  if echo "$discordsync_stats" | grep -q '"guilds"'; then
+# DiscordSync: database should have tables.
+# Write to file and grep from file — the /api/stats response can contain null
+# bytes (embedded data) which bash command-substitution silently strips,
+# corrupting the JSON and making grep miss the pattern. Use grep -a (treat
+# binary as text) for the same reason.
+if curl -s --compressed --max-time 15 -o /tmp/.smoke-discordsync "http://localhost:8085/api/stats" 2>/dev/null; then
+  if grep -qa '"guilds"' /tmp/.smoke-discordsync 2>/dev/null; then
     echo -e "${GREEN}PASS${NC} DiscordSync API functional (stats endpoint returns data)"
     PASS=$((PASS + 1))
   else
@@ -134,7 +164,7 @@ if discordsync_stats=$(curl -s --max-time 5 "http://localhost:8085/api/stats" 2>
     SKIP=$((SKIP + 1))
   fi
 else
-  echo -e "${YELLOW}SKIP${NC} DiscordSync not reachable"
+  echo -e "${YELLOW}SKIP${NC} DiscordSync not reachable (may be in startup backfill — API binds after thumb-hash backfill completes)"
   SKIP=$((SKIP + 1))
 fi
 

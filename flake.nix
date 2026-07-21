@@ -528,6 +528,7 @@
                 aw-watcher-utilization
                 govalid
                 jscpd
+                qmd
                 sqlc
                 ;
             }

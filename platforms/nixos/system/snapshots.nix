@@ -112,7 +112,12 @@ in {
   };
 
   systemd = {
-    tmpfiles.rules = rustCacheDirs ++ rustCacheLinks;
+    tmpfiles.rules = rustCacheDirs ++ rustCacheLinks ++ [
+      # btrbk-data needs /data/.snapshots to exist before it can create
+      # snapshot subvolumes. Without this, btrbk-data fails with
+      # "Failed to fetch subvolume detail for snapshot_dir".
+      "d /data/.snapshots 0755 root root -"
+    ];
 
     services."btrfs-verify-snapshots" = {
       description = "Verify BTRFS snapshot freshness";
@@ -142,7 +147,20 @@ in {
           exit 1
         fi
 
-        SNAP_EPOCH=$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)
+        # Parse the snapshot creation date from the NAME, not from stat.
+        # BTRFS snapshots inherit the source subvolume's root directory mtime,
+        # so stat -c %Y returns the SOURCE mtime (e.g. Jun 26 when the root
+        # dir was last changed), not when the snapshot was taken. This caused
+        # false "24 days old" alerts despite daily snapshots being fresh.
+        # btrbk names snapshots as @.YYYYMMDDTHHMM.
+        SNAP_NAME=$(basename "$LATEST")
+        SNAP_DATESTR="''${SNAP_NAME#@.}"
+        SNAP_DATESTR="''${SNAP_DATESTR%%T*}"
+        if [ ''${#SNAP_DATESTR} -ne 8 ]; then
+          echo "WARNING: Could not parse date from snapshot name: $SNAP_NAME"
+          exit 1
+        fi
+        SNAP_EPOCH=$(date -d "''${SNAP_DATESTR:0:4}-''${SNAP_DATESTR:4:2}-''${SNAP_DATESTR:6:2}" +%s)
         NOW_EPOCH=$(date +%s)
         AGE_DAYS=$(( (NOW_EPOCH - SNAP_EPOCH) / 86400 ))
 

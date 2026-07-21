@@ -358,6 +358,21 @@ in {
         environmentFile = config.sops.templates."crush-daily-env".path;
       };
 
+      # qmd — on-device markdown hybrid search engine.
+      # CLI: `qmd search ...`, `qmd collection add ...`
+      # Service: persistent HTTP MCP on localhost:8181 — Crush/clients connect
+      # to http://localhost:8181/mcp so embedding/reranker models stay loaded
+      # across requests (stdio mode pays 5-15s reload cost per reconnect).
+      # CPU-only by default — Vulkan probing is brittle on Strix Halo and
+      # competes with Ollama for VRAM. Override `qmdForceCpu = false` to opt in.
+      qmd-config = {
+        enable = true;
+        # Add per-user collections declaratively here if desired:
+        # bootstrapCollections = [
+        #   { name = "notes"; path = "/home/${config.users.primaryUser}/notes"; pattern = "**/*.md"; context = "Personal notes and ideas"; }
+        # ];
+      };
+
       # Overview — local project dashboard (discovers git repos, shows stats/activity)
       overview = {
         enable = true;
