@@ -39,7 +39,7 @@ Copy/paste detector for programming source code — finds duplicated code across
 
 Query Markup Documents — on-device hybrid search engine for markdown notes. Combines SQLite FTS5 (BM25), vector embeddings via node-llama-cpp, and LLM reranking — all local, no API keys. Exposes both a CLI (`qmd search`, `qmd query`, `qmd get`) and an MCP server (stdio + HTTP).
 
-- **Source:** `qmd.nix` (npm package `@tobilu/qmd`, pnpm FOD)
+- **Source:** `qmd.nix` (GitHub source + `pnpmConfigHook`, builds `dist/` from TypeScript)
 - **Platform:** All platforms (x86_64-linux, aarch64-linux, x86_64-darwin, aarch64-darwin)
 - **CLI:** Installed system-wide via `base.nix` — `qmd --help` after deploy
 - **Service:** `modules/nixos/services/qmd-config.nix` runs `qmd mcp --http` as a user systemd service on `127.0.0.1:8181`. Connect MCP clients to `http://localhost:8181/mcp`. CPU-only by default.

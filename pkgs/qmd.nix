@@ -1,98 +1,103 @@
 # qmd — on-device hybrid search engine for markdown notes
 # (BM25 + vector embeddings + LLM reranking, all local via node-llama-cpp).
 #
-# Packaged as a pure-Node pnpm build. The upstream npm tarball ships prebuilt
-# JS with a `bin/qmd` shell wrapper, plus a package.json listing every
-# transitive dep as a direct dependency. It does NOT ship a pnpm-lock.yaml —
-# `fetchPnpmDeps` requires one to seed its offline pnpm store, so we wrap the
-# npm tarball with a vendored lockfile (regenerated from package.json via
-# `pnpm install --lockfile-only --prod`).
+# Built from upstream GitHub source using pnpmConfigHook + the real
+# pnpm-lock.yaml. The npm tarball is a prebuilt distribution artifact; this
+# derivation is closer to Nix conventions: VCS source, lockfile-driven install,
+# and a build step that produces dist/ from TypeScript.
 #
-# Why wrapped-src: `fetchPnpmDeps` runs against `src` BEFORE patchPhase, so
-# a copied lockfile via `postPatch` arrives too late. The fix (same as jscpd)
-# is a derivation that copies the tarball and adds the lockfile, then point
-# both `src` and `fetchPnpmDeps.src` at the wrapped output.
+# Build-time details:
+#   - pnpmConfigHook installs all dependencies (including devDependencies) from
+#     the offline pnpm store so `pnpm run build` can invoke the TypeScript compiler.
+#   - `pnpm run build` emits dist/ and adds the Node shebang to dist/cli/qmd.js.
+#   - Runtime only needs bin/, dist/, skills/, node_modules/, and package.json.
+#   - Native dependencies (better-sqlite3, sqlite-vec, node-llama-cpp) are
+#     installed from the lockfile; prebuilt optionalDependencies are preferred.
+#     If a sandbox blocks a prebuilt download, the package falls back to compiling
+#     from source, which is why build tools (python3, node-gyp, gcc) are included.
 #
-# Native dependencies:
-#   - SQLite (better-sqlite3, sqlite-vec): prebuilt node-gyp binaries, install
-#     via `optionalDependencies` per platform (sqlite-vec-linux-x64, etc.)
-#   - node-llama-cpp: downloads model binaries from HuggingFace at first use
-#   - tree-sitter-*: web-tree-sitter WASM grammars, no native compile needed
-#   - autoPatchelfHook patches ELF RPATHs on Linux (noop on Darwin)
-#
-# CPU-only is the safe default — GPU selection is delegated to QMD_LLAMA_GPU
-# / QMD_FORCE_CPU env vars at runtime. Vulkan probing on Strix Halo competes
-# with Ollama for VRAM and isn't worth the brittleness.
-#
-# pnpm build uses --prod (skips devDeps = tsx, vitest, typescript) and
-# --ignore-scripts (avoids sandbox-time compile of tree-sitter). The CLI
-# wrapper script invokes node directly on dist/cli/qmd.js — no compile needed.
+# CPU-only is the safe default at runtime — GPU selection is delegated to the
+# QMD_LLAMA_GPU / QMD_FORCE_CPU env vars set by the service module.
 {
   lib,
   stdenv,
-  fetchzip,
+  fetchFromGitHub,
   fetchPnpmDeps,
   nodejs,
   pnpm,
+  pnpmConfigHook,
   autoPatchelfHook,
   makeWrapper,
-  perl,
+  python3,
+  node-gyp,
   pkg-config,
+  gcc,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "qmd";
   version = "2.5.3";
 
-  # Wrap upstream tarball so pnpm-lock.yaml is present BEFORE fetchPnpmDeps
-  # runs (the hook requires a lockfile to seed its offline store).
-  src = stdenv.mkDerivation {
-    name = "${finalAttrs.pname}-${finalAttrs.version}-with-lockfile";
-    src = fetchzip {
-      url = "https://registry.npmjs.org/@tobilu/qmd/-/qmd-${finalAttrs.version}.tgz";
-      hash = "sha256-hdsZ3MYZibNFceWIKDVHGtYeyl0/RphpuOG0WQplfnE=";
-    };
-    dontBuild = true;
-    dontConfigure = true;
-    installPhase = ''
-      cp -r $src $out
-      chmod -R u+w $out
-      cp ${./qmd-pnpm-lock.yaml} $out/pnpm-lock.yaml
-    '';
+  src = fetchFromGitHub {
+    owner = "tobi";
+    repo = "qmd";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-bFk078qQ8Ha/1na+r5ka6yNPI/Pealh0Rk6hJxKBwNs=";
   };
 
-  nativeBuildInputs = [
-    nodejs
-    pnpm
-    makeWrapper
-  ]
-  ++ lib.optionals stdenv.isLinux [
-    autoPatchelfHook
-    perl
-    pkg-config
-  ];
+  nativeBuildInputs =
+    [
+      nodejs
+      pnpm
+      pnpmConfigHook
+      makeWrapper
+      python3
+      node-gyp
+      gcc
+    ]
+    ++ lib.optionals stdenv.isLinux [
+      autoPatchelfHook
+      pkg-config
+    ];
 
+  # Lockfile-driven dependency store. The hash covers the offline pnpm store
+  # contents, not the built node_modules. Run `nix build .#qmd` once with an
+  # empty hash to discover the correct value.
   pnpmDeps = fetchPnpmDeps {
     inherit (finalAttrs) pname version src;
-    pnpm = pnpm;
+    inherit pnpm;
     fetcherVersion = 4;
-    hash = "sha256-oVyRsxY2A+2KCGVsKPIiisfKuUgxSMEK046vzhc9VKk=";
+    hash = "sha256-4Nvsfo3JmMj+vPQZLjigV+DNX5JYMA8tI3IIXJbDM30=";
   };
 
-  # pnpmConfigHook is intentionally omitted: it runs `pnpm install` with
-  # build scripts enabled, which tries to compile tree-sitter native addons
-  # in the sandbox. Instead we install with --ignore-scripts — the prebuilt
-  # optionalDependencies (sqlite-vec-linux-x64, sqlite-vec-darwin-arm64, etc.)
-  # install platform binaries without compilation.
+  # node-llama-cpp ships optional GPU backends for Vulkan/CUDA/Metal. We
+  # default to CPU inference (QMD_FORCE_CPU=1), so these shared libraries are
+  # intentionally NOT in the closure. Tell autoPatchelfHook to ignore them.
+  autoPatchelfIgnoreMissingDeps = [
+    "libvulkan.so.1"
+    "libcudart.so.12"
+    "libcudart.so.13"
+    "libcublas.so.12"
+    "libcublas.so.13"
+    "libcuda.so.1"
+  ];
+
   buildPhase = ''
     runHook preBuild
-    pnpm install --offline --frozen-lockfile --prod --ignore-scripts
+    pnpm run build
     runHook postBuild
   '';
 
   installPhase = ''
     runHook preInstall
     mkdir -p $out/lib/qmd $out/bin
-    cp -r . $out/lib/qmd/
+
+    # Copy only the runtime artifacts that the published package includes.
+    # src/ and test/ are build-time only and would bloat the closure.
+    cp -r package.json node_modules $out/lib/qmd/
+    cp -r bin $out/lib/qmd/
+    cp -r dist $out/lib/qmd/
+    cp -r skills $out/lib/qmd/
+
     chmod -R u+w $out/lib/qmd
 
     makeWrapper ${nodejs}/bin/node $out/bin/qmd \
