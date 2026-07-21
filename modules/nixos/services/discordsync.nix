@@ -1,5 +1,15 @@
-# DiscordSync — Continuous Discord backup with local SQLite + Turso cloud sync
-{ inputs, ... }: {
+# DiscordSync — SystemNix wrapper around upstream nixos-module.
+#
+# The upstream module (inputs.discordsync.nixosModules.default) provides every
+# option (enable, package, user, group, discordTokenFile, dataDir, backend,
+# databasePath, tursoUrl, tursoAuthTokenFile, backfillOnStartup, apiAddr,
+# apiKeyFile, healthCheck) plus the systemd service with strong hardening and a
+# SIGHUP ExecReload. This file layers ONLY the SystemNix-specific concerns on
+# top: sops template wiring, DNS-gate, onFailure alert routing, GCS attachment
+# backup option, OTel tracing, and a correct readiness gate (upstream's is
+# malformed — see healthCheck note below).
+{ inputs, ... }:
+{
   flake.nixosModules.discordsync =
     {
       config,
@@ -10,13 +20,10 @@
     let
       inherit (import ../../../lib/default.nix lib)
         harden
-        serviceDefaults
-        onFailure
-        serviceTypes
         ports
+        onFailure
         ;
       cfg = config.services.discordsync;
-      inherit (lib) types;
       discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
@@ -33,128 +40,87 @@
       };
     in
     {
+      imports = [ inputs.discordsync.nixosModules.default ];
+
       options.services.discordsync = {
-        enable = lib.mkEnableOption "DiscordSync continuous Discord backup";
-
-        inherit
-          (serviceTypes.systemdServiceIdentity {
-            defaultUser = "discordsync";
-            defaultStateDir = "/var/lib/discordsync";
-          })
-          user
-          group
-          stateDir
-          ;
-
-        restartSec = serviceTypes.restartDelay "10";
-
-        timeoutStopSec = serviceTypes.stopTimeout "30";
-
-        databasePath = lib.mkOption {
-          type = types.str;
-          default = "${cfg.stateDir}/discordsync.db";
-          description = "Path to the local SQLite database file";
-        };
-
-        attachmentPath = lib.mkOption {
-          type = types.str;
-          default = "${cfg.stateDir}/attachments";
-          description = "Path to store downloaded attachments";
-        };
-
+        # Opt-in GCS attachment backup. Upstream has no equivalent option; the
+        # binary reads GCS_BUCKET + GOOGLE_APPLICATION_CREDENTIALS env vars.
         gcsBucket = lib.mkOption {
-          type = types.nullOr types.str;
+          type = lib.types.nullOr lib.types.str;
           default = null;
-          description = "GCS bucket name for cloud attachment backup";
-        };
-
-        backfillOnStartup = lib.mkOption {
-          type = types.bool;
-          default = true;
-          description = "Backfill all historical messages on startup";
-        };
-
-        apiAddr = lib.mkOption {
-          type = types.str;
-          default = "127.0.0.1:${toString ports.discordsync-api}";
-          description = "Listen address for the HTTP API (/metrics, /api/events/stream, /api/export). Localhost-only by default for security.";
+          description = "GCS bucket name for cloud attachment backup (requires discordsync_gcs_credentials sops secret)";
         };
       };
 
       config = lib.mkIf cfg.enable {
-        users.groups.${cfg.group} = { };
-
-        users.users.${cfg.user} = {
-          isSystemUser = true;
-          inherit (cfg) group;
-          home = cfg.stateDir;
-          createHome = true;
-          description = "DiscordSync backup service";
+        services.discordsync = {
+          package = lib.mkDefault discordsyncPkg;
+          backend = lib.mkDefault "turso-sync";
+          backfillOnStartup = lib.mkDefault true;
+          apiAddr = lib.mkDefault "127.0.0.1:${toString ports.discordsync-api}";
+          # Upstream's ExecStartPost curls http://localhost:${cfg.apiAddr}/readyz
+          # which expands to http://localhost:127.0.0.1:8085/readyz — a malformed
+          # URL (three colon-separated authority parts). Disabled here; a correct
+          # readiness gate is wired in serviceConfig.ExecStartPost below.
+          # TODO: drop this override once upstream fixes the URL template.
+          healthCheck = lib.mkDefault false;
+          # Both token paths point to the single sops template (contains
+          # DISCORD_TOKEN, TURSO_URL, TURSO_AUTH_TOKEN). The duplicate entry in
+          # upstream's EnvironmentFile list is harmless (systemd re-parses).
+          discordTokenFile = lib.mkDefault sopsEnvPath;
+          tursoAuthTokenFile = lib.mkDefault sopsEnvPath;
         };
 
-        system.activationScripts."discordsync-setup" =
-          lib.stringAfter
-            ([ "users" ] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets")
-            ''
-              mkdir -p ${cfg.stateDir}/attachments
-              chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
-              chmod 2770 ${cfg.stateDir} ${cfg.stateDir}/attachments
-            '';
-
         systemd.services.discordsync = {
-          description = "DiscordSync — Continuous Discord Backup";
-          wantedBy = [ "multi-user.target" ];
+          # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
           after = [
-            "network-online.target"
             "sops-nix.service"
             "dnsblockd.service"
           ];
           wants = [
-            "network-online.target"
             "sops-nix.service"
             "dnsblockd.service"
           ];
           inherit onFailure;
-          startLimitIntervalSec = 300;
-          startLimitBurst = 10;
+          startLimitBurst = lib.mkForce 10; # SystemNix uses 10 (upstream is 5)
+
+          environment = {
+            # Preserve subdir layout (upstream uses dataDir root).
+            ATTACHMENT_STORAGE_PATH = lib.mkForce "${cfg.dataDir}/attachments";
+          } // lib.optionalAttrs (cfg.gcsBucket != null) {
+            GCS_BUCKET = cfg.gcsBucket;
+            GOOGLE_APPLICATION_CREDENTIALS = config.sops.secrets.discordsync_gcs_credentials.path;
+          };
 
           serviceConfig = lib.mkMerge [
             {
-              Type = "simple";
-              User = cfg.user;
-              Group = cfg.group;
               ExecStartPre = "+${lib.getExe waitDnsReady}";
-              ExecStart = "${lib.getExe discordsyncPkg}";
-              WorkingDirectory = cfg.stateDir;
-              Environment = [
-                "DB_BACKEND=turso-sync"
-                "DATABASE_PATH=${cfg.databasePath}"
-                "API_ADDR=${cfg.apiAddr}"
-                "ATTACHMENT_STORAGE_PATH=${cfg.attachmentPath}"
-                "BACKFILL_ON_STARTUP=${lib.boolToString cfg.backfillOnStartup}"
-              ]
-              ++ lib.optional (cfg.gcsBucket != null) "GCS_BUCKET=${cfg.gcsBucket}"
-              ++ lib.optional (
-                cfg.gcsBucket != null
-              ) "GOOGLE_APPLICATION_CREDENTIALS=${config.sops.secrets.discordsync_gcs_credentials.path}";
-              EnvironmentFile = [ sopsEnvPath ];
-              KillMode = "mixed";
-              KillSignal = "SIGTERM";
-              TimeoutStopSec = cfg.timeoutStopSec;
-              StandardOutput = "journal";
-              StandardError = "journal";
-              UMask = "0026";
+              # Correct /readyz gate (upstream's is malformed — see healthCheck).
+              ExecStartPost = [
+                "${pkgs.curl}/bin/curl --fail --silent --show-error --retry 5 --retry-delay 2 --retry-all-errors --max-time 10 http://${cfg.apiAddr}/readyz"
+              ];
             }
-            (serviceDefaults {
-              Restart = "on-failure";
-              RestartSec = cfg.restartSec;
-            })
             (harden {
-              MemoryMax = "2G";
-              ReadWritePaths = [ cfg.stateDir ];
+              # Backfill bursts + turso-sync need more than upstream's 512M.
+              MemoryMax = lib.mkForce "2G";
+              ReadWritePaths = [ cfg.dataDir ];
             })
           ];
         };
+
+        # Pre-create the attachments subdir with correct ownership.
+        # (Upstream creates dataDir only — the subdir is a SystemNix convention.)
+        system.activationScripts."discordsync-setup" =
+          lib.stringAfter
+            (
+              [ "users" ]
+              ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets"
+            )
+            ''
+              mkdir -p ${cfg.dataDir}/attachments
+              chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}
+              chmod 2770 ${cfg.dataDir} ${cfg.dataDir}/attachments
+            '';
       };
     };
 }
