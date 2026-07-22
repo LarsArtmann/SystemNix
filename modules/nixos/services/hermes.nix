@@ -17,7 +17,7 @@
       cfg = config.services.hermes;
       hermesPkg =
         let
-          # Upstream (v2026.6.5+) uses fetcherVersion=2 in nix/lib.nix, no hash patching needed.
+          # Upstream (v2026.7.20+) uses fetcherVersion=2 in nix/lib.nix, no hash patching needed.
           baseOverlay = inputs.hermes-agent.overlays.default;
           patchedOverlay =
             final: prev:
@@ -28,12 +28,24 @@
             // {
               hermes-agent = base.hermes-agent.override {
                 extraDependencyGroups = [
-                  "messaging"
                   "anthropic"
-                  "firecrawl"
+                  "azure-identity"
+                  "bedrock"
+                  "daytona"
+                  "dingtalk"
                   "edge-tts"
-                  "fal"
                   "exa"
+                  "fal"
+                  "feishu"
+                  "firecrawl"
+                  "hindsight"
+                  "honcho"
+                  "messaging"
+                  "matrix"
+                  "modal"
+                  "parallel-web"
+                  "tts-premium"
+                  "voice"
                 ];
               };
             };
