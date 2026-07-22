@@ -145,3 +145,39 @@
 ## Next Action Required
 
 Run `nix run .#deploy` on evo-x2 to apply the Caddy vhost change, then validate the live URLs.
+
+---
+
+## Resolution Update (2026-07-22, same session)
+
+**User decision:** Make `dnsblock.home.lan` the canonical subdomain (not `dnsblockd.home.lan`).
+
+### Changes applied
+
+- **`modules/nixos/services/caddy.nix:170`** — swapped roles:
+  - `dnsblock.home.lan` is now the `protectedVHost` reverse-proxying to `localhost:9090`.
+  - `dnsblockd.home.lan` is now the 301 redirect to `dnsblock.home.lan`.
+- **`modules/nixos/services/homepage.nix:206,210`** — updated the `DNS Blocker` tile:
+  - `href = svcUrl "dnsblock"`.
+  - `siteMonitor = "${svcUrl "dnsblock"}/health"`.
+- **`scripts/post-deploy-check.sh:93`** — health check now targets `https://dnsblock.$DOMAIN/health`.
+
+### Verification
+
+- `nix flake check --no-build` passes.
+- `nix eval` confirms `dnsblock.home.lan` contains `reverse_proxy localhost:9090`, and `dnsblockd.home.lan` contains `redir * https://dnsblock.home.lan{uri} permanent`.
+- `bash -n scripts/post-deploy-check.sh` passes.
+
+### What was not done
+
+- The `dnsblockd` infraServices tile in `homepage.nix:166` still has no `href`/`siteMonitor` — left intact because it carries a different visual role ("DNS Resolver + Blocker").
+- `dns-blocker.nix` still doesn't expose `auth_token_file`; no service-level dashboard auth added.
+- No deploy performed.
+
+### Open questions still pending
+
+- Should we add `auth_token_file` for dnsblockd dashboard auth via sops?
+- Should the block-page HTTP server on `192.168.1.200:80` also be exposed through Caddy?
+
+(Question 1 from the original report — "canonical subdomain" — is now resolved.)
+

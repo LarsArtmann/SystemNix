@@ -203,11 +203,11 @@ _: {
                 siteMonitor = "${svcUrl "immich"}/api/server/ping";
               })
               (mkService "DNS Blocker" {
-                href = svcUrl "dnsblockd";
+                href = svcUrl "dnsblock";
                 description = "DNS Block Stats";
                 icon = "blocky.png";
                 statusStyle = "dot";
-                siteMonitor = "${svcUrl "dnsblockd"}/health";
+                siteMonitor = "${svcUrl "dnsblock"}/health";
               })
             ];
 
