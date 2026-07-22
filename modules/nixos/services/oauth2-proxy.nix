@@ -89,6 +89,10 @@ _: {
           };
           extraConfig = {
             skip-provider-button = true;
+            # PKCE (Proof Key for Code Exchange) — prevents authorization code
+            # interception attacks. Pocket ID supports S256 (SHA-256 hash method).
+            # Immich and Monitor365 already use PKCE with Pocket ID successfully.
+            code-challenge-method = "S256";
             # Allow post-login redirect back to any *.home.lan service protected
             # by this oauth2-proxy instance. Without this, the OIDC callback
             # succeeds but the final redirect to the original vHost is rejected
