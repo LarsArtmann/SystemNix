@@ -609,13 +609,6 @@ in
         Install.WantedBy = [ "graphical-session.target" ];
       };
 
-      # Helium as a persistent systemd user service so it auto-restarts when
-      # the display reconnects after a monitor swap (DP-2 disconnect/reconnect).
-      # Niri has no virtual output support — when all physical outputs are gone,
-      # Wayland clients lose their surfaces and exit. This service brings Helium
-      # back automatically once an output returns (~5-7s).
-      # --restore-last-session + --disable-session-crashed-bubble (in the wrapper)
-      # reopen the previous tabs automatically.
       helium = {
         Unit = {
           Description = "Helium browser";
