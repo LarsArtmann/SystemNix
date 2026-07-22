@@ -515,6 +515,70 @@ _: {
           echo "✓ OIDC auth source '$AUTH_NAME' configured."
         '';
       };
+
+      addKeysScript = pkgs.writeShellApplication {
+        name = "forgejo-ssh-keys";
+        runtimeInputs = [
+          pkgs.curl
+          pkgs.jq
+          pkgs.coreutils
+        ];
+        text = ''
+          set -euo pipefail
+
+          TOKEN_FILE="${stateDir}/.admin-token.env"
+          FORGEJO_TOKEN=""
+          if [ -f "$TOKEN_FILE" ]; then
+            FORGEJO_TOKEN=$(grep -E '^FORGEJO_TOKEN=[0-9a-f]{40}$' "$TOKEN_FILE" 2>/dev/null | cut -d= -f2 || true)
+          fi
+
+          if [[ -z "$FORGEJO_TOKEN" ]]; then
+            echo "Error: FORGEJO_TOKEN not found in $TOKEN_FILE"
+            exit 1
+          fi
+
+          KEYS_FILE=${lib.escapeShellArg (pkgs.writeText "forgejo-ssh-keys.json" (builtins.toJSON cfg.sshKeys))}
+
+          existing_keys=$(mktemp)
+          trap 'rm -f "$existing_keys"' EXIT
+
+          for user in $(jq -r 'keys[]' "$KEYS_FILE"); do
+            echo "Syncing SSH keys for Forgejo user: $user"
+
+            curl -sf -H "Authorization: token $FORGEJO_TOKEN" \
+              "${forgejoUrl}/api/v1/admin/users/$user/keys" > "$existing_keys"
+
+            mapfile -t keys < <(jq -r --arg user "$user" '.[$user][]' "$KEYS_FILE")
+
+            for key in "''${keys[@]}"; do
+              [[ -z "$key" ]] && continue
+
+              if jq -e --arg key "$key" '.[] | select(.key == $key)' "$existing_keys" >/dev/null 2>&1; then
+                echo "  ✓ Key already exists"
+                continue
+              fi
+
+              title="nix-declared"
+              response=$(curl -s -w "\n%{http_code}" \
+                -X POST \
+                -H "Authorization: token $FORGEJO_TOKEN" \
+                -H "Content-Type: application/json" \
+                "${forgejoUrl}/api/v1/admin/users/$user/keys" \
+                -d "$(jq -n --arg key "$key" --arg title "$title" '{key: $key, title: $title}')")
+
+              http_code=$(echo "$response" | tail -n1)
+              body=$(echo "$response" | sed '$d')
+
+              if [[ "$http_code" == "200" || "$http_code" == "201" ]]; then
+                echo "  ✓ Added key"
+              else
+                echo "  ✗ Failed to add key (HTTP $http_code): $body"
+                exit 1
+              fi
+            done
+          done
+        '';
+      };
     in
     {
       options = {

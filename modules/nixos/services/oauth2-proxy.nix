@@ -89,6 +89,11 @@ _: {
           };
           extraConfig = {
             skip-provider-button = true;
+            # Allow post-login redirect back to any *.home.lan service protected
+            # by this oauth2-proxy instance. Without this, the OIDC callback
+            # succeeds but the final redirect to the original vHost is rejected
+            # with "domain / port not in whitelist" and the user sees a 500.
+            whitelist-domain = [ ".${domain}" ];
           };
         };
 
