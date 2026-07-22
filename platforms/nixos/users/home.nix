@@ -193,16 +193,19 @@ in {
         name = "go-test";
         maxMemory = "4G";
         command = lib.getExe pkgs.go;
+        extraArgs = ["test"];
       })
       (wrapWithMemoryLimit pkgs {
         name = "cargo-test";
         maxMemory = "8G";
         command = lib.getExe pkgs.cargo;
+        extraArgs = ["test"];
       })
       (wrapWithMemoryLimit pkgs {
         name = "pnpm-test";
         maxMemory = "4G";
         command = lib.getExe pkgs.pnpm;
+        extraArgs = ["test"];
       })
 
       # Cursor themes

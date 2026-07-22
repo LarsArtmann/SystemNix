@@ -599,6 +599,8 @@ _: {
                 ];
                 alerts = discordAlert "Memory pressure CRITICAL — PSI some>50% or full>10%. Risk of OOM cascade. Check Helium/Electron processes.";
               })
+            ]
+            ++ lib.optionals (config.services.system-health.enable or false) [
               (mkHttpCheck {
                 name = "Monitor365 Server Crash Loop";
                 group = "Monitoring";
@@ -665,6 +667,8 @@ _: {
                 ];
                 alerts = discordAlert "Monitor365 DuckDB exceeds 1.6G — buffer pressure risk. Server may hit MemoryMax under load. Consider reducing retention or increasing MemoryMax.";
               })
+            ]
+            ++ [
               (mkHttpCheck {
                 name = "Crush Daily";
                 group = "AI";

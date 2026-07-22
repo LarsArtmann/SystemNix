@@ -13,6 +13,7 @@
 _: {
   flake.nixosModules.system-health = {
     config,
+    options,
     pkgs,
     lib,
     ...
@@ -73,27 +74,38 @@ _: {
           echo "system_service_start_limit_hit{service=\"''${svc}\"} ''${limit_hit}"
         }
 
-        # === User-1000.slice memory ===
-        SLICE_MEM=$(systemctl show user-1000.slice -p MemoryCurrent --value 2>/dev/null) || SLICE_MEM=0
-        SLICE_MEM="''${SLICE_MEM:-0}"
+        # === User-1000.slice memory (desktop-only) ===
+        collect_user_slice=${lib.boolToString cfg.collectUserSlice}
         SLICE_OVER=0
-        [ "$SLICE_MEM" -gt ${toString userSliceThreshold} ] 2>/dev/null && SLICE_OVER=1
+        SLICE_MEM=0
+        if [ "$collect_user_slice" = "true" ]; then
+          SLICE_MEM=$(systemctl show user-1000.slice -p MemoryCurrent --value 2>/dev/null) || SLICE_MEM=0
+          SLICE_MEM="''${SLICE_MEM:-0}"
+          [ "$SLICE_MEM" -gt ${toString userSliceThreshold} ] 2>/dev/null && SLICE_OVER=1
+        fi
 
-        # === GPUActive threshold (from /proc/meminfo) ===
-        GPU_ACTIVE_KB=$(grep "^GPUActive:" /proc/meminfo 2>/dev/null | awk '{print $2}') || GPU_ACTIVE_KB=0
-        GPU_ACTIVE_KB="''${GPU_ACTIVE_KB:-0}"
+        # === GPUActive threshold (Strix Halo only) ===
+        collect_gpu_active=${lib.boolToString cfg.collectGpuActive}
+        GPU_ACTIVE_KB=0
         GPU_OVER=0
-        [ "$GPU_ACTIVE_KB" -gt ${toString gpuActiveThresholdKb} ] 2>/dev/null && GPU_OVER=1
+        if [ "$collect_gpu_active" = "true" ]; then
+          GPU_ACTIVE_KB=$(grep "^GPUActive:" /proc/meminfo 2>/dev/null | awk '{print $2}') || GPU_ACTIVE_KB=0
+          GPU_ACTIVE_KB="''${GPU_ACTIVE_KB:-0}"
+          [ "$GPU_ACTIVE_KB" -gt ${toString gpuActiveThresholdKb} ] 2>/dev/null && GPU_OVER=1
+        fi
 
         # === monitor365 DuckDB buffer pressure ===
-        DUCKDB_PATH="/var/lib/monitor365-server/monitor365.duckdb"
+        collect_monitor365=${lib.boolToString cfg.collectMonitor365}
         DUCKDB_SIZE=0
         BUFFER_PRESSURE=0
-        if [ -f "$DUCKDB_PATH" ]; then
-          DUCKDB_SIZE=$(stat -c %s "$DUCKDB_PATH" 2>/dev/null) || DUCKDB_SIZE=0
-          DUCKDB_SIZE="''${DUCKDB_SIZE:-0}"
-          if [ "$DUCKDB_SIZE" -gt ${toString monitor365BufferThreshold} ] 2>/dev/null; then
-            BUFFER_PRESSURE=1
+        if [ "$collect_monitor365" = "true" ]; then
+          DUCKDB_PATH="${cfg.monitor365.stateDir}/monitor365.duckdb"
+          if [ -f "$DUCKDB_PATH" ]; then
+            DUCKDB_SIZE=$(stat -c %s "$DUCKDB_PATH" 2>/dev/null) || DUCKDB_SIZE=0
+            DUCKDB_SIZE="''${DUCKDB_SIZE:-0}"
+            if [ "$DUCKDB_SIZE" -gt ${toString monitor365BufferThreshold} ] 2>/dev/null; then
+              BUFFER_PRESSURE=1
+            fi
           fi
         fi
 
@@ -101,8 +113,8 @@ _: {
           echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
           echo "# TYPE system_service_active gauge"
 
-          echo "# HELP system_service_nrestarts Number of times the service has restarted"
-          echo "# TYPE system_service_nrestarts counter"
+          echo "# HELP system_service_nrestarts Number of times the service has restarted since boot"
+          echo "# TYPE system_service_nrestarts gauge"
 
           echo "# HELP system_service_start_limit_hit 1 if service hit systemd start rate limit, 0 otherwise"
           echo "# TYPE system_service_start_limit_hit gauge"
@@ -152,17 +164,54 @@ _: {
       monitoredServices = lib.mkOption {
         type = lib.types.listOf lib.types.str;
         default = [
-          "monitor365-server"
-          "monitor365"
-          "projects-management-automation"
-          "discordsync"
           "caddy"
+          "dnsblockd"
+          "discordsync"
+          "forgejo"
+          "gatus"
+          "homepage-dashboard"
+          "monitor365"
+          "monitor365-server"
+          "pocket-id"
+          "projects-management-automation"
+          "signoz"
         ];
         description = "Systemd services to monitor for state, restart count, and start-limit-hit";
+      };
+
+      collectUserSlice = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Collect user-1000.slice memory metrics (disable on non-desktop hosts)";
+      };
+
+      collectGpuActive = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Collect GPUActive metrics from /proc/meminfo (Strix Halo / amdgpu only)";
+      };
+
+      collectMonitor365 = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Collect monitor365 DuckDB buffer pressure metrics";
+      };
+
+      monitor365.stateDir = lib.mkOption {
+        type = lib.types.str;
+        default = "/var/lib/monitor365-server";
+        description = "Directory containing monitor365.duckdb (used for buffer-pressure metrics)";
       };
     };
 
     config = lib.mkIf cfg.enable {
+      # Auto-disable collectors that target resources not present on this host.
+      # These use mkDefault so user configuration can override.
+      services.system-health = lib.optionalAttrs (options ? services.monitor365-server) {
+        collectMonitor365 = lib.mkDefault (config.services.monitor365-server.enable or false);
+        monitor365.stateDir = lib.mkDefault (config.services.monitor365-server.stateDir or "/var/lib/monitor365-server");
+      };
+
       systemd = {
         tmpfiles.rules = [
           (mkStateDir textfileDir "1777" "nobody" "nogroup")

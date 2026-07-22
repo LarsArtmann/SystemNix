@@ -146,8 +146,8 @@ in {
   mkFilesystem = import ./filesystems.nix lib;
 
   # wrapWithMemoryLimit: creates a wrapper script that runs a command under a
-  # systemd transient scope with a cgroup MemoryMax limit. Prevents
-  # memory-hungry dev/test commands (cargo test, go test, npm) from consuming
+  # systemd transient user scope with a cgroup MemoryMax limit. Prevents
+  # memory-hungry dev/test commands (cargo test, go test, pnpm) from consuming
   # all system RAM on memory-constrained hosts like evo-x2 (Strix Halo with
   # chronic GPUActive memory pressure).
   #
@@ -160,12 +160,14 @@ in {
   #     name = "go-test";
   #     maxMemory = "4G";
   #     command = lib.getExe pkgs.go;
+  #     extraArgs = ["test"];
   #   }
-  #   → produces a `go-test-memlimit` script
+  #   → produces a `go-test-memlimit` script that runs `go test "$@"`
   wrapWithMemoryLimit = pkgs: {
     name,
     maxMemory,
     command,
+    extraArgs ? [],
   }:
     pkgs.writeShellApplication {
       name = "${name}-memlimit";
@@ -173,8 +175,10 @@ in {
       text = ''
         exec systemd-run \
           --user --collect --wait \
+          --same-dir \
+          --setenv="*" \
           -p MemoryMax=${maxMemory} \
-          -- ${command} "$@"
+          -- ${command} ${lib.escapeShellArgs extraArgs} "$@"
       '';
     };
 }
