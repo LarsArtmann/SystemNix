@@ -420,8 +420,9 @@ in
       };
 
       # Monitor365 unified agent — system + desktop collectors
+      # TEMPORARILY DISABLED: upstream wasm_bindgen_test build failure blocks all deploys
       monitor365 = {
-        enable = true;
+        enable = false;
         settings.collectors = {
           # Headless collectors
           network.enabled = lib.mkDefault true;
