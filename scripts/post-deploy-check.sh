@@ -90,6 +90,8 @@ check_local "Homepage" "8082" "/" "200" "<html" 2>/dev/null || true
 
 check_local "Gatus" "9110" "/" "200" "" 2>/dev/null || true
 
+check "DNS Blocker" "https://dnsblockd.$DOMAIN/health" "200" "" 2>/dev/null || true
+
 # --- Application health endpoints ---
 check_local "Forgejo" "3000" "/api/v1/version" "200" "" 2>/dev/null || true
 
