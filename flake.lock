@@ -142,11 +142,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1784738546,
-        "narHash": "sha256-5jT6OlexC+XNNBJZWSFChn0lcvKGBIfe97cpIjoCb4Q=",
+        "lastModified": 1784714141,
+        "narHash": "sha256-Tq0NgXg8LJyRHVimRWhtXA+8aFVpaO9LB1MEzgFWFMg=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "a951a99853fa0397f9d148fee3c3b5a346c0b114",
+        "rev": "f309106e7757c2c26679a89929d4593c0d00528d",
         "type": "github"
       },
       "original": {
