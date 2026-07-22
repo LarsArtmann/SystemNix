@@ -801,6 +801,31 @@ _: {
           script = lib.getExe oidcSetupScript;
         };
 
+        systemd.services.forgejo-ssh-keys = {
+          description = "Add declarative SSH keys to Forgejo users";
+          after = [
+            "forgejo.service"
+            "forgejo-generate-token.service"
+          ];
+          wants = [ "forgejo-generate-token.service" ];
+          wantedBy = [ "forgejo.service" ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          inherit onFailure;
+          restartTriggers = [ (lib.getExe addKeysScript) ];
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "forgejo";
+              Group = "forgejo";
+              RemainAfterExit = true;
+            }
+            (harden { })
+            (serviceOneshotDefaults { })
+          ];
+          script = lib.getExe addKeysScript;
+        };
+
         services.gitea-actions-runner = {
           package = pkgs.forgejo-runner;
           instances.${hostName} = {
