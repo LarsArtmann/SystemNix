@@ -219,6 +219,12 @@ in {
         };
       };
       oauth2-proxy-config.enable = true;
+      # Force-regenerate the oauth2-proxy client secret — the provisioned file
+      # at /var/lib/pocket-id/client-secrets/oauth2-proxy is desynced from
+      # Pocket ID's database (stale value from the old sops-seeded migration
+      # block). Every token exchange fails with "invalid_client". Clear this
+      # list after the next successful deploy.
+      pocket-id-config.provision.regenerateSecretsFor = [ "oauth2-proxy" ];
       homepage.enable = true;
       taskchampion-config.enable = true;
       display-manager-config.enable = true;
@@ -498,8 +504,8 @@ in {
           "/home/${config.users.primaryUser}/projects/archived"
         ];
         autoPush = false;
-        debounceSeconds = 10;
-        minCommitIntervalSeconds = 60;
+        debounceSeconds = 60;
+        minCommitIntervalSeconds = 120;
         enableDiscoveryDaemon = true;
         memoryMax = "8G";
       };
