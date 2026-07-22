@@ -448,8 +448,9 @@ in
       };
 
       # Monitor365 server (dashboard + API) runs on the same machine
+      # TEMPORARILY DISABLED: upstream wasm_bindgen_test build failure blocks all deploys
       monitor365-server = {
-        enable = lib.mkDefault true;
+        enable = false;
         # DuckDB is the sole store on local-only BTRFS (#1 data-loss risk).
         # Local nightly backup is the prerequisite for any future offsite sync.
         backup = {
