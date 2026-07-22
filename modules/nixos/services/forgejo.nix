@@ -594,11 +594,11 @@ _: {
       };
 
       config = lib.mkIf config.services.forgejo.enable {
-        services.forgejo.sshKeys = lib.mkDefault {
-          ${primaryUser} = config.users.users.${primaryUser}.openssh.authorizedKeys.keys;
-        };
-
         services.forgejo = {
+          sshKeys = lib.mkDefault {
+            ${primaryUser} = config.users.users.${primaryUser}.openssh.authorizedKeys.keys;
+          };
+
           package = pkgs.forgejo-lts;
 
           database.type = "sqlite3";
