@@ -168,48 +168,23 @@
         })
 
         # Display discovery: the upstream module's inline pgrep/heredoc approach
-        # in the start script is fragile (the export vars don't survive into the
-        # exec'd binary in some systemd/cgroup configurations). This ExecStartPre
-        # discovers the display env and writes it to a file that systemd loads
-        # via EnvironmentFile — more robust than bash export in a subshell.
-        # Also relaxes ProtectProc from "invisible" to "default" so pgrep can
-        # see the primary user's processes (the service already has CAP_SYS_PTRACE
-        # for process monitoring, making ProtectProc redundant defense-in-depth).
+        # for displayUser doesn't reliably export vars into the exec'd binary.
+        # We set the display environment directly via systemd Environment=, which
+        # is inherited by the start script and passed to exec. These values are
+        # deterministic on evo-x2: SDDM starts niri on DISPLAY=:1, wayland-1,
+        # uid 1000. Also relaxes ProtectProc from "invisible" to "default" so
+        # the upstream's inline pgrep (and our process monitoring) can see all
+        # users' processes — the service already has CAP_SYS_PTRACE.
         (lib.mkIf (systemAgentCfg.enable && systemAgentCfg.displayUser != null) {
-          systemd.services.monitor365 =
-            let
-              displayDiscover = pkgs.writeShellApplication {
-                name = "monitor365-discover-display";
-                runtimeInputs = [ pkgs.procps pkgs.coreutils ];
-                text = ''
-                  ENV_FILE="/run/monitor365/display.env"
-                  DISPLAY_USER="${systemAgentCfg.displayUser}"
-                  DISPLAY_PID="$(pgrep -u "$DISPLAY_USER" "niri|sway|gnome-shell|weston|kwin_wayland|Xorg|Labwc|hyprland" 2>/dev/null | head -1)"
-                  if [ -z "$DISPLAY_PID" ]; then
-                    DISPLAY_PID="$(pgrep -u "$DISPLAY_USER" 2>/dev/null | head -1)"
-                  fi
-                  if [ -n "$DISPLAY_PID" ] && [ -r "/proc/$DISPLAY_PID/environ" ]; then
-                    tr '\0' '\n' < "/proc/$DISPLAY_PID/environ" 2>/dev/null \
-                      | grep -E '^(DISPLAY|WAYLAND_DISPLAY|XAUTHORITY|XDG_RUNTIME_DIR|DBUS_SESSION_BUS_ADDRESS|XKB_DEFAULT_)=' \
-                      > "$ENV_FILE" || true
-                    echo "monitor365: discovered display env from $DISPLAY_USER (PID $DISPLAY_PID)" >&2
-                  else
-                    : > "$ENV_FILE"
-                    echo "monitor365: no graphical session found for $DISPLAY_USER — clipboard/screenshot collectors will skip" >&2
-                  fi
-                '';
-              };
-            in
-            {
-              serviceConfig = {
-                ProtectProc = lib.mkForce "default";
-                ExecStartPre = [
-                  "${pkgs.coreutils}/bin/mkdir -p /run/monitor365"
-                  "+${lib.getExe displayDiscover}"
-                ];
-                EnvironmentFile = "-/run/monitor365/display.env";
-              };
+          systemd.services.monitor365 = {
+            serviceConfig.ProtectProc = lib.mkForce "default";
+            environment = {
+              DISPLAY = ":1";
+              WAYLAND_DISPLAY = "wayland-1";
+              XDG_RUNTIME_DIR = "/run/user/${toString config.users.users.${primaryUser}.uid}";
+              DBUS_SESSION_BUS_ADDRESS = "unix:path=/run/user/${toString config.users.users.${primaryUser}.uid}/bus";
             };
+          };
         })
 
       ];
