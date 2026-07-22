@@ -167,12 +167,12 @@ _: {
             "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
             "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
 
-            "dnsblockd.${domain}" = protectedVHost "dnsblockd" config.services.dns-blocker.statsPort;
-            "dnsblock.${domain}" = {
+            "dnsblock.${domain}" = protectedVHost "dnsblock" config.services.dns-blocker.statsPort;
+            "dnsblockd.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
                 ${commonConfig}
-                redir * https://dnsblockd.${domain}{uri} permanent
+                redir * https://dnsblock.${domain}{uri} permanent
               '';
             };
           }
