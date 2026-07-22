@@ -3,8 +3,7 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
   # 29360128 pages × 4096 = 112 GiB (exceeds ~94 GiB visible, but it's a ceiling not a reservation)
   ttmPagesLimit = 29360128;
@@ -14,8 +13,7 @@ let
   # were NEVER returned to the kernel, causing GPUActive=51+ GiB with only desktop workloads).
   # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
   ttmPagePoolSize = 6291456;
-in
-{
+in {
   # Bootloader and Kernel Configuration
   boot = {
     # Systemd boot configuration
@@ -107,7 +105,7 @@ in
       "delayacct"
     ];
 
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
+    binfmt.emulatedSystems = ["aarch64-linux"];
 
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
@@ -121,7 +119,7 @@ in
     tmp.useTmpfs = false;
   };
 
-  # Static /tmp tmpfs mount with explicit 16 GiB size cap.
+  # Static /tmp tmpfs mount with explicit 24 GiB size cap.
   # MUST use systemd.mounts (NOT fileSystems) so the unit is in the Nix store
   # closure and switch-to-configuration can track it across generations.
   systemd.mounts = [
@@ -129,7 +127,7 @@ in
       what = "tmpfs";
       where = "/tmp";
       type = "tmpfs";
-      options = "mode=1777,size=16G";
+      options = "mode=1777,size=24G";
     }
   ];
 
@@ -211,8 +209,8 @@ in
       # not a /proc/sys/ sysctl, so it can't go in boot.kernel.sysctl.
       mglru-thrash-protection = {
         description = "Enable MGLRU thrashing prevention (min_ttl_ms=1000)";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "systemd-modules-load.service" ];
+        wantedBy = ["multi-user.target"];
+        after = ["systemd-modules-load.service"];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
