@@ -3500,11 +3500,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784690646,
-        "narHash": "sha256-btffDLRPHgWSLNvfUpLR35ahbfgEeJ8vBlmGync6LLc=",
+        "lastModified": 1784736958,
+        "narHash": "sha256-HKm+AQoZVWeKpK84GH4NV0XKm/YW9/WPRq3i0kcR9Vs=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "d1d013d254e662d2937cceec255743a38cd8758c",
+        "rev": "e8380b44b56d008fcbb413c708e29b9db32f4b20",
         "type": "github"
       },
       "original": {
