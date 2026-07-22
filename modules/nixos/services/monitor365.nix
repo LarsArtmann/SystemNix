@@ -214,6 +214,53 @@
           ];
         })
 
+        # DuckDB WAL corruption self-healing — same defensive pattern as the
+        # SigNoz migration-lock clear. When the server crashes mid-write (OOM,
+        # WDT reset, power loss), the WAL file can end up corrupt: DuckDB's
+        # replay fails with "Failure while replaying WAL file … Calling
+        # DatabaseManager::GetDefaultDatabase with no default database set"
+        # (an INTERNAL/assertion error). The server crash-loops indefinitely
+        # (291+ restarts observed), leaving port 3001 unreachable — the
+        # agent's circuit breaker opens (220K+ consecutive failures), all
+        # telemetry accumulates in the disk buffer, and events are dropped.
+        #
+        # DuckDB checkpoints the WAL into the main DB on graceful shutdown and
+        # deletes the .wal file. A .wal present at startup ALWAYS means the
+        # previous shutdown was unclean. Always removing it eliminates this
+        # crash class entirely. The data loss is limited to events from the
+        # last uncheckpointed session (acceptable for a monitoring dashboard).
+        # If the main DB is also gone, restore from the nightly backup.
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-server = {
+            serviceConfig = {
+              ExecStartPre = lib.mkBefore [
+                "${pkgs.writeShellScript "monitor365-duckdb-heal" ''
+                  DB_DIR="${serverCfg.stateDir}"
+                  WAL="$DB_DIR/monitor365.duckdb.wal"
+                  MAIN_DB="$DB_DIR/monitor365.duckdb"
+
+                  if [ -f "$WAL" ]; then
+                    echo "monitor365-duckdb-heal: WAL from unclean shutdown found, removing to prevent replay crash"
+                    rm -f "$WAL"
+                  fi
+
+                  # If the main DB is missing or empty, restore from the most
+                  # recent nightly backup before the server starts.
+                  if [ ! -f "$MAIN_DB" ] || [ ! -s "$MAIN_DB" ]; then
+                    LATEST_BACKUP="$(ls -t "$DB_DIR"/*.backup_*.db 2>/dev/null | head -1)"
+                    if [ -n "$LATEST_BACKUP" ]; then
+                      echo "monitor365-duckdb-heal: main DB missing/empty, restoring from backup: $LATEST_BACKUP"
+                      cp "$LATEST_BACKUP" "$MAIN_DB"
+                    else
+                      echo "monitor365-duckdb-heal: main DB missing/empty, no backup found — server will create fresh DB"
+                    fi
+                  fi
+                ''}"
+              ];
+            };
+          };
+        })
+
         # Display discovery: the upstream module's start script uses pgrep to
         # find the displayUser's compositor PID, reads DISPLAY, WAYLAND_DISPLAY,
         # XAUTHORITY, XDG_RUNTIME_DIR, DBUS_SESSION_BUS_ADDRESS from
