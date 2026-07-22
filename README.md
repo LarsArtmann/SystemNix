@@ -11,7 +11,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Languages**            | Go 1.26, Node.js, Bun, Python 3.13, Rust                                                                                                                              |
 | **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                    |
 | **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                           |
-| **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Sway (backup WM), Rofi (Sway fallback only) |
+| **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Helium (Chromium browser), Sway (backup WM), Rofi (Sway fallback only) |
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI                                                                                 |
 | **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                       |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                             |
@@ -121,6 +121,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 - **Kitty**: Backup terminal (GPU-accelerated, image display)
 - **SDDM**: Login manager with Catppuccin Mocha theme
 - **Theme**: Catppuccin Mocha across all applications (GTK, Qt, terminal, browser)
+- **Helium**: Ungoogled Chromium fork (Chromium 150) with Widevine DRM, VA-API hardware video decode, Catppuccin Mocha theme
 - **Backup WM**: Sway configured as fallback (uses Rofi, not DMS)
 
 ## NixOS Hardware (evo-x2)

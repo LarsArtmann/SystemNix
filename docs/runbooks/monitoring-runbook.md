@@ -45,8 +45,8 @@ When an alert fires, find the service name below and follow the steps.
 ### DNS Resolver down
 
 - **Impact:** All DNS resolution fails, no service reachable by hostname
-- **Fix:** `sudo systemctl restart unbound`
-- **If persistent:** Check `dnsblockd-attach-ip.service` — the block IP may not be attached
+- **Fix:** `sudo systemctl restart dnsblockd`
+- **If persistent:** Check `dnsblockd-attach-ip.service` — the block IP may not be attached. Also check `restartTriggers` ensure config changes propagate.
 
 ---
 
@@ -101,9 +101,8 @@ When an alert fires, find the service name below and follow the steps.
 
 ### Ollama down — local AI unavailable
 
-- **Note:** Ollama has `wantedBy = []` (no autostart) — this is expected when not manually started
+- **Note:** Ollama starts automatically with `ai-stack.enable = true`. Idle ollama uses ~34 MB RSS (models load on demand via OLLAMA_KEEP_ALIVE).
 - **Fix:** `sudo systemctl start ollama`
-- **No alert needed** unless you actively use it
 
 ### Hermes down — AI gateway unavailable
 
@@ -131,8 +130,33 @@ When an alert fires, find the service name below and follow the steps.
 
 ### Monitor365 server down — device telemetry unavailable
 
-- **Fix:** `systemctl --user restart monitor365-server` (runs as USER service)
-- **Package check:** Verify it uses `pkgs.monitor365-server` (not `pkgs.monitor365`)
+- **Fix:** `sudo systemctl restart monitor365-server` (system service, not user)
+- **Package check:** Verify it uses `pkgs.monitor365-server` (not `pkgs.monitor365` which is the agent CLI)
+- **DuckDB WAL:** If crash-looping, the ExecStartPre heal script removes stale `.wal` files automatically
+
+### Monitor365 server crash loop — start-limit-hit
+
+- **Impact:** Server is completely down, agent circuit breaker opens, all telemetry buffered to disk
+- **Root cause:** Usually DuckDB WAL corruption from unclean shutdown (OOM, WDT reset) or OOM under load
+- **Fix:**
+  ```bash
+  sudo systemctl reset-failed monitor365-server
+  sudo systemctl start monitor365-server
+  ```
+- **If it crash-loops again:** Check DuckDB WAL healing in ExecStartPre logs: `journalctl -u monitor365-server -n 50`
+- **Nuclear option:** Delete the DuckDB file and restore from backup:
+  ```bash
+  sudo systemctl stop monitor365-server
+  sudo rm /var/lib/monitor365-server/monitor365.duckdb
+  sudo systemctl start monitor365-server  # ExecStartPre restores from latest backup
+  ```
+
+### Monitor365 buffer pressure — DuckDB exceeding memory budget
+
+- **Impact:** Server approaching MemoryMax, risk of OOM kill under load
+- **Fix:** Consider reducing data retention or increasing MemoryMax in the module config
+- **Check DuckDB size:** `stat -c %s /var/lib/monitor365-server/monitor365.duckdb`
+- **If consistently >1.6G:** The buffer cache is growing beyond the 2G MemoryMax. Increase `MemoryMax` in `monitor365.nix` or configure DuckDB `PRAGMA memory_limit='512M'`
 
 ### Monitor365 UI not serving — WASM dashboard missing
 
@@ -204,6 +228,51 @@ When an alert fires, find the service name below and follow the steps.
 - **Impact:** Blind to GPU memory pressure (the GPUActive crisis)
 - **Fix:** `sudo systemctl restart amdgpu-metrics.timer`
 - **Check:** `/sys/class/drm/card*/device/mem_info_vram_used_bytes` exists
+
+### GPUActive exceeds 60G — GTT buffer objects consuming excessive RAM
+
+- **Impact:** GPUActive (GTT buffer objects) is the #1 RAM consumer on Strix Halo. At 60G+, only ~34G remains for all system processes.
+- **Root cause:** Helium/Electron renderers, Quickshell Qt buffers, or Wayland compositor surfaces allocating GTT memory that cannot be reclaimed (GPUReclaim=0).
+- **Diagnosis:**
+  ```bash
+  grep GPUActive /proc/meminfo
+  grep GPUReclaim /proc/meminfo
+  ```
+- **Mitigation:**
+  1. Close unnecessary Helium tabs/windows (each renderer holds GTT BOs)
+  2. Restart Quickshell: `systemctl --user restart systemnix-quickshell.service`
+  3. Check for runaway processes: `btop` sorted by memory
+- **Long-term:** The TTM pool is configured with `pages_limit = 112 GiB` (exceeds visible RAM). Consider reducing this via kernel parameter or sysfs.
+
+### user-1000.slice memory exceeds 40G — desktop memory pressure
+
+- **Impact:** Desktop processes (Helium, DMS, niri) are consuming >40G. The slice has MemoryHigh=56G (throttle) and MemoryMax=64G (kill). At 40G+, the system is heading toward the OOM cascade chain.
+- **The OOM cascade chain:** user processes grow → journald starved → sp5100-tco WDT fires (60s) → hard reset
+- **Diagnosis:**
+  ```bash
+  systemctl show user-1000.slice -p MemoryCurrent -p MemoryHigh -p MemoryMax
+  systemd-cgtop -n 1 /user.slice/user-1000.slice
+  ```
+- **Mitigation:**
+  1. Close Helium tabs (each Chromium renderer can hold 500MB-2GB)
+  2. Check for leaked processes: `ps aux --sort=-%mem | head -20`
+  3. If chronic: the zram swap may be full (`swapon --show`). Consider increasing zram size or adding physical swap.
+
+### PMA daemon down — automated project tracking stopped
+
+- **Impact:** Projects Management Automation is not tracking git repos or running automations.
+- **Fix:** `sudo systemctl restart projects-management-automation`
+- **Common cause:** Type=notify timeout (upstream bug — overridden to Type=exec in SystemNix). If still cycling, check:
+  ```bash
+  journalctl -u projects-management-automation -n 50
+  ```
+- **Dependency:** Overview depends on PMA's discovery daemon. If PMA is down, Overview may OOM-loop trying local discovery.
+
+### Service restart metrics missing
+
+- **Impact:** Systemd health monitoring (crash-loop detection, restart counts) is disabled.
+- **Fix:** `sudo systemctl restart system-health-metrics.timer`
+- **Check:** The collector writes to `/var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`
 
 ---
 
