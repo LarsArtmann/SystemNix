@@ -20,7 +20,7 @@
     else
       pkg.overrideAttrs (old: {
         goModules = old.goModules.overrideAttrs (_: {
-          outputHash = "sha256-nW9vJMydVGAAN3VHl3YXaBm9P87Pk/BtTD3TdDQc+1k=";
+          outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA=";
         });
       });
 in
