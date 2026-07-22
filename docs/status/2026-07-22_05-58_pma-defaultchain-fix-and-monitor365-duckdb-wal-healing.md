@@ -224,7 +224,7 @@ sudo systemctl start monitor365-server.service
 
 ### Long-term:
 
-40. **Consider SQLite over DuckDB for monitor365** — SQLite has battle-tested WAL recovery; DuckDB does not
+40. ~~**Consider SQLite over DuckDB for monitor365**~~ — **REJECTED.** DuckDB is correct for monitor365's analytical workload (columnar aggregations over time-series events). SQLite is row-oriented and would be the wrong engine. The WAL corruption is handled by the `ExecStartPre` self-healing, not by switching databases
 41. **Investigate DuckDB graceful shutdown** — does the server handle SIGTERM and checkpoint?
 42. **PMA CI integration test** — run the daemon in CI with a mock provider to catch this class of bug
 43. **SystemNix module test** — `nixosTests` for monitor365-server crash recovery
