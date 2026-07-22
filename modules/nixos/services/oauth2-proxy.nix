@@ -99,6 +99,11 @@ _: {
 
         systemd.services.oauth2-proxy = {
           inherit onFailure;
+          # Restart when provision runs: oauth2-proxy loads the client secret
+          # via systemd LoadCredential at start time. If provision regenerates
+          # the secret (e.g. after desync recovery), oauth2-proxy must restart
+          # to pick up the new credential.
+          partOf = lib.optional provisionEnabled "pocket-id-provision.service";
           after = [
             "network-online.target"
             "pocket-id.service"
