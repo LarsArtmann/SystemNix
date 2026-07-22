@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hermes v0.19.0 Upgrade — Session Status Report</title>
+    <style>
+      :root {
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+        --radius: 0px;
+        --font-heading: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono: ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas, monospace;
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { scroll-behavior: smooth; }
+      section[id], [id] { scroll-margin-top: 60px; }
+      body { background: var(--surface); color: var(--text); font-family: var(--font-body); font-size: 15px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+      :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+      .top-bar { background: var(--text); color: var(--surface); padding: 0.6rem 2rem; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+      .layout { display: flex; gap: 2.5rem; padding: 2rem; }
+      .sidebar { width: 220px; flex-shrink: 0; position: sticky; top: 1rem; align-self: flex-start; height: calc(100vh - 2rem); overflow-y: auto; display: none; }
+      .sidebar nav { display: flex; flex-direction: column; gap: 0; }
+      .sidebar .label { font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.75rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); }
+      .sidebar a { font-size: 0.85rem; color: var(--text-muted); text-decoration: none; padding: 0.45rem 0.75rem; border-left: 2px solid transparent; transition: all 0.15s ease; line-height: 1.4; font-weight: 500; }
+      .sidebar a:hover, .sidebar a.active { color: var(--accent); border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+      .main { flex: 1; min-width: 0; }
+      h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 800; letter-spacing: -0.02em; }
+      h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.1; margin: 0 0 0.6rem; }
+      h2 { font-size: 1.4rem; margin: 2.5rem 0 1rem; padding-bottom: 0.4rem; border-bottom: 2px solid var(--border-strong); display: flex; align-items: baseline; gap: 0.6rem; }
+      h2 .num { font-family: var(--font-mono); font-size: 0.78rem; color: var(--accent); font-weight: 700; letter-spacing: 0.06em; }
+      h3 { font-size: 1.1rem; margin: 0 0 0.4rem; font-weight: 700; }
+      p { margin: 0 0 1rem; }
+      .hero { padding: 1.5rem 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-strong); }
+      .hero-badge { display: inline-block; font-family: var(--font-mono); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em; color: var(--surface); background: var(--accent); padding: 0.3rem 0.7rem; margin-bottom: 0.9rem; }
+      .hero-subtitle { font-size: 1.05rem; color: var(--text-muted); max-width: 70ch; margin: 0; }
+      .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.75rem; margin: 1rem 0 1.5rem; }
+      .stat-card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1rem; position: relative; }
+      .stat-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: var(--border-strong); }
+      .stat-bad::before { background: var(--problem); }
+      .stat-good::before { background: var(--solution); }
+      .stat-warn::before { background: var(--warning); }
+      .stat-value { font-family: var(--font-heading); font-size: 2rem; font-weight: 800; line-height: 1; letter-spacing: -0.03em; color: var(--text); }
+      .stat-bad .stat-value { color: var(--problem); }
+      .stat-good .stat-value { color: var(--solution); }
+      .stat-warn .stat-value { color: var(--warning); }
+      .stat-label { font-family: var(--font-mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-faint); margin-top: 0.5rem; }
+      .card { background: var(--surface-raised); border: 1px solid var(--border); padding: 1.1rem 1.3rem; margin-bottom: 1rem; border-left: 4px solid var(--border-strong); }
+      .card-problem { border-left-color: var(--problem); background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised)); }
+      .card-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised)); }
+      .card-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised)); }
+      .badge { display: inline-block; font-family: var(--font-mono); font-size: 0.62rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.18rem 0.5rem; border: 1px solid var(--border-strong); color: var(--text-muted); }
+      .badge-critical { color: var(--problem); border-color: var(--problem); }
+      .badge-high { color: var(--warning); border-color: var(--warning); }
+      .badge-medium { color: var(--accent); border-color: var(--accent); }
+      .badge-fixed { color: var(--solution); border-color: var(--solution); }
+      .badge-low { color: var(--text-muted); }
+      table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; font-size: 0.9rem; }
+      th { text-align: left; padding: 0.6rem 0.9rem; background: var(--surface-raised); color: var(--text-faint); font-family: var(--font-mono); font-size: 0.66rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border-strong); }
+      td { padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--border); }
+      tr:hover td { background: var(--surface-raised); }
+      .callout { margin: 0.8rem 0 0; padding: 0.7rem 0.9rem; border-left: 3px solid var(--border-strong); background: color-mix(in srgb, var(--text) 5%, transparent); font-size: 0.9rem; }
+      .callout strong { display: inline-block; margin-right: 0.4rem; }
+      .callout-solution { border-left-color: var(--solution); background: color-mix(in srgb, var(--solution) 10%, transparent); }
+      .callout-warning { border-left-color: var(--warning); background: color-mix(in srgb, var(--warning) 10%, transparent); }
+      pre { background: var(--surface-sunken); border: 1px solid var(--border); padding: 1rem 1.2rem; margin: 1rem 0; font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.65; overflow-x: auto; }
+      code { font-family: var(--font-mono); }
+      .toc { background: var(--surface-raised); border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 1rem 1.3rem; margin: 1rem 0 1.5rem; }
+      .toc h3 { margin-bottom: 0.5rem; }
+      .toc ul { list-style: none; padding: 0; }
+      .toc li { margin: 0.25rem 0; }
+      .toc a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+      .toc a:hover { color: var(--accent); }
+      .footer { margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border); font-size: 0.8rem; color: var(--text-faint); font-family: var(--font-mono); }
+      @media (min-width: 1024px) { .sidebar { display: block; } }
+      @media (max-width: 768px) { .layout { flex-direction: column; padding: 1rem; } .stat-grid { grid-template-columns: repeat(2, 1fr); } }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>SESSION STATUS REPORT</span>
+      <span>2026-07-22</span>
+      <span>SystemNix</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#done">Fully Done</a>
+          <a href="#partial">Partially Done</a>
+          <a href="#missed">Missed</a>
+          <a href="#improve">Improve</a>
+          <a href="#next">Next Steps</a>
+          <a href="#questions">Questions</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-badge">Session Report</div>
+          <h1>Hermes v0.19.0 Upgrade</h1>
+          <p class="hero-subtitle">Updated hermes-agent from v2026.6.5 to v2026.7.20 ("The Quicksilver Release") — 5 releases behind, ~2,245 commits, ~3,300 issues closed upstream.</p>
+        </div>
+
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#summary">Summary</a></li>
+            <li><a href="#done">Fully Done</a></li>
+            <li><a href="#partial">Partially Done</a></li>
+            <li><a href="#missed">Missed / Not Done</a></li>
+            <li><a href="#improve">What We Should Improve</a></li>
+            <li><a href="#next">Next Steps</a></li>
+            <li><a href="#questions">Questions</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card stat-good">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Fully Done</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Partially Done</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Missed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">25</div>
+            <div class="stat-label">Next Steps</div>
+          </div>
+        </div>
+
+        <h2 id="done"><span class="num">01</span>Fully Done</h2>
+
+        <div class="card card-solution">
+          <h4>Updated flake.nix hermes-agent input</h4>
+          <p>Changed <code>github:NousResearch/hermes-agent/v2026.6.5</code> → <code>v2026.7.20</code> in <code>flake.nix:152</code>.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Updated flake.lock</h4>
+          <p>Ran <code>nix flake lock --update-input hermes-agent</code>. Lock now points to rev <code>3ef6bbd</code> (2026-07-20). Transitive deps (pyproject-nix, uv2nix) also updated.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Expanded extraDependencyGroups to match upstream full</h4>
+          <p>Updated <code>hermes.nix:29-46</code> from 6 groups to 18 groups matching upstream's <code>full</code> set. Added: <code>azure-identity</code>, <code>bedrock</code>, <code>daytona</code>, <code>dingtalk</code>, <code>feishu</code>, <code>hindsight</code>, <code>honcho</code>, <code>matrix</code>, <code>modal</code>, <code>parallel-web</code>, <code>tts-premium</code>, <code>voice</code>.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Verified NixOS module evaluation</h4>
+          <p><code>nix eval .#nixosConfigurations.evo-x2.config.services.hermes.enable</code> → <code>true</code>. ExecStart resolves to <code>hermes-agent-0.19.0/bin/hermes gateway run --replace</code>. MemoryMax=24G intact. Dry-run build succeeds.</p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Reviewed upstream release notes for breaking changes</h4>
+          <p>Checked v2026.7.1 (v0.18.0 "Judgment"), v2026.7.7 (v0.18.1 patch), v2026.7.20 (v0.19.0 "Quicksilver"). No breaking changes affecting our NixOS module — same entrypoint, same overlay interface, same <code>extraDependencyGroups</code> option.</p>
+        </div>
+
+        <h2 id="partial"><span class="num">02</span>Partially Done</h2>
+
+        <div class="card card-warning">
+          <h4>Deploy not triggered</h4>
+          <p>Updated flake inputs and verified evaluation, but did NOT run <code>nix run .#deploy</code> to actually deploy v0.19.0 to evo-x2. The changes are local-only — committed changes haven't been pushed or deployed.</p>
+          <div class="callout callout-warning">
+            <strong>Action needed</strong>
+            Run <code>nix run .#deploy</code> to deploy Hermes v0.19.0 to the live system. Consider running <code>nix run .#post-deploy-check</code> after to verify the Hermes service starts correctly.
+          </div>
+        </div>
+
+        <h2 id="missed"><span class="num">03</span>Missed / Not Done</h2>
+
+        <div class="card card-problem">
+          <h4>No AGENTS.md update for new dependency groups</h4>
+          <p>The AGENTS.md section on "Active pip extras" lists <code>messaging, anthropic, firecrawl, edge-tts, fal, exa</code>. This should be updated to reflect the 18 active groups now.</p>
+        </div>
+
+        <div class="card card-problem">
+          <h4>No sops secret audit for new Hermes features</h4>
+          <p>v0.19.0 adds Bitwarden/1Password secret sources, profile-based routing, and durable delivery ledger. Should verify if any new env vars or config files are needed in the sops template.</p>
+        </div>
+
+        <h2 id="improve"><span class="num">04</span>What We Should Improve</h2>
+
+        <div class="card">
+          <h4>Pre-deploy checklist for dependency upgrades</h4>
+          <p>We jumped straight into editing without a systematic checklist. A pre-commit checklist should include: (1) read upstream changelog, (2) check for new required env vars, (3) verify overlay interface unchanged, (4) update AGENTS.md, (5) run flake check, (6) deploy, (7) run post-deploy-check.</p>
+        </div>
+
+        <div class="card">
+          <h4>nix flake check --no-build is unreliable</h4>
+          <p>The <code>nix flake check --no-build</code> fails because upstream's <code>nix/web.nix</code> uses <code>builtins.readFile</code> on a derivation output that requires building. This is a pre-existing issue unrelated to our update, but it means we can't use flake check as a gate. Consider using <code>nix eval</code> on specific config paths instead.</p>
+        </div>
+
+        <h2 id="next"><span class="num">05</span>Next Steps</h2>
+
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Priority</th>
+              <th>Task</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>Deploy Hermes v0.19.0 to evo-x2</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>Run post-deploy-check after deploy</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Update AGENTS.md "Active pip extras" list</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Audit sops secrets for new Hermes v0.19.0 env vars</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Test Hermes gateway starts and connects to Discord</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>Verify Matrix messaging integration works (new dependency group)</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Commit all changes with descriptive message</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Test new Hermes features: profile-based routing, durable delivery ledger</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Review Hermes Gatus health check for any new endpoints</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Update Homepage dashboard tile if Hermes web UI changed</td>
+              <td><span class="badge badge-high">Not Started</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="questions"><span class="num">06</span>Questions I Can't Figure Out</h2>
+
+        <div class="card card-warning">
+          <h3>1. Does Hermes v0.19.0 need new sops secrets for the durable delivery ledger?</h3>
+          <p>The release notes mention a "durable delivery-obligation ledger" in <code>state.db</code>. Our migration script already handles <code>state.db</code> integrity checks. But does this feature require any new configuration or env vars in the sops template?</p>
+        </div>
+
+        <div class="card card-warning">
+          <h3>2. Should we enable Matrix messaging now that the dependency group is available?</h3>
+          <p>We added <code>"matrix"</code> to <code>extraDependencyGroups</code> (Linux-only). But Hermes currently runs as a Discord bot. Is there a Matrix server we should connect to, or should we remove this group until needed?</p>
+        </div>
+
+        <div class="card card-warning">
+          <h3>3. What's the correct deploy sequence for Hermes upgrades?</h3>
+          <p>Hermes is a long-running gateway with in-flight conversations. The v0.19.0 release mentions "drain coordination" and "scale-to-zero". Should we: (a) just deploy and let systemd restart handle it, (b) manually drain first, or (c) time it for low-usage period?</p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-07-22 17:38 &middot; Session: Hermes v0.19.0 upgrade
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
+        var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              links.forEach(function (link) {
+                link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+              });
+            }
+          });
+        }, { rootMargin: "-80px 0px -60% 0px", threshold: 0 });
+        sections.forEach(function (s) { observer.observe(s); });
+      })();
+    </script>
+  </body>
+</html>
