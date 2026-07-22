@@ -243,6 +243,14 @@ _: {
 
               # Generate client secret (POST /secret rotates — only when file missing)
               SECRET_FILE="$CLIENT_SECRETS_DIR/${client.clientId}"
+              ${lib.optionalString (builtins.elem client.clientId cfg.provision.regenerateSecretsFor) ''
+                # Force regeneration: delete stale file so the skip-if-exists
+                # check below falls through to POST /secret.
+                if [ -f "$SECRET_FILE" ]; then
+                  echo "  Force-regenerating secret (listed in regenerateSecretsFor)..."
+                  rm -f "$SECRET_FILE"
+                fi
+              ''}
               if [ -f "$SECRET_FILE" ] && [ -s "$SECRET_FILE" ]; then
                 echo "  Secret file already exists."
               else
@@ -428,6 +436,18 @@ _: {
             type = lib.types.path;
             default = ../../../assets/avatar.png;
             description = "Path to avatar image to seed for admin user";
+          };
+
+          regenerateSecretsFor = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+            description = ''
+              Client IDs whose secrets should be force-regenerated on the next
+              provision run. Use this to recover from client-secret file desync
+              (stale file value that doesn't match Pocket ID's database).
+              Clear the list after a successful deploy to prevent unwanted
+              secret rotation on subsequent provision runs.
+            '';
           };
         };
       };
