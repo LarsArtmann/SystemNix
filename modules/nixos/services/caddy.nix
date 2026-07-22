@@ -166,6 +166,15 @@ _: {
             };
             "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
             "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
+
+            "dnsblockd.${domain}" = protectedVHost "dnsblockd" config.services.dns-blocker.statsPort;
+            "dnsblock.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                redir * https://dnsblockd.${domain}{uri} permanent
+              '';
+            };
           }
           // lib.optionalAttrs config.services.voice-agents.enable {
             "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
