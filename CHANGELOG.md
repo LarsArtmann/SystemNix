@@ -10,6 +10,13 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Added
 
+- **qmd** — on-device semantic + BM25 hybrid markdown/code search via persistent HTTP MCP server (port 8181). Built from GitHub source (`fetchFromGitHub` + `pnpmConfigHook`). Three GGUF models auto-cached (~2 GiB). CPU-only by default. Crush MCP integration.
+- **Bun memory limiter** — `bunMemoryLimitOverlay` wraps `bun` in a `systemd-run --user --scope` with `MemoryMax=8G`, `MemorySwapMax=0`, `oom_score_adj=1000`. Prevents runaway `bun test` from consuming 61 GB and triggering WDT reset.
+- **monitor365 graphical collectors** — keystroke, mouse, camera, clipboard, screenshot collectors wired. `input`/`video` groups added, path-unit restart on Wayland login, upstream pgrep-based display env discovery (`displayUser`).
+- **monitor365 backup health monitoring** — Prometheus textfile collector (`monitor365_backup_healthy`, `monitor365_backup_age_hours`) + Gatus Discord alert. Follows AGENTS.md rule 9 mandate.
+- **monitor365 nightly DuckDB backup** — timer at 03:00, 7-day retention.
+- **DiscordSync OTel tracing** — traces exported to SigNoz via `OTEL_EXPORTER_OTLP_ENDPOINT`.
+- **DiscordSync webhook alerting** — `DISCORDSYNC_WEBHOOK_URL` from sops secret.
 - **ssh-suspend-guard** — holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active, preventing idle suspend during remote work
 - **PSI memory pressure metrics** — textfile collector in SigNoz exports `/proc/pressure/memory` avg10 values + derived alert boolean, with Gatus Discord alerting
 - **md-go-validator** — added to both NixOS and macOS desktops
@@ -17,6 +24,8 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Changed
 
+- **DiscordSync module refactor** — consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). Eliminates option re-declaration drift. SystemNix specifics layered via `lib.mkMerge`.
+- **Post-deploy-check improvements** — SIGPIPE fix (body-file grep instead of pipe), `--compressed` flag for gzip responses, DiscordSync startup-race handling (retry + SKIP for backfill), renamer data-correctness assertion (`total_operations > 0`).
 - **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
 - **goreleaser** added to Linux base packages
@@ -27,6 +36,12 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Fixed
 
+- **File & Image Renamer split-brain** — watcher and health service unified on `dataDir` state paths (`b0c76b58`). Dashboard was silently showing 0 operations while watcher wrote to `$HOME` defaults.
+- **PMA watcher attribution** — `convertEvent` now resolves actual git repo root per file event (upstream `52c01b18`). Was attributing all events to watch root → infinite `git status` failure loop → daemon timeout.
+- **Monitor365 integrity hash serialization** — canonical JSON serialization before hashing (upstream `9ea1f1000` + `ebb26a0bd`). Root cause: struct field order vs BTreeMap alphabetical order → every event with non-alphabetical fields rejected.
+- **btrbk-data snapshot directory** — `/data/.snapshots` created via tmpfiles rule. Was failing nightly since the directory never existed.
+- **btrfs-verify-snapshots false alarm** — parses snapshot name (`@.YYYYMMDDTHHMM` btrbk format) instead of `stat` mtime (BTRFS snapshots inherit source mtime).
+- **Ollama silent non-start** — removed `wantedBy = mkForce []` that suppressed nixpkgs' default `WantedBy=multi-user.target`.
 - Cascading build failures across 10+ Go repos (cmdguard follows clause, vendor hash cascades)
 - Hermes hardcoded `lars` username → `config.users.primaryUser`
 - Forgejo duplicate password generation in admin setup

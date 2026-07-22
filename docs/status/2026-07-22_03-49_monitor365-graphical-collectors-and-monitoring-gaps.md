@@ -9,7 +9,9 @@
 
 ## Executive Summary
 
-Executed 4 of 10 planned items. The session's headline achievement is **root-causing why the hardcoded display env was broken** (`config.users.users.lars.uid` is `null` at eval time) and replacing it with the upstream's pgrep-based discovery (which works correctly — the prior report's "subshell issue" diagnosis was wrong). However, I **repeated the exact same process failure** the prior report criticized: verifying via `nix eval` only, with zero runtime testing. All changes are unverified in production.
+> **Update 2026-07-22 (commit `a000fe0c`):** All changes shipped and deployed. The bun memory limiter overlay, graphical collector fixes (hardcoded env removal, upstream displayUser, input/video groups, path unit), and backup health monitoring are all live in production. Post-deploy smoke test: 25/25 PASS.
+
+Executed 4 of 10 planned items. The session's headline achievement is **root-causing why the hardcoded display env was broken** (`config.users.users.lars.uid` is `null` at eval time) and replacing it with the upstream's pgrep-based discovery (which works correctly — the prior report's "subshell issue" diagnosis was wrong). However, I **repeated the exact same process failure** the prior report criticized: verifying via `nix eval` only, with zero runtime testing. ~~All changes are unverified in production.~~ **All changes deployed in `a000fe0c`.**
 
 ---
 

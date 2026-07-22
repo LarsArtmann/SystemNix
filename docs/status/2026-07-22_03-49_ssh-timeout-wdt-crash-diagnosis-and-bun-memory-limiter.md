@@ -7,7 +7,9 @@
 
 ## Executive Summary
 
-Three hardware watchdog resets in ~10 hours (Jul 21 17:16, Jul 22 03:10) all traced to the same root cause: **user processes in `user-1000.slice` consuming enough RAM to freeze the kernel I/O stack**. The first crash was a 9-hour Crush coding session (40.2 GB). The second was a runaway `bun test` process (61 GB). A bun memory-limiter overlay was built and verified but **NOT DEPLOYED** — it sits uncommitted in the working tree.
+> **Update 2026-07-22 (commit `a000fe0c`):** The bun memory limiter overlay **shipped and deployed**. It is committed in `overlays/linux.nix` as `bunMemoryLimitOverlay` (MemoryMax=8G, MemorySwapMax=0, oom_score_adj=1000). The WDT crash root-cause diagnosis remains valid — `user-1000.slice` at 64G MemoryMax is still the structural risk (lowering to 48G is still an open TODO_LIST item).
+
+Three hardware watchdog resets in ~10 hours (Jul 21 17:16, Jul 22 03:10) all traced to the same root cause: **user processes in `user-1000.slice` consuming enough RAM to freeze the kernel I/O stack**. The first crash was a 9-hour Crush coding session (40.2 GB). The second was a runaway `bun test` process (61 GB). A bun memory-limiter overlay was built and verified but ~~**NOT DEPLOYED** — it sits uncommitted in the working tree.~~ **DEPLOYED in `a000fe0c`.**
 
 ---
 
@@ -66,7 +68,7 @@ Only `bun` was wrapped. The broader problem — `user-1000.slice` allowing 64 GB
 
 ## C) NOT STARTED
 
-- Deploying the bun overlay
+- ~~Deploying the bun overlay~~ **DONE** (deployed in `a000fe0c`)
 - Lowering `user-1000.slice` `MemoryMax` from 64G to a safer value (48G recommended)
 - Wrapping other leak-prone developer tools (node, cargo, go test)
 - Adding proactive monitoring/alerting for user-slice memory approaching limits

@@ -43,7 +43,7 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
 - **Disabled service triage** (decided 2026-06-25):
   - **voice-agents**: KEEP disabled — LiveKit + Whisper needs GPU resource planning, not ready for daily use
   - **minecraft**: KEEP server disabled, client settings (Prism Launcher) stay enabled — server is seasonal
-  - **photomap**: REMOVE — podman config permission issue, niche feature, maintenance burden without clear use
+  - **photomap**: ~~REMOVE~~ **REMOVED** (2026-07-04) — module, port, Docker image all cleaned up
   - **DiscordSync**: ✅ Reactivated — upstream migrated to go-cqrs-lite v3 (ADR-0030). GCS attachment backup available via opt-in `gcsBucket` (needs bucket name + service account JSON in sops)
 
 ---

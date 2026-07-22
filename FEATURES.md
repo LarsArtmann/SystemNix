@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-07-09 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-07-22 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,7 +25,7 @@ _A brutally honest audit of every feature the project actually has._
 | Feature                                   | Status | Notes                                                                                       |
 | ----------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
 | Cross-platform Nix flake (Darwin + NixOS) | ✅     | Single flake, two systems, 80% shared via `platforms/common/`                               |
-| flake-parts modular architecture          | ✅     | 39 service modules auto-discovered in `flake.nix`                                           |
+| flake-parts modular architecture          | ✅     | 41 service modules auto-discovered in `flake.nix` (run `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'`) |
 | Shared overlays (Darwin + NixOS)          | ✅     | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync                        |
 | Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer           |
 | Shared Home Manager config                | ✅     | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs`                                  |
@@ -69,7 +69,7 @@ _A brutally honest audit of every feature the project actually has._
 | ~~PhotoMap AI~~                       | ❌     | —                                    | Removed (2026-07-04): OCI container permission issue, niche feature, maintenance burden                                                                                                                                                                                                 |
 | SigNoz (observability)                | ✅     | `signoz.nix`                         | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 18 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics                                                            |
 | TaskChampion (Taskwarrior sync)       | ✅     | `taskchampion.nix`                   | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days                                                                                                                                                                                                                     |
-| Twenty CRM                            | ✅     | `twenty.nix`                         | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan                                                                                                                                                                                 |
+| Twenty CRM                            | ⚠️     | `twenty.nix`                         | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan. **Known issue:** `twenty-server` crash-loops with `FATAL: role "twenty" does not exist` (PG role mismatch). Data intact (90 tables, 17 MB). |
 | Dozzle (Docker log viewer)            | ✅     | inline `configuration.nix`           | OCI container, `logs.home.lan`, Docker socket mount, 300-line tail, running-only filter                                                                                                                                                                                                 |
 | Minecraft server                      | 🔧     | `minecraft.nix`                      | JDK 25, ZGC, firewall restricted to LAN, Prism Launcher client config, whitelist — disabled in config                                                                                                                                                                                   |
 | Manifest (LLM router)                 | ✅     | `manifest.nix`                       | Smart LLM router for AI agents, cost optimization, port 2099, `manifest.home.lan`                                                                                                                                                                                                       |
@@ -78,17 +78,18 @@ _A brutally honest audit of every feature the project actually has._
 | OpenSEO (SEO suite)                   | ✅     | `openseo.nix` + `pkgs/openseo.nix`   | Self-hosted SEO: rank tracking, keyword research, backlinks. Native NixOS service (built from source via Vite/pnpm, workerd runtime), port 3002, `seo.home.lan`                                                                                                                         |
 | Monitor365 (device monitoring)        | ✅     | `monitor365.nix`                     | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID                                                                                                                                                        |
 | PMA (auto-commit daemon)              | ✅     | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval                                                                                                                                                                                                  |
-| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 52+ health check endpoints, Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                              |
+| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 59 health check endpoints (run `rg -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                 |
 | Disk Monitor                          | ✅     | `disk-monitor.nix`                   | Desktop notifications at disk usage thresholds                                                                                                                                                                                                                                          |
 | NVMe Health Monitor                   | ✅     | `nvme-health-monitor.nix`            | Desktop notifications for critical NVMe SMART events                                                                                                                                                                                                                                    |
-| DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, turso-sync backend (local + cloud), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). GCS attachment backup opt-in via `gcsBucket`. |
+| DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, turso-sync backend (local + cloud), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz. |
+| Qmd (on-device markdown search)       | ✅     | `qmd-config.nix`                     | Semantic + BM25 hybrid markdown/code search via HTTP MCP server on port 8181. Built from GitHub source (`fetchFromGitHub` + `pnpmConfigHook`). Three GGUF models auto-cached (~2 GiB). CPU-only by default (`QMD_FORCE_CPU=1`). Crush MCP integration at `http://localhost:8181/mcp`. |
 
 ### AI / ML Stack
 
 | Service                          | Status     | Module             | Key Details                                                                                                                                                 |
 | -------------------------------- | ---------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Centralized AI model storage     | ✅         | `ai-models.nix`    | `/data/ai/` tree (14 dirs), env vars, tmpfiles rules — dependency for all AI services                                                                       |
-| Ollama (LLM inference)           | ✅         | `ai-stack.nix`     | ROCm GPU, flash attention, 2 parallel, q8_0 KV, 1h keep-alive, 32G MemoryMax, no autostart (`wantedBy = []`)                                                |
+| Ollama (LLM inference)           | ✅         | `ai-stack.nix`     | ROCm GPU, flash attention, 2 parallel, q8_0 KV, 1h keep-alive, 32G MemoryMax, auto-starts with `multi-user.target` (`mkForce []` removed) |                                                |
 | llama.cpp (standalone)           | ✅         | `ai-stack.nix`     | ROCWMMA + MFMA custom build (`-DGGML_HIP_MMQ_MFMA=ON`)                                                                                                      |
 | gpu-python wrapper               | ✅         | `ai-stack.nix`     | ROCm env vars + LD_LIBRARY_PATH for GPU-accelerated Python                                                                                                  |
 | ComfyUI (image generation)       | ❌ Removed | —                  | Disabled — prefer using AI models via code directly                                                                                                         |
@@ -106,7 +107,7 @@ _A brutally honest audit of every feature the project actually has._
 | Browser policies          | ✅     | `browser-policies.nix`       | YouTube Shorts Blocker + OneTab force-installed                                                                |
 | Steam gaming              | ✅     | `steam.nix`                  | extest, protontricks, gamemode (renice=10, GPU temp 80°C), gamescope, mangohud                                 |
 | Multi-WM (Sway backup)    | ✅     | `multi-wm.nix`               | Sway as backup at SDDM login — enabled in config                                                               |
-| File & Image Renamer (AI) | ⚠️     | `file-and-image-renamer.nix` | AI screenshot renaming via charm.land/fantasy — re-enabled in config (Go 1.26.3 now available), pending deploy |
+| File & Image Renamer (AI) | ✅     | `file-and-image-renamer.nix` | AI screenshot renaming via charm.land/fantasy. Watcher + health dashboard unified on `dataDir` state (split-brain fixed `b0c76b58`). Post-deploy-check asserts `total_operations > 0`. |
 
 ### Monitoring
 
@@ -382,6 +383,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | dnsblockd                    | Go       | ✅     | ~930-line DNS blocker: dynamic TLS, temp-allow API, false positive reporting, Prometheus metrics, 10-category system, Catppuccin block page — source in `platforms/nixos/programs/dnsblockd/` |
 | emeet-pixyd                  | Go       | ✅     | EMEET PIXY webcam daemon — via flake input                                                                                                                                                    |
 | monitor365                   | Rust     | ✅     | Device monitoring agent — source-only flake input                                                                                                                                             |
+| qmd                          | Node.js  | ✅     | On-device semantic markdown search — built from GitHub source via `pnpmConfigHook`                                                                                                            |
 | netwatch                     | Rust     | ✅     | Real-time network diagnostics TUI                                                                                                                                                             |
 | openaudible                  | AppImage | ✅     | Audible audiobook manager                                                                                                                                                                     |
 | jscpd                        | Node.js  | ✅     | Copy/paste detector                                                                                                                                                                           |
@@ -440,7 +442,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Raspberry Pi 3    | Hardware not provisioned — entire DNS failover cluster is planned-only | High     |
 | ~~PhotoMap AI~~   | Removed (2026-07-04) — module, port, Docker image all cleaned up       | —        |
 | Multi-WM (Sway)   | Enabled as backup compositor at SDDM login — may have minor bitrot     | Low      |
-| Twenty CRM        | Module exists, enabled in configuration, Caddy at crm.home.lan         | Low      |
+| Twenty CRM        | `twenty-server` crash-loops with PG role mismatch — data intact, app down  | Medium   |
 | Voice agents      | Disabled in configuration, Whisper Docker + ROCm pipeline              | Medium   |
 | Minecraft         | Disabled in configuration                                              | Low      |
 | Benchmark scripts | Planned but never created                                              | Low      |

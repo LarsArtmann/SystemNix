@@ -136,8 +136,10 @@
 
 ## Raw notes
 
+> **Update 2026-07-22:** The refactor shipped as `bb37ad2a` ("refactor(qmd): build from GitHub source with pnpmConfigHook"). qmd is deployed, the HTTP MCP server runs on `localhost:8181`, and Crush is configured to use it. The mixed git state was resolved — all files committed cleanly.
+
 - Built `qmd` successfully from GitHub source with `pnpmConfigHook`. Binary responds to `--version` and `--help`.
 - `nix flake check --no-build` passes on x86_64-linux.
 - `nixosConfigurations.evo-x2.config.system.build.toplevel` evaluates to `/nix/store/r2683s50kvf44j0573halahffgc3dlyw-nixos-system-evo-x2-26.11.20260719.241313f`.
-- Current `git status` shows a mix of staged and unstaged changes on the same files. Need user decision before committing/deploying.
-- Wait for instructions.
+- ~~Current `git status` shows a mix of staged and unstaged changes on the same files. Need user decision before committing/deploying.~~ **Resolved:** committed as `bb37ad2a`, deployed, runtime-verified.
+- ~~Wait for instructions.~~ **Done.**

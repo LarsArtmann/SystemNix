@@ -199,8 +199,12 @@ The 200 response I "verified" returns `total_operations: 0` — but the watcher 
 
 ## TL;DR
 
+> **Update 2026-07-21 15:14 (commit `b0c76b58`):** The split-brain is **RESOLVED**. Both watcher and health service now use `${cfg.dataDir}/history.json` and `${cfg.dataDir}/hashes.db`. State migrated (25 entries, 25 hash files). Dashboard verified showing `total_operations: 25`. The 3 questions below were answered by the follow-up session: watcher and health share the same state files, plain copy migration was sufficient, changes shipped as one atomic commit. See `docs/status/2026-07-21_15-14_renamer-split-brain-resolution.md` for the full resolution.
+
 Diagnosed and fixed the renamer HTTP 500 (nil-pointer panic from read-only-home init failure). Three-layer upstream fix (env-var config + nil-safe handlers + regression tests), pushed as `ca95be5`. SystemNix module wired, deployed, endpoint returns 200.
 
 **BUT: I introduced a split-brain.** The watcher still writes to `~/.renamer-history.json`; the dashboard now reads `~/.file-renamer/history.json` (empty). The green dashboard is silently lying. The fix is incomplete until the watcher is wired to the same `dataDir` paths and existing data is migrated.
 
 **Awaiting user instructions on the 3 questions above before proceeding.**
+
+> **Update 2026-07-21 15:14 (commit `b0c76b58`):** ~~Awaiting instructions.~~ **RESOLVED.** Watcher wired to `dataDir` paths, state migrated (25 entries), dashboard verified at `total_operations: 25`. See `docs/status/2026-07-21_15-14_renamer-split-brain-resolution.md`.

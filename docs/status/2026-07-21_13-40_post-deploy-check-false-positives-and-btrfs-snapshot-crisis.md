@@ -229,10 +229,12 @@ Only DiscordSync's `/api/stats` was found to return gzip. Other endpoints (`/hea
 
 ## Final State
 
+> **Update 2026-07-22:** All 6 bug fixes were deployed in subsequent deploys. `/data/.snapshots` now exists (tmpfiles rule activated). btrbk-data succeeds nightly. The SIGPIPE fix (`grep -qiE` from body file instead of pipe) and `--compressed` flag are live in `scripts/post-deploy-check.sh`.
+
 ```
 Post-deploy-check: 23 PASS, 0 FAIL, 0 SKIP ✅
 nix flake check --no-build: all checks passed ✅
 All 14 monitored services: healthy ✅
-/data/.snapshots: STILL MISSING (needs deploy or manual mkdir) ⚠️
-Changes deployed: NO (committed in 99ac60a5 but not activated on live system) ⚠️
+/data/.snapshots: STILL MISSING (needs deploy or manual mkdir) ⚠️  ← DEPLOYED + FIXED
+Changes deployed: NO (committed in 99ac60a5 but not activated on live system) ⚠️  ← DEPLOYED IN LATER COMMITS
 ```

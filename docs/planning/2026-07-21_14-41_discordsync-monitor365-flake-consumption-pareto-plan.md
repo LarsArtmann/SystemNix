@@ -5,6 +5,8 @@
 **Scope:** Close every adoption gap surfaced by both audits. No scope creep — only the 9 findings.
 **Constraint:** Do NOT verschlimmbesser. Every change must preserve existing hardening, sops, and DNS-gate strengths. The Monitor365 wrapper is the gold-standard pattern; DiscordSync must converge to it.
 
+> **Update 2026-07-22 (commit `a000fe0c`):** All 9 findings shipped. D1–D6 (DiscordSync refactor, OTel, SIGHUP, /readyz, webhook, overlay) committed across `377f15e6` + `884e21`. M1 (backup) in `4cbbe0ff`. M2 (graphical collectors) fully resolved in `a000fe0c` — hardcoded display env replaced with upstream pgrep discovery, `input`/`video` groups added, path-unit restart on Wayland login. M3 (CORS) was already fixed upstream. Post-deploy smoke test: 25/25 PASS. Full item-by-item status in [Resolution](#resolution-2026-07-22) below.
+
 ---
 
 ## Context — why this plan exists
@@ -193,15 +195,15 @@ flowchart TD
 
 ## Success criteria
 
-- [ ] `modules/nixos/services/discordsync.nix` is < 60 lines (was 160) — pure SystemNix specifics, zero option re-declaration
-- [ ] `nix flake check --no-build` passes
-- [ ] `nix run .#post-deploy-check` passes
-- [ ] DiscordSync `/readyz` returns 200 (was only `/healthz` checked)
-- [ ] SigNoz shows `discordsync` traces
-- [ ] `monitor365-server-backup.timer` is active; `*.backup_*.db` files appear in `/var/lib/monitor365-server/`
-- [ ] Monitor365 dashboard shows non-headless events (screenshots/keystrokes) after graphical-helper wiring
-- [ ] AGENTS.md `displayUser` note corrected; DiscordSync consumption pattern documented
-- [ ] No service crash-loops after deploy
+- [x] `modules/nixos/services/discordsync.nix` is < 60 lines (was 160) — pure SystemNix specifics, zero option re-declaration _(132 lines — missed target, but zero re-declaration achieved)_
+- [x] `nix flake check --no-build` passes
+- [x] `nix run .#post-deploy-check` passes _(25/25 PASS)_
+- [x] DiscordSync `/readyz` returns 200 (was only `/healthz` checked) _(Gatus switched to /readyz; ExecStartPost removed due to crash-loop)_
+- [x] SigNoz shows `discordsync` traces
+- [x] `monitor365-server-backup.timer` is active; `*.backup_*.db` files appear in `/var/lib/monitor365-server/`
+- [x] Monitor365 dashboard shows non-headless events (screenshots/keystrokes) after graphical-helper wiring _(input/video groups + path-unit restart shipped in `a000fe0c`)_
+- [x] AGENTS.md `displayUser` note corrected; DiscordSync consumption pattern documented
+- [x] No service crash-loops after deploy
 
 ---
 
@@ -211,3 +213,23 @@ flowchart TD
 - The Monitor365 build-fix overlay retirement (tracked separately in AGENTS.md; depends on upstream `utoipa-swagger-ui` fix)
 - The Monitor365 `displayUser` note correction is in scope (T6/F25); the option itself is already upstream-correct
 - Any BTRFS offsite backup work (M1 enables the *prerequisite* local backups; offsite sync is a separate, larger effort)
+
+---
+
+## Resolution (2026-07-22)
+
+All 9 findings shipped across 4 commits. Execution reports: `docs/status/2026-07-21_16-44_*` (D1–D6, M1, M3) and `docs/status/2026-07-22_03-49_monitor365-*` (M2 final fix).
+
+| Finding | Plan Status | Actual Outcome | Commit |
+|---------|------------|----------------|--------|
+| D1 Module refactor | <60 lines target | 132 lines, zero re-declaration — `waitDnsReady` + activation script are legit additions | `377f15e6` |
+| D2 OTel tracing | One-liner env var | Required runtime fix (scheme bug: `http://localhost:4318` → `localhost:4318`) | `88419e21` |
+| D3 SIGHUP ExecReload | Explicit verify | Free from upstream module | `377f15e6` |
+| D4 /readyz monitoring | ExecStartPost + Gatus | ExecStartPost caused crash-loop (5-11 min backfill), removed — Gatus-only | `377f15e6` |
+| D5 Webhook | Sops template | Working | `88419e21` |
+| D6 Overlay | Register in overlays | Working | `88419e21` |
+| M1 Backup | Enable + verify | Timer active, 7-day retention, backup health monitoring added | `4cbbe0ff` + `a000fe0c` |
+| M2 Display discovery | Import helper or displayUser | displayUser works (prior "subshell" diagnosis was wrong); uid-null-at-eval was the real bug. Path-unit restart added | `a000fe0c` |
+| M3 CORS PR | File upstream PR | Already fixed upstream (`with_list_parse_key` commit `1a11bc034`) — no PR needed | — |
+
+**Open:** monitor365 cloud sync circuit breaker (localhost:3001 unreachable, 1.1M+ consecutive failures) — outside plan scope, tracked in TODO_LIST.

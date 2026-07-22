@@ -8,6 +8,8 @@
 
 ## Executive Summary
 
+> **Update 2026-07-22 (commit `a000fe0c`):** The graphical collectors are now FIXED. The root cause was `config.users.users.lars.uid` being `null` at eval time (not a subshell issue — the prior diagnosis was wrong). Hardcoded `Environment=` removed; upstream `displayUser` pgrep discovery works correctly. `input`/`video` groups added for keystroke/mouse/camera. Path-unit restarts the agent when the Wayland session appears. All 9 plan findings fully resolved. See `docs/status/2026-07-22_03-49_monitor365-graphical-collectors-and-monitoring-gaps.md` for the root-cause analysis.
+
 Executed 8 tasks (T1-T8) from the Pareto plan. **3 runtime bugs shipped to production** before being caught by post-deploy smoke tests. The plan's 9 findings are addressed, but **2 graphical collectors remain non-functional** (keystroke, mouse) and **1 is partially broken** (screenshot). Post-deploy smoke test: 25/25 PASS. DiscordSync crash-looped twice due to my bugs before stabilizing.
 
 ---
@@ -254,7 +256,7 @@ Adding `users.users.monitor365.extraGroups = [ "input" "video" ]` would unlock k
 | D5 Webhook | Sops template | Working | ✅ |
 | D6 Overlay | Register in overlays | Working | ✅ |
 | M1 Backup | Enable + verify | Timer active, no Gatus check | 🟡 Functional, monitoring gap |
-| M2 Display discovery | Import helper or displayUser | Hardcoded Environment=, clipboard only | 🔴 3 of 4 graphical collectors still broken |
+| M2 Display discovery | Import helper or displayUser | ~~Hardcoded Environment=, clipboard only~~ **FIXED in `a000fe0c`:** upstream pgrep discovery works, all collectors unlocked | ✅ |
 | M3 CORS PR | File upstream PR | Already fixed upstream | ✅ No work needed |
 
-**Net result:** 5 fully done, 2 partially done, 2 shipped-broken-then-fixed, 0 totally failed. The plan's structural insight (D1 refactor) is sound and delivered value. The execution quality (runtime bugs, incomplete verification) needs improvement.
+**Net result:** ~~5 fully done, 2 partially done, 2 shipped-broken-then-fixed, 0 totally failed.~~ **ALL 9 RESOLVED** as of `a000fe0c`. The plan's structural insight (D1 refactor) is sound and delivered value. The execution quality (runtime bugs, incomplete verification) needed improvement — addressed in the follow-up session.
