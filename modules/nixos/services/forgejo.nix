@@ -10,7 +10,8 @@ _: {
     }:
     let
       inherit (config.users) primaryUser;
-      forgejoPkg = config.services.forgejo.package;
+      cfg = config.services.forgejo;
+      forgejoPkg = cfg.package;
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
@@ -516,7 +517,23 @@ _: {
       };
     in
     {
+      options = {
+        services.forgejo.sshKeys = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.listOf lib.types.str);
+          default = { };
+          description = ''
+            Declarative SSH public keys for Forgejo users. Keys are idempotent:
+            existing keys are matched by their raw string and left unchanged.
+            Defaults to the primary user's NixOS authorized keys.
+          '';
+        };
+      };
+
       config = lib.mkIf config.services.forgejo.enable {
+        services.forgejo.sshKeys = lib.mkDefault {
+          ${primaryUser} = config.users.users.${primaryUser}.openssh.authorizedKeys.keys;
+        };
+
         services.forgejo = {
           package = pkgs.forgejo-lts;
 
