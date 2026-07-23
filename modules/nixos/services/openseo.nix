@@ -2,6 +2,14 @@
 # Native NixOS service — builds from source, no Docker container.
 # SSO: no built-in auth (AUTH_MODE=local_noauth). Access is gated by
 # oauth2-proxy forward-auth (Layer 2 SSO) on seo.<domain>.
+#
+# Optional features (declarative via module options):
+#   - Google Search Console: services.openseo.googleSearchConsole.enable
+#     Requires google_client_id, google_client_secret, better_auth_secret in openseo.yaml.
+#     GSC OAuth callback at https://seo.<domain>/api/gsc/oauth/callback works behind
+#     protectedVHost because the browser carries the oauth2-proxy session cookie.
+#   - AI agent (SAM): services.openseo.aiFeatures.enable
+#     Requires openrouter_api_key in openseo.yaml.
 _: {
   flake.nixosModules.openseo =
     {
@@ -94,6 +102,23 @@ _: {
       options.services.openseo = {
         enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
         port = serviceTypes.servicePort ports.openseo "HTTP port for OpenSEO dashboard";
+
+        googleSearchConsole = {
+          enable = lib.mkEnableOption ''
+            Google Search Console integration.
+            Requires google_client_id, google_client_secret, and better_auth_secret
+            in the openseo.yaml sops file. The GSC OAuth callback at
+            /api/gsc/oauth/callback works behind protectedVHost (browser carries
+            the oauth2-proxy session cookie).
+          '';
+        };
+
+        aiFeatures = {
+          enable = lib.mkEnableOption ''
+            AI features (SAM in-app SEO agent via OpenRouter).
+            Requires openrouter_api_key in the openseo.yaml sops file.
+          '';
+        };
       };
 
       config = lib.mkIf cfg.enable {
@@ -117,6 +142,10 @@ _: {
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
 
+          # restartTriggers: prevent stale vite preview process serving GC'd static
+          # files from the old nix store path. Same pattern as homepage-dashboard.
+          restartTriggers = [ pkg ];
+
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "2G";
@@ -137,6 +166,11 @@ _: {
                 "NODE_OPTIONS=--max-old-space-size=1536"
                 "CLOUDFLARE_INCLUDE_PROCESS_ENV=true"
                 "HOME=${stateDir}"
+                # Privacy: opt out of OpenSEO's anonymous telemetry (introduced v0.1.0).
+                # Sends heartbeats with aggregate counts every 5 min during first 2h,
+                # then at most once daily. No personal data, but unnecessary for a
+                # self-hosted homelab.
+                "OPENSEO_TELEMETRY_DISABLED=1"
               ];
 
               ExecStartPre = [

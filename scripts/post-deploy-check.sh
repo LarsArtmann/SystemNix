@@ -132,6 +132,8 @@ check_local "Monitor365 UI" "3001" "/ui/" "200" "<html" 2>/dev/null || true
 
 check_local "File Renamer" "8086" "/status" "200" "" 2>/dev/null || true
 
+check_local "OpenSEO" "3002" "/" "200" "<html" 2>/dev/null || true
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="
