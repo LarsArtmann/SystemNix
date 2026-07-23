@@ -290,13 +290,15 @@
               Group = "monitor365-server";
               StateDirectory = "monitor365-server";
             };
+            restartTriggers = [
+              "${pkgs.duckdb}"
+            ];
             script = ''
               DB="${serverCfg.stateDir}/monitor365.duckdb"
               if [ -f "$DB" ] && [ -s "$DB" ]; then
                 ${pkgs.duckdb}/bin/duckdb "$DB" -c \
-                  "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;" \
-                  && echo "monitor365-schema-migrate: version column ensured" \
-                  || echo "monitor365-schema-migrate: ALTER TABLE failed (column may already exist)"
+                  "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;"
+                echo "monitor365-schema-migrate: version column ensured"
               else
                 echo "monitor365-schema-migrate: DB not found or empty, skipping"
               fi
