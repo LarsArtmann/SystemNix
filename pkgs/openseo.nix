@@ -10,13 +10,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "openseo";
-  version = "0.0.26";
+  version = "0.1.1";
 
   src = fetchFromGitHub {
     owner = "every-app";
     repo = "open-seo";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-QoneI22o7GYUNfQ+sSFq2kEx/GNv7SMIbfqo11L4/Y0=";
+    hash = "sha256-xsb49Au+PCOe13imPWgfch0S0R84hCUUpIaYRiTyqIQ=";
   };
 
   nativeBuildInputs = [
@@ -35,7 +35,7 @@ stdenv.mkDerivation (finalAttrs: {
     inherit (finalAttrs) pname version;
     inherit (finalAttrs) src;
     fetcherVersion = 4;
-    hash = "sha256-2aGxcFzezCke22IVFW4IDxlMWlakw0x0RzPXwCaoKjA=";
+    hash = "sha256-FDFfffVB8bKqZGLduBqdRmd2PWW8/HUprxW8STntLyM=";
   };
 
   # Provide native libraries at build time so vite/wrangler/workerd can load native addons.
