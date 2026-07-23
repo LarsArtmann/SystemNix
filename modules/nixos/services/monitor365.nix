@@ -294,7 +294,7 @@
               DB="${serverCfg.stateDir}/monitor365.duckdb"
               if [ -f "$DB" ] && [ -s "$DB" ]; then
                 ${pkgs.duckdb}/bin/duckdb "$DB" -c \
-                  "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 0;" \
+                  "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;" \
                   && echo "monitor365-schema-migrate: version column ensured" \
                   || echo "monitor365-schema-migrate: ALTER TABLE failed (column may already exist)"
               else

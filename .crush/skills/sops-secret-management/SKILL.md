@@ -112,7 +112,7 @@ sops-nix decrypts ALL secrets atomically. One bad owner → everything fails. Gu
 | `dnsblockd-certs.yaml` | dnsblockd_ca_cert, dnsblockd_ca_key, dnsblockd_server_cert, dnsblockd_server_key                                                                                |
 | `voice-agents.yaml`    | livekit_keys                                                                                                                                                    |
 | `hermes.yaml`          | discord_bot_token, glm_api_key, minimax_api_key, xiaomi_api_key, fal_key, firecrawl_api_key                                                                     |
-| `crush-daily.yaml`     | synthetic_api_key                                                                                                                                               |
+| `crush-daily.yaml`     | synthetic_api_key (also used by file-and-image-renamer via `mkKeyedSecrets` as `file_renamer_synthetic_api_key`)                                               |
 | `openseo.yaml`         | dataforseo_api_key                                                                                                                                              |
 | `monitor365.yaml`      | cloud_auth_token, server_jwt_secret                                                                                                                             |
 | `signoz.yaml`          | discord_alert_webhook_url                                                                                                                                       |
