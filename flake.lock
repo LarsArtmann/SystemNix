@@ -1251,16 +1251,16 @@
     "go-commit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784714280,
-        "narHash": "sha256-3J9XUgGu19Jzj3HUiTCM7rCoAIHoKCtBXlXc2+0tC40=",
+        "lastModified": 1784835093,
+        "narHash": "sha256-CfZFhBBjVzfz8h6+p6D3/7q59faPY/4GlCF3J0fQlnM=",
         "owner": "LarsArtmann",
         "repo": "go-commit",
-        "rev": "4e1ef73b1eb75b5ccf94ce4e8e8a990a8ab8070f",
+        "rev": "138f759d11c85d59e6aec3e81549e9bef57d71ea",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.4.0",
+        "ref": "refs/tags/v0.4.1",
         "repo": "go-commit",
         "type": "github"
       }

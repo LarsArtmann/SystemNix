@@ -269,13 +269,14 @@
       url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
       flake = false;
     };
-    # go-commit — pinned to v0.4.0 which has the `git config` CLI fix.
+    # go-commit — pinned to v0.4.1 which upgrades the default Minimax model to MiniMax-M3.
+    # v0.4.0 had the `git config` CLI fix (local scope → ~/.config/git/config).
     # Without this pin, PMA's flake pulls go-commit from master, which uses
     # go-git's repo.Config() (local scope only, misses ~/.config/git/config)
     # → all PMA auto-commits have "Unknown Author <unknown@example.com>".
     # mkPreparedSource overrides go.mod's version with this flake input source.
     go-commit = {
-      url = "github:LarsArtmann/go-commit?ref=refs/tags/v0.4.0";
+      url = "github:LarsArtmann/go-commit?ref=refs/tags/v0.4.1";
       flake = false;
     };
     go-nix-helpers = {
