@@ -295,8 +295,12 @@
     # NOTE: Go-module replace deps (go-output, go-branded-id, cmdguard) are NOT
     # followed — overriding them changes vendored content and breaks vendorHash.
     # Only build-infra inputs are followed.
+    # PINNED: upstream commit 6492eef removed `nixpkgs` from outputs params but
+    # left it in inputs, causing `function 'outputs' called with unexpected
+    # argument 'nixpkgs'`. Pin to last commit before the break until upstream
+    # adds `...` to outputs. See AGENTS.md "mr-sync outputs signature missing ...".
     mr-sync = {
-      url = "github:LarsArtmann/mr-sync?ref=master";
+      url = "github:LarsArtmann/mr-sync/3db4fb24d009cf4483f4bb384092a3f2c16f50fe";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";

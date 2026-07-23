@@ -2933,17 +2933,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1784794704,
-        "narHash": "sha256-doQyI9H1pVBsYzKrblA8EIpmTj+Uq0j46wVCywaoebU=",
+        "lastModified": 1784794523,
+        "narHash": "sha256-Pn/ZZq4zYzmC231MiQHwx7A7srjnD345Fcm6jTxkc98=",
         "owner": "LarsArtmann",
         "repo": "mr-sync",
-        "rev": "6492eef2ddf83222388872f981ba036df8045bb4",
+        "rev": "3db4fb24d009cf4483f4bb384092a3f2c16f50fe",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
         "repo": "mr-sync",
+        "rev": "3db4fb24d009cf4483f4bb384092a3f2c16f50fe",
         "type": "github"
       }
     },
