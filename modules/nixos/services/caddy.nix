@@ -164,7 +164,30 @@ _: {
                 reverse_proxy localhost:${toString config.services.gatus-config.port}
               '';
             };
-            "seo.${domain}" = protectedVHost "seo" config.services.openseo.port;
+            # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
+            # (/api/gsc/oauth/callback) is exempt from forward-auth — OAuth callback
+            # endpoints should be directly reachable to prevent cookie-expiry edge
+            # cases and SameSite policy regressions. The callback is browser-initiated
+            # (the browser carries the _oauth2_proxy cookie), so forward-auth would
+            # pass anyway, but exempting it makes the flow deterministic.
+            "seo.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                @gsc_callback path /api/gsc/oauth/callback
+                handle @gsc_callback {
+                  reverse_proxy localhost:${toString config.services.openseo.port}
+                }
+                @external not remote_ip 127.0.0.1/8 ${lanSubnet}
+                handle @external {
+                  ${forwardAuth}
+                  reverse_proxy localhost:${toString config.services.openseo.port}
+                }
+                handle {
+                  reverse_proxy localhost:${toString config.services.openseo.port}
+                }
+              '';
+            };
             "daily.${domain}" = protectedVHost "daily" config.services.crush-daily.port;
 
             "dnsblock.${domain}" = protectedVHost "dnsblock" config.services.dns-blocker.statsPort;

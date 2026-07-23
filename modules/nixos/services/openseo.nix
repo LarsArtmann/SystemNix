@@ -3,13 +3,23 @@
 # SSO: no built-in auth (AUTH_MODE=local_noauth). Access is gated by
 # oauth2-proxy forward-auth (Layer 2 SSO) on seo.<domain>.
 #
+# Auth model:
+#   - Layer 2 SSO via oauth2-proxy forward-auth (Pocket ID at auth.<domain>)
+#   - LAN access bypasses forward-auth (protectedVHost @external matcher)
+#   - GSC OAuth callback (/api/gsc/oauth/callback) is exempt from forward-auth
+#     in caddy.nix — makes the callback deterministic and immune to SameSite
+#     policy changes. The callback IS browser-initiated (browser carries the
+#     _oauth2_proxy cookie, SameSite=lax), so it would pass forward-auth anyway,
+#     but exempting OAuth callback endpoints from auth layers is best practice.
+#
 # Optional features (declarative via module options):
 #   - Google Search Console: services.openseo.googleSearchConsole.enable
 #     Requires google_client_id, google_client_secret, better_auth_secret in openseo.yaml.
-#     GSC OAuth callback at https://seo.<domain>/api/gsc/oauth/callback works behind
-#     protectedVHost because the browser carries the oauth2-proxy session cookie.
+#     GSC redirect URI: https://seo.<domain>/api/gsc/oauth/callback
+#     Validated at startup (ExecStartPre) — service refuses to start if keys are empty.
 #   - AI agent (SAM): services.openseo.aiFeatures.enable
 #     Requires openrouter_api_key in openseo.yaml.
+#     Validated at startup — service refuses to start if key is empty.
 _: {
   flake.nixosModules.openseo =
     {
@@ -97,7 +107,30 @@ _: {
         cd "${stateDir}/project"
         exec "${storeDir}/node_modules/.bin/vite" preview --host 127.0.0.1 --port ${toString cfg.port}
       '';
-    in
+
+      # Validate: ensure required env vars are non-empty when features are enabled.
+      # Catches the failure mode of enabling GSC/AI without adding the keys to
+      # openseo.yaml — sops placeholders render as empty strings for missing keys.
+      validateScript = pkgs.writeShellScriptBin "openseo-validate" ''
+        set -euo pipefail
+        ${lib.optionalString cfg.googleSearchConsole.enable ''
+          for var in GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET BETTER_AUTH_SECRET; do
+            val="''${!var:-}"
+            if [ -z "''$val" ]; then
+              echo "ERROR: services.openseo.googleSearchConsole.enable is true but ''$var is empty." >&2
+              echo "       Add google_client_id, google_client_secret, and better_auth_secret to openseo.yaml sops file." >&2
+              exit 1
+            fi
+          done
+        ''}
+        ${lib.optionalString cfg.aiFeatures.enable ''
+          if [ -z "''${OPENROUTER_API_KEY:-}" ]; then
+            echo "ERROR: services.openseo.aiFeatures.enable is true but OPENROUTER_API_KEY is empty." >&2
+            echo "       Add openrouter_api_key to openseo.yaml sops file." >&2
+            exit 1
+          fi
+        ''}
+      '';    in
     {
       options.services.openseo = {
         enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
@@ -174,6 +207,7 @@ _: {
               ];
 
               ExecStartPre = [
+                (lib.getExe validateScript)
                 (lib.getExe stageScript)
                 (lib.getExe migrateScript)
               ];
