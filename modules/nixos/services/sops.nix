@@ -159,21 +159,23 @@ in
                 }
             )
             // lib.optionalAttrs (svcEnabled "openseo") (
-              mkSecrets "openseo.yaml" {
-                owner = "root";
-                group = "root";
-                restartUnits = [ "openseo.service" ];
-              } (
-                [ "dataforseo_api_key" ]
-                ++ lib.optionals config.services.openseo.googleSearchConsole.enable [
-                  "google_client_id"
-                  "google_client_secret"
-                  "better_auth_secret"
-                ]
-                ++ lib.optionals config.services.openseo.aiFeatures.enable [
-                  "openrouter_api_key"
-                ]
-              )
+              mkSecrets "openseo.yaml"
+                {
+                  owner = "root";
+                  group = "root";
+                  restartUnits = [ "openseo.service" ];
+                }
+                (
+                  [ "dataforseo_api_key" ]
+                  ++ lib.optionals config.services.openseo.googleSearchConsole.enable [
+                    "google_client_id"
+                    "google_client_secret"
+                    "better_auth_secret"
+                  ]
+                  ++ lib.optionals config.services.openseo.aiFeatures.enable [
+                    "openrouter_api_key"
+                  ]
+                )
             )
             # cloud_auth_token: single tenant-level API key shared by ALL monitor365
             # consumers (server bootstrap, unified agent).  The same YAML key is
@@ -289,7 +291,9 @@ in
               mode = "0400";
               restartUnits = [ "openseo.service" ];
               content = lib.generators.toKeyValue { } (
-                { DATAFORSEO_API_KEY = config.sops.placeholder.dataforseo_api_key; }
+                {
+                  DATAFORSEO_API_KEY = config.sops.placeholder.dataforseo_api_key;
+                }
                 // lib.optionalAttrs config.services.openseo.googleSearchConsole.enable {
                   GOOGLE_CLIENT_ID = config.sops.placeholder.google_client_id;
                   GOOGLE_CLIENT_SECRET = config.sops.placeholder.google_client_secret;
