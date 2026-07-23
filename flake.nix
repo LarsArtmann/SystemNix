@@ -155,8 +155,11 @@
     };
 
     # monitor365 — Device monitoring agent (Rust)
+    # Pinned to 0615301 (last working commit). Newer commits (5ee717e3+) switched
+    # from cargoVendorDir patching to [patch.crates-io] + .clang_macro_fallback(),
+    # which generates incomplete bindgen output (699 errors, empty spa_sys).
     monitor365 = {
-      url = "github:LarsArtmann/monitor365?ref=master";
+      url = "github:LarsArtmann/monitor365/06153013945baa16d83a81bd7497433537235240";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -259,6 +262,13 @@
       url = "github:LarsArtmann/cmdguard?ref=master";
       flake = false;
     };
+    # Pinned to v0.5.0: cmdguard's go.mod expects this version. Newer versions
+    # (master/v0.6.0) changed ServiceByName to accept ServiceName type, breaking
+    # cmdguard's code that passes string.
+    samber-do-auditlog = {
+      url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
+      flake = false;
+    };
     go-nix-helpers = {
       url = "github:LarsArtmann/go-nix-helpers?ref=master";
       flake = false;
@@ -332,6 +342,7 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
+        samber-do-auditlog.follows = "samber-do-auditlog";
       };
     };
 
