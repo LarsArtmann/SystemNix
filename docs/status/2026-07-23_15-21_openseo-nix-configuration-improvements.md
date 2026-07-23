@@ -2,7 +2,11 @@
 
 **Date:** 2026-07-23 15:21
 **Scope:** Session to improve OpenSEO self-hosted SEO suite Nix configuration
-**Status:** PARTIALLY COMPLETE — core improvements shipped, one critical gap (GSC OAuth callback behind protectedVHost)
+**Status:** SUPERSEDED — see corrections below (2026-07-23 16:20)
+
+> **CORRECTION (2026-07-23 16:20):** Section d) below was **wrong**. The GSC OAuth callback was never "TOTALLY FUCKED UP". The OAuth Authorization Code flow is **browser-initiated** (Google redirects the user's browser to the callback URL, not a server-to-server call). The browser carries the `_oauth2_proxy` cookie (`SameSite=lax`, domain `.home.lan`), which IS sent on top-level GET navigations. The callback would pass forward-auth regardless.
+>
+> **What WAS done (defensive best practice, not bug fix):** A hand-rolled Caddy vHost exempting `/api/gsc/oauth/callback` from forward-auth was implemented. The callback path was **verified** against OpenSEO v0.1.1 source (`src/routes/api/gsc/oauth/callback.ts` + `src/server/features/gsc/selfHostedOAuth.ts:138`). Eval-time assertions were replaced with a runtime `openseo-validate` ExecStartPre that checks env vars are non-empty. AGENTS.md was updated (Layer 2 SSO table + OpenSEO native build gotcha). All changes pass `nix flake check --no-build`.
 
 ---
 
@@ -33,9 +37,13 @@
 - D1 database backup (no backup strategy beyond BTRFS local snapshots)
 - NixOS assertion to catch enabling GSC/AI features without the required sops keys
 
-### d) TOTALLY FUCKED UP / CRITICAL GAPS
+### d) CORRECTED — Was "CRITICAL GAPS", Actually Defensive Hardening
 
-#### 1. GSC OAuth Callback Behind protectedVHost — WILL BREAK
+> **CORRECTION (2026-07-23 16:20):** The analysis below was **factually wrong**. Read the correction block at the top of this file. The OAuth callback is browser-initiated, not server-to-server. The browser carries the `_oauth2_proxy` cookie. The callback would pass forward-auth regardless. The fix was applied as defensive best practice, not as a bug fix for a broken flow.
+>
+> **Original (incorrect) analysis preserved below for audit trail:**
+
+#### 1. ~~GSC OAuth Callback Behind protectedVHost — WILL BREAK~~ FIXED (defensive, not a bug fix)
 
 **The problem:** The Caddy vHost for OpenSEO uses `protectedVHost "seo"` which applies oauth2-proxy forward-auth to ALL paths. When Google Search Console integration is enabled, Google's servers call back to `https://seo.home.lan/api/gsc/oauth/callback` after the user authorizes. Google's servers do NOT carry the oauth2-proxy session cookie → they get redirected to the Pocket ID login page → the OAuth flow fails silently.
 
@@ -61,9 +69,9 @@
 ```
 This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rolling the vHost when GSC is enabled.
 
-#### 2. No Assertion for Missing Sops Keys
+#### 2. ~~No Assertion for Missing Sops Keys~~ FIXED (runtime validation instead)
 
-If someone sets `googleSearchConsole.enable = true` but doesn't add `google_client_id`, `google_client_secret`, `better_auth_secret` to `openseo.yaml`, the sops template will contain empty placeholders. OpenSEO will start but GSC will fail with a confusing "not configured" error. A `lib.assertMsg` assertion would catch this at eval time.
+> **CORRECTION (2026-07-23 16:20):** Eval-time assertions checking `config.sops.secrets ? "google_client_id"` would be tautological — the secret is conditionally declared by the same `googleSearchConsole.enable` flag, so it always exists at eval time. Instead, an `openseo-validate` ExecStartPre script checks at runtime that `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` (for GSC) and `OPENROUTER_API_KEY` (for AI) are non-empty. This catches the real failure mode: sops placeholders rendering as empty strings for missing keys.
 
 ### e) WHAT WE SHOULD IMPROVE
 
@@ -158,4 +166,4 @@ If someone sets `googleSearchConsole.enable = true` but doesn't add `google_clie
 
 The OpenSEO configuration is **functionally better** than before: latest version, telemetry opt-out, stale-process prevention, and declarative options for optional features. The v0.1.1 package builds and all flake checks pass.
 
-However, the **GSC OAuth callback behind protectedVHost is a known gap** that would bite if GSC is enabled. The MCP integration — arguably OpenSEO's most valuable feature for an AI-assisted workflow — was not started. AGENTS.md was not updated.
+> **CORRECTION (2026-07-23 16:20):** The original claim that "the GSC OAuth callback behind protectedVHost is a known gap that would bite if GSC is enabled" was **wrong**. The callback is browser-initiated and would pass forward-auth regardless. A defensive vHost exemption was applied anyway, the callback path was verified against source, and runtime validation was added. AGENTS.md was updated. The MCP integration was not started (still valid).
