@@ -1,10 +1,32 @@
-{ lib, inputs }: system:
+# Single source of truth for all LarsArtmann Go tool packages.
+#
+# Referenced by perSystem.packages (for `nix build .#X`) and passed to
+# base.nix via specialArgs (for environment.systemPackages).
+#
+# Each entry pulls the `default` package from the matching flake input;
+# inputs that don't expose a package for this system are filtered out.
+{
+  lib,
+  inputs,
+}:
+system:
 let
   flakePkg = input: (input.packages.${system} or { }).default or null;
-  overrideCqrsLint = pkg: if pkg == null then null else
-    pkg.overrideAttrs (old: { goModules = old.goModules.overrideAttrs (_: { outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA="; }); });
-  overrideVendorHash = hash: pkg: if pkg == null then null else
-    pkg.overrideAttrs (old: { goModules = old.goModules.overrideAttrs (_: { outputHash = hash; }); });
+  # Upstream go-cqrs-lite's cqrs-lint package has a stale vendorHash. Override
+  # the go-modules fixed-output hash with the value computed from the current
+  # source to avoid a hash mismatch during deploy. TODO: remove once upstream
+  # fixes the vendorHash.
+  overrideVendorHash = hash: pkg: if pkg == null then null else pkg.overrideAttrs (old: { goModules = old.goModules.overrideAttrs (_: { outputHash = hash; }); });
+  overrideCqrsLint =
+    pkg:
+    if pkg == null then
+      null
+    else
+      pkg.overrideAttrs (old: {
+        goModules = old.goModules.overrideAttrs (_: {
+          outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA=";
+        });
+      });
 in
 lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
