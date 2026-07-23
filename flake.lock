@@ -142,11 +142,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1784798032,
-        "narHash": "sha256-SnapVWqMrPxSF2IEbnNjYIzHNRK4LkRofJE/hdxEBqI=",
+        "lastModified": 1784798495,
+        "narHash": "sha256-8T3ffmAIzDvfSzwXpUIfEYPM3PaFTZUc9GpL3e0H/w4=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "e787b2df1ddf1f82c35a745677f8604c25571f52",
+        "rev": "398a97606cbbf5f41538f85551000bdc42db8cec",
         "type": "github"
       },
       "original": {
@@ -210,11 +210,11 @@
     "cmdguard_2": {
       "flake": false,
       "locked": {
-        "lastModified": 1784782183,
-        "narHash": "sha256-ApXhhgaL3m9/Wwl6vmmNCXagBEzOYFGAwC6yqAJ8Ow4=",
+        "lastModified": 1784798532,
+        "narHash": "sha256-YscB8ksz+zoclJOK4kOdI0NvMBzzZlVAuGzqA/9P/YQ=",
         "owner": "LarsArtmann",
         "repo": "cmdguard",
-        "rev": "7a008b33538d6ed9e790553afd9864aa7cf42d58",
+        "rev": "b9987228f6adcb787547033be7065bf49a2377af",
         "type": "github"
       },
       "original": {
@@ -468,11 +468,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784798054,
-        "narHash": "sha256-tF1ofbObH6dsAcvG6I40CoKqRvRCqJI2LigR+25SRNc=",
+        "lastModified": 1784798698,
+        "narHash": "sha256-LaizRknvcD/XjceY0TMo+c4ZJq7uKd+5dsddAk4jBBk=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "1f8ad5ace45adc2bc823ee1e2a46293cb871765d",
+        "rev": "062466c81b17d131b3f4fdc8988df920e97ca475",
         "type": "github"
       },
       "original": {
