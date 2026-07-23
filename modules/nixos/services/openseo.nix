@@ -141,8 +141,8 @@ _: {
             Google Search Console integration.
             Requires google_client_id, google_client_secret, and better_auth_secret
             in the openseo.yaml sops file. The GSC OAuth callback at
-            /api/gsc/oauth/callback works behind protectedVHost (browser carries
-            the oauth2-proxy session cookie).
+            /api/gsc/oauth/callback is exempt from Caddy forward-auth (see caddy.nix).
+            Validated at startup — service refuses to start if keys are missing.
           '';
         };
 
