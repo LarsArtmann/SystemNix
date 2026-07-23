@@ -8,38 +8,35 @@
 {
   lib,
   inputs,
-}:
-system:
-let
-  flakePkg = input: (input.packages.${system} or { }).default or null;
+}: system: let
+  flakePkg = input: (input.packages.${system} or {}).default or null;
   # Upstream go-cqrs-lite's cqrs-lint package has a stale vendorHash. Override
   # the go-modules fixed-output hash with the value computed from the current
   # source to avoid a hash mismatch during deploy. TODO: remove once upstream
   # fixes the vendorHash.
-  overrideCqrsLint =
-    pkg:
-    if pkg == null then
-      null
+  overrideCqrsLint = pkg:
+    if pkg == null
+    then null
     else
       pkg.overrideAttrs (old: {
         goModules = old.goModules.overrideAttrs (_: {
-          outputHash = "sha256-MIFcY952gDRxsuJo9M0X7XUnULL8MOLAZBIqHRIzCkU=";
+          outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA=";
         });
       });
 in
-lib.filterAttrs (_: v: v != null) {
-  art-dupl = flakePkg inputs.art-dupl;
-  branching-flow = flakePkg inputs.branching-flow;
-  buildflow = flakePkg inputs.buildflow;
-  cqrs-lint = overrideCqrsLint ((inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null);
-  go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
-  go-structure-linter = flakePkg inputs.go-structure-linter;
-  golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
-  hierarchical-errors = flakePkg inputs.hierarchical-errors;
-  library-policy = flakePkg inputs.library-policy;
-  md-go-validator = flakePkg inputs.md-go-validator;
-  mr-sync = flakePkg inputs.mr-sync;
-  project-meta = flakePkg inputs.project-meta;
-  projects-management-automation = flakePkg inputs.projects-management-automation;
-  todo-list-ai = flakePkg inputs.todo-list-ai;
-}
+  lib.filterAttrs (_: v: v != null) {
+    art-dupl = flakePkg inputs.art-dupl;
+    branching-flow = flakePkg inputs.branching-flow;
+    buildflow = flakePkg inputs.buildflow;
+    cqrs-lint = overrideCqrsLint ((inputs.go-cqrs-lite.packages.${system} or {}).cqrs-lint or null);
+    go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
+    go-structure-linter = flakePkg inputs.go-structure-linter;
+    golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
+    hierarchical-errors = flakePkg inputs.hierarchical-errors;
+    library-policy = flakePkg inputs.library-policy;
+    md-go-validator = flakePkg inputs.md-go-validator;
+    mr-sync = flakePkg inputs.mr-sync;
+    project-meta = flakePkg inputs.project-meta;
+    projects-management-automation = flakePkg inputs.projects-management-automation;
+    todo-list-ai = flakePkg inputs.todo-list-ai;
+  }
