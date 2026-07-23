@@ -6,18 +6,18 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 
 ## What You Get
 
-| Category                 | Tools & Services                                                                                                                                                      |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Languages**            | Go 1.26, Node.js, Bun, Python 3.13, Rust                                                                                                                              |
-| **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                    |
-| **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                           |
+| Category                 | Tools & Services                                                                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Languages**            | Go 1.26, Node.js, Bun, Python 3.13, Rust                                                                                                                                                         |
+| **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                                               |
+| **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                                                      |
 | **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Helium (Chromium browser), Sway (backup WM), Rofi (Sway fallback only) |
-| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI                                                                                 |
-| **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                       |
-| **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                             |
-| **Monitoring**           | SigNoz (18 alert rules, 9 dashboards), Gatus (52+ health checks), ActivityWatch                                                                                       |
-| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), 2.5M+ blocked domains                                                                |
-| **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI                                                                                                            |
+| **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                                                  |
+| **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                        |
+| **Monitoring**           | SigNoz (18 alert rules, 9 dashboards), Gatus (52+ health checks), ActivityWatch                                                                                                                  |
+| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), 2.5M+ blocked domains                                                                                           |
+| **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                                           |
 
 ## Quick Start
 

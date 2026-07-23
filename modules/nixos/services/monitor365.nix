@@ -260,19 +260,6 @@
                     fi
                   fi
 
-                  # Schema migration: add 'version' column to tenants table.
-                  # Upstream bug at pinned commit 0615301: schema.sql includes
-                  # 'version INTEGER NOT NULL DEFAULT 0' in CREATE TABLE IF NOT
-                  # EXISTS tenants, but no ALTER TABLE migration exists for DBs
-                  # created before the column was added. The init_schema()
-                  # idempotent migration list is also missing it. Every SELECT
-                  # using COLUMNS (which has COALESCE(tenants.version, 0)) fails
-                  # with a Binder Error until this column is added manually.
-                  if [ -f "$MAIN_DB" ] && [ -s "$MAIN_DB" ]; then
-                    ${pkgs.duckdb}/bin/duckdb "$MAIN_DB" -c \
-                      "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER NOT NULL DEFAULT 0;" \
-                      2>/dev/null || true
-                  fi
                 ''}"
               ];
             };
