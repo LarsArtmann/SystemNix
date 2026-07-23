@@ -130,7 +130,8 @@ _: {
             exit 1
           fi
         ''}
-      '';    in
+      '';
+    in
     {
       options.services.openseo = {
         enable = lib.mkEnableOption "OpenSEO — self-hosted SEO suite (keyword research, rank tracking, backlinks, site audits)";
