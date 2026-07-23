@@ -1,30 +1,10 @@
-# Single source of truth for all LarsArtmann Go tool packages.
-{
-  lib,
-  inputs,
-}:
-system:
+{ lib, inputs }: system:
 let
   flakePkg = input: (input.packages.${system} or { }).default or null;
-  overrideCqrsLint =
-    pkg:
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs (old: {
-        goModules = old.goModules.overrideAttrs (_: {
-          outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA=";
-        });
-      });
-  overrideVendorHash = hash: pkg:
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs (old: {
-        goModules = old.goModules.overrideAttrs (_: {
-          outputHash = hash;
-        });
-      });
+  overrideCqrsLint = pkg: if pkg == null then null else
+    pkg.overrideAttrs (old: { goModules = old.goModules.overrideAttrs (_: { outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA="; }); });
+  overrideVendorHash = hash: pkg: if pkg == null then null else
+    pkg.overrideAttrs (old: { goModules = old.goModules.overrideAttrs (_: { outputHash = hash; }); });
 in
 lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
