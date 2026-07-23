@@ -5,7 +5,8 @@
   colorScheme,
   dankMaterialShell,
   ...
-}: let
+}:
+let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
   wallpaperDir = "%h/.local/share/wallpapers";
@@ -94,12 +95,13 @@
 
   dms-lock = pkgs.writeShellApplication {
     name = "dms-lock";
-    runtimeInputs = [pkgs.swaylock-effects];
+    runtimeInputs = [ pkgs.swaylock-effects ];
     text = ''
       dms ipc lock lock 2>/dev/null || exec swaylock
     '';
   };
-in {
+in
+{
   config = {
     home.file.".local/share/wallpapers".source = wallpapers;
 
@@ -184,9 +186,9 @@ in {
         background-color = "#${colors.base00}";
 
         preset-column-widths = [
-          {proportion = 0.33333;}
-          {proportion = 0.5;}
-          {proportion = 0.66667;}
+          { proportion = 0.33333; }
+          { proportion = 0.5; }
+          { proportion = 0.66667; }
         ];
 
         default-column-width = {
@@ -230,190 +232,194 @@ in {
         };
       };
 
-      binds = let
-        sh = cmd: [
-          "sh"
-          "-c"
-          cmd
-        ];
-        screenshot = grimArgs: "mkdir -p ~/Pictures/screenshots && grim ${grimArgs} /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
-      in {
-        "Mod+Return".action.spawn = ["ghostty"];
-        "Mod+Shift+Return".action.spawn = ["kitty"];
+      binds =
+        let
+          sh = cmd: [
+            "sh"
+            "-c"
+            cmd
+          ];
+          screenshot =
+            grimArgs:
+            "mkdir -p ~/Pictures/screenshots && grim ${grimArgs} /tmp/screenshot.png && wl-copy < /tmp/screenshot.png && swappy -f /tmp/screenshot.png";
+        in
+        {
+          "Mod+Return".action.spawn = [ "ghostty" ];
+          "Mod+Shift+Return".action.spawn = [ "kitty" ];
 
-        "Mod+Q".action.close-window = {};
-        "Mod+Shift+Q".action.quit = {};
-        "F11".action.fullscreen-window = {};
-        "Mod+Shift+Space".action.toggle-window-floating = {};
-        "Mod+Shift+M".action.maximize-column = {};
-        "Mod+T".action.toggle-column-tabbed-display = {};
+          "Mod+Q".action.close-window = { };
+          "Mod+Shift+Q".action.quit = { };
+          "F11".action.fullscreen-window = { };
+          "Mod+Shift+Space".action.toggle-window-floating = { };
+          "Mod+Shift+M".action.maximize-column = { };
+          "Mod+T".action.toggle-column-tabbed-display = { };
 
-        "Mod+Left".action.focus-column-left = {};
-        "Mod+Right".action.focus-column-right = {};
-        "Mod+Up".action.focus-window-up = {};
-        "Mod+Down".action.focus-window-down = {};
+          "Mod+Left".action.focus-column-left = { };
+          "Mod+Right".action.focus-column-right = { };
+          "Mod+Up".action.focus-window-up = { };
+          "Mod+Down".action.focus-window-down = { };
 
-        "Mod+H".action.focus-column-left = {};
-        "Mod+L".action.focus-column-right = {};
-        "Mod+K".action.focus-window-up = {};
-        "Mod+J".action.focus-window-down = {};
+          "Mod+H".action.focus-column-left = { };
+          "Mod+L".action.focus-column-right = { };
+          "Mod+K".action.focus-window-up = { };
+          "Mod+J".action.focus-window-down = { };
 
-        "Mod+Shift+Left".action.move-column-left = {};
-        "Mod+Shift+Right".action.move-column-right = {};
-        "Mod+Shift+Up".action.move-window-up = {};
-        "Mod+Shift+Down".action.move-window-down = {};
+          "Mod+Shift+Left".action.move-column-left = { };
+          "Mod+Shift+Right".action.move-column-right = { };
+          "Mod+Shift+Up".action.move-window-up = { };
+          "Mod+Shift+Down".action.move-window-down = { };
 
-        "Mod+Shift+H".action.move-column-left = {};
-        "Mod+Shift+L".action.move-column-right = {};
-        "Mod+Shift+K".action.move-window-up = {};
-        "Mod+Shift+J".action.move-window-down = {};
+          "Mod+Shift+H".action.move-column-left = { };
+          "Mod+Shift+L".action.move-column-right = { };
+          "Mod+Shift+K".action.move-window-up = { };
+          "Mod+Shift+J".action.move-window-down = { };
 
-        "Mod+BracketLeft".action.consume-window-into-column = {};
-        "Mod+BracketRight".action.expel-window-from-column = {};
-        "Mod+R".action.switch-preset-column-width = {};
-        "Mod+Shift+R".action.reset-window-height = {};
-        "Mod+Minus".action.set-column-width = "-10%";
-        "Mod+Equal".action.set-column-width = "+10%";
+          "Mod+BracketLeft".action.consume-window-into-column = { };
+          "Mod+BracketRight".action.expel-window-from-column = { };
+          "Mod+R".action.switch-preset-column-width = { };
+          "Mod+Shift+R".action.reset-window-height = { };
+          "Mod+Minus".action.set-column-width = "-10%";
+          "Mod+Equal".action.set-column-width = "+10%";
 
-        "Mod+1".action.focus-workspace = 1;
-        "Mod+2".action.focus-workspace = 2;
-        "Mod+3".action.focus-workspace = 3;
-        "Mod+4".action.focus-workspace = 4;
-        "Mod+5".action.focus-workspace = 5;
-        "Mod+6".action.focus-workspace = 6;
-        "Mod+7".action.focus-workspace = 7;
-        "Mod+8".action.focus-workspace = 8;
-        "Mod+9".action.focus-workspace = 9;
+          "Mod+1".action.focus-workspace = 1;
+          "Mod+2".action.focus-workspace = 2;
+          "Mod+3".action.focus-workspace = 3;
+          "Mod+4".action.focus-workspace = 4;
+          "Mod+5".action.focus-workspace = 5;
+          "Mod+6".action.focus-workspace = 6;
+          "Mod+7".action.focus-workspace = 7;
+          "Mod+8".action.focus-workspace = 8;
+          "Mod+9".action.focus-workspace = 9;
 
-        "Mod+Shift+1".action.move-column-to-workspace = 1;
-        "Mod+Shift+2".action.move-column-to-workspace = 2;
-        "Mod+Shift+3".action.move-column-to-workspace = 3;
-        "Mod+Shift+4".action.move-column-to-workspace = 4;
-        "Mod+Shift+5".action.move-column-to-workspace = 5;
-        "Mod+Shift+6".action.move-column-to-workspace = 6;
-        "Mod+Shift+7".action.move-column-to-workspace = 7;
-        "Mod+Shift+8".action.move-column-to-workspace = 8;
-        "Mod+Shift+9".action.move-column-to-workspace = 9;
+          "Mod+Shift+1".action.move-column-to-workspace = 1;
+          "Mod+Shift+2".action.move-column-to-workspace = 2;
+          "Mod+Shift+3".action.move-column-to-workspace = 3;
+          "Mod+Shift+4".action.move-column-to-workspace = 4;
+          "Mod+Shift+5".action.move-column-to-workspace = 5;
+          "Mod+Shift+6".action.move-column-to-workspace = 6;
+          "Mod+Shift+7".action.move-column-to-workspace = 7;
+          "Mod+Shift+8".action.move-column-to-workspace = 8;
+          "Mod+Shift+9".action.move-column-to-workspace = 9;
 
-        "Mod+Page_Up".action.focus-workspace-up = {};
-        "Mod+Page_Down".action.focus-workspace-down = {};
-        "Mod+Shift+Page_Up".action.move-column-to-workspace-up = {};
-        "Mod+Shift+Page_Down".action.move-column-to-workspace-down = {};
+          "Mod+Page_Up".action.focus-workspace-up = { };
+          "Mod+Page_Down".action.focus-workspace-down = { };
+          "Mod+Shift+Page_Up".action.move-column-to-workspace-up = { };
+          "Mod+Shift+Page_Down".action.move-column-to-workspace-down = { };
 
-        # App launcher — DMS spotlight (replaces rofi drun, which OOM-killed niri)
-        "Mod+D".action.spawn = [
-          "dms"
-          "ipc"
-          "call"
-          "spotlight"
-          "toggle"
-        ];
-        "Mod+Space".action.spawn = [
-          "dms"
-          "ipc"
-          "call"
-          "spotlight"
-          "toggle"
-        ];
-        # Keybinds cheatsheet — DMS keybinds modal (replaces niri msg binds | rofi -dmenu)
-        "Mod+Shift+Slash".action.spawn = [
-          "dms"
-          "ipc"
-          "call"
-          "keybinds"
-          "toggle"
-          "niri"
-        ];
-        # Clipboard history — DMS clipboard modal (replaces cliphist | rofi -dmenu)
-        "Alt+C".action.spawn = [
-          "dms"
-          "ipc"
-          "call"
-          "clipboard"
-          "toggle"
-        ];
-        # Emoji picker — DMS spotlight via emoji plugin trigger :e (replaces rofi-emoji)
-        "Mod+period".action.spawn = [
-          "dms"
-          "ipc"
-          "call"
-          "spotlight"
-          "toggleQuery"
-          ":e"
-        ];
-        # Calculator — DMS spotlight via calculator plugin trigger = (replaces rofi-calc)
-        "Mod+Shift+C".action.spawn = [
-          "dms"
-          "ipc"
-          "call"
-          "spotlight"
-          "toggleQuery"
-          "="
-        ];
-        # dunstctl keybind removed — DankMaterialShell provides notification center
-        "Mod+Shift+E".action.spawn = ["emacs"];
-        "Mod+Shift+B".action.spawn = ["firefox"];
-        "Mod+Z".action.spawn = ["zed"];
-        "Mod+Shift+F".action.spawn = sh "ghostty --class floating -e yazi";
-        "Mod+Shift+D".action.spawn = sh "zellij --layout dev";
+          # App launcher — DMS spotlight (replaces rofi drun, which OOM-killed niri)
+          "Mod+D".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "spotlight"
+            "toggle"
+          ];
+          "Mod+Space".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "spotlight"
+            "toggle"
+          ];
+          # Keybinds cheatsheet — DMS keybinds modal (replaces niri msg binds | rofi -dmenu)
+          "Mod+Shift+Slash".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "keybinds"
+            "toggle"
+            "niri"
+          ];
+          # Clipboard history — DMS clipboard modal (replaces cliphist | rofi -dmenu)
+          "Alt+C".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "clipboard"
+            "toggle"
+          ];
+          # Emoji picker — DMS spotlight via emoji plugin trigger :e (replaces rofi-emoji)
+          "Mod+period".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "spotlight"
+            "toggleQuery"
+            ":e"
+          ];
+          # Calculator — DMS spotlight via calculator plugin trigger = (replaces rofi-calc)
+          "Mod+Shift+C".action.spawn = [
+            "dms"
+            "ipc"
+            "call"
+            "spotlight"
+            "toggleQuery"
+            "="
+          ];
+          # dunstctl keybind removed — DankMaterialShell provides notification center
+          "Mod+Shift+E".action.spawn = [ "emacs" ];
+          "Mod+Shift+B".action.spawn = [ "firefox" ];
+          "Mod+Z".action.spawn = [ "zed" ];
+          "Mod+Shift+F".action.spawn = sh "ghostty --class floating -e yazi";
+          "Mod+Shift+D".action.spawn = sh "zellij --layout dev";
 
-        "Mod+Shift+Escape".action.spawn = sh "${lib.getExe dms-lock}";
-        "Mod+Shift+P".action.power-off-monitors = {};
-        "Mod+Shift+S".action.suspend = {};
+          "Mod+Shift+Escape".action.spawn = sh "${lib.getExe dms-lock}";
+          "Mod+Shift+P".action.power-off-monitors = { };
+          "Mod+Shift+S".action.suspend = { };
 
-        "Mod+W".action.spawn = sh "dms ipc call wallpaper next";
+          "Mod+W".action.spawn = sh "dms ipc call wallpaper next";
 
-        "Mod+Shift+F11".action.spawn = sh (screenshot ''-g "$(slurp)"'');
-        "Mod+F11".action.spawn = sh (screenshot "");
-        "Mod+Ctrl+F11".action.spawn = sh (screenshot "-o $(niri msg focused-output | head -1)");
+          "Mod+Shift+F11".action.spawn = sh (screenshot ''-g "$(slurp)"'');
+          "Mod+F11".action.spawn = sh (screenshot "");
+          "Mod+Ctrl+F11".action.spawn = sh (screenshot "-o $(niri msg focused-output | head -1)");
 
-        "XF86AudioRaiseVolume" = {
-          action.spawn = sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.5";
-          allow-when-locked = true;
+          "XF86AudioRaiseVolume" = {
+            action.spawn = sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1+ -l 1.5";
+            allow-when-locked = true;
+          };
+          "XF86AudioLowerVolume" = {
+            action.spawn = sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-";
+            allow-when-locked = true;
+          };
+          "XF86AudioMute" = {
+            action.spawn = sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+            allow-when-locked = true;
+          };
+          "XF86AudioMicMute" = {
+            action.spawn = sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
+            allow-when-locked = true;
+          };
+
+          "XF86AudioPlay" = {
+            action.spawn = sh "playerctl play-pause";
+            allow-when-locked = true;
+          };
+          "XF86AudioNext" = {
+            action.spawn = sh "playerctl next";
+            allow-when-locked = true;
+          };
+          "XF86AudioPrev" = {
+            action.spawn = sh "playerctl previous";
+            allow-when-locked = true;
+          };
+
+          "XF86MonBrightnessUp" = {
+            action.spawn = sh "ddcutil setvcp 10 + 10 2>/dev/null || brightnessctl set +5%";
+            allow-when-locked = true;
+          };
+          "XF86MonBrightnessDown" = {
+            action.spawn = sh "ddcutil setvcp 10 - 10 2>/dev/null || brightnessctl set 5%-";
+            allow-when-locked = true;
+          };
         };
-        "XF86AudioLowerVolume" = {
-          action.spawn = sh "wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.1-";
-          allow-when-locked = true;
-        };
-        "XF86AudioMute" = {
-          action.spawn = sh "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-          allow-when-locked = true;
-        };
-        "XF86AudioMicMute" = {
-          action.spawn = sh "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle";
-          allow-when-locked = true;
-        };
-
-        "XF86AudioPlay" = {
-          action.spawn = sh "playerctl play-pause";
-          allow-when-locked = true;
-        };
-        "XF86AudioNext" = {
-          action.spawn = sh "playerctl next";
-          allow-when-locked = true;
-        };
-        "XF86AudioPrev" = {
-          action.spawn = sh "playerctl previous";
-          allow-when-locked = true;
-        };
-
-        "XF86MonBrightnessUp" = {
-          action.spawn = sh "ddcutil setvcp 10 + 10 2>/dev/null || brightnessctl set +5%";
-          allow-when-locked = true;
-        };
-        "XF86MonBrightnessDown" = {
-          action.spawn = sh "ddcutil setvcp 10 - 10 2>/dev/null || brightnessctl set 5%-";
-          allow-when-locked = true;
-        };
-      };
 
       window-rules = [
         {
-          matches = [{app-id = "^org.prismlauncher.PrismLauncher$";}];
+          matches = [ { app-id = "^org.prismlauncher.PrismLauncher$"; } ];
           opacity = 1.0;
         }
         {
-          matches = [{is-floating = false;}];
+          matches = [ { is-floating = false; } ];
           opacity = 0.95;
           geometry-corner-radius = {
             top-left = 8.0;
@@ -425,18 +431,18 @@ in {
           draw-border-with-background = false;
         }
         {
-          matches = [{title = "^Picture-in-Picture$";}];
+          matches = [ { title = "^Picture-in-Picture$"; } ];
           open-floating = true;
         }
         {
           matches = [
-            {app-id = "^pavucontrol$";}
-            {app-id = "^com.saivert.pwvucontrol$";}
+            { app-id = "^pavucontrol$"; }
+            { app-id = "^com.saivert.pwvucontrol$"; }
           ];
           open-floating = true;
         }
         {
-          matches = [{app-id = "^floating$";}];
+          matches = [ { app-id = "^floating$"; } ];
           open-floating = true;
           default-floating-position = {
             x = 0.25;
@@ -452,22 +458,22 @@ in {
         }
         {
           matches = [
-            {app-id = "^steam_app_.*";}
+            { app-id = "^steam_app_.*"; }
           ];
           open-fullscreen = true;
           opacity = 1.0;
         }
         {
           matches = [
-            {app-id = "^steam_app_.*";}
-            {app-id = "^steam$";}
-            {title = "^Counter-Strike";}
+            { app-id = "^steam_app_.*"; }
+            { app-id = "^steam$"; }
+            { title = "^Counter-Strike"; }
           ];
           open-fullscreen = true;
           opacity = 1.0;
         }
         {
-          matches = [{app-id = "^xdg-desktop-portal-gtk$";}];
+          matches = [ { app-id = "^xdg-desktop-portal-gtk$"; } ];
           open-floating = true;
         }
         {
@@ -481,8 +487,8 @@ in {
         }
         {
           matches = [
-            {app-id = "^firefox$";}
-            {app-id = "^Firefox$";}
+            { app-id = "^firefox$"; }
+            { app-id = "^Firefox$"; }
           ];
           open-on-workspace = "browser";
           default-column-width = {
@@ -491,10 +497,10 @@ in {
         }
         {
           matches = [
-            {app-id = "^com.mitchellh.ghostty$";}
-            {app-id = "^kitty$";}
-            {app-id = "^foot$";}
-            {app-id = "^helium$";}
+            { app-id = "^com.mitchellh.ghostty$"; }
+            { app-id = "^kitty$"; }
+            { app-id = "^foot$"; }
+            { app-id = "^helium$"; }
           ];
           open-on-workspace = "main";
           default-column-width = {
@@ -502,7 +508,7 @@ in {
           };
         }
         {
-          matches = [{app-id = "^emacs$";}];
+          matches = [ { app-id = "^emacs$"; } ];
           open-on-workspace = "dev";
           default-column-width = {
             proportion = 0.66667;
@@ -510,29 +516,29 @@ in {
         }
         {
           matches = [
-            {app-id = "^Slack$";}
-            {app-id = "^discord$";}
-            {app-id = "^vesktop$";}
-            {app-id = "^telegramdesktop$";}
-            {app-id = "^signal$";}
+            { app-id = "^Slack$"; }
+            { app-id = "^discord$"; }
+            { app-id = "^vesktop$"; }
+            { app-id = "^telegramdesktop$"; }
+            { app-id = "^signal$"; }
           ];
           open-on-workspace = "chat";
         }
         {
           matches = [
-            {app-id = "^Spotify$";}
-            {app-id = "^spotify$";}
+            { app-id = "^Spotify$"; }
+            { app-id = "^spotify$"; }
           ];
           open-on-workspace = "media";
         }
       ];
 
       workspaces = {
-        main = {};
-        browser = {};
-        dev = {};
-        chat = {};
-        media = {};
+        main = { };
+        browser = { };
+        dev = { };
+        chat = { };
+        media = { };
       };
 
       animations = {
@@ -549,67 +555,65 @@ in {
       dms-wallpaper-init = {
         Unit = {
           Description = "Seed DMS wallpaper from collection on first launch";
-          After = ["graphical-session.target"];
-          PartOf = ["graphical-session.target"];
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
         };
-        Service =
-          sd.hardenUser {}
-          // {
-            Type = "oneshot";
-            RemainAfterExit = true;
-            ExecStart = "${lib.getExe dms-wallpaper-init} ${wallpaperDir}";
-          };
-        Install.WantedBy = ["graphical-session.target"];
+        Service = sd.hardenUser { } // {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          ExecStart = "${lib.getExe dms-wallpaper-init} ${wallpaperDir}";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
       };
 
       swayidle = {
         Unit = {
           Description = "Idle management daemon";
-          After = ["graphical-session.target"];
-          PartOf = ["graphical-session.target"];
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
           StartLimitBurst = 3;
           StartLimitIntervalSec = 120;
         };
-        Service =
-          sd.serviceDefaultsUser {}
-          // {
-            ExecStart = let
+        Service = sd.serviceDefaultsUser { } // {
+          ExecStart =
+            let
               swayidleSuspend = pkgs.writeShellApplication {
                 name = "swayidle-suspend";
-                runtimeInputs = [pkgs.systemd];
+                runtimeInputs = [ pkgs.systemd ];
                 text = ''
                   systemctl suspend
                 '';
               };
-            in "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
-            TimeoutStartSec = "10s";
-          };
-        Install.WantedBy = ["graphical-session.target"];
+            in
+            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
+          TimeoutStartSec = "10s";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
       };
 
       ssh-suspend-guard = {
         Unit = {
           Description = "Prevents suspend while SSH sessions are active";
-          After = ["graphical-session.target"];
-          PartOf = ["graphical-session.target"];
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
           StartLimitBurst = 3;
           StartLimitIntervalSec = 120;
         };
         Service =
-          sd.hardenUser {}
-          // sd.serviceDefaultsUser {}
+          sd.hardenUser { }
+          // sd.serviceDefaultsUser { }
           // {
             ExecStart = lib.getExe ssh-suspend-guard;
             TimeoutStartSec = "10s";
           };
-        Install.WantedBy = ["graphical-session.target"];
+        Install.WantedBy = [ "graphical-session.target" ];
       };
 
       helium = {
         Unit = {
           Description = "Helium browser";
-          After = ["graphical-session.target"];
-          PartOf = ["graphical-session.target"];
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
           StartLimitBurst = 10;
           StartLimitIntervalSec = 300;
         };
@@ -619,7 +623,7 @@ in {
           Restart = "always";
           RestartSec = 5;
         };
-        Install.WantedBy = ["graphical-session.target"];
+        Install.WantedBy = [ "graphical-session.target" ];
       };
     };
   };
