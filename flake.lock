@@ -1251,18 +1251,18 @@
     "go-commit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784532650,
-        "narHash": "sha256-g2RvIYz/23x5DafNN4lmS9q031nOjF6IEVSwVaT5od0=",
-        "ref": "master",
-        "rev": "3f74fd19adb2e42bd34f3fcc7a1aa7a76e0f2fa3",
-        "revCount": 309,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-commit"
+        "lastModified": 1784714280,
+        "narHash": "sha256-3J9XUgGu19Jzj3HUiTCM7rCoAIHoKCtBXlXc2+0tC40=",
+        "owner": "LarsArtmann",
+        "repo": "go-commit",
+        "rev": "4e1ef73b1eb75b5ccf94ce4e8e8a990a8ab8070f",
+        "type": "github"
       },
       "original": {
-        "ref": "master",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-commit"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.4.0",
+        "repo": "go-commit",
+        "type": "github"
       }
     },
     "go-composable-business-types": {
@@ -3478,7 +3478,9 @@
           "flake-parts"
         ],
         "go-branded-id": "go-branded-id_13",
-        "go-commit": "go-commit",
+        "go-commit": [
+          "go-commit"
+        ],
         "go-composable-business-types": "go-composable-business-types_3",
         "go-error-family": "go-error-family_12",
         "go-filewatcher": "go-filewatcher_5",
@@ -3583,6 +3585,7 @@
         "flake-utils": "flake-utils",
         "go-auto-upgrade": "go-auto-upgrade_2",
         "go-branded-id": "go-branded-id_6",
+        "go-commit": "go-commit",
         "go-cqrs-lite": "go-cqrs-lite_3",
         "go-error-family": "go-error-family_5",
         "go-filewatcher": "go-filewatcher",
