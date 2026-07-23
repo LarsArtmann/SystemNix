@@ -16,7 +16,6 @@ let
   # the go-modules fixed-output hash with the value computed from the current
   # source to avoid a hash mismatch during deploy. TODO: remove once upstream
   # fixes the vendorHash.
-  overrideVendorHash = hash: pkg: if pkg == null then null else pkg.overrideAttrs (old: { goModules = old.goModules.overrideAttrs (_: { outputHash = hash; }); });
   overrideCqrsLint =
     pkg:
     if pkg == null then
@@ -30,7 +29,7 @@ let
 in
 lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
-  branching-flow = overrideVendorHash "sha256-ycIZlqUi5MlVdczbMfelD5KwyTWE7P6cDfgQV4siMEg=" (flakePkg inputs.branching-flow);
+  branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
   cqrs-lint = overrideCqrsLint ((inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null);
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
