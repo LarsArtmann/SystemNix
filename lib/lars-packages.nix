@@ -26,15 +26,6 @@ let
           outputHash = "sha256-OxASLe2eemTxUYKODYE6JECm1uH/U4qIqE7xXDh6BnA=";
         });
       });
-  overrideVendorHash = hash: pkg:
-    if pkg == null then
-      null
-    else
-      pkg.overrideAttrs (old: {
-        goModules = old.goModules.overrideAttrs (_: {
-          outputHash = hash;
-        });
-      });
 in
 lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
@@ -47,7 +38,7 @@ lib.filterAttrs (_: v: v != null) {
   hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
   md-go-validator = flakePkg inputs.md-go-validator;
-  mr-sync = overrideVendorHash "sha256-vY6B71gXP+wJm2fgw5eS8h6Q89ae63Bn1SSX7XU1ad8=" (flakePkg inputs.mr-sync);
+  mr-sync = flakePkg inputs.mr-sync;
   project-meta = flakePkg inputs.project-meta;
   projects-management-automation = flakePkg inputs.projects-management-automation;
   todo-list-ai = flakePkg inputs.todo-list-ai;
