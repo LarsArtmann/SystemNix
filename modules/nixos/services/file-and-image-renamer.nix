@@ -39,16 +39,15 @@ _: {
         };
 
         apiKeyFile = lib.mkOption {
-          type = lib.types.str;
-          default = "${config.users.users.${cfg.user}.home}/.zai_api_key";
-          defaultText = "/home/<user>/.zai_api_key";
-          description = "Path to the ZAI API key file";
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          description = "Path to the ZAI API key file (null = skip ZAI, use Synthetic only)";
         };
 
         syntheticApiKeyFile = lib.mkOption {
           type = lib.types.nullOr lib.types.str;
           default = null;
-          description = "Path to the Synthetic.new API key file (optional fallback provider)";
+          description = "Path to the Synthetic.new API key file";
         };
 
         model = lib.mkOption {
@@ -167,7 +166,6 @@ _: {
 
                   Environment = [
                     "DESKTOP_PATH=${cfg.watchDirectory}"
-                    "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
                     "DEAD_LETTER_PATH=${cfg.dataDir}/dead-letter.json"
                     # Unify history + hashdb state with the health dashboard.
                     # The health service (ProtectHome=read-only) MUST redirect
@@ -177,6 +175,7 @@ _: {
                     "HISTORY_FILE_PATH=${cfg.dataDir}/history.json"
                     "HASHDB_PATH=${cfg.dataDir}/hashes.db"
                   ]
+                  ++ lib.optional (cfg.apiKeyFile != null) "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
                   ++ lib.optional (
                     cfg.syntheticApiKeyFile != null
                   ) "SYNTHETIC_API_KEY_FILE=${cfg.syntheticApiKeyFile}"

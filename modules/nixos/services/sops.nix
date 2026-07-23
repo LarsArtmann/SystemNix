@@ -145,6 +145,19 @@ in
                 restartUnits = [ "crush-daily.service" ];
               } [ "synthetic_api_key" ]
             )
+            // lib.optionalAttrs (svcEnabled "file-and-image-renamer") (
+              mkKeyedSecrets "crush-daily.yaml"
+                {
+                  owner = primaryUser;
+                  group = "users";
+                  restartUnits = [ "file-and-image-renamer.service" ];
+                }
+                {
+                  # Same encrypted key as crush-daily's synthetic_api_key, but
+                  # owned by primaryUser so the HM user service can read it.
+                  file_renamer_synthetic_api_key = "synthetic_api_key";
+                }
+            )
             // lib.optionalAttrs (svcEnabled "openseo") (
               mkSecrets "openseo.yaml" {
                 owner = "root";

@@ -316,7 +316,7 @@ in
           "/home/${config.users.primaryUser}/Pictures"
         ];
         syntheticModel = "syn:small:vision";
-        syntheticApiKeyFile = "/home/${config.users.primaryUser}/.synthetic_api_key";
+        syntheticApiKeyFile = config.sops.secrets.file_renamer_synthetic_api_key.path;
       };
 
       libinput = {
