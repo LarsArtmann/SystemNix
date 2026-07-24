@@ -223,7 +223,18 @@ else
   FAIL=$((FAIL + 1))
 fi
 
-# Check 3: Server reports agent as connected device
+# Check 3: Server reports agent as connected device.
+# The agent takes 15-30s to connect after (re)start. When the server reports
+# 0 devices, we retry after a grace period before declaring failure.
+# This avoids false FAILs right after deploy (agent was just started).
+m365_check_server() {
+  local health
+  health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null) || return 3
+  echo "$health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"' && return 0
+  echo "$health" | grep -q '"realtime":"connected (0 devices)"' && return 1
+  return 2
+}
+
 if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
   if echo "$m365_health" | grep -q '"realtime"'; then
     if echo "$m365_health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"'; then
@@ -231,8 +242,17 @@ if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null
       m365_server_ok=true
       PASS=$((PASS + 1))
     elif echo "$m365_health" | grep -q '"realtime":"connected (0 devices)"'; then
-      echo -e "${RED}FAIL${NC} Monitor365 server reports 0 connected devices — agent not registered (circuit breaker deadlock or API key desync)"
-      FAIL=$((FAIL + 1))
+      # Agent may still be connecting. Wait 20s and retry.
+      echo -e "${YELLOW}WAIT${NC} Monitor365 server reports 0 devices — agent may still be connecting, waiting 20s..."
+      sleep 20
+      if m365_check_server; then
+        echo -e "${GREEN}PASS${NC} Monitor365 agent connected to server (after grace period)"
+        m365_server_ok=true
+        PASS=$((PASS + 1))
+      else
+        echo -e "${RED}FAIL${NC} Monitor365 server reports 0 connected devices after grace period"
+        FAIL=$((FAIL + 1))
+      fi
     else
       echo -e "${YELLOW}WARN${NC} Monitor365 health reachable but unexpected realtime format"
       SKIP=$((SKIP + 1))
@@ -246,20 +266,34 @@ else
   SKIP=$((SKIP + 1))
 fi
 
-# Check 4: If agent is up but server reports 0 devices, the circuit breaker
-# is likely deadlocked. Restart the agent to clear in-memory CB state.
+# Check 4: If agent is up but server still reports 0 devices after the grace
+# period, check how long the agent has been running. If it was started <2min
+# ago (e.g. by deploy), SKIP — the agent-watchdog timer will verify within 5min.
+# If the agent has been running >2min with 0 devices, it's a real CB deadlock —
+# restart to clear in-memory circuit breaker state.
 if $m365_agent_ok && ! $m365_server_ok; then
-  echo -e "${YELLOW}WARN${NC} Agent alive but not connected to server — restarting agent to clear circuit breaker"
-  sudo systemctl restart monitor365.service 2>/dev/null || true
-  sleep 10
-  if m365_health2=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
-    if echo "$m365_health2" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"'; then
-      echo -e "${GREEN}PASS${NC} Monitor365 agent reconnected after restart"
-      PASS=$((PASS + 1))
+  AGENT_UPTIME=$(sudo systemctl show -p ActiveEnterTimestamp --value monitor365.service 2>/dev/null)
+  if [ -n "$AGENT_UPTIME" ]; then
+    NOW_EPOCH=$(date +%s)
+    STARTED_EPOCH=$(date -d "$AGENT_UPTIME" +%s 2>/dev/null || echo 0)
+    if [ "$STARTED_EPOCH" -gt 0 ] && [ $((NOW_EPOCH - STARTED_EPOCH)) -lt 120 ]; then
+      echo -e "${YELLOW}SKIP${NC} Monitor365 agent recently started ($((NOW_EPOCH - STARTED_EPOCH))s ago) — watchdog timer will verify connectivity within 5min"
+      SKIP=$((SKIP + 1))
     else
-      echo -e "${RED}FAIL${NC} Monitor365 agent still not connected after restart — check API key or server logs"
-      FAIL=$((FAIL + 1))
+      echo -e "${YELLOW}WARN${NC} Agent alive but not connected (CB deadlock) — restarting agent to clear circuit breaker"
+      sudo systemctl restart monitor365.service 2>/dev/null || true
+      sleep 30
+      if m365_check_server; then
+        echo -e "${GREEN}PASS${NC} Monitor365 agent reconnected after restart"
+        PASS=$((PASS + 1))
+      else
+        echo -e "${RED}FAIL${NC} Monitor365 agent still not connected after restart — check API key or server logs"
+        FAIL=$((FAIL + 1))
+      fi
     fi
+  else
+    echo -e "${YELLOW}SKIP${NC} Cannot determine agent uptime — skipping CB deadlock check"
+    SKIP=$((SKIP + 1))
   fi
 fi
 

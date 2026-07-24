@@ -330,7 +330,10 @@
         (lib.mkIf (systemAgentCfg.enable && serverCfg.enable) {
           systemd.services.monitor365-agent-watchdog = {
             description = "Monitor365 agent health watchdog";
-            after = [ "monitor365-server.service" "monitor365.service" ];
+            after = [
+              "monitor365-server.service"
+              "monitor365.service"
+            ];
             serviceConfig = {
               Type = "oneshot";
               # Must run as root — the watchdog calls `systemctl start/restart`
@@ -339,7 +342,11 @@
               NoNewPrivileges = true;
               PrivateTmp = true;
             };
-            path = with pkgs; [ systemd curl jq ];
+            path = with pkgs; [
+              systemd
+              curl
+              jq
+            ];
             script = ''
               AGENT_METRICS="http://localhost:${toString ports.monitor365-metrics}/metrics"
               SERVER_HEALTH="http://localhost:${toString ports.monitor365-server}/health"
@@ -432,6 +439,15 @@
 
             services.monitor365-graphical-restart = {
               description = "Restart Monitor365 agent after graphical session starts";
+              # The path unit can fire multiple times during deploy (wayland-1
+              # socket already exists → PathExists triggers on each activation
+              # cycle). Without generous start limits, systemd kills the service
+              # after 5 starts in 10s (default), leaving it dead and the path
+              # unit also enters failed state. The debounce logic in the script
+              # handles the actual restart decision — these rapid triggers are
+              # harmless and exit 0 immediately.
+              startLimitBurst = 20;
+              startLimitIntervalSec = 300;
               serviceConfig = {
                 Type = "oneshot";
               };
