@@ -26,6 +26,18 @@ if nix run .#pre-deploy-check; then
     systemctl --user reset-failed 2>/dev/null || true
   fi
 
+  # Start critical services that deploy may have left in inactive/dead state.
+  # reset-failed only clears the failure counter — it does NOT start the service.
+  # The monitor365 agent in particular dies on start-limit-hit and never recovers
+  # without an explicit start (the agent-watchdog timer covers this too, but
+  # starting here avoids waiting up to 5 minutes).
+  for svc in monitor365.service; do
+    if systemctl is-enabled --quiet "$svc" 2>/dev/null && ! systemctl is-active --quiet "$svc" 2>/dev/null; then
+      echo "Starting $svc (was enabled but inactive)..."
+      sudo systemctl start "$svc" 2>/dev/null || true
+    fi
+  done
+
   echo ""
   echo "=== Waiting 10s for services to settle ==="
   sleep 10

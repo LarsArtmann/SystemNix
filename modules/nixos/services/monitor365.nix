@@ -307,6 +307,71 @@
           };
         })
 
+        # ── Agent resilience: start-limit + self-healing ──────────────
+        # The upstream module doesn't set StartLimitBurst/StartLimitIntervalSec,
+        # so systemd defaults (5/10s) apply. When the agent exits rapidly
+        # (e.g. niri restart triggering graphical-restart path unit multiple
+        # times in 1 second), the default limit is hit immediately and the
+        # agent stays dead until the next deploy. Set generous limits so
+        # transient crashes self-heal.
+        (lib.mkIf systemAgentCfg.enable {
+          systemd.services.monitor365 = {
+            startLimitBurst = 10;
+            startLimitIntervalSec = 300;
+          };
+        })
+
+        # Agent health watchdog: periodically verify the agent is running,
+        # its metrics endpoint responds, and the server sees it as a connected
+        # device. If any check fails, reset start-limit and restart the agent.
+        # This breaks the circuit-breaker deadlock (CB is in-memory; restart
+        # clears it) and ensures the agent recovers from crashes that deploy.sh
+        # misses (deploy only does reset-failed, not start).
+        (lib.mkIf (systemAgentCfg.enable && serverCfg.enable) {
+          systemd.services.monitor365-agent-watchdog = {
+            description = "Monitor365 agent health watchdog";
+            after = [ "monitor365-server.service" "monitor365.service" ];
+            serviceConfig = {
+              Type = "oneshot";
+              User = "monitor365";
+              Group = "monitor365";
+              NoNewPrivileges = true;
+              PrivateTmp = true;
+            };
+            path = with pkgs; [ systemd curl ];
+            script = ''
+              AGENT_METRICS="http://localhost:${toString ports.monitor365-metrics}/metrics"
+              SERVER_HEALTH="http://localhost:${toString ports.monitor365-server}/health"
+
+              # 1. Is the agent process alive?
+              if ! systemctl is-active --quiet monitor365.service; then
+                echo "monitor365-agent-watchdog: agent is NOT active — resetting start-limit and starting"
+                systemctl reset-failed monitor365.service 2>/dev/null || true
+                systemctl start monitor365.service || true
+                exit 0
+              fi
+
+              # 2. Is the agent's metrics endpoint responding?
+              if ! curl -sf -m 5 "$AGENT_METRICS" >/dev/null 2>&1; then
+                echo "monitor365-agent-watchdog: agent metrics endpoint unreachable — restarting"
+                systemctl restart monitor365.service || true
+                exit 0
+              fi
+
+              echo "monitor365-agent-watchdog: agent healthy (process active, metrics responding)"
+            '';
+          };
+
+          systemd.timers.monitor365-agent-watchdog = {
+            description = "Periodic Monitor365 agent health check";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "2min";
+              OnUnitActiveSec = "5min";
+            };
+          };
+        })
+
         # Display discovery: the upstream module's start script uses pgrep to
         # find the displayUser's compositor PID, reads DISPLAY, WAYLAND_DISPLAY,
         # XAUTHORITY, XDG_RUNTIME_DIR, DBUS_SESSION_BUS_ADDRESS from
@@ -336,6 +401,13 @@
             # before niri exists, leaving graphical collectors disabled until
             # restart). Uses uid 1000 — deterministic on evo-x2 (SDDM+niri,
             # primary user lars). Update if a multi-host deployment is added.
+            #
+            # The oneshot script skips the restart if the service is in
+            # start-limit-hit or was restarted within the last 60s (prevents
+            # the rapid-restart storm when niri bounces the Wayland socket
+            # during DRM zombie recovery — each bounce previously triggered
+            # a fresh `systemctl restart`, causing 6 start/stop cycles in 1s
+            # → start-limit-hit → agent dead until next deploy).
             paths.monitor365-graphical-restart = {
               description = "Restart Monitor365 agent when graphical session starts";
               wantedBy = [ "paths.target" ];
@@ -351,9 +423,29 @@
                 Type = "oneshot";
               };
               script = ''
-                if ${pkgs.systemd}/bin/systemctl is-active --quiet monitor365.service; then
-                  ${pkgs.systemd}/bin/systemctl restart monitor365.service
+                # Skip if the service is not running (start-limit-hit, dead, etc.)
+                if ! ${pkgs.systemd}/bin/systemctl is-active --quiet monitor365.service; then
+                  echo "monitor365-graphical-restart: agent not active, skipping restart (watchdog will recover)"
+                  exit 0
                 fi
+
+                # Skip if the agent was started less than 60s ago (debounce:
+                # prevents rapid-restart storm during niri Wayland socket bounce)
+                AGENT_UPTIME=$(${pkgs.systemd}/bin/systemctl show -p ActiveEnterTimestamp --value monitor365.service 2>/dev/null)
+                if [ -n "$AGENT_UPTIME" ]; then
+                  NOW=$(${pkgs.coreutils}/bin/date +%s)
+                  STARTED=$(${pkgs.coreutils}/bin/date -d "$AGENT_UPTIME" +%s 2>/dev/null || echo 0)
+                  if [ "$STARTED" -gt 0 ]; then
+                    ELAPSED=$((NOW - STARTED))
+                    if [ "$ELAPSED" -lt 60 ]; then
+                      echo "monitor365-graphical-restart: agent started \''${ELAPSED}s ago, skipping (debounce <60s)"
+                      exit 0
+                    fi
+                  fi
+                fi
+
+                echo "monitor365-graphical-restart: restarting agent for display discovery"
+                ${pkgs.systemd}/bin/systemctl restart monitor365.service
               '';
             };
           };
