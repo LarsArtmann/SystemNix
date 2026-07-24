@@ -428,71 +428,72 @@
     };
   };
 
-  outputs =
-    inputs@{
-      flake-parts,
-      nixpkgs,
-      nix-ssh-config,
-      treefmt-full-flake,
-      ...
-    }:
-    let
-      lib = nixpkgs.lib;
-      overlays = import ./overlays inputs;
-      inherit (overlays)
-        sharedOverlays
-        linuxOnlyOverlays
-        disableTests
-        pythonTest
-        ;
+  outputs = inputs @ {
+    flake-parts,
+    nixpkgs,
+    nix-ssh-config,
+    treefmt-full-flake,
+    ...
+  }: let
+    lib = nixpkgs.lib;
+    overlays = import ./overlays inputs;
+    inherit
+      (overlays)
+      sharedOverlays
+      linuxOnlyOverlays
+      disableTests
+      pythonTest
+      ;
 
-      # Auto-discover NixOS modules from modules/nixos/{services,desktop}/.
-      # Convention: filename (minus .nix) IS the module name and MUST be unique
-      # across all scanned directories (it becomes flake.nixosModules.<name>).
-      # Non-module files must start with _ (e.g., _signoz-alerts.nix).
-      # Non-.nix files and directories are ignored automatically.
-      moduleDirs = [
-        ./modules/nixos/services
-        ./modules/nixos/desktop
-      ];
-      discoveredModules = lib.concatMap (
-        dir:
-        let
+    # Auto-discover NixOS modules from modules/nixos/{services,desktop}/.
+    # Convention: filename (minus .nix) IS the module name and MUST be unique
+    # across all scanned directories (it becomes flake.nixosModules.<name>).
+    # Non-module files must start with _ (e.g., _signoz-alerts.nix).
+    # Non-.nix files and directories are ignored automatically.
+    moduleDirs = [
+      ./modules/nixos/services
+      ./modules/nixos/desktop
+    ];
+    discoveredModules =
+      lib.concatMap (
+        dir: let
           files = lib.filterAttrs (n: v: v == "regular" && lib.hasSuffix ".nix" n && !(lib.hasPrefix "_" n)) (
             builtins.readDir dir
           );
         in
-        lib.mapAttrsToList (file: _: {
-          path = dir + "/${file}";
-          module = lib.removeSuffix ".nix" file;
-        }) files
-      ) moduleDirs;
+          lib.mapAttrsToList (file: _: {
+            path = dir + "/${file}";
+            module = lib.removeSuffix ".nix" file;
+          })
+          files
+      )
+      moduleDirs;
 
-      discoveredModulePaths = map (m: m.path) discoveredModules;
+    discoveredModulePaths = map (m: m.path) discoveredModules;
 
-      # Shared Home Manager configuration — only user/home file path differs per system
-      sharedHomeManagerConfig = {
-        useGlobalPkgs = true;
-        useUserPackages = true;
-        backupFileExtension = "backup";
-        overwriteBackup = true;
-      };
+    # Shared Home Manager configuration — only user/home file path differs per system
+    sharedHomeManagerConfig = {
+      useGlobalPkgs = true;
+      useUserPackages = true;
+      backupFileExtension = "backup";
+      overwriteBackup = true;
+    };
 
-      # Shared theme (Catppuccin Mocha palette)
-      theme = import ./platforms/common/theme.nix;
+    # Shared theme (Catppuccin Mocha palette)
+    theme = import ./platforms/common/theme.nix;
 
-      # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
-      sharedHomeManagerSpecialArgs = {
-        inherit nix-ssh-config;
-        inherit (theme) colorScheme;
-      };
+    # Shared extraSpecialArgs for Home Manager — available in all platform home.nix files
+    sharedHomeManagerSpecialArgs = {
+      inherit nix-ssh-config;
+      inherit (theme) colorScheme;
+    };
 
-      # LarsArtmann Go tool packages — single source of truth in lib/lars-packages.nix.
-      # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
-      # via specialArgs (for environment.systemPackages).
-      mkLarsPackages = import ./lib/lars-packages.nix { inherit lib inputs; };
-    in
-    flake-parts.lib.mkFlake { inherit inputs; } {
+    # LarsArtmann Go tool packages — single source of truth in lib/lars-packages.nix.
+    # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
+    # via specialArgs (for environment.systemPackages).
+    mkLarsPackages = import ./lib/lars-packages.nix {inherit lib inputs;};
+  in
+    flake-parts.lib.mkFlake {inherit inputs;} {
       systems = [
         "aarch64-darwin"
         "x86_64-linux"
@@ -502,103 +503,104 @@
       imports = discoveredModulePaths;
 
       # Per-system configuration (packages, devShells, etc.)
-      perSystem =
-        {
-          pkgs,
-          system,
-          lib,
-          ...
-        }:
-        {
-          # Allow unfree and broken packages for all systems
-          _module.args.pkgs = import nixpkgs {
-            inherit system;
-            config.allowUnfree = true;
-            config.allowBroken = false; # # <-- THIS MUST ALWAYS BE FALSE!
-            overlays =
-              sharedOverlays
-              ++ [ disableTests ]
-              ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
+      perSystem = {
+        pkgs,
+        system,
+        lib,
+        ...
+      }: {
+        # Allow unfree and broken packages for all systems
+        _module.args.pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+          config.allowBroken = false; # # <-- THIS MUST ALWAYS BE FALSE!
+          overlays =
+            sharedOverlays
+            ++ [disableTests]
+            ++ lib.optionals (lib.hasSuffix "-linux" system) linuxOnlyOverlays;
+        };
+
+        # Use treefmt-full-flake's formatter which includes alejandra in PATH
+        formatter = treefmt-full-flake.formatter.${system};
+
+        packages =
+          (mkLarsPackages system)
+          // {
+            inherit
+              (pkgs)
+              aw-watcher-utilization
+              govalid
+              jscpd
+              qmd
+              sqlc
+              ;
+          }
+          // lib.optionalAttrs pkgs.stdenv.isLinux {
+            inherit
+              (pkgs)
+              openaudible
+              openseo
+              dnsblockd
+              monitor365
+              netwatch
+              emeet-pixyd
+              file-and-image-renamer
+              crush-daily
+              ;
           };
 
-          # Use treefmt-full-flake's formatter which includes alejandra in PATH
-          formatter = treefmt-full-flake.formatter.${system};
-
-          packages =
-            (mkLarsPackages system)
-            // {
-              inherit (pkgs)
-                aw-watcher-utilization
-                govalid
-                jscpd
-                qmd
-                sqlc
-                ;
-            }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
-              inherit (pkgs)
-                openaudible
-                openseo
-                dnsblockd
-                monitor365
-                netwatch
-                emeet-pixyd
-                file-and-image-renamer
-                crush-daily
-                ;
-            };
-
-          # Development shells for different program categories
-          devShells = {
-            default = pkgs.mkShellNoCC {
-              BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
-              packages = with pkgs; [
-                git
-                nixfmt
-                alejandra
-                treefmt
-                deadnix
-                shellcheck
-                statix
-                gitleaks
-                jq
-                sqlc
-              ];
-            };
-            # Quickshell development — hot-reload QML shell development
-            quickshell = pkgs.mkShellNoCC {
-              packages = [
-                inputs.dankMaterialShell.packages.${system}.default
-                pkgs.qt6.qtdeclarative
-                pkgs.qt6.qttools # provides qmlls (QML LSP)
-              ];
-            };
+        # Development shells for different program categories
+        devShells = {
+          default = pkgs.mkShellNoCC {
+            BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
+            packages = with pkgs; [
+              git
+              nixfmt
+              alejandra
+              treefmt
+              deadnix
+              shellcheck
+              statix
+              gitleaks
+              jq
+              sqlc
+            ];
           };
+          # Quickshell development — hot-reload QML shell development
+          quickshell = pkgs.mkShellNoCC {
+            packages = [
+              inputs.dankMaterialShell.packages.${system}.default
+              pkgs.qt6.qtdeclarative
+              pkgs.qt6.qttools # provides qmlls (QML LSP)
+            ];
+          };
+        };
 
-          checks = {
+        checks =
+          {
             statix =
               pkgs.runCommand "statix-check"
-                {
-                  nativeBuildInputs = [ pkgs.statix ];
-                }
-                ''
-                  cd ${./.}
-                  statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
-                  if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
-                    exit 1
-                  fi
-                  exit 0
-                '';
+              {
+                nativeBuildInputs = [pkgs.statix];
+              }
+              ''
+                cd ${./.}
+                statix check -o errfmt . 2>&1 | grep -v ':E:0:' | tee $out || true
+                if statix check -o errfmt . 2>&1 | grep -v ':E:0:' | grep -q '.'; then
+                  exit 1
+                fi
+                exit 0
+              '';
 
             deadnix =
               pkgs.runCommand "deadnix-check"
-                {
-                  nativeBuildInputs = [ pkgs.deadnix ];
-                }
-                ''
-                  cd ${./.}
-                  deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
-                '';
+              {
+                nativeBuildInputs = [pkgs.deadnix];
+              }
+              ''
+                cd ${./.}
+                deadnix --fail --no-lambda-pattern-names . 2>&1 | tee $out
+              '';
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux (
             import ./tests {
@@ -611,93 +613,96 @@
             }
           );
 
-          apps =
-            let
-              mkApp = name: description: runtimeInputs: scriptPath: {
-                type = "app";
-                program = "${
-                  pkgs.writeShellApplication {
-                    inherit name runtimeInputs;
-                    text = builtins.readFile scriptPath;
-                  }
-                }/bin/${name}";
-                meta.description = description;
-              };
-            in
-            {
-              deploy = mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
+        apps = let
+          mkApp = name: description: runtimeInputs: scriptPath: {
+            type = "app";
+            program = "${
+              pkgs.writeShellApplication {
+                inherit name runtimeInputs;
+                text = builtins.readFile scriptPath;
+              }
+            }/bin/${name}";
+            meta.description = description;
+          };
+        in
+          {
+            deploy =
+              mkApp "deploy" "Deploy NixOS config to evo-x2 via nh with post-deploy checks" [
                 pkgs.nh
                 pkgs.systemd
-              ] ./scripts/deploy.sh;
-              validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
-              pre-deploy-check =
-                mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
-                  [ pkgs.nix pkgs.jq pkgs.systemd ]
-                  ./scripts/pre-deploy-check.sh;
-              post-deploy-check =
-                mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
-                  [ pkgs.curl ]
-                  ./scripts/post-deploy-check.sh;
-              btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
+              ]
+              ./scripts/deploy.sh;
+            validate = mkApp "validate" "Validate flake without building" [pkgs.nix] ./scripts/validate.sh;
+            pre-deploy-check =
+              mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
+              [pkgs.nix pkgs.jq pkgs.systemd]
+              ./scripts/pre-deploy-check.sh;
+            post-deploy-check =
+              mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
+              [pkgs.curl]
+              ./scripts/post-deploy-check.sh;
+            btrfs-inventory =
+              mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs
                 pkgs.util-linux
                 pkgs.coreutils
                 pkgs.findutils
-              ] ./scripts/btrfs-subvolume-inventory.sh;
-              pocket-id-login-code =
-                mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
-                  [ pkgs.curl pkgs.jq ]
-                  ./scripts/pocket-id-login-code.sh;
-            }
-            // lib.optionalAttrs pkgs.stdenv.isLinux {
-              dns-diagnostics =
-                mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
-                  [
-                    pkgs.systemd
-                    pkgs.bind.dnsutils
-                    pkgs.curl
-                    pkgs.iproute2
-                    pkgs.iputils
-                    pkgs.jq
-                  ]
-                  ./scripts/dns-diagnostics.sh;
-              dms-restart = {
-                type = "app";
-                program = "${
-                  pkgs.writeShellApplication {
-                    name = "dms-restart";
-                    runtimeInputs = [ pkgs.systemd ];
-                    text = "systemctl --user restart dms.service && echo 'DMS restarted'";
-                  }
-                }/bin/dms-restart";
-                meta.description = "Restart DankMaterialShell desktop shell";
-              };
-              dms-locks = {
-                type = "app";
-                program = "${
-                  pkgs.writeShellApplication {
-                    name = "dms-locks";
-                    text = "dms ipc lock lock 2>/dev/null || exec swaylock";
-                  }
-                }/bin/dms-locks";
-                meta.description = "Lock screen via DMS IPC (fallback: swaylock)";
-              };
-              dms-wallpaper-next = {
-                type = "app";
-                program = "${
-                  pkgs.writeShellApplication {
-                    name = "dms-wallpaper-next";
-                    text = "dms ipc call wallpaper next";
-                  }
-                }/bin/dms-wallpaper-next";
-                meta.description = "Cycle to next wallpaper via DMS IPC";
-              };
+              ]
+              ./scripts/btrfs-subvolume-inventory.sh;
+            pocket-id-login-code =
+              mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
+              [pkgs.curl pkgs.jq]
+              ./scripts/pocket-id-login-code.sh;
+          }
+          // lib.optionalAttrs pkgs.stdenv.isLinux {
+            dns-diagnostics =
+              mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
+              [
+                pkgs.systemd
+                pkgs.bind.dnsutils
+                pkgs.curl
+                pkgs.iproute2
+                pkgs.iputils
+                pkgs.jq
+              ]
+              ./scripts/dns-diagnostics.sh;
+            dms-restart = {
+              type = "app";
+              program = "${
+                pkgs.writeShellApplication {
+                  name = "dms-restart";
+                  runtimeInputs = [pkgs.systemd];
+                  text = "systemctl --user restart dms.service && echo 'DMS restarted'";
+                }
+              }/bin/dms-restart";
+              meta.description = "Restart DankMaterialShell desktop shell";
             };
-        };
+            dms-locks = {
+              type = "app";
+              program = "${
+                pkgs.writeShellApplication {
+                  name = "dms-locks";
+                  text = "dms ipc lock lock 2>/dev/null || exec swaylock";
+                }
+              }/bin/dms-locks";
+              meta.description = "Lock screen via DMS IPC (fallback: swaylock)";
+            };
+            dms-wallpaper-next = {
+              type = "app";
+              program = "${
+                pkgs.writeShellApplication {
+                  name = "dms-wallpaper-next";
+                  text = "dms ipc call wallpaper next";
+                }
+              }/bin/dms-wallpaper-next";
+              meta.description = "Cycle to next wallpaper via DMS IPC";
+            };
+          };
+      };
 
       # System configurations — assembled in systems/*.nix (thin host files)
       flake = {
-        lib = import ./lib { inherit (nixpkgs) lib; };
+        lib = import ./lib {inherit (nixpkgs) lib;};
 
         darwinConfigurations."Lars-MacBook-Air" = import ./systems/darwin.nix {
           inherit
