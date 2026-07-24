@@ -19,10 +19,11 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
   6. Add `@data` to btrbk config for snapshot protection
   7. Clean up old toplevel data (after verifying snapshots work)
      Requires ~1h downtime window. Docker containers on `/data/docker` will be stopped.
-- **Cloud backup** — no off-site backup exists. Evaluate BorgBackup to Hetzner StorageBox (see `docs/research/hetzner-storagebox-borgbackup.md`). Critical for disaster recovery.
+- **Cloud backup** — no off-site backup exists. Evaluate BorgBackup to Hetzner StorageBox (see `docs/research/hetzner-storagebox-borgbackup.md`). Critical for disaster recovery. **This is the #1 data loss risk — flagged since 2026-06-25.**
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP). Module and config ready, hardware not purchased.
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed upstream.
 - **Disk space monitoring** — Darwin is 90%+ full on 256GB SSD. Need automated alerting before builds fail.
+- **GPUActive memory pressure** — `system-health.nix` now collects GPUActive metrics and alerts at 60G threshold. TTM `page_pool_size` reduced from 112 GiB to 24 GiB. GPUActive is the #1 RAM consumer on Strix Halo (~51 GiB with desktop workloads). Remaining: investigate lowering `ttmPagesLimit` and `GPUReclaim` tuning.
 
 ---
 
@@ -50,7 +51,7 @@ The system has been hardened through multiple OOM/crash cycles. Remaining work:
 
 ## Theme 4: Architecture & Code Quality
 
-- **Split large modules** — `signoz.nix` (943L), `forgejo.nix` (725L) are too large. Extract sub-modules. (monitor365.nix was 716L but is now 151L after restructuring.)
+- **Split large modules** — `signoz.nix` (943L), `forgejo.nix` (725L) are too large. Extract sub-modules. (monitor365.nix was 716L but is now 151L after restructuring — schema-migrate, watchdog, graphical-restart extracted into self-contained services.)
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`).
 - **Replace unbound with dnsblockd's embedded resolver** — ✅ DONE (2026-07-13). dnsblockd is now the sole DNS resolver on :53 with embedded sdns (DNSSEC, DoT, DoH, caching, local zones, LAN ACLs, blocklist hot-reload, cache flush). All six original gaps closed in the dnsblockd repo: local zones, upstream DoT forwarding, LAN ACLs, zone-level NXDOMAIN, DNS cache flush, IPv6 disable. SystemNix migrated: dns-blocker.nix generates dnsblockd YAML with `dns_enabled: true`, all unbound config removed, all service dependencies updated.
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing.
