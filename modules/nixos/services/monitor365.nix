@@ -339,7 +339,7 @@
               NoNewPrivileges = true;
               PrivateTmp = true;
             };
-            path = with pkgs; [ systemd curl ];
+            path = with pkgs; [ systemd curl jq ];
             script = ''
               AGENT_METRICS="http://localhost:${toString ports.monitor365-metrics}/metrics"
               SERVER_HEALTH="http://localhost:${toString ports.monitor365-server}/health"
@@ -359,7 +359,19 @@
                 exit 0
               fi
 
-              echo "monitor365-agent-watchdog: agent healthy (process active, metrics responding)"
+              # 3. Does the server see the agent as a connected device?
+              # This catches the circuit-breaker deadlock: agent is alive and
+              # metrics respond, but it can't upload to the server (CB open
+              # with 700K+ failures). Restarting clears the in-memory CB.
+              REALTIME=$(curl -sf -m 5 "$SERVER_HEALTH" 2>/dev/null \
+                | jq -r '.realtime // empty' 2>/dev/null || echo "")
+              if [ -n "$REALTIME" ] && echo "$REALTIME" | grep -q "connected (0 devices)"; then
+                echo "monitor365-agent-watchdog: server reports 0 devices — circuit breaker deadlock, restarting agent"
+                systemctl restart monitor365.service || true
+                exit 0
+              fi
+
+              echo "monitor365-agent-watchdog: agent healthy (process active, metrics responding, server connected)"
             '';
           };
 
@@ -439,7 +451,7 @@
                   if [ "$STARTED" -gt 0 ]; then
                     ELAPSED=$((NOW - STARTED))
                     if [ "$ELAPSED" -lt 60 ]; then
-                      echo "monitor365-graphical-restart: agent started \''${ELAPSED}s ago, skipping (debounce <60s)"
+                      echo "monitor365-graphical-restart: agent started ''${ELAPSED}s ago, skipping (debounce <60s)"
                       exit 0
                     fi
                   fi

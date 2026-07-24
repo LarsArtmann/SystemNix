@@ -69,8 +69,15 @@ let
       # empty window and exits 0 — with Restart=always that becomes a tight loop
       # of empty windows (11 in 36s, then start-limit-hit).
       # Instead: wait for the existing instance to die, then launch fresh.
+      # Cap the wait at 300s to avoid hanging forever on a zombie process.
+      WAITED=0
       while pgrep -f "helium --ozone-platform-hint" >/dev/null 2>&1; do
+        if [ "$WAITED" -ge 300 ]; then
+          echo "helium-launch: existing instance still alive after 300s, launching anyway" >&2
+          break
+        fi
         sleep 5
+        WAITED=$((WAITED + 5))
       done
       exec env -u QT_STYLE_OVERRIDE helium
     '';
