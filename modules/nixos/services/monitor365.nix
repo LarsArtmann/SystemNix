@@ -265,6 +265,48 @@
           };
         })
 
+        # Schema migration: add 'version' column to tenants table for existing DBs.
+        # Upstream bug at pinned commit 0615301: schema.sql includes
+        # 'version INTEGER NOT NULL DEFAULT 0' in CREATE TABLE IF NOT EXISTS
+        # tenants, but no ALTER TABLE migration exists for DBs created before
+        # the column was added. Every SELECT using COLUMNS (which has
+        # COALESCE(tenants.version, 0)) fails with a Binder Error.
+        #
+        # This runs as a SEPARATE service because the monitor365-server's
+        # hardened SystemCallFilter=@system-service blocks the duckdb CLI's
+        # C++ thread creation (clone3 syscall). ExecStartPre inherits the
+        # service's sandbox, so the migration must run outside it.
+        # NOTE: DuckDB ALTER TABLE does not support NOT NULL or DEFAULT
+        # constraints — use bare INTEGER. The Rust COALESCE handles NULLs.
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-schema-migrate = {
+            description = "Monitor365 DuckDB schema migration";
+            before = [ "monitor365-server.service" ];
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig = {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              User = "monitor365-server";
+              Group = "monitor365-server";
+              StateDirectory = "monitor365-server";
+            };
+            script = ''
+              DB="${serverCfg.stateDir}/monitor365.duckdb"
+              if [ -f "$DB" ] && [ -s "$DB" ]; then
+                ${pkgs.duckdb}/bin/duckdb "$DB" -c \
+                  "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;"
+                echo "monitor365-schema-migrate: version column ensured"
+              else
+                echo "monitor365-schema-migrate: DB not found or empty, skipping"
+              fi
+            '';
+          };
+          systemd.services.monitor365-server = {
+            after = [ "monitor365-schema-migrate.service" ];
+            requires = [ "monitor365-schema-migrate.service" ];
+          };
+        })
+
         # Display discovery: the upstream module's start script uses pgrep to
         # find the displayUser's compositor PID, reads DISPLAY, WAYLAND_DISPLAY,
         # XAUTHORITY, XDG_RUNTIME_DIR, DBUS_SESSION_BUS_ADDRESS from
