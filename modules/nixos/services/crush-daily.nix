@@ -11,6 +11,7 @@ _: {
       cfg = config.services.crush-daily;
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkStateDir
         serviceDefaults
         onFailure
         ports
@@ -25,16 +26,13 @@ _: {
         # Ensure the crush-daily user can traverse the directory chain to the
         # Crush database. Three dirs default to 700 (lars:users), which blocks
         # the crush-daily system user even with SupplementaryGroups = "users".
-        system.activationScripts."crush-daily-perms" = lib.stringAfter [ "users" ] ''
-          for dir in \
-            /home/${primaryUser}/.local \
-            /home/${primaryUser}/.local/share \
-            /home/${primaryUser}/.local/share/crush/.crush; do
-            if [ -d "$dir" ]; then
-              chmod g+rx "$dir"
-            fi
-          done
-        '';
+        # tmpfiles `d` type sets mode on existing dirs too, achieving what the
+        # former `chmod g+rx` activation script did.
+        systemd.tmpfiles.rules = [
+          (mkStateDir "/home/${primaryUser}/.local" "0750" primaryUser "users")
+          (mkStateDir "/home/${primaryUser}/.local/share" "0750" primaryUser "users")
+          (mkStateDir "/home/${primaryUser}/.local/share/crush/.crush" "0750" primaryUser "users")
+        ];
 
         systemd.services.crush-daily = {
           inherit onFailure;

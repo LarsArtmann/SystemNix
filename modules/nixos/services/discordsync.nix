@@ -20,6 +20,7 @@
     let
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkStateDir
         ports
         onFailure
         ;
@@ -119,14 +120,10 @@
 
         # Pre-create the attachments subdir with correct ownership.
         # (Upstream creates dataDir only — the subdir is a SystemNix convention.)
-        system.activationScripts."discordsync-setup" =
-          lib.stringAfter
-            ([ "users" ] ++ lib.optional (config.system.activationScripts ? setupSecrets) "setupSecrets")
-            ''
-              mkdir -p ${cfg.dataDir}/attachments
-              chown -R ${cfg.user}:${cfg.group} ${cfg.dataDir}
-              chmod 2770 ${cfg.dataDir} ${cfg.dataDir}/attachments
-            '';
+        systemd.tmpfiles.rules = [
+          (mkStateDir cfg.dataDir "2770" cfg.user cfg.group)
+          (mkStateDir "${cfg.dataDir}/attachments" "2770" cfg.user cfg.group)
+        ];
       };
     };
 }

@@ -10,6 +10,7 @@
     let
       inherit (import ../../../lib/default.nix lib)
         harden
+        mkStateDir
         serviceDefaults
         onFailure
         serviceTypes
@@ -105,6 +106,25 @@
           chown -R ${cfg.user}:${cfg.group} ${cfg.stateDir}
           find ${cfg.stateDir} -type d -exec chmod 2770 {} + 2>/dev/null || true
           find ${cfg.stateDir} -type f -exec chmod 0660 {} + 2>/dev/null || true
+        '';
+      };
+
+      # Grant hermes (via 'users' group) read+execute access to the primary
+      # user's home so it can navigate to shared project directories. Uses ACLs
+      # instead of broad chmod to avoid making the entire home directory
+      # writable. Only read+execute (r-x) is granted, not write. Runs as root
+      # via the ExecStartPre `+` prefix (cannot be expressed via tmpfiles).
+      aclSetupScript = pkgs.writeShellApplication {
+        name = "hermes-acl-setup";
+        runtimeInputs = [
+          pkgs.acl
+          pkgs.coreutils
+        ];
+        text = ''
+          primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
+          if [ -n "$primaryHome" ] && [ -d "$primaryHome" ]; then
+            setfacl -m "g:${cfg.group}:r-x" "$primaryHome" 2>/dev/null || chmod g+rx "$primaryHome"
+          fi
         '';
       };
 

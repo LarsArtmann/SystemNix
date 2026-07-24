@@ -95,6 +95,8 @@ in
 
       tmpfiles.rules = [
         "L+ /var/lib/AccountsService/icons/${config.users.primaryUser} - - - - ${../../../assets/avatar.png}"
+        # Ensure Home Manager profile directory exists (replaces activationScripts)
+        "d /nix/var/nix/profiles/per-user/${config.users.primaryUser} 0755 ${config.users.primaryUser} users -"
       ];
     };
 
@@ -131,13 +133,6 @@ in
 
     # AccountsService avatar for SDDM login/lock screen
     services.accounts-daemon.enable = true;
-
-    # Ensure Home Manager profile directory exists
-    # This is required for home-manager.useUserPackages = true to work properly
-    system.activationScripts.home-manager-profile-dirs = ''
-      mkdir -p /nix/var/nix/profiles/per-user/${config.users.primaryUser}
-      chown ${config.users.primaryUser}:users /nix/var/nix/profiles/per-user/${config.users.primaryUser}
-    '';
 
     programs.obs-studio = {
       enable = true;
