@@ -59,7 +59,7 @@
 
 ### Home Manager
 
-- [ ] **ActivityWatch Wayland watcher: `graphical-session.target` deps** — Wayland watchers need compositor dependency.
+- [x] **ActivityWatch Wayland watcher: `graphical-session.target` deps** — Done 2026-07-24. Local workaround hardened with `StartLimitBurst=5`/`StartLimitIntervalSec=300` (prevents the observed `start-limit-hit` on slow compositor startup). Upstream Home Manager patch prepared in `docs/services/home-manager-activitywatch-graphical-session.patch` (adds a `requiresGraphicalSession` watcher option); submission is a manual external step.
 - [ ] **Darwin user definition requirement** — HM on Darwin requires explicit `users.users.<name>.home` — tracks issue #6036.
 
 ### Third-Party

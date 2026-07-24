@@ -1,0 +1,39 @@
+diff --git a/modules/services/activitywatch.nix b/modules/services/activitywatch.nix
+index 9d50864..6828abf 100644
+--- a/modules/services/activitywatch.nix
++++ b/modules/services/activitywatch.nix
+@@ -19,7 +19,9 @@ let
+     lib.nameValuePair jobName {
+       Unit = {
+         Description = "ActivityWatch watcher '${cfg.name}'";
+-        After = [ "activitywatch.service" ];
++        After = [ "activitywatch.service" ]
++          ++ lib.optional cfg.requiresGraphicalSession "graphical-session.target";
++        PartOf = lib.optional cfg.requiresGraphicalSession "graphical-session.target";
+         BindsTo = [ "activitywatch.target" ];
+       };
+ 
+@@ -118,6 +120,23 @@ let
+             Extra arguments to be passed to the watcher executable.
+           '';
+         };
++
++        requiresGraphicalSession = mkOption {
++          type = lib.types.bool;
++          default = false;
++          example = true;
++          description = ''
++            Whether this watcher needs a running graphical session (e.g. a
++            Wayland compositor) to function.
++
++            When enabled, the generated user service is ordered after
++            {var}`graphical-session.target` and bound to its lifetime with
++            {manpage}`PartOf=`, so it does not start before the compositor is
++            ready and is stopped together with the session. This is required
++            for watchers such as {cmd}`aw-watcher-window-wayland` that connect
++            to a display server on startup.
++          '';
++        };
+       };
+     };
+ 
