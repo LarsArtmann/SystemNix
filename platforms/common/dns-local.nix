@@ -16,5 +16,7 @@
     "discordsync"
     "overview"
     "renamer"
+    "dnsblock"
+    "dnsblockd"
   ];
 }
