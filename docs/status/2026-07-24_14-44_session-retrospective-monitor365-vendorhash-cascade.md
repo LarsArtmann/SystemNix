@@ -5,6 +5,8 @@
 **Commits by this session:** ~15 of 58 total since conversation start
 **Concurrent agent commits:** ~43 (other agent sessions modifying same repo)
 
+> **Update 2026-07-24:** Monitor365 server and agent are both healthy and deployed (server `/health` → `{"status":"ok","database":"connected"}`, agent process alive). The schema-migrate oneshot, watchdog timer (runs as root), and all vendorHash fixes are live. The agent circuit breaker (452K+ failures flagged in the backlog) clears on process restart — the `monitor365-agent-watchdog.timer` handles this. The cmdguard/samber-do-auditlog version-drift fix (samber-do-auditlog pinned to `refs/tags/v0.5.0`) and cqrs-lint/mr-sync pins are deployed. Remaining open items from the backlog: GPUActive monitoring, off-site backup, DiscordSync Turso 403 (all in TODO_LIST).
+
 ---
 
 ## a) FULLY DONE
