@@ -10,6 +10,16 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Added
 
+- **OpenSEO** — self-hosted SEO suite (rank tracking, keyword research, backlinks). Native NixOS service built from source (Vite/pnpm + workerd runtime). Port 3002, `seo.home.lan`. GSC OAuth callback + AI features conditionally enabled with `openseo-validate` ExecStartPre.
+- **system-health collector** — Prometheus textfile collector for systemd service state (active/failed/start-limit-hit), `user-1000.slice` memory threshold (40G), GPUActive threshold (60G), monitor365 DuckDB buffer pressure. Pre-computes boolean flags for Gatus `pat()` matching.
+- **Monitor365 schema-migrate oneshot** — runs `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER` before server start. Resolves the DuckDB "version" column binder error after upstream schema change.
+- **Monitor365 agent watchdog** — timer (every 5min) checks agent process + metrics endpoint; resets start-limit and restarts if dead. Runs as root (required for `systemctl start`).
+- **Monitor365 graphical-restart path unit** — watches for Wayland socket, restarts agent when compositor appears. Debounced (skips restart if started <60s ago or not active).
+- **Helium auto-restart service** — systemd user service (`helium.service`) with `Restart=always`, `RestartSec=5`, `StartLimitBurst=10`. `helium-launch` wrapper pgrep-checks for existing main process before launching, preventing the empty-window crash loop.
+- **Memory-limited test wrappers** — `go-test-memlimit` (4G), `cargo-test-memlimit` (8G), `pnpm-test-memlimit` (4G) via `wrapWithMemoryLimit` helper in `lib/default.nix`. Uses `systemd-run --user --scope` with `MemoryMax`.
+- **TTM page_pool_size reduction** — `ttmPagePoolSize` reduced from 112 GiB to 24 GiB in boot.nix (was exceeding the 94 GiB visible to Linux, allowing GPU driver to consume virtually all RAM).
+- **Post-deployment health check** — `scripts/post-deploy-check.sh` verifies services are functional (not just alive) after deploy: checks vHosts return expected HTML, APIs return expected JSON, catches "alive but broken" services.
+- **DNS local config module** — `dns-local.nix` extracted from inline config. Manages `localSubdomains` list (required because dnsblockd's sdns resolver does NOT support wildcard local records).
 - **qmd** — on-device semantic + BM25 hybrid markdown/code search via persistent HTTP MCP server (port 8181). Built from GitHub source (`fetchFromGitHub` + `pnpmConfigHook`). Three GGUF models auto-cached (~2 GiB). CPU-only by default. Crush MCP integration.
 - **Bun memory limiter** — `bunMemoryLimitOverlay` wraps `bun` in a `systemd-run --user --scope` with `MemoryMax=8G`, `MemorySwapMax=0`, `oom_score_adj=1000`. Prevents runaway `bun test` from consuming 61 GB and triggering WDT reset.
 - **monitor365 graphical collectors** — keystroke, mouse, camera, clipboard, screenshot collectors wired. `input`/`video` groups added, path-unit restart on Wayland login, upstream pgrep-based display env discovery (`displayUser`).
@@ -21,13 +31,21 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **PSI memory pressure metrics** — textfile collector in SigNoz exports `/proc/pressure/memory` avg10 values + derived alert boolean, with Gatus Discord alerting
 - **md-go-validator** — added to both NixOS and macOS desktops
 - **USB printing support** — added to NixOS hardware configuration
+- **Homepage local icons** — `enableLocalIcons = true` bundles 4276 dashboard icons (was defaulting to false, producing ~25 browser 404s per page load)
 
 ### Changed
 
+- **Deploy resilience** — `deploy.sh` now runs `systemctl reset-failed` (system + user) AND explicitly starts enabled-but-inactive services after reset. Previously crash-looped services at boot blocked ALL deploys until manually reset.
+- **Monitor365 module restructured** — pinned to upstream `0615301` (avoids libspa-sys bindgen breakage from `5ee717e3+`). Added schema-migrate, watchdog, graphical-restart, backup-health, restartTriggers. All `//` chains converted to `lib.mkMerge`.
+- **oauth2-proxy hardening** — added `--whitelist-domain=.home.lan` (fixes post-login redirect 500), `partOf = pocket-id-provision.service` (ensures credential reload on secret rotation), PKCE S256 enabled (`code-challenge-method = "S256"`).
+- **SigNoz auth** — impersonation mode (`SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true`) + unconditional Caddy forward-auth (no LAN bypass). Pocket ID is the sole auth boundary. OIDC is Enterprise-only ($4k/mo).
+- **samber-do-auditlog pinned to v0.5.0** — resolves cmdguard type mismatch (`ServiceName` typed string vs bare `string`). Added as top-level flake input with `go-cqrs-lite.inputs.samber-do-auditlog.follows`.
+- **mr-sync pinned to `3db4fb2`** — upstream `6492eef` removed `nixpkgs` from `outputs` params without adding `...` catch-all.
 - **DiscordSync module refactor** — consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). Eliminates option re-declaration drift. SystemNix specifics layered via `lib.mkMerge`.
 - **Post-deploy-check improvements** — SIGPIPE fix (body-file grep instead of pipe), `--compressed` flag for gzip responses, DiscordSync startup-race handling (retry + SKIP for backfill), renamer data-correctness assertion (`total_operations > 0`).
 - **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
+- **Gatus monitoring expansion** — 65 endpoints (was 59), with Discord alerting and response-time thresholds on user-facing services
 - **goreleaser** added to Linux base packages
 
 ### Removed
@@ -36,12 +54,29 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Fixed
 
-- **File & Image Renamer split-brain** — watcher and health service unified on `dataDir` state paths (`b0c76b58`). Dashboard was silently showing 0 operations while watcher wrote to `$HOME` defaults.
-- **PMA watcher attribution** — `convertEvent` now resolves actual git repo root per file event (upstream `52c01b18`). Was attributing all events to watch root → infinite `git status` failure loop → daemon timeout.
-- **Monitor365 integrity hash serialization** — canonical JSON serialization before hashing (upstream `9ea1f1000` + `ebb26a0bd`). Root cause: struct field order vs BTreeMap alphabetical order → every event with non-alphabetical fields rejected.
-- **btrbk-data snapshot directory** — `/data/.snapshots` created via tmpfiles rule. Was failing nightly since the directory never existed.
-- **btrfs-verify-snapshots false alarm** — parses snapshot name (`@.YYYYMMDDTHHMM` btrbk format) instead of `stat` mtime (BTRFS snapshots inherit source mtime).
+- **Monitor365 DuckDB WAL corruption** — `monitor365-duckdb-heal` ExecStartPre always removes `.wal` before startup. DuckDB checkpoints WAL on graceful shutdown; `.wal` present = unclean shutdown. Server was crash-looping 291+ times.
+- **Monitor365 agent circuit-breaker deadlock + start-limit death spiral** — 4-layer fix: `startLimitBurst=10` on service, debounced graphical-restart (skips if <60s ago), watchdog timer (resets + restarts), deploy.sh starts inactive services.
+- **PMA auto-commit (DefaultChain)** — `committer.New()` now uses `DefaultChainFromEnv()` (reads `MINIMAX_API_KEY` from env) instead of `DefaultChain()` (empty providers). Upstream `d1d013d2`.
+- **PMA "Unknown Author"** — go-git's `repo.Config()` reads only local scope (`.git/config`), not global. Both go-commit (`v0.4.0`) and PMA (`e8380b44`) now use `git config user.name`/`user.email` via CLI which merges all scopes.
+- **Helium empty-window crash loop** — `Restart=always` + existing-session handoff spawned 11 empty windows in 36s. `helium-launch` wrapper pgrep-checks before launch.
+- **dnsblockd wildcard DNS resolution** — `*.home.lan` wildcard record silently ignored by sdns resolver. Only explicitly listed subdomains in `localSubdomains` resolve. Added all service subdomains.
+- **dnsblockd cache CNAME-chase bug** — cache never called `SetQueryer`, serving partial CNAME answers (CNAME without terminal A/AAAA). Caused `curl: (6) Could not resolve host` for CNAME-chained CDN hostnames. Fixed upstream.
+- **dnsblockd blocklist dir-vs-file path** — was reading directory instead of file inside it (0 entries blocked, 2.5M domains silently missing).
+- **Pocket ID client-secret desync** — provision script migration block seeded stale secrets; skip-if-exists check prevented regeneration. `regenerateSecretsFor` option added for declarative recovery.
+- **Forgejo GitHub-sync API token** — `FORGEJO_TOKEN` must come from auto-generated token file, not sops template (stale `CHANGE_ME` placeholder rejected all API calls).
+- **Immich Redis TCP port** — nixpkgs defaults to unix-socket-only (port 0); overridden to listen on TCP for monitoring.
+- **PMA Type=notify without sd_notify** — upstream sets `Type=notify` + `WatchdogSec=30s` but Go binary never calls `sd_notify(READY=1)`. Overridden to `Type=exec`.
+- **Overview OOM-kills when PMA absent** — Overview delegates discovery to PMA daemon socket; falls back to 4+ GB local discovery (OOM-loop) when socket missing.
+- **File & Image Renamer auth fallback** — `ErrorTypeAuth` (non-retryable, triggers provider fallback) for 401/403. Upstream `8bf60bd`. Sops key provisioning via `mkKeyedSecrets`.
+- **File & Image Renamer split-brain** — watcher and health service unified on `dataDir` state paths (`b0c76b58`). Dashboard was silently showing 0 operations.
+- **PMA watcher attribution** — `convertEvent` now resolves actual git repo root per file event (upstream `52c01b18`).
+- **Monitor365 integrity hash serialization** — canonical JSON serialization before hashing (upstream `9ea1f1000` + `ebb26a0bd`).
+- **Homepage orphaned process after nix-gc** — `restartTriggers = [ pkg ]` forces restart when package changes (same pattern as dnsblockd).
+- **Post-deploy-check SIGPIPE false-FAIL** — grep reads from body file directly instead of pipe (large bodies >64KB triggered SIGPIPE under `set -o pipefail`).
+- **btrbk-data snapshot directory** — `/data/.snapshots` created via tmpfiles rule.
+- **btrfs-verify-snapshots false alarm** — parses snapshot name instead of inherited `stat` mtime.
 - **Ollama silent non-start** — removed `wantedBy = mkForce []` that suppressed nixpkgs' default `WantedBy=multi-user.target`.
+- **Pre-commit hook statix multi-file bug** — statix now iterates per-file instead of passing all files to one invocation.
 - Cascading build failures across 10+ Go repos (cmdguard follows clause, vendor hash cascades)
 - Hermes hardcoded `lars` username → `config.users.primaryUser`
 - Forgejo duplicate password generation in admin setup

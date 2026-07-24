@@ -1,25 +1,23 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-22 | **Last deploy:** `a000fe0c` (monitor365 graphical collectors + bun memory limiter)
+**Updated:** 2026-07-24 | **Last deploy:** `d243f1ee` (comprehensive fix audit — monitor365, helium, DNS, watchdog)
 
 ---
 
 ## Priority 0: Critical (Data Loss Risk)
 
 - [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
-- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum. No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /`. Monitoring infrastructure is complete (scrub metrics every 5 min, Gatus alerts on Discord).
+- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum. No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /`. Monitoring infrastructure is complete (scrub metrics every 5 min via `btrfs-health.nix`, Gatus alerts on Discord when `btrfs_scrub_error_free` drops to 0).
 - [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know.
-- [x] **monitor365 DuckDB WAL corruption** (FIXED 2026-07-22) — Server crash-looped 291+ times on corrupt DuckDB WAL replay after unclean shutdown. Root cause: DuckDB WAL from OOM/WDT reset unclean shutdown. Fix: `ExecStartPre` (`monitor365-duckdb-heal`) always removes `.wal` before startup + restores from backup if main DB missing. **Needs deploy + `sudo systemctl restart monitor365-server` to heal the live system.**
-- [x] **PMA auto-commit broken** (FIXED 2026-07-22) — Root cause: daemon's `committer.New()` fell back to `DefaultChain()` (empty API keys) instead of `DefaultChainFromEnv()` (reads `MINIMAX_API_KEY` from env). Upstream fix committed (`d1d013d2`), pushed, SystemNix `flake.lock` updated. **Needs deploy to take effect.**
 
 ## Priority 1: High (Stability & Monitoring)
 
-- [ ] **Wrap other dev tools with memory limits** — Bun wrapper shipped (`a000fe0c`, 8G cap). node, cargo, go test, rust-analyzer, gopls, vtsls all need the same `systemd-run --scope` + `MemoryMax` pattern. Create a generic `wrapWithMemoryLimit` helper in `lib/`. This per-tool approach is preferable to lowering the global `user-1000.slice` MemoryMax — legitimate heavy workloads (Crush + nix builds + browser) routinely hit 40+ GiB, and the GPUActive drain (51+ GiB) already leaves only ~43 GiB effective. The targeted limiter catches runaway processes without punishing real work.
-- [ ] **GPUActive monitoring** — Add Prometheus/textfile collector for `/proc/meminfo`'s `GPUActive` field. Currently 51+ GiB consumed by GPU buffer objects with `GPUReclaim=0`. The #1 RAM consumer on Strix Halo, invisible to standard `free`/`htop`.
-- [ ] **TTM `page_pool_size` reduction** — Currently `112 GiB` (exceeds the 94 GiB visible to Linux). Documented in `boot.nix` since Jul 2 — needs reboot + Ollama testing. Reducing to ~48 GiB would force faster return of freed GPU pages.
 - [ ] **DiscordSync Turso 403** — 13,993+ consecutive turso sync failures: "SQL read operations are forbidden" (free plan limit). Either upgrade Turso plan or disable turso sync (switch to sqlite local-only backend).
 - [ ] **monitor365 buffer backlog purge** — 597M events predate the integrity fix, may be unrecoverable. Daily 10K tenant limit blocks drain (would take ~163 years). Needs purge or limit raise.
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification.
+- [ ] **Monitor365 agent circuit breaker investigation** — Agent accumulated 452K+ consecutive cloud-sync failures before watchdog restart cleared it. If server is down for extended periods, the in-memory CB opens and only a process restart clears it. Consider persisting CB state or adding a `cloud_sync_zero_accept_cycles` alert threshold.
+- [ ] **go-commit v0.4.0 flake input pin** — flake.lock still shows go-commit at `ref=master, rev=3f74fd19` (pre-fix). The PMA repo has its own fix (`e8380b44`), but go-commit's `gogit.go` CLI path still compiles the old buggy code via `mkPreparedSource` override. Pin go-commit as a top-level flake input to `refs/tags/v0.4.0`.
+- [ ] **MiniMax-M3 model identifier verification** — PMA auto-commit daemon was switched to `MiniMax-M3` but the model name was never verified against the MiniMax API. If invalid, every auto-commit fails silently. Verify before relying on it.
 
 ## Priority 2: Manual Steps (Blocked on Human)
 
@@ -42,10 +40,10 @@
 
 ## Priority 5: Desktop (from Jul 9 Helium/browser reports)
 
-- [ ] **Runtime-verify Helium wrapper double-wrap fix** — single-layer `makeWrapper` fix never tested at runtime. Verify all flags survive.
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary.
 - [ ] **Remove `--enable-gpu-rasterization`** — increases GPUActive memory pressure on Strix Halo with no proven benefit.
 - [ ] **Remove 9gag Post Filter** — abandoned extension ("THIS PROJECT IS DEAD").
+- [ ] **file-and-image-renamer: update to upstream `b181444`** — current pin is `ca95be5` (auth fix only). Upstream `b181444` adds `ErrorTypeRateLimit`, `ErrorTypeContextTooLarge`, provider architecture redesign via `vision-review-agent` + `charm.land/fantasy`. Also: clear dead-letter queue, trash stale `~/.zai_api_key`, add `restartTriggers`.
 
 ## Priority 6: Upstream Contributions
 
@@ -85,9 +83,8 @@
 
 ## Documentation
 
-- [ ] **Add Helium to README.md desktop row** — primary browser not mentioned in "What You Get" table.
 - [ ] **Add doc-freshness CI check** — script that verifies doc counts against code.
-- [ ] **Create monitoring runbook** — "what to do when each Discord alert fires" (started in `docs/runbooks/monitoring-runbook.md`, needs completion).
+- [ ] **Create `docs/DOMAIN_LANGUAGE.md`** — does not exist yet. Would document domain terms for the Nix config ecosystem (BTRFS, DNS, SSO, etc.).
 
 ---
 
