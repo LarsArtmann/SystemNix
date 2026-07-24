@@ -280,14 +280,13 @@
     # followed — overriding them changes vendored content and breaks vendorHash.
     # Only build-infra inputs are followed.
     mr-sync = {
-      url = "github:LarsArtmann/mr-sync/ceb4da5d4f4265a4d39460f4d600e64cdff60d0a";
+      url = "github:LarsArtmann/mr-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        samber-do-auditlog.follows = "samber-do-auditlog";
       };
     };
 
@@ -336,17 +335,7 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        # Pin samber-do-auditlog to v0.5.0: v0.6.0+ changed ServiceByName to
-        # take ServiceName type, breaking cmdguard callers (cqrs-lint, mr-sync).
-        samber-do-auditlog.follows = "samber-do-auditlog";
       };
-    };
-
-    # samber-do-auditlog — Pinned to v0.5.0 for API compatibility.
-    # v0.6.0+ changed ServiceByName(string) to ServiceByName(ServiceName).
-    samber-do-auditlog = {
-      url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
-      flake = false;
     };
 
     # branching-flow — Error context preservation analyzer
