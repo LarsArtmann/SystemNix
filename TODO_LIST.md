@@ -35,7 +35,8 @@
 
 - [ ] **Split large modules** — signoz (943L), forgejo (725L) into sub-modules.
 - [ ] **Convert `minecraft.nix` raw iptables** → declarative `networking.firewall.allowedTCPPorts`
-- [ ] **Convert `activationScripts`** → `systemd.tmpfiles.rules` (hermes, discordsync, crush-daily, configuration, darwin)
+- [x] **Convert `activationScripts`** → `systemd.tmpfiles.rules` (hermes, discordsync, crush-daily, configuration, darwin) — Done 2026-07-24. Darwin not convertible (no systemd). Hermes ACL moved to ExecStartPre. See `docs/status/2026-07-24_20-26_activation-scripts-to-tmpfiles-conversion.md`
+- [ ] **Convert `ssh-config.nix` `home.activation.ssh-sockets-dir`** → `systemd.user.tmpfiles.rules` — same class of conversion, HM-level. Discovered during activationScripts audit.
 - [ ] **Audit all `writeShellApplication` scripts for missing `runtimeInputs`** — gpu-active collector lacked `gawk`, same bug class may exist elsewhere.
 
 ## Priority 5: Desktop (from Jul 9 Helium/browser reports)
