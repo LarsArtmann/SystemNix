@@ -30,6 +30,8 @@ in
       Unit = {
         After = lib.mkAfter [ "graphical-session.target" ];
         PartOf = lib.mkAfter [ "graphical-session.target" ];
+        StartLimitBurst = 5;
+        StartLimitIntervalSec = 300;
       };
       Service = {
         Restart = "on-failure";
