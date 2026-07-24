@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-22 10:44
 **Session goal:** Deploy SystemNix with monitoring layer, fix design flaws from self-critique, unblock build failure
-**Outcome:** Deploy succeeded (exit code 4 = services failed during activation but config IS live). Monitor365 server has a NEW pre-existing upstream bug now exposed. All other fixes verified live.
+**Outcome:** Deploy succeeded (exit code 4 = services failed during activation but config IS live). ~~Monitor365 server has a NEW pre-existing upstream bug now exposed.~~ All other fixes verified live.
+
+> **Update 2026-07-24:** The "version" column binder bug exposed here is RESOLVED. Upstream commit `0615301` added the migration; SystemNix pins monitor365 to `06153013945baa16d83a81bd7497433537235240` and `monitor365-schema-migrate.service` runs it before server start. Server now healthy (`/health` → `{"status":"ok","database":"connected"}`). The cqrs-lint vendorHash override remains as a documented workaround (AGENTS.md "cqrs-lint samber-do-auditlog version drift").
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-24 06:25
 **Session scope:** Single incident — empty Chrome (Helium) windows spawning in a loop
-**Status:** Fix written, NOT yet deployed
+**Status:** ~~Fix written, NOT yet deployed~~ **Deployed** — `helium-launch` wrapper is live in the comprehensive audit deploy (generation built 2026-07-24 18:14). The wrapper pgrep-checks for an existing main process before launching, preventing the empty-window loop while preserving zero-output auto-restart.
 
 ---
 

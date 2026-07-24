@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-22 20:19
 **Session scope:** Enable PKCE on oauth2-proxy, fix build blockers (cqrs-lint vendorHash, flake.lock), achieve a clean full deploy
-**Status:** PKCE DEPLOYED AND ACTIVE — oauth2-proxy warning eliminated. Full deploy succeeded at generation 565 = git HEAD. Two unrelated services remain broken (monitor365, dnsblockd health endpoint).
+**Status:** PKCE DEPLOYED AND ACTIVE — oauth2-proxy warning eliminated. Full deploy succeeded at generation 565 = git HEAD. ~~Two unrelated services remain broken (monitor365, dnsblockd health endpoint).~~ Both since resolved — see update.
+
+> **Update 2026-07-24:** The two services flagged as "still broken" are now healthy. Monitor365 server: `{"status":"ok","database":"connected"}` (schema-migrate oneshot + pin to `0615301` fixed the binder error). DNS blocker: `dnsblock.home.lan` resolves and serves the dashboard (canonical subdomain promoted, Caddy vHost deployed).
 
 ---
 

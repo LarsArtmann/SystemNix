@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-22 18:27
 **Session scope:** Diagnose and fix `Author: Unknown Author <unknown@example.com>` in projects-management-automation auto-commits
-**Status:** Upstream fixed and pushed. SystemNix changes **uncommitted and undeployed**.
+**Status:** Upstream fixed and pushed. ~~SystemNix changes **uncommitted and undeployed**.~~ **Deployed** — see update.
+
+> **Update 2026-07-24:** PMA is deployed at upstream `e8380b44` (which includes the `git config user.name`/`user.email` CLI fix in `service_gogit.go`). The Unknown Author issue is resolved via PMA's own code path. The go-commit v0.4.0 top-level flake input pin (tracked in `2026-07-23_10-31`) addresses the `mkPreparedSource` override for go-commit's `gogit.go` — that pin remains an open follow-up (flake.lock currently shows go-commit at `ref=master`). See AGENTS.md "go-git `repo.Config()` only reads local scope" for the full gotcha.
 
 ---
 

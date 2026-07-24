@@ -3,6 +3,8 @@
 **Date:** 2026-07-23 15:04
 **Session scope:** Fix `nix flake update` → `nh os boot` failure caused by upstream `outputs` signature changes
 
+> **Update 2026-07-24:** The fix (commit `97a9d2de` — mr-sync pinned to `3db4fb2`, hierarchical-errors pinned to `refs/tags/v0.2.0`) shipped and subsequent deploys succeeded. The mr-sync pin remains in place (upstream has not yet added `...` to its `outputs` signature). See AGENTS.md "mr-sync outputs signature missing `...`" for the full gotcha.
+
 ---
 
 ## A. Fully Done

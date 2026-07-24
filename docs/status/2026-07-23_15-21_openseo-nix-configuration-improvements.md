@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-23 15:21
 **Scope:** Session to improve OpenSEO self-hosted SEO suite Nix configuration
-**Status:** SUPERSEDED — see corrections below (2026-07-23 16:20)
+**Status:** SUPERSEDED — see corrections below (2026-07-23 16:20). Deployed 2026-07-24.
+
+> **Update 2026-07-24:** OpenSEO is deployed and running (`openseo.service` in deployed generation). The v0.1.1 config improvements (telemetry opt-out `OPENSEO_TELEMETRY_DISABLED=1`, conditional GSC/AI feature options, `openseo-validate` ExecStartPre) are all live. MCP integration into Crush `mcpServers` remains an open follow-up (TODO_LIST). D1 database backup relies on BTRFS local snapshots only (no off-site backup — TODO_LIST Priority 0).
 
 > **CORRECTION (2026-07-23 16:20):** Section d) below was **wrong**. The GSC OAuth callback was never "TOTALLY FUCKED UP". The OAuth Authorization Code flow is **browser-initiated** (Google redirects the user's browser to the callback URL, not a server-to-server call). The browser carries the `_oauth2_proxy` cookie (`SameSite=lax`, domain `.home.lan`), which IS sent on top-level GET navigations. The callback would pass forward-auth regardless.
 >

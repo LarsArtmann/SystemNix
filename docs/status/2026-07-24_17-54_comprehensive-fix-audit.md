@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-24 17:54
 **Scope:** Full audit of all session changes — found and fixed 5 bugs across 4 files
-**Status:** All changes validated, ready for deploy
+**Status:** ~~All changes validated, ready for deploy~~ **Deployed** — generation built 2026-07-24 18:14 (after HEAD `d243f1ee`). All 5 bug fixes are live: shellcheck fix in deploy.sh, `${ELAPSED}` escaping, watchdog runs as root, dead-code removal, helium-launch timeout, post-deploy pgrep. Monitor365 server healthy, agent running, DNS resolving.
 
 ---
 

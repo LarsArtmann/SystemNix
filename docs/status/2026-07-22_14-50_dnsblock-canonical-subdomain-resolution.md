@@ -5,6 +5,8 @@
 **Reporter:** Crush (autonomous session)
 **Branch:** `master` (working tree clean; all changes already committed)
 
+> **Update 2026-07-24:** Deployed. `dnsblock.home.lan` resolves (`getent hosts` → `192.168.1.150`) and serves the dashboard behind Caddy `protectedVHost`. `dnsblockd.home.lan` 301-redirects to it. Post-deploy smoke test checks `https://dnsblock.$DOMAIN/health`.
+
 ---
 
 ## a) FULLY DONE

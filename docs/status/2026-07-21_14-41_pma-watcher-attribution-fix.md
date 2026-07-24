@@ -3,7 +3,9 @@
 **Date:** 2026-07-21 14:41
 **Session scope:** Diagnosing and fixing "the daemon not working" — `projects-management-automation` discovery daemon timeout + auto-commit crash loop
 **Host:** evo-x2
-**Outcome:** Root cause fixed, deployed, verified. Auto-commit still blocked by a SEPARATE pre-existing issue (missing AI provider keys).
+**Outcome:** Root cause fixed, deployed, verified. ~~Auto-commit still blocked by a SEPARATE pre-existing issue (missing AI provider keys).~~ Auto-commit since fixed — see update.
+
+> **Update 2026-07-24:** The "missing AI provider keys" blocker was resolved upstream (`d1d013d2`): `committer.New()` now uses `providers.DefaultChainFromEnv()` which reads `MINIMAX_API_KEY` from the systemd `EnvironmentFile`. PMA is deployed at `e8380b44`. The watcher attribution fix (`52c01b18`) is live. Auto-commit works end-to-end.
 
 ---
 

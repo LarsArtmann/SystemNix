@@ -4,6 +4,8 @@
 **Session scope:** Diagnose "why did Helium crash?", fix the display-switch crash
 **Changed files:** `platforms/nixos/desktop/niri-wrapped.nix`
 
+> **Update 2026-07-24:** The helium systemd auto-restart service (`helium.service` with `Restart=always`, `RestartSec=5`, `StartLimitBurst=10`) is deployed and running. The follow-up report (`2026-07-24_06-25`) fixed the empty-window crash-loop caused by `Restart=always` + existing-session handoff via the `helium-launch` wrapper (pgrep-checks before launch). Both fixes are live. The root cause (niri disconnecting DP-2 → zero Wayland outputs → all clients exit) is documented in AGENTS.md.
+
 ---
 
 ## Context

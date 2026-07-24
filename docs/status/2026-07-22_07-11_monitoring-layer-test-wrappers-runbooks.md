@@ -2,6 +2,8 @@
 
 **Session scope:** Implement proactive monitoring, memory-limit wrappers, and operational runbooks on top of pending PMA + DuckDB WAL deploy.
 
+> **Update 2026-07-24:** Deployed. The system-health textfile collector, 7 Gatus alerts, `wrapWithMemoryLimit` helper, and test wrappers are all live (deployed in the session documented in `2026-07-22_10-44`). Runbooks are in `docs/runbooks/`. The pending PMA + DuckDB WAL deploy referenced in the scope line also shipped — both fixes are live.
+
 ---
 
 ## a) FULLY DONE (shipped, verified, committed as `9a56c1a7`)

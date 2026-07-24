@@ -1,7 +1,9 @@
 # Monitor365 DuckDB Version Column + VendorHash Cascade
 
 **Date:** 2026-07-24  
-**Status:** IN PROGRESS — monitor365-server crash-looping, build broken by vendorHash cascade
+**Status:** ~~IN PROGRESS — monitor365-server crash-looping, build broken by vendorHash cascade~~ **RESOLVED** — see update below.
+
+> **Update 2026-07-24:** Build and runtime both fixed. Upstream `0615301` added the `version` column migration; SystemNix pins monitor365 to `06153013945baa16d83a81bd7497433537235240`. `monitor365-schema-migrate.service` runs the migration before server start. All vendorHash cascades resolved (overview, crush-daily, discordsync). Server is healthy and deployed — `/health` returns `{"status":"ok","database":"connected"}`, agent running (PID alive). Full resolution documented in `2026-07-24_14-44_session-retrospective`.
 
 ---
 

@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-23 15:53
 **Scope:** Fix OpenSEO auth (GSC OAuth callback + validation), self-review what was missed
-**Status:** PARTIALLY COMPLETE — auth wiring shipped, but critical verification gaps remain
+**Status:** ~~PARTIALLY COMPLETE — auth wiring shipped, but critical verification gaps remain~~ **Verified & deployed** — see update.
+
+> **Update 2026-07-24:** The #1 gap flagged here (callback path never verified against source) was closed in the follow-up session (`2026-07-23_20-34`): path confirmed as `src/routes/api/gsc/oauth/callback.ts` + `selfHostedOAuth.ts:138` — no discrepancy. OpenSEO is deployed and running. The eval-time `assertions` TODO was replaced by the runtime `openseo-validate` ExecStartPre (checks env vars non-empty when features enabled).
 
 ---
 

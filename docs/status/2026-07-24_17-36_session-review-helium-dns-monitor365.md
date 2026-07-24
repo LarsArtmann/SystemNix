@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-24 17:36
 **Session scope:** Three incidents fixed across this session
-**Overall status:** Code written and syntax-validated, **NOT fully deployed**
+**Overall status:** ~~Code written and syntax-validated, **NOT fully deployed**~~ **All three deployed** — see update below.
+
+> **Update 2026-07-24:** All three fixes deployed in the comprehensive audit deploy (generation built 18:14, after HEAD `d243f1ee`). (1) Helium empty-window crash loop: `helium-launch` wrapper deployed and running. (2) DNS blocker: `dnsblock.home.lan` resolves correctly (verified via `getent hosts`). (3) Monitor365 agent: watchdog runs as **root** (the critical bug flagged below is FIXED), agent process running. The `monitor365-agent-watchdog.timer` resets start-limit and restarts the agent when dead.
 
 ---
 

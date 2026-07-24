@@ -3,7 +3,9 @@
 **Date:** 2026-07-22 14:06 CEST  
 **Session focus:** Why `dnsblock.home.lan` was down and fixing the Caddy/DNS routing gap.  
 **Reporter:** Crush (autonomous session)  
-**Branch:** `master` (working tree clean before edits)  
+**Branch:** `master` (working tree clean before edits)
+
+> **Update 2026-07-24:** Deployed. `dnsblock.home.lan` resolves (verified via `getent hosts` → `192.168.1.150`) and serves the dashboard behind Caddy. The canonical subdomain decision from the follow-up report (`2026-07-22_14-50`) shipped: `dnsblock.home.lan` is the `protectedVHost`, `dnsblockd.home.lan` 301-redirects to it. Post-deploy smoke test checks `https://dnsblock.$DOMAIN/health`. See AGENTS.md "dnsblockd wildcard `*.home.lan` does not resolve" for the local-subdomain requirement.
 
 ---
 

@@ -2,7 +2,9 @@
 
 **Date:** 2026-07-23 20:34
 **Scope:** Verify the OpenSEO GSC OAuth callback auth fix from the previous session, run formatters, verify config rendering, update documentation
-**Status:** VERIFIED & DOCUMENTED — all eval-time checks pass, runtime testing pending
+**Status:** ~~VERIFIED & DOCUMENTED — all eval-time checks pass, runtime testing pending~~ **Deployed** — see update.
+
+> **Update 2026-07-24:** OpenSEO is deployed and running (`openseo.service` active in deployed generation). The GSC callback path verification (`src/routes/api/gsc/oauth/callback.ts`), Caddy vHost rendering, and `openseo-validate` ExecStartPre are all live. AGENTS.md documents the hand-rolled Caddy vHost pattern (OpenSEO native build gotcha). MCP integration remains an open follow-up (TODO_LIST).
 
 ---
 
