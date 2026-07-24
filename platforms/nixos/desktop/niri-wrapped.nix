@@ -59,6 +59,23 @@ let
     '';
   };
 
+  helium-launch = pkgs.writeShellApplication {
+    name = "helium-launch";
+    runtimeInputs = [ pkgs.procps ];
+    text = ''
+      # Guard against the "opening in existing browser session" empty-window loop.
+      # When a helium main process is already alive (e.g. it survived a
+      # graphical-session restart on deploy), a fresh invocation just opens an
+      # empty window and exits 0 — with Restart=always that becomes a tight loop
+      # of empty windows (11 in 36s, then start-limit-hit).
+      # Instead: wait for the existing instance to die, then launch fresh.
+      while pgrep -f "helium --ozone-platform-hint" >/dev/null 2>&1; do
+        sleep 5
+      done
+      exec env -u QT_STYLE_OVERRIDE helium
+    '';
+  };
+
   dmsPkg = dankMaterialShell.packages.${pkgs.system}.default;
 
   dms-wallpaper-init = pkgs.writeShellApplication {
@@ -619,7 +636,7 @@ in
         };
         Service = {
           Type = "simple";
-          ExecStart = "/run/current-system/sw/bin/env -u QT_STYLE_OVERRIDE helium";
+          ExecStart = lib.getExe helium-launch;
           Restart = "always";
           RestartSec = 5;
         };
