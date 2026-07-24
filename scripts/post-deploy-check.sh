@@ -194,7 +194,7 @@ else
 fi
 
 # Monitor365: FULL agent↔server connectivity verification.
-# Checks BOTH sides: (1) agent process alive + metrics responding,
+# Checks BOTH sides: (1) agent metrics endpoint responding (process alive),
 # (2) server sees the agent as a connected device. If the agent is dead,
 # attempts one restart before declaring failure.
 echo ""
@@ -203,14 +203,14 @@ echo "--- Monitor365 Agent ↔ Server Connectivity ---"
 m365_agent_ok=false
 m365_server_ok=false
 
-# Check 1: Agent process alive
-if pgrep -x monitor365 >/dev/null 2>&1 || pgrep -f "monitor365.*--config" >/dev/null 2>&1; then
-  : # agent process exists
+# Check 1: Agent metrics endpoint (port 9191) — verifies agent process is alive
+if curl -sf -m 5 -o /dev/null "http://localhost:9191/metrics" 2>/dev/null; then
+  : # agent alive
 else
-  echo -e "${YELLOW}WARN${NC} Monitor365 agent process not found — attempting restart"
+  echo -e "${YELLOW}WARN${NC} Monitor365 agent metrics not responding — attempting restart"
   sudo systemctl reset-failed monitor365.service 2>/dev/null || true
   sudo systemctl start monitor365.service 2>/dev/null || true
-  sleep 5
+  sleep 10
 fi
 
 # Check 2: Agent metrics endpoint (port 9191)
