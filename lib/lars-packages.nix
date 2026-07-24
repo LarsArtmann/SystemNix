@@ -38,7 +38,10 @@ lib.filterAttrs (_: v: v != null) {
   hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
   md-go-validator = flakePkg inputs.md-go-validator;
-  mr-sync = flakePkg inputs.mr-sync;
+  # mr-sync temporarily disabled: cmdguard/samber-do-auditlog v0.6.0+ API break
+  # (ServiceByName takes ServiceName type, not bare string). Re-enable when
+  # upstream cmdguard is updated or samber-do-auditlog is pinned via mkPreparedSource.
+  # mr-sync = flakePkg inputs.mr-sync;
   project-meta = flakePkg inputs.project-meta;
   projects-management-automation = flakePkg inputs.projects-management-automation;
   todo-list-ai = flakePkg inputs.todo-list-ai;
