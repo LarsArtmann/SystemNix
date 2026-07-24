@@ -271,6 +271,15 @@ let
       netwatch # Real-time network diagnostics TUI (interfaces, connections, packets, health probes)
       ecapture # Capture SSL/TLS text content without CA cert using eBPF
 
+      # Network & DNS diagnostics — always available, even during outages
+      bind.dnsutils # dig, nslookup, host, delv — DNS troubleshooting
+      ldns # drill — modern dig alternative with DNSSEC validation
+      dnstracer # Trace DNS delegation chain to authoritative servers
+      mtr # Combined ping + traceroute with real-time stats
+      traceroute # Classic network path tracing
+      tcpdump # Packet capture — essential for protocol-level debugging
+      nettools # netstat, ifconfig, route — legacy network tools (ss replacement kept too)
+
       # Privacy & anonymity
       tor-browser # Anonymous browsing bundle
 

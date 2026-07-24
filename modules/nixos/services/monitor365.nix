@@ -422,32 +422,29 @@
             # restart). Uses uid 1000 — deterministic on evo-x2 (SDDM+niri,
             # primary user lars). Update if a multi-host deployment is added.
             #
-            # The oneshot script skips the restart if the service is in
-            # start-limit-hit or was restarted within the last 60s (prevents
-            # the rapid-restart storm when niri bounces the Wayland socket
-            # during DRM zombie recovery — each bounce previously triggered
-            # a fresh `systemctl restart`, causing 6 start/stop cycles in 1s
-            # → start-limit-hit → agent dead until next deploy).
+            # PathChanged (not PathExists!) is CRITICAL: PathExists re-fires in
+            # a tight loop during deploy — the file already exists, the service
+            # exits 0, systemd re-evaluates the condition, fires again → 8
+            # starts in 1 second → start-limit-hit on both the service AND the
+            # path unit. PathChanged only fires when the file is CREATED or
+            # MODIFIED, not when the path unit starts with the file already
+            # present. During deploy (user logged in), the socket doesn't change
+            # → no trigger. After boot (user logs in), the socket is created →
+            # triggers once → agent restarts with display discovery.
+            #
+            # The oneshot script adds a 60s debounce to handle niri bouncing
+            # the Wayland socket during DRM zombie recovery.
             paths.monitor365-graphical-restart = {
               description = "Restart Monitor365 agent when graphical session starts";
               wantedBy = [ "paths.target" ];
               pathConfig = {
-                PathExists = "/run/user/1000/wayland-1";
+                PathChanged = "/run/user/1000/wayland-1";
                 Unit = "monitor365-graphical-restart.service";
               };
             };
 
             services.monitor365-graphical-restart = {
               description = "Restart Monitor365 agent after graphical session starts";
-              # The path unit can fire multiple times during deploy (wayland-1
-              # socket already exists → PathExists triggers on each activation
-              # cycle). Without generous start limits, systemd kills the service
-              # after 5 starts in 10s (default), leaving it dead and the path
-              # unit also enters failed state. The debounce logic in the script
-              # handles the actual restart decision — these rapid triggers are
-              # harmless and exit 0 immediately.
-              startLimitBurst = 20;
-              startLimitIntervalSec = 300;
               serviceConfig = {
                 Type = "oneshot";
               };

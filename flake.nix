@@ -651,8 +651,15 @@
             }
             // lib.optionalAttrs pkgs.stdenv.isLinux {
               dns-diagnostics =
-                mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats)"
-                  [ pkgs.systemd pkgs.dnsutils pkgs.curl ]
+                mkApp "dns-diagnostics" "Run DNS stack diagnostics (resolution, blocking, stats, connectivity)"
+                  [
+                    pkgs.systemd
+                    pkgs.bind.dnsutils
+                    pkgs.curl
+                    pkgs.iproute2
+                    pkgs.iputils
+                    pkgs.jq
+                  ]
                   ./scripts/dns-diagnostics.sh;
               dms-restart = {
                 type = "app";
