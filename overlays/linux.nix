@@ -227,17 +227,22 @@ in
   (_final: prev: {
     crush-daily = prev.crush-daily.overrideAttrs (old: {
       goModules = old.goModules.overrideAttrs (_: {
-        outputHash = "sha256-XDZ/7VBfLM2HQaEmLodmE8GpCi3k01BUKkAfFsjGtl4=";
+        outputHash = "sha256-+669CP3DOKkb5a0tXtKBg9bBxhMMWfJ6AsImBmeeXW0=";
       });
     });
     discordsync = prev.discordsync.overrideAttrs (old: {
       goModules = old.goModules.overrideAttrs (_: {
-        outputHash = "sha256-mEvMm8mt6hGF113MCd0+jbRwYMW0Cd3KF5juYrtOzRA=";
+        outputHash = "sha256-JldWaWyQcPgSxy+pRkAwfRLBHck14QLH8tys1qDT6VI=";
       });
     });
     dnsblockd = prev.dnsblockd.overrideAttrs (old: {
       goModules = old.goModules.overrideAttrs (_: {
         outputHash = "sha256-ekdAsxFoAEH4x2bGynsA7MGG/hFXk93Pcf8fU7qnheg=";
+      });
+    });
+    overview = prev.overview.overrideAttrs (old: {
+      goModules = old.goModules.overrideAttrs (_: {
+        outputHash = "sha256-vBZBNgCVrAG5oLdhcNkHyjrueHiHbrBt/5puyRvWjPU=";
       });
     });
   })
