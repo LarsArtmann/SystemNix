@@ -6,21 +6,22 @@
   otel-tui ? null,
   larsPackages,
   ...
-}: let
+}:
+let
   inherit (pkgs.stdenv.hostPlatform) system;
 
   heliumPackage =
-    if builtins.hasAttr "packages" helium && builtins.hasAttr system helium.packages
-    then (helium.packages.${system}.default or helium.packages.${system}.helium or null)
-    else null;
+    if builtins.hasAttr "packages" helium && builtins.hasAttr system helium.packages then
+      (helium.packages.${system}.default or helium.packages.${system}.helium or null)
+    else
+      null;
 
   heliumWrapped =
-    if heliumPackage != null && pkgs.stdenv.isLinux
-    then
+    if heliumPackage != null && pkgs.stdenv.isLinux then
       pkgs.symlinkJoin {
         name = "helium";
-        paths = [heliumPackage];
-        nativeBuildInputs = [pkgs.makeWrapper];
+        paths = [ heliumPackage ];
+        nativeBuildInputs = [ pkgs.makeWrapper ];
         postBuild = ''
           # Add Widevine CDM for DRM streaming (Netflix, Max, Disney+, etc.)
           rm -rf $out/opt
@@ -47,17 +48,18 @@
           mkdir -p $out/bin
           makeWrapper $out/opt/helium/helium $out/bin/helium \
             --prefix LD_LIBRARY_PATH : "${
-            pkgs.lib.makeLibraryPath (
-              with pkgs; [
-                libGL
-                libvdpau
-                libva
-                pipewire
-                alsa-lib
-                libpulseaudio
-              ]
-            )
-          }" \
+              pkgs.lib.makeLibraryPath (
+                with pkgs;
+                [
+                  libGL
+                  libvdpau
+                  libva
+                  pipewire
+                  alsa-lib
+                  libpulseaudio
+                ]
+              )
+            }" \
             --add-flags "--ozone-platform-hint=auto" \
             --add-flags "--enable-features=VaapiVideoDecoder,AcceleratedVideoDecodeLinuxGL,AcceleratedVideoDecodeLinuxZeroCopyGL,AcceleratedVideoEncoder,VaapiIgnoreDriverChecks,UseMultiPlaneFormatForHardwareVideo,WebAuthenticationHybridTransport" \
             --add-flags "--ignore-gpu-blocklist" \
@@ -71,10 +73,12 @@
             --add-flags "--disable-background-networking"
         '';
       }
-    else heliumPackage;
+    else
+      heliumPackage;
 
   # Essential CLI tools that work across platforms
-  essentialPackages = with pkgs;
+  essentialPackages =
+    with pkgs;
     [
       # Version control
       git
@@ -157,7 +161,8 @@
     ];
 
   # Development tools (platform-agnostic)
-  developmentPackages = with pkgs;
+  developmentPackages =
+    with pkgs;
     [
       # JavaScript/TypeScript
       bun # Incredibly fast JavaScript runtime
@@ -241,7 +246,8 @@
     ];
 
   # Linux-specific utilities
-  linuxUtilities = with pkgs;
+  linuxUtilities =
+    with pkgs;
     lib.optionals stdenv.isLinux [
       jetbrains.idea
       openaudible
@@ -289,7 +295,8 @@
     ];
 
   # GUI Applications (cross-platform)
-  guiPackages = with pkgs;
+  guiPackages =
+    with pkgs;
     lib.optional (heliumWrapped != null) heliumWrapped
     ++ lib.optionals stdenv.isDarwin [
       google-chrome
@@ -299,8 +306,9 @@
 
   # Use NUR (Nix User Repository) for the most up-to-date version of Crush
   # NUR is updated much more frequently than nixpkgs unstable
-  aiPackages = [pkgs.nur.repos.charmbracelet.crush];
-in {
+  aiPackages = [ pkgs.nur.repos.charmbracelet.crush ];
+in
+{
   # System packages list
   environment.systemPackages =
     essentialPackages
