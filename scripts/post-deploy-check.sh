@@ -193,17 +193,49 @@ else
   SKIP=$((SKIP + 1))
 fi
 
-# Monitor365: agent must be connected to server (not just alive).
-# The health endpoint returns a JSON "realtime" field showing device count.
-# "connected (0 devices)" means the API key desync bug is still present.
+# Monitor365: FULL agent↔server connectivity verification.
+# Checks BOTH sides: (1) agent process alive + metrics responding,
+# (2) server sees the agent as a connected device. If the agent is dead,
+# attempts one restart before declaring failure.
+echo ""
+echo "--- Monitor365 Agent ↔ Server Connectivity ---"
+
+m365_agent_ok=false
+m365_server_ok=false
+
+# Check 1: Agent process alive
+if pgrep -x monitor365 >/dev/null 2>&1 || pgrep -f "monitor365.*--config" >/dev/null 2>&1; then
+  : # agent process exists
+else
+  echo -e "${YELLOW}WARN${NC} Monitor365 agent process not found — attempting restart"
+  sudo systemctl reset-failed monitor365.service 2>/dev/null || true
+  sudo systemctl start monitor365.service 2>/dev/null || true
+  sleep 5
+fi
+
+# Check 2: Agent metrics endpoint (port 9191)
+if curl -sf -m 5 -o /dev/null "http://localhost:9191/metrics" 2>/dev/null; then
+  echo -e "${GREEN}PASS${NC} Monitor365 agent metrics responding (localhost:9191)"
+  m365_agent_ok=true
+  PASS=$((PASS + 1))
+else
+  echo -e "${RED}FAIL${NC} Monitor365 agent metrics NOT responding (localhost:9191) — agent may be crashed or circuit-breaker deadlocked"
+  FAIL=$((FAIL + 1))
+fi
+
+# Check 3: Server reports agent as connected device
 if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
   if echo "$m365_health" | grep -q '"realtime"'; then
-    if echo "$m365_health" | grep -q '"realtime":"connected (0 devices)"'; then
-      echo -e "${RED}FAIL${NC} Monitor365 agent NOT connected — server reports 0 devices (API key desync or agent crash)"
+    if echo "$m365_health" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"'; then
+      echo -e "${GREEN}PASS${NC} Monitor365 agent connected to server"
+      m365_server_ok=true
+      PASS=$((PASS + 1))
+    elif echo "$m365_health" | grep -q '"realtime":"connected (0 devices)"'; then
+      echo -e "${RED}FAIL${NC} Monitor365 server reports 0 connected devices — agent not registered (circuit breaker deadlock or API key desync)"
       FAIL=$((FAIL + 1))
     else
-      echo -e "${GREEN}PASS${NC} Monitor365 agent connected to server"
-      PASS=$((PASS + 1))
+      echo -e "${YELLOW}WARN${NC} Monitor365 health reachable but unexpected realtime format"
+      SKIP=$((SKIP + 1))
     fi
   else
     echo -e "${YELLOW}WARN${NC} Monitor365 health reachable but realtime field missing"
@@ -212,6 +244,23 @@ if m365_health=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null
 else
   echo -e "${YELLOW}SKIP${NC} Monitor365 server not reachable on localhost:3001"
   SKIP=$((SKIP + 1))
+fi
+
+# Check 4: If agent is up but server reports 0 devices, the circuit breaker
+# is likely deadlocked. Restart the agent to clear in-memory CB state.
+if $m365_agent_ok && ! $m365_server_ok; then
+  echo -e "${YELLOW}WARN${NC} Agent alive but not connected to server — restarting agent to clear circuit breaker"
+  sudo systemctl restart monitor365.service 2>/dev/null || true
+  sleep 10
+  if m365_health2=$(curl -s --max-time 5 "http://localhost:3001/health" 2>/dev/null); then
+    if echo "$m365_health2" | grep -qE '"realtime":"connected \([1-9][0-9]* devices\)"'; then
+      echo -e "${GREEN}PASS${NC} Monitor365 agent reconnected after restart"
+      PASS=$((PASS + 1))
+    else
+      echo -e "${RED}FAIL${NC} Monitor365 agent still not connected after restart — check API key or server logs"
+      FAIL=$((FAIL + 1))
+    fi
+  fi
 fi
 
 # File Renamer: dashboard must show accumulated history, not a split-brain empty fork.
