@@ -224,26 +224,4 @@ in
   discordsync.overlays.default
   pocketIdUpgradeOverlay
   bunMemoryLimitOverlay
-  (_final: prev: {
-    crush-daily = prev.crush-daily.overrideAttrs (old: {
-      goModules = old.goModules.overrideAttrs (_: {
-        outputHash = "sha256-+669CP3DOKkb5a0tXtKBg9bBxhMMWfJ6AsImBmeeXW0=";
-      });
-    });
-    discordsync = prev.discordsync.overrideAttrs (old: {
-      goModules = old.goModules.overrideAttrs (_: {
-        outputHash = "sha256-JldWaWyQcPgSxy+pRkAwfRLBHck14QLH8tys1qDT6VI=";
-      });
-    });
-    dnsblockd = prev.dnsblockd.overrideAttrs (old: {
-      goModules = old.goModules.overrideAttrs (_: {
-        outputHash = "sha256-ekdAsxFoAEH4x2bGynsA7MGG/hFXk93Pcf8fU7qnheg=";
-      });
-    });
-    overview = prev.overview.overrideAttrs (old: {
-      goModules = old.goModules.overrideAttrs (_: {
-        outputHash = "sha256-vBZBNgCVrAG5oLdhcNkHyjrueHiHbrBt/5puyRvWjPU=";
-      });
-    });
-  })
 ]

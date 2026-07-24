@@ -262,23 +262,6 @@
       url = "github:LarsArtmann/cmdguard?ref=master";
       flake = false;
     };
-    # Pinned to v0.5.0: cmdguard's go.mod expects this version. Newer versions
-    # (master/v0.6.0) changed ServiceByName to accept ServiceName type, breaking
-    # cmdguard's code that passes string.
-    samber-do-auditlog = {
-      url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
-      flake = false;
-    };
-    # go-commit — pinned to v0.4.1 which upgrades the default Minimax model to MiniMax-M3.
-    # v0.4.0 had the `git config` CLI fix (local scope → ~/.config/git/config).
-    # Without this pin, PMA's flake pulls go-commit from master, which uses
-    # go-git's repo.Config() (local scope only, misses ~/.config/git/config)
-    # → all PMA auto-commits have "Unknown Author <unknown@example.com>".
-    # mkPreparedSource overrides go.mod's version with this flake input source.
-    go-commit = {
-      url = "github:LarsArtmann/go-commit?ref=refs/tags/v0.4.1";
-      flake = false;
-    };
     go-nix-helpers = {
       url = "github:LarsArtmann/go-nix-helpers?ref=master";
       flake = false;
@@ -296,12 +279,8 @@
     # NOTE: Go-module replace deps (go-output, go-branded-id, cmdguard) are NOT
     # followed — overriding them changes vendored content and breaks vendorHash.
     # Only build-infra inputs are followed.
-    # PINNED: upstream commit 6492eef removed `nixpkgs` from outputs params but
-    # left it in inputs, causing `function 'outputs' called with unexpected
-    # argument 'nixpkgs'`. Pin to last commit before the break until upstream
-    # adds `...` to outputs. See AGENTS.md "mr-sync outputs signature missing ...".
     mr-sync = {
-      url = "github:LarsArtmann/mr-sync/3db4fb24d009cf4483f4bb384092a3f2c16f50fe";
+      url = "github:LarsArtmann/mr-sync?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
@@ -356,8 +335,17 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
+        # Pin samber-do-auditlog to v0.5.0: v0.6.0+ changed ServiceByName to
+        # take ServiceName type, breaking cmdguard callers (cqrs-lint, mr-sync).
         samber-do-auditlog.follows = "samber-do-auditlog";
       };
+    };
+
+    # samber-do-auditlog — Pinned to v0.5.0 for API compatibility.
+    # v0.6.0+ changed ServiceByName(string) to ServiceByName(ServiceName).
+    samber-do-auditlog = {
+      url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
+      flake = false;
     };
 
     # branching-flow — Error context preservation analyzer
@@ -384,7 +372,6 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
-        go-commit.follows = "go-commit";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
