@@ -2952,7 +2952,9 @@
           "nixpkgs"
         ],
         "project-discovery-sdk": "project-discovery-sdk",
-        "samber-do-auditlog": "samber-do-auditlog_4",
+        "samber-do-auditlog": [
+          "samber-do-auditlog"
+        ],
         "systems": [
           "systems"
         ],
@@ -2970,8 +2972,8 @@
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "master",
         "repo": "mr-sync",
+        "rev": "ceb4da5d4f4265a4d39460f4d600e64cdff60d0a",
         "type": "github"
       }
     },
@@ -3534,7 +3536,7 @@
         ],
         "project-discovery-sdk": "project-discovery-sdk_4",
         "project-meta": "project-meta_2",
-        "samber-do-auditlog": "samber-do-auditlog_5",
+        "samber-do-auditlog": "samber-do-auditlog_4",
         "systems": [
           "systems"
         ],
@@ -3657,7 +3659,7 @@
         "overview": "overview",
         "project-meta": "project-meta",
         "projects-management-automation": "projects-management-automation",
-        "samber-do-auditlog": "samber-do-auditlog_6",
+        "samber-do-auditlog": "samber-do-auditlog_5",
         "signoz-collector-src": "signoz-collector-src",
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
@@ -3767,23 +3769,6 @@
     "samber-do-auditlog_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1784738485,
-        "narHash": "sha256-gYNqa3DYF2qFbcJ/KRNQQlMYhxHC4kiKdXewKATyieg=",
-        "ref": "master",
-        "rev": "1088c32a174dd75a770781afb33e9c53c2363afa",
-        "revCount": 402,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
-      },
-      "original": {
-        "ref": "master",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
-      }
-    },
-    "samber-do-auditlog_5": {
-      "flake": false,
-      "locked": {
         "lastModified": 1784617907,
         "narHash": "sha256-dzAm1BShAuenup54O212F5FrYmz8Tq37HZ7pHDtLYd0=",
         "ref": "master",
@@ -3798,7 +3783,7 @@
         "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
       }
     },
-    "samber-do-auditlog_6": {
+    "samber-do-auditlog_5": {
       "flake": false,
       "locked": {
         "lastModified": 1783429419,

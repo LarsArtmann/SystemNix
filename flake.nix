@@ -280,13 +280,14 @@
     # followed — overriding them changes vendored content and breaks vendorHash.
     # Only build-infra inputs are followed.
     mr-sync = {
-      url = "github:LarsArtmann/mr-sync?ref=master";
+      url = "github:LarsArtmann/mr-sync/ceb4da5d4f4265a4d39460f4d600e64cdff60d0a";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
+        samber-do-auditlog.follows = "samber-do-auditlog";
       };
     };
 
