@@ -333,8 +333,9 @@
             after = [ "monitor365-server.service" "monitor365.service" ];
             serviceConfig = {
               Type = "oneshot";
-              User = "monitor365";
-              Group = "monitor365";
+              # Must run as root — the watchdog calls `systemctl start/restart`
+              # on system services, which requires root. The monitor365 user
+              # cannot start system services.
               NoNewPrivileges = true;
               PrivateTmp = true;
             };
