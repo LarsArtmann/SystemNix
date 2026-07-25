@@ -54,6 +54,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Fixed
 
+- **ActivityWatch Wayland watcher start-limit-hit** — `aw-watcher-window-wayland` had `After`/`PartOf = graphical-session.target` but no start-limit hardening, so a slow compositor start or transient Wayland failure hit the systemd default (5 starts / 10 s) and left the watcher dead until manual `reset-failed`. Added `StartLimitBurst=5` / `StartLimitIntervalSec=300` to the local override. Upstream Home Manager patch prepared (`docs/services/home-manager-activitywatch-graphical-session.patch`) adding a `requiresGraphicalSession` watcher option so the compositor dep is upstreamable instead of a hand-rolled per-site override.
 - **Monitor365 DuckDB WAL corruption** — `monitor365-duckdb-heal` ExecStartPre always removes `.wal` before startup. DuckDB checkpoints WAL on graceful shutdown; `.wal` present = unclean shutdown. Server was crash-looping 291+ times.
 - **Monitor365 agent circuit-breaker deadlock + start-limit death spiral** — 4-layer fix: `startLimitBurst=10` on service, debounced graphical-restart (skips if <60s ago), watchdog timer (resets + restarts), deploy.sh starts inactive services.
 - **PMA auto-commit (DefaultChain)** — `committer.New()` now uses `DefaultChainFromEnv()` (reads `MINIMAX_API_KEY` from env) instead of `DefaultChain()` (empty providers). Upstream `d1d013d2`.
