@@ -340,9 +340,9 @@ in {
                   if [ -f "$WEBHOOK_FILE" ]; then
                     echo "Deploying notification channels..."
                     WEBHOOK_URL=$(cat "$WEBHOOK_FILE")
-                    EXISTING_CHANNELS=$(curl -sf "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || echo '[]')
+                    EXISTING_CHANNELS=$(curl -sf "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || echo '{"data":[]}')
 
-                    EXISTING_CHANNEL_ID=$(echo "$EXISTING_CHANNELS" | jq -r --arg n "$CHANNEL_NAME" '.[] | select(.name == $n) | .id // empty' | head -1)
+                    EXISTING_CHANNEL_ID=$(echo "$EXISTING_CHANNELS" | jq -r --arg n "$CHANNEL_NAME" '.data[] | select(.name == $n) | .id // empty' | head -1)
                     if [ -n "$EXISTING_CHANNEL_ID" ]; then
                       echo "  Deleting existing channel: $CHANNEL_NAME ($EXISTING_CHANNEL_ID)"
                       curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/channels/$EXISTING_CHANNEL_ID" 2>/dev/null || true

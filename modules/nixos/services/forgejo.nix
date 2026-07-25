@@ -247,10 +247,12 @@ _: {
         after = [
           "forgejo.service"
           "pocket-id-provision.service"
+          "dnsblockd.service"
         ];
         wants = [
           "forgejo.service"
           "pocket-id-provision.service"
+          "dnsblockd.service"
         ];
         wantedBy = ["forgejo.service"];
         restartTriggers = [(lib.getExe oidcSetupScript)];

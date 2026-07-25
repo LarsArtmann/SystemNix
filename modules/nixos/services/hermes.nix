@@ -119,6 +119,7 @@
         runtimeInputs = [
           pkgs.acl
           pkgs.coreutils
+          pkgs.getent
         ];
         text = ''
           primaryHome=$(getent passwd ${config.users.primaryUser} 2>/dev/null | cut -d: -f6)
