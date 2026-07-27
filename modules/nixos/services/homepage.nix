@@ -321,7 +321,9 @@ _: {
               )
               ++ [
                 (mkService "dnsblockd" {
-                  description = "DNS Block Page Server";
+                  # Tile exists for parity with other infra services (Node Exporter,
+                  # cAdvisor, EMEET PIXY) that expose a metrics-only health check.
+                  description = "Block-page HTTP server (localhost-only)";
                   icon = "blocky.png";
                   statusStyle = "dot";
                   siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/metrics";
