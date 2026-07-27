@@ -421,39 +421,93 @@ _: {
               {
                 Infrastructure = [
                   {
-                    Pocket-ID = [ { abbr = "PI"; href = svcUrl "auth"; description = "Passkey OIDC login"; } ];
+                    Pocket-ID = [
+                      {
+                        abbr = "PI";
+                        href = svcUrl "auth";
+                        description = "Passkey OIDC login";
+                      }
+                    ];
                   }
                   {
-                    Gatus = [ { abbr = "GA"; href = svcUrl "status"; description = "Service uptime dashboard"; } ];
+                    Gatus = [
+                      {
+                        abbr = "GA";
+                        href = svcUrl "status";
+                        description = "Service uptime dashboard";
+                      }
+                    ];
                   }
                   {
-                    SigNoz = [ { abbr = "SN"; href = svcUrl "signoz"; description = "Traces, metrics, logs"; } ];
+                    SigNoz = [
+                      {
+                        abbr = "SN";
+                        href = svcUrl "signoz";
+                        description = "Traces, metrics, logs";
+                      }
+                    ];
                   }
                 ];
               }
               {
                 Development = [
                   {
-                    Forgejo = [ { abbr = "FJ"; href = svcUrl "forgejo"; description = "Git forge"; } ];
+                    Forgejo = [
+                      {
+                        abbr = "FJ";
+                        href = svcUrl "forgejo";
+                        description = "Git forge";
+                      }
+                    ];
                   }
                   {
-                    GitHub = [ { abbr = "GH"; href = "https://github.com/LarsArtmann"; description = "LarsArtmann GitHub"; } ];
+                    GitHub = [
+                      {
+                        abbr = "GH";
+                        href = "https://github.com/LarsArtmann";
+                        description = "LarsArtmann GitHub";
+                      }
+                    ];
                   }
                   {
-                    "NixOS Options" = [ { abbr = "NX"; href = "https://search.nixos.org/options"; description = "NixOS option search"; } ];
+                    "NixOS Options" = [
+                      {
+                        abbr = "NX";
+                        href = "https://search.nixos.org/options";
+                        description = "NixOS option search";
+                      }
+                    ];
                   }
                   {
-                    "Nix Package Search" = [ { abbr = "NP"; href = "https://search.nixos.org/packages"; description = "Find packages"; } ];
+                    "Nix Package Search" = [
+                      {
+                        abbr = "NP";
+                        href = "https://search.nixos.org/packages";
+                        description = "Find packages";
+                      }
+                    ];
                   }
                 ];
               }
               {
                 Search = [
                   {
-                    DuckDuckGo = [ { abbr = "DD"; href = "https://duckduckgo.com"; description = "Privacy-first search"; } ];
+                    DuckDuckGo = [
+                      {
+                        abbr = "DD";
+                        href = "https://duckduckgo.com";
+                        description = "Privacy-first search";
+                      }
+                    ];
                   }
                   {
-                    Kagi = [ { abbr = "KG"; href = "https://kagi.com"; description = "Paid, no-ads search"; } ];
+                    Kagi = [
+                      {
+                        abbr = "KG";
+                        href = "https://kagi.com";
+                        description = "Paid, no-ads search";
+                      }
+                    ];
                   }
                 ];
               }

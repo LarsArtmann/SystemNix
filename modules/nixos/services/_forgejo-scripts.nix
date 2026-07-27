@@ -12,7 +12,8 @@
   hostName,
   runnerLabels,
   runnerConfigFile,
-}: {
+}:
+{
   mirrorGithubScript = pkgs.writeShellApplication {
     name = "forgejo-mirror-github";
     runtimeInputs = [
@@ -238,7 +239,7 @@
 
   setupScript = pkgs.writeShellApplication {
     name = "forgejo-setup";
-    runtimeInputs = [pkgs.systemd];
+    runtimeInputs = [ pkgs.systemd ];
     text = ''
       echo "=== Forgejo Setup Helper ==="
       echo ""
@@ -263,7 +264,7 @@
 
   ensurePasswordFile = pkgs.writeShellApplication {
     name = "forgejo-ensure-password-file";
-    runtimeInputs = [pkgs.coreutils];
+    runtimeInputs = [ pkgs.coreutils ];
     text = ''
       PASS_FILE="${stateDir}/.admin-password"
       if [ ! -f "$PASS_FILE" ]; then
