@@ -169,6 +169,12 @@ _: {
               # and a visible status dot. The bare daemon exposes only an
               # internal /metrics endpoint (Prometheus scrapes it directly),
               # which has no value as a clickable dashboard tile.
+              # PostgreSQL and Redis are kept as decorative tiles with NO
+              # siteMonitor: neither exposes a public HTTP health endpoint
+              # (pg_isready is TCP-only; Redis exports to Prometheus only).
+              # Their dependents (Immich, Gatus, Manifest) will go red when
+              # the DB/cache goes down — that's the real signal. These tiles
+              # serve as visual confirmation that the backing services exist.
               (mkService "PostgreSQL" {
                 description = "Database Server";
                 icon = "postgres.png";
@@ -374,13 +380,10 @@ _: {
                   statusStyle = "dot";
                   siteMonitor = svcUrl "tasks";
                 })
-                (mkService "Homepage" {
-                  description = "This Page";
-                  icon = "homepage.png";
-                  target = "_self";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "dash";
-                })
+                # The "Homepage" self-tile was removed: clicking it while
+                # already on the dashboard is a no-op (`target = "_self"`
+                # would just reload). The dashboard IS the entry point,
+                # so a tile pointing to itself adds no value.
                 (mkService "OpenSEO" {
                   href = svcUrl "seo";
                   description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
