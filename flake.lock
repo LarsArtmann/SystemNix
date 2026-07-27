@@ -1124,11 +1124,11 @@
         "treefmt-nix": "treefmt-nix_6"
       },
       "locked": {
-        "lastModified": 1785148176,
-        "narHash": "sha256-nOyB/Evd8dz5axCdhz8b5CkHmHUqQ1KX+l02F16txRw=",
+        "lastModified": 1785153230,
+        "narHash": "sha256-WnIiCN7rTNXDy3s9evQJ1e2fZbEvwX414iwV8jsB6h8=",
         "owner": "LarsArtmann",
         "repo": "go-auto-upgrade",
-        "rev": "d5a2efcd22ca38ed40a5bb6fa44a1699ebf6e03f",
+        "rev": "d228b9ab1717591223302e7a9c43f4fc22ecabe8",
         "type": "github"
       },
       "original": {
@@ -2352,16 +2352,16 @@
     "go-output_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1781224280,
-        "narHash": "sha256-GMvAIL7GGzuToUNFAvkUaHpvl0z59XULLqMvmqEg+Fw=",
-        "ref": "refs/tags/v0.33.0",
-        "rev": "194441bbd62141ca4e85f322066138ffb718f372",
-        "revCount": 624,
+        "lastModified": 1785147530,
+        "narHash": "sha256-juRL9KB9RZKgMzNNLQ2o/7vi8y8ySm1CZnadD895kT4=",
+        "ref": "refs/tags/v0.34.0",
+        "rev": "3b0640efb80806900c5305eb58f186b437bbc65c",
+        "revCount": 1085,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       },
       "original": {
-        "ref": "refs/tags/v0.33.0",
+        "ref": "refs/tags/v0.34.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-output"
       }
@@ -2867,11 +2867,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1785108339,
-        "narHash": "sha256-nImtXaYzNbHdjbDOfHFB2nRcnEZckuAsBh1aJMhQPyM=",
+        "lastModified": 1785150923,
+        "narHash": "sha256-3H200GS4G2KzBP7zwXgAOII+0kC53vUGdyOkScjk/iI=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "dc2506ea8cb58fc8cde7ceb357cad03b1aba0da1",
+        "rev": "6d1bedee3ee164ed0151f8adab1313be5915d652",
         "type": "github"
       },
       "original": {
@@ -3531,11 +3531,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785149112,
-        "narHash": "sha256-dlJZlp+yCtHsVWA3b1hdbqOT14XpdWu7CpYRxEv8aw8=",
+        "lastModified": 1785153025,
+        "narHash": "sha256-ubyziylgBIw321CEpkexuP32X2i/whn0LJHNhjWIldY=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "97892351f9904622e94078c19f04c39a05c20668",
+        "rev": "8f3b21ed289d13c395a82f0dde06fb5ddf6f5078",
         "type": "github"
       },
       "original": {
