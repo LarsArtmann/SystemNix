@@ -366,13 +366,13 @@ in {
 
                   # Deploy alert rules (idempotent: delete existing by name, then create fresh)
                   echo "Deploying alert rules..."
-                  EXISTING_RULES=$(curl -sf --max-time 10 "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || echo '{"data":[]}')
+                  EXISTING_RULES=$(curl -sf --max-time 10 "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || echo '{"data":{"rules":[]}}')
 
                   for rule_file in /etc/signoz/rules/*.json; do
                     if [ -f "$rule_file" ]; then
                       RULE_NAME=$(jq -r '.data.rule.name // empty' "$rule_file")
                       if [ -n "$RULE_NAME" ]; then
-                        EXISTING_ID=$(echo "$EXISTING_RULES" | jq -r --arg n "$RULE_NAME" '.data[] | select(.rule.name == $n) | .id // empty' | head -1)
+                        EXISTING_ID=$(echo "$EXISTING_RULES" | jq -r --arg n "$RULE_NAME" '.data.rules[]? // empty | select(.name == $n) | .id // empty' | head -1)
                         if [ -n "$EXISTING_ID" ]; then
                           echo "  Deleting existing: $RULE_NAME ($EXISTING_ID)"
                           curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/rules/$EXISTING_ID" 2>/dev/null || true
