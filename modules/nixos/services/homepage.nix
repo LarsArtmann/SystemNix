@@ -411,7 +411,85 @@ _: {
           "d /var/cache/homepage-dashboard 0755 homepage homepage -"
           "L+ ${stateDir}/services.yaml - - - - /etc/homepage/services.yaml"
           "L+ ${stateDir}/settings.yaml - - - - /etc/homepage/settings.yaml"
-          "L+ ${stateDir}/bookmarks.yaml - - - - ${pkgs.writeText "bookmarks.yaml" ""}"
+          "L+ ${stateDir}/bookmarks.yaml - - - - ${
+            (pkgs.formats.yaml { }).generate "bookmarks.yaml" [
+              {
+                Infrastructure = [
+                  {
+                    Pocket-ID = {
+                      abbr = "PI";
+                      href = svcUrl "auth";
+                      description = "Passkey OIDC login";
+                    };
+                  }
+                  {
+                    Gatus = {
+                      abbr = "GA";
+                      href = svcUrl "status";
+                      description = "Service uptime dashboard";
+                    };
+                  }
+                  {
+                    SigNoz = {
+                      abbr = "SN";
+                      href = svcUrl "signoz";
+                      description = "Traces, metrics, logs";
+                    };
+                  }
+                ];
+              }
+              {
+                Development = [
+                  {
+                    Forgejo = {
+                      abbr = "FJ";
+                      href = svcUrl "forgejo";
+                      description = "Git forge";
+                    };
+                  }
+                  {
+                    GitHub = {
+                      abbr = "GH";
+                      href = "https://github.com/LarsArtmann";
+                      description = "LarsArtmann GitHub";
+                    };
+                  }
+                  {
+                    "NixOS Options" = {
+                      abbr = "NX";
+                      href = "https://search.nixos.org/options";
+                      description = "NixOS option search";
+                    };
+                  }
+                  {
+                    "Nix Package Search" = {
+                      abbr = "NP";
+                      href = "https://search.nixos.org/packages";
+                      description = "Find packages";
+                    };
+                  }
+                ];
+              }
+              {
+                Search = [
+                  {
+                    DuckDuckGo = {
+                      abbr = "DD";
+                      href = "https://duckduckgo.com";
+                      description = "Privacy-first search";
+                    };
+                  }
+                  {
+                    Kagi = {
+                      abbr = "KG";
+                      href = "https://kagi.com";
+                      description = "Paid, no-ads search";
+                    };
+                  }
+                ];
+              }
+            ]
+          }"
           "L+ ${stateDir}/widgets.yaml - - - - ${
             (pkgs.formats.yaml { }).generate "widgets.yaml" [
               { greeting.text = "evo-x2 Dashboard"; }
@@ -433,12 +511,30 @@ _: {
               }
               {
                 resources = {
+                  label = "System";
                   cpu = true;
                   memory = true;
-                  disk = "/";
                   cputemp = true;
+                  # Strix Halo (AMD Ryzen AI Max+ 395) idle ~50°C, full load
+                  # 90-95°C. Bounds below color the gauge green/yellow/red.
+                  tempmin = 30;
+                  tempmax = 95;
                   network = true;
                   uptime = true;
+                };
+              }
+              {
+                # /data is a separate BTRFS partition (per AGENTS.md):
+                # Docker volumes, Immich DB, AI models. Losing this disk
+                # is the #1 data-loss risk — monitor it explicitly. Disk
+                # widget reports usage of the mountpoint passed in.
+                resources = {
+                  label = "Storage";
+                  disk = [
+                    "/"
+                    "/data"
+                  ];
+                  expanded = true;
                 };
               }
             ]
