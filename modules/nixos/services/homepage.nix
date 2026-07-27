@@ -412,79 +412,48 @@ _: {
           "L+ ${stateDir}/services.yaml - - - - /etc/homepage/services.yaml"
           "L+ ${stateDir}/settings.yaml - - - - /etc/homepage/settings.yaml"
           "L+ ${stateDir}/bookmarks.yaml - - - - ${
+            # Homepage bookmark schema (from src/skeleton/bookmarks.yaml):
+            # each service name maps to a LIST of one props object,
+            # NOT a bare object. Using a bare object makes Homepage's
+            # parser feed the wrong value to `new URL()`, crashing the
+            # whole page with "Failed to construct 'URL': Invalid URL".
             (pkgs.formats.yaml { }).generate "bookmarks.yaml" [
               {
                 Infrastructure = [
                   {
-                    Pocket-ID = {
-                      abbr = "PI";
-                      href = svcUrl "auth";
-                      description = "Passkey OIDC login";
-                    };
+                    Pocket-ID = [ { abbr = "PI"; href = svcUrl "auth"; description = "Passkey OIDC login"; } ];
                   }
                   {
-                    Gatus = {
-                      abbr = "GA";
-                      href = svcUrl "status";
-                      description = "Service uptime dashboard";
-                    };
+                    Gatus = [ { abbr = "GA"; href = svcUrl "status"; description = "Service uptime dashboard"; } ];
                   }
                   {
-                    SigNoz = {
-                      abbr = "SN";
-                      href = svcUrl "signoz";
-                      description = "Traces, metrics, logs";
-                    };
+                    SigNoz = [ { abbr = "SN"; href = svcUrl "signoz"; description = "Traces, metrics, logs"; } ];
                   }
                 ];
               }
               {
                 Development = [
                   {
-                    Forgejo = {
-                      abbr = "FJ";
-                      href = svcUrl "forgejo";
-                      description = "Git forge";
-                    };
+                    Forgejo = [ { abbr = "FJ"; href = svcUrl "forgejo"; description = "Git forge"; } ];
                   }
                   {
-                    GitHub = {
-                      abbr = "GH";
-                      href = "https://github.com/LarsArtmann";
-                      description = "LarsArtmann GitHub";
-                    };
+                    GitHub = [ { abbr = "GH"; href = "https://github.com/LarsArtmann"; description = "LarsArtmann GitHub"; } ];
                   }
                   {
-                    "NixOS Options" = {
-                      abbr = "NX";
-                      href = "https://search.nixos.org/options";
-                      description = "NixOS option search";
-                    };
+                    "NixOS Options" = [ { abbr = "NX"; href = "https://search.nixos.org/options"; description = "NixOS option search"; } ];
                   }
                   {
-                    "Nix Package Search" = {
-                      abbr = "NP";
-                      href = "https://search.nixos.org/packages";
-                      description = "Find packages";
-                    };
+                    "Nix Package Search" = [ { abbr = "NP"; href = "https://search.nixos.org/packages"; description = "Find packages"; } ];
                   }
                 ];
               }
               {
                 Search = [
                   {
-                    DuckDuckGo = {
-                      abbr = "DD";
-                      href = "https://duckduckgo.com";
-                      description = "Privacy-first search";
-                    };
+                    DuckDuckGo = [ { abbr = "DD"; href = "https://duckduckgo.com"; description = "Privacy-first search"; } ];
                   }
                   {
-                    Kagi = {
-                      abbr = "KG";
-                      href = "https://kagi.com";
-                      description = "Paid, no-ads search";
-                    };
+                    Kagi = [ { abbr = "KG"; href = "https://kagi.com"; description = "Paid, no-ads search"; } ];
                   }
                 ];
               }
