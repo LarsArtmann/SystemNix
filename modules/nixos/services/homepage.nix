@@ -163,11 +163,12 @@ _: {
                 statusStyle = "dot";
                 siteMonitor = svcUrl "dash";
               })
-              (mkService "dnsblockd" {
-                description = "DNS Resolver + Blocker";
-                icon = "adguard-home.png";
-                statusStyle = "dot";
-              })
+              # Note: dnsblockd is intentionally NOT a separate tile here.
+              # The user-facing "DNS Blocker" tile (in Media) already points
+              # at https://dnsblock.<domain>/health with a clickable link
+              # and a visible status dot. The bare daemon exposes only an
+              # internal /metrics endpoint (Prometheus scrapes it directly),
+              # which has no value as a clickable dashboard tile.
               (mkService "PostgreSQL" {
                 description = "Database Server";
                 icon = "postgres.png";
@@ -356,7 +357,9 @@ _: {
                 mkService "File Renamer" {
                   href = svcUrl "renamer";
                   description = "AI-Powered File & Image Renaming";
-                  icon = "mdi-file-rename-outline";
+                  # filebot.png: bundled icon pack has no 'mdi-*' mdi-style icons;
+                  # filebot is the canonical self-hosted file-rename tool icon.
+                  icon = "filebot.png";
                   statusStyle = "dot";
                   siteMonitor = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
                 }
