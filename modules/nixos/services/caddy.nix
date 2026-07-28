@@ -131,10 +131,10 @@ _: {
                 ${tlsConfig}
                 ${commonConfig}
                 handle /oauth2/* {
-                  reverse_proxy localhost:${toString proxyPort}
+                  ${proxyTo proxyPort}
                 }
                 handle {
-                  reverse_proxy localhost:${toString authPort}
+                  ${proxyTo authPort}
                 }
               '';
             };
@@ -144,7 +144,7 @@ _: {
               extraConfig = ''
                 ${tlsConfig}
                 ${commonConfig}
-                reverse_proxy localhost:${toString config.services.forgejo.settings.server.HTTP_PORT}
+                ${proxyTo config.services.forgejo.settings.server.HTTP_PORT}
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
@@ -155,7 +155,7 @@ _: {
                 ${tlsConfig}
                 ${commonConfig}
                 ${forwardAuth}
-                reverse_proxy localhost:${toString config.services.signoz.settings.queryService.port}
+                ${proxyTo config.services.signoz.settings.queryService.port}
               '';
             };
             "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
@@ -167,7 +167,7 @@ _: {
               extraConfig = ''
                 ${tlsConfig}
                 ${commonConfig}
-                reverse_proxy localhost:${toString config.services.gatus-config.port}
+                ${proxyTo config.services.gatus-config.port}
               '';
             };
             # OpenSEO: Layer 2 (oauth2-proxy forward-auth). The GSC OAuth callback
@@ -182,15 +182,15 @@ _: {
                 ${commonConfig}
                 @gsc_callback path /api/gsc/oauth/callback
                 handle @gsc_callback {
-                  reverse_proxy localhost:${toString config.services.openseo.port}
+                  ${proxyTo config.services.openseo.port}
                 }
                 @external not remote_ip 127.0.0.1/8 ${lanSubnet}
                 handle @external {
                   ${forwardAuth}
-                  reverse_proxy localhost:${toString config.services.openseo.port}
+                  ${proxyTo config.services.openseo.port}
                 }
                 handle {
-                  reverse_proxy localhost:${toString config.services.openseo.port}
+                  ${proxyTo config.services.openseo.port}
                 }
               '';
             };
@@ -236,7 +236,7 @@ _: {
                         @noCache path /ui /ui/ /ui/index.html /ui/bootstrap.js
                         header @noCache Cache-Control "no-cache, no-store, must-revalidate"
 
-                        reverse_proxy localhost:${toString ports.monitor365-server}
+                        ${proxyTo ports.monitor365-server}
                       '';
                     }
                   else
