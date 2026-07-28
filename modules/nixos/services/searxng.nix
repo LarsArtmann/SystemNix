@@ -133,7 +133,10 @@ _: {
                 "::1"
                 lanSubnet
               ];
-              ip_lists.pass_ip = [ lanSubnet ];
+              ip_lists.pass_ip = [
+                "127.0.0.0/8"
+                lanSubnet
+              ];
             };
           };
         };
