@@ -134,6 +134,8 @@ check_local "File Renamer" "8086" "/status" "200" "" 2>/dev/null || true
 
 check_local "OpenSEO" "3002" "/" "200" "<html" 2>/dev/null || true
 
+check_local "SearXNG" "8888" "/healthz" "200" 2>/dev/null || true
+
 # --- Functional checks (not just liveness) ---
 echo ""
 echo "=== Functional Checks ==="
@@ -151,9 +153,9 @@ if crush_reports=$(curl -s --max-time 5 "http://localhost:8081/api/reports" 2>/d
     # crush CLI schema discovery, ...). Without this check, a backfill of
     # zero-data reports can sit silently for weeks.
     latest_date=$(echo "$crush_reports" | grep -oE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"' | head -1 | tr -d '"')
-    if [ -n "$latest_date" ] && \
-       curl -s --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:8081/api/reports/$latest_date" 2>/dev/null && \
-       grep -qE '"session_count":[ ]*[1-9][0-9]*' /tmp/.smoke-crush-report; then
+    if [ -n "$latest_date" ] &&
+      curl -s --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:8081/api/reports/$latest_date" 2>/dev/null &&
+      grep -qE '"session_count":[ ]*[1-9][0-9]*' /tmp/.smoke-crush-report; then
       echo -e "${GREEN}PASS${NC} Crush Daily latest report ($latest_date) has session_count >0"
       PASS=$((PASS + 1))
     elif [ -n "$latest_date" ]; then

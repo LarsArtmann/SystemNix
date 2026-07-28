@@ -519,6 +519,15 @@ _: {
                       }
                     ];
                   }
+                  {
+                    SearXNG = [
+                      {
+                        abbr = "SX";
+                        href = svcUrl "search";
+                        description = "Self-hosted metasearch";
+                      }
+                    ];
+                  }
                 ];
               }
             ]
@@ -536,11 +545,22 @@ _: {
                 };
               }
               {
-                search = {
-                  provider = "duckduckgo";
-                  target = "_blank";
-                  showSearchSuggestions = true;
-                };
+                search = (
+                  if searxEnabled then
+                    {
+                      provider = "custom";
+                      url = "https://search.${domain}/search?q=";
+                      suggestionsUrl = "https://search.${domain}/autocompleter?q=";
+                      target = "_blank";
+                      showSearchSuggestions = true;
+                    }
+                  else
+                    {
+                      provider = "duckduckgo";
+                      target = "_blank";
+                      showSearchSuggestions = true;
+                    }
+                );
               }
               {
                 resources = {

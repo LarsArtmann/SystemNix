@@ -3,8 +3,7 @@
 # The upstream crush-daily flake module (flake.nix) now declares
 # `services.crush-daily.runAsUser`. SystemNix just wires SystemNix-specific
 # hardening: directory traversal permissions and per-host overrides.
-_:
-{
+_: {
   flake.nixosModules.crush-daily =
     {
       config,
