@@ -16,12 +16,16 @@ let
   # Workaround: go-branded-id v0.5.0 ships a prebuilt ELF binary (`namer`) in
   # its module root. The binary's debug_info references the Go compiler store
   # path, which breaks the fixed-output `go-modules` derivation. Switch to
-  # vendored module mode and strip the binary from the vendor directory before
-  # it is hashed. Remove once upstream drops the binary from the published
-  # module.
+  # vendored module mode, drop the `go-finding` local replace (so the vendor
+  # directory does not record a Nix store path), and strip the binary from the
+  # vendor directory before it is hashed. Remove once upstream drops the binary
+  # from the published module.
   stripPrebuiltGoBinaries =
     pkg: vendorHash:
-    pkg.overrideAttrs (old: {
+    let
+      pkgWithoutReplace = pkg.override { go-finding-src = null; };
+    in
+    pkgWithoutReplace.overrideAttrs (old: {
       inherit vendorHash;
       proxyVendor = false;
       modPostBuild =
