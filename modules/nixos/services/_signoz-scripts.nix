@@ -33,6 +33,7 @@
       pkgs.coreutils
     ];
     text = ''
+      echo "signoz-provision: starting (v2 — jq .data.rules[] fix)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
 
