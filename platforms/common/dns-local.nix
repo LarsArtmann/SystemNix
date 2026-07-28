@@ -18,5 +18,6 @@
     "renamer"
     "dnsblock"
     "dnsblockd"
+    "search"
   ];
 }

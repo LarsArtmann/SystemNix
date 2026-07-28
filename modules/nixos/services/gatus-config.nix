@@ -758,6 +758,19 @@ _: {
                 ];
                 alerts = discordAlert "qmd MCP HTTP server down — AI agents (Crush, Claude) cannot search local markdown until it restarts. Check: systemctl --user status qmd-mcp on the primary user's session.";
               })
+            ]
+            ++ lib.optionals (config.services.searx.enable or false) [
+              (mkHttpCheck {
+                name = "SearXNG";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.searxng}/healthz";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 1000"
+                ];
+                alerts = discordAlert "SearXNG metasearch engine down — privacy search unavailable";
+              })
             ];
           };
         };

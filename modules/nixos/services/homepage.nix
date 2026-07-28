@@ -45,6 +45,7 @@ _: {
       discordsyncEnabled = config.services.discordsync.enable;
       overviewEnabled = config.services.overview.enable;
       fileAndImageRenamerEnabled = config.services.file-and-image-renamer.enable or false;
+      searxEnabled = config.services.searx.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;

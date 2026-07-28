@@ -199,6 +199,9 @@ _: {
               '';
             };
           }
+          // lib.optionalAttrs config.services.searx.enable {
+            "search.${domain}" = protectedVHost "search" config.services.searx.settings.server.port;
+          }
           // lib.optionalAttrs config.services.voice-agents.enable {
             "voice.${domain}" = protectedVHost "voice" config.services.livekit.settings.port;
             "whisper.${domain}" = protectedVHost "whisper" config.services.voice-agents.whisperPort;
