@@ -62,5 +62,7 @@
     file-and-image-renamer-health = 8086;
 
     qmd = 8181;
+
+    searxng = 8888;
   };
 }
