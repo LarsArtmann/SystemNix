@@ -190,3 +190,15 @@ After 5 restart attempts (startLimitBurst=5), the service hit `start-limit-hit` 
 2. **Tor-only engines** — SearXNG's default engine set includes Tor-only engines (ahmia, torch) that log errors on every startup because Tor is not configured. Should I disable them via `use_default_settings.engines.remove`, or do you plan to add Tor support in the future?
 
 3. **Secret key via sops** — The current auto-generated secret key pattern (`openssl rand -hex 32` → `/var/lib/searxng/searxng.env`) means the key is NOT reproducible across reinstalls. Should this use sops instead so the key survives reinstall/migration? This was flagged in the original session as an open question.
+
+---
+
+## ⚠️ RESOLVED — See `2026-07-28_23-37_searxng-port-conflict-resolved-and-deployed.md`
+
+**All three questions were resolved in the follow-up session (23:37):**
+
+1. **Port 8888 conflict** — The occupant was SigNoz's OTel Collector metrics endpoint (permanent service), NOT a Go test binary. SearXNG moved to **port 8889**. Service is running and functional.
+2. **Tor-only engines** — Disabled via `use_default_settings.engines.remove = [ "ahmia" "torch" ]`.
+3. **Secret key** — Stays as auto-generated (`openssl rand -hex 32`). The key persists across deploys via `/var/lib/searxng/searxng.env`. Reinstall-loss is acceptable for a search engine.
+
+This report is **stale** — SearXNG is fully operational on port 8889.
