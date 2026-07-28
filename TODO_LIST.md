@@ -44,7 +44,7 @@
 ## Priority 5: Desktop (from Jul 9 Helium/browser reports)
 
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary.
-- [ ] **Remove `--enable-gpu-rasterization`** — increases GPUActive memory pressure on Strix Halo with no proven benefit.
+- [x] **Remove `--enable-gpu-rasterization`** — Done. Already excluded in `base.nix:43-46` with documented rationale (Strix Halo unified memory: GPUActive 51+ GiB, GPUReclaim=0). The TODO was stale from before the exclusion was added.
 - [ ] **Remove 9gag Post Filter** — abandoned extension ("THIS PROJECT IS DEAD").
 
 ## Priority 6: Upstream Contributions
