@@ -57,11 +57,15 @@
           package = lib.mkDefault discordsyncPkg;
           # Turso returns persistent 403 "SQL read operations are forbidden" on
           # the current plan, so the sync engine falls back to local-only mode
-          # after every failed push/pull. Running in sqlite backend eliminates
-          # the sync goroutine, the 403 log spam, and the DB lock contention it
-          # adds during the startup thumb-hash backfill. Revert to "turso-sync"
-          # if the Turso plan is upgraded and cloud replication is desired.
-          backend = lib.mkDefault "sqlite";
+          # after every failed push/pull. A local-only `sqlite` backend was
+          # attempted, but it caused the startup thumb-hash backfill to take
+          # 40+ minutes (likely FTS5 trigger contention with projection workers
+          # on a single connection) versus ~21 minutes with `turso-sync`. Until
+          # the upstream SQLite backend is optimized, keep `turso-sync`: the
+          # 403 errors are log noise only and the service runs fully local.
+          # Revert to `turso-sync` is also the fallback if the Turso plan is
+          # upgraded and cloud replication is desired.
+          backend = lib.mkDefault "turso-sync";
           backfillOnStartup = lib.mkDefault true;
           apiAddr = lib.mkDefault "127.0.0.1:${toString ports.discordsync-api}";
           # Upstream's ExecStartPost curls http://localhost:${cfg.apiAddr}/readyz

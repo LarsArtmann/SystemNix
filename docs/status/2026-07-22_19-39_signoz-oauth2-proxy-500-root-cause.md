@@ -4,6 +4,8 @@
 **Session scope:** Diagnose and fix why `signoz.home.lan` returns 500 errors on auth
 **Status:** FIXED AND VERIFIED — two distinct root causes identified and fixed. Zero auth errors after restart.
 
+> **Update 2026-07-24 (deployed):** The "PARTIALLY DONE" deploy-staleness and PKCE-as-future-work sections below were resolved the same evening in `2026-07-22_20-19_pkce-and-build-fixes-deployed.md`: PKCE S256 enabled, cqrs-lint vendorHash fixed, flake.lock reverted to known-good, clean full deploy (generation 565 = git HEAD). `partOf = pocket-id-provision.service` dependency added so oauth2-proxy reloads credentials on provision. All Layer 2 services verified working.
+
 ---
 
 ## A) FULLY DONE ✅

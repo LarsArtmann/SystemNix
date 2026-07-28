@@ -3,6 +3,8 @@
 **Date:** 2026-07-24 20:26  
 **Session scope:** Convert `activationScripts` → `systemd.tmpfiles.rules` (hermes, discordsync, crush-daily, configuration, darwin)
 
+> **Update 2026-07-29 (deployed):** This conversion shipped and is live. Confirmed by TODO_LIST `[x]` checkbox (marked done 2026-07-24). The `ssh-config.nix` `home.activation.ssh-sockets-dir` conversion remains open as a follow-up (TODO_LIST Priority 4).
+
 ---
 
 ## a) FULLY DONE

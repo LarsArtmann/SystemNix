@@ -4,6 +4,8 @@
 **Session:** Single-session SearXNG integration into SystemNix
 **Status:** Code complete, NOT deployed
 
+> **Update 2026-07-29 (deployed `840ff561`):** SearXNG is deployed and functional on port **8889** (NOT 8888 — SigNoz OTel Collector metrics endpoint occupied 8888). All port references in this report are stale. Backend switched to sqlite in the process. Search returns 26-27 results. Remaining gaps: Gatus green unverified, browser policy unverified, favicon cache unverified. Full details in `2026-07-28_23-37_searxng-port-conflict-resolved-and-deployed.md` and `2026-07-29_00-05_searxng-followup-fixes-self-review.md`.
+
 ---
 
 ## Executive Summary

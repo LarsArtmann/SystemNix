@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-07-24 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-07-29 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,7 +25,7 @@ _A brutally honest audit of every feature the project actually has._
 | Feature                                   | Status | Notes                                                                                                                                    |
 | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Cross-platform Nix flake (Darwin + NixOS) | ✅     | Single flake, two systems, 80% shared via `platforms/common/`                                                                            |
-| flake-parts modular architecture          | ✅     | 42 modules auto-discovered (36 services + 6 desktop). Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
+| flake-parts modular architecture          | ✅     | 43 modules auto-discovered (37 services + 6 desktop). Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
 | Shared overlays (Darwin + NixOS)          | ✅     | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync                                                                     |
 | Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer                                                        |
 | Shared Home Manager config                | ✅     | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs`                                                                               |
@@ -74,16 +74,17 @@ _A brutally honest audit of every feature the project actually has._
 | Minecraft server                      | 🔧     | `minecraft.nix`                      | JDK 25, ZGC, firewall restricted to LAN, Prism Launcher client config, whitelist — disabled in config                                                                                                                                                                                                                                                                                          |
 | Manifest (LLM router)                 | ✅     | `manifest.nix`                       | Smart LLM router for AI agents, cost optimization, port 2099, `manifest.home.lan`                                                                                                                                                                                                                                                                                                              |
 | Overview (project dashboard)          | ✅     | `overview` flake input               | Local project dashboard, git repo discovery, stats, activity, port 8083                                                                                                                                                                                                                                                                                                                        |
-| Crush Daily (AI insights)             | ✅     | `crush-daily.nix`                    | AI-powered development insights from Crush databases, port 8081, `daily.home.lan`                                                                                                                                                                                                                                                                                                              |
+| Crush Daily (AI insights)             | ✅     | `crush-daily.nix`                    | AI-powered development insights from Crush databases, port 8081, `daily.home.lan`. Runs as `primaryUser` via `runAsUser` (fixes ACL `/home/lars` traversal). Silent-zero-data post-deploy assertion (`session_count > 0`). Fixed: CLI schema drift, SQLite DSN `file:` prefix, HTML template printf arg order.                                                                                                                                                                                                                                                              |
 | OpenSEO (SEO suite)                   | ✅     | `openseo.nix` + `pkgs/openseo.nix`   | Self-hosted SEO: rank tracking, keyword research, backlinks. Native NixOS service (built from source via Vite/pnpm, workerd runtime), port 3002, `seo.home.lan`. GSC OAuth callback exempt from forward-auth, AI features conditional, `openseo-validate` ExecStartPre                                                                                                                         |
 | System Health Collector               | ✅     | `system-health.nix`                  | Prometheus textfile collector: systemd service state, `user-1000.slice` memory, GPUActive thresholds, monitor365 buffer pressure. Pre-computes boolean flags for Gatus `pat()` matching                                                                                                                                                                                                        |
 | Monitor365 (device monitoring)        | ✅     | `monitor365.nix`                     | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID. Schema-migrate oneshot, agent watchdog timer (root), graphical-restart path unit, backup health monitoring, restartTriggers                                                                                                                                  |
 | PMA (auto-commit daemon)              | ✅     | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval                                                                                                                                                                                                                                                                                                         |
-| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 65 health check endpoints (run `rg -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                       |
+| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 66 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                       |
 | Disk Monitor                          | ✅     | `disk-monitor.nix`                   | Desktop notifications at disk usage thresholds                                                                                                                                                                                                                                                                                                                                                 |
 | NVMe Health Monitor                   | ✅     | `nvme-health-monitor.nix`            | Desktop notifications for critical NVMe SMART events                                                                                                                                                                                                                                                                                                                                           |
-| DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, turso-sync backend (local + cloud), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz. |
+| DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, sqlite backend (was turso-sync — switched to eliminate Turso free-plan 403), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz. |
 | Qmd (on-device markdown search)       | ✅     | `qmd-config.nix`                     | Semantic + BM25 hybrid markdown/code search via HTTP MCP server on port 8181. Built from GitHub source (`fetchFromGitHub` + `pnpmConfigHook`). Three GGUF models auto-cached (~2 GiB). CPU-only by default (`QMD_FORCE_CPU=1`). Crush MCP integration at `http://localhost:8181/mcp`.                                                                                                          |
+| SearXNG (privacy metasearch)          | ✅     | `searxng.nix`                        | Privacy-focused metasearch engine on port 8889 (`search.home.lan`). Built-in Granian ASGI server, dedicated Redis (unix socket), auto-generated secret key. Layer 2 SSO via oauth2-proxy (no native OIDC). Rate limiter with trusted proxies + LAN pass_ip. POST-only search (privacy), dark mode, favicon caching (DuckDuckGo). Browser default search engine via Chromium policy. `restartTriggers` on settings + limiter config + package. |
 
 ### AI / ML Stack
 
@@ -286,7 +287,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | Static IP networking       | ✅     | `eno1` 192.168.1.150, no DHCP/NetworkManager                                                                                                                                                          |
 | Firewall                   | ✅     | TCP 22,53,80,443; UDP 53,853                                                                                                                                                                          |
 | Centralized network config | ✅     | `local-network.nix` module options — lanIP, gateway, subnet, blockIP, virtualIP, piIP                                                                                                                 |
-| Local DNS records          | ✅     | auth/immich/forgejo/dash/signoz/tasks/crm/manifest/status/seo/daily/logs/monitor/dnsblock → `*.home.lan` (explicitly listed in `localSubdomains` — dnsblockd does NOT support wildcard local records) |
+| Local DNS records          | ✅     | auth/immich/forgejo/dash/signoz/tasks/crm/manifest/status/seo/daily/logs/monitor/dnsblock/search → `*.home.lan` (explicitly listed in `localSubdomains` — dnsblockd does NOT support wildcard local records) |
 | Mullvad VPN                | 🔧     | WireGuard VPN — **disabled** (talpid_dns corrupted `/etc/resolv.conf`). Config kept for future re-enablement                                                                                          |
 | Dual-WAN (MPTCP)           | ✅     | MPTCP dual-WAN with route health monitoring, automatic failover                                                                                                                                       |
 | SSH banner                 | ✅     | Legal warning banner on SSH login                                                                                                                                                                     |
@@ -445,6 +446,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | ~~PhotoMap AI~~   | Removed (2026-07-04) — module, port, Docker image all cleaned up          | —        |
 | Multi-WM (Sway)   | Enabled as backup compositor at SDDM login — may have minor bitrot        | Low      |
 | Twenty CRM        | `twenty-server` crash-loops with PG role mismatch — data intact, app down | Medium   |
+| SigNoz alerts     | 19 alert rules NOT provisioned — jq path bug fixed but oneshot never re-ran | Medium   |
 | Voice agents      | Disabled in configuration, Whisper Docker + ROCm pipeline                 | Medium   |
 | Minecraft         | Disabled in configuration                                                 | Low      |
 | Benchmark scripts | Planned but never created                                                 | Low      |
@@ -528,7 +530,7 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 
 | Category                   | Count    |
 | -------------------------- | -------- |
-| NixOS service modules      | 42       |
+| NixOS service modules      | 43       |
 | Custom packages            | 24       |
 | Cross-platform programs    | 20+      |
 | NixOS desktop components   | 16+      |
@@ -539,11 +541,11 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 | Architecture patterns      | 7        |
 | ADRs                       | 13       |
 | GitHub Actions             | 2        |
-| Gatus health endpoints     | 65       |
+| Gatus health endpoints     | 66       |
 | Sops secret files          | 12       |
-| **Total enabled features** | **~185** |
+| **Total enabled features** | **~190** |
 | Planned/disabled           | ~8       |
-| Known gaps                 | 11       |
+| Known gaps                 | 12       |
 
 ---
 
