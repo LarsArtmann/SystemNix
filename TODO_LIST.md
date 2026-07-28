@@ -16,7 +16,7 @@
 - [ ] **SearXNG runtime verification** — SearXNG is deployed and functional (returns search results) but 4 items remain unverified: (1) Gatus health check green (never queried the Gatus API), (2) browser default search-engine policy at runtime, (3) favicon cache state (`faviconcache.db` may not exist; SQLite `ResourceWarning`), (4) wikidata 403 / Brave 429 engine errors (assumed transient, not tested). See `docs/status/2026-07-29_00-05_searxng-followup-fixes-self-review.md`.
 - [ ] **monitor365 buffer backlog purge** — 597M events predate the integrity fix, may be unrecoverable. Daily 10K tenant limit blocks drain (would take ~163 years). Needs purge or limit raise.
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification.
-- [ ] **MiniMax-M3 model identifier verification** — PMA auto-commit daemon was switched to `MiniMax-M3` but the model name was never verified against the MiniMax API. If invalid, every auto-commit fails silently. Verify before relying on it.
+- [x] **MiniMax-M3 model identifier verification** — Verified 2026-07-29. The MiniMax API accepts `MiniMax-M3` as a valid model identifier: PMA auto-commit daemon produced **1,147 successful AI-generated commits** in the last 7 days (durations 3-15s, consistent with LLM API calls) with zero model-not-found/4xx API errors. The model constant lives at `go-commit/pkg/commit/providers/minimax.go:4` (`defaultMinimaxModel = "MiniMax-M3"`). An invalid model would reject every request and yield zero successful AI commits.
 
 ## Priority 2: Manual Steps (Blocked on Human)
 

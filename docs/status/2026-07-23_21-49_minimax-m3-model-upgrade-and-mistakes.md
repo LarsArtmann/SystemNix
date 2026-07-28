@@ -3,7 +3,7 @@
 **Date:** 2026-07-23 21:49
 **Session goal:** Update the PMA auto-commit daemon's MiniMax model from `MiniMax-M2.7-highspeed` to `MiniMax-M3`
 
-> **Update 2026-07-29:** The model identifier `MiniMax-M3` was **never verified** against the MiniMax API — if invalid, every PMA auto-commit fails silently. This remains an open risk tracked in TODO_LIST Priority 1. Additionally, go-commit flake.lock is at `ref=master` (`fd9a9664`), not the `v0.4.1` tag this report claims to pin — the pin may have been reverted or overridden by a later session.
+> **Update 2026-07-29 (resolved):** The model identifier `MiniMax-M3` is **VERIFIED VALID** against the MiniMax API. The PMA auto-commit daemon produced 1,147 successful AI-generated commits in the last 7 days with zero model-not-found/4xx errors — an invalid model would reject every request. See TODO_LIST (closed). The second concern remains: go-commit flake.lock is at `ref=master` (`fd9a9664`), not the `v0.4.1` tag this report claims to pin — the pin may have been reverted or overridden by a later session.
 
 ---
 

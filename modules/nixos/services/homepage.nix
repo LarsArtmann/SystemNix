@@ -545,8 +545,7 @@ _: {
                 };
               }
               {
-                search = (
-                  if searxEnabled then
+                search = if searxEnabled then
                     {
                       provider = "custom";
                       url = "https://search.${domain}/search?q=";
@@ -559,8 +558,7 @@ _: {
                       provider = "duckduckgo";
                       target = "_blank";
                       showSearchSuggestions = true;
-                    }
-                );
+                    };
               }
               {
                 resources = {
