@@ -46,6 +46,8 @@ _: {
           pkgs.gnugrep
           pkgs.gawk
           pkgs.systemd
+          pkgs.curl
+          pkgs.jq
         ];
         text = ''
           OUT="${textfileDir}/system_health.prom"
@@ -110,6 +112,18 @@ _: {
             fi
           fi
 
+          # === SigNoz alert rules count ===
+          collect_signoz_rules=${lib.boolToString cfg.collectSignozRules}
+          RULE_COUNT=0
+          RULES_HEALTHY=0
+          if [ "$collect_signoz_rules" = "true" ]; then
+            RULE_COUNT=$(curl -sf --max-time 5 http://127.0.0.1:${toString cfg.signoz.port}/api/v1/rules 2>/dev/null | jq '.data.rules | length' 2>/dev/null) || RULE_COUNT=0
+            RULE_COUNT="''${RULE_COUNT:-0}"
+            if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
+              RULES_HEALTHY=1
+            fi
+          fi
+
           {
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
@@ -147,6 +161,14 @@ _: {
             echo "# HELP system_monitor365_buffer_pressure 1 if DuckDB exceeds buffer threshold, 0 otherwise"
             echo "# TYPE system_monitor365_buffer_pressure gauge"
             echo "system_monitor365_buffer_pressure ''${BUFFER_PRESSURE}"
+
+            echo "# HELP system_signoz_alert_rules_total Number of SigNoz alert rules provisioned"
+            echo "# TYPE system_signoz_alert_rules_total gauge"
+            echo "system_signoz_alert_rules_total ''${RULE_COUNT}"
+
+            echo "# HELP system_signoz_alert_rules_healthy 1 if SigNoz has >15 alert rules, 0 otherwise"
+            echo "# TYPE system_signoz_alert_rules_healthy gauge"
+            echo "system_signoz_alert_rules_healthy ''${RULES_HEALTHY}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -198,6 +220,18 @@ _: {
           description = "Collect monitor365 DuckDB buffer pressure metrics";
         };
 
+        collectSignozRules = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect SigNoz alert rules count (disable on hosts without SigNoz)";
+        };
+
+        signoz.port = lib.mkOption {
+          type = lib.types.int;
+          default = 8080;
+          description = "SigNoz query service port for alert rules API";
+        };
+
         monitor365.stateDir = lib.mkOption {
           type = lib.types.str;
           default = "/var/lib/monitor365-server";
@@ -208,12 +242,15 @@ _: {
       config = lib.mkIf cfg.enable {
         # Auto-disable collectors that target resources not present on this host.
         # These use mkDefault so user configuration can override.
-        services.system-health = lib.optionalAttrs (options ? services.monitor365-server) {
+        services.system-health = (lib.optionalAttrs (options ? services.monitor365-server) {
           collectMonitor365 = lib.mkDefault (config.services.monitor365-server.enable or false);
           monitor365.stateDir = lib.mkDefault (
             config.services.monitor365-server.stateDir or "/var/lib/monitor365-server"
           );
-        };
+        }) // (lib.optionalAttrs (options ? services.signoz) {
+          collectSignozRules = lib.mkDefault (config.services.signoz.enable or false);
+          signoz.port = lib.mkDefault (config.services.signoz.settings.queryService.port or 8080);
+        });
 
         systemd = {
           tmpfiles.rules = [

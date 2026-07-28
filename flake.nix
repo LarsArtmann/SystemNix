@@ -287,7 +287,6 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
-        samber-do-auditlog.follows = "samber-do-auditlog";
       };
     };
 

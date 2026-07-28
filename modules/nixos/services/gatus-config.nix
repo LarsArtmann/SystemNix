@@ -207,6 +207,14 @@ _: {
                 alerts = discordAlert "SigNoz observability platform down — no metrics/alerts";
               })
               (mkHttpCheck {
+                name = "SigNoz Alert Rules Provisioned";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [ "[BODY] == pat(*system_signoz_alert_rules_healthy 1*)" ];
+                alerts = discordAlert "SigNoz alert rules not provisioned — observability gap, no alerts will fire";
+              })
+              (mkHttpCheck {
                 name = "Manifest";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";

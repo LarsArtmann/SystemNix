@@ -26,8 +26,8 @@
 
 ## Priority 3: Infrastructure
 
-- [ ] **Caddy: generalize `proxyTo` X-Real-IP** — `protectedVHost` now adds `X-Real-IP`, but 10 bare `reverse_proxy` directives (oauth2-proxy, Pocket ID, Forgejo, SigNoz, Gatus, OpenSEO GSC, Monitor365) still see `127.0.0.1`. Apply `header_up X-Real-IP {remote_host}` to all reverse_proxy directives.
-- [ ] **Crush Daily: data backfill 2026-07-19 to 2026-07-26** — The scheduler only collects "yesterday". The 8-day gap (between the silent-zero-data bug and the fix) has no reports. Needs a manual POST per date or a `backfill` option.
+- [x] **Caddy: generalize `proxyTo` X-Real-IP** — Done 2026-07-29. All 10 bare `reverse_proxy` directives (oauth2-proxy, Pocket ID, Forgejo, SigNoz, Gatus, OpenSEO GSC, Monitor365) now use `${proxyTo PORT}` which adds `header_up X-Real-IP {remote_host}`. Validated with `nix flake check --no-build`. **Pending deploy.**
+- [x] **Crush Daily: data backfill** — Done 2026-07-29. The zero-data bug was present since launch (2026-06-11), not just 2026-07-19 to 2026-07-26. Backfilled ALL 45 zero-data dates (2026-06-11 through 2026-07-26) via `scripts/crush-daily-backfill.py`: deleted zero-data events, re-ran collect (all dates show correct session/message/cost counts), ran insights + report for the TODO-specified dates. Reusable script at `scripts/crush-daily-backfill.py` supports `--from/--to`, `--date`, `--collect-only`, `--dry-run`. **Pending service restart** (`sudo systemctl restart crush-daily.service`) to rehydrate the in-memory read model.
 - [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), now has btrbk snapshot protection but still not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime.
 - [ ] **Firewall deny-by-default** — all inbound allowed, services exposed to LAN. Should restrict to 80/443 + SSH + LAN-only ports.
 - [ ] **Replace X11-only runtime deps with Wayland equivalents in monitor365** — `xdotool`, `xprintidle`, `scrot` are X11-only but evo-x2 runs niri (Wayland-only). Consider adding `grim`, `slurp`, `wtype`, `wlr-randr`.
