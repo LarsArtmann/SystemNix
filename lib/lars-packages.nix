@@ -16,26 +16,32 @@ let
   # Workaround: go-branded-id v0.5.0 ships a prebuilt ELF binary (`namer`) in
   # its module root. The binary's debug_info references the Go compiler store
   # path, which breaks the fixed-output `go-modules` derivation. Switch to
-  # vendored module mode, drop the `go-finding` local replace (so the vendor
-  # directory does not record a Nix store path), and strip the binary from the
-  # vendor directory before it is hashed. Remove once upstream drops the binary
-  # from the published module.
+  # vendored module mode, replace the absolute `go-finding` Nix store path with
+  # a local copy inside the source tree, and strip the binary from the vendor
+  # directory before it is hashed. Remove once upstream drops the binary from
+  # the published module.
   stripPrebuiltGoBinaries =
     pkg: vendorHash:
     let
+      goFindingSrc = inputs.md-go-validator.inputs.go-finding-src;
       pkgWithoutReplace = pkg.override { go-finding-src = null; };
     in
     pkgWithoutReplace.overrideAttrs (old: {
       inherit vendorHash;
       proxyVendor = false;
-      modPostBuild =
-        (old.modPostBuild or "")
-        + ''
-          if [ -d vendor/github.com/larsartmann/go-branded-id ]; then
-            echo "stripPrebuiltGoBinaries: removing prebuilt namer binary from vendor"
-            rm -f vendor/github.com/larsartmann/go-branded-id/namer
-          fi
-        '';
+      postPatch = ''
+        mkdir -p deps
+        cp -r ${goFindingSrc} deps/go-finding
+        find deps/go-finding -type d -exec chmod +w {} \;
+        chmod -R +w deps/go-finding
+        echo 'replace github.com/larsartmann/go-finding => ./deps/go-finding' >> go.mod
+      '';
+      modPostBuild = ''
+        if [ -d vendor/github.com/larsartmann/go-branded-id ]; then
+          echo "stripPrebuiltGoBinaries: removing prebuilt namer binary from vendor"
+          rm -f vendor/github.com/larsartmann/go-branded-id/namer
+        fi
+      '';
     });
 
 in
