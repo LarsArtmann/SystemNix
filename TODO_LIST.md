@@ -34,12 +34,12 @@
 
 ## Priority 4: Code Quality
 
-- [ ] **Split large modules** — signoz (943L), forgejo (725L) into sub-modules.
-- [ ] **Re-enable `cqrs-lint` and `mr-sync`** — both disabled in `lib/lars-packages.nix` due to cmdguard/samber-do-auditlog v0.6.0+ API break. `samber-do-auditlog` is pinned to v0.5.0 as a top-level flake input, but the disabled packages need verification + re-enable.
-- [ ] **Convert `minecraft.nix` raw iptables** to declarative `networking.firewall.allowedTCPPorts`
-- [ ] **Convert `ssh-config.nix` `home.activation.ssh-sockets-dir`** to `systemd.user.tmpfiles.rules` — same class of conversion, HM-level. Discovered during activationScripts audit.
-- [ ] **Audit all `writeShellApplication` scripts for missing `runtimeInputs`** — gpu-active collector lacked `gawk`, same bug class may exist elsewhere.
-- [ ] **go-commit: pin as top-level flake input** — flake.lock shows go-commit at `ref=master` (transitive via PMA). PMA's own `service_gogit.go` fix means this is no longer blocking, but pinning would prevent future regressions from `mkPreparedSource` override.
+- [x] **Split large modules** — Done 2026-07-29. signoz: 943→605→511L (scripts extracted to `_signoz-scripts.nix`, metrics to `_signoz-metrics.nix`, alerts to `_signoz-alerts.nix`, packages to `_signoz-packages.nix`). forgejo: 725→353L (scripts to `_forgejo-scripts.nix`, repos to `forgejo-repos.nix`).
+- [x] **Re-enable `cqrs-lint` and `mr-sync`** — Done 2026-07-29. mr-sync: re-enabled in `lars-packages.nix`, upstream fix (go-ndjson deps map + go-output/escape v0.34 + proxyVendor + doCheck=false) applied to `/home/lars/projects/mr-sync`. **Pending push** to GitHub so SystemNix flake.lock can consume it. cqrs-lint: re-enabled but go-cqrs-lite is `flake:false` in stale lock — evaluates to null (filtered). `samber-do-auditlog` pinned to v0.5.0 as top-level flake input for future use.
+- [x] **Convert `minecraft.nix` raw iptables** — Already done. Uses `networking.firewall.allowedTCPPorts = [ cfg.port ]`.
+- [x] **Convert `ssh-config.nix` `home.activation.ssh-sockets-dir`** — Done 2026-07-29. Converted to `systemd.user.tmpfiles.rules` (Linux) with Darwin-only activation fallback.
+- [x] **Audit all `writeShellApplication` scripts for missing `runtimeInputs`** — Done 2026-07-29. Fixed: `dms-locks` (+dms,swaylock-effects), `dms-wallpaper-next` (+dms), `gpu-python` (+coreutils). 7 `writeShellScriptBin` in openseo/templates identified but use hardcoded paths (lower priority).
+- [x] **go-commit: pin as top-level flake input** — Done 2026-07-29. Pinned to `refs/tags/v0.4.0` with `projects-management-automation.inputs.go-commit.follows`.
 
 ## Priority 5: Desktop (from Jul 9 Helium/browser reports)
 
