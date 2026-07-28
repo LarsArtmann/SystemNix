@@ -287,6 +287,9 @@ in
       # OpenSEO — self-hosted SEO suite (rank tracking, keyword research, backlinks)
       openseo.enable = true;
 
+      # SearXNG — privacy-focused metasearch engine
+      searx.enable = true;
+
       # Dual-WAN with MPTCP and route health monitoring
       # DISABLED: route-health-monitor evicts the eno1 default route on transient
       # ISP probe failures (2s timeout to 1.1.1.1), pinning traffic to WiFi-only.

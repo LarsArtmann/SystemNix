@@ -392,7 +392,16 @@ _: {
                   statusStyle = "dot";
                   siteMonitor = svcUrl "seo";
                 })
-              ];
+              ]
+              ++ lib.optional searxEnabled (
+                mkService "SearXNG" {
+                  href = svcUrl "search";
+                  description = "Privacy Metasearch Engine";
+                  icon = "searxng.png";
+                  statusStyle = "dot";
+                  siteMonitor = "${svcUrl "search"}/healthz";
+                }
+              );
 
             groups = [
               { Infrastructure = infraServices; }

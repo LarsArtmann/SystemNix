@@ -47,7 +47,6 @@ _: {
     {
       config = lib.mkIf cfg.enable {
         services.searx = {
-          enable = true;
           # Dedicated Redis via unix socket (isolated from Immich's Redis).
           # Required for the rate limiter / bot protection (server.limiter = true).
           redisCreateLocally = true;
