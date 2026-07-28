@@ -17,44 +17,6 @@ let
     netwatch = prev.callPackage ../pkgs/netwatch.nix { };
   };
 
-  # crush-daily upstream has TWO bugs that surface only at runtime on SystemNix:
-  #
-  #  1. html/template `printf` arg-order reversal in Go 1.26.
-  #     internal/server/index.go:83 uses pipeline form `{{"%.2f"|printf .TotalCost}}`
-  #     which invokes `printf(.TotalCost, "%.2f")` — wrong arg order. Go's
-  #     html/template emits "expected string; got float64" and the trends box
-  #     silently renders empty on every page load.
-  #
-  #  2. /api/prometheus route is not registered (only /api/metrics is). Gatus
-  #     probes using /api/prometheus receive 404 → false alerts.
-  #
-  # Both are local to SystemNix until crush-daily ships an upstream fix.
-  # Tracked in crush-daily/docs/feeback/new/2026-07-28_*.md.
-  #
-  # Fix: overrideAttrs on the upstream Go derivation. We `substituteInPlace`
-  # the broken pipeline form → direct call form, and add a Prometheus
-  # handler alias if missing.
-  crushDailyLocalFixOverlay =
-    _final: prev:
-    let
-      crushDaily = prev.crush-daily.overrideAttrs (old: {
-        postPatch =
-          (old.postPatch or "")
-          + ''
-            # Fix 1: html/template `printf` arg-order reversal in Go 1.26.
-            # Pipeline form `{{format|printf .Arg}}` becomes `printf(.Arg, format)`
-            # which yields "expected string; got float64" because TotalCost is float64.
-            # Direct call form `{{printf format .Arg}}` keeps the correct order.
-            substituteInPlace internal/server/index.go \
-              --replace-fail '${{"%.2f"|printf .TotalCost}}' \
-                             '${{printf "%.2f" .TotalCost}}'
-          '';
-      });
-    in
-    {
-      crush-daily = crushDaily;
-    };
-
   bunMemoryLimitOverlay = _final: prev: {
     bun = prev.writeShellScriptBin "bun" ''
       REAL_BUN="${prev.bun}/bin/bun"
@@ -258,7 +220,6 @@ in
   netwatchOverlay
   file-and-image-renamer.overlays.default
   crush-daily.overlays.default
-  crushDailyLocalFixOverlay
   overview.overlays.default
   discordsync.overlays.default
   pocketIdUpgradeOverlay
