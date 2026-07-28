@@ -88,6 +88,22 @@ _: {
           path = [ pkgs.crush ];
           startLimitBurst = 3;
           startLimitIntervalSec = 60;
+          # When runAsUser is set, take ownership of the data dir so the new
+          # user can read prior reports and write fresh data. The data dir is
+          # created by upstream tmpfiles (crush-daily:crush-daily:0750); we
+          # chown it idempotently at start. Single-user homelab: safe.
+          preStart = lib.mkIf (validatedRunAsUser != null) (
+            let
+              dataDirEscaped = lib.escapeShellArg cfg.dataDir;
+              userEscaped = lib.escapeShellArg validatedRunAsUser;
+            in
+            ''
+              mkdir -p ${dataDirEscaped}
+              chown -R ${userEscaped}:users ${dataDirEscaped} 2>/dev/null || true
+              find ${dataDirEscaped} -type d -exec chmod 0750 {} \; 2>/dev/null || true
+              find ${dataDirEscaped} -type f -exec chmod 0640 {} \; 2>/dev/null || true
+            ''
+          );
 
           # --- User/Group override when runAsUser is set ---
           # The upstream module hardcodes User = "crush-daily", Group = "crush-daily".
