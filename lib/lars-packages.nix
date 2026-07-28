@@ -56,7 +56,7 @@ lib.filterAttrs (_: v: v != null) {
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
   hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
-  md-go-validator = stripPrebuiltGoBinaries (flakePkg inputs.md-go-validator) "sha256-4haqiQNHHDvXkcgnk2WlrKcnC7j6xF8FuOPT456JStU=";
+  md-go-validator = stripPrebuiltGoBinaries (flakePkg inputs.md-go-validator) "sha256-X0b5+DXMDNW05HONHZUKw96PDrkCaHbkiMKk4mWqwg8=";
   # mr-sync temporarily disabled: cmdguard/samber-do-auditlog v0.6.0+ API break
   # (ServiceByName takes ServiceName type, not bare string). Re-enable when
   # upstream cmdguard is updated or samber-do-auditlog is pinned via mkPreparedSource.
