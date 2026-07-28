@@ -512,5 +512,17 @@ in
         memoryMax = "8G";
       };
     };
+
+    # SearXNG as default Chromium/Helium search engine.
+    # LAN access bypasses oauth2-proxy forward-auth via protectedVHost.
+    programs.chromium = lib.mkIf config.services.searx.enable {
+      extraOpts = {
+        DefaultSearchProviderEnabled = true;
+        DefaultSearchProviderName = "SearXNG";
+        DefaultSearchProviderKeyword = "sx";
+        DefaultSearchProviderSearchURL = "https://search.${config.networking.domain}/search?q={searchTerms}";
+        DefaultSearchProviderSuggestURL = "https://search.${config.networking.domain}/autocompleter?q={searchTerms}";
+      };
+    };
   };
 }
