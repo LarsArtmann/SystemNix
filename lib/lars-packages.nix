@@ -30,11 +30,9 @@ let
       inherit vendorHash;
       proxyVendor = false;
       postPatch = ''
-        mkdir -p deps
-        cp -r ${goFindingSrc} deps/go-finding
-        find deps/go-finding -type d -exec chmod +w {} \;
-        chmod -R +w deps/go-finding
-        echo 'replace github.com/larsartmann/go-finding => ./deps/go-finding' >> go.mod
+        cp -r ${goFindingSrc} $NIX_BUILD_TOP/go-finding-src
+        chmod -R +w $NIX_BUILD_TOP/go-finding-src
+        echo 'replace github.com/larsartmann/go-finding => ../go-finding-src' >> go.mod
       '';
       modPostBuild = ''
         if [ -d vendor/github.com/larsartmann/go-branded-id ]; then
@@ -56,7 +54,7 @@ lib.filterAttrs (_: v: v != null) {
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
   hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
-  md-go-validator = stripPrebuiltGoBinaries (flakePkg inputs.md-go-validator) "sha256-a+w+u2lEWg8fTBwac/TMOg8+SrY7ScwcdFDD8YWU6M0=";
+  md-go-validator = stripPrebuiltGoBinaries (flakePkg inputs.md-go-validator) "sha256-HgKVpLhVf3qD3Ovtfmw0w4Qa/gLaQctY5lmUFMcA7x8=";
   # mr-sync temporarily disabled: cmdguard/samber-do-auditlog v0.6.0+ API break
   # (ServiceByName takes ServiceName type, not bare string). Re-enable when
   # upstream cmdguard is updated or samber-do-auditlog is pinned via mkPreparedSource.
