@@ -1,0 +1,24 @@
+Work around an upstream migration bug: nullable foreign-key columns
+must not be backfilled to an empty string because '' violates the
+REFERENCES constraint. Channels in DMs and threads with unknown owners
+legitimately have NULL for these columns.
+
+Remove once upstream fixes internal/db/backfill_nulls.go.
+
+--- a/internal/db/backfill_nulls.go
++++ b/internal/db/backfill_nulls.go
+@@ -18,7 +18,6 @@ var nullTextBackfills = []string{
+ 	`UPDATE guilds SET icon_url = '' WHERE icon_url IS NULL`,
+ 	`UPDATE guilds SET icon_hash = '' WHERE icon_hash IS NULL`,
+ 
+-	`UPDATE channels SET guild_id = '' WHERE guild_id IS NULL`,
+ 	`UPDATE channels SET topic = '' WHERE topic IS NULL`,
+ 	`UPDATE channels SET parent_id = '' WHERE parent_id IS NULL`,
+ 
+@@ -63,7 +62,6 @@ var nullTextBackfills = []string{
+ 	`UPDATE voice_states SET channel_id = '' WHERE channel_id IS NULL`,
+ 	`UPDATE voice_states SET session_id = '' WHERE session_id IS NULL`,
+ 
+-	`UPDATE threads SET owner_id = '' WHERE owner_id IS NULL`,
+ 	`UPDATE guild_members SET nick = '' WHERE nick IS NULL`,
+ }

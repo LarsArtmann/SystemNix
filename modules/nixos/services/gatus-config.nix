@@ -719,12 +719,15 @@ _: {
               (mkHttpCheck {
                 name = "DiscordSync";
                 group = "Infrastructure";
-                # /readyz performs deep readiness (aggregates db+projection+content-store
-                # health); /healthz is pure liveness (always 200, even DB closed).
-                url = "http://localhost:${toString ports.discordsync-api}/readyz";
+                # Use /healthz for liveness: it returns 200 once the API server is
+                # bound (after the long thumb-hash backfill), and fails hard
+                # (connection refused) when the process is down. /readyz returns 503
+                # during startup which made the previous < 400 condition miss
+                # connection failures (status 0).
+                url = "http://localhost:${toString ports.discordsync-api}/healthz";
                 interval = "60s";
                 conditions = [
-                  "[STATUS] < 400"
+                  "[STATUS] == 200"
                   "[RESPONSE_TIME] < 500"
                 ];
                 alerts = discordAlert "DiscordSync backup bot down — Discord messages not being captured";

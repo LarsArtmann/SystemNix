@@ -147,6 +147,7 @@ Active pip extras: `messaging`, `anthropic`, `firecrawl`, `edge-tts`, `fal`, `ex
 - **SSO:** Layer 2 (`protectedVHost`) — SearXNG has no native OIDC support. External access via oauth2-proxy forward-auth; LAN bypass open
 - **Key settings:** `http_protocol_version = "1.1"` (keep-alive behind Caddy), `method = "POST"` (privacy — queries not in URLs/logs), `favicon_resolver = "duckduckgo"`, `theme_args.simple_style = "auto"` (dark mode), `query_in_title = false` (privacy), `formats = [ "html" ]` (no API surface)
 - **`restartTriggers`** on `searx.service` references settings JSON + limiterSettings JSON + package — ensures searx restarts when config changes (the nixpkgs module only sets restartTriggers for uWSGI mode, not direct server mode)
+- **Browser integration:** SearXNG is set as the default Chromium/Helium search engine via `programs.chromium.extraOpts` in `configuration.nix` (conditional on `services.searx.enable`). The `DefaultSearchProviderSuggestURL` uses SearXNG's `/autocompleter` endpoint — suggestions are proxied through SearXNG (not sent directly to Google). LAN access bypasses forward-auth, so search works without SSO prompts
 
 ### SSO / OIDC Architecture
 
