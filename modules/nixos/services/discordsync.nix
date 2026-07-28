@@ -24,14 +24,7 @@
         onFailure
         ;
       cfg = config.services.discordsync;
-      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default.overrideAttrs (old: {
-        # Work around upstream migration bug: nullable foreign-key columns
-        # (channels.guild_id, threads.owner_id) are backfilled to '' which
-        # violates REFERENCES constraints (DM channels and owner-unknown threads
-        # legitimately have NULL here). Patch removes those two UPDATEs.
-        # TODO: remove once upstream fixes internal/db/backfill_nulls.go.
-        patches = (old.patches or [ ]) ++ [ ../../../patches/discordsync-backfill-nullable-fk.patch ];
-      });
+      discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
       sopsEnvPath = config.sops.templates."discordsync-env".path;
 
       waitDnsReady = pkgs.writeShellApplication {
