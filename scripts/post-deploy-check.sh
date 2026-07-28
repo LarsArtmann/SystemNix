@@ -211,6 +211,25 @@ else
   SKIP=$((SKIP + 1))
 fi
 
+# SigNoz: alert rules must be provisioned (>15 rules expected)
+if signoz_rules=$(curl -s --max-time 5 "http://localhost:8080/api/v1/rules" 2>/dev/null); then
+  RULE_COUNT=$(echo "$signoz_rules" | jq -r '.data.rules | length' 2>/dev/null || echo "0")
+  RULE_COUNT="${RULE_COUNT:-0}"
+  if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
+    echo -e "${GREEN}PASS${NC} SigNoz alert rules provisioned ($RULE_COUNT rules)"
+    PASS=$((PASS + 1))
+  elif [ "$RULE_COUNT" -gt 0 ] 2>/dev/null; then
+    echo -e "${RED}FAIL${NC} SigNoz alert rules under-provisioned ($RULE_COUNT rules, expected >15) — re-trigger signoz-provision.service"
+    FAIL=$((FAIL + 1))
+  else
+    echo -e "${RED}FAIL${NC} SigNoz has ZERO alert rules — signoz-provision.service did not run or failed. Observability gap: no alerts will fire"
+    FAIL=$((FAIL + 1))
+  fi
+else
+  echo -e "${YELLOW}SKIP${NC} SigNoz rules endpoint not reachable"
+  SKIP=$((SKIP + 1))
+fi
+
 # Monitor365: FULL agent↔server connectivity verification.
 # Checks BOTH sides: (1) agent metrics endpoint responding (process alive),
 # (2) server sees the agent as a connected device. If the agent is dead,
