@@ -17,10 +17,10 @@ lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
   branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
-  # cqrs-lint: re-enabled — go-cqrs-lite flake lock was stale (flake:false with
-  # SSH url); will be resolved by `nix flake lock`. If samber-do-auditlog API
-  # break persists, add go-cqrs-lite.inputs.samber-do-auditlog.follows.
-  cqrs-lint = (inputs.go-cqrs-lite.packages.${system} or { }).cqrs-lint or null;
+  # cqrs-lint: temporarily disabled — go-cqrs-lite has broken transitive deps
+  # (cmdguard/v3/pkg/cmdguard/v3 missing after private dep additions).
+  # Re-enable once upstream is fixed.
+  cqrs-lint = null;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
