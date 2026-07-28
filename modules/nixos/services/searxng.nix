@@ -14,9 +14,12 @@ _: {
     }:
     let
       inherit (config.networking) domain;
+      lanSubnet = config.networking.local.subnet;
+
       inherit (import ../../../lib/default.nix lib)
         harden
         serviceDefaults
+        serviceOneshotDefaults
         onFailure
         ports
         ;
@@ -57,6 +60,8 @@ _: {
             general = {
               instance_name = "SearXNG";
               debug = false;
+              enable_metrics = true;
+              donation_url = false;
             };
             server = {
               port = ports.searxng;
@@ -67,59 +72,95 @@ _: {
               method = "POST";
               limiter = true;
               public_instance = false;
+              # Keep-alive between Caddy and SearXNG's built-in server.
+              http_protocol_version = "1.1";
             };
             search = {
               safe_search = 0;
               autocomplete = "google";
+              autocomplete_min = 4;
               default_lang = "auto";
+              # Favicons next to results for a polished UI.
+              favicon_resolver = "duckduckgo";
+              formats = [ "html" ];
+              ban_time_on_fail = 5;
+              max_ban_time_on_fail = 120;
             };
             ui = {
               default_theme = "simple";
               default_locale = "en";
               infinite_scroll = true;
               center_alignment = true;
+              # Explicit privacy: don't leak queries into browser tab titles.
+              query_in_title = false;
+              results_on_new_tab = true;
+              theme_args.simple_style = "auto";
             };
             outgoing = {
               request_timeout = 3.0;
+              max_request_timeout = 10.0;
               enable_http2 = true;
+            };
+          };
+
+          # Bot protection / rate limiter config. Caddy proxies from
+          # 127.0.0.1, which is in the default trusted_proxies — SearXNG
+          # extracts the real client IP from X-Forwarded-For. The LAN
+          # subnet is passlisted for unrestricted access (private instance).
+          limiterSettings = {
+            botdetection = {
+              trusted_proxies = [
+                "127.0.0.0/8"
+                "::1"
+                lanSubnet
+              ];
+              ip_lists.pass_ip = [ lanSubnet ];
             };
           };
         };
 
-        # Generate the persistent secret key before searx-init runs.
-        systemd.services.searxng-secret-key = {
-          description = "Generate SearXNG secret key";
-          wantedBy = [ "multi-user.target" ];
-          before = [
-            "searx-init.service"
-            "searx.service"
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
+        systemd.services = {
+          # Generate the persistent secret key before searx-init runs.
+          searxng-secret-key = {
+            description = "Generate SearXNG secret key";
+            wantedBy = [ "multi-user.target" ];
+            before = [
+              "searx-init.service"
+              "searx.service"
+            ];
+            serviceConfig = lib.mkMerge [
+              (harden { })
+              (serviceOneshotDefaults { })
+              { StateDirectory = "searxng"; }
+            ];
+            script = lib.getExe generateSecretKey;
           };
-          script = lib.getExe generateSecretKey;
-        };
 
-        # Layer SystemNix specifics on top of the nixpkgs searx module.
-        # The nixpkgs module already has comprehensive hardening (ProtectSystem=strict,
-        # DynamicUser, etc.) — harden {} values use mkDefault so upstream's explicit
-        # settings take precedence. We only fill gaps (MemoryMax, Restart policy).
-        systemd.services.searx = {
-          after = [ "searxng-secret-key.service" ];
-          requires = [ "searxng-secret-key.service" ];
-          inherit onFailure;
-          startLimitBurst = 5;
-          startLimitIntervalSec = 300;
-          serviceConfig = lib.mkMerge [
-            (harden { MemoryMax = "512M"; })
-            (serviceDefaults { })
-          ];
-        };
+          # Layer SystemNix specifics on top of the nixpkgs searx module.
+          # The nixpkgs module already has comprehensive hardening (ProtectSystem=strict,
+          # DynamicUser, etc.) — harden {} values use mkDefault so upstream's explicit
+          # settings take precedence. We only fill gaps (MemoryMax, Restart policy).
+          searx = {
+            after = [ "searxng-secret-key.service" ];
+            requires = [ "searxng-secret-key.service" ];
+            inherit onFailure;
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
+            restartTriggers = [
+              config.services.searx.package
+              (builtins.toJSON config.services.searx.settings)
+              (builtins.toJSON config.services.searx.limiterSettings)
+            ];
+            serviceConfig = lib.mkMerge [
+              (harden { MemoryMax = "512M"; })
+              (serviceDefaults { })
+            ];
+          };
 
-        systemd.services.searx-init = {
-          after = [ "searxng-secret-key.service" ];
-          requires = [ "searxng-secret-key.service" ];
+          searx-init = {
+            after = [ "searxng-secret-key.service" ];
+            requires = [ "searxng-secret-key.service" ];
+          };
         };
       };
     };
