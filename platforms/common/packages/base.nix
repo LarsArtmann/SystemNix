@@ -67,10 +67,17 @@ let
             --add-flags "--disable-gpu-watchdog" \
             --add-flags "--restore-last-session" \
             --add-flags "--disable-session-crashed-bubble" \
-            --add-flags "--disable-component-update" \
             --add-flags "--simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'" \
-            --add-flags "--check-for-update-interval=0" \
-            --add-flags "--disable-background-networking"
+            --add-flags "--check-for-update-interval=0"
+          # CRITICAL: --disable-background-networking and --disable-component-update
+          # were REMOVED because they silently block all force_installed extensions
+          # from downloading. --disable-background-networking kills the ExtensionDownloader
+          # (the Chromium subsystem that fetches CRX files from update_url in enterprise
+          # policy). Without it, ExtensionSettings with force_installed mode silently fails —
+          # policies appear in chrome://policy but no extension ever appears in
+          # chrome://extensions. Helium's ungoogled-chromium base already strips Google
+          # telemetry, and Helium anonymizes Chrome Web Store requests via its own proxy,
+          # so the privacy tradeoff of allowing background networking is acceptable.
         '';
       }
     else

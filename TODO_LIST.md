@@ -45,6 +45,7 @@
 
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary.
 - [x] **Remove `--enable-gpu-rasterization`** — Done. Already excluded in `base.nix:43-46` with documented rationale (Strix Halo unified memory: GPUActive 51+ GiB, GPUReclaim=0). The TODO was stale from before the exclusion was added.
+- [x] **Fix Helium extensions not installing** — Done 2026-07-29. Root cause: `--disable-background-networking` killed the `ExtensionDownloader` subsystem, preventing all `force_installed` extensions from downloading. Removed `--disable-background-networking` and `--disable-component-update` from `base.nix` wrapper. See AGENTS.md gotcha for full diagnosis. **Pending deploy + runtime verification** (check `chrome://extensions` after `nix run .#deploy`).
 - [ ] **Remove 9gag Post Filter** — abandoned extension ("THIS PROJECT IS DEAD").
 
 ## Priority 6: Upstream Contributions

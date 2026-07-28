@@ -91,13 +91,21 @@ in
   };
 
   # Ensure the ControlPath target exists before SSH tries to spawn a master.
-  home.activation.ssh-sockets-dir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    $DRY_RUN_CMD mkdir -p "${socketsDir}"
-    $DRY_RUN_CMD chmod 700 "${socketsDir}"
-  '';
+  # Linux: systemd.user.tmpfiles.rules creates it declaratively (below).
+  # Darwin: no systemd, so use an activation script.
+  home.activation = lib.optionalAttrs (!pkgs.stdenv.isLinux) {
+    ssh-sockets-dir = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+      $DRY_RUN_CMD mkdir -p "${socketsDir}"
+      $DRY_RUN_CMD chmod 700 "${socketsDir}"
+    '';
+  };
 
   # Self-heal orphaned control-master sockets (Linux only — no systemd on Darwin).
   systemd.user = lib.optionalAttrs pkgs.stdenv.isLinux {
+    tmpfiles.rules = [
+      "d ${socketsDir} 0700 - - -"
+    ];
+
     services.ssh-socket-cleanup = {
       Unit.Description = "Remove stale SSH control-master sockets";
       Service =
