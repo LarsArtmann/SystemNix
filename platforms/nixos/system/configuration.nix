@@ -359,6 +359,12 @@ in
       crush-daily = {
         enable = true;
         environmentFile = config.sops.templates."crush-daily-env".path;
+        # Run as the primary user so the collector can read per-user crush state
+        # from /home/${primaryUser}/.local/share/crush/. The default upstream
+        # system user (crush-daily) cannot traverse /home on this system
+        # (mode 700 + ACL mask ---) so `crush projects --json` returns an empty
+        # list and "collect done projects=0" forever.
+        runAsUser = config.users.primaryUser;
       };
 
       # qmd — on-device markdown hybrid search engine.
