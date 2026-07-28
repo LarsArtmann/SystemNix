@@ -1379,18 +1379,18 @@
     "go-commit": {
       "flake": false,
       "locked": {
-        "lastModified": 1785232707,
-        "narHash": "sha256-NoY8eHSdsAdgyGrAEh7BGlK1qgNEhUkzl/okpBDWpSM=",
-        "ref": "master",
-        "rev": "fd9a9664a162cef0bfa9895a4b50694b01e54dca",
-        "revCount": 383,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-commit"
+        "lastModified": 1784714280,
+        "narHash": "sha256-3J9XUgGu19Jzj3HUiTCM7rCoAIHoKCtBXlXc2+0tC40=",
+        "owner": "LarsArtmann",
+        "repo": "go-commit",
+        "rev": "4e1ef73b1eb75b5ccf94ce4e8e8a990a8ab8070f",
+        "type": "github"
       },
       "original": {
-        "ref": "master",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-commit"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.4.0",
+        "repo": "go-commit",
+        "type": "github"
       }
     },
     "go-composable-business-types": {
@@ -3208,7 +3208,9 @@
           "nixpkgs"
         ],
         "project-discovery-sdk": "project-discovery-sdk",
-        "samber-do-auditlog": "samber-do-auditlog_6",
+        "samber-do-auditlog": [
+          "samber-do-auditlog"
+        ],
         "systems": [
           "systems"
         ],
@@ -3763,7 +3765,9 @@
         ],
         "go-atomic-write": "go-atomic-write_6",
         "go-branded-id": "go-branded-id_13",
-        "go-commit": "go-commit",
+        "go-commit": [
+          "go-commit"
+        ],
         "go-composable-business-types": "go-composable-business-types_3",
         "go-error-family": "go-error-family_12",
         "go-filewatcher": "go-filewatcher_5",
@@ -3780,7 +3784,7 @@
         ],
         "project-discovery-sdk": "project-discovery-sdk_4",
         "project-meta": "project-meta_2",
-        "samber-do-auditlog": "samber-do-auditlog_7",
+        "samber-do-auditlog": "samber-do-auditlog_6",
         "systems": [
           "systems"
         ],
@@ -3870,6 +3874,7 @@
         "flake-utils": "flake-utils",
         "go-auto-upgrade": "go-auto-upgrade_2",
         "go-branded-id": "go-branded-id_6",
+        "go-commit": "go-commit",
         "go-cqrs-lite": "go-cqrs-lite_3",
         "go-error-family": "go-error-family_5",
         "go-filewatcher": "go-filewatcher",
@@ -3903,6 +3908,7 @@
         "overview": "overview",
         "project-meta": "project-meta",
         "projects-management-automation": "projects-management-automation",
+        "samber-do-auditlog": "samber-do-auditlog_7",
         "signoz-collector-src": "signoz-collector-src",
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
@@ -4046,14 +4052,14 @@
       "locked": {
         "lastModified": 1785107133,
         "narHash": "sha256-074ikCRouc8ecZPO79APL3ei5IyVrL/7bs7WJLIiyvg=",
-        "ref": "refs/tags/v0.8.1",
+        "ref": "master",
         "rev": "aae2e298f94f706689ee61b99c415b8e0714aa68",
         "revCount": 556,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
       },
       "original": {
-        "ref": "refs/tags/v0.8.1",
+        "ref": "master",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
       }
@@ -4061,18 +4067,18 @@
     "samber-do-auditlog_7": {
       "flake": false,
       "locked": {
-        "lastModified": 1785107133,
-        "narHash": "sha256-074ikCRouc8ecZPO79APL3ei5IyVrL/7bs7WJLIiyvg=",
-        "ref": "master",
-        "rev": "aae2e298f94f706689ee61b99c415b8e0714aa68",
-        "revCount": 556,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
+        "lastModified": 1783429419,
+        "narHash": "sha256-jNonb/Bq6Sn+XNd2trOiahO/lumthpAaefx1nurGUNY=",
+        "owner": "LarsArtmann",
+        "repo": "samber-do-auditlog",
+        "rev": "05d647c2dfe00fa6a01124dec9793f70d0f01be7",
+        "type": "github"
       },
       "original": {
-        "ref": "master",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.5.0",
+        "repo": "samber-do-auditlog",
+        "type": "github"
       }
     },
     "signoz-collector-src": {

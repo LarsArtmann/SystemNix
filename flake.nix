@@ -365,6 +365,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # go-commit — Conventional commit helper (consumed by PMA via mkPreparedSource).
+    # Pinned to v0.4.0 tag: mkPreparedSource overrides go.mod with the flake input
+    # source, so master source (which had a git config scope bug) would override the
+    # go.mod pin. See AGENTS.md "go-git repo.Config() only reads local scope".
+    go-commit = {
+      url = "github:LarsArtmann/go-commit?ref=refs/tags/v0.4.0";
+      flake = false;
+    };
+
     # projects-management-automation — CLI for managing multiple projects with workflow automation
     projects-management-automation = {
       url = "github:LarsArtmann/projects-management-automation?ref=master";
@@ -374,6 +383,7 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
+        go-commit.follows = "go-commit";
       };
     };
 
