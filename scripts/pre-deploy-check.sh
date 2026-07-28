@@ -130,6 +130,23 @@ if [ "$STALE_BUILDS" -gt 0 ]; then
   warn "$STALE_BUILDS stale build sandboxes in /nix/var/nix/builds — run 'nix-build-cleanup' or clean manually"
 fi
 
+# 9. Port availability — check that ports assigned to enabled services are free
+echo ""
+echo "9. Port availability for enabled services"
+CONFLICTED_PORTS=0
+# Check SearXNG port specifically (common conflict with OTel collector on 8888)
+SEARXNG_PORT=$(nix eval --raw .#nixosConfigurations.evo-x2.config.services.searx.settings.server.port 2>/dev/null || echo "")
+SEARXNG_ENABLED=$(nix eval --raw .#nixosConfigurations.evo-x2.config.services.searx.enable 2>/dev/null || echo "false")
+if [ "$SEARXNG_ENABLED" = "true" ] && [ -n "$SEARXNG_PORT" ]; then
+  if ss -tlnH 2>/dev/null | grep -qE "127\.0\.0\.1:$SEARXNG_PORT\b|0\.0\.0\.0:$SEARXNG_PORT\b"; then
+    fail "Port $SEARXNG_PORT (SearXNG) is already in use — searx.service will crash-loop"
+    ss -tlnH "sport = :$SEARXNG_PORT" 2>/dev/null
+    CONFLICTED_PORTS=$((CONFLICTED_PORTS + 1))
+  else
+    pass "Port $SEARXNG_PORT (SearXNG) is available"
+  fi
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

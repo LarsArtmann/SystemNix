@@ -63,6 +63,6 @@
 
     qmd = 8181;
 
-    searxng = 8888;
+    searxng = 8889;
   };
 }

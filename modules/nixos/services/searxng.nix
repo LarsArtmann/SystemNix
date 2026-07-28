@@ -55,8 +55,27 @@ _: {
           redisCreateLocally = true;
           environmentFile = secretKeyFile;
 
+          faviconsSettings = {
+            favicons = {
+              cfg_schema = 1;
+              cache = {
+                db_url = "/var/cache/searx/faviconcache.db";
+                HOLD_TIME = 5184000;
+                LIMIT_TOTAL_BYTES = 2147483648;
+                BLOB_MAX_BYTES = 40960;
+                MAINTENANCE_MODE = "auto";
+                MAINTENANCE_PERIOD = 600;
+              };
+            };
+          };
+
           settings = {
-            use_default_settings = true;
+            use_default_settings = {
+              engines.remove = [
+                "ahmia"
+                "torch"
+              ];
+            };
             general = {
               instance_name = "SearXNG";
               debug = false;

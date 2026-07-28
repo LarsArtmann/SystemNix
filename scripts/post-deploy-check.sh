@@ -134,7 +134,7 @@ check_local "File Renamer" "8086" "/status" "200" "" 2>/dev/null || true
 
 check_local "OpenSEO" "3002" "/" "200" "<html" 2>/dev/null || true
 
-check_local "SearXNG" "8888" "/healthz" "200" 2>/dev/null || true
+check_local "SearXNG" "8889" "/healthz" "200" 2>/dev/null || true
 
 # --- Functional checks (not just liveness) ---
 echo ""
