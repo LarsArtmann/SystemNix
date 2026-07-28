@@ -65,6 +65,12 @@ _: {
         }
       '';
 
+      proxyTo = port: ''
+        reverse_proxy localhost:${toString port} {
+          header_up X-Real-IP {remote_host}
+        }
+      '';
+
       protectedVHost = _subdomain: port: {
         extraConfig = ''
           ${tlsConfig}
@@ -72,10 +78,10 @@ _: {
           @external not remote_ip 127.0.0.1/8 ${lanSubnet}
           handle @external {
             ${forwardAuth}
-            reverse_proxy localhost:${toString port}
+            ${proxyTo port}
           }
           handle {
-            reverse_proxy localhost:${toString port}
+            ${proxyTo port}
           }
         '';
       };

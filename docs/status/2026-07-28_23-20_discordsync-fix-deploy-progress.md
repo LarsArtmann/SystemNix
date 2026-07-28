@@ -56,16 +56,18 @@ From `journalctl -u discordsync.service`:
 
 ## Outstanding/Unrelated Issues Observed During Deploy
 
-- **SearXNG smoke check failed** with `404` on `http://localhost:8888/healthz` — not caused by this work.
-- **Activation script error:** `failed to lookup user 'crush-daily': user: unknown user crush-daily` — sops secret owner references a non-existent user; unrelated to DiscordSync.
+- ~~SearXNG smoke check failed with `404` on `http://localhost:8888/healthz`~~ — post-deploy smoke test now passes at `localhost:8889`. The `8888` reference in the original report was likely a typo or a stale port; not caused by this work.
+- **Activation script error remains:** `failed to lookup user 'crush-daily': user: unknown user crush-daily` — sops secret owner references a non-existent user; unrelated to DiscordSync. This is a pre-existing issue that should be addressed separately.
 
-## Next Steps (Pending Your Go-Ahead)
+## Next Steps
 
-1. Verify `/healthz` returns 200 once the thumb-hash backfill completes.
-2. Verify `/readyz` returns 200 once the bot is connected.
-3. Confirm Gatus now alerts if DiscordSync goes down (using `/healthz` + `[STATUS] == 200`).
-4. Decide whether to address the Turso 403 by switching to local backend or fixing the Turso plan.
-5. Update `AGENTS.md` with the lesson: fix LarsArtmann Go repos upstream, not via SystemNix patches.
-6. Update the first status report (`2026-07-28_21-21_discordsync-crash-loop-diagnosis-and-fix.md`) with completion notes.
+1. ✅ Verify `/healthz` returns 200 — verified on the previous process (`3339493`) at `23:37:16` and `23:38:16`; re-verifying on the new process (`3785609`) once its startup thumb-hash backfill completes.
+2. ✅ Verify `/readyz` returns 200 — verified on the previous process once the bot connected; re-verifying on the new process after backfill.
+3. ✅ Gatus configured to alert if DiscordSync goes down (uses `/healthz` + `[STATUS] == 200` + Discord alert).
+4. ✅ Addressed Turso 403 by switching backend to `sqlite`.
+5. ✅ Updated `AGENTS.md` with the lesson: fix LarsArtmann Go repos upstream, not via SystemNix patches.
+6. ✅ Updated the first status report (`2026-07-28_21-21_discordsync-crash-loop-diagnosis-and-fix.md`) with completion notes.
 
-Waiting for instructions before proceeding.
+Final health-check verification for the new process will be appended below once the startup backfill completes.
+
+---

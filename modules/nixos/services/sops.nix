@@ -140,8 +140,8 @@ in
             )
             // lib.optionalAttrs (svcEnabled "crush-daily") (
               mkSecrets "crush-daily.yaml" {
-                owner = "crush-daily";
-                group = "crush-daily";
+                owner = primaryUser;
+                group = "users";
                 restartUnits = [ "crush-daily.service" ];
               } [ "synthetic_api_key" ]
             )
@@ -307,8 +307,8 @@ in
           }
           // lib.optionalAttrs (svcEnabled "crush-daily") {
             "crush-daily-env" = {
-              owner = "crush-daily";
-              group = "crush-daily";
+              owner = primaryUser;
+              group = "users";
               mode = "0400";
               restartUnits = [ "crush-daily.service" ];
               content = lib.generators.toKeyValue { } {
