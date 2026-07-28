@@ -144,6 +144,22 @@ if crush_reports=$(curl -s --max-time 5 "http://localhost:8081/api/reports" 2>/d
   if echo "$crush_reports" | grep -qE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"'; then
     echo -e "${GREEN}PASS${NC} Crush Daily has reports"
     PASS=$((PASS + 1))
+
+    # Silent-zero-data guard: the most recent report must have >0 sessions.
+    # Catches the entire class of bugs where the service is "healthy" but
+    # collected nothing (cross-user /home ACLs, missing runAsUser, broken
+    # crush CLI schema discovery, ...). Without this check, a backfill of
+    # zero-data reports can sit silently for weeks.
+    latest_date=$(echo "$crush_reports" | grep -oE '"[0-9]{4}-[0-9]{2}-[0-9]{2}"' | head -1 | tr -d '"')
+    if [ -n "$latest_date" ] && \
+       curl -s --max-time 5 -o /tmp/.smoke-crush-report "http://localhost:8081/api/reports/$latest_date" 2>/dev/null && \
+       grep -qE '"session_count":[ ]*[1-9][0-9]*' /tmp/.smoke-crush-report; then
+      echo -e "${GREEN}PASS${NC} Crush Daily latest report ($latest_date) has session_count >0"
+      PASS=$((PASS + 1))
+    elif [ -n "$latest_date" ]; then
+      echo -e "${RED}FAIL${NC} Crush Daily latest report ($latest_date) shows 0 sessions — silent-zero-data regression"
+      FAIL=$((FAIL + 1))
+    fi
   elif echo "$crush_reports" | grep -q '\[\]'; then
     echo -e "${YELLOW}WARN${NC} Crush Daily reports empty — collection may not have run yet"
     SKIP=$((SKIP + 1))
