@@ -106,6 +106,7 @@ _: {
           pkgs.python313
           (pkgs.writeShellApplication {
             name = "gpu-python";
+            runtimeInputs = [ pkgs.coreutils ];
             text = ''
               exec env \
                 PYTORCH_CUDA_ALLOC_CONF="per_process_memory_fraction:''${GPU_MEM_FRACTION:-0.95}" \

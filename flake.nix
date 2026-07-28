@@ -287,6 +287,7 @@
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
+        samber-do-auditlog.follows = "samber-do-auditlog";
       };
     };
 
@@ -336,6 +337,14 @@
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
       };
+    };
+
+    # samber-do-auditlog — Pinned to v0.5.0 because cmdguard passes a bare
+    # string to ServiceByName, which v0.6.0+ changed to auditlog.ServiceName.
+    # mkPreparedSource overrides Go module deps with flake input source.
+    samber-do-auditlog = {
+      url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
+      flake = false;
     };
 
     # branching-flow — Error context preservation analyzer
@@ -677,6 +686,10 @@
                 program = "${
                   pkgs.writeShellApplication {
                     name = "dms-locks";
+                    runtimeInputs = [
+                      inputs.dankMaterialShell.packages.${system}.default
+                      pkgs.swaylock-effects
+                    ];
                     text = "dms ipc lock lock 2>/dev/null || exec swaylock";
                   }
                 }/bin/dms-locks";
@@ -687,6 +700,7 @@
                 program = "${
                   pkgs.writeShellApplication {
                     name = "dms-wallpaper-next";
+                    runtimeInputs = [ inputs.dankMaterialShell.packages.${system}.default ];
                     text = "dms ipc call wallpaper next";
                   }
                 }/bin/dms-wallpaper-next";
