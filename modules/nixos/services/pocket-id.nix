@@ -526,6 +526,7 @@ _: {
             wants = [ "pocket-id.service" ];
             wantedBy = [ "pocket-id.service" ];
             inherit onFailure;
+            restartTriggers = [ (lib.getExe provisionScript) ];
             path = [
               pkgs.curl
               pkgs.jq

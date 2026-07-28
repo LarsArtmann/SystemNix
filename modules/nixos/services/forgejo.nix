@@ -205,6 +205,7 @@ _: {
             wants = [ "network-online.target" ];
             requires = [ "forgejo.service" ];
             inherit onFailure;
+            restartTriggers = [ (lib.getExe mirrorGithubScript) ];
             path = [
               pkgs.curl
               pkgs.jq
@@ -244,6 +245,7 @@ _: {
           after = [ "forgejo.service" ];
           wants = [ "forgejo.service" ];
           wantedBy = [ "forgejo.service" ];
+          restartTriggers = [ (lib.getExe tokenGen) ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";

@@ -607,6 +607,7 @@ _: {
               inherit onFailure;
               startLimitBurst = 5;
               startLimitIntervalSec = 300;
+              restartTriggers = [ (lib.getExe attachIPScript) ];
               serviceConfig = lib.mkMerge [
                 {
                   Type = "oneshot";

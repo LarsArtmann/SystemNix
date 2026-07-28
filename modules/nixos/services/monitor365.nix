@@ -67,6 +67,21 @@
         scrot
         wmctrl # Window collector dependency (upstream warns if missing)
       ];
+
+      schemaMigrateScript = pkgs.writeShellApplication {
+        name = "monitor365-schema-migrate";
+        runtimeInputs = [ pkgs.duckdb ];
+        text = ''
+          DB="${serverCfg.stateDir}/monitor365.duckdb"
+          if [ -f "$DB" ] && [ -s "$DB" ]; then
+            duckdb "$DB" -c \
+              "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;"
+            echo "monitor365-schema-migrate: version column ensured"
+          else
+            echo "monitor365-schema-migrate: DB not found or empty, skipping"
+          fi
+        '';
+      };
     in
     {
       imports = [
@@ -283,6 +298,7 @@
             description = "Monitor365 DuckDB schema migration";
             before = [ "monitor365-server.service" ];
             wantedBy = [ "multi-user.target" ];
+            restartTriggers = [ (lib.getExe schemaMigrateScript) ];
             serviceConfig = {
               Type = "oneshot";
               RemainAfterExit = true;
@@ -290,16 +306,7 @@
               Group = "monitor365-server";
               StateDirectory = "monitor365-server";
             };
-            script = ''
-              DB="${serverCfg.stateDir}/monitor365.duckdb"
-              if [ -f "$DB" ] && [ -s "$DB" ]; then
-                ${pkgs.duckdb}/bin/duckdb "$DB" -c \
-                  "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;"
-                echo "monitor365-schema-migrate: version column ensured"
-              else
-                echo "monitor365-schema-migrate: DB not found or empty, skipping"
-              fi
-            '';
+            script = lib.getExe schemaMigrateScript;
           };
           systemd.services.monitor365-server = {
             after = [ "monitor365-schema-migrate.service" ];

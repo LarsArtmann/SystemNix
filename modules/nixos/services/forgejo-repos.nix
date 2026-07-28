@@ -308,6 +308,7 @@ _: {
             inherit onFailure;
             startLimitIntervalSec = 300;
             startLimitBurst = 3;
+            restartTriggers = [ (lib.getExe ensureReposScript) ];
             path = [
               pkgs.curl
               pkgs.jq

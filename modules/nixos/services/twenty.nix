@@ -188,6 +188,7 @@ _: {
               requires = [ "docker.service" ];
               wants = [ "twenty.service" ];
               wantedBy = [ "multi-user.target" ];
+              restartTriggers = [ (lib.getExe fixCollation) ];
               path = [ pkgs.docker ];
               serviceConfig = lib.mkMerge [
                 (harden { MemoryMax = "512M"; })
