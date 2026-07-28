@@ -32,6 +32,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **md-go-validator** — added to both NixOS and macOS desktops
 - **USB printing support** — added to NixOS hardware configuration
 - **Homepage local icons** — `enableLocalIcons = true` bundles 4276 dashboard icons (was defaulting to false, producing ~25 browser 404s per page load)
+- **SearXNG** — privacy-focused metasearch engine on port 8889 (`search.home.lan`). Built-in Granian ASGI server, dedicated Redis (unix socket, isolated from Immich), auto-generated secret key (not sops — machine-local random). Layer 2 SSO via oauth2-proxy (no native OIDC support). Rate limiter with trusted proxies (Caddy) + LAN `pass_ip`. POST-only search (queries not in URLs/logs), dark mode, favicon caching (DuckDuckGo resolver). Browser default search engine integration via Chromium policy (`DefaultSearchProviderSuggestURL` proxied through SearXNG). `restartTriggers` on settings + limiter config + package
 
 ### Changed
 
@@ -46,6 +47,10 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
 - **Gatus monitoring expansion** — 65 endpoints (was 59), with Discord alerting and response-time thresholds on user-facing services
+- **NixOS modules** — 43 auto-discovered (was 42, added SearXNG)
+- **DiscordSync backend** — switched turso-sync → sqlite (eliminates Turso free-plan "SQL read operations forbidden" 403 — 13,993+ consecutive failures). Turso cloud sync can be re-enabled by setting `backend = "turso-sync"` + `tursoUrl` + `tursoAuthTokenFile`
+- **Caddy `proxyTo` helper** — `protectedVHost` now wraps `reverse_proxy` with `header_up X-Real-IP {remote_host}`, benefiting all Layer 2 services behind forward-auth (SearXNG, Homepage, etc.)
+- **Crush Daily** — `runAsUser` support (runs as `primaryUser` instead of system user, fixing ACL `mask::---` on `/home/lars`). Silent-zero-data post-deploy assertion (`session_count > 0`)
 - **goreleaser** added to Linux base packages
 
 ### Removed
@@ -82,6 +87,14 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - Hermes hardcoded `lars` username → `config.users.primaryUser`
 - Forgejo duplicate password generation in admin setup
 - Monitor365 re-enabled after SQLX_OFFLINE fix
+- **SigNoz provision jq array-path bug** — 4-month-old `jq` accessed `.rules[]` instead of `.data.rules[]` in alert-rules provisioning, blocking `nh os switch`. Fixed array path in `signoz-provision` script
+- **Homepage bookmark schema crash** — bare YAML object instead of list-of-one-object white-screened the entire dashboard. Fixed to upstream schema format (`[{ ... }]`)
+- **Crush Daily silent-zero-data (3 bugs)** — (1) service ran as `crush-daily` system user instead of `primaryUser` (ACL `mask::---` blocked `/home/lars` traversal — `crush projects --json` read empty state), (2) crush CLI v0.86 schema drift (`prompt_tokens`/`completion_tokens`/`cost` moved from per-message to per-session columns — SQL `no such column`), (3) SQLite DSN without `file:` URI prefix opened in-memory DB (treated `?` as filename). All fixed upstream + SystemNix
+- **DiscordSync nullable FK crash loop** — backfilling empty string into nullable `guild_id`/`channel_id` columns caused `invalid expression in CREATE INDEX` → crash loop → `start-limit-hit`. Upstream fix (`d785fdfa`) added `backfill_nulls.go` regression test
+- **md-go-validator FOD purity break** — `go-branded-id@v0.5.0` shipped a 3.3 MB committed ELF `namer` binary embedding the Go compiler store path. Resolved upstream in v0.5.1 (removed binary). SystemNix `stripPrebuiltGoBinaries` band-aid removed
+- **sops crush-daily user mismatch** — secrets owned by non-existent `crush-daily` system user blocked ALL secret deployment atomically (`failed to lookup user 'crush-daily'`). Fixed to `owner = primaryUser; group = "users"` (same pattern as file-and-image-renamer)
+- **Crush Daily SQLite DSN** — `sql.Open("sqlite", dbPath+"?_loc=...")` without `file:` URI prefix opened in-memory DB. Fixed to `sql.Open("sqlite", "file:"+dbPath+"?_loc=auto&_time_format=sqlite")` (upstream `83cb19d`)
+- **Crush Daily HTML template** — Go 1.26 `html/template` reverted `printf` arg order — `{{"%.2f"|printf .TotalCost}}` triggered type error. Fixed to `{{printf "%.2f" .TotalCost}}` (upstream `b8095de`)
 
 ### Disabled
 
