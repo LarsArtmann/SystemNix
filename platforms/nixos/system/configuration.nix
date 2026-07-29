@@ -134,13 +134,27 @@ in
     # AccountsService avatar for SDDM login/lock screen
     services.accounts-daemon.enable = true;
 
-    programs.obs-studio = {
-      enable = true;
-      enableVirtualCamera = true;
-    };
+    programs = {
+      obs-studio = {
+        enable = true;
+        enableVirtualCamera = true;
+      };
 
-    # Enable Fish shell system-wide
-    programs.fish.enable = true;
+      # Enable Fish shell system-wide
+      fish.enable = true;
+
+      # SearXNG as default Chromium/Helium search engine.
+      # LAN access bypasses oauth2-proxy forward-auth via protectedVHost.
+      chromium = lib.mkIf config.services.searx.enable {
+        extraOpts = {
+          DefaultSearchProviderEnabled = true;
+          DefaultSearchProviderName = "SearXNG";
+          DefaultSearchProviderKeyword = "sx";
+          DefaultSearchProviderSearchURL = "https://search.${config.networking.domain}/search?q={searchTerms}";
+          DefaultSearchProviderSuggestURL = "https://search.${config.networking.domain}/autocompleter?q={searchTerms}";
+        };
+      };
+    };
 
     # Dozzle — Docker container log tailing at logs.home.lan
     # Inline config (not module) to avoid nix flake check eval issue
@@ -509,18 +523,6 @@ in
         minCommitIntervalSeconds = 120;
         enableDiscoveryDaemon = true;
         memoryMax = "8G";
-      };
-    };
-
-    # SearXNG as default Chromium/Helium search engine.
-    # LAN access bypasses oauth2-proxy forward-auth via protectedVHost.
-    programs.chromium = lib.mkIf config.services.searx.enable {
-      extraOpts = {
-        DefaultSearchProviderEnabled = true;
-        DefaultSearchProviderName = "SearXNG";
-        DefaultSearchProviderKeyword = "sx";
-        DefaultSearchProviderSearchURL = "https://search.${config.networking.domain}/search?q={searchTerms}";
-        DefaultSearchProviderSuggestURL = "https://search.${config.networking.domain}/autocompleter?q={searchTerms}";
       };
     };
   };
