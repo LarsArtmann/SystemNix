@@ -51,6 +51,7 @@ _: {
           ProtectHome = "read-only";
           RestrictNamespaces = lib.mkForce false;
           NoNewPrivileges = lib.mkForce false;
+          CPUQuota = "300%";
         };
         extraServiceConfig = {
           RestartSec = "10s";

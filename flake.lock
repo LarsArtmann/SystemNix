@@ -1521,11 +1521,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785332596,
-        "narHash": "sha256-7gACAFP0TcGQte8O1KNeTV7zUXtxgdmguC+xI3rbvxU=",
+        "lastModified": 1785334397,
+        "narHash": "sha256-mu98RD1L+VAIDeiByNObjnmR7K+JjUCsyiXMXub87io=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "0b9466b6f92db57531e2aeb9ea2e75427869de29",
+        "rev": "1423e1abc1a30f7ce137f5863d7dba2de32c999b",
         "type": "github"
       },
       "original": {
@@ -1912,11 +1912,11 @@
     "go-filewatcher_5": {
       "flake": false,
       "locked": {
-        "lastModified": 1785327081,
-        "narHash": "sha256-c7lxflR2Y935hDjZxNT7NNetUzoNmORvsF4xOliHeHw=",
+        "lastModified": 1785329151,
+        "narHash": "sha256-kOZtscdxP0wrUwvLw4xyaqE1AtJQmEmkRfrlnPRo1p0=",
         "ref": "master",
-        "rev": "4c47fe578ab69bf6666e050dbcd52a54afb2f852",
-        "revCount": 448,
+        "rev": "c32a95d54445a86805b8bb1d8b809a31c9466795",
+        "revCount": 456,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-filewatcher"
       },
@@ -3053,11 +3053,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1785333134,
-        "narHash": "sha256-q8XM+QEy7IrQ7poTisQtuAGAEp5yZjtgnu/x//KxP6Y=",
+        "lastModified": 1785334192,
+        "narHash": "sha256-g/5IsvhXyAVmXMpLO3Xk9Ad3gzcPJNOUC2KPvnoJQYI=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "5aa2df4c08d5635a60129dfa59fa4be83303828c",
+        "rev": "01635241f7a17a90b4d7d4df8bae4eb06216c149",
         "type": "github"
       },
       "original": {
@@ -3754,11 +3754,11 @@
     "project-discovery-sdk_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1785327548,
-        "narHash": "sha256-T+8+ZuyrMbxdAvHBvAoOShZuHCtjRAtORKuzN1q+4Zs=",
+        "lastModified": 1785331710,
+        "narHash": "sha256-mCiysdKcgffAEz2cJsqA4lY3t1zVlF7WoRVB9f4jA8k=",
         "ref": "master",
-        "rev": "2e9ebb0dbc78ffd2437695027f301af480756265",
-        "revCount": 1105,
+        "rev": "d0a34216ed42cd4bf97b9a72f6605b934d2c1ad1",
+        "revCount": 1117,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
@@ -3863,11 +3863,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785328970,
-        "narHash": "sha256-skHsvsRyyIrn/EUKxnwBAfEY9aQ44Z9ALDyDJqfd+Dc=",
+        "lastModified": 1785334934,
+        "narHash": "sha256-vXf0AeuBvfka3r/efe6hEnMp5dFs701eGlaZcTuWdgo=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "000581fcceb614c45ab5d79e61dc5f20fe64a0c8",
+        "rev": "aaec9e3c62b481392abeed6c43ce087ce91503b0",
         "type": "github"
       },
       "original": {
