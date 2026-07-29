@@ -259,7 +259,6 @@ in
             # Translation
             (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
             # Social / Content
-            (ext "ajkipkkhchaaccpbpkclolpebkgbmodl" "9gag Post Filter")
             (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
           ];
       };

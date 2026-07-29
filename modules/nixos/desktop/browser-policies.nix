@@ -105,6 +105,10 @@
               };
             }) cfg.chromiumExtensions
           ));
+
+          # Chromium 150+ deprecates MV2. Some extensions may be MV2-only.
+          # 2 = allow both MV2 and MV3 (matches macOS config).
+          extraOpts.ExtensionManifestV2Availability = 2;
         };
 
         programs.firefox.policies.Preferences = {
