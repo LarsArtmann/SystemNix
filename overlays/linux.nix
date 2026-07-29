@@ -18,16 +18,20 @@ let
   };
 
   bunMemoryLimitOverlay = _final: prev: {
-    bun = prev.writeShellScriptBin "bun" ''
-      REAL_BUN="${prev.bun}/bin/bun"
-      if [ -z "''${XDG_RUNTIME_DIR:-}" ] || ! [ -S "''${XDG_RUNTIME_DIR}/systemd/private" ]; then
-        exec "$REAL_BUN" "$@"
-      fi
-      exec systemd-run --user --quiet --scope --collect \
-        -p MemoryMax=8G \
-        -p MemorySwapMax=0 \
-        ${prev.bash}/bin/bash -c 'echo 1000 > /proc/self/oom_score_adj 2>/dev/null; exec "$@"' _ "$REAL_BUN" "$@"
-    '';
+    bun = prev.writeShellApplication {
+      name = "bun";
+      runtimeInputs = [ prev.systemd ];
+      text = ''
+        REAL_BUN="${prev.bun}/bin/bun"
+        if [ -z "''${XDG_RUNTIME_DIR:-}" ] || ! [ -S "''${XDG_RUNTIME_DIR}/systemd/private" ]; then
+          exec "$REAL_BUN" "$@"
+        fi
+        exec systemd-run --user --quiet --scope --collect \
+          -p MemoryMax=8G \
+          -p MemorySwapMax=0 \
+          ${prev.bash}/bin/bash -c 'echo 1000 > /proc/self/oom_score_adj 2>/dev/null; exec "$@"' _ "$REAL_BUN" "$@"
+      '';
+    };
   };
 
   # Pocket ID v2.10.0 — Francis actor framework for background jobs (PR #1556).
