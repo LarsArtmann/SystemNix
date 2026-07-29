@@ -242,15 +242,17 @@ _: {
       config = lib.mkIf cfg.enable {
         # Auto-disable collectors that target resources not present on this host.
         # These use mkDefault so user configuration can override.
-        services.system-health = (lib.optionalAttrs (options ? services.monitor365-server) {
-          collectMonitor365 = lib.mkDefault (config.services.monitor365-server.enable or false);
-          monitor365.stateDir = lib.mkDefault (
-            config.services.monitor365-server.stateDir or "/var/lib/monitor365-server"
-          );
-        }) // (lib.optionalAttrs (options ? services.signoz) {
-          collectSignozRules = lib.mkDefault (config.services.signoz.enable or false);
-          signoz.port = lib.mkDefault (config.services.signoz.settings.queryService.port or 8080);
-        });
+        services.system-health =
+          (lib.optionalAttrs (options ? services.monitor365-server) {
+            collectMonitor365 = lib.mkDefault (config.services.monitor365-server.enable or false);
+            monitor365.stateDir = lib.mkDefault (
+              config.services.monitor365-server.stateDir or "/var/lib/monitor365-server"
+            );
+          })
+          // (lib.optionalAttrs (options ? services.signoz) {
+            collectSignozRules = lib.mkDefault (config.services.signoz.enable or false);
+            signoz.port = lib.mkDefault (config.services.signoz.settings.queryService.port or 8080);
+          });
 
         systemd = {
           tmpfiles.rules = [

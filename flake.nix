@@ -714,7 +714,8 @@
                     name = "crush-daily-backfill";
                     runtimeInputs = [
                       pkgs.python3
-                      inputs.crush-daily.packages.${system}.default or pkgs.crush-daily or (throw "crush-daily package not found")
+                      inputs.crush-daily.packages.${system}.default or pkgs.crush-daily
+                        or (throw "crush-daily package not found")
                     ];
                     text = builtins.readFile ./scripts/crush-daily-backfill.py;
                   }

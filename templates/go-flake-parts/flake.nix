@@ -126,24 +126,28 @@
 
             test = {
               type = "app";
-              program = lib.getExe (pkgs.writeShellApplication {
-                name = "run-test";
-                runtimeInputs = [ goPkg ];
-                text = ''
-                  exec go test -race -v -coverprofile=coverage.out ./...
-                '';
-              });
+              program = lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "run-test";
+                  runtimeInputs = [ goPkg ];
+                  text = ''
+                    exec go test -race -v -coverprofile=coverage.out ./...
+                  '';
+                }
+              );
             };
 
             lint = {
               type = "app";
-              program = lib.getExe (pkgs.writeShellApplication {
-                name = "run-lint";
-                runtimeInputs = [ pkgs.golangci-lint ];
-                text = ''
-                  exec golangci-lint run ./...
-                '';
-              });
+              program = lib.getExe (
+                pkgs.writeShellApplication {
+                  name = "run-lint";
+                  runtimeInputs = [ pkgs.golangci-lint ];
+                  text = ''
+                    exec golangci-lint run ./...
+                  '';
+                }
+              );
             };
           };
 
