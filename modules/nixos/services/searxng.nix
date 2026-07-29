@@ -56,7 +56,7 @@ _: {
       # readiness; this ExecStartPre actively probes resolution.
       waitDnsReady = pkgs.writeShellApplication {
         name = "searxng-wait-dns";
-        runtimeInputs = [ pkgs.glibc.bin ];
+        runtimeInputs = [ pkgs.getent ];
         text = ''
           echo "searxng: waiting for DNS resolution..."
           for i in $(seq 1 60); do
