@@ -37,7 +37,7 @@
 ## Priority 4: Code Quality
 
 - [x] **Split large modules** — Done 2026-07-29. signoz: 943→511L, forgejo: 725→353L.
-- [ ] **Fix cqrs-lint (go-cqrs-lite stale lock)** — `cqrs-lint = null` in `lars-packages.nix`. go-cqrs-lite flake.lock entry is stale (SSH URL, resolves to non-flake). Needs `nix flake lock --update-input go-cqrs-lite --refresh` or manual lock surgery. Not runtime-critical (dev-time linting only).
+- [x] **Fix cqrs-lint (go-cqrs-lite stale lock)** — Done 2026-07-29. Root cause was multi-layered: (1) go-cqrs-lite flake.lock had stale `flake:false` orphan node, (2) upstream go-cqrs-lite still imported `cmdguard/v3` but cmdguard had migrated to v4, (3) `go.mod` needed tidying to capture indirect deps from local-source replaces. Fixed upstream (cmdguard v3→v4 imports, `go mod tidy`, vendorHash). SystemNix lock surgery updated `go-cqrs-lite_3` to the fixed commit. `nix build .#cqrs-lint` produces `cqrs-lint 0.2.2`.
 - [x] **mr-sync re-enabled** — Builds from upstream. Uses `proxyVendor = true` (mkPreparedSource workaround). `doCheck = false` is upstream — change to `checkFlags` upstream. Push to GitHub done.
 - [x] **minecraft.nix iptables** — Already uses `networking.firewall.allowedTCPPorts`.
 - [x] **ssh-config.nix activation → tmpfiles** — Done 2026-07-29.
