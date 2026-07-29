@@ -69,12 +69,6 @@
         defaultBranch = "master";
       };
 
-      url = {
-        "git@github.com:" = {
-          insteadOf = "https://github.com/";
-        };
-      };
-
       gc = {
         auto = 6700;
         autopacklimit = 50;
