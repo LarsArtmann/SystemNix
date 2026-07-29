@@ -17,11 +17,7 @@ lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
   branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
-  # cqrs-lint: disabled — go-cqrs-lite flake.lock is stale (SSH URL, resolves
-  # to a non-flake). The cmdguard/v3/pkg/cmdguard/v3 package path doesn't
-  # resolve. Needs flake.lock force-refresh (--refresh) or manual lock surgery.
-  # Not runtime-critical (dev-time linting only).
-  cqrs-lint = null;
+  cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
