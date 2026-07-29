@@ -155,11 +155,8 @@
     };
 
     # monitor365 — Device monitoring agent (Rust)
-    # Pinned to 0615301 (last working commit). Newer commits (5ee717e3+) switched
-    # from cargoVendorDir patching to [patch.crates-io] + .clang_macro_fallback(),
-    # which generates incomplete bindgen output (699 errors, empty spa_sys).
     monitor365 = {
-      url = "github:LarsArtmann/monitor365/06153013945baa16d83a81bd7497433537235240";
+      url = "github:LarsArtmann/monitor365/750ff4c102ab1815134aed044fc7f9acf2a5ea9c";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
