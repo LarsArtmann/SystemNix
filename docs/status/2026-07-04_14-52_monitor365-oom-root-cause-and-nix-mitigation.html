@@ -3,10 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      SystemNix Status — 2026-07-04 Monitor365 OOM Root Cause &amp; Nix-Side
-      Mitigation
-    </title>
+    <title>SystemNix Status — 2026-07-04 Monitor365 OOM Root Cause &amp; Nix-Side Mitigation</title>
     <style>
       :root {
         --color-graphite: #0e0e10;
@@ -33,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -234,27 +231,15 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue {
         background: var(--surface-raised);
@@ -265,27 +250,15 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -540,20 +513,17 @@
           <div class="hero-badge">MONITOR365 OOM ROOT CAUSE</div>
           <h1>Monitor365 OOM Diagnosis — Not a Panic, a systemd-oomd Kill</h1>
           <p class="hero-subtitle">
-            The TODO_LIST.md diagnosis was wrong: Monitor365 is NOT crashing
-            from an Axum route syntax panic (routes are already Axum 0.8
-            <code>{param}</code> syntax). The SIGABRT coredumps are OOM kills —
-            systemd-oomd targets the agent because
-            <code>oom_score_adj=200</code> (systemd default for user services) +
-            12 GB virtual memory = <code>oom_score=827</code>, the highest on
-            the system. Nix-side fix applied: MemoryMax 256M → 512M,
-            OOMScoreAdjust -100. Pending deploy.
+            The TODO_LIST.md diagnosis was wrong: Monitor365 is NOT crashing from an Axum route
+            syntax panic (routes are already Axum 0.8
+            <code>{param}</code> syntax). The SIGABRT coredumps are OOM kills — systemd-oomd targets
+            the agent because <code>oom_score_adj=200</code> (systemd default for user services) +
+            12 GB virtual memory = <code>oom_score=827</code>, the highest on the system. Nix-side
+            fix applied: MemoryMax 256M → 512M, OOMScoreAdjust -100. Pending deploy.
           </p>
         </div>
 
         <h2 id="summary">
-          <span class="num">00</span>System Snapshot — Delta Since Last Report
-          (14:30)
+          <span class="num">00</span>System Snapshot — Delta Since Last Report (14:30)
         </h2>
         <div class="stat-grid">
           <div class="stat-card stat-good">
@@ -594,29 +564,24 @@
             <h4>Monitor365 root cause FOUND</h4>
             <p>
               The TODO_LIST.md diagnosis ("upstream Rust panic, Axum 0.7
-              <code>:param</code> → <code>{param}</code>") was
-              <strong>WRONG</strong>. The Axum routes are already migrated to
-              0.8 <code>{param}</code> syntax. The coredumps show normal tokio
-              thread parking (epoll_wait, Condvar) — no panic frames. The agent
-              is being <strong>killed by systemd-oomd</strong>, not crashing
-              from a Rust panic. <code>oom_score_adj=200</code> (systemd default
-              for user services, no override in the module) + 12 GB virtual
-              memory = <code>oom_score=827</code>. Under memory pressure (zram
-              100%, swap 84%), the agent is always the #1 kill target. Fix
-              applied: <code>MemoryMax=512M</code> +
-              <code>OOMScoreAdjust=-100</code>. Pending deploy.
+              <code>:param</code> → <code>{param}</code>") was <strong>WRONG</strong>. The Axum
+              routes are already migrated to 0.8 <code>{param}</code> syntax. The coredumps show
+              normal tokio thread parking (epoll_wait, Condvar) — no panic frames. The agent is
+              being <strong>killed by systemd-oomd</strong>, not crashing from a Rust panic.
+              <code>oom_score_adj=200</code> (systemd default for user services, no override in the
+              module) + 12 GB virtual memory = <code>oom_score=827</code>. Under memory pressure
+              (zram 100%, swap 84%), the agent is always the #1 kill target. Fix applied:
+              <code>MemoryMax=512M</code> + <code>OOMScoreAdjust=-100</code>. Pending deploy.
             </p>
           </div>
           <div class="card card-problem">
             <h4>Load average spiked back to 31</h4>
             <p>
-              Load was 10.6 at 14:30 — now 31.1. Causes: (1) BDD test binary PID
-              2747185 still running at 105% CPU (29 min CPU time), (2) nix
-              builds compiling monitor365 WASM UI (multiple <code>rustc</code> +
-              <code>cc1</code> at 90-100% CPU each), (3)
-              <code>jscpd</code> copy-paste detector at 109% CPU, (4) agent PID
-              3014572 at 45% CPU. 13 Crush instances consuming ~2.5 GB. Root
-              disk grew to 86%.
+              Load was 10.6 at 14:30 — now 31.1. Causes: (1) BDD test binary PID 2747185 still
+              running at 105% CPU (29 min CPU time), (2) nix builds compiling monitor365 WASM UI
+              (multiple <code>rustc</code> + <code>cc1</code> at 90-100% CPU each), (3)
+              <code>jscpd</code> copy-paste detector at 109% CPU, (4) agent PID 3014572 at 45% CPU.
+              13 Crush instances consuming ~2.5 GB. Root disk grew to 86%.
             </p>
           </div>
         </div>
@@ -630,12 +595,11 @@
             <div class="text">
               <strong>Monitor365 OOM root cause — correctly diagnosed</strong>
               <span
-                >NOT an Axum route panic (routes already fixed). NOT a Rust
-                panic. It's systemd-oomd killing the agent because
-                <code>oom_score_adj=200</code> + 12 GB virtual memory = highest
-                kill priority. Coredump stack traces confirm: normal tokio
-                threads (epoll_wait, parking_lot::Condvar, mpsc::Channel::recv).
-                The TODO_LIST.md diagnosis was wrong for weeks.</span
+                >NOT an Axum route panic (routes already fixed). NOT a Rust panic. It's systemd-oomd
+                killing the agent because <code>oom_score_adj=200</code> + 12 GB virtual memory =
+                highest kill priority. Coredump stack traces confirm: normal tokio threads
+                (epoll_wait, parking_lot::Condvar, mpsc::Channel::recv). The TODO_LIST.md diagnosis
+                was wrong for weeks.</span
               >
             </div>
           </div>
@@ -645,9 +609,8 @@
               <strong>Nix-side OOM mitigation — applied, pending deploy</strong>
               <span
                 ><code>MemoryMax</code>: 256M → 512M (both agent + server).
-                <code>OOMScoreAdjust = -100</code> (both). This drops the agent
-                from #1 kill target to protected. Eval passes. Not yet
-                deployed.</span
+                <code>OOMScoreAdjust = -100</code> (both). This drops the agent from #1 kill target
+                to protected. Eval passes. Not yet deployed.</span
               >
             </div>
           </div>
@@ -656,11 +619,10 @@
             <div class="text">
               <strong>Systemic bug audit — 4 bugs fixed</strong>
               <span
-                >certutil infinite loop (guarded with
-                <code>if [ ! -f cert9.db ]</code>), unbounded while-loop on
-                secret file (30-iteration timeout), 12 curl calls with no
-                <code>--max-time</code> (Pocket-ID + SigNoz provisioners). All
-                committed at <code>0f91d129</code>.</span
+                >certutil infinite loop (guarded with <code>if [ ! -f cert9.db ]</code>), unbounded
+                while-loop on secret file (30-iteration timeout), 12 curl calls with no
+                <code>--max-time</code> (Pocket-ID + SigNoz provisioners). All committed at
+                <code>0f91d129</code>.</span
               >
             </div>
           </div>
@@ -669,8 +631,8 @@
             <div class="text">
               <strong>Renamer 502 fixed + architectural improvement</strong>
               <span
-                >Health dashboard moved to system service. Global
-                <code>sd-switch</code> added. Deployed and verified.</span
+                >Health dashboard moved to system service. Global <code>sd-switch</code> added.
+                Deployed and verified.</span
               >
             </div>
           </div>
@@ -679,10 +641,9 @@
             <div class="text">
               <strong>certutil GPUActive crisis resolved</strong>
               <span
-                >Killing the 33-hour certutil spin freed 24 GB GPUActive
-                instantly (24 GB → 140 MB). Root cause:
-                <code>certutil -N</code> on existing DB enters infinite
-                userspace CPU spin.</span
+                >Killing the 33-hour certutil spin freed 24 GB GPUActive instantly (24 GB → 140 MB).
+                Root cause: <code>certutil -N</code> on existing DB enters infinite userspace CPU
+                spin.</span
               >
             </div>
           </div>
@@ -691,9 +652,8 @@
             <div class="text">
               <strong>3 runaway processes killed</strong>
               <span
-                >certutil (33h, 99% CPU), llama-server (8h, 8.1 GB RAM), BDD
-                test binary (6h, 98.6% CPU). Note: a NEW BDD test binary
-                respawned (PID 2747185, still running).</span
+                >certutil (33h, 99% CPU), llama-server (8h, 8.1 GB RAM), BDD test binary (6h, 98.6%
+                CPU). Note: a NEW BDD test binary respawned (PID 2747185, still running).</span
               >
             </div>
           </div>
@@ -706,14 +666,11 @@
         <div class="issue issue-important">
           <span class="severity severity-important">Pending Deploy</span>
           <h3>Monitor365 OOM fix — applied but not deployed</h3>
-          <div class="where">
-            modules/nixos/services/monitor365.nix · uncommitted
-          </div>
+          <div class="where">modules/nixos/services/monitor365.nix · uncommitted</div>
           <p>
-            MemoryMax raised from 256M → 512M, OOMScoreAdjust set to -100 for
-            both agent and server. Eval passes. The agent is still being
-            OOM-killed every ~10 min until this deploys. The fix won't stop the
-            virtual memory bloat (12 GB VMS from Rust allocator) but it will
+            MemoryMax raised from 256M → 512M, OOMScoreAdjust set to -100 for both agent and server.
+            Eval passes. The agent is still being OOM-killed every ~10 min until this deploys. The
+            fix won't stop the virtual memory bloat (12 GB VMS from Rust allocator) but it will
             prevent systemd-oomd from targeting the agent as its #1 kill.
           </p>
         </div>
@@ -721,12 +678,10 @@
         <div class="issue issue-important">
           <span class="severity severity-important">Broken Integration</span>
           <h3>Deploy smoke test still broken</h3>
-          <div class="where">
-            scripts/deploy.sh · post-deploy-check.sh path mismatch
-          </div>
+          <div class="where">scripts/deploy.sh · post-deploy-check.sh path mismatch</div>
           <p>
-            Three status reports, still not fixed. Every deploy silently skips
-            the smoke test. One-line fix.
+            Three status reports, still not fixed. Every deploy silently skips the smoke test.
+            One-line fix.
           </p>
         </div>
 
@@ -734,10 +689,7 @@
           <span class="severity severity-important">No Off-Site Backup</span>
           <h3>Cloud backup — zero off-site copies</h3>
           <div class="where">ROADMAP.md Theme 1</div>
-          <p>
-            Root disk at 86%, grew 5% in 6 hours. 114 GB Nix store. Zero
-            off-site backup.
-          </p>
+          <p>Root disk at 86%, grew 5% in 6 hours. 114 GB Nix store. Zero off-site backup.</p>
         </div>
 
         <div class="issue issue-important">
@@ -745,8 +697,8 @@
           <h3>DNS Migration: dnsblockd → Primary Resolver</h3>
           <div class="where">TODO_LIST.md Priority 0</div>
           <p>
-            Full 4-phase plan exists. Three gaps: local zones, upstream DoT
-            forwarding, LAN ACLs. ~15h estimated.
+            Full 4-phase plan exists. Three gaps: local zones, upstream DoT forwarding, LAN ACLs.
+            ~15h estimated.
           </p>
         </div>
 
@@ -796,12 +748,11 @@
           <h3>Monitor365 still being OOM-killed every ~10 min</h3>
           <div class="where">12 kills in 3h · last two: 14:33 and 14:43</div>
           <p>
-            The agent is STILL being killed. The fix is written but not
-            deployed. Each kill generates a coredump. 44 coredumps total in 24h.
-            The agent allocates 12 GB virtual memory with
-            <code>oom_score_adj=200</code>, making it the #1 system kill target.
-            Until the deploy lands with <code>OOMScoreAdjust=-100</code>, this
-            continues.
+            The agent is STILL being killed. The fix is written but not deployed. Each kill
+            generates a coredump. 44 coredumps total in 24h. The agent allocates 12 GB virtual
+            memory with
+            <code>oom_score_adj=200</code>, making it the #1 system kill target. Until the deploy
+            lands with <code>OOMScoreAdjust=-100</code>, this continues.
           </p>
         </div>
 
@@ -809,14 +760,13 @@
           <span class="severity severity-critical">Critical</span>
           <h3>BDD test binary STILL running — 105% CPU for 29 min</h3>
           <div class="where">
-            PID 2747185 · bdd_server-9e81757c885d1cd1 · parent: cargo test →
-            crush -y
+            PID 2747185 · bdd_server-9e81757c885d1cd1 · parent: cargo test → crush -y
           </div>
           <p>
-            The BDD test binary we identified at 14:30 is STILL running (29 min
-            CPU time now, was 7.5 min). It's launched by
-            <code>cargo test -p monitor365-bdd-tests --test bdd-server</code>,
-            parent is a Crush instance. It won't terminate on its own.
+            The BDD test binary we identified at 14:30 is STILL running (29 min CPU time now, was
+            7.5 min). It's launched by
+            <code>cargo test -p monitor365-bdd-tests --test bdd-server</code>, parent is a Crush
+            instance. It won't terminate on its own.
           </p>
         </div>
 
@@ -825,10 +775,9 @@
           <h3>Root disk at 86% — grew 5% in 6 hours</h3>
           <div class="where">/dev/nvme0n1p6 · 561 GB used · 95 GB free</div>
           <p>
-            ~35 GB consumed in 6 hours. Sources: nix builds (multiple monitor365
-            deploys with WASM compilation), 44 coredumps, BTRFS snapshot
-            overhead, jscpd reports. Nix store at 114 GB. At this rate: disk
-            full in ~4 days. Weekly nix-gc won't catch up.
+            ~35 GB consumed in 6 hours. Sources: nix builds (multiple monitor365 deploys with WASM
+            compilation), 44 coredumps, BTRFS snapshot overhead, jscpd reports. Nix store at 114 GB.
+            At this rate: disk full in ~4 days. Weekly nix-gc won't catch up.
           </p>
         </div>
 
@@ -837,11 +786,10 @@
           <h3>Load average 31.1 on a 32-thread system</h3>
           <div class="where">uptime · 1 day 10h uptime · 24 users</div>
           <p>
-            Load average spiked from 10.6 (14:30) to 31.1 (14:52). The system is
-            at saturation: BDD test (105% CPU), jscpd (109% CPU), 2× cc1 SQLite
-            compilation (90-100% each), 2× rustc (67-93% each), monitor365 agent
-            (45% CPU). Plus 13 Crush instances. The system is running at the
-            edge of stability.
+            Load average spiked from 10.6 (14:30) to 31.1 (14:52). The system is at saturation: BDD
+            test (105% CPU), jscpd (109% CPU), 2× cc1 SQLite compilation (90-100% each), 2× rustc
+            (67-93% each), monitor365 agent (45% CPU). Plus 13 Crush instances. The system is
+            running at the edge of stability.
           </p>
         </div>
 
@@ -850,10 +798,9 @@
           <h3>44 coredumps in 24h — storage full</h3>
           <div class="where">systemd-coredump · "No space left on device"</div>
           <p>
-            44 total: ~20 Monitor365 OOM kills, ~8 Monitor365 SIGABRT, ~14
-            Quickshell SIGABRT/SIGSEGV, ~2 unstoreable (disk full). The coredump
-            partition is permanently full. Need <code>Storage=none</code> or
-            size cap.
+            44 total: ~20 Monitor365 OOM kills, ~8 Monitor365 SIGABRT, ~14 Quickshell
+            SIGABRT/SIGSEGV, ~2 unstoreable (disk full). The coredump partition is permanently full.
+            Need <code>Storage=none</code> or size cap.
           </p>
         </div>
 
@@ -864,45 +811,43 @@
         <div class="card card-problem">
           <h4>Deploy the monitor365 OOM fix NOW</h4>
           <p>
-            The fix is written, eval-confirmed, and the agent is still being
-            killed every 10 minutes. Every minute of delay = another OOM kill +
-            coredump. This is the single highest-impact action available.
+            The fix is written, eval-confirmed, and the agent is still being killed every 10
+            minutes. Every minute of delay = another OOM kill + coredump. This is the single
+            highest-impact action available.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>Fix deploy.sh post-deploy-check — 3 reports and counting</h4>
           <p>
-            This has been flagged in every status report since 09:52. It's a
-            one-line fix. The smoke test exists and works standalone. The deploy
-            script just references the wrong path. Fix it.
+            This has been flagged in every status report since 09:52. It's a one-line fix. The smoke
+            test exists and works standalone. The deploy script just references the wrong path. Fix
+            it.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>Run nix-collect-garbage — disk 86%</h4>
           <p>
-            35 GB consumed in 6 hours. Weekly GC won't catch up. Run it manually
-            before the disk fills.
+            35 GB consumed in 6 hours. Weekly GC won't catch up. Run it manually before the disk
+            fills.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>Stop the BDD test spawn cycle</h4>
           <p>
-            A Crush instance in <code>~/projects/monitor365/</code> keeps
-            running <code>cargo test</code> and the test binary never
-            terminates. Kill PID 2747185 + PID 2747166 (cargo test parent). Then
-            tell that Crush instance to stop running tests.
+            A Crush instance in <code>~/projects/monitor365/</code> keeps running
+            <code>cargo test</code> and the test binary never terminates. Kill PID 2747185 + PID
+            2747166 (cargo test parent). Then tell that Crush instance to stop running tests.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>Disable coredump storage</h4>
           <p>
-            44 coredumps in 24h, partition permanently full. SigNoz + journald
-            already capture crash data. Set <code>Storage=none</code> in
-            systemd-coredump config.
+            44 coredumps in 24h, partition permanently full. SigNoz + journald already capture crash
+            data. Set <code>Storage=none</code> in systemd-coredump config.
           </p>
         </div>
 
@@ -925,8 +870,8 @@
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Deploy monitor365 OOM fix</strong> — MemoryMax 512M +
-                  OOMScoreAdjust -100 (uncommitted)
+                  <strong>Deploy monitor365 OOM fix</strong> — MemoryMax 512M + OOMScoreAdjust -100
+                  (uncommitted)
                 </td>
                 <td>5 min</td>
                 <td>Stop 10-min OOM kill cycle</td>
@@ -935,9 +880,7 @@
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong
-                    >Kill BDD test PID 2747185 + cargo test PID 2747166</strong
-                  >
+                  <strong>Kill BDD test PID 2747185 + cargo test PID 2747166</strong>
                 </td>
                 <td>1 min</td>
                 <td>Recover 105% CPU</td>
@@ -945,10 +888,7 @@
               <tr>
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td>
-                  <strong>Run nix-collect-garbage</strong> — disk 86%, grew 5%
-                  in 6h
-                </td>
+                <td><strong>Run nix-collect-garbage</strong> — disk 86%, grew 5% in 6h</td>
                 <td>10 min</td>
                 <td>Prevent disk full</td>
               </tr>
@@ -956,8 +896,7 @@
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Fix deploy.sh post-deploy-check path</strong> — 3
-                  reports, still broken
+                  <strong>Fix deploy.sh post-deploy-check path</strong> — 3 reports, still broken
                 </td>
                 <td>10 min</td>
                 <td>Catch silent failures</td>
@@ -965,30 +904,21 @@
               <tr>
                 <td>5</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td>
-                  <strong>Disable coredump storage</strong> — 44 dumps,
-                  partition full
-                </td>
+                <td><strong>Disable coredump storage</strong> — 44 dumps, partition full</td>
                 <td>10 min</td>
                 <td>Stop disk fill</td>
               </tr>
               <tr>
                 <td>6</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>
-                  <strong>Reboot evo-x2</strong> — clear all orphans, verify
-                  boot fixes
-                </td>
+                <td><strong>Reboot evo-x2</strong> — clear all orphans, verify boot fixes</td>
                 <td>5 min</td>
                 <td>Clean slate</td>
               </tr>
               <tr>
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>
-                  <strong>Cloud backup</strong> — BorgBackup to Hetzner
-                  StorageBox
-                </td>
+                <td><strong>Cloud backup</strong> — BorgBackup to Hetzner StorageBox</td>
                 <td>4h</td>
                 <td>Disaster recovery</td>
               </tr>
@@ -1002,30 +932,21 @@
               <tr>
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>
-                  <strong>Investigate Quickshell SIGSEGV</strong> — 78 MB
-                  coredump
-                </td>
+                <td><strong>Investigate Quickshell SIGSEGV</strong> — 78 MB coredump</td>
                 <td>2h</td>
                 <td>Desktop stability</td>
               </tr>
               <tr>
                 <td>10</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>
-                  <strong>DNS migration Phase 2a</strong> — dnsblockd → primary
-                  :53
-                </td>
+                <td><strong>DNS migration Phase 2a</strong> — dnsblockd → primary :53</td>
                 <td>15h</td>
                 <td>Eliminate unbound</td>
               </tr>
               <tr>
                 <td>11</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td>
-                  <strong>Fix Monitor365 package alias</strong> — wrong package
-                  for server UI
-                </td>
+                <td><strong>Fix Monitor365 package alias</strong> — wrong package for server UI</td>
                 <td>30 min</td>
                 <td>Working dashboard</td>
               </tr>
@@ -1062,10 +983,7 @@
               <tr>
                 <td>16</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td>
-                  <strong>Split large modules</strong> — monitor365, signoz,
-                  forgejo
-                </td>
+                <td><strong>Split large modules</strong> — monitor365, signoz, forgejo</td>
                 <td>3h</td>
                 <td>Maintainability</td>
               </tr>
@@ -1080,8 +998,8 @@
                 <td>18</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Investigate fs_event collector spam</strong> — 1s
-                  interval, never produces events, log floods journal
+                  <strong>Investigate fs_event collector spam</strong> — 1s interval, never produces
+                  events, log floods journal
                 </td>
                 <td>1h</td>
                 <td>Reduce log noise + CPU</td>
@@ -1132,8 +1050,8 @@
                 <td>25</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Update TODO_LIST.md</strong> — Monitor365 diagnosis
-                  was WRONG (not Axum panic, it's OOM)
+                  <strong>Update TODO_LIST.md</strong> — Monitor365 diagnosis was WRONG (not Axum
+                  panic, it's OOM)
                 </td>
                 <td>5 min</td>
                 <td>Correct documentation</td>
@@ -1144,55 +1062,43 @@
 
         <!-- ==================== THE ONE QUESTION ==================== -->
 
-        <h2 id="question">
-          <span class="num">07</span>The One Question I Can't Answer
-        </h2>
+        <h2 id="question"><span class="num">07</span>The One Question I Can't Answer</h2>
 
         <div class="card card-problem">
-          <h4>
-            Why does the Monitor365 agent allocate 12 GB of virtual memory?
-          </h4>
+          <h4>Why does the Monitor365 agent allocate 12 GB of virtual memory?</h4>
           <p>
-            The agent's RSS is only ~217 MB, but its <code>total-vm</code> is
-            consistently 10-12 GB. This is what makes <code>oom_score</code> so
-            high (827) — the kernel sees 12 GB virtual and ranks it as the most
-            memory-reclaimable process on the system, even though it's only
+            The agent's RSS is only ~217 MB, but its <code>total-vm</code> is consistently 10-12 GB.
+            This is what makes <code>oom_score</code> so high (827) — the kernel sees 12 GB virtual
+            and ranks it as the most memory-reclaimable process on the system, even though it's only
             touching 217 MB.
           </p>
           <p>Possible causes:</p>
           <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
             <li>
-              Rust/tokio default thread stack reservations (each thread reserves
-              a large virtual stack guard)
+              Rust/tokio default thread stack reservations (each thread reserves a large virtual
+              stack guard)
             </li>
             <li>
-              <code>mmap</code> with <code>MAP_ANONYMOUS</code> for arena
-              allocators that never touch most pages
+              <code>mmap</code> with <code>MAP_ANONYMOUS</code> for arena allocators that never
+              touch most pages
             </li>
             <li>SQLite WAL mode pre-allocating large virtual address ranges</li>
-            <li>
-              Something in the collector pipeline (fs_event watcher?) mapping
-              large buffers
-            </li>
+            <li>Something in the collector pipeline (fs_event watcher?) mapping large buffers</li>
           </ul>
           <p>
-            I can see <code>total-vm:12,604,256kB</code> in the OOM kill log,
-            and <code>VSZ: 6,899,628</code> (6.6 GB) in <code>ps aux</code> for
-            the current agent PID. The discrepancy suggests the virtual size
-            grows over time. Understanding this would tell us whether 512M
-            MemoryMax is sufficient or whether the agent needs upstream memory
-            profiling. Without being able to run
-            <code>valgrind --tool=massif</code> or
-            <code>strace -e mmap</code> (blocked by security policy), I can only
-            hypothesize.
+            I can see <code>total-vm:12,604,256kB</code> in the OOM kill log, and
+            <code>VSZ: 6,899,628</code> (6.6 GB) in <code>ps aux</code> for the current agent PID.
+            The discrepancy suggests the virtual size grows over time. Understanding this would tell
+            us whether 512M MemoryMax is sufficient or whether the agent needs upstream memory
+            profiling. Without being able to run <code>valgrind --tool=massif</code> or
+            <code>strace -e mmap</code> (blocked by security policy), I can only hypothesize.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-04 14:52 CEST &middot; Runtime data verified live on
-          evo-x2 via /proc, journalctl, coredumpctl, ps &middot; Delta
-          comparison against 09:52 + 14:30 reports &middot; Written by Crush
-          (status-report skill)
+          Generated 2026-07-04 14:52 CEST &middot; Runtime data verified live on evo-x2 via /proc,
+          journalctl, coredumpctl, ps &middot; Delta comparison against 09:52 + 14:30 reports
+          &middot; Written by Crush (status-report skill)
         </footer>
       </main>
     </div>
