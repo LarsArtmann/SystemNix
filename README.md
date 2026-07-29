@@ -171,7 +171,7 @@ Shared across macOS and NixOS via `platforms/common/programs/`:
 | **Fish**      | Primary shell, shared aliases, carapace completions, 5000 history |
 | **Zsh**       | Secondary shell with autosuggestions, syntax highlighting         |
 | **Starship**  | Prompt with Catppuccin Mocha, performance-optimized               |
-| **Git**       | GPG signing, SSH insteadOf HTTPS, git-town integration            |
+| **Git**       | GPG signing, SSH remotes, git-town integration                    |
 | **tmux**      | Catppuccin theme, resurrect plugin, SystemNix dev session         |
 | **FZF**       | Ripgrep integration, reverse layout                               |
 | **KeePassXC** | Browser integration (Chromium + Helium)                           |
