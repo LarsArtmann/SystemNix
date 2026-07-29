@@ -12,11 +12,11 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                                               |
 | **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                                                      |
 | **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Helium (Chromium browser), Sway (backup WM), Rofi (Sway fallback only) |
-| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), SearXNG (privacy search), Homepage Dashboard, Hermes AI, Monitor365, Crush Daily |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), SearXNG (privacy search), Homepage Dashboard, Hermes AI, Monitor365, Crush Daily                                                         |
 | **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                                                  |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                        |
-| **Monitoring**           | SigNoz (19 alert rules, 6 dashboards), Gatus (67 health checks), ActivityWatch                                                                                                                  |
-| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 2.5M+ blocked domains                                                                        |
+| **Monitoring**           | SigNoz (19 alert rules, 6 dashboards), Gatus (67 health checks), ActivityWatch                                                                                                                   |
+| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 2.5M+ blocked domains                                                                       |
 | **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                                           |
 
 ## Quick Start
@@ -104,7 +104,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **DNS Blocker**  | 53, 8050         | —                   | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked |
 | **Mullvad VPN**  | —                | —                   | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                               |
 | **DiscordSync**  | —                | —                   | Continuous Discord channel backup bot                                                               |
-| **SearXNG**      | 8889             | `search.home.lan`   | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                  |
+| **SearXNG**      | 8889             | `search.home.lan`   | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                   |
 
 ### DNS Blocking
 
