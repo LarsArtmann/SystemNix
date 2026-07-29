@@ -56,15 +56,17 @@
         services.discordsync = {
           package = lib.mkDefault discordsyncPkg;
           # Turso returns persistent 403 "SQL read operations are forbidden" on
-          # the current plan, so the sync engine falls back to local-only mode
-          # after every failed push/pull. A local-only `sqlite` backend was
-          # attempted, but it caused the startup thumb-hash backfill to take
-          # 40+ minutes (likely FTS5 trigger contention with projection workers
-          # on a single connection) versus ~21 minutes with `turso-sync`. Until
-          # the upstream SQLite backend is optimized, keep `turso-sync`: the
-          # 403 errors are log noise only and the service runs fully local.
-          # Revert to `turso-sync` is also the fallback if the Turso plan is
-          # upgraded and cloud replication is desired.
+          # the current plan. Upstream `OpenTursoSync` now detects this quota
+          # error (tursostorage.IsQuotaExceeded) and falls back to opening the
+          # local replica as plain SQLite with cloud sync disabled, so the
+          # service runs fully local instead of crash-looping. A bare `sqlite`
+          # backend was tried but caused 40+ min startup backfill (FTS5 trigger
+          # contention with projection workers on a single connection) vs ~21
+          # min with `turso-sync`, so keep `turso-sync` and rely on the quota
+          # fallback. Cloud sync resumes automatically when the quota resets or
+          # the plan is upgraded. NOTE: requires the upstream DiscordSync fix
+          # (OpenTursoSync quota fallback) to be committed + the flake input
+          # bumped before this takes effect at runtime.
           backend = lib.mkDefault "turso-sync";
           backfillOnStartup = lib.mkDefault true;
           apiAddr = lib.mkDefault "127.0.0.1:${toString ports.discordsync-api}";
