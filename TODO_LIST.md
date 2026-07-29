@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-29 | **Last session:** Comprehensive TODO execution (provisioner error handling, browser fixes, docs overhaul, monitoring365 Wayland deps)
+**Updated:** 2026-07-29 | **Last session:** Crush Daily insights pipeline — 3 root-cause bugs fixed (errgroup cancellation, partial results discarded, timezone truncation), all 46 dates now have cross-project insights, flake.lock bumped, deployed
 
 ---
 
@@ -29,7 +29,7 @@
 
 - [x] **Caddy: generalize `proxyTo` X-Real-IP** — Done 2026-07-29. ALL reverse_proxy directives now use `${proxyTo PORT}`. Zero bare `reverse_proxy` remaining. **Pending deploy.**
 - [x] **Crush Daily: data backfill** — Done 2026-07-29. All 45 zero-data dates backfilled. Collect + reports 100% complete. 31/45 dates missing cross-project insights (Synthetic API rate limit). **Pending service restart** to rehydrate in-memory read model.
-- [ ] **Crush Daily: retry 31 failed cross-project insights** — Synthetic API rate limit was exhausted during backfill. Retry after quota resets. Use `nix run .#crush-daily-backfill -- --from 2026-06-11 --to 2026-07-10` (throttle with `--collect-only` first).
+- [x] **Crush Daily: retry 31 failed cross-project insights** — Fixed 2026-07-29. Three root-cause bugs found and fixed: (1) `errgroup.WithContext` cancelled all goroutines on first error (→ plain `errgroup.Group` + error slice), (2) partial results discarded before storage (→ moved storage before error return), (3) `Yesterday()` timezone truncation — `Truncate(24h)` snapped to UTC midnight, causing nightly collect (00:30 CEST) and insights (03:00 CEST) to compute different dates (→ `time.Date()` with local location). All upstream commits pushed (`868fe33`, `9286bf0`, `0cb5ea6`). Flake.lock bumped. 27/31 batch successes + remaining dates retried manually. All 46 collected dates now have cross-project insights.
 - [x] **Firewall deny-by-default** — Already configured. `networking.nix` has `firewall.enable = true`, `trustedInterfaces = [ "eno1" ]` (LAN trusted), only 22/53/80/443 open to WAN. Correct homelab design.
 - [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), now has btrbk snapshot protection but still not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime.
 - [x] **Replace X11-only deps in monitor365** — Done 2026-07-29. Added `grim`, `slurp`, `wtype` alongside legacy X11 tools. X11 tools kept for upstream compatibility.
