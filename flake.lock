@@ -1521,11 +1521,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785350930,
-        "narHash": "sha256-jjRr3IZheTxSc0d9BMVW6G8+DCi0055t0KNw2xnY71o=",
+        "lastModified": 1785353618,
+        "narHash": "sha256-23fWv5WAQBmw4FxsZPpZtMxa4pko1Oqjulh3Avu9b7I=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "8a34163d5827d9dd6638d83c7dd32fa96b2adc72",
+        "rev": "b0d76b680100717268828819c1501fddab8f24bd",
         "type": "github"
       },
       "original": {
@@ -2938,11 +2938,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1785349282,
-        "narHash": "sha256-xAabhG1GpW6nOUt1TMTo8fX91lB71GkyaUuhmgYCWZA=",
+        "lastModified": 1785353000,
+        "narHash": "sha256-KgF6F/T0gPQpK04B6yiarlFCkJIgkz9yWRwo8jy+Sy0=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "f6060cf682f69ef8302c25e8924c0b27aef7ae16",
+        "rev": "2313fb8ac3746faf3e971ef955a5499d8618d2ee",
         "type": "github"
       },
       "original": {
@@ -3053,11 +3053,11 @@
     "homebrew-cask": {
       "flake": false,
       "locked": {
-        "lastModified": 1785348804,
-        "narHash": "sha256-cOpWJwHJXgJjkc1xZ2QAntJvjlOtpCnUPI/4WOf3lwg=",
+        "lastModified": 1785353091,
+        "narHash": "sha256-45Yv61NvjpA8DckvKcvnOLe6aRBZl/KWuly/qzswZ3g=",
         "owner": "homebrew",
         "repo": "homebrew-cask",
-        "rev": "63fb599b0c8b511dc404c752e5a875a3b39692b0",
+        "rev": "ca1b20f287192074bc50dd58a380a39a3ed4eb6e",
         "type": "github"
       },
       "original": {
@@ -3603,11 +3603,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785351148,
-        "narHash": "sha256-hpdn/UemMudSbAOsmMXu67QSR+s0fVY4s+/K2nkyRpc=",
+        "lastModified": 1785353786,
+        "narHash": "sha256-rxXQTcNiU+y576pFqBccBTGwHpjoiB1v3SXirdQoi+w=",
         "owner": "nix-community",
         "repo": "NUR",
-        "rev": "4ac2a3214f62e169114fbb85ce427c87ddebe839",
+        "rev": "9a4818c64d433c78e3eb442c8db4c228964b9bf1",
         "type": "github"
       },
       "original": {
@@ -4191,11 +4191,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785015872,
-        "narHash": "sha256-7dTNd8o3xInMXSBRkRCkHAGQc+e0mrlljDGTXKhk6I0=",
+        "lastModified": 1785353884,
+        "narHash": "sha256-UYAP/sPJxG95tN6a4VNTcskY54ud2sIQKrTzTLioGv0=",
         "owner": "uiriansan",
         "repo": "SilentSDDM",
-        "rev": "da69191d32721c1f093d13bfd803e8d8000bd712",
+        "rev": "0dc4386ef570659537b480f4b226b3b6f2699948",
         "type": "github"
       },
       "original": {
