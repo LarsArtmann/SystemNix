@@ -78,8 +78,8 @@
 ### LarsArtmann Apps
 
 - [ ] **`hermes`**: Auto-create directory structure on first run; handle own state migration; sane defaults for `OLLAMA_API_KEY`; use PID file or socket-based single-instance locking instead of `--replace` flag.
-- [ ] **`mr-sync`**: Change `doCheck = false` to `checkFlags = [ "-skip" "TestWriteFirstRun|TestWriteAndParse" ]` in upstream package.nix.
-- [ ] **`go-cqrs-lite`**: Fix `cmdguard/v3/pkg/cmdguard/v3` package path resolution. Force-refresh flake.lock from SSH→GitHub URL.
+- [x] **`mr-sync`**: Changed `doCheck = false` to `checkFlags` in upstream package.nix. Done 2026-07-29. Root cause: 6 tests fail because go-atomic-write v0.4.0's `commitVerified` acquires a flock on the target path before checking existence; gofrs/flock creates the file via O_CREATE, so the zero-fingerprint first-write branch always sees the file as "created concurrently". Fix is ready in go-atomic-write (check existence before flock, skip flock for first-write) with regression tests — pending a v0.4.1 tag + push. Once bumped, the checkFlags can be removed entirely. The skip list covers all 6 affected tests: TestWriteFirstRun, TestWriteAndParse, TestExecuteMigrationsActualMove, TestExecuteMigrationsSelfMigration, TestRunSyncWritesNewRepos, TestPrintReportHumanNoIssues.
+- [x] **`go-cqrs-lite`**: Fixed cmdguard/v3→v4 path resolution (already done in prior session, verified). Force-refreshed flake.lock from SSH→GitHub URL — converted 9 `git+ssh://` flake inputs to `github:` HTTPS URLs and re-locked. All inputs now `type=github` (no SSH keys required at eval/build time). cqrs-lint v0.2.2 builds and `nix flake check` passes.
 
 ## Priority 7: Long-Term
 
