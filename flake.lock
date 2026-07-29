@@ -1521,11 +1521,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785318389,
-        "narHash": "sha256-0co8cXVmUUIcw8+IrbZLoICNp6CkjSyUd575h6Vj82M=",
+        "lastModified": 1785327069,
+        "narHash": "sha256-i+eQhgY9gCw53j79BqBLCu+H/SoAbyfsCtirPyd3tc8=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "b5628220609cf8a2385ec0c6eee545d0f7713995",
+        "rev": "53072a75087827c242ab3c2042f050a431b4e955",
         "type": "github"
       },
       "original": {
@@ -1827,11 +1827,11 @@
     "go-filewatcher": {
       "flake": false,
       "locked": {
-        "lastModified": 1785311219,
-        "narHash": "sha256-+oMvvuq9rXWQIqAj2qfIvnqurAQlm51hC/yNIMEFgDI=",
+        "lastModified": 1785327081,
+        "narHash": "sha256-c7lxflR2Y935hDjZxNT7NNetUzoNmORvsF4xOliHeHw=",
         "owner": "LarsArtmann",
         "repo": "go-filewatcher",
-        "rev": "a7e28b2c8c77a75dac45c2e6beb51a0f75699cef",
+        "rev": "4c47fe578ab69bf6666e050dbcd52a54afb2f852",
         "type": "github"
       },
       "original": {
@@ -3863,11 +3863,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785313976,
-        "narHash": "sha256-Dp4gCRhrPnQ9uMfHz2ly0+M3WxYZjzG/xKZGhCsNn7o=",
+        "lastModified": 1785327200,
+        "narHash": "sha256-kBkqqAz6mHmL2R3h2rJJwXdp5fxD7bkYJiXdcgW3Ht0=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "3a0a4ac82f468ab1c26d21e05115d113e48a29cb",
+        "rev": "8b9b754a51dc32135d2ce68a0ed860daeade4467",
         "type": "github"
       },
       "original": {
