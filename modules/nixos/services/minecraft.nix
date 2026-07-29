@@ -453,6 +453,7 @@ _: {
                 ProtectHome = lib.mkForce false;
                 ProtectSystem = lib.mkForce false;
                 MemoryMax = lib.mkForce "4G";
+                CPUQuota = "300%"; # Java GC + chunk generation can spike multi-core
               })
               (serviceDefaults { })
             ];

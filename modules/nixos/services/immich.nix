@@ -99,6 +99,7 @@ _: {
             immich-machine-learning.serviceConfig = lib.mkMerge [
               (harden {
                 MemoryMax = "4G";
+                CPUQuota = "300%"; # ML inference (face detection, CLIP) can spike multi-core
                 ProtectHome = lib.mkForce false;
                 ProtectSystem = lib.mkForce false;
               })

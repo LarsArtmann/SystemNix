@@ -92,6 +92,7 @@ _: {
             (serviceDefaults { })
             (harden {
               MemoryMax = "32G";
+              CPUQuota = "400%"; # Model loading (GGUF quantization) is multi-threaded
               ProtectHome = false;
               NoNewPrivileges = false;
             })

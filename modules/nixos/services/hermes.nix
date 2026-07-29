@@ -289,6 +289,7 @@
             (serviceDefaults { RestartSec = cfg.restartSec; })
             (harden {
               MemoryMax = "24G"; # PyTorch + ROCm + HIP libraries require significant GPU memory mapping
+              CPUQuota = "400%"; # PyTorch data preprocessing + inference can spike multi-core
               ProtectHome = false;
               ReadWritePaths = [ cfg.stateDir ];
             })

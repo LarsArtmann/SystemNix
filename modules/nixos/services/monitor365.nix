@@ -360,6 +360,7 @@
           systemd.services.monitor365 = {
             startLimitBurst = 10;
             startLimitIntervalSec = 300;
+            serviceConfig.CPUQuota = "200%"; # Cap at 2 cores — prevents CB busy-loop runaway
           };
         })
 
