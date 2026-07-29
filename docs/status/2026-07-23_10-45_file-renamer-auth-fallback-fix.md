@@ -127,3 +127,7 @@
 2. **Do you want to keep ZAI as a provider at all?** Currently `apiKeyFile` defaults to `null` (ZAI disabled). The stale `~/.zai_api_key` suggests it was used before. If ZAI should still be the primary with Synthetic as fallback, I need a valid ZAI key in sops. If Synthetic-only is the intended future, the `apiKeyFile` option and `model` option can be deprecated.
 
 3. **Should I amend the auto-commit messages, or leave them?** The commits `6a390c82` through `b5db6d5c` have misleading messages. I can `git rebase -i` to fix them, but that rewrites history on a repo that may be shared (the commits are not pushed to origin yet — `git status` shows "up to date with origin/master" which means the auto-commits are local-only). Per the rules, I will NOT do this without explicit instruction.
+
+---
+
+> **Update 2026-07-29:** The auth fallback fix was deployed and is working. File-renamer pin later updated to `eca4cb20` (master, includes vision-review-agent integration). The `restartTriggers` concern was resolved system-wide on 2026-07-29 (ALL provisioner oneshots got `restartTriggers` + `deploy.sh` restart loop). The "FULLY DONE" claims were premature (no runtime verification at time of writing) but held up after deploy. ZAI question is moot — Synthetic is the sole provider.

@@ -160,3 +160,7 @@ Deploying now would fix the auth fallback bug (the primary issue), but the servi
 ### 3. The `caddy.nix` and `openseo.nix` have unstaged formatter changes — are those yours?
 
 When I started this session, `caddy.nix` and `openseo.nix` had unstaged pure-formatter changes (alejandra-style reformatting). I left them untouched per the "never revert changes you didn't author" rule. But I don't know if another agent or you made these intentionally. Should they be committed, discarded, or investigated?
+
+---
+
+> **Update 2026-07-29:** Deploy + restartTriggers gaps closed. File-renamer is at `eca4cb20` (master, past `b181444`). `restartTriggers` added system-wide on 2026-07-29 to ALL provisioner oneshots. The upstream redesign (vision-review-agent + fantasy) is deployed and functional. The `/metrics`, `/events`, `/events.csv`, `/partials/*` routes are all live.

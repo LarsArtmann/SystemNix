@@ -216,3 +216,7 @@ If the user wants only the report (no fix yet), this status doc IS the deliverab
 ---
 
 _Session end._
+
+---
+
+> **Update 2026-07-29:** Three factual errors in this report were corrected by the fix report (`2026-07-29_07-18_caddy-xrealip-and-crush-daily-backfill.md`): (1) The `/home/lars` mode-700 claim was wrong — the real blocker was the ACL mask (`mask::---` zeroing out `users:r-x`). (2) The claim that upstream has NO `runAsUser` was false — upstream DID add `services.crush-daily.runAsUser`, and SystemNix now sets `runAsUser = config.users.primaryUser`. (3) The schema drift + SQLite DSN bugs were fixed upstream (commits `4b94ed8`, `83cb19d`). All 45 zero-data dates (2026-06-11 through 2026-07-26) were backfilled. The `file:` prefix DSN fix was the critical missing piece.

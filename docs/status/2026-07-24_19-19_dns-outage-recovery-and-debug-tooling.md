@@ -152,3 +152,7 @@
 2. **Should I revert the alejandra global reformat of flake.nix (457 lines of churn)?** The functional change was only ~10 lines, but `alejandra` reformatted the entire file. I can `git revert 5a20ff1f` and re-apply just the functional change surgically, but I don't know if you prefer the reformatted version or want minimal diffs.
 
 3. **Is the Overview 503 a known/accepted state, or should I deep-dive into fixing it?** It depends on PMA's discovery daemon, which IS now running and committing. But Overview still returns 503. There's also the `StartLimitIntervalSec` in wrong systemd section bug. I don't know if this is a transient issue you're aware of, or if it needs immediate investigation.
+
+---
+
+> **Update 2026-07-29:** The Overview 503 was traced to PMA's discovery daemon being down (the `Type=notify` without `sd_notify` bug — PMA crash-looped, socket never appeared, Overview fell back to local discovery which OOM-looped). Fixed: SystemNix overrides PMA to `Type=exec`. PMA's `DefaultChain()` vs `DefaultChainFromEnv()` bug was also fixed upstream (`d1d013d2`). The `StartLimitIntervalSec` placement bug was resolved. DNS outage root cause (dnsblockd cache CNAME-chase bug) was fixed upstream.
