@@ -39,6 +39,9 @@ _: {
       # monitor365 DuckDB buffer pressure: alert when DB exceeds 80% of server MemoryMax (2G default)
       monitor365BufferThreshold = 1600000000; # ~1.6 GB
 
+      # CPU alert threshold: average CPU% over collection interval that triggers alert
+      cpuAlertThreshold = 150;
+
       systemHealthMetrics = pkgs.writeShellApplication {
         name = "system-health-metrics";
         runtimeInputs = [
@@ -52,6 +55,8 @@ _: {
         text = ''
           OUT="${textfileDir}/system_health.prom"
           TMP="''${OUT}.tmp"
+          CPU_STATE="${textfileDir}/.system_health_cpu_state"
+          NOW_EPOCH=$(date +%s)
 
           emit_service() {
             local svc="''${1?}"
@@ -76,6 +81,24 @@ _: {
             echo "system_service_nrestarts{service=\"''${svc}\"} ''${nrestarts}"
             echo "system_service_start_limit_hit{service=\"''${svc}\"} ''${limit_hit}"
           }
+
+          # CPU tracking: read previous CPUUsageNSec per service from state file,
+          # compute delta / elapsed to get average CPU% since last collection.
+          declare -A prev_cpu_nsec prev_cpu_ts
+          if [ -f "$CPU_STATE" ]; then
+            while IFS=' ' read -r s n t; do
+              [ -n "$s" ] && prev_cpu_nsec["$s"]="$n" && prev_cpu_ts["$s"]="$t"
+            done < "$CPU_STATE"
+          fi
+
+          # Write new state for next run
+          : > "''${CPU_STATE}.tmp"
+          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") cfg.monitoredServices}; do
+            cpu_nsec=$(systemctl show "$svc" -p CPUUsageNSec --value 2>/dev/null) || cpu_nsec=0
+            cpu_nsec="''${cpu_nsec:-0}"
+            echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
+          done
+          mv "''${CPU_STATE}.tmp" "$CPU_STATE"
 
           # === User-1000.slice memory (desktop-only) ===
           collect_user_slice=${lib.boolToString cfg.collectUserSlice}
@@ -136,6 +159,36 @@ _: {
 
             ${lib.concatMapStrings (svc: ''
               emit_service "${svc}"
+            '') cfg.monitoredServices}
+
+            echo "# HELP system_service_cpu_percent Average CPU percentage since last collection interval"
+            echo "# TYPE system_service_cpu_percent gauge"
+
+            echo "# HELP system_service_cpu_over_threshold 1 if service CPU exceeds ${toString cpuAlertThreshold}% average, 0 otherwise"
+            echo "# TYPE system_service_cpu_over_threshold gauge"
+
+            ${lib.concatMapStrings (svc: ''
+              svc="${svc}"
+              cur_nsec="''${prev_cpu_nsec[$svc]:-0}"
+              # Re-read current value from state we just wrote
+              cur_nsec=$(grep "^$svc " "$CPU_STATE" 2>/dev/null | awk '{print $2}') || cur_nsec=0
+              cur_nsec="''${cur_nsec:-0}"
+              prev_nsec="''${prev_cpu_nsec[$svc]:-0}"
+              prev_ts="''${prev_cpu_ts[$svc]:-0}"
+              cpu_pct="0"
+              cpu_over="0"
+              if [ "$prev_ts" -gt 0 ] 2>/dev/null; then
+                elapsed=$((NOW_EPOCH - prev_ts))
+                if [ "$elapsed" -gt 0 ] && [ "$cur_nsec" -ge "$prev_nsec" ] 2>/dev/null; then
+                  cpu_delta=$((cur_nsec - prev_nsec))
+                  cpu_pct=$(awk "BEGIN { printf \"%.1f\", ($cpu_delta / ($elapsed * 1000000000.0)) * 100 }")
+                  if awk "BEGIN { exit !($cpu_pct > ${toString cpuAlertThreshold}) }"; then
+                    cpu_over="1"
+                  fi
+                fi
+              fi
+              echo "system_service_cpu_percent{service=\"$svc\"} ''${cpu_pct}"
+              echo "system_service_cpu_over_threshold{service=\"$svc\"} ''${cpu_over}"
             '') cfg.monitoredServices}
 
             echo "# HELP system_user_slice_memory_bytes Memory usage of user-1000.slice in bytes"
