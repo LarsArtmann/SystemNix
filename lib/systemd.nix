@@ -3,6 +3,7 @@ args@{
   mode ? "system",
   MemoryMax ? "512M",
   MemoryHigh ? "80%", # Throttle at 80% of MemoryMax before hard kill
+  CPUQuota ? "200%", # Hard cap: 2 cores. Prevents CPU runaway from code bugs. Override for AI/build services.
   ProtectSystem ? "full",
   ProtectHome ? true,
   ReadWritePaths ? [ ],
@@ -22,6 +23,7 @@ let
     LockPersonality = lib.mkDefault true;
     MemoryMax = mkDefault' MemoryMax;
     MemoryHigh = mkDefault' MemoryHigh;
+    CPUQuota = mkDefault' CPUQuota;
     RestrictNamespaces = mkDefault' RestrictNamespaces;
     NoNewPrivileges = mkDefault' NoNewPrivileges;
   };
@@ -39,6 +41,7 @@ let
     "mode"
     "MemoryMax"
     "MemoryHigh"
+    "CPUQuota"
     "ProtectSystem"
     "ProtectHome"
     "ReadWritePaths"
