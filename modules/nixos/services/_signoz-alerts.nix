@@ -4,45 +4,55 @@
   inputs,
 }:
 let
+  # SigNoz v5 alerting API payload.
+  # op semantics (preserved from the legacy AND/AND_NOT operators):
+  #   "above_or_equal" = alert when metric is at/above target (legacy "AND")
+  #   "below"          = alert when metric drops strictly below target (legacy "AND_NOT")
+  # v5 requires every rule to reference at least one notification channel.
   mkRule =
     {
       name,
       description,
       query,
       step ? 300,
-      op ? "AND",
+      op ? "above_or_equal",
       target,
       interval ? "5m",
       severity ? "critical",
     }:
     pkgs.writeText "${lib.strings.sanitizeDerivationName name}-rule.json" (
       builtins.toJSON {
-        data = {
-          rule = {
-            alertType = "METRIC_BASED_ALERT";
-            inherit description;
-            enabled = true;
-            condition = {
-              compositeMetricQuery = {
-                promQueries = [
-                  {
-                    name = "A";
-                    inherit query step;
-                    statsAggExpr = "last";
-                  }
-                ];
-              };
-              inherit op target;
-            };
-            evaluationInterval = interval;
-            inherit name;
-            preferredChannels = lib.optional (severity == "critical") "Discord Alerts";
-            source = "RULE";
-            labels = {
-              inherit severity;
-            };
+        alert = name;
+        alertType = "METRIC_BASED_ALERT";
+        ruleType = "promql_rule";
+        version = "v5";
+        inherit description;
+        evalWindow = interval;
+        frequency = interval;
+        disabled = false;
+        source = "RULE";
+        condition = {
+          compositeQuery = {
+            queryType = "promql";
+            panelType = "graph";
+            queries = [
+              {
+                type = "promql";
+                spec = {
+                  name = "A";
+                  inherit query step;
+                };
+              }
+            ];
           };
+          selectedQueryName = "A";
+          inherit op target;
+          matchType = "last";
         };
+        labels = {
+          inherit severity;
+        };
+        preferredChannels = [ "Discord Alerts" ];
       }
     );
 in
@@ -92,7 +102,7 @@ in
       description = "dnsblockd metrics endpoint is unreachable";
       query = ''up{job="dnsblockd"}'';
       step = 60;
-      op = "AND_NOT";
+      op = "below";
       target = 1;
       interval = "1m";
     };
@@ -110,7 +120,7 @@ in
       description = "emeet-pixyd metrics endpoint is unreachable";
       query = ''up{job="emeet-pixyd"}'';
       step = 60;
-      op = "AND_NOT";
+      op = "below";
       target = 1;
       interval = "1m";
       severity = "warning";
@@ -126,7 +136,7 @@ in
       description = "Niri Wayland compositor is not running — desktop may be unresponsive";
       query = "niri_running";
       step = 60;
-      op = "AND_NOT";
+      op = "below";
       target = 1;
       interval = "1m";
     };
@@ -135,7 +145,7 @@ in
       description = "Ollama LLM service is not responding — AI inference unavailable";
       query = ''up{job="ollama"}'';
       step = 60;
-      op = "AND_NOT";
+      op = "below";
       target = 1;
       interval = "1m";
       severity = "warning";
@@ -145,7 +155,7 @@ in
       description = "Docker daemon or container runtime is not responding — all container services affected";
       query = ''up{job="cadvisor"}'';
       step = 60;
-      op = "AND_NOT";
+      op = "below";
       target = 1;
       interval = "1m";
     };
@@ -181,7 +191,7 @@ in
       description = "NVMe SSD available spare below 30% on {{.Labels.device}} — drive aging";
       query = "node_nvme_available_spare_percent";
       step = 60;
-      op = "AND_NOT";
+      op = "below";
       target = 30;
       interval = "5m";
       severity = "warning";
