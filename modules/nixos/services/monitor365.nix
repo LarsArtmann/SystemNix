@@ -85,7 +85,17 @@
           if [ -f "$DB" ] && [ -s "$DB" ]; then
             duckdb "$DB" -c \
               "ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER;"
-            echo "monitor365-schema-migrate: version column ensured"
+
+            # Raise the daily event upload limit to 1B so the 597M-event
+            # backlog from the integrity-hash fix can drain in ~1 day
+            # instead of ~163 years (10K/day default from upstream
+            # crates/api-types/src/tenant.rs:39).
+            duckdb "$DB" -c \
+              "UPDATE tenants SET max_events_per_day = 1000000000;" \
+              && echo "monitor365-schema-migrate: max_events_per_day set to 1B" \
+              || echo "monitor365-schema-migrate: WARNING — could not update max_events_per_day"
+
+            echo "monitor365-schema-migrate: migrations complete"
           else
             echo "monitor365-schema-migrate: DB not found or empty, skipping"
           fi

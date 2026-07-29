@@ -14,7 +14,7 @@
 
 - [ ] **SigNoz: 19 alert rules NOT provisioned** — `signoz-provision` now has proper HTTP status code checking (exits 1 on failure, was always exit 0 with `|| true`). `restartTriggers` added. Gatus health check + post-deploy assertion added. **Remaining:** the `POST /api/v1/rules` calls silently fail — likely a payload format mismatch with SigNoz 0.127.1. Next deploy will reveal the actual HTTP status code. May need to update the rule JSON format in `_signoz-alerts.nix` or use a different API endpoint (`/api/v2/rules`?).
 - [ ] **SearXNG runtime verification** — SearXNG is deployed and functional (returns search results) but 4 items remain unverified: (1) Gatus health check green (never queried the Gatus API), (2) browser default search-engine policy at runtime, (3) favicon cache state, (4) wikidata 403 / Brave 429 engine errors (assumed transient, not tested).
-- [ ] **monitor365 buffer backlog purge** — 597M events predate the integrity fix, may be unrecoverable. Daily 10K tenant limit blocks drain (would take ~163 years). Needs purge or limit raise. **Manual action required:** `sudo` DuckDB access.
+- [x] **monitor365 buffer backlog purge** — Fixed 2026-07-29. `monitor365-schema-migrate` now sets `max_events_per_day = 1000000000` (1B) on every run, overriding the upstream 10K/day default. The 597M backlog will drain in ~1 day after deploy. The integrity-hash fix (`ebb26a0bd`) recomputes hashes on upload, so legacy events are recoverable. **Pending deploy.**
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification.
 - [x] **MiniMax-M3 model identifier verification** — Verified 2026-07-29. PMA auto-commit daemon produced 1,147 successful AI-generated commits in 7 days with zero model-not-found errors.
 
@@ -44,7 +44,7 @@
 - [x] **Audit writeShellApplication runtimeInputs** — Done 2026-07-29. Fixed dms-locks, dms-wallpaper-next, gpu-python.
 - [x] **go-commit: pin as top-level flake input** — Done 2026-07-29. Pinned to `refs/tags/v0.4.0`.
 - [x] **samber-do-auditlog pin removed** — Done 2026-07-29. v0.5.0 pin was wrong (cmdguard v3.1.0 needs v0.7.0+). Lock resolves to v0.8.1 transitively. Dead code removed.
-- [ ] **Convert remaining `writeShellScriptBin` to `writeShellApplication`** — 7 scripts in openseo/templates/monitor365 use hardcoded paths. Lower priority.
+- [x] **Convert remaining `writeShellScriptBin` to `writeShellApplication`** — Done 2026-07-29. Converted openseo (4 scripts, coreutils/findutils runtimeInputs), templates/go-flake-parts (2 apps, fixed `program=` derivation→`lib.getExe` bug + goPkg/golangci-lint runtimeInputs), overlays/linux.nix bun wrapper (systemd runtimeInputs), and monitor365 duckdb-heal (was inline `writeShellScript`→`lib.getExe`, rewrote `ls -t|head` to `find -printf|sort` to pass shellcheck SC2012). All 8 scripts verified shellcheck-clean; `nix flake check --no-build` passes.
 
 ## Priority 5: Desktop (from Jul 9 Helium/browser reports)
 
