@@ -17,9 +17,10 @@ lib.filterAttrs (_: v: v != null) {
   art-dupl = flakePkg inputs.art-dupl;
   branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
-  # cqrs-lint: temporarily disabled — go-cqrs-lite has broken transitive deps
-  # (cmdguard/v3/pkg/cmdguard/v3 missing after private dep additions).
-  # Re-enable once upstream is fixed.
+  # cqrs-lint: disabled — go-cqrs-lite flake.lock is stale (SSH URL, resolves
+  # to a non-flake). The cmdguard/v3/pkg/cmdguard/v3 package path doesn't
+  # resolve. Needs flake.lock force-refresh (--refresh) or manual lock surgery.
+  # Not runtime-critical (dev-time linting only).
   cqrs-lint = null;
   go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-structure-linter = flakePkg inputs.go-structure-linter;
@@ -27,8 +28,8 @@ lib.filterAttrs (_: v: v != null) {
   hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
   md-go-validator = flakePkg inputs.md-go-validator;
-  # mr-sync: re-enabled — samber-do-auditlog now pinned to v0.5.0 as top-level
-  # flake input, which mkPreparedSource uses to override the v0.6.0+ API break.
+  # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
+  # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
   project-meta = flakePkg inputs.project-meta;
   projects-management-automation = flakePkg inputs.projects-management-automation;

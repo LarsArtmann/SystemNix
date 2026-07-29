@@ -338,14 +338,6 @@
       };
     };
 
-    # samber-do-auditlog — Pinned to v0.5.0 because cmdguard passes a bare
-    # string to ServiceByName, which v0.6.0+ changed to auditlog.ServiceName.
-    # mkPreparedSource overrides Go module deps with flake input source.
-    samber-do-auditlog = {
-      url = "github:LarsArtmann/samber-do-auditlog?ref=refs/tags/v0.5.0";
-      flake = false;
-    };
-
     # branching-flow — Error context preservation analyzer
     branching-flow = {
       url = "github:LarsArtmann/branching-flow?ref=master";

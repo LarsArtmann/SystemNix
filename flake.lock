@@ -3978,7 +3978,6 @@
         "overview": "overview",
         "project-meta": "project-meta",
         "projects-management-automation": "projects-management-automation",
-        "samber-do-auditlog": "samber-do-auditlog_8",
         "signoz-collector-src": "signoz-collector-src",
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
@@ -4149,23 +4148,6 @@
         "ref": "master",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
-      }
-    },
-    "samber-do-auditlog_8": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1783429419,
-        "narHash": "sha256-jNonb/Bq6Sn+XNd2trOiahO/lumthpAaefx1nurGUNY=",
-        "owner": "LarsArtmann",
-        "repo": "samber-do-auditlog",
-        "rev": "05d647c2dfe00fa6a01124dec9793f70d0f01be7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.5.0",
-        "repo": "samber-do-auditlog",
-        "type": "github"
       }
     },
     "signoz-collector-src": {
