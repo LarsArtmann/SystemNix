@@ -167,6 +167,7 @@ _: {
             echo "# HELP system_service_cpu_over_threshold 1 if service CPU exceeds ${toString cpuAlertThreshold}% average, 0 otherwise"
             echo "# TYPE system_service_cpu_over_threshold gauge"
 
+            ANY_CPU_OVER=0
             ${lib.concatMapStrings (svc: ''
               svc="${svc}"
               cur_nsec="''${prev_cpu_nsec[$svc]:-0}"
@@ -184,12 +185,17 @@ _: {
                   cpu_pct=$(awk "BEGIN { printf \"%.1f\", ($cpu_delta / ($elapsed * 1000000000.0)) * 100 }")
                   if awk "BEGIN { exit !($cpu_pct > ${toString cpuAlertThreshold}) }"; then
                     cpu_over="1"
+                    ANY_CPU_OVER=1
                   fi
                 fi
               fi
               echo "system_service_cpu_percent{service=\"$svc\"} ''${cpu_pct}"
               echo "system_service_cpu_over_threshold{service=\"$svc\"} ''${cpu_over}"
             '') cfg.monitoredServices}
+
+            echo "# HELP system_any_service_cpu_over_threshold 1 if ANY monitored service exceeds ${toString cpuAlertThreshold}% CPU average, 0 otherwise"
+            echo "# TYPE system_any_service_cpu_over_threshold gauge"
+            echo "system_any_service_cpu_over_threshold ''${ANY_CPU_OVER}"
 
             echo "# HELP system_user_slice_memory_bytes Memory usage of user-1000.slice in bytes"
             echo "# TYPE system_user_slice_memory_bytes gauge"
