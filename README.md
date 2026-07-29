@@ -72,7 +72,7 @@ SystemNix/
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
 │       ├── programs/            # Rofi (Sway backup), Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
-├── scripts/                     # 43 operational scripts (shell + Python)
+├── scripts/                     # 39 operational scripts (shell + Python)
 └── docs/                        # Architecture decisions (ADRs), status reports, troubleshooting
 ```
 

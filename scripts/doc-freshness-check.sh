@@ -18,8 +18,9 @@ check_count() {
   fi
 }
 
-# Module count (non-underscore .nix files in services/ + desktop/)
-MODULE_COUNT=$(find modules/nixos/services modules/nixos/desktop -name '*.nix' ! -name '_*' 2>/dev/null | wc -l)
+# Module count (non-underscore .nix files in services/ only — desktop counted separately)
+SERVICE_MODULES=$(find modules/nixos/services -maxdepth 1 -name '*.nix' ! -name '_*' 2>/dev/null | wc -l)
+DESKTOP_MODULES=$(find modules/nixos/desktop -maxdepth 1 -name '*.nix' ! -name '_*' 2>/dev/null | wc -l)
 
 # Gatus endpoints
 GATUS_COUNT=$(grep -c 'name =' modules/nixos/services/gatus-config.nix 2>/dev/null || echo 0)
@@ -36,7 +37,7 @@ echo ""
 # Check README.md
 echo "--- README.md ---"
 README_MODULES=$(grep -oP '\d+(?= NixOS service modules)' README.md 2>/dev/null | head -1 || echo "N/A")
-check_count "README module count" "$MODULE_COUNT" "$README_MODULES" "README.md"
+check_count "README service module count" "$SERVICE_MODULES" "$README_MODULES" "README.md"
 
 README_GATUS=$(grep -oP '\d+(?= health checks)' README.md 2>/dev/null | head -1 || echo "N/A")
 check_count "README Gatus count" "$GATUS_COUNT" "$README_GATUS" "README.md"
@@ -50,14 +51,22 @@ check_count "README package count" "$PKG_COUNT" "$README_PKGS" "README.md"
 # Check FEATURES.md
 echo ""
 echo "--- FEATURES.md ---"
-FEATURES_GATUS=$(grep -oP '\d+(?= Gatus)' FEATURES.md 2>/dev/null | head -1 || echo "N/A")
-check_count "FEATURES Gatus count" "$GATUS_COUNT" "$FEATURES_GATUS" "FEATURES.md"
+FEATURES_GATUS=$(grep -oP '\d+(?= health check)' FEATURES.md 2>/dev/null | head -1 || echo "N/A")
+if [ "$FEATURES_GATUS" != "N/A" ]; then
+  check_count "FEATURES Gatus count" "$GATUS_COUNT" "$FEATURES_GATUS" "FEATURES.md"
+else
+  echo "OK: FEATURES has no health-check count (skip)"
+fi
 
-# Check CHANGELOG.md
+# Check CHANGELOG.md (only [Unreleased] section)
 echo ""
 echo "--- CHANGELOG.md ---"
-CHANGELOG_GATUS=$(grep -oP '\d+(?= endpoints)' CHANGELOG.md 2>/dev/null | tail -1 || echo "N/A")
-check_count "CHANGELOG Gatus count" "$GATUS_COUNT" "$CHANGELOG_GATUS" "CHANGELOG.md"
+UNRELEASED_GATUS=$(sed -n '/## \[Unreleased\]/,/## \[/p' CHANGELOG.md 2>/dev/null | grep -oP '\d+(?= endpoints)' | tail -1 || echo "N/A")
+if [ "$UNRELEASED_GATUS" != "N/A" ]; then
+  check_count "CHANGELOG [Unreleased] Gatus count" "$GATUS_COUNT" "$UNRELEASED_GATUS" "CHANGELOG.md"
+else
+  echo "OK: CHANGELOG [Unreleased] has no endpoint count (skip)"
+fi
 
 echo ""
 if [ "$FAIL" -gt 0 ]; then

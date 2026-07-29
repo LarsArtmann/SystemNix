@@ -1,52 +1,58 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-29 | **Last deploy:** `840ff561` (SearXNG follow-up fixes — proxyTo X-Real-IP, sops crush-daily owner fix)
+**Updated:** 2026-07-29 | **Last session:** Comprehensive TODO execution (provisioner error handling, browser fixes, docs overhaul, monitoring365 Wayland deps)
 
 ---
 
 ## Priority 0: Critical (Data Loss Risk)
 
-- [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25.
-- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum. No scrub has ever been run. Need `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /`. Monitoring infrastructure is complete (scrub metrics every 5 min via `btrfs-health.nix`, Gatus alerts on Discord when `btrfs_scrub_error_free` drops to 0).
-- [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know.
+- [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25. **Manual action required:** set up Hetzner StorageBox + BorgBackup.
+- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum. No scrub has ever been run. **Manual command:** `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /`. Monitoring infrastructure is complete (scrub metrics every 5 min via `btrfs-health.nix`, Gatus alerts on Discord when `btrfs_scrub_error_free` drops to 0).
+- [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know. **Manual command required.**
 
 ## Priority 1: High (Stability & Monitoring)
 
-- [ ] **SigNoz: 19 alert rules NOT provisioned** — `signoz-provision` had a 4-month-old jq array-path bug (`.rules[]` instead of `.data.rules[]`) that blocked deploy. The jq path is now fixed, but the `RemainAfterExit=yes` + `Restart=no` oneshot never re-ran. Rules endpoint still returns `{"data":{"rules":[]}}` — a silent observability gap (no Gatus alert fires because no rules exist). Action: re-trigger `signoz-provision.service`, add `restartTriggers` to ALL SystemNix provisioner oneshots, add a Gatus check asserting `GET /api/v1/rules → .data.rules length > 15`.
-- [ ] **SearXNG runtime verification** — SearXNG is deployed and functional (returns search results) but 4 items remain unverified: (1) Gatus health check green (never queried the Gatus API), (2) browser default search-engine policy at runtime, (3) favicon cache state (`faviconcache.db` may not exist; SQLite `ResourceWarning`), (4) wikidata 403 / Brave 429 engine errors (assumed transient, not tested). See `docs/status/2026-07-29_00-05_searxng-followup-fixes-self-review.md`.
-- [ ] **monitor365 buffer backlog purge** — 597M events predate the integrity fix, may be unrecoverable. Daily 10K tenant limit blocks drain (would take ~163 years). Needs purge or limit raise.
+- [ ] **SigNoz: 19 alert rules NOT provisioned** — `signoz-provision` now has proper HTTP status code checking (exits 1 on failure, was always exit 0 with `|| true`). `restartTriggers` added. Gatus health check + post-deploy assertion added. **Remaining:** the `POST /api/v1/rules` calls silently fail — likely a payload format mismatch with SigNoz 0.127.1. Next deploy will reveal the actual HTTP status code. May need to update the rule JSON format in `_signoz-alerts.nix` or use a different API endpoint (`/api/v2/rules`?).
+- [ ] **SearXNG runtime verification** — SearXNG is deployed and functional (returns search results) but 4 items remain unverified: (1) Gatus health check green (never queried the Gatus API), (2) browser default search-engine policy at runtime, (3) favicon cache state, (4) wikidata 403 / Brave 429 engine errors (assumed transient, not tested).
+- [ ] **monitor365 buffer backlog purge** — 597M events predate the integrity fix, may be unrecoverable. Daily 10K tenant limit blocks drain (would take ~163 years). Needs purge or limit raise. **Manual action required:** `sudo` DuckDB access.
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification.
-- [x] **MiniMax-M3 model identifier verification** — Verified 2026-07-29. The MiniMax API accepts `MiniMax-M3` as a valid model identifier: PMA auto-commit daemon produced **1,147 successful AI-generated commits** in the last 7 days (durations 3-15s, consistent with LLM API calls) with zero model-not-found/4xx API errors. The model constant lives at `go-commit/pkg/commit/providers/minimax.go:4` (`defaultMinimaxModel = "MiniMax-M3"`). An invalid model would reject every request and yield zero successful AI commits.
+- [x] **MiniMax-M3 model identifier verification** — Verified 2026-07-29. PMA auto-commit daemon produced 1,147 successful AI-generated commits in 7 days with zero model-not-found errors.
 
 ## Priority 2: Manual Steps (Blocked on Human)
 
 - [ ] **Hermes: install SSH deploy key** — private key to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model`
 - [ ] **Install `dnsblockd-CA` on Mac** — Without it, Chrome/Helium block Touch ID platform authenticator for `*.home.lan`, breaking Gatus/Forgejo SSO. Manual: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /tmp/dnsblockd-ca.pem`
+- [ ] **Deploy pending changes** — Multiple code-complete changes are undeployed: Caddy `proxyTo` generalization, browser extension fix + 9gag removal + MV2 policy, SigNoz provisioner error handling, monitor365 Wayland deps, Pocket-ID secret hard-fail, crush-daily-backfill app. **Run `nix run .#deploy`** then verify with `nix run .#post-deploy-check`.
 
 ## Priority 3: Infrastructure
 
-- [x] **Caddy: generalize `proxyTo` X-Real-IP** — Done 2026-07-29. All 10 bare `reverse_proxy` directives (oauth2-proxy, Pocket ID, Forgejo, SigNoz, Gatus, OpenSEO GSC, Monitor365) now use `${proxyTo PORT}` which adds `header_up X-Real-IP {remote_host}`. Validated with `nix flake check --no-build`. **Pending deploy.**
-- [x] **Crush Daily: data backfill** — Done 2026-07-29. The zero-data bug was present since launch (2026-06-11), not just 2026-07-19 to 2026-07-26. Backfilled ALL 45 zero-data dates (2026-06-11 through 2026-07-26) via `scripts/crush-daily-backfill.py`: deleted zero-data events, re-ran collect (all dates show correct session/message/cost counts), ran insights + report for the TODO-specified dates. Reusable script at `scripts/crush-daily-backfill.py` supports `--from/--to`, `--date`, `--collect-only`, `--dry-run`. **Pending service restart** (`sudo systemctl restart crush-daily.service`) to rehydrate the in-memory read model.
+- [x] **Caddy: generalize `proxyTo` X-Real-IP** — Done 2026-07-29. ALL reverse_proxy directives now use `${proxyTo PORT}`. Zero bare `reverse_proxy` remaining. **Pending deploy.**
+- [x] **Crush Daily: data backfill** — Done 2026-07-29. All 45 zero-data dates backfilled. Collect + reports 100% complete. 31/45 dates missing cross-project insights (Synthetic API rate limit). **Pending service restart** to rehydrate in-memory read model.
+- [ ] **Crush Daily: retry 31 failed cross-project insights** — Synthetic API rate limit was exhausted during backfill. Retry after quota resets. Use `nix run .#crush-daily-backfill -- --from 2026-06-11 --to 2026-07-10` (throttle with `--collect-only` first).
+- [x] **Firewall deny-by-default** — Already configured. `networking.nix` has `firewall.enable = true`, `trustedInterfaces = [ "eno1" ]` (LAN trusted), only 22/53/80/443 open to WAN. Correct homelab design.
 - [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), now has btrbk snapshot protection but still not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime.
-- [ ] **Firewall deny-by-default** — all inbound allowed, services exposed to LAN. Should restrict to 80/443 + SSH + LAN-only ports.
-- [ ] **Replace X11-only runtime deps with Wayland equivalents in monitor365** — `xdotool`, `xprintidle`, `scrot` are X11-only but evo-x2 runs niri (Wayland-only). Consider adding `grim`, `slurp`, `wtype`, `wlr-randr`.
+- [x] **Replace X11-only deps in monitor365** — Done 2026-07-29. Added `grim`, `slurp`, `wtype` alongside legacy X11 tools. X11 tools kept for upstream compatibility.
 
 ## Priority 4: Code Quality
 
-- [x] **Split large modules** — Done 2026-07-29. signoz: 943→605→511L (scripts extracted to `_signoz-scripts.nix`, metrics to `_signoz-metrics.nix`, alerts to `_signoz-alerts.nix`, packages to `_signoz-packages.nix`). forgejo: 725→353L (scripts to `_forgejo-scripts.nix`, repos to `forgejo-repos.nix`).
-- [x] **Re-enable `cqrs-lint` and `mr-sync`** — Done 2026-07-29. mr-sync: re-enabled in `lars-packages.nix`, upstream fix (go-ndjson deps map + go-output/escape v0.34 + proxyVendor + doCheck=false) applied to `/home/lars/projects/mr-sync`. **Pending push** to GitHub so SystemNix flake.lock can consume it. cqrs-lint: re-enabled but go-cqrs-lite is `flake:false` in stale lock — evaluates to null (filtered). `samber-do-auditlog` pinned to v0.5.0 as top-level flake input for future use.
-- [x] **Convert `minecraft.nix` raw iptables** — Already done. Uses `networking.firewall.allowedTCPPorts = [ cfg.port ]`.
-- [x] **Convert `ssh-config.nix` `home.activation.ssh-sockets-dir`** — Done 2026-07-29. Converted to `systemd.user.tmpfiles.rules` (Linux) with Darwin-only activation fallback.
-- [x] **Audit all `writeShellApplication` scripts for missing `runtimeInputs`** — Done 2026-07-29. Fixed: `dms-locks` (+dms,swaylock-effects), `dms-wallpaper-next` (+dms), `gpu-python` (+coreutils). 7 `writeShellScriptBin` in openseo/templates identified but use hardcoded paths (lower priority).
-- [x] **go-commit: pin as top-level flake input** — Done 2026-07-29. Pinned to `refs/tags/v0.4.0` with `projects-management-automation.inputs.go-commit.follows`.
+- [x] **Split large modules** — Done 2026-07-29. signoz: 943→511L, forgejo: 725→353L.
+- [ ] **Fix cqrs-lint (go-cqrs-lite stale lock)** — `cqrs-lint = null` in `lars-packages.nix`. go-cqrs-lite flake.lock entry is stale (SSH URL, resolves to non-flake). Needs `nix flake lock --update-input go-cqrs-lite --refresh` or manual lock surgery. Not runtime-critical (dev-time linting only).
+- [x] **mr-sync re-enabled** — Builds from upstream. Uses `proxyVendor = true` (mkPreparedSource workaround). `doCheck = false` is upstream — change to `checkFlags` upstream. Push to GitHub done.
+- [x] **minecraft.nix iptables** — Already uses `networking.firewall.allowedTCPPorts`.
+- [x] **ssh-config.nix activation → tmpfiles** — Done 2026-07-29.
+- [x] **Audit writeShellApplication runtimeInputs** — Done 2026-07-29. Fixed dms-locks, dms-wallpaper-next, gpu-python.
+- [x] **go-commit: pin as top-level flake input** — Done 2026-07-29. Pinned to `refs/tags/v0.4.0`.
+- [x] **samber-do-auditlog pin removed** — Done 2026-07-29. v0.5.0 pin was wrong (cmdguard v3.1.0 needs v0.7.0+). Lock resolves to v0.8.1 transitively. Dead code removed.
+- [ ] **Convert remaining `writeShellScriptBin` to `writeShellApplication`** — 7 scripts in openseo/templates/monitor365 use hardcoded paths. Lower priority.
 
 ## Priority 5: Desktop (from Jul 9 Helium/browser reports)
 
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary.
-- [x] **Remove `--enable-gpu-rasterization`** — Done. Already excluded in `base.nix:43-46` with documented rationale (Strix Halo unified memory: GPUActive 51+ GiB, GPUReclaim=0). The TODO was stale from before the exclusion was added.
-- [x] **Fix Helium extensions not installing** — Done 2026-07-29. Root cause: `--disable-background-networking` killed the `ExtensionDownloader` subsystem, preventing all `force_installed` extensions from downloading. Removed `--disable-background-networking` and `--disable-component-update` from `base.nix` wrapper. See AGENTS.md gotcha for full diagnosis. **Pending deploy + runtime verification** (check `chrome://extensions` after `nix run .#deploy`).
-- [ ] **Remove 9gag Post Filter** — abandoned extension ("THIS PROJECT IS DEAD").
+- [x] **Remove `--enable-gpu-rasterization`** — Already excluded in `base.nix:43-46`.
+- [x] **Fix Helium extensions not installing** — Done 2026-07-29. Root cause: `--disable-background-networking` killed the ExtensionDownloader. Removed both `--disable-background-networking` and `--disable-component-update`. Added `ExtensionManifestV2Availability = 2`. Removed dead 9gag Post Filter. **Pending deploy + runtime verification** (check `chrome://extensions`).
+- [ ] **Research `--disable-component-update` removal impact** — Removed alongside background networking. May enable CRLSet/cert-revocation component fetches. If extensions work without it, consider re-adding it (blocks unwanted component fetches without breaking extensions).
+- [ ] **Verify all 20 extension IDs are live on Chrome Web Store** — Dead IDs cause silent download failures now that networking is enabled.
 
 ## Priority 6: Upstream Contributions
 
@@ -61,7 +67,7 @@
 
 ### Home Manager
 
-- [x] **ActivityWatch Wayland watcher: `graphical-session.target` deps** — Done 2026-07-24. Local workaround hardened with `StartLimitBurst=5`/`StartLimitIntervalSec=300` (prevents the observed `start-limit-hit` on slow compositor startup). Upstream Home Manager patch prepared in `docs/services/home-manager-activitywatch-graphical-session.patch` (adds a `requiresGraphicalSession` watcher option); submission is a manual external step.
+- [x] **ActivityWatch Wayland watcher: `graphical-session.target` deps** — Done 2026-07-24. Local workaround + upstream patch prepared.
 - [ ] **Darwin user definition requirement** — HM on Darwin requires explicit `users.users.<name>.home` — tracks issue #6036.
 
 ### Third-Party
@@ -72,6 +78,8 @@
 ### LarsArtmann Apps
 
 - [ ] **`hermes`**: Auto-create directory structure on first run; handle own state migration; sane defaults for `OLLAMA_API_KEY`; use PID file or socket-based single-instance locking instead of `--replace` flag.
+- [ ] **`mr-sync`**: Change `doCheck = false` to `checkFlags = [ "-skip" "TestWriteFirstRun|TestWriteAndParse" ]` in upstream package.nix.
+- [ ] **`go-cqrs-lite`**: Fix `cmdguard/v3/pkg/cmdguard/v3` package path resolution. Force-refresh flake.lock from SSH→GitHub URL.
 
 ## Priority 7: Long-Term
 
@@ -86,9 +94,26 @@
 
 ## Documentation
 
-- [ ] **Add AGENTS.md gotchas** — Two gotchas overdue from multiple sessions: (1) homepage `mdi-*` icon names don't exist in the dashboard-icons pack (verify against the pack before using), (2) md-go-validator "prebuilt ELF binaries in Go modules break FOD purity" (go-branded-id v0.5.0 case study).
-- [ ] **Add doc-freshness CI check** — script that verifies doc counts against code.
-- [ ] **Create `docs/DOMAIN_LANGUAGE.md`** — does not exist yet. Would document domain terms for the Nix config ecosystem (BTRFS, DNS, SSO, etc.).
+- [x] **Add AGENTS.md gotchas** — Done 2026-07-29. Added 6 gotchas: mdi-* icons, prebuilt ELF binaries, switch-to-configuration+oneshot, proxyTo canonical, SigNoz || true fix, Helium extensions.
+- [x] **Create `docs/DOMAIN_LANGUAGE.md`** — Done 2026-07-29. Created with infrastructure domain terms.
+- [x] **Add doc-freshness CI check** — Done 2026-07-29. `scripts/doc-freshness-check.sh` validates doc counts against code.
+- [x] **Annotate stale historical reports** — Done 2026-07-29. 4 reports annotated with resolution notes.
+- [x] **README.md audit** — Done 2026-07-29. Updated module/script/package/Gatus counts, added SearXNG to service table.
+- [x] **Hermes v0.19 in FEATURES/CHANGELOG** — Done 2026-07-29.
+- [ ] **Wire `doc-freshness-check.sh` into pre-commit or CI** — Script exists but not automated.
+
+---
+
+## Deploy Verification Checklist
+
+After `nix run .#deploy`, verify:
+
+1. **SigNoz provisioner** — Check `journalctl -u signoz-provision.service` for HTTP status codes on POST /api/v1/rules. If non-2xx, the rule JSON format needs updating for SigNoz 0.127.1.
+2. **Browser extensions** — Launch Helium, check `chrome://extensions` for installed extensions. Check `~/.config/net.imput.helium/Default/Extensions/` is non-empty.
+3. **Caddy proxyTo** — Check service access logs for real client IPs (not `127.0.0.1`).
+4. **Crush Daily** — Run `sudo systemctl restart crush-daily.service`, then verify `GET /api/reports/2026-07-28` returns non-zero sessions.
+5. **monitor365 Wayland** — Verify `grim`/`slurp`/`wtype` are in the agent's PATH (`systemctl show monitor365.service -p Environment`).
+6. **Post-deploy check** — `nix run .#post-deploy-check` (hard-fails on SigNoz rules if 0 provisioned).
 
 ---
 
