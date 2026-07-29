@@ -28,6 +28,22 @@
     "art-dupl-src": {
       "flake": false,
       "locked": {
+        "lastModified": 1785355288,
+        "narHash": "sha256-LW6khd11EKW2LIZd8xUmEUhJEg0MrFJ6440cSBOiYDA=",
+        "owner": "LarsArtmann",
+        "repo": "art-dupl",
+        "rev": "8c3e84723a28638a7e58241fd0de66943e981829",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "repo": "art-dupl",
+        "type": "github"
+      }
+    },
+    "art-dupl-src_2": {
+      "flake": false,
+      "locked": {
         "lastModified": 1785224536,
         "narHash": "sha256-uqwg4tJfjGewlJ4WXp2xF8fa1xEHfzy7pYgnI/B11zU=",
         "owner": "LarsArtmann",
@@ -524,7 +540,7 @@
     },
     "dnsblockd": {
       "inputs": {
-        "art-dupl-src": "art-dupl-src",
+        "art-dupl-src": "art-dupl-src_2",
         "flake-parts": [
           "flake-parts"
         ],
@@ -3930,6 +3946,7 @@
     "root": {
       "inputs": {
         "art-dupl": "art-dupl",
+        "art-dupl-src": "art-dupl-src",
         "branching-flow": "branching-flow",
         "buildflow": "buildflow",
         "cmdguard": "cmdguard_2",
