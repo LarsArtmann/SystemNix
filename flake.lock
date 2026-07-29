@@ -1396,16 +1396,16 @@
     "go-commit": {
       "flake": false,
       "locked": {
-        "lastModified": 1784714280,
-        "narHash": "sha256-3J9XUgGu19Jzj3HUiTCM7rCoAIHoKCtBXlXc2+0tC40=",
+        "lastModified": 1785232707,
+        "narHash": "sha256-NoY8eHSdsAdgyGrAEh7BGlK1qgNEhUkzl/okpBDWpSM=",
         "owner": "LarsArtmann",
         "repo": "go-commit",
-        "rev": "4e1ef73b1eb75b5ccf94ce4e8e8a990a8ab8070f",
+        "rev": "fd9a9664a162cef0bfa9895a4b50694b01e54dca",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.4.0",
+        "ref": "master",
         "repo": "go-commit",
         "type": "github"
       }
@@ -3248,17 +3248,17 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1784742806,
-        "narHash": "sha256-36OhjVSUQfxhGFr78yad8vePFlgZr3E0mnypTUX6nOI=",
+        "lastModified": 1785240425,
+        "narHash": "sha256-M4ETGdy/AWMIgdX+5brf9NQHEyS0HV/7LkNQdOdxBBQ=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "06153013945baa16d83a81bd7497433537235240",
+        "rev": "8ac70ec13e682b8f8081dcc3b6efe47de37477ee",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
+        "ref": "master",
         "repo": "monitor365",
-        "rev": "06153013945baa16d83a81bd7497433537235240",
         "type": "github"
       }
     },
@@ -4018,11 +4018,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1784697913,
-        "narHash": "sha256-DK+AmC9SQ9hmOFNIMu1l05gJtsmKyYsfJnuFtt1TnAU=",
+        "lastModified": 1785216007,
+        "narHash": "sha256-KrGilCiFVxEQOaBD3TODhklZzE7uICQvqsBWgycIABA=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "47759faaddf38fadaf172151ca9df8adae9c0b2e",
+        "rev": "8ec8a5a41f8d8244e672829c9cd705416139d3f0",
         "type": "github"
       },
       "original": {

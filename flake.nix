@@ -156,7 +156,7 @@
 
     # monitor365 — Device monitoring agent (Rust)
     monitor365 = {
-      url = "github:LarsArtmann/monitor365/750ff4c102ab1815134aed044fc7f9acf2a5ea9c";
+      url = "github:LarsArtmann/monitor365?ref=master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -354,11 +354,8 @@
     };
 
     # go-commit — Conventional commit helper (consumed by PMA via mkPreparedSource).
-    # Pinned to v0.4.0 tag: mkPreparedSource overrides go.mod with the flake input
-    # source, so master source (which had a git config scope bug) would override the
-    # go.mod pin. See AGENTS.md "go-git repo.Config() only reads local scope".
     go-commit = {
-      url = "github:LarsArtmann/go-commit?ref=refs/tags/v0.4.0";
+      url = "github:LarsArtmann/go-commit?ref=master";
       flake = false;
     };
 
