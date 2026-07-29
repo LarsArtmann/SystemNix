@@ -1464,10 +1464,10 @@
     "go-cqrs-lite": {
       "flake": false,
       "locked": {
-        "lastModified": 1785234907,
-        "narHash": "sha256-pOBdqamdL9k9xoom+rHhCRkZYEBYvtORJ00cmy7fK0s=",
+        "lastModified": 1785312529,
+        "narHash": "sha256-P3Aqu4jcPUu8ZOVJWRoXMHEz3NBwb4i8U6lofFmXk00=",
         "ref": "master",
-        "rev": "92d87145c1243e34abc493f8eb60b4131b805260",
+        "rev": "452f74d43eaf825b0865849f2ee4e38c1e50c7be",
         "revCount": 3765,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
