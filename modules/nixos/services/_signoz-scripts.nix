@@ -33,9 +33,21 @@
       pkgs.coreutils
     ];
     text = ''
-      echo "signoz-provision: starting (v2 — jq .data.rules[] fix)"
+      echo "signoz-provision: starting (v3 — HTTP status code checking)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
+      FAILED=0
+
+      # Helper: check HTTP status code is 2xx
+      check_status() {
+        local label="$1" status="$2"
+        if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
+          echo "  OK $label (HTTP $status)"
+        else
+          echo "  FAILED $label (HTTP $status)" >&2
+          FAILED=$((FAILED + 1))
+        fi
+      }
 
       # Deploy notification channels (idempotent: delete existing by name, then create fresh)
       WEBHOOK_FILE="${config.sops.secrets.discord_alert_webhook_url.path}"
@@ -58,10 +70,11 @@
           }]
         }')
         echo "  Creating channel: $CHANNEL_NAME"
-        curl -sf --max-time 10 -X POST \
+        STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
           -H "Content-Type: application/json" \
           -d "$CHANNEL_JSON" \
-          "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || true
+          "$SIGNOZ_URL/api/v1/channels")
+        check_status "channel:$CHANNEL_NAME" "$STATUS"
       else
         echo "Skipping channels: Discord webhook secret not found at $WEBHOOK_FILE"
       fi
@@ -81,10 +94,11 @@
             fi
           fi
           echo "  Creating: $(basename "$rule_file")"
-          curl -sf --max-time 10 -X POST \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
             -H "Content-Type: application/json" \
             -d @"$rule_file" \
-            "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || true
+            "$SIGNOZ_URL/api/v1/rules")
+          check_status "rule:$(basename "$rule_file" .json)" "$STATUS"
         fi
       done
 
@@ -93,14 +107,29 @@
       for dash_file in /etc/signoz/dashboards/*.json; do
         if [ -f "$dash_file" ]; then
           echo "  Applying: $(basename "$dash_file")"
-          curl -sf --max-time 10 -X POST \
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
             -H "Content-Type: application/json" \
             -d @"$dash_file" \
-            "$SIGNOZ_URL/api/v1/dashboards" 2>/dev/null || true
+            "$SIGNOZ_URL/api/v1/dashboards")
+          check_status "dashboard:$(basename "$dash_file" .json)" "$STATUS"
         fi
       done
 
-      echo "Provisioning complete."
+      # Verify: GET /api/v1/rules must return >0 rules
+      echo "Verifying alert rules provisioned..."
+      RULE_COUNT=$(curl -sf --max-time 10 "$SIGNOZ_URL/api/v1/rules" 2>/dev/null | jq '.data.rules | length' 2>/dev/null || echo 0)
+      if [ "$RULE_COUNT" -gt 0 ]; then
+        echo "  OK $RULE_COUNT alert rules confirmed"
+      else
+        echo "  FAILED: 0 alert rules after provisioning — POST may be failing silently" >&2
+        FAILED=$((FAILED + 1))
+      fi
+
+      if [ "$FAILED" -gt 0 ]; then
+        echo "Provisioning FAILED: $FAILED errors. See stderr above." >&2
+        exit 1
+      fi
+      echo "Provisioning complete: 0 errors."
     '';
   };
 }

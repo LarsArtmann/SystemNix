@@ -266,7 +266,8 @@ _: {
                   chown pocket-id:pocket-id "$SECRET_FILE"
                   echo "  Secret written to $SECRET_FILE"
                 else
-                  echo "  WARNING: Failed to generate secret for '${client.name}'" >&2
+                  echo "  ERROR: Failed to generate secret for '${client.name}' — consumer service will crash-loop" >&2
+                  exit 1
                 fi
               fi
             ''
