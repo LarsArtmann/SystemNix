@@ -37,6 +37,12 @@
         systemd.services.projects-management-automation.serviceConfig = {
           Type = lib.mkForce "exec";
           WatchdogSec = lib.mkForce "0";
+          # The discovery daemon re-scans all ~293 projects on every restart,
+          # spiking memory above the upstream 8G cap and getting OOM-killed.
+          # An OOM mid-deploy kills the project-discovery socket, which strands
+          # any consumer mid-discovery (Overview caches the failure → 503). 12G
+          # gives headroom for the transient scan; steady state is far lower.
+          MemoryMax = lib.mkForce "12G";
         };
       };
     };

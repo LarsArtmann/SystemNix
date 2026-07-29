@@ -42,6 +42,12 @@
         systemd.services.overview = {
           after = [ "projects-management-automation.service" ];
           wants = [ "projects-management-automation.service" ];
+          # Overview discovers exactly once at startup and never retries: if the
+          # PMA discovery daemon dies (OOM, restart) during that window, Overview
+          # caches a nil result and 503s forever. partOf restarts Overview
+          # whenever PMA restarts, so after PMA recovers Overview re-discovers
+          # against a healthy daemon (the ExecStartPre gate waits for it).
+          partOf = [ "projects-management-automation.service" ];
           serviceConfig.ExecStartPre = "+${lib.getExe waitDaemonReady}";
         };
       };

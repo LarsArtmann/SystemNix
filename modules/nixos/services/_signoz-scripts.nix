@@ -58,23 +58,26 @@
 
         EXISTING_CHANNEL_ID=$(echo "$EXISTING_CHANNELS" | jq -r --arg n "$CHANNEL_NAME" '.data[] | select(.name == $n) | .id // empty' | head -1)
         if [ -n "$EXISTING_CHANNEL_ID" ]; then
-          echo "  Deleting existing channel: $CHANNEL_NAME ($EXISTING_CHANNEL_ID)"
-          curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/channels/$EXISTING_CHANNEL_ID" 2>/dev/null || true
+          # Skip recreation: alert rules reference this receiver by name, so
+          # deleting + recreating it conflicts ("alertmanager_config_conflict:
+          # the receiver name has to be unique"). The channel persists with its
+          # webhook across runs; only create when absent.
+          echo "  Channel already exists: $CHANNEL_NAME ($EXISTING_CHANNEL_ID) — skipping creation"
+        else
+          CHANNEL_JSON=$(jq -n --arg url "$WEBHOOK_URL" '{
+            name: "Discord Alerts",
+            discord_configs: [{
+              send_resolved: true,
+              webhook_url: $url
+            }]
+          }')
+          echo "  Creating channel: $CHANNEL_NAME"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
+            -H "Content-Type: application/json" \
+            -d "$CHANNEL_JSON" \
+            "$SIGNOZ_URL/api/v1/channels")
+          check_status "channel:$CHANNEL_NAME" "$STATUS"
         fi
-
-        CHANNEL_JSON=$(jq -n --arg url "$WEBHOOK_URL" '{
-          name: "Discord Alerts",
-          discord_configs: [{
-            send_resolved: true,
-            webhook_url: $url
-          }]
-        }')
-        echo "  Creating channel: $CHANNEL_NAME"
-        STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
-          -H "Content-Type: application/json" \
-          -d "$CHANNEL_JSON" \
-          "$SIGNOZ_URL/api/v1/channels")
-        check_status "channel:$CHANNEL_NAME" "$STATUS"
       else
         echo "Skipping channels: Discord webhook secret not found at $WEBHOOK_FILE"
       fi
