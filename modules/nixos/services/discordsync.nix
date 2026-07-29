@@ -64,9 +64,8 @@
           # contention with projection workers on a single connection) vs ~21
           # min with `turso-sync`, so keep `turso-sync` and rely on the quota
           # fallback. Cloud sync resumes automatically when the quota resets or
-          # the plan is upgraded. NOTE: requires the upstream DiscordSync fix
-          # (OpenTursoSync quota fallback) to be committed + the flake input
-          # bumped before this takes effect at runtime.
+          # the plan is upgraded. The upstream quota fallback (OpenTursoSync)
+          # is deployed (flake input bumped to the fix commit).
           backend = lib.mkDefault "turso-sync";
           backfillOnStartup = lib.mkDefault true;
           apiAddr = lib.mkDefault "127.0.0.1:${toString ports.discordsync-api}";
