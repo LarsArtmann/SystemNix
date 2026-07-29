@@ -72,7 +72,6 @@ nixpkgs.lib.nixosSystem {
     inputs.niri-session-manager.nixosModules.niri-session-manager
     inputs.emeet-pixyd.nixosModules.default
     inputs.crush-daily.nixosModules.crush-daily
-    inputs.overview.nixosModules.default
     ../platforms/nixos/system/configuration.nix
   ];
 }
