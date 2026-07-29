@@ -508,11 +508,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785321485,
-        "narHash": "sha256-Q11Al0IMTNBGMg4v92m7O1v4B1Jo9k8BBwv436BRqVg=",
+        "lastModified": 1785327351,
+        "narHash": "sha256-QMyM05OCa7rN1Q3byCVg6Vw8aQpY0dfQhAPwLiO8AMU=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "49e1b204a242ceebf81a049635b9914116707aaa",
+        "rev": "d459e07a7156c070d779758a4477e3de313f2a39",
         "type": "github"
       },
       "original": {
@@ -1521,11 +1521,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785327069,
-        "narHash": "sha256-i+eQhgY9gCw53j79BqBLCu+H/SoAbyfsCtirPyd3tc8=",
+        "lastModified": 1785327562,
+        "narHash": "sha256-R8ZBM05eApJ286NSM7EuqapojBNnKZQ3KIh+dHTN6jQ=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "53072a75087827c242ab3c2042f050a431b4e955",
+        "rev": "773bd980c511d501e4a1e89b18dbc48747fd2141",
         "type": "github"
       },
       "original": {
@@ -2938,11 +2938,11 @@
         "rust-overlay": "rust-overlay"
       },
       "locked": {
-        "lastModified": 1785326552,
-        "narHash": "sha256-MQSYtePOvONpnGermWJwEQwTk9KREpm8UE8Lz5Xmw5g=",
+        "lastModified": 1785327397,
+        "narHash": "sha256-sf2S+djCzyv1Rk/DdlkyLcORgfrYJhWsaUOosQ+aLHY=",
         "owner": "ogulcancelik",
         "repo": "herdr",
-        "rev": "5b0be42e043e25e34ceeecf72e72bdb043164997",
+        "rev": "14df4d219dd36ba5f553ddcffc9fc1a4cb7c141a",
         "type": "github"
       },
       "original": {
