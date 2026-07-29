@@ -55,6 +55,10 @@
 
       # Runtime deps — CLI tools for system + desktop collectors.
       # Wired into the systemd service PATH by the upstream module.
+      # X11 tools (xdotool, xprintidle, scrot, wmctrl) are kept for upstream
+      # compatibility but are non-functional on niri (Wayland-only).
+      # Wayland equivalents (grim, slurp, wtype) are provided for the
+      # screenshot/keyboard collectors once upstream supports them.
       runtimeDeps = with pkgs; [
         procps
         util-linux
@@ -62,10 +66,15 @@
         lm_sensors
         networkmanager
         bluez
+        # X11 (legacy — evo-x2 runs Wayland-only niri)
         xdotool
         xprintidle
         scrot
-        wmctrl # Window collector dependency (upstream warns if missing)
+        wmctrl
+        # Wayland (functional on niri)
+        grim
+        slurp
+        wtype
       ];
 
       schemaMigrateScript = pkgs.writeShellApplication {
