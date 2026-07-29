@@ -40,18 +40,26 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Monitor365 module restructured** — pinned to upstream `0615301` (avoids libspa-sys bindgen breakage from `5ee717e3+`). Added schema-migrate, watchdog, graphical-restart, backup-health, restartTriggers. All `//` chains converted to `lib.mkMerge`.
 - **oauth2-proxy hardening** — added `--whitelist-domain=.home.lan` (fixes post-login redirect 500), `partOf = pocket-id-provision.service` (ensures credential reload on secret rotation), PKCE S256 enabled (`code-challenge-method = "S256"`).
 - **SigNoz auth** — impersonation mode (`SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true`) + unconditional Caddy forward-auth (no LAN bypass). Pocket ID is the sole auth boundary. OIDC is Enterprise-only ($4k/mo).
-- **samber-do-auditlog pinned to v0.5.0** — resolves cmdguard type mismatch (`ServiceName` typed string vs bare `string`). Added as top-level flake input with `go-cqrs-lite.inputs.samber-do-auditlog.follows`.
+- **samber-do-auditlog pin REMOVED** — the v0.5.0 pin was wrong (cmdguard v3.1.0 needs v0.7.0+). Flake.lock resolves to v0.8.1 transitively. Top-level input removed as dead code.
+- **Hermes upgraded to v0.19** — active pip extras: messaging, anthropic, firecrawl, edge-tts, fal, exa. Multi-provider LLM wiring updated (GLM, MiniMax, Xiaomi, Synthetic, FAL).
 - **mr-sync pinned to `3db4fb2`** — upstream `6492eef` removed `nixpkgs` from `outputs` params without adding `...` catch-all.
 - **DiscordSync module refactor** — consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). Eliminates option re-declaration drift. SystemNix specifics layered via `lib.mkMerge`.
 - **Post-deploy-check improvements** — SIGPIPE fix (body-file grep instead of pipe), `--compressed` flag for gzip responses, DiscordSync startup-race handling (retry + SKIP for backfill), renamer data-correctness assertion (`total_operations > 0`).
 - **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
-- **Gatus monitoring expansion** — 65 endpoints (was 59), with Discord alerting and response-time thresholds on user-facing services
+- **Gatus monitoring expansion** — 67 endpoints (was 59), with Discord alerting and response-time thresholds on user-facing services
 - **NixOS modules** — 43 auto-discovered (was 42, added SearXNG)
 - **DiscordSync backend** — switched turso-sync → sqlite (eliminates Turso free-plan "SQL read operations forbidden" 403 — 13,993+ consecutive failures). Turso cloud sync can be re-enabled by setting `backend = "turso-sync"` + `tursoUrl` + `tursoAuthTokenFile`
 - **Caddy `proxyTo` helper** — `protectedVHost` now wraps `reverse_proxy` with `header_up X-Real-IP {remote_host}`, benefiting all Layer 2 services behind forward-auth (SearXNG, Homepage, etc.)
 - **Crush Daily** — `runAsUser` support (runs as `primaryUser` instead of system user, fixing ACL `mask::---` on `/home/lars`). Silent-zero-data post-deploy assertion (`session_count > 0`)
 - **goreleaser** added to Linux base packages
+- **SigNoz provisioner error handling** — all `|| true` on POST calls replaced with HTTP status code checking (`curl -w "%{http_code}"`). Script now exits 1 on failure (was always exit 0). Final verification step asserts `GET /api/v1/rules` returns >0 rules.
+- **SigNoz alert rules monitoring** — Prometheus textfile collector (`system_signoz_alert_rules_total`, `system_signoz_alert_rules_healthy`) + Gatus Discord alert. Post-deploy-check hard-fails if 0 rules provisioned.
+- **restartTriggers on ALL provisioner oneshots** — signoz-provision, pocket-id-provision, forgejo-generate-token, forgejo-github-sync, forgejo-ensure-repos, twenty-fix-collation, dnsblockd-attach-ip, monitor365-schema-migrate. `deploy.sh` explicitly restarts all provisioners after `nh os switch` (systemd doesn't restart `Type=oneshot` + `RemainAfterExit=true` on `restartTriggers` change).
+- **Browser extensions** — removed `--disable-background-networking` and `--disable-component-update` from Helium wrapper (was silently blocking all `force_installed` extension downloads). Added `ExtensionManifestV2Availability = 2` (Chromium 150 MV2 deprecation). Removed dead 9gag Post Filter extension.
+- **Caddy `proxyTo` generalized** — ALL reverse_proxy directives now use `${proxyTo PORT}` (was only `protectedVHost`). Forgejo, SigNoz, Gatus, Pocket ID, oauth2-proxy, OpenSEO, Monitor365 all get `X-Real-IP` header.
+- **monitor365 Wayland deps** — added `grim`, `slurp`, `wtype` alongside legacy X11 tools (`xdotool`, `xprintidle`, `scrot`). Functional on niri (Wayland-only).
+- **Crush Daily backfill** — `scripts/crush-daily-backfill.py` wired as `nix run .#crush-daily-backfill`. All 45 zero-data dates (2026-06-11 through 2026-07-26) backfilled.
 
 ### Removed
 

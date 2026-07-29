@@ -12,11 +12,11 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Cloud & Infra**        | AWS CLI, GCP SDK, kubectl, Helm, Terraform, Docker                                                                                                                                               |
 | **Development**          | Git, GitHub CLI, Git Town, JetBrains Toolbox, Zed, Sublime Text 4, Fish shell, tmux, Zellij                                                                                                      |
 | **Desktop (NixOS)**      | Niri (Wayland tiling), DankMaterialShell (Quickshell) status bar / notifications / launcher / lock, SDDM, Ghostty, Kitty, Helium (Chromium browser), Sway (backup WM), Rofi (Sway fallback only) |
-| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), Homepage Dashboard, Hermes AI                                                                                                            |
+| **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), SearXNG (privacy search), Homepage Dashboard, Hermes AI, Monitor365, Crush Daily |
 | **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                                                  |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                        |
-| **Monitoring**           | SigNoz (18 alert rules, 9 dashboards), Gatus (52+ health checks), ActivityWatch                                                                                                                  |
-| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), 2.5M+ blocked domains                                                                                           |
+| **Monitoring**           | SigNoz (19 alert rules, 6 dashboards), Gatus (67 health checks), ActivityWatch                                                                                                                  |
+| **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 2.5M+ blocked domains                                                                        |
 | **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                                           |
 
 ## Quick Start
@@ -51,8 +51,8 @@ nix flake check --no-build  # Validate configuration syntax
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── modules/nixos/services/     # 35 NixOS service modules + 6 desktop modules (auto-discovered, ~34 enabled)
-├── pkgs/                        # 6 custom package derivations + dms-plugins/ (13 widgets)
+├── modules/nixos/services/     # 37 NixOS service modules + 6 desktop modules (auto-discovered, ~35 enabled)
+├── pkgs/                        # 7 custom package derivations + dms-plugins/ (13 widgets)
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
 ├── lib/                         # 10 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
 ├── platforms/
@@ -72,13 +72,13 @@ SystemNix/
 │       ├── hardware/            # AMD GPU/NPU, Bluetooth, hardware config
 │       ├── programs/            # Rofi (Sway backup), Yazi, Zellij, Chromium
 │       └── users/               # Home Manager user config
-├── scripts/                     # 36 operational scripts (shell + Python)
+├── scripts/                     # 43 operational scripts (shell + Python)
 └── docs/                        # Architecture decisions (ADRs), status reports, troubleshooting
 ```
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (52+ health checks) + SigNoz (18 alert rules, 9 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (67 health checks) + SigNoz (19 alert rules, 6 dashboards):
 
 | Service          | Port             | URL                 | Description                                                                                         |
 | ---------------- | ---------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
@@ -104,6 +104,7 @@ All services are defined as flake-parts modules, reverse-proxied through Caddy w
 | **DNS Blocker**  | 53, 8050         | —                   | dnsblockd (embedded sdns resolver: DNSSEC, DoT, DoH, caching), 23 blocklists, 2.5M+ domains blocked |
 | **Mullvad VPN**  | —                | —                   | WireGuard VPN — currently disabled (talpid_dns corrupted resolv.conf)                               |
 | **DiscordSync**  | —                | —                   | Continuous Discord channel backup bot                                                               |
+| **SearXNG**      | 8889             | `search.home.lan`   | Privacy metasearch engine (70+ engines, no tracking, POST-only, DuckDuckGo icons)                  |
 
 ### DNS Blocking
 
