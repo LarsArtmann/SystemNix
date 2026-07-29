@@ -676,6 +676,17 @@ _: {
                 ];
                 alerts = discordAlert "Monitor365 DuckDB exceeds 1.6G — buffer pressure risk. Server may hit MemoryMax under load. Consider reducing retention or increasing MemoryMax.";
               })
+              (mkHttpCheck {
+                name = "Monitor365 CPU Runaway";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_cpu_over_threshold{service=\"monitor365\"} 0*)"
+                ];
+                alerts = discordAlert "Monitor365 agent CPU exceeds 150% average — possible busy-loop (circuit breaker + early-flush bug). Check: journalctl -u monitor365 -n 50, look for cloud_sync failures";
+              })
             ]
             ++ [
               (mkHttpCheck {
