@@ -91,6 +91,43 @@
           fi
         '';
       };
+
+      # Heal DuckDB before the server starts: remove a stale WAL from an
+      # unclean shutdown (DuckDB checkpoints + deletes the WAL on graceful
+      # exit, so a present WAL always means a crash) and restore the main DB
+      # from the newest nightly backup if it is missing or empty.
+      duckdbHealScript = pkgs.writeShellApplication {
+        name = "monitor365-duckdb-heal";
+        runtimeInputs = [
+          pkgs.coreutils
+          pkgs.findutils
+        ];
+        text = ''
+          DB_DIR="${serverCfg.stateDir}"
+          WAL="$DB_DIR/monitor365.duckdb.wal"
+          MAIN_DB="$DB_DIR/monitor365.duckdb"
+
+          if [ -f "$WAL" ]; then
+            echo "monitor365-duckdb-heal: WAL from unclean shutdown found, removing to prevent replay crash"
+            rm -f "$WAL"
+          fi
+
+          # If the main DB is missing or empty, restore from the most
+          # recent nightly backup before the server starts.
+          if [ ! -f "$MAIN_DB" ] || [ ! -s "$MAIN_DB" ]; then
+            LATEST_BACKUP="$(
+              find "$DB_DIR" -maxdepth 1 -name '*.backup_*.db' -printf '%T@\t%p\n' 2>/dev/null \
+                | sort -rn | cut -f2- | head -1
+            )"
+            if [ -n "$LATEST_BACKUP" ]; then
+              echo "monitor365-duckdb-heal: main DB missing/empty, restoring from backup: $LATEST_BACKUP"
+              cp "$LATEST_BACKUP" "$MAIN_DB"
+            else
+              echo "monitor365-duckdb-heal: main DB missing/empty, no backup found — server will create fresh DB"
+            fi
+          fi
+        '';
+      };
     in
     {
       imports = [
@@ -262,28 +299,7 @@
           systemd.services.monitor365-server = {
             serviceConfig = {
               ExecStartPre = lib.mkBefore [
-                "${pkgs.writeShellScript "monitor365-duckdb-heal" ''
-                  DB_DIR="${serverCfg.stateDir}"
-                  WAL="$DB_DIR/monitor365.duckdb.wal"
-                  MAIN_DB="$DB_DIR/monitor365.duckdb"
-
-                  if [ -f "$WAL" ]; then
-                    echo "monitor365-duckdb-heal: WAL from unclean shutdown found, removing to prevent replay crash"
-                    rm -f "$WAL"
-                  fi
-
-                  # If the main DB is missing or empty, restore from the most
-                  # recent nightly backup before the server starts.
-                  if [ ! -f "$MAIN_DB" ] || [ ! -s "$MAIN_DB" ]; then
-                    LATEST_BACKUP="$(ls -t "$DB_DIR"/*.backup_*.db 2>/dev/null | head -1)"
-                    if [ -n "$LATEST_BACKUP" ]; then
-                      echo "monitor365-duckdb-heal: main DB missing/empty, restoring from backup: $LATEST_BACKUP"
-                      cp "$LATEST_BACKUP" "$MAIN_DB"
-                    else
-                      echo "monitor365-duckdb-heal: main DB missing/empty, no backup found — server will create fresh DB"
-                    fi
-                  fi
-                ''}"
+                (lib.getExe duckdbHealScript)
               ];
             };
           };
