@@ -525,7 +525,7 @@
         echo "Syncing SSH keys for Forgejo user: $user"
 
         curl -sf -H "Authorization: token $FORGEJO_TOKEN" \
-          "${forgejoUrl}/api/v1/admin/users/$user/keys" > "$existing_keys"
+          "${forgejoUrl}/api/v1/users/$user/keys" > "$existing_keys"
 
         mapfile -t keys < <(jq -r --arg user "$user" '.[$user][]' "$KEYS_FILE")
 
