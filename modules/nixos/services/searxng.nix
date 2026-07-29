@@ -46,6 +46,30 @@ _: {
           fi
         '';
       };
+
+      # DNS-gate: SearXNG engine init() runs at process startup and makes
+      # network calls (wikidata fetches SPARQL properties, radio browser
+      # resolves its server list, ClearURLs downloads tracker-pattern rules).
+      # If DNS isn't ready at boot, these engines fail init PERMANENTLY and
+      # stay disabled for the entire process lifetime — no retry. dnsblockd
+      # is Type=simple, so after/wants ordering alone doesn't guarantee
+      # readiness; this ExecStartPre actively probes resolution.
+      waitDnsReady = pkgs.writeShellApplication {
+        name = "searxng-wait-dns";
+        runtimeInputs = [ pkgs.glibc.bin ];
+        text = ''
+          echo "searxng: waiting for DNS resolution..."
+          for i in $(seq 1 60); do
+            if getent hosts wikidata.org >/dev/null 2>&1; then
+              echo "searxng: DNS resolution ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "searxng: DNS not ready after 120s — engines requiring init-time network will be disabled" >&2
+          exit 0
+        '';
+      };
     in
     {
       config = lib.mkIf cfg.enable {
@@ -162,8 +186,14 @@ _: {
           # The nixpkgs module already has comprehensive hardening (ProtectSystem=strict,
           # DynamicUser, etc.) — harden {} values use mkDefault so upstream's explicit
           # settings take precedence. We only fill gaps (MemoryMax, Restart policy).
+          # DNS-gate: dnsblockd must resolve before engine init (wikidata,
+          # radio browser, ClearURLs all need network at init time).
           searx = {
-            after = [ "searxng-secret-key.service" ];
+            after = [
+              "searxng-secret-key.service"
+              "dnsblockd.service"
+            ];
+            wants = [ "dnsblockd.service" ];
             requires = [ "searxng-secret-key.service" ];
             inherit onFailure;
             startLimitBurst = 5;
@@ -174,13 +204,20 @@ _: {
               (builtins.toJSON config.services.searx.limiterSettings)
             ];
             serviceConfig = lib.mkMerge [
+              {
+                ExecStartPre = "+${lib.getExe waitDnsReady}";
+              }
               (harden { MemoryMax = "512M"; })
               (serviceDefaults { })
             ];
           };
 
           searx-init = {
-            after = [ "searxng-secret-key.service" ];
+            after = [
+              "searxng-secret-key.service"
+              "dnsblockd.service"
+            ];
+            wants = [ "dnsblockd.service" ];
             requires = [ "searxng-secret-key.service" ];
           };
         };
