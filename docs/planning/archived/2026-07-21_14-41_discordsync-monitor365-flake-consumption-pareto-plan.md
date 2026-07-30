@@ -233,3 +233,9 @@ All 9 findings shipped across 4 commits. Execution reports: `docs/status/2026-07
 | M3 CORS PR | File upstream PR | Already fixed upstream (`with_list_parse_key` commit `1a11bc034`) — no PR needed | — |
 
 **Open:** monitor365 cloud sync circuit breaker (localhost:3001 unreachable, 1.1M+ consecutive failures) — outside plan scope, tracked in TODO_LIST.
+
+---
+
+## Item Resolution (2026-07-30)
+
+All 9 findings (D1-D6, M1-M3) shipped. Commits: `377f15e6`, `88419e21`, `4cbbe0ff`, `a000fe0c`. Post-deploy smoke test 25/25. The existing Resolution table above covers the item-by-item status. No open items remain.

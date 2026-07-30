@@ -83,3 +83,9 @@ Nothing catastrophic. But these are real mistakes:
 ## Self-Critique Summary
 
 The diagnosis was fast and correct. The fix is pragmatic and consistent with existing patterns (`ssh-suspend-guard` in the same file uses the same poll-loop style). But I **failed at triage** — I should have led with "run this to stop it NOW" before diving into diagnosis. The user was actively watching windows spawn. I also didn't clearly communicate that the auto-restart is currently dead until deploy. The fix itself is a band-aid; the deeper PartOf question is uninvestigated.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Helium empty-window fix. DONE: helium-launch wrapper deployed, pgrep-check prevents empty-window loop. All 3 items resolved.

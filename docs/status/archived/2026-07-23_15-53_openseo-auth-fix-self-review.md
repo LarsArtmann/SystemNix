@@ -168,3 +168,9 @@ The project uses alejandra via `nix fmt` / treefmt. I did a manual `in` placemen
 The auth fix is **structurally sound** — hand-rolled Caddy vHost with callback exemption, runtime validation script, corrected documentation. But it's **unverified**: I never confirmed the callback path against actual source code, never deployed, never tested runtime behavior. The previous session's analysis was corrected (the callback was never actually broken), but I may have built a fix for the wrong path.
 
 The validate script is the right tool (runtime > eval-time for sops-backed features), but it's also untested. The code passes `nix flake check --no-build` but that only proves Nix evaluation, not runtime behavior or Caddyfile syntax.
+
+---
+
+## Item Resolution (2026-07-30)
+
+OpenSEO auth self-review. Items 1-20 DONE (deployed, callback path verified, validate script). Items 21-61 REJECTED as brainstorms (protectedVHost extraction, upstream PRs, etc.). MCP integration OPEN in TODO_LIST.

@@ -77,3 +77,9 @@ All changes are syntax-validated and bug-fixed. Run:
 ```
 nix run .#deploy
 ```
+
+---
+
+## Item Resolution (2026-07-30)
+
+No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.

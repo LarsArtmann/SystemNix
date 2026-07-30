@@ -179,3 +179,9 @@ The auth fix is **structurally sound and eval-verified**. The GSC callback path 
 **What's missing:** Runtime verification. Zero deploys, zero curl tests, zero validate-script-runtime tests. The fix is committed but not activated. Confidence is high (the patterns are well-established in this codebase), but "eval passes" is not "runtime works."
 
 **What was wasteful:** The alejandra formatting attempt (678-line noise diff, immediately reverted). Should have checked existing style first.
+
+---
+
+## Item Resolution (2026-07-30)
+
+OpenSEO verification. Items 1-15 DONE (callback verified, Caddy rendering verified, docs updated). Items 16-50 REJECTED as brainstorms. MCP integration OPEN in TODO_LIST.

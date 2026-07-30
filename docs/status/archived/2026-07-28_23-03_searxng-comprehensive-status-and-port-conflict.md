@@ -202,3 +202,9 @@ After 5 restart attempts (startLimitBurst=5), the service hit `start-limit-hit` 
 3. **Secret key** — Stays as auto-generated (`openssl rand -hex 32`). The key persists across deploys via `/var/lib/searxng/searxng.env`. Reinstall-loss is acceptable for a search engine.
 
 This report is **stale** — SearXNG is fully operational on port 8889.
+
+---
+
+## Item Resolution (2026-07-30)
+
+SearXNG port conflict. Items 1-10 DONE (port moved to 8889, SigNoz OTel was on 8888, deployed functional). Items 11-50 REJECTED as brainstorms. Resolution block at bottom already marks all 3 questions resolved.

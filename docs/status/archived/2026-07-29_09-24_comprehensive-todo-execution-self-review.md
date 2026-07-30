@@ -273,3 +273,9 @@ Most items flagged here were resolved in later sessions the same day and next da
 - **mr-sync** — re-enabled with all tests passing (`2026-07-29_17-01`).
 - **Pocket-ID secret hard-fail** — implemented as `exit 1` on POST failure (acceptable).
 - **restartTriggers on provisioners** — added to 8 provisioners + `deploy.sh` restart loop.
+
+---
+
+## Item Resolution (2026-07-30)
+
+No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.

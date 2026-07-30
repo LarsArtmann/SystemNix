@@ -155,3 +155,9 @@
 2. **Can you fix the upstream monitor365 `wasm_bindgen_test` issue, or should I attempt it?** The fix is either adding `wasm_bindgen_test` to `[dev-dependencies]` in `crates/server-ui/Cargo.toml` or wrapping the macro at `route_model.rs:414` in `#[cfg(test)]`. But since it's a private repo, I'd need you to push the fix and tag it, or give me access to do so.
 
 3. **Is the DNS Blocker failure (`dnsblock.home.lan/health` returns 000000) something you've noticed in daily use, or is it just a smoke-test false positive?** DNS resolution appears to work (all external vHost checks passed), but the health endpoint is unreachable. This could be a Caddy vHost config issue or the actual dnsblockd health endpoint being down.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Helium deploy + monitor365 blocker. Items 1-10 DONE (helium deployed, monitor365 re-enabled at 0615301). Items 11-55 REJECTED as brainstorms. Physical cable-swap test requires user.

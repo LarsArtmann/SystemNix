@@ -305,3 +305,9 @@ Both repos are on `ref=master`, which means any upstream change (like adding new
 | Post-deploy checks added | 1 (alert rules count assertion) |
 | Time spent on upstream fixes | ~4 hours (60% of session) |
 | Time spent on actual task | ~2.5 hours (40% of session) |
+
+---
+
+## Item Resolution (2026-07-30)
+
+SigNoz provision restartTriggers. Items 1-15 DONE (restartTriggers on 8 provisioners, Gatus monitoring, deploy.sh restart loop). Items 16-50 MIXED: core issue (empty rules endpoint) resolved via v5 API migration (2026-07-29_23-46); remaining items REJECTED as brainstorms.

@@ -193,3 +193,9 @@ SearXNG enables ~70+ engines by default. Some (Google, Bing) may rate-limit or b
 ### 3. Should the secret key use sops instead of auto-generation?
 
 Currently the key is auto-generated on first boot via `openssl rand -hex 32` and stored at `/var/lib/searxng/searxng.env` (plaintext, root:root, 0600). This is consistent with how SearXNG's Docker image handles it. Alternatively, it could be stored in sops like other SystemNix secrets — but it's a machine-local random secret, not a shared credential, so sops adds complexity without clear benefit. Your call on which pattern to standardize on.
+
+---
+
+## Item Resolution (2026-07-30)
+
+SearXNG integration. Items 1-15 DONE (deployed on port 8889, functional). Items 16-50 MIXED: most REJECTED as brainstorms. Engine tuning/browser verification items OPEN in TODO_LIST deploy checklist.

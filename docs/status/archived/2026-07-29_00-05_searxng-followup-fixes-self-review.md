@@ -188,3 +188,9 @@ Resolved 3 code issues (sops crush-daily user mismatch, Caddy X-Real-IP header, 
 ## TL;DR
 
 Fixed the critical sops crush-daily user mismatch (was silently blocking ALL secret deployment on every deploy since the user was removed). Added X-Real-IP to Caddy protectedVHost (but missed 10 other bare reverse_proxy directives). Annotated 2 stale reports. Documented engine errors as non-actionable (without testing). Deployed successfully with 28 PASS / 0 FAIL. The main self-critique: **the `proxyTo` fix is a half-measure**, I **assumed rather than tested** for wikidata/Brave, and I **never verified Gatus is green** for SearXNG.
+
+---
+
+## Item Resolution (2026-07-30)
+
+No NEXT items — self-review report. sops crush-daily fix DONE, Caddy proxyTo DONE (generalized in 07-18), stale reports annotated. All work done.

@@ -198,3 +198,9 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 ## Resolution (2026-07-30)
 
 The cqrs-lint fix later **regressed** — commit `b0d76b68` wrongly reverted go-finding to a zero pseudo-version, breaking the build again. Re-fixed in `2026-07-29_22-01` (`649bcd5f` upstream). cqrs-lint v0.2.2 builds and is deployed. The go-cqrs-lite lock was cleaned (4 stale nodes consolidated in `2026-07-29_17-01`). The `git insteadOf` rule was removed (`2026-07-29_17-01`) then **restored on user demand** (`2026-07-30_15-53`, `502020e7`) — it remains in effect.
+
+---
+
+## Item Resolution (2026-07-30)
+
+cqrs-lint fix. Items 1-15 DONE (cmdguard v4 migration, lock cleaned, builds 0.2.2). Items 16-54 REJECTED. Later regressed (22-01) and re-fixed. Resolution section at end documents the regression.

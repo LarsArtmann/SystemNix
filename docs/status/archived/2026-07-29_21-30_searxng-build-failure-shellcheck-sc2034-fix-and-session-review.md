@@ -166,3 +166,9 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 ## Resolution (2026-07-30)
 
 The one-character fix (`i` -> `_`) was committed (`d09f6693`) and deployed in a subsequent deploy. SearXNG builds cleanly with the DNS boot-race fix active. The `searxng-wait-dns` ExecStartPre runs successfully on boot.
+
+---
+
+## Item Resolution (2026-07-30)
+
+SC2034 fix. DONE: i→_ fix committed (d09f6693), deployed. Most items REJECTED as brainstorms (pre-commit hook, mkDnsGate helper, auto-git daemon docs).

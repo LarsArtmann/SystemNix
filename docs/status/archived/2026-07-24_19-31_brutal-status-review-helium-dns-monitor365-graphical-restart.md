@@ -256,3 +256,9 @@ The "Not started" items from the scorecard were later resolved:
 - **Overview StartLimitIntervalSec** — resolved in the PMA fix session.
 - **Monitor365 buffer purge** — resolved: `monitor365-schema-migrate` now sets `max_events_per_day = 1B` to drain the 597M backlog.
 - **Wildcard DNS removal** — the wildcard `*.home.lan` record is a documented no-op in dnsblockd (sdns does not support wildcard local records); all service subdomains are explicitly listed in `localSubdomains`.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Brutal status review. All 3 incidents DONE (deployed). Overview 503 + StartLimitIntervalSec resolved in later sessions. Resolution table at end of file covers all items.

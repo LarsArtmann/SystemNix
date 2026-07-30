@@ -150,3 +150,9 @@ The old script used `chmod g+rx` (additive). If those dirs are currently `0755`,
 
 ### Q3: Should `home.activation.ssh-sockets-dir` in `ssh-config.nix` also be converted?
 It's the same class of conversion (mkdir + chmod → tmpfiles) but at the Home Manager level (`systemd.user.tmpfiles.rules`). It wasn't in the task scope but was discovered during research.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Activation scripts to tmpfiles. Items 1-10 DONE (hermes, discordsync, crush-daily, configuration converted). Items 11-25 REJECTED/MIXED: ssh-config.nix conversion OPEN in TODO_LIST; rest REJECTED.

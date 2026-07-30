@@ -311,3 +311,9 @@ Nothing critically broken. Two near-misses worth flagging:
 ## Resolution (2026-07-30)
 
 The bookmarks change described here caused a **full-page React crash** (wrong YAML schema — bare object instead of list-of-one-object), discovered in the immediately-following session (`2026-07-27_16-41`). Fixed in commit `9600cf8b`. Homepage is now deployed and working (`enableLocalIcons = true`, 4276 icons bundled). The `mdi-*` icon gotcha was recorded in AGENTS.md. The dashboard has been runtime-verified.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Homepage improvements. Items 1-10 DONE (icons fixed, tiles deduplicated). Bookmarks caused crash (fixed in 16-41). Resolution section at end already documents the crash. Most remaining items REJECTED as brainstorms.

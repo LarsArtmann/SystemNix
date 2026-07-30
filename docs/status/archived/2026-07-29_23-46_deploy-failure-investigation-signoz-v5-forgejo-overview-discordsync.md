@@ -139,3 +139,9 @@ I verified 19 rules provision, but I never compared the provisioned rule names a
 2. **Is the Overview upstream (`github:LarsArtmann/overview`) a repo I should patch directly?** — The one-shot-discovery design is the root cause of the 503. I added a SystemNix watchdog as a workaround, but the real fix (retry discovery with backoff) belongs upstream. I don't know if you want me to invest in upstream Overview changes or keep the SystemNix workaround.
 
 3. **The deploy diff showed package bumps I didn't investigate** (`art-dupl 0.6.0 -> 0.6.1`, `buildflow`, `cqrs-lint`, `overview dae056d -> 206d6ad`). Were these intentional pre-session changes, or did the flake lock drift? I focused only on the 4 failures and didn't verify these upgrades are safe. Should I audit them?
+
+---
+
+## Item Resolution (2026-07-30)
+
+Deploy failure investigation. Items 1-20 DONE (SigNoz v5 API, Forgejo SSH keys, DiscordSync Turso fallback, Overview 503 watchdog — all deployed). Items 21-44 MIXED: Turso plan OPEN in TODO_LIST; always-firing rules resolved (14-27); rest REJECTED.

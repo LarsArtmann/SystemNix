@@ -206,3 +206,9 @@ This determines whether a dummy plug helps. If you physically swap cables, a dum
 ### Q3: Do you want the helium service to start automatically on boot/login, or only when you manually launch it?
 
 The current implementation starts with `graphical-session.target` (auto-start). Previously you launched Helium manually (the `spawn-at-startup` block in niri config doesn't include Helium). If you prefer manual launch with auto-restart-on-crash only, the `WantedBy` target should change. I can't determine your preference from the config.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Helium display crash. Items 1-10 DONE (helium.service deployed, AGENTS.md updated, SIGBUS minidump decoded). Items 11-50 MIXED: dummy plug REJECTED; DP-2 investigation REJECTED (documented); xwayland restart REJECTED; most are brainstorms.

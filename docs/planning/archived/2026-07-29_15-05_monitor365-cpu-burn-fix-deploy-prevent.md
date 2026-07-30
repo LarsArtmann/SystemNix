@@ -306,3 +306,9 @@ graph TD
 ## Resolution (2026-07-30)
 
 Plan executed across sessions `2026-07-29_15-44` and `2026-07-29_16-58`. **The plan's central root-cause assumption was WRONG** — the sync failures were NOT caused by 404/429 device-registration/rate-limiting. The actual root cause was a server-side DuckDB COALESCE NULL crash in the `version` column (`b900d3454`), which crash-looped the server → opened the agent's circuit breaker permanently → CPU busy-loop. Fixing the server crash (`COALESCE(tenants.version, 0)`) resolved everything. All 15 tasks were completed, including `CPUQuota=200%` in `harden()` (item 6), `go-commit` unpin verification (item 10), and libspa-sys build safety (item 11 — builds fine on master). The "Do NOT restart monitor365-server" advice (item 6 above) was wrong — the server WAS the problem.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Plan executed across sessions 15-44 and 16-58. Root cause assumption (404/429) was WRONG — actual root cause was server-side DuckDB COALESCE NULL crash (`b900d3454`). All 15 tasks completed. Resolution section above documents the actual outcome.

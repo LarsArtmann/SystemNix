@@ -145,3 +145,9 @@
 ## Resolution (2026-07-30)
 
 All resolved. The CPU busy-loop fix was pushed upstream (`f72cf1073`) and deployed in `2026-07-29_16-58`. The REAL sync root cause was NOT 404/429 — it was a server-side DuckDB COALESCE NULL crash (`b900d3454`) in the `version` column. The server crash-looped, causing the agent's circuit breaker to open → busy-loop. Fixing the server crash resolved the sync failures entirely. The `CPUQuota=200%` defense-in-depth was added to `harden()`. The libspa-sys pin was NOT needed — `[patch.crates-io]` builds fine on master. monitor365 + go-commit both unpinned to `ref=master` successfully.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Monitor365 CPU busy-loop. Items 1-10 DONE (fix pushed f72cf1073, deployed 16-58). Items 11-53 REJECTED. Real root cause was server COALESCE crash, not 404/429. Resolution section at end corrects the root cause.

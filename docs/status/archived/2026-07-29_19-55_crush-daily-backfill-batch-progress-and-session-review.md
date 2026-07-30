@@ -229,3 +229,9 @@ A batch job is backfilling cross-project insights for 31 dates that had **zero**
 ## Resolution (2026-07-30)
 
 Superseded. The batch completed (27/31), and a THIRD bug (`Yesterday()` timezone truncation) was found and fixed in `2026-07-29_22-05`. Full recovery by `2026-07-30_00-05`: all 46 dates have project + cross-project insights. The 5 dates with zero insights (2026-07-19 through 2026-07-25) were the timezone bug victims — all now resolved. Deployed (`0cb5ea6`).
+
+---
+
+## Item Resolution (2026-07-30)
+
+Crush-daily batch progress. Superseded by 22-05 and 00-05. All items resolved — batch completed, timezone bug found and fixed, full recovery. Resolution section at end.

@@ -245,3 +245,9 @@ I found that SigNoz provision has no `restartTriggers` and the 19 rules are like
 | Restraint judgment | 4/10 | Over-applied "restraint" to skip real work — 4 files that needed annotation were skipped |
 | Process discipline | 3/10 | Skipped mandatory quality gate, rationalized it, didn't investigate discrepancies |
 | **Overall** | **5/10** | Good output quality on what I did, but significant gaps in completeness and discipline |
+
+---
+
+## Item Resolution (2026-07-30)
+
+Docs-health meta-report. Items about annotating skipped reports DONE (this session). SigNoz rules investigated (resolved 07-21/14-27). go-commit pinned (resolved 07-18). Most items REJECTED as meta-process brainstorms.

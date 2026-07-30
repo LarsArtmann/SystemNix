@@ -202,3 +202,9 @@ _This report documents the gap between "code fixed" and "service running." The u
 ## Resolution (2026-07-30)
 
 Deployed and resolved. DiscordSync backend switched to `sqlite` (eliminates Turso free-plan 403 entirely). The upstream `IsQuotaExceeded` fallback (detects quota error → opens local replica as plain SQLite) is deployed as defense-in-depth. DiscordSync is healthy and running. See `2026-07-29_23-46` (`d7db5bfe`).
+
+---
+
+## Item Resolution (2026-07-30)
+
+Turso quota efficiency. Items 1-15 DONE (IsQuotaExceeded, circuit breaker backoff, committed). Items 16-41 REJECTED as brainstorms. Resolution section at end confirms deployment.

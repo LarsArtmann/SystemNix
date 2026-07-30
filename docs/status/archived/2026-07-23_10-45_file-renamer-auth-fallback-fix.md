@@ -131,3 +131,9 @@
 ---
 
 > **Update 2026-07-29:** The auth fallback fix was deployed and is working. File-renamer pin later updated to `eca4cb20` (master, includes vision-review-agent integration). The `restartTriggers` concern was resolved system-wide on 2026-07-29 (ALL provisioner oneshots got `restartTriggers` + `deploy.sh` restart loop). The "FULLY DONE" claims were premature (no runtime verification at time of writing) but held up after deploy. ZAI question is moot — Synthetic is the sole provider.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Auth fallback fix. DONE: deployed (eca4cb20), ErrorTypeAuth added upstream (8bf60bd), sops key provisioned, restartTriggers added system-wide. All 6 items resolved.

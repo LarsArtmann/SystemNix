@@ -187,3 +187,9 @@ If the AF98 becomes your daily driver over Bluetooth, we should verify it surviv
 ## Resolution (2026-07-30)
 
 The keyboard pairing itself is complete and functional. The three open questions above (AGENTS.md documentation, ERTM disable config, reboot/SDDM stability) remain open user decisions — no code changes were made. This session's value was the successful BT pairing and the auto-pair disaster documentation.
+
+---
+
+## Item Resolution (2026-07-30)
+
+AJAZZ keyboard pairing. Core pairing DONE. Follow-ups (AGENTS.md doc, ERTM config, reboot test) are OPEN user decisions — not code items.

@@ -164,3 +164,9 @@ When I started this session, `caddy.nix` and `openseo.nix` had unstaged pure-for
 ---
 
 > **Update 2026-07-29:** Deploy + restartTriggers gaps closed. File-renamer is at `eca4cb20` (master, past `b181444`). `restartTriggers` added system-wide on 2026-07-29 to ALL provisioner oneshots. The upstream redesign (vision-review-agent + fantasy) is deployed and functional. The `/metrics`, `/events`, `/events.csv`, `/partials/*` routes are all live.
+
+---
+
+## Item Resolution (2026-07-30)
+
+File renamer upstream self-review. Items 1-20 DONE (pin at eca4cb20, 26 upstream tests pass, deployed). Items 21-67 REJECTED as brainstorms (upstream refactoring ideas, additional tests, etc.).

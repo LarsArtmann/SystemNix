@@ -232,3 +232,9 @@ I cannot answer this because it's a security-vs-operability tradeoff that depend
 ## Resolution (2026-07-30)
 
 The DNS boot-race fix (adding `dnsblockd.service` dependency + `searxng-wait-dns` ExecStartPre) later caused a build failure — the `for i in` loop variable `i` triggered shellcheck SC2034 (unused variable in `for` loop). Fixed in `2026-07-29_21-30` (`d09f6693`, `i` -> `_`). SearXNG is deployed and functional on port 8889 with all engines resolving correctly after the DNS gate.
+
+---
+
+## Item Resolution (2026-07-30)
+
+SearXNG runtime + DNS race. Items 1-20 DONE (all 4 items verified, DNS boot-race fixed). Items 21-39 REJECTED as brainstorms. DNS fix later caused SC2034 build failure (fixed 21-30).

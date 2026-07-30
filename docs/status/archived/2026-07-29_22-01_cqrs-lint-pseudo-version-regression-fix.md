@@ -314,3 +314,9 @@ prevention is a CI guard against zero pseudo-versions in committed go.mod files.
 ## Resolution (2026-07-30)
 
 The SystemNix `flake.lock` was committed and deployed. cqrs-lint v0.2.2 builds successfully with the corrected go-finding v1.4.1 pseudo-version. The regression was caused by an auto-commit daemon reverting a correct fix — the systemic issue (auto-git commits broken code without build checks) remains open as a process improvement item.
+
+---
+
+## Item Resolution (2026-07-30)
+
+cqrs-lint pseudo-version fix. DONE: build fixed (649bcd5f), flake.lock committed/deployed. Most items REJECTED as brainstorms (CI guard, functional test).

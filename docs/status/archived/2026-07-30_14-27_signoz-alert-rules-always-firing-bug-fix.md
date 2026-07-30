@@ -253,3 +253,9 @@ I can add a Nix-level `assert` to `mkRule` that throws when `op == "above_or_equ
 - There may be other always-true combinations (`target=0` + `below` for negative-only metrics — unlikely but theoretically valid)
 
 Should I add the assertion, or just document the anti-pattern in AGENTS.md (which I already did)?
+
+---
+
+## Item Resolution (2026-07-30)
+
+No NEXT items — bug fix report. 4 always-firing rules fixed (target=0 → target=1), provision script v4, deployed, 19 rules verified. All work done.

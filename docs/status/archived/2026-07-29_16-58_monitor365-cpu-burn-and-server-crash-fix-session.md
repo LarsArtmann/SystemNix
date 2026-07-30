@@ -157,3 +157,9 @@ This session: discovered the server crash-loop via log analysis, fixed the root 
 2. **Is the "status is already online" warning in the server a problem?** Every event upload triggers `failed to set device online status during ingest error=status is already online`. Events ARE accepted (200). This looks like the server's `set_device_online()` is called redundantly on every upload batch, and the device is already online from the WS connection. Should this be suppressed upstream, or is it a sign of a deeper state management issue?
 
 3. **Should the CPUQuota=200% default be lowered for non-compute services?** 200% (2 cores) is generous for daemons like caddy, dnsblockd, forgejo — they typically use <5% CPU. A tighter cap (e.g., 100% or even 50%) would catch runaway loops sooner. But it risks throttling legitimate bursts (e.g., forgejo during git operations). What's the right balance between safety and headroom?
+
+---
+
+## Item Resolution (2026-07-30)
+
+No NEXT items — this is the resolution session. Server COALESCE crash fixed (b900d3454), deployed, 55K events uploaded. CPUQuota + CPU alerting added. All work done.

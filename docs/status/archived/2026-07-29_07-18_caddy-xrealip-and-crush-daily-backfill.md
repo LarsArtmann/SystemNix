@@ -241,3 +241,9 @@ Deploying applies the Caddy `proxyTo` changes AND would restart crush-daily (reh
 ### 3. What happened on 2026-06-24?
 
 The event store has NO `DailyDataCollected` event for 2026-06-24 (it jumps from 06-23 to 06-25). This means either the crush-daily service was down, the scheduler crashed, or the collection failed silently (no event written). I can't easily determine this without `journalctl --since "2026-06-24" --until "2026-06-25" -u crush-daily` (which requires root). Should I investigate, or is this old enough to skip?
+
+---
+
+## Item Resolution (2026-07-30)
+
+Caddy proxyTo + crush-daily backfill. Items 1-20 DONE (proxyTo generalized to all 9 directives, 45 dates backfilled). Items 21-64 MIXED: deploy items OPEN in TODO_LIST; backfill script integration DONE; most REJECTED as brainstorms.

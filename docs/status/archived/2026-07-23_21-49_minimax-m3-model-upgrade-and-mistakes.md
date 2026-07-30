@@ -188,3 +188,9 @@ The PMA daemon auto-committed my edit with the message `"feat(providers): add Mi
 ### 3. Should I deploy now, or wait?
 
 The flake changes are committed but not deployed. Should I run `nix run .#deploy` now to make M3 live, or do you want to verify the model name first? If M3 is wrong, deploying will break the PMA auto-commit daemon (every commit attempt will get a 404/model-not-found from MiniMax).
+
+---
+
+## Item Resolution (2026-07-30)
+
+MiniMax-M3 upgrade. Items 1-10 DONE (model verified valid: 1,147 commits in 7 days, zero errors). Items 11-55 REJECTED as brainstorms. go-commit pin concern resolved (unpinned to master).

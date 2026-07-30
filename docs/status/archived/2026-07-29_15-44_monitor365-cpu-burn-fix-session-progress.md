@@ -161,3 +161,9 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 ## Resolution (2026-07-30)
 
 Superseded by `2026-07-29_16-58`. The sync root cause was NOT 404/429 — it was a server-side DuckDB COALESCE NULL crash in the `version` column (`b900d3454`). The server crash-looped, causing the agent's circuit breaker to open permanently. Fixing the server crash resolved the sync failures and the CPU burn. All 15 plan tasks completed. `CPUQuota=200%` added to `harden()` as defense-in-depth. AI services got explicit overrides (ollama 400%, hermes 400%, immich-ml 300%).
+
+---
+
+## Item Resolution (2026-07-30)
+
+No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.

@@ -113,3 +113,9 @@
 2. **Should I deploy now, or are there other changes to batch into this deploy?** The SystemNix working tree also has an untracked status file from a previous session (`docs/status/2026-07-22_10-44_*`). Deploying now fixes the active bug; batching defers it.
 
 3. **Should the committed binary artifacts in go-commit (`4e1ef73`) be cleaned up?** This commit adds platform binaries (Darwin/Linux/Windows) directly to the git tree. This bloats the repo and is unusual for a Go library. Was this intentional (distribution mechanism) or a mistake by the PMA auto-commit daemon?
+
+---
+
+## Item Resolution (2026-07-30)
+
+PMA Unknown Author fix. Items 1-10 DONE (go-git config reader fixed, deployed e8380b44, go-commit tagged v0.4.0). Items 11-29 REJECTED as brainstorms (regression tests, audit, openRepo cleanup).

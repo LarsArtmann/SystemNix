@@ -236,3 +236,9 @@ In one session: five distinct bugs in crush-daily (one architectural, four code-
 Five bugs, one deploy, one read-model service restart, 29/29 smoke tests passing, real data flowing through the system. Bugs #1, #4, and #5 were each independently sufficient to make the dashboards silent — no single fix would have worked. The `file:` URI prefix bug (#5) in particular is the kind of thing that could survive in production for years because `sql.Open` doesn't fail, it just opens the wrong DB.
 
 The most important deliverable from this session is **not** any of the five bug fixes individually — it's the post-deploy-check assertion. That single grep against `/api/reports/<latest>` would have caught this entire outage within the first 24 hours of it occurring, never mind the 10 days it actually sat. Every other SystemNix-managed service that produces numerical reports should adopt the same pattern; that's the meta-lesson worth more than any individual fix.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Crush-daily fix execution. All 36 items DONE — 5 bugs fixed upstream (83cb19d, 4b94ed8, b8095de, 106b773), deployed, 29/29 smoke tests pass, backfill script wired.

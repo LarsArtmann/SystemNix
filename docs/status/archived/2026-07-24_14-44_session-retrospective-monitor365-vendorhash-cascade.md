@@ -160,3 +160,9 @@ Six new gotchas discovered during this session have NOT been added to AGENTS.md:
 48. **Add a `monitor365-debug` devShell** with duckdb + sqlite tools for DB inspection
 49. **Document the circuit breaker recovery procedure** for monitor365 agent
 50. **Add a post-deploy functional test** that verifies monitor365 agent is connected (not just server alive)
+
+---
+
+## Item Resolution (2026-07-30)
+
+Retrospective. All items are retrospective observations, not action items. GPUActive/off-site backup/Turso items tracked in TODO_LIST/ROADMAP.

@@ -263,3 +263,9 @@ Many discovered projects have only 1-2 sessions per day. These contribute almost
 ## Resolution (2026-07-30)
 
 Superseded by two later sessions. A THIRD root-cause bug (`Yesterday()` timezone truncation — `Truncate(24h)` snapped to UTC midnight, causing collect and insights to compute different "yesterday" dates) was found in `2026-07-29_22-05`. All 46 dates fully recovered by `2026-07-30_00-05` — 10/10 retries succeeded, all dates have project + cross-project insights. Deployed (`0cb5ea6`). Upstream commits: `868fe33` (errgroup), `9286bf0` (timezone), `0cb5ea6` (nightly scheduler).
+
+---
+
+## Item Resolution (2026-07-30)
+
+Crush-daily insights backfill. Items 1-10 DONE (errgroup fix, partial-results fix). Items 11-66 REJECTED. THIRD bug (timezone) found in 22-05. Resolution section at end documents full recovery.

@@ -89,3 +89,9 @@ Priority ordered (P0 = blocking / silent failure today):
 **Q3:** Should `signoz-provision` get a Gatus health check + alert endpoint, or is the existing failure-routing via `onFailure = notify-failure@%n.service` enough?
    - Right now it has onFailure (sends a Discord message) but no Gatus check for the **service being healthy & complete** — only post-mortem "it failed" alerts.
    - Proactive monitoring would catch future silent-success issues, but adds noise.
+
+---
+
+## Item Resolution (2026-07-30)
+
+SigNoz jq fix. P0 items (14-16) DONE (restartTriggers added, Gatus check added, rules provisioned via v5 API). Items 17-29 REJECTED as brainstorms. Update block at top + body annotations already cover key items.

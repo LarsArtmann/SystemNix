@@ -169,3 +169,9 @@ This requires refactoring `protectedVHost` to allow path exclusions, OR hand-rol
 The OpenSEO configuration is **functionally better** than before: latest version, telemetry opt-out, stale-process prevention, and declarative options for optional features. The v0.1.1 package builds and all flake checks pass.
 
 > **CORRECTION (2026-07-23 16:20):** The original claim that "the GSC OAuth callback behind protectedVHost is a known gap that would bite if GSC is enabled" was **wrong**. The callback is browser-initiated and would pass forward-auth regardless. A defensive vHost exemption was applied anyway, the callback path was verified against source, and runtime validation was added. AGENTS.md was updated. The MCP integration was not started (still valid).
+
+---
+
+## Item Resolution (2026-07-30)
+
+OpenSEO Nix improvements. Items 1-30 DONE (deployed, GSC callback verified, telemetry opt-out, validate script). Items 31-61 MIXED: MCP integration OPEN in TODO_LIST; D1 backup OPEN in TODO_LIST P0; rest REJECTED as brainstorms.

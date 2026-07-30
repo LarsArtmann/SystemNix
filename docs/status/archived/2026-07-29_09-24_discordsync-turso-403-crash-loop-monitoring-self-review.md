@@ -198,3 +198,9 @@ _This report was written after the user's prompt to research first. The first re
 ## Resolution (2026-07-30)
 
 Fully resolved. The Turso 403 quota issue was fixed upstream (`OpenTursoSync` now detects quota errors and falls back to local SQLite, commit in DiscordSync). The backend was switched to `sqlite` (eliminates Turso dependency entirely). DiscordSync is deployed and healthy. See `2026-07-29_14-04` (efficiency fix) and `2026-07-29_23-46` (deploy confirmation, `d7db5bfe`).
+
+---
+
+## Item Resolution (2026-07-30)
+
+DiscordSync Turso 403. Items 1-10 DONE (backend switched to sqlite, deployed d7db5bfe, Turso fallback added). Items 11-25 REJECTED as brainstorms. Resolution section at end confirms deployment.

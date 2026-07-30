@@ -163,3 +163,9 @@ Three independent issues were diagnosed and fixed in this session:
 2. **Was the Monitor365 server crash caused by DuckDB WAL corruption or something else?** The `monitor365-duckdb-heal` ExecStartPre exists and removes WAL files, but I don't know if it actually fired on the crash that started this cascade. The server logs I checked (from the last hour) show it healthy now. I'd need to check historical logs from when the cascade started (possibly days ago) to determine the original cause. Should I dig into historical logs, or is the WAL heal sufficient as a band-aid?
 
 3. **Should I deploy now, or do you want to review the watchdog user fix first?** The watchdog as written has a critical bug (runs as `monitor365` user, can't `systemctl start`). I need to fix this before deploying. But the DNS fix and the other Monitor365 layers (start limits, debounce, deploy.sh fix) are independent and ready. Do you want me to fix the watchdog and deploy everything together, or deploy the ready parts now?
+
+---
+
+## Item Resolution (2026-07-30)
+
+Session review of 3 incident fixes. All 3 incidents DONE (helium, DNS, monitor365 deployed). Remaining items are process observations. watchdog bug FIXED (runs as root).

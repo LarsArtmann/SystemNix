@@ -86,3 +86,9 @@ Binder Error: Table "tenants" does not have a column named "version"
 - **Use `--no-update-lock-file`** when building to prevent nix from modifying the lock
 - **DuckDB ALTER TABLE doesn't support constraints** — use bare column type, rely on COALESCE in queries
 - **Check for concurrent modifications** before editing files in a shared repo
+
+---
+
+## Item Resolution (2026-07-30)
+
+No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.

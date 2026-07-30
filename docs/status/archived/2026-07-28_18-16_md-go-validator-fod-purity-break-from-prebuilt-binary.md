@@ -363,3 +363,9 @@ The real fix is upstream: remove the committed binary.
 ## ⚠️ RESOLVED — See `2026-07-28_23-01_md-go-validator-fod-resolved-upstream-already-fixed.md`
 
 `go-branded-id@v0.5.1` already moved `namer` to source-only. SystemNix `flake.lock` already pinned the fix (`b99e5fe`). The `stripPrebuiltGoBinaries` band-aid was removed. All 8 lars-packages verified building cleanly. Deploy succeeded. This report's unverified workaround is **obsolete** — do not use it.
+
+---
+
+## Item Resolution (2026-07-30)
+
+md-go-validator FOD break. DONE: resolved upstream (go-branded-id v0.5.1 removed binary). Band-aid removed. All 8 items resolved.

@@ -247,3 +247,9 @@ The root causes are fixed and all code is pushed to GitHub. The insteadOf remova
 ## Resolution (2026-07-30)
 
 **The headline change (`git insteadOf` removal) was REVERTED** on 2026-07-30 by explicit user demand (`2026-07-30_15-53`, commit `502020e7`). The `url.git@github.com:.insteadof=https://github.com/` rule is back in effect. All OTHER changes in this session (go-atomic-write v0.4.1, mr-sync tests passing, go-cqrs-lite lock cleanup) remain deployed and valid. AGENTS.md updated to document the restoration.
+
+---
+
+## Item Resolution (2026-07-30)
+
+mr-sync insteadOf + go-atomic-write v0.4.1. Items 1-15 DONE (all pushed/tagged/deployed). Items 16-50 REJECTED. insteadOf removal was REVERTED on user demand (15-53). Resolution section at end documents the reversal.

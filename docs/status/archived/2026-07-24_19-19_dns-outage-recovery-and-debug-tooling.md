@@ -156,3 +156,9 @@
 ---
 
 > **Update 2026-07-29:** The Overview 503 was traced to PMA's discovery daemon being down (the `Type=notify` without `sd_notify` bug — PMA crash-looped, socket never appeared, Overview fell back to local discovery which OOM-looped). Fixed: SystemNix overrides PMA to `Type=exec`. PMA's `DefaultChain()` vs `DefaultChainFromEnv()` bug was also fixed upstream (`d1d013d2`). The `StartLimitIntervalSec` placement bug was resolved. DNS outage root cause (dnsblockd cache CNAME-chase bug) was fixed upstream.
+
+---
+
+## Item Resolution (2026-07-30)
+
+DNS outage recovery. Items 1-20 DONE (debug tools installed, dns-diagnostics.sh rewritten, Overview 503 traced to PMA Type=notify bug). Items 21-69 MIXED: DNS root cause (CNAME-chase) DONE upstream; most remaining items REJECTED as brainstorms. Off-site backup OPEN in TODO_LIST P0.

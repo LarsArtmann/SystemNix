@@ -162,3 +162,9 @@
 2. **Is SearXNG supposed to be on port 8888?** The post-deploy-check expects `http://localhost:8888/healthz` but the service log says "Port 8888 is in use by another program." Something else is on 8888 — is this a port collision in `lib/ports.nix`, or a stale process from a previous config?
 
 3. **Should I annotate the predecessor report (18:16) inline or just write a resolution note at the bottom?** The predecessor contains 50 next-steps that are now mostly moot. Annotating every item would be noisy; a resolution header might be cleaner. What's the preferred style?
+
+---
+
+## Item Resolution (2026-07-30)
+
+md-go-validator resolution. DONE: go-branded-id v0.5.1 fixed, band-aid removed, all 8 lars-packages verified, deployed. Items are forward-looking brainstorms — most REJECTED. cqrs-lint/mr-sync items resolved in later sessions.

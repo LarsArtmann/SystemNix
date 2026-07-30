@@ -215,3 +215,9 @@ The auto-git daemon committed my `.nix` edits before `alejandra` ran. Running `a
 The migration task is **functionally complete and verified** (shellcheck + `nix flake check --no-build`). All 8 shell script derivations now use `writeShellApplication` with explicit `runtimeInputs`. Two genuine bugs were caught and fixed (template `program = <derivation>` → `lib.getExe`, and SC2012 `ls|head` → `find|sort`).
 
 **The main quality gap is formatting** — the auto-git daemon committed before `alejandra` ran. Secondary gap: no real nix build or deploy verification. The monitor365 behavior change (`set -e` on cp) should be confirmed as intentional.
+
+---
+
+## Item Resolution (2026-07-30)
+
+writeShellApplication migration. Items 1-10 DONE (8 scripts migrated, bugs fixed, shellcheck clean). Items 11-53 REJECTED as brainstorms (pre-commit guard, testing, etc.).

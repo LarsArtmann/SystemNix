@@ -183,3 +183,9 @@ Run `nix run .#deploy` on evo-x2 to apply the Caddy vhost change, then validate 
 
 (Question 1 from the original report — "canonical subdomain" — is now resolved.)
 
+
+---
+
+## Item Resolution (2026-07-30)
+
+dnsblock.home.lan outage. DONE: Caddy vHost added, deployed, dnsblock.home.lan serving. Subdomain canonicalized in follow-up (14-50). All items resolved.

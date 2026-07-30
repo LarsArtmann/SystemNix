@@ -83,3 +83,9 @@ The persistent Turso 403 (`SQL read operations are forbidden`) was addressed by 
 1. **Gatus check trade-off.** ✅ Keeping `/healthz` with `[STATUS] == 200`. The 60s interval tolerates the thumb-hash backfill startup window; it correctly detected the crash-loop and connection failures, while `/readyz` with `< 400` missed them.
 2. **Turso 403.** ✅ Switched the module default backend to `sqlite` (local-only). The 403 is a Turso plan/billing restriction (`SQL read operations are forbidden`). Revert to `turso-sync` if the Turso plan is upgraded and cloud replication is desired.
 3. **Upstream commit flow.** ✅ Fix was pushed directly to `master` on `github.com/LarsArtmann/DiscordSync` (commit `d785fdfa` for the test plus the auto-daemon commits containing the functional fix).
+
+---
+
+## Item Resolution (2026-07-30)
+
+No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.

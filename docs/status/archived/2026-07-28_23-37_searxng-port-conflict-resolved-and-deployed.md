@@ -228,3 +228,9 @@ SearXNG logs this as ERROR level every time a direct localhost request arrives w
 - (C) Move health checks to go through Caddy instead of localhost
 
 I can't decide because I don't know if ERROR-level log noise is acceptable in this homelab's operational standards, or if it would trigger alerting.
+
+---
+
+## Item Resolution (2026-07-30)
+
+No NEXT items — this is a deploy progress report. sops crush-daily issue resolved in 00-05 follow-up. All work done.

@@ -280,3 +280,9 @@ page in a browser.
 ## Resolution (2026-07-30)
 
 The fix (`9600cf8b`) was deployed in a subsequent deploy. Homepage dashboard is running and functional (FEATURES.md: ✅). The bookmarks schema lesson was recorded in AGENTS.md gotchas. The `mdi-*` icon gotcha and "bare object vs list-of-one-object" YAML schema both documented.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Homepage bookmark crash fix. DONE: fix committed (9600cf8b), deployed. Resolution section at end confirms deployment. Remaining items REJECTED as brainstorms.

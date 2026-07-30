@@ -88,3 +88,9 @@ Nothing relevant to this session's scope.
 2. **Is the locality tradeoff acceptable?** Moving `programs.chromium` (SearXNG integration) next to `programs.obs-studio`/`programs.fish` satisfies statix but groups unrelated concerns. Alternative: extract a `programs` block that's more deliberately organized, or move some of these into their own modules. Your call on whether statix compliance is worth the reduced locality.
 
 3. **Should `programs.chromium` live in `configuration.nix` at all?** The SearXNG integration (`extraOpts` for default search engine) is tightly coupled to the SearXNG service. It could arguably move into `modules/nixos/services/searxng.nix` (the module that enables SearXNG), keeping the browser-integration config next to the service it depends on. Would you prefer that extraction?
+
+---
+
+## Item Resolution (2026-07-30)
+
+Statix repeated keys fix. DONE: committed (3f113a0e), statix clean, nix eval passes. All 12 items resolved (mostly process observations).

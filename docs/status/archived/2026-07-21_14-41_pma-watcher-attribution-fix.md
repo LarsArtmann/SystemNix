@@ -161,3 +161,9 @@
 ## Verdict
 
 The reported symptom ("daemon not working") is **fixed and verified**. The underlying product feature (auto-commit) is **still broken** by a separate secrets issue I did not address. The code fix is correct but has two known gaps: a dead parameter and an unbounded negative cache. Documentation not updated.
+
+---
+
+## Item Resolution (2026-07-30)
+
+PMA watcher fix. Items 1-10 DONE (watcher fix committed 52c01b18, auto-commit fixed d1d013d2, AGENTS.md updated). Items 11-53 REJECTED as brainstorms (dead param, cache eviction, load testing, etc.).

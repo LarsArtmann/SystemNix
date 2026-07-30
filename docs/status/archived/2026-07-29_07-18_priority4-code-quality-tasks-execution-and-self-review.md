@@ -173,3 +173,9 @@
 2. **Should I remove the `samber-do-auditlog` top-level flake input entirely?** It resolves to v0.8.1 (not the declared v0.5.0), no service depends on the pin, and the v0.5.0 premise was wrong (cmdguard v3.1.0 needs v0.7.0+). Removing it would clean up the flake, but it was explicitly requested in the original TODO. Your call.
 
 3. **The `go-cqrs-lite` lock entry is `flake: false` with an SSH URL, but flake.nix declares a GitHub URL — `nix flake lock --update-input go-cqrs-lite` silently does nothing.** Do you know why this lock is stuck? Is there a manual lock surgery needed, or should I `rm flake.lock && nix flake lock` from scratch (risky — would update ALL inputs)?
+
+---
+
+## Item Resolution (2026-07-30)
+
+Priority 4 code quality. Items 1-20 DONE (ssh-config tmpfiles, runtimeInputs audit, go-commit pin, mr-sync re-enabled, signoz split, cqrs-lint). Items 21-60 REJECTED as brainstorms. samber-do-auditlog pin removed (dead code).

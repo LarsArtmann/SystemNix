@@ -297,3 +297,9 @@ collected = set(r[0] for r in conn.execute(\"SELECT DISTINCT json_extract(payloa
 print(f'Missing: {sorted(collected - cross)}')
 "
 ```
+
+---
+
+## Item Resolution (2026-07-30)
+
+Crush-daily capstone. Items 1-20 DONE (46/46 dates complete, deployed, nightly scheduler fixed). Items 21-71 MIXED: event-store compaction OPEN in TODO_LIST; reclassify ErrNoDataCollected REJECTED; cost data verification OPEN; most REJECTED as brainstorms.
