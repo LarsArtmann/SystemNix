@@ -33,6 +33,10 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **USB printing support** — added to NixOS hardware configuration
 - **Homepage local icons** — `enableLocalIcons = true` bundles 4276 dashboard icons (was defaulting to false, producing ~25 browser 404s per page load)
 - **SearXNG** — privacy-focused metasearch engine on port 8889 (`search.home.lan`). Built-in Granian ASGI server, dedicated Redis (unix socket, isolated from Immich), auto-generated secret key (not sops — machine-local random). Layer 2 SSO via oauth2-proxy (no native OIDC support). Rate limiter with trusted proxies (Caddy) + LAN `pass_ip`. POST-only search (queries not in URLs/logs), dark mode, favicon caching (DuckDuckGo resolver). Browser default search engine integration via Chromium policy (`DefaultSearchProviderSuggestURL` proxied through SearXNG). `restartTriggers` on settings + limiter config + package
+- **CPUQuota=200% default in `harden()`** — ALL services now get a 2-core hard CPU cap by default, preventing CPU runaway from code bugs (monitor365 busy-loop incident). AI services (ollama 400%, hermes 400%, immich-ml 300%, minecraft 300%, whisper-asr 300%) have explicit overrides
+- **Per-service CPU alerting** — `system-health.nix` tracks `CPUUsageNSec` per monitored service, emits `system_service_cpu_percent` + `system_service_cpu_over_threshold` (threshold=150%). Gatus "CPU Runaway (Any Service)" alert fires on Discord
+- **Overview 503 watchdog** — timer (every 2 min) restarts Overview when it returns 503 BUT the PMA discovery daemon is healthy. ExecStartPre gate waits for daemon `/v1/health` before starting Overview
+- **/tmp cleanup timer** — `nix-build-cleanup-timer` variant removes /tmp entries untouched >4h (every 4h + on boot). `/tmp` tmpfs cap raised from 16 GiB to 48 GiB
 
 ### Changed
 
@@ -60,6 +64,10 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Caddy `proxyTo` generalized** — ALL reverse_proxy directives now use `${proxyTo PORT}` (was only `protectedVHost`). Forgejo, SigNoz, Gatus, Pocket ID, oauth2-proxy, OpenSEO, Monitor365 all get `X-Real-IP` header.
 - **monitor365 Wayland deps** — added `grim`, `slurp`, `wtype` alongside legacy X11 tools (`xdotool`, `xprintidle`, `scrot`). Functional on niri (Wayland-only).
 - **Crush Daily backfill** — `scripts/crush-daily-backfill.py` wired as `nix run .#crush-daily-backfill`. All 45 zero-data dates (2026-06-11 through 2026-07-26) backfilled.
+- **monitor365 + go-commit unpinned to `ref=master`** — both were temporarily pinned to specific commits (monitor365 `0615301` for libspa-sys bindgen, go-commit `v0.4.0` for go-git config fix). Both issues resolved upstream; unpinned safely
+- **Monitor365 daily event limit override** — `monitor365-schema-migrate` sets `max_events_per_day = 1000000000` (1B) on every run, overriding upstream 10K/day default. The 597M backlog drains in ~1 day instead of ~163 years
+- **PMA MemoryMax raised to 12G** — upstream `MemoryMax=8G` was too low for project-discovery daemon re-scanning ~293 projects on restart (OOM-kill). Steady state is far lower; the spike is transient
+- **git insteadOf restoration** — the `url.git@github.com:.insteadof=https://github.com/` rule was removed (`2026-07-29`) to prevent SSH-URL lock pollution, then restored on user demand (`2026-07-30`, `502020e7`). AGENTS.md documents both the risk and the restoration
 
 ### Removed
 
@@ -103,6 +111,18 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **sops crush-daily user mismatch** — secrets owned by non-existent `crush-daily` system user blocked ALL secret deployment atomically (`failed to lookup user 'crush-daily'`). Fixed to `owner = primaryUser; group = "users"` (same pattern as file-and-image-renamer)
 - **Crush Daily SQLite DSN** — `sql.Open("sqlite", dbPath+"?_loc=...")` without `file:` URI prefix opened in-memory DB. Fixed to `sql.Open("sqlite", "file:"+dbPath+"?_loc=auto&_time_format=sqlite")` (upstream `83cb19d`)
 - **Crush Daily HTML template** — Go 1.26 `html/template` reverted `printf` arg order — `{{"%.2f"|printf .TotalCost}}` triggered type error. Fixed to `{{printf "%.2f" .TotalCost}}` (upstream `b8095de`)
+- **SigNoz always-firing alert rules** — four rules used `target=0` with `above_or_equal` (the default), meaning "alert when metric >= 0" — mathematically always true. Three rules (`service-down`, `nvme-critical-warning`, `nvme-media-errors`) were permanently `state: firing`. Fixed all to `target=1` (`2026-07-30_14-27`)
+- **SigNoz v5 alerting API format** — SigNoz 0.127.1 replaced the legacy `{"data":{"rule":{...}}}` payload. Migrated to the flat v5 schema with `condition.compositeQuery`, `preferredChannels`, `ruleType: promql_rule`
+- **SigNoz provisioner `|| true` anti-pattern** — all POST calls swallowed errors (always exit 0). Replaced with HTTP status code checking + final verification step asserting rules >0
+- **Monitor365 server COALESCE NULL crash** — `tenants.version`/`users.version` columns contained NULL in legacy rows from projection replay. Restored `COALESCE(tenants.version, 0)` with qualified table prefix (avoids DuckDB alias-shadow binder error)
+- **Monitor365 CPU busy-loop** — circuit breaker + early-flush path bypassed backoff sleep when buffer had >=200 events. With CB open (1.15M failures), loop busy-spun at ~16Hz burning 295% CPU for 23+ hours. Fixed upstream (`f72cf1073`)
+- **DiscordSync Turso quota hard-fail** — `OpenTursoSync` retried 3x then HARD-FAILED (exit 69) on Turso 403 quota exhaustion, crash-looping to `start-limit-hit`. Now detects quota error and falls back to local SQLite
+- **Forgejo SSH keys GET endpoint** — Forgejo removed GET on `/api/v1/admin/users/{u}/keys` (returns 405). Switched dedup GET to public `GET /api/v1/users/{u}/keys`
+- **SearXNG engine init DNS race** — engines calling network during `init()` (wikidata, radio-browser) failed with DNS errors at boot and stayed permanently disabled. Added `dnsblockd.service` dependency + `searxng-wait-dns` ExecStartPre gate
+- **Crush Daily insights errgroup cancellation** — `errgroup.WithContext` cancelled ALL goroutines on first transient API failure. Replaced with plain `errgroup.Group` + mutex-guarded error slice (upstream `868fe33`)
+- **Crush Daily timezone bug** — `Yesterday()` used `time.Now().Truncate(24h)` which snaps to UTC midnight, not local midnight. Collect (00:30 CEST) and insights (03:00 CEST) computed different dates. Fixed to `time.Date()` with local location (upstream `9286bf0`)
+- **PMA discovery OOM during restart** — daemon re-scans ~293 projects on every restart, spiking memory past `MemoryMax=8G`. Raised to `12G`
+- **Overview 503 on deploy** — Overview runs discovery ONCE at startup, caches nil on timeout → permanent 503. Three-layer fix: ExecStartPre gate, `partOf` PMA restart, watchdog timer
 
 ### Disabled
 
