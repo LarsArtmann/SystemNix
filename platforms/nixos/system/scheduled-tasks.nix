@@ -515,14 +515,14 @@ in
       tmp-cleanup = {
         description = "Remove stale top-level entries in /tmp untouched for >4h";
         inherit onFailure;
-        serviceConfig =
-          harden {
+        serviceConfig = lib.mkMerge [
+          (harden {
             MemoryMax = "128M";
             ProtectHome = true;
             PrivateTmp = false; # MUST see the real /tmp, not a private tmpfs
             ReadWritePaths = [ "/tmp" ];
-          }
-          // {
+          })
+          {
             Type = "oneshot";
             ExecStart =
               let
@@ -535,7 +535,8 @@ in
                   text = ''
                     THRESHOLD_MIN=240 # 4 hours — active builds touch files constantly
 
-                    before_kb=$(du -sk /tmp 2>/dev/null | cut -f1 || echo 0)
+                    # -x prevents crossing into bind-mounted filesystems under /tmp
+                    before_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || echo 0)
 
                     removed=0
                     # Only top-level non-dotfile entries — dotfiles (.X11-unix, .font-unix,
@@ -543,7 +544,8 @@ in
                     # removing dirs that contain recently-touched files (active builds
                     # writing into a dir created hours ago: dir mtime stays old but file
                     # mtimes are fresh). This is MORE conservative than cleanOnBoot (which
-                    # wipes everything on reboot).
+                    # wipes everything on reboot). -xdev prevents find from descending
+                    # into mount points on other filesystems (defense-in-depth).
                     for entry in /tmp/*; do
                       [ -e "$entry" ] || continue
                       [ -L "$entry" ] && continue  # never follow symlinks
@@ -551,13 +553,13 @@ in
                       [ -p "$entry" ] && continue  # skip named pipes
                       # If ANY descendant was touched in the last THRESHOLD_MIN, the
                       # entry is active — skip it.
-                      if find "$entry" -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
+                      if find "$entry" -xdev -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
                         continue
                       fi
-                      rm -rf -- "$entry" && removed=$((removed + 1))
+                      rm -rf --one-file-system -- "$entry" && removed=$((removed + 1))
                     done
 
-                    after_kb=$(du -sk /tmp 2>/dev/null | cut -f1 || echo 0)
+                    after_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || echo 0)
                     freed_kb=$((before_kb - after_kb))
                     freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
                     echo "tmp-cleanup: removed $removed stale entries, freed $freed_human from /tmp"
@@ -567,7 +569,8 @@ in
               "${tmpCleanup}/bin/tmp-cleanup";
             StandardOutput = "journal";
             StandardError = "journal";
-          };
+          }
+        ];
       };
 
       disk-growth-check = {
