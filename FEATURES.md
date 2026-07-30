@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-07-29 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-07-30 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,7 +25,7 @@ _A brutally honest audit of every feature the project actually has._
 | Feature                                   | Status | Notes                                                                                                                                    |
 | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Cross-platform Nix flake (Darwin + NixOS) | ✅     | Single flake, two systems, 80% shared via `platforms/common/`                                                                            |
-| flake-parts modular architecture          | ✅     | 43 modules auto-discovered (37 services + 6 desktop). Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
+| flake-parts modular architecture          | ✅     | 44 modules auto-discovered (38 services + 6 desktop). Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
 | Shared overlays (Darwin + NixOS)          | ✅     | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync                                                                     |
 | Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer                                                        |
 | Shared Home Manager config                | ✅     | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs`                                                                               |
@@ -67,7 +67,7 @@ _A brutally honest audit of every feature the project actually has._
 | Homepage Dashboard                    | ✅     | `homepage.nix`                       | Catppuccin Mocha, programmatic `mkGroup`/`mkService` tiles, 5 categories, `ALLOWED_HOSTS`, cache dir, conditional tiles per service                                                                                                                                                                                                                                                                                                           |
 | Immich (photo/video management)       | ✅     | `immich.nix`                         | PostgreSQL + Redis + ML, OAuth via Pocket ID, daily DB backup, VA-API hardware transcoding (H.264/HEVC/AV1), ML GPU access                                                                                                                                                                                                                                                                                                                    |
 | ~~PhotoMap AI~~                       | ❌     | —                                    | Removed (2026-07-04): OCI container permission issue, niche feature, maintenance burden                                                                                                                                                                                                                                                                                                                                                       |
-| SigNoz (observability)                | ✅     | `signoz.nix`                         | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 18 alert rules, custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics                                                                                                                                                                                                                  |
+| SigNoz (observability)                | ✅     | `signoz.nix`                         | Full-stack: traces/metrics/logs, ClickHouse, OTel Collector, node_exporter, cadvisor, 19 alert rules provisioned (v5 API, all verified `state: inactive`), custom `signoz.target` (decoupled from boot), JWT auto-generation, dashboard provisioning, PSI memory pressure metrics, CPUQuota=200% on all services                                                                                                                                                                                                                  |
 | TaskChampion (Taskwarrior sync)       | ✅     | `taskchampion.nix`                   | Port 10222, TLS via Caddy, no forward auth, 100 snapshots / 14 days                                                                                                                                                                                                                                                                                                                                                                           |
 | Twenty CRM                            | ⚠️     | `twenty.nix`                         | Docker Compose (4 containers), PostgreSQL + Redis, sops secrets, daily DB backup, Caddy at crm.home.lan. **Known issue:** `twenty-server` crash-loops with `FATAL: role "twenty" does not exist` (PG role mismatch). Data intact (90 tables, 17 MB).                                                                                                                                                                                          |
 | Dozzle (Docker log viewer)            | ✅     | inline `configuration.nix`           | OCI container, `logs.home.lan`, Docker socket mount, 300-line tail, running-only filter                                                                                                                                                                                                                                                                                                                                                       |
@@ -446,7 +446,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | ~~PhotoMap AI~~   | Removed (2026-07-04) — module, port, Docker image all cleaned up            | —        |
 | Multi-WM (Sway)   | Enabled as backup compositor at SDDM login — may have minor bitrot          | Low      |
 | Twenty CRM        | `twenty-server` crash-loops with PG role mismatch — data intact, app down   | Medium   |
-| SigNoz alerts     | 19 alert rules NOT provisioned — jq path bug fixed but oneshot never re-ran | Medium   |
+| SigNoz alerts     | 19 alert rules provisioned and verified (v5 API, all `state: inactive`). 4 always-firing rules fixed 2026-07-30 (`target=0` + `above_or_equal` = always true). 20th rule silently dropped — investigation pending | Medium   |
 | Voice agents      | Disabled in configuration, Whisper Docker + ROCm pipeline                   | Medium   |
 | Minecraft         | Disabled in configuration                                                   | Low      |
 | Benchmark scripts | Planned but never created                                                   | Low      |
@@ -530,7 +530,7 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 
 | Category                   | Count    |
 | -------------------------- | -------- |
-| NixOS service modules      | 43       |
+| NixOS service modules      | 44       |
 | Custom packages            | 24       |
 | Cross-platform programs    | 20+      |
 | NixOS desktop components   | 16+      |
@@ -541,9 +541,9 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 | Architecture patterns      | 7        |
 | ADRs                       | 13       |
 | GitHub Actions             | 2        |
-| Gatus health endpoints     | 66       |
+| Gatus health endpoints     | 68       |
 | Sops secret files          | 12       |
-| **Total enabled features** | **~190** |
+| **Total enabled features** | **~195** |
 | Planned/disabled           | ~8       |
 | Known gaps                 | 12       |
 
