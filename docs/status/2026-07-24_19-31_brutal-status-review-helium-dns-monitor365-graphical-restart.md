@@ -246,3 +246,13 @@ The deploy diff showed openseo jumping from 0.0.2 to 0.1.1 (+478 MiB). This is a
 | **Deploy result** | 26 PASS / 0 FAIL (for SystemNix-managed services) | Overview 503 is pre-existing PMA dependency issue |
 
 **Overall assessment:** The three original incidents are resolved and deployed. The session exposed two systemic gaps: (1) I don't read deploy output comprehensively, and (2) I skip verification steps when things "pass." Both are process discipline issues, not technical ones.
+
+---
+
+## Resolution (2026-07-30)
+
+The "Not started" items from the scorecard were later resolved:
+- **Overview 503 recovery** — traced to PMA's `Type=notify` without `sd_notify(1)` bug; fixed by overriding to `Type=exec` + a discovery watchdog timer (2026-07-29).
+- **Overview StartLimitIntervalSec** — resolved in the PMA fix session.
+- **Monitor365 buffer purge** — resolved: `monitor365-schema-migrate` now sets `max_events_per_day = 1B` to drain the 597M backlog.
+- **Wildcard DNS removal** — the wildcard `*.home.lan` record is a documented no-op in dnsblockd (sdns does not support wildcard local records); all service subdomains are explicitly listed in `localSubdomains`.

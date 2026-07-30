@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-27 14:20 CEST
 **Trigger:** `nh os switch .` failed with `signoz-provision.service` exiting 5/NOTINSTALLED
-**Outcome:** Deploy unblocked, all 28 smoke checks PASS, signoz rules endpoint still empty (see "Open Issues")
+**Outcome:** ~~Deploy unblocked, all 28 smoke checks PASS, signoz rules endpoint still empty (see "Open Issues")~~ — Deploy unblocked; rules endpoint now populated (see Resolution below)
 
 ---
 
@@ -28,10 +28,7 @@ A 4-month-old jq path bug in `signoz-provision` returned the right answer by acc
 
 ## b) PARTIALLY DONE
 
-7. **Signoz alert rule provisioning** — partially:
-   - The fix is **deployed**, so any future fresh run of `signoz-provision` will work correctly.
-   - The single new discord channel from the prior failed deploy persists.
-   - The 19 alert rules from `_signoz-alerts.nix` are NOT in the API yet (see "Open Issues" below).
+7. ~~**Signoz alert rule provisioning** — partially: The fix is **deployed**, so any future fresh run of `signoz-provision` will work correctly. The single new discord channel from the prior failed deploy persists. The 19 alert rules from `_signoz-alerts.nix` are NOT in the API yet (see "Open Issues" below).~~ — DONE: All 19 rules provisioned after the v5 API migration (2026-07-29) + `restartTriggers` + `deploy.sh` provisioner restart loop. Verified 0 errors, all `state: inactive` (2026-07-30).
 
 ## c) NOT STARTED (Scope of this session was narrowly the deploy crash)
 
@@ -60,9 +57,9 @@ A 4-month-old jq path bug in `signoz-provision` returned the right answer by acc
 
 Priority ordered (P0 = blocking / silent failure today):
 
-14. **[P0]** Manually reset and start `signoz-provision.service` to populate the empty rules endpoint. Right now SigNoz has 0 alert rules deployed. The fixes are in `/run/current-system/etc/systemd/system/signoz-provision.service`, the script just hasn't been triggered.
-15. **[P0]** Add `restartTriggers` to all SystemNix provisioner oneshot services (`signoz-provision`, `pocket-id-provision`, `forgejo-generate-token`, `forgejo-oidc-setup`, `forgejo-ssh-keys`, `forgejo-github-sync`, `forgejo-ensure-repos`, `openseo-validate`, `monitor365-duckdb-heal`, `twenty-fix-collation`, `dnsblockd-attach-ip`).
-16. **[P0]** Add a Gatus check `SigNoz Alert Rules Loaded → http://127.0.0.1:8080/api/v1/rules → [BODY].data.rules length > 15`.
+14. ~~**[P0]** Manually reset and start `signoz-provision.service` to populate the empty rules endpoint.~~ DONE: provisioner now has `restartTriggers` + `deploy.sh` restart loop; v5 API migration completed 2026-07-29.
+15. ~~**[P0]** Add `restartTriggers` to all SystemNix provisioner oneshot services.~~ DONE: 8 provisioners now have `restartTriggers`; `deploy.sh` explicitly restarts all provisioners after `nh os switch`.
+16. ~~**[P0]** Add a Gatus check `SigNoz Alert Rules Loaded`.~~ DONE: Prometheus textfile collector (`system_signoz_alert_rules_total`) + Gatus alert. Post-deploy-check hard-fails if 0 rules provisioned.
 17. **[P1]** Replace per-shape jq paths in `signoz.nix` with a defensive helper (try `.data[]`, `.data.rules[]`, etc.) so future SigNoz API changes don't crash the provisioner.
 18. **[P1]** Audit ALL `curl -sf ... || true` patterns across SystemNix — silent POST failures can hide entire service classes. Fix each one to log HTTP status.
 19. **[P1]** Update AGENTS.md with the new gotcha: "SigNoz `/api/v1/channels` returns `{data:[...]}` but `/api/v1/rules` returns `{data:{rules:[...]}}` — different envelopes for the same concept. Defensive jq needed."

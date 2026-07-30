@@ -181,3 +181,9 @@ The pairing succeeded, but I observed `le-connection-abort-by-local` errors befo
 ### 3. Do you want the keyboard to be the primary input device, replacing the wired SEMICO connection?
 
 If the AF98 becomes your daily driver over Bluetooth, we should verify it survives reboots, works in the display manager (SDDM), and handles sleep/wake correctly. If it's a secondary/travel keyboard, the current setup is sufficient. What's the intended use?
+
+---
+
+## Resolution (2026-07-30)
+
+The keyboard pairing itself is complete and functional. The three open questions above (AGENTS.md documentation, ERTM disable config, reboot/SDDM stability) remain open user decisions — no code changes were made. This session's value was the successful BT pairing and the auto-pair disaster documentation.

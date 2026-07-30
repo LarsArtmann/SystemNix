@@ -305,3 +305,9 @@ Nothing critically broken. Two near-misses worth flagging:
 - `nix run .#pre-deploy-check`
 - `nix run .#post-deploy-check`
 - Browser inspection of `https://dash.home.lan`
+
+---
+
+## Resolution (2026-07-30)
+
+The bookmarks change described here caused a **full-page React crash** (wrong YAML schema — bare object instead of list-of-one-object), discovered in the immediately-following session (`2026-07-27_16-41`). Fixed in commit `9600cf8b`. Homepage is now deployed and working (`enableLocalIcons = true`, 4276 icons bundled). The `mdi-*` icon gotcha was recorded in AGENTS.md. The dashboard has been runtime-verified.

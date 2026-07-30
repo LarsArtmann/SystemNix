@@ -274,3 +274,9 @@ page in a browser.
 - `nix run .#deploy`
 - `nix run .#post-deploy-check`
 - Browser inspection of `https://dash.home.lan` — **the only verification that would have caught the original bug**
+
+---
+
+## Resolution (2026-07-30)
+
+The fix (`9600cf8b`) was deployed in a subsequent deploy. Homepage dashboard is running and functional (FEATURES.md: ✅). The bookmarks schema lesson was recorded in AGENTS.md gotchas. The `mdi-*` icon gotcha and "bare object vs list-of-one-object" YAML schema both documented.
