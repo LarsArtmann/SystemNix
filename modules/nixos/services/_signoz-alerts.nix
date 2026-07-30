@@ -88,7 +88,7 @@ in
       description = "Systemd service {{.Labels.name}} is in failed state";
       query = ''node_systemd_units{state="failed"}'';
       step = 60;
-      target = 0;
+      target = 1;
       interval = "1m";
     };
     "signoz/rules/gpu-thermal.json".source = mkRule {
@@ -109,9 +109,9 @@ in
     "signoz/rules/dnsblockd-crashes.json".source = mkRule {
       name = "DNS Blocker Listener Crashes";
       description = "dnsblockd DNS listener crashed and may not have recovered";
-      query = "rate(dnsblockd_dns_crashes_total[5m]) > 0";
+      query = "increase(dnsblockd_dns_crashes_total[5m])";
       step = 60;
-      target = 0;
+      target = 1;
       interval = "1m";
       severity = "warning";
     };
@@ -184,7 +184,7 @@ in
       name = "NVMe SSD Media Errors Detected";
       description = "NVMe SSD has media/data integrity errors on {{.Labels.device}} — possible flash cell degradation";
       query = "node_nvme_media_errors_total";
-      target = 0;
+      target = 1;
     };
     "signoz/rules/nvme-spare-low.json".source = mkRule {
       name = "NVMe SSD Spare Blocks Low (<30%)";
@@ -201,7 +201,7 @@ in
       description = "NVMe SSD critical warning flag is set on {{.Labels.device}} — check SMART immediately";
       query = "node_nvme_critical_warning";
       step = 60;
-      target = 0;
+      target = 1;
       interval = "1m";
     };
   };

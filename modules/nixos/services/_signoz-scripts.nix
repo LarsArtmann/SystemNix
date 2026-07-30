@@ -97,11 +97,19 @@
             fi
           fi
           echo "  Creating: $(basename "$rule_file")"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
+          RESPONSE_FILE=$(mktemp)
+          STATUS=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 10 -X POST \
             -H "Content-Type: application/json" \
             -d @"$rule_file" \
             "$SIGNOZ_URL/api/v1/rules")
-          check_status "rule:$(basename "$rule_file" .json)" "$STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "  OK rule:$(basename "$rule_file" .json) (HTTP $STATUS)"
+          else
+            echo "  FAILED rule:$(basename "$rule_file" .json) (HTTP $STATUS)" >&2
+            echo "    Response: $(cat "$RESPONSE_FILE" 2>/dev/null | head -c 500)" >&2
+            FAILED=$((FAILED + 1))
+          fi
+          rm -f "$RESPONSE_FILE"
         fi
       done
 
@@ -110,11 +118,19 @@
       for dash_file in /etc/signoz/dashboards/*.json; do
         if [ -f "$dash_file" ]; then
           echo "  Applying: $(basename "$dash_file")"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
+          RESPONSE_FILE=$(mktemp)
+          STATUS=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 10 -X POST \
             -H "Content-Type: application/json" \
             -d @"$dash_file" \
             "$SIGNOZ_URL/api/v1/dashboards")
-          check_status "dashboard:$(basename "$dash_file" .json)" "$STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "  OK dashboard:$(basename "$dash_file" .json) (HTTP $STATUS)"
+          else
+            echo "  FAILED dashboard:$(basename "$dash_file" .json) (HTTP $STATUS)" >&2
+            echo "    Response: $(cat "$RESPONSE_FILE" 2>/dev/null | head -c 500)" >&2
+            FAILED=$((FAILED + 1))
+          fi
+          rm -f "$RESPONSE_FILE"
         fi
       done
 
