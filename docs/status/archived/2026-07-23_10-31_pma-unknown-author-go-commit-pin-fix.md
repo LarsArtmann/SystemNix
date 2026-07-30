@@ -122,3 +122,9 @@ However, a **prior session failure** is worth noting: the AGENTS.md entry for th
 2. **Should I also unpin go-commit from v0.4.0 to master?** The v0.4.0 tag has the config fix, but master may have other improvements. However, master is what was broken before (3f74fd19 was master). Do you want to stay on the tag for stability, or track master with periodic audits?
 
 3. **The PMA staging errors (EOF on StopTube vendor/, "unknown extension" on .go/.ts files) — should I investigate those now or are they known/separate issues?** They're go-git bugs unrelated to the author fix, but they cause ~30% of PMA commits to fail silently.
+
+---
+
+## Item Resolution (2026-07-30)
+
+PMA go-commit pin fix. Items 1-18 are all about the go-commit pin. DONE: PMA deployed at e8380b44 with its own service_gogit.go fix. go-commit unpinned to ref=master (fd9a9664 has the fix). mkPreparedSource trap documented in AGENTS.md.

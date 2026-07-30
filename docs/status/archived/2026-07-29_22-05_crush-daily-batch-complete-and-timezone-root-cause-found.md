@@ -277,3 +277,9 @@ cd /home/lars/projects/SystemNix && nix run .#deploy
 ## Resolution (2026-07-30)
 
 All remaining items resolved by `2026-07-30_00-05`: 10/10 retry dates succeeded, flake.lock bumped to `0cb5ea6` (includes timezone fix `9286bf0`), deployed, nightly scheduler fixed. All 46 collected dates now have project + cross-project insights. Complete recovery confirmed.
+
+---
+
+## Item Resolution (2026-07-30)
+
+Crush-daily timezone root cause. DONE: bug fixed (9286bf0), full recovery in 00-05. Resolution section at end confirms all 46 dates complete.
