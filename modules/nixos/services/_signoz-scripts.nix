@@ -33,7 +33,7 @@
       pkgs.coreutils
     ];
     text = ''
-      echo "signoz-provision: starting (v3 — HTTP status code checking)"
+      echo "signoz-provision: starting (v4 — HTTP status + response body logging)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
       FAILED=0
@@ -72,11 +72,19 @@
             }]
           }')
           echo "  Creating channel: $CHANNEL_NAME"
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 -X POST \
+          RESPONSE_FILE=$(mktemp)
+          STATUS=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 10 -X POST \
             -H "Content-Type: application/json" \
             -d "$CHANNEL_JSON" \
             "$SIGNOZ_URL/api/v1/channels")
-          check_status "channel:$CHANNEL_NAME" "$STATUS"
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "  OK channel:$CHANNEL_NAME (HTTP $STATUS)"
+          else
+            echo "  FAILED channel:$CHANNEL_NAME (HTTP $STATUS)" >&2
+            echo "    Response: $(cat "$RESPONSE_FILE" 2>/dev/null | head -c 500)" >&2
+            FAILED=$((FAILED + 1))
+          fi
+          rm -f "$RESPONSE_FILE"
         fi
       else
         echo "Skipping channels: Discord webhook secret not found at $WEBHOOK_FILE"
