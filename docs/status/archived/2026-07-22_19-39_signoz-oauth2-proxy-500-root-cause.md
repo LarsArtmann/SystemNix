@@ -238,3 +238,22 @@ Pocket ID's OIDC discovery advertises `code_challenge_methods_supported: ["plain
 ### Q3: The builds for dnsblockd, monitor365-server, and buildflow are all broken — should I fix them now?
 
 Every `nix run .#deploy` fails because of three independent build failures (dnsblockd go-modules hash mismatch, monitor365 DuckDB SQL binder error, buildflow vendorHash). These are pre-existing issues unrelated to the auth fix. I worked around them by manually restarting oauth2-proxy. But the system generation is stale — the config changes are committed but not fully deployed. **Should I fix these build failures as part of this session, or are they being tracked/handled elsewhere?** Fixing them would require upstream changes to monitor365 (DuckDB SQL) and potentially dnsblockd (go-modules hash).
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-5 | DONE | All build failures fixed; deploys succeed; PKCE enabled |
+| 6-8 | REJECTED | Browser tests — require manual user verification, tracked in TODO_LIST deploy checklist |
+| 9 | DONE | PKCE S256 enabled on oauth2-proxy |
+| 10 | DONE | `partOf = pocket-id-provision.service` ensures credential reload |
+| 11 | DONE | Gatus checks oauth2-proxy `/ping` endpoint |
+| 12 | DONE | Native OIDC clients verified (Forgejo, Immich, Gatus) |
+| 13-14 | REJECTED | Pre-deploy dry-run / commit message CI — over-engineering |
+| 15 | DONE | regenerateSecretsFor documented in AGENTS.md |
+| 16 | DONE | PKCE enabled and tested |
+| 17 | DONE | `-k` curl flags audited |
+| 18-19 | DONE/REJECTED | OIDC monitoring DONE via Gatus; read-only API key REJECTED |
+| 20-50 | MIXED | Items 20-50 are oauth2-proxy hardening brainstorms. Most REJECTED as over-engineering for single-admin. Key survivors: item 24 (localhost:8080 firewall) noted in AGENTS.md. |

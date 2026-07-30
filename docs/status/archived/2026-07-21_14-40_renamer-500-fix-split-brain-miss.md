@@ -208,3 +208,29 @@ Diagnosed and fixed the renamer HTTP 500 (nil-pointer panic from read-only-home 
 **Awaiting user instructions on the 3 questions above before proceeding.**
 
 > **Update 2026-07-21 15:14 (commit `b0c76b58`):** ~~Awaiting instructions.~~ **RESOLVED.** Watcher wired to `dataDir` paths, state migrated (25 entries), dashboard verified at `total_operations: 25`. See `docs/status/2026-07-21_15-14_renamer-split-brain-resolution.md`.
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-4 | DONE | Split-brain fixed in `b0c76b58` — watcher and health service unified on `dataDir` state |
+| 5 | DONE | AGENTS.md updated with `initServiceOrWarn` nil-swallow + env-var override + split-brain gotchas |
+| 6 | DONE | AGENTS.md `harden {} + /home` entry expanded with this instance |
+| 7 | DONE | post-deploy-check asserts `history.total_operations > 0` |
+| 8 | REJECTED | Data consistency cross-check — over-engineering for single-admin |
+| 9 | DONE | protect-home-audit pre-commit hook covers this |
+| 10 | DONE | Gatus renamer check passing |
+| 11 | DONE | Homepage tile verified |
+| 12 | DONE | health-status.json path documented in AGENTS.md (latent, works because dataDir default) |
+| 13 | DONE | Upstream redesigned with charm.land/fantasy — env vars sufficient |
+| 14 | DONE | Upstream `safe_accessors.go` wraps all call sites with nil-safe accessors |
+| 15 | DONE | Upstream tests pass (26 packages) |
+| 16 | DONE | .gitattributes committed separately upstream |
+| 17-20 | REJECTED | Polish items — nix fmt runs via pre-commit, comments verified |
+| 21 | DONE | AGENTS.md documents the env-var override pattern |
+| 22-25 | REJECTED | Pre-existing/unrelated items — not actionable from this report |
+| 26-28 | DONE | Upstream redesigned; `LoadPathFromEnv` and fantasy provider abstraction replace these |
+| 29 | REJECTED | Module-level assertion for ProtectHome — over-engineering |
+| 30 | DONE | `nix flake check --no-build` passes |

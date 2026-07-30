@@ -198,3 +198,28 @@ There's an untracked file from earlier today that I didn't create. It appears to
 | AGENTS.md updated | NO |
 | TODO_LIST.md updated | NO |
 | Time to first error | ~2 min (module not in git → flake check failure) |
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-6 | DONE | All deployed in `9a56c1a7`; system-health, Gatus, test wrappers verified |
+| 7 | DONE | `system_service_nrestarts` changed from counter to gauge |
+| 8 | DONE | More services added to `monitoredServices` |
+| 9-14 | DONE/REJECTED | PMA health check REJECTED (no endpoint); crash-loop checks DONE; snapshot freshness DONE |
+| 15 | DONE | nix-gc guard in btrfs-health.nix |
+| 16-17 | DONE | zram + GPUReclaim metrics in system-health |
+| 18 | REJECTED | SigNoz scraping textfile collectors — Gatus pat() is sufficient |
+| 19 | DONE | DMS crash-rate alerting via system-health |
+| 20 | REJECTED | SSH socket cleanup timer check — timer is self-verifying |
+| 21-23 | DONE/REJECTED | wrapWithMemoryLimit renamed + env passthrough DONE; working-directory REJECTED |
+| 24-26 | REJECTED | prlimit/ulimit fallback, nix-build-memlimit — over-engineering |
+| 27 | DONE | system-health references upstream config options, not hardcoded paths |
+| 28 | DONE | system-health guarded with lib.optionalAttrs for rpi3-dns |
+| 29-32 | DONE/REJECTED | HELP/TYPE metrics DONE; UID configurable REJECTED (single-user); Prometheus naming verified |
+| 33-36 | DONE | AGENTS.md, TODO_LIST, FEATURES.md, CHANGELOG.md all updated |
+| 37-39 | DONE/REJECTED | Monitoring runbook DONE; pat() gotcha DONE; architecture diagram REJECTED |
+| 40-43 | REJECTED | VM tests — aspirational, no NixOS test infrastructure |
+| 44-50 | DONE/REJECTED | PMA health check REJECTED; nix-daemon memory REJECTED; others DONE or REJECTED as brainstorms |

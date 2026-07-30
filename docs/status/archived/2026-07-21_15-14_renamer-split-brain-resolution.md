@@ -188,3 +188,23 @@ Resolved the split-brain: wired the watcher service to use the same `dataDir` st
 **Near-miss:** I almost declared victory based on the 23/23 post-deploy smoke test passing, without noticing the health service was still serving stale empty data from memory. Caught it only because I committed to verifying `total_operations > 0` explicitly. The lesson (again): verify data correctness, not just liveness.
 
 **Awaiting user instructions on the 3 questions above before proceeding with upstream improvements.**
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1 | DONE | .gitattributes committed upstream |
+| 2-5 | DONE | Upstream redesigned with charm.land/fantasy v0.1.0 — CLI flags replaced by env-var + fantasy config |
+| 6 | REJECTED | Gatus jsonpath bug — post-deploy-check assertion is sufficient |
+| 7 | DONE | `nix flake check --no-build` passes |
+| 8 | DONE | Pre-existing changes committed by auto-git daemon |
+| 9 | DONE | protect-home-audit pre-commit hook covers this pattern |
+| 10-14 | REJECTED | Over-engineering — restart-after-migration is documented, SIGHUP/cached-at-init audit not worth the effort |
+| 15 | DONE | Homepage tile verified |
+| 16-17 | DONE | Old files cleaned up; `DEAD_LETTER_PATH` verified |
+| 18 | DONE | Full upstream test suite passes (26 packages) |
+| 19 | DONE | post-deploy-check re-run after health service restart |
+| 20 | DONE | pgrep + kill pattern documented |
+| 21-26 | DONE/REJECTED | Upstream redesign superseded these; `initServiceOptional` pattern replaced by `safe_accessors.go` |

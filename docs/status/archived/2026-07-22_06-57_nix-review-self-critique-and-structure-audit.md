@@ -211,3 +211,23 @@ The repo root has a `treefmt` file that `cat` returns nothing for. The flake use
 ### Q3: Should this review become a recurring automated check?
 
 The review found the codebase clean (0 statix, 0 deadnix, 0 purity violations). Both `statix` and `deadnix` are already in the devShell and there's a `checks.statix` + `checks.deadnix` defined. But these checks don't seem to run in CI (`.github/workflows/` was never read). Should I set up a GitHub Actions workflow that runs `nix flake check`, `statix`, `deadnix`, and `nix fmt -- --check` on every PR? Or is this already handled outside the repo?
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-5 | DONE | `nix flake check --no-build` passes; statix/deadnix clean; nix fmt works |
+| 6-9 | DONE | flake.lock checked; CI exists (.github/workflows/); pre-commit hooks verified |
+| 10-14 | DONE | All host/platform files read in later sessions; structure verified |
+| 15-20 | DONE | All module/package/lib files read in later nix-review sessions |
+| 21-29 | DONE | All platform/pkg files read; quality assessed |
+| 30 | REJECTED | maintainers field — not required for personal config |
+| 31-32 | DONE | lib.fileset verified; lib/filesystems.nix validated |
+| 33-35 | DONE | lib/rocm.nix, lib/types.nix reviewed |
+| 36-40 | REJECTED | Module-level assertions — over-engineering for personal config |
+| 41 | DONE | lib/images.nix rec attrsets fixed |
+| 42 | DONE | Hardcoded /home/lars/notes in qmd-config.nix documented |
+| 43-46 | DONE | All `//` chains converted to `lib.mkMerge` |
+| 47-50 | DONE | signoz.nix split (943→511L), forgejo.nix split (725→353L); others are acceptable size |

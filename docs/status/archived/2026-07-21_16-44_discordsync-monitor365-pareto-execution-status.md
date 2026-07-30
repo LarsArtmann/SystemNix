@@ -260,3 +260,9 @@ Adding `users.users.monitor365.extraGroups = [ "input" "video" ]` would unlock k
 | M3 CORS PR | File upstream PR | Already fixed upstream | ✅ No work needed |
 
 **Net result:** ~~5 fully done, 2 partially done, 2 shipped-broken-then-fixed, 0 totally failed.~~ **ALL 9 RESOLVED** as of `a000fe0c`. The plan's structural insight (D1 refactor) is sound and delivered value. The execution quality (runtime bugs, incomplete verification) needed improvement — addressed in the follow-up session.
+
+---
+
+## Item Resolution (2026-07-30)
+
+All items in this report were part of the DiscordSync + Monitor365 Pareto plan. All 9 findings (D1-D6, M1-M3) shipped in commits `377f15e6`, `88419e21`, `4cbbe0ff`, `a000fe0c`. Post-deploy smoke test 25/25 passed. The full item-by-item resolution table is in `docs/planning/archived/2026-07-21_14-41_discordsync-monitor365-flake-consumption-pareto-plan.md` (Resolution section).

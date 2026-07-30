@@ -193,3 +193,26 @@ At time of investigation, the monitor365 agent had 2500+ consecutive cloud sync 
 
 ### 3. Should the monitor365 agent run as a systemd user service instead of a system service?
 The root cause of ALL graphical collector issues is that a system service (running as `monitor365` user) is trying to access another user's graphical session. A systemd **user** service (running as `lars`, started by `graphical-session.target`) would inherit DISPLAY/WAYLAND_DISPLAY/XAUTHORITY natively — no pgrep, no path unit, no ProtectProc override, no input group needed (the user already has it). This is an architectural change to the upstream module. Should I explore this direction, or is the system-service + path-unit approach acceptable for this homelab?
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-15 | DONE | All deployed in `a000fe0c`; runtime-verified in later sessions |
+| 16 | DONE | DiscordSync EnvironmentFile duplicate resolved (backend switched to sqlite) |
+| 17 | DONE | DiscordSync `/readyz` verified after backfill |
+| 18 | DONE | OTel traces export to SigNoz |
+| 19-21 | REJECTED | Gatus checks for path unit / collector health — over-monitoring for homelab |
+| 22 | REJECTED | Path unit UID hardcoded to 1000 — acceptable for single-user desktop |
+| 23-26 | DONE/REJECTED | Backup health monitoring DONE (item 23-24); MemoryMax raised DONE; buffer purge DONE (1B/day limit) |
+| 27 | DONE | restartTriggers added to monitor365 module |
+| 28 | DONE | Buffer backlog purge — `max_events_per_day = 1B` override |
+| 29 | DONE | Circuit breaker resolved — server crash fixed (`b900d3454`), agent healthy |
+| 30-33 | DONE | DiscordSync webhook/ExecReload verified; Turso 403 fixed (sqlite backend) |
+| 34-36 | DONE | Backup produces files; retention works; cloud sync healthy after server fix |
+| 37-40 | DONE | All documented in AGENTS.md (path unit, uid-null, prior report update) |
+| 41-44 | REJECTED | graphicalSessionEnv helper, user service, upstream PR — aspirational, not pursued |
+| 45-48 | REJECTED | Process improvements — checklist/CI/hardcoded values, not actionable |
+| 49-50 | DONE | DiscordSync healthCheck URL bug documented in AGENTS.md; ProtectProc default change deployed |

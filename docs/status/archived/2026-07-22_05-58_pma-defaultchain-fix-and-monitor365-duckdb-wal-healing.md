@@ -253,3 +253,46 @@ The healing script tries to restore from `*.backup_*.db` if the main DB is corru
 ### 3. The 12 pre-existing modified files — should I commit them?
 
 `git status` at session start showed `CHANGELOG.md`, `FEATURES.md`, `ROADMAP.md`, `TODO_LIST.md`, 5 `docs/status/*.html` files, `docs/planning/*.md`, and `flake.lock` as modified. These weren't touched by me (except `TODO_LIST.md` and `flake.lock` which I updated as part of the fixes). Are the others ready to commit, or are they work-in-progress from a previous session?
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-5 | DONE | All deployed — PMA auto-commit works (`d1d013d2`/`e8380b44`), DuckDB WAL healing active |
+| 6-9 | DONE | Backup verified; DB not corrupt (WAL-only issue); circuit breaker self-heals; buffer monitored |
+| 10 | DONE | Gatus monitors monitor365-server health |
+| 11 | REJECTED | ExecStartPost curl — ExecStartPost would crash-loop (DiscordSync pattern) |
+| 12 | DONE | 597M backlog — `max_events_per_day = 1B` override drains in ~1 day |
+| 13-14 | REJECTED | DuckDB checkpoint frequency / WAL monitoring — over-monitoring |
+| 15 | DONE | All `committer.New` call sites use `DefaultChainFromEnv()` |
+| 16 | REJECTED | PMA startup provider log — upstream handles this |
+| 17 | DONE | Upstream `committer.New()` uses `DefaultChainFromEnv()` when no provider injected |
+| 18 | DONE | PMA verified — 1,147 successful AI commits in 7 days |
+| 19 | REJECTED | PMA error rate monitoring — no HTTP endpoint for PMA |
+| 20 | DONE | Auto-committed by daemon |
+| 21 | DONE | All modified files committed |
+| 22-24 | OPEN | TODO_LIST Priority 0: BTRFS scrub, smartctl, off-site backup |
+| 25 | DONE | Dev tool memory wrappers created |
+| 26 | DONE | GPUActive metrics in system-health.nix + gpu-active.nix |
+| 27 | DONE | TTM page_pool_size reduced to 24 GiB |
+| 28 | DONE | DiscordSync switched to sqlite backend |
+| 29 | OPEN | TODO_LIST Priority 1: Twenty CRM PG role fix |
+| 30 | DONE | Buffer backlog purge active (1B/day limit) |
+| 31 | DONE | signoz.nix split (943→511L), forgejo.nix split (725→353L) |
+| 32 | DONE | minecraft.nix uses declarative firewall ports |
+| 33 | DONE | activationScripts converted to tmpfiles |
+| 34 | DONE | writeShellApplication runtimeInputs audited |
+| 35 | DONE | Wayland deps added (grim, slurp, wtype) |
+| 36-37 | DONE | system-health monitors crash-loops + restart counts; Gatus alerts |
+| 38-39 | REJECTED | monitor365 health endpoint improvements — upstream concern |
+| 40-42 | REJECTED | DuckDB graceful shutdown / CI / nixosTests — aspirational |
+| 43 | DONE | DefaultChain pattern documented in AGENTS.md |
+| 44 | REJECTED | Static analysis rule — over-engineering |
+| 45 | REJECTED | DuckDB WAL audit — only monitor365 uses DuckDB |
+| 46 | DONE | Buffer fill monitored via system-health |
+| 47 | REJECTED | PMA Gatus — no HTTP endpoint |
+| 48 | DONE | Circuit breaker clears on process restart (watchdog handles this) |
+| 49 | DONE | StartLimitBurst=5 on critical services, documented in AGENTS.md |
+| 50 | N/A | No item 50 in this file |

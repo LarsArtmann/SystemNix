@@ -192,3 +192,29 @@ The error `Binder Error: Column "version" referenced that exists in the SELECT c
 | Files modified | 7 (system-health.nix, gatus-config.nix, lib/default.nix, home.nix, lars-packages.nix, AGENTS.md, flake.lock) |
 | Pre-commit hooks | All passed (gitleaks, deadnix, statix, alejandra, flake-check) |
 | Time to deploy | ~15 min (including 2 failed attempts) |
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-2 | DONE | Monitor365 binder bug fixed (`b900d3454` COALESCE fix); server healthy |
+| 3 | DONE | cqrs-lint vendorHash fixed; go-cqrs-lite lock cleaned (2026-07-29) |
+| 4-7 | DONE/REJECTED | Binder bug Gatus REJECTED; system-health expanded DONE; restart-rate alerting DONE; timer check DONE |
+| 8 | REJECTED | nix-build-memlimit — over-engineering |
+| 9 | DONE | BTRFS snapshot freshness in system-health + Gatus |
+| 10 | REJECTED | Pocket ID cert expiry monitoring — over-monitoring |
+| 11 | DONE | monitoredServices is in system-health.nix (shared default) |
+| 12 | DONE | restartTriggers added to system-health-metrics |
+| 13-15 | REJECTED | Integration tests — aspirational, no test infrastructure |
+| 16-17 | DONE | cqrs-lint vendorHash documented in AGENTS.md; goModules override documented |
+| 18-20 | DONE | DuckDB WAL healing documented; binder bug in AGENTS.md; runbook updated |
+| 21-22 | DONE | Build sandboxes cleaned by nix-build-cleanup timer; GC runs weekly |
+| 23-25 | DONE | Memlimit wrappers verified; Gatus checks loaded; system_health.prom verified |
+| 26-28 | DONE/REJECTED | Hardening of system-health-metrics DONE; GPUActive collector duplication REJECTED (acceptable) |
+| 29-30 | DONE | zram + BTRFS metadata thresholds in system-health |
+| 31-33 | REJECTED | --dry-run, health-check app, Discord webhook test — over-engineering |
+| 34-35 | REJECTED | SigNoz dashboard, custom collector — Gatus is sufficient |
+| 36-39 | DONE/REJECTED | Flake.lock cleaned DONE; go-cqrs-lite pinned to master DONE; CI check REJECTED |
+| 40-50 | REJECTED | Brainstorm items — flake.lock age check, Gatus dashboard cosmetics, uptime metric, DuckDB research, VictoriaMetrics — all aspirational for single-admin homelab |

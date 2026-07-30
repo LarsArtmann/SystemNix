@@ -238,3 +238,58 @@ All 14 monitored services: healthy ✅
 /data/.snapshots: STILL MISSING (needs deploy or manual mkdir) ⚠️  ← DEPLOYED + FIXED
 Changes deployed: NO (committed in 99ac60a5 but not activated on live system) ⚠️  ← DEPLOYED IN LATER COMMITS
 ```
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-3 | DONE | Deployed; tmpfiles rule for `/data/.snapshots` active, btrbk-data succeeds |
+| 4 | DONE | `--compressed` added to global `check()` in post-deploy-check.sh |
+| 5 | DONE | disk-growth-check StateDirectory fixed |
+| 6 | DONE | nix-build-cleanup timer works (4h + on boot) |
+| 7 | DONE | pocket-id SQLITE_BUSY investigated — transient, self-resolves |
+| 8 | DONE | `/data` added to btrfs-verify-snapshots |
+| 9 | DONE | btrfs-health.nix Gatus alerts on snapshot freshness + scrub errors |
+| 10 | DONE | Forgejo ALLOWED_DOMAINS includes `github.com` |
+| 11 | DONE | Auto-committed by daemon |
+| 12 | OPEN | TODO_LIST: "Turso plan decision" — DiscordSync switched to sqlite |
+| 13 | REJECTED | Over-engineering for single-admin homelab |
+| 14 | REJECTED | protect-home-audit pre-commit hook covers the systematic case |
+| 15 | REJECTED | CI for bash scripts — shellcheck in pre-commit is sufficient |
+| 16 | REJECTED | Parallel commit risk documented; single-session is the norm |
+| 17 | DONE | `--compressed` added to pre-deploy-check and deploy.sh |
+| 18 | REJECTED | User decision — repo review is manual |
+| 19 | DONE | Pocket ID start-limit documented in AGENTS.md |
+| 20 | DONE | PSI memory pressure metrics + Gatus Discord alerting added |
+| 21 | REJECTED | Bash works fine after SIGPIPE fix; migration not worth the effort |
+| 22 | DONE | btrfs-health.nix collects snapshot metrics |
+| 23 | REJECTED | BTRFS qgroups documented in AGENTS.md as not worth it on QLC NAND |
+| 24 | DONE | DiscordSync startup race documented + Gatus retries |
+| 25 | REJECTED | OnFailure notification works; review unnecessary |
+| 26 | REJECTED | Pre-deploy snapshot for /data — over-engineering |
+| 27 | DONE | protect-home-audit pre-commit hook catches missing dirs |
+| 28 | DONE | shellcheck + shfmt in pre-commit hook |
+| 29 | REJECTED | Documenting gzip behavior per-service — too niche |
+| 30 | DONE | btrfs-health.nix checks btrbk success |
+| 31 | REJECTED | Pocket ID actor-host — transient, not worth investigating |
+| 32 | DONE | `/data` in btrfs-verify-snapshots |
+| 33 | DONE | tmpfiles rule handles `/data/.snapshots` creation |
+| 34 | DONE | nix-build-cleanup timer monitors + cleans sandboxes |
+| 35 | DONE | protect-home-audit pre-commit hook audits `harden {}` services |
+| 36 | DONE | DiscordSync switched to sqlite backend; Turso 403 eliminated |
+| 37 | DONE | DiscordSync startup sequence documented in AGENTS.md |
+| 38 | REJECTED | restartTriggers for post-deploy-check — over-engineering |
+| 39 | REJECTED | Dry-run mode — over-engineering for single-admin |
+| 40 | DONE | SIGPIPE fix applied to all curl-based checks |
+| 41 | DONE | btrfs-health.nix tracks snapshot count/freshness |
+| 42 | DONE | BTRFS layout for /data documented in AGENTS.md |
+| 43 | DONE | btrfs-health.nix provides btrbk health metrics |
+| 44 | DONE | Forgejo sync token fixed (auto-generated token file) |
+| 45 | DONE | disk-growth-check fixed (StateDirectory) |
+| 46 | REJECTED | Zram increase — chronic pressure is GPUActive, not zram size |
+| 47 | DONE | protect-home-audit pre-commit hook |
+| 48 | DONE | post-deploy-check expanded with each new service |
+| 49 | DONE | stat timestamp gotcha documented in AGENTS.md |
+| 50 | REJECTED | btrfs-health.nix already provides unified snapshot health |

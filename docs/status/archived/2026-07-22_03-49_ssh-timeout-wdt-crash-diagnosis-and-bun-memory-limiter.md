@@ -215,3 +215,43 @@ Lowering to 48G means any combination of Crush + builds + LSP servers + browser 
 ### 3. Should I deploy now, or do you want to batch the bun overlay with the user-slice MemoryMax change?
 
 Deploying just the bun overlay is safe and fast. But if we're also lowering `user-1000.slice` MemoryMax, that's a single deploy that covers both. **One deploy or two?** (I recommend one — both address the same crash class, and the system has already rebooted 3x today).
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1-2 | DONE | Bun memory limiter deployed in `a000fe0c` |
+| 3 | REJECTED | user-1000.slice MemoryMax kept at 64G; GPUActive is the real issue, not user-slice |
+| 4 | DONE | AGENTS.md updated with bun wrapper, WDT crash pattern, user-slice memory |
+| 5 | DONE | Tested — bun wrapper limits to 8G |
+| 6-8 | DONE | `wrapWithMemoryLimit` helper created; `go-test-memlimit`, `cargo-test-memlimit`, `pnpm-test-memlimit` wired |
+| 9 | DONE | `wrapWithMemoryLimit` in `lib/default.nix` |
+| 10 | DONE | system-health collector: `user-1000.slice` memory threshold (40G) + Gatus alert |
+| 11 | REJECTED | Kill-30G-RSS timer — over-engineering; per-service MemoryMax + oomd is sufficient |
+| 12 | DONE | TTM `page_pool_size` reduced from 112 GiB to 24 GiB |
+| 13-14 | DONE | Monitor365 server crash fixed (`b900d3454`); buffer purge active (1B/day limit) |
+| 15 | REJECTED | WDT reset detection via uptime — btrfs-health + system-health cover this |
+| 16 | DONE | systemd-oomd tuned (50%/20s pressure); `ManagedOOMSwap=kill` active |
+| 17 | DONE | `MemoryHigh=56G` already set alongside `MemoryMax=64G` |
+| 18 | REJECTED | cgroup v2 pressure listener — over-engineering; oomd handles this |
+| 19 | REJECTED | Wrap nix build — nix-daemon has its own memory management |
+| 20 | REJECTED | oom_score_adj awareness in Crush agent — not a SystemNix concern |
+| 21 | OPEN | GPUActive profiling — documented in ROADMAP "GPUActive memory pressure" |
+| 22 | REJECTED | amdgpu.gtt_size — not a safe kernel parameter to tune |
+| 23 | DONE | WDT crash chain documented in AGENTS.md + docs/runbooks/ |
+| 24 | REJECTED | Boot-time MemoryMax check — over-engineering |
+| 25 | REJECTED | memory-killer service — oomd handles this |
+| 26-29 | DONE | Buffer purge active; server fixed; circuit breaker self-heals; system-health monitors buffer |
+| 30 | REJECTED | Lowering max_size_bytes — would drop more events |
+| 31-35 | REJECTED | Wrapping LSP processes — stale-LSP-cleanup timer (5min) already handles this |
+| 36-38 | REJECTED | Zram tuning — chronic pressure is GPUActive, not zram size |
+| 39 | REJECTED | SigNoz dashboard for user-slice — Gatus alerts are sufficient |
+| 40 | DONE | All services have MemoryMax via `harden {}` |
+| 41 | DONE | writeShellApplication + systemd-run pattern documented in AGENTS.md |
+| 42 | DONE | protect-home-audit pre-commit hook |
+| 43 | DONE | docs/runbooks/wdt-reset-investigation.md created |
+| 44 | REJECTED | Postmortem document — status reports serve this purpose |
+| 45 | DONE | stale-lsp-cleanup.service extended to all dev LSPs |
+| 46-50 | REJECTED | dev-tool-memory-guard, Crush guardrails, session accounting, SSH timeout, Forgejo runner limits — aspirational, not pursued |

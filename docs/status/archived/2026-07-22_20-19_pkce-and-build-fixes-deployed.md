@@ -202,3 +202,18 @@ The working tree has a full `nix flake update` from another session. None of the
 ### Q3: Monitor365 server has been crash-looping with a DuckDB SQL error for days — should I fix it?
 
 `Binder Error: Column "version" referenced that exists in the SELECT clause - but this column cannot be referenced before it is defined`. This is an upstream SQL migration incompatibility with DuckDB's stricter semantics. It's unrelated to the auth fixes but blocks monitor365 from starting and causes 2 of the 3 post-deploy smoke test failures. Fixing it likely requires an upstream code change to monitor365. **Should I investigate and fix this, or is it being tracked elsewhere?**
+
+---
+
+## Item Resolution (2026-07-30)
+
+| # | Status | Resolution |
+|---|--------|------------|
+| 1 | REJECTED | Browser test — requires manual verification, in TODO_LIST deploy checklist |
+| 2 | DONE | Pocket ID provision HTTP 500 resolved (regenerateSecretsFor + partOf) |
+| 3 | DONE | Monitor365 binder bug fixed (`b900d3454`) |
+| 4 | DONE | dnsblockd health endpoint working after subdomain fix |
+| 5 | DONE | flake.lock committed by auto-git daemon |
+| 6-10 | DONE | partOf/restartTriggers, Gatus, native OIDC, PKCE all done |
+| 11 | DONE | cqrs-lint vendorHash fixed (2026-07-29) |
+| 12-50 | MIXED | Items 12-50 overlap heavily with file 12 (signoz-oauth2-proxy). Most are oauth2-proxy hardening brainstorms — REJECTED as over-engineering. Key survivors tracked in TODO_LIST/ROADMAP. |
