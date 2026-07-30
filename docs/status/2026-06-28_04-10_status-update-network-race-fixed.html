@@ -58,14 +58,14 @@
         --radius-sm: 0px;
 
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
 
       * {
@@ -273,15 +273,27 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
 
       .issue {
@@ -293,15 +305,27 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -793,9 +817,10 @@
           <div class="hero-badge">SystemNix + DiscordSync</div>
           <h1>Status — Network Boot Race Fixed, Deploy Still Pending</h1>
           <p class="hero-subtitle">
-            Since the 2026-06-27 22:48 report, the network-dependent service ordering bug has been
-            fixed and pushed. Seven boot-time fixes are now in Nix; one upstream DiscordSync fix is
-            committed but not yet propagated. The deploy still has not run.
+            Since the 2026-06-27 22:48 report, the network-dependent service
+            ordering bug has been fixed and pushed. Seven boot-time fixes are
+            now in Nix; one upstream DiscordSync fix is committed but not yet
+            propagated. The deploy still has not run.
           </p>
         </div>
 
@@ -856,7 +881,10 @@
               <td>evo-x2 toplevel eval</td>
               <td>
                 <span class="badge badge-fixed">PASS</span>
-                <code>nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel</code>
+                <code
+                  >nix eval
+                  .#nixosConfigurations.evo-x2.config.system.build.toplevel</code
+                >
               </td>
             </tr>
             <tr>
@@ -869,7 +897,10 @@
             </tr>
             <tr>
               <td>Failed units (live)</td>
-              <td>Unknown; likely 4 still in <code>start-limit-hit</code> until deploy</td>
+              <td>
+                Unknown; likely 4 still in <code>start-limit-hit</code> until
+                deploy
+              </td>
             </tr>
           </tbody>
         </table>
@@ -883,8 +914,9 @@
             <div class="text">
               <strong>SigNoz stale migration lock</strong>
               <span
-                ><code>ExecStartPre</code> clears <code>migration_lock</code> before every start.
-                Self-healing after OOM/hard-reset.</span
+                ><code>ExecStartPre</code> clears
+                <code>migration_lock</code> before every start. Self-healing
+                after OOM/hard-reset.</span
               >
             </div>
           </div>
@@ -893,7 +925,8 @@
             <div class="text">
               <strong>Monitor365 agent</strong>
               <span
-                >Switched from <code>$XDG_RUNTIME_DIR</code> to <code>%t</code> systemd specifier in
+                >Switched from <code>$XDG_RUNTIME_DIR</code> to
+                <code>%t</code> systemd specifier in
                 ExecStart/ExecStartPre.</span
               >
             </div>
@@ -903,8 +936,8 @@
             <div class="text">
               <strong>Monitor365 server</strong>
               <span
-                >Removed invalid <code>--config</code> flag; upstream CLI now uses env vars + XDG
-                auto-load.</span
+                >Removed invalid <code>--config</code> flag; upstream CLI now
+                uses env vars + XDG auto-load.</span
               >
             </div>
           </div>
@@ -913,8 +946,8 @@
             <div class="text">
               <strong>dnsblockd-cert-import</strong>
               <span
-                ><code>path = [pkgs.nss.tools pkgs.coreutils]</code> — <code>certutil</code> is in
-                the tools output, not libs.</span
+                ><code>path = [pkgs.nss.tools pkgs.coreutils]</code> —
+                <code>certutil</code> is in the tools output, not libs.</span
               >
             </div>
           </div>
@@ -923,8 +956,8 @@
             <div class="text">
               <strong>xdg-document-portal</strong>
               <span
-                >Added setuid <code>fusermount3</code> wrapper so the portal can spawn FUSE mounts
-                at login.</span
+                >Added setuid <code>fusermount3</code> wrapper so the portal can
+                spawn FUSE mounts at login.</span
               >
             </div>
           </div>
@@ -933,7 +966,8 @@
             <div class="text">
               <strong>ActivityWatch wayland watcher</strong>
               <span
-                >Added <code>Restart=on-failure</code> so it recovers after compositor race.</span
+                >Added <code>Restart=on-failure</code> so it recovers after
+                compositor race.</span
               >
             </div>
           </div>
@@ -947,14 +981,16 @@
               <strong>deploy.sh reset-failed</strong>
               <span
                 >Runs <code>systemctl reset-failed</code> (system + user) before
-                <code>nh os switch</code>, clearing the exit-code-4 trap from changed units stuck in
-                <code>start-limit-hit</code>.</span
+                <code>nh os switch</code>, clearing the exit-code-4 trap from
+                changed units stuck in <code>start-limit-hit</code>.</span
               >
             </div>
           </div>
         </div>
 
-        <h3>Network-dependent service ordering fix (commit <code>4b37a0a5</code>)</h3>
+        <h3>
+          Network-dependent service ordering fix (commit <code>4b37a0a5</code>)
+        </h3>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
@@ -962,8 +998,9 @@
               <strong>dnsblockd-attach-ip.service</strong>
               <span
                 >New CAP_NET_ADMIN oneshot ordered after
-                <code>sys-subsystem-net-devices-eno1.device</code>. Replaces the broken
-                <code>networking.localCommands</code> with <code>|| true</code>.</span
+                <code>sys-subsystem-net-devices-eno1.device</code>. Replaces the
+                broken <code>networking.localCommands</code> with
+                <code>|| true</code>.</span
               >
             </div>
           </div>
@@ -972,8 +1009,9 @@
             <div class="text">
               <strong>dnsblockd.service dependency</strong>
               <span
-                >Now <code>After/Wants</code> <code>dnsblockd-attach-ip.service</code> — never
-                starts before the block IP exists.</span
+                >Now <code>After/Wants</code>
+                <code>dnsblockd-attach-ip.service</code> — never starts before
+                the block IP exists.</span
               >
             </div>
           </div>
@@ -982,8 +1020,8 @@
             <div class="text">
               <strong>keepalived ordering</strong>
               <span
-                ><code>dns-failover.nix</code> now orders keepalived after the interface
-                <code>.device</code> unit.</span
+                ><code>dns-failover.nix</code> now orders keepalived after the
+                interface <code>.device</code> unit.</span
               >
             </div>
           </div>
@@ -992,14 +1030,17 @@
             <div class="text">
               <strong>dual-wan ordering</strong>
               <span
-                ><code>mptcp-endpoint-manager</code> and <code>route-health-monitor</code> order
-                after the eno1 <code>.device</code> unit when re-enabled.</span
+                ><code>mptcp-endpoint-manager</code> and
+                <code>route-health-monitor</code> order after the eno1
+                <code>.device</code> unit when re-enabled.</span
               >
             </div>
           </div>
         </div>
 
-        <h3>DiscordSync upstream migration bug (commit <code>e6c7606</code>)</h3>
+        <h3>
+          DiscordSync upstream migration bug (commit <code>e6c7606</code>)
+        </h3>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
@@ -1007,8 +1048,9 @@
               <strong>Schema split for turso driver</strong>
               <span
                 >Replaced single multi-statement <code>ExecContext</code> with
-                <code>splitSQLStatements()</code> + <code>execSchema()</code>. Handles
-                <code>BEGIN...END</code> triggers and comments. 3 new tests; 54 tests pass.</span
+                <code>splitSQLStatements()</code> + <code>execSchema()</code>.
+                Handles <code>BEGIN...END</code> triggers and comments. 3 new
+                tests; 54 tests pass.</span
               >
             </div>
           </div>
@@ -1021,8 +1063,8 @@
             <div class="text">
               <strong>AGENTS.md</strong>
               <span
-                >All root-cause gotchas documented, including the new FIXED network interface boot
-                race entry.</span
+                >All root-cause gotchas documented, including the new FIXED
+                network interface boot race entry.</span
               >
             </div>
           </div>
@@ -1043,32 +1085,32 @@
               <td><strong>Deploy</strong></td>
               <td><span class="badge badge-high">Ready</span></td>
               <td>
-                <code>nix run .#deploy</code> has not been executed. All fixes are inert until
-                switch.
+                <code>nix run .#deploy</code> has not been executed. All fixes
+                are inert until switch.
               </td>
             </tr>
             <tr>
               <td><strong>DiscordSync in SystemNix</strong></td>
               <td><span class="badge badge-high">Code ready</span></td>
               <td>
-                DiscordSync commit <code>e6c7606</code> is not pushed; SystemNix flake input not
-                updated.
+                DiscordSync commit <code>e6c7606</code> is not pushed; SystemNix
+                flake input not updated.
               </td>
             </tr>
             <tr>
               <td><strong>Verification</strong></td>
               <td><span class="badge badge-fixed">Eval OK</span></td>
               <td>
-                No live deploy verification. Services may still fail for reasons not visible in
-                static eval.
+                No live deploy verification. Services may still fail for reasons
+                not visible in static eval.
               </td>
             </tr>
             <tr>
               <td><strong>DiscordSync repo hygiene</strong></td>
               <td><span class="badge badge-medium">Blocked</span></td>
               <td>
-                17 foreign uncommitted refactoring files in working tree. Cannot verify or commit
-                them.
+                17 foreign uncommitted refactoring files in working tree. Cannot
+                verify or commit them.
               </td>
             </tr>
           </tbody>
@@ -1086,25 +1128,32 @@
           <tbody>
             <tr>
               <td><strong>Deploy the fixes</strong></td>
-              <td><code>nix run .#deploy</code> — single action that activates everything.</td>
+              <td>
+                <code>nix run .#deploy</code> — single action that activates
+                everything.
+              </td>
             </tr>
             <tr>
               <td><strong>Push DiscordSync + update flake lock</strong></td>
               <td>
                 Push <code>e6c7606</code>, run
-                <code>nix flake lock --update-input discordsync</code>, redeploy.
+                <code>nix flake lock --update-input discordsync</code>,
+                redeploy.
               </td>
             </tr>
             <tr>
               <td><strong>Off-site backup</strong></td>
-              <td>No BorgBackup to Hetzner StorageBox. Single point of failure.</td>
+              <td>
+                No BorgBackup to Hetzner StorageBox. Single point of failure.
+              </td>
             </tr>
             <tr>
               <td>
                 <strong>BTRFS <code>/data</code> subvolume migration</strong>
               </td>
               <td>
-                <code>/data</code> is toplevel (subvolid=5), no snapshot protection. ~1h downtime.
+                <code>/data</code> is toplevel (subvolid=5), no snapshot
+                protection. ~1h downtime.
               </td>
             </tr>
             <tr>
@@ -1125,15 +1174,17 @@
           <h3>1. Deploy has still not run</h3>
           <div class="where">Last report → now</div>
           <p>
-            All fixes exist in git and are eval-clean, but none are live on evo-x2. The four
-            services (signoz, monitor365, monitor365-server, discordsync) were likely still in
-            <code>start-limit-hit</code> at the time of this report. Every hour of delay increases
-            the chance the next boot hits the same chain.
+            All fixes exist in git and are eval-clean, but none are live on
+            evo-x2. The four services (signoz, monitor365, monitor365-server,
+            discordsync) were likely still in
+            <code>start-limit-hit</code> at the time of this report. Every hour
+            of delay increases the chance the next boot hits the same chain.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            Run <code>nix run .#deploy</code> now. The deploy script now resets failed units first,
-            so it should succeed where previous attempts failed silently.
+            Run <code>nix run .#deploy</code> now. The deploy script now resets
+            failed units first, so it should succeed where previous attempts
+            failed silently.
           </div>
         </div>
 
@@ -1142,9 +1193,9 @@
           <h3>2. DiscordSync fix requires a two-repo deploy dance</h3>
           <div class="where">DiscordSync repo → SystemNix flake input</div>
           <p>
-            The migration fix is committed in DiscordSync (<code>e6c7606</code>) but SystemNix still
-            pins an older commit. Three manual steps are required: push, lock update, rebuild. Any
-            one can fail.
+            The migration fix is committed in DiscordSync (<code>e6c7606</code>)
+            but SystemNix still pins an older commit. Three manual steps are
+            required: push, lock update, rebuild. Any one can fail.
           </p>
         </div>
 
@@ -1153,9 +1204,9 @@
           <h3>3. DiscordSync working tree has foreign changes</h3>
           <div class="where">DiscordSync working tree</div>
           <p>
-            17 files of uncommitted refactoring (generics in config.go, test cleanup, formatting)
-            that I did not author. They complicate a clean push and I cannot verify their
-            correctness or intent.
+            17 files of uncommitted refactoring (generics in config.go, test
+            cleanup, formatting) that I did not author. They complicate a clean
+            push and I cannot verify their correctness or intent.
           </p>
         </div>
 
@@ -1164,27 +1215,30 @@
           <h3>4. Boot is still slow (~4min 53s)</h3>
           <div class="where">signoz-provision.service</div>
           <p>
-            <code>signoz-provision</code> takes ~2 minutes waiting for signoz health checks. This
-            will improve once signoz starts cleanly (migration lock fix), but the provision timeout
-            remains the largest boot-time contributor.
+            <code>signoz-provision</code> takes ~2 minutes waiting for signoz
+            health checks. This will improve once signoz starts cleanly
+            (migration lock fix), but the provision timeout remains the largest
+            boot-time contributor.
           </p>
         </div>
 
-        <h2 id="improve"><span class="num">05</span>What We Should Improve 🔧</h2>
+        <h2 id="improve">
+          <span class="num">05</span>What We Should Improve 🔧
+        </h2>
 
         <div class="card card-warning">
           <h4>1. Deploy immediately</h4>
           <p>
-            Every fix is inert until <code>nix run .#deploy</code> runs. This is the
-            highest-leverage action.
+            Every fix is inert until <code>nix run .#deploy</code> runs. This is
+            the highest-leverage action.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>2. Two-repo deploy automation</h4>
           <p>
-            The update-push-relock-rebuild flow for private LarsArtmann dependencies is manual and
-            fragile. Add a
+            The update-push-relock-rebuild flow for private LarsArtmann
+            dependencies is manual and fragile. Add a
             <code>nix run .#update-dep &lt;name&gt;</code> script.
           </p>
         </div>
@@ -1192,8 +1246,8 @@
         <div class="card card-warning">
           <h4>3. Post-deploy health assertion</h4>
           <p>
-            <code>deploy.sh</code> should verify that previously-failed services are now running,
-            not just list <code>systemctl --failed</code>.
+            <code>deploy.sh</code> should verify that previously-failed services
+            are now running, not just list <code>systemctl --failed</code>.
           </p>
         </div>
 
@@ -1201,28 +1255,30 @@
           <h4>4. Automatic reset-failed upstream</h4>
           <p>
             NixOS's <code>switch-to-configuration</code> should handle
-            <code>start-limit-hit</code> gracefully. Consider an upstream PR or a
-            <code>system.activationScripts</code> hook.
+            <code>start-limit-hit</code> gracefully. Consider an upstream PR or
+            a <code>system.activationScripts</code> hook.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>5. Watchdog for stuck-failed services</h4>
           <p>
-            Four services were broken for the entire previous uptime. Add a timer that alerts on
-            services stuck in failed state.
+            Four services were broken for the entire previous uptime. Add a
+            timer that alerts on services stuck in failed state.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>6. DiscordSync working tree hygiene</h4>
           <p>
-            Resolve the 17 uncommitted files: commit them if they are valid, or stash/revert if they
-            are WIP.
+            Resolve the 17 uncommitted files: commit them if they are valid, or
+            stash/revert if they are WIP.
           </p>
         </div>
 
-        <h2 id="top25"><span class="num">06</span>Top 25 Things to Get Done Next</h2>
+        <h2 id="top25">
+          <span class="num">06</span>Top 25 Things to Get Done Next
+        </h2>
 
         <div class="table-wrap">
           <table>
@@ -1237,15 +1293,19 @@
             <tbody>
               <tr>
                 <td>1</td>
-                <td><strong>Deploy the 7 fixes</strong> (<code>nix run .#deploy</code>)</td>
+                <td>
+                  <strong>Deploy the 7 fixes</strong> (<code
+                    >nix run .#deploy</code
+                  >)
+                </td>
                 <td><span class="badge badge-critical">Critical</span></td>
                 <td><span class="badge badge-low">XS</span></td>
               </tr>
               <tr>
                 <td>2</td>
                 <td>
-                  <strong>Push DiscordSync</strong> <code>e6c7606</code> → update flake lock →
-                  redeploy
+                  <strong>Push DiscordSync</strong> <code>e6c7606</code> →
+                  update flake lock → redeploy
                 </td>
                 <td><span class="badge badge-critical">Critical</span></td>
                 <td><span class="badge badge-medium">S</span></td>
@@ -1253,7 +1313,9 @@
               <tr>
                 <td>3</td>
                 <td>
-                  <strong>Commit/stash DiscordSync's 17 uncommitted files</strong>
+                  <strong
+                    >Commit/stash DiscordSync's 17 uncommitted files</strong
+                  >
                 </td>
                 <td><span class="badge badge-critical">Blocker</span></td>
                 <td><span class="badge badge-low">XS</span></td>
@@ -1268,7 +1330,10 @@
               </tr>
               <tr>
                 <td>5</td>
-                <td><strong>Verify signoz-provision completes</strong> (should self-heal now)</td>
+                <td>
+                  <strong>Verify signoz-provision completes</strong> (should
+                  self-heal now)
+                </td>
                 <td><span class="badge badge-critical">High</span></td>
                 <td><span class="badge badge-low">XS</span></td>
               </tr>
@@ -1280,7 +1345,9 @@
               </tr>
               <tr>
                 <td>7</td>
-                <td><strong>Set up BorgBackup</strong> to Hetzner StorageBox</td>
+                <td>
+                  <strong>Set up BorgBackup</strong> to Hetzner StorageBox
+                </td>
                 <td><span class="badge badge-critical">Critical</span></td>
                 <td><span class="badge badge-medium">M</span></td>
               </tr>
@@ -1294,7 +1361,10 @@
               </tr>
               <tr>
                 <td>9</td>
-                <td><strong>Hermes manual steps</strong> (OpenAI key, SSH key, fallback model)</td>
+                <td>
+                  <strong>Hermes manual steps</strong> (OpenAI key, SSH key,
+                  fallback model)
+                </td>
                 <td><span class="badge badge-high">Medium</span></td>
                 <td><span class="badge badge-medium">S</span></td>
               </tr>
@@ -1318,7 +1388,9 @@
               </tr>
               <tr>
                 <td>13</td>
-                <td><strong>Post-deploy health assertion</strong> in deploy.sh</td>
+                <td>
+                  <strong>Post-deploy health assertion</strong> in deploy.sh
+                </td>
                 <td><span class="badge badge-high">Medium</span></td>
                 <td><span class="badge badge-medium">S</span></td>
               </tr>
@@ -1351,19 +1423,28 @@
               </tr>
               <tr>
                 <td>18</td>
-                <td><strong>Split large modules</strong> (monitor365 716L, signoz 705L)</td>
+                <td>
+                  <strong>Split large modules</strong> (monitor365 716L, signoz
+                  705L)
+                </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-high">L</span></td>
               </tr>
               <tr>
                 <td>19</td>
-                <td><strong>Upstream nixpkgs PRs</strong> (aw-watcher-utilization, etc.)</td>
+                <td>
+                  <strong>Upstream nixpkgs PRs</strong> (aw-watcher-utilization,
+                  etc.)
+                </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-medium">S</span></td>
               </tr>
               <tr>
                 <td>20</td>
-                <td><strong>Auditd enablement</strong> (re-check NixOS bug #483085)</td>
+                <td>
+                  <strong>Auditd enablement</strong> (re-check NixOS bug
+                  #483085)
+                </td>
                 <td><span class="badge badge-medium">Security</span></td>
                 <td><span class="badge badge-medium">S</span></td>
               </tr>
@@ -1375,19 +1456,26 @@
               </tr>
               <tr>
                 <td>22</td>
-                <td><strong>Provision Pi 3</strong> for DNS failover cluster</td>
+                <td>
+                  <strong>Provision Pi 3</strong> for DNS failover cluster
+                </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-high">L</span></td>
               </tr>
               <tr>
                 <td>23</td>
-                <td><strong>Darwin HM parity</strong> (blocked by 256GB disk)</td>
+                <td>
+                  <strong>Darwin HM parity</strong> (blocked by 256GB disk)
+                </td>
                 <td><span class="badge badge-low">Low</span></td>
                 <td><span class="badge badge-high">L</span></td>
               </tr>
               <tr>
                 <td>24</td>
-                <td><strong>Re-enable dual-wan</strong> after network ordering fix verification</td>
+                <td>
+                  <strong>Re-enable dual-wan</strong> after network ordering fix
+                  verification
+                </td>
                 <td><span class="badge badge-high">Medium</span></td>
                 <td><span class="badge badge-medium">M</span></td>
               </tr>
@@ -1403,37 +1491,46 @@
           </table>
         </div>
 
-        <h2 id="question"><span class="num">07</span>Top Question I Cannot Figure Out Myself 🤔</h2>
+        <h2 id="question">
+          <span class="num">07</span>Top Question I Cannot Figure Out Myself 🤔
+        </h2>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Needs Decision</span>
-          <h3>What should I do with the 17 uncommitted files in the DiscordSync working tree?</h3>
+          <h3>
+            What should I do with the 17 uncommitted files in the DiscordSync
+            working tree?
+          </h3>
           <div class="where">DiscordSync repo</div>
           <p>
             They contain real refactoring (not mine):
-            <code>getEnvInt</code>/<code>getEnvDuration</code> collapsed into a generic
-            <code>getEnvParsed[T]</code>, test deduplication, and gofumpt formatting across
-            <code>internal/bot/</code>, <code>internal/db/</code>,
-            <code>internal/projection/</code>, and <code>internal/config/</code>. They were present
-            when I started working on the migration fix.
+            <code>getEnvInt</code>/<code>getEnvDuration</code> collapsed into a
+            generic <code>getEnvParsed[T]</code>, test deduplication, and
+            gofumpt formatting across <code>internal/bot/</code>,
+            <code>internal/db/</code>, <code>internal/projection/</code>, and
+            <code>internal/config/</code>. They were present when I started
+            working on the migration fix.
           </p>
           <div class="callout callout-warning">
             <strong>Options</strong>
             <ul style="margin: 0.5rem 0 0 1.2rem">
               <li>
-                <strong>Commit them</strong> — they look like clean refactoring, but I didn't author
-                them and can't verify intent
+                <strong>Commit them</strong> — they look like clean refactoring,
+                but I didn't author them and can't verify intent
               </li>
-              <li><strong>Stash them</strong> — safe, but creates divergence and complexity</li>
               <li>
-                <strong>Leave them</strong> — my commit <code>e6c7606</code> is already on top, so
-                push works, but the tree stays dirty
+                <strong>Stash them</strong> — safe, but creates divergence and
+                complexity
+              </li>
+              <li>
+                <strong>Leave them</strong> — my commit <code>e6c7606</code> is
+                already on top, so push works, but the tree stays dirty
               </li>
             </ul>
           </div>
           <p>
-            I need to know: are these your changes? Should I commit them, or are they WIP from
-            another session that you'll handle?
+            I need to know: are these your changes? Should I commit them, or are
+            they WIP from another session that you'll handle?
           </p>
         </div>
 
@@ -1450,35 +1547,45 @@
               <tr>
                 <td><code>4b37a0a5</code></td>
                 <td>
-                  fix(network): resolve boot race for services binding to eno1 — CAP_NET_ADMIN
-                  oneshot adds block IP after interface is up
+                  fix(network): resolve boot race for services binding to eno1 —
+                  CAP_NET_ADMIN oneshot adds block IP after interface is up
                 </td>
               </tr>
               <tr>
                 <td><code>1f32ed6d</code></td>
-                <td>chore(flake.lock): update lock file with latest upstream revisions</td>
+                <td>
+                  chore(flake.lock): update lock file with latest upstream
+                  revisions
+                </td>
               </tr>
               <tr>
                 <td><code>c012fe0b</code></td>
                 <td>
-                  docs(status): boot reliability complete, deploy pending — 7 fixes across 2 repos
+                  docs(status): boot reliability complete, deploy pending — 7
+                  fixes across 2 repos
                 </td>
               </tr>
               <tr>
                 <td><code>71081507</code></td>
-                <td>fix(deploy): reset failed units before activation to prevent exit code 4</td>
+                <td>
+                  fix(deploy): reset failed units before activation to prevent
+                  exit code 4
+                </td>
               </tr>
               <tr>
                 <td><code>f09dae03</code></td>
-                <td>fix(services): resolve six boot-time service failures from log audit</td>
+                <td>
+                  fix(services): resolve six boot-time service failures from log
+                  audit
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <footer class="footer">
-          Generated 2026-06-28 04:10 CEST &middot; Source: SystemNix master @ 4b37a0a5 &middot; Eval
-          verified with
+          Generated 2026-06-28 04:10 CEST &middot; Source: SystemNix master @
+          4b37a0a5 &middot; Eval verified with
           <code>nix flake check --no-build</code>
         </footer>
       </main>

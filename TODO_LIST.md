@@ -13,12 +13,12 @@
 ## Priority 1: High (Stability & Monitoring)
 
 - [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification
-- [ ] **Find the missing 20th SigNoz alert rule** — 20 `mkRule` calls in `_signoz-alerts.nix` but only 19 rules appear in the API. The 20th rule is silently dropped during provisioning. Investigate the provision script's dedup logic or a POST failure
-- [ ] **Add `target` validation to SigNoz `mkRule`** — Prevent `target=0` + `above_or_equal` (mathematically always true for non-negative metrics). Four rules had this bug (fixed `2026-07-30_14-27`). Add a Nix-level assertion so it can't recur
+- [ ] **Find the missing 20th SigNoz alert rule** — 20 `mkRule` calls in `_signoz-alerts.nix` but only 19 rules appeared in the API. The 20th rule was silently dropped during provisioning. **UPDATE 2026-07-30:** Now 20 rules exist (added `/tmp TmpFS Usage High`). Need to verify all 20 appear in the live API after deploy — the original 20th drop may still be a provision script bug
+- [x] **Add `target` validation to SigNoz `mkRule`** — DONE 2026-07-30. `validateTarget` assertion in `_signoz-alerts.nix` throws at eval time on `target=0 + above_or_equal` (always true) and `target=0 + below` (never true). Verified: all 20 rules pass, deliberate bad target correctly throws. `nix flake check` catches it before deploy
 
 ## Priority 2: Manual Steps (Blocked on Human)
 
-- [ ] **Deploy pending changes** — Code-complete items pending `nix run .#deploy`: /tmp tmpfs cap raise (16G -> 48G) + cleanup timer, git insteadOf restoration (`502020e7`), SigNoz always-firing rules fix. Run deploy then `nix run .#post-deploy-check`
+- [ ] **Deploy pending changes** — Code-complete items pending `nix run .#deploy`: /tmp tmpfs cap raise (16G -> 48G) + cleanup timer, git insteadOf restoration (`502020e7`), SigNoz always-firing rules fix, CPUQuota=200% default, mkRule target validation, /tmp tmpfs monitoring (system-health + SigNoz + Gatus), Homepage Caddy tile + favicon fixes. Run deploy then `nix run .#post-deploy-check`
 - [ ] **Hermes: install SSH deploy key** — private key to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model`
 - [ ] **Install `dnsblockd-CA` on Mac** — Without it, Chrome/Helium block Touch ID platform authenticator for `*.home.lan`, breaking Gatus/Forgejo SSO. Manual: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /tmp/dnsblockd-ca.pem`
@@ -27,12 +27,12 @@
 ## Priority 3: Infrastructure
 
 - [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), now has btrbk snapshot protection but still not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime
-- [ ] **/tmp Prometheus monitoring** — Add `df /tmp` metric to `system-health` textfile collector + Gatus alert when /tmp exceeds 80% (~38 GiB). Would catch runaway builds before hitting the 48 GiB ceiling
+- [x] **/tmp Prometheus monitoring** — DONE 2026-07-30. `system-health.nix` emits `system_tmpfs_tmp_usage_percent` + `system_tmpfs_tmp_over_threshold` (80% of 48 GiB). SigNoz alert "/tmp TmpFS Usage High (>80%)" (primary, numeric comparison) + Gatus check (defense-in-depth, pre-computed boolean). Pending deploy
 
 ## Priority 4: Code Quality
 
 - [ ] **Wire `doc-freshness-check.sh` into pre-commit or CI** — Script exists (`scripts/doc-freshness-check.sh`) but is not automated. Validates doc counts against code
-- [ ] **Homepage widgets audit** — Audit `widgets.yaml` for schema issues (same class as the bookmark schema crash). Verify Productivity `columns=4` with 3 tiles, fix dishonest Caddy tile latency, consider local favicon bundling instead of CDN
+- [x] **Homepage widgets audit** — DONE 2026-07-30. Widgets use `pkgs.formats.yaml` (structurally safe). Productivity has 5 tiles (not 3), `columns=4` correct. Caddy tile `siteMonitor` fixed (self-referential dashboard URL → Caddy admin API `localhost:2019/metrics`). Favicon CDN → local `/icons/nixos.png`. **Caveat:** field-level schema not cross-referenced against Homepage docs. Pending deploy
 
 ## Priority 5: Desktop
 
