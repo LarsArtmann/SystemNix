@@ -152,7 +152,7 @@ systemctl --user --failed
 | Gatus: GPUActive > 60G alert | `gatus-config.nix` | Early warning before critical memory pressure |
 | Gatus: user-slice > 40G alert | `gatus-config.nix` | Early warning before OOM cascade |
 | Gatus: Memory Pressure (PSI) | `gatus-config.nix` | Fires at >50% stall (10s avg) |
-| `/tmp` tmpfs capped 16G | `boot.nix` | Prevents build cache filling RAM-backed tmpfs |
+| `/tmp` tmpfs capped 48G + stale-entry cleanup timer | `boot.nix`, `scheduled-tasks.nix` | Prevents build cache filling RAM-backed tmpfs; timer removes untouched entries >4h |
 
 ### Monitoring the WDT Health
 
