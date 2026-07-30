@@ -69,28 +69,30 @@
       imports = [ inputs.overview.nixosModules.default ];
 
       config = lib.mkIf cfg.enable {
-        systemd.services.overview = {
-          after = [ "projects-management-automation.service" ];
-          wants = [ "projects-management-automation.service" ];
-          partOf = [ "projects-management-automation.service" ];
-          serviceConfig.ExecStartPre = "+${lib.getExe waitDaemonReady}";
-        };
-
-        systemd.services.overview-discovery-watchdog = {
-          description = "Restart Overview when it is 503 but the discovery daemon is healthy";
-          serviceConfig = {
-            Type = "oneshot";
-            ExecStart = lib.getExe discoveryWatchdog;
+        systemd = {
+          services.overview = {
+            after = [ "projects-management-automation.service" ];
+            wants = [ "projects-management-automation.service" ];
+            partOf = [ "projects-management-automation.service" ];
+            serviceConfig.ExecStartPre = "+${lib.getExe waitDaemonReady}";
           };
-        };
 
-        systemd.timers.overview-discovery-watchdog = {
-          description = "Periodically recover Overview from a stale 503 discovery failure";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "3min";
-            OnUnitActiveSec = "2min";
-            AccuracySec = "30s";
+          services.overview-discovery-watchdog = {
+            description = "Restart Overview when it is 503 but the discovery daemon is healthy";
+            serviceConfig = {
+              Type = "oneshot";
+              ExecStart = lib.getExe discoveryWatchdog;
+            };
+          };
+
+          timers.overview-discovery-watchdog = {
+            description = "Periodically recover Overview from a stale 503 discovery failure";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "3min";
+              OnUnitActiveSec = "2min";
+              AccuracySec = "30s";
+            };
           };
         };
       };
