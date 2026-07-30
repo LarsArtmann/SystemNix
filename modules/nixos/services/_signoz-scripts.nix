@@ -38,17 +38,6 @@
       CHANNEL_NAME="Discord Alerts"
       FAILED=0
 
-      # Helper: check HTTP status code is 2xx
-      check_status() {
-        local label="$1" status="$2"
-        if [ "$status" -ge 200 ] && [ "$status" -lt 300 ]; then
-          echo "  OK $label (HTTP $status)"
-        else
-          echo "  FAILED $label (HTTP $status)" >&2
-          FAILED=$((FAILED + 1))
-        fi
-      }
-
       # Deploy notification channels (idempotent: delete existing by name, then create fresh)
       WEBHOOK_FILE="${config.sops.secrets.discord_alert_webhook_url.path}"
       if [ -f "$WEBHOOK_FILE" ]; then
