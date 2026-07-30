@@ -93,6 +93,17 @@ in
         };
         wantedBy = [ "timers.target" ];
       };
+
+      tmp-cleanup = {
+        description = "Remove stale entries in /tmp older than 4 hours";
+        timerConfig = {
+          OnBootSec = "5min";
+          OnUnitActiveSec = "4h";
+          Persistent = true;
+          RandomizedDelaySec = "5m";
+        };
+        wantedBy = [ "timers.target" ];
+      };
     };
 
     services = {
@@ -496,6 +507,64 @@ in
                 };
               in
               "${buildCleanup}/bin/nix-build-cleanup";
+            StandardOutput = "journal";
+            StandardError = "journal";
+          };
+      };
+
+      tmp-cleanup = {
+        description = "Remove stale top-level entries in /tmp untouched for >4h";
+        inherit onFailure;
+        serviceConfig =
+          harden {
+            MemoryMax = "128M";
+            ProtectHome = true;
+            PrivateTmp = false; # MUST see the real /tmp, not a private tmpfs
+            ReadWritePaths = [ "/tmp" ];
+          }
+          // {
+            Type = "oneshot";
+            ExecStart =
+              let
+                tmpCleanup = pkgs.writeShellApplication {
+                  name = "tmp-cleanup";
+                  runtimeInputs = [
+                    pkgs.findutils
+                    pkgs.coreutils
+                  ];
+                  text = ''
+                    THRESHOLD_MIN=240 # 4 hours — active builds touch files constantly
+
+                    before_kb=$(du -sk /tmp 2>/dev/null | cut -f1 || echo 0)
+
+                    removed=0
+                    # Only top-level non-dotfile entries — dotfiles (.X11-unix, .font-unix,
+                    # lock files) are protected. Per-entry descendant check prevents
+                    # removing dirs that contain recently-touched files (active builds
+                    # writing into a dir created hours ago: dir mtime stays old but file
+                    # mtimes are fresh). This is MORE conservative than cleanOnBoot (which
+                    # wipes everything on reboot).
+                    for entry in /tmp/*; do
+                      [ -e "$entry" ] || continue
+                      [ -L "$entry" ] && continue  # never follow symlinks
+                      [ -S "$entry" ] && continue  # skip sockets
+                      [ -p "$entry" ] && continue  # skip named pipes
+                      # If ANY descendant was touched in the last THRESHOLD_MIN, the
+                      # entry is active — skip it.
+                      if find "$entry" -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
+                        continue
+                      fi
+                      rm -rf -- "$entry" && removed=$((removed + 1))
+                    done
+
+                    after_kb=$(du -sk /tmp 2>/dev/null | cut -f1 || echo 0)
+                    freed_kb=$((before_kb - after_kb))
+                    freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
+                    echo "tmp-cleanup: removed $removed stale entries, freed $freed_human from /tmp"
+                  '';
+                };
+              in
+              "${tmpCleanup}/bin/tmp-cleanup";
             StandardOutput = "journal";
             StandardError = "journal";
           };

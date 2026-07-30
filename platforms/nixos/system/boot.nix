@@ -121,15 +121,18 @@ in
     tmp.useTmpfs = false;
   };
 
-  # Static /tmp tmpfs mount with explicit 24 GiB size cap.
+  # Static /tmp tmpfs mount with explicit 48 GiB size cap.
   # MUST use systemd.mounts (NOT fileSystems) so the unit is in the Nix store
   # closure and switch-to-configuration can track it across generations.
+  # size= is a CEILING, not a reservation — RAM is only consumed by files actually
+  # written. Stale accumulation is handled by the tmp-cleanup timer in
+  # scheduled-tasks.nix (removes untouched entries >4h old).
   systemd.mounts = [
     {
       what = "tmpfs";
       where = "/tmp";
       type = "tmpfs";
-      options = "mode=1777,size=24G";
+      options = "mode=1777,size=48G";
     }
   ];
 
