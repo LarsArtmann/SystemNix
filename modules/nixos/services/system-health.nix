@@ -42,6 +42,11 @@ _: {
       # CPU alert threshold: average CPU% over collection interval that triggers alert
       cpuAlertThreshold = 150;
 
+      # /tmp tmpfs usage alert threshold (percentage). /tmp is capped at 48 GiB
+      # (boot.nix static systemd mount). 80% ≈ 38 GiB — catches runaway builds
+      # (go-build caches, dev temp files) before hitting the ceiling.
+      tmpfsThreshold = 80;
+
       systemHealthMetrics = pkgs.writeShellApplication {
         name = "system-health-metrics";
         runtimeInputs = [
@@ -145,6 +150,15 @@ _: {
             if [ "$RULE_COUNT" -gt 15 ] 2>/dev/null; then
               RULES_HEALTHY=1
             fi
+          fi
+
+          # === /tmp tmpfs usage ===
+          TMPFS_USAGE=0
+          TMPFS_OVER=0
+          if df /tmp >/dev/null 2>&1; then
+            TMPFS_USAGE=$(df --output=pcent /tmp 2>/dev/null | tail -1 | tr -dc '0-9') || TMPFS_USAGE=0
+            TMPFS_USAGE="''${TMPFS_USAGE:-0}"
+            [ "$TMPFS_USAGE" -ge ${toString tmpfsThreshold} ] 2>/dev/null && TMPFS_OVER=1
           fi
 
           {

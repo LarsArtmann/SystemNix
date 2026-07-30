@@ -9,6 +9,20 @@ let
   #   "above_or_equal" = alert when metric is at/above target (legacy "AND")
   #   "below"          = alert when metric drops strictly below target (legacy "AND_NOT")
   # v5 requires every rule to reference at least one notification channel.
+  # Guard against mathematically vacuous conditions.
+  #   target=0 + above_or_equal → fires when metric >= 0 → ALWAYS true for non-negative metrics
+  #   target=0 + below          → fires when metric < 0  → NEVER true for non-negative metrics
+  # Both are almost certainly bugs. See AGENTS.md gotcha:
+  # "SigNoz alert rule target=0 + above_or_equal = always firing".
+  validateTarget =
+    name: op: target:
+    if target == 0 && op == "above_or_equal" then
+      throw "mkRule: rule '${name}' has target=0 with op='above_or_equal' — always true for non-negative metrics. Use target=1 (at least one) or op='below' with target=1 (alert when value drops)."
+    else if target == 0 && op == "below" then
+      throw "mkRule: rule '${name}' has target=0 with op='below' — never true for non-negative metrics. Use target=1 with op='below' (alert when value drops below 1)."
+    else
+      true;
+
   mkRule =
     {
       name,
@@ -20,6 +34,7 @@ let
       interval ? "5m",
       severity ? "critical",
     }:
+    assert validateTarget name op target;
     pkgs.writeText "${lib.strings.sanitizeDerivationName name}-rule.json" (
       builtins.toJSON {
         alert = name;
@@ -63,6 +78,13 @@ in
       description = "Disk usage above 90% on {{.Labels.fstype}} mounted at {{.Labels.mountpoint}}";
       query = ''(1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100'';
       target = 90;
+    };
+    "signoz/rules/tmp-tmpfs-high.json".source = mkRule {
+      name = "/tmp TmpFS Usage High (>80%)";
+      description = "/tmp tmpfs usage above 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation risking exhaustion";
+      query = "system_tmpfs_tmp_usage_percent";
+      target = 80;
+      severity = "warning";
     };
     "signoz/rules/cpu-sustained.json".source = mkRule {
       name = "CPU Sustained High (>90%)";
