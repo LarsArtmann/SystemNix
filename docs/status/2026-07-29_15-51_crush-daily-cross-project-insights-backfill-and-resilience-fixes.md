@@ -257,3 +257,9 @@ The crush-daily resilience fix is committed upstream but SystemNix's flake.lock 
 ### 3. The crush-daily insights pipeline generates ~250 LLM calls per date (one per active project). Should I add a `min_session_threshold` config to skip low-activity projects?
 
 Many discovered projects have only 1-2 sessions per day. These contribute almost no signal to the cross-project synthesis but each costs an API call. Skipping projects with <3 sessions would reduce API usage by ~40-60% per date. This is an upstream change — should I implement it?
+
+---
+
+## Resolution (2026-07-30)
+
+Superseded by two later sessions. A THIRD root-cause bug (`Yesterday()` timezone truncation — `Truncate(24h)` snapped to UTC midnight, causing collect and insights to compute different "yesterday" dates) was found in `2026-07-29_22-05`. All 46 dates fully recovered by `2026-07-30_00-05` — 10/10 retries succeeded, all dates have project + cross-project insights. Deployed (`0cb5ea6`). Upstream commits: `868fe33` (errgroup), `9286bf0` (timezone), `0cb5ea6` (nightly scheduler).

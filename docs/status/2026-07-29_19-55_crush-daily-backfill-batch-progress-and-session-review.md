@@ -223,3 +223,9 @@ A batch job is backfilling cross-project insights for 31 dates that had **zero**
 - **Failed:** 2 dates (2026-06-13, 2026-07-09) — transient Synthetic API outage (~18:26-18:31)
 - **Remaining:** 9 dates (2026-06-19 in progress, then 2026-06-22, 2026-06-14, 2026-07-10, 2026-06-12, 2026-06-15, 2026-06-28, 2026-06-17, 2026-07-18)
 - **Rate limited:** No
+
+---
+
+## Resolution (2026-07-30)
+
+Superseded. The batch completed (27/31), and a THIRD bug (`Yesterday()` timezone truncation) was found and fixed in `2026-07-29_22-05`. Full recovery by `2026-07-30_00-05`: all 46 dates have project + cross-project insights. The 5 dates with zero insights (2026-07-19 through 2026-07-25) were the timezone bug victims — all now resolved. Deployed (`0cb5ea6`).

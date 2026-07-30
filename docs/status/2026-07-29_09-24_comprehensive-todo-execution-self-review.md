@@ -261,3 +261,15 @@ Which tradeoff do you prefer?
 | Runtime verifications | **0** |
 | Time to execute | ~45 min |
 | Time to self-review | ~15 min |
+
+---
+
+## Resolution (2026-07-30)
+
+Most items flagged here were resolved in later sessions the same day and next day:
+- **SigNoz rules API** — root cause was the v5 schema change in SigNoz 0.127.1 (not the jq path). Fixed in `2026-07-29_23-46` + `2026-07-30_14-27` (4 always-firing rules also fixed). All 19 rules now provisioned and verified.
+- **crush-daily-backfill architecture** — script was later integrated as `nix run .#crush-daily-backfill`.
+- **cqrs-lint/go-cqrs-lite stale lock** — fully resolved (`2026-07-29_14-56` + `2026-07-29_22-01`).
+- **mr-sync** — re-enabled with all tests passing (`2026-07-29_17-01`).
+- **Pocket-ID secret hard-fail** — implemented as `exit 1` on POST failure (acceptable).
+- **restartTriggers on provisioners** — added to 8 provisioners + `deploy.sh` restart loop.

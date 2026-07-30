@@ -271,3 +271,9 @@ cd /home/lars/projects/SystemNix && nix run .#deploy
 - Did NOT bump the flake.lock from `868fe33` to `9286bf0` for the timezone fix
 
 **The deeper failure:** Three sessions to find three bugs that were all in the same pipeline. Each session fixed one bug, ran the batch, and discovered the next bug only when the batch still had failures. A thorough code review of the entire insights pipeline in session 1 would have found all three in 30 minutes.
+
+---
+
+## Resolution (2026-07-30)
+
+All remaining items resolved by `2026-07-30_00-05`: 10/10 retry dates succeeded, flake.lock bumped to `0cb5ea6` (includes timezone fix `9286bf0`), deployed, nightly scheduler fixed. All 46 collected dates now have project + cross-project insights. Complete recovery confirmed.

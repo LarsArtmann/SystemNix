@@ -192,3 +192,9 @@ SystemNix has a rich `docs/status/` history. Every incident is documented. **Not
 ---
 
 _This report was written after the user's prompt to research first. The first response in this session was premature — it diagnosed without reading prior session context. This report corrects that. The core lesson: **read `docs/status/` and the module comments BEFORE diagnosing. Every incident here is documented._
+
+---
+
+## Resolution (2026-07-30)
+
+Fully resolved. The Turso 403 quota issue was fixed upstream (`OpenTursoSync` now detects quota errors and falls back to local SQLite, commit in DiscordSync). The backend was switched to `sqlite` (eliminates Turso dependency entirely). DiscordSync is deployed and healthy. See `2026-07-29_14-04` (efficiency fix) and `2026-07-29_23-46` (deploy confirmation, `d7db5bfe`).
