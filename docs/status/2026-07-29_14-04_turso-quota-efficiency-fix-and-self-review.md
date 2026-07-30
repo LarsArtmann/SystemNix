@@ -196,3 +196,9 @@ Then report the actual deployed state, not just "tests pass."
 ---
 
 _This report documents the gap between "code fixed" and "service running." The upstream work is solid and tested. The deployment is not done. That's on me._
+
+---
+
+## Resolution (2026-07-30)
+
+Deployed and resolved. DiscordSync backend switched to `sqlite` (eliminates Turso free-plan 403 entirely). The upstream `IsQuotaExceeded` fallback (detects quota error → opens local replica as plain SQLite) is deployed as defense-in-depth. DiscordSync is healthy and running. See `2026-07-29_23-46` (`d7db5bfe`).

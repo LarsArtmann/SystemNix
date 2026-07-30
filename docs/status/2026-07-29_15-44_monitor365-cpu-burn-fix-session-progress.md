@@ -155,3 +155,9 @@ This session executed the deployment and prevention plan. **4 of 11 tasks comple
 2. **The sync root cause (404/429) — is this a known issue or a new regression?** The plan says the server returns 404 for device config and 429 for enrollment. I don't know if this started after a specific deploy, or if sync has been broken since the server was first set up. The agent's circuit breaker has been open long enough to accumulate 1.15M failures — this may have been broken for weeks. Do you have context on when sync last worked?
 
 3. **Should I kill the background build and restart monitor365 first, or let the build finish?** The build is running and may take 5-10 more minutes. The agent is burning 3 cores. You could restart it now (`sudo systemctl restart monitor365.service`) and the build continues in parallel. Or we wait for the build, deploy everything at once, and the restart happens as part of deploy. Which do you prefer?
+
+---
+
+## Resolution (2026-07-30)
+
+Superseded by `2026-07-29_16-58`. The sync root cause was NOT 404/429 — it was a server-side DuckDB COALESCE NULL crash in the `version` column (`b900d3454`). The server crash-looped, causing the agent's circuit breaker to open permanently. Fixing the server crash resolved the sync failures and the CPU burn. All 15 plan tasks completed. `CPUQuota=200%` added to `harden()` as defense-in-depth. AI services got explicit overrides (ollama 400%, hermes 400%, immich-ml 300%).

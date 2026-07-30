@@ -160,3 +160,9 @@ Nothing. The fix is correct and minimal. But there are process failures worth ca
 | Root cause (no build gate) | NOT addressed |
 
 **One-character fix, correct and minimal. But I skipped the full-build verification, didn't update docs, and didn't address the systemic issue (auto-git daemon commits without build checks). The fix is done; the process that created the bug is not.**
+
+---
+
+## Resolution (2026-07-30)
+
+The one-character fix (`i` -> `_`) was committed (`d09f6693`) and deployed in a subsequent deploy. SearXNG builds cleanly with the DNS boot-race fix active. The `searxng-wait-dns` ExecStartPre runs successfully on boot.

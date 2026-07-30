@@ -139,3 +139,9 @@
 2. **Should I restart the monitor365 service NOW as immediate mitigation?** Even without the code fix deployed, `systemctl restart monitor365` would clear the in-memory circuit breaker and stop the CPU burn temporarily (until the CB opens again from the next sync failure). The root sync issue would remain unfixed. Do you want me to restart it now?
 
 3. **Should I restore the libspa-sys pin if the Nix build breaks?** The `[patch.crates-io] libspa-sys` override is still on master and produced 699 bindgen errors in the Nix sandbox historically. If the build fails on deploy, should I restore the `0615301` pin and cherry-pick the CPU fix onto that commit, or fix the bindgen issue upstream first?
+
+---
+
+## Resolution (2026-07-30)
+
+All resolved. The CPU busy-loop fix was pushed upstream (`f72cf1073`) and deployed in `2026-07-29_16-58`. The REAL sync root cause was NOT 404/429 — it was a server-side DuckDB COALESCE NULL crash (`b900d3454`) in the `version` column. The server crash-looped, causing the agent's circuit breaker to open → busy-loop. Fixing the server crash resolved the sync failures entirely. The `CPUQuota=200%` defense-in-depth was added to `harden()`. The libspa-sys pin was NOT needed — `[patch.crates-io]` builds fine on master. monitor365 + go-commit both unpinned to `ref=master` successfully.

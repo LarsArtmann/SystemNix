@@ -226,3 +226,9 @@ Gatus API at `localhost:9110` returns 401 for unauthenticated requests. This mea
 - (c) Add a read-only API key for monitoring
 
 I cannot answer this because it's a security-vs-operability tradeoff that depends on your threat model for localhost access.
+
+---
+
+## Resolution (2026-07-30)
+
+The DNS boot-race fix (adding `dnsblockd.service` dependency + `searxng-wait-dns` ExecStartPre) later caused a build failure — the `for i in` loop variable `i` triggered shellcheck SC2034 (unused variable in `for` loop). Fixed in `2026-07-29_21-30` (`d09f6693`, `i` -> `_`). SearXNG is deployed and functional on port 8889 with all engines resolving correctly after the DNS gate.

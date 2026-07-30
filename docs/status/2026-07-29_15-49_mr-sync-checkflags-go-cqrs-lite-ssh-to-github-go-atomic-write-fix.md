@@ -157,3 +157,9 @@
 2. **Should I remove the `git insteadOf` rule (`url.git@github.com:.insteadof=https://github.com/`)?** The prior session flagged it as the root cause of SSH URLs in flake.locks. All LarsArtmann repos are public except 4 GOPRIVATE repos that use access-tokens (not SSH). Removing the rule would prevent future SSH URL pollution but might affect other git workflows on this machine. I can check `git config --global --list` to assess the full blast radius before recommending.
 
 3. **Should I proceed with bumping go-atomic-write to v0.4.1 in mr-sync (after push) and removing the `checkFlags` entirely?** The alternative is leaving `checkFlags` in place as a permanent skip (less ideal — hides the real fix). The proper path requires: push go-atomic-write → tag v0.4.1 → `go get` in mr-sync → `go mod vendor` → update flake.nix ref → recompute vendorHash → remove checkFlags → verify all tests pass.
+
+---
+
+## Resolution (2026-07-30)
+
+Fully resolved in `2026-07-29_17-01`. All 3 repos pushed/tagged/deployed: go-atomic-write v0.4.1 (tagged), mr-sync checkFlags removed (`doCheck` defaults to true, all tests pass), go-cqrs-lite lock cleaned (4 stale nodes consolidated). All 9 SSH flake inputs converted to `github:` HTTPS URLs.

@@ -241,3 +241,9 @@
 ## Summary
 
 The root causes are fixed and all code is pushed to GitHub. The insteadOf removal is deployed. All mr-sync tests pass without checkFlags. The go-cqrs-lite lock is clean. But the session was inefficient — 50% of the time was spent fighting an unidentified auto-commit daemon, and two standard Go operations (`go mod tidy`, `go mod vendor`) were skipped, leaving the local development environment in an inconsistent state.
+
+---
+
+## Resolution (2026-07-30)
+
+**The headline change (`git insteadOf` removal) was REVERTED** on 2026-07-30 by explicit user demand (`2026-07-30_15-53`, commit `502020e7`). The `url.git@github.com:.insteadof=https://github.com/` rule is back in effect. All OTHER changes in this session (go-atomic-write v0.4.1, mr-sync tests passing, go-cqrs-lite lock cleanup) remain deployed and valid. AGENTS.md updated to document the restoration.

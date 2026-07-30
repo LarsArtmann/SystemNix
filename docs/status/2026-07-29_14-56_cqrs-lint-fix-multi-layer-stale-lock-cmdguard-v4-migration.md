@@ -192,3 +192,9 @@ The TODO item described the symptom ("stale flake.lock with SSH URL") but the ac
 2. **Should the 4 go-cqrs-lite lock nodes be consolidated?** Root uses `go-cqrs-lite_3` (proper flake, rev `05d12c05`). crush-daily uses `go-cqrs-lite` (flake=false, stale rev `92d87145`). overview uses `go-cqrs-lite_4` (flake=false, same stale rev). discordsync uses `go-cqrs-lite_2` (flake=false, pinned rev `da745368`). Consolidating crush-daily and overview to follow root would eliminate the stale nodes, but risks vendorHash breakage in those consumers. Worth doing, or leave as-is?
 
 3. **Should the stale `git insteadOf` rule be removed?** `url.git@github.com:.insteadof=https://github.com/` in global git config rewrites all HTTPS GitHub URLs to SSH. This caused nix to convert `github:` flake URLs to `ssh://git@github.com/` in lock entries (observed during this session). All LarsArtmann repos are public (except 4 in GOPRIVATE which use access-tokens). Removing the rule would prevent SSH-URL lock pollution but might affect other git workflows. Your call.
+
+---
+
+## Resolution (2026-07-30)
+
+The cqrs-lint fix later **regressed** — commit `b0d76b68` wrongly reverted go-finding to a zero pseudo-version, breaking the build again. Re-fixed in `2026-07-29_22-01` (`649bcd5f` upstream). cqrs-lint v0.2.2 builds and is deployed. The go-cqrs-lite lock was cleaned (4 stale nodes consolidated in `2026-07-29_17-01`). The `git insteadOf` rule was removed (`2026-07-29_17-01`) then **restored on user demand** (`2026-07-30_15-53`, `502020e7`) — it remains in effect.
