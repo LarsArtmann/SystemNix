@@ -687,6 +687,17 @@ _: {
                 ];
                 alerts = discordAlert "A monitored service exceeds 150% average CPU — possible busy-loop or runaway. Check: curl localhost:9100/metrics | grep cpu_over_threshold | grep ' 1$'";
               })
+              (mkHttpCheck {
+                name = "/tmp TmpFS Usage";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_tmpfs_tmp_over_threshold 0*)"
+                ];
+                alerts = discordAlert "/tmp tmpfs exceeds 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation. Check: du -sh /tmp/* | sort -rh | head";
+              })
             ]
             ++ [
               (mkHttpCheck {
