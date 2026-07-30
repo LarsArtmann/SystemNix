@@ -194,3 +194,9 @@ The cleanup removes /tmp entries untouched for >4h. Your longest builds (monitor
 ### 3. Do you want /tmp usage monitoring (Prometheus + Gatus alert)?
 
 I can add a `df /tmp` metric to the `system-health` textfile collector and a Gatus alert when /tmp exceeds 80% (≈38 GiB). This would catch runaway builds before they hit the 48 GiB ceiling and fail with ENOSPC. Worth adding, or is the cleanup timer + 48 GiB ceiling sufficient?
+
+---
+
+## Resolution (2026-07-30)
+
+Code is committed and `nix flake check --no-build` passes. The tmpfs cap raise (16G -> 48G) and cleanup timer are **pending deploy** — the tmpfs size change requires a remount or reboot to take effect. The cleanup timer (`nix-build-cleanup-timer` variant for /tmp) will activate on next deploy. The three questions above remain open user decisions (staleness threshold, /tmp monitoring).
