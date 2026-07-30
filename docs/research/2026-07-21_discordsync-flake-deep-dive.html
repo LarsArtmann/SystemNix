@@ -65,14 +65,14 @@
 
         /* --- Type stacks (system only — zero external fonts) --- */
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
 
       * {
@@ -483,20 +483,12 @@
       .callout-teal,
       .callout-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 10%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 10%, var(--surface-raised));
       }
       .callout-amber,
       .callout-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 18%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 18%, var(--surface-raised));
       }
 
       /* --- Strengths --- */
@@ -880,24 +872,17 @@
             <div class="tri"></div>
           </div>
           <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-07-21</div>
-          <h1>
-            DiscordSync <code>flake.nix</code> — Adoption &amp; Utilization
-            Audit
-          </h1>
+          <h1>DiscordSync <code>flake.nix</code> — Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            Is SystemNix consuming the DiscordSync flake superbly? The binary is
-            used well, but SystemNix ignores the flake's
-            <code>nixosModules.default</code> and
-            <code>overlays.default</code> outputs &mdash; hand-rolling a
-            160-line module that duplicates every option and has already
-            drifted. Three runtime capabilities sit dark.
+            Is SystemNix consuming the DiscordSync flake superbly? The binary is used well, but
+            SystemNix ignores the flake's
+            <code>nixosModules.default</code> and <code>overlays.default</code> outputs &mdash;
+            hand-rolling a 160-line module that duplicates every option and has already drifted.
+            Three runtime capabilities sit dark.
           </p>
           <div class="meta">
             <span class="tag amber">Pinned rev: <code>9c640075</code></span>
-            <span class="tag"
-              >Input:
-              <code>github:LarsArtmann/DiscordSync?ref=master</code></span
-            >
+            <span class="tag">Input: <code>github:LarsArtmann/DiscordSync?ref=master</code></span>
             <span class="tag teal">Adoption Score: 62/100</span>
           </div>
         </header>
@@ -931,38 +916,32 @@
           <h2><span class="num">00</span>Summary</h2>
           <p>
             SystemNix consumes only
-            <code>inputs.discordsync.packages.${system}.default</code> &mdash;
-            the compiled binary &mdash; from the DiscordSync flake. The flake's
-            two other outputs, <code>nixosModules.default</code> and
-            <code>overlays.default</code>, are ignored entirely. In their place,
-            <code>modules/nixos/services/discordsync.nix</code> hand-writes a
-            160-line NixOS module that re-declares every option the upstream
-            module already provides.
+            <code>inputs.discordsync.packages.${system}.default</code> &mdash; the compiled binary
+            &mdash; from the DiscordSync flake. The flake's two other outputs,
+            <code>nixosModules.default</code> and <code>overlays.default</code>, are ignored
+            entirely. In their place,
+            <code>modules/nixos/services/discordsync.nix</code> hand-writes a 160-line NixOS module
+            that re-declares every option the upstream module already provides.
           </p>
           <p>
-            This is not careless duplication. SystemNix's module adds real host
-            integration the upstream cannot: <code>sops</code> templates, the
-            shared <code>harden {}</code> /
-            <code>serviceDefaults</code> helpers, <code>onFailure</code> Discord
-            alerts, a DNS-readiness wait gate, and correct ordering after
-            <code>dnsblockd.service</code>. That layering is genuinely superb.
-            The cost is silent drift: upstream commit
-            <code>ced0431b</code> (&ldquo;extract NixOS module to standalone
-            file + add user/group options&rdquo;) already changed the option
-            surface, and SystemNix's copy has not followed. Three
-            binary-supported capabilities are dark as a direct consequence.
+            This is not careless duplication. SystemNix's module adds real host integration the
+            upstream cannot: <code>sops</code> templates, the shared <code>harden {}</code> /
+            <code>serviceDefaults</code> helpers, <code>onFailure</code> Discord alerts, a
+            DNS-readiness wait gate, and correct ordering after <code>dnsblockd.service</code>. That
+            layering is genuinely superb. The cost is silent drift: upstream commit
+            <code>ced0431b</code> (&ldquo;extract NixOS module to standalone file + add user/group
+            options&rdquo;) already changed the option surface, and SystemNix's copy has not
+            followed. Three binary-supported capabilities are dark as a direct consequence.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            Strong integration layer, weak consumption. The single
-            highest-leverage change is to
-            <em>consume</em> <code>flake.nixosModules.default</code> as the base
-            and layer the SystemNix-specifics on top &mdash; eliminating 160
-            lines of drift-prone duplication while keeping every hardening and
-            sops integration. In parallel, wire three one-line environment
-            variables that turn on OTel tracing, SIGHUP hot-reload, and
-            self-alerting webhook notifications &mdash; all of which the binary
-            already supports and SystemNix already has the infrastructure for.
+            Strong integration layer, weak consumption. The single highest-leverage change is to
+            <em>consume</em> <code>flake.nixosModules.default</code> as the base and layer the
+            SystemNix-specifics on top &mdash; eliminating 160 lines of drift-prone duplication
+            while keeping every hardening and sops integration. In parallel, wire three one-line
+            environment variables that turn on OTel tracing, SIGHUP hot-reload, and self-alerting
+            webhook notifications &mdash; all of which the binary already supports and SystemNix
+            already has the infrastructure for.
           </div>
         </section>
 
@@ -970,10 +949,9 @@
         <section id="strengths">
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            SystemNix's integration is <em>not</em> a subset of upstream &mdash;
-            it adds host-specific hardening and dependency wiring that a
-            portable upstream module cannot. These are done superbly and should
-            be preserved in any refactor.
+            SystemNix's integration is <em>not</em> a subset of upstream &mdash; it adds
+            host-specific hardening and dependency wiring that a portable upstream module cannot.
+            These are done superbly and should be preserved in any refactor.
           </p>
 
           <div class="strengths">
@@ -982,9 +960,8 @@
               <div class="text">
                 <strong>Rev-pinned with <code>nixpkgs.follows</code></strong>
                 <span
-                  ><code>flake.nix:393-402</code> &mdash; pinned to
-                  <code>9c640075</code>, all five sub-inputs follow the
-                  SystemNix nixpkgs. Reproducible, no double
+                  ><code>flake.nix:393-402</code> &mdash; pinned to <code>9c640075</code>, all five
+                  sub-inputs follow the SystemNix nixpkgs. Reproducible, no double
                   instantiation.</span
                 >
               </div>
@@ -993,17 +970,14 @@
               <div class="check">+</div>
               <div class="text">
                 <strong
-                  >Shared <code>harden {}</code> hardening &mdash; stronger than
-                  upstream</strong
+                  >Shared <code>harden {}</code> hardening &mdash; stronger than upstream</strong
                 >
                 <span
-                  ><code>discordsync.nix:152</code> uses the SystemNix
-                  <code>harden</code> helper, which is broader than upstream's
-                  hand-rolled <code>NoNewPrivileges</code>/<code
+                  ><code>discordsync.nix:152</code> uses the SystemNix <code>harden</code> helper,
+                  which is broader than upstream's hand-rolled <code>NoNewPrivileges</code>/<code
                     >ProtectSystem</code
                   >
-                  list. <code>MemoryMax=2G</code> +
-                  <code>ReadWritePaths</code> scope writes.</span
+                  list. <code>MemoryMax=2G</code> + <code>ReadWritePaths</code> scope writes.</span
                 >
               </div>
             </div>
@@ -1012,42 +986,34 @@
               <div class="text">
                 <strong>Structured sops secret management</strong>
                 <span
-                  ><code>sops.nix:178-200</code> &mdash; Discord token, Turso
-                  URL+token, and GCS credentials flow through a sops
-                  <em>template</em> (<code>discordsync-env</code>) with
-                  <code>svcEnabled</code> guards. One missing service cannot
-                  block atomic secret decryption.</span
+                  ><code>sops.nix:178-200</code> &mdash; Discord token, Turso URL+token, and GCS
+                  credentials flow through a sops <em>template</em> (<code>discordsync-env</code>)
+                  with <code>svcEnabled</code> guards. One missing service cannot block atomic
+                  secret decryption.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >DNS-readiness gate (defends a documented boot race)</strong
-                >
+                <strong>DNS-readiness gate (defends a documented boot race)</strong>
                 <span
-                  ><code>discordsync.nix:23-33</code> &mdash;
-                  <code>waitDnsReady</code> blocks <code>ExecStart</code> until
-                  <code>discord.com</code> resolves. Necessary because
-                  <code>dnsblockd</code> owns <code>:53</code> and the embedded
-                  sdns resolver must finish cache warm-up. A documented
-                  SystemNix gotcha.</span
+                  ><code>discordsync.nix:23-33</code> &mdash; <code>waitDnsReady</code> blocks
+                  <code>ExecStart</code> until <code>discord.com</code> resolves. Necessary because
+                  <code>dnsblockd</code> owns <code>:53</code> and the embedded sdns resolver must
+                  finish cache warm-up. A documented SystemNix gotcha.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Correct dependency ordering on <code>dnsblockd</code></strong
-                >
+                <strong>Correct dependency ordering on <code>dnsblockd</code></strong>
                 <span
                   ><code>discordsync.nix:107-116</code> &mdash;
-                  <code>after = [ ... "dnsblockd.service" ]</code>. Upstream
-                  only orders after <code>network-online.target</code>, which
-                  does NOT guarantee <code>:53</code> has a listener. SystemNix
-                  is correct here; upstream is not.</span
+                  <code>after = [ ... "dnsblockd.service" ]</code>. Upstream only orders after
+                  <code>network-online.target</code>, which does NOT guarantee <code>:53</code> has
+                  a listener. SystemNix is correct here; upstream is not.</span
                 >
               </div>
             </div>
@@ -1056,10 +1022,9 @@
               <div class="text">
                 <strong>Full surface integration</strong>
                 <span
-                  ><code>onFailure</code> &rarr; Discord alert; Gatus health
-                  check + Discord alert (<code>gatus-config.nix:639</code>);
-                  Homepage tile (<code>homepage.nix:187</code>); Caddy
-                  <code>protectedVHost</code> with SSO
+                  ><code>onFailure</code> &rarr; Discord alert; Gatus health check + Discord alert
+                  (<code>gatus-config.nix:639</code>); Homepage tile
+                  (<code>homepage.nix:187</code>); Caddy <code>protectedVHost</code> with SSO
                   (<code>caddy.nix:204</code>). GCS backup wired (<code
                     >gcsBucket = "discordsync-backup"</code
                   >) with sops-managed credentials.</span
@@ -1069,14 +1034,11 @@
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Intentional
-                  <code>backfillOnStartup = true</code> default</strong
-                >
+                <strong>Intentional <code>backfillOnStartup = true</code> default</strong>
                 <span
-                  >SystemNix flips upstream's default (<code>false</code> &rarr;
-                  <code>true</code>) for backup completeness. A deliberate
-                  divergence, documented at the option site.</span
+                  >SystemNix flips upstream's default (<code>false</code> &rarr; <code>true</code>)
+                  for backup completeness. A deliberate divergence, documented at the option
+                  site.</span
                 >
               </div>
             </div>
@@ -1087,8 +1049,7 @@
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
           <p>
-            Ordered by impact. Every finding cites code in both SystemNix and
-            the upstream flake.
+            Ordered by impact. Every finding cites code in both SystemNix and the upstream flake.
           </p>
 
           <!-- Issue 1 -->
@@ -1097,54 +1058,43 @@
               >Missed Opportunity &middot; High impact (drift risk)</span
             >
             <h3>
-              Upstream <code>flake.nixosModules.default</code> ignored &mdash;
-              160-line module duplicated
+              Upstream <code>flake.nixosModules.default</code> ignored &mdash; 160-line module
+              duplicated
             </h3>
             <div class="where">
               SystemNix
-              <code>modules/nixos/services/discordsync.nix:1-160</code> vs
-              upstream <code>nixos-module.nix:1-220</code>; upstream flake
-              export at
+              <code>modules/nixos/services/discordsync.nix:1-160</code> vs upstream
+              <code>nixos-module.nix:1-220</code>; upstream flake export at
               <code>flake.nix:554</code>
             </div>
             <p>
               DiscordSync's <code>flake.nix</code> line 554 exports
-              <code
-                >flake.nixosModules.default = import ./nixos-module.nix;</code
-              >
-              &mdash; a complete NixOS module declaring <code>enable</code>,
-              <code>package</code>, <code>user</code>, <code>group</code>,
-              <code>discordTokenFile</code>, <code>backend</code>,
-              <code>databasePath</code>, <code>tursoUrl</code>,
-              <code>tursoAuthTokenFile</code>, <code>backfillOnStartup</code>,
-              <code>apiAddr</code>, <code>apiKeyFile</code>, and a
-              <code>healthCheck</code> ExecStartPost. SystemNix re-declares a
-              parallel set from scratch and does not reference the upstream
-              module anywhere (confirmed: <code>grep</code> for
-              <code>discordsync.nixosModules</code> in <code>modules/</code>,
-              <code>platforms/</code>, <code>flake.nix</code> returns nothing).
+              <code>flake.nixosModules.default = import ./nixos-module.nix;</code>
+              &mdash; a complete NixOS module declaring <code>enable</code>, <code>package</code>,
+              <code>user</code>, <code>group</code>, <code>discordTokenFile</code>,
+              <code>backend</code>, <code>databasePath</code>, <code>tursoUrl</code>,
+              <code>tursoAuthTokenFile</code>, <code>backfillOnStartup</code>, <code>apiAddr</code>,
+              <code>apiKeyFile</code>, and a <code>healthCheck</code> ExecStartPost. SystemNix
+              re-declares a parallel set from scratch and does not reference the upstream module
+              anywhere (confirmed: <code>grep</code> for <code>discordsync.nixosModules</code> in
+              <code>modules/</code>, <code>platforms/</code>, <code>flake.nix</code> returns
+              nothing).
             </p>
             <p>
-              The duplication is <strong>already drifting</strong>. Upstream
-              commit <code>ced0431b</code> (&ldquo;extract NixOS module to
-              standalone file + add user/group options&rdquo;) is recent, and
-              SystemNix's copy diverges in defaults
-              (<code>backfillOnStartup</code>), option shape (<code
-                >gcsBucket</code
-              >
-              is first-class in SystemNix, env-var-only upstream), and missing
-              options (<code>apiKeyFile</code>, <code>healthCheck</code>,
-              <code>package</code>). Every future upstream option addition will
-              require a manual port that nobody will remember to do.
+              The duplication is <strong>already drifting</strong>. Upstream commit
+              <code>ced0431b</code> (&ldquo;extract NixOS module to standalone file + add user/group
+              options&rdquo;) is recent, and SystemNix's copy diverges in defaults
+              (<code>backfillOnStartup</code>), option shape (<code>gcsBucket</code> is first-class
+              in SystemNix, env-var-only upstream), and missing options (<code>apiKeyFile</code>,
+              <code>healthCheck</code>, <code>package</code>). Every future upstream option addition
+              will require a manual port that nobody will remember to do.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
-              Import the upstream module as the base, then layer
-              SystemNix-specifics on top via
-              <code>lib.mkMerge</code> / <code>disabledModules</code> only where
-              needed. The custom <code>harden</code>, <code>sops</code>,
-              <code>onFailure</code>, and DNS-gate logic stays &mdash; it merges
-              cleanly onto the upstream module's
+              Import the upstream module as the base, then layer SystemNix-specifics on top via
+              <code>lib.mkMerge</code> / <code>disabledModules</code> only where needed. The custom
+              <code>harden</code>, <code>sops</code>, <code>onFailure</code>, and DNS-gate logic
+              stays &mdash; it merges cleanly onto the upstream module's
               <code>systemd.services.discordsync</code>. See the
               <a href="#proposal">Proposal</a> section for the concrete pattern.
             </div>
@@ -1193,29 +1143,27 @@
               <code>127.0.0.1:4318</code>, tracer is a no-op
             </h3>
             <div class="where">
-              SystemNix <code>discordsync.nix:129-139</code> (Environment list
-              &mdash; no <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>); upstream
-              <code>cmd/discordsync/init.go:356-367</code> reads it; SigNoz
-              collector at <code>signoz.nix:827</code> binds
+              SystemNix <code>discordsync.nix:129-139</code> (Environment list &mdash; no
+              <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>); upstream
+              <code>cmd/discordsync/init.go:356-367</code> reads it; SigNoz collector at
+              <code>signoz.nix:827</code> binds
               <code>127.0.0.1:4318</code>
             </div>
             <p>
               DiscordSync's <code>initObservability()</code> reads
-              <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>. When unset, it installs
-              a <strong>noop tracer</strong> and every span is dropped. SigNoz
-              is enabled on evo-x2, its OTLP/HTTP receiver binds
-              <code>127.0.0.1:4318</code>, and DiscordSync supports the
-              <code>otlptracehttp</code> exporter with
-              <code>WithInsecure()</code> (plaintext localhost). The
-              infrastructure is fully in place; only one env var is missing.
+              <code>OTEL_EXPORTER_OTLP_ENDPOINT</code>. When unset, it installs a
+              <strong>noop tracer</strong> and every span is dropped. SigNoz is enabled on evo-x2,
+              its OTLP/HTTP receiver binds <code>127.0.0.1:4318</code>, and DiscordSync supports the
+              <code>otlptracehttp</code> exporter with <code>WithInsecure()</code> (plaintext
+              localhost). The infrastructure is fully in place; only one env var is missing.
             </p>
             <p>
-              DiscordSync is exactly the service where traces pay off:
-              long-lived gateway connection, backfill workers with crash-resume
-              checkpoints, projection workers, attachment downloads with retry,
-              and GCS reconciliation. Today, incident diagnosis relies on
-              <code>journalctl</code> log greps. With traces, a stuck backfill
-              or a projection-lag spike would be a click in SigNoz.
+              DiscordSync is exactly the service where traces pay off: long-lived gateway
+              connection, backfill workers with crash-resume checkpoints, projection workers,
+              attachment downloads with retry, and GCS reconciliation. Today, incident diagnosis
+              relies on
+              <code>journalctl</code> log greps. With traces, a stuck backfill or a projection-lag
+              spike would be a click in SigNoz.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
@@ -1239,40 +1187,32 @@
               >Missed Opportunity &middot; Medium impact</span
             >
             <h3>
-              SIGHUP hot-reload not wired &mdash; config tweaks force a full
-              gateway reconnect
+              SIGHUP hot-reload not wired &mdash; config tweaks force a full gateway reconnect
             </h3>
             <div class="where">
-              SystemNix <code>discordsync.nix</code> (no
-              <code>ExecReload</code>); upstream
-              <code>nixos-module.nix:139</code> wires
-              <code>ExecReload = kill -HUP $MAINPID</code>; binary
-              <code>cmd/discordsync/shutdown.go:32-51</code> handles SIGHUP
+              SystemNix <code>discordsync.nix</code> (no <code>ExecReload</code>); upstream
+              <code>nixos-module.nix:139</code> wires <code>ExecReload = kill -HUP $MAINPID</code>;
+              binary <code>cmd/discordsync/shutdown.go:32-51</code> handles SIGHUP
             </div>
             <p>
-              The binary implements <code>waitForSignalOrReload</code>: on
-              <code>SIGHUP</code> it hot-reloads <code>COMPRESSION_ALGO</code>,
-              <code>CAPTURE_BOT_MESSAGES</code>,
-              <code>CAPTURE_WEBHOOK_MESSAGES</code>,
-              <code>DISCORDSYNC_WEBHOOK_URL</code>, and
-              <code>BOT_HEALTH_GRACE_PERIOD</code> &mdash; with a storm-guard
-              against rapid repeats. Upstream's module wires this as
-              <code>ExecReload</code>, so
-              <code>systemctl reload discordsync</code> applies the change
-              instantly.
+              The binary implements <code>waitForSignalOrReload</code>: on <code>SIGHUP</code> it
+              hot-reloads <code>COMPRESSION_ALGO</code>, <code>CAPTURE_BOT_MESSAGES</code>,
+              <code>CAPTURE_WEBHOOK_MESSAGES</code>, <code>DISCORDSYNC_WEBHOOK_URL</code>, and
+              <code>BOT_HEALTH_GRACE_PERIOD</code> &mdash; with a storm-guard against rapid repeats.
+              Upstream's module wires this as <code>ExecReload</code>, so
+              <code>systemctl reload discordsync</code> applies the change instantly.
             </p>
             <p>
-              SystemNix's module omits <code>ExecReload</code>. The consequence:
-              toggling capture policy (e.g. <code>systemctl reload</code> would
-              not work) requires <code>systemctl restart</code>, which drops the
-              Discord gateway connection, re-runs <code>waitDnsReady</code>, and
-              re-triggers backfill resume bookkeeping. A 50&nbsp;ms config
-              refresh becomes a multi-second reconnect cycle.
+              SystemNix's module omits <code>ExecReload</code>. The consequence: toggling capture
+              policy (e.g. <code>systemctl reload</code> would not work) requires
+              <code>systemctl restart</code>, which drops the Discord gateway connection, re-runs
+              <code>waitDnsReady</code>, and re-triggers backfill resume bookkeeping. A 50&nbsp;ms
+              config refresh becomes a multi-second reconnect cycle.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
-              One line in <code>serviceConfig</code>. If SystemNix adopts the
-              upstream module (Issue&nbsp;1), this comes for free.
+              One line in <code>serviceConfig</code>. If SystemNix adopts the upstream module
+              (Issue&nbsp;1), this comes for free.
             </div>
             <pre><code>serviceConfig = lib.mkMerge [
   # ... existing ...
@@ -1283,51 +1223,44 @@
           <!-- Issue 4 -->
           <div class="issue issue-important" id="partial-shallow-health">
             <span class="severity severity-important"
-              >Partially Used &middot; Medium impact (silent data loss
-              risk)</span
+              >Partially Used &middot; Medium impact (silent data loss risk)</span
             >
             <h3>
               Health monitoring hits shallow <code>/healthz</code>, not deep
               <code>/readyz</code>
             </h3>
             <div class="where">
-              SystemNix <code>gatus-config.nix:643</code> polls
-              <code>/healthz</code>; upstream
-              <code>nixos-module.nix:217</code> ExecStartPost polls
-              <code>/readyz</code>; binary distinction documented in
+              SystemNix <code>gatus-config.nix:643</code> polls <code>/healthz</code>; upstream
+              <code>nixos-module.nix:217</code> ExecStartPost polls <code>/readyz</code>; binary
+              distinction documented in
               <code>internal/api/server_test.go:135-158</code>
             </div>
             <p>
-              DiscordSync exposes two health endpoints with deliberately
-              different semantics:
-              <code>/healthz</code> is <strong>pure liveness</strong> &mdash; it
-              returns 200 even when the database is closed (verified by
-              <code>TestHealthz_DatabaseClosed</code>). <code>/readyz</code> is
-              <strong>deep readiness</strong> &mdash; it aggregates database,
-              projection, and content-store health, with a configurable grace
-              window that tolerates transient gateway disconnects
-              (<code>BOT_HEALTH_GRACE_PERIOD</code>, default 30s).
+              DiscordSync exposes two health endpoints with deliberately different semantics:
+              <code>/healthz</code> is <strong>pure liveness</strong> &mdash; it returns 200 even
+              when the database is closed (verified by <code>TestHealthz_DatabaseClosed</code>).
+              <code>/readyz</code> is <strong>deep readiness</strong> &mdash; it aggregates
+              database, projection, and content-store health, with a configurable grace window that
+              tolerates transient gateway disconnects (<code>BOT_HEALTH_GRACE_PERIOD</code>, default
+              30s).
             </p>
             <p>
               SystemNix's Gatus check and Homepage site-monitor both hit
               <code>/healthz</code>. This means the
               <strong
-                >&ldquo;DiscordSync backup bot down&rdquo; Discord alert only
-                fires on process death</strong
-              >. A broken projection worker, a closed DB handle, or a stuck
-              content store all return 200 on <code>/healthz</code> &mdash; the
-              bot appears healthy while silently dropping events. There is also
-              no <code>ExecStartPost</code> health gate, so systemd considers
-              the service started the moment <code>execve</code> succeeds,
-              before any subsystem is verified.
+                >&ldquo;DiscordSync backup bot down&rdquo; Discord alert only fires on process
+                death</strong
+              >. A broken projection worker, a closed DB handle, or a stuck content store all return
+              200 on <code>/healthz</code> &mdash; the bot appears healthy while silently dropping
+              events. There is also no <code>ExecStartPost</code> health gate, so systemd considers
+              the service started the moment <code>execve</code> succeeds, before any subsystem is
+              verified.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
-              Switch the Gatus URL to <code>/readyz</code>, loosen the status
-              condition to <code>[STATUS] &lt; 400</code> (to tolerate
-              grace-period 503s), and add the upstream
-              <code>ExecStartPost</code> curl gate so systemd restarts on
-              degraded subsystem state.
+              Switch the Gatus URL to <code>/readyz</code>, loosen the status condition to
+              <code>[STATUS] &lt; 400</code> (to tolerate grace-period 503s), and add the upstream
+              <code>ExecStartPost</code> curl gate so systemd restarts on degraded subsystem state.
             </div>
             <pre><code># gatus-config.nix — Before
 url = "http://localhost:${toString ports.discordsync-api}/healthz";
@@ -1349,61 +1282,53 @@ serviceConfig.ExecStartPost =
               >Missed Opportunity &middot; Low impact, high ease</span
             >
             <h3>
-              <code>DISCORDSYNC_WEBHOOK_URL</code> unused &mdash; instant
-              disconnect alerts already possible
+              <code>DISCORDSYNC_WEBHOOK_URL</code> unused &mdash; instant disconnect alerts already
+              possible
             </h3>
             <div class="where">
               SystemNix <code>discordsync.nix</code> (not set); upstream
               <code>internal/config/config.go:121-124</code>
               (<code>WebhookURL</code>); SystemNix already holds
-              <code>discord_alert_webhook_url</code> in sops
-              (<code>sops.nix:176</code>)
+              <code>discord_alert_webhook_url</code> in sops (<code>sops.nix:176</code>)
             </div>
             <p>
-              The binary posts a JSON payload to a Discord/Slack-compatible
-              webhook on every gateway disconnect and reconnect. SystemNix
-              already has a Discord webhook URL in sops (used by Gatus). Today,
-              a gateway disconnect is only noticed via the 60-second Gatus poll
+              The binary posts a JSON payload to a Discord/Slack-compatible webhook on every gateway
+              disconnect and reconnect. SystemNix already has a Discord webhook URL in sops (used by
+              Gatus). Today, a gateway disconnect is only noticed via the 60-second Gatus poll
               &mdash; and only if Issue&nbsp;4 is fixed so the check uses
-              <code>/readyz</code>. With the webhook wired, the bot self-pushes
-              an alert within seconds of the event.
+              <code>/readyz</code>. With the webhook wired, the bot self-pushes an alert within
+              seconds of the event.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
-              Add <code>DISCORDSYNC_WEBHOOK_URL</code> to the sops template
-              (<code>sops.nix</code> <code>discordsync-env</code>) sourced from
-              the existing <code>discord_alert_webhook_url</code>. Zero new
-              infrastructure.
+              Add <code>DISCORDSYNC_WEBHOOK_URL</code> to the sops template (<code>sops.nix</code>
+              <code>discordsync-env</code>) sourced from the existing
+              <code>discord_alert_webhook_url</code>. Zero new infrastructure.
             </div>
           </div>
 
           <!-- Issue 6 -->
           <div class="issue issue-nice" id="missed-overlay">
-            <span class="severity severity-nice"
-              >Partially Used &middot; Low impact</span
-            >
+            <span class="severity severity-nice">Partially Used &middot; Low impact</span>
             <h3>
-              <code>flake.overlays.default</code> unused &mdash; package
-              referenced by raw input path
+              <code>flake.overlays.default</code> unused &mdash; package referenced by raw input
+              path
             </h3>
             <div class="where">
               SystemNix <code>discordsync.nix:20</code>
-              (<code>inputs.discordsync.packages.${system}.default</code>);
-              upstream
+              (<code>inputs.discordsync.packages.${system}.default</code>); upstream
               <code>flake.nix:550-552</code> exposes
               <code>overlays.default</code>
             </div>
             <p>
               Upstream exports an overlay that injects
-              <code>pkgs.discordsync</code>. SystemNix reaches across the input
-              boundary directly. Both work, but the overlay is the idiomatic
-              consumption pattern: it lets any module reference
-              <code>pkgs.discordsync</code> without threading
-              <code>inputs</code> through, and it composes with
-              <code>mkLarsPackages</code>. Low impact on its own; becomes
+              <code>pkgs.discordsync</code>. SystemNix reaches across the input boundary directly.
+              Both work, but the overlay is the idiomatic consumption pattern: it lets any module
+              reference <code>pkgs.discordsync</code> without threading <code>inputs</code> through,
+              and it composes with <code>mkLarsPackages</code>. Low impact on its own; becomes
               relevant if Issue&nbsp;1 is addressed (the upstream module uses
-              <code>lib.mkPackageOption pkgs "discordsync"</code>, which
-              resolves through the overlay).
+              <code>lib.mkPackageOption pkgs "discordsync"</code>, which resolves through the
+              overlay).
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
@@ -1417,16 +1342,12 @@ serviceConfig.ExecStartPost =
 
         <!-- Proposal -->
         <section id="proposal">
-          <h2>
-            <span class="num">02</span>Target state &mdash; consume upstream,
-            layer SystemNix
-          </h2>
+          <h2><span class="num">02</span>Target state &mdash; consume upstream, layer SystemNix</h2>
           <p>
-            The refactor below preserves <em>every</em> SystemNix-specific
-            strength from the Strengths section while eliminating the 160-line
-            duplication. The upstream module becomes the base; SystemNix merges
-            its hardening, secret, dependency-ordering, and DNS-gate logic on
-            top. Issues 2, 3, and 5 are addressed inline (tracing, reload,
+            The refactor below preserves <em>every</em> SystemNix-specific strength from the
+            Strengths section while eliminating the 160-line duplication. The upstream module
+            becomes the base; SystemNix merges its hardening, secret, dependency-ordering, and
+            DNS-gate logic on top. Issues 2, 3, and 5 are addressed inline (tracing, reload,
             webhook) because they are each a one-line addition.
           </p>
           <pre><code># modules/nixos/services/discordsync.nix — target shape
@@ -1477,24 +1398,20 @@ serviceConfig.ExecStartPost =
 }</code></pre>
           <div class="callout callout-teal">
             <strong>Why this is strictly better</strong>
-            &dash; Eliminates ~160 lines of option re-declaration that drift on
-            every upstream release. &dash; Keeps every hardening, sops, and
-            DNS-gate strength. &dash; Wires three binary-supported capabilities
-            (tracing, reload, webhook) that were dark. &dash; Future upstream
-            option additions arrive automatically via <code>imports</code>.
+            &dash; Eliminates ~160 lines of option re-declaration that drift on every upstream
+            release. &dash; Keeps every hardening, sops, and DNS-gate strength. &dash; Wires three
+            binary-supported capabilities (tracing, reload, webhook) that were dark. &dash; Future
+            upstream option additions arrive automatically via <code>imports</code>.
           </div>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2>
-            <span class="num">03</span>Priority matrix &amp; version currency
-          </h2>
+          <h2><span class="num">03</span>Priority matrix &amp; version currency</h2>
           <p>
-            SystemNix is pinned to <code>9c640075</code>, the HEAD of
-            <code>master</code> at audit time (0 versions behind). All findings
-            are adoption gaps, not version gaps &mdash; nothing requires a flake
-            bump.
+            SystemNix is pinned to <code>9c640075</code>, the HEAD of <code>master</code> at audit
+            time (0 versions behind). All findings are adoption gaps, not version gaps &mdash;
+            nothing requires a flake bump.
           </p>
           <table class="compare">
             <thead>
@@ -1509,19 +1426,14 @@ serviceConfig.ExecStartPost =
             <tbody>
               <tr>
                 <td>1</td>
-                <td>
-                  Consume <code>nixosModules.default</code>, layer on top (Issue
-                  1)
-                </td>
+                <td>Consume <code>nixosModules.default</code>, layer on top (Issue 1)</td>
                 <td class="yes">5</td>
                 <td class="yes">3</td>
                 <td><span class="highlight">15</span></td>
               </tr>
               <tr>
                 <td>2</td>
-                <td>
-                  Switch Gatus + ExecStartPost to <code>/readyz</code> (Issue 4)
-                </td>
+                <td>Switch Gatus + ExecStartPost to <code>/readyz</code> (Issue 4)</td>
                 <td class="yes">5</td>
                 <td class="yes">5</td>
                 <td><span class="highlight">25</span></td>
@@ -1542,10 +1454,7 @@ serviceConfig.ExecStartPost =
               </tr>
               <tr>
                 <td>5</td>
-                <td>
-                  Wire <code>DISCORDSYNC_WEBHOOK_URL</code> from existing sops
-                  (Issue 5)
-                </td>
+                <td>Wire <code>DISCORDSYNC_WEBHOOK_URL</code> from existing sops (Issue 5)</td>
                 <td>3</td>
                 <td class="yes">5</td>
                 <td><span class="highlight">15</span></td>
@@ -1560,12 +1469,11 @@ serviceConfig.ExecStartPost =
             </tbody>
           </table>
           <p style="margin-top: 1.5rem">
-            <strong>Adoption score breakdown.</strong> The binary and its
-            runtime surface (GCS, backfill, Caddy, Gatus, Homepage, sops,
-            hardening, DNS-gate) are used superbly. The
-            <em>flake consumption</em> is the weak axis: 2 of 3 flake outputs
-            ignored, 3 binary-supported capabilities dark. Fixing Issues
-            1&ndash;5 lifts the score from 62 to an estimated 88&ndash;92.
+            <strong>Adoption score breakdown.</strong> The binary and its runtime surface (GCS,
+            backfill, Caddy, Gatus, Homepage, sops, hardening, DNS-gate) are used superbly. The
+            <em>flake consumption</em> is the weak axis: 2 of 3 flake outputs ignored, 3
+            binary-supported capabilities dark. Fixing Issues 1&ndash;5 lifts the score from 62 to
+            an estimated 88&ndash;92.
           </p>
         </section>
 
@@ -1573,9 +1481,8 @@ serviceConfig.ExecStartPost =
         <footer class="footer">
           <p>
             Generated 2026-07-21 &middot; Reviewed against DiscordSync rev
-            <code>9c640075db45cb0da9ef9f59398e970fbaac9ec2</code> &middot; All
-            claims verified against SystemNix (<code>master</code>) and upstream
-            flake source
+            <code>9c640075db45cb0da9ef9f59398e970fbaac9ec2</code> &middot; All claims verified
+            against SystemNix (<code>master</code>) and upstream flake source
           </p>
         </footer>
       </main>

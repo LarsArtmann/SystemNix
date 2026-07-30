@@ -3,9 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      SystemNix Status — 2026-07-04 Bug Hunt &amp; Systemic Fix Audit
-    </title>
+    <title>SystemNix Status — 2026-07-04 Bug Hunt &amp; Systemic Fix Audit</title>
     <style>
       :root {
         --color-graphite: #0e0e10;
@@ -32,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -233,27 +231,15 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue {
         background: var(--surface-raised);
@@ -264,27 +250,15 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -537,21 +511,17 @@
             <div class="tri"></div>
           </div>
           <div class="hero-badge">BUG HUNT &amp; SYSTEMIC FIX</div>
-          <h1>
-            Systemic Bug Audit — Certutil, Curl Timeouts &amp; Monitor365 OOM
-          </h1>
+          <h1>Systemic Bug Audit — Certutil, Curl Timeouts &amp; Monitor365 OOM</h1>
           <p class="hero-subtitle">
-            After fixing the renamer 502, we hunted for the same class of bug
-            across the entire codebase. Found and fixed: certutil infinite loop,
-            unbounded while-loop on secret file, 12 curl calls with no timeout.
-            Monitor365 is now OOM-killing every 10 minutes. Root disk grew 4% in
-            5 hours. GPUActive crisis resolved (24 GB → 140 MB).
+            After fixing the renamer 502, we hunted for the same class of bug across the entire
+            codebase. Found and fixed: certutil infinite loop, unbounded while-loop on secret file,
+            12 curl calls with no timeout. Monitor365 is now OOM-killing every 10 minutes. Root disk
+            grew 4% in 5 hours. GPUActive crisis resolved (24 GB → 140 MB).
           </p>
         </div>
 
         <h2 id="summary">
-          <span class="num">00</span>System Snapshot — Delta Since Last Report
-          (09:52)
+          <span class="num">00</span>System Snapshot — Delta Since Last Report (09:52)
         </h2>
         <div class="stat-grid">
           <div class="stat-card stat-good">
@@ -591,27 +561,23 @@
           <div class="card card-solution">
             <h4>What improved since 09:52</h4>
             <p>
-              <strong>GPUActive: 24 GB → 140 MB</strong> — the certutil infinite
-              loop was the root cause of the GPU memory pressure. Killing it
-              freed 24 GB instantly.
-              <strong>MemAvailable: 35 GB → 73 GB</strong>. Load average dropped
-              from 22.5 to 10.6 (still high due to another BDD test binary).
-              Root cause analysis: certutil was burning 99.3% CPU in userspace
-              spin, which kept GPU driver threads busy, inflating GPUActive
+              <strong>GPUActive: 24 GB → 140 MB</strong> — the certutil infinite loop was the root
+              cause of the GPU memory pressure. Killing it freed 24 GB instantly.
+              <strong>MemAvailable: 35 GB → 73 GB</strong>. Load average dropped from 22.5 to 10.6
+              (still high due to another BDD test binary). Root cause analysis: certutil was burning
+              99.3% CPU in userspace spin, which kept GPU driver threads busy, inflating GPUActive
               buffer objects.
             </p>
           </div>
           <div class="card card-problem">
             <h4>What got worse since 09:52</h4>
             <p>
-              <strong>Swap: 68% → 84%</strong> (+2.6 GB).
-              <strong>Root disk: 81% → 85%</strong> (+4% in 5h, ~29 GB — likely
-              nix builds + coredumps).
-              <strong>Monitor365: 10 OOM kills in 3 hours</strong> — the agent
-              is in a crash-restart-OOM cycle, killed every ~10 min by
-              systemd-oomd with <code>oom_score_adj:200</code>.
-              <strong>15 coredumps total</strong> (was 10), including a 78 MB
-              Quickshell SIGSEGV at 11:30.
+              <strong>Swap: 68% → 84%</strong> (+2.6 GB). <strong>Root disk: 81% → 85%</strong> (+4%
+              in 5h, ~29 GB — likely nix builds + coredumps).
+              <strong>Monitor365: 10 OOM kills in 3 hours</strong> — the agent is in a
+              crash-restart-OOM cycle, killed every ~10 min by systemd-oomd with
+              <code>oom_score_adj:200</code>. <strong>15 coredumps total</strong> (was 10),
+              including a 78 MB Quickshell SIGSEGV at 11:30.
             </p>
           </div>
         </div>
@@ -625,11 +591,10 @@
             <div class="text">
               <strong>Renamer 502 fixed + architectural improvement</strong>
               <span
-                >Health dashboard moved from user service to system service
-                (multi-user.target). Global <code>sd-switch</code> added to
-                home-base.nix prevents recurrence for all user services.
-                Deployed and verified — <code>renamer.home.lan</code> returns
-                HTTP 200.</span
+                >Health dashboard moved from user service to system service (multi-user.target).
+                Global <code>sd-switch</code> added to home-base.nix prevents recurrence for all
+                user services. Deployed and verified — <code>renamer.home.lan</code> returns HTTP
+                200.</span
               >
             </div>
           </div>
@@ -638,12 +603,11 @@
             <div class="text">
               <strong>certutil infinite loop — root-caused AND fixed</strong>
               <span
-                ><code>certutil -N</code> (create DB) ran on every deploy even
-                when DB existed (files from Dec 2025). This certutil version
-                enters infinite userspace CPU spin on existing DB. Fixed:
-                guarded with <code>if [ ! -f cert9.db ]</code>. Process was
-                killed after 33h at 99.3% CPU. This was the #1 contributor to
-                the GPUActive memory crisis.</span
+                ><code>certutil -N</code> (create DB) ran on every deploy even when DB existed
+                (files from Dec 2025). This certutil version enters infinite userspace CPU spin on
+                existing DB. Fixed: guarded with <code>if [ ! -f cert9.db ]</code>. Process was
+                killed after 33h at 99.3% CPU. This was the #1 contributor to the GPUActive memory
+                crisis.</span
               >
             </div>
           </div>
@@ -653,10 +617,9 @@
               <strong>Unbounded while-loop on secret file — fixed</strong>
               <span
                 ><code>dns-blocker.nix:425</code>:
-                <code>while [ ! -s "$CA_CERT" ]; do sleep 1; done</code> had NO
-                timeout. If the sops secret never materialized, it would spin
-                forever. Fixed: 30-iteration loop with explicit error and
-                <code>exit 1</code>.</span
+                <code>while [ ! -s "$CA_CERT" ]; do sleep 1; done</code> had NO timeout. If the sops
+                secret never materialized, it would spin forever. Fixed: 30-iteration loop with
+                explicit error and <code>exit 1</code>.</span
               >
             </div>
           </div>
@@ -665,12 +628,11 @@
             <div class="text">
               <strong>12 curl calls with no timeout — fixed</strong>
               <span
-                >Pocket-ID provisioner: 6 curl calls (GET/PUT/POST/DELETE for
-                users, OIDC clients, avatar, logo, secret rotation). SigNoz
-                provisioner: 6 curl calls (channels, rules, dashboards). All had
-                <code>|| true</code> with NO <code>--max-time</code>. Any API
-                hang → infinite block, masked as success. Fixed: added
-                <code>--max-time 10</code> to all 12.</span
+                >Pocket-ID provisioner: 6 curl calls (GET/PUT/POST/DELETE for users, OIDC clients,
+                avatar, logo, secret rotation). SigNoz provisioner: 6 curl calls (channels, rules,
+                dashboards). All had <code>|| true</code> with NO <code>--max-time</code>. Any API
+                hang → infinite block, masked as success. Fixed: added <code>--max-time 10</code> to
+                all 12.</span
               >
             </div>
           </div>
@@ -679,13 +641,11 @@
             <div class="text">
               <strong>Full-system bug audit completed</strong>
               <span
-                >Exhaustive search across all .nix files for:
-                <code>|| true</code> masking (47 occurrences), unbounded
-                <code>while</code> loops (3 found), unconditional state
-                mutations, <code>sed -i</code> patterns, and
-                <code>eval</code> injection. 5 critical bugs found, 4 fixed, 1
-                determined to be safe (SigNoz migration_lock). Report identifies
-                remaining low-risk patterns.</span
+                >Exhaustive search across all .nix files for: <code>|| true</code> masking (47
+                occurrences), unbounded <code>while</code> loops (3 found), unconditional state
+                mutations, <code>sed -i</code> patterns, and <code>eval</code> injection. 5 critical
+                bugs found, 4 fixed, 1 determined to be safe (SigNoz migration_lock). Report
+                identifies remaining low-risk patterns.</span
               >
             </div>
           </div>
@@ -694,9 +654,9 @@
             <div class="text">
               <strong>3 runaway processes killed</strong>
               <span
-                >certutil PID 12253 (33h, 99% CPU), llama-server PID 4174062
-                (8h, 8.1 GB RAM, 90% CPU), monitor365 BDD test PID 1108948 (6h,
-                98.6% CPU). Combined: ~290% CPU + 8 GB RAM recovered.</span
+                >certutil PID 12253 (33h, 99% CPU), llama-server PID 4174062 (8h, 8.1 GB RAM, 90%
+                CPU), monitor365 BDD test PID 1108948 (6h, 98.6% CPU). Combined: ~290% CPU + 8 GB
+                RAM recovered.</span
               >
             </div>
           </div>
@@ -709,44 +669,35 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Crash Loop</span>
           <h3>Monitor365 — OOM-killed every 10 minutes</h3>
-          <div class="where">
-            systemd-oomd · 10 kills in 3 hours (12:40–14:01)
-          </div>
+          <div class="where">systemd-oomd · 10 kills in 3 hours (12:40–14:01)</div>
           <p>
-            The Monitor365 agent is in a crash-restart-OOM cycle. systemd-oomd
-            kills it every ~10 minutes with <code>oom_score_adj:200</code>. The
-            agent allocates ~11 GB virtual memory (total-vm:11648508kB) before
-            being killed. Root cause is likely the upstream Rust panic (Axum 0.7
-            <code>:param</code> → <code>{param}</code> syntax) combined with the
-            wrong package alias (<code>pkgs.monitor365</code> resolves to the
-            agent CLI, not the server with UI). Additionally, ANOTHER BDD test
-            binary (<code>bdd_server-9e81757c885d1cd1</code>, PID 2747185) is
-            running at 129% CPU — a new one spawned after we killed the last
-            one.
+            The Monitor365 agent is in a crash-restart-OOM cycle. systemd-oomd kills it every ~10
+            minutes with <code>oom_score_adj:200</code>. The agent allocates ~11 GB virtual memory
+            (total-vm:11648508kB) before being killed. Root cause is likely the upstream Rust panic
+            (Axum 0.7 <code>:param</code> → <code>{param}</code> syntax) combined with the wrong
+            package alias (<code>pkgs.monitor365</code> resolves to the agent CLI, not the server
+            with UI). Additionally, ANOTHER BDD test binary
+            (<code>bdd_server-9e81757c885d1cd1</code>, PID 2747185) is running at 129% CPU — a new
+            one spawned after we killed the last one.
           </p>
           <div class="callout callout-warning">
             <strong>Blocker:</strong> Upstream fix required in
-            <code>github:LarsArtmann/monitor365</code>. Nix-side workaround
-            impossible. The agent should probably be disabled (<code
-              >enable = false</code
-            >) until the upstream Rust panic is fixed.
+            <code>github:LarsArtmann/monitor365</code>. Nix-side workaround impossible. The agent
+            should probably be disabled (<code>enable = false</code>) until the upstream Rust panic
+            is fixed.
           </div>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Broken Integration</span>
           <h3>Deploy smoke test still broken</h3>
-          <div class="where">
-            scripts/deploy.sh · post-deploy-check.sh path mismatch
-          </div>
+          <div class="where">scripts/deploy.sh · post-deploy-check.sh path mismatch</div>
           <p>
             Every deploy prints:
-            <code>bash: post-deploy-check.sh: No such file or directory</code>.
-            The smoke test works standalone (<code
-              >nix run .#post-deploy-check</code
-            >) but the deploy script references a wrong Nix store path. Silent
-            failures go undetected after every deploy. One-line fix in the
-            deploy script.
+            <code>bash: post-deploy-check.sh: No such file or directory</code>. The smoke test works
+            standalone (<code>nix run .#post-deploy-check</code>) but the deploy script references a
+            wrong Nix store path. Silent failures go undetected after every deploy. One-line fix in
+            the deploy script.
           </p>
         </div>
 
@@ -755,10 +706,9 @@
           <h3>Cloud backup — zero off-site copies</h3>
           <div class="where">ROADMAP.md Theme 1</div>
           <p>
-            Root disk grew from 81% → 85% in 5 hours. 114 GB Nix store. BTRFS
-            snapshots protect locally, but if the NVMe fails, everything is
-            lost. Docker volumes, Immich photos, Forgejo repos, ClickHouse data
-            — all at risk. No BorgBackup implementation started.
+            Root disk grew from 81% → 85% in 5 hours. 114 GB Nix store. BTRFS snapshots protect
+            locally, but if the NVMe fails, everything is lost. Docker volumes, Immich photos,
+            Forgejo repos, ClickHouse data — all at risk. No BorgBackup implementation started.
           </p>
         </div>
 
@@ -767,10 +717,9 @@
           <h3>DNS Migration: dnsblockd → Primary Resolver</h3>
           <div class="where">TODO_LIST.md Priority 0</div>
           <p>
-            Full 4-phase plan exists. dnsblockd has a full recursive resolver
-            but three gaps block migration: (1) no local zones, (2) no upstream
-            DoT forwarding, (3) no LAN ACLs. ~15h estimated effort across both
-            repos.
+            Full 4-phase plan exists. dnsblockd has a full recursive resolver but three gaps block
+            migration: (1) no local zones, (2) no upstream DoT forwarding, (3) no LAN ACLs. ~15h
+            estimated effort across both repos.
           </p>
         </div>
 
@@ -779,8 +728,8 @@
           <h3>Darwin Home Manager parity</h3>
           <div class="where">platforms/darwin/</div>
           <p>
-            macOS HM config is minimal — no terminal/editor/theme parity with
-            NixOS. Blocked by 256 GB SSD (90%+ full).
+            macOS HM config is minimal — no terminal/editor/theme parity with NixOS. Blocked by 256
+            GB SSD (90%+ full).
           </p>
         </div>
 
@@ -790,22 +739,16 @@
         <div class="grid-2">
           <div class="card card-warning">
             <h4>Pi 3 DNS Failover Cluster</h4>
-            <p>
-              Module + config ready, hardware not purchased. VRRP two-node
-              cluster.
-            </p>
+            <p>Module + config ready, hardware not purchased. VRRP two-node cluster.</p>
           </div>
           <div class="card card-warning">
             <h4>Firewall Deny-by-Default</h4>
-            <p>
-              NixOS currently allows all inbound. Docker punches its own holes.
-            </p>
+            <p>NixOS currently allows all inbound. Docker punches its own holes.</p>
           </div>
           <div class="card card-warning">
             <h4>BTRFS /data Subvolume Migration</h4>
             <p>
-              /data is BTRFS toplevel — no snapshot protection for Docker/Immich
-              data. ~1h downtime.
+              /data is BTRFS toplevel — no snapshot protection for Docker/Immich data. ~1h downtime.
             </p>
           </div>
           <div class="card card-warning">
@@ -818,10 +761,7 @@
           </div>
           <div class="card card-warning">
             <h4>Typed NixOS Module Options</h4>
-            <p>
-              Most modules use mkEnableOption only. No typed
-              ports/paths/timeouts.
-            </p>
+            <p>Most modules use mkEnableOption only. No typed ports/paths/timeouts.</p>
           </div>
         </div>
 
@@ -832,33 +772,27 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>Monitor365 OOM-killing every 10 minutes (10 kills in 3h)</h3>
-          <div class="where">
-            monitor365 agent · oom_score_adj:200 · ~11 GB virtual per spawn
-          </div>
+          <div class="where">monitor365 agent · oom_score_adj:200 · ~11 GB virtual per spawn</div>
           <p>
-            The agent spawns, allocates ~11 GB virtual memory, then gets
-            OOM-killed by systemd-oomd ~10 minutes later. Restart loop:
-            <code
-              >Memory cgroup out of memory: Killed process (monitor365)
-              total-vm:11648508kB</code
-            >. 10 times in 3 hours. Combined with the upstream Rust panic and
-            the wrong package alias, this service is completely broken. It
-            should be disabled until upstream fixes land.
+            The agent spawns, allocates ~11 GB virtual memory, then gets OOM-killed by systemd-oomd
+            ~10 minutes later. Restart loop:
+            <code>Memory cgroup out of memory: Killed process (monitor365) total-vm:11648508kB</code
+            >. 10 times in 3 hours. Combined with the upstream Rust panic and the wrong package
+            alias, this service is completely broken. It should be disabled until upstream fixes
+            land.
           </p>
         </div>
 
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>Another BDD test binary running wild — 129% CPU</h3>
-          <div class="where">
-            PID 2747185 · bdd_server-9e81757c885d1cd1 · 7.5 min CPU time
-          </div>
+          <div class="where">PID 2747185 · bdd_server-9e81757c885d1cd1 · 7.5 min CPU time</div>
           <p>
-            After we killed the first BDD test binary (PID 1108948, 6h at 98.6%
-            CPU), a NEW one spawned (PID 2747185, 129% CPU for 7.5 min). This is
-            not a production service — it's a Rust integration test binary from
-            <code>~/projects/monitor365/</code>. Something keeps launching
-            these. Likely a watch/build tool or editor integration.
+            After we killed the first BDD test binary (PID 1108948, 6h at 98.6% CPU), a NEW one
+            spawned (PID 2747185, 129% CPU for 7.5 min). This is not a production service — it's a
+            Rust integration test binary from
+            <code>~/projects/monitor365/</code>. Something keeps launching these. Likely a
+            watch/build tool or editor integration.
           </p>
         </div>
 
@@ -867,10 +801,10 @@
           <h3>Root disk grew 4% in 5 hours (81% → 85%)</h3>
           <div class="where">/dev/nvme0n1p6 · 551 GB used · 104 GB free</div>
           <p>
-            ~29 GB consumed in 5 hours. Sources: nix builds (multiple deploys
-            today), coredumps (15 dumps, one 78 MB), go-build cache, BTRFS
-            snapshot overhead. Nix store alone is 114 GB. At this rate, the disk
-            fills in ~6 days. nix-gc runs weekly — may need to trigger manually.
+            ~29 GB consumed in 5 hours. Sources: nix builds (multiple deploys today), coredumps (15
+            dumps, one 78 MB), go-build cache, BTRFS snapshot overhead. Nix store alone is 114 GB.
+            At this rate, the disk fills in ~6 days. nix-gc runs weekly — may need to trigger
+            manually.
           </p>
         </div>
 
@@ -879,24 +813,20 @@
           <h3>Quickshell SIGSEGV — 78 MB coredump at 11:30</h3>
           <div class="where">PID 12478 · .quickshell-wrapped · SIGSEGV</div>
           <p>
-            DMS/Quickshell crashed with a segfault (not SIGABRT like the
-            deploy-cycle crashes). 78 MB coredump — significantly larger than
-            the ~1.1 MB ABRT dumps. May indicate a deeper Quickshell/QML
-            instability beyond deploy restarts.
+            DMS/Quickshell crashed with a segfault (not SIGABRT like the deploy-cycle crashes). 78
+            MB coredump — significantly larger than the ~1.1 MB ABRT dumps. May indicate a deeper
+            Quickshell/QML instability beyond deploy restarts.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">Important</span>
           <h3>Swap pressure worsening — 84% used (was 68%)</h3>
-          <div class="where">
-            SwapTotal: 16.7 GB · SwapFree: 2.7 GB · zram at 100%
-          </div>
+          <div class="where">SwapTotal: 16.7 GB · SwapFree: 2.7 GB · zram at 100%</div>
           <p>
-            Despite freeing 24 GB GPUActive + 8 GB llama-server, swap usage
-            INCREASED from 68% to 84%. The system is swapping harder now than
-            before. Likely caused by: 13 Crush instances running (each 130-280
-            MB), ClickHouse (780 MB), 9 Docker containers, and the Monitor365
+            Despite freeing 24 GB GPUActive + 8 GB llama-server, swap usage INCREASED from 68% to
+            84%. The system is swapping harder now than before. Likely caused by: 13 Crush instances
+            running (each 130-280 MB), ClickHouse (780 MB), 9 Docker containers, and the Monitor365
             OOM-restart loop thrashing memory.
           </p>
         </div>
@@ -906,11 +836,9 @@
           <h3>Coredump storage still full</h3>
           <div class="where">systemd-coredump · "No space left on device"</div>
           <p>
-            15 coredumps in 24h (8 Monitor365, 6 Quickshell ABRT, 1 Quickshell
-            SEGV). The coredump partition is still full — new coredumps for
-            clickhouse/helium/nix can't be stored. Need
-            <code>Storage=external</code> with a size limit, or
-            <code>Storage=none</code>.
+            15 coredumps in 24h (8 Monitor365, 6 Quickshell ABRT, 1 Quickshell SEGV). The coredump
+            partition is still full — new coredumps for clickhouse/helium/nix can't be stored. Need
+            <code>Storage=external</code> with a size limit, or <code>Storage=none</code>.
           </p>
         </div>
 
@@ -921,43 +849,38 @@
         <div class="card card-problem">
           <h4>Disable Monitor365 until upstream is fixed</h4>
           <p>
-            The agent has been crash-looping and OOM-killing for hours. It's
-            generating coredumps, consuming swap, and producing zero useful
-            monitoring data. Disable it (<code
+            The agent has been crash-looping and OOM-killing for hours. It's generating coredumps,
+            consuming swap, and producing zero useful monitoring data. Disable it (<code
               >services.monitor365.enable = false</code
-            >) until the upstream Rust panic is fixed. Gatus already monitors
-            the endpoint — it'll show DOWN, which is more honest than fake
-            crash-loop data.
+            >) until the upstream Rust panic is fixed. Gatus already monitors the endpoint — it'll
+            show DOWN, which is more honest than fake crash-loop data.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>Fix deploy.sh post-deploy-check integration</h4>
           <p>
-            The smoke test exists and works standalone, but the deploy script
-            can't find it. Every deploy silently skips functional verification.
-            This is a one-line fix that has been reported in two consecutive
-            status reports and still isn't fixed.
+            The smoke test exists and works standalone, but the deploy script can't find it. Every
+            deploy silently skips functional verification. This is a one-line fix that has been
+            reported in two consecutive status reports and still isn't fixed.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>Run nix-gc manually — disk grew 4% in 5 hours</h4>
           <p>
-            At 85% root disk with 114 GB Nix store and weekly GC, the disk will
-            fill before the next scheduled cleanup. Run
-            <code>nix-collect-garbage -d</code> or trigger the nix-gc timer
-            manually.
+            At 85% root disk with 114 GB Nix store and weekly GC, the disk will fill before the next
+            scheduled cleanup. Run
+            <code>nix-collect-garbage -d</code> or trigger the nix-gc timer manually.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>Investigate BDD test binary respawns</h4>
           <p>
-            We killed the first BDD binary (6h, 98.6% CPU), and a new one
-            spawned within hours. Something in the dev environment (cargo-watch?
-            editor integration? CI?) keeps launching these test binaries and not
-            terminating them.
+            We killed the first BDD binary (6h, 98.6% CPU), and a new one spawned within hours.
+            Something in the dev environment (cargo-watch? editor integration? CI?) keeps launching
+            these test binaries and not terminating them.
           </p>
         </div>
 
@@ -965,17 +888,17 @@
           <h4>Disable or limit coredump storage</h4>
           <p>
             15 coredumps in 24h, storage full. Either
-            <code>Storage=none</code> or <code>Storage=external</code> with a
-            size cap. SigNoz + journald already capture crash info.
+            <code>Storage=none</code> or <code>Storage=external</code> with a size cap. SigNoz +
+            journald already capture crash info.
           </p>
         </div>
 
         <div class="card card-warning">
           <h4>13 Crush instances consuming ~2.5 GB RAM</h4>
           <p>
-            Each Crush instance uses 130-280 MB. 13 × ~200 MB = ~2.6 GB. Under
-            memory pressure this contributes to the swap problem. Consider
-            whether all 13 terminal sessions need Crush running.
+            Each Crush instance uses 130-280 MB. 13 × ~200 MB = ~2.6 GB. Under memory pressure this
+            contributes to the swap problem. Consider whether all 13 terminal sessions need Crush
+            running.
           </p>
         </div>
 
@@ -998,8 +921,8 @@
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Deploy the 4 bug fixes</strong> — certutil guard,
-                  while-loop timeout, 12 curl --max-time (uncommitted)
+                  <strong>Deploy the 4 bug fixes</strong> — certutil guard, while-loop timeout, 12
+                  curl --max-time (uncommitted)
                 </td>
                 <td>5 min</td>
                 <td>Prevents infinite hangs in provisioners</td>
@@ -1008,8 +931,8 @@
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Disable Monitor365</strong> — OOM-killing every 10
-                  min, generating garbage coredumps, zero useful data
+                  <strong>Disable Monitor365</strong> — OOM-killing every 10 min, generating garbage
+                  coredumps, zero useful data
                 </td>
                 <td>5 min</td>
                 <td>Stop crash loop, free swap, stop coredump spam</td>
@@ -1017,20 +940,14 @@
               <tr>
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td>
-                  <strong>Kill BDD test PID 2747185</strong> + find what keeps
-                  spawning them
-                </td>
+                <td><strong>Kill BDD test PID 2747185</strong> + find what keeps spawning them</td>
                 <td>5 min</td>
                 <td>Recover 129% CPU</td>
               </tr>
               <tr>
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td>
-                  <strong>Run nix-collect-garbage</strong> — disk 85%, grew 4%
-                  in 5h
-                </td>
+                <td><strong>Run nix-collect-garbage</strong> — disk 85%, grew 4% in 5h</td>
                 <td>10 min</td>
                 <td>Prevent disk full</td>
               </tr>
@@ -1038,8 +955,7 @@
                 <td>5</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Fix deploy.sh post-deploy-check path</strong> — 2
-                  reports, still broken
+                  <strong>Fix deploy.sh post-deploy-check path</strong> — 2 reports, still broken
                 </td>
                 <td>10 min</td>
                 <td>Catch silent failures post-deploy</td>
@@ -1047,10 +963,7 @@
               <tr>
                 <td>6</td>
                 <td><span class="badge badge-critical">P0</span></td>
-                <td>
-                  <strong>Disable coredump storage</strong> — partition full, 15
-                  dumps in 24h
-                </td>
+                <td><strong>Disable coredump storage</strong> — partition full, 15 dumps in 24h</td>
                 <td>10 min</td>
                 <td>Stop silent disk fill</td>
               </tr>
@@ -1058,8 +971,7 @@
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Fix Monitor365 upstream</strong> — Axum 0.7 route
-                  syntax panic (Rust)
+                  <strong>Fix Monitor365 upstream</strong> — Axum 0.7 route syntax panic (Rust)
                 </td>
                 <td>2h (upstream)</td>
                 <td>Restore monitoring agent</td>
@@ -1067,10 +979,7 @@
               <tr>
                 <td>8</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>
-                  <strong>Cloud backup</strong> — BorgBackup to Hetzner
-                  StorageBox
-                </td>
+                <td><strong>Cloud backup</strong> — BorgBackup to Hetzner StorageBox</td>
                 <td>4h</td>
                 <td>Disaster recovery</td>
               </tr>
@@ -1078,8 +987,8 @@
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>BTRFS /data subvolume migration</strong> — 686 GB
-                  data, zero snapshot protection
+                  <strong>BTRFS /data subvolume migration</strong> — 686 GB data, zero snapshot
+                  protection
                 </td>
                 <td>1h downtime</td>
                 <td>Snapshot protection for all data</td>
@@ -1088,8 +997,7 @@
                 <td>10</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Reboot evo-x2</strong> — clear all orphaned processes,
-                  verify boot fixes
+                  <strong>Reboot evo-x2</strong> — clear all orphaned processes, verify boot fixes
                 </td>
                 <td>5 min</td>
                 <td>Clean slate</td>
@@ -1098,8 +1006,8 @@
                 <td>11</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Investigate Quickshell SIGSEGV</strong> — 78 MB
-                  coredump, worse than deploy-cycle ABRTs
+                  <strong>Investigate Quickshell SIGSEGV</strong> — 78 MB coredump, worse than
+                  deploy-cycle ABRTs
                 </td>
                 <td>2h</td>
                 <td>Desktop shell stability</td>
@@ -1108,8 +1016,7 @@
                 <td>12</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>DNS migration Phase 2a</strong> — dnsblockd → primary
-                  resolver on :53
+                  <strong>DNS migration Phase 2a</strong> — dnsblockd → primary resolver on :53
                 </td>
                 <td>15h</td>
                 <td>Eliminate unbound</td>
@@ -1118,8 +1025,8 @@
                 <td>13</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Fix Monitor365 package alias</strong> —
-                  <code>pkgs.monitor365</code> → agent, not server+UI
+                  <strong>Fix Monitor365 package alias</strong> — <code>pkgs.monitor365</code> →
+                  agent, not server+UI
                 </td>
                 <td>30 min</td>
                 <td>Working monitoring dashboard</td>
@@ -1127,10 +1034,7 @@
               <tr>
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td>
-                  <strong>Verify Pocket ID email sending</strong> — SMTP wired
-                  but untested
-                </td>
+                <td><strong>Verify Pocket ID email sending</strong> — SMTP wired but untested</td>
                 <td>10 min</td>
                 <td>SSO email notifications</td>
               </tr>
@@ -1161,8 +1065,8 @@
                 <td>18</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Split large modules</strong> — monitor365 (716L),
-                  signoz (705L), forgejo (583L)
+                  <strong>Split large modules</strong> — monitor365 (716L), signoz (705L), forgejo
+                  (583L)
                 </td>
                 <td>3h</td>
                 <td>Maintainability</td>
@@ -1177,10 +1081,7 @@
               <tr>
                 <td>20</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td>
-                  <strong>Investigate swap/zram pressure</strong> — 84% swap,
-                  zram 100%
-                </td>
+                <td><strong>Investigate swap/zram pressure</strong> — 84% swap, zram 100%</td>
                 <td>1h</td>
                 <td>Memory stability</td>
               </tr>
@@ -1194,10 +1095,7 @@
               <tr>
                 <td>22</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td>
-                  <strong>Upstream nixpkgs PRs</strong> — 7 packages with
-                  workarounds
-                </td>
+                <td><strong>Upstream nixpkgs PRs</strong> — 7 packages with workarounds</td>
                 <td>5h</td>
                 <td>Ecosystem contribution</td>
               </tr>
@@ -1205,8 +1103,7 @@
                 <td>23</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>TTM pool pages_limit fix</strong> — set to &lt;90 GB
-                  (currently 112 GB)
+                  <strong>TTM pool pages_limit fix</strong> — set to &lt;90 GB (currently 112 GB)
                 </td>
                 <td>30 min</td>
                 <td>Reduce GPU memory pressure</td>
@@ -1215,8 +1112,7 @@
                 <td>24</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Disabled service triage</strong> — voice-agents,
-                  minecraft, photomap
+                  <strong>Disabled service triage</strong> — voice-agents, minecraft, photomap
                 </td>
                 <td>30 min</td>
                 <td>Clean config</td>
@@ -1224,9 +1120,7 @@
               <tr>
                 <td>25</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td>
-                  <strong>Darwin HM parity</strong> — incremental improvements
-                </td>
+                <td><strong>Darwin HM parity</strong> — incremental improvements</td>
                 <td>Ongoing</td>
                 <td>Cross-platform consistency</td>
               </tr>
@@ -1236,52 +1130,39 @@
 
         <!-- ==================== THE ONE QUESTION ==================== -->
 
-        <h2 id="question">
-          <span class="num">07</span>The One Question I Can't Answer
-        </h2>
+        <h2 id="question"><span class="num">07</span>The One Question I Can't Answer</h2>
 
         <div class="card card-problem">
           <h4>What keeps spawning the monitor365 BDD test binaries?</h4>
           <p>
-            We killed PID 1108948 (<code>bdd_server-200e06e192be5448</code>, 6h
-            at 98.6% CPU). Two hours later, PID 2747185
-            (<code>bdd_server-9e81757c885d1cd1</code>, 129% CPU) appeared — a
-            different binary hash but same pattern. Both are in
+            We killed PID 1108948 (<code>bdd_server-200e06e192be5448</code>, 6h at 98.6% CPU). Two
+            hours later, PID 2747185 (<code>bdd_server-9e81757c885d1cd1</code>, 129% CPU) appeared —
+            a different binary hash but same pattern. Both are in
             <code>~/projects/monitor365/target/debug/deps/</code>.
           </p>
           <p>
-            I cannot determine what launches them without being able to inspect
-            the parent process tree (blocked by security policy). The possible
-            culprits:
+            I cannot determine what launches them without being able to inspect the parent process
+            tree (blocked by security policy). The possible culprits:
           </p>
           <ul style="margin-left: 1.5rem; margin-bottom: 1rem">
-            <li>
-              <code>cargo watch</code> or <code>bacon</code> running in a
-              terminal
-            </li>
-            <li>
-              An editor integration (LSP, rust-analyzer) triggering test builds
-            </li>
+            <li><code>cargo watch</code> or <code>bacon</code> running in a terminal</li>
+            <li>An editor integration (LSP, rust-analyzer) triggering test builds</li>
             <li>A git hook or development script in the monitor365 repo</li>
             <li>A systemd timer or cron job pointing at the project</li>
-            <li>
-              The Crush instance running in <code>~/projects/monitor365/</code>
-            </li>
+            <li>The Crush instance running in <code>~/projects/monitor365/</code></li>
           </ul>
           <p>
-            This matters because each instance burns ~100% CPU and prevents
-            Monitor365 from being truly "disabled" — even if we disable the
-            NixOS service, something keeps launching dev binaries from the
-            project directory. Understanding the source is required to stop the
+            This matters because each instance burns ~100% CPU and prevents Monitor365 from being
+            truly "disabled" — even if we disable the NixOS service, something keeps launching dev
+            binaries from the project directory. Understanding the source is required to stop the
             cycle permanently.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-04 14:30 CEST &middot; Runtime data verified live on
-          evo-x2 via /proc, journalctl, coredumpctl, ss &middot; Delta
-          comparison against 09:52 report &middot; Written by Crush
-          (status-report skill)
+          Generated 2026-07-04 14:30 CEST &middot; Runtime data verified live on evo-x2 via /proc,
+          journalctl, coredumpctl, ss &middot; Delta comparison against 09:52 report &middot;
+          Written by Crush (status-report skill)
         </footer>
       </main>
     </div>

@@ -65,14 +65,14 @@
 
         /* --- Type stacks (system only — zero external fonts) --- */
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
 
       * {
@@ -483,20 +483,12 @@
       .callout-teal,
       .callout-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 10%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 10%, var(--surface-raised));
       }
       .callout-amber,
       .callout-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 18%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 18%, var(--surface-raised));
       }
 
       /* --- Strengths --- */
@@ -880,24 +872,17 @@
             <div class="tri"></div>
           </div>
           <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-07-21</div>
-          <h1>
-            Monitor365 <code>flake.nix</code> — Adoption &amp; Utilization Audit
-          </h1>
+          <h1>Monitor365 <code>flake.nix</code> — Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            Is SystemNix consuming the Monitor365 flake superbly? Yes &mdash;
-            this is the
-            <strong>gold-standard pattern</strong>. SystemNix imports both
-            upstream <code>nixosModules</code> directly and layers only
-            host-specific defaults with <code>lib.mkDefault</code>. The 164-line
-            wrapper contains zero option duplication. Three minor capability
-            gaps remain, one of which is a data-loss exposure.
+            Is SystemNix consuming the Monitor365 flake superbly? Yes &mdash; this is the
+            <strong>gold-standard pattern</strong>. SystemNix imports both upstream
+            <code>nixosModules</code> directly and layers only host-specific defaults with
+            <code>lib.mkDefault</code>. The 164-line wrapper contains zero option duplication. Three
+            minor capability gaps remain, one of which is a data-loss exposure.
           </p>
           <div class="meta">
             <span class="tag amber">Pinned rev: <code>7696991d</code></span>
-            <span class="tag"
-              >Input:
-              <code>github:LarsArtmann/monitor365?ref=master</code></span
-            >
+            <span class="tag">Input: <code>github:LarsArtmann/monitor365?ref=master</code></span>
             <span class="tag teal">Adoption Score: 88/100</span>
           </div>
         </header>
@@ -930,54 +915,44 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            SystemNix consumes the Monitor365 flake exactly the way a downstream
-            consumer should. The wrapper module at
-            <code>modules/nixos/services/monitor365.nix</code> (164 lines) opens
-            with
+            SystemNix consumes the Monitor365 flake exactly the way a downstream consumer should.
+            The wrapper module at
+            <code>modules/nixos/services/monitor365.nix</code> (164 lines) opens with
             <code class="text"
               >imports = [ inputs.monitor365.nixosModules.monitor365
               inputs.monitor365.nixosModules.monitor365-server ]</code
             >
-            and then layers only SystemNix-specific defaults &mdash; ports, sops
-            secret paths, runtime deps, Pocket&nbsp;ID SSO &mdash; every one
-            annotated with
-            <code>lib.mkDefault</code> so the operator can still override. There
-            is <strong>zero option duplication</strong>: every option the
-            upstream modules declare (<code>listenAddr</code>,
-            <code>jwtSecretFile</code>, <code>bootstrap</code>,
+            and then layers only SystemNix-specific defaults &mdash; ports, sops secret paths,
+            runtime deps, Pocket&nbsp;ID SSO &mdash; every one annotated with
+            <code>lib.mkDefault</code> so the operator can still override. There is
+            <strong>zero option duplication</strong>: every option the upstream modules declare
+            (<code>listenAddr</code>, <code>jwtSecretFile</code>, <code>bootstrap</code>,
             <code>sso</code>, <code>healthCheck</code>, <code>backup</code>,
-            <code>tlsCertFile</code>, <code>displayUser</code>, &hellip;) flows
-            in through the import. This is the pattern the DiscordSync deep dive
-            (same date) recommends adopting.
+            <code>tlsCertFile</code>, <code>displayUser</code>, &hellip;) flows in through the
+            import. This is the pattern the DiscordSync deep dive (same date) recommends adopting.
           </p>
           <p>
             The overlay is consumed correctly too:
-            <code>overlays/linux.nix:197</code> registers
-            <code>monitor365.overlays.default</code>, then layers a build-fix
-            overlay (<code>monitor365SwaggerUiFixOverlay</code>) on top for two
-            genuine upstream build bugs (utoipa-swagger-ui
-            <code>PermissionDenied</code> + libspa
-            <code>SPA_ID_INVALID</code> bindgen failure). Both fixes are
-            necessary and correctly isolated. The surface integration is
-            comprehensive: 8 Gatus checks with Discord alerts, Caddy vHost with
-            conditional SSO, Homepage tile, Pocket&nbsp;ID OIDC client, sops
-            templates, and <code>restartTriggers</code> on the shared auth-token
+            <code>overlays/linux.nix:197</code> registers <code>monitor365.overlays.default</code>,
+            then layers a build-fix overlay (<code>monitor365SwaggerUiFixOverlay</code>) on top for
+            two genuine upstream build bugs (utoipa-swagger-ui <code>PermissionDenied</code> +
+            libspa <code>SPA_ID_INVALID</code> bindgen failure). Both fixes are necessary and
+            correctly isolated. The surface integration is comprehensive: 8 Gatus checks with
+            Discord alerts, Caddy vHost with conditional SSO, Homepage tile, Pocket&nbsp;ID OIDC
+            client, sops templates, and <code>restartTriggers</code> on the shared auth-token
             secret.
           </p>
           <div class="callout callout-teal">
             <strong>The bottom line</strong>
-            This is exemplary flake consumption. Three minor gaps remain: (1)
-            the upstream
-            <code>backup</code> option is unused &mdash; the DuckDB is the sole
-            store of all monitoring data and BTRFS snapshots are local-only, so
-            this is a real data-loss exposure; (2) eight desktop collectors are
-            enabled but neither display-discovery mechanism (<code
-              >displayUser</code
-            >
-            or the graphical-helper module) is wired, so they likely skip
-            gracefully as silent no-ops; (3) a load-bearing CORS workaround
-            comment documents an upstream env-var-vs-TOML-sequence bug that
-            should be fixed upstream. Fixing all three lifts the score to ~96.
+            This is exemplary flake consumption. Three minor gaps remain: (1) the upstream
+            <code>backup</code> option is unused &mdash; the DuckDB is the sole store of all
+            monitoring data and BTRFS snapshots are local-only, so this is a real data-loss
+            exposure; (2) eight desktop collectors are enabled but neither display-discovery
+            mechanism (<code>displayUser</code>
+            or the graphical-helper module) is wired, so they likely skip gracefully as silent
+            no-ops; (3) a load-bearing CORS workaround comment documents an upstream
+            env-var-vs-TOML-sequence bug that should be fixed upstream. Fixing all three lifts the
+            score to ~96.
           </div>
         </section>
 
@@ -985,30 +960,25 @@
         <section id="strengths">
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            This section is long because the consumption genuinely is superb.
-            These patterns are worth studying and replicating across every other
-            LarsArtmann-flake consumer in SystemNix.
+            This section is long because the consumption genuinely is superb. These patterns are
+            worth studying and replicating across every other LarsArtmann-flake consumer in
+            SystemNix.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Imports both upstream
-                  <code>nixosModules</code> directly</strong
-                >
+                <strong>Imports both upstream <code>nixosModules</code> directly</strong>
                 <span
                   ><code>monitor365.nix:72-75</code> &mdash;
                   <code class="text"
                     >imports = [ inputs.monitor365.nixosModules.monitor365
                     inputs.monitor365.nixosModules.monitor365-server ]</code
-                  >. Zero option re-declaration. Every upstream option
-                  (<code>backup</code>, <code>sso</code>,
-                  <code>tlsCertFile</code>, <code>displayUser</code>,
-                  <code>healthCheck</code>, <code>poolSize</code>,
-                  <code>rateLimit*</code>, &hellip;) arrives automatically.
-                  Contrast with DiscordSync's 160-line hand-rolled
+                  >. Zero option re-declaration. Every upstream option (<code>backup</code>,
+                  <code>sso</code>, <code>tlsCertFile</code>, <code>displayUser</code>,
+                  <code>healthCheck</code>, <code>poolSize</code>, <code>rateLimit*</code>,
+                  &hellip;) arrives automatically. Contrast with DiscordSync's 160-line hand-rolled
                   duplicate.</span
                 >
               </div>
@@ -1018,27 +988,23 @@
               <div class="text">
                 <strong>Every override uses <code>lib.mkDefault</code></strong>
                 <span
-                  ><code>monitor365.nix:80-145</code> &mdash; preserves upstream
-                  priority. The operator (or a higher-level module) can still
-                  override any SystemNix default without <code>mkForce</code>.
-                  This is the correct module-system discipline.</span
+                  ><code>monitor365.nix:80-145</code> &mdash; preserves upstream priority. The
+                  operator (or a higher-level module) can still override any SystemNix default
+                  without <code>mkForce</code>. This is the correct module-system discipline.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Overlay consumed, build-fix overlay layered correctly</strong
-                >
+                <strong>Overlay consumed, build-fix overlay layered correctly</strong>
                 <span
                   ><code>overlays/linux.nix:197-198</code> &mdash;
                   <code>monitor365.overlays.default</code> first, then
-                  <code>monitor365SwaggerUiFixOverlay</code> on top. The fix
-                  overlay rebuilds <code>monitor365-server</code> via
-                  <code>symlinkJoin</code> to bake in the patched CLI
-                  (upstream's <code>symlinkJoin</code> would otherwise embed the
-                  unfixed binary).</span
+                  <code>monitor365SwaggerUiFixOverlay</code> on top. The fix overlay rebuilds
+                  <code>monitor365-server</code> via <code>symlinkJoin</code> to bake in the patched
+                  CLI (upstream's <code>symlinkJoin</code> would otherwise embed the unfixed
+                  binary).</span
                 >
               </div>
             </div>
@@ -1047,82 +1013,63 @@
               <div class="text">
                 <strong>Rev-pinned to exact HEAD (0 versions behind)</strong>
                 <span
-                  ><code>flake.lock:2864</code> &mdash; pinned to
-                  <code>7696991d</code>, which IS the current
-                  <code>master</code> HEAD.
-                  <code>nixpkgs.follows = "nixpkgs"</code> avoids double
-                  instantiation. No version drift.</span
+                  ><code>flake.lock:2864</code> &mdash; pinned to <code>7696991d</code>, which IS
+                  the current <code>master</code> HEAD.
+                  <code>nixpkgs.follows = "nixpkgs"</code> avoids double instantiation. No version
+                  drift.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Pocket&nbsp;ID SSO fully wired (native OIDC, Layer 1)</strong
-                >
+                <strong>Pocket&nbsp;ID SSO fully wired (native OIDC, Layer 1)</strong>
                 <span
-                  ><code>monitor365.nix:138-144</code> +
-                  <code>pocket-id.nix:418</code> &mdash; OIDC client registered
-                  (<code>clientId = "monitor365"</code>), client secret read
-                  from the pocket-id provisioner's
-                  <code>client-secrets/monitor365</code> file, redirect URI
-                  matches. The <code>monitor365-server</code> user is added to
-                  the <code>pocket-id</code> group for secret read access. Caddy
-                  uses conditional <code>protectedVHost</code> vs plain proxy
-                  based on <code>sso.enable</code>.</span
+                  ><code>monitor365.nix:138-144</code> + <code>pocket-id.nix:418</code> &mdash; OIDC
+                  client registered (<code>clientId = "monitor365"</code>), client secret read from
+                  the pocket-id provisioner's <code>client-secrets/monitor365</code> file, redirect
+                  URI matches. The <code>monitor365-server</code> user is added to the
+                  <code>pocket-id</code> group for secret read access. Caddy uses conditional
+                  <code>protectedVHost</code> vs plain proxy based on <code>sso.enable</code>.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Comprehensive monitoring (8 Gatus checks + Discord
-                  alerts)</strong
-                >
+                <strong>Comprehensive monitoring (8 Gatus checks + Discord alerts)</strong>
                 <span
-                  ><code>gatus-config.nix:368-461</code> &mdash; Server health,
-                  bootstrap status, UI serving, external endpoint,
-                  agent-connected, agent <code>/metrics</code>, cloud-sync
-                  subsystem. Each has a Discord alert with a diagnostic hint
-                  (<code>journalctl -u &hellip;</code>). The agent-metrics check
-                  correctly matches <code>collector_events_collected</code> (not
-                  a literal "monitor365" string &mdash; a previously-fixed
-                  trap).</span
+                  ><code>gatus-config.nix:368-461</code> &mdash; Server health, bootstrap status, UI
+                  serving, external endpoint, agent-connected, agent <code>/metrics</code>,
+                  cloud-sync subsystem. Each has a Discord alert with a diagnostic hint (<code
+                    >journalctl -u &hellip;</code
+                  >). The agent-metrics check correctly matches
+                  <code>collector_events_collected</code> (not a literal "monitor365" string &mdash;
+                  a previously-fixed trap).</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Secret model: sops template + systemd
-                  <code>LoadCredential</code></strong
-                >
+                <strong>Secret model: sops template + systemd <code>LoadCredential</code></strong>
                 <span
-                  ><code>sops.nix:242-250</code> + upstream
-                  <code>module.nix:225</code> &mdash; JWT secret flows through a
-                  sops template owned by <code>monitor365-server</code>; the
-                  agent auth token uses <code>LoadCredential</code> (read as
-                  root, exposed in <code>$CREDENTIALS_DIRECTORY</code>). No
-                  secret value ever lands in the Nix store or
-                  <code>/proc/PID/environ</code>.</span
+                  ><code>sops.nix:242-250</code> + upstream <code>module.nix:225</code> &mdash; JWT
+                  secret flows through a sops template owned by <code>monitor365-server</code>; the
+                  agent auth token uses <code>LoadCredential</code> (read as root, exposed in
+                  <code>$CREDENTIALS_DIRECTORY</code>). No secret value ever lands in the Nix store
+                  or <code>/proc/PID/environ</code>.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  ><code>restartTriggers</code> on the shared auth token</strong
-                >
+                <strong><code>restartTriggers</code> on the shared auth token</strong>
                 <span
-                  ><code>monitor365.nix:153-160</code> &mdash; both
-                  <code>monitor365</code> and
-                  <code>monitor365-server</code> restart when
-                  <code>cloud_auth_token</code> changes. Prevents the
-                  agent/server auth-desync class of bug (a documented historical
+                  ><code>monitor365.nix:153-160</code> &mdash; both <code>monitor365</code> and
+                  <code>monitor365-server</code> restart when <code>cloud_auth_token</code> changes.
+                  Prevents the agent/server auth-desync class of bug (a documented historical
                   failure mode).</span
                 >
               </div>
@@ -1130,16 +1077,14 @@
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Runtime deps wired into the service <code>PATH</code></strong
-                >
+                <strong>Runtime deps wired into the service <code>PATH</code></strong>
                 <span
                   ><code>monitor365.nix:58-69</code> &rarr; upstream
                   <code>module.nix:164-166</code> &mdash; <code>procps</code>,
-                  <code>util-linux</code>, <code>xdotool</code>,
-                  <code>scrot</code>, <code>wmctrl</code>, &hellip; flow into
-                  <code>Environment = [ "PATH=&hellip;" ]</code>. Without this,
-                  collectors silently find no tools.</span
+                  <code>util-linux</code>, <code>xdotool</code>, <code>scrot</code>,
+                  <code>wmctrl</code>, &hellip; flow into
+                  <code>Environment = [ "PATH=&hellip;" ]</code>. Without this, collectors silently
+                  find no tools.</span
                 >
               </div>
             </div>
@@ -1149,11 +1094,10 @@
                 <strong>Honest, load-bearing workaround comments</strong>
                 <span
                   ><code>monitor365.nix:120-126</code> documents exactly why
-                  <code>corsOrigins</code> is intentionally NOT set (upstream
-                  emits a string, Rust parser wants a TOML sequence).
-                  <code>monitor365.nix:27-39</code> documents the auth model.
-                  These comments are the only place this knowledge lives &mdash;
-                  they prevent re-introduction of the bugs.</span
+                  <code>corsOrigins</code> is intentionally NOT set (upstream emits a string, Rust
+                  parser wants a TOML sequence). <code>monitor365.nix:27-39</code> documents the
+                  auth model. These comments are the only place this knowledge lives &mdash; they
+                  prevent re-introduction of the bugs.</span
                 >
               </div>
             </div>
@@ -1164,63 +1108,50 @@
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
           <p>
-            Ordered by impact. None of these are consumption anti-patterns
-            &mdash; they are capabilities the upstream flake exposes that
-            SystemNix has not yet wired. The pattern itself is exemplary.
+            Ordered by impact. None of these are consumption anti-patterns &mdash; they are
+            capabilities the upstream flake exposes that SystemNix has not yet wired. The pattern
+            itself is exemplary.
           </p>
 
           <!-- Issue 1 -->
           <div class="issue issue-important" id="missed-backup">
             <span class="severity severity-important"
-              >Missed Opportunity &middot; Medium-high impact (data-loss
-              exposure)</span
+              >Missed Opportunity &middot; Medium-high impact (data-loss exposure)</span
             >
-            <h3>
-              Scheduled backup unused &mdash; DuckDB is the sole store, BTRFS is
-              local-only
-            </h3>
+            <h3>Scheduled backup unused &mdash; DuckDB is the sole store, BTRFS is local-only</h3>
             <div class="where">
-              SystemNix <code>monitor365.nix</code> +
-              <code>configuration.nix:428-434</code> (no
-              <code>backup</code> attr); upstream
-              <code>server-module.nix:200-217</code> exposes
-              <code>backup.enable</code> / <code>backup.schedule</code> /
-              <code>backup.keep</code>; timer at
+              SystemNix <code>monitor365.nix</code> + <code>configuration.nix:428-434</code> (no
+              <code>backup</code> attr); upstream <code>server-module.nix:200-217</code> exposes
+              <code>backup.enable</code> / <code>backup.schedule</code> / <code>backup.keep</code>;
+              timer at
               <code>server-module.nix:502-533</code>
             </div>
             <p>
-              The upstream server module ships a complete scheduled-backup
-              subsystem: a oneshot service that runs
-              <code
-                >monitor365-server &hellip; backup --output-dir
-                &lt;stateDir&gt;</code
-              >, plus a systemd timer (default daily at 03:00,
-              <code>Persistent = true</code>), with configurable retention
-              (<code>keep = 7</code> default, oldest pruned). SystemNix sets
-              none of these &mdash; the option defaults to
-              <code>enable = false</code>.
+              The upstream server module ships a complete scheduled-backup subsystem: a oneshot
+              service that runs
+              <code>monitor365-server &hellip; backup --output-dir &lt;stateDir&gt;</code>, plus a
+              systemd timer (default daily at 03:00, <code>Persistent = true</code>), with
+              configurable retention (<code>keep = 7</code> default, oldest pruned). SystemNix sets
+              none of these &mdash; the option defaults to <code>enable = false</code>.
             </p>
             <p>
               The risk is real and documented. Per AGENTS.md:
               <em
-                >&ldquo;All snapshots are LOCAL-ONLY. If the NVMe fails,
-                everything is lost. This is the #1 data loss risk (flagged since
-                2026-06-25).&rdquo;</em
+                >&ldquo;All snapshots are LOCAL-ONLY. If the NVMe fails, everything is lost. This is
+                the #1 data loss risk (flagged since 2026-06-25).&rdquo;</em
               >
               The DuckDB at
-              <code>/var/lib/monitor365-server/monitor365.duckdb</code> is the
-              sole store of every captured event &mdash; system telemetry, app
-              usage, screenshots metadata, keystroke counts, location. BTRFS
-              snapshots of <code>@</code> cover it, but only locally. A daily
-              <code>*.backup_*.db</code> export is a prerequisite for any future
-              offsite sync (rsync/rclone/borg) of those files &mdash; you cannot
-              safely rsync a live DuckDB.
+              <code>/var/lib/monitor365-server/monitor365.duckdb</code> is the sole store of every
+              captured event &mdash; system telemetry, app usage, screenshots metadata, keystroke
+              counts, location. BTRFS snapshots of <code>@</code> cover it, but only locally. A
+              daily <code>*.backup_*.db</code> export is a prerequisite for any future offsite sync
+              (rsync/rclone/borg) of those files &mdash; you cannot safely rsync a live DuckDB.
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
               Three lines in <code>configuration.nix</code> under
-              <code>services.monitor365-server</code>. The timer, retention, and
-              backup script all arrive free via the upstream import.
+              <code>services.monitor365-server</code>. The timer, retention, and backup script all
+              arrive free via the upstream import.
             </div>
             <pre><code># configuration.nix — services.monitor365-server
 monitor365-server = {
@@ -1240,72 +1171,57 @@ monitor365-server = {
             <span class="severity severity-important"
               >Missed Opportunity &middot; Medium impact (silent no-op)</span
             >
-            <h3>
-              Eight desktop collectors enabled but no display-discovery path
-              wired
-            </h3>
+            <h3>Eight desktop collectors enabled but no display-discovery path wired</h3>
             <div class="where">
-              SystemNix <code>configuration.nix:412-424</code> (enables
-              screenshots, keystrokes, mouse, clipboard, camera, notifications,
-              app_usage, afk_status); <code>monitor365.nix</code> sets neither
-              <code>displayUser</code> nor imports
+              SystemNix <code>configuration.nix:412-424</code> (enables screenshots, keystrokes,
+              mouse, clipboard, camera, notifications, app_usage, afk_status);
+              <code>monitor365.nix</code> sets neither <code>displayUser</code> nor imports
               <code>nixosModules.monitor365-graphical-helper</code>; upstream
               <code>module.nix:101-112</code> (<code>displayUser</code>) and
               <code>flake.nix:566</code> +
               <code>graphical-helper-module.nix</code>
             </div>
             <p>
-              The agent runs as a dedicated system user
-              (<code>monitor365</code>) with
-              <code>linger = true</code>, so it survives logout &mdash; correct
-              for headless collectors. But graphical collectors (screenshots,
-              window titles, keystrokes, mouse, clipboard, AFK) need
-              <code>DISPLAY</code>/<code>WAYLAND_DISPLAY</code>/
-              <code>XAUTHORITY</code>/<code>XDG_RUNTIME_DIR</code>, which are
-              session-scoped environment variables on the
-              <em>logged-in</em> user. The upstream module offers two discovery
-              paths:
+              The agent runs as a dedicated system user (<code>monitor365</code>) with
+              <code>linger = true</code>, so it survives logout &mdash; correct for headless
+              collectors. But graphical collectors (screenshots, window titles, keystrokes, mouse,
+              clipboard, AFK) need <code>DISPLAY</code>/<code>WAYLAND_DISPLAY</code>/
+              <code>XAUTHORITY</code>/<code>XDG_RUNTIME_DIR</code>, which are session-scoped
+              environment variables on the <em>logged-in</em> user. The upstream module offers two
+              discovery paths:
             </p>
             <ul>
               <li>
                 <strong><code>displayUser</code></strong>
-                (<code>module.nix:101-112</code>) &mdash; the agent discovers
-                display env from this user's active login session at startup via
-                <code>/proc/&lt;pid&gt;/environ</code>. SystemNix does not set
-                it.
+                (<code>module.nix:101-112</code>) &mdash; the agent discovers display env from this
+                user's active login session at startup via
+                <code>/proc/&lt;pid&gt;/environ</code>. SystemNix does not set it.
               </li>
               <li>
                 <strong><code>monitor365-graphical-helper</code></strong> (<code
                   >flake.nix:566</code
                 >
-                &rarr; <code>graphical-helper-module.nix</code>) &mdash; a
-                separate <code>systemd.user</code> service in
-                <code>graphical-session.target</code> that forwards graphical
-                events to the agent over the IPC socket at
-                <code>/run/monitor365/agent.sock</code>. SystemNix does not
-                import this module (confirmed: <code>grep</code> for
-                <code>graphical.helper</code> in <code>modules/</code>,
-                <code>platforms/</code> returns only the comment at
+                &rarr; <code>graphical-helper-module.nix</code>) &mdash; a separate
+                <code>systemd.user</code> service in <code>graphical-session.target</code> that
+                forwards graphical events to the agent over the IPC socket at
+                <code>/run/monitor365/agent.sock</code>. SystemNix does not import this module
+                (confirmed: <code>grep</code> for <code>graphical.helper</code> in
+                <code>modules/</code>, <code>platforms/</code> returns only the comment at
                 <code>monitor365.nix:18</code>).
               </li>
             </ul>
             <p>
-              The SystemNix wrapper comment (<code>monitor365.nix:17-20</code>)
-              says
+              The SystemNix wrapper comment (<code>monitor365.nix:17-20</code>) says
               <em
-                >&ldquo;Display env discovered from active sessions via the
-                graphical helper&rdquo;</em
+                >&ldquo;Display env discovered from active sessions via the graphical
+                helper&rdquo;</em
               >
-              &mdash; but neither mechanism is actually wired. The upstream
-              module docstring says collectors &ldquo;check availability at
-              startup and skip gracefully if unavailable.&rdquo; The likely
-              runtime state: the eight desktop collectors are enabled in TOML,
-              pass validation, and then silently emit zero events because the
-              agent has no
-              <code>DISPLAY</code>. No crash, no error &mdash; just an empty
-              dashboard for those categories.
-              <strong>This needs runtime verification</strong> (see
-              Recommendation).
+              &mdash; but neither mechanism is actually wired. The upstream module docstring says
+              collectors &ldquo;check availability at startup and skip gracefully if
+              unavailable.&rdquo; The likely runtime state: the eight desktop collectors are enabled
+              in TOML, pass validation, and then silently emit zero events because the agent has no
+              <code>DISPLAY</code>. No crash, no error &mdash; just an empty dashboard for those
+              categories. <strong>This needs runtime verification</strong> (see Recommendation).
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation (verify first, then pick one path)</strong>
@@ -1314,17 +1230,14 @@ monitor365-server = {
                 >journalctl -u monitor365 -b | grep -iE
                 "display|wayland|skip|graphical|screenshot|keystroke"</code
               >
-              and check the dashboard for any non-headless events since the last
-              reboot. Step 2 &mdash; if confirmed empty, wire
-              <strong>one</strong> of the two paths. The graphical-helper module
-              is the upstream-recommended design (it runs <em>inside</em> the
-              user's graphical session, so display env is natural);
-              <code>displayUser</code> is the lighter single-line option but
-              depends on <code>/proc</code> discovery surviving the hardening
-              profile. AGENTS.md has a note that
-              <code>displayUser</code> &ldquo;does NOT exist in the current
-              upstream module&rdquo; &mdash; that note is
-              <strong>stale</strong>; the option is present at
+              and check the dashboard for any non-headless events since the last reboot. Step 2
+              &mdash; if confirmed empty, wire
+              <strong>one</strong> of the two paths. The graphical-helper module is the
+              upstream-recommended design (it runs <em>inside</em> the user's graphical session, so
+              display env is natural); <code>displayUser</code> is the lighter single-line option
+              but depends on <code>/proc</code> discovery surviving the hardening profile. AGENTS.md
+              has a note that <code>displayUser</code> &ldquo;does NOT exist in the current upstream
+              module&rdquo; &mdash; that note is <strong>stale</strong>; the option is present at
               <code>module.nix:101-112</code> as of the pinned rev.
             </div>
             <pre><code># Option A — graphical-helper module (upstream-recommended)
@@ -1351,59 +1264,47 @@ services.monitor365.displayUser = lib.mkDefault primaryUser;</code></pre>
             <span class="severity severity-nice"
               >Partially Used &middot; Low impact (upstream debt)</span
             >
-            <h3>
-              CORS workaround is load-bearing knowledge &mdash; fix should go
-              upstream
-            </h3>
+            <h3>CORS workaround is load-bearing knowledge &mdash; fix should go upstream</h3>
             <div class="where">
-              SystemNix <code>monitor365.nix:120-126</code> (the comment);
-              upstream <code>server-module.nix:441-443</code> emits
-              <code>MONITOR365_SERVER__CORS_ORIGINS</code> as a comma-separated
-              string
+              SystemNix <code>monitor365.nix:120-126</code> (the comment); upstream
+              <code>server-module.nix:441-443</code> emits
+              <code>MONITOR365_SERVER__CORS_ORIGINS</code> as a comma-separated string
             </div>
             <p>
-              SystemNix correctly works around an upstream bug: the upstream
-              module emits
+              SystemNix correctly works around an upstream bug: the upstream module emits
               <code>MONITOR365_SERVER__CORS_ORIGINS=https://a,https://b</code>
               (a single string), but the server's Rust
               <code>figment</code> config parser expects a TOML sequence (<code
                 >["https://a", "https://b"]</code
-              >), so startup crashes with a parse error. SystemNix's workaround
-              is to simply not set <code>corsOrigins</code> &mdash; valid
-              because the WASM dashboard and API are same-origin behind Caddy
-              (<code>monitor.${domain}</code>), so CORS is unnecessary.
+              >), so startup crashes with a parse error. SystemNix's workaround is to simply not set
+              <code>corsOrigins</code> &mdash; valid because the WASM dashboard and API are
+              same-origin behind Caddy (<code>monitor.${domain}</code>), so CORS is unnecessary.
             </p>
             <p>
               The workaround is correct for this deployment, but the comment at
               <code>monitor365.nix:120-126</code> is the
-              <strong>only place this knowledge lives</strong>. If the comment
-              is ever deleted, or a future contributor adds
-              <code>corsOrigins</code> thinking it will work, the server will
-              crash-loop. The root fix belongs upstream: the module should write
-              a TOML config file for sequence-typed values (as the comment
-              itself suggests).
+              <strong>only place this knowledge lives</strong>. If the comment is ever deleted, or a
+              future contributor adds <code>corsOrigins</code> thinking it will work, the server
+              will crash-loop. The root fix belongs upstream: the module should write a TOML config
+              file for sequence-typed values (as the comment itself suggests).
             </p>
             <div class="callout callout-teal">
               <strong>Recommendation</strong>
               File an upstream issue/PR in
-              <code>github:LarsArtmann/monitor365</code> describing the
-              env-var-vs-TOML-sequence mismatch, with the fix sketch from the
-              SystemNix comment. Until then, the SystemNix comment is doing
-              essential work &mdash; do not remove it.
+              <code>github:LarsArtmann/monitor365</code> describing the env-var-vs-TOML-sequence
+              mismatch, with the fix sketch from the SystemNix comment. Until then, the SystemNix
+              comment is doing essential work &mdash; do not remove it.
             </div>
           </div>
         </section>
 
         <!-- Proposal -->
         <section id="proposal">
-          <h2>
-            <span class="num">02</span>Target state &mdash; close the three gaps
-          </h2>
+          <h2><span class="num">02</span>Target state &mdash; close the three gaps</h2>
           <p>
-            The consumption pattern is already the target &mdash; no refactor
-            needed. The three findings are additive: enable one option, import
-            one module (or set one option), file one upstream issue. The diff
-            below shows all three applied.
+            The consumption pattern is already the target &mdash; no refactor needed. The three
+            findings are additive: enable one option, import one module (or set one option), file
+            one upstream issue. The diff below shows all three applied.
           </p>
           <pre><code># modules/nixos/services/monitor365.nix — add graphical-helper import (Issue 2, Option A)
 imports = [
@@ -1437,26 +1338,22 @@ monitor365-server = {
           <div class="callout callout-teal">
             <strong>Why this is the right shape</strong>
             &dash; Zero change to the consumption pattern (still pure
-            <code>imports</code> + <code>mkDefault</code> layering). &dash;
-            Backup closes the documented #1 data-loss risk for this service.
-            &dash; Graphical helper unlocks 8 collectors that are configured but
-            likely dark. &dash; Upstream CORS fix removes a load-bearing comment
-            and unblocks future multi-origin deployments.
+            <code>imports</code> + <code>mkDefault</code> layering). &dash; Backup closes the
+            documented #1 data-loss risk for this service. &dash; Graphical helper unlocks 8
+            collectors that are configured but likely dark. &dash; Upstream CORS fix removes a
+            load-bearing comment and unblocks future multi-origin deployments.
           </div>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2>
-            <span class="num">03</span>Priority matrix &amp; version currency
-          </h2>
+          <h2><span class="num">03</span>Priority matrix &amp; version currency</h2>
           <p>
-            SystemNix is pinned to <code>7696991d</code>, the exact HEAD of
-            <code>master</code> at audit time (0 versions behind). All findings
-            are adoption gaps, not version gaps &mdash; nothing requires a flake
-            bump. The build-fix overlay (<code>overlays/linux.nix:70-192</code>)
-            patches two genuine upstream build bugs and is correctly isolated;
-            it can be retired when upstream lands the fixes (tracked in
+            SystemNix is pinned to <code>7696991d</code>, the exact HEAD of <code>master</code> at
+            audit time (0 versions behind). All findings are adoption gaps, not version gaps &mdash;
+            nothing requires a flake bump. The build-fix overlay
+            (<code>overlays/linux.nix:70-192</code>) patches two genuine upstream build bugs and is
+            correctly isolated; it can be retired when upstream lands the fixes (tracked in
             AGENTS.md).
           </p>
           <table class="compare">
@@ -1473,8 +1370,7 @@ monitor365-server = {
               <tr>
                 <td>1</td>
                 <td>
-                  Enable <code>backup</code> (3 lines) &mdash; closes data-loss
-                  exposure (Issue 1)
+                  Enable <code>backup</code> (3 lines) &mdash; closes data-loss exposure (Issue 1)
                 </td>
                 <td class="yes">5</td>
                 <td class="yes">5</td>
@@ -1483,8 +1379,8 @@ monitor365-server = {
               <tr>
                 <td>2</td>
                 <td>
-                  Wire graphical display discovery &mdash; verify, then import
-                  helper module (Issue 2)
+                  Wire graphical display discovery &mdash; verify, then import helper module (Issue
+                  2)
                 </td>
                 <td class="yes">4</td>
                 <td>3</td>
@@ -1492,10 +1388,7 @@ monitor365-server = {
               </tr>
               <tr>
                 <td>3</td>
-                <td>
-                  File upstream CORS fix PR &mdash; remove load-bearing comment
-                  (Issue 3)
-                </td>
+                <td>File upstream CORS fix PR &mdash; remove load-bearing comment (Issue 3)</td>
                 <td>2</td>
                 <td>3</td>
                 <td><span class="highlight">6</span></td>
@@ -1503,26 +1396,22 @@ monitor365-server = {
             </tbody>
           </table>
           <p style="margin-top: 1.5rem">
-            <strong>Adoption score breakdown.</strong> Module consumption (10/10
-            &mdash; the gold-standard <code>imports</code> +
-            <code>mkDefault</code> pattern), overlay consumption (10/10 &mdash;
-            consumed + correctly layered build-fix), surface integration (9/10
-            &mdash; Gatus, Caddy SSO, Homepage, Pocket-ID, sops, restartTriggers
-            all wired), capability coverage (7/10 &mdash; backup and graphical
-            display discovery dark), version currency (10/10 &mdash; exact
-            HEAD). The two point deductions are Issues 1 and 2. Contrast with
-            the DiscordSync deep dive (same date, score 62): Monitor365 is the
-            pattern DiscordSync should adopt.
+            <strong>Adoption score breakdown.</strong> Module consumption (10/10 &mdash; the
+            gold-standard <code>imports</code> + <code>mkDefault</code> pattern), overlay
+            consumption (10/10 &mdash; consumed + correctly layered build-fix), surface integration
+            (9/10 &mdash; Gatus, Caddy SSO, Homepage, Pocket-ID, sops, restartTriggers all wired),
+            capability coverage (7/10 &mdash; backup and graphical display discovery dark), version
+            currency (10/10 &mdash; exact HEAD). The two point deductions are Issues 1 and 2.
+            Contrast with the DiscordSync deep dive (same date, score 62): Monitor365 is the pattern
+            DiscordSync should adopt.
           </p>
           <div class="callout callout-teal">
             <strong>Cross-reference</strong>
             See
-            <code
-              >docs/research/2026-07-21_discordsync-flake-deep-dive.html</code
-            >
+            <code>docs/research/2026-07-21_discordsync-flake-deep-dive.html</code>
             &mdash; the DiscordSync audit recommends consuming
-            <code>nixosModules.default</code> exactly the way this Monitor365
-            wrapper already does. Monitor365 is the reference implementation.
+            <code>nixosModules.default</code> exactly the way this Monitor365 wrapper already does.
+            Monitor365 is the reference implementation.
           </div>
         </section>
 
@@ -1530,9 +1419,8 @@ monitor365-server = {
         <footer class="footer">
           <p>
             Generated 2026-07-21 &middot; Reviewed against Monitor365 rev
-            <code>7696991d4310babb4ec47ee2b8c03a96ef441c90</code> &middot; All
-            claims verified against SystemNix (<code>master</code>) and upstream
-            flake source
+            <code>7696991d4310babb4ec47ee2b8c03a96ef441c90</code> &middot; All claims verified
+            against SystemNix (<code>master</code>) and upstream flake source
           </p>
         </footer>
       </main>

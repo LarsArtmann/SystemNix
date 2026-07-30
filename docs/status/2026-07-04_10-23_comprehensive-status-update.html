@@ -31,14 +31,14 @@
         --radius: 0px;
         --radius-sm: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -240,27 +240,15 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue {
         background: var(--surface-raised);
@@ -271,27 +259,15 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(
-          in srgb,
-          var(--problem) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(
-          in srgb,
-          var(--warning) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(
-          in srgb,
-          var(--solution) 8%,
-          var(--surface-raised)
-        );
+        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -582,9 +558,8 @@
           <div class="hero-badge">Comprehensive Status Update</div>
           <h1>SystemNix — Post-Memory-Crisis, Pre-Deploy Lock</h1>
           <p class="hero-subtitle">
-            Snapshot after the Monitor365 Agent visibility fix, with the evo-x2
-            memory crisis, ~2+ undeployed commits, and a long tail of
-            reliability work still ahead.
+            Snapshot after the Monitor365 Agent visibility fix, with the evo-x2 memory crisis, ~2+
+            undeployed commits, and a long tail of reliability work still ahead.
           </p>
         </div>
 
@@ -625,14 +600,12 @@
         <div class="card card-problem">
           <h4>Critical Context</h4>
           <p>
-            evo-x2 is running in chronic memory pressure. GPUActive consumes 51+
-            GiB of the ~94 GiB visible to Linux, and the sum of service
-            <code>MemoryMax</code> quotas overcommits available RAM by ~2×. The
-            last deploy failed with <code>ExitStatus(Exited(4))</code> because a
-            service was in <code>start-limit-hit</code>; the fix (<code
-              >systemctl reset-failed</code
-            >) is now load-bearing. A reboot and careful deploy are required
-            before stability can be trusted.
+            evo-x2 is running in chronic memory pressure. GPUActive consumes 51+ GiB of the ~94 GiB
+            visible to Linux, and the sum of service
+            <code>MemoryMax</code> quotas overcommits available RAM by ~2×. The last deploy failed
+            with <code>ExitStatus(Exited(4))</code> because a service was in
+            <code>start-limit-hit</code>; the fix (<code>systemctl reset-failed</code>) is now
+            load-bearing. A reboot and careful deploy are required before stability can be trusted.
           </p>
         </div>
 
@@ -644,9 +617,8 @@
             <div class="text">
               <strong>Monitor365 Agent visibility restored</strong>
               <span
-                >Enabled agent metrics endpoint and added a Gatus "Monitor365
-                Agent" check so status.home.lan no longer silently ignores the
-                local collector.</span
+                >Enabled agent metrics endpoint and added a Gatus "Monitor365 Agent" check so
+                status.home.lan no longer silently ignores the local collector.</span
               >
             </div>
           </div>
@@ -655,9 +627,8 @@
             <div class="text">
               <strong>DiscordSync exposed and protected</strong>
               <span
-                >Wired behind Caddy with OIDC via oauth2-proxy, added Gatus +
-                Homepage tiles, and moved the always-on API to localhost-only
-                port 8085.</span
+                >Wired behind Caddy with OIDC via oauth2-proxy, added Gatus + Homepage tiles, and
+                moved the always-on API to localhost-only port 8085.</span
               >
             </div>
           </div>
@@ -666,10 +637,8 @@
             <div class="text">
               <strong>Crush-daily data collection fixed</strong>
               <span
-                >Removed the silent data-access failure caused by
-                <code>ProtectHome=true</code>; now uses
-                <code>ProtectHome=false</code> with scoped
-                <code>ReadOnlyPaths</code>.</span
+                >Removed the silent data-access failure caused by <code>ProtectHome=true</code>; now
+                uses <code>ProtectHome=false</code> with scoped <code>ReadOnlyPaths</code>.</span
               >
             </div>
           </div>
@@ -678,9 +647,8 @@
             <div class="text">
               <strong>Monitor365 server + UI repaired</strong>
               <span
-                >Fixed package alias trap (<code>monitor365-server</code> with
-                bundled UI), made agent config writable after copy, and updated
-                cloud auth token injection.</span
+                >Fixed package alias trap (<code>monitor365-server</code> with bundled UI), made
+                agent config writable after copy, and updated cloud auth token injection.</span
               >
             </div>
           </div>
@@ -689,9 +657,8 @@
             <div class="text">
               <strong>Post-deploy smoke test</strong>
               <span
-                >Added <code>nix run .#post-deploy-check</code> that verifies
-                functional outcomes (HTML bodies, JSON responses) rather than
-                just process liveness.</span
+                >Added <code>nix run .#post-deploy-check</code> that verifies functional outcomes
+                (HTML bodies, JSON responses) rather than just process liveness.</span
               >
             </div>
           </div>
@@ -700,9 +667,8 @@
             <div class="text">
               <strong>Caddy hardening</strong>
               <span
-                >Bare-IP redirect to Homepage, no-cache headers to prevent stale
-                HTML, structured access logging, TLS 1.2+, strict SNI, and 10
-                GiB body limit.</span
+                >Bare-IP redirect to Homepage, no-cache headers to prevent stale HTML, structured
+                access logging, TLS 1.2+, strict SNI, and 10 GiB body limit.</span
               >
             </div>
           </div>
@@ -712,8 +678,8 @@
               <strong>BTRFS crash prevention</strong>
               <span
                 ><code>btrfs-health.nix</code> gates <code>nix-gc</code> and
-                <code>nix-build-cleanup</code> when device-unallocated &lt; 10%,
-                with Gatus + Prometheus alerts.</span
+                <code>nix-build-cleanup</code> when device-unallocated &lt; 10%, with Gatus +
+                Prometheus alerts.</span
               >
             </div>
           </div>
@@ -733,9 +699,8 @@
             <div class="text">
               <strong>Helium hotplug crash mitigated</strong>
               <span
-                >Added <code>--disable-gpu-watchdog</code> wrapper to prevent
-                Chromium from killing the GPU process during slow display
-                reconfiguration.</span
+                >Added <code>--disable-gpu-watchdog</code> wrapper to prevent Chromium from killing
+                the GPU process during slow display reconfiguration.</span
               >
             </div>
           </div>
@@ -744,8 +709,8 @@
             <div class="text">
               <strong>SSH control-master socket cleanup</strong>
               <span
-                >Systemd user timer probes stale sockets and unlinks dead ones,
-                fixing multiplexing warnings after OOM/suspend.</span
+                >Systemd user timer probes stale sockets and unlinks dead ones, fixing multiplexing
+                warnings after OOM/suspend.</span
               >
             </div>
           </div>
@@ -754,8 +719,8 @@
             <div class="text">
               <strong><code>/tmp</code> tmpfs capped at 16 GiB</strong>
               <span
-                >Prevents runaway Go/dev temp files from consuming the whole RAM
-                pool via a static systemd mount unit.</span
+                >Prevents runaway Go/dev temp files from consuming the whole RAM pool via a static
+                systemd mount unit.</span
               >
             </div>
           </div>
@@ -764,9 +729,8 @@
             <div class="text">
               <strong>DNS local zones extracted</strong>
               <span
-                >Refactored local subdomain configuration into
-                <code>dns-local.nix</code> for clarity and
-                maintainability.</span
+                >Refactored local subdomain configuration into <code>dns-local.nix</code> for
+                clarity and maintainability.</span
               >
             </div>
           </div>
@@ -774,20 +738,14 @@
             <div class="check">+</div>
             <div class="text">
               <strong>File-and-image-renamer wired</strong>
-              <span
-                >New health dashboard exposed behind Caddy/Gatus with Pocket ID
-                SSO.</span
-              >
+              <span>New health dashboard exposed behind Caddy/Gatus with Pocket ID SSO.</span>
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Overview service exposed</strong>
-              <span
-                >Added Caddy vHost and Homepage tile for the new overview
-                console.</span
-              >
+              <span>Added Caddy vHost and Homepage tile for the new overview console.</span>
             </div>
           </div>
         </div>
@@ -797,16 +755,12 @@
         <div class="issue issue-important">
           <span class="severity severity-important">In Progress</span>
           <h3>DNS migration to dnsblockd</h3>
-          <div class="where">
-            modules/nixos/services/dns-blocker.nix, ROADMAP.md
-          </div>
+          <div class="where">modules/nixos/services/dns-blocker.nix, ROADMAP.md</div>
           <p>
-            dnsblockd v2.0.0 has a recursive resolver (DoT/DoH/DNSSEC), but
-            SystemNix still runs the split architecture (unbound on :53 +
-            dnsblockd as block-page HTTP only). Gaps remain: local zone support,
-            upstream DoT forwarding, and LAN ACLs. Phase 1
-            (allowlist/extraction) is done; Phases 2a–4 are pending upstream
-            work or config changes.
+            dnsblockd v2.0.0 has a recursive resolver (DoT/DoH/DNSSEC), but SystemNix still runs the
+            split architecture (unbound on :53 + dnsblockd as block-page HTTP only). Gaps remain:
+            local zone support, upstream DoT forwarding, and LAN ACLs. Phase 1
+            (allowlist/extraction) is done; Phases 2a–4 are pending upstream work or config changes.
           </p>
         </div>
 
@@ -815,10 +769,9 @@
           <h3>Monitor365 agent</h3>
           <div class="where">modules/nixos/services/monitor365.nix</div>
           <p>
-            Server and UI are healthy; agent was crashing due to an upstream
-            Rust panic/Axum 0.7 route issue. Visibility is now restored, but the
-            underlying agent panic may still need an upstream fix or dependency
-            bump before the collector is fully reliable.
+            Server and UI are healthy; agent was crashing due to an upstream Rust panic/Axum 0.7
+            route issue. Visibility is now restored, but the underlying agent panic may still need
+            an upstream fix or dependency bump before the collector is fully reliable.
           </p>
         </div>
 
@@ -827,12 +780,10 @@
           <h3>Deploy pipeline</h3>
           <div class="where">deploy.sh, modules/nixos/system</div>
           <p>
-            <code>deploy.sh</code> now runs
-            <code>systemctl reset-failed</code> before
-            <code>nh os switch</code> to avoid
-            <code>start-limit-hit</code> activation failures. This is a
-            mitigation, not a root-cause fix. The pre-deploy check and
-            post-deploy smoke test are in place but need real-deploy validation.
+            <code>deploy.sh</code> now runs <code>systemctl reset-failed</code> before
+            <code>nh os switch</code> to avoid <code>start-limit-hit</code> activation failures.
+            This is a mitigation, not a root-cause fix. The pre-deploy check and post-deploy smoke
+            test are in place but need real-deploy validation.
           </p>
         </div>
 
@@ -841,11 +792,9 @@
           <h3>Memory accounting</h3>
           <div class="where">boot.nix, modules/nixos/services/*.nix</div>
           <p>
-            <code>user-1000.slice</code> now has
-            <code>MemoryHigh=56G; MemoryMax=64G</code>, oomd is tuned, and MGLRU
-            thrash protection is enabled. However, individual service quotas
-            still sum to more than available RAM, and GPUActive is not counted
-            in standard tools.
+            <code>user-1000.slice</code> now has <code>MemoryHigh=56G; MemoryMax=64G</code>, oomd is
+            tuned, and MGLRU thrash protection is enabled. However, individual service quotas still
+            sum to more than available RAM, and GPUActive is not counted in standard tools.
           </p>
         </div>
 
@@ -854,23 +803,20 @@
           <h3>GPUActive visibility</h3>
           <div class="where">monitoring stack, DMS widget</div>
           <p>
-            The <code>GPUActive</code> counter in <code>/proc/meminfo</code> is
-            the only reliable signal. Some dashboards may show it, but it is not
-            integrated into Gatus/SigNoz as a first-class metric with alerts.
+            The <code>GPUActive</code> counter in <code>/proc/meminfo</code> is the only reliable
+            signal. Some dashboards may show it, but it is not integrated into Gatus/SigNoz as a
+            first-class metric with alerts.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">In Progress</span>
           <h3>OIDC SSO</h3>
-          <div class="where">
-            pocket-id.nix, forgejo.nix, immich.nix, gatus-config.nix
-          </div>
+          <div class="where">pocket-id.nix, forgejo.nix, immich.nix, gatus-config.nix</div>
           <p>
-            Layer 1 native OIDC works for Forgejo, Immich, and Gatus. Layer 2
-            oauth2-proxy protects the rest. Single Logout (SLO) is only partial
-            — Layer 1 apps keep their own sessions and do not participate in
-            coordinated logout.
+            Layer 1 native OIDC works for Forgejo, Immich, and Gatus. Layer 2 oauth2-proxy protects
+            the rest. Single Logout (SLO) is only partial — Layer 1 apps keep their own sessions and
+            do not participate in coordinated logout.
           </p>
         </div>
 
@@ -879,20 +825,18 @@
           <h3>Hermes</h3>
           <div class="where">modules/nixos/services/hermes.nix</div>
           <p>
-            Service is configured with the active pip extras. Manual steps
-            remain: SSH deploy key and fallback model setup.
+            Service is configured with the active pip extras. Manual steps remain: SSH deploy key
+            and fallback model setup.
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">In Progress</span>
           <h3>File & Image Renamer</h3>
-          <div class="where">
-            modules/nixos/services/file-and-image-renamer.nix
-          </div>
+          <div class="where">modules/nixos/services/file-and-image-renamer.nix</div>
           <p>
-            Caddy/Gatus/Pocket ID wiring is complete. Deployment and real-world
-            validation are pending the next switch.
+            Caddy/Gatus/Pocket ID wiring is complete. Deployment and real-world validation are
+            pending the next switch.
           </p>
         </div>
 
@@ -901,82 +845,70 @@
         <div class="card">
           <h4>BTRFS <code>/data</code> subvolume migration</h4>
           <p>
-            <code>/data</code> is currently BTRFS toplevel (subvolid=5) and is
-            NOT snapshotted. Need to migrate to a <code>@data</code> subvolume
-            with retention policy.
+            <code>/data</code> is currently BTRFS toplevel (subvolid=5) and is NOT snapshotted. Need
+            to migrate to a <code>@data</code> subvolume with retention policy.
           </p>
         </div>
         <div class="card">
           <h4>Off-site backup</h4>
-          <p>
-            No BorgBackup or other off-site DR exists. Existential risk for the
-            whole homelab.
-          </p>
+          <p>No BorgBackup or other off-site DR exists. Existential risk for the whole homelab.</p>
         </div>
         <div class="card">
           <h4>Firewall deny-by-default</h4>
           <p>
-            All inbound is currently allowed. Need a deny-by-default firewall
-            with explicit service holes.
+            All inbound is currently allowed. Need a deny-by-default firewall with explicit service
+            holes.
           </p>
         </div>
         <div class="card">
           <h4>Pi 3 DNS failover</h4>
           <p>
-            Hardware not purchased. Plan is to run a secondary resolver on
-            rpi3-dns for LAN redundancy.
+            Hardware not purchased. Plan is to run a secondary resolver on rpi3-dns for LAN
+            redundancy.
           </p>
         </div>
         <div class="card">
           <h4>Jan llama-server respawn fix</h4>
           <p>
-            Spawns 1.2 GB processes every 1–3 minutes. Needs root-cause fix in
-            the Jan module or service config.
+            Spawns 1.2 GB processes every 1–3 minutes. Needs root-cause fix in the Jan module or
+            service config.
           </p>
         </div>
         <div class="card">
           <h4>Memory quota right-sizing</h4>
           <p>
-            Audit every <code>MemoryMax</code> and
-            <code>MemoryHigh</code> against the real ~43 GiB available after
-            GPUActive.
+            Audit every <code>MemoryMax</code> and <code>MemoryHigh</code> against the real ~43 GiB
+            available after GPUActive.
           </p>
         </div>
         <div class="card">
           <h4>GPU driver/firmware triage</h4>
           <p>
-            Determine whether the 51+ GiB GPUActive is a driver bug or an
-            inherent Strix Halo unified-memory behavior.
+            Determine whether the 51+ GiB GPUActive is a driver bug or an inherent Strix Halo
+            unified-memory behavior.
           </p>
         </div>
         <div class="card">
           <h4>AppArmor / sandboxing</h4>
-          <p>
-            Security hardening beyond systemd <code>harden</code> is not yet
-            implemented.
-          </p>
+          <p>Security hardening beyond systemd <code>harden</code> is not yet implemented.</p>
         </div>
         <div class="card">
           <h4>Darwin Home Manager parity</h4>
           <p>
-            Blocked by 256 GB SSD at 90%+ full. Minimal HM config; no
-            desktop/editor/theme parity with NixOS.
+            Blocked by 256 GB SSD at 90%+ full. Minimal HM config; no desktop/editor/theme parity
+            with NixOS.
           </p>
         </div>
         <div class="card">
           <h4>SigNoz module split</h4>
           <p>
             <code>modules/nixos/services/signoz.nix</code> is 705 lines and
-            <code>forgejo.nix</code> is 583 lines. Should split into smaller
-            modules.
+            <code>forgejo.nix</code> is 583 lines. Should split into smaller modules.
           </p>
         </div>
         <div class="card">
           <h4>Community upstream contributions</h4>
-          <p>
-            ROADMAP.md lists nixpkgs/Home Manager PRs that should be
-            opened/pursued.
-          </p>
+          <p>ROADMAP.md lists nixpkgs/Home Manager PRs that should be opened/pursued.</p>
         </div>
 
         <h2 id="fucked"><span class="num">04</span>Totally Fucked Up</h2>
@@ -986,17 +918,16 @@
           <h3>GPUActive memory crisis</h3>
           <div class="where">evo-x2, amdgpu, /proc/meminfo GPUActive</div>
           <p>
-            128 GiB physical RAM → ~94 GiB visible → 51+ GiB consumed by
-            GPUActive (unreclaimable, GPUReclaim=0). Standard tools
-            (<code>free</code>, <code>htop</code>) do not show this breakdown,
-            so the system appears to have "mysterious" usage. The TTM pool is
-            configured with a 112 GiB limit, exceeding visible RAM.
+            128 GiB physical RAM → ~94 GiB visible → 51+ GiB consumed by GPUActive (unreclaimable,
+            GPUReclaim=0). Standard tools (<code>free</code>, <code>htop</code>) do not show this
+            breakdown, so the system appears to have "mysterious" usage. The TTM pool is configured
+            with a 112 GiB limit, exceeding visible RAM.
           </p>
           <div class="callout callout-warning">
             <strong>Why it matters</strong>
-            This is the root cause of the chronic OOM pressure, oomd kills,
-            service crash-loops, and deploy failures. Until GPUActive is
-            understood and bounded, every other mitigation is a band-aid.
+            This is the root cause of the chronic OOM pressure, oomd kills, service crash-loops, and
+            deploy failures. Until GPUActive is understood and bounded, every other mitigation is a
+            band-aid.
           </div>
         </div>
 
@@ -1005,9 +936,9 @@
           <h3>MemoryMax overcommit</h3>
           <div class="where">systemd service definitions</div>
           <p>
-            Sum of service <code>MemoryMax</code> quotas exceeds the ~43 GiB
-            actually available after GPUActive. The quotas were designed for a
-            system with ~94 GiB free, not one where the GPU already owns half.
+            Sum of service <code>MemoryMax</code> quotas exceeds the ~43 GiB actually available
+            after GPUActive. The quotas were designed for a system with ~94 GiB free, not one where
+            the GPU already owns half.
           </p>
           <div class="callout callout-solution">
             <strong>Mitigation</strong>
@@ -1023,14 +954,14 @@
           <div class="where">deploy.sh</div>
           <p>
             The deploy script now runs
-            <code>systemctl reset-failed</code> (system + user) before every
-            switch because services chronically crash-loop into
-            <code>start-limit-hit</code>. This masks the real instability.
+            <code>systemctl reset-failed</code> (system + user) before every switch because services
+            chronically crash-loop into <code>start-limit-hit</code>. This masks the real
+            instability.
           </p>
           <div class="callout callout-warning">
             <strong>Risk</strong>
-            If a service is legitimately broken, reset-failed allows the deploy
-            to proceed anyway, potentially leaving the system in a worse state.
+            If a service is legitimately broken, reset-failed allows the deploy to proceed anyway,
+            potentially leaving the system in a worse state.
           </div>
         </div>
 
@@ -1039,9 +970,8 @@
           <h3>No off-site backup</h3>
           <div class="where">BTRFS /data, source code, secrets</div>
           <p>
-            A single disk failure, ransomware event, or catastrophic BTRFS
-            corruption would wipe the homelab. No BorgBackup, rsync.net, or
-            cloud DR exists.
+            A single disk failure, ransomware event, or catastrophic BTRFS corruption would wipe the
+            homelab. No BorgBackup, rsync.net, or cloud DR exists.
           </p>
         </div>
 
@@ -1050,9 +980,9 @@
           <h3>Pocket ID provisioning cascade</h3>
           <div class="where">pocket-id-provision.service</div>
           <p>
-            Slow Pocket ID startup causes many downstream services to start
-            simultaneously, spiking memory during boot and contributing to the
-            OOM chain. Ordering and resource constraints need review.
+            Slow Pocket ID startup causes many downstream services to start simultaneously, spiking
+            memory during boot and contributing to the OOM chain. Ordering and resource constraints
+            need review.
           </p>
         </div>
 
@@ -1062,77 +992,68 @@
           <h4>1. Make GPUActive impossible to ignore</h4>
           <p>
             Add a DMS widget, a Gatus check, and a SigNoz metric that surfaces
-            <code>GPUActive</code> from <code>/proc/meminfo</code> with a clear
-            alert when it crosses a threshold (e.g., 40 GiB).
+            <code>GPUActive</code> from <code>/proc/meminfo</code> with a clear alert when it
+            crosses a threshold (e.g., 40 GiB).
           </p>
         </div>
         <div class="card card-solution">
           <h4>2. Right-size memory quotas</h4>
           <p>
             Write a memory-audit script and adjust every
-            <code>MemoryMax</code>/<code>MemoryHigh</code> to fit the real
-            available pool. Add <code>RestartSec=5</code> and
-            <code>RestartSteps=3</code> to <code>serviceDefaults</code> to
-            reduce crash-loop thundering herds.
+            <code>MemoryMax</code>/<code>MemoryHigh</code> to fit the real available pool. Add
+            <code>RestartSec=5</code> and <code>RestartSteps=3</code> to
+            <code>serviceDefaults</code> to reduce crash-loop thundering herds.
           </p>
         </div>
         <div class="card card-solution">
           <h4>3. Replace <code>reset-failed</code> with health-gated deploy</h4>
           <p>
-            Instead of blindly resetting failed units, only reset specific units
-            that the pre-deploy check has verified are safe to reset. Log any
-            unexpected failures and abort the deploy.
+            Instead of blindly resetting failed units, only reset specific units that the pre-deploy
+            check has verified are safe to reset. Log any unexpected failures and abort the deploy.
           </p>
         </div>
         <div class="card card-solution">
           <h4>4. Stagger service startup</h4>
           <p>
-            Add <code>After=</code> / <code>RequiresMountsFor=</code> and
-            memory-ordered targets so heavy services (SigNoz, Immich,
-            ClickHouse) do not all start at once after Pocket ID.
+            Add <code>After=</code> / <code>RequiresMountsFor=</code> and memory-ordered targets so
+            heavy services (SigNoz, Immich, ClickHouse) do not all start at once after Pocket ID.
           </p>
         </div>
         <div class="card card-solution">
           <h4>5. Off-site backup now</h4>
           <p>
-            Provision a Hetzner StorageBox (or similar), set up BorgBackup via
-            sops-managed SSH key, and back up
-            <code>/data</code>, <code>~</code>, and critical state dirs nightly.
-            This is higher priority than most feature work.
+            Provision a Hetzner StorageBox (or similar), set up BorgBackup via sops-managed SSH key,
+            and back up
+            <code>/data</code>, <code>~</code>, and critical state dirs nightly. This is higher
+            priority than most feature work.
           </p>
         </div>
         <div class="card card-solution">
           <h4>6. Fix the real agent crash</h4>
           <p>
-            Restoring visibility is good, but the Monitor365 agent still has an
-            upstream Rust panic. Either fix the Axum 0.7 route issue, downgrade
-            the dependency, or replace the agent's metrics path with a simpler
-            health check until upstream is stable.
+            Restoring visibility is good, but the Monitor365 agent still has an upstream Rust panic.
+            Either fix the Axum 0.7 route issue, downgrade the dependency, or replace the agent's
+            metrics path with a simpler health check until upstream is stable.
           </p>
         </div>
         <div class="card card-solution">
           <h4>7. Stop building from source on Darwin</h4>
           <p>
-            The 256 GB SSD is 90%+ full. Audit every Darwin package and avoid
-            any source build. Cache heavy packages on the NixOS host where
-            possible.
+            The 256 GB SSD is 90%+ full. Audit every Darwin package and avoid any source build.
+            Cache heavy packages on the NixOS host where possible.
           </p>
         </div>
         <div class="card card-solution">
           <h4>8. Split the largest modules</h4>
           <p>
-            <code>signoz.nix</code> and <code>forgejo.nix</code> are too large.
-            Extract helpers, OIDC setup scripts, and service definitions into
-            separate files to reduce merge conflict risk and review burden.
+            <code>signoz.nix</code> and <code>forgejo.nix</code> are too large. Extract helpers,
+            OIDC setup scripts, and service definitions into separate files to reduce merge conflict
+            risk and review burden.
           </p>
         </div>
 
-        <h2 id="top25">
-          <span class="num">06</span>Top #25 Things We Should Get Done Next
-        </h2>
-        <p class="hero-subtitle">
-          Sorted by impact. P0 = blocking operational stability.
-        </p>
+        <h2 id="top25"><span class="num">06</span>Top #25 Things We Should Get Done Next</h2>
+        <p class="hero-subtitle">Sorted by impact. P0 = blocking operational stability.</p>
 
         <div class="table-wrap">
           <table>
@@ -1150,21 +1071,16 @@
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>Reboot evo-x2 and verify clean boot</td>
-                <td>
-                  Validates all recent boot-race fixes and gives a known-good
-                  starting point.
-                </td>
+                <td>Validates all recent boot-race fixes and gives a known-good starting point.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
+                <td>Deploy current master with <code>nix run .#deploy</code></td>
                 <td>
-                  Deploy current master with <code>nix run .#deploy</code>
-                </td>
-                <td>
-                  ~2+ commits undeployed; must verify reset-failed + pre-deploy
-                  checks work in production.
+                  ~2+ commits undeployed; must verify reset-failed + pre-deploy checks work in
+                  production.
                 </td>
                 <td>lars</td>
               </tr>
@@ -1172,38 +1088,28 @@
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>Write <code>scripts/memory-audit.sh</code></td>
-                <td>
-                  Quantifies MemoryMax overcommit against real available RAM.
-                </td>
+                <td>Quantifies MemoryMax overcommit against real available RAM.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>Right-size all service memory quotas</td>
-                <td>
-                  Prevents the chronic OOM chain that kills services and blocks
-                  deploys.
-                </td>
+                <td>Prevents the chronic OOM chain that kills services and blocks deploys.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>5</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>Set up BorgBackup to Hetzner StorageBox</td>
-                <td>
-                  Off-site DR is missing; single disk failure = total loss.
-                </td>
+                <td>Off-site DR is missing; single disk failure = total loss.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>6</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>Surface GPUActive in Gatus / DMS / SigNoz</td>
-                <td>
-                  Makes the #1 resource consumer visible to monitoring and
-                  alerting.
-                </td>
+                <td>Makes the #1 resource consumer visible to monitoring and alerting.</td>
                 <td>lars</td>
               </tr>
               <tr>
@@ -1211,8 +1117,8 @@
                 <td><span class="badge badge-high">P1</span></td>
                 <td>Investigate amdgpu GPUActive root cause</td>
                 <td>
-                  Determine if driver/firmware update helps or if this is
-                  inherent Strix Halo behavior.
+                  Determine if driver/firmware update helps or if this is inherent Strix Halo
+                  behavior.
                 </td>
                 <td>lars</td>
               </tr>
@@ -1220,40 +1126,28 @@
                 <td>8</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>Fix Monitor365 upstream agent panic</td>
-                <td>
-                  Visibility is restored but the collector may still crash.
-                </td>
+                <td>Visibility is restored but the collector may still crash.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
-                <td>
-                  Add <code>RestartSec</code> / <code>RestartSteps</code> to
-                  serviceDefaults
-                </td>
-                <td>
-                  Reduces thundering-herd restarts after transient failures.
-                </td>
+                <td>Add <code>RestartSec</code> / <code>RestartSteps</code> to serviceDefaults</td>
+                <td>Reduces thundering-herd restarts after transient failures.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>10</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>Stagger heavy service startup</td>
-                <td>
-                  Prevents simultaneous memory spikes after Pocket ID
-                  provisioning.
-                </td>
+                <td>Prevents simultaneous memory spikes after Pocket ID provisioning.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>11</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>Replace blind reset-failed with health-gated reset</td>
-                <td>
-                  Stops masking real failures while still allowing deploys.
-                </td>
+                <td>Stops masking real failures while still allowing deploys.</td>
                 <td>lars</td>
               </tr>
               <tr>
@@ -1266,10 +1160,7 @@
               <tr>
                 <td>13</td>
                 <td><span class="badge badge-medium">P2</span></td>
-                <td>
-                  Migrate BTRFS <code>/data</code> to
-                  <code>@data</code> subvolume
-                </td>
+                <td>Migrate BTRFS <code>/data</code> to <code>@data</code> subvolume</td>
                 <td>Enables snapshots and retention for the data partition.</td>
                 <td>lars</td>
               </tr>
@@ -1305,10 +1196,7 @@
                 <td>18</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>Verify Pocket ID email sending</td>
-                <td>
-                  SMTP is wired but untested; needed for passkey recovery and
-                  notifications.
-                </td>
+                <td>SMTP is wired but untested; needed for passkey recovery and notifications.</td>
                 <td>lars</td>
               </tr>
               <tr>
@@ -1322,18 +1210,14 @@
                 <td>20</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>Split forgejo.nix into focused modules</td>
-                <td>
-                  583 lines; OIDC setup and service config can be separate.
-                </td>
+                <td>583 lines; OIDC setup and service config can be separate.</td>
                 <td>lars</td>
               </tr>
               <tr>
                 <td>21</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>Darwin HM parity audit</td>
-                <td>
-                  Blocked by disk space, but a gap analysis should be done.
-                </td>
+                <td>Blocked by disk space, but a gap analysis should be done.</td>
                 <td>lars</td>
               </tr>
               <tr>
@@ -1368,44 +1252,37 @@
           </table>
         </div>
 
-        <h2 id="question">
-          <span class="num">07</span>Top #1 Question I Cannot Figure Out Myself
-        </h2>
+        <h2 id="question"><span class="num">07</span>Top #1 Question I Cannot Figure Out Myself</h2>
         <div class="question-box">
           <h3>
-            Is the 51+ GiB GPUActive on Strix Halo a driver/firmware bug we can
-            fix with a kernel or amdgpu update, or is it an inherent
-            architectural behavior of unified-memory APUs that we must design
-            around forever?
+            Is the 51+ GiB GPUActive on Strix Halo a driver/firmware bug we can fix with a kernel or
+            amdgpu update, or is it an inherent architectural behavior of unified-memory APUs that
+            we must design around forever?
           </h3>
           <p>
-            Everything in the codebase treats GPUActive as an observed fact: we
-            read it from
-            <code>/proc/meminfo</code>, we cap other services around it, and we
-            warn about it. But the codebase cannot answer whether this memory is
-            actually in use by the GPU, leaked by the driver, or reserved by
-            firmware. A definitive answer requires:
+            Everything in the codebase treats GPUActive as an observed fact: we read it from
+            <code>/proc/meminfo</code>, we cap other services around it, and we warn about it. But
+            the codebase cannot answer whether this memory is actually in use by the GPU, leaked by
+            the driver, or reserved by firmware. A definitive answer requires:
           </p>
           <ul>
             <li>
-              Testing on a newer kernel (<code>linuxPackages_latest</code>) or
-              amdgpu firmware,
+              Testing on a newer kernel (<code>linuxPackages_latest</code>) or amdgpu firmware,
             </li>
             <li>Comparing with Windows behavior on the same hardware,</li>
             <li>Reading TTM/TTM pool debugfs counters, and</li>
             <li>Possibly checking AMD errata or Mesa bug trackers.</li>
           </ul>
           <p>
-            Until this is known, every memory decision is a bet. If it is a bug,
-            we patch or upgrade. If it is architecture, we must permanently
-            reserve ~50 GiB from service planning and document it as
-            non-negotiable.
+            Until this is known, every memory decision is a bet. If it is a bug, we patch or
+            upgrade. If it is architecture, we must permanently reserve ~50 GiB from service
+            planning and document it as non-negotiable.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-04 10:23 CEST &middot; Working tree: master @
-          38d3f965 + uncommitted Monitor365 Agent visibility fix
+          Generated 2026-07-04 10:23 CEST &middot; Working tree: master @ 38d3f965 + uncommitted
+          Monitor365 Agent visibility fix
         </footer>
       </main>
     </div>
