@@ -104,7 +104,7 @@ _: {
           (pkgs.formats.yaml { }).generate "homepage-settings.yaml"
             {
               title = "evo-x2";
-              favicon = "https://raw.githubusercontent.com/walkxcode/dashboard-icons/main/png/nixos.png";
+              favicon = "/icons/nixos.png";
               theme = "dark";
               color = "slate";
               headerStyle = "boxed";
@@ -158,11 +158,17 @@ _: {
                 siteMonitor = "${svcUrl "auth"}/healthz";
               })
               (mkService "Caddy" {
-                href = svcUrl "dash";
                 description = "Reverse Proxy";
                 icon = "caddy.png";
                 statusStyle = "dot";
-                siteMonitor = svcUrl "dash";
+                # Monitor Caddy's own admin API (port 2019), not the dashboard
+                # proxied through it. The old siteMonitor pointed at dash.<domain>,
+                # showing the Next.js SSR latency THROUGH Caddy as "Caddy latency"
+                # — dishonest. The admin /metrics endpoint measures Caddy's own
+                # process response time. No href: there is no user-facing Caddy
+                # UI, and linking to the dashboard you're already on is a no-op
+                # (same rationale as the removed Homepage self-tile).
+                siteMonitor = "http://127.0.0.1:2019/metrics";
               })
               # Note: dnsblockd is intentionally NOT a separate tile here.
               # The user-facing "DNS Blocker" tile (in Media) already points

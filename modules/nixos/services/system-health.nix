@@ -153,9 +153,10 @@ _: {
           fi
 
           # === /tmp tmpfs usage ===
+          collect_tmpfs=${lib.boolToString cfg.collectTmpfs}
           TMPFS_USAGE=0
           TMPFS_OVER=0
-          if df /tmp >/dev/null 2>&1; then
+          if [ "$collect_tmpfs" = "true" ] && df /tmp >/dev/null 2>&1; then
             TMPFS_USAGE=$(df --output=pcent /tmp 2>/dev/null | tail -1 | tr -dc '0-9') || TMPFS_USAGE=0
             TMPFS_USAGE="''${TMPFS_USAGE:-0}"
             [ "$TMPFS_USAGE" -ge ${toString tmpfsThreshold} ] 2>/dev/null && TMPFS_OVER=1
@@ -242,6 +243,14 @@ _: {
             echo "# HELP system_signoz_alert_rules_healthy 1 if SigNoz has >15 alert rules, 0 otherwise"
             echo "# TYPE system_signoz_alert_rules_healthy gauge"
             echo "system_signoz_alert_rules_healthy ''${RULES_HEALTHY}"
+
+            echo "# HELP system_tmpfs_tmp_usage_percent /tmp tmpfs usage percentage (0-100)"
+            echo "# TYPE system_tmpfs_tmp_usage_percent gauge"
+            echo "system_tmpfs_tmp_usage_percent ''${TMPFS_USAGE}"
+
+            echo "# HELP system_tmpfs_tmp_over_threshold 1 if /tmp tmpfs exceeds ${toString tmpfsThreshold}% usage, 0 otherwise"
+            echo "# TYPE system_tmpfs_tmp_over_threshold gauge"
+            echo "system_tmpfs_tmp_over_threshold ''${TMPFS_OVER}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -297,6 +306,12 @@ _: {
           type = lib.types.bool;
           default = true;
           description = "Collect SigNoz alert rules count (disable on hosts without SigNoz)";
+        };
+
+        collectTmpfs = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect /tmp tmpfs usage metrics";
         };
 
         signoz.port = lib.mkOption {
