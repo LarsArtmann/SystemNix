@@ -36,8 +36,8 @@ User asked "Why did Helium crash?" The investigation went through three phases:
 
 | # | Item | What's done | What's missing |
 |---|------|-------------|----------------|
-| 1 | Helium auto-restart service | Service defined, flake check passes | **Not deployed.** No runtime verification. Start limits, restart timing, and session restore are untested. |
-| 2 | Root cause documentation | Status report written, AGENTS.md gotcha partially understood | **AGENTS.md not updated** with the new "DP-2 disconnect kills all clients" gotcha. The existing "Helium crash on display hotplug" entry conflates two different failure modes (GPU watchdog kill vs connector disconnect). |
+| 1 | Helium auto-restart service | Service defined, flake check passes | ~~**Not deployed.** No runtime verification.~~ — DONE: deployed and running (per top update, `2026-07-24_06-25`). |
+| 2 | Root cause documentation | Status report written, AGENTS.md gotcha partially understood | ~~**AGENTS.md not updated**~~ — DONE: documented in AGENTS.md (per top update). |
 | 3 | The Jul 17 SIGBUS crash | Minidump decoded (SIGBUS/BUS_ADRERR, crashed in main helium thread, 2.86 day uptime) | **Stack trace unresolved** — no debug symbols in the Nix helium package, `addr2line` returned garbage for offset resolution. The crash address `0x792e322e3788` and the SIGBUS code suggest a stale DMA-BUF/GPU memory access, but without symbols we can't confirm the call path. |
 
 ---
@@ -46,7 +46,7 @@ User asked "Why did Helium crash?" The investigation went through three phases:
 
 | # | Item | Impact |
 |---|------|--------|
-| 1 | **Deploy and verify** | The helium service is defined but not deployed. Helium still runs as a manual process, not managed by systemd. The fix won't take effect until `nix run .#deploy`. |
+| 1 | **Deploy and verify** | ~~The helium service is defined but not deployed.~~ — DONE: deployed and running (per top update, `2026-07-24_06-25`). |
 | 2 | **AGENTS.md update** | The existing "Helium crash on display hotplug" entry is misleading — it blames GPU watchdog kills and DMA-BUF invalidation, but today's events were clean connector disconnects. Needs a new entry: "Niri zero-output state kills all Wayland clients during monitor swap." |
 | 3 | **swayidle display power management** | swayidle runs with a 43200s (12h) timeout but has no display power management rules (no `timeout N dpms off`). If the monitor is being manually switched to a TV, there's no DPMS event. Unclear if swayidle is relevant to the disconnect. |
 | 4 | **Multiple monitor setup** | No `outputs` block in niri config. No plan for how to handle a TV on a different connector (HDMI-A-1) alongside or instead of DP-2. The user needs to connect the TV, but there's no niri-side output config. |

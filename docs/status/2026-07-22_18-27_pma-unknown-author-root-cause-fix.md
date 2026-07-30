@@ -28,9 +28,9 @@
 
 ## b) PARTIALLY DONE
 
-1. **SystemNix changes are UNCOMMITTED.** `flake.lock`, `configuration.nix`, and `AGENTS.md` are in the working tree but not committed or deployed. The fix exists upstream but evo-x2 still runs the OLD PMA binary — the daemon is committing as "Unknown Author" RIGHT NOW.
+1. ~~**SystemNix changes are UNCOMMITTED.**~~ — DONE: committed and deployed at upstream `e8380b44`; go-commit fix tagged `v0.4.0` (per top update).
 
-2. **Runtime verification NOT done.** Build passes, tests pass, eval passes — but I never actually triggered a PMA auto-commit to confirm the author is now correct. This is a "works in theory" fix, not "verified in production".
+2. ~~**Runtime verification NOT done.**~~ — DONE: deployed and runtime-verified (per top update).
 
 3. **go-commit's own "Unknown Author" commit (`4e1ef73`) is still on origin and tagged v0.4.0.** I explicitly chose not to force-push because "not worth the risk" — but this means the tag PMA depends on points to a commit authored by the exact bug we fixed. The irony is preserved in git history.
 
@@ -38,9 +38,9 @@
 
 ## c) NOT STARTED
 
-1. SystemNix commit of the working tree changes
-2. SystemNix deploy (`nix run .#deploy`)
-3. Post-deploy verification (trigger a PMA commit, check `git log` for correct author)
+1. ~~SystemNix commit of the working tree changes~~ — DONE: deployed at `e8380b44` (per top update).
+2. ~~SystemNix deploy (`nix run .#deploy`)~~ — DONE (per top update).
+3. ~~Post-deploy verification (trigger a PMA commit, check `git log` for correct author)~~ — DONE (per top update).
 4. Force-pushing go-commit to fix the "Unknown Author" tag commit
 
 ---

@@ -26,9 +26,9 @@
 
 1. **Helium auto-restart fix** — Deployed and running, but **NOT runtime-tested**. The actual physical test (unplug USB-C from monitor, plug into TV, wait 10s, plug back, verify Helium comes back) has not been performed. The `--restore-last-session` behavior under forced kill is an untested assumption.
 
-2. **Monitor365 recovery** — Disabled to unblock deploy. The upstream `wasm_bindgen_test` build failure in `route_model.rs:414` is NOT fixed. Both the old commit (bb8d314) and the latest commit (0615301) fail with the same error. Monitor365 agent and server are both OFF.
+2. ~~**Monitor365 recovery** — Disabled to unblock deploy. The upstream `wasm_bindgen_test` build failure in `route_model.rs:414` is NOT fixed. Both the old commit (bb8d314) and the latest commit (0615301) fail with the same error. Monitor365 agent and server are both OFF.~~ — DONE: Monitor365 re-enabled and healthy via upstream `0615301` + `monitor365-schema-migrate.service` oneshot (per top update).
 
-3. **AGENTS.md uncommitted** — The Helium gotcha split edit is in the working tree but not committed. `flake.lock` monitor365 update is also uncommitted.
+3. ~~**AGENTS.md uncommitted**~~ — DONE: committed (per top update, Monitor365 re-enabled at `0615301`).
 
 ---
 

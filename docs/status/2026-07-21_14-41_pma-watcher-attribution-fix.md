@@ -28,8 +28,8 @@
 
 ## b) PARTIALLY DONE
 
-1. **The daemon "works" now, but auto-commit does NOT.** The watcher fix unblocked discovery and the daemon, but the committer still fails on every batch with: `no AI provider available — set MINIMAX_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY`. This is a sops/secrets gap, not a code bug. The user reported "the daemon not working" — discovery is fixed, but the auto-commit product feature is still broken end-to-end. I stopped here instead of continuing to fix the next blocker.
-2. **SystemNix AGENTS.md NOT updated** — The extensive "Non-Obvious Gotchas" table should have a new entry documenting the watcher-attribution bug and its 3-symptom cascade (commit loop + cache poisoning + daemon timeout). The existing "Overview OOM-kills when PMA discovery daemon is absent (FIXED 2026-07-18)" entry is now incomplete — it doesn't mention that the daemon can ALSO appear dead from cache starvation caused by misattribution.
+1. ~~**The daemon "works" now, but auto-commit does NOT.** The watcher fix unblocked discovery and the daemon, but the committer still fails on every batch with: `no AI provider available — set MINIMAX_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY`. This is a sops/secrets gap, not a code bug. The user reported "the daemon not working" — discovery is fixed, but the auto-commit product feature is still broken end-to-end. I stopped here instead of continuing to fix the next blocker.~~ — DONE: auto-commit fixed in upstream `d1d013d2` (`DefaultChainFromEnv`) and deployed at `e8380b44` (per top update).
+2. ~~**SystemNix AGENTS.md NOT updated**~~ — DONE: documented (per top update, `e8380b44`).
 3. **Pre-existing PMA working-tree changes left untouched** — `.gitattributes`, `cmdguard_ai_fix_mnd.go`, `migrate_validation.go`, `patterns.go` have unrelated refactoring (generic `errors.AsType` helper). I correctly excluded them from my commit but did not flag them for the user to handle.
 
 ---
