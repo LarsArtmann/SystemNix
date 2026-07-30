@@ -15,7 +15,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), SearXNG (privacy search), Homepage Dashboard, Hermes AI, Monitor365, Crush Daily                                                         |
 | **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                                                  |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                        |
-| **Monitoring**           | SigNoz (19 alert rules, 6 dashboards), Gatus (68 health checks), ActivityWatch                                                                                                                   |
+| **Monitoring**           | SigNoz (20 alert rules, 6 dashboards), Gatus (69 health checks), ActivityWatch                                                                                                                   |
 | **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 2.5M+ blocked domains                                                                       |
 | **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                                           |
 
@@ -78,7 +78,7 @@ SystemNix/
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (68 health checks) + SigNoz (19 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (69 health checks) + SigNoz (20 alert rules, 6 dashboards):
 
 | Service          | Port             | URL                 | Description                                                                                         |
 | ---------------- | ---------------- | ------------------- | --------------------------------------------------------------------------------------------------- |

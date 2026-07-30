@@ -37,6 +37,8 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Per-service CPU alerting** — `system-health.nix` tracks `CPUUsageNSec` per monitored service, emits `system_service_cpu_percent` + `system_service_cpu_over_threshold` (threshold=150%). Gatus "CPU Runaway (Any Service)" alert fires on Discord
 - **Overview 503 watchdog** — timer (every 2 min) restarts Overview when it returns 503 BUT the PMA discovery daemon is healthy. ExecStartPre gate waits for daemon `/v1/health` before starting Overview
 - **/tmp cleanup timer** — `nix-build-cleanup-timer` variant removes /tmp entries untouched >4h (every 4h + on boot). `/tmp` tmpfs cap raised from 16 GiB to 48 GiB
+- **/tmp tmpfs monitoring** — system-health collector emits `system_tmpfs_tmp_usage_percent` + `system_tmpfs_tmp_over_threshold` (80% of 48 GiB cap ≈ 38 GiB). SigNoz alert "/tmp TmpFS Usage High (>80%)" + Gatus Discord alert. Catches runaway builds before hitting the ceiling
+- **SigNoz mkRule target validation** — `validateTarget` assertion in `mkRule` rejects `target=0` + `above_or_equal` (always true for non-negative metrics) and `target=0` + `below` (never true). Prevents the always-firing alert bug from recurring
 
 ### Changed
 
@@ -51,7 +53,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Post-deploy-check improvements** — SIGPIPE fix (body-file grep instead of pipe), `--compressed` flag for gzip responses, DiscordSync startup-race handling (retry + SKIP for backfill), renamer data-correctness assertion (`total_operations > 0`).
 - **OOM hardening** — tuned systemd-oomd thresholds (50%/20s pressure), added `user-1000.slice` MemoryHigh=56G / MemoryMax=64G to contain runaway user processes that starved journald → WDT hard reset. PSI early-warning alerting via Gatus Discord
 - **mkLarsPackages simplification** — eliminated manual vendorHash overrides, removed `mkPackageOverlay` indirection for Go tool packages
-- **Gatus monitoring expansion** — 68 endpoints (was 59), with Discord alerting and response-time thresholds on user-facing services
+- **Gatus monitoring expansion** — 69 endpoints (was 59), with Discord alerting and response-time thresholds on user-facing services
 - **NixOS modules** — 43 auto-discovered (was 42, added SearXNG)
 - **DiscordSync backend** — switched turso-sync → sqlite (eliminates Turso free-plan "SQL read operations forbidden" 403 — 13,993+ consecutive failures). Turso cloud sync can be re-enabled by setting `backend = "turso-sync"` + `tursoUrl` + `tursoAuthTokenFile`
 - **Caddy `proxyTo` helper** — `protectedVHost` now wraps `reverse_proxy` with `header_up X-Real-IP {remote_host}`, benefiting all Layer 2 services behind forward-auth (SearXNG, Homepage, etc.)
@@ -68,6 +70,8 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Monitor365 daily event limit override** — `monitor365-schema-migrate` sets `max_events_per_day = 1000000000` (1B) on every run, overriding upstream 10K/day default. The 597M backlog drains in ~1 day instead of ~163 years
 - **PMA MemoryMax raised to 12G** — upstream `MemoryMax=8G` was too low for project-discovery daemon re-scanning ~293 projects on restart (OOM-kill). Steady state is far lower; the spike is transient
 - **git insteadOf restoration** — the `url.git@github.com:.insteadof=https://github.com/` rule was removed (`2026-07-29`) to prevent SSH-URL lock pollution, then restored on user demand (`2026-07-30`, `502020e7`). AGENTS.md documents both the risk and the restoration
+- **Homepage Caddy tile honesty** — `siteMonitor` changed from self-referential dashboard URL (showed Next.js SSR latency through Caddy as "Caddy latency") to Caddy admin API (`localhost:2019/metrics` — measures Caddy's own process). `href` removed (no user-facing Caddy UI; linking to the dashboard you're already on is a no-op)
+- **Homepage favicon local bundling** — changed from GitHub CDN (`raw.githubusercontent.com/walkxcode/dashboard-icons`) to local icon pack (`/icons/nixos.png`), eliminating external dependency
 
 ### Removed
 
