@@ -81,6 +81,17 @@
           if pkgs.stdenv.isDarwin then "osxkeychain" else "${pkgs.gitFull}/bin/git-credential-libsecret";
       };
 
+      # Rewrite HTTPS GitHub URLs to SSH. WARNING: this caused `nix flake lock`
+      # to record `ssh://git@github.com/...` in lock files instead of `github:`
+      # entries (removed 2026-07-29, restored on user demand). Run
+      # `GIT_CONFIG_GLOBAL=/dev/null nix flake update` to refresh locks with
+      # clean `github:` URLs when needed.
+      url = {
+        "git@github.com:" = {
+          insteadOf = "https://github.com/";
+        };
+      };
+
       "coderabbit" = {
         machineId = "cli/98a25a4615614fc5ae0c8a2718076dca";
       };
