@@ -15,7 +15,7 @@ SystemNix manages both macOS (nix-darwin) and NixOS systems through a single, re
 | **Self-Hosted Services** | Immich (photos), Forgejo (Git), SigNoz (observability), SearXNG (privacy search), Homepage Dashboard, Hermes AI, Monitor365, Crush Daily                                                         |
 | **AI/ML**                | Ollama (ROCm), llama.cpp, AMD NPU (XDNA) driver                                                                                                                                                  |
 | **Security**             | Gitleaks, sops-nix, AppArmor, Fail2ban, ClamAV, Touch ID for sudo (macOS)                                                                                                                        |
-| **Monitoring**           | SigNoz (19 alert rules, 6 dashboards), Gatus (67 health checks), ActivityWatch                                                                                                                   |
+| **Monitoring**           | SigNoz (19 alert rules, 6 dashboards), Gatus (68 health checks), ActivityWatch                                                                                                                   |
 | **Networking**           | Caddy reverse proxy (TLS), dnsblockd embedded resolver (sdns: DNSSEC, DoT, DoH), SearXNG metasearch, 2.5M+ blocked domains                                                                       |
 | **Storage**              | BTRFS with btrbk snapshots (daily), ZRAM swap (~16 GiB), monthly scrub                                                                                                                           |
 
@@ -51,7 +51,7 @@ nix flake check --no-build  # Validate configuration syntax
 ```
 SystemNix/
 ├── flake.nix                    # Main entry point with flake-parts
-├── modules/nixos/services/     # 37 NixOS service modules + 6 desktop modules (auto-discovered, ~35 enabled)
+├── modules/nixos/services/     # 38 NixOS service modules + 6 desktop modules (auto-discovered, ~35 enabled)
 ├── pkgs/                        # 7 custom package derivations + dms-plugins/ (13 widgets)
 ├── overlays/                    # Shared + Linux-only overlays (callPackage + flake-input overlays)
 ├── lib/                         # 10 files exporting 13+ helpers (harden, ports, mkDockerServiceFactory, ...)
@@ -78,7 +78,7 @@ SystemNix/
 
 ## NixOS Services (evo-x2)
 
-All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (67 health checks) + SigNoz (19 alert rules, 6 dashboards):
+All services are defined as flake-parts modules, reverse-proxied through Caddy with TLS, and monitored by Gatus (68 health checks) + SigNoz (19 alert rules, 6 dashboards):
 
 | Service          | Port             | URL                 | Description                                                                                         |
 | ---------------- | ---------------- | ------------------- | --------------------------------------------------------------------------------------------------- |
