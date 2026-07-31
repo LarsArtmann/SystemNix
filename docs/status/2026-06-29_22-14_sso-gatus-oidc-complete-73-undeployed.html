@@ -28,14 +28,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -324,7 +324,11 @@
         font-size: 0.9em;
       }
       .question {
-        background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--accent) 10%,
+          var(--surface-raised)
+        );
         border: 1px solid var(--accent);
         border-left: 3px solid var(--accent);
         padding: 20px 24px;
@@ -370,12 +374,13 @@
           <div class="hero-badge">Comprehensive Status Report</div>
           <h1>SSO Gatus OIDC Complete · 73 Commits Undeployed</h1>
           <p class="hero-subtitle">
-            SystemNix (NixOS evo-x2 + macOS) audited 2026-06-29 22:14. Native OIDC SSO now live for
-            Forgejo + Gatus (Layer 1); 3 services documented as Layer-2-only by upstream
-            constraints.
+            SystemNix (NixOS evo-x2 + macOS) audited 2026-06-29 22:14. Native
+            OIDC SSO now live for Forgejo + Gatus (Layer 1); 3 services
+            documented as Layer-2-only by upstream constraints.
             <strong style="color: var(--problem)"
-              >Critical: 73+ commits — including all SSO work, BTRFS crash prevention, and the
-              network boot-race fix — are undeployed.</strong
+              >Critical: 73+ commits — including all SSO work, BTRFS crash
+              prevention, and the network boot-race fix — are
+              undeployed.</strong
             >
             Every change this week is theoretical until
             <code>nix run .#deploy</code> runs.
@@ -417,18 +422,21 @@
 
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <p>
-          This was an <strong>SSO / OIDC expansion</strong> session. Starting from "which services
-          support SSO?", the work researched upstream capabilities for 4 candidates (Gatus, SigNoz,
-          Twenty, Homepage), discovered that only <strong>Gatus</strong> can get free native OIDC,
-          implemented it end-to-end (build-verified), and documented the 3 dead-ends in-code so
-          future agents don't waste time. The Forgejo OIDC SSO (committed just before this session)
-          and Gatus OIDC SSO complete the Layer 1 SSO story.
+          This was an <strong>SSO / OIDC expansion</strong> session. Starting
+          from "which services support SSO?", the work researched upstream
+          capabilities for 4 candidates (Gatus, SigNoz, Twenty, Homepage),
+          discovered that only <strong>Gatus</strong> can get free native OIDC,
+          implemented it end-to-end (build-verified), and documented the 3
+          dead-ends in-code so future agents don't waste time. The Forgejo OIDC
+          SSO (committed just before this session) and Gatus OIDC SSO complete
+          the Layer 1 SSO story.
         </p>
         <div class="callout callout-warning">
-          <strong>The elephant in the room:</strong> 73+ commits are undeployed. This includes
-          boot-critical BTRFS metadata-ENOSPC prevention, the DNS network-interface boot-race fix,
-          AND all the SSO work. The machine is running a configuration from ~2 weeks ago. Nothing
-          described as "done" below has been verified on the actual hardware.
+          <strong>The elephant in the room:</strong> 73+ commits are undeployed.
+          This includes boot-critical BTRFS metadata-ENOSPC prevention, the DNS
+          network-interface boot-race fix, AND all the SSO work. The machine is
+          running a configuration from ~2 weeks ago. Nothing described as "done"
+          below has been verified on the actual hardware.
         </div>
 
         <h2 id="done"><span class="num">a</span>Fully Done</h2>
@@ -438,9 +446,10 @@
             <div class="text">
               <strong>Gatus native OIDC SSO (commit 42c1263a)</strong
               ><span
-                >security.oidc block, LoadCredential wiring for DynamicUser, pocket-id client
-                registered, Caddy moved to plain reverse_proxy, self-health probe fixed for 302
-                redirects. Eval-verified, config renders correct JSON.</span
+                >security.oidc block, LoadCredential wiring for DynamicUser,
+                pocket-id client registered, Caddy moved to plain reverse_proxy,
+                self-health probe fixed for 302 redirects. Eval-verified, config
+                renders correct JSON.</span
               >
             </div>
           </div>
@@ -449,8 +458,9 @@
             <div class="text">
               <strong>Forgejo native OIDC SSO (commit e9ce7050)</strong
               ><span
-                >forgejo-oidc-setup oneshot, ENABLE_AUTO_REGISTRATION, Pocket ID as auth source.
-                Pre-dates this session but is the Layer 1 pattern Gatus followed.</span
+                >forgejo-oidc-setup oneshot, ENABLE_AUTO_REGISTRATION, Pocket ID
+                as auth source. Pre-dates this session but is the Layer 1
+                pattern Gatus followed.</span
               >
             </div>
           </div>
@@ -459,8 +469,9 @@
             <div class="text">
               <strong>SSO architecture documented in AGENTS.md</strong
               ><span
-                >New "SSO / OIDC Architecture" section (Layer 1 vs Layer 2 table), 3 gotcha rows
-                (Gatus+DynamicUser, native-OIDC-isn't-free, SLO partial), per-service header
+                >New "SSO / OIDC Architecture" section (Layer 1 vs Layer 2
+                table), 3 gotcha rows (Gatus+DynamicUser,
+                native-OIDC-isn't-free, SLO partial), per-service header
                 comments in signoz/twenty/homepage modules.</span
               >
             </div>
@@ -468,10 +479,13 @@
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>DiscordSync full recovery (commits 5fb42cc7, 906d8297, 81591c10)</strong
+              <strong
+                >DiscordSync full recovery (commits 5fb42cc7, 906d8297,
+                81591c10)</strong
               ><span
-                >Three upstream dep bumps fixed schema-drift migration, FTS5 graceful degradation,
-                and empty-string DDL parsing. DiscordSync is back online.</span
+                >Three upstream dep bumps fixed schema-drift migration, FTS5
+                graceful degradation, and empty-string DDL parsing. DiscordSync
+                is back online.</span
               >
             </div>
           </div>
@@ -480,8 +494,9 @@
             <div class="text">
               <strong>BTRFS metadata ENOSPC crash prevention</strong
               ><span
-                >btrfs-health.nix gates nix-gc via ExecStartPre guard, Prometheus metrics, Gatus
-                Discord alerts, DMS widget. Prevents the 2026-06-26 WDT-reset crash.</span
+                >btrfs-health.nix gates nix-gc via ExecStartPre guard,
+                Prometheus metrics, Gatus Discord alerts, DMS widget. Prevents
+                the 2026-06-26 WDT-reset crash.</span
               >
             </div>
           </div>
@@ -490,8 +505,9 @@
             <div class="text">
               <strong>Network interface boot race fixed</strong
               ><span
-                >dnsblockd-attach-ip.service (CAP_NET_ADMIN oneshot) ordered after the eno1 .device
-                unit. Old localCommands race closed.</span
+                >dnsblockd-attach-ip.service (CAP_NET_ADMIN oneshot) ordered
+                after the eno1 .device unit. Old localCommands race
+                closed.</span
               >
             </div>
           </div>
@@ -500,8 +516,8 @@
             <div class="text">
               <strong>SSH control-master socket cleanup</strong
               ><span
-                >ssh-socket-cleanup user timer probes dead sockets every 5 min, unlinks them. Fixes
-                the "disabling multiplexing" spam.</span
+                >ssh-socket-cleanup user timer probes dead sockets every 5 min,
+                unlinks them. Fixes the "disabling multiplexing" spam.</span
               >
             </div>
           </div>
@@ -510,8 +526,8 @@
             <div class="text">
               <strong>Flake reorganization (commit 9dedaf78)</strong
               ><span
-                >Module tree reorganized, host configs extracted, dead split-brain killed. 71 files
-                changed.</span
+                >Module tree reorganized, host configs extracted, dead
+                split-brain killed. 71 files changed.</span
               >
             </div>
           </div>
@@ -521,8 +537,9 @@
               <strong>Build verification passes</strong
               ><span
                 ><code>nix flake check --no-build</code> = all checks passed.
-                <code>nix eval .#nixosConfigurations.evo-x2...toplevel</code> = store path produced.
-                Formatting clean (<code>nix fmt</code> = 0 changed).</span
+                <code>nix eval .#nixosConfigurations.evo-x2...toplevel</code> =
+                store path produced. Formatting clean (<code>nix fmt</code> = 0
+                changed).</span
               >
             </div>
           </div>
@@ -570,24 +587,26 @@
             </tr>
           </table>
           <p style="color: var(--text-muted); font-size: 0.88em">
-            This is by-design, not a gap. Each blocked service has a header comment documenting why.
-            They remain protected by oauth2-proxy Layer 2 forward-auth.
+            This is by-design, not a gap. Each blocked service has a header
+            comment documenting why. They remain protected by oauth2-proxy Layer
+            2 forward-auth.
           </p>
         </div>
         <div class="card card-warning">
           <h3>Single Logout (SLO) — uncoordinated</h3>
           <p>
-            Layer 2 apps share the oauth2-proxy session cookie (coordinated). Layer 1 apps (Forgejo,
-            Immich, Gatus) keep their own session cookies — logging out of the IdP does NOT log you
-            out of them until their per-app session expires. RP-initiated logout wiring is per-app
-            work, not started.
+            Layer 2 apps share the oauth2-proxy session cookie (coordinated).
+            Layer 1 apps (Forgejo, Immich, Gatus) keep their own session cookies
+            — logging out of the IdP does NOT log you out of them until their
+            per-app session expires. RP-initiated logout wiring is per-app work,
+            not started.
           </p>
         </div>
         <div class="card card-warning">
           <h3>AGENTS.md SLO note — staged, uncommitted</h3>
           <p>
-            The SLO documentation paragraph (+2 lines) is staged in the index but not yet committed.
-            Will be committed as part of this report.
+            The SLO documentation paragraph (+2 lines) is staged in the index
+            but not yet committed. Will be committed as part of this report.
           </p>
         </div>
 
@@ -601,16 +620,16 @@
           <tr>
             <td><strong>Deploy</strong> (nix run .#deploy)</td>
             <td>
-              73+ commits undeployed. ALL SSO, BTRFS, and network work is theoretical until
-              deployed.
+              73+ commits undeployed. ALL SSO, BTRFS, and network work is
+              theoretical until deployed.
             </td>
             <td><span class="badge badge-high">30-60 min</span></td>
           </tr>
           <tr>
             <td><strong>E2E browser test of Gatus SSO</strong></td>
             <td>
-              status.home.lan → Pocket ID passkey → callback → dashboard. Config is eval-verified
-              but never run on hardware.
+              status.home.lan → Pocket ID passkey → callback → dashboard. Config
+              is eval-verified but never run on hardware.
             </td>
             <td><span class="badge badge-medium">10 min</span></td>
           </tr>
@@ -622,7 +641,8 @@
           <tr>
             <td>Native OIDC for LarsArtmann Go services</td>
             <td>
-              Manifest, OpenSEO, Crush Daily, Monitor365 — need OIDC code in their upstream repos.
+              Manifest, OpenSEO, Crush Daily, Monitor365 — need OIDC code in
+              their upstream repos.
             </td>
             <td>
               <span class="badge badge-blocked">Large (separate repos)</span>
@@ -630,7 +650,9 @@
           </tr>
           <tr>
             <td>Coordinated SLO across Layer 1 apps</td>
-            <td>RP-initiated logout per app. Low priority — single-admin IdP.</td>
+            <td>
+              RP-initiated logout per app. Low priority — single-admin IdP.
+            </td>
             <td><span class="badge badge-medium">Per-app</span></td>
           </tr>
           <tr>
@@ -640,7 +662,10 @@
           </tr>
           <tr>
             <td>Double-auth lint/CI check</td>
-            <td>Catch services with native OIDC behind protectedVHost automatically.</td>
+            <td>
+              Catch services with native OIDC behind protectedVHost
+              automatically.
+            </td>
             <td><span class="badge badge-medium">Medium</span></td>
           </tr>
         </table>
@@ -650,39 +675,45 @@
           <h3>1. 73+ commits undeployed — the machine is 2 weeks stale</h3>
           <p>
             <strong>This is the #1 risk in the entire system right now.</strong>
-            The last deploy was around commit <code>ea151191</code> (~2 weeks ago). Since then:
-            BTRFS metadata-ENOSPC crash prevention, the DNS network boot-race fix, Forgejo OIDC,
-            Gatus OIDC, DiscordSync recovery, flake reorg, SSH socket cleanup —
+            The last deploy was around commit <code>ea151191</code> (~2 weeks
+            ago). Since then: BTRFS metadata-ENOSPC crash prevention, the DNS
+            network boot-race fix, Forgejo OIDC, Gatus OIDC, DiscordSync
+            recovery, flake reorg, SSH socket cleanup —
             <strong>none of it is running on the actual hardware.</strong>
           </p>
           <p>
-            The BTRFS crash that took the machine down on 2026-06-26 could recur because the
-            prevention code isn't deployed. The "fixed" network race isn't fixed on the running
-            system. Every "done" item in section (a) is, in production terms,
+            The BTRFS crash that took the machine down on 2026-06-26 could recur
+            because the prevention code isn't deployed. The "fixed" network race
+            isn't fixed on the running system. Every "done" item in section (a)
+            is, in production terms,
             <strong>not done</strong>.
           </p>
           <div class="callout callout-warning">
-            <strong>Why this happened:</strong> Deploys require a reboot window (kernel/systemd
-            changes), and the session focused on building/verifying rather than deploying. But the
-            gap is now dangerously large.
+            <strong>Why this happened:</strong> Deploys require a reboot window
+            (kernel/systemd changes), and the session focused on
+            building/verifying rather than deploying. But the gap is now
+            dangerously large.
           </div>
         </div>
         <div class="card card-problem">
           <h3>2. Disk at 87% — trending toward the 90% danger zone</h3>
           <p>
-            94G free of 723G. The last report showed 93%. It's improved (BTRFS snapshots may have
-            expired), but nix-gc hasn't run on the deployed config (the btrfs-health guard is
-            undeployed). Another big build could push it back up. The
-            <code>/nix/var/nix/builds</code> sandbox cleanup timer is also undeployed.
+            94G free of 723G. The last report showed 93%. It's improved (BTRFS
+            snapshots may have expired), but nix-gc hasn't run on the deployed
+            config (the btrfs-health guard is undeployed). Another big build
+            could push it back up. The
+            <code>/nix/var/nix/builds</code> sandbox cleanup timer is also
+            undeployed.
           </p>
         </div>
         <div class="card card-problem">
           <h3>3. SSO changes are completely untested on hardware</h3>
           <p>
-            The Gatus and Forgejo OIDC configs eval-clean and render correct JSON, but OIDC flows
-            have many runtime failure modes (redirect URI mismatch, cookie domain issues, PKCE
-            errors, DynamicUser credential path permissions). Until a browser actually completes the
-            passkey → callback → authenticated-session flow, this is unverified.
+            The Gatus and Forgejo OIDC configs eval-clean and render correct
+            JSON, but OIDC flows have many runtime failure modes (redirect URI
+            mismatch, cookie domain issues, PKCE errors, DynamicUser credential
+            path permissions). Until a browser actually completes the passkey →
+            callback → authenticated-session flow, this is unverified.
           </p>
         </div>
 
@@ -690,47 +721,54 @@
         <div class="card">
           <h3>1. Deploy cadence — stop accumulating 2-week gaps</h3>
           <p>
-            73 undeployed commits is unacceptable. Either deploy more frequently, or maintain a
-            "deploy readiness" dashboard showing the commit gap. The pre-deploy-check + deploy.sh
-            infrastructure exists — use it.
+            73 undeployed commits is unacceptable. Either deploy more
+            frequently, or maintain a "deploy readiness" dashboard showing the
+            commit gap. The pre-deploy-check + deploy.sh infrastructure exists —
+            use it.
           </p>
         </div>
         <div class="card">
           <h3>2. Automated double-auth detection</h3>
           <p>
-            The native-OIDC + protectedVHost double-auth conflict is a sharp footgun (caused
-            redirect loops). A pre-deploy-check rule that flags any vHost using
-            <code>protectedVHost</code> whose backend also has native OIDC would prevent recurrence.
+            The native-OIDC + protectedVHost double-auth conflict is a sharp
+            footgun (caused redirect loops). A pre-deploy-check rule that flags
+            any vHost using
+            <code>protectedVHost</code> whose backend also has native OIDC would
+            prevent recurrence.
           </p>
         </div>
         <div class="card">
           <h3>3. SSO test automation</h3>
           <p>
-            OIDC flows are brittle. A headless browser test (Playwright) that hits each Layer 1
-            vHost, completes the Pocket ID flow, and asserts an authenticated session would catch
-            regressions at deploy time.
+            OIDC flows are brittle. A headless browser test (Playwright) that
+            hits each Layer 1 vHost, completes the Pocket ID flow, and asserts
+            an authenticated session would catch regressions at deploy time.
           </p>
         </div>
         <div class="card">
           <h3>4. The immich/oauth2-proxy sops secrets are unguarded</h3>
           <p>
-            In <code>sops.nix</code>, the immich and oauth2-proxy client secrets have
-            service-specific owners but are NOT wrapped in
-            <code>lib.optionalAttrs (svcEnabled ...)</code>. On rpi3 (which enables sops-config but
-            not immich), these would block ALL secrets atomically if the users don't exist. The
-            gatus secret I added correctly uses the guard — the older ones are latent debt.
+            In <code>sops.nix</code>, the immich and oauth2-proxy client secrets
+            have service-specific owners but are NOT wrapped in
+            <code>lib.optionalAttrs (svcEnabled ...)</code>. On rpi3 (which
+            enables sops-config but not immich), these would block ALL secrets
+            atomically if the users don't exist. The gatus secret I added
+            correctly uses the guard — the older ones are latent debt.
           </p>
         </div>
         <div class="card">
           <h3>5. Backup strategy is undocumented and likely incomplete</h3>
           <p>
-            Flagged in the c2951791 audit. No systematic backup of Pocket ID data, Forgejo repos, or
-            sops-encrypted secret files off-host. DiscordSync has GCS backup; the critical
-            identity/config layer does not.
+            Flagged in the c2951791 audit. No systematic backup of Pocket ID
+            data, Forgejo repos, or sops-encrypted secret files off-host.
+            DiscordSync has GCS backup; the critical identity/config layer does
+            not.
           </p>
         </div>
 
-        <h2 id="next25"><span class="num">f</span>Top 25 Things to Get Done Next</h2>
+        <h2 id="next25">
+          <span class="num">f</span>Top 25 Things to Get Done Next
+        </h2>
         <table>
           <tr>
             <th>#</th>
@@ -740,40 +778,53 @@
           </tr>
           <tr>
             <td>1</td>
-            <td><strong>Deploy</strong> — <code>nix run .#deploy</code> (73+ commits)</td>
+            <td>
+              <strong>Deploy</strong> — <code>nix run .#deploy</code> (73+
+              commits)
+            </td>
             <td><span class="badge badge-critical">CRITICAL</span></td>
             <td>30-60 min</td>
           </tr>
           <tr>
             <td>2</td>
-            <td>E2E browser test: Gatus SSO (status.home.lan → passkey → dashboard)</td>
+            <td>
+              E2E browser test: Gatus SSO (status.home.lan → passkey →
+              dashboard)
+            </td>
             <td><span class="badge badge-critical">CRITICAL</span></td>
             <td>10 min</td>
           </tr>
           <tr>
             <td>3</td>
-            <td>E2E browser test: Forgejo SSO (forgejo.home.lan → passkey → login)</td>
+            <td>
+              E2E browser test: Forgejo SSO (forgejo.home.lan → passkey → login)
+            </td>
             <td><span class="badge badge-critical">CRITICAL</span></td>
             <td>10 min</td>
           </tr>
           <tr>
             <td>4</td>
             <td>
-              Verify BTRFS metadata guard is active post-deploy (<code>btrfs-health.service</code>)
+              Verify BTRFS metadata guard is active post-deploy
+              (<code>btrfs-health.service</code>)
             </td>
             <td><span class="badge badge-critical">CRITICAL</span></td>
             <td>5 min</td>
           </tr>
           <tr>
             <td>5</td>
-            <td>Verify dnsblockd-attach-ip.service resolved the boot race post-deploy</td>
+            <td>
+              Verify dnsblockd-attach-ip.service resolved the boot race
+              post-deploy
+            </td>
             <td><span class="badge badge-high">HIGH</span></td>
             <td>5 min</td>
           </tr>
           <tr>
             <td>6</td>
             <td>
-              Run <code>nix-collect-garbage</code> / verify nix-build-cleanup timer after deploy
+              Run <code>nix-collect-garbage</code> / verify nix-build-cleanup
+              timer after deploy
             </td>
             <td><span class="badge badge-high">HIGH</span></td>
             <td>10 min</td>
@@ -789,15 +840,17 @@
           </tr>
           <tr>
             <td>8</td>
-            <td>Backup audit: Pocket ID data dir, Forgejo repos, sops yaml files</td>
+            <td>
+              Backup audit: Pocket ID data dir, Forgejo repos, sops yaml files
+            </td>
             <td><span class="badge badge-high">HIGH</span></td>
             <td>1-2 hr</td>
           </tr>
           <tr>
             <td>9</td>
             <td>
-              Set up off-host backup for <code>/var/lib/pocket-id</code> (the identity layer —
-              single point of failure)
+              Set up off-host backup for <code>/var/lib/pocket-id</code> (the
+              identity layer — single point of failure)
             </td>
             <td><span class="badge badge-high">HIGH</span></td>
             <td>1 hr</td>
@@ -805,7 +858,8 @@
           <tr>
             <td>10</td>
             <td>
-              Pre-deploy-check rule: flag native-OIDC service behind protectedVHost (double-auth)
+              Pre-deploy-check rule: flag native-OIDC service behind
+              protectedVHost (double-auth)
             </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>30 min</td>
@@ -813,7 +867,8 @@
           <tr>
             <td>11</td>
             <td>
-              Reconcile disk: check <code>/nix/var/nix/builds</code> for stale sandboxes post-deploy
+              Reconcile disk: check <code>/nix/var/nix/builds</code> for stale
+              sandboxes post-deploy
             </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>10 min</td>
@@ -821,127 +876,159 @@
           <tr>
             <td>12</td>
             <td>
-              BTRFS snapshot review: confirm btrbk 23:00 → GC 00:00 staggering works post-deploy
+              BTRFS snapshot review: confirm btrbk 23:00 → GC 00:00 staggering
+              works post-deploy
             </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>10 min</td>
           </tr>
           <tr>
             <td>13</td>
-            <td>OIDC headless browser test (Playwright) for Layer 1 vHosts — regression safety</td>
+            <td>
+              OIDC headless browser test (Playwright) for Layer 1 vHosts —
+              regression safety
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>2-3 hr</td>
           </tr>
           <tr>
             <td>14</td>
-            <td>Document the deploy runbook (when to deploy, rollback procedure, reboot window)</td>
+            <td>
+              Document the deploy runbook (when to deploy, rollback procedure,
+              reboot window)
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>30 min</td>
           </tr>
           <tr>
             <td>15</td>
             <td>
-              Coordinated SLO: wire RP-initiated logout into Forgejo (highest-value Layer 1 app)
+              Coordinated SLO: wire RP-initiated logout into Forgejo
+              (highest-value Layer 1 app)
             </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>1 hr</td>
           </tr>
           <tr>
             <td>16</td>
-            <td>Homepage dashboard: add an "undeployed commits" tile (git rev gap)</td>
+            <td>
+              Homepage dashboard: add an "undeployed commits" tile (git rev gap)
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>30 min</td>
           </tr>
           <tr>
             <td>17</td>
-            <td>Monitor365 screenshot collector: verify it's capturing post-deploy</td>
+            <td>
+              Monitor365 screenshot collector: verify it's capturing post-deploy
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>10 min</td>
           </tr>
           <tr>
             <td>18</td>
             <td>
-              Re-enable dual-wan with a fixed route-health-monitor (currently disabled — probe
-              timeout issue)
+              Re-enable dual-wan with a fixed route-health-monitor (currently
+              disabled — probe timeout issue)
             </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>2 hr</td>
           </tr>
           <tr>
             <td>19</td>
-            <td>Re-enable voice-agents (LiveKit + Whisper) — disabled, has OIDC vHosts ready</td>
+            <td>
+              Re-enable voice-agents (LiveKit + Whisper) — disabled, has OIDC
+              vHosts ready
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>1 hr</td>
           </tr>
           <tr>
             <td>20</td>
             <td>
-              Investigate Twenty CRM SSO entitlement cost (contact twenty.com) — if affordable,
-              native OIDC
+              Investigate Twenty CRM SSO entitlement cost (contact twenty.com) —
+              if affordable, native OIDC
             </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>Investigation</td>
           </tr>
           <tr>
             <td>21</td>
-            <td>Add OIDC to Manifest (LarsArtmann Go service) in its upstream repo</td>
+            <td>
+              Add OIDC to Manifest (LarsArtmann Go service) in its upstream repo
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>Per-repo</td>
           </tr>
           <tr>
             <td>22</td>
-            <td>Add OIDC to OpenSEO / Crush Daily / Monitor365 (LarsArtmann Go services)</td>
+            <td>
+              Add OIDC to OpenSEO / Crush Daily / Monitor365 (LarsArtmann Go
+              services)
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>Per-repo</td>
           </tr>
           <tr>
             <td>23</td>
-            <td>rpi3-dns: verify dns-failover VRRP failover actually works (untested)</td>
+            <td>
+              rpi3-dns: verify dns-failover VRRP failover actually works
+              (untested)
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>30 min</td>
           </tr>
           <tr>
             <td>24</td>
-            <td>macOS (darwin.nix): disk cleanup — 256GB SSD was 90-95% full</td>
+            <td>
+              macOS (darwin.nix): disk cleanup — 256GB SSD was 90-95% full
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>30 min</td>
           </tr>
           <tr>
             <td>25</td>
-            <td>Review the 40 sops secrets for rotation needs / stale entries</td>
+            <td>
+              Review the 40 sops secrets for rotation needs / stale entries
+            </td>
             <td><span class="badge badge-medium">MED</span></td>
             <td>1 hr</td>
           </tr>
         </table>
 
-        <h2 id="question"><span class="num">g</span>Top #1 Question I Cannot Figure Out Myself</h2>
+        <h2 id="question">
+          <span class="num">g</span>Top #1 Question I Cannot Figure Out Myself
+        </h2>
         <div class="question">
           <h3>When is the next deploy window?</h3>
           <p style="font-size: 1.05em">
             <strong
-              >73+ commits are undeployed, including boot-critical BTRFS crash prevention and all
-              the SSO work this session produced.</strong
+              >73+ commits are undeployed, including boot-critical BTRFS crash
+              prevention and all the SSO work this session produced.</strong
             >
-            The machine is running a ~2-week-old configuration. I can build and verify, but I cannot
-            deploy without a reboot window — kernel/systemd changes (BTRFS guard,
-            dnsblockd-attach-ip) require
-            <code>nh os switch</code> which may need a reboot if the running kernel diverges.
+            The machine is running a ~2-week-old configuration. I can build and
+            verify, but I cannot deploy without a reboot window — kernel/systemd
+            changes (BTRFS guard, dnsblockd-attach-ip) require
+            <code>nh os switch</code> which may need a reboot if the running
+            kernel diverges.
           </p>
           <p style="color: var(--text-muted)">
-            <strong>Should I run <code>nix run .#deploy</code> now?</strong> If yes, I'll run
-            pre-deploy-check first, deploy, then immediately run the E2E SSO browser tests (tasks
-            #1-3 above). If now is not a good time (you need the machine up), tell me when the
-            window is and I'll prepare a deploy checklist so it goes smoothly.
+            <strong>Should I run <code>nix run .#deploy</code> now?</strong> If
+            yes, I'll run pre-deploy-check first, deploy, then immediately run
+            the E2E SSO browser tests (tasks #1-3 above). If now is not a good
+            time (you need the machine up), tell me when the window is and I'll
+            prepare a deploy checklist so it goes smoothly.
           </p>
           <p style="color: var(--text-faint); font-size: 0.85em">
-            I cannot self-resolve this because deploys can cause downtime (service restarts,
-            potential reboot, start-limit-hit recovery) and only you know if the machine is in use.
+            I cannot self-resolve this because deploys can cause downtime
+            (service restarts, potential reboot, start-limit-hit recovery) and
+            only you know if the machine is in use.
           </p>
         </div>
 
         <div class="footer">
-          Generated 2026-06-29 22:14 · SystemNix · 34 service modules · Reviewed against commit
-          42c1263a
+          Generated 2026-06-29 22:14 · SystemNix · 34 service modules · Reviewed
+          against commit 42c1263a
         </div>
       </main>
     </div>

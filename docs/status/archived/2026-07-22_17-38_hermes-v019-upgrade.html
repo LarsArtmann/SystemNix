@@ -30,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -252,15 +252,27 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .badge {
         display: inline-block;
@@ -424,8 +436,9 @@
           <div class="hero-badge">Session Report</div>
           <h1>Hermes v0.19.0 Upgrade</h1>
           <p class="hero-subtitle">
-            Updated hermes-agent from v2026.6.5 to v2026.7.20 ("The Quicksilver Release") — 5
-            releases behind, ~2,245 commits, ~3,300 issues closed upstream.
+            Updated hermes-agent from v2026.6.5 to v2026.7.20 ("The Quicksilver
+            Release") — 5 releases behind, ~2,245 commits, ~3,300 issues closed
+            upstream.
           </p>
         </div>
 
@@ -475,38 +488,44 @@
         <div class="card card-solution">
           <h4>Updated flake.lock</h4>
           <p>
-            Ran <code>nix flake lock --update-input hermes-agent</code>. Lock now points to rev
-            <code>3ef6bbd</code> (2026-07-20). Transitive deps (pyproject-nix, uv2nix) also updated.
+            Ran <code>nix flake lock --update-input hermes-agent</code>. Lock
+            now points to rev <code>3ef6bbd</code> (2026-07-20). Transitive deps
+            (pyproject-nix, uv2nix) also updated.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>Expanded extraDependencyGroups to match upstream full</h4>
           <p>
-            Updated <code>hermes.nix:29-46</code> from 6 groups to 18 groups matching upstream's
-            <code>full</code> set. Added: <code>azure-identity</code>, <code>bedrock</code>,
+            Updated <code>hermes.nix:29-46</code> from 6 groups to 18 groups
+            matching upstream's <code>full</code> set. Added:
+            <code>azure-identity</code>, <code>bedrock</code>,
             <code>daytona</code>, <code>dingtalk</code>, <code>feishu</code>,
-            <code>hindsight</code>, <code>honcho</code>, <code>matrix</code>, <code>modal</code>,
-            <code>parallel-web</code>, <code>tts-premium</code>, <code>voice</code>.
+            <code>hindsight</code>, <code>honcho</code>, <code>matrix</code>,
+            <code>modal</code>, <code>parallel-web</code>,
+            <code>tts-premium</code>, <code>voice</code>.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>Verified NixOS module evaluation</h4>
           <p>
-            <code>nix eval .#nixosConfigurations.evo-x2.config.services.hermes.enable</code>
+            <code
+              >nix eval
+              .#nixosConfigurations.evo-x2.config.services.hermes.enable</code
+            >
             → <code>true</code>. ExecStart resolves to
-            <code>hermes-agent-0.19.0/bin/hermes gateway run --replace</code>. MemoryMax=24G intact.
-            Dry-run build succeeds.
+            <code>hermes-agent-0.19.0/bin/hermes gateway run --replace</code>.
+            MemoryMax=24G intact. Dry-run build succeeds.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>Reviewed upstream release notes for breaking changes</h4>
           <p>
-            Checked v2026.7.1 (v0.18.0 "Judgment"), v2026.7.7 (v0.18.1 patch), v2026.7.20 (v0.19.0
-            "Quicksilver"). No breaking changes affecting our NixOS module — same entrypoint, same
-            overlay interface, same
+            Checked v2026.7.1 (v0.18.0 "Judgment"), v2026.7.7 (v0.18.1 patch),
+            v2026.7.20 (v0.19.0 "Quicksilver"). No breaking changes affecting
+            our NixOS module — same entrypoint, same overlay interface, same
             <code>extraDependencyGroups</code> option.
           </p>
         </div>
@@ -517,14 +536,16 @@
           <h4>Deploy not triggered</h4>
           <p>
             Updated flake inputs and verified evaluation, but did NOT run
-            <code>nix run .#deploy</code> to actually deploy v0.19.0 to evo-x2. The changes are
-            local-only — committed changes haven't been pushed or deployed.
+            <code>nix run .#deploy</code> to actually deploy v0.19.0 to evo-x2.
+            The changes are local-only — committed changes haven't been pushed
+            or deployed.
           </p>
           <div class="callout callout-warning">
             <strong>Action needed</strong>
-            Run <code>nix run .#deploy</code> to deploy Hermes v0.19.0 to the live system. Consider
-            running <code>nix run .#post-deploy-check</code> after to verify the Hermes service
-            starts correctly.
+            Run <code>nix run .#deploy</code> to deploy Hermes v0.19.0 to the
+            live system. Consider running
+            <code>nix run .#post-deploy-check</code> after to verify the Hermes
+            service starts correctly.
           </div>
         </div>
 
@@ -533,8 +554,8 @@
           <p>
             Hermes is deployed and running (PID alive,
             <code>hermes.service</code>
-            active in the deployed generation). The v0.19.0 "Quicksilver" upgrade with updated flake
-            inputs and dependency groups is live.
+            active in the deployed generation). The v0.19.0 "Quicksilver"
+            upgrade with updated flake inputs and dependency groups is live.
           </p>
         </div>
 
@@ -544,17 +565,17 @@
           <h4>No AGENTS.md update for new dependency groups</h4>
           <p>
             The AGENTS.md section on "Active pip extras" lists
-            <code>messaging, anthropic, firecrawl, edge-tts, fal, exa</code>. This should be updated
-            to reflect the 18 active groups now.
+            <code>messaging, anthropic, firecrawl, edge-tts, fal, exa</code>.
+            This should be updated to reflect the 18 active groups now.
           </p>
         </div>
 
         <div class="card card-problem">
           <h4>No sops secret audit for new Hermes features</h4>
           <p>
-            v0.19.0 adds Bitwarden/1Password secret sources, profile-based routing, and durable
-            delivery ledger. Should verify if any new env vars or config files are needed in the
-            sops template.
+            v0.19.0 adds Bitwarden/1Password secret sources, profile-based
+            routing, and durable delivery ledger. Should verify if any new env
+            vars or config files are needed in the sops template.
           </p>
         </div>
 
@@ -563,10 +584,11 @@
         <div class="card">
           <h4>Pre-deploy checklist for dependency upgrades</h4>
           <p>
-            We jumped straight into editing without a systematic checklist. A pre-commit checklist
-            should include: (1) read upstream changelog, (2) check for new required env vars, (3)
-            verify overlay interface unchanged, (4) update AGENTS.md, (5) run flake check, (6)
-            deploy, (7) run post-deploy-check.
+            We jumped straight into editing without a systematic checklist. A
+            pre-commit checklist should include: (1) read upstream changelog,
+            (2) check for new required env vars, (3) verify overlay interface
+            unchanged, (4) update AGENTS.md, (5) run flake check, (6) deploy,
+            (7) run post-deploy-check.
           </p>
         </div>
 
@@ -574,9 +596,10 @@
           <h4>nix flake check --no-build is unreliable</h4>
           <p>
             The <code>nix flake check --no-build</code> fails because upstream's
-            <code>nix/web.nix</code> uses <code>builtins.readFile</code> on a derivation output that
-            requires building. This is a pre-existing issue unrelated to our update, but it means we
-            can't use flake check as a gate. Consider using <code>nix eval</code> on specific config
+            <code>nix/web.nix</code> uses <code>builtins.readFile</code> on a
+            derivation output that requires building. This is a pre-existing
+            issue unrelated to our update, but it means we can't use flake check
+            as a gate. Consider using <code>nix eval</code> on specific config
             paths instead.
           </p>
         </div>
@@ -626,7 +649,9 @@
             <tr>
               <td>6</td>
               <td><span class="badge badge-medium">Medium</span></td>
-              <td>Verify Matrix messaging integration works (new dependency group)</td>
+              <td>
+                Verify Matrix messaging integration works (new dependency group)
+              </td>
               <td><span class="badge badge-high">Not Started</span></td>
             </tr>
             <tr>
@@ -638,7 +663,10 @@
             <tr>
               <td>8</td>
               <td><span class="badge badge-low">Low</span></td>
-              <td>Test new Hermes features: profile-based routing, durable delivery ledger</td>
+              <td>
+                Test new Hermes features: profile-based routing, durable
+                delivery ledger
+              </td>
               <td><span class="badge badge-high">Not Started</span></td>
             </tr>
             <tr>
@@ -656,34 +684,43 @@
           </tbody>
         </table>
 
-        <h2 id="questions"><span class="num">06</span>Questions I Can't Figure Out</h2>
+        <h2 id="questions">
+          <span class="num">06</span>Questions I Can't Figure Out
+        </h2>
 
         <div class="card card-warning">
-          <h3>1. Does Hermes v0.19.0 need new sops secrets for the durable delivery ledger?</h3>
+          <h3>
+            1. Does Hermes v0.19.0 need new sops secrets for the durable
+            delivery ledger?
+          </h3>
           <p>
             The release notes mention a "durable delivery-obligation ledger" in
             <code>state.db</code>. Our migration script already handles
-            <code>state.db</code> integrity checks. But does this feature require any new
-            configuration or env vars in the sops template?
+            <code>state.db</code> integrity checks. But does this feature
+            require any new configuration or env vars in the sops template?
           </p>
         </div>
 
         <div class="card card-warning">
-          <h3>2. Should we enable Matrix messaging now that the dependency group is available?</h3>
+          <h3>
+            2. Should we enable Matrix messaging now that the dependency group
+            is available?
+          </h3>
           <p>
-            We added <code>"matrix"</code> to <code>extraDependencyGroups</code> (Linux-only). But
-            Hermes currently runs as a Discord bot. Is there a Matrix server we should connect to,
-            or should we remove this group until needed?
+            We added <code>"matrix"</code> to
+            <code>extraDependencyGroups</code> (Linux-only). But Hermes
+            currently runs as a Discord bot. Is there a Matrix server we should
+            connect to, or should we remove this group until needed?
           </p>
         </div>
 
         <div class="card card-warning">
           <h3>3. What's the correct deploy sequence for Hermes upgrades?</h3>
           <p>
-            Hermes is a long-running gateway with in-flight conversations. The v0.19.0 release
-            mentions "drain coordination" and "scale-to-zero". Should we: (a) just deploy and let
-            systemd restart handle it, (b) manually drain first, or (c) time it for low-usage
-            period?
+            Hermes is a long-running gateway with in-flight conversations. The
+            v0.19.0 release mentions "drain coordination" and "scale-to-zero".
+            Should we: (a) just deploy and let systemd restart handle it, (b)
+            manually drain first, or (c) time it for low-usage period?
           </p>
         </div>
 
@@ -731,8 +768,9 @@
     <hr />
     <h2>Item Resolution (2026-07-30)</h2>
     <p>
-      All items resolved. Hermes v0.19 deployed. Active pip extras documented in AGENTS.md. Sops
-      audit done. Matrix integration not pursued (voice extra has complex native deps).
+      All items resolved. Hermes v0.19 deployed. Active pip extras documented in
+      AGENTS.md. Sops audit done. Matrix integration not pursued (voice extra
+      has complex native deps).
     </p>
   </body>
 </html>

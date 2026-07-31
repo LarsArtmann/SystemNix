@@ -26,14 +26,14 @@
         --solution: var(--color-blue);
         --warning: var(--color-yellow);
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -250,7 +250,8 @@
       <div class="hero-badge">Pareto Execution Plan</div>
       <h1>SystemNix — All TODOs Ranked by Impact / Effort</h1>
       <p class="hero-subtitle">
-        Generated 2026-07-09 06:36 &middot; 27 medium tasks &middot; 9 feasible in this session
+        Generated 2026-07-09 06:36 &middot; 27 medium tasks &middot; 9 feasible
+        in this session
       </p>
     </div>
 
@@ -266,11 +267,13 @@
     <section id="summary">
       <h2>Executive Summary</h2>
       <p>
-        The previous documentation pass fixed stale README/FEATURES/CONTRIBUTING counts and removed
-        justfile ghosts, but left the active engineering TODOs untouched. This plan ranks every open
-        TODO by customer value, impact, and effort. The 1% highest-leverage tasks are code-only
-        fixes that prevent silent failures or expose invisible resource hogs. The 75% tail is
-        blocked on deploy, hardware, or human steps and is documented separately.
+        The previous documentation pass fixed stale README/FEATURES/CONTRIBUTING
+        counts and removed justfile ghosts, but left the active engineering
+        TODOs untouched. This plan ranks every open TODO by customer value,
+        impact, and effort. The 1% highest-leverage tasks are code-only fixes
+        that prevent silent failures or expose invisible resource hogs. The 75%
+        tail is blocked on deploy, hardware, or human steps and is documented
+        separately.
       </p>
       <div class="stat-grid">
         <div class="stat-card stat-bad">
@@ -301,7 +304,8 @@
             <div class="pareto-fill" style="width: 85%"></div>
           </div>
           <div class="pareto-label">
-            post-deploy-check path, GPUActive monitoring, TTM pool reduction, dnsblockd pin
+            post-deploy-check path, GPUActive monitoring, TTM pool reduction,
+            dnsblockd pin
           </div>
         </div>
         <div class="pareto-row">
@@ -310,8 +314,8 @@
             <div class="pareto-fill" style="width: 60%"></div>
           </div>
           <div class="pareto-label">
-            DNS migration code (assertions, YAML, unbound backup), typed NixOS options, remove
-            photomap
+            DNS migration code (assertions, YAML, unbound backup), typed NixOS
+            options, remove photomap
           </div>
         </div>
         <div class="pareto-row">
@@ -320,7 +324,8 @@
             <div class="pareto-fill" style="width: 35%"></div>
           </div>
           <div class="pareto-label">
-            Full DNS migration, Monitor365 auth, large module splits, upstream contributions
+            Full DNS migration, Monitor365 auth, large module splits, upstream
+            contributions
           </div>
         </div>
         <div class="pareto-row">
@@ -329,7 +334,8 @@
             <div class="pareto-fill" style="width: 10%"></div>
           </div>
           <div class="pareto-label">
-            Deploy/reboot, manual steps, hardware provisioning, external upstream PRs
+            Deploy/reboot, manual steps, hardware provisioning, external
+            upstream PRs
           </div>
         </div>
       </div>
@@ -353,9 +359,10 @@
           <tr>
             <td>T01</td>
             <td>
-              <strong>Fix post-deploy-check.sh path in deploy.sh</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
-                >Use nix run .#post-deploy-check instead of $(dirname $0)/post-deploy-check.sh</span
+              <strong>Fix post-deploy-check.sh path in deploy.sh</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
+                >Use nix run .#post-deploy-check instead of $(dirname
+                $0)/post-deploy-check.sh</span
               >
             </td>
             <td>P1</td>
@@ -370,7 +377,8 @@
             <td>
               <strong>Add GPUActive textfile collector</strong><br /><span
                 style="color: var(--text-faint); font-size: 0.85rem"
-                >Expose /proc/meminfo GPUActive/GPUReclaim via node_exporter textfile</span
+                >Expose /proc/meminfo GPUActive/GPUReclaim via node_exporter
+                textfile</span
               >
             </td>
             <td>P3</td>
@@ -413,8 +421,8 @@
           <tr>
             <td>T05</td>
             <td>
-              <strong>Investigate project-meta silent build failure</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong>Investigate project-meta silent build failure</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >Check if binary is empty or missing from systemPackages</span
               >
             </td>
@@ -428,8 +436,8 @@
           <tr>
             <td>T06</td>
             <td>
-              <strong>Remove photomap disabled service from config</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong>Remove photomap disabled service from config</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >Podman permission issues, niche feature</span
               >
             </td>
@@ -443,8 +451,8 @@
           <tr>
             <td>T07</td>
             <td>
-              <strong>Add DNS migration assertions to dns-blocker.nix</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong>Add DNS migration assertions to dns-blocker.nix</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >require allowedNetworks and localZones</span
               >
             </td>
@@ -458,9 +466,10 @@
           <tr>
             <td>T08</td>
             <td>
-              <strong>Add typed NixOS options for one service</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
-                >Improve type safety, e.g. disk-monitor or nvme-health-monitor</span
+              <strong>Add typed NixOS options for one service</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
+                >Improve type safety, e.g. disk-monitor or
+                nvme-health-monitor</span
               >
             </td>
             <td>P6</td>
@@ -473,8 +482,8 @@
           <tr>
             <td>T09</td>
             <td>
-              <strong>Generate dnsblockd YAML with dns_enabled</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong>Generate dnsblockd YAML with dns_enabled</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >Local records, zones, forwarders, ACLs, IPv6</span
               >
             </td>
@@ -503,8 +512,9 @@
           <tr>
             <td>T11</td>
             <td>
-              <strong>Update dns-blocker-config.nix for dnsblockd primary</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong
+                >Update dns-blocker-config.nix for dnsblockd primary</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >Migrate 13 local-data entries</span
               >
             </td>
@@ -518,8 +528,9 @@
           <tr>
             <td>T12</td>
             <td>
-              <strong>Update service dependencies from unbound to dnsblockd</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong
+                >Update service dependencies from unbound to dnsblockd</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >6+ services + generic DNS target</span
               >
             </td>
@@ -533,8 +544,8 @@
           <tr>
             <td>T13</td>
             <td>
-              <strong>Rewrite VRRP health check for dnsblockd</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong>Rewrite VRRP health check for dnsblockd</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >chk_unbound -> DNS query on :53</span
               >
             </td>
@@ -593,8 +604,8 @@
           <tr>
             <td>T17</td>
             <td>
-              <strong>Add library-policy / mr-sync go.sum fixes</strong><br /><span
-                style="color: var(--text-faint); font-size: 0.85rem"
+              <strong>Add library-policy / mr-sync go.sum fixes</strong
+              ><br /><span style="color: var(--text-faint); font-size: 0.85rem"
                 >Upstream go.sum corrections</span
               >
             </td>
@@ -831,7 +842,10 @@
     <section id="graph">
       <h2>Execution Graph</h2>
       <div class="graph">
-        <img src="2026-07-09_pareto-execution-plan.svg" alt="Pareto execution graph" />
+        <img
+          src="2026-07-09_pareto-execution-plan.svg"
+          alt="Pareto execution graph"
+        />
       </div>
     </section>
 
@@ -839,20 +853,23 @@
       <h2>Blockers</h2>
       <div class="card card-problem">
         <strong>Deploy / Reboot Required</strong><br />
-        discard=async fix, boot time verification, crush-daily/Monitor365/DiscordSync/Overview
-        verification.
+        discard=async fix, boot time verification,
+        crush-daily/Monitor365/DiscordSync/Overview verification.
       </div>
       <div class="card card-problem">
         <strong>Human / Vendor Required</strong><br />
-        Off-site backup (Hetzner StorageBox), Hermes SSH key + fallback model, dnsblockd-CA on Mac.
+        Off-site backup (Hetzner StorageBox), Hermes SSH key + fallback model,
+        dnsblockd-CA on Mac.
       </div>
       <div class="card card-problem">
         <strong>Long-Running / Hardware</strong><br />
-        BTRFS scrub, SMART check, Pi 3 provisioning, BTRFS /data subvolume migration.
+        BTRFS scrub, SMART check, Pi 3 provisioning, BTRFS /data subvolume
+        migration.
       </div>
       <div class="card card-warning">
         <strong>Upstream / External</strong><br />
-        nixpkgs PRs, Home Manager PRs, LarsArtmann Go repo go.sum fixes, monitor365/hermes features.
+        nixpkgs PRs, Home Manager PRs, LarsArtmann Go repo go.sum fixes,
+        monitor365/hermes features.
       </div>
     </section>
   </body>
