@@ -455,6 +455,11 @@ in
                     "postgresql.service"
                     "pocket-id.service"
                     "oauth2-proxy.service"
+                    "monitor365-server.service"
+                    "discordsync.service"
+                    "hermes.service"
+                    "projects-management-automation.service"
+                    "dnsblockd.service"
                   ];
                 };
               };
