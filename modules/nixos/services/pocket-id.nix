@@ -545,6 +545,50 @@ _: {
               ${lib.getExe provisionScript}
             '';
           };
+
+          # Secret rotation health metrics — monitors OIDC client secret
+          # file freshness. Alerts when any secret hasn't been rotated in >90d.
+          pocket-id-secret-rotation = {
+            description = "Pocket ID OIDC client secret rotation metrics";
+            after = [ "pocket-id-provision.service" ];
+            serviceConfig = {
+              Type = "oneshot";
+              ReadWritePaths = [ "/var/lib/prometheus-node-exporter/textfile_collectors" ];
+            };
+            script = ''
+              OUT="/var/lib/prometheus-node-exporter/textfile_collectors/secret-rotation.prom"
+              NOW="$(${pkgs.coreutils}/bin/date +%s)"
+              MAX_AGE_DAYS=90
+              ANY_STALE=0
+              TEMP="$OUT.tmp"
+              : > "$TEMP"
+
+              if [ -d "${clientSecretsDir}" ]; then
+                for f in "${clientSecretsDir}"/*; do
+                  [ -f "$f" ] || continue
+                  CLIENT="$(basename "$f")"
+                  MTIME="$(${pkgs.coreutils}/bin/stat -c %Y "$f")"
+                  AGE_DAYS=$(( (NOW - MTIME) / 86400 ))
+                  STALE=0
+                  [ "$AGE_DAYS" -gt "$MAX_AGE_DAYS" ] && STALE=1 && ANY_STALE=1
+                  echo "secret_rotation_age_days{client=\"$CLIENT\"} $AGE_DAYS" >> "$TEMP"
+                  echo "secret_rotation_stale{client=\"$CLIENT\"} $STALE" >> "$TEMP"
+                done
+              fi
+
+              echo "secret_rotation_all_fresh $([ "$ANY_STALE" -eq 0 ] && echo 1 || echo 0)" >> "$TEMP"
+              mv "$TEMP" "$OUT"
+            '';
+          };
+        };
+
+        systemd.timers.pocket-id-secret-rotation = {
+          description = "Check OIDC client secret rotation freshness";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "10m";
+            OnUnitActiveSec = "1h";
+          };
         };
       };
     };

@@ -149,6 +149,7 @@ _: {
         };
         backup = {
           execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T db pg_dump -U ${pgUser} ${pgDb} > /var/lib/twenty/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /var/lib/twenty/backup -name \"*.sql\" -mtime +30 -delete'";
+          schedule = "*-*-* 02:00:00";
         };
       };
     in

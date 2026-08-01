@@ -829,6 +829,20 @@ _: {
                 ];
                 alerts = discordAlert "One or more service backups are stale (>25h)";
               })
+            ]
+            ++ lib.optionals (config.services.pocket-id-config.enable or false) [
+              (mkHttpCheck {
+                name = "Secret Rotation Health";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "1h";
+                client.timeout = "10s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*secret_rotation_all_fresh 1*)"
+                ];
+                alerts = discordAlert "One or more OIDC client secrets are stale (>90d) — consider rotating";
+              })
             ];
           };
         };

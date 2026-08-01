@@ -116,6 +116,7 @@ _: {
         };
         backup = {
           execStart = "${pkgs.bash}/bin/bash -c '${pkgs.docker-compose}/bin/docker-compose -f ${composeFile} exec -T postgres pg_dump -U manifest manifest > /var/lib/manifest/backup/$(date +%%Y%%m%%d_%%H%%M%%S).sql && find /var/lib/manifest/backup -name \"*.sql\" -mtime +30 -delete'";
+          schedule = "*-*-* 02:30:00";
         };
       };
     in
