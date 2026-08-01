@@ -127,6 +127,7 @@ in
       interval ? "30s",
       conditions ? [ "[STATUS] == 200" ],
       alerts ? [ ],
+      client ? { },
     }:
     {
       inherit
@@ -137,7 +138,7 @@ in
         conditions
         alerts
         ;
-    };
+    } // lib.optionalAttrs (client != { }) { inherit client; };
 
   ports =
     let
