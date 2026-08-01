@@ -43,6 +43,13 @@ _: {
           startLimitBurst = 3;
           startLimitIntervalSec = 60;
 
+          # OTel traces → local SigNoz OTLP/HTTP collector. Uses go-cqrs-lite
+          # otel package which auto-initializes from this env var (noop tracer
+          # when unset). See docs/service-integration-ideas.md appendix.
+          environment = {
+            OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
+          };
+
           # When runAsUser is set, take ownership of the existing data dir so
           # the new user can write the SQLite DB and read prior reports. The
           # dir is owned by `crush-daily:crush-daily` from historical runs
