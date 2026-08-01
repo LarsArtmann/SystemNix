@@ -120,7 +120,10 @@ _: {
             };
             search = {
               safe_search = 0;
-              autocomplete = "google";
+              # DuckDuckGo instead of Google: stop leaking every keystroke to
+              # Google's autocomplete API. SearXNG is a privacy tool — don't
+              # undermine it at the type-ahead layer.
+              autocomplete = "duckduckgo";
               autocomplete_min = 4;
               default_lang = "auto";
               # Favicons next to results for a polished UI.
@@ -128,6 +131,16 @@ _: {
               formats = [ "html" ];
               ban_time_on_fail = 5;
               max_ban_time_on_fail = 120;
+              # Engine suspension times after errors (seconds). Matches
+              # upstream defaults but made explicit for reproducibility.
+              suspended_times = {
+                SearxEngineAccessDenied = 180;
+                SearxEngineCaptcha = 3600;
+                SearxEngineTooManyRequests = 180;
+                cf_SearxEngineCaptcha = 1296000;
+                cf_SearxEngineAccessDenied = 86400;
+                recaptcha_SearxEngineCaptcha = 604800;
+              };
             };
             ui = {
               default_theme = "simple";
@@ -137,13 +150,36 @@ _: {
               # Explicit privacy: don't leak queries into browser tab titles.
               query_in_title = false;
               results_on_new_tab = true;
+              # Vim-style keybindings for result navigation (j/k/Tab).
+              hotkeys = "vim";
               theme_args.simple_style = "auto";
             };
             outgoing = {
               request_timeout = 3.0;
               max_request_timeout = 10.0;
               enable_http2 = true;
+              # Identify this instance to upstream engines so they contact us
+              # instead of silently blocking. Recommended by SearXNG docs.
+              useragent_suffix = "";
+              # Connection pool tuning for parallel multi-engine queries.
+              pool_connections = 100;
+              pool_maxsize = 20;
+              keepalive_expiry = 5.0;
             };
+
+            # Re-enable Google (inactive in SearXNG defaults) and Bing
+            # (disabled by default). Google is the highest-quality general
+            # search engine — SearXNG proxies requests through itself, so
+            # Google sees the server IP, not the user's. With image_proxy
+            # and POST method, privacy is still far better than direct use.
+            # Bing is enabled directly for result diversity beyond what
+            # DuckDuckGo/Brave/Startpage already pull from its index.
+            engines = [
+              { name = "google"; inactive = false; }
+              { name = "google images"; inactive = false; }
+              { name = "google videos"; inactive = false; }
+              { name = "bing"; disabled = false; }
+            ];
           };
 
           # Bot protection / rate limiter config. Caddy proxies from
