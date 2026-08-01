@@ -14,6 +14,7 @@
       primaryUser = config.users.primaryUser;
       pmaModule = inputs.projects-management-automation.nixosModules.default;
       sopsEnvPath = config.sops.templates."pma-env".path;
+      inherit (import ../../../lib/default.nix lib) ports;
     in
     {
       imports = [ pmaModule ];
@@ -25,6 +26,12 @@
           group = "users";
           home = "/home/${primaryUser}";
           environmentFile = sopsEnvPath;
+        };
+
+        # OTel traces → local SigNoz OTLP/HTTP collector. Uses raw OTel SDK
+        # (no go-cqrs-lite). Noop tracer when unset (zero overhead).
+        systemd.services.projects-management-automation.environment = {
+          OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
         };
 
         # The upstream NixOS module sets Type=notify + WatchdogSec=30s (commit
