@@ -1,13 +1,16 @@
-# BTRFS chunk allocation health monitoring + GC guard.
+# BTRFS chunk allocation health monitoring + GC guard + proactive maintenance.
 #
 # Prevents the 2026-06-26 crash mode: nightly nix-gc timer fires metadata
 # transactions on a filesystem with zero device-unallocated space → metadata
 # ENOSPC → I/O deadlock → hardware watchdog reset.
 #
-# Two components:
+# Five components:
 #   1. btrfs-health.service — collects Prometheus metrics every 5 min
 #   2. ExecStartPre guard on nix-gc + nix-build-cleanup — aborts reclamation
 #      when device-unallocated < 10% (the deadlock threshold)
+#   3. btrfs-balance-metadata.timer — weekly metadata chunk consolidation
+#   4. btrfs-balance-data.timer — weekly bounded data chunk consolidation
+#   5. btrfs-emergency-reserve.service — 10 GiB fallocated recovery reserve
 #
 # See docs/crash-analysis-2026-06-26.md for full forensic analysis.
 {
