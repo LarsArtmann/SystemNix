@@ -133,6 +133,7 @@ let
       btrfsChunkCheck
       pkgs.btrfs-progs
       pkgs.gawk
+      pkgs.coreutils # stat for emergency reserve check
     ];
     text = ''
       set -uo pipefail
@@ -227,6 +228,19 @@ let
         else
           echo "btrfs_scrub_error_free 0"
         fi
+
+        # ── Emergency reserve ──────────────────────────────────────────────────
+        echo "# HELP btrfs_emergency_reserve_present Emergency BTRFS space reserve file exists"
+        echo "# TYPE btrfs_emergency_reserve_present gauge"
+        echo "# HELP btrfs_emergency_reserve_bytes Size of emergency reserve file"
+        echo "# TYPE btrfs_emergency_reserve_bytes gauge"
+        if [ -f /btrfs-emergency-reserve ]; then
+          echo "btrfs_emergency_reserve_present 1"
+          echo "btrfs_emergency_reserve_bytes $(stat -c %s /btrfs-emergency-reserve 2>/dev/null || echo 0)"
+        else
+          echo "btrfs_emergency_reserve_present 0"
+          echo "btrfs_emergency_reserve_bytes 0"
+        fi
       } > "$TMP_FILE"
       mv "$TMP_FILE" "$METRICS_FILE"
 
@@ -246,6 +260,122 @@ let
       else
         echo "BTRFS health: $STATE (unalloc=''${UNALLOC_PCT}% meta=''${META_PCT}%)"
       fi
+    '';
+  };
+
+  # ── Metadata balance: consolidates underused metadata chunks ──────────────
+  # Runs weekly. Metadata chunks are small (256 MiB each), so this is fast
+  # and safe. Reclaims allocated-but-underused metadata space back to the
+  # unallocated pool, preventing the metadata ENOSPC crash (2026-06-26).
+  btrfsBalanceMetadata = pkgs.writeShellApplication {
+    name = "btrfs-balance-metadata";
+    runtimeInputs = [
+      btrfsChunkCheck
+      pkgs.btrfs-progs
+    ];
+    text = ''
+      set -uo pipefail
+      MOUNT="${""}/"
+
+      # Guard 1: skip if a balance is already running
+      STATUS=$(btrfs balance status "$MOUNT" 2>&1)
+      if ! echo "$STATUS" | grep -qi "No balance found"; then
+        echo "btrfs-balance-metadata: balance already in progress, skipping"
+        echo "$STATUS"
+        exit 0
+      fi
+
+      # Guard 2: need >= 5 GiB unallocated as bounce room
+      eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
+      : "''${UNALLOC_BYTES:=0}"
+      : "''${META_PCT:=0}"
+      if [ "$UNALLOC_BYTES" -lt 5368709120 ]; then
+        echo "btrfs-balance-metadata: insufficient unallocated ($(($UNALLOC_BYTES / 1073741824)) GiB < 5 GiB), skipping"
+        exit 0
+      fi
+
+      echo "btrfs-balance-metadata: starting -musage=50 on $MOUNT (meta at ''${META_PCT}%)"
+      btrfs balance start -musage=50 "$MOUNT"
+      echo "btrfs-balance-metadata: completed"
+      btrfs-chunk-check "$MOUNT" 2>/dev/null
+    '';
+  };
+
+  # ── Data balance: consolidates underused data chunks (bounded) ─────────────
+  # Runs weekly. -dlimit caps the number of chunks rewritten per run, preventing
+  # runaway IO. Each data chunk is up to 1 GiB; -dlimit=10 means <= 10 GiB
+  # relocated per run. Staggered AFTER metadata balance.
+  btrfsBalanceData = pkgs.writeShellApplication {
+    name = "btrfs-balance-data";
+    runtimeInputs = [
+      btrfsChunkCheck
+      pkgs.btrfs-progs
+    ];
+    text = ''
+      set -uo pipefail
+      MOUNT="${""}/"
+
+      # Guard 1: skip if a balance is already running
+      STATUS=$(btrfs balance status "$MOUNT" 2>&1)
+      if ! echo "$STATUS" | grep -qi "No balance found"; then
+        echo "btrfs-balance-data: balance already in progress, skipping"
+        echo "$STATUS"
+        exit 0
+      fi
+
+      # Guard 2: need >= 10 GiB unallocated as bounce room
+      eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
+      : "''${UNALLOC_BYTES:=0}"
+      if [ "$UNALLOC_BYTES" -lt 10737418240 ]; then
+        echo "btrfs-balance-data: insufficient unallocated ($(($UNALLOC_BYTES / 1073741824)) GiB < 10 GiB), skipping"
+        exit 0
+      fi
+
+      echo "btrfs-balance-data: starting -dusage=50 -dlimit=10 on $MOUNT"
+      btrfs balance start -dusage=50 -dlimit=10 "$MOUNT"
+      echo "btrfs-balance-data: completed"
+      btrfs-chunk-check "$MOUNT" 2>/dev/null
+    '';
+  };
+
+  # ── Emergency reserve: pre-allocated space for BTRFS recovery ──────────────
+  # A fallocated file at /btrfs-emergency-reserve. Delete it for instant free
+  # space when you need to run balance, repair, or survive metadata ENOSPC.
+  # The file is NOT recreated automatically after deletion. Re-provision with:
+  #   sudo systemctl start btrfs-emergency-reserve
+  btrfsEmergencyReserve = pkgs.writeShellApplication {
+    name = "btrfs-emergency-reserve";
+    runtimeInputs = [
+      pkgs.util-linux # fallocate
+      pkgs.coreutils # stat, df, chmod
+      pkgs.gawk
+    ];
+    text = ''
+      set -uo pipefail
+      RESERVE_FILE="/btrfs-emergency-reserve"
+      RESERVE_SIZE="10G"
+      RESERVE_BYTES=$((10 * 1024 * 1024 * 1024))
+
+      if [ -f "$RESERVE_FILE" ]; then
+        CURRENT_SIZE=$(stat -c %s "$RESERVE_FILE" 2>/dev/null || echo 0)
+        echo "btrfs-emergency-reserve: already exists ($(($CURRENT_SIZE / 1073741824)) GiB)"
+        exit 0
+      fi
+
+      # Check free space (reserve + 5 GiB headroom)
+      FREE_BYTES=$(df -B1 / | awk 'NR==2 {print $4}')
+      MIN_FREE=$((RESERVE_BYTES + 5368709120))
+      if [ "$FREE_BYTES" -lt "$MIN_FREE" ]; then
+        echo "btrfs-emergency-reserve: insufficient free space ($(($FREE_BYTES / 1073741824)) GiB available, need $(($MIN_FREE / 1073741824)) GiB)"
+        exit 1
+      fi
+
+      echo "btrfs-emergency-reserve: creating ''${RESERVE_SIZE} reserve..."
+      fallocate -l "$RESERVE_SIZE" "$RESERVE_FILE"
+      chmod 644 "$RESERVE_FILE"
+      echo "btrfs-emergency-reserve: created at $RESERVE_FILE"
+      echo "  To free emergency space: rm $RESERVE_FILE"
+      echo "  To re-provision after use: sudo systemctl start btrfs-emergency-reserve"
     '';
   };
 
@@ -353,6 +483,73 @@ in
           }
         ];
       };
+
+      # ── Metadata balance: weekly chunk consolidation ────────────────────────
+      # Consolidates underused metadata chunks back to the unallocated pool.
+      # Fast and safe: metadata chunks are 256 MiB each.
+      btrfs-balance-metadata = {
+        description = "BTRFS metadata balance (consolidate underused metadata chunks)";
+        inherit onFailure;
+        startLimitBurst = 1;
+        startLimitIntervalSec = 86400;
+        serviceConfig = lib.mkMerge [
+          (serviceOneshotDefaults { })
+          (harden {
+            MemoryMax = "256M";
+            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            ProtectSystem = false;
+          })
+          {
+            Type = "oneshot";
+            ExecStart = lib.getExe btrfsBalanceMetadata;
+            TimeoutStartSec = "1h";
+          }
+        ];
+      };
+
+      # ── Data balance: weekly bounded chunk consolidation ─────────────────────
+      # -dlimit=10 caps relocation to <= 10 chunks per run. Staggered after
+      # metadata balance (Mon 05:00, metadata runs at Mon 04:00).
+      btrfs-balance-data = {
+        description = "BTRFS data balance (consolidate underused data chunks, bounded)";
+        inherit onFailure;
+        startLimitBurst = 1;
+        startLimitIntervalSec = 86400;
+        serviceConfig = lib.mkMerge [
+          (serviceOneshotDefaults { })
+          (harden {
+            MemoryMax = "256M";
+            CapabilityBoundingSet = "CAP_SYS_ADMIN";
+            ProtectSystem = false;
+          })
+          {
+            Type = "oneshot";
+            ExecStart = lib.getExe btrfsBalanceData;
+            TimeoutStartSec = "2h";
+          }
+        ];
+      };
+
+      # ── Emergency reserve: pre-allocated space for recovery ──────────────────
+      # Creates a 10 GiB fallocated file at /btrfs-emergency-reserve on boot.
+      # Delete it for instant free space when you need to run balance, repair,
+      # or survive metadata ENOSPC. Re-provision: systemctl start btrfs-emergency-reserve
+      btrfs-emergency-reserve = {
+        description = "BTRFS emergency space reserve (10 GiB fallocated file)";
+        wantedBy = [ "multi-user.target" ];
+        serviceConfig = lib.mkMerge [
+          (serviceOneshotDefaults { })
+          (harden {
+            MemoryMax = "64M";
+            ProtectSystem = false;
+          })
+          {
+            Type = "oneshot";
+            ExecStart = lib.getExe btrfsEmergencyReserve;
+            RemainAfterExit = true;
+          }
+        ];
+      };
     };
 
     timers.btrfs-health = {
@@ -372,6 +569,28 @@ in
         OnBootSec = "5min";
         OnUnitActiveSec = "6h";
         AccuracySec = "5m";
+      };
+    };
+
+    # ── Balance timers (weekly, staggered before nix-gc at 00:00) ───────────────
+    # Metadata at Mon 04:00, Data at Mon 05:00. Both guarded by chunk-check.
+    timers.btrfs-balance-metadata = {
+      description = "Weekly BTRFS metadata balance (consolidate chunks)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "Mon 04:00";
+        AccuracySec = "30m";
+        Persistent = true;
+      };
+    };
+
+    timers.btrfs-balance-data = {
+      description = "Weekly BTRFS data balance (bounded chunk consolidation)";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "Mon 05:00";
+        AccuracySec = "30m";
+        Persistent = true;
       };
     };
   };
