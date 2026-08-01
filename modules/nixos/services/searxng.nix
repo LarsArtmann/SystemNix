@@ -179,91 +179,93 @@ _: {
             # Bing is enabled directly for result diversity beyond what
             # DuckDuckGo/Brave/Startpage already pull from its index.
             #
-            # Explicitly enable developer-reference engines (packages, Q&A,
-            # repos) so they survive any future SearXNG default changes.
+            # IMPORTANT: SearXNG has two separate off-switches per engine:
+            #   disabled: true  — engine won't load at all
+            #   inactive: true  — engine loads but is excluded from default searches
+            # Setting inactive=false does NOT override disabled=true.
+            # We set BOTH to false on every engine we want enabled.
             engines = [
               # General search engines
-              { name = "google"; inactive = false; }
-              { name = "google images"; inactive = false; }
-              { name = "bing"; disabled = false; }
-              { name = "yandex"; inactive = false; }
-              { name = "yandex images"; inactive = false; }
-              { name = "baidu images"; inactive = false; }
-              { name = "quark images"; inactive = false; }
+              { name = "google"; disabled = false; inactive = false; }
+              { name = "google images"; disabled = false; inactive = false; }
+              { name = "bing"; disabled = false; inactive = false; }
+              { name = "yandex"; disabled = false; inactive = false; }
+              { name = "yandex images"; disabled = false; inactive = false; }
+              { name = "baidu images"; disabled = false; inactive = false; }
+              { name = "quark images"; disabled = false; inactive = false; }
 
               # Package registries (!bang: !packages)
-              { name = "alpine linux packages"; inactive = false; }
-              { name = "cachy os packages"; inactive = false; }
-              { name = "crates.io"; inactive = false; }
-              { name = "docker hub"; inactive = false; }
-              { name = "hex"; inactive = false; }
-              { name = "hoogle"; inactive = false; }
-              { name = "lib.rs"; inactive = false; }
-              { name = "metacpan"; inactive = false; }
-              { name = "npm"; inactive = false; }
-              { name = "packagist"; inactive = false; }
-              { name = "pkg.go.dev"; inactive = false; }
-              { name = "pub.dev"; inactive = false; }
-              { name = "pypi"; inactive = false; }
-              { name = "rubygems"; inactive = false; }
-              { name = "voidlinux"; inactive = false; }
+              { name = "alpine linux packages"; disabled = false; inactive = false; }
+              { name = "cachy os packages"; disabled = false; inactive = false; }
+              { name = "crates.io"; disabled = false; inactive = false; }
+              { name = "docker hub"; disabled = false; inactive = false; }
+              { name = "hex"; disabled = false; inactive = false; }
+              { name = "hoogle"; disabled = false; inactive = false; }
+              { name = "lib.rs"; disabled = false; inactive = false; }
+              { name = "metacpan"; disabled = false; inactive = false; }
+              { name = "npm"; disabled = false; inactive = false; }
+              { name = "packagist"; disabled = false; inactive = false; }
+              { name = "pkg.go.dev"; disabled = false; inactive = false; }
+              { name = "pub.dev"; disabled = false; inactive = false; }
+              { name = "pypi"; disabled = false; inactive = false; }
+              { name = "rubygems"; disabled = false; inactive = false; }
+              { name = "voidlinux"; disabled = false; inactive = false; }
 
               # Q&A forums (!bang: !q&a)
-              { name = "askubuntu"; inactive = false; }
-              { name = "caddy.community"; inactive = false; }
-              { name = "discuss.python"; inactive = false; }
-              { name = "pi-hole.community"; inactive = false; }
-              { name = "stackoverflow"; inactive = false; }
-              { name = "superuser"; inactive = false; }
+              { name = "askubuntu"; disabled = false; inactive = false; }
+              { name = "caddy.community"; disabled = false; inactive = false; }
+              { name = "discuss.python"; disabled = false; inactive = false; }
+              { name = "pi-hole.community"; disabled = false; inactive = false; }
+              { name = "stackoverflow"; disabled = false; inactive = false; }
+              { name = "superuser"; disabled = false; inactive = false; }
 
               # Code repositories (!bang: !repos)
-              { name = "bitbucket"; inactive = false; }
-              { name = "codeberg"; inactive = false; }
-              { name = "gitea.com"; inactive = false; }
-              { name = "github"; inactive = false; }
-              { name = "gitlab"; inactive = false; }
-              { name = "huggingface"; inactive = false; }
-              { name = "huggingface datasets"; inactive = false; }
-              { name = "huggingface spaces"; inactive = false; }
-              { name = "ollama"; inactive = false; }
-              { name = "sourcehut"; inactive = false; }
+              { name = "bitbucket"; disabled = false; inactive = false; }
+              { name = "codeberg"; disabled = false; inactive = false; }
+              { name = "gitea.com"; disabled = false; inactive = false; }
+              { name = "github"; disabled = false; inactive = false; }
+              { name = "gitlab"; disabled = false; inactive = false; }
+              { name = "huggingface"; disabled = false; inactive = false; }
+              { name = "huggingface datasets"; disabled = false; inactive = false; }
+              { name = "huggingface spaces"; disabled = false; inactive = false; }
+              { name = "ollama"; disabled = false; inactive = false; }
+              { name = "sourcehut"; disabled = false; inactive = false; }
 
               # Video search (!bang: !videos) — full coverage so the
-              # video results grid is populated with thumbnails, not
-              # a sparse text list.
-              { name = "google videos"; inactive = false; }
-              { name = "bing videos"; inactive = false; }
-              { name = "brave.videos"; inactive = false; }
-              { name = "qwant videos"; inactive = false; }
-              { name = "duckduckgo videos"; inactive = false; }
-              { name = "youtube"; inactive = false; }
-              { name = "dailymotion"; inactive = false; }
-              { name = "vimeo"; inactive = false; }
-              { name = "rumble"; inactive = false; }
-              { name = "peertube"; inactive = false; }
-              { name = "sepiasearch"; inactive = false; }
-              { name = "odysee"; inactive = false; }
-              { name = "bilibili"; inactive = false; }
-              { name = "media.ccc.de"; inactive = false; }
-              { name = "wikicommons.videos"; inactive = false; }
-              { name = "pixabay videos"; inactive = false; }
-              { name = "bitchute"; inactive = false; }
-              { name = "google play movies"; inactive = false; }
-              { name = "mediathekviewweb"; inactive = false; }
-              { name = "naver videos"; inactive = false; }
-              { name = "acfun"; inactive = false; }
-              { name = "iqiyi"; inactive = false; }
-              { name = "sogou videos"; inactive = false; }
-              { name = "360search videos"; inactive = false; }
-              { name = "adobe stock video"; inactive = false; }
-              { name = "dogpile videos"; inactive = false; }
-              { name = "findfiles videos"; inactive = false; }
-              { name = "fireball videos"; inactive = false; }
-              { name = "niconico"; inactive = false; }
-              { name = "privacywall videos"; inactive = false; }
-              { name = "tusksearch videos"; inactive = false; }
-              { name = "vuhuv videos"; inactive = false; }
-              { name = "ina"; inactive = false; }
+              # video results show thumbnails + durations, not sparse text.
+              { name = "google videos"; disabled = false; inactive = false; }
+              { name = "bing videos"; disabled = false; inactive = false; }
+              { name = "brave.videos"; disabled = false; inactive = false; }
+              { name = "qwant videos"; disabled = false; inactive = false; }
+              { name = "duckduckgo videos"; disabled = false; inactive = false; }
+              { name = "youtube"; disabled = false; inactive = false; }
+              { name = "dailymotion"; disabled = false; inactive = false; }
+              { name = "vimeo"; disabled = false; inactive = false; }
+              { name = "rumble"; disabled = false; inactive = false; }
+              { name = "peertube"; disabled = false; inactive = false; }
+              { name = "sepiasearch"; disabled = false; inactive = false; }
+              { name = "odysee"; disabled = false; inactive = false; }
+              { name = "bilibili"; disabled = false; inactive = false; }
+              { name = "media.ccc.de"; disabled = false; inactive = false; }
+              { name = "wikicommons.videos"; disabled = false; inactive = false; }
+              { name = "pixabay videos"; disabled = false; inactive = false; }
+              { name = "bitchute"; disabled = false; inactive = false; }
+              { name = "google play movies"; disabled = false; inactive = false; }
+              { name = "mediathekviewweb"; disabled = false; inactive = false; }
+              { name = "naver videos"; disabled = false; inactive = false; }
+              { name = "acfun"; disabled = false; inactive = false; }
+              { name = "iqiyi"; disabled = false; inactive = false; }
+              { name = "sogou videos"; disabled = false; inactive = false; }
+              { name = "360search videos"; disabled = false; inactive = false; }
+              { name = "adobe stock video"; disabled = false; inactive = false; }
+              { name = "dogpile videos"; disabled = false; inactive = false; }
+              { name = "findfiles videos"; disabled = false; inactive = false; }
+              { name = "fireball videos"; disabled = false; inactive = false; }
+              { name = "niconico"; disabled = false; inactive = false; }
+              { name = "privacywall videos"; disabled = false; inactive = false; }
+              { name = "tusksearch videos"; disabled = false; inactive = false; }
+              { name = "vuhuv videos"; disabled = false; inactive = false; }
+              { name = "ina"; disabled = false; inactive = false; }
             ];
           };
 
