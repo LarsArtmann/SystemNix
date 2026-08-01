@@ -181,6 +181,8 @@ _: {
               { name = "google images"; inactive = false; }
               { name = "google videos"; inactive = false; }
               { name = "bing"; disabled = false; }
+              { name = "yandex"; inactive = false; }
+              { name = "yandex images"; inactive = false; }
             ];
           };
 
