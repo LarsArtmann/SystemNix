@@ -487,6 +487,34 @@ in
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };
 
+      # Cross-service backup health monitoring. Checks all backup dirs for
+      # freshness and writes Prometheus metrics. Gatus alerts on Discord
+      # when any backup is stale (>25h). Schedules are staggered to avoid
+      # IO spikes: Immich ~01:00, Twenty ~02:00, Manifest ~02:30,
+      # Monitor365 03:00.
+      backup-coordination = {
+        enable = true;
+        backups = {
+          immich = {
+            directory = "/var/lib/immich/database-backup";
+            maxAgeHours = 25;
+          };
+          twenty = {
+            directory = "/var/lib/twenty/backup";
+            maxAgeHours = 31;
+          };
+          manifest = {
+            directory = "/var/lib/manifest/backup";
+            maxAgeHours = 31;
+          };
+          monitor365 = {
+            directory = "/var/lib/monitor365-server";
+            filePattern = "*.backup_*.db";
+            maxAgeHours = 25;
+          };
+        };
+      };
+
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
         enable = true;

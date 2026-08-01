@@ -158,9 +158,9 @@ _: {
             description = "Daily Immich database backup";
             wantedBy = [ "timers.target" ];
             timerConfig = {
-              OnCalendar = "daily";
+              OnCalendar = "*-*-* 01:00:00";
               Persistent = true;
-              RandomizedDelaySec = "30m";
+              RandomizedDelaySec = "10m";
             };
           };
         };

@@ -815,6 +815,20 @@ _: {
                 ];
                 alerts = discordAlert "SearXNG metasearch engine down — privacy search unavailable";
               })
+            ]
+            ++ lib.optionals (config.services.backup-coordination.enable or false) [
+              (mkHttpCheck {
+                name = "All Backups Healthy";
+                group = "Infrastructure";
+                url = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
+                interval = "5m";
+                client.timeout = "10s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*backup_all_healthy 1*)"
+                ];
+                alerts = discordAlert "One or more service backups are stale (>25h)";
+              })
             ];
           };
         };
