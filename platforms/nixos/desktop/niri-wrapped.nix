@@ -66,18 +66,16 @@ let
       # Guard against the "opening in existing browser session" empty-window loop.
       # When a helium main process is already alive (e.g. it survived a
       # graphical-session restart on deploy), a fresh invocation just opens an
-      # empty window and exits 0 — with Restart=always that becomes a tight loop
-      # of empty windows (11 in 36s, then start-limit-hit).
+      # empty window and exits 0 — with Restart=always that becomes a loop
+      # of empty windows every RestartSec.
       # Instead: wait for the existing instance to die, then launch fresh.
-      # Cap the wait at 300s to avoid hanging forever on a zombie process.
-      WAITED=0
+      # No timeout: if the instance is alive, we block here indefinitely.
+      # This makes helium-launch a monitor — systemd sees the service as
+      # "running" while waiting, and only execs helium when the old one dies.
+      # If helium is truly stuck (zombie), kill it manually and this will
+      # detect the death within 5s and launch fresh.
       while pgrep -f "helium --ozone-platform-hint" >/dev/null 2>&1; do
-        if [ "$WAITED" -ge 300 ]; then
-          echo "helium-launch: existing instance still alive after 300s, launching anyway" >&2
-          break
-        fi
         sleep 5
-        WAITED=$((WAITED + 5))
       done
       exec env -u QT_STYLE_OVERRIDE helium
     '';
