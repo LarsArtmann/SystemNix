@@ -120,10 +120,10 @@ _: {
             };
             search = {
               safe_search = 0;
-              # DuckDuckGo instead of Google: stop leaking every keystroke to
-              # Google's autocomplete API. SearXNG is a privacy tool — don't
-              # undermine it at the type-ahead layer.
-              autocomplete = "duckduckgo";
+              # Yandex autocomplete: keystrokes are proxied through Tor
+              # (like all SearXNG outgoing requests), so the autocomplete
+              # provider sees a Tor exit IP, not the user's or server's.
+              autocomplete = "yandex";
               autocomplete_min = 4;
               default_lang = "auto";
               # Favicons next to results for a polished UI.
@@ -304,8 +304,12 @@ _: {
             after = [
               "searxng-secret-key.service"
               "dnsblockd.service"
+              "tor.service"
             ];
-            wants = [ "dnsblockd.service" ];
+            wants = [
+              "dnsblockd.service"
+              "tor.service"
+            ];
             requires = [ "searxng-secret-key.service" ];
             inherit onFailure;
             startLimitBurst = 5;
@@ -328,8 +332,12 @@ _: {
             after = [
               "searxng-secret-key.service"
               "dnsblockd.service"
+              "tor.service"
             ];
-            wants = [ "dnsblockd.service" ];
+            wants = [
+              "dnsblockd.service"
+              "tor.service"
+            ];
             requires = [ "searxng-secret-key.service" ];
           };
         };
