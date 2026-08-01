@@ -112,7 +112,10 @@ _: {
               base_url = "https://search.${domain}/";
               secret_key = "$SEARX_SECRET_KEY";
               image_proxy = true;
-              method = "POST";
+              # GET: shareable/bookmarkable URLs. Safe because
+              # Caddy sets Referrer-Policy: strict-origin-when-cross-origin
+              # (origin only, no query string leaked to result sites).
+              method = "GET";
               limiter = true;
               public_instance = false;
               # Keep-alive between Caddy and SearXNG's built-in server.
@@ -137,7 +140,8 @@ _: {
               infinite_scroll = true;
               center_alignment = true;
               # Explicit privacy: don't leak queries into browser tab titles.
-              query_in_title = false;
+              # Tab/window titles show the query for easy identification.
+              query_in_title = true;
               results_on_new_tab = true;
               theme_args.simple_style = "auto";
             };
