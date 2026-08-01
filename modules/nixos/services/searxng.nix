@@ -142,10 +142,23 @@ _: {
               results_on_new_tab = true;
               theme_args.simple_style = "auto";
             };
+            # Route all engine requests through Tor (SOCKS5 proxy on
+            # 127.0.0.1:9050) so upstream engines see a Tor exit node IP,
+            # not the server's. SearXNG prefers .onion endpoints for engines
+            # that support them (DuckDuckGo, Brave, etc.). socks5h ensures
+            # DNS resolution happens inside Tor (no local DNS leak).
+            # Tradeoff: Tor adds 2-5s latency; timeouts accommodate it.
+            # Some engines (notably Google) aggressively block Tor exits —
+            # those will show as errors and be auto-banned/retried.
             outgoing = {
-              request_timeout = 3.0;
-              max_request_timeout = 10.0;
+              request_timeout = 5.0;
+              max_request_timeout = 15.0;
               enable_http2 = true;
+              using_tor_proxy = true;
+              proxies = {
+                allhttp = "socks5h://127.0.0.1:9050";
+                allhttps = "socks5h://127.0.0.1:9050";
+              };
             };
 
             # Hostname plugin: boost developer reference sites, remove spam.
@@ -176,7 +189,11 @@ _: {
             # and POST method, privacy is still far better than direct use.
             # Bing is enabled directly for result diversity beyond what
             # DuckDuckGo/Brave/Startpage already pull from its index.
+            #
+            # Explicitly enable developer-reference engines (packages, Q&A,
+            # repos) so they survive any future SearXNG default changes.
             engines = [
+              # General search engines
               { name = "google"; inactive = false; }
               { name = "google images"; inactive = false; }
               { name = "google videos"; inactive = false; }
@@ -185,6 +202,43 @@ _: {
               { name = "yandex images"; inactive = false; }
               { name = "baidu images"; inactive = false; }
               { name = "quark images"; inactive = false; }
+
+              # Package registries (!bang: !packages)
+              { name = "alpine linux packages"; inactive = false; }
+              { name = "cachy os packages"; inactive = false; }
+              { name = "crates.io"; inactive = false; }
+              { name = "docker hub"; inactive = false; }
+              { name = "hex"; inactive = false; }
+              { name = "hoogle"; inactive = false; }
+              { name = "lib.rs"; inactive = false; }
+              { name = "metacpan"; inactive = false; }
+              { name = "npm"; inactive = false; }
+              { name = "packagist"; inactive = false; }
+              { name = "pkg.go.dev"; inactive = false; }
+              { name = "pub.dev"; inactive = false; }
+              { name = "pypi"; inactive = false; }
+              { name = "rubygems"; inactive = false; }
+              { name = "voidlinux"; inactive = false; }
+
+              # Q&A forums (!bang: !q&a)
+              { name = "askubuntu"; inactive = false; }
+              { name = "caddy.community"; inactive = false; }
+              { name = "discuss.python"; inactive = false; }
+              { name = "pi-hole.community"; inactive = false; }
+              { name = "stackoverflow"; inactive = false; }
+              { name = "superuser"; inactive = false; }
+
+              # Code repositories (!bang: !repos)
+              { name = "bitbucket"; inactive = false; }
+              { name = "codeberg"; inactive = false; }
+              { name = "gitea.com"; inactive = false; }
+              { name = "github"; inactive = false; }
+              { name = "gitlab"; inactive = false; }
+              { name = "huggingface"; inactive = false; }
+              { name = "huggingface datasets"; inactive = false; }
+              { name = "huggingface spaces"; inactive = false; }
+              { name = "ollama"; inactive = false; }
+              { name = "sourcehut"; inactive = false; }
             ];
           };
 
@@ -205,6 +259,22 @@ _: {
               ];
             };
           };
+        };
+
+        # Redis is pure cache for SearXNG (rate limiter / bot protection
+        # state). Data loss is harmless — cap memory and evict cold keys.
+        services.redis.servers.searx.settings = {
+          maxmemory = "128mb";
+          maxmemory-policy = "allkeys-lru";
+        };
+
+        # Tor client: provides SOCKS5 proxy on 127.0.0.1:9050 for SearXNG
+        # outgoing requests. Client-only (no relay/exit/bridge) — sole
+        # purpose is anonymizing engine requests so upstream search engines
+        # see a Tor exit node IP, not the server's.
+        services.tor = {
+          enable = true;
+          client.enable = true;
         };
 
         systemd.services = {
