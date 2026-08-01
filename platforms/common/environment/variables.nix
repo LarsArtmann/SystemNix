@@ -30,6 +30,11 @@ let
     CLICOLOR = "1"; # Enable color output in ls
     LSCOLORS = "ExGxBxDxCxEgEdxbxgxcxd"; # Custom ls colors
 
+    # Privacy: respect the donottrack.sh convention (https://donottrack.sh/)
+    # Disables telemetry in Crush (CRUSH_DISABLE_METRICS) and any other tool
+    # that honors DO_NOT_TRACK.
+    DO_NOT_TRACK = "1";
+
     # Crush AI assistant
     CRUSH_SHORT_TOOL_DESCRIPTIONS = "1";
   };
