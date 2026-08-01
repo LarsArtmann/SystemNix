@@ -148,6 +148,27 @@ _: {
               enable_http2 = true;
             };
 
+            # Hostname plugin: boost developer reference sites, remove spam.
+            # The plugin is active by default but does nothing without this
+            # section. These are objective quality improvements for a
+            # developer homelab — docs bubble up, content farms disappear.
+            hostnames = {
+              high_priority = [
+                "(.*\\.)?stackoverflow\\.com$"
+                "(.*\\.)?developer\\.mozilla\\.org$"
+                "(.*\\.)?docs\\.rs$"
+                "(.*\\.)?pkg\\.go\\.dev$"
+                "(.*\\.)?github\\.com$"
+                "(.*\\.)?wiki\\.nixos\\.org$"
+                "(.*\\.)?wiki\\.archlinux\\.org$"
+                "(.*\\.)?nixos\\.org$"
+              ];
+              remove = [
+                "(.*\\.)?pinterest\\..*$"
+                "(.*\\.)?pinterest\\.com$"
+              ];
+            };
+
             # Re-enable Google (inactive in SearXNG defaults) and Bing
             # (disabled by default). Google is the highest-quality general
             # search engine — SearXNG proxies requests through itself, so
