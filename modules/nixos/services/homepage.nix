@@ -154,21 +154,10 @@ _: {
                 href = svcUrl "auth";
                 description = "Passkey OIDC Provider";
                 icon = "pocket-id.png";
-                statusStyle = "dot";
-                siteMonitor = "${svcUrl "auth"}/healthz";
               })
               (mkService "Caddy" {
                 description = "Reverse Proxy";
                 icon = "caddy.png";
-                statusStyle = "dot";
-                # Monitor Caddy's own admin API (port 2019), not the dashboard
-                # proxied through it. The old siteMonitor pointed at dash.<domain>,
-                # showing the Next.js SSR latency THROUGH Caddy as "Caddy latency"
-                # — dishonest. The admin /metrics endpoint measures Caddy's own
-                # process response time. No href: there is no user-facing Caddy
-                # UI, and linking to the dashboard you're already on is a no-op
-                # (same rationale as the removed Homepage self-tile).
-                siteMonitor = "http://127.0.0.1:2019/metrics";
               })
               # Note: dnsblockd is intentionally NOT a separate tile here.
               # The user-facing "DNS Blocker" tile (in Media) already points
@@ -203,8 +192,6 @@ _: {
                 href = svcUrl "discordsync";
                 description = "Discord Backup Bot (Messages, Attachments, Reactions)";
                 icon = "discord.png";
-                statusStyle = "dot";
-                siteMonitor = "http://localhost:${toString ports.discordsync-api}/healthz";
               }
             );
 
@@ -213,15 +200,11 @@ _: {
                 href = svcUrl "immich";
                 description = "Photo & Video Management";
                 icon = "immich.png";
-                statusStyle = "dot";
-                siteMonitor = "${svcUrl "immich"}/api/server/ping";
               })
               (mkService "DNS Blocker" {
                 href = svcUrl "dnsblock";
                 description = "DNS Block Stats";
                 icon = "blocky.png";
-                statusStyle = "dot";
-                siteMonitor = "${svcUrl "dnsblock"}/health";
               })
             ];
 
@@ -230,8 +213,6 @@ _: {
                 href = svcUrl "forgejo";
                 description = "Git Forge (GitHub Sync)";
                 icon = "forgejo.png";
-                statusStyle = "dot";
-                siteMonitor = "${svcUrl "forgejo"}/api/v1/nodeinfo";
               })
             ]
             ++ lib.optional overviewEnabled (
@@ -239,8 +220,6 @@ _: {
                 href = svcUrl "overview";
                 description = "Project Dashboard (Git Repos, Stats, Activity)";
                 icon = "code.png";
-                statusStyle = "dot";
-                siteMonitor = "http://localhost:${toString ports.overview}";
               }
             );
 
