@@ -315,6 +315,16 @@
           };
         })
 
+        # OTel traces → local SigNoz OTLP/gRPC collector (tonic). The otel
+        # cargo feature must be enabled in the build (see upstream flake.nix
+        # commonArgs). Tonic requires http:// scheme in the endpoint.
+        # When unset, noop tracer is used (zero overhead).
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-server.environment = {
+            OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "http://localhost:${toString ports.signoz-otlp-grpc}";
+          };
+        })
+
         # Schema migration: add 'version' column to tenants table for existing DBs.
         # Upstream bug at pinned commit 0615301: schema.sql includes
         # 'version INTEGER NOT NULL DEFAULT 0' in CREATE TABLE IF NOT EXISTS
