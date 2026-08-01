@@ -539,6 +539,17 @@ _: {
                 alerts = discordAlert "BTRFS scrub found errors — potential data corruption. Run 'btrfs scrub status /' and 'btrfs scrub status /data' to investigate. Check Prometheus btrfs_scrub_errors_total for details.";
               })
               (mkHttpCheck {
+                name = "BTRFS Emergency Reserve";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "10m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*btrfs_emergency_reserve_present 1*)"
+                ];
+                alerts = discordAlert "BTRFS emergency reserve missing — the 10 GiB safety net at /btrfs-emergency-reserve was deleted or never created. Re-provision: 'sudo systemctl start btrfs-emergency-reserve'.";
+              })
+              (mkHttpCheck {
                 name = "NVMe SMART Metrics";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
