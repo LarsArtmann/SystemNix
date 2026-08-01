@@ -38,6 +38,10 @@ _: {
                 MANIFEST_MODE = "selfhosted";
                 MANIFEST_TELEMETRY_DISABLED = "1";
                 CORS_ORIGIN = "https://manifest.${domain}";
+                # OTLP tracing — Node.js in Docker must use host.docker.internal
+                # to reach the host's OTLP receiver. Noop until upstream Manifest
+                # adds @opentelemetry/exporter-trace-otlp-http instrumentation.
+                OTEL_EXPORTER_OTLP_ENDPOINT = "http://host.docker.internal:${toString ports.signoz-otlp-http}";
               };
               depends_on.postgres.condition = "service_healthy";
               healthcheck = {

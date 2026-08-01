@@ -190,90 +190,390 @@ _: {
             # We set BOTH to false on every engine we want enabled.
             engines = [
               # General search engines
-              { name = "google"; disabled = false; inactive = false; }
-              { name = "google images"; disabled = false; inactive = false; }
-              { name = "bing"; disabled = false; inactive = false; }
-              { name = "yandex"; disabled = false; inactive = false; }
-              { name = "yandex images"; disabled = false; inactive = false; }
-              { name = "baidu images"; disabled = false; inactive = false; }
-              { name = "quark images"; disabled = false; inactive = false; }
-              { name = "bing images"; disabled = false; inactive = false; }
-              { name = "duckduckgo images"; disabled = false; inactive = false; }
-              { name = "qwant images"; disabled = false; inactive = false; }
-              { name = "tineye"; disabled = false; inactive = false; }
+              {
+                name = "google";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "google images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "bing";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "yandex";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "yandex images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "baidu images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "quark images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "bing images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "duckduckgo images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "qwant images";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "tineye";
+                disabled = false;
+                inactive = false;
+              }
 
               # Package registries (!bang: !packages)
-              { name = "alpine linux packages"; disabled = false; inactive = false; }
-              { name = "cachy os packages"; disabled = false; inactive = false; }
-              { name = "crates.io"; disabled = false; inactive = false; }
-              { name = "docker hub"; disabled = false; inactive = false; }
-              { name = "hex"; disabled = false; inactive = false; }
-              { name = "hoogle"; disabled = false; inactive = false; }
-              { name = "lib.rs"; disabled = false; inactive = false; }
-              { name = "metacpan"; disabled = false; inactive = false; }
-              { name = "npm"; disabled = false; inactive = false; }
-              { name = "packagist"; disabled = false; inactive = false; }
-              { name = "pkg.go.dev"; disabled = false; inactive = false; }
-              { name = "pub.dev"; disabled = false; inactive = false; }
-              { name = "pypi"; disabled = false; inactive = false; }
-              { name = "rubygems"; disabled = false; inactive = false; }
-              { name = "voidlinux"; disabled = false; inactive = false; }
+              {
+                name = "alpine linux packages";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "cachy os packages";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "crates.io";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "docker hub";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "hex";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "hoogle";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "lib.rs";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "metacpan";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "npm";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "packagist";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "pkg.go.dev";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "pub.dev";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "pypi";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "rubygems";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "voidlinux";
+                disabled = false;
+                inactive = false;
+              }
 
               # Q&A forums (!bang: !q&a)
-              { name = "askubuntu"; disabled = false; inactive = false; }
-              { name = "caddy.community"; disabled = false; inactive = false; }
-              { name = "discuss.python"; disabled = false; inactive = false; }
-              { name = "pi-hole.community"; disabled = false; inactive = false; }
-              { name = "stackoverflow"; disabled = false; inactive = false; }
-              { name = "superuser"; disabled = false; inactive = false; }
+              {
+                name = "askubuntu";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "caddy.community";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "discuss.python";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "pi-hole.community";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "stackoverflow";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "superuser";
+                disabled = false;
+                inactive = false;
+              }
 
               # Code repositories (!bang: !repos)
-              { name = "bitbucket"; disabled = false; inactive = false; }
-              { name = "codeberg"; disabled = false; inactive = false; }
-              { name = "gitea.com"; disabled = false; inactive = false; }
-              { name = "github"; disabled = false; inactive = false; }
-              { name = "gitlab"; disabled = false; inactive = false; }
-              { name = "huggingface"; disabled = false; inactive = false; }
-              { name = "huggingface datasets"; disabled = false; inactive = false; }
-              { name = "huggingface spaces"; disabled = false; inactive = false; }
-              { name = "ollama"; disabled = false; inactive = false; }
-              { name = "sourcehut"; disabled = false; inactive = false; }
+              {
+                name = "bitbucket";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "codeberg";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "gitea.com";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "github";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "gitlab";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "huggingface";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "huggingface datasets";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "huggingface spaces";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "ollama";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "sourcehut";
+                disabled = false;
+                inactive = false;
+              }
 
               # Video search (!bang: !videos) — full coverage so the
               # video results show thumbnails + durations, not sparse text.
-              { name = "google videos"; disabled = false; inactive = false; }
-              { name = "bing videos"; disabled = false; inactive = false; }
-              { name = "brave.videos"; disabled = false; inactive = false; }
-              { name = "qwant videos"; disabled = false; inactive = false; }
-              { name = "duckduckgo videos"; disabled = false; inactive = false; }
-              { name = "youtube"; disabled = false; inactive = false; }
-              { name = "dailymotion"; disabled = false; inactive = false; }
-              { name = "vimeo"; disabled = false; inactive = false; }
-              { name = "rumble"; disabled = false; inactive = false; }
-              { name = "peertube"; disabled = false; inactive = false; }
-              { name = "sepiasearch"; disabled = false; inactive = false; }
-              { name = "odysee"; disabled = false; inactive = false; }
-              { name = "bilibili"; disabled = false; inactive = false; }
-              { name = "media.ccc.de"; disabled = false; inactive = false; }
-              { name = "wikicommons.videos"; disabled = false; inactive = false; }
-              { name = "pixabay videos"; disabled = false; inactive = false; }
-              { name = "bitchute"; disabled = false; inactive = false; }
-              { name = "google play movies"; disabled = false; inactive = false; }
-              { name = "mediathekviewweb"; disabled = false; inactive = false; }
-              { name = "naver videos"; disabled = false; inactive = false; }
-              { name = "acfun"; disabled = false; inactive = false; }
-              { name = "iqiyi"; disabled = false; inactive = false; }
-              { name = "sogou videos"; disabled = false; inactive = false; }
-              { name = "360search videos"; disabled = false; inactive = false; }
-              { name = "adobe stock video"; disabled = false; inactive = false; }
-              { name = "dogpile videos"; disabled = false; inactive = false; }
-              { name = "findfiles videos"; disabled = false; inactive = false; }
-              { name = "fireball videos"; disabled = false; inactive = false; }
-              { name = "niconico"; disabled = false; inactive = false; }
-              { name = "privacywall videos"; disabled = false; inactive = false; }
-              { name = "tusksearch videos"; disabled = false; inactive = false; }
-              { name = "vuhuv videos"; disabled = false; inactive = false; }
-              { name = "ina"; disabled = false; inactive = false; }
+              {
+                name = "google videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "bing videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "brave.videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "qwant videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "duckduckgo videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "youtube";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "dailymotion";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "vimeo";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "rumble";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "peertube";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "sepiasearch";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "odysee";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "bilibili";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "media.ccc.de";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "wikicommons.videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "pixabay videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "bitchute";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "google play movies";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "mediathekviewweb";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "naver videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "acfun";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "iqiyi";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "sogou videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "360search videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "adobe stock video";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "dogpile videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "findfiles videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "fireball videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "niconico";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "privacywall videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "tusksearch videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "vuhuv videos";
+                disabled = false;
+                inactive = false;
+              }
+              {
+                name = "ina";
+                disabled = false;
+                inactive = false;
+              }
             ];
           };
 

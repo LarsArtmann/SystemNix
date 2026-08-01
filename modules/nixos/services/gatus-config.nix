@@ -215,6 +215,16 @@ _: {
                 alerts = discordAlert "SigNoz alert rules not provisioned — observability gap, no alerts will fire";
               })
               (mkHttpCheck {
+                name = "SigNoz OTLP Receiver";
+                group = "Monitoring";
+                url = "http://localhost:${toString ports.signoz-otlp-http}/";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] < 500"
+                ];
+                alerts = discordAlert "SigNoz OTLP receiver not responding — distributed tracing will silently fail for all services";
+              })
+              (mkHttpCheck {
                 name = "Manifest";
                 group = "Monitoring";
                 url = "http://localhost:${toString config.services.manifest.port}/api/v1/health";

@@ -232,7 +232,6 @@
         # That module writes backup_healthy{backup="monitor365"} to the shared
         # textfile collector, replacing the former monitor365_backup_* metrics.
 
-
         # Restart both agent and server when the sops secret or package changes.
         # Package triggers ensure services restart after flake updates even if
         # switch-to-configuration doesn't detect the unit-file change.

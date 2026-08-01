@@ -7,8 +7,7 @@
 #
 # Replaces the former monitor365-backup-health service — the generic module
 # covers monitor365 via the "monitor365" backup entry in configuration.nix.
-_:
-{
+_: {
   flake.nixosModules.backup-coordination =
     {
       config,
@@ -31,38 +30,35 @@ _:
           TEMP="$OUT.tmp"
           ANY_UNHEALTHY=0
 
-          ${
-            lib.concatStringsSep "\n" (
-              lib.mapAttrsToList (
-                name: backup:
-                let
-                  pattern =
-                    if backup.filePattern != null then backup.filePattern else "*";
-                in
-                ''
-                  # Backup: ${name}
-                  BACKUP_DIR="${backup.directory}"
-                  PATTERN="${pattern}"
-                  MAX_AGE="${toString backup.maxAgeHours}"
-                  LATEST="$(ls -t "$BACKUP_DIR"/$PATTERN 2>/dev/null | head -1)"
-                  if [ -n "$LATEST" ]; then
-                    MTIME="$(stat -c %Y "$LATEST")"
-                    AGE_HOURS=$(( (NOW - MTIME) / 3600 ))
-                    HEALTHY=1
-                    [ "$AGE_HOURS" -gt "$MAX_AGE" ] && HEALTHY=0
-                  else
-                    MTIME=0
-                    AGE_HOURS=999
-                    HEALTHY=0
-                  fi
-                  [ "$HEALTHY" -eq 0 ] && ANY_UNHEALTHY=1
-                  echo "backup_healthy{backup=\"${name}\"} $HEALTHY" >> "$TEMP"
-                  echo "backup_age_hours{backup=\"${name}\"} $AGE_HOURS" >> "$TEMP"
-                  echo "backup_last_success_timestamp{backup=\"${name}\"} $MTIME" >> "$TEMP"
-                ''
-              ) cfg.backups
-            )
-          }
+          ${lib.concatStringsSep "\n" (
+            lib.mapAttrsToList (
+              name: backup:
+              let
+                pattern = if backup.filePattern != null then backup.filePattern else "*";
+              in
+              ''
+                # Backup: ${name}
+                BACKUP_DIR="${backup.directory}"
+                PATTERN="${pattern}"
+                MAX_AGE="${toString backup.maxAgeHours}"
+                LATEST="$(ls -t "$BACKUP_DIR"/$PATTERN 2>/dev/null | head -1)"
+                if [ -n "$LATEST" ]; then
+                  MTIME="$(stat -c %Y "$LATEST")"
+                  AGE_HOURS=$(( (NOW - MTIME) / 3600 ))
+                  HEALTHY=1
+                  [ "$AGE_HOURS" -gt "$MAX_AGE" ] && HEALTHY=0
+                else
+                  MTIME=0
+                  AGE_HOURS=999
+                  HEALTHY=0
+                fi
+                [ "$HEALTHY" -eq 0 ] && ANY_UNHEALTHY=1
+                echo "backup_healthy{backup=\"${name}\"} $HEALTHY" >> "$TEMP"
+                echo "backup_age_hours{backup=\"${name}\"} $AGE_HOURS" >> "$TEMP"
+                echo "backup_last_success_timestamp{backup=\"${name}\"} $MTIME" >> "$TEMP"
+              ''
+            ) cfg.backups
+          )}
 
           echo "backup_all_healthy $([ "$ANY_UNHEALTHY" -eq 0 ] && echo 1 || echo 0)" >> "$TEMP"
           mv "$TEMP" "$OUT"

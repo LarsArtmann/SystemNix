@@ -14,6 +14,7 @@
         serviceDefaults
         onFailure
         serviceTypes
+        ports
         ;
       cfg = config.services.hermes;
       hermesPkg =
@@ -275,6 +276,9 @@
                 "HERMES_MANAGED=true"
                 "GATEWAY_ALLOW_ALL_USERS=true"
                 "LD_LIBRARY_PATH=${pkgs.libopus}/lib"
+                # OTLP tracing — Python SDK expects full URL with scheme.
+                # Noop until upstream Hermes adds opentelemetry-sdk instrumentation.
+                "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:${toString ports.signoz-otlp-http}"
               ];
               EnvironmentFile = [ sopsEnvPath ];
               RestartForceExitStatus = 75;
