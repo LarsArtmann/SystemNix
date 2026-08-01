@@ -197,6 +197,10 @@ _: {
               { name = "yandex images"; disabled = false; inactive = false; }
               { name = "baidu images"; disabled = false; inactive = false; }
               { name = "quark images"; disabled = false; inactive = false; }
+              { name = "bing images"; disabled = false; inactive = false; }
+              { name = "duckduckgo images"; disabled = false; inactive = false; }
+              { name = "qwant images"; disabled = false; inactive = false; }
+              { name = "tineye"; disabled = false; inactive = false; }
 
               # Package registries (!bang: !packages)
               { name = "alpine linux packages"; disabled = false; inactive = false; }

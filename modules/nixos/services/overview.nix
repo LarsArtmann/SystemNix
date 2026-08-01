@@ -24,6 +24,7 @@
     }:
     let
       cfg = config.services.overview;
+      inherit (import ../../../lib/default.nix lib) ports;
       daemonSock = "/run/project-discovery/daemon.sock";
       waitDaemonReady = pkgs.writeShellApplication {
         name = "overview-wait-daemon";
@@ -75,6 +76,9 @@
             wants = [ "projects-management-automation.service" ];
             partOf = [ "projects-management-automation.service" ];
             serviceConfig.ExecStartPre = "+${lib.getExe waitDaemonReady}";
+            environment = {
+              OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
+            };
           };
 
           services.overview-discovery-watchdog = {
