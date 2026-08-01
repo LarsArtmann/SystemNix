@@ -434,17 +434,6 @@ _: {
                 ];
                 alerts = discordAlert "Monitor365 agent not connected to server — API key desync or agent crash";
               })
-              (mkHttpCheck {
-                name = "Monitor365 Backup Health";
-                group = "Monitoring";
-                url = "http://localhost:${toString nodePort}/metrics";
-                interval = "10m";
-                conditions = [
-                  "[STATUS] == 200"
-                  "[BODY] == pat(*monitor365_backup_healthy 1*)"
-                ];
-                alerts = discordAlert "Monitor365 backup stale or missing — DuckDB nightly backup may have failed. Check: systemctl status monitor365-server-backup.timer";
-              })
             ]
             ++ lib.optionals (config.services.monitor365.enable or false) [
               (mkHttpCheck {

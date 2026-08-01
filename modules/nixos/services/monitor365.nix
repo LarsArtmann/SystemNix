@@ -227,53 +227,11 @@
           ) "pocket-id";
         })
 
-        # Backup health metrics — AGENTS.md rule 9: every new service MUST be
-        # monitored. Writes Prometheus textfile metrics for backup freshness so
-        # Gatus can alert if the nightly backup stops producing files.
-        (lib.mkIf (serverCfg.enable && serverCfg.backup.enable or false) {
-          systemd.services.monitor365-backup-health = {
-            description = "Monitor365 backup health metrics for Prometheus textfile";
-            after = [ "monitor365-server.service" ];
-            serviceConfig = {
-              Type = "oneshot";
-              User = "monitor365-server";
-              Group = "monitor365-server";
-              StateDirectory = "monitor365-server";
-              ReadWritePaths = [
-                "/var/lib/prometheus-node-exporter/textfile_collectors"
-              ];
-            };
-            script = ''
-              OUT="/var/lib/prometheus-node-exporter/textfile_collectors/monitor365-backup.prom"
-              BACKUP_DIR="${serverCfg.stateDir}"
-              LATEST="$(ls -t "$BACKUP_DIR"/*.backup_*.db 2>/dev/null | head -1)"
-              NOW="$(${pkgs.coreutils}/bin/date +%s)"
-              if [ -n "$LATEST" ]; then
-                MTIME="$(${pkgs.coreutils}/bin/stat -c %Y "$LATEST")"
-                AGE_HOURS=$(( (NOW - MTIME) / 3600 ))
-                HEALTHY=1
-                [ "$AGE_HOURS" -gt 25 ] && HEALTHY=0
-              else
-                MTIME=0
-                AGE_HOURS=999
-                HEALTHY=0
-              fi
-              cat > "$OUT" <<EOF
-              monitor365_backup_last_success_timestamp $MTIME
-              monitor365_backup_age_hours $AGE_HOURS
-              monitor365_backup_healthy $HEALTHY
-              EOF
-            '';
-          };
-          systemd.timers.monitor365-backup-health = {
-            description = "Collect Monitor365 backup health metrics";
-            wantedBy = [ "timers.target" ];
-            timerConfig = {
-              OnBootSec = "5m";
-              OnUnitActiveSec = "5m";
-            };
-          };
-        })
+        # Backup health monitoring consolidated into the generic
+        # backup-coordination module (services.backup-coordination.backups.monitor365).
+        # That module writes backup_healthy{backup="monitor365"} to the shared
+        # textfile collector, replacing the former monitor365_backup_* metrics.
+
 
         # Restart both agent and server when the sops secret or package changes.
         # Package triggers ensure services restart after flake updates even if

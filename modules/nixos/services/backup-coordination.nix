@@ -5,9 +5,10 @@
 # schedules avoid IO spikes: Immich 01:00, Twenty 02:00, Manifest 02:30,
 # Monitor365 03:00 (set in each service's timer config).
 #
-# monitor365-backup-health (in monitor365.nix) is the reference implementation.
-# This module generalizes the pattern for all services.
-_: {
+# Replaces the former monitor365-backup-health service — the generic module
+# covers monitor365 via the "monitor365" backup entry in configuration.nix.
+_:
+{
   flake.nixosModules.backup-coordination =
     {
       config,
@@ -16,6 +17,7 @@ _: {
       ...
     }:
     let
+      inherit (import ../../../lib/default.nix lib) harden serviceOneshotDefaults onFailure;
       cfg = config.services.backup-coordination;
 
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
@@ -100,13 +102,22 @@ _: {
       config = lib.mkIf cfg.enable {
         systemd.services.backup-health-metrics = {
           description = "Cross-service backup health metrics for Prometheus textfile";
-          serviceConfig = {
-            Type = "oneshot";
-            # Runs as root: backup dirs are owned by different users
-            # (immich, twenty, manifest, monitor365-server). Root can read
-            # all of them and write to the textfile collector dir.
-            ReadWritePaths = [ textfileDir ];
-          };
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "128M";
+              # Runs as root: backup dirs are owned by different users
+              # (immich, twenty, manifest, monitor365-server). Root can read
+              # all of them and write to the textfile collector dir.
+              # ProtectSystem=full (default) only makes /usr and /boot
+              # read-only — /var/lib backup dirs remain readable.
+              ReadWritePaths = [ textfileDir ];
+            })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+            }
+          ];
           path = [ metricsScript ];
           script = ''
             backup-health-metrics
