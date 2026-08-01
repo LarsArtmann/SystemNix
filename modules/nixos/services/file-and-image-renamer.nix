@@ -131,6 +131,7 @@ _: {
                 # returns nil, and handlers nil-deref → HTTP 500.
                 "HISTORY_FILE_PATH=${cfg.dataDir}/history.json"
                 "HASHDB_PATH=${cfg.dataDir}/hashes.db"
+                "OTEL_EXPORTER_OTLP_ENDPOINT=localhost:${toString ports.signoz-otlp-http}"
               ];
             };
           wantedBy = [ "multi-user.target" ];
@@ -174,6 +175,9 @@ _: {
                     # reflects real accumulated state instead of an empty fork.
                     "HISTORY_FILE_PATH=${cfg.dataDir}/history.json"
                     "HASHDB_PATH=${cfg.dataDir}/hashes.db"
+                    # OTel traces → local SigNoz OTLP/HTTP collector.
+                    # Noop tracer when unset (zero overhead).
+                    "OTEL_EXPORTER_OTLP_ENDPOINT=localhost:${toString ports.signoz-otlp-http}"
                   ]
                   ++ lib.optional (cfg.apiKeyFile != null) "ZAI_API_KEY_FILE=${cfg.apiKeyFile}"
                   ++ lib.optional (
