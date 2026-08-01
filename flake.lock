@@ -458,11 +458,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785362728,
-        "narHash": "sha256-9LFYI4HD8BCoWZo6+pRrNaqNU0CgDW9P2iumy4U/pe4=",
+        "lastModified": 1785598463,
+        "narHash": "sha256-1ZE7c11vFnxeu6n40ZP0nmclUOViZtKDXsz62im37Hw=",
         "owner": "LarsArtmann",
         "repo": "crush-daily",
-        "rev": "3d438e912869b8cf5644014248dc8ca4a8cfd00a",
+        "rev": "bfd01d5ae559af4f5f30e5b4f09c43864532b63b",
         "type": "github"
       },
       "original": {
@@ -628,11 +628,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1785428071,
-        "narHash": "sha256-Dx+Y87N/pf5NuyBihgdFcN3nBswQfn7Apx+N9tBcoBs=",
+        "lastModified": 1785598482,
+        "narHash": "sha256-P24XW05tvZQPqwgAq/7fEkBvbHCJXE4+H0fz6uACmfw=",
         "owner": "LarsArtmann",
         "repo": "file-and-image-renamer",
-        "rev": "cbb73600347c5fc39754b558d9f8ec8f17165406",
+        "rev": "de1f9ea8e95d91e2af4917dd28138ff3b91bbeaa",
         "type": "github"
       },
       "original": {
@@ -3390,11 +3390,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1785586963,
-        "narHash": "sha256-nQIcKP8Rl69vWMtaEbOhzrCHESmwNFZRGtxWhdVDh7o=",
+        "lastModified": 1785598538,
+        "narHash": "sha256-sxiZPIMHrcHtd/SbdzYsK+zNlSFr5zMyS/YfwG+QSCE=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "e1c4c8ecbe8ed286f72779237057a32166ff0ec4",
+        "rev": "575b9d92b82f2d6c73c9bafcf2fb1a14bae63b5d",
         "type": "github"
       },
       "original": {
@@ -3812,11 +3812,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785369526,
-        "narHash": "sha256-t5I+tWmKZ+uDb0sFjqvZbU1RammsboI4sF9r10088Wc=",
+        "lastModified": 1785598475,
+        "narHash": "sha256-eM5BQwXttAqyRFSBPv8G/hSVxQPmUDG/rJJMeNtbGc0=",
         "owner": "LarsArtmann",
         "repo": "overview",
-        "rev": "25451dc07d9f24f10d7e813b343f4f6363568ba7",
+        "rev": "2e7131af9abd1b9209a69dfd55ea65aa8c9bba7b",
         "type": "github"
       },
       "original": {
@@ -4006,11 +4006,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785371478,
-        "narHash": "sha256-a4v8lwxvI7Gj2vt4UnF1mLRpTk1r+lLXSUKUphJfgcQ=",
+        "lastModified": 1785598472,
+        "narHash": "sha256-tWkqQF+xyjAoJPUzqsAfI8Mzphk7Nq40REdMKth2PIc=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "810c05bfef329dfee869732175a7cecffa8741aa",
+        "rev": "5ce61cdb0833769fa4a8e82d15efe9c42af1b0b2",
         "type": "github"
       },
       "original": {

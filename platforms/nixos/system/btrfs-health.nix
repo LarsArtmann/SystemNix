@@ -555,45 +555,47 @@ in
       };
     };
 
-    timers.btrfs-health = {
-      description = "BTRFS health check every 5 minutes";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "1min";
-        OnUnitActiveSec = "5min";
-        AccuracySec = "30s";
+    timers = {
+      btrfs-health = {
+        description = "BTRFS health check every 5 minutes";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "1min";
+          OnUnitActiveSec = "5min";
+          AccuracySec = "30s";
+        };
       };
-    };
 
-    timers.btrfs-compsize = {
-      description = "BTRFS compression ratio check every 6 hours";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnBootSec = "5min";
-        OnUnitActiveSec = "6h";
-        AccuracySec = "5m";
+      btrfs-compsize = {
+        description = "BTRFS compression ratio check every 6 hours";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnBootSec = "5min";
+          OnUnitActiveSec = "6h";
+          AccuracySec = "5m";
+        };
       };
-    };
 
-    # ── Balance timers (weekly, staggered before nix-gc at 00:00) ───────────────
-    # Metadata at Mon 04:00, Data at Mon 05:00. Both guarded by chunk-check.
-    timers.btrfs-balance-metadata = {
-      description = "Weekly BTRFS metadata balance (consolidate chunks)";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "Mon 04:00";
-        AccuracySec = "30m";
-        Persistent = true;
+      # ── Balance timers (weekly, staggered before nix-gc at 00:00) ───────────────
+      # Metadata at Mon 04:00, Data at Mon 05:00. Both guarded by chunk-check.
+      btrfs-balance-metadata = {
+        description = "Weekly BTRFS metadata balance (consolidate chunks)";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "Mon 04:00";
+          AccuracySec = "30m";
+          Persistent = true;
+        };
       };
-    };
 
-    timers.btrfs-balance-data = {
-      description = "Weekly BTRFS data balance (bounded chunk consolidation)";
-      wantedBy = [ "timers.target" ];
-      timerConfig = {
-        OnCalendar = "Mon 05:00";
-        AccuracySec = "30m";
-        Persistent = true;
+      btrfs-balance-data = {
+        description = "Weekly BTRFS data balance (bounded chunk consolidation)";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = "Mon 05:00";
+          AccuracySec = "30m";
+          Persistent = true;
+        };
       };
     };
   };
