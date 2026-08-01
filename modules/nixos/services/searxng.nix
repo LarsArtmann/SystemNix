@@ -120,9 +120,8 @@ _: {
             };
             search = {
               safe_search = 0;
-              # Yandex autocomplete: keystrokes are proxied through Tor
-              # (like all SearXNG outgoing requests), so the autocomplete
-              # provider sees a Tor exit IP, not the user's or server's.
+              # Yandex autocomplete: keystrokes go to Yandex's API
+              # via SearXNG (server IP, not user IP).
               autocomplete = "yandex";
               autocomplete_min = 4;
               default_lang = "auto";
@@ -142,23 +141,13 @@ _: {
               results_on_new_tab = true;
               theme_args.simple_style = "auto";
             };
-            # Route all engine requests through Tor (SOCKS5 proxy on
-            # 127.0.0.1:9050) so upstream engines see a Tor exit node IP,
-            # not the server's. SearXNG prefers .onion endpoints for engines
-            # that support them (DuckDuckGo, Brave, etc.). socks5h ensures
-            # DNS resolution happens inside Tor (no local DNS leak).
-            # Tradeoff: Tor adds 2-5s latency; timeouts accommodate it.
-            # Some engines (notably Google) aggressively block Tor exits —
-            # those will show as errors and be auto-banned/retried.
+            # Generous timeouts for image/video-heavy searches.
+            # Image engines (Google Images, Yandex Images, Baidu, Quark)
+            # are slower than text — short timeouts drop them from results.
             outgoing = {
-              request_timeout = 5.0;
-              max_request_timeout = 15.0;
+              request_timeout = 8.0;
+              max_request_timeout = 20.0;
               enable_http2 = true;
-              using_tor_proxy = true;
-              proxies = {
-                allhttp = "socks5h://127.0.0.1:9050";
-                allhttps = "socks5h://127.0.0.1:9050";
-              };
             };
 
             # Hostname plugin: boost developer reference sites, remove spam.
@@ -268,15 +257,6 @@ _: {
           maxmemory-policy = "allkeys-lru";
         };
 
-        # Tor client: provides SOCKS5 proxy on 127.0.0.1:9050 for SearXNG
-        # outgoing requests. Client-only (no relay/exit/bridge) — sole
-        # purpose is anonymizing engine requests so upstream search engines
-        # see a Tor exit node IP, not the server's.
-        services.tor = {
-          enable = true;
-          client.enable = true;
-        };
-
         systemd.services = {
           # Generate the persistent secret key before searx-init runs.
           searxng-secret-key = {
@@ -304,12 +284,8 @@ _: {
             after = [
               "searxng-secret-key.service"
               "dnsblockd.service"
-              "tor.service"
             ];
-            wants = [
-              "dnsblockd.service"
-              "tor.service"
-            ];
+            wants = [ "dnsblockd.service" ];
             requires = [ "searxng-secret-key.service" ];
             inherit onFailure;
             startLimitBurst = 5;
@@ -332,12 +308,8 @@ _: {
             after = [
               "searxng-secret-key.service"
               "dnsblockd.service"
-              "tor.service"
             ];
-            wants = [
-              "dnsblockd.service"
-              "tor.service"
-            ];
+            wants = [ "dnsblockd.service" ];
             requires = [ "searxng-secret-key.service" ];
           };
         };
