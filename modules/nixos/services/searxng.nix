@@ -185,7 +185,6 @@ _: {
               # General search engines
               { name = "google"; inactive = false; }
               { name = "google images"; inactive = false; }
-              { name = "google videos"; inactive = false; }
               { name = "bing"; disabled = false; }
               { name = "yandex"; inactive = false; }
               { name = "yandex images"; inactive = false; }
@@ -228,6 +227,43 @@ _: {
               { name = "huggingface spaces"; inactive = false; }
               { name = "ollama"; inactive = false; }
               { name = "sourcehut"; inactive = false; }
+
+              # Video search (!bang: !videos) — full coverage so the
+              # video results grid is populated with thumbnails, not
+              # a sparse text list.
+              { name = "google videos"; inactive = false; }
+              { name = "bing videos"; inactive = false; }
+              { name = "brave.videos"; inactive = false; }
+              { name = "qwant videos"; inactive = false; }
+              { name = "duckduckgo videos"; inactive = false; }
+              { name = "youtube"; inactive = false; }
+              { name = "dailymotion"; inactive = false; }
+              { name = "vimeo"; inactive = false; }
+              { name = "rumble"; inactive = false; }
+              { name = "peertube"; inactive = false; }
+              { name = "sepiasearch"; inactive = false; }
+              { name = "odysee"; inactive = false; }
+              { name = "bilibili"; inactive = false; }
+              { name = "media.ccc.de"; inactive = false; }
+              { name = "wikicommons.videos"; inactive = false; }
+              { name = "pixabay videos"; inactive = false; }
+              { name = "bitchute"; inactive = false; }
+              { name = "google play movies"; inactive = false; }
+              { name = "mediathekviewweb"; inactive = false; }
+              { name = "naver videos"; inactive = false; }
+              { name = "acfun"; inactive = false; }
+              { name = "iqiyi"; inactive = false; }
+              { name = "sogou videos"; inactive = false; }
+              { name = "360search videos"; inactive = false; }
+              { name = "adobe stock video"; inactive = false; }
+              { name = "dogpile videos"; inactive = false; }
+              { name = "findfiles videos"; inactive = false; }
+              { name = "fireball videos"; inactive = false; }
+              { name = "niconico"; inactive = false; }
+              { name = "privacywall videos"; inactive = false; }
+              { name = "tusksearch videos"; inactive = false; }
+              { name = "vuhuv videos"; inactive = false; }
+              { name = "ina"; inactive = false; }
             ];
           };
 
