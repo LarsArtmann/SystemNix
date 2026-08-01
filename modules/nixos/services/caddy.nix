@@ -250,6 +250,18 @@ _: {
           }
           // lib.optionalAttrs config.services.file-and-image-renamer.enable {
             "renamer.${domain}" = protectedVHost "renamer" ports.file-and-image-renamer-health;
+          }
+          # Attic binary cache — plain reverse proxy (no forward-auth).
+          # Nix substituters need unauthenticated read access; push requires
+          # a valid Attic token.
+          // lib.optionalAttrs (config.services.attic-config.enable or false) {
+            "cache.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo ports.attic}
+              '';
+            };
           };
         };
 

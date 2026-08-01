@@ -217,6 +217,7 @@ in
       caddy.enable = true;
       forgejo.enable = true;
       immich.enable = true;
+      attic-config.enable = true;
       pocket-id-config = {
         enable = true;
         provision = {

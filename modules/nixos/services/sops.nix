@@ -236,6 +236,15 @@ in
                 }
             // lib.optionalAttrs (svcEnabled "dns-failover") (
               mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
+            )
+            // lib.optionalAttrs (svcEnabled "attic-config") (
+              mkSecrets "attic.yaml"
+                {
+                  owner = "atticd";
+                  group = "atticd";
+                  restartUnits = [ "atticd.service" ];
+                }
+                [ "attic_token_hs256_secret_base64" ]
             );
 
           templates = {
@@ -346,6 +355,17 @@ in
             "dns-failover-env" = {
               content = lib.generators.toKeyValue { } {
                 VRRP_AUTH_PASSWORD = config.sops.placeholder.vrrp_auth_password;
+              };
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "attic-config") {
+            "attic-env" = {
+              owner = "atticd";
+              group = "atticd";
+              mode = "0400";
+              restartUnits = [ "atticd.service" ];
+              content = lib.generators.toKeyValue { } {
+                ATTIC_SERVER_TOKEN_HS256_SECRET_BASE64 = config.sops.placeholder.attic_token_hs256_secret_base64;
               };
             };
           };

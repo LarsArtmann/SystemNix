@@ -19,5 +19,6 @@
     "dnsblock"
     "dnsblockd"
     "search"
+    "cache"
   ];
 }
