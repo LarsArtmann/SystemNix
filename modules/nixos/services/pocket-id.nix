@@ -548,7 +548,7 @@ _: {
 
           # Secret rotation health metrics — monitors OIDC client secret
           # file freshness. Alerts when any secret hasn't been rotated in >90d.
-          pocket-id-secret-rotation = {
+          services.pocket-id-secret-rotation = {
             description = "Pocket ID OIDC client secret rotation metrics";
             after = [ "pocket-id-provision.service" ];
             serviceConfig = {
@@ -580,14 +580,14 @@ _: {
               mv "$TEMP" "$OUT"
             '';
           };
-        };
 
-        systemd.timers.pocket-id-secret-rotation = {
-          description = "Check OIDC client secret rotation freshness";
-          wantedBy = [ "timers.target" ];
-          timerConfig = {
-            OnBootSec = "10m";
-            OnUnitActiveSec = "1h";
+          timers.pocket-id-secret-rotation = {
+            description = "Check OIDC client secret rotation freshness";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "10m";
+              OnUnitActiveSec = "1h";
+            };
           };
         };
       };
