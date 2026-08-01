@@ -165,12 +165,12 @@ _: {
               # and a visible status dot. The bare daemon exposes only an
               # internal /metrics endpoint (Prometheus scrapes it directly),
               # which has no value as a clickable dashboard tile.
-              # PostgreSQL and Redis are kept as decorative tiles with NO
-              # siteMonitor: neither exposes a public HTTP health endpoint
-              # (pg_isready is TCP-only; Redis exports to Prometheus only).
-              # Their dependents (Immich, Gatus, Manifest) will go red when
-              # the DB/cache goes down — that's the real signal. These tiles
-              # serve as visual confirmation that the backing services exist.
+              # PostgreSQL and Redis are decorative tiles: neither exposes a
+              # public HTTP health endpoint (pg_isready is TCP-only; Redis
+              # exports to Prometheus only). Their dependents (Immich, Gatus,
+              # Manifest) will show errors when the DB/cache goes down — that's
+              # the real signal. All service health monitoring is owned by Gatus
+              # (Discord alerting). Homepage tiles are navigation only.
               (mkService "PostgreSQL" {
                 description = "Database Server";
                 icon = "postgres.png";
@@ -184,7 +184,6 @@ _: {
               mkService "Hermes" {
                 description = "AI Agent Gateway (Discord, Cron, Messaging)";
                 icon = "self-hosted-gateway.png";
-                statusStyle = "dot";
               }
             )
             ++ lib.optional discordsyncEnabled (
@@ -229,8 +228,6 @@ _: {
                   href = svcUrl "daily";
                   description = "AI-Powered Development Insights";
                   icon = "openai.png";
-                  statusStyle = "dot";
-                  siteMonitor = "${svcUrl "daily"}/api/health";
                 }
               )
               ++ lib.optional manifestEnabled (
@@ -238,16 +235,12 @@ _: {
                   href = svcUrl "manifest";
                   description = "Smart LLM Router (Cost Optimization)";
                   icon = "openai.png";
-                  statusStyle = "dot";
-                  siteMonitor = "${svcUrl "manifest"}/api/v1/health";
                 }
               )
               ++ lib.optional ollamaEnabled (
                 mkService "Ollama" {
                   description = "Local AI Inference";
                   icon = "ollama.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString config.services.ollama.port}/api/tags";
                 }
               )
               ++ lib.optionals voiceAgentsEnabled [
@@ -255,15 +248,11 @@ _: {
                   href = svcUrl "voice";
                   description = "Real-Time Voice Infrastructure";
                   icon = "voip-info.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "voice";
                 })
                 (mkService "Whisper ASR" {
                   href = svcUrl "whisper";
                   description = "Speech-to-Text (Gradio)";
                   icon = "web-whisper.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "whisper";
                 })
               ];
 
@@ -273,8 +262,6 @@ _: {
                   href = svcUrl "status";
                   description = "Uptime & Health Check Dashboard";
                   icon = "gatus.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "status";
                 }
               )
               ++ lib.optional signozEnabled (
@@ -282,8 +269,6 @@ _: {
                   href = svcUrl "signoz";
                   description = "Observability Platform (Traces, Metrics, Logs)";
                   icon = "signoz.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString config.services.signoz.settings.queryService.port}";
                 }
               )
               ++ lib.optional dozzleEnabled (
@@ -291,24 +276,18 @@ _: {
                   href = svcUrl "logs";
                   description = "Docker Log Viewer";
                   icon = "docker.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "logs";
                 }
               )
               ++ [
                 (mkService "Node Exporter" {
                   description = "System Metrics (CPU, RAM, Disk, Network)";
                   icon = "prometheus.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString config.services.prometheus.exporters.node.port}/metrics";
                 })
               ]
               ++ lib.optional signozEnabled (
                 mkService "cAdvisor" {
                   description = "Container Metrics";
                   icon = "docker.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString config.services.signoz.settings.cadvisorPort}/metrics";
                 }
               )
               ++ [
@@ -317,14 +296,10 @@ _: {
                   # cAdvisor, EMEET PIXY) that expose a metrics-only health check.
                   description = "Block-page HTTP server (localhost-only)";
                   icon = "blocky.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString config.services.dns-blocker.statsPort}/metrics";
                 })
                 (mkService "EMEET PIXY" {
                   description = "Webcam Auto-Management Daemon";
                   icon = "camera-ui.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString ports.emeet-pixyd}/metrics";
                 })
               ]
               ++ lib.optional monitor365Enabled (
@@ -332,8 +307,6 @@ _: {
                   href = svcUrl "monitor";
                   description = "Device Monitoring Agent";
                   icon = "uptime-kuma.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "monitor";
                 }
               );
 
@@ -343,8 +316,6 @@ _: {
                   href = svcUrl "crm";
                   description = "Customer Relationship Management";
                   icon = "espocrm.png";
-                  statusStyle = "dot";
-                  siteMonitor = "${svcUrl "crm"}/healthz";
                 }
               )
               ++ lib.optional fileAndImageRenamerEnabled (
@@ -354,8 +325,6 @@ _: {
                   # filebot.png: bundled icon pack has no 'mdi-*' mdi-style icons;
                   # filebot is the canonical self-hosted file-rename tool icon.
                   icon = "filebot.png";
-                  statusStyle = "dot";
-                  siteMonitor = "http://localhost:${toString ports.file-and-image-renamer-health}/status";
                 }
               )
               ++ [
@@ -363,8 +332,6 @@ _: {
                   href = svcUrl "tasks";
                   description = "Task Sync Server (TaskChampion)";
                   icon = "taskcafe.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "tasks";
                 })
                 # The "Homepage" self-tile was removed: clicking it while
                 # already on the dashboard is a no-op (`target = "_self"`
@@ -374,8 +341,6 @@ _: {
                   href = svcUrl "seo";
                   description = "SEO Suite (Rank Tracking, Keywords, Backlinks)";
                   icon = "google-search-console.png";
-                  statusStyle = "dot";
-                  siteMonitor = svcUrl "seo";
                 })
               ]
               ++ lib.optional searxEnabled (
@@ -383,8 +348,6 @@ _: {
                   href = svcUrl "search";
                   description = "Privacy Metasearch Engine";
                   icon = "searxng.png";
-                  statusStyle = "dot";
-                  siteMonitor = "${svcUrl "search"}/healthz";
                 }
               );
 

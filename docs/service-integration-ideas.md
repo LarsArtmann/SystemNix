@@ -177,3 +177,57 @@ Crush Daily generates insights from Crush databases. QMD indexes local markdown/
 | 6 | Forgejo → PMA discovery | Medium | Medium | Later |
 | 10 | QMD → Crush Daily context | Low | Medium | Optional |
 | 4 | QMD ↔ SearXNG | Low | Medium | Optional |
+
+---
+
+## Appendix: OTLP Tracing Wiring Pattern
+
+The canonical pattern for wiring a Go service to send OTLP traces to SigNoz:
+
+### Go Services (via go-cqrs-lite otel package)
+
+Services using `github.com/larsartmann/go-cqrs-lite/otel/v4` (DiscordSync, Crush Daily, PMA) auto-initialize an OTLP exporter when the env var is set. The binary installs a **noop tracer** when unset.
+
+**NixOS module** — add one line to the service `environment`:
+
+```nix
+environment = {
+  OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}";
+};
+```
+
+**Key rules:**
+- `localhost:4318` (HTTP) — NOT `localhost:4317` (gRPC). The Go `otlptracehttp` SDK expects `host:port` WITHOUT scheme.
+- The SDK constructs the full URL internally (`http://<endpoint>/v1/traces`).
+- `WithInsecure()` is used (plain HTTP, no TLS) since traffic is localhost.
+- When `OTEL_EXPORTER_OTLP_ENDPOINT` is unset, a noop tracer is installed — zero overhead.
+
+### Rust Services (monitor365)
+
+Monitor365 has full OTLP support behind the `otel` cargo feature flag (`#[cfg(feature = "otel")]`). The `init_tracing` function in `crates/cli/src/telemetry.rs` reads `OTEL_EXPORTER_OTLP_ENDPOINT` from env.
+
+**Key differences from Go:**
+- Uses tonic (gRPC), NOT HTTP. The endpoint should be `localhost:4317` (gRPC port), not `localhost:4318`.
+- Requires the `otel` cargo feature to be enabled in the Nix build (`buildFeatures = ["otel"]`).
+- Uses `tracing-opentelemetry` layer integration for structured logging + tracing.
+
+### Docker Services (Manifest)
+
+Docker containers cannot reach `localhost:4318` on the host. Use `host.docker.internal:4318` and add `extra_hosts` in the compose definition:
+
+```yaml
+services:
+  app:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=host.docker.internal:4318
+```
+
+### Verification
+
+After wiring, verify traces appear in SigNoz:
+1. Deploy: `nix run .#deploy`
+2. Navigate to SigNoz → Traces → Services
+3. Each service should appear with incoming trace data
+4. Cross-service traces show the full request path
