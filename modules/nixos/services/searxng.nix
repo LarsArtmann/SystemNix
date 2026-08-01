@@ -183,6 +183,8 @@ _: {
               { name = "bing"; disabled = false; }
               { name = "yandex"; inactive = false; }
               { name = "yandex images"; inactive = false; }
+              { name = "baidu images"; inactive = false; }
+              { name = "quark images"; inactive = false; }
             ];
           };
 
