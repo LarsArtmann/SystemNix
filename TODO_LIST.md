@@ -49,7 +49,7 @@
 - [ ] **`taskwarrior3` build flags** — `SYSTEM_CORROSION=on` + `ENABLE_TLS_NATIVE_ROOTS=on` should be nixpkgs defaults
 - [ ] **Kitty GC resilience patch** — After `nix-collect-garbage`, kitty's bundled binary lookup breaks
 - [ ] **KeePassXC Chromium manifests** — nixpkgs only ships Firefox-format native messaging manifests
-- [ ] **`llama-cpp` ROCm MMFMA flag** — `-DGGML_HIP_MMQ_MFMA=ON` should be a package option
+- [x] ~~**`llama-cpp` ROCm MMFMA flag** — `-DGGML_HIP_MMQ_MFMA=ON` should be a package option~~ **REMOVED 2026-08-02:** No-op on RDNA 3.5 (Strix Halo). The flag only affects CDNA GPUs (MI100/200/300), defaults to ON upstream already, and RDNA uses WMMA (not MFMA) which is always enabled via compiler builtins. The overrideAttrs only broke binary caching for 30+ min builds with zero effect
 
 ### Home Manager
 
