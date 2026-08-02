@@ -133,8 +133,36 @@ _: {
       # We set ONLY MemoryMax here (nixpkgs doesn't set it). ReadWritePaths
       # is computed by nixpkgs from the storage path automatically.
       # NOTE: atticd is DynamicUser — sops secrets are root-owned (see sops.nix).
+      # /data has nofail — systemd-tmpfiles-setup may run before /data
+      # mounts, creating the storage dir on root (hidden under the mount).
+      # This oneshot runs AFTER the mount is active, creating the real dir.
+      systemd.services.atticd-storage-dir = {
+        description = "Create Attic storage directory on /data";
+        wantedBy = ["multi-user.target"];
+        unitConfig = {
+          RequiresMountsFor = "/data";
+        };
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            User = "root";
+            RemainAfterExit = true;
+          }
+          (harden {
+            MemoryMax = "128M";
+            ReadWritePaths = ["/data"];
+          })
+          (serviceOneshotDefaults {})
+        ];
+        script = ''
+          mkdir -p ${toString cfg.storagePath}
+          chmod 0755 ${toString cfg.storagePath}
+        '';
+      };
+
       systemd.services.atticd = {
-        after = ["network.target"];
+        after = ["network.target" "atticd-storage-dir.service"];
+        wants = ["atticd-storage-dir.service"];
         # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
         startLimitBurst = 5;
         startLimitIntervalSec = 300;
