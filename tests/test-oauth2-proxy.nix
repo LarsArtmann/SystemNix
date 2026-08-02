@@ -19,20 +19,31 @@
   clientSecret = pkgs.runCommand "oauth2-client-secret" {} ''
     echo -n "test-client-secret-value" > $out
   '';
+
+  # Mock pocket-id-config options so oauth2-proxy can evaluate without the
+  # full pocket-id module. provision.enable = false means sops secrets are used.
+  mockPocketId = {lib, ...}: {
+    options.services.pocket-id-config.provision.enable = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+    };
+    options.services.pocket-id.dataDir = lib.mkOption {
+      type = lib.types.str;
+      default = "/var/lib/pocket-id";
+    };
+  };
 in {
   name = "oauth2-proxy";
 
   nodes.machine = {lib, ...}: {
     imports = [
       oauth2ProxyNixosModule
+      mockPocketId
       ./mock-sops.nix
       ./test-helpers.nix
     ];
 
     services.oauth2-proxy-config.enable = true;
-
-    # Disable Pocket ID provision path — use sops secrets directly
-    services.pocket-id-config.provision.enable = lib.mkForce false;
 
     # Register sops secrets (mock-sops creates empty files at these paths)
     sops.secrets.oauth2_proxy_cookie_secret = {};
@@ -55,11 +66,10 @@ in {
       '';
     };
 
-    # Override the ExecStartPre to skip OIDC wait (no Pocket ID in VM)
+    # Override ExecStartPre: keep cookie secret check, skip OIDC wait (no Pocket ID)
     systemd.services.oauth2-proxy.serviceConfig = lib.mkMerge [
       {
         ExecStartPre = [
-          # Keep cookie secret check, skip OIDC wait
           "+${lib.getExe (pkgs.writeShellApplication {
             name = "check-cookie-secret-only";
             runtimeInputs = [pkgs.coreutils];
@@ -73,7 +83,6 @@ in {
             '';
           })}"
         ];
-        # Remove ExecStartPost ping retry (it works but takes time)
         ExecStartPost = lib.mkForce [];
       }
     ];
@@ -86,13 +95,10 @@ in {
     # 1. oauth2-proxy service starts with mocked secrets
     machine.wait_for_unit("oauth2-proxy.service")
 
-    # 2. Port is open
+    # 2. Port is open (default oauth2-proxy port)
     machine.wait_for_open_port(4180)
 
     # 3. /ping endpoint responds (oauth2-proxy built-in health check)
     machine.succeed("curl -sf http://localhost:4180/ping")
-
-    # 4. Cookie secret validation passed (service started = ExecStartPre succeeded)
-    machine.succeed("systemctl is-active oauth2-proxy.service")
   '';
 }
