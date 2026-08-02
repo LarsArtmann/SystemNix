@@ -62,6 +62,26 @@ _: {
         oidcSetupScript
         addKeysScript
         ;
+
+      # DNS gate for OIDC setup — dnsblockd may not be ready immediately
+      # after deploy restart. The OIDC setup resolves auth.home.lan to
+      # fetch the OpenID configuration from Pocket ID.
+      forgejoOidcWaitDns = pkgs.writeShellApplication {
+        name = "forgejo-oidc-wait-dns";
+        runtimeInputs = [pkgs.getent];
+        text = ''
+          echo "forgejo-oidc: waiting for DNS resolution..."
+          for _ in $(seq 1 30); do
+            if getent hosts auth.home.lan >/dev/null 2>&1; then
+              echo "forgejo-oidc: DNS resolution ready"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "forgejo-oidc: DNS not ready after 60s — OIDC setup may fail" >&2
+          exit 1
+        '';
+      };
     in
     {
       options = {
@@ -281,6 +301,7 @@ _: {
               LoadCredential = [
                 "forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"
               ];
+              ExecStartPre = "+${lib.getExe forgejoOidcWaitDns}";
             }
             (harden { })
             (serviceOneshotDefaults { })

@@ -327,6 +327,76 @@ _: {
         wantedBy = ["timers.target"];
       };
 
+      # Bootstrap: automatically create cache + configure retention on deploy.
+      # Eliminates the need for manual `sudo atticd-atticadm make-token` + manual
+      # `attic cache create`. Uses atticd-atticadm (needs root via systemd-run)
+      # for token creation, then attic client for cache management via HTTP API.
+      systemd.services.atticd-bootstrap = {
+        description = "Bootstrap Attic cache (create cache + configure retention)";
+        after = ["atticd.service"];
+        wants = ["atticd.service"];
+        startLimitBurst = 3;
+        startLimitIntervalSec = 300;
+        inherit onFailure;
+        path = [pkgs.attic-client pkgs.python3];
+        serviceConfig = lib.mkMerge [
+          {
+            Type = "oneshot";
+            User = "root";
+            RemainAfterExit = true;
+          }
+          (harden {
+            MemoryMax = "256M";
+            ProtectHome = false; # attic login writes to ~/.config/attic/
+          })
+          (serviceOneshotDefaults {})
+        ];
+        script = ''
+          set -euo pipefail
+
+          # Wait for atticd to be ready (migrations run on first start)
+          for i in $(seq 1 30); do
+            if python3 -c "
+import urllib.request, sys
+try:
+    urllib.request.urlopen('http://127.0.0.1:${toString atticPort}/', timeout=2)
+except Exception:
+    sys.exit(1)
+" 2>/dev/null; then
+              echo "atticd is ready"
+              break
+            fi
+            echo "Waiting for atticd... ($i)"
+            sleep 1
+          done
+
+          # Create a short-lived admin token via atticd-atticadm (systemd-run
+          # wrapper that runs atticadm in the DynamicUser context with the
+          # RS256 secret from the sops env file).
+          TOKEN=$(atticd-atticadm make-token \
+            --sub bootstrap \
+            --validity 1h \
+            --pull '*' --push '*' \
+            --create-cache '*' --configure-cache '*' \
+            --configure-cache-retention '*' --destroy-cache '*')
+
+          # Login to the local server
+          attic login local http://127.0.0.1:${toString atticPort}/ "$TOKEN"
+
+          # Create cache (idempotent — attic cache create fails if it exists)
+          attic cache create monitor365 --public 2>/dev/null \
+            && echo "Created cache 'monitor365'" \
+            || echo "Cache 'monitor365' already exists"
+
+          # Configure retention
+          attic cache configure monitor365 --retention-period ${cfg.retentionPeriod}
+
+          # Print cache info (includes public key for configuration.nix)
+          echo "=== Cache Info ==="
+          attic cache info monitor365 | tee /var/lib/atticd/cache-info.txt
+        '';
+      };
+
       # Attic client for cache management (run atticadm, attic push, etc.)
       environment.systemPackages = [pkgs.attic-client];
 
