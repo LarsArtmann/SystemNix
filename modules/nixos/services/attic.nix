@@ -409,7 +409,7 @@ except Exception:
 
           # Print cache info (includes public key for configuration.nix)
           echo "=== Cache Info ==="
-          attic cache info monitor365 | tee /var/lib/atticd/cache-info.txt
+          attic cache info monitor365
         '';
       };
 
