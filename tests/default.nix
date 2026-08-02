@@ -1,13 +1,12 @@
 {
+  pkgs,
   nixpkgs,
-  system,
   ...
-}:
-let
-  makeTest =
-    testSpec: import "${nixpkgs}/nixos/tests/make-test-python.nix" testSpec { inherit system; };
-in
-{
+}: let
+  # Modern NixOS test runner — replaces the deprecated make-test-python.nix.
+  # Same { nodes, testScript, name } shape, cleaner API.
+  makeTest = testSpec: pkgs.testers.runNixOSTest testSpec;
+in {
   boot = makeTest {
     name = "boot";
 
@@ -21,4 +20,6 @@ in
       machine.succeed("systemctl is-system-running | grep running")
     '';
   };
+
+  attic = makeTest (import ./test-attic.nix {inherit pkgs;});
 }
