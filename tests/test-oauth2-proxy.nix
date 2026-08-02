@@ -66,26 +66,25 @@ in {
       '';
     };
 
-    # Override ExecStartPre: keep cookie secret check, skip OIDC wait (no Pocket ID)
-    systemd.services.oauth2-proxy.serviceConfig = lib.mkMerge [
-      {
-        ExecStartPre = [
-          "+${lib.getExe (pkgs.writeShellApplication {
-            name = "check-cookie-secret-only";
-            runtimeInputs = [pkgs.coreutils];
-            text = ''
-              secret_path="/run/secrets/oauth2_proxy_cookie_secret"
-              len=$(base64 -d < "$secret_path" | wc -c)
-              if [ "$len" -ne 16 ] && [ "$len" -ne 24 ] && [ "$len" -ne 32 ]; then
-                echo "cookie_secret must be 16, 24, or 32 bytes, got $len" >&2
-                exit 1
-              fi
-            '';
-          })}"
-        ];
-        ExecStartPost = lib.mkForce [];
-      }
-    ];
+    # Override ExecStartPre entirely: skip OIDC wait (no Pocket ID in VM).
+    # mkForce replaces the list — without it, NixOS module system concatenates.
+    systemd.services.oauth2-proxy.serviceConfig = {
+      ExecStartPre = lib.mkForce [
+        "+${lib.getExe (pkgs.writeShellApplication {
+          name = "check-cookie-secret-only";
+          runtimeInputs = [pkgs.coreutils];
+          text = ''
+            secret_path="/run/secrets/oauth2_proxy_cookie_secret"
+            len=$(base64 -d < "$secret_path" | wc -c)
+            if [ "$len" -ne 16 ] && [ "$len" -ne 24 ] && [ "$len" -ne 32 ]; then
+              echo "cookie_secret must be 16, 24, or 32 bytes, got $len" >&2
+              exit 1
+            fi
+          '';
+        })}"
+      ];
+      ExecStartPost = lib.mkForce [];
+    };
   };
 
   testScript = ''

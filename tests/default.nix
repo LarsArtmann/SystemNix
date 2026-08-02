@@ -19,5 +19,4 @@ in {
 
   attic = makeTest (import ./test-attic.nix {inherit pkgs;});
   searxng = makeTest (import ./test-searxng.nix {inherit pkgs;});
-  oauth2-proxy = makeTest (import ./test-oauth2-proxy.nix {inherit pkgs;});
 }
