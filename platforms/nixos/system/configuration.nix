@@ -217,7 +217,10 @@ in
       caddy.enable = true;
       forgejo.enable = true;
       immich.enable = true;
-      attic-config.enable = true;
+      attic-config = {
+        enable = true;
+        cachePublicKey = "monitor365:/vu56vS4pTdjoltqqqj80dJ6freEdzEEf4ugdZUPpY8=";
+      };
       pocket-id-config = {
         enable = true;
         provision = {
