@@ -34,13 +34,17 @@ cannot be automated declaratively.
 
 ---
 
-## Step 1: Generate the Attic JWT Secret
+## Step 1: Generate the Attic JWT RS256 Secret
+
+Attic uses RS256 (RSA) JWT signing — not a random symmetric string. Generate
+an RSA private key and base64-encode it:
 
 ```bash
-openssl rand -base64 32
+openssl genrsa -traditional 4096 | base64 -w0
 ```
 
-Copy the output (a base64 string like `aB3dE6f...`).
+Copy the entire base64 output (a long single-line string). This is the
+`ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64` value.
 
 ## Step 2: Create the Sops Secret File
 
@@ -48,8 +52,9 @@ Copy the output (a base64 string like `aB3dE6f...`).
 cd ~/projects/SystemNix
 
 # Create the encrypted secret file
+# NOTE: the key name must match the sops placeholder in sops.nix.
 cat > platforms/nixos/secrets/attic.yaml << 'EOF'
-attic_token_hs256_secret_base64: PASTE_BASE64_HERE
+attic_token_rs256_secret_base64: PASTE_BASE64_RSA_KEY_HERE
 EOF
 
 # Encrypt with sops (uses age key from SSH host key)
@@ -74,28 +79,40 @@ This starts `atticd` behind Caddy at `https://cache.home.lan/`.
 Verify:
 ```bash
 systemctl status atticd
-curl -sk https://cache.home.lan/api/v1/server-info
+# Attic's root endpoint returns a placeholder HTML page (200).
+# There is no /api/v1/server-info endpoint — the server only exposes
+# / (placeholder), /{cache}/nix-cache-info, and /_api/v1/* (internal).
+curl -s -o /dev/null -w '%{http_code}' https://cache.home.lan/
+# Expected: 200
 ```
 
 ## Step 4: Create the Monitor365 Cache
 
-Attic needs an initial cache created via the admin tool. Run as the atticd user:
+Attic needs an initial cache created via the admin token. The nixpkgs module
+ships an `atticd-atticadm` wrapper that runs `atticadm` with the server's
+config file (so it has access to the JWT signing key).
+
+First generate a bootstrap token WITH PERMISSIONS (without `--pull`/`--push`/
+`--create-cache` flags, the token is useless):
 
 ```bash
-sudo -u atticd atticd-queue monitor365 --public
-```
+# Mint an admin token valid for 1 day with full permissions.
+sudo atticd-atticadm make-token --sub admin --validity 1d \
+  --pull '*' --push '*' \
+  --create-cache '*' --configure-cache '*' \
+  --configure-cache-retention '*' --destroy-cache '*' \
+  > /tmp/attic-admin-token
 
-Or if the above doesn't work (atticd-queue may not exist in all versions):
+# Point the attic client at the local server and authenticate.
+# (attic-client is installed system-wide via the attic module's
+# environment.systemPackages)
+attic login local https://cache.home.lan/ "$(cat /tmp/attic-admin-token)"
 
-```bash
-# Generate a bootstrap token (server must be running)
-attic token --endpoint https://cache.home.lan/ \
-  --jwt-config /run/secrets-rendered/attic-env
-
-# Create the cache
-attic login local https://cache.home.lan/ <bootstrap-token>
+# Create a public cache (public = pullable without a token).
 attic cache create monitor365 --public
-attic cache configure monitor365 --retention-period 30d
+
+# Set 7-day retention — paths older than this are GC'd.
+attic cache configure monitor365 --retention-period 7d
 ```
 
 ## Step 5: Get the Cache Public Key
@@ -135,17 +152,18 @@ nixConfig = {
 
 ## Step 7: Create CI Token for Forgejo Actions
 
-Generate a scoped push token:
+The `attic` client has NO `token` subcommand. CI tokens are minted server-side
+via `atticadm make-token` (same tool as Step 4, but with scoped permissions):
 
 ```bash
-attic token --endpoint https://cache.home.lan/ \
-  monitor365 \
-  --pull \
-  --push \
-  --create-cache \
-  --configure-cache \
-  --configure-cache-retention
+# Generate a long-lived token scoped to the monitor365 cache only.
+sudo atticd-atticadm make-token --sub ci-monitor365 --validity 100y \
+  --pull 'monitor365' --push 'monitor365' \
+  --create-cache 'monitor365' --configure-cache 'monitor365' \
+  --configure-cache-retention 'monitor365'
 ```
+
+The output is a JWT string — use it as `ATTIC_TOKEN` in Step 8.
 
 ## Step 8: Add Forgejo Repo Secrets
 

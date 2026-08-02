@@ -238,13 +238,18 @@ in
               mkSecrets "dns-failover.yaml" { } [ "vrrp_auth_password" ]
             )
             // lib.optionalAttrs (svcEnabled "attic-config") (
+              # atticd runs with DynamicUser=true (nixpkgs module default), so the
+              # "atticd" user does NOT exist at sops-decrypt time and cannot own
+              # files — same constraint as Gatus. The EnvironmentFile is read by
+              # systemd (PID 1, root) and the env vars injected into the atticd
+              # process, so a root-owned file is correct and secure.
               mkSecrets "attic.yaml"
                 {
-                  owner = "atticd";
-                  group = "atticd";
+                  owner = "root";
+                  group = "root";
                   restartUnits = [ "atticd.service" ];
                 }
-                [ "attic_token_hs256_secret_base64" ]
+                [ "attic_token_rs256_secret_base64" ]
             );
 
           templates = {
@@ -359,13 +364,17 @@ in
             };
           }
           // lib.optionalAttrs (svcEnabled "attic-config") {
+            # RS256 (RSA PEM PKCS1), NOT HS256 — the nixpkgs atticd module reads
+            # ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64. Generate with:
+            #   openssl genrsa -traditional 4096 | base64 -w0
+            # root-owned: atticd is a DynamicUser (see secrets block above).
             "attic-env" = {
-              owner = "atticd";
-              group = "atticd";
+              owner = "root";
+              group = "root";
               mode = "0400";
               restartUnits = [ "atticd.service" ];
               content = lib.generators.toKeyValue { } {
-                ATTIC_SERVER_TOKEN_HS256_SECRET_BASE64 = config.sops.placeholder.attic_token_hs256_secret_base64;
+                ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64 = config.sops.placeholder.attic_token_rs256_secret_base64;
               };
             };
           };

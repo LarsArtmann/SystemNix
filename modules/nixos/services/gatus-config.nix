@@ -384,6 +384,19 @@ _: {
                 alerts = discordAlert "OpenSEO down — SEO rank tracking unavailable";
               })
             ]
+            ++ lib.optionals (config.services.attic-config.enable or false) [
+              (mkHttpCheck {
+                name = "Attic Binary Cache";
+                group = "Infrastructure";
+                url = "http://localhost:${toString ports.attic}/";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alerts = discordAlert "Attic binary cache down — CI builds will not push/pull cached paths, causing redundant recompilation";
+              })
+            ]
             ++ lib.optionals (config.services.monitor365-server.enable or false) [
               (mkHttpCheck {
                 name = "Monitor365 Server";

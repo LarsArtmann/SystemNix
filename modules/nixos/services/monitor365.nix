@@ -50,6 +50,13 @@
       inherit (import ../../../lib/default.nix lib) ports;
       domain = config.networking.domain;
 
+      # Agent event buffer lives on /data (separate BTRFS partition, 367 GiB
+      # free) instead of the root @ subvolume. The buffer can grow to 30 GiB
+      # (max_size_mb) and previously consumed 50 GiB on a 94%-full root disk.
+      # /data has nofail so a mount failure won't block boot — the agent just
+      # won't start, which is acceptable for a non-critical monitoring service.
+      agentStoragePath = "/data/monitor365";
+
       systemAgentCfg = config.services.monitor365;
       serverCfg = config.services.monitor365-server;
 
@@ -166,8 +173,9 @@
               };
 
               storage = {
+                path = lib.mkDefault agentStoragePath;
                 encryption = lib.mkDefault true;
-                encryption_key_file = lib.mkDefault "/var/lib/monitor365/storage_key";
+                encryption_key_file = lib.mkDefault "${agentStoragePath}/storage_key";
                 max_size_mb = lib.mkDefault (30 * 1024);
               };
 

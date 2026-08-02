@@ -19,7 +19,9 @@
 #   attic push monitor365 <paths>
 #
 # The JWT signing secret is in sops: platforms/nixos/secrets/attic.yaml
-# Generate with: openssl rand -base64 32
+# It is an RS256 RSA PEM PKCS1 key (NOT a random string). Generate with:
+#   openssl genrsa -traditional 4096 | base64 -w0
+# The nixpkgs atticd module reads ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64.
 _: {
   flake.nixosModules.attic =
     {
@@ -35,6 +37,7 @@ _: {
         ports
         harden
         serviceDefaults
+        serviceOneshotDefaults
         onFailure
         ;
       atticPort = ports.attic;
@@ -122,44 +125,63 @@ _: {
           };
         };
 
-        # Hardening: atticd needs write access to state dir AND storage path
+        # Hardening: the nixpkgs atticd module ships comprehensive hardening
+        # (ProtectSystem=strict, ProtectProc=invisible, MemoryDenyWriteExecute,
+        # SystemCallFilter, etc.) at default priority. SystemNix's harden{}
+        # uses mkDefault' for most values, so nixpkgs' values win on overlap.
+        # We set ONLY MemoryMax here (nixpkgs doesn't set it). ReadWritePaths
+        # is computed by nixpkgs from the storage path automatically.
+        # NOTE: atticd is DynamicUser — sops secrets are root-owned (see sops.nix).
         systemd.services.atticd = {
           after = [ "network.target" ];
+          # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+          onFailure = onFailure;
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "2G";
-              ProtectSystem = "full";
-              ReadWritePaths = [
-                stateDir
-                cfg.storagePath
-              ];
             })
             (serviceDefaults { })
           ];
         };
 
-        # Ensure directories exist with correct ownership.
-        # Storage lives on /data (BTRFS data partition) to protect root disk.
+        # Ensure the storage directory exists. StateDirectory (set by nixpkgs)
+        # already creates /var/lib/atticd, so we only create the /data storage
+        # path. Owner is root because atticd is a DynamicUser — the nixpkgs module
+        # grants the dynamic user write access via ReadWritePaths + StateDirectory
+        # semantics. A non-root owner here would fail (user doesn't resolve).
         systemd.tmpfiles.rules = [
-          "d ${stateDir} 0750 atticd atticd - -"
-          "d ${cfg.storagePath} 0750 atticd atticd - -"
+          "d ${cfg.storagePath} 0755 root root - -"
         ];
 
         # Disk-safety guard: if storage exceeds maxStorageGigabytes, trigger
         # an immediate atticd GC cycle. Attic's built-in GC is time-based only
         # (no max-size option), so this is the hard disk bound.
         #
-        # Checks every 30min — if over threshold, restarts atticd which runs
-        # GC on startup with the configured retention period.
+        # CAVEAT: Attic's GC runs on an interval (garbage-collection.interval,
+        # every 4h). Restarting atticd resets that timer — it does NOT guarantee
+        # an immediate GC cycle. Verify on first deploy that a restart actually
+        # reaps expired paths within the retention window; if not, the real
+        # lever is shortening retention-period (or the interval) rather than
+        # restarting. The size check + alert still bounds runaway growth.
         systemd.services.atticd-size-guard = {
           description = "Attic storage size guard — emergency GC trigger";
           after = [ "atticd.service" ];
           wants = [ "atticd.service" ];
-          serviceConfig = {
-            Type = "oneshot";
-            User = "root";
-            MemoryMax = "256M";
-          };
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+            }
+            (harden {
+              MemoryMax = "256M";
+              ReadWritePaths = [ cfg.storagePath ];
+            })
+            (serviceOneshotDefaults { })
+          ];
           script = ''
             storage_path="${cfg.storagePath}"
             max_bytes=$(( ${toString cfg.maxStorageGigabytes} * 1024 * 1024 * 1024 ))

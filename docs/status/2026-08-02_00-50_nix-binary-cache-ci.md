@@ -162,7 +162,7 @@ Commit `ae55ce08e` ("chore(session): commit all uncommitted changes from clippy 
 2. Create `platforms/nixos/secrets/attic.yaml` with sops
 3. Deploy SystemNix: `nh os switch .`
 4. Verify atticd starts: `systemctl status atticd`
-5. Verify Caddy proxy: `curl -sk https://cache.home.lan/api/v1/server-info`
+5. Verify Caddy proxy: `curl -s -o /dev/null -w '%{http_code}' https://cache.home.lan/` (expect 200)
 6. Create cache: `attic cache create monitor365 --public`
 7. Get public key: `attic cache info monitor365`
 8. Fill public key into `nix-settings.nix` (`cachePublicKey`)
@@ -236,3 +236,172 @@ You have PostgreSQL running for immich. Attic supports PG as a backend. For a si
 ### 3. What's the desired cache retention and disk budget?
 
 I defaulted to 30 days and local storage at `/var/lib/atticd/`. The evo-x2 has a 98GB `/rust-cache` partition and BTRFS root. Where should Attic store its data? Is 30 days appropriate, or do you want shorter/longer retention? And what's the disk budget — the full Monitor365 closure could be 5-10GB per build.
+
+---
+
+## Appendix: Disk Safety Update (_00:55_)
+
+### Question answered: "How do we make sure I am not killing my disk?"
+
+**G)Q3 above is now resolved.** Storage, retention, and disk bounds were the
+last unanswered design decision. All three are now configured with hard limits.
+
+### Changes made to `modules/nixos/services/attic.nix`
+
+Three layers of disk protection added:
+
+#### Layer 1: Storage moved to `/data` partition
+
+```nix
+storagePath = lib.mkOption {
+  default = "/data/atticd/storage";   # BTRFS data partition, separate from root
+};
+```
+
+NAR files never touch the NVMe root filesystem. The `/data` partition is a
+separate BTRFS subvolume (`nofail`), so cache fill can never crash the OS or
+compete with system packages for space.
+
+#### Layer 2: Retention cut 30d → 7d, GC frequency 12h → 4h
+
+```nix
+retentionPeriod = "7 days";          # was 30 days
+garbage-collection.interval = "4 hours";  # was 12 hours
+```
+
+For a CI cache, 7 days covers any reasonable PR/iteration cycle. Paths from
+superseded nixpkgs-unstable commits are evicted fast, keeping the cache lean.
+
+#### Layer 3: Size guard timer (the hard bound Attic doesn't have)
+
+Attic's built-in GC is **time-based only** — it has no max-size option. A new
+systemd timer (`atticd-size-guard`) checks `/data/atticd/storage` every 30min:
+
+- If storage exceeds 20GB (configurable via `maxStorageGigabytes`), it restarts
+  `atticd`, which triggers an immediate GC cycle
+- This is the hard disk-safety bound — retention alone can't cap disk if many
+  large paths are pushed within the retention window
+
+Verified via `nix eval`:
+- `services.attic-config.storagePath` → `/data/atticd/storage`
+- `services.attic-config.maxStorageGigabytes` → `20`
+- `services.attic-config.retentionPeriod` → `"7 days"`
+- `services.atticd.settings.garbage-collection.interval` → `"4 hours"`
+- `systemd.services.atticd-size-guard.script` → renders correct bash
+- `systemd.timers.atticd-size-guard.timerConfig` → `OnUnitActiveSec = "30min"`
+
+### Decision: No cloud storage (for now)
+
+**GCS Auto-Class** was evaluated and rejected: egress fees ($0.12/GB) apply on
+every pull. A single 5GB closure pull costs $0.60 — over a month of active
+development this compounds.
+
+**Cloudflare R2** (zero egress) was evaluated and deferred: moving the backend
+to S3 means every pull traverses the internet instead of the 2.5G LAN. A 5GB
+closure that takes seconds locally takes minutes over a 100Mbps uplink.
+
+**Local `/data` with size guard** is the right choice for a hot CI cache on a
+single-machine LAN. If the cache outgrows 20GB regularly, the natural upgrade
+path is R2 (S3-compatible, zero egress) via Attic's `storage.type = "s3"`
+setting — no other code changes needed.
+
+### Updates to section A table
+
+The `attic.nix` entry should now read:
+
+| File | Change | Status |
+| --- | --- | --- |
+| `modules/nixos/services/attic.nix` | Attic server module (SQLite, `/data` storage, 4h GC, 7-day retention, size guard timer, hardened systemd) | **DONE** — updated and verified |
+
+### Updates to section E (improvements)
+
+- ~~E4: SQLite backend may not scale~~ — still valid but deprioritized; single-project cache with 7-day retention will stay well within SQLite's comfort zone
+- ~~E10: `allow-duplicate-paths` might not be valid~~ — **removed** during rewrite; was an untested Attic setting that may not exist in the nixpkgs module
+- New item: the `allow-duplicate-paths` setting was removed in the disk-safety rewrite — verify it's not needed after first real deployment
+
+---
+
+## Appendix: Independent Review (_02:30_)
+
+A second pass against the nixpkgs `atticd` module source and AGENTS.md
+conventions found **two showstoppers and three convention violations that the
+self-review (section D) missed entirely.** All are now fixed; `nix flake check
+--no-build` passes.
+
+### SHOWSTOPPERS (would have blocked deploy or crash-looped atticd)
+
+#### RS1 — Wrong JWT env var: HS256 vs RS256
+
+The nixpkgs `atticd` module reads **`ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64`**
+(an RSA PEM PKCS1 key). The sops template provided
+`ATTIC_SERVER_TOKEN_HS256_SECRET_BASE64` (a random symmetric string), and the
+setup guide generated it with `openssl rand -base64 32`.
+
+Both the name **and** the value type are wrong:
+- Name: `..._HS256_...` → `..._RS256_...`
+- Value: random bytes → RSA private key (`openssl genrsa -traditional 4096 | base64 -w0`)
+
+Even after creating the secret, atticd would have failed to sign/verify tokens.
+**Fixed:** sops.nix template + secret key renamed to `..._rs256_...`; setup
+guide Step 1 rewritten to `openssl genrsa`. Verified: template now renders
+`ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=...`.
+
+#### RS2 — DynamicUser + sops `owner = "atticd"` blocks ALL secrets
+
+The nixpkgs module sets `DynamicUser = true` + `User = "atticd"`. A dynamic
+user does **not** exist at sops-decrypt time (it is allocated when the service
+starts), so `getpwnam("atticd")` fails and `sops-install-secrets` aborts —
+blocking **every** secret atomically (same class as the Gatus and crush-daily
+gotchas in AGENTS.md). This is worse than the "atticd crash-loop" the report
+predicted in section B: it takes down the whole secret layer.
+
+**Fixed:** secret + template owner changed `atticd:atticd` → `root:root`.
+systemd reads the `EnvironmentFile` as PID 1 (root) and injects the vars into
+the atticd process, so a root-owned file is correct and the dynamic user never
+touches it. The tmpfiles rules were also fixed (the `atticd` owner there would
+have warned/skipped; now root-owned, with `StateDirectory` handling
+`/var/lib/atticd`).
+
+### CONVENTION VIOLATIONS (AGENTS.md mandates)
+
+#### RS3 — No Gatus health check (AGENTS.md rule 9: "Every new service MUST be monitored")
+
+The report admitted this in E6 but left it undone. **Fixed:** added an
+"Attic Binary Cache" endpoint (`http://localhost:8200/`,
+60s, Discord alert) to `gatus-config.nix`, conditional on
+`attic-config.enable`.
+
+#### RS4 — No `startLimitBurst` / `startLimitIntervalSec` (AGENTS.md rule 5)
+
+**Fixed:** `atticd` → `5`/`300`; `atticd-size-guard` → `3`/`300`.
+
+#### RS5 — `onFailure` imported but never wired
+
+**Fixed:** `systemd.services.atticd.onFailure` now routes to
+`notify-failure@%n.service`.
+
+### Minor improvements applied
+- `atticd-size-guard` now uses `serviceOneshotDefaults {}` + `harden {}`
+  (was a raw hand-rolled `serviceConfig`).
+- Setup guide Step 4 rewritten: the old `sudo -u atticd atticd-queue` and
+  `/run/secrets-rendered/...` path were both wrong (atticd is a DynamicUser;
+  the sops-rendered path is `/run/secrets/rendered/...`). Now uses the
+  `atticd-atticadm` make-token flow shipped by the nixpkgs module.
+
+### Still OPEN (require deploy/runtime — flagged, not silently fixed)
+
+- **GC-on-restart assumption:** the size guard restarts atticd expecting an
+  immediate GC cycle, but Attic's GC is interval-based (`garbage-collection.interval`,
+  4h). A restart resets the timer; it likely does **not** reap paths for up to
+  4h. The code comment now documents this caveat. Real lever = shorten
+  retention/interval, not restart. Verify on first deploy.
+- **Storage path on `/data` under DynamicUser:** works via nixpkgs'
+  `ReadWritePaths` handling, but verify the directory is created/owned
+  correctly on first start. If it isn't, the simplest correct fallback is the
+  default `/var/lib/atticd/storage` (under `StateDirectory`, guaranteed to
+  work); the size guard still bounds disk usage.
+- **`attic.yaml` secret still absent** (section B): deploy remains blocked
+  until the RS256 key is generated + sops-encrypted (manual, needs the age key).
+- **Workflow `--accept-flake-config`** (E2): lives in the Monitor365 repo.
+  The `attic use` step mitigates it, but CI won't reuse the cache without it.
+
