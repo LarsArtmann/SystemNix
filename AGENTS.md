@@ -128,11 +128,23 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 
 ### Sops + Age
 
+**Encrypting a NEW secret file** — NO sudo needed. The age PUBLIC key in `.sops.yaml` is sufficient:
+
+```bash
+echo "secret_key: $(openssl rand -base64 32)" > platforms/nixos/secrets/newservice.yaml
+sops -e -i platforms/nixos/secrets/newservice.yaml
+git add -f platforms/nixos/secrets/newservice.yaml  # secrets/ matches .gitignore pattern
+```
+
+**Modifying or decrypting an existing secret** — requires the age PRIVATE key (from SSH host key, needs sudo):
+
 ```bash
 SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops --set '["key"] "value"' file.yaml
 ```
 
 - `SOPS_AGE_KEY` in RAM only — never write age key to disk. `SOPS_AGE_SSH_PRIVATE_KEY_FILE` does NOT work with `sops` CLI
+- `sops -e` (encrypt): needs only the PUBLIC key recipient from `.sops.yaml` — NO sudo. The private key is only needed at DEPLOY time (sops-nix activation script runs as root on the target host)
+- `sops --set` / `sops -d` (modify/decrypt): needs `SOPS_AGE_KEY` env var with the private key — requires `sudo` to read the SSH host key
 - Secrets with service-specific owners MUST be guarded with `lib.optionalAttrs config.services.X.enable` — one bad owner blocks ALL secrets atomically
 - See `.crush/skills/sops-secret-management/SKILL.md` for full workflow
 
