@@ -99,7 +99,10 @@ _: {
           environmentFile = config.sops.templates."attic-env".path;
 
           settings = {
-            listen = "[::]:${toString atticPort}";
+            # Bind to localhost only — Caddy (port 80/443) is the sole external
+            # entry point. Defense-in-depth: even if the firewall rule for port
+            # 8200 is accidentally added, the raw HTTP server stays unreachable.
+            listen = "127.0.0.1:${toString atticPort}";
 
             # SQLite metadata — small, lives on root (KB-scale)
             database.url = "sqlite://${stateDir}/server.db?mode=rwc";
@@ -138,6 +141,12 @@ _: {
           startLimitBurst = 5;
           startLimitIntervalSec = 300;
           onFailure = onFailure;
+          # Force restart when settings or package change (nixpkgs module does
+          # not set restartTriggers). Same pattern as dnsblockd / homepage.
+          restartTriggers = [
+            (builtins.toJSON config.services.atticd.settings)
+            config.services.atticd.package
+          ];
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "2G";
@@ -159,12 +168,13 @@ _: {
         # an immediate atticd GC cycle. Attic's built-in GC is time-based only
         # (no max-size option), so this is the hard disk bound.
         #
-        # CAVEAT: Attic's GC runs on an interval (garbage-collection.interval,
-        # every 4h). Restarting atticd resets that timer — it does NOT guarantee
-        # an immediate GC cycle. Verify on first deploy that a restart actually
-        # reaps expired paths within the retention window; if not, the real
-        # lever is shortening retention-period (or the interval) rather than
-        # restarting. The size check + alert still bounds runaway growth.
+        # GC-on-restart is VERIFIED: atticd's monolithic mode spawns the GC
+        # task at startup, and the loop calls run_garbage_collection_once FIRST
+        # (before sleeping for the interval). So restarting atticd guarantees
+        # an immediate GC sweep of expired paths. Source: server/src/gc.rs:34-64
+        # + server/src/main.rs:74-87. An alternative one-shot mode exists
+        # (--mode garbage-collector-once) but requires the same DynamicUser
+        # context + config file path, making the restart approach simpler.
         systemd.services.atticd-size-guard = {
           description = "Attic storage size guard — emergency GC trigger";
           after = [ "atticd.service" ];

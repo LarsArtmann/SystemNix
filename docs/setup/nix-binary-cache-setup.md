@@ -1,5 +1,8 @@
 # Nix Binary Cache Setup Guide
 
+> **Status**: Steps 1-2 are ✅ DONE (secret generated + sops file created).
+> Steps 3-9 are runtime steps that require deployment.
+
 This guide covers the manual steps required to bring the Attic binary cache online.
 All code changes are already in place — these are the runtime/secret steps that
 cannot be automated declaratively.
@@ -34,7 +37,7 @@ cannot be automated declaratively.
 
 ---
 
-## Step 1: Generate the Attic JWT RS256 Secret
+## Step 1: Generate the Attic JWT RS256 Secret ✅ DONE
 
 Attic uses RS256 (RSA) JWT signing — not a random symmetric string. Generate
 an RSA private key and base64-encode it:
@@ -43,29 +46,28 @@ an RSA private key and base64-encode it:
 openssl genrsa -traditional 4096 | base64 -w0
 ```
 
-Copy the entire base64 output (a long single-line string). This is the
-`ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64` value.
-
-## Step 2: Create the Sops Secret File
+## Step 2: Create the Sops Secret File ✅ DONE
 
 ```bash
 cd ~/projects/SystemNix
 
-# Create the encrypted secret file
-# NOTE: the key name must match the sops placeholder in sops.nix.
-cat > platforms/nixos/secrets/attic.yaml << 'EOF'
-attic_token_rs256_secret_base64: PASTE_BASE64_RSA_KEY_HERE
-EOF
+# Create the encrypted secret file.
+# NOTE: sops encryption only needs the age PUBLIC key from .sops.yaml —
+# NO sudo or SSH host key access is required. The private key is only
+# needed for decryption at deploy time (by the sops-nix activation script
+# on the target host).
+echo "attic_token_rs256_secret_base64: $(openssl genrsa -traditional 4096 | base64 -w0)" \
+  > platforms/nixos/secrets/attic.yaml
 
-# Encrypt with sops (uses age key from SSH host key)
+# Encrypt with sops (reads age recipients from .sops.yaml)
 sops -e -i platforms/nixos/secrets/attic.yaml
+
+# Force-add past .gitignore (secrets/ matches 'secrets*' pattern)
+git add -f platforms/nixos/secrets/attic.yaml
 ```
 
-Verify it's encrypted:
-```bash
-cat platforms/nixos/secrets/attic.yaml
-# Should show ENC[AES256_GCM,...] values, not plaintext
-```
+The sops file `platforms/nixos/secrets/attic.yaml` has been created and
+encrypted. It is tracked by git (force-added past `.gitignore`).
 
 ## Step 3: Deploy SystemNix
 
@@ -215,9 +217,12 @@ nix build github:LarsArtmann/monitor365#monitor365 --substituters "https://cache
   ```
 
 - **GC interaction**: Attic stores NAR files in its own storage
-  (`/var/lib/atticd/storage/`), independent of the host's `/nix/store`. The
+  (`/data/atticd/storage/`), independent of the host's `/nix/store`. The
   host's 3-day GC does NOT affect cached paths. Attic has its own GC
-  (`garbage-collection.interval = "12 hours"`) with a 30-day default retention.
+  (`garbage-collection.interval = "4 hours"`) with a 7-day default retention.
+  GC runs immediately on startup (verified from source: `gc.rs:34-64` — the
+  loop calls `run_garbage_collection_once` first, then sleeps for the
+  interval), so the size guard's restart-to-trigger-GC mechanism works.
 
 - **LAN-only**: The cache is only reachable on `cache.home.lan`. GitHub Actions
   CI cannot use it. To expose externally, use a Tailscale funnel or Cloudflare

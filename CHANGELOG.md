@@ -39,6 +39,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **/tmp cleanup timer** — `nix-build-cleanup-timer` variant removes /tmp entries untouched >4h (every 4h + on boot). `/tmp` tmpfs cap raised from 16 GiB to 48 GiB
 - **/tmp tmpfs monitoring** — system-health collector emits `system_tmpfs_tmp_usage_percent` + `system_tmpfs_tmp_over_threshold` (80% of 48 GiB cap ≈ 38 GiB). SigNoz alert "/tmp TmpFS Usage High (>80%)" + Gatus Discord alert. Catches runaway builds before hitting the ceiling
 - **SigNoz mkRule target validation** — `validateTarget` assertion in `mkRule` rejects `target=0` + `above_or_equal` (always true for non-negative metrics) and `target=0` + `below` (never true). Prevents the always-firing alert bug from recurring
+- **duckdb CLI** — added to cross-platform base packages (handy for inspecting monitor365 `.duckdb` files)
 
 ### Changed
 

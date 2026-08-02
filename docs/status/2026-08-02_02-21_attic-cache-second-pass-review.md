@@ -74,17 +74,18 @@ Built `nixpkgs#attic-server` and `nixpkgs#attic-client` from source and ran
 
 ## B) PARTIALLY DONE
 
-### GC-on-restart assumption STILL unverified
+### GC-on-restart assumption — ✅ VERIFIED (third session)
 
-The `atticd-size-guard` restarts atticd when storage exceeds
-`maxStorageGigabytes`, expecting an immediate GC cycle. Attic's GC is
-interval-based (`garbage-collection.interval = "4h"`). A restart resets the
-timer. **Whether atticd runs GC once on startup when paths are past retention
-has NOT been verified.** I had sourcegraph access to the Attic Rust source
-(`server/src/`) and could have checked, but didn't. The code comment documents
-the caveat. The size guard still provides disk-safety value (bounds growth +
-alerts on Discord), but the "restart triggers GC" mechanism may be
-"restart and pray".
+**VERIFIED from Attic source** (`server/src/gc.rs:34-64` + `server/src/main.rs:74-87`):
+The GC loop (`run_garbage_collection`) calls `run_garbage_collection_once` FIRST
+(before sleeping for the interval). So on every startup — including restart —
+GC runs an immediate sweep of expired paths. The "restart and pray" concern was
+unfounded. The size guard's restart-to-trigger-GC mechanism is correct and verified.
+
+An alternative one-shot mode exists (`atticd --mode garbage-collector-once`) but
+requires the same DynamicUser context + config file path, making the restart
+approach simpler. The code comment in `attic.nix` has been updated to reflect
+this verified behavior.
 
 ### Setup guide Step 5 (`attic cache info` output format)
 
@@ -298,34 +299,25 @@ and understood what was already changed before adding my own edits.
 
 ---
 
-## G) Questions I Cannot Answer Myself
+## G) Questions — All Resolved (Third Session)
 
-### 1. Should I deploy now, or wait?
+### 1. Should I deploy now, or wait? — ✅ READY TO DEPLOY
 
-The Attic module code is clean (`nix flake check --no-build` passes), but the
-secret file `platforms/nixos/secrets/attic.yaml` does NOT exist. Creating it
-requires `sudo` access to read the SSH host key for the age key derivation:
-`SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)`.
-I cannot run `sudo`. Should you create the secret and deploy, or should I
-prepare everything else and hand off the deploy to you?
+The sops file `platforms/nixos/secrets/attic.yaml` has been created and encrypted.
+**Sops encryption does NOT need sudo** — the age PUBLIC key in `.sops.yaml` is
+sufficient for `sops -e`. The private key is only needed for decryption at deploy
+time (by sops-nix activation on the target host). The system is ready for
+`nh os switch .` or `nix run .#deploy`.
 
-### 2. What's the status of the parallel monitor365 changes?
+### 2. What's the status of the parallel monitor365 changes? — ⚠️ STILL OPEN
 
 There are uncommitted changes in `monitor365.nix` (SystemNix — adds
-`agentStoragePath = "/data/monitor365"`) and in the monitor365 repo (8 files —
-encryption key zeroize fix + fd_leak_detector + smart_predictor). These were
-NOT made by this session. Are these from a parallel session that should be
-committed before I deploy? Or are they WIP that I should leave alone? I don't
-want to commit changes I didn't author.
+`agentStoragePath = "/data/monitor365"`) and in the monitor365 repo (many .rs
+files from a clippy session + nix-cache.yml from this session). These were NOT
+made by this session. Commit them before deploying if they're ready.
 
-### 3. Should the size guard use a different GC trigger mechanism?
+### 3. Should the size guard use a different GC trigger mechanism? — ✅ RESOLVED
 
-The current `atticd-size-guard` restarts atticd to trigger GC. But I haven't
-verified (via source) that atticd runs GC on startup. If it doesn't, the guard
-is "restart and pray." I could:
-- **(a)** Read the Attic Rust source now to verify (sourcegraph query)
-- **(b)** Redesign the guard to use `atticd --mode garbage-collector` as a one-shot
-- **(c)** Leave it as-is and verify empirically after first deploy
-
-I lean toward (c) since the size guard is a safety net, not the primary GC
-mechanism (the 4h interval is). But if you want certainty now, I can do (a).
+**Current mechanism is correct.** Verified from Attic source (`gc.rs:34-64`):
+the GC loop runs `run_garbage_collection_once` FIRST (before sleeping), so every
+restart triggers an immediate GC sweep. No redesign needed.

@@ -119,6 +119,7 @@ let
       # Data manipulation
       jq
       yq-go
+      duckdb # In-process analytical SQL database (used by monitor365)
 
       # Task runner
       just
