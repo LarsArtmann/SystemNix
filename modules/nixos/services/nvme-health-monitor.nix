@@ -142,9 +142,9 @@ _: {
           pkgs.libnotify
           pkgs.util-linux
         ];
-        user = cfg.user;
+        inherit (cfg) user;
         inherit uid;
-        interval = cfg.interval;
+        inherit (cfg) interval;
         bootDelay = "1min";
         hardenFn = hardenUser;
       };

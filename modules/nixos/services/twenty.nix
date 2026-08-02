@@ -201,7 +201,7 @@ _: {
               ];
             };
           };
-          timers = docker.timers;
+          inherit (docker) timers;
         };
       };
     };

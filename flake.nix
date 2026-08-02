@@ -447,7 +447,7 @@
       ...
     }:
     let
-      lib = nixpkgs.lib;
+      inherit (nixpkgs) lib;
       overlays = import ./overlays inputs;
       inherit (overlays)
         sharedOverlays
@@ -615,7 +615,6 @@
               inherit
                 pkgs
                 lib
-                nixpkgs
                 system
                 ;
             }

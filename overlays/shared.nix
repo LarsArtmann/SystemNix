@@ -28,9 +28,9 @@
           };
     in
     {
-      aw-server-rust = awPkgs.aw-server-rust;
+      inherit (awPkgs) aw-server-rust;
       activitywatch = prev.activitywatch.override {
-        aw-server-rust = final.aw-server-rust;
+        inherit (final) aw-server-rust;
       };
     }
   )

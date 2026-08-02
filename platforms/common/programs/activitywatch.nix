@@ -4,7 +4,7 @@
   ...
 }:
 let
-  ports = (import ../../../lib/default.nix lib).ports;
+  inherit ((import ../../../lib/default.nix lib)) ports;
 in
 {
   services.activitywatch = {

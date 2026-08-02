@@ -6,45 +6,23 @@
 let
   keepassxcPkg = pkgs.keepassxc;
 
-  # Chromium manifest as a separate file to avoid eval-time cycles
-  chromiumManifest = pkgs.writeText "keepassxc-chromium-manifest" (
-    builtins.toJSON {
-      name = "org.keepassxc.keepassxc_browser";
-      description = "KeePassXC integration with native messaging support";
-      path = "${keepassxcPkg}/bin/keepassxc-proxy";
-      type = "stdio";
-      allowed_origins = [ "chrome-extension://oboonakemofpalcgghocfoadofidjkkk/" ];
-    }
-  );
-
-  # Wrapper that provides Chromium native messaging manifests.
-  # nixpkgs keepassxc only ships $out/lib/mozilla/ (Firefox format).
-  # HM's chromium/brave modules expect $out/etc/chromium/native-messaging-hosts/.
-  keepassxcWithChromiumManifests = pkgs.symlinkJoin {
-    name = "keepassxc-with-chromium-manifests";
-    paths = [ keepassxcPkg ];
-    postBuild = ''
-      mkdir -p $out/etc/chromium/native-messaging-hosts
-      ln -s ${chromiumManifest} $out/etc/chromium/native-messaging-hosts/org.keepassxc.keepassxc_browser.json
-    '';
-  };
-
   # Native messaging manifest for Helium browser extension.
   # Helium uses net.imput.helium (from imputnet/helium change-chromium-branding.patch).
   #   macOS: ~/Library/Application Support/net.imput.helium/
   #   Linux: $XDG_CONFIG_HOME/net.imput.helium/
+  # nixpkgs keepassxc already ships Chromium + Firefox manifests at the standard
+  # paths — no symlinkJoin wrapper needed. Helium uses a non-standard config dir.
   heliumManifest = builtins.toJSON {
     name = "org.keepassxc.keepassxc_browser";
     description = "KeePassXC integration with native messaging support";
-    path = "${keepassxcWithChromiumManifests}/bin/keepassxc-proxy";
+    path = "${keepassxcPkg}/bin/keepassxc-proxy";
     type = "stdio";
     allowed_origins = [ "chrome-extension://oboonakemofpalcgghocfoadofidjkkk/" ];
   };
-in
-{
+in {
   programs.keepassxc = {
     enable = true;
-    package = keepassxcWithChromiumManifests;
+    package = keepassxcPkg;
     settings = {
       Browser.Enabled = true;
       Browser.UpdateBinaryPath = false;

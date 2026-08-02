@@ -26,7 +26,7 @@ _: {
         services.taskchampion-sync-server = {
           enable = true;
           host = "127.0.0.1";
-          port = cfg.port;
+          inherit (cfg) port;
           openFirewall = false;
           snapshot = {
             versions = 100;

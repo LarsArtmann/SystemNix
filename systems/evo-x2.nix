@@ -56,7 +56,7 @@ nixpkgs.lib.nixosSystem {
         };
         extraSpecialArgs = sharedHomeManagerSpecialArgs // {
           wallpapers = inputs.wallpapers-src;
-          dankMaterialShell = inputs.dankMaterialShell;
+          inherit (inputs) dankMaterialShell;
         };
       };
     }

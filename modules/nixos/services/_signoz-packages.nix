@@ -5,7 +5,7 @@
   lib,
 }:
 let
-  ports = (import ../../../lib/default.nix lib).ports;
+  inherit ((import ../../../lib/default.nix lib)) ports;
   version = "0.127.1";
   collectorVersion = "0.144.5";
 in

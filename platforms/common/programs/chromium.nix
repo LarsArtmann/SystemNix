@@ -7,7 +7,7 @@
   ...
 }:
 let
-  ytShortsBlocker = (import ../browser-extensions.nix).ytShortsBlocker;
+  inherit ((import ../browser-extensions.nix)) ytShortsBlocker;
 in
 {
   # Chromium browser with declarative extension management

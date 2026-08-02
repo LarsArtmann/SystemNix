@@ -1,20 +1,30 @@
 # VM test for the Attic binary cache module.
 #
-# Verifies the 5 runtime risks that nix eval CANNOT check:
+# Verifies the runtime risks that nix eval CANNOT check:
 #   1. atticd starts (DynamicUser + storage permissions + systemd unit validity)
 #   2. Health endpoint responds (catches non-existent API endpoint bugs)
 #   3. Prometheus metrics file is valid (catches heredoc indentation bugs)
 #   4. Storage directory is writable by DynamicUser
-#   5. atticadm make-token works with permission flags (catches missing flags)
+#   5. Size guard runs without error (no crash from missing ReadWritePaths)
+#   6. atticd-atticadm make-token works (catches missing permission flags)
+#   7. Full cache lifecycle: token → login → cache create (end-to-end)
 #
 # Uses mock-sops.nix so we can evaluate sops-dependent config without the age key.
-# Generates a real RSA key at VM boot for JWT signing.
+# Generates a real RSA key at build time for JWT signing (same pattern as nixpkgs upstream test).
 {pkgs}: let
   # Extract the NixOS module from the flake-parts wrapper.
   # attic.nix is _: { flake.nixosModules.attic = <nixos-module-fn>; }
   # Calling with {} extracts the inner module function.
   atticFlakeOutput = (import ../modules/nixos/services/attic.nix) {};
   atticNixosModule = atticFlakeOutput.flake.nixosModules.attic;
+
+  # Generate a real RS256 key at build time (same pattern as the nixpkgs upstream test).
+  # The module's environmentFile points to a sops template path; we override it
+  # with this build-time file via mkForce so the VM has a real key without needing
+  # a keygen oneshot service.
+  testEnvFile = pkgs.runCommand "atticd-test-env" {} ''
+    echo "ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=$(${pkgs.openssl}/bin/openssl genrsa -traditional 2048 | base64 -w0)" > $out
+  '';
 in {
   name = "attic";
 
@@ -22,14 +32,12 @@ in {
     imports = [
       atticNixosModule
       ./mock-sops.nix
+      ./test-helpers.nix
     ];
 
-    networking.domain = "test.local";
-
-    # Make atticadm (server admin tool) available — attic-client only has the
-    # client CLI, not the admin tool. The nixpkgs module sets services.atticd.package
-    # which includes atticd + atticadm.
-    environment.systemPackages = [pkgs.attic-server];
+    # Override the sops template path with a build-time generated key file.
+    # mkForce is needed because the module sets environmentFile at default priority.
+    services.atticd.environmentFile = lib.mkForce testEnvFile;
 
     # Use a VM-friendly storage path (no /data partition in QEMU)
     services.attic-config = {
@@ -41,28 +49,6 @@ in {
     # resolves (mock-sops creates the option, we just register the names)
     sops.templates."attic-env" = {};
     sops.secrets.attic_token_rs256_secret_base64 = {};
-
-    # Generate a real RS256 key for JWT signing — atticd needs it at startup.
-    # Written to the mock template path before atticd starts.
-    systemd.services.attic-test-keygen = {
-      description = "Generate RS256 JWT key for Attic test";
-      script = ''
-        mkdir -p /run/secrets-rendered
-        key=$(${pkgs.openssl}/bin/openssl genrsa -traditional 2048 | base64 -w0)
-        echo "ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=$key" > /run/secrets-rendered/attic-env
-      '';
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      wantedBy = ["multi-user.target"];
-      before = ["atticd.service"];
-    };
-
-    # Ensure textfile collector directory exists for metrics service
-    systemd.tmpfiles.rules = [
-      "d /var/lib/prometheus-node-exporter/textfile_collectors 0755 root root - -"
-    ];
   };
 
   testScript = ''
@@ -92,9 +78,15 @@ in {
     # 6. Size guard runs without error (no crash from missing ReadWritePaths)
     machine.systemctl("start atticd-size-guard.service")
 
-    # NOTE: atticadm make-token is tested manually post-deploy. The nixpkgs module
-    # creates an atticd-atticadm wrapper with the generated config file baked in,
-    # which is not trivially accessible in a VM test context. The 6 tests above
-    # cover the SystemNix module risks that nix eval cannot verify.
+    # 7. atticd-atticadm make-token with permission flags (catches missing flags).
+    #    Same flags as the nixpkgs upstream test. The nixpkgs module creates the
+    #    atticd-atticadm wrapper which bakes in the config file and runs via
+    #    systemd-run with the same DynamicUser/EnvironmentFile as atticd.
+    token = machine.succeed("atticd-atticadm make-token --sub test --validity 1y --create-cache '*' --pull '*' --push '*' --delete '*' --configure-cache '*' --configure-cache-retention '*'").strip()
+    assert len(token) > 50, f"Expected a JWT token, got: {token!r}"
+
+    # 8. Full cache lifecycle: login + create cache (end-to-end smoke test)
+    machine.succeed(f"attic login local http://localhost:8200 {token}")
+    machine.succeed("attic cache create test-cache")
   '';
 }

@@ -140,7 +140,7 @@ _: {
                 };
                 existingCollections = lib.listToAttrs (
                   map (c: {
-                    name = c.name;
+                    inherit (c) name;
                     value = lib.filterAttrs (n: _: n != "name") c;
                   }) cfg.bootstrapCollections
                 );

@@ -293,7 +293,7 @@ let
       : "''${UNALLOC_BYTES:=0}"
       : "''${META_PCT:=0}"
       if [ "$UNALLOC_BYTES" -lt 5368709120 ]; then
-        echo "btrfs-balance-metadata: insufficient unallocated ($(($UNALLOC_BYTES / 1073741824)) GiB < 5 GiB), skipping"
+        echo "btrfs-balance-metadata: insufficient unallocated ($((UNALLOC_BYTES / 1073741824)) GiB < 5 GiB), skipping"
         exit 0
       fi
 
@@ -330,7 +330,7 @@ let
       eval "$(btrfs-chunk-check "$MOUNT" 2>/dev/null)"
       : "''${UNALLOC_BYTES:=0}"
       if [ "$UNALLOC_BYTES" -lt 10737418240 ]; then
-        echo "btrfs-balance-data: insufficient unallocated ($(($UNALLOC_BYTES / 1073741824)) GiB < 10 GiB), skipping"
+        echo "btrfs-balance-data: insufficient unallocated ($((UNALLOC_BYTES / 1073741824)) GiB < 10 GiB), skipping"
         exit 0
       fi
 
@@ -361,7 +361,7 @@ let
 
       if [ -f "$RESERVE_FILE" ]; then
         CURRENT_SIZE=$(stat -c %s "$RESERVE_FILE" 2>/dev/null || echo 0)
-        echo "btrfs-emergency-reserve: already exists ($(($CURRENT_SIZE / 1073741824)) GiB)"
+        echo "btrfs-emergency-reserve: already exists ($((CURRENT_SIZE / 1073741824)) GiB)"
         exit 0
       fi
 
@@ -369,7 +369,7 @@ let
       FREE_BYTES=$(df -B1 / | awk 'NR==2 {print $4}')
       MIN_FREE=$((RESERVE_BYTES + 5368709120))
       if [ "$FREE_BYTES" -lt "$MIN_FREE" ]; then
-        echo "btrfs-emergency-reserve: insufficient free space ($(($FREE_BYTES / 1073741824)) GiB available, need $(($MIN_FREE / 1073741824)) GiB)"
+        echo "btrfs-emergency-reserve: insufficient free space ($((FREE_BYTES / 1073741824)) GiB available, need $((MIN_FREE / 1073741824)) GiB)"
         exit 1
       fi
 

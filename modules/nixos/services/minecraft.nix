@@ -83,7 +83,7 @@ _: {
             forceUnicodeFont = false;
             japaneseGlyphVariants = false;
             fov = fovToNormalized ccfg.fov;
-            fovEffectScale = ccfg.fovEffectScale;
+            inherit (ccfg) fovEffectScale;
             darknessEffectScale = 1.0;
             glintSpeed = 0.5;
             glintStrength = 0.75;
@@ -91,8 +91,8 @@ _: {
             prioritizeChunkUpdates = 1;
             fullscreen = false;
             exclusiveFullscreen = false;
-            gamma = ccfg.gamma;
-            guiScale = ccfg.guiScale;
+            inherit (ccfg) gamma;
+            inherit (ccfg) guiScale;
             maxAnisotropyBit = 1;
             textureFiltering = 1;
             maxFps = 120;
@@ -104,8 +104,8 @@ _: {
             reducedDebugInfo = false;
             renderClouds = "\"true\"";
             cloudRange = 64;
-            renderDistance = ccfg.renderDistance;
-            simulationDistance = ccfg.simulationDistance;
+            inherit (ccfg) renderDistance;
+            inherit (ccfg) simulationDistance;
             screenEffectScale = 1.0;
             soundDevice = "\"\"";
             vignette = true;

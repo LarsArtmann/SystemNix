@@ -106,7 +106,7 @@ _: {
         };
 
         systemd = {
-          services = docker.services;
+          inherit (docker) services;
           tmpfiles.rules = docker.tmpfiles;
         };
 

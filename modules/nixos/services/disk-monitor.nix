@@ -96,9 +96,9 @@ _: {
           pkgs.coreutils
           pkgs.systemd
         ];
-        user = cfg.user;
+        inherit (cfg) user;
         inherit uid;
-        interval = cfg.interval;
+        inherit (cfg) interval;
         bootDelay = "2min";
         hardenFn = hardenUser;
       };

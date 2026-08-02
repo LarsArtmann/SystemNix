@@ -22,10 +22,35 @@ jobs:
         run: nix flake show --allow-import-from-derivation 2>&1 | head -20
 
       - name: Run statix linter
-        run: nix run nixpkgs#statix -- check . || true
+        run: nix run nixpkgs#statix -- check .
 
       - name: Run deadnix linter
         run: nix run nixpkgs#deadnix -- --fail --no-lambda-pattern-names .
 
       - name: Check Nix formatting
         run: nix fmt -- --ci
+
+      - name: Evaluate flake (no build)
+        run: nix flake check --no-build
+
+  vm-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM for VM tests
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+            access-tokens = github.com=${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run NixOS VM tests
+        run: |
+          nix build .#checks.x86_64-linux.boot --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.attic --no-link --print-out-paths

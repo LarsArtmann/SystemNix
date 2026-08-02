@@ -138,7 +138,7 @@ _: {
         # AGENTS.md rule 5: every service sets start-limit bounds + onFailure.
         startLimitBurst = 5;
         startLimitIntervalSec = 300;
-        onFailure = onFailure;
+        inherit onFailure;
         # Force restart when settings or package change (nixpkgs module does
         # not set restartTriggers). Same pattern as dnsblockd / homepage.
         restartTriggers = [

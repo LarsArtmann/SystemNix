@@ -20,7 +20,7 @@ _: {
         mkSecretCheck
         ;
       pocketIdPort = cfg.port;
-      metricsPort = cfg.metricsPort;
+      inherit (cfg) metricsPort;
 
       dataDir = config.services.pocket-id.dataDir;
       clientSecretsDir = "${dataDir}/client-secrets";
@@ -189,15 +189,15 @@ _: {
             let
               logoPath = if client.logoFile != null then toString client.logoFile else "";
               clientAttrs = {
-                name = client.name;
-                callbackURLs = client.callbackURLs;
+                inherit (client) name;
+                inherit (client) callbackURLs;
                 logoutCallbackURLs = client.logoutCallbackURLs or [ ];
-                isPublic = client.isPublic;
-                pkceEnabled = client.pkceEnabled;
+                inherit (client) isPublic;
+                inherit (client) pkceEnabled;
                 requiresReauthentication = client.requiresReauthentication or false;
               }
               // lib.optionalAttrs (client.launchURL or null != null) {
-                launchURL = client.launchURL;
+                inherit (client) launchURL;
               };
               createAttrs = clientAttrs // {
                 id = client.clientId;
