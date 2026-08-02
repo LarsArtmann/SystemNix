@@ -134,7 +134,7 @@
           if [ ! -f "$MAIN_DB" ] || [ ! -s "$MAIN_DB" ]; then
             LATEST_BACKUP="$(
               find "$DB_DIR" -maxdepth 1 -name '*.backup_*.db' -printf '%T@\t%p\n' 2>/dev/null \
-                | sort -rn | cut -f2- | head -1
+                | sort -rn | cut -f2- | head -1 || true
             )"
             if [ -n "$LATEST_BACKUP" ]; then
               echo "monitor365-duckdb-heal: main DB missing/empty, restoring from backup: $LATEST_BACKUP"

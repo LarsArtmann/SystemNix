@@ -373,7 +373,8 @@ in
                           log "cargo-sweep --time 7d in $project ($dir_size_human)"
                           if cargo-sweep --time 7d --installed 2>/dev/null \
                              || cargo-sweep --time 7d; then
-                            new_size_kb=$(du -sk "$target_dir" 2>/dev/null | cut -f1 || echo 0)
+                            new_size_kb=$(du -sk "$target_dir" 2>/dev/null | cut -f1 || true)
+                            new_size_kb=${new_size_kb:-0}
                             freed_kb=$((dir_size_kb - new_size_kb))
                             TOTAL_FREED_KB=$((TOTAL_FREED_KB + freed_kb))
                             CLEANED=$((CLEANED + 1))
