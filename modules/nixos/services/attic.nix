@@ -350,6 +350,7 @@ _: {
           (harden {
             MemoryMax = "256M";
             ProtectHome = false; # attic login writes to ~/.config/attic/
+            ReadWritePaths = ["/var/lib/atticd"]; # cache-info.txt output
           })
           (serviceOneshotDefaults {})
         ];
