@@ -1,13 +1,16 @@
 # VM test for the oauth2-proxy forward-auth module.
 #
-# Verifies the runtime risks that nix eval CANNOT check:
-#   1. oauth2-proxy starts with correct config (port, provider, cookie domain)
-#   2. /ping endpoint responds (built-in health check)
-#   3. Cookie secret validation works (base64-decoded length check)
-#   4. The hardening + serviceDefaults produce a valid systemd unit
+# DISABLED — not registered in tests/default.nix because oauth2-proxy requires
+# a real OIDC provider (Pocket ID) at startup. Without auth.test.local serving
+# the OIDC discovery document, oauth2-proxy crashes immediately. Setting up a
+# mock OIDC provider in the VM is more complexity than the test value justifies.
 #
-# The OIDC wait gate (waitOidcReady) is replaced with a no-op since there's no
-# Pocket ID in the VM. The real OIDC integration is tested post-deploy.
+# The SystemNix-specific config (hardening, port wiring, cookie secret
+# validation) is verified by nix eval. The OIDC integration is tested
+# post-deploy on the real system.
+#
+# KEPT as reference for: mocking pocket-id-config options, overriding
+# ExecStartPre with mkForce, generating build-time secrets.
 {pkgs}: let
   oauth2ProxyFlakeOutput = (import ../modules/nixos/services/oauth2-proxy.nix) {};
   oauth2ProxyNixosModule = oauth2ProxyFlakeOutput.flake.nixosModules.oauth2-proxy;
