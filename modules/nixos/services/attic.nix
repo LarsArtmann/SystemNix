@@ -329,8 +329,9 @@ _: {
 
       # Bootstrap: automatically create cache + configure retention on deploy.
       # Eliminates the need for manual `sudo atticd-atticadm make-token` + manual
-      # `attic cache create`. Uses atticd-atticadm (needs root via systemd-run)
-      # for token creation, then attic client for cache management via HTTP API.
+      # `attic cache create`. Runs atticadm directly (root can read the sops env
+      # file and the server config from the nix store), then uses the attic
+      # client for cache management via the HTTP API.
       systemd.services.atticd-bootstrap = {
         description = "Bootstrap Attic cache (create cache + configure retention)";
         after = ["atticd.service"];
@@ -339,7 +340,7 @@ _: {
         startLimitBurst = 3;
         startLimitIntervalSec = 300;
         inherit onFailure;
-        path = [pkgs.attic-client pkgs.python3];
+        path = [config.services.atticd.package pkgs.attic-client pkgs.python3 pkgs.gnused];
         serviceConfig = lib.mkMerge [
           {
             Type = "oneshot";
@@ -371,10 +372,23 @@ except Exception:
             sleep 1
           done
 
-          # Create a short-lived admin token via atticd-atticadm (systemd-run
-          # wrapper that runs atticadm in the DynamicUser context with the
-          # RS256 secret from the sops env file).
-          TOKEN=$(atticd-atticadm make-token \
+          # Source the RS256 secret (sops-rendered env file, root-readable).
+          # atticadm make-token only needs the RS256 key to sign a JWT —
+          # no database access required.
+          set -a
+          . /run/secrets/rendered/attic-env
+          set +a
+
+          # Extract the server config path from atticd's ExecStart.
+          # atticadm needs -f <config> to initialize (even for make-token).
+          CONFIG_FILE=$(sed -n 's/^ExecStart=.* -f \([^ ]*\) .*/\1/p' /etc/systemd/system/atticd.service)
+          if [ -z "$CONFIG_FILE" ]; then
+            echo "ERROR: Could not find atticd config file path"
+            exit 1
+          fi
+
+          # Create a short-lived admin token.
+          TOKEN=$(atticadm -f "$CONFIG_FILE" make-token \
             --sub bootstrap \
             --validity 1h \
             --pull '*' --push '*' \
