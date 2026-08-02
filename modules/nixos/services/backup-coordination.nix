@@ -28,6 +28,11 @@ _: {
         TEMP="$OUT.tmp"
         ANY_UNHEALTHY=0
 
+        # Ensure the textfile collector directory exists (defense-in-depth —
+        # ReadWritePaths should handle this, but the dir may be missing on
+        # first boot before prometheus-node-exporter has run).
+        mkdir -p "${textfileDir}"
+
         ${lib.concatStringsSep "\n" (
           lib.mapAttrsToList (
             name: backup: let
@@ -40,9 +45,10 @@ _: {
               BACKUP_DIR="${backup.directory}"
               PATTERN="${pattern}"
               MAX_AGE="${toString backup.maxAgeHours}"
-              LATEST="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name "$PATTERN" -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2)"
-              if [ -n "$LATEST" ]; then
-                MTIME="$(stat -c %Y "$LATEST")"
+              # || true handles: find exit non-zero (dir missing), head SIGPIPE
+              LATEST="$(find "$BACKUP_DIR" -maxdepth 1 -type f -name "$PATTERN" -printf '%T@\t%p\n' 2>/dev/null | sort -rn | head -1 | cut -f2 || true)"
+              if [ -n "$LATEST" ] && [ -e "$LATEST" ]; then
+                MTIME="$(stat -c %Y "$LATEST" 2>/dev/null || echo 0)"
                 AGE_HOURS=$(( (NOW - MTIME) / 3600 ))
                 HEALTHY=1
                 [ "$AGE_HOURS" -gt "$MAX_AGE" ] && HEALTHY=0

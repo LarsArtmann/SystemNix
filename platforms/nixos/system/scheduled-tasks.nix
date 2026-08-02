@@ -492,12 +492,14 @@ in
                     BUILD_DIR="/nix/var/nix/builds"
                     [ -d "$BUILD_DIR" ] || exit 0
 
-                    before_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || echo 0)
+                    before_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || true)
+                    before_kb=${before_kb:-0}
 
                     # Remove sandboxes untouched for >1h (active builds constantly write)
                     find "$BUILD_DIR" -maxdepth 1 -type d -name 'nix-*' -mmin +60 -exec rm -rf {} +
 
-                    after_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || echo 0)
+                    after_kb=$(du -sk "$BUILD_DIR" 2>/dev/null | cut -f1 || true)
+                    after_kb=${after_kb:-0}
                     freed_kb=$((before_kb - after_kb))
                     freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
 
@@ -536,7 +538,8 @@ in
                     THRESHOLD_MIN=240 # 4 hours — active builds touch files constantly
 
                     # -x prevents crossing into bind-mounted filesystems under /tmp
-                    before_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || echo 0)
+                    before_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
+                    before_kb=${before_kb:-0}
 
                     removed=0
                     # Only top-level non-dotfile entries — dotfiles (.X11-unix, .font-unix,
@@ -556,10 +559,13 @@ in
                       if find "$entry" -xdev -mmin "-$THRESHOLD_MIN" -print -quit 2>/dev/null | grep -q .; then
                         continue
                       fi
-                      rm -rf --one-file-system -- "$entry" && removed=$((removed + 1))
+                      # rm errors (permission denied on other users' files) are
+                      # non-fatal — suppress stderr and continue to next entry.
+                      rm -rf --one-file-system -- "$entry" 2>/dev/null && removed=$((removed + 1)) || true
                     done
 
-                    after_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || echo 0)
+                    after_kb=$(du -skx /tmp 2>/dev/null | cut -f1 || true)
+                    after_kb=${after_kb:-0}
                     freed_kb=$((before_kb - after_kb))
                     freed_human=$(numfmt --to=iec --suffix=B "$((freed_kb * 1024))" 2>/dev/null || echo "''${freed_kb}KB")
                     echo "tmp-cleanup: removed $removed stale entries, freed $freed_human from /tmp"
