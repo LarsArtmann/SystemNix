@@ -335,6 +335,7 @@ _: {
         description = "Bootstrap Attic cache (create cache + configure retention)";
         after = ["atticd.service"];
         wants = ["atticd.service"];
+        wantedBy = ["multi-user.target"];
         startLimitBurst = 3;
         startLimitIntervalSec = 300;
         inherit onFailure;
