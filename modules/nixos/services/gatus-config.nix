@@ -396,6 +396,17 @@ _: {
                 ];
                 alerts = discordAlert "Attic binary cache down — CI builds will not push/pull cached paths, causing redundant recompilation";
               })
+              (mkHttpCheck {
+                name = "Attic Storage Size";
+                group = "Infrastructure";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*attic_storage_over_threshold 0*)"
+                ];
+                alerts = discordAlert "Attic storage exceeded maxStorageGigabytes — emergency GC triggered. Check /data/atticd/storage size.";
+              })
             ]
             ++ lib.optionals (config.services.monitor365-server.enable or false) [
               (mkHttpCheck {

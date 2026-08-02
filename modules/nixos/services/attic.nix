@@ -164,6 +164,81 @@ _: {
           "d ${cfg.storagePath} 0755 root root - -"
         ];
 
+        # Prometheus metrics collector — measures storage and emits textfile
+        # metrics every 5 min. Separated from the size-guard so that metrics
+        # emission and GC triggering have independent failure modes, frequencies,
+        # and permissions. Same pattern as system-health, btrfs-health, and all
+        # other Prometheus textfile collectors in SystemNix.
+        systemd.services.atticd-metrics = {
+          description = "Attic storage Prometheus metrics collector";
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = "root";
+            }
+            (harden {
+              MemoryMax = "128M";
+              ReadWritePaths = [
+                "/var/lib/prometheus-node-exporter/textfile_collectors"
+              ];
+            })
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            storage_path="${cfg.storagePath}"
+            textfile_dir="/var/lib/prometheus-node-exporter/textfile_collectors"
+            max_gb=${toString cfg.maxStorageGigabytes}
+
+            if [ ! -d "$storage_path" ]; then
+              current_bytes=0
+            else
+              current_bytes=$(du -sb "$storage_path" 2>/dev/null | cut -f1)
+              if [ -z "$current_bytes" ]; then
+                current_bytes=0
+              fi
+            fi
+
+            current_gb=$(( current_bytes / 1024 / 1024 / 1024 ))
+            max_bytes=$(( max_gb * 1024 * 1024 * 1024 ))
+            if [ "$current_bytes" -gt 0 ] && [ "$current_bytes" -gt "$max_bytes" ]; then
+              over_threshold=1
+            else
+              over_threshold=0
+            fi
+
+            mkdir -p "$textfile_dir"
+            prom_file="$textfile_dir/attic.prom"
+            tmp_file="''${prom_file}.tmp"
+            cat > "$tmp_file" <<METRICS
+            # HELP attic_storage_bytes Total bytes used by Attic NAR storage
+            # TYPE attic_storage_bytes gauge
+            attic_storage_bytes ''${current_bytes}
+            # HELP attic_storage_gb Total gigabytes used by Attic NAR storage
+            # TYPE attic_storage_gb gauge
+            attic_storage_gb ''${current_gb}
+            # HELP attic_storage_max_gb Configured maximum storage in gigabytes
+            # TYPE attic_storage_max_gb gauge
+            attic_storage_max_gb ''${max_gb}
+            # HELP attic_storage_over_threshold 1 if storage exceeds max (GC triggered), 0 otherwise
+            # TYPE attic_storage_over_threshold gauge
+            attic_storage_over_threshold ''${over_threshold}
+METRICS
+            mv "$tmp_file" "$prom_file"
+          '';
+        };
+
+        systemd.timers.atticd-metrics = {
+          description = "Emit Attic storage Prometheus metrics every 5 minutes";
+          timerConfig = {
+            OnBootSec = "2min";
+            OnUnitActiveSec = "5min";
+            Persistent = true;
+          };
+          wantedBy = [ "timers.target" ];
+        };
+
         # Disk-safety guard: if storage exceeds maxStorageGigabytes, trigger
         # an immediate atticd GC cycle. Attic's built-in GC is time-based only
         # (no max-size option), so this is the hard disk bound.
@@ -188,7 +263,6 @@ _: {
             }
             (harden {
               MemoryMax = "256M";
-              ReadWritePaths = [ cfg.storagePath ];
             })
             (serviceOneshotDefaults { })
           ];
@@ -210,7 +284,7 @@ _: {
             current_gb=$(( current_bytes / 1024 / 1024 / 1024 ))
             echo "Attic storage: ''${current_gb} GB (limit: ${toString cfg.maxStorageGigabytes} GB)"
 
-            if [ "$current_bytes" -gt "$max_bytes" ]; then
+            if [ "$current_bytes" -gt 0 ] && [ "$current_bytes" -gt "$max_bytes" ]; then
               echo "OVER LIMIT — restarting atticd to trigger emergency GC"
               ${lib.getExe' pkgs.systemd "systemctl"} restart atticd.service
             fi
@@ -229,6 +303,10 @@ _: {
 
         # Attic client for cache management (run atticadm, attic push, etc.)
         environment.systemPackages = [ pkgs.attic-client ];
+
+        # Port 8200 is intentionally NOT in networking.firewall.allowedTCPPorts.
+        # atticd binds to 127.0.0.1 only — Caddy (ports 80/443) is the sole
+        # external entry point via cache.${domain}. No direct access needed.
 
         # Register the cache as a substituter when a public key is configured
         nix.settings = lib.mkIf (cfg.cachePublicKey != "") {

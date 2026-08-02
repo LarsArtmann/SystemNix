@@ -336,7 +336,7 @@ _: {
               ("+" + lib.getExe genRunnerToken)
               (lib.getExe registerRunner)
             ];
-            MemoryMax = "4G";
+            MemoryMax = "16G";
           };
         };
 

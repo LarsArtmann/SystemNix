@@ -275,12 +275,12 @@ _: {
             "pocket-id.service"
             "oauth2-proxy.service"
             "sops-nix.service"
-          ];
+          ] ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           wants = [
             "pocket-id.service"
             "oauth2-proxy.service"
             "sops-nix.service"
-          ];
+          ] ++ lib.optional (config.services.attic-config.enable or false) "atticd.service";
           inherit onFailure;
           unitConfig = {
             StartLimitBurst = lib.mkForce 3;

@@ -46,6 +46,7 @@ _: {
       overviewEnabled = config.services.overview.enable;
       fileAndImageRenamerEnabled = config.services.file-and-image-renamer.enable or false;
       searxEnabled = config.services.searx.enable or false;
+      atticEnabled = config.services.attic-config.enable or false;
 
       theme = import ../../../platforms/common/theme.nix;
       colors = theme.colorScheme.palette;
@@ -191,6 +192,13 @@ _: {
                 href = svcUrl "discordsync";
                 description = "Discord Backup Bot (Messages, Attachments, Reactions)";
                 icon = "discord.png";
+              }
+            )
+            ++ lib.optional atticEnabled (
+              mkService "Attic Cache" {
+                href = svcUrl "cache";
+                description = "Self-hosted Nix Binary Cache (CI build artifacts)";
+                icon = "nixos.png";
               }
             );
 
