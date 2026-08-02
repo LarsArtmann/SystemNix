@@ -403,8 +403,8 @@ except Exception:
             && echo "Created cache 'monitor365'" \
             || echo "Cache 'monitor365' already exists"
 
-          # Configure retention
-          attic cache configure monitor365 --retention-period ${cfg.retentionPeriod}
+          # Configure retention (quote to handle spaces in "7 days")
+          attic cache configure monitor365 --retention-period "${cfg.retentionPeriod}"
 
           # Print cache info (includes public key for configuration.nix)
           echo "=== Cache Info ==="
