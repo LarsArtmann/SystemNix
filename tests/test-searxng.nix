@@ -4,8 +4,7 @@
 #   1. searx service starts (Python ASGI server + config generation)
 #   2. Health endpoint responds (/healthz)
 #   3. Secret key is auto-generated and persisted
-#   4. Redis (rate limiter backend) is running on the unix socket
-#   5. Settings file is valid YAML with expected keys
+#   4. Settings file is valid YAML with expected keys
 #
 # The DNS-gate (ExecStartPre waitDnsReady) exits 0 on timeout (degraded mode),
 # so SearXNG starts even without DNS — some engines just stay disabled.
@@ -36,26 +35,22 @@ in {
     #    Use wait_for_file since the service doesn't use RemainAfterExit.
     machine.wait_for_file("/var/lib/searxng/searxng.env")
 
-    # 2. Redis rate-limiter backend is running (unix socket)
-    machine.wait_for_unit("redis-searx.service")
-    machine.wait_for_file("/run/redis-searx/redis.sock")
-
-    # 3. Restart the searx init chain now that the secret key exists.
+    # 2. Restart the searx init chain now that the secret key exists.
     #    Works around a boot ordering race where searx-init can start before
     #    searxng-secret-key finishes writing the environment file.
     machine.systemctl("restart searx-init.service")
     machine.systemctl("restart searx.service")
 
-    # 4. searx service starts — catches config generation + Python startup errors
+    # 3. searx service starts — catches config generation + Python startup errors
     machine.wait_for_unit("searx.service")
 
-    # 5. Port is open (SearXNG built-in server on port 8889)
+    # 4. Port is open (SearXNG built-in server on port 8889)
     machine.wait_for_open_port(8889)
 
-    # 6. Health endpoint responds
+    # 5. Health endpoint responds
     machine.succeed("curl -sf http://localhost:8889/healthz")
 
-    # 7. Settings file exists and contains expected configuration
+    # 6. Settings file exists and contains expected configuration
     machine.succeed("test -f /run/searx/settings.yml")
     machine.succeed("grep -q 'test.local' /run/searx/settings.yml")
   '';

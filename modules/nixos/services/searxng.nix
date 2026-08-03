@@ -14,7 +14,6 @@ _: {
     }:
     let
       inherit (config.networking) domain;
-      lanSubnet = config.networking.local.subnet;
 
       inherit (import ../../../lib/default.nix lib)
         harden
@@ -74,9 +73,11 @@ _: {
     {
       config = lib.mkIf cfg.enable {
         services.searx = {
-          # Dedicated Redis via unix socket (isolated from Immich's Redis).
-          # Required for the rate limiter / bot protection (server.limiter = true).
-          redisCreateLocally = true;
+          # No Redis/Valkey — the rate limiter (server.limiter) is disabled
+          # for this private LAN instance. Redis was only used for bot detection
+          # sliding-window counters, which is pointless when all traffic is
+          # passlisted (127.0.0.0/8 + LAN subnet). Removing Redis eliminates a
+          # synchronous unix-socket round-trip on every search request.
           environmentFile = secretKeyFile;
 
           faviconsSettings = {
@@ -116,16 +117,16 @@ _: {
               # Caddy sets Referrer-Policy: strict-origin-when-cross-origin
               # (origin only, no query string leaked to result sites).
               method = "GET";
-              limiter = true;
+              limiter = false;
               public_instance = false;
               # Keep-alive between Caddy and SearXNG's built-in server.
               http_protocol_version = "1.1";
             };
             search = {
               safe_search = 0;
-              # Yandex autocomplete: keystrokes go to Yandex's API
-              # via SearXNG (server IP, not user IP).
-              autocomplete = "yandex";
+              # DuckDuckGo autocomplete: faster from EU than Yandex.
+              # Keystrokes go to DDG's API via SearXNG (server IP, not user IP).
+              autocomplete = "duckduckgo";
               autocomplete_min = 4;
               default_lang = "auto";
               # Favicons next to results for a polished UI.
@@ -578,30 +579,6 @@ _: {
             ];
           };
 
-          # Bot protection / rate limiter config. Caddy proxies from
-          # 127.0.0.1, which is in the default trusted_proxies — SearXNG
-          # extracts the real client IP from X-Forwarded-For. The LAN
-          # subnet is passlisted for unrestricted access (private instance).
-          limiterSettings = {
-            botdetection = {
-              trusted_proxies = [
-                "127.0.0.0/8"
-                "::1"
-                lanSubnet
-              ];
-              ip_lists.pass_ip = [
-                "127.0.0.0/8"
-                lanSubnet
-              ];
-            };
-          };
-        };
-
-        # Redis is pure cache for SearXNG (rate limiter / bot protection
-        # state). Data loss is harmless — cap memory and evict cold keys.
-        services.redis.servers.searx.settings = {
-          maxmemory = "128mb";
-          maxmemory-policy = "allkeys-lru";
         };
 
         systemd.services = {
@@ -640,7 +617,6 @@ _: {
             restartTriggers = [
               config.services.searx.package
               (builtins.toJSON config.services.searx.settings)
-              (builtins.toJSON config.services.searx.limiterSettings)
             ];
             serviceConfig = lib.mkMerge [
               {
