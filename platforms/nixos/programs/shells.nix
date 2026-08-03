@@ -1,6 +1,7 @@
 # NixOS shell configurations with platform-specific overrides
-{ lib, ... }:
+{ lib, pkgs, ... }:
 let
+  carapaceKey = pkgs.carapace.name; # Build-time cache key — zero runtime cost
   nixAliases = {
     nixup = "sudo nixos-rebuild switch --flake .";
     nixbuild = "sudo nixos-rebuild build --flake .";
@@ -25,13 +26,11 @@ in
           set -g fish_complete_path /etc/profiles/per-user/$USER/share/nixos/completions $fish_complete_path
       end
 
-      # COMPLETIONS: Universal completion engine — cached to avoid
-      # re-generating ~7ms of fish init on every startup.
+      # COMPLETIONS: Universal completion engine — cached (build-time key)
       if command -v carapace >/dev/null 2>&1
           set -l cache_dir "$XDG_CACHE_HOME/fish-init"
           test -d $cache_dir; or mkdir -p $cache_dir
-          set -l cara_ver (carapace --version 2>/dev/null | string match -r '[\d.]+$')
-          set -l cara_cache "$cache_dir/carapace-$cara_ver.fish"
+          set -l cara_cache "$cache_dir/carapace-${carapaceKey}.fish"
           if test -f $cara_cache
               source $cara_cache
           else
