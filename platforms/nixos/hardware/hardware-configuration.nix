@@ -39,13 +39,20 @@ in
   hardware.enableRedistributableFirmware = true;
 
   fileSystems = {
-    # Explicitly disable continuous async TRIM (nodiscard).
+    # ════════════════════════════════════════════════════════════════════════
+    # CRITICAL: Kernel 7.1.5 BTRFS SILENTLY IGNORES `nodiscard`.
+    # The fstab specifies `nodiscard` but the kernel boot log shows "turning on
+    # async discard" and /proc/mounts shows neither `nodiscard` nor `discard=async`.
+    # The BTRFS sysfs discard counters confirm 1.3 TiB of discards processed on `/`
+    # and 252 GiB on `/data` despite this option. See `disable-nvme-discard` service
+    # in boot.nix — it sets discard_max_bytes=0 at the BLOCK LAYER level (unconditional).
+    # Both `nodiscard` and `discard=none` are kept here for documentation/intent;
+    # the block-layer disable is the actual enforcement mechanism.
+    # ════════════════════════════════════════════════════════════════════════
+    #
     # QLC NAND (Lexar NQ790) has 253ms discard latency → BTRFS commit stalls.
-    # Periodic fstrim (configuration.nix) handles TRIM weekly without competing with host I/O.
-    # nodiscard is set explicitly for defense-in-depth: makes intent clear and guards
-    # against any future kernel default that might enable continuous discard.
-    # Note: BTRFS auto-adds the 'ssd' option for non-rotational devices, but does NOT
-    # auto-enable discard. Verified on kernel 7.1.5 via /proc/mounts + sysfs discard counters.
+    # Suspected root cause of data corruption on /data (2026-08-03).
+    # fstrim.timer is ALSO effectively disabled by the block-layer fix.
     "/" = mkFilesystem {
       device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
       fsType = "btrfs";
@@ -53,6 +60,7 @@ in
         "subvol=@"
         "compress=zstd"
         "noatime"
+        "discard=none"
         "nodiscard"
         "space_cache=v2"
       ];
@@ -64,6 +72,7 @@ in
         "compress=zstd:3"
         "noatime"
         "ssd"
+        "discard=none"
         "nodiscard"
         "space_cache=v2"
         "nofail"
