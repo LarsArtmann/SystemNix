@@ -39,11 +39,13 @@ in
   hardware.enableRedistributableFirmware = true;
 
   fileSystems = {
-    # BTRFS on this kernel auto-enables discard=async on SSDs. We MUST explicitly
-    # set nodiscard — simply omitting discard=async from the config does NOT work.
-    # QLC NAND (Lexar NQ790): 253ms per TRIM op, 86 ops/sec, 17.7s BTRFS commit stalls.
+    # Explicitly disable continuous async TRIM (nodiscard).
+    # QLC NAND (Lexar NQ790) has 253ms discard latency → BTRFS commit stalls.
     # Periodic fstrim (configuration.nix) handles TRIM weekly without competing with host I/O.
-    # See docs/status/2026-08-03_00-52_nvme-ssd-benchmark-discard-async-diagnosis.md
+    # nodiscard is set explicitly for defense-in-depth: makes intent clear and guards
+    # against any future kernel default that might enable continuous discard.
+    # Note: BTRFS auto-adds the 'ssd' option for non-rotational devices, but does NOT
+    # auto-enable discard. Verified on kernel 7.1.5 via /proc/mounts + sysfs discard counters.
     "/" = mkFilesystem {
       device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
       fsType = "btrfs";
@@ -75,7 +77,7 @@ in
         "dmask=0077"
       ];
     };
-    # nodiscard — same BTRFS auto-discard issue as above. fstrim covers this filesystem.
+    # nodiscard — defense-in-depth. fstrim (configuration.nix) covers this filesystem.
     "/rust-cache" = mkFilesystem {
       device = "/dev/disk/by-partlabel/rust-cache";
       fsType = "ext4";
