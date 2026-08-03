@@ -10,6 +10,13 @@
 #   2. use_go_env helper          — auto-detects GOEXPERIMENT + GOPRIVATE
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─── nix-direnv Compatibility Guard ──────────────────────────────────────────
+# If nix-direnv renamed _nix_add_gcroot, the override below is a dead function
+# that nothing calls. Warn so the developer knows GC root optimization is off.
+if declare -f use_flake > /dev/null 2>&1 && ! declare -f _nix_add_gcroot > /dev/null 2>&1; then
+  log_error "zz-smart-nix.sh: nix-direnv loaded but _nix_add_gcroot not found — GC root optimization inactive (function may have been renamed upstream)"
+fi
+
 # ─── GC Root Optimization ───────────────────────────────────────────────────
 # Override nix-direnv's per-input GC root creation.
 #
@@ -40,11 +47,11 @@ use_go_env() {
   #   nix-direnv doesn't reliably propagate shellHook exports, so we set it
   #   here as a fallback. Detection order (fast → slow):
   #     1. flake.nix mentions GOEXPERIMENT or jsonv2 (instant, most reliable)
-  #     2. Go source files import encoding/json/v2 (bounded grep, first match)
+  #     2. Go source files import encoding/json/v2 (fast grep, excludes vendor/)
   if [[ -z ${GOEXPERIMENT:-} ]]; then
     if [[ -f flake.nix ]] && grep -qE 'GOEXPERIMENT|jsonv2' flake.nix 2>/dev/null; then
       export GOEXPERIMENT=jsonv2
-    elif [[ -f go.mod ]] && grep -rl --include='*.go' 'encoding/json/v2' . 2>/dev/null | head -1 | grep -q .; then
+    elif [[ -f go.mod ]] && grep -rq --include='*.go' --exclude-dir=vendor --exclude-dir=node_modules --exclude-dir=.git 'encoding/json/v2' . 2>/dev/null; then
       export GOEXPERIMENT=jsonv2
     fi
   fi
