@@ -44,13 +44,16 @@
       # non-index page" when B-tree pages are corrupted. PRAGMA integrity_check
       # catches this before the Go binary hits it.
       #
-      # Recovery cascade (preserves maximum data):
+      # Recovery cascade (preserves maximum data at every step):
       #   1. If integrity_check = ok → proceed normally
       #   2. If corrupt → run `sqlite3 .recover` which scans pages directly and
       #      rebuilds a new DB with all salvageable rows. This can recover most
       #      data even when the B-tree structure is damaged.
-      #   3. Only if .recover itself fails → move the corrupt DB aside for manual
-      #      forensics and let DiscordSync start fresh (re-syncs from Turso cloud).
+      #   3. If .recover fails → try BTRFS snapshot restore. Finds the newest
+      #      btrbk snapshot with a healthy DB and clones it via CoW (instant,
+      #      zero additional space). Recovers the pre-crash state.
+      #   4. Only if ALL recovery fails → move corrupt DB aside for manual
+      #      forensics and let DiscordSync start fresh (re-syncs from Turso).
       # Attachments in the separate attachments/ dir are always preserved.
       dbHeal = pkgs.writeShellApplication {
         name = "discordsync-db-heal";
@@ -97,13 +100,50 @@
               rm -f "$recovered" 2>/dev/null || true
             fi
           else
-            echo "discordsync: .recover failed completely — falling back to fresh DB" >&2
+            echo "discordsync: .recover failed completely — trying BTRFS snapshot restore" >&2
             rm -f "$recovered" 2>/dev/null || true
           fi
 
-          # Last resort: remove the corrupt DB, DiscordSync recreates from scratch
+          # BTRFS snapshot recovery: find the newest snapshot with a healthy DB.
+          # btrbk snapshots are BTRFS subvolumes — `cp --reflink=always` makes
+          # an instant CoW clone (zero additional disk space). This recovers the
+          # pre-crash state when .recover can't salvage enough from the corrupt DB.
+          # Snapshots live at /mnt/btrfs-root/.snapshots/@.YYYYMMDDTHHMM/
+          db_rel="''${db#/}"
+          snapshots_dir="/mnt/btrfs-root/.snapshots"
+          if [ -d "$snapshots_dir" ]; then
+            for snap in $(ls -1d "$snapshots_dir"/@.* 2>/dev/null | sort -r); do
+              snap_db="$snap/$db_rel"
+              if [ -f "$snap_db" ]; then
+                echo "discordsync: trying BTRFS snapshot restore from $(basename "$snap")" >&2
+                # Try CoW clone first (instant), fall back to regular copy
+                if cp --reflink=always "$snap_db" "$recovered" 2>/dev/null || cp "$snap_db" "$recovered" 2>/dev/null; then
+                  snap_check=$(sqlite3 "$recovered" "PRAGMA integrity_check;" 2>&1 || true)
+                  if [ "$snap_check" = "ok" ]; then
+                    snap_rows=$(sqlite3 "$recovered" "SELECT count(*) FROM sqlite_master;" 2>/dev/null || echo "0")
+                    echo "discordsync: snapshot restore succeeded — $snap_rows objects from $(basename "$snap")" >&2
+                    mv "$recovered" "$db"
+                    rm -f "$db-wal" "$db-shm" 2>/dev/null || true
+                    echo "discordsync: snapshot DB verified and replaces corrupt DB. Corrupt backup at $backup" >&2
+                    exit 0
+                  else
+                    echo "discordsync: snapshot DB also corrupt — trying older snapshot" >&2
+                    rm -f "$recovered" 2>/dev/null || true
+                  fi
+                fi
+              fi
+            done
+            echo "discordsync: no healthy DB found in any BTRFS snapshot" >&2
+          else
+            echo "discordsync: snapshots dir not found ($snapshots_dir) — skipping snapshot restore" >&2
+          fi
+
+          # Last resort: ALL recovery attempts failed. Move the corrupt DB aside
+          # for manual forensics (never just delete — the backup may have data
+          # salvageable by expert tools). DiscordSync starts fresh and re-syncs
+          # from Turso cloud (or runs local-only if quota-exhausted).
           rm -f "$db" "$db-wal" "$db-shm" 2>/dev/null || true
-          echo "discordsync: corrupt DB removed. Backup at $backup. DiscordSync will re-sync from Turso cloud" >&2
+          echo "discordsync: all recovery attempts exhausted. Corrupt DB preserved at $backup. Starting fresh." >&2
         '';
       };
     in
