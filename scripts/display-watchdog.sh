@@ -73,6 +73,36 @@ done
   exit 0
 }
 
+# ── Login-screen guard ─────────────────────────────────────────────────────
+# If no user is logged into a graphical (wayland/x11) session, we're at the
+# SDDM login screen. A connected-but-disabled connector with DPMS off there is
+# just Xorg's idle power-saving (~10 min timeout) — NOT a dead display.
+# Restarting SDDM needlessly wakes the monitor, which sleeps again 10 min
+# later, producing an infinite restart loop. Only recover when a user session
+# exists (e.g. the compositor died mid-session and left the output wedged).
+has_graphical_session=0
+if command -v loginctl >/dev/null 2>&1; then
+  found=$(
+    loginctl list-sessions --no-legend 2>/dev/null |
+      awk '{print $1}' |
+      while IFS= read -r sid; do
+        c=$(loginctl show-session "$sid" -p Class --value 2>/dev/null || true)
+        t=$(loginctl show-session "$sid" -p Type --value 2>/dev/null || true)
+        if [ "$c" = "user" ] && { [ "$t" = "wayland" ] || [ "$t" = "x11" ]; }; then
+          echo 1
+        fi
+      done
+  ) || found=""
+  case "$found" in
+    *1*) has_graphical_session=1 ;;
+  esac
+fi
+if [ "$has_graphical_session" -eq 0 ]; then
+  echo "Login screen (no user graphical session): display idle/DPMS-off is normal — not recovering."
+  state_reset
+  exit 0
+fi
+
 # ── Scenario 1: niri alive but display dead (GPU pipeline corruption) ──────
 # This is the OOM-kill-GPU-processes scenario: niri process survives but the
 # DRM pipeline is wedged. Restarting niri re-acquires DRM master and resets
