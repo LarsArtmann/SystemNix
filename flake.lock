@@ -3316,11 +3316,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785634603,
-        "narHash": "sha256-fVyGf0KXlF5t3JiPvb6GCSElTrVD6b1WhlAzQCV1hQo=",
+        "lastModified": 1785741193,
+        "narHash": "sha256-TOOn79duc1/QgiqsOlEoweGEhmeSyKgjEMTGA309oKc=",
         "owner": "LarsArtmann",
         "repo": "library-policy",
-        "rev": "e96c42c584fdcc4a43b5eb85eefc1c8951ac9f57",
+        "rev": "1086d58b7e0cd9f78e848bd68ae2141c12411b3d",
         "type": "github"
       },
       "original": {
