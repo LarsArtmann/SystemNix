@@ -524,11 +524,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785683930,
-        "narHash": "sha256-45m4dOlWwWfB1tepnffsArarXAXkgs8sRsLFCADkfwc=",
+        "lastModified": 1785739383,
+        "narHash": "sha256-bVbRXleJEZcYSWdV3js1oX5Wa5F9mJxcWbSIgSRBiFE=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "be339fc0c7123613b2c8f24dec2fddae374e3c9a",
+        "rev": "92fefcb054072fd42d542a0a1e92fe2a5eaf90cb",
         "type": "github"
       },
       "original": {
