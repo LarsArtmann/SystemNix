@@ -39,6 +39,11 @@ in
   hardware.enableRedistributableFirmware = true;
 
   fileSystems = {
+    # BTRFS on this kernel auto-enables discard=async on SSDs. We MUST explicitly
+    # set nodiscard — simply omitting discard=async from the config does NOT work.
+    # QLC NAND (Lexar NQ790): 253ms per TRIM op, 86 ops/sec, 17.7s BTRFS commit stalls.
+    # Periodic fstrim (configuration.nix) handles TRIM weekly without competing with host I/O.
+    # See docs/status/2026-08-03_00-52_nvme-ssd-benchmark-discard-async-diagnosis.md
     "/" = mkFilesystem {
       device = "/dev/disk/by-uuid/0b629b65-a1b7-40df-a7dc-9ea5e0b04959";
       fsType = "btrfs";
@@ -46,14 +51,10 @@ in
         "subvol=@"
         "compress=zstd"
         "noatime"
+        "nodiscard"
         "space_cache=v2"
       ];
     };
-    # TRIM via mount option removed — continuous discard=async causes severe I/O latency on
-    # QLC NAND (Lexar NQ790: 253ms per TRIM op, 86 ops/sec, 17.7s BTRFS commit stalls).
-    # Periodic fstrim (enabled in configuration.nix) handles TRIM weekly without competing
-    # with host I/O. Root filesystem has never had discard=async and has been fine.
-    # See docs/status/2026-07-08_08-38_NVME-DISCARD-ASYNC-IO-CHOKE-INVESTIGATION.md
     "/data" = mkFilesystem {
       device = "/dev/disk/by-uuid/046ea663-da55-48b7-b516-0dcdb87ba710";
       fsType = "btrfs";
@@ -61,6 +62,7 @@ in
         "compress=zstd:3"
         "noatime"
         "ssd"
+        "nodiscard"
         "space_cache=v2"
         "nofail"
       ];
@@ -73,13 +75,13 @@ in
         "dmask=0077"
       ];
     };
-    # TRIM via mount option removed — same QLC discard issue as /data above.
-    # Periodic fstrim (configuration.nix) covers this filesystem.
+    # nodiscard — same BTRFS auto-discard issue as above. fstrim covers this filesystem.
     "/rust-cache" = mkFilesystem {
       device = "/dev/disk/by-partlabel/rust-cache";
       fsType = "ext4";
       options = [
         "noatime"
+        "nodiscard"
         "nofail"
         "x-systemd.automount"
         "x-systemd.idle-timeout=10min"
