@@ -42,9 +42,16 @@
       # Self-heal corrupted SQLite DB from unclean shutdown (WDT reset, OOM kill).
       # The libSQL/Go binding panics with "cell_index_read_payload_ptr called on
       # non-index page" when B-tree pages are corrupted. PRAGMA integrity_check
-      # catches this before the Go binary hits it. Recovery: move the corrupt DB
-      # aside (forensics) and let DiscordSync recreate from scratch or re-sync
-      # from Turso cloud. Attachments in the separate attachments/ dir are preserved.
+      # catches this before the Go binary hits it.
+      #
+      # Recovery cascade (preserves maximum data):
+      #   1. If integrity_check = ok → proceed normally
+      #   2. If corrupt → run `sqlite3 .recover` which scans pages directly and
+      #      rebuilds a new DB with all salvageable rows. This can recover most
+      #      data even when the B-tree structure is damaged.
+      #   3. Only if .recover itself fails → move the corrupt DB aside for manual
+      #      forensics and let DiscordSync start fresh (re-syncs from Turso cloud).
+      # Attachments in the separate attachments/ dir are always preserved.
       dbHeal = pkgs.writeShellApplication {
         name = "discordsync-db-heal";
         runtimeInputs = [ pkgs.sqlite ];
@@ -59,13 +66,44 @@
             echo "discordsync: DB integrity check passed"
             exit 0
           fi
-          echo "discordsync: DB integrity check FAILED — backing up and removing corrupt DB" >&2
+          echo "discordsync: DB integrity check FAILED — attempting recovery" >&2
           echo "discordsync: integrity_check result: $result" >&2
           ts=$(date +%Y%m%dT%H%M%S)
-          mv "$db" "$db.corrupt-$ts"
-          # Clean up WAL/SHM sidecars — stale WAL after corruption causes cascading failures
-          rm -f "$db-wal" "$db-shm" 2>/dev/null || true
-          echo "discordsync: corrupt DB moved to $db.corrupt-$ts — DiscordSync will recreate from scratch"
+          backup="''${db}.corrupt-$ts"
+          recovered="''${db}.recovered-$ts"
+
+          # Back up the corrupt DB for forensics before touching it
+          cp "$db" "$backup"
+
+          # Attempt recovery: .recover scans pages directly, bypassing the
+          # damaged B-tree structure, and writes all salvageable rows to a new DB.
+          if sqlite3 "$db" ".recover" | sqlite3 "$recovered" 2>/dev/null; then
+            recovered_rows=$(sqlite3 "$recovered" "SELECT count(*) FROM sqlite_master;" 2>/dev/null || echo "0")
+            if [ "$recovered_rows" -gt 0 ]; then
+              echo "discordsync: recovery succeeded — $recovered_rows objects recovered" >&2
+              # Verify the recovered DB is structurally sound
+              recovered_check=$(sqlite3 "$recovered" "PRAGMA integrity_check;" 2>&1 || true)
+              if [ "$recovered_check" = "ok" ]; then
+                mv "$recovered" "$db"
+                rm -f "$db-wal" "$db-shm" 2>/dev/null || true
+                echo "discordsync: recovered DB verified and replaces corrupt DB. Backup at $backup" >&2
+                exit 0
+              else
+                echo "discordsync: recovered DB failed integrity check ($recovered_check) — falling back to fresh DB" >&2
+                rm -f "$recovered" 2>/dev/null || true
+              fi
+            else
+              echo "discordsync: .recover produced empty DB — falling back to fresh DB" >&2
+              rm -f "$recovered" 2>/dev/null || true
+            fi
+          else
+            echo "discordsync: .recover failed completely — falling back to fresh DB" >&2
+            rm -f "$recovered" 2>/dev/null || true
+          fi
+
+          # Last resort: remove the corrupt DB, DiscordSync recreates from scratch
+          rm -f "$db" "$db-wal" "$db-shm" 2>/dev/null || true
+          echo "discordsync: corrupt DB removed. Backup at $backup. DiscordSync will re-sync from Turso cloud" >&2
         '';
       };
     in
