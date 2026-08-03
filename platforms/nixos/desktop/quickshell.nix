@@ -2,11 +2,13 @@
   config,
   lib,
   pkgs,
+  colorScheme,
   dankMaterialShell,
   ...
 }:
 let
   cfg = config.programs.systemnix-quickshell;
+  theme = import ../../common/theme.nix;
   inherit (import ../../../lib/default.nix lib) ports;
 in
 {
@@ -31,9 +33,34 @@ in
       systemd.enable = true;
 
       enableSystemMonitoring = true;
-      enableDynamicTheming = false; # Disabled: matugen overrides Catppuccin Mocha (our global theme)
+      enableDynamicTheming = false;
       enableAudioWavelength = true;
       enableCalendarEvents = false;
+
+      settings = {
+        fontFamily = theme.font.name;
+        monoFontFamily = theme.font.mono;
+        cornerRadius = 12;
+        iconTheme = theme.iconTheme;
+
+        showDock = true;
+        dockAutoHide = true;
+        dockSmartAutoHide = true;
+        dockIconSize = 48;
+        dockPosition = 2;
+        dockTransparency = 0.92;
+
+        lockScreenShowPowerActions = true;
+        lockScreenShowSystemIcons = true;
+        lockScreenShowTime = true;
+        lockScreenShowDate = true;
+        lockScreenShowMediaPlayer = true;
+        lockScreenShowPasswordField = true;
+
+        notificationOverlayEnabled = true;
+        notificationPopupShadowEnabled = true;
+        notificationPopupPrivacyMode = false;
+      };
 
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.
       # Each plugin's src points to its directory in pkgs/dms-plugins/.

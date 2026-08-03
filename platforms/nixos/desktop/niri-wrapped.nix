@@ -178,6 +178,13 @@ in
     programs.niri.settings = {
       prefer-no-csd = true;
 
+      blur = {
+        passes = 3;
+        offset = 3.0;
+        noise = 0.02;
+        saturation = 1.5;
+      };
+
       spawn-at-startup = [
         {
           command = [
@@ -254,13 +261,6 @@ in
         center-focused-column = "on-overflow";
         always-center-single-column = true;
         background-color = "#${colors.base00}";
-
-        blur = {
-          passes = 3;
-          offset = 3.0;
-          noise = 0.02;
-          saturation = 1.5;
-        };
 
         preset-column-widths = [
           { proportion = 0.33333; }
@@ -646,14 +646,8 @@ in
 
       animations = {
         horizontal-view-movement.kind.spring = spring;
-        window-open = {
-          kind = "shader";
-          custom-shader = circleOpenShader;
-        };
-        window-close = {
-          kind = "shader";
-          custom-shader = fireCloseShader;
-        };
+        window-open.custom-shader = circleOpenShader;
+        window-close.custom-shader = fireCloseShader;
         window-movement.kind.spring = spring;
         window-resize.kind.spring = spring;
         workspace-switch.kind.spring = spring;
