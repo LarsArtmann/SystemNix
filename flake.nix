@@ -683,7 +683,7 @@
               };
               dms-locks = {
                 type = "app";
-                program = "${pkgs.callPackage ./pkgs/dms-lock.nix { colors = theme.colors; }}/bin/dms-lock";
+                program = "${pkgs.callPackage ./pkgs/dms-lock.nix { inherit (theme) colors; }}/bin/dms-lock";
                 meta.description = "Lock screen via DMS IPC (fallback: swaylock-effects with wallpaper + Catppuccin Mocha)";
               };
               dms-wallpaper-next = {
