@@ -3,7 +3,9 @@
 **Generated:** 2026-08-03 06:51 CEST (last updated 07:10 CEST — added "Overlooked Findings" section)
 **Session:** Single session (resumed from prior `discard=async` investigation)
 **Hardware:** evo-x2 (AMD Strix Halo), Lexar NQ790 2TB QLC NVMe, kernel 7.1.5
-**Severity:** P0-CRITICAL — Confirmed corruption, `nodiscard` deploy is a no-op, async discard still active
+**Severity:** ~~P0-CRITICAL — Confirmed corruption, `nodiscard` deploy is a no-op, async discard still active~~ **CORRECTED:** Data corruption confirmed (13 files), but `nodiscard` IS working — root cause is 58 unsafe shutdowns, not async discard. See [Resolution](#resolution-2026-08-03) below.
+
+> **Update 2026-08-03 09:24 (commits `c2615d09`, `ff2c2f80`):** The central claim of this report — that `nodiscard` is being ignored by the kernel — was **PROVEN FALSE**. The `BTRFS info: turning on async discard` kernel messages were from a **previous boot** (before the `nodiscard` deploy), visible in `journalctl` because it shows messages from all boots since journal rotation. `mount | grep btrfs` confirms `nodiscard` IS active on all BTRFS mounts. SMART analysis shows the drive is healthy (0 media errors, 11% wear). Root cause is **58 unsafe shutdowns** (46% of 126 power cycles), not async discard. All 13 corrupted files were identified and deleted. `autoScrub` changed from monthly to weekly. Dangerous config changes (`discard=none`, block-layer disable) were reverted. Full investigation in `2026-08-03_08-14` and `2026-08-03_09-24`.
 
 ---
 
@@ -475,4 +477,29 @@ findmnt -o TARGET,SOURCE,OPTIONS | grep btrfs
 - SMART data: **Unknown** — never checked this session
 - Monthly scrub: **Broken** — interrupted after 15 minutes, hasn't completed since at least Aug 1
 
-**Operational recommendation:** Do not run additional balance operations or write benchmarks until foreground scrub enumerates the full scope. The drive may be actively degrading from async discard that cannot be disabled via mount options on kernel 7.1.5.
+**Operational recommendation:** ~~Do not run additional balance operations or write benchmarks until foreground scrub enumerates the full scope. The drive may be actively degrading from async discard that cannot be disabled via mount options on kernel 7.1.5.~~ **SUPERSEDED** — see Resolution below.
+
+---
+
+## Resolution (2026-08-03 09:24)
+
+This report's central claim — **"`nodiscard` is NOT working, async discard is STILL ACTIVE"** (section e.0) — was **proven false** in the follow-up investigations (`2026-08-03_08-14`, `2026-08-03_09-24`).
+
+| Claim in this report | Resolution |
+|---|---|
+| §e.0: `nodiscard` is NOT working, kernel ignores it | **FALSE.** `mount \| grep btrfs` confirms `nodiscard` IS active. The kernel log messages were from a **previous boot** (journalctl shows all boots since rotation). |
+| §e.0: "The prior 3 sessions' fix was a complete no-op" | **FALSE.** `nodiscard` is working as intended. |
+| §e.0: "Async discard on QLC NAND is the root cause" | **FALSE.** Root cause is **58 unsafe shutdowns** (46% of 126 power cycles) causing incomplete BTRFS commits. |
+| §f.2: "The `nodiscard` deploy was a no-op" | **FALSE.** Same as above. |
+| §f.5: Hypothesis that `nodiscard` might be correctly working | **CONFIRMED** — this falsification criterion was the correct one. |
+| 2 corrupted inodes (ino 1331118, ino 2608092) | **EXPANDED:** foreground scrub found **13 corrupted files** total (all AI model files), all deleted. |
+| SMART data never checked | **DONE:** 0 media errors, 11% wear, drive is healthy. See `2026-08-03_08-14`. |
+| Monthly scrub broken (15min/16h) | **FIXED:** `autoScrub` changed from monthly to weekly (`9083c126`). Scrub monitoring false-positive fixed. |
+| `discard=none` and block-layer discard disable | **REVERTED** — both were dangerous changes made without research. `discard=none` would have bricked boot. Reverted in `c2615d09`. |
+| Database integrity unchecked | **DONE:** PostgreSQL (Immich) clean, MySQL (Twenty) dead, DuckDB (monitor365) not on `/data`. |
+
+**What IS still open from this report:**
+- Off-site backup (still #1 data loss risk — flagged since 2026-06-25)
+- `/data` at 92% fill (systemic risk, needs cleanup)
+- Investigate the 58 unsafe shutdowns (WDT resets, OOM cascades, power events)
+- `/data` compression removal (`compress=zstd:3` → undecided)
