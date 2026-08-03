@@ -10,7 +10,7 @@
 # This module DEFINES users.primaryUser and networking.local (same as their
 # respective platforms/nixos/system/ modules). Do NOT also import those modules
 # in tests that use this helper — duplicate option definitions cause errors.
-{lib, ...}: {
+{ lib, ... }: {
   options = {
     users.primaryUser = lib.mkOption {
       type = lib.types.str;

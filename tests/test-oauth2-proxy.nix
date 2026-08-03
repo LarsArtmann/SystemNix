@@ -11,21 +11,22 @@
 #
 # KEPT as reference for: mocking pocket-id-config options, overriding
 # ExecStartPre with mkForce, generating build-time secrets.
-{pkgs}: let
-  oauth2ProxyFlakeOutput = (import ../modules/nixos/services/oauth2-proxy.nix) {};
+{ pkgs }:
+let
+  oauth2ProxyFlakeOutput = (import ../modules/nixos/services/oauth2-proxy.nix) { };
   oauth2ProxyNixosModule = oauth2ProxyFlakeOutput.flake.nixosModules.oauth2-proxy;
 
   # Generate valid secrets at build time
-  cookieSecret = pkgs.runCommand "oauth2-cookie-secret" {} ''
+  cookieSecret = pkgs.runCommand "oauth2-cookie-secret" { } ''
     echo -n "0123456789abcdef" | ${pkgs.coreutils}/bin/base64 > $out
   '';
-  clientSecret = pkgs.runCommand "oauth2-client-secret" {} ''
+  clientSecret = pkgs.runCommand "oauth2-client-secret" { } ''
     echo -n "test-client-secret-value" > $out
   '';
 
   # Mock pocket-id-config options so oauth2-proxy can evaluate without the
   # full pocket-id module. provision.enable = false means sops secrets are used.
-  mockPocketId = {lib, ...}: {
+  mockPocketId = { lib, ... }: {
     options.services.pocket-id-config.provision.enable = lib.mkOption {
       type = lib.types.bool;
       default = false;
@@ -35,10 +36,11 @@
       default = "/var/lib/pocket-id";
     };
   };
-in {
+in
+{
   name = "oauth2-proxy";
 
-  nodes.machine = {lib, ...}: {
+  nodes.machine = { lib, ... }: {
     imports = [
       oauth2ProxyNixosModule
       mockPocketId
@@ -49,14 +51,14 @@ in {
     services.oauth2-proxy-config.enable = true;
 
     # Register sops secrets (mock-sops creates empty files at these paths)
-    sops.secrets.oauth2_proxy_cookie_secret = {};
-    sops.secrets.oauth2_proxy_client_secret = {};
+    sops.secrets.oauth2_proxy_cookie_secret = { };
+    sops.secrets.oauth2_proxy_client_secret = { };
 
     # Write real secrets to the mock paths before the service starts
     systemd.services.oauth2-proxy-test-secrets = {
       description = "Write test secrets for oauth2-proxy";
-      before = ["oauth2-proxy.service"];
-      wantedBy = ["multi-user.target"];
+      before = [ "oauth2-proxy.service" ];
+      wantedBy = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -73,20 +75,24 @@ in {
     # mkForce replaces the list — without it, NixOS module system concatenates.
     systemd.services.oauth2-proxy.serviceConfig = {
       ExecStartPre = lib.mkForce [
-        "+${lib.getExe (pkgs.writeShellApplication {
-          name = "check-cookie-secret-only";
-          runtimeInputs = [pkgs.coreutils];
-          text = ''
-            secret_path="/run/secrets/oauth2_proxy_cookie_secret"
-            len=$(base64 -d < "$secret_path" | wc -c)
-            if [ "$len" -ne 16 ] && [ "$len" -ne 24 ] && [ "$len" -ne 32 ]; then
-              echo "cookie_secret must be 16, 24, or 32 bytes, got $len" >&2
-              exit 1
-            fi
-          '';
-        })}"
+        "+${
+          lib.getExe (
+            pkgs.writeShellApplication {
+              name = "check-cookie-secret-only";
+              runtimeInputs = [ pkgs.coreutils ];
+              text = ''
+                secret_path="/run/secrets/oauth2_proxy_cookie_secret"
+                len=$(base64 -d < "$secret_path" | wc -c)
+                if [ "$len" -ne 16 ] && [ "$len" -ne 24 ] && [ "$len" -ne 32 ]; then
+                  echo "cookie_secret must be 16, 24, or 32 bytes, got $len" >&2
+                  exit 1
+                fi
+              '';
+            }
+          )
+        }"
       ];
-      ExecStartPost = lib.mkForce [];
+      ExecStartPost = lib.mkForce [ ];
     };
   };
 

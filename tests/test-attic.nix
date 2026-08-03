@@ -11,24 +11,26 @@
 #
 # Uses mock-sops.nix so we can evaluate sops-dependent config without the age key.
 # Generates a real RSA key at build time for JWT signing (same pattern as nixpkgs upstream test).
-{pkgs}: let
+{ pkgs }:
+let
   # Extract the NixOS module from the flake-parts wrapper.
   # attic.nix is _: { flake.nixosModules.attic = <nixos-module-fn>; }
   # Calling with {} extracts the inner module function.
-  atticFlakeOutput = (import ../modules/nixos/services/attic.nix) {};
+  atticFlakeOutput = (import ../modules/nixos/services/attic.nix) { };
   atticNixosModule = atticFlakeOutput.flake.nixosModules.attic;
 
   # Generate a real RS256 key at build time (same pattern as the nixpkgs upstream test).
   # The module's environmentFile points to a sops template path; we override it
   # with this build-time file via mkForce so the VM has a real key without needing
   # a keygen oneshot service.
-  testEnvFile = pkgs.runCommand "atticd-test-env" {} ''
+  testEnvFile = pkgs.runCommand "atticd-test-env" { } ''
     echo "ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64=$(${pkgs.openssl}/bin/openssl genrsa -traditional 2048 | base64 -w0)" > $out
   '';
-in {
+in
+{
   name = "attic";
 
-  nodes.machine = {lib, ...}: {
+  nodes.machine = { lib, ... }: {
     imports = [
       atticNixosModule
       ./mock-sops.nix
@@ -47,8 +49,8 @@ in {
 
     # Declare the sops template + secret so config.sops.templates."attic-env".path
     # resolves (mock-sops creates the option, we just register the names)
-    sops.templates."attic-env" = {};
-    sops.secrets.attic_token_rs256_secret_base64 = {};
+    sops.templates."attic-env" = { };
+    sops.secrets.attic_token_rs256_secret_base64 = { };
   };
 
   testScript = ''

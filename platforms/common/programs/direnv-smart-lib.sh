@@ -13,7 +13,7 @@
 # ─── nix-direnv Compatibility Guard ──────────────────────────────────────────
 # If nix-direnv renamed _nix_add_gcroot, the override below is a dead function
 # that nothing calls. Warn so the developer knows GC root optimization is off.
-if declare -f use_flake > /dev/null 2>&1 && ! declare -f _nix_add_gcroot > /dev/null 2>&1; then
+if declare -f use_flake >/dev/null 2>&1 && ! declare -f _nix_add_gcroot >/dev/null 2>&1; then
   log_error "zz-smart-nix.sh: nix-direnv loaded but _nix_add_gcroot not found — GC root optimization inactive (function may have been renamed upstream)"
 fi
 

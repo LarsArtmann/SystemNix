@@ -1,8 +1,10 @@
-{pkgs, ...}: let
+{ pkgs, ... }:
+let
   # Modern NixOS test runner — replaces the deprecated make-test-python.nix.
   # Same { nodes, testScript, name } shape, cleaner API.
   makeTest = testSpec: pkgs.testers.runNixOSTest testSpec;
-in {
+in
+{
   boot = makeTest {
     name = "boot";
 
@@ -17,6 +19,6 @@ in {
     '';
   };
 
-  attic = makeTest (import ./test-attic.nix {inherit pkgs;});
-  searxng = makeTest (import ./test-searxng.nix {inherit pkgs;});
+  attic = makeTest (import ./test-attic.nix { inherit pkgs; });
+  searxng = makeTest (import ./test-searxng.nix { inherit pkgs; });
 }

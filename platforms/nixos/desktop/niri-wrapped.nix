@@ -136,8 +136,6 @@ let
     '';
   };
 
-  dmsPkg = dankMaterialShell.packages.${pkgs.system}.default;
-
   dms-wallpaper-init = pkgs.writeShellApplication {
     name = "dms-wallpaper-init";
     runtimeInputs = [

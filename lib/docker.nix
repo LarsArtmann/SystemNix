@@ -117,7 +117,10 @@
             name = "${name}-db-backup";
             value = {
               description = "${name} Database Backup";
-              after = [ "${name}.service" "docker.service" ];
+              after = [
+                "${name}.service"
+                "docker.service"
+              ];
               requires = [ "docker.service" ];
               inherit onFailure;
               serviceConfig = {

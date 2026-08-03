@@ -68,7 +68,7 @@ _: {
       # fetch the OpenID configuration from Pocket ID.
       forgejoOidcWaitDns = pkgs.writeShellApplication {
         name = "forgejo-oidc-wait-dns";
-        runtimeInputs = [pkgs.getent];
+        runtimeInputs = [ pkgs.getent ];
         text = ''
           echo "forgejo-oidc: waiting for DNS resolution..."
           for _ in $(seq 1 30); do

@@ -138,7 +138,8 @@ in
         conditions
         alerts
         ;
-    } // lib.optionalAttrs (client != { }) { inherit client; };
+    }
+    // lib.optionalAttrs (client != { }) { inherit client; };
 
   ports =
     let

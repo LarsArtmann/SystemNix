@@ -243,13 +243,11 @@ in
               # files — same constraint as Gatus. The EnvironmentFile is read by
               # systemd (PID 1, root) and the env vars injected into the atticd
               # process, so a root-owned file is correct and secure.
-              mkSecrets "attic.yaml"
-                {
-                  owner = "root";
-                  group = "root";
-                  restartUnits = [ "atticd.service" ];
-                }
-                [ "attic_token_rs256_secret_base64" ]
+              mkSecrets "attic.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "atticd.service" ];
+              } [ "attic_token_rs256_secret_base64" ]
             );
 
           templates = {

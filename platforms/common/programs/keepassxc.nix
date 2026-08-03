@@ -19,7 +19,8 @@ let
     type = "stdio";
     allowed_origins = [ "chrome-extension://oboonakemofpalcgghocfoadofidjkkk/" ];
   };
-in {
+in
+{
   programs.keepassxc = {
     enable = true;
     package = keepassxcPkg;

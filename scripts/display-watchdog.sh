@@ -94,7 +94,7 @@ if command -v loginctl >/dev/null 2>&1; then
       done
   ) || found=""
   case "$found" in
-    *1*) has_graphical_session=1 ;;
+  *1*) has_graphical_session=1 ;;
   esac
 fi
 if [ "$has_graphical_session" -eq 0 ]; then

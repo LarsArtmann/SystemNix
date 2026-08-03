@@ -2,7 +2,6 @@
   config,
   lib,
   pkgs,
-  colorScheme,
   dankMaterialShell,
   ...
 }:
@@ -41,7 +40,7 @@ in
         fontFamily = theme.font.name;
         monoFontFamily = theme.font.mono;
         cornerRadius = 12;
-        iconTheme = theme.iconTheme;
+        inherit (theme) iconTheme;
 
         showDock = true;
         dockAutoHide = true;

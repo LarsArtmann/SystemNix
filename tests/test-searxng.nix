@@ -8,13 +8,15 @@
 #
 # The DNS-gate (ExecStartPre waitDnsReady) exits 0 on timeout (degraded mode),
 # so SearXNG starts even without DNS — some engines just stay disabled.
-{pkgs}: let
-  searxngFlakeOutput = (import ../modules/nixos/services/searxng.nix) {};
+_:
+let
+  searxngFlakeOutput = (import ../modules/nixos/services/searxng.nix) { };
   searxngNixosModule = searxngFlakeOutput.flake.nixosModules.searxng;
-in {
+in
+{
   name = "searxng";
 
-  nodes.machine = {...}: {
+  nodes.machine = { ... }: {
     imports = [
       searxngNixosModule
       ./test-helpers.nix
