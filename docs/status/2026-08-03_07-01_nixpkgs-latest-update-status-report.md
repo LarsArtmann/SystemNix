@@ -1,8 +1,18 @@
-# Status Report: nixpkgs Latest Update — 2026-08-03 07:01
+# Status Report: nixpkgs Latest Update — 2026-08-03 07:01 (COMPLETED 09:30)
 
 ## Context
 
 User demanded: "You know I like to have ALL my software on the fucking latest version!" — nixpkgs was pinned to Jan 2026 (7 months stale), Pocket ID pinned to 2.10.0 via overlay. Full update needed across the board.
+
+## ✅ FINAL STATUS: DEPLOYED SUCCESSFULLY
+
+- **nixpkgs**: `26.11.20260801.148bab9` (Aug 1, 2026) — was Jan 8, 2026
+- **Pocket ID**: 2.12.0 (francis crash-loop fixed) — was 2.10.0
+- **Post-deploy**: 29 PASS, 0 FAIL, 2 SKIP (DiscordSync startup backfill — expected)
+- **GC**: 12.9 GiB freed, root FS at 64%
+- **All LarsArtmann Go packages**: vendorHash updated for new nixpkgs (crush-daily, library-policy)
+- **monitor365**: 3 upstream fixes pushed (segment-buffer outputHashes for crane + importCargoLock, Cargo.toml lints)
+- **SigNoz**: All 3 packages build with `go_1_25` (no update needed)
 
 ---
 
