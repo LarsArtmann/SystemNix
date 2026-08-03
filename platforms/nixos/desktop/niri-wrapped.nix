@@ -115,54 +115,7 @@ let
     '';
   };
 
-  dms-lock = pkgs.writeShellApplication {
-    name = "dms-lock";
-    runtimeInputs = [
-      dmsPkg
-      pkgs.swaylock-effects
-    ];
-    text = ''
-      # Try DMS lock first (primary — QML-based lock screen with blur + clock)
-      if dms ipc lock lock 2>/dev/null; then
-        exit 0
-      fi
-      # Fallback: swaylock-effects themed with Catppuccin Mocha
-      exec swaylock \
-        --daemonize \
-        --ignore-empty-password \
-        --show-failed-attempts \
-        --clock \
-        --datestr '%Y-%m-%d' \
-        --timestr '%H:%M' \
-        --screenshots \
-        --effect-blur 10x3 \
-        --effect-vignette 0.5:0.5 \
-        --indicator \
-        --indicator-radius 120 \
-        --indicator-thickness 12 \
-        --inside-color ${colors.base}dd \
-        --inside-clear-color ${colors.green}dd \
-        --inside-ver-color ${colors.lavender}dd \
-        --inside-wrong-color ${colors.red}dd \
-        --key-hl-color ${colors.lavender} \
-        --layout-bg-color 00000000 \
-        --layout-text-color ${colors.text} \
-        --line-color 00000000 \
-        --line-clear-color 00000000 \
-        --line-ver-color 00000000 \
-        --line-wrong-color 00000000 \
-        --ring-color ${colors.surface1} \
-        --ring-clear-color ${colors.green} \
-        --ring-ver-color ${colors.lavender} \
-        --ring-wrong-color ${colors.red} \
-        --separator-color 00000000 \
-        --text-color ${colors.text} \
-        --text-clear-color ${colors.base} \
-        --text-ver-color ${colors.base} \
-        --text-wrong-color ${colors.base} \
-        --bs-hl-color ${colors.red}
-    '';
-  };
+  dms-lock = pkgs.callPackage ../../../pkgs/dms-lock.nix { inherit colors; };
 in
 {
   config = {
@@ -647,20 +600,8 @@ in
                   systemctl suspend
                 '';
               };
-              swayidlePowerOff = pkgs.writeShellApplication {
-                name = "swayidle-power-off-monitors";
-                runtimeInputs = [ pkgs.niri ];
-                text = ''
-                  niri msg action power-off-monitors 2>/dev/null || true
-                '';
-              };
             in
-            # Idle gradient: lock (10m) → power off monitors (15m) → suspend (12h)
-            "${lib.getExe' pkgs.swayidle "swayidle"} -w"
-            + " timeout 600 ${lib.getExe dms-lock}"
-            + " timeout 900 ${lib.getExe swayidlePowerOff}"
-            + " timeout 43200 ${lib.getExe swayidleSuspend}"
-            + " before-sleep ${lib.getExe dms-lock}";
+            "${lib.getExe' pkgs.swayidle "swayidle"} -w timeout 43200 ${lib.getExe swayidleSuspend} before-sleep ${lib.getExe dms-lock}";
           TimeoutStartSec = "10s";
         };
         Install.WantedBy = [ "graphical-session.target" ];
@@ -680,6 +621,21 @@ in
           // {
             ExecStart = lib.getExe ssh-suspend-guard;
             TimeoutStartSec = "10s";
+          };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
+      sway-audio-idle-inhibit = {
+        Unit = {
+          Description = "Inhibit idle/suspend during audio playback";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service =
+          sd.hardenUser { }
+          // sd.serviceDefaultsUser { }
+          // {
+            ExecStart = "${lib.getExe pkgs.sway-audio-idle-inhibit}";
           };
         Install.WantedBy = [ "graphical-session.target" ];
       };

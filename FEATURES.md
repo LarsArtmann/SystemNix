@@ -195,7 +195,7 @@ _A brutally honest audit of every feature the project actually has._
 | DankMaterialShell (DMS)  | ✅     | v1.4.6 on Quickshell v0.2.1 — replaces Waybar, Dunst, Wlogout, Swaylock, polkit-gnome. Owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names |
 | DMS status bar (DankBar) | ✅     | System monitoring, media, clock, tray — replaces Waybar's 15+ modules                                                                                                                            |
 | DMS notifications        | ✅     | Full notification daemon with popup history, replaces Dunst                                                                                                                                      |
-| DMS lock screen          | ✅     | `dms ipc lock lock` via Mod+Shift+Escape; swaylock-effects fallback (Catppuccin Mocha, blurred screenshots, clock)              |
+| DMS lock screen          | ✅     | `dms ipc lock lock` via Mod+Shift+Escape; swaylock-effects fallback (wallpaper + blur, Catppuccin Mocha). Shared `pkgs/dms-lock.nix`                  |
 | DMS power menu           | ✅     | Replaces wlogout — lock/hibernate/logout/shutdown/suspend/reboot                                                                                                                                 |
 | DMS polkit agent         | ✅     | Replaces polkit-gnome                                                                                                                                                                            |
 | DMS OSD                  | ✅     | Volume/brightness/media overlay                                                                                                                                                                  |
@@ -236,7 +236,7 @@ _A brutally honest audit of every feature the project actually has._
 | Zellij (terminal multiplexer) | ✅     | Catppuccin Mocha, tmux-compatible keybindings (Ctrl+A), 3 custom layouts (dev/monitoring/default)                   |
 | Kitty (terminal)              | ✅     | Font size 16 (TV-friendly), 85% opacity, Catppuccin Mocha, Nix GC resilience patch                                  |
 | Foot (terminal)               | ✅     | Lightweight Wayland alt, JetBrainsMono size 12, 95% opacity                                                         |
-| Swayidle                      | ✅     | 10m idle → lock, 15m idle → power off monitors, 12h idle → suspend; lock before sleep                              |
+| Swayidle                      | ✅     | 12h idle → suspend, lock before sleep. `sway-audio-idle-inhibit` prevents idle during audio playback |
 | SSH suspend guard             | ✅     | Holds `sleep` block inhibitor via `systemd-inhibit` while SSH sessions active — prevents suspend during remote work |
 | Cliphist CLI                  | ✅     | Package kept for manual use; always-on service retired (DMS owns clipboard history)                                 |
 
