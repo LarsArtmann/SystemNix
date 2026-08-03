@@ -437,7 +437,7 @@ in
           "Mod+Shift+P".action.power-off-monitors = { };
           "Mod+Shift+S".action.suspend = { };
 
-          "Mod+W".action.spawn = sh "dms ipc call wallpaper next";
+          "Mod+W".action.spawn = sh "${lib.getExe swww-wallpaper} next";
 
           "Mod+Shift+F11".action.spawn = sh (screenshot ''-g "$(slurp)"'');
           "Mod+F11".action.spawn = sh (screenshot "");
