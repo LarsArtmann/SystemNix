@@ -112,7 +112,7 @@
           db_rel="''${db#/}"
           snapshots_dir="/mnt/btrfs-root/.snapshots"
           if [ -d "$snapshots_dir" ]; then
-            for snap in $(ls -1d "$snapshots_dir"/@.* 2>/dev/null | sort -r); do
+            for snap in $(find "$snapshots_dir" -maxdepth 1 -name '@.*' -type d 2>/dev/null | sort -r); do
               snap_db="$snap/$db_rel"
               if [ -f "$snap_db" ]; then
                 echo "discordsync: trying BTRFS snapshot restore from $(basename "$snap")" >&2
