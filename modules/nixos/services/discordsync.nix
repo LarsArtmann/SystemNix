@@ -38,6 +38,36 @@
           echo "discordsync: DNS resolution ready"
         '';
       };
+
+      # Self-heal corrupted SQLite DB from unclean shutdown (WDT reset, OOM kill).
+      # The libSQL/Go binding panics with "cell_index_read_payload_ptr called on
+      # non-index page" when B-tree pages are corrupted. PRAGMA integrity_check
+      # catches this before the Go binary hits it. Recovery: move the corrupt DB
+      # aside (forensics) and let DiscordSync recreate from scratch or re-sync
+      # from Turso cloud. Attachments in the separate attachments/ dir are preserved.
+      dbHeal = pkgs.writeShellApplication {
+        name = "discordsync-db-heal";
+        runtimeInputs = [ pkgs.sqlite ];
+        text = ''
+          db="${cfg.databasePath}"
+          if [ ! -f "$db" ]; then
+            echo "discordsync: DB does not exist yet — first run, nothing to heal"
+            exit 0
+          fi
+          result=$(sqlite3 "$db" "PRAGMA integrity_check;" 2>&1 || true)
+          if [ "$result" = "ok" ]; then
+            echo "discordsync: DB integrity check passed"
+            exit 0
+          fi
+          echo "discordsync: DB integrity check FAILED — backing up and removing corrupt DB" >&2
+          echo "discordsync: integrity_check result: $result" >&2
+          ts=$(date +%Y%m%dT%H%M%S)
+          mv "$db" "$db.corrupt-$ts"
+          # Clean up WAL/SHM sidecars — stale WAL after corruption causes cascading failures
+          rm -f "$db-wal" "$db-shm" 2>/dev/null || true
+          echo "discordsync: corrupt DB moved to $db.corrupt-$ts — DiscordSync will recreate from scratch"
+        '';
+      };
     in
     {
       imports = [ inputs.discordsync.nixosModules.default ];
@@ -111,7 +141,10 @@
 
           serviceConfig = lib.mkMerge [
             {
-              ExecStartPre = "+${lib.getExe waitDnsReady}";
+              ExecStartPre = [
+                "+${lib.getExe dbHeal}"
+                "+${lib.getExe waitDnsReady}"
+              ];
               # NO ExecStartPost readiness gate: the API server binds in a
               # goroutine AFTER thumb-hash backfill completes (3139+ attachments
               # at ~7/sec = 5-11 min). ExecStartPost runs immediately after
