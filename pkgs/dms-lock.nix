@@ -1,5 +1,4 @@
 {
-  lib,
   writeShellApplication,
   swaylock-effects,
   coreutils,

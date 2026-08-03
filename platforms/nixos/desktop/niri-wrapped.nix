@@ -255,6 +255,13 @@ in
         always-center-single-column = true;
         background-color = "#${colors.base00}";
 
+        blur = {
+          passes = 3;
+          offset = 3.0;
+          noise = 0.02;
+          saturation = 1.5;
+        };
+
         preset-column-widths = [
           { proportion = 0.33333; }
           { proportion = 0.5; }
@@ -266,9 +273,9 @@ in
         };
 
         focus-ring = {
-          width = 2;
+          width = 3;
           active = {
-            color = "#${colors.base0D}";
+            color = "#${colors.base0E}";
           };
           inactive = {
             color = "#${colors.base03}";
@@ -284,14 +291,14 @@ in
 
         shadow = {
           enable = true;
-          softness = 30;
-          spread = 5;
+          softness = 40;
+          spread = 10;
           offset = {
             x = 0;
-            y = 5;
+            y = 3;
           };
           draw-behind-window = true;
-          color = "#00000060";
+          color = "#${colors.base00}80";
         };
 
         struts = {
@@ -489,6 +496,32 @@ in
           opacity = 1.0;
         }
         {
+          matches = [
+            { app-id = "^com.mitchellh.ghostty$"; }
+            { app-id = "^kitty$"; }
+            { app-id = "^foot$"; }
+          ];
+          opacity = 0.88;
+          geometry-corner-radius = {
+            top-left = 12.0;
+            top-right = 12.0;
+            bottom-left = 12.0;
+            bottom-right = 12.0;
+          };
+          clip-to-geometry = true;
+          draw-border-with-background = false;
+        }
+        {
+          matches = [
+            { app-id = "^floating$"; }
+            { app-id = "^pavucontrol$"; }
+            { app-id = "^com.saivert.pwvucontrol$"; }
+            { app-id = "^xdg-desktop-portal-gtk$"; }
+          ];
+          opacity = 0.9;
+          draw-border-with-background = false;
+        }
+        {
           matches = [ { is-floating = false; } ];
           opacity = 0.95;
           geometry-corner-radius = {
@@ -628,10 +661,28 @@ in
     };
 
     systemd.user.services = {
+      swww-daemon = {
+        Unit = {
+          Description = "swww animated wallpaper daemon";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          Type = "simple";
+          ExecStart = "${lib.getExe' pkgs.swww "swww-daemon"}";
+          Restart = "always";
+          RestartSec = 3;
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+
       dms-wallpaper-init = {
         Unit = {
-          Description = "Seed DMS wallpaper from collection on first launch";
-          After = [ "graphical-session.target" ];
+          Description = "Seed swww wallpaper from collection on first launch";
+          After = [
+            "graphical-session.target"
+            "swww-daemon.service"
+          ];
           PartOf = [ "graphical-session.target" ];
         };
         Service = sd.hardenUser { } // {
