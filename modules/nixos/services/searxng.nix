@@ -145,12 +145,13 @@ _: {
               results_on_new_tab = true;
               theme_args.simple_style = "auto";
             };
-            # Generous timeouts for image/video-heavy searches.
-            # Image engines (Google Images, Yandex Images, Baidu, Quark)
-            # are slower than text — short timeouts drop them from results.
+            # Aggressive timeouts for fast TTFB. SearXNG queries all active
+            # engines concurrently — TTFB ≈ slowest engine (capped by timeout).
+            # 3s cuts stragglers; fast engines (Google, Bing) return <1s.
+            # Slow engines simply drop from results instead of blocking the page.
             outgoing = {
-              request_timeout = 8.0;
-              max_request_timeout = 20.0;
+              request_timeout = 3.0;
+              max_request_timeout = 5.0;
               enable_http2 = true;
             };
 
@@ -198,7 +199,7 @@ _: {
               {
                 name = "google images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "bing";
@@ -213,198 +214,198 @@ _: {
               {
                 name = "yandex images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "baidu images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "quark images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "bing images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "duckduckgo images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "qwant images";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "tineye";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
 
               # Package registries (!bang: !packages)
               {
                 name = "alpine linux packages";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "cachy os packages";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "crates.io";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "docker hub";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "hex";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "hoogle";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "lib.rs";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "metacpan";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "npm";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "packagist";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "pkg.go.dev";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "pub.dev";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "pypi";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "rubygems";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "voidlinux";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
 
               # Q&A forums (!bang: !q&a)
               {
                 name = "askubuntu";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "caddy.community";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "discuss.python";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "pi-hole.community";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "stackoverflow";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "superuser";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
 
               # Code repositories (!bang: !repos)
               {
                 name = "bitbucket";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "codeberg";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "gitea.com";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "github";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "gitlab";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "huggingface";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "huggingface datasets";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "huggingface spaces";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "ollama";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "sourcehut";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
 
               # Video search (!bang: !videos) — full coverage so the
@@ -412,167 +413,167 @@ _: {
               {
                 name = "google videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "bing videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "brave.videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "qwant videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "duckduckgo videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "youtube";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "dailymotion";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "vimeo";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "rumble";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "peertube";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "sepiasearch";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "odysee";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "bilibili";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "media.ccc.de";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "wikicommons.videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "pixabay videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "bitchute";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "google play movies";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "mediathekviewweb";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "naver videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "acfun";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "iqiyi";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "sogou videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "360search videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "adobe stock video";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "dogpile videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "findfiles videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "fireball videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "niconico";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "privacywall videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "tusksearch videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "vuhuv videos";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
               {
                 name = "ina";
                 disabled = false;
-                inactive = false;
+                inactive = true;
               }
             ];
           };
