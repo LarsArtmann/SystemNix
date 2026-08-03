@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-07-30 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-08-03 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,7 +25,7 @@ _A brutally honest audit of every feature the project actually has._
 | Feature                                   | Status | Notes                                                                                                                                    |
 | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Cross-platform Nix flake (Darwin + NixOS) | ✅     | Single flake, two systems, 80% shared via `platforms/common/`                                                                            |
-| flake-parts modular architecture          | ✅     | 44 modules auto-discovered (38 services + 6 desktop). Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
+| flake-parts modular architecture          | ✅     | 52 modules auto-discovered. Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
 | Shared overlays (Darwin + NixOS)          | ✅     | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync                                                                     |
 | Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer                                                        |
 | Shared Home Manager config                | ✅     | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs`                                                                               |
@@ -79,12 +79,13 @@ _A brutally honest audit of every feature the project actually has._
 | System Health Collector               | ✅     | `system-health.nix`                  | Prometheus textfile collector: systemd service state, `user-1000.slice` memory, GPUActive thresholds, monitor365 buffer pressure. Pre-computes boolean flags for Gatus `pat()` matching                                                                                                                                                                                                                                                       |
 | Monitor365 (device monitoring)        | ✅     | `monitor365.nix`                     | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID. Schema-migrate oneshot, agent watchdog timer (root), graphical-restart path unit, backup health monitoring, restartTriggers                                                                                                                                                                                 |
 | PMA (auto-commit daemon)              | ✅     | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval                                                                                                                                                                                                                                                                                                                                                        |
-| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 69 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
+| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 74 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
 | Disk Monitor                          | ✅     | `disk-monitor.nix`                   | Desktop notifications at disk usage thresholds                                                                                                                                                                                                                                                                                                                                                                                                |
 | NVMe Health Monitor                   | ✅     | `nvme-health-monitor.nix`            | Desktop notifications for critical NVMe SMART events                                                                                                                                                                                                                                                                                                                                                                                          |
 | DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, sqlite backend (was turso-sync — switched to eliminate Turso free-plan 403), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz.       |
 | Qmd (on-device markdown search)       | ✅     | `qmd-config.nix`                     | Semantic + BM25 hybrid markdown/code search via HTTP MCP server on port 8181. Built from GitHub source (`fetchFromGitHub` + `pnpmConfigHook`). Three GGUF models auto-cached (~2 GiB). CPU-only by default (`QMD_FORCE_CPU=1`). Crush MCP integration at `http://localhost:8181/mcp`.                                                                                                                                                         |
-| SearXNG (privacy metasearch)          | ✅     | `searxng.nix`                        | Privacy-focused metasearch engine on port 8889 (`search.home.lan`). Built-in Granian ASGI server, dedicated Redis (unix socket), auto-generated secret key. Layer 2 SSO via oauth2-proxy (no native OIDC). Rate limiter with trusted proxies + LAN pass_ip. POST-only search (privacy), dark mode, favicon caching (DuckDuckGo). Browser default search engine via Chromium policy. `restartTriggers` on settings + limiter config + package. |
+| SearXNG (privacy metasearch)          | ✅     | `searxng.nix`                        | Privacy-focused metasearch engine on port 8889 (`search.home.lan`). Built-in Granian ASGI server. Rate limiter + Redis REMOVED (private LAN, no abuse vector). POST→GET method switch, `query_in_title=true`. 71 engines across 5 categories. Layer 2 SSO via oauth2-proxy (no native OIDC). POST-only search (privacy), dark mode, favicon caching (DuckDuckGo). Browser default search engine via Chromium policy. `restartTriggers` on settings + package. |
+| Attic binary cache                    | ✅     | `attic.nix`                          | Self-hosted Nix binary cache on port 8200 (`cache.home.lan`). RS256 JWT auth, DynamicUser + sops secret (owner=root), Prometheus metrics split from GC trigger, storage dir pre-creation service, cache bootstrap automation. NixOS VM test (6 assertions).                                                                                                                                                                                    |
 
 ### AI / ML Stack
 
@@ -92,7 +93,7 @@ _A brutally honest audit of every feature the project actually has._
 | -------------------------------- | ---------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Centralized AI model storage     | ✅         | `ai-models.nix`    | `/data/ai/` tree (14 dirs), env vars, tmpfiles rules — dependency for all AI services                                                                                                              |
 | Ollama (LLM inference)           | ✅         | `ai-stack.nix`     | ROCm GPU, flash attention, 2 parallel, q8_0 KV, 1h keep-alive, 32G MemoryMax, auto-starts with `multi-user.target` (`mkForce []` removed)                                                          |     |
-| llama.cpp (standalone)           | ✅         | `ai-stack.nix`     | ROCWMMA + MFMA custom build (`-DGGML_HIP_MMQ_MFMA=ON`)                                                                                                                                             |
+| llama.cpp (standalone)           | ✅         | `ai-stack.nix`     | ROCWMMA custom build. MFMA flag (`-DGGML_HIP_MMQ_MFMA=ON`) REMOVED — complete no-op on Strix Halo (gfx1150/RDNA 3.5). Flag only affects CDNA GPUs; RDNA uses WMMA via compiler builtins                                                                                                                                             |
 | gpu-python wrapper               | ✅         | `ai-stack.nix`     | ROCm env vars + LD_LIBRARY_PATH for GPU-accelerated Python                                                                                                                                         |
 | ComfyUI (image generation)       | ❌ Removed | —                  | Disabled — prefer using AI models via code directly                                                                                                                                                |
 | Voice agents (LiveKit + Whisper) | 🔧         | `voice-agents.nix` | Docker ROCm Whisper, Caddy reverse proxy, UDP 50000-51000 — disabled in config                                                                                                                     |
@@ -127,7 +128,7 @@ _A brutally honest audit of every feature the project actually has._
 
 | Program                | Status | Notes                                                                                              |
 | ---------------------- | ------ | -------------------------------------------------------------------------------------------------- |
-| Fish                   | ✅     | Primary shell — shared aliases, Carapace completions, 5k history, autosuggestions, GOPATH in PATH  |
+| Fish                   | ✅     | Primary shell — shared aliases, Carapace completions, 5k history, autosuggestions, GOPATH in PATH, direnv per-command caching (46ms→0.7ms), starship/fzf/carapace init caching |
 | Zsh                    | ✅     | Autosuggestions + syntax highlighting, XDG dotdir, `~/.env.private` sourcing                       |
 | Bash                   | ✅     | Shared aliases, erase-dups history, cdspell/autocd/globstar                                        |
 | Starship prompt        | ✅     | Performance-tuned: 400ms timeout, 30+ modules disabled, only Go/Node/Nix shown, colorScheme-driven |
@@ -200,7 +201,7 @@ _A brutally honest audit of every feature the project actually has._
 | DMS polkit agent         | ✅     | Replaces polkit-gnome                                                                                                                                                                            |
 | DMS OSD                  | ✅     | Volume/brightness/media overlay                                                                                                                                                                  |
 | DMS clipboard manager    | ✅     | Owns clipboard history exclusively (cliphist service retired 2026-06-30)                                                                                                                         |
-| DMS wallpaper management | ✅     | Owns wallpapers natively. `dms-wallpaper-init` seeds from `~/.local/share/wallpapers/`. Mod+W = `dms ipc call wallpaper next`. Dynamic theming DISABLED (Catppuccin Mocha preserved)             |
+| DMS wallpaper management | ✅     | swww wallpaper daemon with GLSL shader transitions (fire on close, circle on open). `swww-wallpaper` switcher script. `dms-wallpaper-init` seeds from `~/.local/share/wallpapers/`. Mod+W = wallpaper switch. Dynamic theming DISABLED (Catppuccin Mocha preserved)             |
 | DMS calendar/events      | ✅     | `enableCalendarEvents = false` (khal available, disabled)                                                                                                                                        |
 | DMS audio wavelength     | ✅     | cava-based visualizer (`enableAudioWavelength`)                                                                                                                                                  |
 
@@ -254,7 +255,7 @@ _A brutally honest audit of every feature the project actually has._
 | BTRFS root (`/`)      | ✅     | zstd compression, noatime                                                                                                                 |
 | BTRFS data (`/data`)  | ✅     | zstd:3 compression, SSD optimizations, space_cache=v2 — Docker lives here (discard=async removed: QLC NAND I/O choke)                     |
 | FAT32 boot (`/boot`)  | ✅     | Restrictive masks (fmask=0077, dmask=0077)                                                                                                |
-| BTRFS snapshots       | ✅     | btrbk: daily snapshots of root (@), 14d + 4w retention, monthly scrub, verify timer alerts stale snapshots                                |
+| BTRFS snapshots       | ✅     | btrbk: daily snapshots of root (@), 14d + 4w retention, weekly autoScrub, verify timer alerts stale snapshots                                                                                                |
 | ZRAM swap             | ✅     | 17% of visible RAM (~16 GiB compressed), zstd compression                                                                                 |
 | AMD virtualization    | ✅     | KVM-AMD + AMD microcode updates                                                                                                           |
 
@@ -446,7 +447,8 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | ~~PhotoMap AI~~   | Removed (2026-07-04) — module, port, Docker image all cleaned up                                                                                                                                                                                            | —        |
 | Multi-WM (Sway)   | Enabled as backup compositor at SDDM login — may have minor bitrot                                                                                                                                                                                          | Low      |
 | Twenty CRM        | `twenty-server` crash-loops with PG role mismatch — data intact, app down                                                                                                                                                                                   | Medium   |
-| SigNoz alerts     | 20 alert rules provisioned and verified (v5 API, all `state: inactive`). 4 always-firing rules fixed 2026-07-30 (`target=0` + `above_or_equal` = always true). mkRule has target=0 assertion preventing recurrence. /tmp tmpfs usage alert added 2026-07-30 | Low      |
+| SigNoz alerts     | 20 alert rules provisioned and verified (v5 API, all `state: inactive`). 4 always-firing rules fixed 2026-07-30 (`target=0` + `above_or_equal` = always true). mkRule has target=0 assertion preventing recurrence. /tmp tmpfs usage alert added 2026-07-30 | Low     |
+| NVMe data integrity | SMART healthy (0 media errors, 11% wear). 13 corrupted files found and deleted (Aug 3). Root cause: 58 unsafe shutdowns, not async discard. Weekly scrub enabled. `nodiscard` confirmed working. Off-site backup still missing | Medium   |
 | Voice agents      | Disabled in configuration, Whisper Docker + ROCm pipeline                                                                                                                                                                                                   | Medium   |
 | Minecraft         | Disabled in configuration                                                                                                                                                                                                                                   | Low      |
 | Benchmark scripts | Planned but never created                                                                                                                                                                                                                                   | Low      |
@@ -530,7 +532,7 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 
 | Category                   | Count    |
 | -------------------------- | -------- |
-| NixOS service modules      | 44       |
+| NixOS service modules      | 52       |
 | Custom packages            | 24       |
 | Cross-platform programs    | 20+      |
 | NixOS desktop components   | 16+      |
@@ -541,9 +543,10 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 | Architecture patterns      | 7        |
 | ADRs                       | 13       |
 | GitHub Actions             | 2        |
-| Gatus health endpoints     | 69       |
+| Gatus health endpoints     | 74       |
 | Sops secret files          | 12       |
-| **Total enabled features** | **~195** |
+| NixOS VM tests             | 2        |
+| **Total enabled features** | **~205** |
 | Planned/disabled           | ~8       |
 | Known gaps                 | 12       |
 

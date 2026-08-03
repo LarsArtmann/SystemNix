@@ -295,3 +295,9 @@ However:
 PASS: 30  FAIL: 0  SKIP: 1
 ✅ All checks passed
 ```
+
+---
+
+## Resolution (2026-08-03 09:30)
+
+The band-aid fix (WAL clearing + ACTORS_HOST + MemoryMax=1G) was **superseded by Pocket ID 2.12.0** via the nixpkgs update (commit `06ed9234`). Pocket ID 2.12.0 includes upstream fixes for the francis actor framework's SQLITE_BUSY contention. The WAL-clearing ExecStartPre and ACTORS_HOST may no longer be necessary — candidates for cleanup (tracked in `2026-08-03_07-01` section C: "remove WAL band-aid", "remove ACTORS_HOST", "revert MemoryMax"). Deploy verified: 29 PASS, 0 FAIL, 2 SKIP per `26ac30d8`.

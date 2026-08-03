@@ -10,7 +10,31 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Added
 
-- **OpenSEO** — self-hosted SEO suite (rank tracking, keyword research, backlinks). Native NixOS service built from source (Vite/pnpm + workerd runtime). Port 3002, `seo.home.lan`. GSC OAuth callback + AI features conditionally enabled with `openseo-validate` ExecStartPre.
+- **Attic binary cache** — self-hosted Nix binary cache on port 8200 (`cache.home.lan`). RS256 JWT auth, DynamicUser + sops secret (owner=root), Prometheus metrics split from GC trigger, storage dir pre-creation service, cache bootstrap automation, Homepage tile. NixOS VM test (`tests/test-attic.nix`, 6 assertions). Dedicated Gatus health check + storage alert. Forgejo runner MemoryMax raised 4G→16G for CI builds
+- **DynamicUser eval-time audit** — `modules/nixos/services/dynamic-user-audit.nix` cross-references `DynamicUser=true` services with sops secrets/templates at eval time. Catches ANY DynamicUser service (present or future) with non-root secret owners. Replaces fragile bash-grep pre-commit hook
+- **BTRFS balance timers** — weekly metadata balance (`-musage=50`, Mon 04:00) + bounded data balance (`-dusage=50 -dlimit=10`, Mon 05:00) in `btrfs-health.nix`. Both guarded by `btrfs-chunk-check` (skip if balance running, skip if unallocated < 5G/10G). Prevents the 2026-06-26 metadata ENOSPC crash mode
+- **BTRFS emergency reserve** — 10 GiB `fallocate`d file at `/btrfs-emergency-reserve`, created on boot. Delete for instant 10 GiB free space during ENOSPC. Tracked via Prometheus metrics + Gatus Discord alert if missing
+- **BTRFS weekly scrub** — `autoScrub.interval` changed from monthly to weekly (monthly scrub only ran 15 min before interruption, corruption detection was broken for weeks). Scrub monitoring false-positive fixed (checks "finished" not just "no errors")
+- **NVMe block-layer discard disable** — `ff2c2f80` disables discards at the block layer (`nvme_core.default_ps_max_latency_us=0` + `elevator=none`). Investigation found BTRFS auto-enables `nodiscard` on SSDs; explicit `nodiscard` on all BTRFS mounts confirmed working
+- **Shell latency optimization** — direnv per-command caching (46ms→0.7ms, 65x faster), carapace/starship/fzf init script caching, per-session direnv sentinel isolation (`$fish_pid`), smart direnv GC root library. Fish startup: 67ms→54ms. Cold path: 14.8s→2.9s
+- **swww wallpaper daemon** — replaces DMS wallpaper management with shader-based transitions (fire GLSL on close, circle GLSL on open). `swww-wallpaper` switcher script. DMS wallpaper init retained as fallback
+- **Lockscreen improvements** — shared `pkgs/dms-lock.nix` package, wallpaper-based lock background (not screenshot), `sway-audio-idle-inhibit` (prevents idle lock during media playback), Catppuccin Mocha theming, `--daemonize` before-sleep fix
+- **Desktop Renaissance v3** — terminal transparency (88%/90%), floating window transparency, enhanced focus ring, DMS dock, DMS lock screen, DMS fonts/icons, fire/circle GLSL shaders, theme color inheritance
+- **SearXNG engine expansion** — expanded from ~8→71 engines across 5 categories. `disabled` vs `inactive` bug fixed (`inactive=false` doesn't override `disabled=true`). Redis cache bounded (128mb/allkeys-lru). Timeouts raised. Image engines expanded (4→8). Hostnames plugin configured (high_priority: SO/MDN/GitHub, remove: Pinterest)
+- **SearXNG privacy + TTFB optimization** — rate limiter + Redis removed (private LAN, no abuse vector), `request_timeout` 8s→3s, `max_request_timeout` 20s→5s, autocomplete→DuckDuckGo, `method=GET` + `query_in_title=true`. `formats=["html"]` blocks JSON API scraping
+- **Service integration: OTLP tracing** — OTLP env vars wired for DiscordSync, crush-daily, PMA, Overview, File-Renamer (Go services: `localhost:4318`). Monitor365 otel cargo feature enabled (`c07b18241`). Hermes + Manifest env vars set (upstream instrumentation pending). Unit tests for `SetupFromEnv` in 4 Go repos
+- **Service integration: backup coordination** — generic `services.backup-coordination` module monitors ALL backup directories via Prometheus textfile metrics. Replaces per-service backup monitors
+- **Service integration: secret rotation monitoring** — Pocket ID client secret freshness check (90-day threshold), Prometheus textfile metrics + Gatus Discord alert
+- **Service integration: SigNoz OTLP receiver Gatus check** — health check for the OTel collector HTTP endpoint
+- **Pocket ID francis crash-loop fix** — WAL clearing ExecStartPre + `ACTORS_HOST=127.0.0.1` + `MemoryMax=1G`. Root cause: francis actor framework SQLITE_BUSY cascade → nil-pointer panic. Superseded by Pocket ID 2.12.0 via nixpkgs update
+- **nixpkgs update (Jan 2026 → Aug 2026)** — 7-month drift resolved. Pocket ID 2.10.0→2.12.0. segment-buffer build fix (crane `importCargoLock`). libspa-sys lint fixes. catppuccin-gtk Python 3.14 overlay. Redis→Valkey module key migration. Deployed successfully (29 PASS, 0 FAIL, 2 SKIP)
+- **statix.toml** — disables `repeated_keys` false positive for NixOS modules. `manual_inherit`/`manual_inherit_from` warnings fixed across 15 files via `statix fix`
+- **Forgejo OIDC DNS gate** — `forgejo-oidc-wait-dns` ExecStartPre probes `getent hosts auth.home.lan` (same DNS-gate pattern as SearXNG/DiscordSync)
+- **Docker backup service ordering** — added `docker.service` to `after` list (was only `requires` without `after`)
+
+### Changed
+
+- **Deploy resilience** — `deploy.sh` now runs `systemctl reset-failed` (system + user) AND explicitly starts enabled-but-inactive services after reset. Previously crash-looped services at boot blocked ALL deploys until manually reset.
 - **system-health collector** — Prometheus textfile collector for systemd service state (active/failed/start-limit-hit), `user-1000.slice` memory threshold (40G), GPUActive threshold (60G), monitor365 DuckDB buffer pressure. Pre-computes boolean flags for Gatus `pat()` matching.
 - **Monitor365 schema-migrate oneshot** — runs `ALTER TABLE tenants ADD COLUMN IF NOT EXISTS version INTEGER` before server start. Resolves the DuckDB "version" column binder error after upstream schema change.
 - **Monitor365 agent watchdog** — timer (every 5min) checks agent process + metrics endpoint; resets start-limit and restarts if dead. Runs as root (required for `systemctl start`).
@@ -73,6 +97,12 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **git insteadOf restoration** — the `url.git@github.com:.insteadof=https://github.com/` rule was removed (`2026-07-29`) to prevent SSH-URL lock pollution, then restored on user demand (`2026-07-30`, `502020e7`). AGENTS.md documents both the risk and the restoration
 - **Homepage Caddy tile honesty** — `siteMonitor` changed from self-referential dashboard URL (showed Next.js SSR latency through Caddy as "Caddy latency") to Caddy admin API (`localhost:2019/metrics` — measures Caddy's own process). `href` removed (no user-facing Caddy UI; linking to the dashboard you're already on is a no-op)
 - **Homepage favicon local bundling** — changed from GitHub CDN (`raw.githubusercontent.com/walkxcode/dashboard-icons`) to local icon pack (`/icons/nixos.png`), eliminating external dependency
+- **Hermes flake input** — switched from pinned tag (`v0.19.0`) to default-branch tracking. Hermes now tracks `0.19.1+` automatically. `extraDependencyGroups` documented
+- **llama-cpp ROCm MFMA flag removed** — `-DGGML_HIP_MMQ_MFMA=ON` override was a complete no-op on Strix Halo (gfx1150/RDNA 3.5). The flag only affects CDNA GPUs (MI100/200/300); RDNA uses WMMA which is always enabled via compiler builtins. Removing it restored binary caching (30+ min builds → instant substitutes)
+- **Attic cache bootstrap automation** — `atticadm` runs directly in bootstrap service, auto-starts on boot, storage dir pre-created via dedicated oneshot (tmpfiles insufficient on `/data`)
+- **PMA death-loop fix** — error wrapping (`oops.Wrap` instead of `oops.New`), per-project failure cooldown, workers reduced 8→4, MemoryMax raised 12G→16G. Upstream commits `3bb24b30`, `5a8a3065`
+- **Helium empty-window loop re-fix** — removed self-defeating 300s timeout from `helium-launch`. The timeout defeated the "wait for existing instance death" guard — every 5 min it fired "launch anyway" → Chromium found SingletonLock → empty window. Now waits indefinitely as a monitor
+- **NixOS VM test infrastructure** — migrated from deprecated `make-test-python.nix` to `pkgs.testers.runNixOSTest`. `tests/mock-sops.nix` mocks sops-nix in VMs. `tests/test-helpers.nix` provides common mocks. CI runs VM tests with KVM
 
 ### Removed
 
@@ -80,6 +110,15 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Fixed
 
+- **NVMe data corruption (13 files)** — root cause: 58 unsafe shutdowns (46% of 126 power cycles) causing incomplete BTRFS commits, NOT async discard. SMART shows drive healthy (0 media errors, 11% wear). All 13 corrupted AI model files identified and deleted. `autoScrub` changed monthly→weekly. Dangerous `discard=none` and block-layer disable changes reverted (would have bricked boot). Database integrity verified (PostgreSQL clean, DuckDB clean)
+- **Pocket ID v2.10.0 francis crash-loop** — `francis` actor framework's SQLITE_BUSY cascade caused nil-pointer panic → SIGSEGV → start-limit-hit. Auth.home.lan was down ~2 hours. WAL clearing + ACTORS_HOST + MemoryMax=1G band-aid applied, then superseded by Pocket ID 2.12.0 via nixpkgs update
+- **segment-buffer build failure** — `outputHashes` entry missing for `segment-buffer-0.6.0` Rust crate. Fixed via crane's `importCargoLock` API in nixpkgs update
+- **libspa-sys bindgen breakage** — monitor365's `[patch.crates.io]` path override produced empty bindgen output. Resolved upstream (unpinned from `5ee717e3`)
+- **`writeShellApplication` pipefail false-FAIL** — two bug classes: (1) `|| echo 0` on pipelines produces multi-line output under pipefail → arithmetic error. Fix: `|| true` + `${var:-0}`. (2) `| sort | head` SIGPIPE (exit 141) under pipefail. Fix: append `|| true`. Affected: `tmp-cleanup`, `nix-build-cleanup`, `cargo-sweep`, `backup-health-metrics`, `monitor365-duckdb-heal`
+- **Attic tmpfiles unsafe path transition** — systemd-tmpfiles skips `/data/atticd/storage` because `/data` (owned by `lars:users`) → root is an unsafe ownership transition. Fix: dedicated `atticd-storage-dir.service` oneshot creates the directory via `mkdir -p` before atticd starts
+- **Attic cache-info.txt write failure** — DynamicUser atticd couldn't write to `/var/lib/atticd`. Fix: explicit `ReadWritePaths` grant via `79dfcd8c`
+- **Forgejo OIDC setup DNS race** — `forgejo-oidc-setup` had `after=["dnsblockd.service"]` but no DNS gate ExecStartPre. During deploy, DNS briefly unavailable → `dial tcp: lookup auth.home.lan: no such host`. Fix: `forgejo-oidc-wait-dns` ExecStartPre (30×2s retries, exits 1 on timeout)
+- **Docker backup service ordering** — backup service had `requires=["docker.service"]` but NOT `after=["docker.service"]`. During deploy, Docker restarts → backup timer fires → `docker-compose exec` fails. Fix: added `docker.service` to `after` list
 - **ActivityWatch Wayland watcher start-limit-hit** — `aw-watcher-window-wayland` had `After`/`PartOf = graphical-session.target` but no start-limit hardening, so a slow compositor start or transient Wayland failure hit the systemd default (5 starts / 10 s) and left the watcher dead until manual `reset-failed`. Added `StartLimitBurst=5` / `StartLimitIntervalSec=300` to the local override. Upstream Home Manager patch prepared (`docs/services/home-manager-activitywatch-graphical-session.patch`) adding a `requiresGraphicalSession` watcher option so the compositor dep is upstreamable instead of a hand-rolled per-site override.
 - **Monitor365 DuckDB WAL corruption** — `monitor365-duckdb-heal` ExecStartPre always removes `.wal` before startup. DuckDB checkpoints WAL on graceful shutdown; `.wal` present = unclean shutdown. Server was crash-looping 291+ times.
 - **Monitor365 agent circuit-breaker deadlock + start-limit death spiral** — 4-layer fix: `startLimitBurst=10` on service, debounced graphical-restart (skips if <60s ago), watchdog timer (resets + restarts), deploy.sh starts inactive services.

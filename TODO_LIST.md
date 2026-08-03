@@ -1,44 +1,50 @@
 # SystemNix TODO List
 
-**Updated:** 2026-07-30 | **Last session:** SigNoz alert rules always-firing bug fix (target=0 + above_or_equal = always true), git insteadOf restoration, /tmp tmpfs cap raise + cleanup timer, full docs-health + update-old-docs pass (76 historical files read, 24 annotated)
+**Updated:** 2026-08-03 | **Last sessions:** NVMe corruption investigation (root cause: 58 unsafe shutdowns, not async discard), nixpkgs update (Jan→Aug 2026, Pocket ID 2.12.0), shell optimization (direnv caching 46ms→0.7ms), Attic binary cache, Desktop Renaissance v3 (swww + GLSL shaders)
 
 ---
 
 ## Priority 0: Critical (Data Loss Risk)
 
-- [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25. **Manual action required:** set up Hetzner StorageBox + BorgBackup
-- [ ] **Run BTRFS scrub on `/` and `/data`** — Jul 8 NVMe report found 91,561 csum errors with identical wrong checksum. No scrub has ever been run. **Manual command:** `sudo btrfs scrub start -r /data` and `sudo btrfs scrub start -r /`. Monitoring infrastructure is complete (scrub metrics every 5 min via `btrfs-health.nix`, Gatus alerts on Discord when `btrfs_scrub_error_free` drops to 0)
-- [ ] **Run `smartctl -a /dev/nvme0n1`** — Cannot determine if the Lexar NQ790 is physically failing (NAND degradation) or if the 91K csum errors are purely a `discard=async` software issue. SMART data is the only way to know. **Manual command required**
+- [ ] **Off-site backup** — No DR backup exists. Forgejo (Git history), Immich (photos), Twenty (CRM), DiscordSync (Discord archive) would all be lost on SSD failure or BTRFS corruption. The Aug 3 corruption event (13 files lost) proves this is not theoretical. Evaluated in `docs/research/hetzner-storagebox-borgbackup.md` but never executed. Flagged in every status report since 2026-06-25. **Manual action required:** set up Hetzner StorageBox + BorgBackup
+- [ ] **Run foreground BTRFS scrub on `/`** — `/dev/nvme0n1p6` (`/`) has NEVER been scrubbed. Same physical NVMe as `/data` which had 13 corrupted files. SMART says drive is healthy (11% wear, 0 media errors), but root FS corruption would be catastrophic. **Manual command:** `sudo btrfs scrub start -B /`
+- [ ] **Investigate 58 unsafe shutdowns** — 46% of 126 power cycles were unsafe (WDT resets, OOM cascades, power events). This is the root cause of the data corruption, not async discard. Each unsafe shutdown risks incomplete BTRFS commits. Consider UPS, WDT timeout tuning, or oomd threshold adjustment
 
-## Priority 1: High (Stability & Monitoring)
+## Priority 1: High (Deploy Pending)
 
-- [ ] **Twenty CRM: fix PG role + decide Docker vs native** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification
-- [ ] **Find the missing 20th SigNoz alert rule** — 20 `mkRule` calls in `_signoz-alerts.nix` but only 19 rules appeared in the API. The 20th rule was silently dropped during provisioning. **UPDATE 2026-07-30:** Now 20 rules exist (added `/tmp TmpFS Usage High`). Need to verify all 20 appear in the live API after deploy — the original 20th drop may still be a provision script bug
-- [x] **Add `target` validation to SigNoz `mkRule`** — DONE 2026-07-30. `validateTarget` assertion in `_signoz-alerts.nix` throws at eval time on `target=0 + above_or_equal` (always true) and `target=0 + below` (never true). Verified: all 20 rules pass, deliberate bad target correctly throws. `nix flake check` catches it before deploy
+- [ ] **Deploy pending changes** — Multiple sessions' work committed but not yet deployed: NVMe corruption fixes (weekly scrub `9083c126`, scrub monitoring fix, dangerous config reverts `c2615d09`), Attic binary cache (bootstrap service + storage dir + public key `2c344e64`), SearXNG TTFB optimization (rate limiter + Redis removal `27aed87b`), Desktop Renaissance v3 (swww + GLSL shaders + transparency), shell optimization (direnv per-command caching `64d53448`). Run `nix run .#deploy` then `nix run .#post-deploy-check`
+- [ ] **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification
+- [ ] **Create Attic cache + CI token** — Attic module deployed but cache not yet created. Steps: `attic cache create monitor365`, `atticadm make-token --sub ci --validity 1y --push monitor365 --pull monitor365`, configure Forgejo runner. See `docs/services/nix-binary-cache-setup.md`
+- [ ] **Enable niri blur** — Desktop Renaissance v3 added terminal transparency (88%/90%) but niri's blur option is NOT configured (niri HM module lacks `blur {}` option). Transparent terminals without blur are hard to read. Workaround: raw KDL config, wait for niri-flake, or drop transparency
 
 ## Priority 2: Manual Steps (Blocked on Human)
 
-- [ ] **Deploy pending changes** — Code-complete items pending `nix run .#deploy`: /tmp tmpfs cap raise (16G -> 48G) + cleanup timer, git insteadOf restoration (`502020e7`), SigNoz always-firing rules fix, CPUQuota=200% default, mkRule target validation, /tmp tmpfs monitoring (system-health + SigNoz + Gatus), Homepage Caddy tile + favicon fixes. Run deploy then `nix run .#post-deploy-check`
 - [ ] **Hermes: install SSH deploy key** — private key to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model`
 - [ ] **Install `dnsblockd-CA` on Mac** — Without it, Chrome/Helium block Touch ID platform authenticator for `*.home.lan`, breaking Gatus/Forgejo SSO. Manual: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /tmp/dnsblockd-ca.pem`
 - [ ] **Turso plan decision** — DiscordSync switched to sqlite backend (eliminates Turso 403). Cloud sync via Turso requires upgrading the plan or waiting for quota reset. Decide: keep sqlite-only, or re-enable turso-sync after plan upgrade
+- [ ] **Reduce `/data` fill below 80%** — Currently 92% full (700 GiB / 758 GiB). High fill on QLC NAND increases write amplification and failure risk. Candidates: clean Docker images (`docker system prune`), re-download corrupted AI models only when needed, audit `/data/activitywatch` (12G), Steam (5.9G), DuckDB (13G)
 
 ## Priority 3: Infrastructure
 
-- [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), now has btrbk snapshot protection but still not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime
-- [x] **/tmp Prometheus monitoring** — DONE 2026-07-30. `system-health.nix` emits `system_tmpfs_tmp_usage_percent` + `system_tmpfs_tmp_over_threshold` (80% of 48 GiB). SigNoz alert "/tmp TmpFS Usage High (>80%)" (primary, numeric comparison) + Gatus check (defense-in-depth, pre-computed boolean). Pending deploy
+- [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), has btrbk snapshot protection but not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime
+- [ ] **`/data` compression decision** — `compress=zstd:3` on `/data` is under review (corruption report recommended removal). Needs user decision: keep, lower to `zstd:1`, or remove. Blocked by reboot requirement
+- [ ] **Remove Pocket ID WAL band-aid** — Pocket ID 2.12.0 (deployed via nixpkgs update `06ed9234`) includes upstream francis fixes. The WAL-clearing ExecStartPre, `ACTORS_HOST=127.0.0.1`, and `MemoryMax=1G` overrides may no longer be needed. Remove one at a time, verify SQLITE_BUSY doesn't recur
+- [ ] **SearXNG streaming exploration** — User wants streaming results (progressive rendering), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy flush_buffers. Config tuning (rate limiter removal) is committed but the streaming work is deferred
 
 ## Priority 4: Code Quality
 
 - [ ] **Wire `doc-freshness-check.sh` into pre-commit or CI** — Script exists (`scripts/doc-freshness-check.sh`) but is not automated. Validates doc counts against code
-- [x] **Homepage widgets audit** — DONE 2026-07-30. Widgets use `pkgs.formats.yaml` (structurally safe). Productivity has 5 tiles (not 3), `columns=4` correct. Caddy tile `siteMonitor` fixed (self-referential dashboard URL → Caddy admin API `localhost:2019/metrics`). Favicon CDN → local `/icons/nixos.png`. **Caveat:** field-level schema not cross-referenced against Homepage docs. Pending deploy
+- [ ] **Add regression tests for past bugs** — VM test infrastructure exists (`tests/`). Add tests for: DynamicUser + sops owner mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail + SIGPIPE patterns
+- [ ] **Consolidate systemd blocks for statix** — `statix.toml` disables `repeated_keys` (false positive for NixOS modules). Alternative: consolidate service+timer pairs into single blocks to eliminate the warning entirely
+- [ ] **PMA `GenerateMessage` handler leak** — Same `defer Close()` pattern as the fixed `Commit()` site, but `GenerateMessage` was missed. Upstream fix needed in PMA repo
 
 ## Priority 5: Desktop
 
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary
-- [ ] **Verify all 20 extension IDs are live on Chrome Web Store** — Dead IDs cause silent download failures now that background networking is enabled. Launch Helium, check `chrome://extensions`
-- [ ] **Research `--disable-component-update` removal impact** — Removed alongside background networking. May enable CRLSet/cert-revocation component fetches. If extensions work without it, consider re-adding it
+- [ ] **Verify all extension IDs are live on Chrome Web Store** — Dead IDs cause silent download failures now that background networking is enabled
+- [ ] **Visual verify Desktop Renaissance v3** — GLSL fire/circle shaders, terminal transparency, swww wallpaper daemon — all committed but ZERO runtime testing. Check `journalctl --user -u quickshell` for shader compile errors
+- [ ] **Backup DMS `settings.json` before deploy** — DMS may overwrite user-owned `settings.json` on rebuild (split-brain risk). Backup before deploying Desktop Renaissance v3
 
 ## Priority 6: Upstream Contributions
 
@@ -49,7 +55,6 @@
 - [ ] **`taskwarrior3` build flags** — `SYSTEM_CORROSION=on` + `ENABLE_TLS_NATIVE_ROOTS=on` should be nixpkgs defaults
 - [ ] **Kitty GC resilience patch** — After `nix-collect-garbage`, kitty's bundled binary lookup breaks
 - [ ] **KeePassXC Chromium manifests** — nixpkgs only ships Firefox-format native messaging manifests
-- [x] ~~**`llama-cpp` ROCm MMFMA flag** — `-DGGML_HIP_MMQ_MFMA=ON` should be a package option~~ **REMOVED 2026-08-02:** No-op on RDNA 3.5 (Strix Halo). The flag only affects CDNA GPUs (MI100/200/300), defaults to ON upstream already, and RDNA uses WMMA (not MFMA) which is always enabled via compiler builtins. The overrideAttrs only broke binary caching for 30+ min builds with zero effect
 
 ### Home Manager
 
@@ -59,6 +64,7 @@
 
 - [ ] **`jscpd` lockfile** — PR upstream to publish `pnpm-lock.yaml`
 - [ ] **XRT boost 1.87+ compat** — PR to `nix-amd-npu` to pin `boost187` for XRT build
+- [ ] **Upstream direnv caching pattern** — The fish-native mtime gate (46ms→0.7ms per command) and `_nix_add_gcroot` optimization (14.8s→2.9s cold path) would benefit all fish+direnv users on large flakes
 
 ### LarsArtmann Apps
 
@@ -74,6 +80,7 @@
 - [ ] **Disabled service triage** — voice-agents, minecraft: decide enable or remove
 - [ ] **Monitor365 event-store compaction** — 597M backlog events draining at 1B/day limit; after drain, compact the event store to reclaim DuckDB space
 - [ ] **Overview upstream: retry discovery** — Overview runs discovery ONCE at startup; if PMA daemon is slow, it caches nil and returns 503. Upstream fix needed (Overview should retry). SystemNix has a watchdog workaround
+- [ ] **NVMe drive replacement evaluation** — SMART says healthy (11% wear) but 58 unsafe shutdowns are the real risk. Consider TLC replacement, RAID1 for `/data`, or UPS to prevent unsafe shutdowns
 
 ---
 
@@ -81,13 +88,13 @@
 
 After `nix run .#deploy`, verify:
 
-1. **SigNoz provisioner** — Check `journalctl -u signoz-provision.service` for HTTP status codes on POST /api/v1/rules. Verify all 19+ rules are `state: inactive` (not `firing`)
-2. **Browser extensions** — Launch Helium, check `chrome://extensions` for installed extensions. Check `~/.config/net.imput.helium/Default/Extensions/` is non-empty
-3. **Caddy proxyTo** — Check service access logs for real client IPs (not `127.0.0.1`)
-4. **Crush Daily** — Run `sudo systemctl restart crush-daily.service`, then verify `GET /api/reports/2026-07-30` returns non-zero sessions
-5. **monitor365 Wayland** — Verify `grim`/`slurp`/`wtype` are in the agent's PATH (`systemctl show monitor365.service -p Environment`)
-6. **/tmp tmpfs** — Verify `df -h /tmp` shows 48G capacity (requires remount/reboot for size change)
-7. **Post-deploy check** — `nix run .#post-deploy-check` (hard-fails on SigNoz rules if 0 provisioned)
+1. **Post-deploy check** — `nix run .#post-deploy-check` (hard-fails on critical issues)
+2. **Pocket ID** — Verify `auth.home.lan` loads, check `journalctl -u pocket-id.service` for SQLITE_BUSY or francis panics (should be resolved by 2.12.0)
+3. **SearXNG** — Verify `search.home.lan` loads, test a search query, confirm rate limiter removal didn't break functionality
+4. **Attic cache** — Verify `cache.home.lan` loads, run `attic cache info monitor365`
+5. **BTRFS scrub** — Verify `btrfs scrub status /` shows weekly schedule, check Prometheus metrics for scrub status
+6. **Shell** — Verify fish startup < 60ms (`fish -i -c exit` with timing), verify direnv caching works (`time cd .`)
+7. **Desktop** — Check `journalctl --user -u quickshell` for GLSL shader errors, verify wallpaper daemon, test transparency
 
 ---
 

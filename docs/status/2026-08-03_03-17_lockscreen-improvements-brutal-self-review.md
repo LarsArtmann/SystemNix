@@ -178,12 +178,18 @@ The `ssh-suspend-guard` only inhibits suspend. With the new 10-min lock, working
 
 ### Q1: Is a 10-minute idle auto-lock the behavior you actually want?
 
-You had 12h as the ONLY idle behavior. I added 10-min lock + 15-min monitor-off without asking. On a machine running long compiles, AI workloads, and video playback, 10 minutes might be aggressively annoying. **What idle lock timeout do you actually want?** (Options: 5m, 10m, 15m, 30m, 1h, disable entirely, or only lock on manual trigger / before-sleep)
+~~You had 12h as the ONLY idle behavior. I added 10-min lock + 15-min monitor-off without asking. On a machine running long compiles, AI workloads, and video playback, 10 minutes might be aggressively annoying. **What idle lock timeout do you actually want?** (Options: 5m, 10m, 15m, 30m, 1h, disable entirely, or only lock on manual trigger / before-sleep)~ **ANSWERED: User rejected 10-min lock.** Reverted in v2 (`2026-08-03_03-32`). Idle timeouts restored to original 12h.
 
 ### Q2: Should media playback inhibit the idle lock?
 
-Standard desktops inhibit screensaver during video/audio playback. SystemNix currently has zero idle-inhibition — the lock fires during movies, music, presentations. **Do you want media-aware idle inhibition?** (This requires either a `playerctl` poll loop, or checking niri's `idle-inhibit` protocol support, or using `xdg-screensaver` DBus inhibition from media players)
+~~Standard desktops inhibit screensaver during video/audio playback. SystemNix currently has zero idle-inhibition — the lock fires during movies, music, presentations. **Do you want media-aware idle inhibition?** (This requires either a `playerctl` poll loop, or checking niri's `idle-inhibit` protocol support, or using `xdg-screensaver` DBus inhibition from media players)~ **ANSWERED: Yes.** `sway-audio-idle-inhibit` added in v2 (`8a3d599a`).
 
 ### Q3: Should the lock screen show a blurred screenshot of your current screen, or a solid color/wallpaper?
 
-`--screenshots` captures your screen at lock time and blurs it. This looks great but means your screen contents are briefly in swaylock's memory. The alternative is `--image` with a specific wallpaper, or `--color` with a solid Catppuccin base color. **Which aesthetic/privacy tradeoff do you prefer?**
+~~`--screenshots` captures your screen at lock time and blurs it. This looks great but means your screen contents are briefly in swaylock's memory. The alternative is `--image` with a specific wallpaper, or `--color` with a solid Catppuccin base color. **Which aesthetic/privacy tradeoff do you prefer?**~ **ANSWERED: Wallpaper.** v2 switched to `--image` wallpaper-based lock (`8a3d599a`).
+
+---
+
+## Resolution (2026-08-03 03:32)
+
+**This report was SUPERSEDED by v2** (`2026-08-03_03-32_lockscreen-improvements-v2-brutal-self-review.md`). All three open questions were answered and addressed: 10-min lock rejected (timeouts reverted), media inhibition added, wallpaper-based lock. Shared `pkgs/dms-lock.nix` extracted. Further extended in Desktop Renaissance v3 (`2026-08-03_04-44`) with swww wallpaper daemon + GLSL shaders.
