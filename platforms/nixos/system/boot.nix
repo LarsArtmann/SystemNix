@@ -224,41 +224,6 @@ in
           echo 1000 > /sys/kernel/mm/lru_gen/min_ttl_ms
         '';
       };
-
-      # ── Disable ALL NVMe discards at block layer ──────────────────────────
-      # Kernel 7.1.5 BTRFS SILENTLY IGNORES the `nodiscard` mount option.
-      # The fstab correctly specifies `nodiscard` on `/` and `/data`, but the
-      # kernel mounts show neither `nodiscard` nor `discard=async`, AND the boot
-      # log says "turning on async discard" for both filesystems. The BTRFS
-      # sysfs discard counters confirm 1.3 TiB of discards processed on `/` and
-      # 252 GiB on `/data` — async discard was running the ENTIRE TIME despite
-      # 3 prior "fix" sessions that added `nodiscard` to the fstab.
-      #
-      # Root cause: likely a kernel 7.1.5 regression in BTRFS mount option
-      # parsing. `nodiscard` may have been renamed to `discard=none` or dropped.
-      # The block-layer fix is UNCONDITIONAL: setting discard_max_bytes=0 makes
-      # the block layer refuse ALL REQ_DISCARD requests, regardless of what the
-      # filesystem does. BTRFS's async discard worker will spin harmlessly.
-      #
-      # This ALSO disables fstrim.timer (fstrim uses the same block-layer path).
-      # This is INTENTIONAL — the QLC NAND (Lexar NQ790) has 253ms discard
-      # latency that causes BTRFS commit stalls and likely caused the data
-      # corruption discovered 2026-08-03 (two corrupted inodes on /data).
-      # Re-enable discards only after replacing the drive with TLC/MLC NAND.
-      disable-nvme-discard = {
-        description = "Disable ALL NVMe discards at block layer (kernel 7.1.5 ignores nodiscard)";
-        wantedBy = [ "sysinit.target" ];
-        after = [ "systemd-udevd.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        script = ''
-          if [ -f /sys/block/nvme0n1/queue/discard_max_bytes ]; then
-            echo 0 > /sys/block/nvme0n1/queue/discard_max_bytes
-          fi
-        '';
-      };
     };
 
     user.services = {
