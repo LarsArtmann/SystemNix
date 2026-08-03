@@ -38,12 +38,11 @@ _: {
         message = "pocket-id: STATIC_API_KEY is missing or empty (${config.sops.secrets.pocket_id_static_api_key.path})\n  Run: just auth-bootstrap";
       };
 
-      # Clear stale SQLite WAL/SHM files left by crash-looping instances.
-      # The francis actor host (v2.10.0+) runs 8+ cleanup jobs concurrently on
-      # startup, all contending for SQLite's single-writer lock. A stale WAL
-      # from a previous crash makes the SQLITE_BUSY cascade worse, which then
-      # triggers a nil-pointer panic in quic-go's WebTransport server when
-      # actor bootstrapping fails with "context canceled".
+      # Defense-in-depth: clear stale SQLite WAL/SHM files left by crash-looping
+      # instances. Originally added for the francis SQLITE_BUSY cascade in v2.10.0.
+      # Pocket ID 2.12.0 includes francis v0.1.0-beta.17+ which fixes the crash-loop,
+      # but clearing stale WAL on startup is harmless and protects against any future
+      # unclean shutdown (OOM, WDT reset, power loss).
       clearStaleWal = pkgs.writeShellApplication {
         name = "pocket-id-clear-stale-wal";
         runtimeInputs = [ pkgs.coreutils ];
