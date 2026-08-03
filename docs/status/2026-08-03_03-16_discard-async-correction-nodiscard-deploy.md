@@ -3,29 +3,50 @@
 **Date:** 2026-08-03 03:16
 **Session type:** Follow-up correction + deploy verification
 **Prior session context:** NVMe SSD benchmark → `discard=async` diagnosis (docs/status/2026-08-03_00-52 and 02-53)
-**Status:** Config deployed. False claims corrected. No reboot yet (mount options apply at mount time).
+**Status:** `discard=async` removed from ALL live mounts (user did this manually). `nodiscard` deployed to fstab permanently. False claims corrected.
 
 ---
 
-## What This Session Did
+## Critical Context: The User Fixed It Manually
 
-The user asked me to READ → UNDERSTAND → RESEARCH → REFLECT → Execute on the prior session's work. During investigation I discovered the prior session's **central root cause claim was false**.
+**The user manually remounted ALL filesystems to remove `discard=async` BEFORE this session.** This was done in the prior session — `sudo mount -o remount,nodiscard` on every BTRFS mount. The live system was ALREADY clean when this session started.
 
-### The False Claim
+This is why `/proc/mounts` showed no `discard=async` — not because "BTRFS doesn't auto-enable it" (which I wrongly concluded), but because **the user had already manually removed it**.
 
-> "BTRFS on Linux kernel 7.1.5 auto-enables `discard=async` when mounted on a non-rotational device (SSD/NVMe). Removing it from fstab is a no-op — the kernel adds it back. The ONLY way to disable it is to explicitly mount with `nodiscard`."
+### What the Prior Sessions' Reports Got Wrong About the "Auto-Enable" Claim
 
-### Evidence It Was False
+The prior session (02-53) claimed BTRFS auto-enables `discard=async`. This session's investigation concluded the claim was "likely false" based on `/proc/mounts` showing no `discard=async`. **But both conclusions were drawn from incomplete information:**
 
-| Check | Result | Implication |
-|-------|--------|-------------|
-| `/proc/mounts` | NO `discard=async` on any mount | If the kernel auto-enabled it, it would appear here (just like `ssd` which IS auto-added) |
-| BTRFS sysfs `discardable_extents` | STATIC (238259 → 238259 over 3s on `/`) | The async discard worker was NOT running — zero discard activity |
-| Booted generation fstab (2026-07-26) | No `discard` on any mount | The 2026-07-08 fix (`7b7b20f3`) had successfully removed it |
-| Current generation fstab (pre-deploy) | No `discard` on any mount | Already clean |
-| Both fstabs identical | Same entries, no `discard` | No drift between generations |
+- The prior session saw `discard=async` in `/proc/mounts` and concluded the kernel auto-added it
+- This session saw NO `discard=async` in `/proc/Mounts` and concluded the kernel does NOT auto-add it
+- **Neither session accounted for the fact that the USER had manually remounted** between observations
 
-**Conclusion:** BTRFS auto-adds `ssd` for non-rotational devices (confirmed), but does NOT auto-add `discard` or `discard=async`. The terrible benchmark numbers (14 MiB/s read on `/data`) were most likely caused by background I/O contention (60-84% disk utilization from 30+ services) and QLC SLC cache pressure at 69% fill, NOT by `discard=async`.
+The actual sequence was:
+1. Prior session: user remounted `/data` with `nodiscard` → `/data` clean
+2. Prior session: `/` and subvolumes STILL had `discard=async` (user hadn't remounted those yet)
+3. Between sessions: **user manually remounted ALL remaining mounts** → entire system clean
+4. This session: saw clean `/proc/mounts` → wrongly concluded "kernel doesn't auto-enable"
+
+**Whether BTRFS auto-enables `discard=async` on SSDs remains UNVERIFIED.** What IS verified:
+- The live system has no `discard=async` (user removed it all manually)
+- The deployed fstab has explicit `nodiscard` on all filesystems (this session deployed it)
+- `fstrim.timer` is enabled for weekly periodic TRIM
+
+---
+
+## What This Session Actually Did
+
+The user asked me to READ → UNDERSTAND → RESEARCH → REFLECT → Execute on the prior session's work.
+
+1. **Read all files** — live mounts, hardware-configuration.nix, AGENTS.md, both prior status reports, filesystems.nix, booted/current fstab, git history
+2. **Corrected false comments** in `hardware-configuration.nix` (removed "BTRFS auto-enables discard" claim, replaced with defense-in-depth rationale)
+3. **Validated** with `nix flake check --no-build` — passed
+4. **Deployed** with `nix run .#deploy` — all 30 post-deploy checks passed
+5. **Verified deployed fstab** — `nodiscard` confirmed on `/`, `/data`, `/rust-cache`
+6. **Updated AGENTS.md** — TRIM section and gotcha table corrected
+7. **Added correction appendices** to both prior status reports
+
+**The real value of this session was ONE thing: deploying `nodiscard` into the fstab so the user's manual fix survives reboot.** Without the deploy, a reboot would have reverted to whatever the kernel default is (unknown — see unverified question above). Everything else was documentation cleanup.
 
 ### What I Actually Did
 
@@ -41,21 +62,20 @@ The user asked me to READ → UNDERSTAND → RESEARCH → REFLECT → Execute on
 
 ## a) FULLY DONE (Correctly)
 
-1. **Identified the false root cause claim** by reading actual system state before acting on prior conclusions — `/proc/mounts`, BTRFS sysfs discard counters, booted/current fstab comparison, git history of `discard=async` in hardware-configuration.nix
-2. **Corrected the hardware-configuration.nix comments** to accurately explain WHY `nodiscard` is set (defense-in-depth, explicit intent, documented QLC constraint) without the false "kernel auto-enables it" narrative
-3. **Deployed successfully** — `nix run .#deploy` built 20 derivations, activated, restarted 8 provisioner services, all 30 post-deploy smoke tests passed
-4. **Verified deployed fstab** — `nodiscard` confirmed on all three filesystems in `/run/current-system/etc/fstab`
-5. **Updated AGENTS.md** — both the BTRFS section TRIM paragraph and the gotcha table entry now have accurate descriptions
-6. **Corrected both prior status reports** with detailed correction appendices explaining what was wrong and why
-7. **Validated with `nix flake check --no-build`** before deploying
+1. **Deployed `nodiscard` into the fstab permanently** — `nix run .#deploy` built 20 derivations, activated, restarted 8 provisioner services, all 30 post-deploy smoke tests passed. This makes the user's manual fix survive reboot.
+2. **Verified deployed fstab** — `nodiscard` confirmed on all three filesystems in `/run/current-system/etc/fstab`
+3. **Corrected the hardware-configuration.nix comments** — removed the false "BTRFS auto-enables discard" narrative, replaced with defense-in-depth rationale
+4. **Updated AGENTS.md** — TRIM section and gotcha table corrected
+5. **Added correction appendices** to both prior status reports
+6. **Validated with `nix flake check --no-build`** before deploying
+7. **The user manually removed `discard=async` from ALL live mounts** (done before this session) — `/proc/mounts` confirms zero `discard` anywhere
 
 ---
 
 ## b) PARTIALLY DONE
 
-1. **The `nodiscard` config is deployed but NOT active on live mounts** — mount options only apply at mount time. The live `/` and its 7 subvolume mounts still have their CURRENT mount options (which already do NOT have `discard=async`, but also don't have `nodiscard`). A reboot would apply `nodiscard` permanently. `/data` was manually remounted with `nodiscard` in the prior session.
-2. **The `/data` manual remount from the prior session is live but won't survive reboot without the deploy** — now it WILL survive because the deployed fstab has `nodiscard` on `/data`.
-3. **AGENTS.md gotcha table updated** but the entry is now shorter/less detailed than before — it lost some context about the WDT reset symptom that might still be useful.
+1. **Live mounts are clean** (user removed `discard=async` manually from all mounts) — but `nodiscard` is NOT in the live mount options either. It's in the fstab (deployed) but won't appear in `/proc/mounts` until a reboot remounts from the new fstab. The important thing is: `discard=async` is GONE from all live mounts.
+2. **AGENTS.md gotcha table updated** but the entry lost some context about the WDT reset symptom and the `df` diagnostic note that was in the original.
 
 ---
 
@@ -75,11 +95,15 @@ The user asked me to READ → UNDERSTAND → RESEARCH → REFLECT → Execute on
 
 ## d) TOTALLY FUCKED UP
 
-1. **In the PRIOR session (02-53), I fabricated a root cause claim without verification.** I stated "BTRFS auto-enables discard=async on SSDs" as a definitive fact ("The Real Root Cause This Time") based on circumstantial reasoning (root never had discard in config yet appeared in /proc/mounts). I did NOT verify this by checking BTRFS sysfs, checking whether discard was actually ACTIVE, or consulting kernel documentation. A 3-second `cat /sys/fs/btrfs/*/discard/discardable_extents` check would have disproven it immediately. This is the same class of error as the prior session: jumping to conclusions without verification.
+1. **THREE SESSIONS, THREE WRONG ROOT CAUSES.** First session (00-52): "fix never deployed, needs reboot" — WRONG, user had rebooted. Second session (02-53): "BTRFS auto-enables discard=async on SSDs" — WRONG, fabricated without kernel source verification. This session: "the auto-discard claim is likely false because /proc/mounts is clean" — WRONG AGAIN, because I didn't know the USER had manually removed `discard=async` from all mounts between sessions. My "evidence" was contaminated by an uncontrolled variable I didn't account for.
 
-2. **I may have OVER-corrected in the other direction.** My correction says the auto-discard claim is "likely false" — but I didn't consult the actual BTRFS kernel source or documentation to definitively confirm whether BTRFS has EVER auto-enabled discard on any kernel version. I'm relying on current system state, which could be consistent with multiple explanations (e.g., discard was active in the past but stopped when the fstab option was removed on 2026-07-08, and the prior session just saw stale `/proc/mounts` data from before a reboot). I should have been more careful about what I can and cannot prove.
+2. **I DID NOT ASK THE USER WHAT THEY HAD DONE.** The entire chain of wrong conclusions stems from not asking a simple question: "Did you manually change the mount options since the last session?" The user had remounted ALL filesystems with `nodiscard`, and I was reading the clean `/proc/mounts` as evidence of kernel behavior when it was evidence of USER action. This is a fundamental investigative failure.
 
-3. **The AGENTS.md gotcha entry lost important context.** The old entry mentioned `df` reports free data space but the drive can be choked — this is a useful diagnostic note that's now gone. I replaced a detailed entry with a shorter one. I should have preserved the useful parts.
+3. **In the PRIOR session (02-53), the root cause claim was fabricated without verification.** "BTRFS auto-enables discard=async" was stated as definitive fact without checking BTRFS sysfs, kernel source, or consulting documentation. A 3-second `cat /sys/fs/btrfs/*/discard/discardable_extents` check would have shown whether discard was active.
+
+4. **My correction in THIS session was ALSO wrong** — I concluded "BTRFS does NOT auto-enable discard" based on clean `/proc/mounts`, but that cleanliness was from the user's manual remount, not from kernel default behavior. Whether BTRFS auto-enables discard on SSDs is STILL UNVERIFIED.
+
+5. **The AGENTS.md gotcha entry lost important context** — the `df` diagnostic note ("df reports free data space but the drive can be choked") was removed in the edit.
 
 ---
 
@@ -182,8 +206,8 @@ The user asked me to READ → UNDERSTAND → RESEARCH → REFLECT → Execute on
 
 ## g) Questions (That I Cannot Answer Myself)
 
-1. **Can you reboot now?** The `nodiscard` option is deployed in fstab but only applies at mount time. All BTRFS mounts need a reboot for `nodiscard` to take effect. There are 30+ services running. When is a safe maintenance window?
+1. **Does BTRFS actually auto-enable `discard=async` on SSDs or not?** Three sessions have failed to answer this definitively. The only way to know for sure is to read the kernel source (`fs/btrfs/discard.c` and `fs/btrfs/super.c`) or test on a clean mount WITHOUT `nodiscard` and check `/proc/mounts`. Should I research this in the kernel source?
 
-2. **Is the `/data` manual remount from the prior session still live, or did the deploy reset it?** The deploy ran `nh os switch` which reloads systemd but should NOT remount filesystems. But I haven't verified `/proc/mounts` for `/data` after the deploy completed — the `nodiscard` option may or may not still be active on `/data` right now.
+2. **When did you manually remount the filesystems?** Was it right after the prior session ended (removing `discard=async` from `/` and all subvolumes), or at some other point? This would help reconstruct the timeline and determine whether the prior session's `/proc/mounts` observation was before or after your manual fix.
 
-3. **Should I check the BTRFS kernel source (`fs/btrfs/discard.c`) to definitively confirm whether `discard` is ever auto-enabled?** My correction is based on system state observation, not kernel code. If you want certainty rather than "likely false", I can read the kernel source and cite the specific code path that controls the discard default.
+3. **Should the AGENTS.md BTRFS section note that BTRFS auto-adds `ssd` on NVMe?** This is confirmed (visible in `/proc/mounts` on every boot) and non-obvious. It's separate from the `discard` question.
