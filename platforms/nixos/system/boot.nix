@@ -280,7 +280,13 @@ in
       # MemoryMax=64G is the hard kill. Leaves ~29G for system services + kernel.
       # Root cause of the 2026-06-19 crash: Helium renderers grew unbounded for 66h
       # → reclaim thrash → journald starved → sp5100-tco WDT hard reset.
-      "user-${toString config.users.users.lars.uid}" = {
+      #
+      # The UID is hardcoded because `config.users.users.lars.uid` is null at eval
+      # time (isNormalUser assigns UID at activation, not eval). `toString null` = "",
+      # so the slice name silently becomes "user-" — the limits are applied to a
+      # nonexistent slice and user-1000.slice runs uncapped. This caused the
+      # 2026-08-03 WDT crash: user processes grew unbounded for 2 days → OOM → WDT.
+      "user-1000" = {
         sliceConfig = {
           MemoryHigh = "56G";
           MemoryMax = "64G";
