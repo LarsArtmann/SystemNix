@@ -38,9 +38,6 @@ in
           end
       end
 
-      # PROMPT: Starship prompt (fast - cached)
-      command -v starship >/dev/null 2>&1 && starship init fish | source
-
       # PERFORMANCE: Optimized completions path
       set -g fish_complete_path /usr/local/share/fish/completions $fish_complete_path
     '';

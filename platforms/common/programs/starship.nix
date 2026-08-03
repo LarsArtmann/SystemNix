@@ -7,7 +7,9 @@ in
 {
   programs.starship = {
     enable = true;
-    enableFishIntegration = true;
+    # Fish integration handled by cached init in fish.nix interactiveShellInit
+    # (avoids `starship init fish | source` subprocess on every startup)
+    enableFishIntegration = false;
     enableBashIntegration = true;
     enableZshIntegration = true;
 

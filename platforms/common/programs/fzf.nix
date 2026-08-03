@@ -10,7 +10,9 @@ in
     enable = true;
     enableZshIntegration = true;
     enableBashIntegration = true;
-    enableFishIntegration = true;
+    # Fish integration handled by cached init in fish.nix interactiveShellInit
+    # (avoids `fzf --fish | source` subprocess on every startup)
+    enableFishIntegration = false;
 
     # FZF options
     defaultOptions = [
