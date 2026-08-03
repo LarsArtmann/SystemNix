@@ -96,9 +96,15 @@ in
       };
     };
 
+    # Weekly instead of monthly: the scrub needs ~2h to complete 707 GiB on /data
+    # at idle I/O priority. With frequent reboots (58 unsafe shutdowns), a monthly
+    # scrub window almost never completes before the next reboot interrupts it.
+    # Weekly gives 4x more retry opportunities. The nixpkgs module sets
+    # Before=shutdown.target + Conflicts=shutdown.target, so scrub never blocks
+    # shutdown — it just gets cancelled and retried next week.
     btrfs.autoScrub = {
       enable = true;
-      interval = "monthly";
+      interval = "weekly";
       fileSystems = [
         "/"
         "/data"

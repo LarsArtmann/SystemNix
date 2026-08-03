@@ -183,21 +183,27 @@ let
         echo "btrfs_metadata_utilization_pct $META_PCT"
 
         # ── Scrub metrics ────────────────────────────────────────────────────
-        echo "# HELP btrfs_scrub_status BTRFS scrub status (0=never 1=running 2=finished)"
+        # Status codes: 0=never 1=running 2=finished 3=interrupted/aborted
+        echo "# HELP btrfs_scrub_status BTRFS scrub status (0=never 1=running 2=finished 3=interrupted)"
         echo "# TYPE btrfs_scrub_status gauge"
         echo "# HELP btrfs_scrub_errors_total Total errors found by last scrub"
         echo "# TYPE btrfs_scrub_errors_total gauge"
         echo "# HELP btrfs_scrub_duration_seconds Duration of last completed scrub in seconds"
         echo "# TYPE btrfs_scrub_duration_seconds gauge"
-        echo "# HELP btrfs_scrub_error_free Composite: 1=all mounts error-free 0=errors found"
+        echo "# HELP btrfs_scrub_error_free Composite: 1=all mounts finished+error-free 0=errors or not finished"
         echo "# TYPE btrfs_scrub_error_free gauge"
         scrub_total_errors=0
+        scrub_all_finished=1
         for scrub_mnt in / /data; do
           scrub_out=$(btrfs scrub status "$scrub_mnt" 2>/dev/null) || continue
           scrub_err=$(echo "$scrub_out" | awk '
             /no errors found/ {e=0}
             /with [0-9]+ error/ {match($0, /with ([0-9]+)/, a); e=a[1]}
             /found [0-9]+ error/ {match($0, /found ([0-9]+)/, a); e=a[1]}
+            /Error summary/ {
+              getline
+              if (match($0, /Uncorrectable:[[:space:]]*([0-9]+)/, a)) e=a[1]
+            }
             END {print e+0}
           ')
           : "''${scrub_err:=0}"
@@ -207,6 +213,7 @@ let
             /no scrub.*started/ {never=1}
             /still running|Status:.*running/ {status=1}
             /finished|Status:.*finished/ {if(status!=1) status=2}
+            /interrupted|Status:.*interrupted/ {if(status!=1 && status!=2) status=3}
             /finished after/ {
               if (match($0, /([0-9]+):([0-9]+):([0-9]+)/, t)) duration=t[1]*3600+t[2]*60+t[3]
             }
@@ -225,8 +232,14 @@ let
               print "btrfs_scrub_duration_seconds{mount=\"" mnt "\"} " duration
             }
           '
+          # Only consider error-free if the scrub actually FINISHED (status=2)
+          if [ "$scrub_err" -eq 0 ] && echo "$scrub_out" | grep -q 'Status:.*finished'; then
+            : # this mount is finished and error-free
+          else
+            scrub_all_finished=0
+          fi
         done
-        if [ "$scrub_total_errors" -eq 0 ]; then
+        if [ "$scrub_all_finished" -eq 1 ] && [ "$scrub_total_errors" -eq 0 ]; then
           echo "btrfs_scrub_error_free 1"
         else
           echo "btrfs_scrub_error_free 0"
