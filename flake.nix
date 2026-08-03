@@ -690,10 +690,48 @@
                       inputs.dankMaterialShell.packages.${system}.default
                       pkgs.swaylock-effects
                     ];
-                    text = "dms ipc lock lock 2>/dev/null || exec swaylock";
+                    text = ''
+                      if dms ipc lock lock 2>/dev/null; then
+                        exit 0
+                      fi
+                      exec swaylock \
+                        --daemonize \
+                        --ignore-empty-password \
+                        --show-failed-attempts \
+                        --clock \
+                        --datestr '%Y-%m-%d' \
+                        --timestr '%H:%M' \
+                        --screenshots \
+                        --effect-blur 10x3 \
+                        --effect-vignette 0.5:0.5 \
+                        --indicator \
+                        --indicator-radius 120 \
+                        --indicator-thickness 12 \
+                        --inside-color ${theme.colors.base}dd \
+                        --inside-clear-color ${theme.colors.green}dd \
+                        --inside-ver-color ${theme.colors.lavender}dd \
+                        --inside-wrong-color ${theme.colors.red}dd \
+                        --key-hl-color ${theme.colors.lavender} \
+                        --layout-bg-color 00000000 \
+                        --layout-text-color ${theme.colors.text} \
+                        --line-color 00000000 \
+                        --line-clear-color 00000000 \
+                        --line-ver-color 00000000 \
+                        --line-wrong-color 00000000 \
+                        --ring-color ${theme.colors.surface1} \
+                        --ring-clear-color ${theme.colors.green} \
+                        --ring-ver-color ${theme.colors.lavender} \
+                        --ring-wrong-color ${theme.colors.red} \
+                        --separator-color 00000000 \
+                        --text-color ${theme.colors.text} \
+                        --text-clear-color ${theme.colors.base} \
+                        --text-ver-color ${theme.colors.base} \
+                        --text-wrong-color ${theme.colors.base} \
+                        --bs-hl-color ${theme.colors.red}
+                    '';
                   }
                 }/bin/dms-locks";
-                meta.description = "Lock screen via DMS IPC (fallback: swaylock)";
+                meta.description = "Lock screen via DMS IPC (fallback: swaylock-effects with Catppuccin Mocha)";
               };
               dms-wallpaper-next = {
                 type = "app";

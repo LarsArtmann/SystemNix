@@ -280,3 +280,26 @@ nix flake check --no-build → all checks passed
 2. **Has the system been noticeably slower over the last 26 days?** Slow nix builds, sluggish Docker containers, service timeouts, unresponsive periods? This would help assess whether the I/O choke has been causing user-visible degradation beyond the benchmark numbers. The drive was running at 1-14 MiB/s instead of 7000 MiB/s — that's a massive real-world impact on every I/O operation.
 
 3. **Should the mount-option drift monitor** (item #11 in next actions) be a pre-deploy-check assertion, a Gatus/Prometheus runtime alert, or both? The pre-deploy check catches it at deploy time; the runtime alert catches kernel-default changes (like this one) that happen without a deploy. I recommend both but want your call on priority.
+
+---
+
+## CORRECTION (2026-08-03 03:10) — "BTRFS Auto-Enables discard" Claim Is Unverified
+
+**The core claim of this report — "BTRFS on kernel 7.1.5 auto-enables discard=async on SSDs" — is UNVERIFIED and likely FALSE.**
+
+Evidence discovered during follow-up verification:
+
+1. **Neither booted nor current generation fstab had `discard` on any mount** — the 2026-07-08 fix (`7b7b20f3`) correctly removed it, and the clean fstab was active at boot
+2. **`/proc/mounts` currently shows NO `discard=async` on any mount** — if BTRFS auto-enabled it, it would appear here (just like `ssd` which IS auto-added)
+3. **BTRFS sysfs `discardable_extents` was STATIC** (238259 → 238259 over 3 seconds) — the async discard worker was NOT running
+4. BTRFS DOES auto-add the `ssd` mount option for non-rotational devices (confirmed in `/proc/mounts`), but it does NOT auto-add `discard`
+
+The terrible benchmark numbers (14 MiB/s) were likely caused by background I/O contention and QLC SLC cache pressure, NOT by `discard=async`.
+
+**However, the `nodiscard` config fix is still correct as defense-in-depth:**
+- It makes the "no continuous TRIM" intent EXPLICIT
+- It documents the QLC NAND constraint at the mount level
+- It guards against any future kernel change
+- It was successfully deployed on 2026-08-03 (all 30 post-deploy checks passed)
+
+**The previous report's comment "Root filesystem has never had discard=async and has been fine" was also misleading** — root may or may not have had `discard=async` at some point, but the current evidence shows it does NOT have it now, and the fstab never specified it.

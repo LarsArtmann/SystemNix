@@ -225,3 +225,23 @@ SMART: Could not read (smartctl needs root permission — not escalated)
 2. **Has the system been exhibiting symptoms of this I/O choke recently?** Slow builds, service timeouts, WDT resets, unresponsive periods? The AGENTS.md documents a WDT hard reset from this exact issue — have there been any since the fix was deployed (but not activated)?
 
 3. **Do you want me to write a persistent monitoring check** (Gatus/Prometheus) that detects when deployed mount options differ from live mount options, so this class of "fix deployed but not active" bug is caught immediately in the future?
+
+---
+
+## CORRECTION (2026-08-03 03:10) — Root Cause Was Wrong
+
+**This report's root cause ("fix never deployed, needs reboot") was INCORRECT.**
+
+Subsequent investigation in the follow-up report (`2026-08-03_02-53`) found:
+
+1. The booted generation's fstab (from 2026-07-26) did NOT have `discard=async` on any mount
+2. `/proc/mounts` after boot showed NO `discard=async` on any mount
+3. BTRFS sysfs `discardable_extents` was STATIC (not changing) — async discard worker was NOT active
+4. The claim that "BTRFS auto-enables discard=async on SSDs" (from the follow-up report) was ALSO unverified and likely false
+
+The terrible benchmark numbers (14 MiB/s read) were most likely caused by:
+- Background I/O from 30+ services (60-84% disk utilization measured during tests)
+- QLC SLC cache pressure at 69% fill on `/data`
+- The fio O_DIRECT benchmark competing with all of the above
+
+The `nodiscard` config fix was deployed on 2026-08-03 as defense-in-depth (explicit > implicit), and all 30 post-deploy checks passed. The deployed fstab now correctly includes `nodiscard` on all BTRFS/ext4 mounts.
