@@ -670,7 +670,7 @@ _: {
                 in
                 lib.mkMerge [
                   (harden {
-                    MemoryMax = "1G";
+                    MemoryMax = "2G";
                     ProtectSystem = "strict";
                     CapabilityBoundingSet = [ "CAP_NET_BIND_SERVICE" ];
                     AmbientCapabilities = [ "CAP_NET_BIND_SERVICE" ];
@@ -678,6 +678,14 @@ _: {
                   (serviceDefaults { RestartSec = "3s"; })
                   {
                     Type = "simple";
+                    # GOMEMLIMIT forces Go GC to run aggressively before MemoryMax.
+                    # dnsblockd has unbounded OTEL cardinality growth (dns_domain,
+                    # http_path, proxy_domain labels) + synchronous SQLite tracking
+                    # writes that accumulate in-memory pages. Without GOMEMLIMIT, Go's
+                    # default GOGC=100 doesn't trigger GC until heap doubles (~1.2G
+                    # from 600M base), but MemoryMax kills first. Fix upstream by
+                    # dropping high-cardinality labels from telemetry.go.
+                    Environment = [ "GOMEMLIMIT=1500MiB" ];
                     ExecStartPre = [
                       "+-${lib.getExe initScript}"
                       "${lib.getExe secretCheck}"

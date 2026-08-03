@@ -219,7 +219,14 @@
 
           serviceConfig = lib.mkMerge [
             {
-              ExecStartPre = [
+              # mkForce replaces the upstream ExecStartPre entirely.
+              # The upstream module ships a broken chattr: "chattr -R +C ... 2>/dev/null || true"
+              # — systemd ExecStartPre is NOT shell, so "2>/dev/null" and "|| true" are
+              # passed as literal file arguments to chattr. Also lacks "+" prefix so runs
+              # as the service user → "Operation not permitted". BTRFS +C (nodatacow) is
+              # nice-to-have for SQLite but not required — DiscordSync uses WAL mode.
+              # Fix upstream: wrap in pkgs.writeShellApplication or use ExecStartPre=+/bin/sh -c '...'.
+              ExecStartPre = lib.mkForce [
                 "+${lib.getExe dbHeal}"
                 "+${lib.getExe waitDnsReady}"
               ];
