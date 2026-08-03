@@ -38,6 +38,20 @@ _: {
         message = "pocket-id: STATIC_API_KEY is missing or empty (${config.sops.secrets.pocket_id_static_api_key.path})\n  Run: just auth-bootstrap";
       };
 
+      # Clear stale SQLite WAL/SHM files left by crash-looping instances.
+      # The francis actor host (v2.10.0+) runs 8+ cleanup jobs concurrently on
+      # startup, all contending for SQLite's single-writer lock. A stale WAL
+      # from a previous crash makes the SQLITE_BUSY cascade worse, which then
+      # triggers a nil-pointer panic in quic-go's WebTransport server when
+      # actor bootstrapping fails with "context canceled".
+      clearStaleWal = pkgs.writeShellApplication {
+        name = "pocket-id-clear-stale-wal";
+        runtimeInputs = [ pkgs.coreutils ];
+        text = ''
+          rm -f "${dataDir}/data/pocket-id.db-wal" "${dataDir}/data/pocket-id.db-shm" 2>/dev/null || true
+        '';
+      };
+
       provisionScript = pkgs.writeShellApplication {
         name = "pocket-id-provision";
         runtimeInputs = [
@@ -477,6 +491,9 @@ _: {
             VERSION_CHECK_DISABLED = true;
             AUDIT_LOG_RETENTION_DAYS = "90";
             DB_CONNECTION_STRING = "data/pocket-id.db";
+            # Bind the francis actor-host WebTransport (QUIC) server to localhost
+            # only. Single-instance setup doesn't need P2P on 0.0.0.0:1414.
+            ACTORS_HOST = "127.0.0.1";
             UPLOAD_PATH = "data/uploads";
             SMTP_HOST = cfg.smtp.host;
             SMTP_PORT = toString cfg.smtp.port;
@@ -507,14 +524,18 @@ _: {
               };
               serviceConfig = lib.mkMerge [
                 (serviceDefaults { })
-                (harden { MemoryMax = "512M"; })
+                (harden { MemoryMax = "1G"; })
                 {
                   TimeoutStartSec = "180s";
-                  ExecStartPre = "+${lib.getExe checkEncryptionKey}";
+                  ExecStartPre = [
+                    "+${lib.getExe clearStaleWal}"
+                    "+${lib.getExe checkEncryptionKey}"
+                  ];
                   ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 120 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString pocketIdPort}/healthz";
                 }
                 (lib.optionalAttrs cfg.provision.enable {
                   ExecStartPre = lib.mkForce [
+                    "+${lib.getExe clearStaleWal}"
                     "+${lib.getExe checkEncryptionKey}"
                     "+${lib.getExe checkStaticApiKey}"
                   ];
