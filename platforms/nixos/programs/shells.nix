@@ -25,14 +25,19 @@ in
           set -g fish_complete_path /etc/profiles/per-user/$USER/share/nixos/completions $fish_complete_path
       end
 
-      # COMPLETIONS: Universal completion engine (1000+ commands)
+      # COMPLETIONS: Universal completion engine — cached to avoid
+      # re-generating ~7ms of fish init on every startup.
       if command -v carapace >/dev/null 2>&1
-          carapace _carapace fish | source
-      end
-
-      # PROMPT: Beautiful Starship prompt with 400ms timeout protection
-      if command -v starship >/dev/null 2>&1
-          starship init fish | source
+          set -l cache_dir "$XDG_CACHE_HOME/fish-init"
+          test -d $cache_dir; or mkdir -p $cache_dir
+          set -l cara_ver (carapace --version 2>/dev/null | string match -r '[\d.]+$')
+          set -l cara_cache "$cache_dir/carapace-$cara_ver.fish"
+          if test -f $cara_cache
+              source $cara_cache
+          else
+              carapace _carapace fish >$cara_cache
+              source $cara_cache
+          end
       end
 
       # Additional Fish-specific optimizations
