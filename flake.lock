@@ -3407,11 +3407,11 @@
         "treefmt-nix": "treefmt-nix_10"
       },
       "locked": {
-        "lastModified": 1785722707,
-        "narHash": "sha256-Sc9MNpOakXXfOnrzDrywjqfD7jPWw6qzWnaN/zrOqRY=",
+        "lastModified": 1785723627,
+        "narHash": "sha256-/qGXD1iMjdSBpCRsjO0qmCWQ0+kwp+0lp32tQoko8jQ=",
         "owner": "LarsArtmann",
         "repo": "monitor365",
-        "rev": "c86673ab233d16da3065d46e1209b69eac814ee3",
+        "rev": "cd0e10966c9c2d31eec1f3fb29e6bde8768b3ad6",
         "type": "github"
       },
       "original": {
