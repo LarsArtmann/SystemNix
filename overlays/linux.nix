@@ -34,42 +34,6 @@ let
     };
   };
 
-  # Pocket ID v2.10.0 — Francis actor framework for background jobs (PR #1556).
-  # Fixes "lock ownership lost" crash under I/O stalls. See GitHub issues #1274, #1356.
-  pocketIdUpgradeOverlay =
-    _final: prev:
-    let
-      newVersion = "2.10.0";
-      newSrc = prev.fetchFromGitHub {
-        owner = "pocket-id";
-        repo = "pocket-id";
-        tag = "v${newVersion}";
-        hash = "sha256-ad8YlWwWeGEwsrx29qpq1asEr4UNN7BueGTBPfFrRuE=";
-      };
-    in
-    {
-      pocket-id = prev.pocket-id.overrideAttrs (old: {
-        version = newVersion;
-        src = newSrc;
-        vendorHash = "sha256-bQNeocRCmhiV7gwCJppjsNw7K5MnsJMK9M18jf0X/oM=";
-        postPatch = ''
-          sed -i 's/^go 1\.26\.[0-9]\+/go 1.26.4/' go.mod
-        '';
-        frontend = old.frontend.overrideAttrs {
-          version = newVersion;
-          src = newSrc;
-          pnpmDeps = prev.fetchPnpmDeps {
-            pname = "pocket-id";
-            version = newVersion;
-            src = newSrc;
-            pnpm = prev.pnpm_10;
-            fetcherVersion = 3;
-            hash = "sha256-DwTvEf/t/DyMRANp4YJUVv97hzyU//tJaovzhTGbzWw=";
-          };
-        };
-      });
-    };
-
   # utoipa-swagger-ui build script PermissionDenied fix + libspa SPA_ID_INVALID fix.
   #
   # Root cause (swagger-ui): Rust's std::fs::copy propagates permissions from
@@ -226,6 +190,5 @@ in
   crush-daily.overlays.default
   overview.overlays.default
   discordsync.overlays.default
-  pocketIdUpgradeOverlay
   bunMemoryLimitOverlay
 ]
