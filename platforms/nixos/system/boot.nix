@@ -276,8 +276,10 @@ in
       # Hard ceiling on the primary user session — catches runaway allocations from
       # non-systemd processes (Helium/Electron renderers, desktop AI tools) that run
       # outside per-service MemoryMax limits.
-      # MemoryHigh=56G throttles gradually (kernel increases reclaim pressure);
-      # MemoryMax=64G is the hard kill. Leaves ~29G for system services + kernel.
+      # MemoryHigh=80G throttles gradually (kernel increases reclaim pressure);
+      # MemoryMax=90G is the hard kill. With 93G visible RAM, this leaves ~3G for
+      # kernel + system services — tight, but MemoryHigh=80G starts reclaiming user
+      # pages well before the wall, giving system.slice breathing room.
       # Root cause of the 2026-06-19 crash: Helium renderers grew unbounded for 66h
       # → reclaim thrash → journald starved → sp5100-tco WDT hard reset.
       #
@@ -288,8 +290,8 @@ in
       # 2026-08-03 WDT crash: user processes grew unbounded for 2 days → OOM → WDT.
       "user-1000" = {
         sliceConfig = {
-          MemoryHigh = "56G";
-          MemoryMax = "64G";
+          MemoryHigh = "80G";
+          MemoryMax = "90G";
         };
       };
     };
