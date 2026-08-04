@@ -20,58 +20,6 @@ let
   fireCloseShader = builtins.readFile ../../../assets/shaders/fire-close.glsl;
   circleOpenShader = builtins.readFile ../../../assets/shaders/circle-open.glsl;
 
-  swww-wallpaper = pkgs.writeShellApplication {
-    name = "swww-wallpaper";
-    runtimeInputs = [
-      pkgs.swww
-      pkgs.coreutils
-      pkgs.findutils
-    ];
-    text = ''
-      WALLPAPER_DIR="''${HOME:-/home/lars}/.local/share/wallpapers"
-
-      cmd="''${1:-next}"
-
-      if [ "$cmd" = "next" ] || [ "$cmd" = "prev" ]; then
-        current=$(swww query 2>/dev/null | head -1 | sed 's/.*: //' || true)
-        files=$(find -L "$WALLPAPER_DIR" -maxdepth 1 -type f \
-          \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) \
-          2>/dev/null | sort)
-        count=$(echo "$files" | grep -c . || true)
-        [ "$count" -eq 0 ] && exit 0
-
-        idx=1
-        if [ -n "$current" ]; then
-          idx=$(echo "$files" | grep -nF "$current" | head -1 | cut -d: -f1 || true)
-          [ -z "$idx" ] && idx=1
-        fi
-
-        if [ "$cmd" = "next" ]; then
-          idx=$((idx % count + 1))
-        else
-          idx=$((idx - 1))
-          [ "$idx" -lt 1 ] && idx=$count
-        fi
-
-        selected=$(echo "$files" | sed -n "''${idx}p")
-      else
-        selected="$cmd"
-      fi
-
-      [ -z "$selected" ] || [ ! -f "$selected" ] && exit 0
-
-      swww img "$selected" \
-        --transition-type grow \
-        --transition-pos "$(find -L "$WALLPAPER_DIR" -name '*.jpg' -o -name '*.png' 2>/dev/null | wc -l | awk '{print 1, $1}')" \
-        --transition-duration 1.5 \
-        --transition-fps 60
-
-      if command -v dms &>/dev/null; then
-        dms ipc call wallpaper set "$selected" 2>/dev/null || true
-      fi
-    '';
-  };
-
   ssh-suspend-guard = pkgs.writeShellApplication {
     name = "ssh-suspend-guard";
     runtimeInputs = [
@@ -139,21 +87,20 @@ let
   dms-wallpaper-init = pkgs.writeShellApplication {
     name = "dms-wallpaper-init";
     runtimeInputs = [
-      pkgs.swww
       pkgs.coreutils
       pkgs.findutils
     ];
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"
 
-      # Wait for swww daemon
+      # Wait for DankMaterialShell to be ready
       for _ in $(seq 1 30); do
-        swww query &>/dev/null && break
+        dms ipc call wallpaper get &>/dev/null && break
         sleep 1
       done
 
       # Respect user choice — only seed if nothing is set
-      if swww query &>/dev/null; then
+      if dms ipc call wallpaper get &>/dev/null; then
         exit 0
       fi
 
@@ -163,7 +110,7 @@ let
         exit 1
       fi
 
-      exec swww img "$img" --transition-type grow --transition-duration 2 --transition-fps 60
+      dms ipc call wallpaper set "$img"
     '';
   };
 
@@ -435,7 +382,7 @@ in
           "Mod+Shift+P".action.power-off-monitors = { };
           "Mod+Shift+S".action.suspend = { };
 
-          "Mod+W".action.spawn = sh "${lib.getExe swww-wallpaper} next";
+          "Mod+W".action.spawn = sh "dms ipc call wallpaper next";
 
           "Mod+Shift+F11".action.spawn = sh (screenshot ''-g "$(slurp)"'');
           "Mod+F11".action.spawn = sh (screenshot "");
@@ -646,28 +593,10 @@ in
     };
 
     systemd.user.services = {
-      swww-daemon = {
-        Unit = {
-          Description = "swww animated wallpaper daemon";
-          After = [ "graphical-session.target" ];
-          PartOf = [ "graphical-session.target" ];
-        };
-        Service = {
-          Type = "simple";
-          ExecStart = "${lib.getExe' pkgs.swww "swww-daemon"}";
-          Restart = "always";
-          RestartSec = 3;
-        };
-        Install.WantedBy = [ "graphical-session.target" ];
-      };
-
       dms-wallpaper-init = {
         Unit = {
-          Description = "Seed swww wallpaper from collection on first launch";
-          After = [
-            "graphical-session.target"
-            "swww-daemon.service"
-          ];
+          Description = "Seed DMS wallpaper from collection on first launch";
+          After = [ "graphical-session.target" ];
           PartOf = [ "graphical-session.target" ];
         };
         Service = sd.hardenUser { } // {
