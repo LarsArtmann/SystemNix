@@ -151,6 +151,11 @@ lib.mkIf cfg.components.nodeExporter {
                     TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
                     TEMP_CELSIUS=$((TEMP_KELVIN - 273))
 
+                    # Endurance warning: 1 when percentage_used >= 50%
+                    PCT_USED=$(extract percentage_used)
+                    ENDURANCE_WARNING=0
+                    [ "''${PCT_USED:-0}" -ge 50 ] 2>/dev/null && ENDURANCE_WARNING=1
+
                     {
                       echo "# HELP node_nvme_temperature_celsius NVMe SSD temperature in Celsius"
                       echo "# TYPE node_nvme_temperature_celsius gauge"
@@ -167,6 +172,10 @@ lib.mkIf cfg.components.nodeExporter {
                       echo "# HELP node_nvme_percentage_used NVMe endurance used percentage (0-100, 100 = worn out)"
                       echo "# TYPE node_nvme_percentage_used gauge"
                       echo "node_nvme_percentage_used{device=\"''${DEV_NAME}\"} $(extract percentage_used)"
+
+                      echo "# HELP node_nvme_endurance_warning NVMe endurance boolean: 1 when percentage_used >= 50%"
+                      echo "# TYPE node_nvme_endurance_warning gauge"
+                      echo "node_nvme_endurance_warning{device=\"''${DEV_NAME}\"} ''${ENDURANCE_WARNING}"
 
                       echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 512 bytes)"
                       echo "# TYPE node_nvme_data_units_read_total counter"

@@ -510,7 +510,8 @@
       lockFile = builtins.fromJSON (builtins.readFile ./flake.lock);
       nixpkgsLockType = lockFile.nodes.nixpkgs.original.type or "unknown";
       nixpkgsTarballGuard =
-        assert nixpkgsLockType == "github"
+        assert
+          nixpkgsLockType == "github"
           || throw ''
             nixpkgs flake.lock regression: original type is "${nixpkgsLockType}", expected "github".
             The nix global registry rewrote nixpkgs to a tarball which may be stale.
@@ -518,8 +519,7 @@
           '';
         true;
     in
-    builtins.seq nixpkgsTarballGuard
-    flake-parts.lib.mkFlake { inherit inputs; } {
+    builtins.seq nixpkgsTarballGuard flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "aarch64-darwin"
         "x86_64-linux"
