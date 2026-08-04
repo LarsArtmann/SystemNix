@@ -329,12 +329,12 @@ in
 
     # ── Resilience: journald size limits ──────────────────────────────────
     # Without limits, AI services (Ollama, ComfyUI, Hermes) can fill /var/log
-    # with multi-GB logs, causing system failures. 16GB ensures crash forensics
-    # survive even when services spam errors for hours (see June 2025 disk-full
-    # incident where 4G was consumed by ClickHouse/Redis error flood, rotating
-    # away the crash boot logs).
+    # with multi-GB logs, causing system failures. 8GB is sufficient for crash
+    # forensics while leaving headroom on the 2TB QLC NVMe (SLC cache
+    # exhaustion is the primary risk — journal writes compete with everything
+    # else for SLC cache blocks).
     journald.extraConfig = ''
-      SystemMaxUse=16G
+      SystemMaxUse=8G
       RuntimeMaxUse=2G
       MaxFileSec=1week
       MaxRetentionSec=1month
@@ -355,6 +355,15 @@ in
   # stale blocks — subsequent daily runs only trim ~24h of churn (~50-100
   # GiB), taking ~10-15 min instead of 1h14m.
   systemd.timers.fstrim.timerConfig.OnCalendar = lib.mkForce "daily";
+
+  # Run fstrim at idle I/O priority so it doesn't compete with host I/O.
+  # fstrim is a background maintenance task; a 10-15 min trim run at idle
+  # priority is preferable to a 5 min run that starves foreground I/O and
+  # risks SLC cache exhaustion from the trim-induced write amplification.
+  systemd.services.fstrim.serviceConfig = {
+    IOSchedulingClass = "idle";
+    Nice = 10;
+  };
 
   # ZRAM: compressed swap emergency buffer on unified memory APU.
   # ~17% = ~16 GiB virtual device. zstd compresses ~2.7x, so 16 GiB of swap

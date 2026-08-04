@@ -56,6 +56,11 @@ in
         "noatime"
         "nodiscard"
         "space_cache=v2"
+        # Commit every 5 min instead of the default 30s. Reduces metadata
+        # write frequency ~10x on QLC NAND, preserving SLC cache blocks for
+        # foreground I/O. Data loss window on crash: 5 min (acceptable with
+        # daily btrbk snapshots + CoW journaling consistency).
+        "commit=300"
       ];
     };
     "/data" = mkFilesystem {
@@ -68,6 +73,7 @@ in
         "nodiscard"
         "space_cache=v2"
         "nofail"
+        "commit=300"
       ];
     };
     "/boot" = mkFilesystem {
