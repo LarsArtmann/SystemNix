@@ -505,6 +505,8 @@
       # Eval-time guard: the nix global registry rewrites github:NixOS/nixpkgs/nixos-unstable
       # to a tarball URL. The tarball pointer can be stale, silently downgrading nixpkgs
       # by months. This assertion fails nix flake check / nix eval if the regression recurs.
+      # Uses builtins.seq to force eager evaluation (Nix is lazy — an unreferenced let
+      # binding would never fire).
       lockFile = builtins.fromJSON (builtins.readFile ./flake.lock);
       nixpkgsLockType = lockFile.nodes.nixpkgs.original.type or "unknown";
       nixpkgsTarballGuard =
@@ -516,6 +518,7 @@
           '';
         true;
     in
+    builtins.seq nixpkgsTarballGuard
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
         "aarch64-darwin"
