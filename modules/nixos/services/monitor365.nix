@@ -384,7 +384,19 @@
                 exit 0
               fi
 
-              # 3. Does the server see the agent as a connected device?
+              # 3. Is the server itself healthy?
+              # If the server's /health fails (DuckDB pool deadlock, OOM, etc.),
+              # the agent's circuit breaker opens and it busy-loops at ~200%
+              # CPU. Restart the agent to clear the in-memory CB and stop CPU
+              # burn. The server watchdog will restart the server separately.
+              SERVER_HTTP=$(curl -sf -m 10 -o /dev/null -w "%{http_code}" "$SERVER_HEALTH" 2>/dev/null || echo "000")
+              if [ "$SERVER_HTTP" != "200" ]; then
+                echo "monitor365-agent-watchdog: server unhealthy (HTTP $SERVER_HTTP) — restarting agent to clear circuit breaker"
+                systemctl restart monitor365.service || true
+                exit 0
+              fi
+
+              # 4. Does the server see the agent as a connected device?
               # This catches the circuit-breaker deadlock: agent is alive and
               # metrics respond, but it can't upload to the server (CB open
               # with 700K+ failures). Restarting clears the in-memory CB.
@@ -405,6 +417,99 @@
             wantedBy = [ "timers.target" ];
             timerConfig = {
               OnBootSec = "2min";
+              OnUnitActiveSec = "5min";
+            };
+          };
+        })
+
+        # ── Server resilience: start-limit + CPUQuota ──────────────
+        # Same pattern as the agent: the upstream module doesn't set
+        # StartLimitBurst/StartLimitIntervalSec or CPUQuota. The server
+        # can enter a DuckDB pool deadlock where all background tasks fail
+        # with "pool acquire failed" — the process stays alive (Restart=always
+        # never triggers) but becomes functionally broken, burning ~1 core
+        # on retry loops. The watchdog below detects and recovers from this.
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-server = {
+            startLimitBurst = 5;
+            startLimitIntervalSec = 600; # 10 min — generous for watchdog recovery
+            serviceConfig.CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
+          };
+        })
+
+        # Server health watchdog: detects DuckDB pool deadlock and other
+        # degraded-but-alive states. The server's Restart=always only fires
+        # when the process EXITS — a pool deadlock keeps the process running
+        # (consuming ~1 core of CPU on retry loops) while every query fails.
+        #
+        # This watchdog performs two checks:
+        #   1. /health endpoint returns 200 within 10s (catches process-level
+        #      degradation, TCP backlog exhaustion from CPU saturation)
+        #   2. Journal "pool acquire failed" error count in last 5 min > 20
+        #      (catches DuckDB pool deadlock even when /health doesn't require
+        #      a DB connection)
+        #
+        # Without this, a pool deadlock persisted for 14+ hours (2026-08-04
+        # incident) because the process never exited and no health check
+        # existed for the server (only the agent had a watchdog).
+        (lib.mkIf serverCfg.enable {
+          systemd.services.monitor365-server-watchdog = {
+            description = "Monitor365 server health watchdog";
+            after = [ "monitor365-server.service" ];
+            serviceConfig = {
+              Type = "oneshot";
+              NoNewPrivileges = true;
+              PrivateTmp = true;
+            };
+            path = with pkgs; [
+              systemd
+              curl
+              gnugrep
+            ];
+            script = ''
+              SERVER_HEALTH="http://localhost:${toString ports.monitor365-server}/health"
+
+              # 1. Is the server process active?
+              if ! systemctl is-active --quiet monitor365-server.service; then
+                echo "monitor365-server-watchdog: server is NOT active — resetting start-limit and starting"
+                systemctl reset-failed monitor365-server.service 2>/dev/null || true
+                systemctl start monitor365-server.service || true
+                exit 0
+              fi
+
+              # 2. Does /health return 200 within 10s?
+              # Pool deadlock causes /health to return 500 or time out.
+              # The 10s timeout matches the DuckDB pool acquire timeout.
+              HTTP_CODE=$(curl -sf -m 10 -o /dev/null -w "%{http_code}" "$SERVER_HEALTH" 2>/dev/null || echo "000")
+              if [ "$HTTP_CODE" != "200" ]; then
+                echo "monitor365-server-watchdog: health check failed (HTTP $HTTP_CODE) — restarting server"
+                systemctl restart monitor365-server.service || true
+                exit 0
+              fi
+
+              # 3. DuckDB pool exhaustion detection via journal.
+              # The /health endpoint might not require a DB connection, so it
+              # can return 200 even when the pool is locked. This secondary
+              # check counts "pool acquire failed" errors in the last 5 min.
+              # Threshold: 20 errors/5min = ~4/min (one every ~15s). Normal
+              # operation has zero. Pool deadlock generates 10+/min.
+              POOL_ERRORS=$(journalctl -u monitor365-server.service --since "5 min ago" --no-pager 2>/dev/null \
+                | grep -c "pool acquire failed" || true)
+              if [ "$POOL_ERRORS" -gt 20 ]; then
+                echo "monitor365-server-watchdog: $POOL_ERRORS pool acquire failures in last 5 min — DuckDB deadlock, restarting server"
+                systemctl restart monitor365-server.service || true
+                exit 0
+              fi
+
+              echo "monitor365-server-watchdog: server healthy (HTTP 200, ''${POOL_ERRORS:-0} pool errors in 5 min)"
+            '';
+          };
+
+          systemd.timers.monitor365-server-watchdog = {
+            description = "Periodic Monitor365 server health check";
+            wantedBy = [ "timers.target" ];
+            timerConfig = {
+              OnBootSec = "3min";
               OnUnitActiveSec = "5min";
             };
           };
