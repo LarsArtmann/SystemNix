@@ -354,7 +354,7 @@ in
   # so the SLC cache stays healthy. The Aug-3 fstrim trimmed 446 GiB of
   # stale blocks — subsequent daily runs only trim ~24h of churn (~50-100
   # GiB), taking ~10-15 min instead of 1h14m.
-  systemd.timers.fstrim.timerConfig.OnCalendar = "daily";
+  systemd.timers.fstrim.timerConfig.OnCalendar = lib.mkForce "daily";
 
   # ZRAM: compressed swap emergency buffer on unified memory APU.
   # ~17% = ~16 GiB virtual device. zstd compresses ~2.7x, so 16 GiB of swap
