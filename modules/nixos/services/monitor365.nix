@@ -422,18 +422,30 @@
           };
         })
 
-        # ── Server resilience: start-limit + CPUQuota ──────────────
+        # ── Server resilience: start-limit + CPUQuota + MemoryMax ──────
         # Same pattern as the agent: the upstream module doesn't set
         # StartLimitBurst/StartLimitIntervalSec or CPUQuota. The server
         # can enter a DuckDB pool deadlock where all background tasks fail
         # with "pool acquire failed" — the process stays alive (Restart=always
         # never triggers) but becomes functionally broken, burning ~1 core
         # on retry loops. The watchdog below detects and recovers from this.
+        #
+        # MemoryMax override: the upstream module sets 3G, but DuckDB needs
+        # room for batch INSERT operations. Under I/O pressure (SLC cache
+        # exhaustion), DuckDB's appender falls back to individual INSERTs
+        # when it can't allocate enough working memory — a 100x slowdown
+        # that cascades into buffer overflow and event drops. 4G gives
+        # DuckDB's default 2GB PRAGMA memory_limit enough cgroup headroom
+        # to avoid this fallback path.
         (lib.mkIf serverCfg.enable {
           systemd.services.monitor365-server = {
             startLimitBurst = 5;
             startLimitIntervalSec = 600; # 10 min — generous for watchdog recovery
-            serviceConfig.CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
+            serviceConfig = {
+              CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
+              MemoryMax = lib.mkForce "4G";
+              MemoryHigh = lib.mkForce "3G";
+            };
           };
         })
 

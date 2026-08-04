@@ -220,7 +220,7 @@ lib.mkIf cfg.components.nodeExporter {
     }
     {
       services.psi-metrics = {
-        description = "Memory pressure (PSI) metrics for node_exporter textfile";
+        description = "Memory + I/O pressure (PSI) metrics for node_exporter textfile";
         inherit onFailure;
         serviceConfig = lib.mkMerge [
           {
@@ -246,6 +246,23 @@ lib.mkIf cfg.components.nodeExporter {
                     awk "BEGIN{exit !($some_avg10 > 0.50)}" && alert=1
                     awk "BEGIN{exit !($full_avg10 > 0.10)}" && alert=1
 
+                    # ── I/O pressure ────────────────────────────────────────────
+                    # avg300 = proportion of last 300s (5 min) where tasks stalled
+                    # on I/O. Equivalent to rate(node_pressure_io_stalled_seconds_total[5m]).
+                    # Alert at >0.10 (10% of wall-clock time stalled) — indicates
+                    # SLC cache exhaustion or sustained I/O starvation.
+                    io_some_avg300=0
+                    io_full_avg300=0
+                    io_alert=0
+                    IO_PSI="/proc/pressure/io"
+                    if [ -f "$IO_PSI" ]; then
+                      io_some_avg300=$(awk '/^some/ {split($5, a, "="); print a[2]}' "$IO_PSI")
+                      io_full_avg300=$(awk '/^full/ {split($5, a, "="); print a[2]}' "$IO_PSI")
+                      io_some_avg300="''${io_some_avg300:-0}"
+                      io_full_avg300="''${io_full_avg300:-0}"
+                      awk "BEGIN{exit !($io_some_avg300 > 0.10)}" && io_alert=1
+                    fi
+
                     {
                       echo "# HELP node_psi_memory_some_avg10 Proportion of last 10s where some tasks stalled on memory"
                       echo "# TYPE node_psi_memory_some_avg10 gauge"
@@ -256,6 +273,15 @@ lib.mkIf cfg.components.nodeExporter {
                       echo "# HELP node_psi_memory_alert Derived boolean: 1 when pressure exceeds early-warning threshold"
                       echo "# TYPE node_psi_memory_alert gauge"
                       echo "node_psi_memory_alert ''${alert}"
+                      echo "# HELP node_psi_io_some_avg300 Proportion of last 5min where some tasks stalled on I/O"
+                      echo "# TYPE node_psi_io_some_avg300 gauge"
+                      echo "node_psi_io_some_avg300 ''${io_some_avg300}"
+                      echo "# HELP node_psi_io_full_avg300 Proportion of last 5min where all tasks stalled on I/O"
+                      echo "# TYPE node_psi_io_full_avg300 gauge"
+                      echo "node_psi_io_full_avg300 ''${io_full_avg300}"
+                      echo "# HELP node_psi_io_alert Derived boolean: 1 when I/O stall rate exceeds 10% (5min avg)"
+                      echo "# TYPE node_psi_io_alert gauge"
+                      echo "node_psi_io_alert ''${io_alert}"
                     } > "$TMP"
 
                     mv "$TMP" "$OUT"
@@ -271,7 +297,7 @@ lib.mkIf cfg.components.nodeExporter {
       };
 
       timers.psi-metrics = {
-        description = "Collect memory pressure metrics every 15s";
+        description = "Collect memory and I/O pressure metrics every 15s";
         wantedBy = [ "timers.target" ];
         timerConfig = {
           OnBootSec = "5s";
