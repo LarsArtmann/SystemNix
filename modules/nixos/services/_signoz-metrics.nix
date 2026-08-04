@@ -256,8 +256,8 @@ lib.mkIf cfg.components.nodeExporter {
                     io_alert=0
                     IO_PSI="/proc/pressure/io"
                     if [ -f "$IO_PSI" ]; then
-                      io_some_avg300=$(awk '/^some/ {split($5, a, "="); print a[2]}' "$IO_PSI")
-                      io_full_avg300=$(awk '/^full/ {split($5, a, "="); print a[2]}' "$IO_PSI")
+                      io_some_avg300=$(awk '/^some/ {split($4, a, "="); print a[2]}' "$IO_PSI")
+                      io_full_avg300=$(awk '/^full/ {split($4, a, "="); print a[2]}' "$IO_PSI")
                       io_some_avg300="''${io_some_avg300:-0}"
                       io_full_avg300="''${io_full_avg300:-0}"
                       awk "BEGIN{exit !($io_some_avg300 > 0.10)}" && io_alert=1
