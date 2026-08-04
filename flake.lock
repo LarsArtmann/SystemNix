@@ -1591,11 +1591,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785833385,
-        "narHash": "sha256-Nq3QeD8r0oqKYF3479A9uT3J4C34ot/iumagAgo3JJ8=",
+        "lastModified": 1785846451,
+        "narHash": "sha256-968IPsPVxD7oMQDN4f5eqI1b3FhKRLLQqhGrd743NZY=",
         "owner": "LarsArtmann",
         "repo": "go-cqrs-lite",
-        "rev": "190c3bae9ce548dfc3a7c46b9b7a48ef3fd6c00b",
+        "rev": "336d2fc715193da6afd910ee41f4f7c854ca9328",
         "type": "github"
       },
       "original": {
