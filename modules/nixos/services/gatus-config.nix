@@ -642,6 +642,17 @@ _: {
                 ];
                 alerts = discordAlert "Memory pressure CRITICAL — PSI some>50% or full>10%. Risk of OOM cascade. Check Helium/Electron processes.";
               })
+              (mkHttpCheck {
+                name = "I/O Stall Rate";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "1m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_psi_io_alert 0*)"
+                ];
+                alerts = discordAlert "I/O pressure CRITICAL — PSI I/O stall >10% over 5min. SLC cache exhaustion or sustained I/O starvation. Check: nvme smart-log, fstrim status, btrfs filesystem usage.";
+              })
             ]
             ++ lib.optionals (config.services.system-health.enable or false) [
               (mkHttpCheck {
@@ -731,6 +742,17 @@ _: {
                   "[BODY] == pat(*system_tmpfs_tmp_over_threshold 0*)"
                 ];
                 alerts = discordAlert "/tmp tmpfs exceeds 80% (~38 GiB of 48 GiB cap) — runaway build or temp file accumulation. Check: du -sh /tmp/* | sort -rh | head";
+              })
+              (mkHttpCheck {
+                name = "fstrim Duration";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "30m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_fstrim_duration_over_threshold 0*)"
+                ];
+                alerts = discordAlert "fstrim took >30 min — possible SLC cache churn backlog or I/O contention. Check: journalctl -u fstrim -n 20, btrfs filesystem usage /";
               })
             ]
             ++ [

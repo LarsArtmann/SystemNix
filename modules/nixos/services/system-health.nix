@@ -47,6 +47,12 @@ _: {
       # (go-build caches, dev temp files) before hitting the ceiling.
       tmpfsThreshold = 80;
 
+      # fstrim duration alert threshold (seconds). Daily fstrim on QLC NAND
+      # should take 10-15 min after the initial 446 GiB backlog is cleared.
+      # >30 min indicates either a huge backlog (SLC cache churn) or the trim
+      # is competing with heavy host I/O.
+      fstrimDurationThreshold = 1800;
+
       systemHealthMetrics = pkgs.writeShellApplication {
         name = "system-health-metrics";
         runtimeInputs = [
@@ -162,6 +168,20 @@ _: {
             [ "$TMPFS_USAGE" -ge ${toString tmpfsThreshold} ] 2>/dev/null && TMPFS_OVER=1
           fi
 
+          # === fstrim last-run duration ===
+          FSTRIM_DURATION=0
+          FSTRIM_OVER=0
+          FSTRIM_START=$(systemctl show fstrim -p ExecMainStartTimestamp --value 2>/dev/null || echo "")
+          FSTRIM_EXIT=$(systemctl show fstrim -p ExecMainExitTimestamp --value 2>/dev/null || echo "")
+          if [ -n "$FSTRIM_START" ] && [ -n "$FSTRIM_EXIT" ] && [ "$FSTRIM_START" != "n/a" ] && [ "$FSTRIM_EXIT" != "n/a" ]; then
+            FSTRIM_START_EPOCH=$(date -d "$FSTRIM_START" +%s 2>/dev/null || echo 0)
+            FSTRIM_EXIT_EPOCH=$(date -d "$FSTRIM_EXIT" +%s 2>/dev/null || echo 0)
+            if [ "$FSTRIM_START_EPOCH" -gt 0 ] && [ "$FSTRIM_EXIT_EPOCH" -ge "$FSTRIM_START_EPOCH" ] 2>/dev/null; then
+              FSTRIM_DURATION=$((FSTRIM_EXIT_EPOCH - FSTRIM_START_EPOCH))
+              [ "$FSTRIM_DURATION" -gt ${toString fstrimDurationThreshold} ] 2>/dev/null && FSTRIM_OVER=1
+            fi
+          fi
+
           {
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
@@ -251,6 +271,14 @@ _: {
             echo "# HELP system_tmpfs_tmp_over_threshold 1 if /tmp tmpfs exceeds ${toString tmpfsThreshold}% usage, 0 otherwise"
             echo "# TYPE system_tmpfs_tmp_over_threshold gauge"
             echo "system_tmpfs_tmp_over_threshold ''${TMPFS_OVER}"
+
+            echo "# HELP system_fstrim_duration_seconds Duration of last fstrim run in seconds"
+            echo "# TYPE system_fstrim_duration_seconds gauge"
+            echo "system_fstrim_duration_seconds ''${FSTRIM_DURATION}"
+
+            echo "# HELP system_fstrim_duration_over_threshold 1 if last fstrim took >${toString fstrimDurationThreshold}s, 0 otherwise"
+            echo "# TYPE system_fstrim_duration_over_threshold gauge"
+            echo "system_fstrim_duration_over_threshold ''${FSTRIM_OVER}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
