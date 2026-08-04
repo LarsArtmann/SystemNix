@@ -501,6 +501,20 @@
       # Referenced by perSystem.packages (for nix build .#X) and passed to base.nix
       # via specialArgs (for environment.systemPackages).
       mkLarsPackages = import ./lib/lars-packages.nix { inherit lib inputs; };
+
+      # Eval-time guard: the nix global registry rewrites github:NixOS/nixpkgs/nixos-unstable
+      # to a tarball URL. The tarball pointer can be stale, silently downgrading nixpkgs
+      # by months. This assertion fails nix flake check / nix eval if the regression recurs.
+      lockFile = builtins.fromJSON (builtins.readFile ./flake.lock);
+      nixpkgsLockType = lockFile.nodes.nixpkgs.original.type or "unknown";
+      nixpkgsTarballGuard =
+        assert nixpkgsLockType == "github"
+          || throw ''
+            nixpkgs flake.lock regression: original type is "${nixpkgsLockType}", expected "github".
+            The nix global registry rewrote nixpkgs to a tarball which may be stale.
+            Fix: manually edit flake.lock nodes.nixpkgs.original to type "github".
+          '';
+        true;
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
