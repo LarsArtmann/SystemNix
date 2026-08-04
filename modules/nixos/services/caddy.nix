@@ -55,9 +55,12 @@ _: {
           Referrer-Policy "strict-origin-when-cross-origin"
           Permissions-Policy "geolocation=(), microphone=(), camera=()"
           -Server
-          # Always revalidate HTML documents to prevent stale cached pages
-          # referencing chunk hashes from a previous deploy
-          Cache-Control "no-cache"
+          # Default to no-cache only when the backend didn't set Cache-Control
+          # itself. The ? prefix means "set if not already present" so that
+          # apps serving immutable content-addressed media
+          # (Cache-Control: public, max-age=31536000, immutable) keep their
+          # long-lived browser cache instead of being clobbered to no-cache.
+          ?Cache-Control "no-cache"
         }
         encode zstd gzip
         request_body {
