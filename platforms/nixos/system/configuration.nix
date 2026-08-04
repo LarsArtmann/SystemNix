@@ -349,18 +349,6 @@ in
 
       fstrim.enable = true;
 
-      # QLC NAND SLC cache exhaustion is the root cause of the recurring
-      # evening WDT crashes (2026-08-03, 2026-08-04). Weekly fstrim is
-      # insufficient: BTRFS CoW churn (every write = new block + unreported
-      # free block) re-exhausts the SLC cache within 22-47h. With the cache
-      # gone, every write hits QLC directly (~253ms each), creating an
-      # exponential I/O queue buildup that eventually freezes the kernel.
-      # Daily fstrim keeps the NVMe controller's FTL informed of freed blocks
-      # so the SLC cache stays healthy. The Aug-3 fstrim trimmed 446 GiB of
-      # stale blocks — subsequent daily runs only trim ~24h of churn (~50-100
-      # GiB), taking ~10-15 min instead of 1h14m.
-      systemd.timers.fstrim.timerConfig.OnCalendar = "daily";
-
       signoz = {
         enable = true;
       };
