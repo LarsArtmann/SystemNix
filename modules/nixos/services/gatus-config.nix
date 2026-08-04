@@ -586,6 +586,17 @@ _: {
                 alerts = discordAlert "NVMe SMART metrics not being collected — disk health unmonitored";
               })
               (mkHttpCheck {
+                name = "NVMe Endurance Warning";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "1h";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_nvme_endurance_warning 0*)"
+                ];
+                alerts = discordAlert "NVMe SSD endurance exceeds 50% — plan for drive replacement. Check: nvme smart-log /dev/nvme0n1";
+              })
+              (mkHttpCheck {
                 name = "Niri Compositor";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";

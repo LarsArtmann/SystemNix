@@ -203,9 +203,11 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 
 **Compression:** `compress=zstd` on `/` (filesystem-wide — covers all `@` subvolumes). `/data` uses `compress=zstd:3`. NOT `compress-force` (against upstream Btrfs guidelines). BTRFS compression is filesystem-wide: setting it on any mount applies to ALL subvolumes on that filesystem. Only `subvol`/`subvolid` and VFS options like `noatime` are per-mount-point.
 
-**Scrub:** `autoScrub` monthly on `/` and `/data`. Scrub results collected as Prometheus metrics (`btrfs_scrub_errors_total`, `btrfs_scrub_status`, `btrfs_scrub_error_free`) via `btrfs-health-metrics` every 5 min. Gatus alerts on Discord when `btrfs_scrub_error_free` drops to 0 (errors found).
+**Commit interval:** `commit=300` on `/` and `/data`. Default 30s commits metadata every 30s; on QLC NAND this is ~10x write amplification for metadata alone. `commit=300` batches metadata commits to every 5 min, preserving SLC cache blocks for foreground I/O. Data loss window on crash: 5 min (acceptable with daily btrbk snapshots + CoW journaling consistency).
 
-**TRIM:** `services.fstrim.enable = true` (periodic). All BTRFS/ext4 mounts explicitly set `nodiscard` — QLC NAND causes 253ms discard latency → BTRFS commit stalls → WDT reset. `fstrim.timer` handles weekly TRIM without competing with host I/O.
+**Scrub:** `autoScrub` weekly on `/` and `/data`. Changed from monthly — frequent reboots (58 unsafe shutdowns) almost never let a monthly scrub complete before interruption. Scrub results collected as Prometheus metrics (`btrfs_scrub_errors_total`, `btrfs_scrub_status`, `btrfs_scrub_error_free`) via `btrfs-health-metrics` every 5 min. Gatus alerts on Discord when `btrfs_scrub_error_free` drops to 0 (errors found).
+
+**TRIM:** `services.fstrim.enable = true` with daily schedule (`OnCalendar = lib.mkForce "daily"`). All BTRFS/ext4 mounts explicitly set `nodiscard` — QLC NAND causes 253ms discard latency → BTRFS commit stalls → WDT reset. Daily fstrim at idle I/O priority (`IOSchedulingClass=idle`, `Nice=10`) keeps the NVMe controller's FTL informed of freed blocks so the SLC cache stays healthy. BTRFS CoW churn (every write = new block + unreported free block) re-exhausts the SLC cache within 22-47h on weekly TRIM — daily runs only trim ~24h of churn (~50-100 GiB, ~10-15 min) vs the initial 446 GiB backlog (1h14m). Monitored via Gatus (`system_fstrim_duration_over_threshold`) when trim takes >30 min.
 
 **bees dedup:** NOT recommended on this hardware. bees does random 4KB reads across the entire filesystem to hash blocks — QLC NAND random IO sensitivity makes this counterproductive. `auto-optimise-store` (whole-file hardlink dedup) captures the biggest win with zero extra IO.
 
@@ -287,7 +289,9 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 
 ### BTRFS & Filesystems
 
-- **All mounts set `nodiscard`** — QLC NAND (`discard=async`) causes 253ms discard latency → BTRFS commit stalls → WDT reset. `fstrim.timer` handles weekly TRIM.
+- **All mounts set `nodiscard`** — QLC NAND (`discard=async`) causes 253ms discard latency → BTRFS commit stalls → WDT reset. Daily `fstrim.timer` (idle priority) handles TRIM.
+- **SLC cache exhaustion is the root crash cause** — QLC NAND uses an SLC write cache that BTRFS CoW churn exhausts within 22-47h when fstrim is weekly. With cache gone, every write hits QLC directly (~253ms), building an exponential I/O queue that freezes the kernel → WDT reset. Daily fstrim + `commit=300` mitigates this. See `docs/gotchas-archive.md` for full incident narrative.
+- **`commit=300` on all BTRFS mounts** — Reduces metadata write frequency ~10x vs default 30s, preserving SLC cache blocks. Data loss window: 5 min (acceptable with daily snapshots + CoW journaling).
 - **ext4 uses bare `discard`** — `discard=async` on ext4 → mount fails → emergency shell.
 - **Non-`nofail` mounts = boot hazard** — Any non-root mount without `nofail` that fails brings down `local-fs.target`.
 - **Compression is filesystem-wide** — `compress=zstd` on any mount applies to ALL subvolumes. Only `subvol`/`subvolid` and VFS options are per-mount.

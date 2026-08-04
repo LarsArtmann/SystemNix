@@ -41,7 +41,7 @@ in
   fileSystems = {
     # Explicitly disable continuous async TRIM (nodiscard).
     # QLC NAND (Lexar NQ790) has 253ms discard latency → BTRFS commit stalls.
-    # Periodic fstrim (configuration.nix) handles TRIM weekly without competing with host I/O.
+    # Periodic fstrim (configuration.nix, daily, idle priority) handles TRIM without competing with host I/O.
     # nodiscard is set explicitly for defense-in-depth: makes intent clear and guards
     # against any future kernel default that might enable continuous discard.
     # Note: BTRFS auto-adds the 'ssd' option for non-rotational devices, but does NOT
