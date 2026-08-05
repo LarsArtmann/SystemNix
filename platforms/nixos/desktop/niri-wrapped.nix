@@ -3,7 +3,6 @@
   lib,
   wallpapers,
   colorScheme,
-  dankMaterialShell,
   ...
 }:
 let
