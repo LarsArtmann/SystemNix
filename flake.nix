@@ -148,9 +148,12 @@
     };
 
     # Hermes AI Agent — Discord/gateway agent platform
+    # NOTE: intentionally NOT following SystemNix nixpkgs. Hermes is sensitive to
+    # nixpkgs version (uv2nix/pyproject.nix internals) and upstream tests against
+    # its own pinned nixpkgs. Forcing latest nixpkgs caused the hermes-python-source
+    # path to become invalid during evaluation.
     hermes-agent = {
       url = "github:NousResearch/hermes-agent";
-      inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-parts.follows = "flake-parts";
     };
 
