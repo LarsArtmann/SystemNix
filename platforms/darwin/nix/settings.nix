@@ -10,4 +10,16 @@
     # Using lib.mkForce to properly override the common module's sandbox = true
     sandbox = lib.mkForce false;
   };
+
+  # Override the Nix global flake registry so github:NixOS/nixpkgs/nixos-unstable
+  # resolves directly to GitHub instead of being rewritten to the channels.nixos.org
+  # tarball. Mirrors the NixOS override in platforms/nixos/system/configuration.nix.
+  nix.registry."nixpkgs/nixos-unstable" = {
+    to = {
+      type = "github";
+      owner = "NixOS";
+      repo = "nixpkgs";
+      ref = "nixos-unstable";
+    };
+  };
 }
