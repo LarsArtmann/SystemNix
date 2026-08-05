@@ -367,7 +367,7 @@
 
     # projects-management-automation — CLI for managing multiple projects with workflow automation
     projects-management-automation = {
-      url = "github:LarsArtmann/projects-management-automation?ref=master";
+      url = "git+file:///home/lars/projects/projects-management-automation";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
