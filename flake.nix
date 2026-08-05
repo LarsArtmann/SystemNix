@@ -436,6 +436,20 @@
       url = "github:ogulcancelik/herdr";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # go-humanize-linter — AST linter detecting hand-rolled reimplementations of go-humanize
+    # Go dep inputs (go-finding, go-linter-sdk, go-error-family) are NOT followed —
+    # they are flake=false git+ssh inputs fetched by the upstream flake itself.
+    go-humanize-linter = {
+      url = "github:LarsArtmann/go-humanize-linter?ref=main";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+      };
+    };
   };
 
   outputs =
