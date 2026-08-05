@@ -20,6 +20,18 @@ if [ ! -f "flake.nix" ]; then
     exit 0
 fi
 
+# Fast guard: reject tarball-type nixpkgs before running the slower nix flake check.
+# The global Nix registry rewrites nixpkgs/nixos-unstable to channels.nixos.org,
+# which is often months stale and breaks deploys.
+if [ -f "flake.lock" ]; then
+    nixpkgs_type=$(nix eval --impure --json --expr 'let lock = builtins.fromJSON (builtins.readFile ./flake.lock); in lock.nodes.nixpkgs.original.type or "unknown"' 2>/dev/null | tr -d '"' || echo "unknown")
+    if [ "$nixpkgs_type" != "github" ]; then
+        log_error "nixpkgs flake.lock regression: original type is '$nixpkgs_type', expected 'github'."
+        log_error "The global Nix registry rewrote nixpkgs to a tarball. Fix flake.lock and retry."
+        exit 1
+    fi
+fi
+
 STAGED_NIX=$(git diff --cached --name-only --diff-filter=ACM '*.nix')
 all_passed=true
 
