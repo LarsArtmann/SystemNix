@@ -81,11 +81,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785953683,
-        "narHash": "sha256-apVF4oxBS8dbqlkDQZ+cxhO2FkUKzXr8qAsTRtEofoY=",
+        "lastModified": 1785959269,
+        "narHash": "sha256-+9jkQx75JpW0sX73p/J6JXADKSOWEGGqp3h0JKjR/IQ=",
         "owner": "LarsArtmann",
         "repo": "branching-flow",
-        "rev": "3ba01a6336150f9ce7a57943b9fbec8fdd065f66",
+        "rev": "bea1953841d17779cd85fdca9c91e119a9d69c89",
         "type": "github"
       },
       "original": {
@@ -175,11 +175,11 @@
         "treefmt-nix": "treefmt-nix_2"
       },
       "locked": {
-        "lastModified": 1785953753,
-        "narHash": "sha256-9+iEGgDIlqdY7keoFKaETCjmcsZ7C4YML7p3UsQb42g=",
+        "lastModified": 1785958568,
+        "narHash": "sha256-YYQHZnNKdH1Hoxdza9mJMMi2Oxf5DRyNmW2L8eCsjUA=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "21374f620f764b07b1b3f76ae469cb93d28f0e3d",
+        "rev": "add55ca32bfd3f97cd74784a7cd097da05d211e7",
         "type": "github"
       },
       "original": {
@@ -458,11 +458,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785954637,
-        "narHash": "sha256-9LLa23qHTU6BtBdUs1D1RXwkJTjSpBEefJckm6zauBE=",
+        "lastModified": 1785959225,
+        "narHash": "sha256-SvmymFHzxcJPOLglHWCV5rC+jmWptKBkLTuNCqYCpbs=",
         "owner": "LarsArtmann",
         "repo": "crush-daily",
-        "rev": "ed35cbbd14c5e778d5f4d590f611297eb300e56a",
+        "rev": "e4fad8ea35d900777cbd5dd825f7c75999cdb466",
         "type": "github"
       },
       "original": {
@@ -579,11 +579,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1785954638,
-        "narHash": "sha256-UrVr4d6/33tWPQcWB3XQkUAPfmtW3JeeCxjk/0Fwo0M=",
+        "lastModified": 1785959217,
+        "narHash": "sha256-9N3HEugsyNYEai8Yp+aPd5kUrwlueymK1EgJIv3xrbE=",
         "owner": "LarsArtmann",
         "repo": "emeet-pixyd",
-        "rev": "e644d1c1ec69e02ec3178e21e1b307799eb617d6",
+        "rev": "b0d3900dc24064b4afc4c10ea904075b10b95181",
         "type": "github"
       },
       "original": {
@@ -2258,11 +2258,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785954983,
-        "narHash": "sha256-ksqS5Yb+1i0EFnaNzzxSp8P/xpYMAYSdCaPsG4sar5M=",
+        "lastModified": 1785959257,
+        "narHash": "sha256-172LFslYhv8UV+T4zym5obP124HaDZTCwz7XPhV7VWU=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "c279c0fc80d1eef95faa862fa5249a9c84e80057",
+        "rev": "7b9e1552c0b73e2364bbafc0397d0a7a22e2ff99",
         "type": "github"
       },
       "original": {
@@ -3293,11 +3293,11 @@
         "treefmt-nix": "treefmt-nix_9"
       },
       "locked": {
-        "lastModified": 1785954522,
-        "narHash": "sha256-PA/1YjV5cmdWtwDMK2v5KkozcsF/bbe5eb1N4u/8rtE=",
+        "lastModified": 1785959276,
+        "narHash": "sha256-Xap5Gt9Z6lmY8llGjIOINNYzgNBjOMHDPJoNGws1NOg=",
         "owner": "LarsArtmann",
         "repo": "hierarchical-errors",
-        "rev": "8c7eb1e2ac03a2de81436cadc28c62f8750f889f",
+        "rev": "2bfed3bdb24869e089976a073f654a670d7296d6",
         "type": "github"
       },
       "original": {
@@ -3522,11 +3522,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785926321,
-        "narHash": "sha256-K6f0eljPaHyxlmQoK4UOk9IBtek3Sd3b1eaBSBBt0ZQ=",
+        "lastModified": 1785959247,
+        "narHash": "sha256-dL/92bPy4IHQfEGL79BKtCxZKw+C89Id8FVFVLJYd6Q=",
         "owner": "LarsArtmann",
         "repo": "md-go-validator",
-        "rev": "3dbb3e3360315bb0c325f1ff86a32a32744d1f82",
+        "rev": "13fa6f9eb80ad3dc0c19569c9a1efb3a94cb7105",
         "type": "github"
       },
       "original": {
@@ -3589,11 +3589,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785955991,
-        "narHash": "sha256-VB55dlWan6vyOfEUrocaAdOhjqx7OkwNARcGGliewCQ=",
+        "lastModified": 1785959237,
+        "narHash": "sha256-h1hnlqg3aKbtONdNmhYsNOIE76XatSu6MruFLIFXOzU=",
         "owner": "LarsArtmann",
         "repo": "mr-sync",
-        "rev": "9c25b5e652d5d52b5906ff63b61c0b2393d93ed2",
+        "rev": "3107a3573a6592c6fbdda7bda1b0b2792f30cbbd",
         "type": "github"
       },
       "original": {
