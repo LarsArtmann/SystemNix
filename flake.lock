@@ -2184,6 +2184,36 @@
         "type": "github"
       }
     },
+    "go-humanize-linter": {
+      "inputs": {
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "systems": [
+          "systems"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785890124,
+        "narHash": "sha256-afaThxTQVWOfLT4EP8GAFQ+TK50S9eAMw+AcWDX5wzw=",
+        "owner": "LarsArtmann",
+        "repo": "go-humanize-linter",
+        "rev": "df978614630f4e0b99c48938336a81bcfb05ed1c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LarsArtmann",
+        "ref": "main",
+        "repo": "go-humanize-linter",
+        "type": "github"
+      }
+    },
     "go-idempotency": {
       "flake": false,
       "locked": {
@@ -4149,6 +4179,7 @@
         "go-error-family": "go-error-family_6",
         "go-filewatcher": "go-filewatcher",
         "go-finding": "go-finding_5",
+        "go-humanize-linter": "go-humanize-linter",
         "go-nix-helpers": "go-nix-helpers_4",
         "go-output": "go-output_6",
         "go-structure-linter": "go-structure-linter_2",
