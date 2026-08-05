@@ -579,11 +579,11 @@
         "treefmt-nix": "treefmt-nix_4"
       },
       "locked": {
-        "lastModified": 1785959217,
-        "narHash": "sha256-9N3HEugsyNYEai8Yp+aPd5kUrwlueymK1EgJIv3xrbE=",
+        "lastModified": 1785959875,
+        "narHash": "sha256-7he4egoNay7QC8Qq4g0m65otDrAQZ7V3u208oe2UXMg=",
         "owner": "LarsArtmann",
         "repo": "emeet-pixyd",
-        "rev": "b0d3900dc24064b4afc4c10ea904075b10b95181",
+        "rev": "f65009c145e54e92d3c1110b1563946b0eb06ff0",
         "type": "github"
       },
       "original": {
