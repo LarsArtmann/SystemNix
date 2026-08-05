@@ -35,6 +35,19 @@ in
 
   # Wrap all configuration in config attribute
   config = {
+    # Override the Nix global flake registry so github:NixOS/nixpkgs/nixos-unstable
+    # resolves directly to GitHub instead of being rewritten to the channels.nixos.org
+    # tarball. The tarball is periodically stale (months behind) and the auto-commit
+    # daemon's `nix flake update` commits the regression, breaking deploys.
+    nix.registry."nixpkgs/nixos-unstable" = {
+      to = {
+        type = "github";
+        owner = "NixOS";
+        repo = "nixpkgs";
+        ref = "nixos-unstable";
+      };
+    };
+
     # dnsblockd CA is trusted via security.pki.certificates in the dns-blocker module
 
     # Fix for Home Manager + xdg.portal integration
