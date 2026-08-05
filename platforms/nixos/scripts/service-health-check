@@ -34,7 +34,6 @@ check_user_service() {
 # === System services ===
 check_service forgejo
 check_service caddy
-check_service unbound
 check_service dnsblockd
 check_service postgresql
 check_service homepage-dashboard
@@ -58,8 +57,6 @@ check_service route-health-monitor
 check_service mptcp-endpoint-manager
 
 # === User services (graphical session) ===
-check_user_service waybar
-check_user_service awww-daemon
 check_user_service swayidle
 check_user_service emeet-pixyd
 check_user_service niri-session-manager

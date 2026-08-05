@@ -670,6 +670,11 @@
                 pkgs.systemd
               ] ./scripts/deploy.sh;
               validate = mkApp "validate" "Validate flake without building" [ pkgs.nix ] ./scripts/validate.sh;
+              fix-nixpkgs-lock =
+                mkApp "fix-nixpkgs-lock"
+                  "Restore the flake.lock nixpkgs node to github type (one-command recovery from the tarball regression)"
+                  [ pkgs.nix pkgs.jq ]
+                  ./scripts/fix-nixpkgs-lock.sh;
               pre-deploy-check =
                 mkApp "pre-deploy-check" "Pre-deploy validation: catches boot-breaking issues before switch"
                   [ pkgs.nix pkgs.jq pkgs.systemd ]

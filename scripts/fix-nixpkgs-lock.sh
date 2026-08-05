@@ -18,25 +18,25 @@ set -euo pipefail
 
 FLAKE_LOCK="flake.lock"
 
-if [[ ! -f "$FLAKE_LOCK" ]]; then
+if [[ ! -f $FLAKE_LOCK ]]; then
   echo "error: $FLAKE_LOCK not found (run from the flake root)" >&2
   exit 1
 fi
 
 current_type="$(jq -r '.nodes.nixpkgs.original.type // "missing"' "$FLAKE_LOCK")"
-if [[ "$current_type" == "github" ]]; then
+if [[ $current_type == "github" ]]; then
   echo "nixpkgs node is already github type — nothing to do."
   exit 0
 fi
 
 echo "nixpkgs node is \"$current_type\" (expected github). Fixing..."
 
-if [[ "${1:-}" == "--latest" ]]; then
+if [[ ${1:-} == "--latest" ]]; then
   ref="github:NixOS/nixpkgs/nixos-unstable"
   echo "Fetching latest nixos-unstable metadata..."
 else
   current_rev="$(jq -r '.nodes.nixpkgs.locked.rev // empty' "$FLAKE_LOCK")"
-  if [[ -z "$current_rev" ]]; then
+  if [[ -z $current_rev ]]; then
     echo "error: cannot determine current rev from $FLAKE_LOCK (use --latest)" >&2
     exit 1
   fi
@@ -47,12 +47,15 @@ fi
 # nix flake prefetch resolves an explicit github: URL WITHOUT registry
 # interception and returns complete original/locked metadata + hash.
 prefetch_json="$(nix flake prefetch "$ref" --json)"
-original="$(jq -c '.original' <<<"$prefetch_json")"
+# original must mirror the flake.nix input declaration (the branch ref), NOT the
+# prefetch original (which pins rev in --pin mode). Hardcoding the canonical form
+# keeps the lockfile consistent with how nix flake update resolves the input.
+original='{"owner":"NixOS","ref":"nixos-unstable","repo":"nixpkgs","type":"github"}'
 locked="$(jq -c '.locked + {narHash: .hash}' <<<"$prefetch_json")"
 
 jq --argjson orig "$original" --argjson lock "$locked" \
   '.nodes.nixpkgs.original = $orig | .nodes.nixpkgs.locked = $lock' \
-  "$FLAKE_LOCK" > "${FLAKE_LOCK}.tmp" && mv "${FLAKE_LOCK}.tmp" "$FLAKE_LOCK"
+  "$FLAKE_LOCK" >"${FLAKE_LOCK}.tmp" && mv "${FLAKE_LOCK}.tmp" "$FLAKE_LOCK"
 
 new_rev="$(jq -r '.nodes.nixpkgs.locked.rev' "$FLAKE_LOCK")"
 echo "nixpkgs node is now github type at rev ${new_rev}."
