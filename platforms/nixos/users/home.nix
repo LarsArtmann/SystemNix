@@ -226,7 +226,6 @@ in
       # Note: kitty managed by programs.kitty above — don't add to packages
       # Note: cliphist CLI in base.nix (manual use only, service retired — DMS manages clipboard)
       libnotify
-      grimblast
       swappy
       playerctl
       brightnessctl
