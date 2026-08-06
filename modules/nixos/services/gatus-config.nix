@@ -512,13 +512,13 @@ _: {
               (mkHttpCheck {
                 name = "EMEET PIXY";
                 group = "Monitoring";
-                url = "http://localhost:${toString ports.emeet-pixyd}/metrics";
+                url = "http://localhost:${toString nodePort}/metrics";
                 interval = "60s";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] == pat(*emeet*)"
+                  "[BODY] == pat(*system_emeet_pixyd_expected_down 0*)"
                 ];
-                alerts = discordAlert "EMEET PIXY daemon down — webcam auto-management broken";
+                alerts = discordAlert "EMEET PIXY daemon down with graphical session active — webcam auto-management broken. Check: systemctl --user status emeet-pixyd";
               })
               (mkHttpCheck {
                 name = "GPU VRAM Metrics";

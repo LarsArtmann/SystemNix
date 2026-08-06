@@ -62,6 +62,7 @@ _: {
           pkgs.systemd
           pkgs.curl
           pkgs.jq
+          pkgs.procps
         ];
         text = ''
           OUT="${textfileDir}/system_health.prom"
@@ -182,6 +183,17 @@ _: {
             fi
           fi
 
+          # === EMEET PIXY session-aware gate ===
+          # emeet-pixyd is a graphical-session user service — it only runs
+          # when someone is logged into the niri desktop. Only flag as
+          # unexpected-down when niri IS running but the daemon is NOT.
+          NIRI_RUNNING=$(pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
+          EMEET_RUNNING=$(pgrep -x emeet-pixyd >/dev/null 2>&1 && echo 1 || echo 0)
+          EMEET_EXPECTED_DOWN=0
+          if [ "$NIRI_RUNNING" = "1" ] && [ "$EMEET_RUNNING" = "0" ]; then
+            EMEET_EXPECTED_DOWN=1
+          fi
+
           {
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
@@ -279,6 +291,10 @@ _: {
             echo "# HELP system_fstrim_duration_over_threshold 1 if last fstrim took >${toString fstrimDurationThreshold}s, 0 otherwise"
             echo "# TYPE system_fstrim_duration_over_threshold gauge"
             echo "system_fstrim_duration_over_threshold ''${FSTRIM_OVER}"
+
+            echo "# HELP system_emeet_pixyd_expected_down 1 if niri is running but emeet-pixyd is not (unexpected), 0 otherwise"
+            echo "# TYPE system_emeet_pixyd_expected_down gauge"
+            echo "system_emeet_pixyd_expected_down ''${EMEET_EXPECTED_DOWN}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
