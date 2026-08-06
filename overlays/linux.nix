@@ -28,9 +28,10 @@ let
   niriLibdisplayInfoShim = _final: prev: {
     libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (old: {
       version = "0.2.0";
+      __intentionallyOverridingVersion = true;
       postFixup = (old.postFixup or "") + ''
         for pc in $out/lib/pkgconfig/libdisplay-info*.pc; do
-          substituteInPlace "$pc" --replace-fail "Version: 0.4.0" "Version: 0.3.0"
+          sed -i 's/^Version: [0-9.]\+$/Version: 0.3.0/' "$pc"
         done
       '';
     });

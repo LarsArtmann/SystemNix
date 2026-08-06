@@ -230,6 +230,10 @@
                 "+${lib.getExe dbHeal}"
                 "+${lib.getExe waitDnsReady}"
               ];
+              # DNS wait + DB integrity check can exceed systemd's default 90s
+              # during system switches when I/O contention is high and dnsblockd
+              # is still settling. 3 min covers worst observed case (~100s).
+              TimeoutStartSec = "3min";
               # NO ExecStartPost readiness gate: the API server binds in a
               # goroutine AFTER thumb-hash backfill completes (3139+ attachments
               # at ~7/sec = 5-11 min). ExecStartPost runs immediately after

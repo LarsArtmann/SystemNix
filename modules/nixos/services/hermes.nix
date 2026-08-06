@@ -285,6 +285,10 @@
               KillMode = "mixed";
               KillSignal = "SIGTERM";
               TimeoutStopSec = cfg.timeoutStopSec;
+              # State migration (535 MB) + ACL setup + permission fix can exceed
+              # systemd's default 90s during system switches. 3 min covers
+              # worst observed case (~96s on cold I/O).
+              TimeoutStartSec = "3min";
               ExecReload = "/bin/kill -USR1 $MAINPID";
               StandardOutput = "journal";
               StandardError = "journal";

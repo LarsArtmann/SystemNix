@@ -19,13 +19,31 @@
     {"flakes":[],"version":2}
   '';
   nix.registry.nixpkgs-nixos-unstable = {
-    from = { type = "indirect"; id = "nixpkgs"; ref = "nixos-unstable"; };
-    to = { type = "github"; owner = "NixOS"; repo = "nixpkgs"; ref = "nixos-unstable"; };
+    from = {
+      type = "indirect";
+      id = "nixpkgs";
+      ref = "nixos-unstable";
+    };
+    to = {
+      type = "github";
+      owner = "NixOS";
+      repo = "nixpkgs";
+      ref = "nixos-unstable";
+    };
     exact = true;
   };
   nix.registry.nixpkgs-nixpkgs-unstable = {
-    from = { type = "indirect"; id = "nixpkgs"; ref = "nixpkgs-unstable"; };
-    to = { type = "github"; owner = "NixOS"; repo = "nixpkgs"; ref = "nixpkgs-unstable"; };
+    from = {
+      type = "indirect";
+      id = "nixpkgs";
+      ref = "nixpkgs-unstable";
+    };
+    to = {
+      type = "github";
+      owner = "NixOS";
+      repo = "nixpkgs";
+      ref = "nixpkgs-unstable";
+    };
     exact = true;
   };
 }

@@ -593,20 +593,23 @@
           devShells = {
             default = pkgs.mkShellNoCC {
               BUILDFLOW_EXCLUDE_PATTERNS = "assets/avatar.png";
-              packages = with pkgs; [
-                git
-                nixfmt
-                alejandra
-                treefmt
-                deadnix
-                shellcheck
-                statix
-                gitleaks
-                jq
-                sqlc
-              ] ++ [
-                (mkLarsPackages system).buildflow
-              ];
+              packages =
+                with pkgs;
+                [
+                  git
+                  nixfmt
+                  alejandra
+                  treefmt
+                  deadnix
+                  shellcheck
+                  statix
+                  gitleaks
+                  jq
+                  sqlc
+                ]
+                ++ [
+                  (mkLarsPackages system).buildflow
+                ];
             };
             # Quickshell development — hot-reload QML shell development
             quickshell = pkgs.mkShellNoCC {
