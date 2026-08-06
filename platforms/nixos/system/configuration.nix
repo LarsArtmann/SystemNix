@@ -35,17 +35,54 @@ in
 
   # Wrap all configuration in config attribute
   config = {
-    # Override the Nix global flake registry so github:NixOS/nixpkgs/nixos-unstable
-    # resolves directly to GitHub instead of being rewritten to the channels.nixos.org
-    # tarball. The tarball is periodically stale (months behind) and the auto-commit
-    # daemon's `nix flake update` commits the regression, breaking deploys.
-    nix.registry."nixpkgs/nixos-unstable" = {
+    # ── nixpkgs tarball regression: ROOT CAUSE FIX ──────────────────────────
+    #
+    # The global flake registry at channels.nixos.org contains `exact: true`
+    # entries that rewrite ALL nixpkgs refs (nixos-unstable, nixpkgs-unstable,
+    # bare nixpkgs) to stale channel tarballs. When `nix flake update` runs, it
+    # consults these registry entries and rewrites the flake.lock nixpkgs node
+    # from `type: github` to `type: tarball`, breaking evaluation.
+    #
+    # Layer 1 — Eliminate the source: point flake-registry at a local empty file
+    # so Nix NEVER downloads the channels.nixos.org registry with its tarball
+    # entries. System + user registries still resolve indirect refs (nixpkgs,
+    # home-manager, etc.) without the global registry.
+    nix.settings.flake-registry = builtins.toFile "empty-flake-registry.json" ''
+      {"flakes":[],"version":2}
+    '';
+
+    # Layer 2 — Correct-format system registry overrides. The previous entry
+    # used `nix.registry."nixpkgs/nixos-unstable"` which creates
+    # `from.id = "nixpkgs/nixos-unstable"` — a COMBINED string that does NOT
+    # match the global registry's `from = {id: "nixpkgs", ref: "nixos-unstable"}`
+    # format. The explicit `from` field below matches the exact key format.
+    nix.registry.nixpkgs-nixos-unstable = {
+      from = {
+        type = "indirect";
+        id = "nixpkgs";
+        ref = "nixos-unstable";
+      };
       to = {
         type = "github";
         owner = "NixOS";
         repo = "nixpkgs";
         ref = "nixos-unstable";
       };
+      exact = true;
+    };
+    nix.registry.nixpkgs-nixpkgs-unstable = {
+      from = {
+        type = "indirect";
+        id = "nixpkgs";
+        ref = "nixpkgs-unstable";
+      };
+      to = {
+        type = "github";
+        owner = "NixOS";
+        repo = "nixpkgs";
+        ref = "nixpkgs-unstable";
+      };
+      exact = true;
     };
 
     # dnsblockd CA is trusted via security.pki.certificates in the dns-blocker module
