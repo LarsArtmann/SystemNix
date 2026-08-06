@@ -461,10 +461,11 @@ _: {
                 conditions = [
                   "[STATUS] == 200"
                   # Gatus 5.36.0's [BODY].jsonpath is broken — use pat() instead.
-                  # Match "connected (N devices)" where N >= 1. The pat() placeholder
-                  # matches any text, so this verifies the realtime field shows at
-                  # least one connected device (the agent).
-                  "[BODY] == pat(*connected (?[1-9]* devices)*)"
+                  # Match "connected (N devices)" where N >= 1. The [1-9] character
+                  # class ensures at least one digit from 1-9 (excludes 0 devices).
+                  # NOTE: Gatus pat() uses glob, NOT regex — do NOT prefix with ?
+                  # (glob ? = single-char wildcard, which would consume the digit).
+                  "[BODY] == pat(*connected ([1-9]* devices)*)"
                 ];
                 alerts = discordAlert "Monitor365 agent not connected to server — API key desync or agent crash";
               })
@@ -489,17 +490,20 @@ _: {
                 # Gatus 5.36.0 cannot do numeric comparison on Prometheus text
                 # metrics ([BODY].jsonpath is broken, pat() is presence-only).
                 # We verify the sync subsystem is ACTIVE by checking both the
-                # backlog gauge and the rejected-events counter exist. The
-                # self-healing fix (server skip-and-continue + agent cursor
-                # advance) means backlog drains automatically — this check
-                # catches the agent STOPPING sync entirely (circuit breaker
-                # stuck open, crash loop, auth failure). For VALUE-based
+                # backlog gauge and the consecutive-failures gauge exist.
+                # NOTE: cloud_sync_consecutive_failures is always emitted (set
+                # on every sync cycle: 0 on success, incremented on failure).
+                # The previous condition used cloud_sync_upload_rejected_events_total
+                # which is only emitted when rejections > 0, so it's ABSENT when
+                # the agent has zero rejections — a permanent false negative.
+                # This check catches the agent STOPPING sync entirely (circuit
+                # breaker stuck open, crash loop, auth failure). For VALUE-based
                 # alerting (backlog > N threshold), wire Prometheus/SigNoz
                 # to scrape this endpoint and add an alert rule there.
                 conditions = [
                   "[STATUS] == 200"
                   "[BODY] == pat(*cloud_sync_upload_backlog_size*)"
-                  "[BODY] == pat(*cloud_sync_upload_rejected_events_total*)"
+                  "[BODY] == pat(*cloud_sync_consecutive_failures*)"
                 ];
                 alerts = discordAlert "Monitor365 cloud sync subsystem not emitting metrics — agent may have stopped syncing (circuit breaker open, auth failure, or crash loop). Check: journalctl -u monitor365 -n 50";
               })
