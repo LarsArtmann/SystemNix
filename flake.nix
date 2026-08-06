@@ -604,6 +604,8 @@
                 gitleaks
                 jq
                 sqlc
+              ] ++ [
+                (mkLarsPackages system).buildflow
               ];
             };
             # Quickshell development — hot-reload QML shell development
