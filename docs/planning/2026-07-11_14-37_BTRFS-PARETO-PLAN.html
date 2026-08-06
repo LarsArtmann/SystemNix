@@ -378,10 +378,9 @@
           <div class="hero-badge">Pareto Plan &middot; 2026-07-11</div>
           <h1>BTRFS Health Improvement Plan</h1>
           <p class="hero-subtitle">
-            25 tasks across 4 priority tiers. Source: NixOS Wiki, Arch Wiki,
-            Disko docs, community guides vs. SystemNix evo-x2 actual state.
-            Every task is 12 minutes or less. bees dedup excluded &mdash; QLC
-            NAND random IO sensitivity makes it counterproductive.
+            25 tasks across 4 priority tiers. Source: NixOS Wiki, Arch Wiki, Disko docs, community
+            guides vs. SystemNix evo-x2 actual state. Every task is 12 minutes or less. bees dedup
+            excluded &mdash; QLC NAND random IO sensitivity makes it counterproductive.
           </p>
         </div>
 
@@ -414,21 +413,17 @@
 
         <h2 id="summary"><span class="num">01</span>Summary</h2>
         <div class="card card-problem">
-          <strong style="display: block; margin-bottom: 8px"
-            >The Problem</strong
-          >
-          SystemNix's BTRFS setup is production-hardened and goes far beyond
-          wiki guidance in monitoring and safety. However, two structural gaps
-          (no remote backup, no subvolume separation for <code>/nix</code> and
-          <code>/home</code>) and several monitoring gaps (no scrub alerting, no
-          compression ratio tracking) leave data at risk.
+          <strong style="display: block; margin-bottom: 8px">The Problem</strong>
+          SystemNix's BTRFS setup is production-hardened and goes far beyond wiki guidance in
+          monitoring and safety. However, two structural gaps (no remote backup, no subvolume
+          separation for <code>/nix</code> and <code>/home</code>) and several monitoring gaps (no
+          scrub alerting, no compression ratio tracking) leave data at risk.
         </div>
         <div class="card card-solution">
           <strong style="display: block; margin-bottom: 8px">The Plan</strong>
-          25 tasks, each 12 minutes or less, sorted by Pareto impact. Tier 1
-          (critical: prevent data loss) delivers 51% of the value in 50 minutes.
-          Tiers 1+2 together deliver 64% in 106 minutes. All 25 tasks deliver
-          100% in ~4 hours.
+          25 tasks, each 12 minutes or less, sorted by Pareto impact. Tier 1 (critical: prevent data
+          loss) delivers 51% of the value in 50 minutes. Tiers 1+2 together deliver 64% in 106
+          minutes. All 25 tasks deliver 100% in ~4 hours.
         </div>
 
         <h2 id="pareto"><span class="num">02</span>Pareto Breakdown</h2>
@@ -446,8 +441,7 @@
             <tr>
               <td><span class="badge badge-critical">T1</span></td>
               <td>
-                1% effort, 51% value: Stop active threats (data corruption, disk
-                failure blindness)
+                1% effort, 51% value: Stop active threats (data corruption, disk failure blindness)
               </td>
               <td>6</td>
               <td>50 min</td>
@@ -456,8 +450,8 @@
             <tr>
               <td><span class="badge badge-high">T2</span></td>
               <td>
-                4% effort, 64% value: Protect against catastrophic disk failure
-                (remote backup, data snapshots)
+                4% effort, 64% value: Protect against catastrophic disk failure (remote backup, data
+                snapshots)
               </td>
               <td>5</td>
               <td>56 min</td>
@@ -465,20 +459,14 @@
             </tr>
             <tr>
               <td><span class="badge badge-medium">T3</span></td>
-              <td>
-                20% effort, 80% value: Improve monitoring visibility and storage
-                efficiency
-              </td>
+              <td>20% effort, 80% value: Improve monitoring visibility and storage efficiency</td>
               <td>5</td>
               <td>45 min</td>
               <td><strong>+16% = 80%</strong></td>
             </tr>
             <tr>
               <td><span class="badge badge-low">T4</span></td>
-              <td>
-                80% effort, 100% value: Documentation, migration planning,
-                future-proofing
-              </td>
+              <td>80% effort, 100% value: Documentation, migration planning, future-proofing</td>
               <td>9</td>
               <td>93 min</td>
               <td><strong>+20% = 100%</strong></td>
@@ -487,12 +475,11 @@
         </table>
 
         <h2 id="tier1">
-          <span class="num">&diams;</span>Tier 1: Critical &mdash; Prevent Data
-          Loss
+          <span class="num">&diams;</span>Tier 1: Critical &mdash; Prevent Data Loss
         </h2>
         <p style="color: var(--text-muted); margin-bottom: 20px">
-          91K csum errors of unknown origin, no scrub ever run, no SMART check,
-          no alerting on scrub failures.
+          91K csum errors of unknown origin, no scrub ever run, no SMART check, no alerting on scrub
+          failures.
         </p>
         <table>
           <thead>
@@ -508,15 +495,13 @@
           <tbody>
             <tr>
               <td><strong>T01</strong></td>
-              <td>
-                Run <code>smartctl -a /dev/nvme0n1</code>, document SMART health
-              </td>
+              <td>Run <code>smartctl -a /dev/nvme0n1</code>, document SMART health</td>
               <td>8m</td>
               <td><span class="badge badge-op">Op</span></td>
               <td><span class="badge badge-critical">5/5</span></td>
               <td>
-                91K csum errors could be NAND degradation. SMART data determines
-                if the Lexar NQ790 is dying or if it's purely a software issue.
+                91K csum errors could be NAND degradation. SMART data determines if the Lexar NQ790
+                is dying or if it's purely a software issue.
               </td>
             </tr>
             <tr>
@@ -526,8 +511,8 @@
               <td><span class="badge badge-op">Op</span></td>
               <td><span class="badge badge-critical">5/5</span></td>
               <td>
-                No scrub has EVER been run on /data. 91,561 csum errors found in
-                Jul 8 report. Scrub maps all bad blocks.
+                No scrub has EVER been run on /data. 91,561 csum errors found in Jul 8 report. Scrub
+                maps all bad blocks.
               </td>
             </tr>
             <tr>
@@ -545,16 +530,13 @@
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-high">4/5</span></td>
               <td>
-                Write status report: total errors, error type, affected blocks.
-                Determine if corruption is from discard=async (software) or
-                media degradation (hardware).
+                Write status report: total errors, error type, affected blocks. Determine if
+                corruption is from discard=async (software) or media degradation (hardware).
               </td>
             </tr>
             <tr>
               <td><strong>T05</strong></td>
-              <td>
-                Add scrub status to <code>btrfs-health</code> metrics collector
-              </td>
+              <td>Add scrub status to <code>btrfs-health</code> metrics collector</td>
               <td>12m</td>
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-high">4/5</span></td>
@@ -571,20 +553,19 @@
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-high">4/5</span></td>
               <td>
-                Scrub runs monthly but NO ONE IS NOTIFIED of results. Silent
-                corruption = silent data loss.
+                Scrub runs monthly but NO ONE IS NOTIFIED of results. Silent corruption = silent
+                data loss.
               </td>
             </tr>
           </tbody>
         </table>
 
         <h2 id="tier2">
-          <span class="num">&diams;</span>Tier 2: High &mdash; Protect Against
-          Disk Failure
+          <span class="num">&diams;</span>Tier 2: High &mdash; Protect Against Disk Failure
         </h2>
         <p style="color: var(--text-muted); margin-bottom: 20px">
-          If the NVMe dies, ALL data is lost. No remote backup exists. Docker
-          volumes, Immich photos, Forgejo git history &mdash; all gone.
+          If the NVMe dies, ALL data is lost. No remote backup exists. Docker volumes, Immich
+          photos, Forgejo git history &mdash; all gone.
         </p>
         <table>
           <thead>
@@ -600,16 +581,13 @@
           <tbody>
             <tr>
               <td><strong>T07</strong></td>
-              <td>
-                Research btrbk remote backup target (Hetzner StorageBox SSH)
-              </td>
+              <td>Research btrbk remote backup target (Hetzner StorageBox SSH)</td>
               <td>12m</td>
               <td><span class="badge badge-research">Research</span></td>
               <td><span class="badge badge-critical">5/5</span></td>
               <td>
-                Read btrbk docs for <code>target</code> directive + SSH.
-                Evaluate Hetzner StorageBox (already researched in
-                <code>docs/research/hetzner-storagebox-borgbackup.md</code>).
+                Read btrbk docs for <code>target</code> directive + SSH. Evaluate Hetzner StorageBox
+                (already researched in <code>docs/research/hetzner-storagebox-borgbackup.md</code>).
               </td>
             </tr>
             <tr>
@@ -622,8 +600,8 @@
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-critical">5/5</span></td>
               <td>
-                Add <code>target</code> section to existing btrbk instance.
-                Incremental send/receive is bandwidth-efficient.
+                Add <code>target</code> section to existing btrbk instance. Incremental send/receive
+                is bandwidth-efficient.
               </td>
             </tr>
             <tr>
@@ -633,8 +611,8 @@
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-high">4/5</span></td>
               <td>
-                Generate SSH keypair for btrbk. Add private key to sops. Wire
-                into btrbk systemd service.
+                Generate SSH keypair for btrbk. Add private key to sops. Wire into btrbk systemd
+                service.
               </td>
             </tr>
             <tr>
@@ -644,8 +622,8 @@
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-high">4/5</span></td>
               <td>
-                <code>/data</code> is subvolid=5 (toplevel) &mdash; NOT
-                snapshotted. Contains Docker volumes, Immich DB, AI models.
+                <code>/data</code> is subvolid=5 (toplevel) &mdash; NOT snapshotted. Contains Docker
+                volumes, Immich DB, AI models.
               </td>
             </tr>
             <tr>
@@ -655,8 +633,7 @@
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                AGENTS.md says "Pre-deploy snapshots: manual only". Automate:
-                snapshot before every
+                AGENTS.md says "Pre-deploy snapshots: manual only". Automate: snapshot before every
                 <code>nh os switch</code>.
               </td>
             </tr>
@@ -664,13 +641,11 @@
         </table>
 
         <h2 id="tier3">
-          <span class="num">&diams;</span>Tier 3: Medium &mdash; Monitoring
-          &amp; Efficiency
+          <span class="num">&diams;</span>Tier 3: Medium &mdash; Monitoring &amp; Efficiency
         </h2>
         <p style="color: var(--text-muted); margin-bottom: 20px">
-          Improve visibility into compression ratios, subvolume sizes. Prevent
-          future surprises. (bees dedup excluded &mdash; QLC NAND random IO
-          sensitivity.)
+          Improve visibility into compression ratios, subvolume sizes. Prevent future surprises.
+          (bees dedup excluded &mdash; QLC NAND random IO sensitivity.)
         </p>
         <table>
           <thead>
@@ -686,56 +661,45 @@
           <tbody>
             <tr>
               <td><strong>T12</strong></td>
-              <td>
-                Add <code>compsize</code> cron &rarr; Prometheus textfile
-                collector
-              </td>
+              <td>Add <code>compsize</code> cron &rarr; Prometheus textfile collector</td>
               <td>12m</td>
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                Track compression ratios over time. Alert if ratio drops (could
-                indicate incompressible data flood).
+                Track compression ratios over time. Alert if ratio drops (could indicate
+                incompressible data flood).
               </td>
             </tr>
             <tr>
               <td><strong>T13</strong></td>
-              <td>
-                Add <code>btrfs qgroup show</code> to btrfs-health metrics
-              </td>
+              <td>Add <code>btrfs qgroup show</code> to btrfs-health metrics</td>
               <td>10m</td>
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
-              <td>
-                Track per-subvolume disk usage. Enables capacity planning.
-              </td>
+              <td>Track per-subvolume disk usage. Enables capacity planning.</td>
             </tr>
             <tr>
               <td><strong>T14</strong></td>
               <td>
-                Run <code>compsize /</code> + <code>/nix/store</code> baseline,
-                document ratios
+                Run <code>compsize /</code> + <code>/nix/store</code> baseline, document ratios
               </td>
               <td>8m</td>
               <td><span class="badge badge-op">Op</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                One-time measurement: what compression ratio are we actually
-                getting? Establish baseline.
+                One-time measurement: what compression ratio are we actually getting? Establish
+                baseline.
               </td>
             </tr>
             <tr>
               <td><strong>T15</strong></td>
-              <td>
-                Add explicit <code>space_cache=v2</code> to root
-                <code>/</code> mount options
-              </td>
+              <td>Add explicit <code>space_cache=v2</code> to root <code>/</code> mount options</td>
               <td>5m</td>
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-low">2/5</span></td>
               <td>
-                Root mount doesn't declare it (it's mkfs default). /data already
-                has it explicit. Be consistent.
+                Root mount doesn't declare it (it's mkfs default). /data already has it explicit. Be
+                consistent.
               </td>
             </tr>
             <tr>
@@ -744,21 +708,17 @@
               <td>10m</td>
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-low">2/5</span></td>
-              <td>
-                Desktop-visible compression savings alongside existing BTRFS
-                health widget.
-              </td>
+              <td>Desktop-visible compression savings alongside existing BTRFS health widget.</td>
             </tr>
           </tbody>
         </table>
 
         <h2 id="tier4">
-          <span class="num">&diams;</span>Tier 4: Low &mdash; Documentation
-          &amp; Future Planning
+          <span class="num">&diams;</span>Tier 4: Low &mdash; Documentation &amp; Future Planning
         </h2>
         <p style="color: var(--text-muted); margin-bottom: 20px">
-          Documentation, migration procedures for subvolume separation, and
-          declarative disk layout spec for future reinstalls.
+          Documentation, migration procedures for subvolume separation, and declarative disk layout
+          spec for future reinstalls.
         </p>
         <table>
           <thead>
@@ -779,8 +739,8 @@
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                Current layout scattered across hardware-configuration.nix,
-                snapshots.nix, boot.nix. Consolidate into
+                Current layout scattered across hardware-configuration.nix, snapshots.nix, boot.nix.
+                Consolidate into
                 <code>docs/reference/btrfs-layout.md</code>.
               </td>
             </tr>
@@ -791,8 +751,8 @@
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-high">4/5</span></td>
               <td>
-                No documented recovery procedure for: metadata ENOSPC, csum
-                corruption, failed mount, broken snapshot.
+                No documented recovery procedure for: metadata ENOSPC, csum corruption, failed
+                mount, broken snapshot.
               </td>
             </tr>
             <tr>
@@ -802,23 +762,19 @@
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                Step-by-step: create <code>@nix</code>, rsync
-                <code>/nix</code> contents, update mounts, update btrbk to
-                exclude.
+                Step-by-step: create <code>@nix</code>, rsync <code>/nix</code> contents, update
+                mounts, update btrbk to exclude.
               </td>
             </tr>
             <tr>
               <td><strong>T20</strong></td>
-              <td>
-                Write <code>@home</code> + <code>@log</code> subvolume migration
-                procedure
-              </td>
+              <td>Write <code>@home</code> + <code>@log</code> subvolume migration procedure</td>
               <td>10m</td>
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                Same pattern for <code>/home</code> and <code>/var/log</code>.
-                Enables independent snapshot/rollback.
+                Same pattern for <code>/home</code> and <code>/var/log</code>. Enables independent
+                snapshot/rollback.
               </td>
             </tr>
             <tr>
@@ -828,34 +784,28 @@
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-medium">3/5</span></td>
               <td>
-                NixOS Wiki recommends Disko. Write <code>disko.nix</code> spec
-                matching current layout + desired flat subvolumes.
+                NixOS Wiki recommends Disko. Write <code>disko.nix</code> spec matching current
+                layout + desired flat subvolumes.
               </td>
             </tr>
             <tr>
               <td><strong>T22</strong></td>
-              <td>
-                Write <code>btrfs subvolume inventory</code> helper script
-              </td>
+              <td>Write <code>btrfs subvolume inventory</code> helper script</td>
               <td>10m</td>
               <td><span class="badge badge-code">Code</span></td>
               <td><span class="badge badge-low">2/5</span></td>
               <td>
-                Script: <code>btrfs subvolume list -t</code> + mount points +
-                sizes + snapshot status.
+                Script: <code>btrfs subvolume list -t</code> + mount points + sizes + snapshot
+                status.
               </td>
             </tr>
             <tr>
               <td><strong>T23</strong></td>
-              <td>
-                Run <code>btrfs filesystem df/usage</code> baseline, document
-              </td>
+              <td>Run <code>btrfs filesystem df/usage</code> baseline, document</td>
               <td>5m</td>
               <td><span class="badge badge-op">Op</span></td>
               <td><span class="badge badge-low">2/5</span></td>
-              <td>
-                Snapshot current chunk allocation state for future comparison.
-              </td>
+              <td>Snapshot current chunk allocation state for future comparison.</td>
             </tr>
             <tr>
               <td><strong>T24</strong></td>
@@ -863,10 +813,7 @@
               <td>10m</td>
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-low">2/5</span></td>
-              <td>
-                Mark completed items, add new tasks from this plan with correct
-                priorities.
-              </td>
+              <td>Mark completed items, add new tasks from this plan with correct priorities.</td>
             </tr>
             <tr>
               <td><strong>T25</strong></td>
@@ -875,8 +822,8 @@
               <td><span class="badge badge-doc">Doc</span></td>
               <td><span class="badge badge-low">2/5</span></td>
               <td>
-                Add: compsize availability, scrub monitoring gap, subvolume
-                separation recommendation.
+                Add: compsize availability, scrub monitoring gap, subvolume separation
+                recommendation.
               </td>
             </tr>
           </tbody>
@@ -891,12 +838,7 @@
             preserveAspectRatio="xMinYMin meet"
             viewBox="0 0 737 4756"
           >
-            <svg
-              class="d2-527143509 d2-svg"
-              width="737"
-              height="4756"
-              viewBox="-101 -101 737 4756"
-            >
+            <svg class="d2-527143509 d2-svg" width="737" height="4756" viewBox="-101 -101 737 4756">
               <rect
                 x="-101.000000"
                 y="-101.000000"
@@ -2007,21 +1949,13 @@
                 width="737"
                 height="4756"
               >
-                <rect
-                  x="-101"
-                  y="-101"
-                  width="737"
-                  height="4756"
-                  fill="white"
-                ></rect>
+                <rect x="-101" y="-101" width="737" height="4756" fill="white"></rect>
               </mask>
             </svg>
           </svg>
         </div>
 
-        <h2 id="all-tasks">
-          <span class="num">04</span>All Tasks Sorted by Impact / Effort
-        </h2>
+        <h2 id="all-tasks"><span class="num">04</span>All Tasks Sorted by Impact / Effort</h2>
         <table>
           <thead>
             <tr>
@@ -2263,9 +2197,7 @@
           </tbody>
         </table>
 
-        <h2 id="strengths">
-          <span class="num">05</span>Existing Strengths (Already Done)
-        </h2>
+        <h2 id="strengths"><span class="num">05</span>Existing Strengths (Already Done)</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
@@ -2282,8 +2214,8 @@
             <div class="text">
               <strong>Chunk allocation Prometheus metrics</strong
               ><span
-                >5-min metrics for device-unallocated, metadata utilization.
-                Beyond any wiki guidance.</span
+                >5-min metrics for device-unallocated, metadata utilization. Beyond any wiki
+                guidance.</span
               >
             </div>
           </div>
@@ -2292,8 +2224,7 @@
             <div class="text">
               <strong>Btrbk staggered before GC</strong
               ><span
-                >23:00 snapshots, 00:00 GC. Prevents CoW-shared extent
-                reclamation failure.</span
+                >23:00 snapshots, 00:00 GC. Prevents CoW-shared extent reclamation failure.</span
               >
             </div>
           </div>
@@ -2302,8 +2233,8 @@
             <div class="text">
               <strong>Snapshot freshness verifier</strong
               ><span
-                >Daily timer alerts if snapshots are &gt;3 days old. Catches
-                silent btrbk failures.</span
+                >Daily timer alerts if snapshots are &gt;3 days old. Catches silent btrbk
+                failures.</span
               >
             </div>
           </div>
@@ -2311,10 +2242,7 @@
             <div class="check">+</div>
             <div class="text">
               <strong>Rust target/ on ext4</strong
-              ><span
-                >Avoids 85K+ small file COW fragmentation. SystemNix
-                innovation.</span
-              >
+              ><span>Avoids 85K+ small file COW fragmentation. SystemNix innovation.</span>
             </div>
           </div>
           <div class="strength">
@@ -2332,8 +2260,7 @@
             <div class="text">
               <strong>Cache subvolume automounts</strong
               ><span
-                >.cache, .cargo, .npm, go/ as separate subvolumes with
-                idle-timeout automount.</span
+                >.cache, .cargo, .npm, go/ as separate subvolumes with idle-timeout automount.</span
               >
             </div>
           </div>
@@ -2351,39 +2278,29 @@
             <div class="check">+</div>
             <div class="text">
               <strong>auto-optimise-store + optimise.automatic</strong
-              ><span
-                >Nix store dedup via hardlinks. 25-35% savings. Both layers
-                enabled.</span
-              >
+              ><span>Nix store dedup via hardlinks. 25-35% savings. Both layers enabled.</span>
             </div>
           </div>
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
               <strong>Monthly autoScrub on both filesystems</strong
-              ><span
-                >/ and /data scrubbed monthly. Just missing result alerting
-                (T05-T06).</span
-              >
+              ><span>/ and /data scrubbed monthly. Just missing result alerting (T05-T06).</span>
             </div>
           </div>
         </div>
 
         <div class="callout callout-warning">
           <strong>Key Insight</strong>
-          SystemNix is at 8.5/10. The remaining 1.5 points come from: (1) remote
-          backup (the #1 gap, flagged since June 25), (2) subvolume separation
-          for /nix and /home, and (3) scrub error alerting. Tier 1+2 tasks (106
-          min total) address the most critical gaps.
+          SystemNix is at 8.5/10. The remaining 1.5 points come from: (1) remote backup (the #1 gap,
+          flagged since June 25), (2) subvolume separation for /nix and /home, and (3) scrub error
+          alerting. Tier 1+2 tasks (106 min total) address the most critical gaps.
         </div>
 
         <div class="footer">
-          Generated 2026-07-11 &middot; Sources: NixOS Wiki, Arch Wiki, Disko
-          docs, notashelf, NixOS Discourse, Btrfs readthedocs.io &middot;
-          Research:
-          <code
-            >docs/research/2026-07-11_nixos-btrfs-wiki-recommendations.md</code
-          >
+          Generated 2026-07-11 &middot; Sources: NixOS Wiki, Arch Wiki, Disko docs, notashelf, NixOS
+          Discourse, Btrfs readthedocs.io &middot; Research:
+          <code>docs/research/2026-07-11_nixos-btrfs-wiki-recommendations.md</code>
         </div>
       </main>
     </div>
@@ -2394,9 +2311,7 @@
         var links = nav.querySelectorAll('a[href^="#"]');
         var sections = [];
         links.forEach(function (link) {
-          var target = document.getElementById(
-            link.getAttribute("href").slice(1),
-          );
+          var target = document.getElementById(link.getAttribute("href").slice(1));
           if (target) sections.push({ link: link, el: target });
         });
         if (!("IntersectionObserver" in window)) return;

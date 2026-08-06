@@ -30,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
-          Menlo, Consolas, monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
+          monospace;
       }
       * {
         box-sizing: border-box;
@@ -495,10 +495,9 @@
           <div class="hero-badge">Comprehensive Status Report</div>
           <h1>SystemNix — Full System Audit</h1>
           <p class="hero-subtitle">
-            Cross-platform Nix configuration (NixOS evo-x2 + macOS) audited
-            2026-06-29 19:18. Covers 33 service modules, 6 desktop modules, ~45
-            flake inputs, secrets, backups, monitoring, and all known gotchas.
-            Includes new Forgejo OIDC SSO work (uncommitted).
+            Cross-platform Nix configuration (NixOS evo-x2 + macOS) audited 2026-06-29 19:18. Covers
+            33 service modules, 6 desktop modules, ~45 flake inputs, secrets, backups, monitoring,
+            and all known gotchas. Includes new Forgejo OIDC SSO work (uncommitted).
           </p>
         </div>
 
@@ -534,39 +533,36 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            SystemNix is a mature, heavily-documented NixOS configuration
-            managing a single x86_64 server (<strong>evo-x2</strong>, 128 GB
-            RAM, AMD Ryzen AI Max+ 395, 2 TB NVMe) and a minimal macOS laptop
-            (<strong>Lars-MacBook-Air</strong>, aarch64-darwin, 24 GB / 256 GB).
-            The codebase is <strong>clean</strong> — zero inline
-            <code>TODO</code>/<code>FIXME</code> markers; all deferred work
-            lives in <code>TODO_LIST.md</code> and <code>ROADMAP.md</code>.
+            SystemNix is a mature, heavily-documented NixOS configuration managing a single x86_64
+            server (<strong>evo-x2</strong>, 128 GB RAM, AMD Ryzen AI Max+ 395, 2 TB NVMe) and a
+            minimal macOS laptop (<strong>Lars-MacBook-Air</strong>, aarch64-darwin, 24 GB / 256
+            GB). The codebase is <strong>clean</strong> — zero inline <code>TODO</code>/<code
+              >FIXME</code
+            >
+            markers; all deferred work lives in <code>TODO_LIST.md</code> and
+            <code>ROADMAP.md</code>.
           </p>
           <p>
-            The system runs 27 services, a 13-plugin DankMaterialShell desktop
-            shell, a custom DNS blocker (~930 lines Go), and full observability
-            (SigNoz + Prometheus + Gatus with Discord alerting).
-            <strong>Forgejo OIDC SSO via Pocket ID</strong> was just implemented
-            this session (uncommitted — 4 files, 109 insertions).
+            The system runs 27 services, a 13-plugin DankMaterialShell desktop shell, a custom DNS
+            blocker (~930 lines Go), and full observability (SigNoz + Prometheus + Gatus with
+            Discord alerting).
+            <strong>Forgejo OIDC SSO via Pocket ID</strong> was just implemented this session
+            (uncommitted — 4 files, 109 insertions).
           </p>
           <div class="callout callout-warning">
             <strong>The three biggest risks right now</strong>
             <ol style="margin-top: 0.4rem">
               <li>
-                <strong>Root disk at ~93%</strong> — high risk of repeating the
-                2026-06-26 BTRFS metadata ENOSPC crash
+                <strong>Root disk at ~93%</strong> — high risk of repeating the 2026-06-26 BTRFS
+                metadata ENOSPC crash
               </li>
               <li>
-                <strong
-                  ><code>/data</code> subvolume has zero snapshots and zero
-                  backup</strong
-                >
+                <strong><code>/data</code> subvolume has zero snapshots and zero backup</strong>
                 — Immich media, Docker volumes, AI models all unprotected
               </li>
               <li>
-                <strong>No offsite backup exists anywhere</strong> — a disk
-                failure or theft loses everything except DiscordSync's Turso
-                cloud sync
+                <strong>No offsite backup exists anywhere</strong> — a disk failure or theft loses
+                everything except DiscordSync's Turso cloud sync
               </li>
             </ol>
           </div>
@@ -578,19 +574,15 @@
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Forgejo OIDC SSO via Pocket ID (NEW, uncommitted)</strong
-                >
+                <strong>Forgejo OIDC SSO via Pocket ID (NEW, uncommitted)</strong>
                 <span
-                  >Native OIDC auth source + auto-registration + account
-                  linking. Client provisioned declaratively by
-                  <code>pocket-id-provision</code>,
-                  <code>forgejo-oidc-setup</code> oneshot reads the secret and
-                  creates the "PocketID" auth source. Caddy vHost switched from
-                  forward-auth to direct TLS proxy (forward-auth + native OIDC
-                  causes double-auth loop). Validated:
-                  <code>nix flake check --no-build</code> passes, all settings
-                  evaluate correctly.</span
+                  >Native OIDC auth source + auto-registration + account linking. Client provisioned
+                  declaratively by <code>pocket-id-provision</code>,
+                  <code>forgejo-oidc-setup</code> oneshot reads the secret and creates the
+                  "PocketID" auth source. Caddy vHost switched from forward-auth to direct TLS proxy
+                  (forward-auth + native OIDC causes double-auth loop). Validated:
+                  <code>nix flake check --no-build</code> passes, all settings evaluate
+                  correctly.</span
                 >
               </div>
             </div>
@@ -599,25 +591,21 @@
               <div class="text">
                 <strong>DiscordSync — fully recovered and deployed</strong>
                 <span
-                  >Three-layer cascading migration bug fixed (schema drift +
-                  FTS5 absence + empty-string DDL parsing). Bot connected,
-                  dispatching events, health checks stable. Verified live
-                  2026-06-29 18:15.</span
+                  >Three-layer cascading migration bug fixed (schema drift + FTS5 absence +
+                  empty-string DDL parsing). Bot connected, dispatching events, health checks
+                  stable. Verified live 2026-06-29 18:15.</span
                 >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong
-                  >Pocket ID declarative provisioning (3 OIDC clients)</strong
-                >
+                <strong>Pocket ID declarative provisioning (3 OIDC clients)</strong>
                 <span
-                  >Passkey-only OIDC provider. Auto-provisions admin user,
-                  avatar, and 3 clients (oauth2-proxy, Immich, Forgejo). Client
-                  secrets generated via API, stored in
-                  <code>/var/lib/pocket-id/client-secrets/</code>. Idempotent —
-                  skip-if-exists prevents secret rotation.</span
+                  >Passkey-only OIDC provider. Auto-provisions admin user, avatar, and 3 clients
+                  (oauth2-proxy, Immich, Forgejo). Client secrets generated via API, stored in
+                  <code>/var/lib/pocket-id/client-secrets/</code>. Idempotent — skip-if-exists
+                  prevents secret rotation.</span
                 >
               </div>
             </div>
@@ -626,12 +614,10 @@
               <div class="text">
                 <strong>BTRFS metadata ENOSPC prevention</strong>
                 <span
-                  >After the 2026-06-26 crash:
-                  <code>btrfs-health.nix</code> gates <code>nix-gc</code> +
-                  <code>nix-build-cleanup</code> via ExecStartPre guard (aborts
-                  when device-unallocated &lt; 10%), collects Prometheus metrics
-                  every 5 min, Gatus sends Discord alerts, DMS widget shows
-                  device-unallocated %.</span
+                  >After the 2026-06-26 crash: <code>btrfs-health.nix</code> gates
+                  <code>nix-gc</code> + <code>nix-build-cleanup</code> via ExecStartPre guard
+                  (aborts when device-unallocated &lt; 10%), collects Prometheus metrics every 5
+                  min, Gatus sends Discord alerts, DMS widget shows device-unallocated %.</span
                 >
               </div>
             </div>
@@ -640,12 +626,10 @@
               <div class="text">
                 <strong>DankMaterialShell desktop shell (13 plugins)</strong>
                 <span
-                  >Quickshell-based shell replacing
-                  Waybar/Dunst/Wlogout/polkit-gnome. 13 SystemNix-native widgets
-                  in <code>pkgs/dms-plugins/</code>. Owns notifications,
-                  screensaver, status notifier DBus. Wallpaper management via
-                  DMS IPC. Hot-reload DevShell with
-                  <code>nix develop .#quickshell</code>.</span
+                  >Quickshell-based shell replacing Waybar/Dunst/Wlogout/polkit-gnome. 13
+                  SystemNix-native widgets in <code>pkgs/dms-plugins/</code>. Owns notifications,
+                  screensaver, status notifier DBus. Wallpaper management via DMS IPC. Hot-reload
+                  DevShell with <code>nix develop .#quickshell</code>.</span
                 >
               </div>
             </div>
@@ -654,10 +638,9 @@
               <div class="text">
                 <strong>DNS blocker (dnsblockd)</strong>
                 <span
-                  >~930 lines Go, 23 HaGeZi blocklists, 2.5M+ domains blocked.
-                  Block page served at block IP. Network boot race fixed
-                  (<code>dnsblockd-attach-ip.service</code>). Stats + health
-                  endpoints. Unbound recursive resolver with DoT to Quad9.</span
+                  >~930 lines Go, 23 HaGeZi blocklists, 2.5M+ domains blocked. Block page served at
+                  block IP. Network boot race fixed (<code>dnsblockd-attach-ip.service</code>).
+                  Stats + health endpoints. Unbound recursive resolver with DoT to Quad9.</span
                 >
               </div>
             </div>
@@ -666,10 +649,9 @@
               <div class="text">
                 <strong>Full observability stack</strong>
                 <span
-                  >SigNoz (APM + traces + ClickHouse) + Prometheus (6 scrape
-                  jobs) + Gatus (38 endpoints with Discord alerting). Custom
-                  textfile collectors: AMDGPU, NVMe SMART, PSI memory pressure,
-                  BTRFS chunk allocation, Niri compositor health.</span
+                  >SigNoz (APM + traces + ClickHouse) + Prometheus (6 scrape jobs) + Gatus (38
+                  endpoints with Discord alerting). Custom textfile collectors: AMDGPU, NVMe SMART,
+                  PSI memory pressure, BTRFS chunk allocation, Niri compositor health.</span
                 >
               </div>
             </div>
@@ -678,11 +660,10 @@
               <div class="text">
                 <strong>Pre-deploy validation pipeline</strong>
                 <span
-                  ><code>nix run .#deploy</code> runs
-                  <code>pre-deploy-check</code> automatically (8 checks: syntax,
-                  eval, container backend, mount safety, harden validation,
-                  system health, DMS doctor, disk space). Blocks deploy on FAIL.
-                  Has prevented multiple boot-breaking issues.</span
+                  ><code>nix run .#deploy</code> runs <code>pre-deploy-check</code> automatically (8
+                  checks: syntax, eval, container backend, mount safety, harden validation, system
+                  health, DMS doctor, disk space). Blocks deploy on FAIL. Has prevented multiple
+                  boot-breaking issues.</span
                 >
               </div>
             </div>
@@ -691,10 +672,9 @@
               <div class="text">
                 <strong>sops + age secrets (RAM-only key)</strong>
                 <span
-                  >~35 secrets across 12 encrypted files. Age key derived from
-                  SSH host key, never written to disk. All service secrets
-                  guarded with <code>lib.optionalAttrs</code> to prevent atomic
-                  blocking.</span
+                  >~35 secrets across 12 encrypted files. Age key derived from SSH host key, never
+                  written to disk. All service secrets guarded with
+                  <code>lib.optionalAttrs</code> to prevent atomic blocking.</span
                 >
               </div>
             </div>
@@ -703,12 +683,10 @@
               <div class="text">
                 <strong>Flake module auto-discovery</strong>
                 <span
-                  ><code>flake.nix</code> scans
-                  <code>modules/nixos/{services,desktop}/</code> — filenames map
-                  to <code>nixosModules.&lt;name&gt;</code>.
-                  <code>_</code>-prefixed files are helpers. Every module
-                  self-imports <code>lib/default.nix</code> for standalone
-                  <code>nix flake check</code> compatibility.</span
+                  ><code>flake.nix</code> scans <code>modules/nixos/{services,desktop}/</code> —
+                  filenames map to <code>nixosModules.&lt;name&gt;</code>. <code>_</code>-prefixed
+                  files are helpers. Every module self-imports <code>lib/default.nix</code> for
+                  standalone <code>nix flake check</code> compatibility.</span
                 >
               </div>
             </div>
@@ -718,9 +696,8 @@
                 <strong>OOM crash chain mitigation</strong>
                 <span
                   >Electron/Helium renderers no longer starve journald.
-                  <code>MemoryHigh=56G; MemoryMax=64G</code> on user slice, oomd
-                  tuned to 50%/20s, MGLRU <code>min_ttl_ms=1000</code> prevents
-                  thrash spiral.</span
+                  <code>MemoryHigh=56G; MemoryMax=64G</code> on user slice, oomd tuned to 50%/20s,
+                  MGLRU <code>min_ttl_ms=1000</code> prevents thrash spiral.</span
                 >
               </div>
             </div>
@@ -729,10 +706,9 @@
               <div class="text">
                 <strong>Boot reliability hardening</strong>
                 <span
-                  ><code>mkFilesystem</code> validator catches cross-fs
-                  contamination at eval time (prevents
-                  <code>discard=async</code> on ext4 → emergency shell). All
-                  non-root mounts require <code>nofail</code>. Docker 29.x
+                  ><code>mkFilesystem</code> validator catches cross-fs contamination at eval time
+                  (prevents <code>discard=async</code> on ext4 → emergency shell). All non-root
+                  mounts require <code>nofail</code>. Docker 29.x
                   <code>userland-proxy</code> fixed.</span
                 >
               </div>
@@ -742,11 +718,9 @@
               <div class="text">
                 <strong>Deploy start-limit recovery</strong>
                 <span
-                  ><code>deploy.sh</code> runs
-                  <code>systemctl reset-failed</code> (system + user) before
-                  activation. Closes the loop where crash-looped services block
-                  ALL deploys with <code>switch-to-configuration</code> exit
-                  code 4.</span
+                  ><code>deploy.sh</code> runs <code>systemctl reset-failed</code> (system + user)
+                  before activation. Closes the loop where crash-looped services block ALL deploys
+                  with <code>switch-to-configuration</code> exit code 4.</span
                 >
               </div>
             </div>
@@ -757,116 +731,90 @@
           <h2><span class="num">B</span>Partially Done</h2>
 
           <div class="card card-warning">
-            <h3>
-              <span class="badge badge-medium">P2</span> Hermes AI gateway
-            </h3>
+            <h3><span class="badge badge-medium">P2</span> Hermes AI gateway</h3>
             <div class="where">
-              modules/nixos/services/hermes.nix &middot; enabled in
-              configuration.nix:314
+              modules/nixos/services/hermes.nix &middot; enabled in configuration.nix:314
             </div>
             <p>
-              Service definition complete and deployed. 6 API keys wired via
-              sops. SQLite state.db with WAL + auto-recovery.
-              <strong>Missing:</strong> SSH deploy key not installed (generated
-              but needs manual copy to <code>/home/hermes/.ssh/</code>),
-              fallback model not set. <code>state.db</code> has no backup.
+              Service definition complete and deployed. 6 API keys wired via sops. SQLite state.db
+              with WAL + auto-recovery.
+              <strong>Missing:</strong> SSH deploy key not installed (generated but needs manual
+              copy to <code>/home/hermes/.ssh/</code>), fallback model not set.
+              <code>state.db</code> has no backup.
             </p>
           </div>
 
           <div class="card card-warning">
-            <h3>
-              <span class="badge badge-medium">P1</span> Monitor365 device
-              monitoring
-            </h3>
+            <h3><span class="badge badge-medium">P1</span> Monitor365 device monitoring</h3>
             <div class="where">
               modules/nixos/services/monitor365.nix (716 lines) &middot; enabled
             </div>
             <p>
-              All collectors enabled (max-mode). Server has an upstream Rust
-              panic that's root-caused but needs an upstream fix. Agent auth not
-              wired. CLI changed — server dropped <code>--config</code> (uses
-              env vars + XDG), agent keeps <code>-c/--config</code>.
+              All collectors enabled (max-mode). Server has an upstream Rust panic that's
+              root-caused but needs an upstream fix. Agent auth not wired. CLI changed — server
+              dropped <code>--config</code> (uses env vars + XDG), agent keeps
+              <code>-c/--config</code>.
             </p>
           </div>
 
           <div class="card card-warning">
             <h3>
-              <span class="badge badge-medium">P1</span> Forgejo OIDC SSO (this
-              session, uncommitted)
+              <span class="badge badge-medium">P1</span> Forgejo OIDC SSO (this session,
+              uncommitted)
             </h3>
             <div class="where">
-              modules/nixos/services/{forgejo,pocket-id,caddy}.nix &middot; 4
-              files, 109 insertions
+              modules/nixos/services/{forgejo,pocket-id,caddy}.nix &middot; 4 files, 109 insertions
             </div>
             <p>
-              Code complete and validated (<code
-                >nix flake check --no-build</code
-              >
+              Code complete and validated (<code>nix flake check --no-build</code>
               passes, all settings evaluate).
-              <strong>Not deployed or tested on the running system.</strong> The
-              provisioning chain will run automatically on deploy: Pocket ID
-              creates client → <code>forgejo-oidc-setup</code> creates auth
-              source. Unverified whether the callback URL pattern
-              (<code>/user/oauth2/PocketID/callback</code>) and the admin email
-              match work as expected.
+              <strong>Not deployed or tested on the running system.</strong> The provisioning chain
+              will run automatically on deploy: Pocket ID creates client →
+              <code>forgejo-oidc-setup</code> creates auth source. Unverified whether the callback
+              URL pattern (<code>/user/oauth2/PocketID/callback</code>) and the admin email match
+              work as expected.
             </p>
           </div>
 
           <div class="card card-warning">
-            <h3>
-              <span class="badge badge-medium">P3</span> Darwin (macOS) parity
-            </h3>
+            <h3><span class="badge badge-medium">P3</span> Darwin (macOS) parity</h3>
             <div class="where">platforms/darwin/</div>
             <p>
-              Functional but minimal. nix-darwin + Home Manager + Homebrew.
-              Touch ID sudo, Chrome policies, ActivityWatch.
-              <strong>Missing:</strong> no service modules, no DNS blocker, no
-              desktop parity (no Wayland/DMS/QuickShell), 256 GB SSD 90%+ full
-              blocks expansion, Home Manager user workaround for issue #6036.
+              Functional but minimal. nix-darwin + Home Manager + Homebrew. Touch ID sudo, Chrome
+              policies, ActivityWatch.
+              <strong>Missing:</strong> no service modules, no DNS blocker, no desktop parity (no
+              Wayland/DMS/QuickShell), 256 GB SSD 90%+ full blocks expansion, Home Manager user
+              workaround for issue #6036.
             </p>
           </div>
 
           <div class="card card-warning">
-            <h3>
-              <span class="badge badge-medium">P1</span> DiscordSync GCS
-              attachment backup
-            </h3>
+            <h3><span class="badge badge-medium">P1</span> DiscordSync GCS attachment backup</h3>
             <div class="where">modules/nixos/services/discordsync.nix</div>
             <p>
-              Wired and enabled (bucket <code>discordsync-backup</code>).
-              Service account JSON in sops.
-              <strong>Upload activity unverified</strong> — bucket may be empty.
-              213 transient <code>database is locked</code> errors during
-              initial backfill (expected to settle). FTS5 search degraded to
-              LIKE-only on turso backend.
+              Wired and enabled (bucket <code>discordsync-backup</code>). Service account JSON in
+              sops. <strong>Upload activity unverified</strong> — bucket may be empty. 213 transient
+              <code>database is locked</code> errors during initial backfill (expected to settle).
+              FTS5 search degraded to LIKE-only on turso backend.
             </p>
           </div>
 
           <div class="card card-warning">
-            <h3>
-              <span class="badge badge-medium">P3</span> DiscordSync feature
-              backlog
-            </h3>
+            <h3><span class="badge badge-medium">P3</span> DiscordSync feature backlog</h3>
             <div class="where">
-              Not started: SSE event filtering, Last-Event-ID replay, HTTP
-              request metrics, E2E tests
+              Not started: SSE event filtering, Last-Event-ID replay, HTTP request metrics, E2E
+              tests
             </div>
-            <p>
-              Core sync works. Advanced event-streaming features and metrics not
-              implemented.
-            </p>
+            <p>Core sync works. Advanced event-streaming features and metrics not implemented.</p>
           </div>
 
           <div class="card card-warning">
-            <h3>
-              <span class="badge badge-medium">P5</span> Upstream nixpkgs/HM PRs
-            </h3>
+            <h3><span class="badge badge-medium">P5</span> Upstream nixpkgs/HM PRs</h3>
             <div class="where">7 nixpkgs PRs + 3 HM PRs pending</div>
             <p>
-              aw-watcher-utilization poetry-core migration, valkey/aiocache
-              tests, taskwarrior3 flags, Kitty GC, KeePassXC manifests,
-              llama-cpp ROCm flag, custom package submissions. HM: ActivityWatch
-              deps, theme option, Darwin user #6036. 3 LarsArtmann Go repos with
+              aw-watcher-utilization poetry-core migration, valkey/aiocache tests, taskwarrior3
+              flags, Kitty GC, KeePassXC manifests, llama-cpp ROCm flag, custom package submissions.
+              HM: ActivityWatch deps, theme option, Darwin user #6036. 3 LarsArtmann Go repos with
               stale <code>go.sum</code>/<code>vendorHash</code>.
             </p>
           </div>
@@ -878,36 +826,34 @@
           <div class="card">
             <h3>Cloud / offsite backup</h3>
             <p>
-              Research done (<code>docs/research/</code> has cloud backup
-              pricing + Hetzner StorageBox borgbackup notes).
-              <strong>Zero implementation.</strong> No restic, no borg, no
-              remote replication. This is the #1 data-loss risk.
+              Research done (<code>docs/research/</code> has cloud backup pricing + Hetzner
+              StorageBox borgbackup notes). <strong>Zero implementation.</strong> No restic, no
+              borg, no remote replication. This is the #1 data-loss risk.
             </p>
           </div>
 
           <div class="card">
             <h3>BTRFS <code>/data</code> subvolume migration</h3>
             <p>
-              <code>/data</code> is BTRFS toplevel (subvolid=5) — not
-              snapshotted. Contains Docker volumes, Immich media library, AI
-              model cache, containerd metadata. 7-step migration plan exists in
-              ROADMAP.md but not executed.
+              <code>/data</code> is BTRFS toplevel (subvolid=5) — not snapshotted. Contains Docker
+              volumes, Immich media library, AI model cache, containerd metadata. 7-step migration
+              plan exists in ROADMAP.md but not executed.
             </p>
           </div>
 
           <div class="card">
             <h3>Pocket ID database backup</h3>
             <p>
-              Losing <code>/var/lib/pocket-id/pocket-id.db</code> breaks ALL SSO
-              (Forgejo, Immich, oauth2-proxy). No backup mechanism exists.
+              Losing <code>/var/lib/pocket-id/pocket-id.db</code> breaks ALL SSO (Forgejo, Immich,
+              oauth2-proxy). No backup mechanism exists.
             </p>
           </div>
 
           <div class="card">
             <h3>SigNoz ClickHouse data backup</h3>
             <p>
-              All traces/metrics/logs history. No backup. Low priority
-              (ephemeral data) but worth noting.
+              All traces/metrics/logs history. No backup. Low priority (ephemeral data) but worth
+              noting.
             </p>
           </div>
 
@@ -915,41 +861,39 @@
             <h3>Pi 3 (rpi3-dns) provisioning</h3>
             <p>
               DNS failover HA secondary node. Age key commented out in
-              <code>.sops.yaml</code>. Cannot decrypt VRRP secret. Hardware may
-              not be active.
+              <code>.sops.yaml</code>. Cannot decrypt VRRP secret. Hardware may not be active.
             </p>
           </div>
 
           <div class="card">
             <h3>AppArmor + auditd</h3>
             <p>
-              AppArmor disabled (<code>mkDefault false</code>). Auditd blocked
-              by NixOS 26.05 bug #483085. Both in ROADMAP.md.
+              AppArmor disabled (<code>mkDefault false</code>). Auditd blocked by NixOS 26.05 bug
+              #483085. Both in ROADMAP.md.
             </p>
           </div>
 
           <div class="card">
             <h3>Firewall deny-by-default</h3>
             <p>
-              Currently only ports 80/443 exposed, but LAN bypasses all auth. No
-              deny-by-default firewall hardening.
+              Currently only ports 80/443 exposed, but LAN bypasses all auth. No deny-by-default
+              firewall hardening.
             </p>
           </div>
 
           <div class="card">
             <h3>Voice agents (LiveKit + Whisper ASR)</h3>
             <p>
-              <code>voice-agents.enable = false</code>. Needs GPU resource
-              planning. Caddy vHosts + Gatus endpoints conditional on enable.
+              <code>voice-agents.enable = false</code>. Needs GPU resource planning. Caddy vHosts +
+              Gatus endpoints conditional on enable.
             </p>
           </div>
 
           <div class="card">
             <h3>Module splitting</h3>
             <p>
-              Three modules exceed 500 lines: monitor365 (716), signoz (705),
-              forgejo (now ~685 with OIDC). ROADMAP.md flags these for
-              extraction.
+              Three modules exceed 500 lines: monitor365 (716), signoz (705), forgejo (now ~685 with
+              OIDC). ROADMAP.md flags these for extraction.
             </p>
           </div>
         </section>
@@ -959,27 +903,23 @@
 
           <div class="card card-problem">
             <h3>
-              <span class="badge badge-critical">Critical</span> Root disk at
-              ~93% — ENOSPC imminent
+              <span class="badge badge-critical">Critical</span> Root disk at ~93% — ENOSPC imminent
             </h3>
             <div class="where">evo-x2 root BTRFS</div>
             <p>
-              This is the <strong>exact precondition</strong> that caused the
-              2026-06-26 BTRFS metadata ENOSPC crash (I/O deadlock → WDT hard
-              reset). <code>df</code> reports Data-pool free space, NOT
-              chunk-level allocation — the monitoring stack was blind then and
-              the <code>btrfs-health.nix</code> guard is the mitigation. But at
-              93%, the guard will start
-              <strong>aborting <code>nix-gc</code></strong
-              >, meaning garbage can't be collected, meaning disk fills faster.
-              This is a negative feedback loop.
+              This is the <strong>exact precondition</strong> that caused the 2026-06-26 BTRFS
+              metadata ENOSPC crash (I/O deadlock → WDT hard reset). <code>df</code> reports
+              Data-pool free space, NOT chunk-level allocation — the monitoring stack was blind then
+              and the <code>btrfs-health.nix</code> guard is the mitigation. But at 93%, the guard
+              will start <strong>aborting <code>nix-gc</code></strong
+              >, meaning garbage can't be collected, meaning disk fills faster. This is a negative
+              feedback loop.
             </p>
             <div class="callout callout-warning" style="margin-top: 0.8rem">
               <strong>Immediate action needed</strong>
               Manual cleanup:
-              <code>sudo rm -rf /nix/var/nix/builds/nix-*</code> (stale OOM
-              sandboxes), expire old BTRFS snapshots, run
-              <code>nix-collect-garbage --delete-older-than 7d</code>. Consider
+              <code>sudo rm -rf /nix/var/nix/builds/nix-*</code> (stale OOM sandboxes), expire old
+              BTRFS snapshots, run <code>nix-collect-garbage --delete-older-than 7d</code>. Consider
               growing the partition.
             </div>
           </div>
@@ -991,92 +931,74 @@
             </h3>
             <div class="where">/data (BTRFS toplevel, subvolid=5)</div>
             <p>
-              Immich media library (irreplaceable photos/videos), Docker volumes
-              (service state), AI model cache (100+ GB), containerd metadata.
-              <strong>None of it is snapshotted or backed up.</strong> A disk
-              failure = total, irreversible loss of all photos and service
-              state. This is the single most dangerous gap in the entire system.
+              Immich media library (irreplaceable photos/videos), Docker volumes (service state), AI
+              model cache (100+ GB), containerd metadata.
+              <strong>None of it is snapshotted or backed up.</strong> A disk failure = total,
+              irreversible loss of all photos and service state. This is the single most dangerous
+              gap in the entire system.
             </p>
           </div>
 
           <div class="card card-problem">
-            <h3>
-              <span class="badge badge-critical">Critical</span> Zero offsite
-              backup anywhere
-            </h3>
+            <h3><span class="badge badge-critical">Critical</span> Zero offsite backup anywhere</h3>
             <div class="where">Entire system</div>
             <p>
-              Every backup that exists (btrbk root snapshots, Forgejo dump,
-              Immich/Twenty/Manifest pg_dump) is
-              <strong>local to the same disk</strong>. Disk failure, theft,
-              fire, or physical damage = total loss. DiscordSync's Turso cloud
-              sync is the <em>only</em> offsite replication, and it's just
-              message history.
+              Every backup that exists (btrbk root snapshots, Forgejo dump, Immich/Twenty/Manifest
+              pg_dump) is
+              <strong>local to the same disk</strong>. Disk failure, theft, fire, or physical damage
+              = total loss. DiscordSync's Turso cloud sync is the <em>only</em> offsite replication,
+              and it's just message history.
             </p>
           </div>
 
           <div class="card card-problem">
             <h3>
-              <span class="badge badge-high">High</span> Docker containerd bbolt
-              corruption (no auto-fix)
+              <span class="badge badge-high">High</span> Docker containerd bbolt corruption (no
+              auto-fix)
             </h3>
             <div class="where">
               /data/docker/containerd/daemon/io.containerd.metadata.v1.bolt/meta.db
             </div>
             <p>
-              OOM/hard reset corrupts <code>meta.db</code> → Docker unusable.
-              Recovery is manual (stop docker →
-              <code>mv meta.db meta.db.bak</code> → remove dirs → restart). No
-              automated detection or self-healing. Given the disk pressure + OOM
-              history, this WILL recur.
+              OOM/hard reset corrupts <code>meta.db</code> → Docker unusable. Recovery is manual
+              (stop docker → <code>mv meta.db meta.db.bak</code> → remove dirs → restart). No
+              automated detection or self-healing. Given the disk pressure + OOM history, this WILL
+              recur.
+            </p>
+          </div>
+
+          <div class="card card-problem">
+            <h3><span class="badge badge-high">High</span> Dual-WAN route eviction (disabled)</h3>
+            <div class="where">modules/nixos/services/dual-wan.nix &middot; enable = false</div>
+            <p>
+              <code>route-health-monitor</code> aggressively evicts the <code>eno1</code> default
+              route on transient ISP probe failures, causing network drops. Disabled entirely. No
+              working multi-WAN failover.
             </p>
           </div>
 
           <div class="card card-problem">
             <h3>
-              <span class="badge badge-high">High</span> Dual-WAN route eviction
+              <span class="badge badge-high">High</span> Mullvad VPN resolv.conf corruption
               (disabled)
             </h3>
-            <div class="where">
-              modules/nixos/services/dual-wan.nix &middot; enable = false
-            </div>
+            <div class="where">configuration.nix:263 &middot; mullvad-vpn.enable = false</div>
             <p>
-              <code>route-health-monitor</code> aggressively evicts the
-              <code>eno1</code> default route on transient ISP probe failures,
-              causing network drops. Disabled entirely. No working multi-WAN
-              failover.
+              <code>talpid_dns</code> overwrites <code>/etc/resolv.conf</code> every ~90s, breaking
+              the Unbound DNS stack. Disabled. No working VPN.
             </p>
           </div>
 
           <div class="card card-problem">
             <h3>
-              <span class="badge badge-high">High</span> Mullvad VPN resolv.conf
-              corruption (disabled)
+              <span class="badge badge-medium">Medium</span> Plaintext SSH private key on disk
             </h3>
-            <div class="where">
-              configuration.nix:263 &middot; mullvad-vpn.enable = false
-            </div>
+            <div class="where">scripts/hermes-setup/id_ed25519 (gitignored, not tracked)</div>
             <p>
-              <code>talpid_dns</code> overwrites
-              <code>/etc/resolv.conf</code> every ~90s, breaking the Unbound DNS
-              stack. Disabled. No working VPN.
-            </p>
-          </div>
-
-          <div class="card card-problem">
-            <h3>
-              <span class="badge badge-medium">Medium</span> Plaintext SSH
-              private key on disk
-            </h3>
-            <div class="where">
-              scripts/hermes-setup/id_ed25519 (gitignored, not tracked)
-            </div>
-            <p>
-              An SSH deploy key for Hermes sits as a plaintext file in the repo
-              directory. Gitignored so it's not committed, but it shouldn't be
-              there at all — it belongs in
-              <code>/home/hermes/.ssh/</code> (and should be installed via a
-              setup step, not left in the repo tree).
+              An SSH deploy key for Hermes sits as a plaintext file in the repo directory.
+              Gitignored so it's not committed, but it shouldn't be there at all — it belongs in
+              <code>/home/hermes/.ssh/</code> (and should be installed via a setup step, not left in
+              the repo tree).
             </p>
           </div>
         </section>
@@ -1097,8 +1019,7 @@
                 <td><strong>Backup strategy</strong></td>
                 <td>All backups local, <code>/data</code> unprotected</td>
                 <td>
-                  Add restic/borg to Hetzner StorageBox (research done).
-                  Snapshot
+                  Add restic/borg to Hetzner StorageBox (research done). Snapshot
                   <code>/data</code> via BTRFS subvolume migration.
                 </td>
               </tr>
@@ -1106,85 +1027,74 @@
                 <td><strong>Disk pressure</strong></td>
                 <td>Root at 93%, negative feedback loop looming</td>
                 <td>
-                  Aggressive GC of stale build sandboxes + old generations.
-                  Consider partition growth.
+                  Aggressive GC of stale build sandboxes + old generations. Consider partition
+                  growth.
                 </td>
               </tr>
               <tr>
                 <td><strong>Module size</strong></td>
                 <td>3 modules &gt;500 lines (monitor365, signoz, forgejo)</td>
                 <td>
-                  Split into sub-modules by concern. Extract dnsblockd Go code
-                  to standalone repo.
+                  Split into sub-modules by concern. Extract dnsblockd Go code to standalone repo.
                 </td>
               </tr>
               <tr>
                 <td><strong>Auth surface</strong></td>
+                <td>LAN bypasses all auth (forward-auth only for external IPs)</td>
                 <td>
-                  LAN bypasses all auth (forward-auth only for external IPs)
-                </td>
-                <td>
-                  Consider enforcing auth on LAN for sensitive services
-                  (Forgejo, Immich). Native OIDC on Forgejo is a start.
+                  Consider enforcing auth on LAN for sensitive services (Forgejo, Immich). Native
+                  OIDC on Forgejo is a start.
                 </td>
               </tr>
               <tr>
                 <td><strong>Secrets hygiene</strong></td>
                 <td>Hermes deploy key in plaintext, rpi3 age key missing</td>
                 <td>
-                  Move SSH key to proper location. Uncomment + provision rpi3
-                  age key for DNS failover.
+                  Move SSH key to proper location. Uncomment + provision rpi3 age key for DNS
+                  failover.
                 </td>
               </tr>
               <tr>
                 <td><strong>Deploy confidence</strong></td>
                 <td>Many commits undeployed at various points</td>
                 <td>
-                  The pre-deploy-check is excellent, but the "zero deploys"
-                  pattern (fixes committed but not live) suggests deploy
-                  friction. Investigate why deploys are being deferred.
+                  The pre-deploy-check is excellent, but the "zero deploys" pattern (fixes committed
+                  but not live) suggests deploy friction. Investigate why deploys are being
+                  deferred.
                 </td>
               </tr>
               <tr>
                 <td><strong>DNS resilience</strong></td>
+                <td>Single upstream (Quad9), no failover (dual-WAN + rpi3 both disabled)</td>
                 <td>
-                  Single upstream (Quad9), no failover (dual-WAN + rpi3 both
-                  disabled)
-                </td>
-                <td>
-                  Add a secondary DNS upstream. Re-enable DNS failover once rpi3
-                  is provisioned.
+                  Add a secondary DNS upstream. Re-enable DNS failover once rpi3 is provisioned.
                 </td>
               </tr>
               <tr>
                 <td><strong>Observability gaps</strong></td>
+                <td>No dedicated Gatus endpoint for Hermes, Forgejo OIDC health unmonitored</td>
                 <td>
-                  No dedicated Gatus endpoint for Hermes, Forgejo OIDC health
-                  unmonitored
-                </td>
-                <td>
-                  Add Forgejo auth-source health check. Add Hermes health
-                  endpoint if the API exposes one.
+                  Add Forgejo auth-source health check. Add Hermes health endpoint if the API
+                  exposes one.
                 </td>
               </tr>
               <tr>
                 <td><strong>Documentation churn</strong></td>
                 <td>
-                  25 status reports in docs/status/ + 197 archived. Some
-                  reference stale states.
+                  25 status reports in docs/status/ + 197 archived. Some reference stale states.
                 </td>
                 <td>
-                  Status reports are point-in-time — good. But ensure AGENTS.md
-                  gotchas are pruned when upstream fixes land (DiscordSync
-                  migration gotcha is marked fixed — verify others).
+                  Status reports are point-in-time — good. But ensure AGENTS.md gotchas are pruned
+                  when upstream fixes land (DiscordSync migration gotcha is marked fixed — verify
+                  others).
                 </td>
               </tr>
               <tr>
                 <td><strong>Type safety</strong></td>
                 <td>Untyped NixOS options in some modules</td>
                 <td>
-                  ROADMAP.md flags "typed NixOS options" + "dnsblockd category
-                  enum". Make impossible states unrepresentable.
+                  ROADMAP.md flags "typed NixOS options" + "dnsblockd category enum". Make
+                  impossible states unrepresentable.
                 </td>
               </tr>
             </tbody>
@@ -1197,36 +1107,42 @@
           <ol class="num-list">
             <li>
               <div>
-                <strong>Free disk space on evo-x2 root (93% → &lt;80%)</strong
-                ><br /><span class="badge badge-critical">Critical</span>
-                Manual GC: stale build sandboxes, old generations, expired
-                snapshots. Avoids ENOSPC crash recurrence.
+                <strong>Free disk space on evo-x2 root (93% → &lt;80%)</strong><br /><span
+                  class="badge badge-critical"
+                  >Critical</span
+                >
+                Manual GC: stale build sandboxes, old generations, expired snapshots. Avoids ENOSPC
+                crash recurrence.
               </div>
             </li>
             <li>
               <div>
-                <strong
-                  >Implement offsite backup (restic → Hetzner
-                  StorageBox)</strong
-                ><br /><span class="badge badge-critical">Critical</span>
-                Research done. This is the #1 data-loss mitigation. Start with
-                Pocket ID DB + Forgejo state + Immich media.
+                <strong>Implement offsite backup (restic → Hetzner StorageBox)</strong><br /><span
+                  class="badge badge-critical"
+                  >Critical</span
+                >
+                Research done. This is the #1 data-loss mitigation. Start with Pocket ID DB +
+                Forgejo state + Immich media.
               </div>
             </li>
             <li>
               <div>
-                <strong>Migrate <code>/data</code> to a BTRFS subvolume</strong
-                ><br /><span class="badge badge-critical">Critical</span>
-                Enables snapshotting of Immich media, Docker volumes, AI models.
-                7-step plan in ROADMAP.md.
+                <strong>Migrate <code>/data</code> to a BTRFS subvolume</strong><br /><span
+                  class="badge badge-critical"
+                  >Critical</span
+                >
+                Enables snapshotting of Immich media, Docker volumes, AI models. 7-step plan in
+                ROADMAP.md.
               </div>
             </li>
             <li>
               <div>
-                <strong>Deploy Forgejo OIDC SSO (this session's work)</strong
-                ><br /><span class="badge badge-high">High</span>
-                4 files, 109 insertions, validated. Deploy + verify the
-                "PocketID" login button + callback URL works end-to-end.
+                <strong>Deploy Forgejo OIDC SSO (this session's work)</strong><br /><span
+                  class="badge badge-high"
+                  >High</span
+                >
+                4 files, 109 insertions, validated. Deploy + verify the "PocketID" login button +
+                callback URL works end-to-end.
               </div>
             </li>
             <li>
@@ -1235,42 +1151,41 @@
                   class="badge badge-critical"
                   >Critical</span
                 >
-                Losing <code>pocket-id.db</code> breaks all SSO. Add to the
-                backup rotation (pg_dump or file copy).
+                Losing <code>pocket-id.db</code> breaks all SSO. Add to the backup rotation (pg_dump
+                or file copy).
               </div>
             </li>
             <li>
               <div>
-                <strong
-                  >Install Hermes SSH deploy key + set fallback model</strong
-                ><br /><span class="badge badge-medium">Medium</span> Move
-                <code>scripts/hermes-setup/id_ed25519</code> to
-                <code>/home/hermes/.ssh/</code>. Set fallback LLM model. TODO
-                #16, #17.
+                <strong>Install Hermes SSH deploy key + set fallback model</strong><br /><span
+                  class="badge badge-medium"
+                  >Medium</span
+                >
+                Move <code>scripts/hermes-setup/id_ed25519</code> to
+                <code>/home/hermes/.ssh/</code>. Set fallback LLM model. TODO #16, #17.
               </div>
             </li>
             <li>
               <div>
-                <strong>Add Docker containerd corruption auto-recovery</strong
-                ><br /><span class="badge badge-high">High</span> ExecStartPre
-                that detects corrupt <code>meta.db</code> and self-heals (like
-                the SigNoz migration-lock pattern).
+                <strong>Add Docker containerd corruption auto-recovery</strong><br /><span
+                  class="badge badge-high"
+                  >High</span
+                >
+                ExecStartPre that detects corrupt <code>meta.db</code> and self-heals (like the
+                SigNoz migration-lock pattern).
               </div>
             </li>
             <li>
               <div>
-                <strong>Split monitor365.nix (716 lines)</strong><br /><span
-                  class="badge badge-low"
+                <strong>Split monitor365.nix (716 lines)</strong><br /><span class="badge badge-low"
                   >Low</span
                 >
-                Largest module. Split into server.nix + agent.nix +
-                collectors.nix.
+                Largest module. Split into server.nix + agent.nix + collectors.nix.
               </div>
             </li>
             <li>
               <div>
-                <strong>Split signoz.nix (705 lines)</strong><br /><span
-                  class="badge badge-low"
+                <strong>Split signoz.nix (705 lines)</strong><br /><span class="badge badge-low"
                   >Low</span
                 >
                 Split by component (clickhouse, query, otel, alerts).
@@ -1278,38 +1193,37 @@
             </li>
             <li>
               <div>
-                <strong>Verify DiscordSync GCS uploads are working</strong
-                ><br /><span class="badge badge-medium">Medium</span> Check
-                bucket <code>discordsync-backup</code> for actual attachment
-                objects.
-              </div>
-            </li>
-            <li>
-              <div>
-                <strong>Provision rpi3-dns (uncomment age key)</strong
-                ><br /><span class="badge badge-medium">Medium</span> Enables
-                DNS failover HA. Uncomment age recipient in
-                <code>.sops.yaml</code>.
-              </div>
-            </li>
-            <li>
-              <div>
-                <strong>Add secondary DNS upstream</strong><br /><span
+                <strong>Verify DiscordSync GCS uploads are working</strong><br /><span
                   class="badge badge-medium"
                   >Medium</span
                 >
-                Quad9-only is fragile. Add Cloudflare (1.1.1.1) or Google
-                (8.8.8.8) as fallback.
+                Check bucket <code>discordsync-backup</code> for actual attachment objects.
               </div>
             </li>
             <li>
               <div>
-                <strong>Fix Dual-WAN route eviction</strong><br /><span
+                <strong>Provision rpi3-dns (uncomment age key)</strong><br /><span
                   class="badge badge-medium"
                   >Medium</span
                 >
-                Tune route-health-monitor thresholds or add hysteresis to
-                prevent aggressive route eviction.
+                Enables DNS failover HA. Uncomment age recipient in <code>.sops.yaml</code>.
+              </div>
+            </li>
+            <li>
+              <div>
+                <strong>Add secondary DNS upstream</strong><br /><span class="badge badge-medium"
+                  >Medium</span
+                >
+                Quad9-only is fragile. Add Cloudflare (1.1.1.1) or Google (8.8.8.8) as fallback.
+              </div>
+            </li>
+            <li>
+              <div>
+                <strong>Fix Dual-WAN route eviction</strong><br /><span class="badge badge-medium"
+                  >Medium</span
+                >
+                Tune route-health-monitor thresholds or add hysteresis to prevent aggressive route
+                eviction.
               </div>
             </li>
             <li>
@@ -1323,12 +1237,10 @@
             </li>
             <li>
               <div>
-                <strong>Verify Pocket ID email/SMTP</strong><br /><span
-                  class="badge badge-low"
+                <strong>Verify Pocket ID email/SMTP</strong><br /><span class="badge badge-low"
                   >Low</span
                 >
-                Email sending unverified (TODO #15). Test passkey enrollment
-                email flow.
+                Email sending unverified (TODO #15). Test passkey enrollment email flow.
               </div>
             </li>
             <li>
@@ -1342,9 +1254,10 @@
             </li>
             <li>
               <div>
-                <strong
-                  >Add typed NixOS options + dnsblockd category enum</strong
-                ><br /><span class="badge badge-low">Low</span>
+                <strong>Add typed NixOS options + dnsblockd category enum</strong><br /><span
+                  class="badge badge-low"
+                  >Low</span
+                >
                 Make impossible states unrepresentable.
               </div>
             </li>
@@ -1354,67 +1267,64 @@
                   class="badge badge-high"
                   >High</span
                 >
-                TODO P0: verify boot time ~35s (from 6m17s). Pending since
-                session 152.
+                TODO P0: verify boot time ~35s (from 6m17s). Pending since session 152.
               </div>
             </li>
             <li>
               <div>
-                <strong>Investigate 8 GB swap usage on 128 GB RAM</strong
-                ><br /><span class="badge badge-low">Low</span>
+                <strong>Investigate 8 GB swap usage on 128 GB RAM</strong><br /><span
+                  class="badge badge-low"
+                  >Low</span
+                >
                 TODO P3. Unexpected swap usage.
               </div>
             </li>
             <li>
               <div>
-                <strong>Add Forgejo OIDC health check to Gatus</strong
-                ><br /><span class="badge badge-medium">Medium</span>
-                Monitor that the "PocketID" auth source exists and OIDC
-                discovery endpoint is reachable.
+                <strong>Add Forgejo OIDC health check to Gatus</strong><br /><span
+                  class="badge badge-medium"
+                  >Medium</span
+                >
+                Monitor that the "PocketID" auth source exists and OIDC discovery endpoint is
+                reachable.
               </div>
             </li>
             <li>
               <div>
-                <strong>Stale nixpkgs/HM PRs</strong><br /><span
-                  class="badge badge-low"
-                  >Low</span
-                >
+                <strong>Stale nixpkgs/HM PRs</strong><br /><span class="badge badge-low">Low</span>
                 10 PRs pending. Ping reviewers, address feedback.
               </div>
             </li>
             <li>
               <div>
-                <strong
-                  >Fix LarsArtmann Go repos with stale go.sum/vendorHash</strong
-                ><br /><span class="badge badge-medium">Medium</span>
+                <strong>Fix LarsArtmann Go repos with stale go.sum/vendorHash</strong><br /><span
+                  class="badge badge-medium"
+                  >Medium</span
+                >
                 library-policy, mr-sync. Update + publish tags.
               </div>
             </li>
             <li>
               <div>
-                <strong>AppArmor enablement</strong><br /><span
-                  class="badge badge-low"
-                  >Low</span
-                >
+                <strong>AppArmor enablement</strong><br /><span class="badge badge-low">Low</span>
                 Currently <code>mkDefault false</code>. ROADMAP.md item.
               </div>
             </li>
             <li>
               <div>
-                <strong>Darwin HM parity (blocked by 256 GB SSD)</strong
-                ><br /><span class="badge badge-low">Low</span>
-                Terminal/editor/theme parity achieved. Full parity blocked by
-                disk space.
+                <strong>Darwin HM parity (blocked by 256 GB SSD)</strong><br /><span
+                  class="badge badge-low"
+                  >Low</span
+                >
+                Terminal/editor/theme parity achieved. Full parity blocked by disk space.
               </div>
             </li>
             <li>
               <div>
-                <strong>DiscordSync advanced features</strong><br /><span
-                  class="badge badge-low"
+                <strong>DiscordSync advanced features</strong><br /><span class="badge badge-low"
                   >Low</span
                 >
-                SSE event filtering, Last-Event-ID replay, HTTP request metrics,
-                E2E tests.
+                SSE event filtering, Last-Event-ID replay, HTTP request metrics, E2E tests.
               </div>
             </li>
           </ol>
@@ -1425,41 +1335,34 @@
             <div class="eyebrow">G — The One Question I Cannot Answer</div>
             <h3>Why are deploys being deferred when fixes are committed?</h3>
             <p>
-              Multiple status reports (2026-06-28, 2026-06-29) describe a
-              recurring pattern:
-              <strong>"73 commits undeployed"</strong>,
-              <strong>"zero deploys"</strong>, fixes committed to master but not
-              applied to the running evo-x2 system. The pre-deploy-check
-              pipeline is excellent and the deploy script (<code
-                >nix run .#deploy</code
-              >) is well-engineered. Yet deploys accumulate a large backlog
-              before being applied.
+              Multiple status reports (2026-06-28, 2026-06-29) describe a recurring pattern:
+              <strong>"73 commits undeployed"</strong>, <strong>"zero deploys"</strong>, fixes
+              committed to master but not applied to the running evo-x2 system. The pre-deploy-check
+              pipeline is excellent and the deploy script (<code>nix run .#deploy</code>) is
+              well-engineered. Yet deploys accumulate a large backlog before being applied.
             </p>
             <p>
               I cannot determine from the code alone
-              <strong>what is creating the friction</strong>. Is it build time?
-              (ROCm/CUDA derivations can take 30+ min.) Is it fear of the
-              <code>switch-to-configuration</code> start-limit issue? Is it the
-              disk pressure making builds risky? Is it a workflow preference
-              (batch deploys)? Or is evo-x2 sometimes unreachable
-              (network/sleep)?
+              <strong>what is creating the friction</strong>. Is it build time? (ROCm/CUDA
+              derivations can take 30+ min.) Is it fear of the
+              <code>switch-to-configuration</code> start-limit issue? Is it the disk pressure making
+              builds risky? Is it a workflow preference (batch deploys)? Or is evo-x2 sometimes
+              unreachable (network/sleep)?
             </p>
             <p>
               <strong
-                >Understanding the root cause would unlock all the undeployed
-                fixes — including this session's Forgejo OIDC SSO work.</strong
+                >Understanding the root cause would unlock all the undeployed fixes — including this
+                session's Forgejo OIDC SSO work.</strong
               >
-              If I knew the constraint, I could either remove it (e.g., split
-              heavy derivations, add a remote builder) or design a
-              lighter-weight deploy path for config-only changes.
+              If I knew the constraint, I could either remove it (e.g., split heavy derivations, add
+              a remote builder) or design a lighter-weight deploy path for config-only changes.
             </p>
           </div>
         </section>
 
         <footer class="footer">
-          Generated 2026-06-29 19:18 &middot; Reviewed against master @ d561f612
-          &middot; Uncommitted: Forgejo OIDC SSO (4 files, +109) &middot;
-          Bauhaus Dark
+          Generated 2026-06-29 19:18 &middot; Reviewed against master @ d561f612 &middot;
+          Uncommitted: Forgejo OIDC SSO (4 files, +109) &middot; Bauhaus Dark
         </footer>
       </main>
     </div>
@@ -1478,9 +1381,7 @@
             entries.forEach((e) => {
               if (e.isIntersecting) {
                 const id = "#" + e.target.id;
-                links.forEach((l) =>
-                  l.classList.toggle("active", l.getAttribute("href") === id),
-                );
+                links.forEach((l) => l.classList.toggle("active", l.getAttribute("href") === id));
               }
             });
           },
