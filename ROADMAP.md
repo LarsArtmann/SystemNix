@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-08-03
+**Updated:** 2026-08-06
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
@@ -10,13 +10,13 @@ For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current 
 
 ## Theme 1: Reliability & Resilience
 
-The system has been hardened through multiple OOM/crash cycles and a data corruption event (Aug 3). Remaining work:
+The system has been hardened through multiple crash cycles (QLC SLC cache exhaustion root-caused Aug 5: BTRFS CoW churn exhausts SLC write cache within 22-47h → direct QLC writes ~253ms → exponential I/O queue → kernel freeze → WDT reset). Mitigations deployed: daily fstrim (was weekly), `commit=300` on all BTRFS mounts, idle I/O priority. Remaining work:
 
 - **Off-site backup** — no DR backup exists. The Aug 3 corruption event (13 files lost) proves this is not theoretical. Evaluate BorgBackup to Hetzner StorageBox (see `docs/research/hetzner-storagebox-borgbackup.md`). **This is the #1 data loss risk — flagged since 2026-06-25.**
 - **Reduce unsafe shutdowns** — 58 of 126 power cycles (46%) were unsafe (WDT resets, OOM cascades, power events). This is the ROOT CAUSE of the data corruption. Options: UPS, WDT timeout tuning, oomd threshold adjustment, hung_task_timeout review
 - **BTRFS `/data` subvolume migration** — `/data` is BTRFS toplevel (subvolid=5). Migration to `@data` would enable separate CoW semantics. Has btrbk snapshot protection but not a named subvolume. Requires ~1h downtime
 - **`/data` fill reduction** — at 92% (700 GiB / 758 GiB). High fill on QLC NAND increases write amplification. Target: <80%
-- **NVMe drive evaluation** — SMART says healthy (11% wear, 0 media errors), but the 58 unsafe shutdowns are the real risk. Consider TLC replacement, RAID1 for `/data`, or UPS
+- **QLC NAND SLC cache health** — root-caused as the mechanism behind ALL 3 WDT crashes (Aug 1, 3, 4). BTRFS CoW churn re-exhausts the SLC cache within 22-47h when fstrim is weekly. Daily fstrim + `commit=300` deployed. Monitor PSI I/O stall rate via Gatus. If crashes resume, consider TLC replacement or UPS
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP). Module and config ready, hardware not purchased
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed upstream
 - **Disk space monitoring** — Darwin is 90%+ full on 256GB SSD. Need automated alerting before builds fail
@@ -53,8 +53,10 @@ The system has been hardened through multiple OOM/crash cycles and a data corrup
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`)
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing
 - **dnsblockd category enum** — categories are stringly-typed (10 hardcoded strings). Define Go enum type
-- **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond Attic/SearXNG to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns
-- **vendorHash drift detection** — Systemic issue: nixpkgs updates break Go vendorHashes across 4+ repos. Consider automated detection script or CI matrix
+- **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression (global registry rewrites github→tarball). 4-layer defense deployed (eval guard + pre-commit + CI normalization + recovery script). Registry override needs reboot to activate. Daemon itself needs to normalize or stop committing flake.lock
+- **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond Attic/SearXNG to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, `builtins.toString null` slice key bug
+- **vendorHash drift detection** — Systemic issue: nixpkgs updates break Go vendorHashes across 8+ repos. `nix flake check` does NOT catch FOD mismatches. Consider CI matrix, batch script, or pre-commit hook
+- **Declarative health-check** — `scripts/service-health-check.sh` uses hand-maintained service list. Retired services produced false-negatives; active services missing. Generate from Nix config instead
 
 ---
 
@@ -75,7 +77,8 @@ See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 
 - **Jan llama-server respawn** — spawns new `llama-server` every 1-3 min (~1.2GB each). Not a systemd service, no cgroup limits. Needs investigation
 - **Voice agents** — LiveKit + Whisper Docker pipeline disabled. Decide: enable with proper resource limits, or remove
-- **NPU utilization** — AMD XDNA driver loaded but no workloads using it. Explore ONNX Runtime / Ryzen AI SDK integration
+- **NPU utilization** — AMD XDNA 2 (50 TOPS) confirmed completely idle (Aug 6 investigation). ROCm GPU is the compute backend. NPU has no vision-LLM path currently. Explore ONNX Runtime / Ryzen AI SDK for small model offloading. Monitor upstream llama.cpp XDNA/IRON plugin progress
+- **Local AI vision models** — file-and-image-renamer can use local llama.cpp provider. Pull vision-capable GGUF model (Llama 3.2 Vision, Qwen2-VL), test on Radeon 8060S via ROCm, benchmark cold-start latency
 - **Attic cache for AI closures** — Ollama, llama-cpp, and other AI package closures are large (30+ min builds). Attic cache (deployed) should serve these once configured
 
 ---
@@ -98,7 +101,9 @@ See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 | Authelia              | Removed  | Replaced by Pocket ID (passkey-based, simpler) |
 | Prometheus            | Removed  | Replaced by SigNoz (full-stack observability)  |
 | Hyprland              | Removed  | Replaced by Niri (scrollable tiling)           |
-| DNS-over-QUIC overlay | Disabled | Breaks binary cache (40+ min builds)           |
+| swww wallpaper daemon     | Removed  | Ghost service crash-looping 1220+ times/boot. DMS manages wallpapers natively via IPC |
+| Hyprland                  | Removed  | Replaced by Niri (scrollable tiling). grimblast dependency purged (~122 MiB) |
+| DNS-over-QUIC overlay     | Disabled | Breaks binary cache (40+ min builds)                           |
 | llama-cpp MFMA flag   | Removed  | No-op on RDNA 3.5 (Strix Halo). Only affects CDNA GPUs |
 | SearXNG rate limiter  | Removed  | Private LAN, no abuse vector. Redis removed too |
 | `discard=none`        | Reverted | Would have bricked boot. `nodiscard` mount option confirmed working |
