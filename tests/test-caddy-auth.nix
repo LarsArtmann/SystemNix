@@ -46,24 +46,26 @@ let
   };
 
   # Simple HTTP backend that identifies itself
-  mockBackend = port: name: pkgs.writeShellApplication {
-    name = "mock-backend-${name}";
-    runtimeInputs = [ pkgs.python3 ];
-    text = ''
-      python3 -c '
-      import http.server
-      class H(http.server.BaseHTTPRequestHandler):
-          def do_GET(self):
-              self.send_response(200)
-              self.send_header("Content-Type", "text/plain")
-              self.end_headers()
-              self.wfile.write(b"backend-${name}")
-          def log_message(self, *_):
-              pass
-      http.server.HTTPServer(("127.0.0.1", ${toString port}), H).serve_forever()
-      '
-    '';
-  };
+  mockBackend =
+    port: name:
+    pkgs.writeShellApplication {
+      name = "mock-backend-${name}";
+      runtimeInputs = [ pkgs.python3 ];
+      text = ''
+        python3 -c '
+        import http.server
+        class H(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200)
+                self.send_header("Content-Type", "text/plain")
+                self.end_headers()
+                self.wfile.write(b"backend-${name}")
+            def log_message(self, *_):
+                pass
+        http.server.HTTPServer(("127.0.0.1", ${toString port}), H).serve_forever()
+        '
+      '';
+    };
 
   # Caddyfile replicating SystemNix auth patterns (HTTP, no TLS for testing)
   caddyfile = pkgs.writeText "Caddyfile" ''
@@ -155,21 +157,21 @@ in
     time.sleep(2)
 
     # 1. Mock oauth2-proxy /ping works (health check)
-    machine.succeed("curl -sf http://localhost:4180/ping")
+    machine.succeed("curl -sf http://127.0.0.1:4180/ping")
 
     # 2. Mock oauth2-proxy /oauth2/auth returns 401 (unauthenticated)
-    machine.fail("curl -sf http://localhost:4180/oauth2/auth")
-    machine.succeed("curl -s -o /dev/null -w '%{http_code}' http://localhost:4180/oauth2/auth | grep 401")
+    machine.fail("curl -sf http://127.0.0.1:4180/oauth2/auth")
+    machine.succeed("curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:4180/oauth2/auth | grep 401")
 
     # 3. Plain proxy: direct access, no auth gate
-    result = machine.succeed("curl -sf http://localhost:8081/")
+    result = machine.succeed("curl -sf http://127.0.0.1:8081/")
     assert "backend-plain" in result, f"Plain proxy should reach backend directly, got: {result}"
 
     # 4. protectedVHost: localhost (127.0.0.1/8) bypasses auth → direct access.
     #    This is the KEY assertion: LAN requests NEVER touch oauth2-proxy.
     #    The old SigNoz bug was unconditional forward_auth (no bypass) —
     #    oauth2-proxy failures broke ALL access, including LAN.
-    result = machine.succeed("curl -sf http://localhost:8082/")
+    result = machine.succeed("curl -sf http://127.0.0.1:8082/")
     assert "backend-protected" in result, f"protectedVHost LAN bypass should reach backend directly, got: {result}"
 
     # 5. Verify the Caddyfile contains the protectedVHost pattern markers.
