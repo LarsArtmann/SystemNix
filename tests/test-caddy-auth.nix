@@ -133,7 +133,7 @@ in
       wantedBy = [ "multi-user.target" ];
       after = [ "network.target" ];
       serviceConfig = {
-        ExecStart = "${pkgs.caddy}/bin/caddy run --config ${caddyfile}";
+        ExecStart = "${pkgs.caddy}/bin/caddy run --config ${caddyfile} --adapter caddyfile";
         Restart = "always";
       };
     };
