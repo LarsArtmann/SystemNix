@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-08-03 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-08-06 | **Scope:** Full codebase scan
 
 ---
 
@@ -25,9 +25,10 @@ _A brutally honest audit of every feature the project actually has._
 | Feature                                   | Status | Notes                                                                                                                                    |
 | ----------------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | Cross-platform Nix flake (Darwin + NixOS) | ✅     | Single flake, two systems, 80% shared via `platforms/common/`                                                                            |
-| flake-parts modular architecture          | ✅     | 52 modules auto-discovered. Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
+| flake-parts modular architecture          | ✅     | 47 modules auto-discovered (52 files total, 5 `_`-prefixed helpers skipped). Run: `nix eval .#nixosModules --apply 'x: builtins.length (builtins.attrNames x)'` |
+| nixpkgs tarball regression guard    | ✅     | Eval-time `nixpkgsTarballGuard` in `flake.nix`, pre-commit hook, CI normalization, `nix run .#fix-nixpkgs-lock` recovery. NixOS + Darwin registry override |
 | Shared overlays (Darwin + NixOS)          | ✅     | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync                                                                     |
-| Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer                                                        |
+| Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer, go-humanize-linter                                        |
 | Shared Home Manager config                | ✅     | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs`                                                                               |
 | Custom packages (pkgs/ + overlays)        | ✅     | 24 packages: 5 in pkgs/ (Go, Rust, Python, Node.js, AppImage) + 19 via flake-input overlays                                              |
 | Formatter (treefmt + alejandra)           | ✅     | Via `treefmt-full-flake`                                                                                                                 |
@@ -77,9 +78,9 @@ _A brutally honest audit of every feature the project actually has._
 | Crush Daily (AI insights)             | ✅     | `crush-daily.nix`                    | AI-powered development insights from Crush databases, port 8081, `daily.home.lan`. Runs as `primaryUser` via `runAsUser` (fixes ACL `/home/lars` traversal). Silent-zero-data post-deploy assertion (`session_count > 0`). Fixed: CLI schema drift, SQLite DSN `file:` prefix, HTML template printf arg order.                                                                                                                                |
 | OpenSEO (SEO suite)                   | ✅     | `openseo.nix` + `pkgs/openseo.nix`   | Self-hosted SEO: rank tracking, keyword research, backlinks. Native NixOS service (built from source via Vite/pnpm, workerd runtime), port 3002, `seo.home.lan`. GSC OAuth callback exempt from forward-auth, AI features conditional, `openseo-validate` ExecStartPre                                                                                                                                                                        |
 | System Health Collector               | ✅     | `system-health.nix`                  | Prometheus textfile collector: systemd service state, `user-1000.slice` memory, GPUActive thresholds, monitor365 buffer pressure. Pre-computes boolean flags for Gatus `pat()` matching                                                                                                                                                                                                                                                       |
-| Monitor365 (device monitoring)        | ✅     | `monitor365.nix`                     | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID. Schema-migrate oneshot, agent watchdog timer (root), graphical-restart path unit, backup health monitoring, restartTriggers                                                                                                                                                                                 |
+| Monitor365 (device monitoring)        | ✅     | `monitor365.nix`                     | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID. Schema-migrate oneshot, agent watchdog timer (root), server health watchdog (DuckDB pool deadlock recovery, 5min interval), graphical-restart path unit, backup health monitoring, restartTriggers                                                                                                                                                                                 |
 | PMA (auto-commit daemon)              | ✅     | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval                                                                                                                                                                                                                                                                                                                                                        |
-| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 74 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
+| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 77 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
 | Disk Monitor                          | ✅     | `disk-monitor.nix`                   | Desktop notifications at disk usage thresholds                                                                                                                                                                                                                                                                                                                                                                                                |
 | NVMe Health Monitor                   | ✅     | `nvme-health-monitor.nix`            | Desktop notifications for critical NVMe SMART events                                                                                                                                                                                                                                                                                                                                                                                          |
 | DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, sqlite backend (was turso-sync — switched to eliminate Turso free-plan 403), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz.       |
@@ -201,7 +202,7 @@ _A brutally honest audit of every feature the project actually has._
 | DMS polkit agent         | ✅     | Replaces polkit-gnome                                                                                                                                                                            |
 | DMS OSD                  | ✅     | Volume/brightness/media overlay                                                                                                                                                                  |
 | DMS clipboard manager    | ✅     | Owns clipboard history exclusively (cliphist service retired 2026-06-30)                                                                                                                         |
-| DMS wallpaper management | ✅     | swww wallpaper daemon with GLSL shader transitions (fire on close, circle on open). `swww-wallpaper` switcher script. `dms-wallpaper-init` seeds from `~/.local/share/wallpapers/`. Mod+W = wallpaper switch. Dynamic theming DISABLED (Catppuccin Mocha preserved)             |
+| DMS wallpaper management | ✅     | DMS IPC wallpaper cycling (`dms ipc call wallpaper next`, Mod+W). `dms-wallpaper-init` seeds from `~/.local/share/wallpapers/`. DMS derives cycling directory from current wallpaper's parent dir. Dynamic theming DISABLED (Catppuccin Mocha preserved). swww RETIRED (ghost service crash-loop)             |
 | DMS calendar/events      | ✅     | `enableCalendarEvents = false` (khal available, disabled)                                                                                                                                        |
 | DMS audio wavelength     | ✅     | cava-based visualizer (`enableAudioWavelength`)                                                                                                                                                  |
 
@@ -252,10 +253,11 @@ _A brutally honest audit of every feature the project actually has._
 | EMEET PIXY webcam     | ✅     | Full daemon: call detection, auto-tracking, noise cancellation, privacy mode, PipeWire source switch, DMS camera plugin, hotplug recovery |
 | Bluetooth             | ✅     | Power-on-boot, A2DP source/sink (Google Nest Audio), Blueman GUI                                                                          |
 | DDC/CI brightness     | ✅     | i2c-dev kernel module, ddcutil for external monitor brightness                                                                            |
-| BTRFS root (`/`)      | ✅     | zstd compression, noatime                                                                                                                 |
-| BTRFS data (`/data`)  | ✅     | zstd:3 compression, SSD optimizations, space_cache=v2 — Docker lives here (discard=async removed: QLC NAND I/O choke)                     |
+| BTRFS root (`/`)      | ✅     | zstd compression, noatime, `commit=300` (5min metadata commit), `nodiscard` (QLC NAND I/O choke)                                                                                                         |
+| BTRFS data (`/data`)  | ✅     | zstd:3 compression, `commit=300`, `nodiscard`, space_cache=v2 — Docker lives here                                                                                           |
 | FAT32 boot (`/boot`)  | ✅     | Restrictive masks (fmask=0077, dmask=0077)                                                                                                |
 | BTRFS snapshots       | ✅     | btrbk: daily snapshots of root (@), 14d + 4w retention, weekly autoScrub, verify timer alerts stale snapshots                                                                                                |
+| Daily fstrim          | ✅     | QLC NAND SLC cache maintenance. Changed weekly → daily (CoW churn exhausts cache within 22-47h). Idle I/O priority (`IOSchedulingClass=idle`, `Nice=10`). Gatus alert if >30min                          |
 | ZRAM swap             | ✅     | 17% of visible RAM (~16 GiB compressed), zstd compression                                                                                 |
 | AMD virtualization    | ✅     | KVM-AMD + AMD microcode updates                                                                                                           |
 
@@ -280,6 +282,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | sops-nix secrets            | ✅     | CA cert/key + server cert/key encrypted at rest                                                                                                                              |
 | Coverage                    | ✅     | 2.5M+ domains blocked, `.lan` domains protected, whitelist for immich.app/GitHub/etc, Reddit forced NXDOMAIN                                                                 |
 | Systemd hardening           | ✅     | ProtectSystem=strict, ProtectHome, PrivateTmp, capability restrictions                                                                                                       |
+| dnsblockd OOM mitigation    | ✅     | `MemoryMax=2G` + `GOMEMLIMIT=1500MiB`. Root cause: unbounded OTEL cardinality (dns_domain, http_path labels). Mitigated, upstream fix pending                             |
 
 #### Network Infrastructure
 
@@ -303,7 +306,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | Systemd watchdog (sd_notify only) | ✅     | Caddy, Forgejo — correctly limited to Type=notify services                                                                                    |
 | Service failure notifications     | ✅     | `notify-failure@` template — desktop + syslog fallback                                                                                        |
 | Service health check              | ✅     | Every 15 min, critical services, desktop notification on failure                                                                              |
-| BTRFS scrub                       | ✅     | Monthly auto-scrub on `/` and `/data`                                                                                                         |
+| BTRFS scrub                       | ✅     | Weekly auto-scrub on `/` and `/data` (changed from monthly: frequent reboots interrupted monthly scrub)                                       |
 | Smart monitoring                  | ✅     | smartd with scheduled short/long tests                                                                                                        |
 | Nix GC                            | ✅     | Weekly, delete older than 7 days, auto-optimise-store                                                                                         |
 | systemd-boot                      | ✅     | 50 generation limit, latest kernel                                                                                                            |
@@ -316,6 +319,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | Blocklist auto-update   | Weekly Mon 04:00 | Downloads + hashes blocklists                        |
 | Service health check    | Every 15 min     | Checks critical services                             |
 | Docker prune            | Weekly Mon 03:00 | Prunes >168h                                         |
+| fstrim                  | Daily            | Idle I/O priority. QLC NAND SLC cache maintenance   |
 | Immich DB backup        | Daily            | 7-day retention                                      |
 | Twenty DB backup        | Daily            | 30-day retention                                     |
 | Taskwarrior JSON backup | Daily            | 30-day retention                                     |
@@ -391,7 +395,8 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | netwatch                     | Rust     | ✅     | Real-time network diagnostics TUI                                                                                                                                                             |
 | openaudible                  | AppImage | ✅     | Audible audiobook manager                                                                                                                                                                     |
 | jscpd                        | Node.js  | ✅     | Copy/paste detector                                                                                                                                                                           |
-| file-and-image-renamer       | Go       | ✅     | AI screenshot renaming — source-only flake input with Go deps                                                                                                                                 |
+| file-and-image-renamer       | Go       | ✅     | AI screenshot renaming — source-only flake input with Go deps                                                                                                                                                     |
+| go-humanize-linter           | Go       | ✅     | AST linter detecting hand-rolled go-humanize reimplementations — via `mkLarsPackages`                                                                                                                            |
 | golangci-lint-auto-configure | Go       | ✅     | Auto-configure golangci-lint — source-only flake input                                                                                                                                        |
 | todo-list-ai                 | Go       | ✅     | AI-powered TODO extraction — via flake input                                                                                                                                                  |
 | mr-sync                      | Go       | ✅     | `~/.mrconfig` GitHub sync CLI — source-only flake input                                                                                                                                       |
@@ -448,7 +453,7 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Multi-WM (Sway)   | Enabled as backup compositor at SDDM login — may have minor bitrot                                                                                                                                                                                          | Low      |
 | Twenty CRM        | `twenty-server` crash-loops with PG role mismatch — data intact, app down                                                                                                                                                                                   | Medium   |
 | SigNoz alerts     | 20 alert rules provisioned and verified (v5 API, all `state: inactive`). 4 always-firing rules fixed 2026-07-30 (`target=0` + `above_or_equal` = always true). mkRule has target=0 assertion preventing recurrence. /tmp tmpfs usage alert added 2026-07-30 | Low     |
-| NVMe data integrity | SMART healthy (0 media errors, 11% wear). 13 corrupted files found and deleted (Aug 3). Root cause: 58 unsafe shutdowns, not async discard. Weekly scrub enabled. `nodiscard` confirmed working. Off-site backup still missing | Medium   |
+| NVMe data integrity | SMART healthy (0 media errors, 11% wear). 13 corrupted files found and deleted (Aug 3). Root cause: QLC SLC cache exhaustion from infrequent fstrim → WDT resets → incomplete BTRFS commits. Fix: daily fstrim + `commit=300`. Off-site backup still missing | Medium   |
 | Voice agents      | Disabled in configuration, Whisper Docker + ROCm pipeline                                                                                                                                                                                                   | Medium   |
 | Minecraft         | Disabled in configuration                                                                                                                                                                                                                                   | Low      |
 | Benchmark scripts | Planned but never created                                                                                                                                                                                                                                   | Low      |
@@ -532,7 +537,7 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 
 | Category                   | Count    |
 | -------------------------- | -------- |
-| NixOS service modules      | 52       |
+| NixOS service modules      | 47       |
 | Custom packages            | 24       |
 | Cross-platform programs    | 20+      |
 | NixOS desktop components   | 16+      |
@@ -543,8 +548,8 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 | Architecture patterns      | 7        |
 | ADRs                       | 13       |
 | GitHub Actions             | 2        |
-| Gatus health endpoints     | 74       |
-| Sops secret files          | 12       |
+| Gatus health endpoints     | 77       |
+| Sops secret files          | 13       |
 | NixOS VM tests             | 2        |
 | **Total enabled features** | **~205** |
 | Planned/disabled           | ~8       |
