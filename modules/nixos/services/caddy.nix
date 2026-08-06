@@ -151,15 +151,12 @@ _: {
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-            # SigNoz runs in impersonation mode (no internal auth). Access is
-            # ungated — protected by firewall (LAN-only) + Caddy TLS only.
-            "signoz.${domain}" = {
-              extraConfig = ''
-                ${tlsConfig}
-                ${commonConfig}
-                ${proxyTo config.services.signoz.settings.queryService.port}
-              '';
-            };
+            # SigNoz runs in impersonation mode (no internal auth — every request
+            # is root admin). Layer 2: LAN bypass (direct proxy, no auth) + external
+            # forward-auth via oauth2-proxy. The previous unconditional forward-auth
+            # (no LAN bypass) caused 500 errors for ALL users when oauth2-proxy
+            # hiccuped. protectedVHost fixes this: LAN requests never touch oauth2-proxy.
+            "signoz.${domain}" = protectedVHost "signoz" config.services.signoz.settings.queryService.port;
             "crm.${domain}" = protectedVHost "crm" config.services.twenty.port;
             "tasks.${domain}" = protectedVHost "tasks" config.services.taskchampion-sync-server.port;
             "manifest.${domain}" = protectedVHost "manifest" config.services.manifest.port;
