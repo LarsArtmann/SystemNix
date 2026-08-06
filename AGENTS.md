@@ -228,6 +228,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **`trash` not `rm`**, **`git mv` not `mv`**, **2-space indentation**, **`config.allowBroken = false`**, **No OpenZFS on macOS** (kernel panics, ADR-003)
 - **Open new terminal** after deploy (shell changes need new session)
 - **Never hardcode** `localhost:PORT` — derive from config. All ports in `lib/ports.nix`, all images in `lib/images.nix`
+- **Never silently substitute placeholder identity in git commits** — if `user.name`/`user.email` cannot be resolved, FAIL LOUD. Hardcoded `"Unknown Author"`/`"unknown@example.com"` fallbacks masked broken git config and produced ~6,400 unattributable commits. SystemNix's `services.projects-management-automation` sets `gitIdentity` which translates to `GIT_AUTHOR_*`/`GIT_COMMITTER_*` env vars on the daemon — env precedence beats config lookup, so the daemon always has a valid identity. See `docs/gotchas-archive.md` for the full incident.
 
 ---
 
