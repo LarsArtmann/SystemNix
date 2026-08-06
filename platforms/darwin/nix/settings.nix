@@ -11,15 +11,21 @@
     sandbox = lib.mkForce false;
   };
 
-  # Override the Nix global flake registry so github:NixOS/nixpkgs/nixos-unstable
-  # resolves directly to GitHub instead of being rewritten to the channels.nixos.org
-  # tarball. Mirrors the NixOS override in platforms/nixos/system/configuration.nix.
-  nix.registry."nixpkgs/nixos-unstable" = {
-    to = {
-      type = "github";
-      owner = "NixOS";
-      repo = "nixpkgs";
-      ref = "nixos-unstable";
-    };
+  # ── nixpkgs tarball regression: ROOT CAUSE FIX ──────────────────────────
+  # Mirrors the NixOS fix in platforms/nixos/system/configuration.nix.
+  # Layer 1: empty local flake-registry (eliminates global tarball entries).
+  # Layer 2: correct-format registry overrides (from.id + from.ref, not combined string).
+  nix.settings.flake-registry = builtins.toFile "empty-flake-registry.json" ''
+    {"flakes":[],"version":2}
+  '';
+  nix.registry.nixpkgs-nixos-unstable = {
+    from = { type = "indirect"; id = "nixpkgs"; ref = "nixos-unstable"; };
+    to = { type = "github"; owner = "NixOS"; repo = "nixpkgs"; ref = "nixos-unstable"; };
+    exact = true;
+  };
+  nix.registry.nixpkgs-nixpkgs-unstable = {
+    from = { type = "indirect"; id = "nixpkgs"; ref = "nixpkgs-unstable"; };
+    to = { type = "github"; owner = "NixOS"; repo = "nixpkgs"; ref = "nixpkgs-unstable"; };
+    exact = true;
   };
 }
