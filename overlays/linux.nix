@@ -17,6 +17,18 @@ let
     netwatch = prev.callPackage ../pkgs/netwatch.nix { };
   };
 
+  # niri-flake's make-niri pins libdisplay-info_0_2 via callPackage.
+  # nixpkgs removed the libdisplay-info_0_2 alias (throws).
+  # niri's Cargo.lock now uses libdisplay-info-sys 0.3.0 Rust crate,
+  # which is compatible with the current C library (0.4.0).
+  # This shim satisfies the stale `assert version == "0.2.0"` so callPackage
+  # finds a non-throwing package while linking the real (0.4.0) library.
+  niriLibdisplayInfoShim = _final: prev: {
+    libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (_: {
+      version = "0.2.0";
+    });
+  };
+
   bunMemoryLimitOverlay = _final: prev: {
     bun = prev.writeShellApplication {
       name = "bun";
@@ -180,6 +192,7 @@ let
     };
 in
 [
+  niriLibdisplayInfoShim
   openaudibleOverlay
   dnsblockd.overlays.default
   emeet-pixyd.overlays.default
