@@ -20,12 +20,19 @@ let
   # niri-flake's make-niri pins libdisplay-info_0_2 via callPackage.
   # nixpkgs removed the libdisplay-info_0_2 alias (throws).
   # niri's Cargo.lock now uses libdisplay-info-sys 0.3.0 Rust crate,
-  # which is compatible with the current C library (0.4.0).
-  # This shim satisfies the stale `assert version == "0.2.0"` so callPackage
-  # finds a non-throwing package while linking the real (0.4.0) library.
+  # whose build script requires the C library to report < 0.4.0 via pkg-config.
+  # The real C library is 0.4.0 (backward compatible — APIs are only added, never removed).
+  # This shim: (1) sets derivation version=0.2.0 to pass niri-flake's stale assert,
+  # and (2) patches the .pc file to report 0.3.0 so libdisplay-info-sys's pkg-config
+  # constraint passes. Remove when niri-flake drops the libdisplay-info_0_2 pinning.
   niriLibdisplayInfoShim = _final: prev: {
-    libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (_: {
+    libdisplay-info_0_2 = prev.libdisplay-info.overrideAttrs (old: {
       version = "0.2.0";
+      postFixup = (old.postFixup or "") + ''
+        for pc in $out/lib/pkgconfig/libdisplay-info*.pc; do
+          substituteInPlace "$pc" --replace-fail "Version: 0.4.0" "Version: 0.3.0"
+        done
+      '';
     });
   };
 
