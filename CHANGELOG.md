@@ -31,6 +31,15 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **statix.toml** — disables `repeated_keys` false positive for NixOS modules. `manual_inherit`/`manual_inherit_from` warnings fixed across 15 files via `statix fix`
 - **Forgejo OIDC DNS gate** — `forgejo-oidc-wait-dns` ExecStartPre probes `getent hosts auth.home.lan` (same DNS-gate pattern as SearXNG/DiscordSync)
 - **Docker backup service ordering** — added `docker.service` to `after` list (was only `requires` without `after`)
+- **nixpkgs tarball regression defense (4 layers)** — eval-time `nixpkgsTarballGuard` in `flake.nix` (fails all flake operations when nixpkgs lock node is tarball type), `.githooks/pre-commit` rejecting tarball-type nixpkgs, CI normalization (`.github/workflows/flake-update.yml` runs `fix-nixpkgs-lock.sh --latest` after every `nix flake update`), one-command recovery (`nix run .#fix-nixpkgs-lock` / `scripts/fix-nixpkgs-lock.sh` using `nix flake prefetch` which is immune to registry interception). NixOS + Darwin system registry override pinning `nixpkgs/nixos-unstable` to GitHub.
+- **QLC SLC cache exhaustion mitigation** — fstrim schedule changed weekly → daily. BTRFS CoW churn exhausts the QLC NAND SLC write cache within 22-47h when fstrim is weekly; with cache gone, every write hits QLC directly (~253ms), building an exponential I/O queue that freezes the kernel → sp5100-tco WDT reset (3 crashes in 3 days proven via ClickHouse metrics). `commit=300` added to `/` and `/data` mounts (reduces metadata write frequency ~10x). fstrim runs at idle I/O priority (`IOSchedulingClass=idle`, `Nice=10`).
+- **PSI I/O stall monitoring** — `/proc/pressure/io` metrics (`node_psi_io_some_avg300`, `node_psi_io_full_avg300`, `node_psi_io_alert` at 10% threshold) + Gatus Discord alert "I/O Stall Rate". Catches the I/O queue buildup that precedes WDT crashes.
+- **fstrim duration monitoring** — system-health collector tracks fstrim execution time via systemd `ExecMainStartTimestamp`/`ExecMainExitTimestamp`, Gatus alert at 30min threshold. Daily fstrim trims ~24h of churn (~50-100 GiB, ~10-15 min) vs the initial 446 GiB backlog (1h14m).
+- **monitor365-server-watchdog** — timer (5min interval) with 3 checks: process alive, `/health` returns HTTP 200 within 10s, journal "pool acquire failed" count >20 in 5min. Recovers degraded-but-alive DuckDB pool deadlock states where `Restart=always` never fires (process stays alive, all endpoints 500). Agent watchdog fixed (`curl -sf` silent failure on non-200 → explicit HTTP status check).
+- **go-humanize-linter** — AST linter detecting hand-rolled reimplementations of `go-humanize`. Added as SystemNix system package via `mkLarsPackages` (`flake.nix` input + `lib/lars-packages.nix`).
+- **Display watchdog login-screen guard** — `display-watchdog.sh` checks `loginctl` for active user Wayland/X11 sessions before treating DPMS-off as "dead display". Prevents SDDM login-screen restart loop (~10min cycle). Root cause: Xorg idle DPMS-off at login screen looked identical to a dead display.
+- **AGENTS.md gotcha archive** — 228-row gotcha table extracted to `docs/gotchas-archive.md` (preserves all root-cause narratives, commit hashes, dates). AGENTS.md gotcha section compressed to categorized enduring-rules list (447 KB → 45 KB, 90% reduction).
+- **DiscordSync SQLite corruption self-heal** — `discordsync-db-heal` ExecStartPre cascade: `PRAGMA integrity_check` → backup corrupt DB (`.corrupt-<timestamp>`) → `sqlite3 .recover` → BTRFS snapshot CoW clone (`cp --reflink=always`) → fresh DB as last resort. Re-syncs from Turso cloud after recovery.
 
 ### Changed
 
@@ -64,10 +73,6 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **/tmp tmpfs monitoring** — system-health collector emits `system_tmpfs_tmp_usage_percent` + `system_tmpfs_tmp_over_threshold` (80% of 48 GiB cap ≈ 38 GiB). SigNoz alert "/tmp TmpFS Usage High (>80%)" + Gatus Discord alert. Catches runaway builds before hitting the ceiling
 - **SigNoz mkRule target validation** — `validateTarget` assertion in `mkRule` rejects `target=0` + `above_or_equal` (always true for non-negative metrics) and `target=0` + `below` (never true). Prevents the always-firing alert bug from recurring
 - **duckdb CLI** — added to cross-platform base packages (handy for inspecting monitor365 `.duckdb` files)
-
-### Changed
-
-- **Deploy resilience** — `deploy.sh` now runs `systemctl reset-failed` (system + user) AND explicitly starts enabled-but-inactive services after reset. Previously crash-looped services at boot blocked ALL deploys until manually reset.
 - **Monitor365 module restructured** — pinned to upstream `0615301` (avoids libspa-sys bindgen breakage from `5ee717e3+`). Added schema-migrate, watchdog, graphical-restart, backup-health, restartTriggers. All `//` chains converted to `lib.mkMerge`.
 - **oauth2-proxy hardening** — added `--whitelist-domain=.home.lan` (fixes post-login redirect 500), `partOf = pocket-id-provision.service` (ensures credential reload on secret rotation), PKCE S256 enabled (`code-challenge-method = "S256"`).
 - **SigNoz auth** — impersonation mode (`SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true`) + unconditional Caddy forward-auth (no LAN bypass). Pocket ID is the sole auth boundary. OIDC is Enterprise-only ($4k/mo).
@@ -103,9 +108,17 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **PMA death-loop fix** — error wrapping (`oops.Wrap` instead of `oops.New`), per-project failure cooldown, workers reduced 8→4, MemoryMax raised 12G→16G. Upstream commits `3bb24b30`, `5a8a3065`
 - **Helium empty-window loop re-fix** — removed self-defeating 300s timeout from `helium-launch`. The timeout defeated the "wait for existing instance death" guard — every 5 min it fired "launch anyway" → Chromium found SingletonLock → empty window. Now waits indefinitely as a monitor
 - **NixOS VM test infrastructure** — migrated from deprecated `make-test-python.nix` to `pkgs.testers.runNixOSTest`. `tests/mock-sops.nix` mocks sops-nix in VMs. `tests/test-helpers.nix` provides common mocks. CI runs VM tests with KVM
+- **user-1000.slice memory cap** — `builtins.toString null` evaluated to `""` for `config.users.users.lars.uid` (null at eval time for `isNormalUser`), creating nonexistent slice key `"user-"`. Hardcoded `"user-1000"`. Raised MemoryMax 64G → 90G / MemoryHigh 56G → 80G per user request (`boot.nix`).
+- **dnsblockd OOM mitigation** — `MemoryMax` 1G → 2G + `GOMEMLIMIT=1500MiB` in `dns-blocker.nix`. Root cause: unbounded OTEL/Prometheus cardinality (`dns_domain`, `http_path`, `proxy_domain` labels retain every unique value forever). Mitigated, not fully fixed — upstream Go code fix needed.
+- **Journald `SystemMaxUse`** — 16G → 8G (reduces disk pressure during I/O-intensive crash cascades).
+- **Monitor365 MemoryMax** — 2G → 4G (+ MemoryHigh 3G) for DuckDB 597M event backlog processing.
+- **Hermes `inputs.nixpkgs.follows` restored** — prior session wrongly removed `follows`, causing root nixpkgs to silently downgrade to hermes's pinned `0954f7ee2f6b` (Jan 2026). Restored to follow main nixpkgs.
+- **nix profile cleanup** — 4 duplicate packages removed from `nix profile` (cqrs-lint, direnv, herdr, mr) that were already provided by SystemNix. `herdr` upgraded 0.7.1 → 0.8.0 via SystemNix. Principle: SystemNix owns persistent tools; `nix profile` is for transient experiments only.
 
 ### Removed
 
+- **swww wallpaper daemon** — ghost service crash-looping 1220+ times/boot (GC'd nix store binary). Replaced with DMS IPC (`dms ipc call wallpaper next`). GLSL fire/circle shader transitions removed. `dms-wallpaper-init` rewritten to seed wallpaper via DMS IPC. DMS owns wallpaper management natively.
+- **Hyprland package set** — `grimblast` (screenshot helper) pulled in hyprland-0.56.1 + all hypr* deps (hyprcursor, hyprgraphics, hyprland-qt-support, hyprland-qtutils, hyprlang, hyprpicker, hyprutils, hyprwire). ~122 MiB purged (3850 → 3824 store paths). Screenshots now via grim + slurp + swappy directly (grimblast was a redundant Hyprland wrapper).
 - **justfile** — removed in favor of direct Nix flake commands (`nix run .#deploy`, `nix flake check --no-build`, `nix fmt`). All recipes replaced by flake apps and `scripts/` shell scripts
 
 ### Fixed
@@ -167,6 +180,17 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Crush Daily timezone bug** — `Yesterday()` used `time.Now().Truncate(24h)` which snaps to UTC midnight, not local midnight. Collect (00:30 CEST) and insights (03:00 CEST) computed different dates. Fixed to `time.Date()` with local location (upstream `9286bf0`)
 - **PMA discovery OOM during restart** — daemon re-scans ~293 projects on every restart, spiking memory past `MemoryMax=8G`. Raised to `12G`
 - **Overview 503 on deploy** — Overview runs discovery ONCE at startup, caches nil on timeout → permanent 503. Three-layer fix: ExecStartPre gate, `partOf` PMA restart, watchdog timer
+- **WDT crash (`builtins.toString null`)** — `config.users.users.lars.uid` is `null` at eval time for `isNormalUser`. `builtins.toString null` evaluates to `""` (does NOT throw), producing slice key `"user-"` instead of `"user-1000"`. MemoryHigh/MemoryMax applied to nonexistent slice → `user-1000.slice` ran uncapped → runaway process starved journald → sp5100-tco WDT hard reset (2026-08-03 crash).
+- **QLC SLC cache exhaustion crashes** (3 crashes in 3 days: Aug 1, 3, 4) — root cause: weekly fstrim insufficient for QLC NAND. BTRFS CoW churn exhausts SLC cache within 22-47h → direct QLC writes (~253ms latency) → exponential I/O queue → kernel freeze → WDT reset. Proven via ClickHouse metrics (PSI I/O stall 42% baseline, queue depth growing 450/s → 6,192/s). Fix: daily fstrim + `commit=300`.
+- **Monitor365 DuckDB pool deadlock** — all pool connections stuck; server alive (port 3001 listening, `Restart=always` never fired) but all endpoints HTTP 500, 99.6% CPU on retry loops, 15+ background tasks failing. Persisted 14+ hours (no server health watchdog existed). Fix: `monitor365-server-watchdog` (5min interval, 3 checks).
+- **Monitor365 agent watchdog silent failure** — `curl -sf` silently returned non-zero on non-200 HTTP responses, making the watchdog believe the agent was dead when it was actually degraded. Fixed to explicit HTTP status code checking.
+- **Display watchdog login-screen false positive** — `display-watchdog.sh` treated Xorg idle DPMS-off at SDDM login screen as "dead display" → restarted `display-manager.service` every ~10min. Fix: `loginctl` session check (if no user Class=wayland|x11 session exists, DPMS-off is normal idle power-saving).
+- **nixpkgs tarball lock regression (RECURRING)** — global Nix registry rewrites `github:NixOS/nixpkgs/nixos-unstable` to stale `channels.nixos.org` tarball during ANY `nix flake update`. PMA auto-commit daemon triggers it by running unscoped `nix flake update`. `--override-input` and `--no-use-registries` do NOT prevent it. Fix: 4-layer defense (eval guard + pre-commit + CI normalization + recovery script) + NixOS/Darwin registry override.
+- **go-cqrs-lite transitive dependency break** — `idempotency/` and `retry/` submodules declared zero pseudo-version + local `replace` directives, breaking all transitive consumers. Fixed upstream: published v0.1.x tags, dropped local replaces (`eea5dafa`).
+- **Mass vendorHash drift (8 repos)** — nixpkgs Jan→Aug 2026 jump broke Go vendorHashes across emeet-pixyd, crush-daily, mr-sync, md-go-validator, go-humanize-linter, branching-flow, hierarchical-errors, PMA. All updated with published upstream fixes.
+- **DiscordSync chattr ExecStartPre** — upstream module ships `chattr -R +C /var/lib/discordsync 2>/dev/null || true` as non-shell ExecStartPre. systemd passes `2>/dev/null` and `|| true` as literal arguments to chattr. Also lacks `+` prefix → runs as `discordsync` user → `Operation not permitted`. Fixed with `lib.mkForce` override in `discordsync.nix`.
+- **Hermes nixpkgs silent downgrade** — removing `inputs.nixpkgs.follows` from hermes-agent input caused root nixpkgs to silently downgrade to hermes's pinned Jan 2026 revision. Restored `follows`.
+- **DNS resolution regression** — `/etc/resolv.conf` had `9.9.9.9` before `127.0.0.1` (user manually replaced Nix-managed symlink with a file). glibc queried Quad9 first → NXDOMAIN for `*.home.lan`. All external vHost checks failed. Fix: restored Nix-managed symlink (only `nameserver 127.0.0.1`).
 
 ### Disabled
 
