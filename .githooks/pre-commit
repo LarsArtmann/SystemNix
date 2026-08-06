@@ -32,6 +32,16 @@ if [ -f "flake.lock" ]; then
     fi
 fi
 
+# Fast guard: reject Gatus pat() patterns with regex-only chars (? or +).
+# Gatus pat() uses GLOB, not regex — ? = single-char wildcard, + = literal.
+if git diff --cached --name-only --diff-filter=ACM | grep -q 'gatus-config.nix'; then
+    if grep -v '^[[:space:]]*#' modules/nixos/services/gatus-config.nix | grep -qE 'pat\(.*[?+]'; then
+        log_error "Gatus pat() patterns contain regex-only chars (? or +)."
+        log_error "Gatus pat() uses GLOB — ? is single-char wildcard, not optional quantifier."
+        exit 1
+    fi
+fi
+
 STAGED_NIX=$(git diff --cached --name-only --diff-filter=ACM '*.nix')
 all_passed=true
 
