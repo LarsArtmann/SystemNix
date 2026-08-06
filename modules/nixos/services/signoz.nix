@@ -254,7 +254,8 @@ in
                         runtimeInputs = [ pkgs.openssl ];
                         text = ''
                           # Impersonation mode: all requests treated as root admin.
-                          # No auth gate — Caddy exposes SigNoz directly (LAN-only).
+                          # Auth is enforced by Caddy protectedVHost (Layer 2):
+                          # LAN bypass + external oauth2-proxy forward-auth.
                           export SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true
                           export SIGNOZ_IDENTN_TOKENIZER_ENABLED=false
                           export SIGNOZ_IDENTN_APIKEY_ENABLED=false
