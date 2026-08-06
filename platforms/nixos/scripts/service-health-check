@@ -55,6 +55,8 @@ check_service openseo
 check_service docker
 check_service route-health-monitor
 check_service mptcp-endpoint-manager
+check_service discordsync
+check_service searx
 
 # === User services (graphical session) ===
 check_user_service swayidle
@@ -62,6 +64,7 @@ check_user_service emeet-pixyd
 check_user_service niri-session-manager
 check_user_service monitor365
 check_user_service monitor365-server
+check_user_service qmd-mcp
 
 # === Report ===
 if [ -n "$FAILED" ]; then
