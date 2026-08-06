@@ -253,6 +253,8 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **Go submodule `replace => ../../sibling` breaks transitive consumers** — Published Go submodules MUST use published versions, not local replaces. `mkPreparedSource` only strips top-level replaces.
 - **Go vendorHash mismatches are FOD** — `nix flake check --no-build` does NOT catch them. Batch-test individual Go packages before full builds.
 - **Dual cargo build paths need different `outputHashes` keys** — crane uses full git URL key; `importCargoLock` uses `package-version` key. Same hash value, different key format.
+- **`__intentionallyOverridingVersion = true`** — nixpkgs warns when `overrideAttrs` changes `version` without changing `src`. Set this flag in the overrideAttrs attrset to silence the warning when intentionally version-shimming (e.g., the libdisplay-info shim for niri-flake).
+- **`go mod tidy` in `preBuild` for mkPreparedSource** — When `mkPreparedSource` adds `replace` directives for private deps, the Go dep graph shifts and `go.sum` becomes stale. Adding `go mod tidy` to `preBuild` (safe with `proxyVendor = true`) regenerates `go.sum` automatically, avoiding "inconsistent vendoring" errors. Also add any new `subModules` (e.g., `testhelpers`, `testhelpers/graphtest` from go-output) so Go can resolve them from the nix store path.
 
 ### Systemd
 
@@ -267,6 +269,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **CPUQuota=200% default in `harden()`** — All services get a 2-core cap. Override per-service (AI services: 300-400%).
 - **Docker services use `multi-user.target`** — NOT `graphical.target`.
 - **`harden` vs `hardenUser`** — User services (systemd --user) MUST use `hardenUser`.
+- **`TimeoutStartSec` for ExecStartPre-heavy services** — systemd default is 90s. Services with slow pre-start (DB heal, DNS wait, state migration) exceed this during system switches (I/O contention). Set `TimeoutStartSec = "3min"` explicitly for discordsync (DB heal + DNS wait) and hermes (535 MB state migration). Without it, `nh os switch` reports "Failed to start" even though the service succeeds on retry.
 
 ### Caddy & Reverse Proxy
 
@@ -353,6 +356,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **Helium is Chromium 150** — Full ungoogled-chromium fork, NOT Electron. Widevine bundled separately.
 - **VA-API flag renames (Chromium 131+)** — `VaapiVideoDecodeLinuxGL` → `AcceleratedVideoDecodeLinuxGL`, etc. Since 143+, VA-API works out of box; explicit flags are defense-in-depth.
 - **`--disable-background-networking` kills extensions** — Blocks ExtensionDownloader. Do NOT re-add (Helium's ungoogled base already strips Google telemetry).
+- **niri-flake libdisplay-info stale pin** — niri-flake's `make-niri` pins `libdisplay-info_0_2` via `callPackage` with `assert version == "0.2.0"`. nixpkgs removed that alias (it throws). niri's Cargo.lock uses `libdisplay-info-sys` 0.3.0 (requires C library `< 0.4.0` via pkg-config), but the real C library is 0.4.0 (backward compatible — APIs only added). The `niriLibdisplayInfoShim` overlay in `overlays/linux.nix` patches both: (1) derivation `version = "0.2.0"` to pass the assert, (2) `.pc` file `Version:` line via sed regex to `0.3.0` for pkg-config. Uses `__intentionallyOverridingVersion = true` to silence the nixpkgs warning. MUST be first in the overlay list (before niri's own overlay). Remove when niri-flake drops the pin.
 
 ### SearXNG
 
