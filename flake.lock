@@ -112,23 +112,6 @@
         "url": "ssh://git@github.com/LarsArtmann/branching-flow"
       }
     },
-    "branching-flow_3": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1785922204,
-        "narHash": "sha256-VvSg0okMXs080CS7nYbmz5xDODvL58UF0qvmyCLpdcQ=",
-        "ref": "master",
-        "rev": "f2839f523d0f3be8474bbc08af87b7033da12312",
-        "revCount": 2432,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
-      },
-      "original": {
-        "ref": "master",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
-      }
-    },
     "brew-src": {
       "flake": false,
       "locked": {
@@ -3814,11 +3797,11 @@
     "nixpkgs": {
       "locked": {
         "lastModified": 1767892417,
+        "narHash": "sha256-dhhvQY67aboBk8b0/u0XB6vwHdgbROZT3fJAjyNh5Ww=",
         "owner": "NixOS",
         "repo": "nixpkgs",
         "rev": "3497aa5c9457a9d88d71fa93a4a8368816fbeeba",
-        "type": "github",
-        "narHash": "sha256-dhhvQY67aboBk8b0/u0XB6vwHdgbROZT3fJAjyNh5Ww="
+        "type": "github"
       },
       "original": {
         "owner": "NixOS",
@@ -4058,11 +4041,11 @@
     "project-discovery-sdk_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1785712341,
-        "narHash": "sha256-5rOXBMmhXhOQ+hWp+aWLSO6qZwWb/Y17pKI+HiHCCdE=",
+        "lastModified": 1785999820,
+        "narHash": "sha256-i8DBcPymXupFc3IyntuAhA9T3c2Jv/msI3+3oxT4oKQ=",
         "ref": "master",
-        "rev": "cc88f22513511dc24391372f88589b9c6423dadb",
-        "revCount": 1154,
+        "rev": "87fa5f8b856cf9fdc45c0fdc12113658f9d09adf",
+        "revCount": 1155,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/project-discovery-sdk"
       },
@@ -4132,7 +4115,6 @@
     },
     "projects-management-automation": {
       "inputs": {
-        "branching-flow": "branching-flow_3",
         "cmdguard": "cmdguard_7",
         "flake-parts": [
           "flake-parts"
@@ -4167,11 +4149,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1785953637,
-        "narHash": "sha256-nAUIk55JP9O1uMcBc9dzQJvL1+91aJCIuwjo3MLxlxU=",
+        "lastModified": 1786009919,
+        "narHash": "sha256-0uV/ZSeR5aHx47yEnSrNAz/BHa5oR5PhGuJc2sJUP1Q=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "34b62ceb42c605de8aabb2fe2d43885880a0c3c3",
+        "rev": "56f528b908c0e85966ce138ad34a415c95a09707",
         "type": "github"
       },
       "original": {

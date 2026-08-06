@@ -593,6 +593,17 @@ in
       # consumers) — the daemon amortizes the ~7GB discovery spike across all
       # consumers instead of each paying it independently. 8G covers the measured
       # peak with headroom; steady state is ~250MB.
+      #
+      # gitIdentity: defense-in-depth against the Unknown Author regression.
+      # Bakes the operator's identity into the daemon's env so it never has to
+      # fall back to git config — even during HM activation races, when
+      # ~/.config/git/config hasn't been symlinked yet, or after a fresh
+      # user-dir reset. Resolution precedence (matches `git commit`):
+      #   1. GIT_AUTHOR_* / GIT_COMMITTER_* env vars (set below)
+      #   2. `git config user.{name,email}` (local > global > system)
+      #   3. Error — getAuthorSignature fails loud instead of silent fallback
+      # See modules/nixos/services/projects-management-automation.nix for the
+      # env wiring; see go-commit pkg/commit/git/gogit.go for the resolver.
       projects-management-automation = {
         enable = true;
         paths = [ "/home/${config.users.primaryUser}/projects" ];
@@ -605,6 +616,11 @@ in
         minCommitIntervalSeconds = 120;
         enableDiscoveryDaemon = true;
         memoryMax = "8G";
+
+        gitIdentity = {
+          name = "Lars Artmann";
+          email = "git@lars.software";
+        };
       };
     };
   };
