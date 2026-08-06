@@ -151,13 +151,12 @@ _: {
               '';
             };
             "dash.${domain}" = protectedVHost "dash" config.services.homepage.port;
-            # SigNoz runs in impersonation mode (no internal auth) — ALL requests
-            # must pass through Pocket ID via oauth2-proxy. No LAN bypass.
+            # SigNoz runs in impersonation mode (no internal auth). Access is
+            # ungated — protected by firewall (LAN-only) + Caddy TLS only.
             "signoz.${domain}" = {
               extraConfig = ''
                 ${tlsConfig}
                 ${commonConfig}
-                ${forwardAuth}
                 ${proxyTo config.services.signoz.settings.queryService.port}
               '';
             };

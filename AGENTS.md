@@ -172,7 +172,8 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | **Layer 1 — Native OIDC**                                | App integrates directly with Pocket ID (in-app login button). Provisioned as OIDC clients in `pocket-id.nix`; Caddy uses **plain `reverse_proxy`** (NOT `protectedVHost`) | Forgejo, Immich, **Gatus**                                                                       |
 | **Layer 2 — oauth2-proxy forward-auth**                  | App has no native auth; Caddy `protectedVHost` gates external access behind a Pocket ID login. LAN access is open                                                         | Homepage, Twenty, Taskchampion, Manifest, OpenSEO†, Crush Daily, Dozzle, Monitor365, **SearXNG** |
-| **Layer 2+ — oauth2-proxy forward-auth (unconditional)** | App internal auth disabled (impersonation mode); Caddy applies `forwardAuth` to ALL requests — no LAN bypass. Pocket ID is the sole auth boundary                         | **SigNoz**                                                                                       |
+
+> **SigNoz** runs in impersonation mode (every request = root admin, no internal auth). OIDC is Enterprise-only ($4k/mo), so the Caddy vHost is a **plain reverse proxy with NO forward-auth** — accessible without SSO, protected by firewall (LAN-only) + Caddy TLS. This was changed from unconditional forward-auth after repeated oauth2-proxy 500 errors made the service inaccessible.
 
 > **†** OpenSEO uses a **hand-rolled Caddy vHost** (not `protectedVHost`) to exempt `/api/gsc/oauth/callback` from forward-auth — see gotcha table. All other paths follow standard Layer 2 behavior (forward-auth for external clients, LAN bypass).
 
@@ -187,7 +188,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 **Native OIDC is NOT free for most services** — verify upstream support before assuming:
 
 - Homepage: no built-in auth at all (proxy-only by design)
-- SigNoz: OIDC is Enterprise-only ($4k/mo). Uses impersonation mode (no internal auth) + unconditional Caddy forward-auth — Pocket ID is the sole auth boundary, no LAN bypass
+- SigNoz: OIDC is Enterprise-only ($4k/mo). Runs in impersonation mode (no internal auth) with a plain Caddy reverse proxy — NO forward-auth, NO SSO. Protected by firewall (LAN-only) + Caddy TLS
 - Twenty: SSO gated behind a billing entitlement
 - Custom LarsArtmann Go services: require upstream OIDC code in their repos
 
@@ -283,8 +284,8 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 
 ### SSO / OIDC
 
-- **Native OIDC is NOT free** — Verify upstream support: Homepage (no auth), SigNoz (Enterprise-only), Twenty (billing-gated), SearXNG (no accounts). These stay on Layer 2 forward-auth.
-- **SigNoz impersonation mode** — Internal auth disabled; Caddy applies `forwardAuth` UNCONDITIONALLY (no LAN bypass). Pocket ID is the sole auth boundary.
+- **Native OIDC is NOT free** — Verify upstream support: Homepage (no auth), SigNoz (Enterprise-only, runs ungated), Twenty (billing-gated), SearXNG (no accounts). Homepage/SearXNG stay on Layer 2 forward-auth; SigNoz uses plain reverse proxy (no auth).
+- **SigNoz no-auth mode** — Internal auth disabled (impersonation mode = every request is root admin). Caddy vHost is a plain reverse proxy with NO forward-auth. Protected by firewall (LAN-only) + Caddy TLS. Changed from unconditional forward-auth after repeated oauth2-proxy 500 errors.
 - **Gatus native OIDC + DynamicUser** — Secret via `LoadCredential` (can't own files). Self-health probe must use `[STATUS] < 400` (302 redirect when OIDC on).
 - **Forgejo OIDC** — Native OIDC via `forgejo-oidc-setup` oneshot. Auth source name ("PocketID") IS the URL slug — no spaces. `ENABLE_AUTO_REGISTRATION = true`.
 - **Pocket ID client-secret desync** — Declarative recovery: `pocket-id-config.provision.regenerateSecretsFor = [ "clientId" ]`. `RemainAfterExit=true` makes `start` a no-op — use `RESTART`.

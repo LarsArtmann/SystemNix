@@ -1,9 +1,8 @@
 # SigNoz observability: ClickHouse, OTel collector, dashboards, alerts
 # Auth: SigNoz CE OIDC/SAML is Enterprise-only ($4k/mo). Instead, impersonation
-# mode disables all internal auth (every request = root admin) and the ENTIRE
-# auth boundary is Caddy + oauth2-proxy (Pocket ID) on signoz.<domain>.
-# The Caddy vHost applies forward-auth UNCONDITIONALLY — no LAN bypass —
-# because impersonation mode means SigNoz itself has zero access control.
+# mode disables all internal auth (every request = root admin). The Caddy vHost
+# is a plain reverse proxy with NO oauth2-proxy forward-auth — SigNoz is
+# accessible without SSO, protected by the firewall (LAN-only) + Caddy TLS.
 {
   inputs,
   lib,
@@ -255,7 +254,7 @@ in
                         runtimeInputs = [ pkgs.openssl ];
                         text = ''
                           # Impersonation mode: all requests treated as root admin.
-                          # Auth is enforced by Caddy + oauth2-proxy (Pocket ID), not SigNoz.
+                          # No auth gate — Caddy exposes SigNoz directly (LAN-only).
                           export SIGNOZ_IDENTN_IMPERSONATION_ENABLED=true
                           export SIGNOZ_IDENTN_TOKENIZER_ENABLED=false
                           export SIGNOZ_IDENTN_APIKEY_ENABLED=false
