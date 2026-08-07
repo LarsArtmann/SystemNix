@@ -404,6 +404,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **Forgejo SSH keys** — Forgejo doesn't read NixOS `openssh.authorizedKeys.keys`. Provisioned via admin API (`forgejo-ssh-keys` oneshot).
 - **Forgejo `GET /admin/users/{u}/keys` → 405** — Use public `GET /api/v1/users/{u}/keys` for dedup. POST stays on admin path.
 - **OpenSEO GSC callback** — Hand-rolled Caddy vHost (NOT `protectedVHost`) to exempt `/api/gsc/oauth/callback` from forward-auth. Do NOT simplify.
+- **Browser History uses WebAuthn, NOT OIDC** — Direct TLS proxy in Caddy (NOT `protectedVHost`). Forward-auth would intercept WebAuthn API calls and break registration/login. The app's built-in passkey auth is the sole access control. OTel uses gRPC (port 4317, NOT 4318) because the Go code uses `otlptracegrpc`, not `otlptracehttp`. `WEBAUTHN_RP_NAME` must not contain spaces (systemd Environment parsing issue).
 - **`-config` suffix is intentional** — `services.audio-config.enable` avoids colliding with upstream `services.pipewire` etc.
 
 ### Shell & DevTools
