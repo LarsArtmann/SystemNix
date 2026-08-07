@@ -94,9 +94,9 @@
 - [x] **M8: ref=master + GOTOOLCHAIN audit** — `scripts/check-flake-inputs.sh` + pre-commit GOTOOLCHAIN guard + CI step
 - [x] **M9: Audit 38 Gatus pat() patterns** — All verified present by M4 automated check. Zero phantom metrics found
 - [x] **M10: Prevention layer documentation** — AGENTS.md updated with prevention table + Gatus design patterns
-- [ ] **M12: Gatus pattern VM test** — Mock servers with canned responses, assert all pat() patterns evaluate GREEN
-- [ ] **M13: PMA daemon identity VM test** — Run daemon commit path in VM, assert author is not "Unknown"
-- [ ] **M14: Monitoring-the-monitor meta-check** — Gatus endpoint that alerts if any endpoint has been RED >24h
+- [x] **M12: Gatus pattern VM test** — `tests/test-gatus-patterns.nix`: mock metrics server + 5 test endpoints, all evaluate GREEN
+- [x] **M13: PMA daemon identity VM test** — `tests/test-pma-identity.nix`: validates git identity env var propagation chain + pre-commit hook enforcement (6 tests)
+- [x] **M14: Monitoring-the-monitor meta-check** — `system-health.nix` emits `system_gatus_endpoints_in_error_long`; Gatus endpoint alerts on sustained failures
 
 ---
 
