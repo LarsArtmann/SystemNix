@@ -225,6 +225,7 @@ _: {
                 (lib.getExe stageScript)
                 (lib.getExe migrateScript)
               ];
+              TimeoutStartSec = "3min";
               ExecStart = lib.getExe serveScript;
             }
           ];

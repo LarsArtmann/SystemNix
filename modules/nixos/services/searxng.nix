@@ -621,6 +621,7 @@ _: {
             serviceConfig = lib.mkMerge [
               {
                 ExecStartPre = "+${lib.getExe waitDnsReady}";
+                TimeoutStartSec = "3min";
               }
               (harden { MemoryMax = "512M"; })
               (serviceDefaults { })

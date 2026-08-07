@@ -325,6 +325,7 @@ _: {
                   "-${config.services.forgejo.stateDir}/.admin-token.env"
                 ];
                 ExecStartPre = lib.getExe waitForForgejo;
+                TimeoutStartSec = "3min";
                 ExecStart = lib.getExe ensureReposScript;
               }
               (serviceOneshotDefaults { Restart = "on-failure"; })

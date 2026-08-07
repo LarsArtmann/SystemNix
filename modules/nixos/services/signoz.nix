@@ -275,6 +275,7 @@ in
                     in
                     "${lib.getExe wrapper}";
                   ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}/api/v1/version";
+                  TimeoutStartSec = "3min";
                   ExecStartPre =
                     let
                       clearMigrationLock = pkgs.writeShellApplication {

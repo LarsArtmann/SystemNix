@@ -210,6 +210,7 @@ _: {
               (serviceDefaults { })
               {
                 ExecStartPre = lib.mkBefore [ ("+" + lib.getExe ensurePasswordFile) ];
+                TimeoutStartSec = "3min";
               }
             ];
             preStart = lib.getExe adminSetup;
@@ -302,6 +303,7 @@ _: {
                 "forgejo-oidc-client-secret:${config.services.pocket-id.dataDir}/client-secrets/forgejo"
               ];
               ExecStartPre = "+${lib.getExe forgejoOidcWaitDns}";
+              TimeoutStartSec = "3min";
             }
             (harden { })
             (serviceOneshotDefaults { })
@@ -357,6 +359,7 @@ _: {
               ("+" + lib.getExe genRunnerToken)
               (lib.getExe registerRunner)
             ];
+            TimeoutStartSec = "3min";
             MemoryMax = "16G";
           };
         };

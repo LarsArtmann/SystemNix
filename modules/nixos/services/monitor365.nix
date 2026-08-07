@@ -276,6 +276,7 @@
               ExecStartPre = lib.mkBefore [
                 (lib.getExe duckdbHealScript)
               ];
+              TimeoutStartSec = "3min";
             };
           };
         })

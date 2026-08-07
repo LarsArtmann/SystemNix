@@ -690,6 +690,7 @@ _: {
                       "+-${lib.getExe initScript}"
                       "${lib.getExe secretCheck}"
                     ];
+                    TimeoutStartSec = "3min";
                     ExecStart = "${lib.getExe pkgs.dnsblockd} serve -c ${dnsblockdConfigFile}";
                     StateDirectory = "dnsblockd";
                     WorkingDirectory = "/var/lib/dnsblockd";

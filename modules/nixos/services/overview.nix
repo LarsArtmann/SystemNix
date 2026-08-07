@@ -76,6 +76,7 @@
             wants = [ "projects-management-automation.service" ];
             partOf = [ "projects-management-automation.service" ];
             serviceConfig.ExecStartPre = "+${lib.getExe waitDaemonReady}";
+            serviceConfig.TimeoutStartSec = "3min";
             environment = {
               OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
             };

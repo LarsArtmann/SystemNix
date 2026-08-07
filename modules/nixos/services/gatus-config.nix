@@ -923,6 +923,7 @@ _: {
                 "+${lib.getExe checkGatusEnv}"
                 "${lib.getExe gatusOidcEnv}"
               ];
+              TimeoutStartSec = "3min";
               RuntimeDirectory = "gatus";
               LoadCredential = lib.optional enableOidc "gatus-oidc-secret:${clientSecretPath}";
               # Compose the full EnvironmentFile list: the sops template
