@@ -178,6 +178,6 @@ in
     if failures:
         machine.fail(f"Gatus pattern test FAILURES: {'; '.join(failures)}")
     else:
-        machine.succeed(f"All {len(statuses)} Gatus endpoints are GREEN")
+        machine.log(f"All {len(statuses)} Gatus endpoints are GREEN")
   '';
 }

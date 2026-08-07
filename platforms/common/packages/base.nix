@@ -44,6 +44,16 @@ let
           # Strix Halo has 51+ GiB GPUActive (55% of visible RAM) with GPUReclaim=0.
           # GPU rasterization moves more work to the GPU, increasing GTT buffer objects
           # and worsening the unified memory pressure crisis.
+          #
+          # Anti-throttling flags — CRITICAL for video playback in niri (tiling WM).
+          # Without these, Chromium aggressively throttles background tabs and occluded
+          # windows: requestAnimationFrame drops to ~1 FPS, JS timers coalesce to ~1/sec,
+          # media playback is suspended. In niri's scrolling layout, when a video tab is
+          # scrolled out of view or loses focus, playback drops to 1-3 FPS.
+          # --disable-background-timer-throttling: JS timers run at full speed in background tabs
+          # --disable-backgrounding-occluded-windows: Aura occlusion tracker can't background windows
+          # --disable-renderer-backgrounding: background renderer processes keep full CPU priority
+          # --disable-background-media-suspend: media keeps playing in background tabs
           rm -rf $out/bin
           mkdir -p $out/bin
           makeWrapper $out/opt/helium/helium $out/bin/helium \
@@ -65,6 +75,10 @@ let
             --add-flags "--ignore-gpu-blocklist" \
             --add-flags "--enable-zero-copy" \
             --add-flags "--disable-gpu-watchdog" \
+            --add-flags "--disable-background-timer-throttling" \
+            --add-flags "--disable-backgrounding-occluded-windows" \
+            --add-flags "--disable-renderer-backgrounding" \
+            --add-flags "--disable-background-media-suspend" \
             --add-flags "--restore-last-session" \
             --add-flags "--disable-session-crashed-bubble" \
             --add-flags "--simulate-outdated-no-au='Tue, 31 Dec 2099 23:59:59 GMT'" \

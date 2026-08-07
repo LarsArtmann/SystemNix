@@ -372,6 +372,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **SDDM hides boot logs** — `console=tty2` redirects boot messages. `Ctrl+Alt+F2` = full log.
 - **Helium GPU SIGBUS** — `--disable-gpu-watchdog` in wrapper. Amplified by `--enable-zero-copy` + high GPUActive.
 - **Helium zero-output death** — Niri has no virtual output support. When all outputs disconnect, Helium exits cleanly. `Restart=always` + `RestartSec=5`.
+- **Helium video throttling (3 FPS)** — Missing anti-throttling flags caused Chromium to throttle video to 1-3 FPS when tab was backgrounded or scrolled out of view in niri. Four flags added: `--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`, `--disable-renderer-backgrounding`, `--disable-background-media-suspend`. Brave/Darwin config already had the first three — they were never ported to Helium Linux.
 - **helium-launch waits indefinitely** — No timeout (timeout caused empty-window loop). Becomes a monitor that blocks until existing instance dies.
 - **Helium is Chromium 150** — Full ungoogled-chromium fork, NOT Electron. Widevine bundled separately.
 - **VA-API flag renames (Chromium 131+)** — `VaapiVideoDecodeLinuxGL` → `AcceleratedVideoDecodeLinuxGL`, etc. Since 143+, VA-API works out of box; explicit flags are defense-in-depth.
