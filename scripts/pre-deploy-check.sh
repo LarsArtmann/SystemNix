@@ -164,26 +164,26 @@ extract_gatus_metrics() {
     | grep -vE '^<|connected'
 }
 
-# Fetch metrics from both endpoints, combine into one blob for searching
-METRICS_BLOB=""
-if curl -sf --max-time 3 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" >/dev/null 2>&1; then
-  METRICS_BLOB+=$(curl -sf --max-time 3 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" 2>/dev/null || echo "")
+# Fetch metrics from both endpoints into a temp file for searching
+METRICS_FILE=$(mktemp)
+trap 'rm -f "$METRICS_FILE"' EXIT
+
+if curl -sf --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
   pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
 else
   warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — skipping metric checks that depend on it"
 fi
 
-if curl -sf --max-time 3 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >/dev/null 2>&1; then
-  METRICS_BLOB+=$'\n'$(curl -sf --max-time 3 "http://127.0.0.1:${MONITOR365_PORT}/metrics" 2>/dev/null || echo "")
+if curl -sf --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >> "$METRICS_FILE" 2>/dev/null; then
   pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
 else
   warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — skipping metric checks that depend on it"
 fi
 
-if [ -n "$METRICS_BLOB" ]; then
+if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
   for metric in $(extract_gatus_metrics); do
-    if echo "$METRICS_BLOB" | grep -q "^${metric}\b\|^# HELP ${metric}\b\|^# TYPE ${metric}\b"; then
+    if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
     else
       fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
