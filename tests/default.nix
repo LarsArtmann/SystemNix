@@ -22,4 +22,5 @@ in
   attic = makeTest (import ./test-attic.nix { inherit pkgs; });
   searxng = makeTest (import ./test-searxng.nix { inherit pkgs; });
   caddy-auth-patterns = makeTest (import ./test-caddy-auth.nix { inherit pkgs; });
+  gatus-patterns = makeTest (import ./test-gatus-patterns.nix { inherit pkgs; });
 }
