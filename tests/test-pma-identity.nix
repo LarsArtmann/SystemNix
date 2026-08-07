@@ -42,16 +42,6 @@ in
   };
 
   testScript = ''
-    import subprocess
-
-    def git(repo, *args, env=None):
-        cmd = ["git", "-C", repo] + list(args)
-        result = machine.succeed(
-            " ".join(cmd),
-            subprocess.run=True
-        )
-        return result.strip()
-
     machine.start()
     machine.wait_for_unit("multi-user.target")
 
@@ -134,8 +124,8 @@ in
     machine.succeed("git -C /tmp/repo-hooked add file.txt")
 
     # Commit WITHOUT env vars → hook should reject it
-    result = machine.execute("git -C /tmp/repo-hooked commit -m 'should be rejected' 2>&1 || true")
-    assert "REJECTED" in result, f"Expected hook to reject, got: {result}"
+    rc, out = machine.execute("git -C /tmp/repo-hooked commit -m 'should be rejected' 2>&1 || true")
+    assert "REJECTED" in out, f"Expected hook to reject, got: rc={rc}, out={out}"
     machine.log("PASS: Identity hook rejects 'Unknown Author' commits")
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -155,18 +145,18 @@ in
     machine.log("PASS: Identity hook accepts commits with proper env vars")
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    # Test 6: Empty author name is rejected by hook
+    # Test 6: Identity hook catches "unknown" (lowercase) author
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-    machine.succeed("git init /tmp/repo-empty")
-    machine.succeed("git -C /tmp/repo-empty config user.email 'test@example.com'")
-    # Intentionally do NOT set user.name
-    machine.succeed("echo empty > /tmp/repo-empty/file.txt")
-    machine.succeed("git -C /tmp/repo-empty add file.txt")
-    machine.succeed("cp ${identityHook}/bin/identity-check /tmp/repo-empty/.git/hooks/pre-commit")
-    machine.succeed("chmod +x /tmp/repo-empty/.git/hooks/pre-commit")
+    machine.succeed("git init /tmp/repo-unknown")
+    machine.succeed("git -C /tmp/repo-unknown config user.name 'unknown'")
+    machine.succeed("git -C /tmp/repo-unknown config user.email 'unknown@localhost'")
+    machine.succeed("cp ${identityHook}/bin/identity-check /tmp/repo-unknown/.git/hooks/pre-commit")
+    machine.succeed("chmod +x /tmp/repo-unknown/.git/hooks/pre-commit")
+    machine.succeed("echo test > /tmp/repo-unknown/file.txt")
+    machine.succeed("git -C /tmp/repo-unknown add file.txt")
 
-    result2 = machine.execute("git -C /tmp/repo-empty commit -m 'empty name' 2>&1 || true")
-    assert "REJECTED" in result2, f"Expected hook to reject empty name, got: {result2}"
-    machine.log("PASS: Identity hook rejects empty author name")
+    rc6, out6 = machine.execute("git -C /tmp/repo-unknown commit -m 'unknown author' 2>&1 || true")
+    assert "REJECTED" in out6, f"Expected hook to reject 'unknown', got: rc={rc6}, out={out6}"
+    machine.log("PASS: Identity hook rejects 'unknown' (lowercase) author")
   '';
 }
