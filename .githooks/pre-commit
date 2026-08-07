@@ -62,6 +62,16 @@ fi
 STAGED_NIX=$(git diff --cached --name-only --diff-filter=ACM '*.nix')
 all_passed=true
 
+# Fast guard: reject GOTOOLCHAIN=auto in .nix files (breaks sandbox purity).
+if [ -n "$STAGED_NIX" ]; then
+  gotoolchain_violation=$(echo "$STAGED_NIX" | xargs grep -lnE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off' || true)
+  if [ -n "$gotoolchain_violation" ]; then
+    log_error "GOTOOLCHAIN=auto found in staged .nix files — breaks Nix sandbox purity."
+    echo "$STAGED_NIX" | xargs grep -nE 'GOTOOLCHAIN.*auto' 2>/dev/null | grep -v 'GOTOOLCHAIN.*off'
+    exit 1
+  fi
+fi
+
 # Gitleaks
 log_info "Running gitleaks (secret detector)..."
 if gitleaks detect --source . > /tmp/gitleaks.log 2>&1; then

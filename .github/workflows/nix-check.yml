@@ -33,6 +33,20 @@ jobs:
       - name: Evaluate flake (no build)
         run: nix flake check --no-build
 
+      - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
+        run: |
+          # Fail on GOTOOLCHAIN=auto (sandbox purity violation)
+          if grep -rnE 'GOTOOLCHAIN.*auto' --include="*.nix" . 2>/dev/null | grep -v 'GOTOOLCHAIN.*off' | grep -q .; then
+            echo "::error::GOTOOLCHAIN=auto found — breaks Nix sandbox purity"
+            grep -rnE 'GOTOOLCHAIN.*auto' --include="*.nix" . 2>/dev/null | grep -v 'GOTOOLCHAIN.*off'
+            exit 1
+          fi
+          # Warn on ref=master (reproducibility risk)
+          MASTER_COUNT=$(grep -c 'ref\s*=\s*"master"' flake.nix 2>/dev/null || echo "0")
+          if [ "$MASTER_COUNT" -gt 0 ]; then
+            echo "::warning::$MASTER_COUNT flake inputs use ref=master — consider pinning"
+          fi
+
   vm-tests:
     runs-on: ubuntu-latest
     steps:

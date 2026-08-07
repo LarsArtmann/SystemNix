@@ -362,6 +362,43 @@ check "Status (HTTPS)" "https://status.$DOMAIN/" "200" "<html" 2>/dev/null || tr
 check "Immich (HTTPS)" "https://immich.$DOMAIN/api/server/ping" "200" "" 2>/dev/null || true
 check "Overview (HTTPS)" "https://overview.$DOMAIN/" "200" "<html" 2>/dev/null || true
 
+# --- Auth gateway health (oauth2-proxy / forward-auth) ---
+# Catches P9: oauth2-proxy returning 500 on protected vHosts.
+# From LAN, protected vHosts should return 200 (LAN bypass) or redirect (302/303).
+# A 500/502/503 means oauth2-proxy itself is broken — the exact SigNoz incident.
+echo ""
+echo "=== Auth Gateway Health ==="
+AUTH_VHOSTS=(
+  "signoz.$DOMAIN"
+  "dozzle.$DOMAIN"
+  "monitor365.$DOMAIN"
+  "searx.$DOMAIN"
+  "crush.$DOMAIN"
+  "taskchampion.$DOMAIN"
+  "manifest.$DOMAIN"
+)
+for vhost in "${AUTH_VHOSTS[@]}"; do
+  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || echo "000")
+  case "$status" in
+    200|301|302|303)
+      echo -e "${GREEN}PASS${NC} $vhost → $status (auth gateway healthy)"
+      PASS=$((PASS + 1))
+      ;;
+    500|502|503)
+      echo -e "${RED}FAIL${NC} $vhost → $status (auth gateway BROKEN — check oauth2-proxy)"
+      FAIL=$((FAIL + 1))
+      ;;
+    000)
+      echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
+      SKIP=$((SKIP + 1))
+      ;;
+    *)
+      echo -e "${YELLOW}WARN${NC} $vhost → $status (unexpected status)"
+      SKIP=$((SKIP + 1))
+      ;;
+  esac
+done
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
