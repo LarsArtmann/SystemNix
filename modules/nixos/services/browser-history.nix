@@ -60,12 +60,13 @@
                 "ADDR=127.0.0.1:${toString cfg.port}"
                 "DB_PATH=${cfg.dataDir}/browser-history.db"
                 "WEBAUTHN_RPID=${fqdn}"
-                ''WEBAUTHN_RP_NAME=Browser History''
+                "WEBAUTHN_RP_NAME=BrowserHistory"
                 "WEBAUTHN_ORIGINS=https://${fqdn}"
                 "COOKIE_SECURE=true"
                 "CSRF_ENABLED=true"
                 "REQUIRE_AUTH=true"
                 "OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318"
+                "OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf"
               ];
             }
             (harden {
