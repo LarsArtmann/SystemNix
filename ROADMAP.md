@@ -56,7 +56,7 @@ The system has been hardened through multiple crash cycles (QLC SLC cache exhaus
 - **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression (global registry rewrites github→tarball). 4-layer defense deployed (eval guard + pre-commit + CI normalization + recovery script). Registry override needs reboot to activate. Daemon itself needs to normalize or stop committing flake.lock
 - **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond Attic/SearXNG to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, `builtins.toString null` slice key bug
 - **vendorHash drift detection** — Systemic issue: nixpkgs updates break Go vendorHashes across 8+ repos. `nix flake check` does NOT catch FOD mismatches. Consider CI matrix, batch script, or pre-commit hook
-- **Declarative health-check** — `scripts/service-health-check.sh` uses hand-maintained service list. Retired services produced false-negatives; active services missing. Generate from Nix config instead
+- **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is hand-maintained (only 4 services). Generate from Nix config instead
 
 ---
 
@@ -67,7 +67,7 @@ Items that benefit the broader Nix ecosystem:
 - **nixpkgs PRs**: `aw-watcher-utilization` poetry-core migration, `valkey`/`aiocache` test fixes, `taskwarrior3` build flags, Kitty GC resilience patch, KeePassXC Chromium manifests
 - **Home Manager PRs**: ActivityWatch Wayland watcher deps, ActivityWatch theme option, Darwin user definition requirement (#6036)
 - **Third-party**: `jscpd` lockfile publishing, XRT boost 1.87+ compat for `nix-amd-npu`, direnv caching pattern (fish-native mtime gate, GC root optimization)
-- **LarsArtmann apps**: Hermes directory auto-creation + state migration, PMA `GenerateMessage` handler leak
+- **LarsArtmann apps**: dnsblockd OTEL cardinality leak (unbounded labels), Monitor365 DuckDB pool deadlock root cause, DiscordSync chattr ExecStartPre (upstream module fix), PMA daemon broken flake.lock commits, file-and-image-renamer input pinning (`ref=master` → tags), Hermes directory auto-creation + state migration, PMA `GenerateMessage` handler leak
 
 See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 
@@ -100,9 +100,8 @@ See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 | ComfyUI               | Removed  | Prefer using AI models via code directly       |
 | Authelia              | Removed  | Replaced by Pocket ID (passkey-based, simpler) |
 | Prometheus            | Removed  | Replaced by SigNoz (full-stack observability)  |
-| Hyprland              | Removed  | Replaced by Niri (scrollable tiling)           |
+| Hyprland              | Removed  | Replaced by Niri (scrollable tiling). grimblast dependency purged (~122 MiB)   |
 | swww wallpaper daemon     | Removed  | Ghost service crash-looping 1220+ times/boot. DMS manages wallpapers natively via IPC |
-| Hyprland                  | Removed  | Replaced by Niri (scrollable tiling). grimblast dependency purged (~122 MiB) |
 | DNS-over-QUIC overlay     | Disabled | Breaks binary cache (40+ min builds)                           |
 | llama-cpp MFMA flag   | Removed  | No-op on RDNA 3.5 (Strix Halo). Only affects CDNA GPUs |
 | SearXNG rate limiter  | Removed  | Private LAN, no abuse vector. Redis removed too |

@@ -176,24 +176,24 @@ all checks passed!
 
 ## What Was NOT Addressed
 
-1. **Deploy** — fixes are in source, not deployed. System is still running without the
-   memory cap. **Deploy ASAP** to prevent another crash.
+1. ~~**Deploy** — fixes are in source, not deployed. System is still running without the
+   memory cap. **Deploy ASAP** to prevent another crash.~~ done at `4372f51d` (deployed Aug 4)
 
-2. **monitor365-server CPU runaway** — server was running at 113-148% CPU processing the 597M
+2. ~~**monitor365-server CPU runaway** — server was running at 113-148% CPU processing the 597M
    event backlog. The `max_events_per_day = 1000000000` (1B) override makes it drain as fast
    as possible. With the user-1000.slice cap now in place, the system should survive the
    backlog processing. But monitor365-server's DuckDB keeps hitting its 953.6 MiB MemoryMax.
-   May need to raise the MemoryMax or reduce the backlog.
+   May need to raise the MemoryMax or reduce the backlog.~~ done at `9f1bd087`, `183925f4` (MemoryMax raised + pool-deadlock watchdog; root cause still tracked TODO_LIST P6)
 
-3. **dnsblockd memory leak** — grew to 1 GB RSS before OOM-kill in the previous boot. The
-   sdns cache may have unbounded growth. Needs investigation upstream.
+3. ~~**dnsblockd memory leak** — grew to 1 GB RSS before OOM-kill in the previous boot. The
+   sdns cache may have unbounded growth. Needs investigation upstream.~~ mitigated at `9bf6fc47` (GOMEMLIMIT=1500MiB + MemoryMax=2G; OTEL cardinality root cause tracked TODO_LIST P6)
 
 4. **system.slice has no memory.max cap** — only user-1000.slice is capped. System services
    collectively have no hard ceiling. The per-service MemoryMax limits help, but the
    aggregate is uncapped. Consider adding a `system.slice` MemoryMax as defense-in-depth.
 
-5. **8 boot-time service failures** — most are transient (DNS races, model loading), but
-   DiscordSync needs the db-heal deployed to recover.
+5. ~~**8 boot-time service failures** — most are transient (DNS races, model loading), but
+   DiscordSync needs the db-heal deployed to recover.~~ done at `4372f51d` (deployed Aug 4; db-heal active)
 
 ---
 
