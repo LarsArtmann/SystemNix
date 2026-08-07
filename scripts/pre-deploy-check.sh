@@ -147,6 +147,56 @@ if [ "$SEARXNG_ENABLED" = "true" ] && [ -n "$SEARXNG_PORT" ]; then
   fi
 fi
 
+# 10. Metric presence — verify Gatus pat() metric names actually appear in /metrics
+echo ""
+echo "10. Metric presence validation (phantom metric detection)"
+GATUS_CONFIG="modules/nixos/services/gatus-config.nix"
+NODE_EXPORTER_PORT=9100
+MONITOR365_PORT=9191
+
+# Extract metric-like names from gatus pat() patterns.
+# Skips HTML checks (*<html*), text body checks, and comments.
+extract_gatus_metrics() {
+  grep -v '^[[:space:]]*#' "$GATUS_CONFIG" \
+    | grep -oE 'pat\(\*[a-zA-Z_][a-zA-Z0-9_]*' \
+    | sed 's/pat(\*//' \
+    | sort -u \
+    | grep -vE '^<|connected'
+}
+
+# Fetch metrics from both endpoints, combine into one blob for searching
+METRICS_BLOB=""
+if curl -sf --max-time 3 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" >/dev/null 2>&1; then
+  METRICS_BLOB+=$(curl -sf --max-time 3 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" 2>/dev/null || echo "")
+  pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
+else
+  warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — skipping metric checks that depend on it"
+fi
+
+if curl -sf --max-time 3 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >/dev/null 2>&1; then
+  METRICS_BLOB+=$'\n'$(curl -sf --max-time 3 "http://127.0.0.1:${MONITOR365_PORT}/metrics" 2>/dev/null || echo "")
+  pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
+else
+  warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — skipping metric checks that depend on it"
+fi
+
+if [ -n "$METRICS_BLOB" ]; then
+  MISSING_METRICS=0
+  for metric in $(extract_gatus_metrics); do
+    if echo "$METRICS_BLOB" | grep -q "^${metric}\b\|^# HELP ${metric}\b\|^# TYPE ${metric}\b"; then
+      pass "Metric '$metric' present"
+    else
+      fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
+      MISSING_METRICS=$((MISSING_METRICS + 1))
+    fi
+  done
+  if [ "$MISSING_METRICS" -gt 0 ]; then
+    warn "$MISSING_METRICS phantom metric/metrics — check if the emitting service is running or if the metric name changed"
+  fi
+else
+  warn "No metrics endpoints responding — cannot validate phantom metrics"
+fi
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="
