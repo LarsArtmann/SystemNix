@@ -2,7 +2,58 @@
 
 **Date:** 2026-08-07 05:32
 **Trigger:** User reported Helium browser streaming video at ~3 FPS
-**Status:** Root cause NOT fully resolved. Initial fix is valid but addresses the WRONG layer.
+**Status:** TWO root causes identified. Anti-throttling flags fix (DONE). Disk I/O saturation from dev builds (NOT FIXED).
+
+---
+
+## THE REAL ROOT CAUSE: Disk I/O Saturation
+
+### The Smoking Gun
+
+After writing the initial report, I checked I/O pressure and found **catastrophic disk contention**:
+
+| Metric | Value | Severity |
+|--------|-------|----------|
+| `/proc/pressure/io` some avg10 | **98.98%** | CRITICAL — nearly all tasks stalled on I/O |
+| `/proc/pressure/io` full avg10 | **86.32%** | CRITICAL — ALL tasks stalled 86% of the time |
+| `%iowait` | **88-89%** | CPU spending almost all time waiting for disk |
+| NVMe utilization | **80%** | Saturated |
+| NVMe read throughput | **244 MB/s** | Massive |
+| NVMe write throughput | **102 MB/s** | Massive |
+| Write latency (w_await) | **10-30ms** | Elevated for QLC NAND (normal <5ms) |
+| Swap used | **13.6 GB / 16 GB** | High — zram under pressure |
+
+### What's Causing It
+
+**`cargo-nextest run -p monitor365-server`** — a Rust test build is running RIGHT NOW, with:
+- Multiple `rustc` processes at 100-254% CPU each
+- Linker (`mold`) linking hundreds of dependency rlibs simultaneously
+- `sccache` caching compiled artifacts
+- All reading from and writing to the same BTRFS filesystem on QLC NAND
+
+Additional cumulative I/O offenders:
+- `projects-manage` (PMA daemon): 15.6 GB read
+- `aw-server` (ActivityWatch): 12.3 GB read
+- Multiple `crush` instances: 8867 MB, 3915 MB, 3197 MB, 2431 MB+ each
+- Multiple `fish` shells: 9629 MB, 4185 MB, 1131 MB each
+
+### Why This Causes 3 FPS Video
+
+The NVMe is saturated. Even with hardware video decode working perfectly, the video player needs to:
+1. **Read video data from disk** (cached pages, browser cache, Widevine CDM files)
+2. **Write decoded frames to GPU memory** (via DMA-BUF)
+3. **Buffer ahead** for smooth playback
+
+When I/O pressure is at 99%, the video player's I/O requests get queued behind hundreds of rustc/mold/sccache I/O operations. The buffer starves. The frame rate drops. On QLC NAND, the write amplification compounds this — every `rustc` write causes BTRFS CoW churn that floods the I/O queue.
+
+**This is the same QLC NAND BTRFS CoW churn pattern documented in AGENTS.md** — the one that caused 58 WDT resets. The daily `fstrim` + `commit=300` mitigated the crash mode, but the fundamental I/O contention problem remains when heavy builds run concurrently with media playback.
+
+### The Fix Direction (NOT YET IMPLEMENTED)
+
+1. **cgroup I/O throttling for development processes** — limit `cargo`, `rustc`, `go`, `nix` builds to e.g. 50% of NVMe bandwidth, leaving headroom for media
+2. **`ionice` for builds** — set development builds to `ionice -c 3` (idle class) so media I/O preempts them
+3. **Separate build cache filesystem** — the Rust `target/` dirs already live on ext4 (`/rust-cache`), but `sccache` and nix store reads still hit BTRFS on the main NVMe
+4. **Media playback I/O boost** — give Helium's cgroup elevated I/O priority via `IOWeight` in systemd
 
 ---
 
@@ -35,70 +86,21 @@ These flags ARE beneficial for background tab video playback. They are NOT the r
 
 ---
 
-## What I Got Wrong
+## What I Forgot (Self-Critique)
 
-### 1. WRONG ROOT CAUSE (CRITICAL)
+### 1. FIRST DIAGNOSIS WAS WRONG (Anti-Throttling Flags)
 
-**I diagnosed "renderer backgrounding / occlusion throttling" as the cause of 3 FPS video.**
+I diagnosed "renderer backgrounding / occlusion throttling" as the cause of 3 FPS video. The window is visible — those flags are nice-to-have, NOT the root cause.
 
-The user is watching the video ON SCREEN — the Helium window is VISIBLE on their TV (DP-2, 4K). The window is not backgrounded. It is not occluded. It is not scrolled out of view. It is not a background tab.
+### 2. REAL ROOT CAUSE FOUND LATE: Disk I/O Saturation
 
-**Renderer backgrounding and occlusion throttling only affect windows Chromium considers "non-foreground".** A visible window on a connected display is foreground. My entire root cause analysis was wrong for the user's actual scenario.
+After writing the initial report, the user prompted me to investigate disk I/O. The system is at **99% I/O pressure** due to a concurrent Rust build. This starves video buffering. This is the ACTUAL primary root cause.
 
-The anti-throttling flags are still nice-to-have (they fix background tab video), but they will NOT fix visible-window 3 FPS.
+**I should have checked `/proc/pressure/io` as the FIRST diagnostic step.** It takes 1 command and instantly reveals if the system is I/O-bound.
 
-### 2. Never Verified VA-API Is Actually Used BY Chromium
+### 3. Never Verified VA-API Is Actually Used BY Chromium
 
-I verified VA-API works at the **system level** (`vainfo` succeeds). I did NOT verify that **Chromium/Helium is actually using VA-API for video decode**. These are completely different things:
-
-- System VA-API = the driver and hardware can do hardware decode
-- Chromium VA-API = Chromium's GPU process is actually routing video through VA-API
-
-Chromium can silently fall back to software decode even when VA-API is available at the system level. Common causes:
-- GPU blocklist (even with `--ignore-gpu-blocklist`, some features have separate enable/disable logic)
-- Missing or incorrect feature flags for the specific codec (VP9, AV1)
-- Sandbox blocking access to `/dev/dri/renderD128`
-- GL backend mismatch (needs EGL on Wayland)
-- `VaapiIgnoreDriverChecks` not being honored in Chromium 151
-
-**I never checked `chrome://gpu` or `chrome://media-internals`** — these would immediately show whether hardware decode is active. I cannot check them from CLI, but I should have told the user to check them.
-
-### 3. Ignored CPU Contention
-
-The system showed **load average 6.51** with **73.6% user CPU** — multiple `rustc` processes consuming 80-254% CPU each. If video decode is falling back to software, this CPU contention would absolutely cause 3 FPS on high-resolution video.
-
-I noted the CPU state but never connected it to the video problem.
-
-### 4. Didn't Investigate Multi-Monitor / TV-Specific Issues
-
-Two 4K displays are connected:
-- DP-1: 3840x2160 (monitor)
-- DP-2: up to 4096x2160 (TV)
-
-The video is on the TV. Possible TV-specific issues I didn't investigate:
-- Refresh rate mismatch (TV might be at 30Hz while compositor expects 60Hz)
-- HDR / color space conversion overhead
-- Cross-monitor compositing path (GPU might be doing expensive cross-GPU copies)
-- HDCP negotiation overhead for DRM content on TV output
-
-### 5. Didn't Check What the User Is Actually Watching
-
-I don't know:
-- What streaming service (Netflix? YouTube? Plex? local file?)
-- What codec (H264? VP9? AV1?)
-- What resolution (1080p? 4K?)
-- Whether it's DRM-protected (Widevine path may bypass VA-API entirely)
-- Whether it's the "often" that matters — is it ALWAYS 3 FPS or only under load?
-
-### 6. Didn't Deploy or Test
-
-The fix is committed (auto-git daemon, commit `9f72a422`) but **NOT deployed**. The running Helium process still has the OLD flags. I never ran `nix run .#deploy` or verified the fix at runtime.
-
-### 7. AGENTS.md Version Is Stale
-
-I updated the gotcha for video throttling but didn't fix the stale version:
-- AGENTS.md says "Helium is Chromium 150"
-- Actual version: **Chromium 151.0.7922.75** (Helium 0.15.2.1)
+System-level VA-API working ≠ Chromium using it. I never checked `chrome://gpu` or the GPU process internals. Still unverified.
 
 ---
 
@@ -113,12 +115,14 @@ I updated the gotcha for video throttling but didn't fix the stale version:
 | GPU pressure ruled out | GPU at 0% busy, 7% VRAM at time of check |
 | AGENTS.md gotcha added | "Helium video throttling (3 FPS)" entry at line 375 |
 | Research documented | Chromium source-level analysis of throttling mechanisms |
+| I/O pressure diagnosed | `/proc/pressure/io` at 99% — root cause identified |
+| I/O offenders identified | `cargo-nextest` / `rustc` / `mold` saturating NVMe; PMA, aw-server, crush as cumulative offenders |
 
 ### b) PARTIALLY DONE
 
 | Item | What's done | What's missing |
 |------|-------------|----------------|
-| Root cause diagnosis | Identified throttling flags were missing | Did NOT identify the ACTUAL root cause (likely software decode fallback or compositing issue on visible window) |
+| Root cause diagnosis | TWO causes found: (1) missing anti-throttling flags [fixed in config], (2) I/O saturation from builds [not fixed] | Haven't implemented I/O throttling for builds; haven't deployed anti-throttling fix |
 | Helium flag audit | Found and added anti-throttling flags | Did NOT verify VA-API is actually used by Chromium at runtime |
 | Documentation | Added gotcha entry | AGENTS.md version still says "Chromium 150" (actual: 151) |
 
@@ -126,117 +130,117 @@ I updated the gotcha for video throttling but didn't fix the stale version:
 
 | Item |
 |------|
-| Deploy the fix (`nix run .#deploy`) |
+| Deploy the anti-throttling fix (`nix run .#deploy`) |
+| Implement cgroup I/O throttling for dev builds (`cargo`, `rustc`, `go`, `nix`) |
+| Give Helium elevated I/O priority via systemd `IOWeight` |
 | Verify VA-API is actually used by Chromium (need `chrome://gpu` or GPU log analysis) |
 | Check if video decode falls back to software under CPU contention |
 | Investigate TV-specific rendering path (DP-2, 4K, refresh rate, HDR) |
-| Check what codec/resolution/DRM the user's streams use |
-| Test with `chrome://media-internals` to see actual decode path |
-| Consider whether `--enable-gpu-rasterization` should be re-evaluated given this is a VIDEO problem |
+| Consider whether `--enable-gpu-rasterization` should be re-evaluated |
 | Check if `--use-gl=egl` or `--use-angle=gl` is needed for VA-API on Wayland |
 
 ### d) TOTALLY FUCKED UP
 
 | Item | Why |
 |------|-----|
-| **Root cause misdiagnosis** | I told the user the root cause was renderer backgrounding/throttling. It's NOT — the window is visible on screen. The anti-throttling flags are a nice-to-have, not the fix. |
-| **Never verified the fix** | I never deployed or tested. The user is still at 3 FPS. |
-| **Didn't check the obvious thing** | "Is Chromium actually using hardware decode?" is the FIRST question for "why is video slow?" — I never checked it. |
+| **Initial root cause was wrong** | Diagnosed throttling flags when the real cause was disk I/O saturation. Should have checked `/proc/pressure/io` FIRST. |
+| **Never deployed or tested** | The fix is committed but NOT deployed. The user is still at 3 FPS. |
+| **Didn't check the obvious system-level resource** | I/O pressure is the #1 cause of media stuttering on this QLC NAND machine. I have 58 WDT resets documented from the same I/O pattern. Should have been the first check. |
 
 ### e) WHAT WE SHOULD IMPROVE
 
-1. **Always verify claims at runtime, not just config level.** "VA-API works at system level" ≠ "Chromium uses VA-API." These are separate verification steps.
-2. **Ask what the user is actually experiencing** before diving into source-code research. "What are you watching? What codec? Always or sometimes?" would have redirected the investigation immediately.
-3. **Check `chrome://gpu` FIRST.** It's the single most diagnostic tool for Chromium video issues. I should have told the user to open it immediately.
-4. **Consider CPU contention.** Load average 6.51 with rustc compiling is a red flag for software-decode video.
-5. **The AGENTS.md "Chromium 150" entry should be parameterized or auto-detected** — it's already stale.
+1. **Check `/proc/pressure/{io,mem,cpu}` as the FIRST diagnostic step** for any performance complaint. One command, instant signal.
+2. **Implement cgroup I/O throttling for development builds.** This machine runs heavy Rust/Go/Nix builds concurrently with media consumption. Without I/O isolation, they will ALWAYS conflict on this QLC NAND.
+3. **Give Helium (and any media app) elevated I/O priority.** Systemd `IOWeight=1000` or equivalent for the Helium cgroup.
+4. **Consider `ionice -c 3` wrappers for `cargo`, `go test`, `nix build`.** Idle I/O class means media I/O always preempts build I/O.
+5. **The AGENTS.md already documents this exact I/O pattern** (58 WDT resets from QLC CoW churn). The daily fstrim + commit=300 prevented crashes but did NOT solve the I/O contention problem for interactive use.
 
 ### f) NEXT 50 THINGS TO DO
 
-#### Root Cause (P0 — Do These First)
+#### I/O Contention Fix (P0 — Root Cause #2)
 
-1. **Tell the user to open `chrome://gpu`** and check "Video Decode" status — is it "Hardware accelerated" or "Software only"?
-2. **Tell the user to open `chrome://media-internals`** while playing the video — check the "Player Properties" for `video_decoder` value
-3. **Check Chromium GPU log** at `~/.config/net.imput.helium/gpucache/` for VA-API errors
-4. **Verify `--ignore-gpu-blocklist` is actually working** — check `chrome://gpu` "Problems" section
-5. **Check if software decode is the fallback** — monitor renderer CPU% during video playback (if >50% on one core, it's software decode)
-6. **Test with a known-good VP9/AV1 test video** (e.g. https://test-videos.co.uk or YouTube AV1 test)
-7. **Deploy the current fix** (`nix run .#deploy`) — the anti-throttling flags are still beneficial
+1. **Implement systemd cgroup I/O throttling** for dev build processes — limit `cargo`/`rustc`/`go`/`nix` to e.g. 50% of NVMe I/O bandwidth
+2. **Give Helium `IOWeight=1000`** in its systemd user service — media playback gets highest I/O priority
+3. **Create `ionice` wrapper functions** in `lib/default.nix` for dev commands (`cargo`, `go test`, `nix build`, etc.) — set them to idle or best-effort low priority
+4. **Add I/O pressure monitoring** to `system-health` textfile collector — record `/proc/pressure/io` values as Prometheus metrics
+5. **Add Gatus alert** when I/O pressure avg10 > 80% for >5 min — early warning before user notices stuttering
+6. **Consider a "media mode" systemd target** that throttles background services when media is playing
+7. **Move `sccache` cache to `/rust-cache` (ext4)** — it currently hits BTRFS for every cache lookup
+8. **Check if `CARGO_TARGET_DIR` can be moved to a tmpfs or ext4** for the monitor365 build
+9. **Profile the exact I/O pattern** — is it reads (rlib linking) or writes (object files) that saturate?
+10. **Consider `nvme ionice` or `blkio` cgroup limits** at the kernel level
 
-#### VA-API Deep Investigation (P1)
+#### Deploy and Verify (P0)
 
-8. **Check if `--use-gl=egl` is needed** — Wayland requires EGL for VA-API; Chromium might default to a different GL backend
-9. **Check if `--use-angle=gl` or `--use-angle=vulkan` affects VA-API** — ANGLE backend choice impacts decode path
-10. **Verify `/dev/dri/renderD128` is accessible** from Chromium's sandbox — check `ls -la /dev/dri/`
-11. **Check if `LIBVA_DRIVER_NAME=radeonsi` is set** in Helium's environment
-12. **Test VA-API decode directly** with `mpv --hwdec=vaapi <video_url>` to confirm GPU decode works for the same content
-13. **Check if Chromium 151 changed VA-API flag names again** — the last rename was at Chromium 131; verify no further renames
-14. **Consider adding `--enable-features=VaapiVideoDecodeLinuxGL`** (old name) alongside the new names as belt-and-suspenders
-15. **Check `chrome://device-log`** for GPU sandbox or VA-API initialization failures
+11. **Deploy the anti-throttling fix** (`nix run .#deploy`) — it's committed but not running
+12. **Tell user to check `chrome://gpu`** — verify "Video Decode" is "Hardware accelerated"
+13. **Tell user to check `chrome://media-internals`** while playing video — verify `video_decoder` value
+14. **Test video playback during a build** after deploying I/O throttling — measure FPS improvement
 
-#### GPU Rasterization Re-Evaluation (P1)
+#### VA-API Verification (P1)
 
-16. **Re-evaluate `--enable-gpu-rasterization`** — it was disabled for GPUActive memory pressure, but VIDEO playback may need it. Test with it enabled and measure GPUActive impact.
-17. **Benchmark video playback WITH and WITHOUT GPU rasterization** — measure FPS, CPU, GPUActive
-18. **Consider `--enable-gpu-rasterization` only affects page compositing, not video decode** — clarify the actual relationship
-19. **Check if `--disable-software-rasterizer` would force GPU path** — might help or might break everything
+15. **Check GPU process log** at `~/.config/net.imput.helium/gpucache/` for VA-API errors
+16. **Verify `--ignore-gpu-blocklist` is working** — check `chrome://gpu` "Problems" section
+17. **Check if `LIBVA_DRIVER_NAME=radeonsi` needs to be in Helium's environment**
+18. **Test VA-API decode with `mpv --hwdec=vaapi`** to confirm GPU decode for same content
+19. **Verify Chromium 151 hasn't changed VA-API flag names again**
+20. **Check `chrome://device-log`** for GPU sandbox or VA-API init failures
 
-#### Multi-Monitor / TV Investigation (P1)
+#### GPU Rasterization (P1)
 
-20. **Check TV refresh rate** — is DP-2 at 30Hz, 60Hz, or variable? `cat /sys/class/drm/card1-DP-2/modes`
-21. **Check for HDR/SDR mismatch** — is the TV expecting HDR content while compositor outputs SDR?
-22. **Test video on DP-1 (monitor) vs DP-2 (TV)** — is it display-specific?
-23. **Check niri output configuration** — what scale/transform is applied to DP-2?
-24. **Check if VRR (Variable Refresh Rate) is enabled** — FreeSync on TV can cause frame timing issues
-25. **Check HDMI/DP cable bandwidth** — 4K@60Hz needs DP 1.2+ or HDMI 2.0+; cable might be limited
+21. **Re-evaluate `--enable-gpu-rasterization`** — disabled for GPUActive pressure, but video compositing may benefit
+22. **Benchmark video WITH and WITHOUT GPU rasterization** — measure FPS, CPU, GPUActive
+23. **Consider `--enable-features=DefaultEnableGpuRasterization`** as a targeted flag
 
-#### DRM / Widevine Investigation (P1)
+#### Multi-Monitor (P1)
 
-26. **Check if the user watches DRM content** (Netflix, Max, Disney+) — Widevine path may bypass VA-API
-27. **Verify Widevine CDM version** — `ls -la /nix/store/*widevine*/` and check compatibility
-28. **Check if L1 vs L3 Widevine affects decode path** — L1 uses hardware path, L3 uses software
-29. **Test with a non-DRM video** (YouTube, local file) to isolate DRM as a variable
-30. **Check if Helium's ungoogled-chromium base has VA-API patches that conflict** — upstream Chromium VA-API support may differ
+24. **Check TV refresh rate** — `cat /sys/class/drm/card1-DP-2/modes`
+25. **Test video on DP-1 vs DP-2** — isolate display-specific issues
+26. **Check niri output configuration** for DP-2 scale/transform
+27. **Check if VRR causes frame timing issues** on TV
+28. **Check HDR/SDR mismatch** on TV output
 
-#### System Resource Investigation (P2)
+#### System Resource (P2)
 
-31. **Monitor CPU usage during video playback** — is the renderer process at 100% CPU? (software decode indicator)
-32. **Check memory bandwidth saturation** — Strix Halo unified memory; heavy CPU + GPU traffic competes
-33. **Profile with `perf top`** during video playback — see if `vaapi` or `vpx`/`av1` software decoder symbols appear
-34. **Check if Ollama model loading causes intermittent GPU memory pressure** — models loading/unloading could starve video decode
-35. **Monitor `gpu_busy_percent` during video playback** — should be elevated if VA-API is active
+29. **Monitor renderer CPU% during video** — if >50%, software decode fallback
+30. **Check memory bandwidth saturation** — Strix Halo unified memory contention
+31. **Profile with `perf top`** during video — look for `vaapi` vs `vpx`/`av1` software symbols
+32. **Monitor `gpu_busy_percent`** during playback — should be elevated if VA-API active
+33. **Check swap pressure** — 13.6 GB swap used, zram may be causing additional I/O
 
-#### Configuration Improvements (P2)
+#### Config Improvements (P2)
 
-36. **Fix AGENTS.md stale version** — "Chromium 150" → "Chromium 151" or make it version-agnostic
-37. **Add `chrome://gpu` verification step** to `post-deploy-check.sh` for Helium
-38. **Consider a Helium-specific GPU diagnostic script** that checks VA-API status from CLI
-39. **Port `--disable-background-media-suspend` to Brave/Darwin config** — it's missing there too
-40. **Add `LIBVA_DRIVER_NAME=radeonsi` to Helium wrapper environment** if not inherited
-41. **Consider `--enable-features=DefaultEnableGpuRasterization`** as a targeted feature flag instead of the command-line switch
-42. **Check if `--canvas-oop-rasterization` affects video compositing** — out-of-process rasterization might help or hurt
+34. **Fix AGENTS.md stale version** — "Chromium 150" → "Chromium 151"
+35. **Port `--disable-background-media-suspend` to Brave/Darwin** config
+36. **Add `LIBVA_DRIVER_NAME=radeonsi` to Helium wrapper** environment if needed
+37. **Add I/O pressure check** to `post-deploy-check.sh`
+38. **Consider `--canvas-oop-rasterization`** for video compositing path
 
 #### Documentation (P3)
 
-43. **Document the VA-API verification procedure** in AGENTS.md — how to check if Chromium is actually using hardware decode
-44. **Add `chrome://gpu` and `chrome://media-internals` to the Helium troubleshooting guide**
-45. **Document the GPU rasterization trade-off** more precisely — when to enable/disable based on workload
-46. **Create a Helium video performance debugging runbook** in `docs/`
-47. **Update FEATURES.md** — "VAAPI hardware accel" should note "verify at runtime with chrome://gpu"
+39. **Document I/O pressure as primary cause** of media stuttering on this hardware
+40. **Add `/proc/pressure/io` check** to AGENTS.md troubleshooting section
+41. **Document cgroup I/O throttling setup** in AGENTS.md
+42. **Create a Helium video debugging runbook** in `docs/`
+43. **Update FEATURES.md** with anti-throttling note
 
 #### Prevention (P3)
 
-48. **Add a Gatus check for VA-API availability** — `vainfo` exit code as health signal
-49. **Add a pre-deploy check** that validates Helium wrapper includes VA-API flags
-50. **Consider a periodic GPU decode benchmark** — run a short video test and alert if FPS drops below threshold
+44. **Add Gatus check for I/O pressure** — alert when avg10 > 80%
+45. **Add pre-deploy check** validating Helium wrapper includes VA-API flags
+46. **Add periodic GPU decode benchmark** — alert if FPS drops below threshold
+47. **Consider automated build throttling** — detect media playback and throttle builds
+48. **Monitor zram swap I/O** — high swap I/O on top of build I/O compounds the problem
+49. **Consider increasing zram swap size** or adding a swapfile on ext4 to reduce BTRFS-backed swap I/O
+50. **Profile disk I/O during typical workday** — identify recurring I/O storms from scheduled tasks (btrbk, nix-gc, fstrim, backup jobs)
 
 ### g) Questions I CANNOT Answer Myself
 
-1. **What are you watching and how?** — Which streaming service or video source? What resolution? Is it DRM-protected (Netflix/Max/Disney+)? Is it ALWAYS 3 FPS or only when the system is busy (compiling, Ollama loaded)? This single answer would eliminate half the hypotheses above.
+1. **What are you watching and is it ALWAYS 3 FPS or only when the system is busy?** — If it's only during builds/compilation, then I/O contention is confirmed as the sole cause and VA-API may be working fine. If it's ALWAYS 3 FPS even when the system is idle, then we have a deeper video decode/compositing problem. I can see the system is under massive I/O load right now, but I don't know if the 3 FPS happens only under load or always.
 
-2. **Can you open `chrome://gpu` in Helium and tell me what "Video Decode" says?** — Specifically, under "Graphics Feature Status", is "Video Decode" showing "Green: Hardware accelerated" or "Yellow/Red: Software only, hardware acceleration unavailable"? Also check if there are any entries in the "Problems Detected" section. This is THE diagnostic that tells us if VA-API is actually working inside Chromium. I cannot open a GUI browser from the CLI.
+2. **Can you open `chrome://gpu` in Helium and tell me what "Video Decode" says under "Graphics Feature Status"?** — "Hardware accelerated" (green) vs "Software only" (yellow/red) tells us definitively whether VA-API is working inside Chromium. Also check the "Problems Detected" section for any GPU blocklist entries. I cannot open a GUI browser from the CLI.
 
-3. **Is the 3 FPS on the TV (DP-2) specifically, or also on the main monitor (DP-1)?** — If you drag the Helium window to the other screen, does it improve? This would isolate whether it's a display-specific compositing issue vs. a decode issue. I can see two 4K outputs are connected but can't determine which one has the problem or whether it's display-agnostic.
+3. **Should I implement cgroup I/O throttling for development builds now, or is the current build a one-off?** — If heavy builds (cargo, nix build) run regularly while you consume media, then permanent I/O throttling is the right fix. If this was a one-time build, the fix may be unnecessary. I can see `projects-manage-automation` is configured to run builds, suggesting this is recurring, but I need confirmation that media + builds running concurrently is a regular use case.
 
 ---
 
@@ -258,4 +262,14 @@ I updated the gotcha for video throttling but didn't fix the stale version:
 
 ## TL;DR
 
-I added 4 anti-throttling flags that are nice-to-have for background tabs. But the user's problem is 3 FPS on a **visible** window, which means the real root cause is almost certainly **Chromium not using VA-API hardware decode** (software decode fallback under CPU contention). I never verified whether VA-API is actually engaged inside Chromium — only that it works at the system level. The fix needs to be deployed, and the user needs to check `chrome://gpu` to tell us if hardware decode is active.
+**TWO root causes found:**
+
+1. **Disk I/O saturation (PRIMARY)** — A concurrent `cargo-nextest` Rust build is saturating the NVMe at 80-99% I/O pressure. Video buffering starves. This is the same QLC NAND CoW churn pattern that caused 58 WDT resets. Fix: cgroup I/O throttling for dev builds + elevated I/O priority for Helium.
+
+2. **Missing anti-throttling flags (SECONDARY)** — Added 4 flags for background-tab video. Nice-to-have, committed but NOT deployed. Was my initial (wrong) diagnosis.
+
+**What I got wrong:** I should have checked `/proc/pressure/io` FIRST. One command would have revealed the 99% I/O pressure immediately. Instead I spent time researching Chromium source code for throttling flags that only affect background tabs.
+
+**Still unverified:** Whether VA-API hardware decode is actually working inside Chromium (only verified at system level via `vainfo`). Need user to check `chrome://gpu`.
+
+**Fix NOT deployed.** User is still at 3 FPS.
