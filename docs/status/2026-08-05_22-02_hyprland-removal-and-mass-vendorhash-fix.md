@@ -65,7 +65,7 @@ DIFF:  -122 MiB
 |---|------|
 | 1 | Reboot evo-x2 to activate the new boot profile (registry override takes effect) |
 | 2 | Deploy to macOS (Darwin registry override) |
-| 3 | Add tarball guard to CI / flake checks (the eval-time `nixpkgsTarballGuard` in `flake.nix:524-534` catches it, but a `nix flake check` step in CI would prevent merge) |
+| ~~3~~ | ~~Add tarball guard to CI / flake checks~~ done at `78a0ed31` |
 | 4 | Investigate whether the PMA auto-commit daemon can add `--no-use-registries` or `--override-input` to its `nix flake update` command to prevent tarball rewrites at the source |
 
 ---

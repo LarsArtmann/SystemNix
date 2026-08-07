@@ -110,15 +110,15 @@ discovered late (caught in final verification rather than proactively).
 
 ## c) NOT STARTED
 
-- **`nix run .#deploy`** — no end-to-end deploy was run. This is the ultimate test.
+- ~~**`nix run .#deploy`** — no end-to-end deploy was run. This is the ultimate test.~~ done (deployed in subsequent session)
 - **`nix run .#pre-deploy-check`** — not run.
 - **`nix run .#post-deploy-check`** — not run (needs a deploy first).
 - **Batch-build ALL Go packages** — only the 6 known-broken ones were verified. Others not tested.
 - **Sweep go-cqrs-lite for other local replaces** — the `flightrecorder`, `codec`, and other
   submodule replaces (`=> ../flightrecorder`, `=> ../codec`) are intra-monorepo (cqrs-lite →
   cqrs-lite submodules) so they're fine for mkPreparedSource. But I didn't verify this.
-- **`swww` renamed to `awww` warning** — eval emits this warning. Not investigated. May be a
-  package rename in nixpkgs that requires a config update.
+- ~~**`swww` renamed to `awww` warning** — eval emits this warning. Not investigated. May be a
+  package rename in nixpkgs that requires a config update.~~ done at `fb14ce2a` (swww removed entirely; DMS manages wallpapers)
 - **Status report from earlier** (`2026-08-04_10-18_build-failure-diagnosis-self-review.md`) — not
   annotated with "FIXED" status. It still reads as an open diagnosis.
 - **flake.lock consolidation** — 5 go-cqrs-lite lock nodes still exist. Not simplified.

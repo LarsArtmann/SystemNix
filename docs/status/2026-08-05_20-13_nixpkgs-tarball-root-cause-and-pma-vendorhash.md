@@ -58,35 +58,27 @@ The auto-commit daemon already committed the SystemNix-side changes:
 
 ## C) STILL BROKEN / BLOCKING
 
-1. **`nix flake check --no-build` fails** on `packages.x86_64-linux.projects-management-automation` with:
-
-   ```
-   error: hash mismatch in fixed-output derivation '...-projects-management-automation-ef18f2c-go-modules.drv':
-            specified: sha256-3LYbR/K12onY6rNEntu8GV3JXSG0Bl9tTqkaYnfWCCk=
-               got:    sha256-mWaqAUTxYHEqXiZdGS3bIFllLxC+3REpyjwJIrXvjf4=
-   ```
-
-   This prevents `nix run .#deploy` / `nh os switch` from completing.
-2. **Darwin registry override not added.** The `nix.registry` override is only in the NixOS config. macOS will still use the global tarball registry until a parallel fix is added to `platforms/darwin/nix/settings.nix` (or nix-darwin is configured via `nix.registry` if supported).
-3. **No automated defense against future tarball regressions.** A pre-commit or eval-time check that rejects tarball-type `nixpkgs` nodes would catch this before the daemon commits it. Currently only the `nixpkgsTarballGuard` assertion exists, which fires after the lock is already corrupted.
+1. ~~**`nix flake check --no-build` fails** on `packages.x86_64-linux.projects-management-automation`~~ done at `dc488af4` (PMA vendorHash fixed)
+2. ~~**Darwin registry override not added.** The `nix.registry` override is only in the NixOS config. macOS will still use the global tarball registry until a parallel fix is added to `platforms/darwin/nix/settings.nix` (or nix-darwin is configured via `nix.registry` if supported).~~ done at `48127edf`
+3. ~~**No automated defense against future tarball regressions.** A pre-commit or eval-time check that rejects tarball-type `nixpkgs` nodes would catch this before the daemon commits it. Currently only the `nixpkgsTarballGuard` assertion exists, which fires after the lock is already corrupted.~~ done at `78a0ed31` (4-layer defense: eval guard + pre-commit + CI normalization + `nix run .#fix-nixpkgs-lock`)
 
 ---
 
 ## D) NEXT STEPS (requires your go/no-go)
 
-1. **Commit and push the PMA vendorHash fix** in `~/projects/projects-management-automation` (the file is already edited). I will not commit upstream without explicit instruction.
-2. **Update SystemNix `flake.lock`** to the new PMA rev (via `nix flake lock --update-input projects-management-automation`).
-3. **Re-run `nix flake check --no-build`** and `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` to confirm the deploy path is clear.
-4. **Deploy** with `nix run .#deploy` so the NixOS registry override takes effect on the host.
-5. **(Optional but recommended)** Add the same registry override for macOS, and add a pre-commit guard that refuses to commit a tarball-type `nixpkgs` node.
+1. ~~**Commit and push the PMA vendorHash fix** in `~/projects/projects-management-automation` (the file is already edited). I will not commit upstream without explicit instruction.~~ done (committed)
+2. ~~**Update SystemNix `flake.lock`** to the new PMA rev (via `nix flake lock --update-input projects-management-automation`).~~ done
+3. ~~**Re-run `nix flake check --no-build`** and `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` to confirm the deploy path is clear.~~ done
+4. ~~**Deploy** with `nix run .#deploy` so the NixOS registry override takes effect on the host.~~ done (needs reboot to activate — tracked TODO_LIST P1)
+5. ~~**(Optional but recommended)** Add the same registry override for macOS, and add a pre-commit guard that refuses to commit a tarball-type `nixpkgs` node.~~ done at `48127edf`, `78a0ed31`
 
 ---
 
 ## E) DECISIONS / UNBLOCKERS NEEDED FROM YOU
 
-1. **May I commit and push the PMA vendorHash change upstream?** The file is already edited at `~/projects/projects-management-automation/flake.nix`. This is the correct upstream fix per AGENTS.md (application build bugs go upstream, not SystemNix patches).
-2. **Do you want the macOS registry override added now?** It requires checking whether nix-darwin supports `nix.registry` or an equivalent.
-3. **Do you want a pre-commit tarball guard added now?** This would prevent the auto-commit daemon from ever committing a tarball `nixpkgs` node again.
+1. ~~**May I commit and push the PMA vendorHash change upstream?** The file is already edited at `~/projects/projects-management-automation/flake.nix`. This is the correct upstream fix per AGENTS.md (application build bugs go upstream, not SystemNix patches).~~ done (committed)
+2. ~~**Do you want the macOS registry override added now?** It requires checking whether nix-darwin supports `nix.registry` or an equivalent.~~ done at `48127edf` (deploy pending — TODO_LIST P2)
+3. ~~**Do you want a pre-commit tarball guard added now?** This would prevent the auto-commit daemon from ever committing a tarball `nixpkgs` node again.~~ done at `78a0ed31`
 
 ---
 

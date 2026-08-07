@@ -76,8 +76,8 @@ Each file was verified against actual source code (exact file:line references, c
 5. **Fix the crush-daily test DSNs** — add `file:` prefix to all test `sql.Open` calls. Feedback file written, code not changed.
 6. **Fix the file-and-image-renamer initServiceOrWarn** — add `initServiceOrFail` for required deps. Feedback file written, code not changed.
 7. **Fix the monitor365 10K/day limit** — make configurable via config file. Feedback file written, code not changed.
-8. **DiscordSync Turso sync failure** — needs root access to diagnose and fix.
-9. **monitor365-server DuckDB pool timeout** — `pool acquire failed: timed out waiting for connection`. Not investigated (separate from this session's scope).
+8. ~~**DiscordSync Turso sync failure** — needs root access to diagnose and fix.~~ done (switched to sqlite-only backend; Turso abandoned)
+9. ~~**monitor365-server DuckDB pool timeout** — `pool acquire failed: timed out waiting for connection`. Not investigated (separate from this session's scope).~~ mitigated at `183925f4` (server health watchdog; root cause tracked TODO_LIST P6)
 10. **Push 3 unpushed SystemNix commits** to origin/master.
 11. **Clean up crush-daily typo directory** (`docs/feeback/` → should not exist).
 

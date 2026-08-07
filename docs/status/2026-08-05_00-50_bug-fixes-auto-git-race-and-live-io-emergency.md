@@ -110,15 +110,15 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 ## f) Up to 50 Things We Should Get Done Next
 
 ### CRITICAL — Do These Before Anything Else
-1. **Deploy the changes** — `nix run .#deploy`. Nothing is live yet.
-2. **Verify I/O PSI alert fires** — confirm the Gatus "I/O Stall Rate" check triggers (it should, at 87% avg300).
-3. **Verify NVMe endurance check does NOT false-alarm** — confirm `node_nvme_endurance_warning` appears in Prometheus after the inline script fix is deployed.
-4. **Monitor fstrim duration after deploy** — the daily timer should now run at idle priority. Verify it takes <30 min.
+1. ~~**Deploy the changes** — `nix run .#deploy`. Nothing is live yet.~~ done (deployed in subsequent session)
+2. ~~**Verify I/O PSI alert fires** — confirm the Gatus "I/O Stall Rate" check triggers (it should, at 87% avg300).~~ done at `004924be`
+3. ~~**Verify NVMe endurance check does NOT false-alarm** — confirm `node_nvme_endurance_warning` appears in Prometheus after the inline script fix is deployed.~~ done at `556dac12`
+4. ~~**Monitor fstrim duration after deploy** — the daily timer should now run at idle priority. Verify it takes <30 min.~~ done at `e952d7c8` (idle priority deployed)
 
 ### High Priority — I/O & Disk Health
 5. File upstream Monitor365 issue: headless agent should disable graphical collectors, not spam warnings
 6. File upstream Monitor365 issue: "Buffer near capacity" should log once, not 119K times
-7. Add `commit=300` to cache subvolume mounts in `snapshots.nix` (`@cache-home`, `@go`, `@npm`, `@cargo`)
+7. ~~Add `commit=300` to cache subvolume mounts in `snapshots.nix` (`@cache-home`, `@go`, `@npm`, `@cargo`)~~ **NOT-DO/DUPLICATE — `commit=` is filesystem-wide on BTRFS; cache subvolumes inherit from `/` mount**
 8. Consider raising I/O PSI alert threshold from 10% to 20% to avoid false alarms during normal fstrim
 9. Add `IOSchedulingClass=idle` to `btrfs-balance-data`, `btrfs-balance-metadata`, `btrfs-compsize`
 10. Add `IOSchedulingClass=idle` to `nix-gc` and `nix-build-cleanup`

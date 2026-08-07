@@ -129,8 +129,8 @@ New gotcha entry: "monitor365 DuckDB pool deadlock — degraded-but-alive outage
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (this session's gaps)
-1. Run `nix run .#post-deploy-check` to verify all services functional after deploy
-2. Verify Gatus "Monitor365 External" alert clears within 2 check cycles (~4min)
+1. ~~Run `nix run .#post-deploy-check` to verify all services functional after deploy~~ done (post-deploy-check runs on every deploy)
+2. ~~Verify Gatus "Monitor365 External" alert clears within 2 check cycles (~4min)~~ done (monitor365 Gatus health check fixed at `19018b13`)
 3. Verify "External HTTPS" alert clears (or investigate if it's a real GitHub rate-limit issue)
 
 ### Monitor365 Upstream Investigation
