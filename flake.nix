@@ -424,6 +424,18 @@
       };
     };
 
+    # browser-history — Browser history intelligence server (CQRS/ES, WebAuthn)
+    browser-history = {
+      url = "github:LarsArtmann/browser-history?ref=master";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        systems.follows = "systems";
+      };
+    };
+
     # DankMaterialShell — Quickshell-based desktop shell (Niri + Hyprland)
     # Brings quickshell transitively — no separate quickshell input needed
     dankMaterialShell = {

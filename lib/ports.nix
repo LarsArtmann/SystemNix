@@ -61,6 +61,8 @@
 
     file-and-image-renamer-health = 8086;
 
+    browser-history = 8087;
+
     qmd = 8181;
 
     searxng = 8889;
