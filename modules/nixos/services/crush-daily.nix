@@ -78,6 +78,7 @@ _: {
               ReadWritePaths = [ cfg.dataDir ];
             })
             (serviceDefaults { })
+            { TimeoutStartSec = "3min"; }
           ];
         };
       };
