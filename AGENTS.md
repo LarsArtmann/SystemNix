@@ -41,13 +41,32 @@ scripts/               # Shell + Python operational scripts
 2. Enable in `platforms/nixos/system/configuration.nix`
 3. Ports go in `lib/ports.nix` — never hardcode. Caddy vHosts go in `caddy.nix` via `protectedVHost "subdomain" port`
 4. Import `import ../../../lib/default.nix lib` for `harden`, `serviceDefaults`, `onFailure`, `serviceTypes`, `ports`, etc.
-5. Use `harden {} // serviceDefaults {}` for systemd. **Must** set `startLimitBurst = 5; startLimitIntervalSec = 300;`
+5. Use `harden {} // serviceDefaults {}` for systemd. **Must** set `startLimitBurst = 5; startLimitIntervalSec = 300;` A global `DefaultTimeoutStartSec=3min` is set by `timeout-audit.nix` — individual services don't need per-service `TimeoutStartSec` unless they need a longer timeout (e.g. large DB migrations)
 6. All vHosts in `caddy.nix`, all Homepage tiles in `homepage.nix` (guard conditional tiles with `lib.optionalString`)
 7. `WatchdogSec` ONLY on services that send `WATCHDOG=1` via `sd_notify()` — Type=notify alone is NOT sufficient
 8. For native OIDC SSO: add the client to `pocket-id.nix` `oidcClients` default, add a provisioning oneshot that reads the secret from `/var/lib/pocket-id/client-secrets/<clientId>` and configures the service via its CLI/API. Use a direct TLS Caddy vHost (NOT `protectedVHost`) — forward-auth + native OIDC causes double-auth loops. See Forgejo (`forgejo-oidc-setup`) as the reference pattern
-9. **Add a Gatus health check** in `gatus-config.nix`. Use `mkHttpCheck` for HTTP endpoints, raw attrset for TCP/DNS checks. Add `alerts = discordAlert "..."` for any service whose failure should notify. Add `[RESPONSE_TIME] < N` conditions for user-facing services (500ms-2s depending on service). Every new service MUST be monitored — silent failures are unacceptable
+9. **Add a Gatus health check** in `gatus-config.nix`. Use `mkHttpCheck` for HTTP endpoints, raw attrset for TCP/DNS checks. Add `alerts = discordAlert "..."` for any service whose failure should notify. Add `[RESPONSE_TIME] < N` conditions for user-facing services (500ms-2s depending on service). Every new service MUST be monitored — silent failures are unacceptable. **Gatus `pat()` uses GLOB, not regex** — `?` is single-char wildcard (NOT optional quantifier), `+` is literal (NOT one-or-more). The `gatus-pattern-lint` flake check rejects `?`/`+` in `pat()` automatically
 10. **For OTLP tracing**: set `OTEL_EXPORTER_OTLP_ENDPOINT` in the service environment. Go services: `localhost:4318` (no scheme). Rust: `http://localhost:4317` (with scheme, gRPC). Python: `http://localhost:4318`. Docker: `http://host.docker.internal:4318`. The env var is a noop if the upstream binary lacks OTel instrumentation — see DiscordSync as the reference. Do NOT add `siteMonitor` to Homepage tiles — Gatus owns all health alerting
 11. **For backup-producing services**: add the backup directory to `services.backup-coordination.backups.<name>` in `configuration.nix` with `directory`, `filePattern`, and `maxAgeHours`. Stagger schedules (01:00, 02:00, 02:30, 03:00) to avoid IO spikes
+
+### Prevention Layers
+
+Every change passes through 5 pipeline layers. Each catches a different class of bug:
+
+| Layer | What it catches | Where | Mechanism |
+|-------|----------------|-------|-----------|
+| **Eval-time (Nix)** | Port collisions, filesystem contamination, tarball regression, missing TimeoutStartSec | `flake.nix`, `lib/`, `modules/nixos/services/*-audit.nix`, `timeout-audit.nix` | `builtins.throw`, `config.assertions`, `systemd.settings.Manager` |
+| **Pre-commit** | Secrets, dead code, lint, formatting, tarball, Gatus pat() syntax, Unknown Author, GOTOOLCHAIN=auto | `.githooks/pre-commit` | gitleaks, deadnix, statix, alejandra, `nix flake check`, grep guards |
+| **CI (GitHub Actions)** | Same linters + VM tests + flake input hygiene + daily nixpkgs compat | `.github/workflows/` | `nix-check.yml` (push/PR), `nixpkgs-compat.yml` (daily schedule) |
+| **Pre-deploy** | Mount safety, ExecStart-in-harden, disk space, port conflicts, **phantom metrics** | `scripts/pre-deploy-check.sh` | 10 numbered checks including metric presence validation |
+| **Post-deploy** | Service liveness, functional outcomes, data presence, **auth gateway health** | `scripts/post-deploy-check.sh` | HTTP smoke tests, SigNoz impersonation check, auth vHost 500/502 detection |
+
+**Gatus Health Check Design Patterns:**
+- `pat(*metric_name*)` = presence check (metric exists in `/metrics` output)
+- `pat(*metric_name 0*)` = value check (metric exists AND equals 0 — e.g. "no errors")
+- `pat(*<html*)` = HTML body check (web UI is serving HTML)
+- **Liveness vs health**: liveness = "process alive" (`[STATUS] == 200`), health = "functional" (`[BODY] == pat(*metric*)`). Always include BOTH conditions — liveness alone gives false greens
+- **Phantom metrics**: Rust `metrics` crate lazily serializes — a metric that's never incremented never appears in `/metrics`. Always verify the metric exists at runtime via pre-deploy-check.sh section 10
 
 ### Consuming LarsArtmann Flakes (DiscordSync/Monitor365 pattern)
 

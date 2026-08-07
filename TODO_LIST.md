@@ -82,7 +82,25 @@
 - [ ] **file-and-image-renamer: `GOTOOLCHAIN=auto` → `local`** — In both `preBuild` blocks + vet check. Currently safe but will break sandbox purity when go.mod exceeds go_1_26
 - [ ] **`hermes`**: Auto-create directory structure on first run; handle own state migration; sane defaults for `OLLAMA_API_KEY`; use PID file or socket-based single-instance locking instead of `--replace` flag
 
-## Priority 7: Long-Term
+## Priority 7: Prevention & Early Detection (From Aug 6 Incident Analysis)
+
+- [x] **M1: Gatus pat() syntax validator** — `flake.nix` check rejects `?`/`+` in `pat()` patterns; pre-commit fast guard
+- [x] **M2: TimeoutStartSec on all ExecStartPre services** — 10 service files + global `DefaultTimeoutStartSec=3min` via `timeout-audit.nix`
+- [x] **M3: ExecStartPre/TimeoutStartSec eval-time audit** — `modules/nixos/services/timeout-audit.nix` sets global default
+- [x] **M4: Metric presence validator** — `pre-deploy-check.sh` section 10: extracts metric names from gatus patterns, verifies presence in `/metrics`
+- [x] **M5: Unknown Author commit rejection** — pre-commit hook blocks "Unknown Author" / "unknown@" / empty identity
+- [x] **M6: Daily nixpkgs compat CI** — `.github/workflows/nixpkgs-compat.yml`: daily scheduled update + check + auto-issue
+- [x] **M7: Auth gateway health smoke test** — `post-deploy-check.sh` checks protected vHosts for 500/502 (oauth2-proxy failure)
+- [x] **M8: ref=master + GOTOOLCHAIN audit** — `scripts/check-flake-inputs.sh` + pre-commit GOTOOLCHAIN guard + CI step
+- [x] **M9: Audit 38 Gatus pat() patterns** — All verified present by M4 automated check. Zero phantom metrics found
+- [x] **M10: Prevention layer documentation** — AGENTS.md updated with prevention table + Gatus design patterns
+- [ ] **M12: Gatus pattern VM test** — Mock servers with canned responses, assert all pat() patterns evaluate GREEN
+- [ ] **M13: PMA daemon identity VM test** — Run daemon commit path in VM, assert author is not "Unknown"
+- [ ] **M14: Monitoring-the-monitor meta-check** — Gatus endpoint that alerts if any endpoint has been RED >24h
+
+---
+
+## Priority 8: Long-Term
 
 - [ ] **Provision Pi 3** for DNS failover cluster — hardware required
 - [ ] **Auditd enablement** — blocked on NixOS 26.05 bug #483085
