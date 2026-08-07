@@ -30,7 +30,7 @@ _A brutally honest audit of every feature the project actually has._
 | Shared overlays (Darwin + NixOS)          | ✅     | NUR, aw-watcher, todo-list-ai, golangci-lint-auto-configure, mr-sync                                                                     |
 | Linux-only overlays                       | ✅     | openaudible, dnsblockd, emeet-pixyd, monitor365, netwatch, file-and-image-renamer, go-humanize-linter                                        |
 | Shared Home Manager config                | ✅     | `sharedHomeManagerConfig` + `sharedHomeManagerSpecialArgs`                                                                               |
-| Custom packages (pkgs/ + overlays)        | ✅     | 24 packages: 5 in pkgs/ (Go, Rust, Python, Node.js, AppImage) + 19 via flake-input overlays                                              |
+| Custom packages (pkgs/ + overlays)        | ✅     | 30 packages: 15 mkLarsPackages + 8 in pkgs/ + 7 flake-input overlays                                                                        |
 | Formatter (treefmt + alejandra)           | ✅     | Via `treefmt-full-flake`                                                                                                                 |
 | Flake checks (statix, deadnix, eval)      | ✅     | Per-system + Linux-specific                                                                                                              |
 | Raspberry Pi 3 SD image build             | 📋     | `nixosConfigurations.rpi3-dns` defined, hardware not provisioned                                                                         |
@@ -83,7 +83,7 @@ _A brutally honest audit of every feature the project actually has._
 | Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 77 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
 | Disk Monitor                          | ✅     | `disk-monitor.nix`                   | Desktop notifications at disk usage thresholds                                                                                                                                                                                                                                                                                                                                                                                                |
 | NVMe Health Monitor                   | ✅     | `nvme-health-monitor.nix`            | Desktop notifications for critical NVMe SMART events                                                                                                                                                                                                                                                                                                                                                                                          |
-| DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, sqlite backend (was turso-sync — switched to eliminate Turso free-plan 403), backfill, attachment downloads, HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz.       |
+| DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, sqlite backend, backfill, attachment downloads, SQLite corruption self-heal (`PRAGMA integrity_check` + `sqlite3 .recover` on boot), HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz.       |
 | Qmd (on-device markdown search)       | ✅     | `qmd-config.nix`                     | Semantic + BM25 hybrid markdown/code search via HTTP MCP server on port 8181. Built from GitHub source (`fetchFromGitHub` + `pnpmConfigHook`). Three GGUF models auto-cached (~2 GiB). CPU-only by default (`QMD_FORCE_CPU=1`). Crush MCP integration at `http://localhost:8181/mcp`.                                                                                                                                                         |
 | SearXNG (privacy metasearch)          | ✅     | `searxng.nix`                        | Privacy-focused metasearch engine on port 8889 (`search.home.lan`). Built-in Granian ASGI server. Rate limiter + Redis REMOVED (private LAN, no abuse vector). POST→GET method switch, `query_in_title=true`. 71 engines across 5 categories. Layer 2 SSO via oauth2-proxy (no native OIDC). POST-only search (privacy), dark mode, favicon caching (DuckDuckGo). Browser default search engine via Chromium policy. `restartTriggers` on settings + package. |
 | Attic binary cache                    | ✅     | `attic.nix`                          | Self-hosted Nix binary cache on port 8200 (`cache.home.lan`). RS256 JWT auth, DynamicUser + sops secret (owner=root), Prometheus metrics split from GC trigger, storage dir pre-creation service, cache bootstrap automation. NixOS VM test (6 assertions).                                                                                                                                                                                    |
@@ -257,6 +257,9 @@ _A brutally honest audit of every feature the project actually has._
 | BTRFS data (`/data`)  | ✅     | zstd:3 compression, `commit=300`, `nodiscard`, space_cache=v2 — Docker lives here                                                                                           |
 | FAT32 boot (`/boot`)  | ✅     | Restrictive masks (fmask=0077, dmask=0077)                                                                                                |
 | BTRFS snapshots       | ✅     | btrbk: daily snapshots of root (@), 14d + 4w retention, weekly autoScrub, verify timer alerts stale snapshots                                                                                                |
+| BTRFS weekly balance  | ✅     | `btrfs-health.nix`: metadata (`-musage=50`) Mon 04:00 + bounded data (`-dusage=50 -dlimit=10`) Mon 05:00. Both guarded by `btrfs-chunk-check` (skip if unallocated < threshold). Prevents metadata ENOSPC crash mode |
+| BTRFS emergency reserve | ✅   | `btrfs-emergency-reserve.service`: 10 GiB `fallocate` at boot. Delete for instant free space during recovery. Prometheus metrics + Gatus alert if missing                    |
+| BTRFS health metrics  | ✅     | Prometheus textfile: `btrfs_scrub_status`, `btrfs_scrub_errors_total`, `btrfs_scrub_error_free`, `btrfs_device_unallocated_bytes`. Requires `CAP_SYS_ADMIN`                 |
 | Daily fstrim          | ✅     | QLC NAND SLC cache maintenance. Changed weekly → daily (CoW churn exhausts cache within 22-47h). Idle I/O priority (`IOSchedulingClass=idle`, `Nice=10`). Gatus alert if >30min                          |
 | ZRAM swap             | ✅     | 17% of visible RAM (~16 GiB compressed), zstd compression                                                                                 |
 | AMD virtualization    | ✅     | KVM-AMD + AMD microcode updates                                                                                                           |
@@ -400,6 +403,13 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | golangci-lint-auto-configure | Go       | ✅     | Auto-configure golangci-lint — source-only flake input                                                                                                                                        |
 | todo-list-ai                 | Go       | ✅     | AI-powered TODO extraction — via flake input                                                                                                                                                  |
 | mr-sync                      | Go       | ✅     | `~/.mrconfig` GitHub sync CLI — source-only flake input                                                                                                                                       |
+| dms-lock                     | Nix      | ✅     | Shared lock-screen package for DMS (`pkgs/dms-lock.nix`)                                                                                                                                       |
+| govalid                      | Go       | ✅     | Go validation library (`pkgs/govalid.nix`)                                                                                                                                                     |
+| openseo                      | Node.js  | ✅     | Self-hosted SEO suite — built from source via Vite/pnpm (`pkgs/openseo.nix`)                                                                                                                   |
+| crush-daily                  | Go       | ✅     | AI-powered dev insights from Crush databases — via flake input overlay                                                                                                                          |
+| discordsync                  | Go       | ✅     | Discord channel backup bot — via flake input overlay                                                                                                                                            |
+| overview                     | Go       | ✅     | Local project dashboard — via flake input overlay                                                                                                                                               |
+| art-dupl + 10 Go tools       | Go       | ✅     | `mkLarsPackages` set (`lib/lars-packages.nix`): art-dupl, branching-flow, buildflow, cqrs-lint, go-auto-upgrade, go-structure-linter, hierarchical-errors, library-policy, md-go-validator, project-meta, projects-management-automation |
 
 ---
 
@@ -460,7 +470,6 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Auditd            | Disabled due to NixOS 26.05 bug #483085                                                                                                                                                                                                                     | Medium   |
 | AppArmor          | Explicitly disabled (`mkDefault false`) in security-hardening                                                                                                                                                                                               | Medium   |
 | DNS-over-QUIC     | Overlay disabled — breaks binary cache (40+ min builds)                                                                                                                                                                                                     | Low      |
-| Go toolchain      | Uses nixpkgs Go directly (no custom overlay) — preserves binary cache                                                                                                                                                                                       | N/A      |
 
 ---
 
@@ -535,25 +544,19 @@ SystemNix has two ADR collections: the canonical `docs/adr/` set (8 records) and
 
 ## 13. Feature Count Summary
 
-| Category                   | Count    |
-| -------------------------- | -------- |
-| NixOS service modules      | 47       |
-| Custom packages            | 24       |
-| Cross-platform programs    | 20+      |
-| NixOS desktop components   | 16+      |
-| macOS features             | 25+      |
-| DNS stack components       | 12       |
-| Validation scripts         | 8        |
-| Flake apps + shell scripts | 45       |
-| Architecture patterns      | 7        |
-| ADRs                       | 13       |
-| GitHub Actions             | 2        |
-| Gatus health endpoints     | 77       |
-| Sops secret files          | 13       |
-| NixOS VM tests             | 2        |
-| **Total enabled features** | **~205** |
-| Planned/disabled           | ~8       |
-| Known gaps                 | 12       |
+_Counts computed from code; re-verify with `rg` / `ls` before citing._
+
+| Category                   | Count | How to verify                                                                 |
+| -------------------------- | ----- | ----------------------------------------------------------------------------- |
+| NixOS service modules      | 47    | `ls modules/nixos/services/*.nix modules/nixos/desktop/*.nix \| grep -v '/_' \| wc -l` |
+| Custom packages            | 30    | 15 mkLarsPackages + 8 pkgs/ + 7 flake-input overlays                          |
+| Gatus health endpoints     | 77    | `grep -c 'name =' modules/nixos/services/gatus-config.nix`                    |
+| Sops secret files          | 13    | `ls platforms/nixos/secrets/*.yaml \| wc -l`                                  |
+| DMS plugins                | 15    | 13 SystemNix + 2 community (`ls pkgs/dms-plugins/`)                           |
+| Architecture patterns      | 7     | See section 11                                                                |
+| ADRs                       | 13    | 8 canonical (`docs/adr/`) + 5 platform (`docs/architecture/`)                 |
+| NixOS VM tests             | 2     | `tests/default.nix`                                                           |
+| Known gaps                 | 12    | See section 10                                                                |
 
 ---
 

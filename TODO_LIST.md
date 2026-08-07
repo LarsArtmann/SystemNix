@@ -33,7 +33,7 @@
 - [ ] **`/data` compression decision** — `compress=zstd:3` on `/data` is under review (corruption report recommended removal). Needs user decision: keep, lower to `zstd:1`, or remove. Blocked by reboot requirement
 - [ ] **Remove Pocket ID WAL band-aid** — Pocket ID 2.12.0 (deployed via nixpkgs update) includes upstream francis fixes. The WAL-clearing ExecStartPre, `ACTORS_HOST=127.0.0.1`, and `MemoryMax=1G` overrides may no longer be needed. Remove one at a time, verify SQLITE_BUSY doesn't recur
 - [ ] **SearXNG streaming exploration** — User wants streaming results (progressive rendering), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy flush_buffers
-- [ ] **Declarative health-check** — `scripts/service-health-check.sh` uses a hand-maintained service list. Retired services (unbound, waybar, awww-daemon) produced permanent false-negatives. Missing active services: discordsync, searx, qmd-mcp, emeet-pixyd. Generate list from Nix config or `systemctl list-units` instead
+- [ ] **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is a hand-maintained list of only 4 services (caddy, forgejo, dnsblockd, postgresql). Missing active services: discordsync, searx, qmd-mcp, emeet-pixyd, monitor365, signoz, immich, pocket-id. Generate list from Nix config or `systemctl list-units` instead
 
 ## Priority 4: Code Quality
 
