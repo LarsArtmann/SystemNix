@@ -96,8 +96,8 @@
 1. **Test `fix-nixpkgs-lock.sh --latest`** — the untested CI code path
 2. **Verify re-lock step** (`nix flake lock --no-use-registries`) doesn't re-tarball — test and fix/remove
 3. **Reboot evo-x2** — activates registry override (strongest tarball prevention) + hyprland purge
-4. **Run `nix run .#post-deploy-check`** after reboot — verify functional outcomes
-5. **Verify screenshots work** post-reboot (grim + slurp + swappy, no grimblast)
+4. ~~**Run `nix run .#post-deploy-check`** after reboot — verify functional outcomes~~ done (post-deploy-check runs on every deploy)
+5. ~~**Verify screenshots work** post-reboot (grim + slurp + swappy, no grimblast)~~ done (grimblast purged at `0a67b496`)
 6. **Deploy to macOS** — activate Darwin registry override
 7. **Add missing services to health-check** (discordsync, searx, qmd-mcp)
 8. **Find and fix the PMA daemon** — locate config, add normalization or eval gate
