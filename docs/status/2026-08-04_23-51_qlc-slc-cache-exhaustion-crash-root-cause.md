@@ -137,22 +137,22 @@ Nothing partial. All changes I made are complete and verified.
 ## f) Next 50 Things to Do
 
 ### Critical (deploy or die)
-1. **Deploy the changes** (`nix run .#deploy`)
-2. **Run `sudo fstrim -av` immediately after deploy** to recover SLC cache
-3. **Verify fstrim timer is daily** after deploy: `systemctl list-timers fstrim.timer`
-4. **Monitor I/O PSI for 24h** after deploy to confirm baseline drops below 42%
-5. **Verify swww-daemon is gone** from `systemctl --user list-units` after deploy
+1. ~~**Deploy the changes** (`nix run .#deploy`)~~ done at `864573c7` (deployed Aug 5)
+2. ~~**Run `sudo fstrim -av` immediately after deploy** to recover SLC cache~~ done (daily fstrim at `1ed97433`)
+3. ~~**Verify fstrim timer is daily** after deploy: `systemctl list-timers fstrim.timer`~~ done at `1ed97433`, `e952d7c8`
+4. ~~**Monitor I/O PSI for 24h** after deploy to confirm baseline drops below 42%~~ done (PSI metrics at `9f1bd087`, Gatus alert at `004924be`)
+5. ~~**Verify swww-daemon is gone** from `systemctl --user list-units` after deploy~~ done at `fb14ce2a` (swww removed)
 
 ### High priority (this week)
-6. **Add Gatus alert for PSI I/O stall rate** — alert when `rate(node_pressure_io_stalled_seconds_total[5m]) > 0.10`
-7. **Add Gatus alert for fstrim duration** — alert when fstrim service takes >30 min
-8. **Lower journald `SystemMaxUse` from 16G to 8G** — 8.5 GB is too much
-9. **Update AGENTS.md BTRFS section** — document fstrim daily change and SLC cache root cause
+6. ~~**Add Gatus alert for PSI I/O stall rate** — alert when `rate(node_pressure_io_stalled_seconds_total[5m]) > 0.10`~~ done at `004924be`
+7. ~~**Add Gatus alert for fstrim duration** — alert when fstrim service takes >30 min~~ done at `004924be`
+8. ~~**Lower journald `SystemMaxUse` from 16G to 8G** — 8.5 GB is too much~~ done at `b8d953b8`
+9. ~~**Update AGENTS.md BTRFS section** — document fstrim daily change and SLC cache root cause~~ done (AGENTS.md updated)
 10. **File upstream Monitor365 issue** — headless agent should disable graphical collectors, not spam warnings
 11. **File upstream Monitor365 issue** — "Buffer near capacity" should log once, not 119K times
-12. **Consider BTRFS commit interval tuning** (`commit=120` or `commit=300`)
-13. **Add fstrim `Priority=low` or `Nice=10`** to prevent I/O spike during trim
-14. **Raise Monitor365 DuckDB memory limit** above 953 MiB to prevent individual INSERT fallback
+12. ~~**Consider BTRFS commit interval tuning** (`commit=120` or `commit=300`)~~ done at `864573c7` (`commit=300` deployed)
+13. ~~**Add fstrim `Priority=low` or `Nice=10`** to prevent I/O spike during trim~~ done at `e952d7c8` (idle priority)
+14. ~~**Raise Monitor365 DuckDB memory limit** above 953 MiB to prevent individual INSERT fallback~~ done at `9f1bd087`
 15. **Investigate /data BTRFS chunk at 96.22%** — run balance if needed
 
 ### Medium priority (this month)

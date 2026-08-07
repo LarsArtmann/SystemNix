@@ -93,12 +93,12 @@ The **memory cap fix IS LIVE** (90G/80G deployed and verified in cgroups). The f
 ## c) NOT STARTED
 
 1. **Standalone BTRFS recovery script** for manual use outside systemd
-2. **AGENTS.md update** for the chattr ExecStartPre upstream bug
-3. **AGENTS.md update** for the resolv.conf DNS ordering issue
-4. **AGENTS.md update** for the 90G memory cap decision and reasoning
+2. ~~**AGENTS.md update** for the chattr ExecStartPre upstream bug~~ done (documented in AGENTS.md DiscordSync section)
+3. ~~**AGENTS.md update** for the resolv.conf DNS ordering issue~~ done (documented in AGENTS.md DNS section)
+4. ~~**AGENTS.md update** for the 90G memory cap decision and reasoning~~ done (documented in AGENTS.md: `builtins.toString null`)
 5. **Boot.nix comment update** for the OOM slice comment (still references old 56G/64G values in the historical context)
 6. **Gatus alerting verification** — haven't confirmed alerts are firing for DiscordSync or DNS
-7. **Post-deploy mitigation** — haven't checked if Caddy/DNS recovered after initial turbulence
+7. ~~**Post-deploy mitigation** — haven't checked if Caddy/DNS recovered after initial turbulence~~ done (DNS fixed at `9bf6fc47`)
 8. **BTRFS snapshot integrity verification** — never confirmed the Aug 2 snapshot DB is healthy (needs root)
 9. **Stale build sandbox cleanup** — pre-deploy check warned about 13 stale sandboxes in `/nix/var/nix/builds/`
 

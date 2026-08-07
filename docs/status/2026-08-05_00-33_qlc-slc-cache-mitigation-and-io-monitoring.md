@@ -122,14 +122,14 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Critical (Fix bugs from this session)
-1. **Fix BUG 2:** Add `node_nvme_endurance_warning` to the inline nvmeMetrics in `_signoz-metrics.nix` (lines 154-198)
-2. **Run `nix fmt`** to format all edited Nix files
-3. **Deploy and verify** — `nix run .#deploy`, then verify new Gatus checks appear and don't false-alarm
+1. ~~**Fix BUG 2:** Add `node_nvme_endurance_warning` to the inline nvmeMetrics in `_signoz-metrics.nix` (lines 154-198)~~ done at `556dac12`
+2. ~~**Run `nix fmt`** to format all edited Nix files~~ done
+3. ~~**Deploy and verify** — `nix run .#deploy`, then verify new Gatus checks appear and don't false-alarm~~ done
 
 ### High Priority (From original task list)
 4. File upstream Monitor365 issue: headless agent should disable graphical collectors gracefully
 5. File upstream Monitor365 issue: "Buffer near capacity" should log once, not spam 119K times
-6. Add `commit=300` to cache subvolume mounts in `snapshots.nix`
+6. ~~Add `commit=300` to cache subvolume mounts in `snapshots.nix`~~ **NOT-DO/DUPLICATE — `commit=` is filesystem-wide on BTRFS, already applied to `/` mount. Cache subvolumes inherit it.**
 7. Add I/O PSI `avg10` + `avg60` metrics (not just `avg300`) for finer-grained alerting
 
 ### I/O & Disk Health

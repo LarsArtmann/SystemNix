@@ -70,7 +70,7 @@
 1. **Upstream dnsblockd fix:** Drop high-cardinality OTEL labels (`dns_domain`, `http_path`, `proxy_domain`) from `internal/server/telemetry.go` in the dnsblockd repo (`/home/lars/projects/dnsblockd`). This is the REAL fix for the memory leak.
 2. **Upstream DiscordSync chattr fix:** Push a proper fix to the DiscordSync NixOS module (wrap chattr in `pkgs.writeShellApplication` or use `ExecStartPre=+/bin/sh -c '...'`).
 3. **DNS resolution check in pre-deploy-check.sh:** The pre-deploy check doesn't validate that `*.home.lan` resolves correctly. A simple `getent hosts dash.home.lan` assertion would have caught the 9.9.9.9 issue immediately.
-4. **Monitor365 server database pool timeout:** `monitor365-server.service: Failed with result 'timeout'` — `pool acquire failed: timed out waiting for connection`. Multiple background tasks failing (offline_alerts, correlation_engine, policy_violations). This is a DuckDB connection pool exhaustion issue, not related to this session's changes.
+4. ~~**Monitor365 server database pool timeout:** `monitor365-server.service: Failed with result 'timeout'` — `pool acquire failed: timed out waiting for connection`. Multiple background tasks failing (offline_alerts, correlation_engine, policy_violations). This is a DuckDB connection pool exhaustion issue, not related to this session's changes.~~ mitigated at `183925f4` (server health watchdog recovers pool deadlock; root cause still tracked TODO_LIST P6)
 5. **Stale build sandboxes:** 13 directories in `/nix/var/nix/builds/` consuming 1.9 GB. The `nix-build-cleanup` timer should handle this, but BTRFS snapshots may hold references.
 6. **Re-deploy to sync generation:** The deployed generation is stale by one doc commit. Low priority.
 
