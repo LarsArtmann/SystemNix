@@ -65,8 +65,7 @@
                 "COOKIE_SECURE=true"
                 "CSRF_ENABLED=true"
                 "REQUIRE_AUTH=true"
-                "OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318"
-                "OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf"
+                "OTEL_EXPORTER_OTLP_ENDPOINT=127.0.0.1:${toString ports.signoz-otlp-grpc}"
               ];
             }
             (harden {
