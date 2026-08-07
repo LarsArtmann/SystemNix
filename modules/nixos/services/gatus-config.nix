@@ -769,6 +769,17 @@ _: {
                 ];
                 alerts = discordAlert "fstrim took >30 min — possible SLC cache churn backlog or I/O contention. Check: journalctl -u fstrim -n 20, btrfs filesystem usage /";
               })
+              (mkHttpCheck {
+                name = "Gatus Sustained Failures";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_gatus_endpoints_in_error_long 0*)"
+                ];
+                alerts = discordAlert "Gatus reports endpoints with sustained failures (all recent checks failed). Either services are down or the alert chain itself is broken. Check: Gatus dashboard for which endpoints are red.";
+              })
             ]
             ++ [
               (mkHttpCheck {

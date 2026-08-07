@@ -194,6 +194,19 @@ _: {
             EMEET_EXPECTED_DOWN=1
           fi
 
+          # === Gatus self-monitoring meta-check ===
+          # Counts endpoints where ALL recent results are failures (sustained
+          # failure across the entire result window). This catches monitoring
+          # blind spots: if an endpoint has been red for the full retention
+          # window, either the service is truly down or the alert chain broke.
+          collect_gatus=${lib.boolToString cfg.collectGatusHealth}
+          GATUS_ENDPOINTS_LONG_FAIL=0
+          if [ "$collect_gatus" = "true" ]; then
+            GATUS_ENDPOINTS_LONG_FAIL=$(curl -sf --max-time 5 "http://127.0.0.1:${toString cfg.gatus.port}/api/v1/endpoints/statuses" 2>/dev/null | \
+              jq '[.[] | select(.results | length > 0) | select((.results | map(.success) | any(. == true)) | not)] | length' 2>/dev/null) || GATUS_ENDPOINTS_LONG_FAIL=0
+            GATUS_ENDPOINTS_LONG_FAIL="''${GATUS_ENDPOINTS_LONG_FAIL:-0}"
+          fi
+
           {
             echo "# HELP system_service_active 1 if systemd service is active, 0 otherwise"
             echo "# TYPE system_service_active gauge"
@@ -295,6 +308,10 @@ _: {
             echo "# HELP system_emeet_pixyd_expected_down 1 if niri is running but emeet-pixyd is not (unexpected), 0 otherwise"
             echo "# TYPE system_emeet_pixyd_expected_down gauge"
             echo "system_emeet_pixyd_expected_down ''${EMEET_EXPECTED_DOWN}"
+
+            echo "# HELP system_gatus_endpoints_in_error_long Count of Gatus endpoints with sustained failures (all recent results failed)"
+            echo "# TYPE system_gatus_endpoints_in_error_long gauge"
+            echo "system_gatus_endpoints_in_error_long ''${GATUS_ENDPOINTS_LONG_FAIL}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -358,10 +375,22 @@ _: {
           description = "Collect /tmp tmpfs usage metrics";
         };
 
+        collectGatusHealth = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect Gatus endpoint failure meta-check (monitoring the monitor)";
+        };
+
         signoz.port = lib.mkOption {
           type = lib.types.int;
           default = 8080;
           description = "SigNoz query service port for alert rules API";
+        };
+
+        gatus.port = lib.mkOption {
+          type = lib.types.int;
+          default = 9110;
+          description = "Gatus web port for the API";
         };
 
         monitor365.stateDir = lib.mkOption {
