@@ -326,7 +326,7 @@
     # Go dep inputs (go-finding, go-output, etc.) are NOT followed — overriding
     # flake=false tarballs changes vendored content and breaks vendorHash.
     go-cqrs-lite = {
-      url = "github:LarsArtmann/go-cqrs-lite?ref=master";
+      url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
