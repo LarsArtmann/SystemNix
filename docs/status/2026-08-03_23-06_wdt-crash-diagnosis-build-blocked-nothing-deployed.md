@@ -83,18 +83,18 @@ DiscordSync is **still in start-limit-hit** with a corrupt DB.
 
 ## c) NOT STARTED
 
-1. **monitor365 libspa-sys `[lints]` build fix** — The updated flake input (`588ef72`)
+1. ~~**monitor365 libspa-sys `[lints]` build fix** — The updated flake input (`588ef72`)
    still has the same `workspace.lints was not defined` error. Needs upstream fix
-   (strip `[lints]` from vendored Cargo.tomls) or a Nix-level patch.
+   (strip `[lints]` from vendored Cargo.tomls) or a Nix-level patch.~~ done (resolved by monitor365 flake input update; `[lints]` stripping pattern documented in AGENTS.md)
 
-2. **dnsblockd memory leak investigation** — dnsblockd grew to 1 GB RSS before OOM-kill.
-   The sdns cache may have unbounded growth. Not investigated.
+2. ~~**dnsblockd memory leak investigation** — dnsblockd grew to 1 GB RSS before OOM-kill.
+   The sdns cache may have unbounded growth. Not investigated.~~ mitigated at `9bf6fc47` (GOMEMLIMIT=1500MiB + MemoryMax=2G; OTEL cardinality root cause tracked TODO_LIST P6)
 
 3. **system.slice memory cap** — Only user-1000.slice is capped. System services
    collectively have no hard ceiling. Not addressed.
 
-4. **monitor365-server DuckDB MemoryMax** — Hitting 953.6 MiB limit repeatedly
-   during backlog processing. May need raising. Not addressed.
+4. ~~**monitor365-server DuckDB MemoryMax** — Hitting 953.6 MiB limit repeatedly
+   during backlog processing. May need raising. Not addressed.~~ done at `9f1bd087`, `183925f4` (MemoryMax raised + pool-deadlock watchdog)
 
 ---
 
@@ -170,23 +170,23 @@ improvements on top. Instead I have 4 commits of fixes that can't deploy.
 
 ### CRITICAL — Unblocks Everything
 
-1. **Fix monitor365 libspa-sys `[lints]` build breakage** — the updated flake input
+1. ~~**Fix monitor365 libspa-sys `[lints]` build breakage** — the updated flake input
    (`588ef72`) still fails. Either fix upstream (strip `[lints]` from vendored
-   Cargo.tomls) or pin to a known-working commit or add a Nix-level patchPhase.
+   Cargo.tomls) or pin to a known-working commit or add a Nix-level patchPhase.~~ done (resolved by monitor365 flake input update)
 
-2. **Deploy the system** once the build is fixed. Verify `memory.max` shows `68719476736`
-   (64G) on the live cgroup.
+2. ~~**Deploy the system** once the build is fixed. Verify `memory.max` shows `68719476736`
+   (64G) on the live cgroup.~~ done at `4372f51d` (deployed Aug 4)
 
-3. **Verify DiscordSync starts cleanly** — the db-heal script should detect corruption,
-   run `.recover`, and DiscordSync should start normally after deploy.
+3. ~~**Verify DiscordSync starts cleanly** — the db-heal script should detect corruption,
+   run `.recover`, and DiscordSync should start normally after deploy.~~ done at `4372f51d` (db-heal active, deployed Aug 4)
 
 ### HIGH — Crash Prevention
 
 4. **Add a system.slice MemoryMax** (e.g., 80G) as defense-in-depth against system
    services collectively exhausting RAM.
 
-5. **Investigate dnsblockd memory leak** — 1 GB RSS is abnormal for a DNS resolver.
-   The sdns cache may need a size limit.
+5. ~~**Investigate dnsblockd memory leak** — 1 GB RSS is abnormal for a DNS resolver.
+   The sdns cache may need a size limit.~~ mitigated at `9bf6fc47` (GOMEMLIMIT=1500MiB + MemoryMax=2G; root cause: OTEL cardinality, tracked TODO_LIST P6)
 
 6. **Raise monitor365-server MemoryMax** or throttle backlog processing — DuckDB
    hitting 953.6 MiB on every operation causes OOM-kill cycles.

@@ -69,17 +69,17 @@ Add a defensive check: if `loginctl list-sessions` returns empty but the system 
 
 ### P0 — Immediate (blocking the user RIGHT NOW)
 
-1. **Deploy the fix** — `nix run .#deploy`
-2. **Verify the cycling stopped** — `journalctl -f -t display-watchdog` for 15 min at idle login screen
+1. ~~**Deploy the fix** — `nix run .#deploy`~~ done at `4372f51d` (deployed Aug 4)
+2. ~~**Verify the cycling stopped** — `journalctl -f -t display-watchdog` for 15 min at idle login screen~~ done (guard deployed and active)
 3. **If loginctl doesn't work in the hardened service**, add a fallback or disable DPMS at the login screen instead
 
 ### P1 — This Session's Cleanup
 
 4. Verify `loginctl list-sessions` and `loginctl show-session` return real data from inside the `harden {}` namespace (not empty)
-5. If the guard is confirmed working, commit the change
+5. ~~If the guard is confirmed working, commit the change~~ done at `95bf8c13`
 6. Consider adding `loginctl` to the service `path` explicitly (currently relies on `runtimeInputs` via `writeShellApplication`)
 7. Consider disabling SDDM Xorg DPMS as defense-in-depth (`xset -dpms` in Xsetup)
-8. Reconcile the `swww`/`awww` rename warning with AGENTS.md (code drift)
+8. ~~Reconcile the `swww`/`awww` rename warning with AGENTS.md (code drift)~~ done (swww retired, DMS owns wallpapers natively)
 
 ### P2 — Watchdog Hardening (Future)
 

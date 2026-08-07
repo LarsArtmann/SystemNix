@@ -42,11 +42,11 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 
 ## c) NOT STARTED
 
-1. **Deploy** — `nix run .#deploy` has not been attempted this session (it was attempted 3x in the previous session, all failed).
-2. **Verify memory cap is live** — `/sys/fs/cgroup/user.slice/user-1000.slice/memory.max` currently shows `max` (unlimited). Needs to show `68719476736` (64G).
-3. **Post-deploy smoke test** — Not run because nothing deployed.
-4. **Manual DiscordSync DB recovery** — Could be done NOW via root: `sqlite3 .recover` from the corrupt DB, or `cp --reflink=always` from the BTRFS snapshot.
-5. **AGENTS.md documentation** — The BTRFS snapshot recovery cascade and the cqrs-lint go.sum/mkPreparedSource interplay are NOT documented yet.
+1. ~~**Deploy** — `nix run .#deploy` has not been attempted this session (it was attempted 3x in the previous session, all failed).~~ done at `4372f51d` (deployed Aug 4)
+2. ~~**Verify memory cap is live** — `/sys/fs/cgroup/user.slice/user-1000.slice/memory.max` currently shows `max` (unlimited). Needs to show `68719476736` (64G).~~ done at `4372f51d`
+3. ~~**Post-deploy smoke test** — Not run because nothing deployed.~~ done at `4372f51d`
+4. ~~**Manual DiscordSync DB recovery** — Could be done NOW via root: `sqlite3 .recover` from the corrupt DB, or `cp --reflink=always` from the BTRFS snapshot.~~ done at `4372f51d` (db-heal auto-recovery deployed)
+5. ~~**AGENTS.md documentation** — The BTRFS snapshot recovery cascade and the cqrs-lint go.sum/mkPreparedSource interplay are NOT documented yet.~~ done (documented in AGENTS.md gotchas)
 6. **system.slice memory cap** — No MemoryMax on system.slice exists. Only per-service limits + the (broken) user slice cap. A system-wide cap could prevent future cascades.
 
 ---
@@ -86,12 +86,12 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 ## f) Up to 50 Things to Get Done Next
 
 ### Critical (BLOCKING — system is unsafe)
-1. Fix buildflow vendorHash mismatch (last build blocker)
-2. Build the full system: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`
-3. Deploy: `nix run .#deploy`
-4. Verify memory cap: `cat /sys/fs/cgroup/user.slice/user-1000.slice/memory.max` must show `68719476736`
-5. Verify DiscordSync dbHeal runs: `journalctl -u discordsync -f`
-6. Run post-deploy smoke test
+1. ~~Fix buildflow vendorHash mismatch (last build blocker)~~ done at `4372f51d` (resolved Aug 4)
+2. ~~Build the full system: `nix build .#nixosConfigurations.evo-x2.config.system.build.toplevel`~~ done at `4372f51d`
+3. ~~Deploy: `nix run .#deploy`~~ done at `4372f51d` (deployed Aug 4)
+4. ~~Verify memory cap: `cat /sys/fs/cgroup/user.slice/user-1000.slice/memory.max` must show `68719476736`~~ done at `4372f51d`
+5. ~~Verify DiscordSync dbHeal runs: `journalctl -u discordsync -f`~~ done at `4372f51d` (db-heal active)
+6. ~~Run post-deploy smoke test~~ done at `4372f51d`
 
 ### Immediate Hotfix (can do NOW, no build needed)
 7. Ask user to run: `sudo systemctl set-property user-1000.slice MemoryMax=64G MemoryHigh=56G` — immediate protection
