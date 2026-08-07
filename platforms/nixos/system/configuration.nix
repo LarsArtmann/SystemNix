@@ -336,6 +336,10 @@ in
         gcsBucket = "discordsync-backup";
       };
 
+      browser-history = {
+        enable = true; # Browser history intelligence server
+      };
+
       # Manifest — Smart LLM router for AI agents (cost optimization)
       manifest = {
         enable = true;

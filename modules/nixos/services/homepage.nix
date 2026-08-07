@@ -45,6 +45,7 @@ _: {
       discordsyncEnabled = config.services.discordsync.enable;
       overviewEnabled = config.services.overview.enable;
       fileAndImageRenamerEnabled = config.services.file-and-image-renamer.enable or false;
+      browserHistoryEnabled = config.services.browser-history.enable or false;
       searxEnabled = config.services.searx.enable or false;
       atticEnabled = config.services.attic-config.enable or false;
 
@@ -192,6 +193,12 @@ _: {
                 href = svcUrl "discordsync";
                 description = "Discord Backup Bot (Messages, Attachments, Reactions)";
                 icon = "discord.png";
+              }
+            )
+            ++ lib.optional browserHistoryEnabled (
+              mkService "Browser History" {
+                href = svcUrl "history";
+                description = "Browsing Analytics & Productivity Insights";
               }
             )
             ++ lib.optional atticEnabled (

@@ -887,6 +887,19 @@ _: {
                 alerts = discordAlert "SearXNG metasearch engine down — privacy search unavailable";
               })
             ]
+            ++ lib.optionals config.services.browser-history.enable [
+              (mkHttpCheck {
+                name = "Browser History";
+                group = "Productivity";
+                url = "http://localhost:${toString ports.browser-history}/health";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alerts = discordAlert "Browser History server down — browsing analytics unavailable";
+              })
+            ]
             ++ lib.optionals (config.services.backup-coordination.enable or false) [
               (mkHttpCheck {
                 name = "All Backups Healthy";

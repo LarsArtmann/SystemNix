@@ -250,6 +250,18 @@ _: {
           // lib.optionalAttrs config.services.file-and-image-renamer.enable {
             "renamer.${domain}" = protectedVHost "renamer" ports.file-and-image-renamer-health;
           }
+          # Browser History — direct TLS proxy (NOT protectedVHost).
+          # browser-history has its own WebAuthn/Passkey auth. Forward-auth would
+          # intercept WebAuthn API calls and break registration/login.
+          // lib.optionalAttrs config.services.browser-history.enable {
+            "history.${domain}" = {
+              extraConfig = ''
+                ${tlsConfig}
+                ${commonConfig}
+                ${proxyTo ports.browser-history}
+              '';
+            };
+          }
           # Attic binary cache — plain reverse proxy (no forward-auth).
           # Nix substituters need unauthenticated read access; push requires
           # a valid Attic token.
