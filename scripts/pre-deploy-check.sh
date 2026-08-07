@@ -157,11 +157,11 @@ MONITOR365_PORT=9191
 # Extract metric-like names from gatus pat() patterns.
 # Skips HTML checks (*<html*), text body checks, and comments.
 extract_gatus_metrics() {
-  grep -v '^[[:space:]]*#' "$GATUS_CONFIG" \
-    | grep -oE 'pat\(\*[a-zA-Z_][a-zA-Z0-9_]*' \
-    | sed 's/pat(\*//' \
-    | sort -u \
-    | grep -vE '^<|connected'
+  grep -v '^[[:space:]]*#' "$GATUS_CONFIG" |
+    grep -oE 'pat\(\*[a-zA-Z_][a-zA-Z0-9_]*' |
+    sed 's/pat(\*//' |
+    sort -u |
+    grep -vE '^<|connected'
 }
 
 # Fetch metrics from both endpoints into a temp file for searching
@@ -174,7 +174,7 @@ else
   warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — skipping metric checks that depend on it"
 fi
 
-if curl -sf --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >> "$METRICS_FILE" 2>/dev/null; then
+if curl -sf --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
   pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
 else
   warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — skipping metric checks that depend on it"

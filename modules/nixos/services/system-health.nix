@@ -413,6 +413,9 @@ _: {
           // (lib.optionalAttrs (options ? services.signoz) {
             collectSignozRules = lib.mkDefault (config.services.signoz.enable or false);
             signoz.port = lib.mkDefault (config.services.signoz.settings.queryService.port or 8080);
+          })
+          // (lib.optionalAttrs (options ? services.gatus) {
+            collectGatusHealth = lib.mkDefault (config.services.gatus.enable or false);
           });
 
         systemd = {

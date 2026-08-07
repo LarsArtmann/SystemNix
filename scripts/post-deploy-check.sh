@@ -380,22 +380,22 @@ AUTH_VHOSTS=(
 for vhost in "${AUTH_VHOSTS[@]}"; do
   status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || echo "000")
   case "$status" in
-    200|301|302|303)
-      echo -e "${GREEN}PASS${NC} $vhost → $status (auth gateway healthy)"
-      PASS=$((PASS + 1))
-      ;;
-    500|502|503)
-      echo -e "${RED}FAIL${NC} $vhost → $status (auth gateway BROKEN — check oauth2-proxy)"
-      FAIL=$((FAIL + 1))
-      ;;
-    000)
-      echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
-      SKIP=$((SKIP + 1))
-      ;;
-    *)
-      echo -e "${YELLOW}WARN${NC} $vhost → $status (unexpected status)"
-      SKIP=$((SKIP + 1))
-      ;;
+  200 | 301 | 302 | 303)
+    echo -e "${GREEN}PASS${NC} $vhost → $status (auth gateway healthy)"
+    PASS=$((PASS + 1))
+    ;;
+  500 | 502 | 503)
+    echo -e "${RED}FAIL${NC} $vhost → $status (auth gateway BROKEN — check oauth2-proxy)"
+    FAIL=$((FAIL + 1))
+    ;;
+  000)
+    echo -e "${YELLOW}SKIP${NC} $vhost unreachable"
+    SKIP=$((SKIP + 1))
+    ;;
+  *)
+    echo -e "${YELLOW}WARN${NC} $vhost → $status (unexpected status)"
+    SKIP=$((SKIP + 1))
+    ;;
   esac
 done
 

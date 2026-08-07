@@ -651,20 +651,16 @@
             # regex (? = optional quantifier), causing silent false
             # negatives in health checks. { is allowed — Prometheus
             # labels use {label="value"} syntax.
-            gatus-pattern-lint =
-              pkgs.runCommand "gatus-pattern-lint" { }
-                ''
-                  if grep -v '^[[:space:]]*#' ${
-                    ./modules/nixos/services/gatus-config.nix
-                  } | grep -nE 'pat\(.*[?+]'; then
-                    echo "FAIL: Gatus pat() patterns contain regex-only chars (? or +)."
-                    echo "Gatus pat() uses GLOB, not regex."
-                    echo "  ? = single-char wildcard (NOT optional quantifier)"
-                    echo "  + = literal character (NOT one-or-more quantifier)"
-                    exit 1
-                  fi
-                  touch $out
-                '';
+            gatus-pattern-lint = pkgs.runCommand "gatus-pattern-lint" { } ''
+              if grep -v '^[[:space:]]*#' ${./modules/nixos/services/gatus-config.nix} | grep -nE 'pat\(.*[?+]'; then
+                echo "FAIL: Gatus pat() patterns contain regex-only chars (? or +)."
+                echo "Gatus pat() uses GLOB, not regex."
+                echo "  ? = single-char wildcard (NOT optional quantifier)"
+                echo "  + = literal character (NOT one-or-more quantifier)"
+                exit 1
+              fi
+              touch $out
+            '';
           }
           // lib.optionalAttrs pkgs.stdenv.isLinux (
             import ./tests {

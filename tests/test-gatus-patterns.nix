@@ -46,6 +46,7 @@ let
     node_amdgpu_gpu_busy_percent 15
     niri_running 1
     attic_storage_over_threshold 0
+    system_gatus_endpoints_in_error_long 0
   '';
 
   mockMetricsServer = pkgs.writeShellApplication {

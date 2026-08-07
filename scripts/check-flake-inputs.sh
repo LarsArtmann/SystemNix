@@ -28,7 +28,7 @@ if [ -n "$MASTER_REFS" ]; then
   done
   WARN_COUNT=$((WARN_COUNT + COUNT))
 else
-  echo "  ✓ No ref=\"master\" inputs"
+  echo '  ✓ No ref="master" inputs'
 fi
 
 # 2. Check for GOTOOLCHAIN=auto (FAIL — breaks sandbox purity)

@@ -11,8 +11,7 @@
 # Bug class history: discordsync (DB heal + DNS wait), hermes (535MB state
 # migration), and 10 other services that silently failed on every deploy with
 # exit code 4 because the 90s systemd default expired under I/O contention.
-_:
-{
+_: {
   flake.nixosModules.timeout-audit =
     { lib, ... }:
     {
