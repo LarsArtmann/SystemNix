@@ -157,11 +157,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786216180,
-        "narHash": "sha256-zYuZAdCCEGT5Fq8R6rtx6ZXMqrgA/OE8rTR9RduOEzs=",
+        "lastModified": 1786217352,
+        "narHash": "sha256-IDKsp6GymL37dedEiNGONHs9Otq9bV66JjIhKrqvsCw=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "1ba20de2fbc9019b8fdfd0ee756c86bf516a1697",
+        "rev": "0a10a23f0d0d66756f2df392635b0a80e33c3228",
         "type": "github"
       },
       "original": {
@@ -500,11 +500,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786216524,
-        "narHash": "sha256-Vcikpb/JqmLid9eCVlUojwQ3VT1kWYbPM218mQfngrc=",
+        "lastModified": 1786217759,
+        "narHash": "sha256-D5zqCaW2VdK4wGcIMLX/AlsepZSzQKGpfonj427I3Xc=",
         "owner": "LarsArtmann",
         "repo": "crush-daily",
-        "rev": "34bc613fc4cc4e0cf104f671aefc2c13cf8b86d1",
+        "rev": "f60c9786e8a185dd968a8d372fec254db5e1be4f",
         "type": "github"
       },
       "original": {
@@ -598,11 +598,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786132870,
-        "narHash": "sha256-hfDy1ZmfOPxqhpWNAelIuAzZbxnHznYmNN1705/P014=",
+        "lastModified": 1786217745,
+        "narHash": "sha256-KsCEZIKvKU8Nw3cEunEsI/N53aeq04ces5YUfBQ4kxs=",
         "owner": "LarsArtmann",
         "repo": "dnsblockd",
-        "rev": "b98077709b8e682d846c59ec13b239110dc30324",
+        "rev": "55d7727224b494aa9d00d88fc78f482462183221",
         "type": "github"
       },
       "original": {
@@ -679,11 +679,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1786216196,
-        "narHash": "sha256-hWa+3AAW9PrJs4aSF9Ae1uAabTURzVIIMx4+5qKvPYw=",
+        "lastModified": 1786217658,
+        "narHash": "sha256-GqVrACz0LufwdoQ5hVD4/AVyz+I01kGe4GrhFdxYiMg=",
         "owner": "LarsArtmann",
         "repo": "file-and-image-renamer",
-        "rev": "3800a6649df874e78cc3312955bd6dd7fdb7d495",
+        "rev": "5ce3a9ecc57ddb21d639abcabd5920d001b98536",
         "type": "github"
       },
       "original": {
@@ -2478,11 +2478,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786216707,
-        "narHash": "sha256-K/s8QduMlAmkVDnu08y55cbGIHS02MA4dWQfNUaSHlg=",
+        "lastModified": 1786217355,
+        "narHash": "sha256-pdkOWvl1uQCucmOUH3CMH/NiCYGbCv3L8RKq9XbCBsM=",
         "owner": "LarsArtmann",
         "repo": "go-humanize-linter",
-        "rev": "9e83bf6f8cb170d3454ff6b6a057cea07ff26772",
+        "rev": "32a7704d6e3ae5a6df68bd5920b1c286a307097b",
         "type": "github"
       },
       "original": {
@@ -3720,16 +3720,16 @@
     "httputil-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785943613,
-        "narHash": "sha256-NUkFEFzjKqTUa/HXjv+Fuqe1z3Vz2Z1uWAkJL2mP/Z0=",
-        "ref": "refs/tags/v0.9.0",
-        "rev": "b98009bf2993cdbf75d99be4682d1a420306b260",
-        "revCount": 257,
+        "lastModified": 1786159586,
+        "narHash": "sha256-ZRqWgMSwRM468Oc2r8HY9Ug2O3btdJfrKenMPfYGfOU=",
+        "ref": "refs/tags/v0.10.0",
+        "rev": "e0b377cb149f3e7cf49017d58b4534fd83975794",
+        "revCount": 356,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/httputil"
       },
       "original": {
-        "ref": "refs/tags/v0.9.0",
+        "ref": "refs/tags/v0.10.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/httputil"
       }
@@ -5105,16 +5105,16 @@
     "templ-components-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1785817541,
-        "narHash": "sha256-2PS+XRrwf7eIyEVJsoe2lVlnfyTnnhE3k9UlGmcFbf4=",
-        "ref": "refs/tags/v1.7.0",
-        "rev": "0b30bbfe04eab4a422b93a84e8ff76c087ed0236",
-        "revCount": 937,
+        "lastModified": 1786180536,
+        "narHash": "sha256-c0lWUCQ7kmeO7SVGsqloVdWepqQWIOcznypRKjlunpo=",
+        "ref": "refs/tags/v1.8.0",
+        "rev": "685bee89ff6c77368e7d0a2808cdec533ffc7b37",
+        "revCount": 960,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       },
       "original": {
-        "ref": "refs/tags/v1.7.0",
+        "ref": "refs/tags/v1.8.0",
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/templ-components"
       }
