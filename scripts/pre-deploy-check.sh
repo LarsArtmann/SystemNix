@@ -25,11 +25,21 @@ echo ""
 
 # 1. Flake syntax check
 echo "1. Flake syntax validation"
-if nix flake check --no-build >/dev/null 2>&1; then
+FLAKE_CHECK_OUTPUT="$(nix flake check --no-build 2>&1 || true)"
+
+# Filter out the known "path is not valid" false positive.
+# mkPreparedSource (go-nix-helpers) and similar patterns use builtins.pathExists
+# at eval time; --no-build doesn't realize source derivations, so these checks
+# spuriously fail. The toplevel eval (check #2) is authoritative for deployment.
+REAL_ERRORS="$(echo "$FLAKE_CHECK_OUTPUT" | grep 'error:' | grep -v 'is not valid' || true)"
+
+if [ -z "$FLAKE_CHECK_OUTPUT" ]; then
   pass "nix flake check --no-build"
-else
+elif [ -n "$REAL_ERRORS" ]; then
   fail "nix flake check --no-build — fix syntax errors before deploying"
-  nix flake check --no-build 2>&1 | tail -5
+  echo "$REAL_ERRORS" | tail -5
+else
+  warn "nix flake check --no-build — only 'path is not valid' errors (known --no-build limitation, toplevel eval is authoritative)"
 fi
 
 # 2. Eval the system configuration
