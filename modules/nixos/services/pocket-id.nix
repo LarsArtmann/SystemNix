@@ -83,14 +83,14 @@ _: {
           api_put() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 10 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --max-time 30 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
           api_post() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 10 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --max-time 30 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
@@ -237,6 +237,7 @@ _: {
                 echo "  Creating OIDC client: ${client.name}"
                 CREATE_RESPONSE=$(api_post "/api/oidc/clients" '${builtins.toJSON createAttrs}')
                 echo "  Client create response: $CREATE_RESPONSE"
+                HTTP_CODE=$(echo "$CREATE_RESPONSE" | tail -1)
                 RESPONSE_BODY=$(echo "$CREATE_RESPONSE" | sed '$d')
                 CLIENT_ID=$(echo "$RESPONSE_BODY" | jq -r '.id // empty' 2>/dev/null || true)
 
@@ -245,7 +246,19 @@ _: {
                   ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
                   CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
                 elif [ -z "$CLIENT_ID" ]; then
-                  echo "  ERROR: Failed to create client '${client.name}'. Response: $RESPONSE_BODY" >&2
+                  # POST may have succeeded server-side despite a curl timeout
+                  # (SQLite SQLITE_BUSY contention can make writes take 10-15s).
+                  # Wait briefly, then re-fetch before declaring failure.
+                  echo "  WARNING: Create returned no client ID (HTTP $HTTP_CODE). Re-fetching in case of timeout..."
+                  sleep 5
+                  ALL_CLIENTS2=$(api_get "/api/oidc/clients?pagination%5Blimit%5D=100")
+                  CLIENT_ID=$(echo "$ALL_CLIENTS2" | jq -r '.data[] | select(.id == "${client.clientId}") | .id // empty' 2>/dev/null | head -1)
+                  if [ -n "$CLIENT_ID" ]; then
+                    echo "  Client '${client.name}' was created despite timeout (ID: $CLIENT_ID)."
+                  else
+                    echo "  ERROR: Failed to create client '${client.name}'. Response: $RESPONSE_BODY" >&2
+                    exit 1
+                  fi
                 else
                   echo "  Created client '${client.name}' with ID: $CLIENT_ID"
                 fi
@@ -268,7 +281,7 @@ _: {
                 echo "  Secret file already exists."
               else
                 echo "  Generating client secret..."
-                SECRET_RESPONSE=$(curl -s --max-time 10 -X POST \
+                SECRET_RESPONSE=$(curl -s --max-time 30 -X POST \
                   -H "X-API-Key: $API_KEY" \
                   "$API_URL/api/oidc/clients/$CLIENT_ID/secret" 2>&1 || true)
                 CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.secret // empty' 2>/dev/null || true)
