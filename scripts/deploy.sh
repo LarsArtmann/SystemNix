@@ -49,12 +49,20 @@ if nix run .#pre-deploy-check; then
   # after their first run. switch-to-configuration does NOT restart them even
   # when restartTriggers change. This means provisioning fixes deployed to the
   # Nix store never re-run without an explicit restart.
-  for provisioner in signoz-provision pocket-id-provision forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate; do
+  for provisioner in signoz-provision pocket-id-provision browser-history-oidc-setup forgejo-generate-token forgejo-oidc-setup forgejo-ssh-keys twenty-fix-collation dnsblockd-attach-ip monitor365-schema-migrate; do
     if systemctl is-enabled --quiet "$provisioner.service" 2>/dev/null; then
       echo "Restarting provisioner: $provisioner.service"
       sudo systemctl restart "$provisioner.service" 2>/dev/null || true
     fi
   done
+
+  # Restart browser-history AFTER browser-history-oidc-setup so it picks up the
+  # freshly-written OAuth2 env file. Without this, browser-history keeps running
+  # with stale (or missing) OAuth2 config from a prior boot.
+  if systemctl is-enabled --quiet browser-history.service 2>/dev/null; then
+    echo "Restarting browser-history.service (reload OAuth2 env file)"
+    sudo systemctl restart browser-history.service 2>/dev/null || true
+  fi
 
   echo ""
   echo "=== Waiting 10s for services to settle ==="
