@@ -7,10 +7,12 @@
 #   - Port assignment from the central registry
 #   - WebAuthn/OAuth2 domain configuration
 #   - OTel endpoint
+#   - Agent token via sops (shared between server and agent)
 #   - Pocket ID OIDC secret bridging (oneshot reads Pocket ID's provisioned
 #     secret and writes an EnvironmentFile for browser-history)
 #   - SSL_CERT_FILE for internal CA (OIDC discovery via Caddy's CA-signed cert)
 #   - onFailure alert routing
+#   - Agent runs as the primary desktop user (to read browser profiles)
 #
 # Both server and agent modules are imported. Machines enable whichever they need:
 #   services.browser-history.enable = true;        # server (headless box)
@@ -32,6 +34,8 @@
       cfg = config.services.browser-history;
       serverPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server;
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
+      primaryUser = config.users.primaryUser or "lars";
+      sopsEnvPath = config.sops.templates."browser-history-env".path;
 
       domain = config.networking.domain;
       fqdn = "history.${domain}";
@@ -59,6 +63,10 @@
           systemd.services.browser-history = {
             onFailure = onFailure;
             restartTriggers = [ serverPkg ];
+
+            # Agent token from sops. Systemd reads EnvironmentFile as root,
+            # so root-owned sops template works for the DynamicUser server.
+            serviceConfig.EnvironmentFile = [ sopsEnvPath ];
           };
         })
 
@@ -84,7 +92,8 @@
             environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
 
             # "-" prefix = optional: won't fail if the file is missing (graceful
-            # degradation to WebAuthn-only mode).
+            # degradation to WebAuthn-only mode). Merges with the sops EnvironmentFile
+            # from the server block above (NixOS list concatenation).
             serviceConfig.EnvironmentFile = [ "-${oauth2SecretsFile}" ];
           };
 
@@ -133,17 +142,29 @@
           };
         })
 
-        # ── Agent: defaults for machines that enable it ────────────────────────────
-        # Individual machines enable + configure the agent in their configuration:
+        # ── Agent: SystemNix defaults for machines that enable it ──────────────────
+        # The agent extracts browser history from local profiles and pushes it
+        # to the server. It must run as the desktop user to read browser data.
+        # Enable per-machine:
         #   services.browser-history-agent = {
         #     enable = true;
-        #     package = inputs.browser-history.packages.${system}.browser-history-agent;
         #     serverUrl = "https://history.${domain}";
-        #     tokenFile = ...;
-        #     machineId = "desktop";
+        #     machineId = "evo-x2";
         #   };
         (lib.mkIf config.services.browser-history-agent.enable {
-          services.browser-history-agent.package = lib.mkDefault agentPkg;
+          services.browser-history-agent = {
+            package = lib.mkDefault agentPkg;
+            tokenFile = lib.mkDefault sopsEnvPath;
+          };
+
+          systemd.services.browser-history-agent = {
+            onFailure = onFailure;
+
+            # Run as the desktop user — browser profiles are mode 0700 and
+            # not readable by other users. ProtectHome=read-only (from the
+            # upstream module) still applies.
+            serviceConfig.User = primaryUser;
+          };
         })
       ];
     };

@@ -248,6 +248,13 @@ in
                 group = "root";
                 restartUnits = [ "atticd.service" ];
               } [ "attic_token_rs256_secret_base64" ]
+            )
+            // lib.optionalAttrs (svcEnabled "browser-history") (
+              mkSecrets "browser-history.yaml" {
+                owner = "root";
+                group = "root";
+                restartUnits = [ "browser-history.service" ];
+              } [ "browser_history_agent_token" ]
             );
 
           templates = {
@@ -373,6 +380,23 @@ in
               restartUnits = [ "atticd.service" ];
               content = lib.generators.toKeyValue { } {
                 ATTIC_SERVER_TOKEN_RS256_SECRET_BASE64 = config.sops.placeholder.attic_token_rs256_secret_base64;
+              };
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "browser-history") {
+            # Shared by server (DynamicUser) and agent (user). Both use
+            # EnvironmentFile= which is read by systemd (root), so root-owned
+            # is correct for both consumers.
+            "browser-history-env" = {
+              owner = "root";
+              group = "root";
+              mode = "0400";
+              restartUnits = [
+                "browser-history.service"
+                "browser-history-agent.service"
+              ];
+              content = lib.generators.toKeyValue { } {
+                BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_token;
               };
             };
           };

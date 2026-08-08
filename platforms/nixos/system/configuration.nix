@@ -340,6 +340,12 @@ in
         enable = true; # Browser history intelligence server
       };
 
+      browser-history-agent = {
+        enable = true; # Extract local browser history → push to server
+        serverUrl = "https://history.${config.networking.domain}";
+        machineId = "evo-x2";
+      };
+
       # Manifest — Smart LLM router for AI agents (cost optimization)
       manifest = {
         enable = true;
