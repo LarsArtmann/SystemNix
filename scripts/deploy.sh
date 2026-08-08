@@ -36,6 +36,14 @@ if nix run .#pre-deploy-check; then
     sudo systemctl start monitor365.service 2>/dev/null || true
   fi
 
+  # Restart Caddy after every deploy. The harden() helper sets PrivateTmp=true
+  # which blocks systemd's mount-namespace reload path — switch-to-configuration
+  # silently fails to reload Caddy (exit code 4), leaving new vHosts unloaded.
+  if systemctl is-enabled --quiet caddy.service 2>/dev/null; then
+    echo "Restarting caddy.service (reload broken by PrivateTmp hardening)..."
+    sudo systemctl restart caddy.service 2>/dev/null || true
+  fi
+
   # Restart provisioner oneshots that switch-to-configuration skips.
   # Type=oneshot + RemainAfterExit=true services stay in "active (exited)" state
   # after their first run. switch-to-configuration does NOT restart them even
