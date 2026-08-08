@@ -27,8 +27,10 @@
     }:
     let
       inherit (import ../../../lib/default.nix lib)
+        harden
         onFailure
         ports
+        serviceOneshotDefaults
         ;
 
       cfg = config.services.browser-history;
@@ -108,11 +110,20 @@
             wants = [ "pocket-id-provision.service" ];
             before = [ "browser-history.service" ];
             wantedBy = [ "browser-history.service" ];
+            startLimitBurst = 5;
+            startLimitIntervalSec = 300;
 
-            serviceConfig = {
-              Type = "oneshot";
-              RemainAfterExit = true;
-            };
+            serviceConfig = lib.mkMerge [
+              {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              }
+              (harden {
+                ProtectSystem = "strict";
+                ReadWritePaths = [ "/var/lib/browser-history" ];
+              })
+              (serviceOneshotDefaults {})
+            ];
 
             path = [
               pkgs.coreutils
@@ -163,7 +174,10 @@
             # Run as the desktop user — browser profiles are mode 0700 and
             # not readable by other users. ProtectHome=read-only (from the
             # upstream module) still applies.
-            serviceConfig.User = primaryUser;
+            serviceConfig = {
+              User = primaryUser;
+              MemoryMax = lib.mkDefault "512M";
+            };
           };
         })
       ];
