@@ -679,11 +679,11 @@
         "vision-review-agent-src": "vision-review-agent-src"
       },
       "locked": {
-        "lastModified": 1786217658,
-        "narHash": "sha256-GqVrACz0LufwdoQ5hVD4/AVyz+I01kGe4GrhFdxYiMg=",
+        "lastModified": 1786217948,
+        "narHash": "sha256-/oqJSnuiVPTPen+eSmVvpJ19E84mtuR8q/yapi40+RY=",
         "owner": "LarsArtmann",
         "repo": "file-and-image-renamer",
-        "rev": "5ce3a9ecc57ddb21d639abcabd5920d001b98536",
+        "rev": "11ed3acafbc7aab26491a979fa7bbd1d75cf0e7f",
         "type": "github"
       },
       "original": {
