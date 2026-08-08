@@ -145,6 +145,18 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **Restart triggers:** `restartTriggers` not yet needed (no store-path content observed to affect runtime). Add if `$out/lib/qmd/node_modules/` changes cause the same `_next/static/*` 404 pattern as Homepage.
 - **Gatus:** `qmd MCP HTTP Server` health check at `http://localhost:8181/health` (5min interval, Discord alert on down). Health endpoint returns uptime JSON per docs.
 
+### Browser History
+
+**Module:** `modules/nixos/services/browser-history.nix` — thin wrapper importing upstream `nixosModules.browser-history-server` + `nixosModules.browser-history-agent`
+
+- **Architecture:** SystemNix consumes BOTH upstream modules via `imports`. Upstream provides all options, defaults, assertions, and security hardening (`DynamicUser`, `ProtectSystem=strict`, `MemoryMax=512M`, `StartLimitBurst`, `USE_SQLITE_READ_MODEL=true`). SystemNix layers only: package wiring, port from `lib/ports.nix`, WebAuthn/OAuth2 domain config, OTel endpoint, sops agent token, Pocket ID secret bridging, onFailure routing
+- **Server + Agent dual-module:** Both modules imported unconditionally. Machines enable independently: `services.browser-history.enable = true` (server) and/or `services.browser-history-agent.enable = true` (agent)
+- **Agent runs as desktop user** (`User = primaryUser`) because browser profiles are mode 0700. Upstream sets `ProtectHome=read-only` which is compatible — user can read own profiles, systemd injects env via `EnvironmentFile` (root reads the file)
+- **Agent token:** Shared sops secret (`browser_history_agent_token`) rendered as `browser-history-env` template. Both server (DynamicUser) and agent read it via `EnvironmentFile`. The v1 auth path uses constant-time env-var comparison — raw hex token works without DB-backed `bh_`-prefixed token creation
+- **Pocket ID OAuth2 bridging:** `browser-history-oidc-setup` oneshot reads `/var/lib/pocket-id/client-secrets/browser-history` and writes `OAUTH2_POCKET_ID_CLIENT_ID` + `OAUTH2_POCKET_ID_CLIENT_SECRET` to `/var/lib/browser-history/oauth2-secrets.env`. Optional `-` prefix on `EnvironmentFile` = graceful degradation to WebAuthn-only if secret missing
+- **EnvironmentFile list merging:** Server gets TWO env files via NixOS list concatenation across `mkMerge` blocks: sops template (always) + OAuth2 secrets (optional, `-` prefix). Verified: `[ "-/var/lib/browser-history/oauth2-secrets.env" "/run/secrets/rendered/browser-history-env" ]`
+- **Deploy ordering:** `deploy.sh` restarts `browser-history-oidc-setup` (provisioner loop) then explicitly restarts `browser-history.service` so it reloads the OAuth2 env file
+
 ### Sops + Age
 
 **Encrypting a NEW secret file** — NO sudo needed. The age PUBLIC key in `.sops.yaml` is sufficient:
