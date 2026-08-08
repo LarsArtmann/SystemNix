@@ -30,14 +30,14 @@
         --warning: var(--color-yellow);
         --radius: 0px;
         --font-heading:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-body:
-          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          Helvetica, Arial, sans-serif;
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         --font-mono:
-          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono", Menlo, Consolas,
-          monospace;
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
       }
       * {
         box-sizing: border-box;
@@ -234,15 +234,27 @@
       }
       .card-problem {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .card-solution {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .card-warning {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue {
         background: var(--surface-raised);
@@ -253,15 +265,27 @@
       }
       .issue-critical {
         border-left-color: var(--problem);
-        background: color-mix(in srgb, var(--problem) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-important {
         border-left-color: var(--warning);
-        background: color-mix(in srgb, var(--warning) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
       }
       .issue-nice {
         border-left-color: var(--solution);
-        background: color-mix(in srgb, var(--solution) 8%, var(--surface-raised));
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
       }
       .issue h3 {
         margin-bottom: 0.3rem;
@@ -569,9 +593,10 @@
           <div class="hero-badge">FULL COMPREHENSIVE STATUS</div>
           <h1>SystemNix &mdash; Full Status Report</h1>
           <p class="hero-subtitle">
-            Cross-platform Nix configuration for AMD Ryzen AI Max+ 395 (Strix Halo) desktop + Apple
-            Silicon MacBook Air. 3,050 commits, 128 Nix files, 201 flake inputs, 33 services, 6
-            desktop modules. Helium hotplug crash fix applied (pending deploy). The system is in a
+            Cross-platform Nix configuration for AMD Ryzen AI Max+ 395 (Strix
+            Halo) desktop + Apple Silicon MacBook Air. 3,050 commits, 128 Nix
+            files, 201 flake inputs, 33 services, 6 desktop modules. Helium
+            hotplug crash fix applied (pending deploy). The system is in a
             <strong>functional but memory-pressured</strong> state.
           </p>
         </div>
@@ -723,7 +748,9 @@
         <!-- ═══════════════════════════════════════════════════════════════ -->
         <h2 id="done">
           <span class="num">01</span>Fully Done
-          <span style="font-size: 0.65rem; color: var(--text-faint)">(Working &amp; Verified)</span>
+          <span style="font-size: 0.65rem; color: var(--text-faint)"
+            >(Working &amp; Verified)</span
+          >
         </h2>
         <!-- ═══════════════════════════════════════════════════════════════ -->
 
@@ -731,47 +758,53 @@
           <h4>Cross-Platform Nix Flake Architecture</h4>
           <p>
             Single flake powering two systems with ~80% shared config via
-            <code>platforms/common/</code>. Flake-parts modular architecture with 39 auto-discovered
-            service modules. SOPS secrets via age (SSH host key). Treefmt + alejandra formatting.
-            Flake checks (statix, deadnix, eval).
+            <code>platforms/common/</code>. Flake-parts modular architecture
+            with 39 auto-discovered service modules. SOPS secrets via age (SSH
+            host key). Treefmt + alejandra formatting. Flake checks (statix,
+            deadnix, eval).
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>SSO / OIDC &mdash; Two-Layer Architecture (Pocket ID)</h4>
           <p>
-            Passkey-only OIDC IdP (<code>auth.home.lan</code>) with two SSO layers fully
-            operational:
-            <strong>Layer 1 (Native OIDC):</strong> Forgejo, Immich, Gatus &mdash; direct OIDC
-            integration, provisioned clients, no forward-auth.
-            <strong>Layer 2 (oauth2-proxy):</strong> Homepage, SigNoz, Twenty, Taskchampion,
-            Manifest, OpenSEO, Crush Daily, Dozzle, Monitor365 &mdash; forward-auth gated behind
-            Pocket ID login.
+            Passkey-only OIDC IdP (<code>auth.home.lan</code>) with two SSO
+            layers fully operational:
+            <strong>Layer 1 (Native OIDC):</strong> Forgejo, Immich, Gatus
+            &mdash; direct OIDC integration, provisioned clients, no
+            forward-auth. <strong>Layer 2 (oauth2-proxy):</strong> Homepage,
+            SigNoz, Twenty, Taskchampion, Manifest, OpenSEO, Crush Daily,
+            Dozzle, Monitor365 &mdash; forward-auth gated behind Pocket ID
+            login.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>Self-Hosted Application Stack (28+ services)</h4>
           <p>
-            <strong>Infrastructure:</strong> Caddy (15 vHosts, TLS), Docker (overlay2, auto-prune),
-            SOPS, Pocket ID, oauth2-proxy.<br />
-            <strong>Apps:</strong> Forgejo (Git forge + Actions), Immich (photos, VA-API
-            transcoding), SigNoz (full observability), Twenty CRM, Homepage dashboard, Gatus (38
-            health checks), DiscordSync (backup bot), Dozzle, TaskChampion, Manifest, OpenSEO, Crush
-            Daily, PMA.<br />
-            <strong>AI/ML:</strong> Ollama (ROCm GPU), llama.cpp (custom ROCWMMA build), centralized
-            model storage, Hermes AI gateway (Discord bot, multi-provider LLM).<br />
-            <strong>Monitoring:</strong> node_exporter, cadvisor, amdgpu-metrics, BTRFS health, NVMe
-            SMART, display watchdog, niri DRM healthcheck.
+            <strong>Infrastructure:</strong> Caddy (15 vHosts, TLS), Docker
+            (overlay2, auto-prune), SOPS, Pocket ID, oauth2-proxy.<br />
+            <strong>Apps:</strong> Forgejo (Git forge + Actions), Immich
+            (photos, VA-API transcoding), SigNoz (full observability), Twenty
+            CRM, Homepage dashboard, Gatus (38 health checks), DiscordSync
+            (backup bot), Dozzle, TaskChampion, Manifest, OpenSEO, Crush Daily,
+            PMA.<br />
+            <strong>AI/ML:</strong> Ollama (ROCm GPU), llama.cpp (custom ROCWMMA
+            build), centralized model storage, Hermes AI gateway (Discord bot,
+            multi-provider LLM).<br />
+            <strong>Monitoring:</strong> node_exporter, cadvisor,
+            amdgpu-metrics, BTRFS health, NVMe SMART, display watchdog, niri DRM
+            healthcheck.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>DankMaterialShell Desktop (Quickshell)</h4>
           <p>
-            Full QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit-gnome, and Rofi. 13
-            SystemNix-native DMS plugins + 2 community plugins (emoji launcher, calculator).
-            Wallpaper management owned by DMS (awww retired). Niri keybindings migrated from rofi to
+            Full QtQuick desktop shell replacing Waybar, Dunst, Wlogout,
+            polkit-gnome, and Rofi. 13 SystemNix-native DMS plugins + 2
+            community plugins (emoji launcher, calculator). Wallpaper management
+            owned by DMS (awww retired). Niri keybindings migrated from rofi to
             DMS IPC. MemoryMax=4G as OOM defense.
             <code>systemd.enable = true</code> explicitly set.
           </p>
@@ -781,9 +814,10 @@
           <h4>BTRFS Crash Prevention &amp; Health Monitoring</h4>
           <p>
             After the 2026-06-26 metadata ENOSPC crash, implemented:
-            <code>btrfs-health.nix</code> gates nix-gc + nix-build-cleanup via ExecStartPre guard
-            (aborts when device-unallocated &lt; 10%), Prometheus metrics every 5 min, Gatus Discord
-            alerts, DMS widget showing device-unallocated %. btrbk staggered to 23:00 (before GC at
+            <code>btrfs-health.nix</code> gates nix-gc + nix-build-cleanup via
+            ExecStartPre guard (aborts when device-unallocated &lt; 10%),
+            Prometheus metrics every 5 min, Gatus Discord alerts, DMS widget
+            showing device-unallocated %. btrbk staggered to 23:00 (before GC at
             00:00).
           </p>
         </div>
@@ -791,27 +825,30 @@
         <div class="card card-solution">
           <h4>Pre-Deploy Validation Pipeline</h4>
           <p>
-            <code>nix run .#pre-deploy-check</code> catches boot-breaking issues before switch. Runs
-            automatically as part of <code>nix run .#deploy</code>. Deploy script also runs
-            <code>systemctl reset-failed</code> (system + user) before nh os switch to clear
-            start-limit counters.
+            <code>nix run .#pre-deploy-check</code> catches boot-breaking issues
+            before switch. Runs automatically as part of
+            <code>nix run .#deploy</code>. Deploy script also runs
+            <code>systemctl reset-failed</code> (system + user) before nh os
+            switch to clear start-limit counters.
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>Forgejo Declarative Repo Mirroring</h4>
           <p>
-            Auto-sync on rebuild + daily timer. Push mirrors to GitHub. Hardened oneshot.
-            Sops-managed tokens. SSO-only login enforced (internal signin + basic auth disabled).
+            Auto-sync on rebuild + daily timer. Push mirrors to GitHub. Hardened
+            oneshot. Sops-managed tokens. SSO-only login enforced (internal
+            signin + basic auth disabled).
           </p>
         </div>
 
         <div class="card card-solution">
           <h4>Display Watchdog System</h4>
           <p>
-            Three-tier recovery: niri-drm-healthcheck (60s timer), display-watchdog (30s timer,
-            restart niri &rarr; restart display-manager &rarr; VT switch), niri-health-metrics
-            (Prometheus textfile). Detects DRM zombie state and recovers automatically.
+            Three-tier recovery: niri-drm-healthcheck (60s timer),
+            display-watchdog (30s timer, restart niri &rarr; restart
+            display-manager &rarr; VT switch), niri-health-metrics (Prometheus
+            textfile). Detects DRM zombie state and recovers automatically.
           </p>
         </div>
 
@@ -821,11 +858,11 @@
             <span class="badge badge-fixed">New (Pending Deploy)</span>
           </h4>
           <p>
-            Root cause identified: Chromium GPU watchdog kills the GPU process during slow display
-            pipeline reconfiguration on Strix Halo DCN 3.5.1 (under chronic GPUActive memory
-            pressure). Fix:
-            <code>--disable-gpu-watchdog</code> flag added to Helium wrapper. Flake check passes.
-            Commit pending.
+            Root cause identified: Chromium GPU watchdog kills the GPU process
+            during slow display pipeline reconfiguration on Strix Halo DCN 3.5.1
+            (under chronic GPUActive memory pressure). Fix:
+            <code>--disable-gpu-watchdog</code> flag added to Helium wrapper.
+            Flake check passes. Commit pending.
           </p>
         </div>
 
@@ -835,8 +872,9 @@
             <div class="text">
               <strong>3050 commits of iterative hardening</strong>
               <span
-                >Every crash, OOM, and boot failure has been root-caused and documented. The
-                AGENTS.md gotchas table is battle-tested institutional knowledge.</span
+                >Every crash, OOM, and boot failure has been root-caused and
+                documented. The AGENTS.md gotchas table is battle-tested
+                institutional knowledge.</span
               >
             </div>
           </div>
@@ -845,8 +883,9 @@
             <div class="text">
               <strong>Atomic secret management</strong>
               <span
-                >All service-specific secrets guarded with <code>lib.optionalAttrs</code>. One bad
-                owner blocks ALL secrets atomically &mdash; by design, not accident.</span
+                >All service-specific secrets guarded with
+                <code>lib.optionalAttrs</code>. One bad owner blocks ALL secrets
+                atomically &mdash; by design, not accident.</span
               >
             </div>
           </div>
@@ -855,9 +894,10 @@
             <div class="text">
               <strong>Self-healing service architecture</strong>
               <span
-                >SigNoz migration lock auto-clear, Pocket ID provision auto-recovery, display
-                watchdog, BTRFS GC guard, SSH socket cleanup &mdash; the system fixes itself in most
-                failure modes.</span
+                >SigNoz migration lock auto-clear, Pocket ID provision
+                auto-recovery, display watchdog, BTRFS GC guard, SSH socket
+                cleanup &mdash; the system fixes itself in most failure
+                modes.</span
               >
             </div>
           </div>
@@ -870,16 +910,19 @@
         <div class="issue issue-important">
           <span class="severity severity-important">In Progress</span>
           <h3>DNS Migration: dnsblockd &rarr; Primary Resolver</h3>
-          <div class="where">TODO_LIST.md &mdash; Priority 0, Phase 2a&ndash;4</div>
+          <div class="where">
+            TODO_LIST.md &mdash; Priority 0, Phase 2a&ndash;4
+          </div>
           <p>
-            Detailed migration plan written (4 phases, 20+ sub-tasks). dnsblockd has embedded
-            resolver (sdns, DNSSEC, DoT, DoH, caching) but three gaps block migration: (1) no local
-            zone support, (2) no upstream DoT forwarding, (3) no LAN ACLs. Currently running split
-            architecture: unbound on :53 + dnsblockd as block-page HTTP server.
+            Detailed migration plan written (4 phases, 20+ sub-tasks). dnsblockd
+            has embedded resolver (sdns, DNSSEC, DoT, DoH, caching) but three
+            gaps block migration: (1) no local zone support, (2) no upstream DoT
+            forwarding, (3) no LAN ACLs. Currently running split architecture:
+            unbound on :53 + dnsblockd as block-page HTTP server.
           </p>
           <div class="callout callout-warning">
-            <strong>Status:</strong> Plan complete, Phase 2a not started. Estimated ~15h across both
-            repos.
+            <strong>Status:</strong> Plan complete, Phase 2a not started.
+            Estimated ~15h across both repos.
           </div>
         </div>
 
@@ -888,10 +931,13 @@
           <h3>Monitor365 Server &mdash; Upstream Rust Panic</h3>
           <div class="where">modules/nixos/services/monitor365.nix</div>
           <p>
-            Server crashes with Axum 0.7 route syntax incompatibility (<code>:param</code> &rarr;
-            <code>{param}</code>). Root cause identified, needs fix in
-            <code>github:LarsArtmann/monitor365</code> source. Nix-side workaround not possible.
-            Agent is functional; server dashboard is down.
+            Server crashes with Axum 0.7 route syntax incompatibility (<code
+              >:param</code
+            >
+            &rarr; <code>{param}</code>). Root cause identified, needs fix in
+            <code>github:LarsArtmann/monitor365</code> source. Nix-side
+            workaround not possible. Agent is functional; server dashboard is
+            down.
           </p>
         </div>
 
@@ -900,10 +946,10 @@
           <h3>Hermes AI Gateway &mdash; Missing Configuration</h3>
           <div class="where">modules/nixos/services/hermes.nix</div>
           <p>
-            Two manual steps remaining: (1) install SSH deploy key for private repos, (2) set
-            fallback model via
-            <code>sudo -u hermes hermes config set fallback_model</code>. Service is running but
-            cannot deploy code or failover LLM providers.
+            Two manual steps remaining: (1) install SSH deploy key for private
+            repos, (2) set fallback model via
+            <code>sudo -u hermes hermes config set fallback_model</code>.
+            Service is running but cannot deploy code or failover LLM providers.
           </p>
         </div>
 
@@ -912,8 +958,9 @@
           <h3>Pocket ID Email Sending</h3>
           <div class="where">modules/nixos/services/pocket-id.nix</div>
           <p>
-            SMTP wiring complete, sops secret added. Email sending not verified end-to-end. Need to
-            test login notification or email verification flow.
+            SMTP wiring complete, sops secret added. Email sending not verified
+            end-to-end. Need to test login notification or email verification
+            flow.
           </p>
         </div>
 
@@ -922,9 +969,9 @@
           <h3>Multiple Undeployed Changes</h3>
           <div class="where">Working tree + recent commits</div>
           <p>
-            Helium <code>--disable-gpu-watchdog</code> fix, flake.lock updates, overview CSP/CDN
-            fixes &mdash; all committed but not yet deployed to evo-x2. Last deploy was the
-            flake.lock bump at 79afe865.
+            Helium <code>--disable-gpu-watchdog</code> fix, flake.lock updates,
+            overview CSP/CDN fixes &mdash; all committed but not yet deployed to
+            evo-x2. Last deploy was the flake.lock bump at 79afe865.
           </p>
         </div>
 
@@ -933,20 +980,24 @@
           <h3>BTRFS /data Subvolume &mdash; Not Snapshotted</h3>
           <div class="where">/data &mdash; BTRFS toplevel (subvolid=5)</div>
           <p>
-            Docker volumes, Immich storage, and AI model data are on the BTRFS toplevel &mdash;
-            cannot be snapshotted. Migration requires ~1h downtime (boot from USB rescue, create
-            subvolume, rsync, update fstab). Root (<code>@</code>) IS snapshotted daily via btrbk
-            (14d+4w retention).
+            Docker volumes, Immich storage, and AI model data are on the BTRFS
+            toplevel &mdash; cannot be snapshotted. Migration requires ~1h
+            downtime (boot from USB rescue, create subvolume, rsync, update
+            fstab). Root (<code>@</code>) IS snapshotted daily via btrbk (14d+4w
+            retention).
           </p>
         </div>
 
         <div class="issue issue-important">
           <span class="severity severity-important">No Off-site Backup</span>
           <h3>Cloud Backup Strategy</h3>
-          <div class="where">docs/research/hetzner-storagebox-borgbackup.md</div>
+          <div class="where">
+            docs/research/hetzner-storagebox-borgbackup.md
+          </div>
           <p>
-            Research done for BorgBackup to Hetzner StorageBox. No off-site backup exists. All data
-            is on a single machine. This is the single biggest disaster recovery risk.
+            Research done for BorgBackup to Hetzner StorageBox. No off-site
+            backup exists. All data is on a single machine. This is the single
+            biggest disaster recovery risk.
           </p>
         </div>
 
@@ -958,54 +1009,59 @@
           <div class="card">
             <h4>Raspberry Pi 3 DNS Failover</h4>
             <p>
-              VRRP cluster module ready (<code>dns-failover.nix</code>). Hardware not purchased.
-              Two-node keepalived with unbound health tracking, GARP refresh.
+              VRRP cluster module ready (<code>dns-failover.nix</code>).
+              Hardware not purchased. Two-node keepalived with unbound health
+              tracking, GARP refresh.
             </p>
           </div>
           <div class="card">
             <h4>Firewall Deny-by-Default</h4>
             <p>
-              NixOS currently allows all inbound. Docker punches its own holes. Need explicit
-              allowlist transition.
+              NixOS currently allows all inbound. Docker punches its own holes.
+              Need explicit allowlist transition.
             </p>
           </div>
           <div class="card">
             <h4>AppArmor Enablement</h4>
             <p>
-              Currently <code>mkDefault false</code> in security-hardening.nix. Full MAC would
-              complement existing fail2ban + ClamAV stack.
+              Currently <code>mkDefault false</code> in security-hardening.nix.
+              Full MAC would complement existing fail2ban + ClamAV stack.
             </p>
           </div>
           <div class="card">
             <h4>NPU Utilization (AMD XDNA)</h4>
             <p>
-              Driver loaded (<code>nix-amd-npu</code>). Zero workloads using it. ONNX Runtime /
-              Ryzen AI SDK integration unexplored.
+              Driver loaded (<code>nix-amd-npu</code>). Zero workloads using it.
+              ONNX Runtime / Ryzen AI SDK integration unexplored.
             </p>
           </div>
           <div class="card">
             <h4>Voice Agents (LiveKit + Whisper)</h4>
             <p>
-              Docker ROCm Whisper pipeline configured but disabled. Needs GPU resource planning
-              (memory budget under chronic pressure).
+              Docker ROCm Whisper pipeline configured but disabled. Needs GPU
+              resource planning (memory budget under chronic pressure).
             </p>
           </div>
           <div class="card">
             <h4>Auditd Enablement</h4>
-            <p>Blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed upstream.</p>
+            <p>
+              Blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed
+              upstream.
+            </p>
           </div>
           <div class="card">
             <h4>Darwin HM Parity</h4>
             <p>
-              macOS HM config is minimal &mdash; no terminal, editor, or theme parity. Blocked by
-              256GB SSD constraint (90%+ full).
+              macOS HM config is minimal &mdash; no terminal, editor, or theme
+              parity. Blocked by 256GB SSD constraint (90%+ full).
             </p>
           </div>
           <div class="card">
             <h4>Module Splitting</h4>
             <p>
-              <code>monitor365.nix</code> (716L), <code>signoz.nix</code> (705L),
-              <code>forgejo.nix</code> (583L) are too large. Need sub-module extraction.
+              <code>monitor365.nix</code> (716L),
+              <code>signoz.nix</code> (705L), <code>forgejo.nix</code> (583L)
+              are too large. Need sub-module extraction.
             </p>
           </div>
         </div>
@@ -1017,29 +1073,39 @@
         <div class="issue issue-critical">
           <span class="severity severity-critical">Critical</span>
           <h3>Strix Halo GPUActive Memory Crisis</h3>
-          <div class="where">/proc/meminfo &mdash; GPUActive field &mdash; boot.nix TTM config</div>
+          <div class="where">
+            /proc/meminfo &mdash; GPUActive field &mdash; boot.nix TTM config
+          </div>
           <p>
             evo-x2 has
-            <strong>128 GiB physical RAM but only ~94 GiB visible to Linux</strong>
+            <strong
+              >128 GiB physical RAM but only ~94 GiB visible to Linux</strong
+            >
             (34 GiB BIOS VRAM carveout). Of that 94 GiB,
-            <strong>GPUActive (GTT buffer objects) consumes 51+ GiB (55%)</strong>
+            <strong
+              >GPUActive (GTT buffer objects) consumes 51+ GiB (55%)</strong
+            >
             with only desktop workloads (Helium browser, Quickshell, niri).
-            <code>GPUReclaim=0</code> means these pages CANNOT be reclaimed under pressure. The TTM
-            pool is configured with <code>pages_limit = page_pool_size = 112 GiB</code> &mdash;
+            <code>GPUReclaim=0</code> means these pages CANNOT be reclaimed
+            under pressure. The TTM pool is configured with
+            <code>pages_limit = page_pool_size = 112 GiB</code> &mdash;
             <strong>exceeds the 94 GiB visible!</strong>
-            Combined with zram swap at 100% full, the system runs in chronic memory pressure.
+            Combined with zram swap at 100% full, the system runs in chronic
+            memory pressure.
           </p>
           <p>
-            <strong>Why it's fucked up:</strong> The TTM pool config was set to "fix" GPU OOM but
-            overshot into consuming all available RAM. <code>free -h</code> and <code>htop</code> do
-            NOT show GPUActive &mdash; only <code>/proc/meminfo</code> exposes it. This is invisible
-            to the entire monitoring stack. Every OOM crash, every journald starvation, every
-            watchdog reset traces back to this.
+            <strong>Why it's fucked up:</strong> The TTM pool config was set to
+            "fix" GPU OOM but overshot into consuming all available RAM.
+            <code>free -h</code> and <code>htop</code> do NOT show GPUActive
+            &mdash; only <code>/proc/meminfo</code> exposes it. This is
+            invisible to the entire monitoring stack. Every OOM crash, every
+            journald starvation, every watchdog reset traces back to this.
           </p>
           <div class="callout callout-problem">
-            <strong>Impact:</strong> Every Helium crash, every display hotplug stall, every near-OOM
-            event is amplified by this. The system has ~30 GiB of usable RAM for all user processes
-            despite having 128 GiB physical.
+            <strong>Impact:</strong> Every Helium crash, every display hotplug
+            stall, every near-OOM event is amplified by this. The system has ~30
+            GiB of usable RAM for all user processes despite having 128 GiB
+            physical.
           </div>
         </div>
 
@@ -1047,24 +1113,26 @@
           <span class="severity severity-critical">Critical</span>
           <h3>Helium Crashes on Every Display Hotplug</h3>
           <div class="where">
-            platforms/common/packages/base.nix:34-43 &mdash; MESA_VK_WSI_PRESENT_MODE in
-            amd-gpu.nix:27
+            platforms/common/packages/base.nix:34-43 &mdash;
+            MESA_VK_WSI_PRESENT_MODE in amd-gpu.nix:27
           </div>
           <p>
-            Chromium's GPU watchdog kills the GPU process when it stalls during display pipeline
-            reconfiguration (monitor unplug &rarr; TV plug). On Strix Halo DCN 3.5.1, surface
-            recreation takes longer than the ~10s watchdog timeout due to the GPUActive memory
-            pressure above. Amplified by <code>--enable-zero-copy</code> (DMA-BUFs invalidated on
-            connector change, no software fallback) and
-            <code>MESA_VK_WSI_PRESENT_MODE=immediate</code> (narrowest possible race window for
-            Vulkan swapchain recreation).
+            Chromium's GPU watchdog kills the GPU process when it stalls during
+            display pipeline reconfiguration (monitor unplug &rarr; TV plug). On
+            Strix Halo DCN 3.5.1, surface recreation takes longer than the ~10s
+            watchdog timeout due to the GPUActive memory pressure above.
+            Amplified by <code>--enable-zero-copy</code> (DMA-BUFs invalidated
+            on connector change, no software fallback) and
+            <code>MESA_VK_WSI_PRESENT_MODE=immediate</code> (narrowest possible
+            race window for Vulkan swapchain recreation).
           </p>
           <div class="callout callout-solution">
             <strong>Fix Applied:</strong>
-            <code>--disable-gpu-watchdog</code> added to Helium wrapper. Flake check passes.
-            <strong>Pending deploy.</strong> Secondary risk:
+            <code>--disable-gpu-watchdog</code> added to Helium wrapper. Flake
+            check passes. <strong>Pending deploy.</strong> Secondary risk:
             <code>MESA_VK_WSI_PRESENT_MODE=immediate</code> remains in
-            <code>amd-gpu.nix</code> &mdash; consider removing if other apps stutter during hotplug.
+            <code>amd-gpu.nix</code> &mdash; consider removing if other apps
+            stutter during hotplug.
           </div>
         </div>
 
@@ -1073,9 +1141,10 @@
           <h3>Jan llama-server Respawner Leak</h3>
           <div class="where">Jan AI app &mdash; not a systemd service</div>
           <p>
-            Jan spawns a new <code>llama-server</code> process every 1-3 minutes (~1.2 GB each). Not
-            managed by systemd, no cgroup limits. Accumulates until OOM or manual kill. Needs
-            investigation &mdash; either cgroup wrapping or Jan configuration fix.
+            Jan spawns a new <code>llama-server</code> process every 1-3 minutes
+            (~1.2 GB each). Not managed by systemd, no cgroup limits.
+            Accumulates until OOM or manual kill. Needs investigation &mdash;
+            either cgroup wrapping or Jan configuration fix.
           </p>
         </div>
 
@@ -1084,11 +1153,13 @@
           <h3>Swap Permanently at 100%</h3>
           <div class="where">zram swap configuration</div>
           <p>
-            zram swap is at 100% utilization. With ~30 GiB effective RAM for user processes, swap is
-            constantly exhausted. This causes: journald starvation under pressure, OOM cascade
-            chains (Helium &rarr; Electron &rarr; dbus-broker &rarr; niri loses DRM master), and
-            slow display pipeline reconfiguration. The root cause is the GPUActive crisis above
-            &mdash; treating the symptom (swap) without treating the cause (TTM pool) is futile.
+            zram swap is at 100% utilization. With ~30 GiB effective RAM for
+            user processes, swap is constantly exhausted. This causes: journald
+            starvation under pressure, OOM cascade chains (Helium &rarr;
+            Electron &rarr; dbus-broker &rarr; niri loses DRM master), and slow
+            display pipeline reconfiguration. The root cause is the GPUActive
+            crisis above &mdash; treating the symptom (swap) without treating
+            the cause (TTM pool) is futile.
           </p>
         </div>
 
@@ -1100,68 +1171,76 @@
           <div class="card card-warning">
             <h4>Cap TTM Pool to Visible RAM</h4>
             <p>
-              The TTM pool is set to 112 GiB but only 94 GiB is visible. This allows the GPU driver
-              to consume all system RAM. Should be capped to ~40 GiB to leave ~54 GiB for the OS.
-              Requires careful testing &mdash; too low causes GPU OOM in Helium/Ollama.
+              The TTM pool is set to 112 GiB but only 94 GiB is visible. This
+              allows the GPU driver to consume all system RAM. Should be capped
+              to ~40 GiB to leave ~54 GiB for the OS. Requires careful testing
+              &mdash; too low causes GPU OOM in Helium/Ollama.
             </p>
           </div>
           <div class="card card-warning">
             <h4>Reduce Flake Input Count</h4>
             <p>
-              201 flake inputs (many transitive <code>follows</code>) slows evaluation and increases
-              lock file churn. Consolidate where possible. Many LarsArtmann Go tool repos share
-              dependencies that could be collapsed.
+              201 flake inputs (many transitive <code>follows</code>) slows
+              evaluation and increases lock file churn. Consolidate where
+              possible. Many LarsArtmann Go tool repos share dependencies that
+              could be collapsed.
             </p>
           </div>
           <div class="card card-warning">
             <h4>Split God Modules</h4>
             <p>
-              <code>signoz.nix</code> (705L), <code>monitor365.nix</code> (716L),
-              <code>forgejo.nix</code> (583L) are too large. Extract sub-modules for testability and
-              readability.
+              <code>signoz.nix</code> (705L),
+              <code>monitor365.nix</code> (716L),
+              <code>forgejo.nix</code> (583L) are too large. Extract sub-modules
+              for testability and readability.
             </p>
           </div>
           <div class="card card-warning">
             <h4>Typed NixOS Module Options</h4>
             <p>
-              Many modules use <code>mkEnableOption</code> only. Add typed options for ports, paths,
-              timeouts &rarr; enables validation and testing. Ports are centralized in
-              <code>lib/ports.nix</code> but module-level options are missing.
+              Many modules use <code>mkEnableOption</code> only. Add typed
+              options for ports, paths, timeouts &rarr; enables validation and
+              testing. Ports are centralized in <code>lib/ports.nix</code> but
+              module-level options are missing.
             </p>
           </div>
           <div class="card card-warning">
             <h4>DNS Architecture Simplification</h4>
             <p>
-              Running both unbound and dnsblockd is split-brain. The migration plan exists but is
-              15h of work across two repos. Would eliminate an entire class of DNS-related gotchas.
+              Running both unbound and dnsblockd is split-brain. The migration
+              plan exists but is 15h of work across two repos. Would eliminate
+              an entire class of DNS-related gotchas.
             </p>
           </div>
           <div class="card card-warning">
             <h4>Cloud Backup (Zero Off-site)</h4>
             <p>
-              All data on one machine. No off-site backup. BorgBackup to Hetzner StorageBox is
-              researched but not implemented. Single hardware failure = total data loss for Docker
-              volumes, Immich photos, Forgejo repos.
+              All data on one machine. No off-site backup. BorgBackup to Hetzner
+              StorageBox is researched but not implemented. Single hardware
+              failure = total data loss for Docker volumes, Immich photos,
+              Forgejo repos.
             </p>
           </div>
           <div class="card card-warning">
             <h4>Monitor365 Agent&rarr;Server Auth</h4>
             <p>
-              No authentication on the monitoring API. Anyone on LAN can POST data. Needs
-              token-based auth or mTLS.
+              No authentication on the monitoring API. Anyone on LAN can POST
+              data. Needs token-based auth or mTLS.
             </p>
           </div>
           <div class="card card-warning">
             <h4>Immich Binding</h4>
             <p>
-              Currently on <code>0.0.0.0</code> with <code>openFirewall</code>. Caddy already
-              reverse-proxies. Should bind to localhost only.
+              Currently on <code>0.0.0.0</code> with <code>openFirewall</code>.
+              Caddy already reverse-proxies. Should bind to localhost only.
             </p>
           </div>
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <h2 id="next25"><span class="num">06</span>Top 25 Things to Get Done Next</h2>
+        <h2 id="next25">
+          <span class="num">06</span>Top 25 Things to Get Done Next
+        </h2>
         <!-- ═══════════════════════════════════════════════════════════════ -->
 
         <p>Sorted by impact &times; urgency. Badges indicate priority tier.</p>
@@ -1182,8 +1261,8 @@
                 <td>1</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Deploy pending changes</strong> (Helium hotplug fix, flake.lock updates,
-                  overview CSP fixes)
+                  <strong>Deploy pending changes</strong> (Helium hotplug fix,
+                  flake.lock updates, overview CSP fixes)
                 </td>
                 <td>15 min</td>
                 <td>Fixes the #1 user-facing crash</td>
@@ -1192,8 +1271,8 @@
                 <td>2</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Reboot evo-x2</strong> &mdash; verify boot time after NVMe APST fix +
-                  Caddy sops ordering fix
+                  <strong>Reboot evo-x2</strong> &mdash; verify boot time after
+                  NVMe APST fix + Caddy sops ordering fix
                 </td>
                 <td>10 min</td>
                 <td>Target: ~35s boot (was 6m17s). Confirms multiple fixes.</td>
@@ -1202,17 +1281,22 @@
                 <td>3</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Cap TTM pool to ~40 GiB</strong> &mdash; stop GPUActive from consuming 55%
-                  of visible RAM
+                  <strong>Cap TTM pool to ~40 GiB</strong> &mdash; stop
+                  GPUActive from consuming 55% of visible RAM
                 </td>
                 <td>30 min + testing</td>
-                <td>Root cause of ALL memory pressure, swap exhaustion, and crash cascades</td>
+                <td>
+                  Root cause of ALL memory pressure, swap exhaustion, and crash
+                  cascades
+                </td>
               </tr>
               <tr>
                 <td>4</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Investigate and fix Jan llama-server respawner</strong>
+                  <strong
+                    >Investigate and fix Jan llama-server respawner</strong
+                  >
                   &mdash; wrap in cgroup or fix Jan config
                 </td>
                 <td>1-2h</td>
@@ -1222,7 +1306,8 @@
                 <td>5</td>
                 <td><span class="badge badge-critical">P0</span></td>
                 <td>
-                  <strong>Implement cloud backup</strong> &mdash; BorgBackup to Hetzner StorageBox
+                  <strong>Implement cloud backup</strong> &mdash; BorgBackup to
+                  Hetzner StorageBox
                 </td>
                 <td>2-4h</td>
                 <td>Zero off-site backup = single point of total data loss</td>
@@ -1231,27 +1316,33 @@
                 <td>6</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>BTRFS /data subvolume migration</strong> &mdash; enable snapshot
-                  protection for Docker/Immich data
+                  <strong>BTRFS /data subvolume migration</strong> &mdash;
+                  enable snapshot protection for Docker/Immich data
                 </td>
                 <td>1h downtime</td>
-                <td>Docker volumes unprotected against corruption/accidental deletion</td>
+                <td>
+                  Docker volumes unprotected against corruption/accidental
+                  deletion
+                </td>
               </tr>
               <tr>
                 <td>7</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Fix Monitor365 server</strong> &mdash; upstream Axum 0.7 route syntax
-                  migration
+                  <strong>Fix Monitor365 server</strong> &mdash; upstream Axum
+                  0.7 route syntax migration
                 </td>
                 <td>2h (upstream)</td>
-                <td>Monitoring dashboard down; agent running but no visibility</td>
+                <td>
+                  Monitoring dashboard down; agent running but no visibility
+                </td>
               </tr>
               <tr>
                 <td>8</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Verify Pocket ID email sending</strong> &mdash; test SMTP end-to-end
+                  <strong>Verify Pocket ID email sending</strong> &mdash; test
+                  SMTP end-to-end
                 </td>
                 <td>10 min</td>
                 <td>Notifications, verification flows depend on this</td>
@@ -1260,7 +1351,8 @@
                 <td>9</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Complete Hermes setup</strong> &mdash; SSH deploy key + fallback model
+                  <strong>Complete Hermes setup</strong> &mdash; SSH deploy key
+                  + fallback model
                 </td>
                 <td>15 min</td>
                 <td>AI gateway can't deploy code or failover providers</td>
@@ -1269,21 +1361,25 @@
                 <td>10</td>
                 <td><span class="badge badge-high">P1</span></td>
                 <td>
-                  <strong>Remove <code>MESA_VK_WSI_PRESENT_MODE=immediate</code></strong>
+                  <strong
+                    >Remove
+                    <code>MESA_VK_WSI_PRESENT_MODE=immediate</code></strong
+                  >
                   from
                   <code>amd-gpu.nix</code>
                 </td>
                 <td>5 min + deploy</td>
                 <td>
-                  Worsens hotplug race window for all Vulkan apps. Was added for gaming latency.
+                  Worsens hotplug race window for all Vulkan apps. Was added for
+                  gaming latency.
                 </td>
               </tr>
               <tr>
                 <td>11</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>DNS migration Phase 2a</strong> &mdash; add dnsblockd resolver options
-                  (localRecords, forwarders, ACLs)
+                  <strong>DNS migration Phase 2a</strong> &mdash; add dnsblockd
+                  resolver options (localRecords, forwarders, ACLs)
                 </td>
                 <td>4-6h</td>
                 <td>Eliminates split-brain DNS architecture</td>
@@ -1309,16 +1405,21 @@
                 <td>14</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Firewall deny-by-default</strong> &mdash; transition to explicit allowlist
+                  <strong>Firewall deny-by-default</strong> &mdash; transition
+                  to explicit allowlist
                 </td>
                 <td>2-3h</td>
-                <td>NixOS currently allows all inbound; Docker punches its own holes</td>
+                <td>
+                  NixOS currently allows all inbound; Docker punches its own
+                  holes
+                </td>
               </tr>
               <tr>
                 <td>15</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Split <code>signoz.nix</code></strong> (705L) into sub-modules
+                  <strong>Split <code>signoz.nix</code></strong> (705L) into
+                  sub-modules
                 </td>
                 <td>2h</td>
                 <td>Testability, readability, maintainability</td>
@@ -1327,17 +1428,20 @@
                 <td>16</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Add GPUActive to monitoring stack</strong> &mdash; Prometheus metric +
-                  Gatus alert + DMS widget
+                  <strong>Add GPUActive to monitoring stack</strong> &mdash;
+                  Prometheus metric + Gatus alert + DMS widget
                 </td>
                 <td>1h</td>
-                <td>The #1 RAM consumer is invisible to all monitoring tools</td>
+                <td>
+                  The #1 RAM consumer is invisible to all monitoring tools
+                </td>
               </tr>
               <tr>
                 <td>17</td>
                 <td><span class="badge badge-medium">P2</span></td>
                 <td>
-                  <strong>Add typed NixOS options</strong> to top 5 modules (ports, paths, timeouts)
+                  <strong>Add typed NixOS options</strong> to top 5 modules
+                  (ports, paths, timeouts)
                 </td>
                 <td>3-4h</td>
                 <td>Enables validation, testing, and better DX</td>
@@ -1345,7 +1449,10 @@
               <tr>
                 <td>18</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Provision Raspberry Pi 3</strong> for DNS failover cluster</td>
+                <td>
+                  <strong>Provision Raspberry Pi 3</strong> for DNS failover
+                  cluster
+                </td>
                 <td>2h + hardware</td>
                 <td>VRRP HA for DNS. Module ready, hardware needed.</td>
               </tr>
@@ -1354,7 +1461,8 @@
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
                   <strong>Submit nixpkgs PRs</strong> &mdash; 7 queued items
-                  (aw-watcher-utilization, valkey tests, taskwarrior3 flags, etc.)
+                  (aw-watcher-utilization, valkey tests, taskwarrior3 flags,
+                  etc.)
                 </td>
                 <td>5-8h total</td>
                 <td>Reduces custom overlay maintenance burden</td>
@@ -1363,8 +1471,8 @@
                 <td>20</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Submit Home Manager PRs</strong> &mdash; ActivityWatch Wayland deps, theme
-                  option, Darwin user fix
+                  <strong>Submit Home Manager PRs</strong> &mdash; ActivityWatch
+                  Wayland deps, theme option, Darwin user fix
                 </td>
                 <td>3-4h total</td>
                 <td>Removes 3 workarounds from SystemNix</td>
@@ -1373,8 +1481,8 @@
                 <td>21</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Fix upstream LarsArtmann repos</strong> &mdash; library-policy, mr-sync
-                  stale go.sum (2 remaining)
+                  <strong>Fix upstream LarsArtmann repos</strong> &mdash;
+                  library-policy, mr-sync stale go.sum (2 remaining)
                 </td>
                 <td>1h each</td>
                 <td>Removes <code>mkTidyOverride</code> workarounds</td>
@@ -1387,20 +1495,30 @@
                   <code>mkDefault false</code>
                 </td>
                 <td>2-4h + testing</td>
-                <span>Full MAC hardening. High regression risk &mdash; test carefully.</span>
+                <span
+                  >Full MAC hardening. High regression risk &mdash; test
+                  carefully.</span
+                >
               </tr>
               <tr>
                 <td>23</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Explore NPU workloads</strong> &mdash; ONNX Runtime / Ryzen AI SDK</td>
+                <td>
+                  <strong>Explore NPU workloads</strong> &mdash; ONNX Runtime /
+                  Ryzen AI SDK
+                </td>
                 <td>Research</td>
-                <td>AMD XDNA driver loaded, zero utilization. Free compute sitting idle.</td>
+                <td>
+                  AMD XDNA driver loaded, zero utilization. Free compute sitting
+                  idle.
+                </td>
               </tr>
               <tr>
                 <td>24</td>
                 <td><span class="badge badge-low">P3</span></td>
                 <td>
-                  <strong>Reduce flake input count</strong> &mdash; consolidate transitive follows
+                  <strong>Reduce flake input count</strong> &mdash; consolidate
+                  transitive follows
                 </td>
                 <td>2-3h</td>
                 <td>Faster eval, less lock file churn</td>
@@ -1408,7 +1526,10 @@
               <tr>
                 <td>25</td>
                 <td><span class="badge badge-low">P3</span></td>
-                <td><strong>Enable auditd</strong> &mdash; blocked on NixOS 26.05 bug #483085</td>
+                <td>
+                  <strong>Enable auditd</strong> &mdash; blocked on NixOS 26.05
+                  bug #483085
+                </td>
                 <td>Monitor upstream</td>
                 <td>Security auditing. Re-evaluate when bug fixed.</td>
               </tr>
@@ -1417,61 +1538,72 @@
         </div>
 
         <!-- ═══════════════════════════════════════════════════════════════ -->
-        <h2 id="question"><span class="num">07</span>The #1 Question I Cannot Answer</h2>
+        <h2 id="question">
+          <span class="num">07</span>The #1 Question I Cannot Answer
+        </h2>
         <!-- ═══════════════════════════════════════════════════════════════ -->
 
         <div class="card card-problem">
           <h3>
-            Should we cap the TTM pool to ~40 GiB, or is the 34 GiB BIOS VRAM carveout itself the
-            problem?
+            Should we cap the TTM pool to ~40 GiB, or is the 34 GiB BIOS VRAM
+            carveout itself the problem?
           </h3>
           <p>
-            The entire memory crisis chain traces back to one architectural decision: the BIOS
-            carves out <strong>34 GiB</strong> for VRAM on this Strix Halo APU, leaving only ~94 GiB
-            visible to Linux. Then the TTM pool config (<code
-              >pages_limit = page_pool_size = 112 GiB</code
+            The entire memory crisis chain traces back to one architectural
+            decision: the BIOS carves out <strong>34 GiB</strong> for VRAM on
+            this Strix Halo APU, leaving only ~94 GiB visible to Linux. Then the
+            TTM pool config (<code>pages_limit = page_pool_size = 112 GiB</code
             >) allows the GPU driver to consume
             <em>more than all visible RAM</em>
             via GPUActive (GTT buffer objects), currently eating 51+ GiB.
           </p>
           <p>
-            <strong>Option A:</strong> Cap the TTM pool to ~40 GiB. This frees ~54 GiB for the OS.
-            But will Helium, Ollama, and Quickshell GPU OOM? We don't know the actual working set
-            &mdash; GPUActive grew to 51 GiB organically, suggesting the GPU driver
-            <em>needs</em> that much for current workloads. Capping too low may just move the
-            crashes from "GPU watchdog kill" to "GPU out-of-memory."
+            <strong>Option A:</strong> Cap the TTM pool to ~40 GiB. This frees
+            ~54 GiB for the OS. But will Helium, Ollama, and Quickshell GPU OOM?
+            We don't know the actual working set &mdash; GPUActive grew to 51
+            GiB organically, suggesting the GPU driver <em>needs</em> that much
+            for current workloads. Capping too low may just move the crashes
+            from "GPU watchdog kill" to "GPU out-of-memory."
           </p>
           <p>
-            <strong>Option B:</strong> Reduce the BIOS VRAM carveout. The GMKtec EVO-X2 BIOS (v1.11)
-            exposes a VRAM allocation setting. Reducing from 34 GiB to e.g. 16 GiB would give Linux
-            ~112 GiB visible. But the carveout exists because Strix Halo has
-            <strong>unified memory</strong> &mdash; the GPU physically shares system RAM. Reducing
-            VRAM may starve the GPU of dedicated memory for compute workloads (Ollama, video
-            decode). The BIOS setting may also not be linear &mdash; it could be a minimum
-            guarantee, not a hard cap.
+            <strong>Option B:</strong> Reduce the BIOS VRAM carveout. The GMKtec
+            EVO-X2 BIOS (v1.11) exposes a VRAM allocation setting. Reducing from
+            34 GiB to e.g. 16 GiB would give Linux ~112 GiB visible. But the
+            carveout exists because Strix Halo has
+            <strong>unified memory</strong> &mdash; the GPU physically shares
+            system RAM. Reducing VRAM may starve the GPU of dedicated memory for
+            compute workloads (Ollama, video decode). The BIOS setting may also
+            not be linear &mdash; it could be a minimum guarantee, not a hard
+            cap.
           </p>
           <p>
             <strong>Option C:</strong> Leave the TTM pool as-is but set
-            <code>GPUReclaim=1</code> (currently 0). This would let the kernel reclaim GPUActive
-            pages under pressure. But <code>GPUReclaim</code> is a relatively new amdgpu feature and
-            its behavior on GFX1151 (gfx1151) with unified memory is undocumented. It may cause GPU
-            hangs or data corruption if it reclaims pages still in use by the GPU command stream.
+            <code>GPUReclaim=1</code> (currently 0). This would let the kernel
+            reclaim GPUActive pages under pressure. But
+            <code>GPUReclaim</code> is a relatively new amdgpu feature and its
+            behavior on GFX1151 (gfx1151) with unified memory is undocumented.
+            It may cause GPU hangs or data corruption if it reclaims pages still
+            in use by the GPU command stream.
           </p>
           <p>
-            <strong>Why I can't figure this out:</strong> There is no documentation on the correct
-            TTM pool size for Strix Halo desktop workloads. The AMD upstream guidance for
-            unified-memory APUs is "let the driver manage it" &mdash; but the driver default was
-            insufficient (causing GPU OOM in Ollama), which is why the pool was increased in the
-            first place. Each option has a plausible failure mode that I cannot evaluate without
-            destructive testing on a production machine. The correct answer likely requires either
-            AMD engineer input or a controlled experiment matrix that I cannot run remotely.
+            <strong>Why I can't figure this out:</strong> There is no
+            documentation on the correct TTM pool size for Strix Halo desktop
+            workloads. The AMD upstream guidance for unified-memory APUs is "let
+            the driver manage it" &mdash; but the driver default was
+            insufficient (causing GPU OOM in Ollama), which is why the pool was
+            increased in the first place. Each option has a plausible failure
+            mode that I cannot evaluate without destructive testing on a
+            production machine. The correct answer likely requires either AMD
+            engineer input or a controlled experiment matrix that I cannot run
+            remotely.
           </p>
         </div>
 
         <footer class="footer">
-          Generated 2026-07-03 05:56 CEST &middot; SystemNix commit 79afe865 (master) + uncommitted
-          Helium hotplug fix &middot; All claims verified against source code, git history,
-          FEATURES.md, TODO_LIST.md, ROADMAP.md, and AGENTS.md
+          Generated 2026-07-03 05:56 CEST &middot; SystemNix commit 79afe865
+          (master) + uncommitted Helium hotplug fix &middot; All claims verified
+          against source code, git history, FEATURES.md, TODO_LIST.md,
+          ROADMAP.md, and AGENTS.md
         </footer>
       </main>
     </div>
