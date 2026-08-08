@@ -251,8 +251,9 @@ _: {
             "renamer.${domain}" = protectedVHost "renamer" ports.file-and-image-renamer-health;
           }
           # Browser History — direct TLS proxy (NOT protectedVHost).
-          # browser-history has its own WebAuthn/Passkey auth. Forward-auth would
-          # intercept WebAuthn API calls and break registration/login.
+          # browser-history has native WebAuthn/Passkey auth AND OAuth2/OIDC via
+          # Pocket ID. Forward-auth would intercept WebAuthn and OAuth2 callback
+          # API calls and break registration/login.
           // lib.optionalAttrs config.services.browser-history.enable {
             "history.${domain}" = {
               extraConfig = ''
