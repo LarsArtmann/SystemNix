@@ -157,11 +157,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786166592,
-        "narHash": "sha256-Cpk0IJOoKxjMENXb7YCI1bzy8f4w+eDhkia5styo/Rk=",
+        "lastModified": 1786166955,
+        "narHash": "sha256-WBm0az27QzYntYhbEPiJjar0sOU+Wjk0I4X0ZUFHRGg=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "5aac4d61ea26c6f3be3d92bc779443c92098d138",
+        "rev": "d8917f0b27887e634fa9788c3d0288e16561770a",
         "type": "github"
       },
       "original": {
@@ -2385,17 +2385,17 @@
     "go-idempotency": {
       "flake": false,
       "locked": {
-        "lastModified": 1785788119,
-        "narHash": "sha256-seGUlw7aGIRaPdjK37Cl3LsC31hsmz7gPQcJ8Dn4sVk=",
+        "lastModified": 1786134829,
+        "narHash": "sha256-M9OEpdiRUcS4pPUWqa8K8k2ni7JhmL9PWrMFtkc7NGo=",
         "owner": "LarsArtmann",
         "repo": "go-idempotency",
-        "rev": "70f9182ac339d3ae43c614f4b01248906abee95b",
+        "rev": "e8d545c58bae1cde64f167c42b7ab707a0a29ef7",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
         "repo": "go-idempotency",
-        "rev": "70f9182ac339d3ae43c614f4b01248906abee95b",
+        "rev": "e8d545c58bae1cde64f167c42b7ab707a0a29ef7",
         "type": "github"
       }
     },
