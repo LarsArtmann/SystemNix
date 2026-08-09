@@ -714,7 +714,7 @@
                   ./scripts/pre-deploy-check.sh;
               post-deploy-check =
                 mkApp "post-deploy-check" "Post-deploy smoke test: verifies services are functional, not just alive"
-                  [ pkgs.curl ]
+                  [ pkgs.curl pkgs.jq ]
                   ./scripts/post-deploy-check.sh;
               btrfs-inventory = mkApp "btrfs-inventory" "List all BTRFS subvolumes, snapshots, and mount points" [
                 pkgs.btrfs-progs

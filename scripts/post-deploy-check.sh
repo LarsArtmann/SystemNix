@@ -73,6 +73,12 @@ check_local() {
   check "$name (localhost:$port)" "http://localhost:$port$path" "$expect_status" "$expect_body"
 }
 
+# Report helpers for non-HTTP checks (system state, timers, journals, etc.)
+report_pass() { echo -e "${GREEN}PASS${NC} $1"; PASS=$((PASS + 1)); }
+report_fail() { echo -e "${RED}FAIL${NC} $1"; FAIL=$((FAIL + 1)); }
+report_skip() { echo -e "${YELLOW}SKIP${NC} $1"; SKIP=$((SKIP + 1)); }
+report_warn() { echo -e "${YELLOW}WARN${NC} $1"; SKIP=$((SKIP + 1)); }
+
 echo "=== Post-Deploy Smoke Test ==="
 echo "Domain: $DOMAIN"
 echo ""
@@ -84,6 +90,15 @@ check "Caddy HTTP redirect" "http://dash.$DOMAIN" "301" "" 2>/dev/null || true
 check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
   check_local "Pocket ID" "1411" "/" "200" "" 2>/dev/null || true
 
+# Pocket ID: scan recent journal for SQLITE_BUSY or francis panics.
+# Write to file then grep — avoids pipefail SIGPIPE trap on large journal output.
+journalctl -u pocket-id.service --since "-30min" --no-pager 2>/dev/null > /tmp/.smoke-pocket-id || true
+if grep -qEi "SQLITE_BUSY|panic" /tmp/.smoke-pocket-id 2>/dev/null; then
+  report_fail "Pocket ID — SQLITE_BUSY or panic in recent journal (run: journalctl -u pocket-id --since -30min)"
+else
+  report_pass "Pocket ID — no SQLITE_BUSY or panics in recent journal"
+fi
+
 check_local "oauth2-proxy" "4180" "/ping" "200" 2>/dev/null || true
 
 check_local "Homepage" "8082" "/" "200" "<html" 2>/dev/null || true
@@ -91,6 +106,23 @@ check_local "Homepage" "8082" "/" "200" "<html" 2>/dev/null || true
 check_local "Gatus" "9110" "/" "200" "" 2>/dev/null || true
 
 check_local "DNS Blocker" "9090" "/health" "200" "" 2>/dev/null || true
+
+# DNS: verify local resolution via dnsblockd
+if getent hosts "dash.$DOMAIN" >/dev/null 2>&1; then
+  report_pass "DNS — dash.$DOMAIN resolves"
+else
+  report_fail "DNS — dash.$DOMAIN does not resolve (dnsblockd local zone misconfigured)"
+fi
+
+# DNS: dnsblockd memory must stay under 2G
+_dns_rss=$(systemctl show -p MemoryCurrent --value dnsblockd 2>/dev/null || echo "0")
+if [ "$_dns_rss" -gt 0 ] 2>/dev/null && [ "$_dns_rss" -lt 2147483648 ]; then
+  report_pass "DNS — dnsblockd memory $(( _dns_rss / 1048576 ))MB (<2G)"
+elif [ "$_dns_rss" -gt 0 ] 2>/dev/null; then
+  report_fail "DNS — dnsblockd memory $(( _dns_rss / 1048576 ))MB (exceeds 2G limit)"
+else
+  report_skip "DNS — cannot determine dnsblockd memory"
+fi
 
 # --- Application health endpoints ---
 check_local "Forgejo" "3000" "/api/v1/version" "200" "" 2>/dev/null || true
@@ -135,6 +167,28 @@ check_local "File Renamer" "8086" "/status" "200" "" 2>/dev/null || true
 check_local "OpenSEO" "3002" "/" "200" "<html" 2>/dev/null || true
 
 check_local "SearXNG" "8889" "/healthz" "200" 2>/dev/null || true
+
+# SearXNG: functional search test (HTML mode — JSON API is disabled by design)
+if _searx_html=$(curl -s --max-time 10 "http://localhost:8889/search?q=test" 2>/dev/null); then
+  if echo "$_searx_html" | grep -qi 'article\|<h4\|result-result'; then
+    report_pass "SearXNG — functional search returns results"
+  else
+    report_fail "SearXNG — search returned no results (engine init may have failed at boot)"
+  fi
+else
+  report_skip "SearXNG — search endpoint not reachable"
+fi
+
+check_local "Attic cache" "8200" "/" "200" 2>/dev/null || true
+
+check_local "Browser History" "8087" "/" "200" 2>/dev/null || true
+
+# Browser History: agent timer must be active for collection
+if systemctl is-active browser-history-agent.timer >/dev/null 2>&1; then
+  report_pass "Browser History — agent timer active"
+else
+  report_fail "Browser History — agent timer NOT active (history collection offline)"
+fi
 
 # --- Functional checks (not just liveness) ---
 echo ""
@@ -334,6 +388,13 @@ if $m365_agent_ok && ! $m365_server_ok; then
   fi
 fi
 
+# Monitor365: server-watchdog timer must be active (catches DuckDB pool deadlock)
+if systemctl is-active monitor365-server-watchdog.timer >/dev/null 2>&1; then
+  report_pass "Monitor365 — server-watchdog timer active"
+else
+  report_fail "Monitor365 — server-watchdog timer NOT active (pool deadlock detection offline)"
+fi
+
 # File Renamer: dashboard must show accumulated history, not a split-brain empty fork.
 # The watcher and health service MUST share the same state files. A 200 with
 # total_operations: 0 on a system that's been renaming for weeks means split-brain
@@ -398,6 +459,71 @@ for vhost in "${AUTH_VHOSTS[@]}"; do
     ;;
   esac
 done
+
+# --- System & Desktop Checks ---
+echo ""
+echo "=== System & Desktop Checks ==="
+
+# BTRFS: commit=300 on mounts (prevents WDT resets on QLC NAND)
+if grep -q 'commit=300' /proc/mounts 2>/dev/null; then
+  report_pass "BTRFS — commit=300 active on mounts"
+else
+  report_fail "BTRFS — commit=300 NOT found on any mount (WDT reset risk on QLC NAND)"
+fi
+
+# BTRFS: fstrim timer must be enabled (daily TRIM prevents SLC cache exhaustion)
+if systemctl is-enabled fstrim.timer >/dev/null 2>&1; then
+  report_pass "BTRFS — fstrim.timer enabled"
+else
+  report_fail "BTRFS — fstrim.timer not enabled (SLC cache exhaustion risk)"
+fi
+
+# Registry: nixpkgs must point to github, NOT tarball (lockfile regression guard)
+if nix registry list 2>/dev/null | grep -qi 'nixpkgs.*github'; then
+  report_pass "Registry — nixpkgs points to github (no tarball regression)"
+elif nix registry list 2>/dev/null | grep -qi 'nixpkgs.*tarball'; then
+  report_fail "Registry — nixpkgs is a tarball entry (run scripts/fix-nixpkgs-lock.sh)"
+else
+  report_skip "Registry — cannot determine nixpkgs registry state"
+fi
+
+# Shell: fish startup time (threshold 200ms — includes bash subprocess overhead)
+if command -v fish >/dev/null 2>&1; then
+  _fish_start=$(date +%s%N)
+  fish -i -c exit >/dev/null 2>&1 || true
+  _fish_end=$(date +%s%N)
+  _fish_ms=$(( (_fish_end - _fish_start) / 1000000 ))
+  if [ "$_fish_ms" -lt 200 ]; then
+    report_pass "Shell — fish startup ${_fish_ms}ms"
+  else
+    report_warn "Shell — fish startup ${_fish_ms}ms (threshold 200ms)"
+  fi
+else
+  report_skip "Shell — fish not on PATH"
+fi
+
+# Shell: direnv smart-nix lib present
+if [ -f "${HOME:-}/.config/direnv/lib/zz-smart-nix.sh" ]; then
+  report_pass "Shell — direnv smart-nix lib present"
+else
+  report_skip "Shell — direnv smart-nix lib not found"
+fi
+
+# Desktop: DMS wallpaper IPC
+if command -v dms >/dev/null 2>&1 && dms ipc call wallpaper get >/dev/null 2>&1; then
+  report_pass "Desktop — DMS wallpaper IPC responding"
+else
+  report_skip "Desktop — DMS wallpaper IPC not responding (expected in non-graphical context)"
+fi
+
+# Desktop: quickshell journal errors (last 1h)
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u 2>/dev/null || echo 0)}"
+_qs_errors=$(journalctl --user -u quickshell --since "-1hour" --no-pager -p err 2>/dev/null | wc -l)
+if [ "${_qs_errors:-0}" -eq 0 ]; then
+  report_pass "Desktop — no errors in quickshell journal (last 1h)"
+else
+  report_warn "Desktop — ${_qs_errors} error line(s) in quickshell journal (last 1h)"
+fi
 
 # --- Summary ---
 echo ""

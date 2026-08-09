@@ -49,7 +49,7 @@ let
     pname = "signoz";
     inherit version;
     inherit src;
-    vendorHash = "sha256-wl12FQS11YWdE6Gd0zjTlAuCGcuz5DqLnwHJ/pSMmqA=";
+    vendorHash = "sha256-wl12FQS11YWdE6Gd0zjTlAuCGcuz5DqLnwHJ/pSMsqA=";
     subPackages = [ "cmd/community" ];
     tags = [ "timetzdata" ];
 
