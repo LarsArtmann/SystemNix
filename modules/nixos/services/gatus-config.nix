@@ -693,6 +693,28 @@ _: {
                 alerts = discordAlert "Projects Management Automation daemon down — automated project tracking stopped. Check: journalctl -u projects-management-automation -n 50";
               })
               (mkHttpCheck {
+                name = "PMA CPU Death-Loop";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_cpu_over_threshold{service=\"projects-management-automation\"} 0*)"
+                ];
+                alerts = discordAlert "PMA CPU exceeds 150% sustained — likely a commit death-loop. The service is technically 'active' but burning CPU. Check: journalctl -u projects-management-automation -n 50. Consider: sudo systemctl restart projects-management-automation";
+              })
+              (mkHttpCheck {
+                name = "PMA Memory Pressure";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_memory_bytes{service=\"projects-management-automation\"} [0-5]*)"
+                ];
+                alerts = discordAlert "PMA cgroup memory exceeds ~5 GB — page cache from repo discovery is growing dangerously. MemoryHigh=6G will throttle, MemoryMax=8G will OOM-kill+restart. If this alert fires repeatedly, PMA is in a page-cache thrash loop (2026-08-09 crash root cause). Check: systemctl status projects-management-automation";
+              })
+              (mkHttpCheck {
                 name = "Service Restart Metrics";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";

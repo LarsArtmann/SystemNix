@@ -257,6 +257,16 @@ _: {
             echo "# TYPE system_any_service_cpu_over_threshold gauge"
             echo "system_any_service_cpu_over_threshold ''${ANY_CPU_OVER}"
 
+            echo "# HELP system_service_memory_bytes Cgroup memory.current for monitored services"
+            echo "# TYPE system_service_memory_bytes gauge"
+
+            ${lib.concatMapStrings (svc: ''
+              svc="${svc}"
+              mem_bytes=$(systemctl show "$svc" -p MemoryCurrent --value 2>/dev/null) || mem_bytes=0
+              mem_bytes="''${mem_bytes:-0}"
+              echo "system_service_memory_bytes{service=\"$svc\"} ''${mem_bytes}"
+            '') cfg.monitoredServices}
+
             echo "# HELP system_user_slice_memory_bytes Memory usage of user-1000.slice in bytes"
             echo "# TYPE system_user_slice_memory_bytes gauge"
             echo "system_user_slice_memory_bytes ''${SLICE_MEM}"
