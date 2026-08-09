@@ -168,9 +168,10 @@ check_local "OpenSEO" "3002" "/" "200" "<html" 2>/dev/null || true
 
 check_local "SearXNG" "8889" "/healthz" "200" 2>/dev/null || true
 
-# SearXNG: functional search test (HTML mode — JSON API is disabled by design)
-if _searx_html=$(curl -s --max-time 10 "http://localhost:8889/search?q=test" 2>/dev/null); then
-  if echo "$_searx_html" | grep -qi 'article\|<h4\|result-result'; then
+# SearXNG: functional search test (HTML mode — JSON API is disabled by design).
+# Write to file then grep — avoids pipefail SIGPIPE trap on large HTML bodies.
+if curl -s --max-time 10 -o /tmp/.smoke-searx "http://localhost:8889/search?q=test" 2>/dev/null; then
+  if grep -qi 'article\|<h4\|result-default' /tmp/.smoke-searx 2>/dev/null; then
     report_pass "SearXNG — functional search returns results"
   else
     report_fail "SearXNG — search returned no results (engine init may have failed at boot)"
