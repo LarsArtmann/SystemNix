@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 The 31-date cross-project insights backfill batch **completed** with 27 successes and 4 failures (all transient Synthetic API outages). During this session, a **third root-cause bug** was discovered: `collector.Yesterday()` used `Truncate(24*time.Hour)` which snaps to UTC midnight, causing the nightly scheduler's collect and insights jobs to compute **different "yesterday" dates** in CEST (+02:00). This is why 5 recent dates (2026-07-19 through 2026-07-25) had data collected but zero insights — the bug was silently breaking the nightly pipeline since launch.

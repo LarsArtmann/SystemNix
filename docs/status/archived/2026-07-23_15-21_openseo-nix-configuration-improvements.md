@@ -12,6 +12,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## What Was Done
 
 ### a) FULLY DONE

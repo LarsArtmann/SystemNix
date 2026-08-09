@@ -44,6 +44,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Helium video anti-throttling** — 4 Chromium flags added to Helium wrapper (`--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`, `--disable-renderer-backgrounding`, `--disable-background-media-suspend`). Prevents video dropping to 1–3 FPS when tab backgrounded or scrolled out of view under I/O contention on QLC NAND
 - **Prevention Plan M12–M14** — Gatus pattern VM test (`tests/test-gatus-patterns.nix`, 5 endpoints), PMA daemon identity VM test (`tests/test-pma-identity.nix`, 6 assertions), monitoring-the-monitor meta-check (`system_gatus_endpoints_in_error_long` metric + Gatus alert on sustained failures)
 - **Pocket ID provision SQLite BUSY timeout fix** — `pocket-id.nix` provision script curl POST/PUT `--max-time` raised 10s→30s for SQLITE_BUSY contention from francis actor framework. Health check retries (`--retry 120 --retry-delay 1`)
+- **IO-heavy journalctl elimination** — SigNoz `journalctl --follow` was burning 96% CPU / 3.78 GB read. `monitor365-server-watchdog` `journalctl | grep -c` burned 98% CPU / 274 MB per 5-min run. `niri-health-metrics` burned CPU every 30s. All switched to `journalctl --grep` (in-process filtering). 4 low-value SigNoz journald log units dropped. Service-level log filters tightened from `info` to `warning`
 
 ### Changed
 

@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 > **Update 2026-07-22 (commit `a000fe0c`):** All changes shipped and deployed. The bun memory limiter overlay, graphical collector fixes (hardcoded env removal, upstream displayUser, input/video groups, path unit), and backup health monitoring are all live in production. Post-deploy smoke test: 25/25 PASS.

@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Done
 
 - [x] Confirmed the upstream qmd flake exists (`github:tobi/qmd`) but rejected it because it uses Bun and only has `nodeModulesHashes` for x86_64-linux and aarch64-darwin.

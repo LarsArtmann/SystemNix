@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## What Happened
 
 A `nix run .#deploy` failed with a cascading build error originating from a single derivation: `searxng-wait-dns`. The `writeShellApplication` wrapper runs shellcheck, which flagged SC2034 (variable `i` appears unused) on the loop `for i in $(seq 1 60); do`. Shellcheck warnings are treated as errors by `writeShellApplication`, failing the derivation. This cascaded: `searxng-wait-dns` → `unit-searx.service` → `system-units` → `etc` → `activate` → `nixos-system-evo-x2` — the ENTIRE system build died from one unused loop variable.

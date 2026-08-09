@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## A) FULLY DONE (working, verified)
 
 ### 1. ssh-config.nix activation → tmpfiles conversion ✅

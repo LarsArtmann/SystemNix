@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Problem
 
 Every commit made by the `projects-management-automation` (PMA) auto-commit daemon had the author `Unknown Author <unknown@example.com>` instead of reading the git config (`Lars Artmann <git@lars.software>`). This affected ALL repos under `~/projects/` — dozens of repos across SystemNix, IMDB, Zlota44, StopTube, storbi, licenseforge, etc.

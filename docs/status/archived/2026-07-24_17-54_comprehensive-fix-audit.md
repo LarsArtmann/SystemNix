@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Bugs Found During Audit
 
 ### BUG 1 (critical): Shellcheck SC2043 — deploy.sh `for` loop with single element

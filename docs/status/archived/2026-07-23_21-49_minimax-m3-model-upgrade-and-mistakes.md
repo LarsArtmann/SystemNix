@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Changed `defaultMinimaxModel`** in `go-commit/pkg/commit/providers/minimax.go:4` from `"MiniMax-M2.7-highspeed"` to `"MiniMax-M3"`

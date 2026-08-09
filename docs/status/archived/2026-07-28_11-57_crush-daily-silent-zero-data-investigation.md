@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## TL;DR
 
 `crush-daily` service is **up, serving HTTP, but collecting nothing**. Every nightly `collect` job at 00:30 logs `collect done projects=0 sessions=0 messages=0 cost=0` — silently successful with empty data. The `insights` and `report` jobs at 03:00 and 03:30 then fail with `read model: no data collected for date: YYYY-MM-DD`. Reports exist for the last week but every one shows "0 sessions" and "Insights pending".

@@ -5,6 +5,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## (A) FULLY DONE
 
 1. **Upstream pin verified at `b181444`** — flake.lock was already at latest (auto-committed by hook). No manual update needed. Confirmed via `nix flake metadata`.

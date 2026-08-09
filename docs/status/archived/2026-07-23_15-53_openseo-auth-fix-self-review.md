@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Context
 
 User asked: "Can we get the auth stuff fixed?" — referring to the GSC OAuth callback gap identified in the previous session's status report (`2026-07-23_15-21_openseo-nix-configuration-improvements.md`).

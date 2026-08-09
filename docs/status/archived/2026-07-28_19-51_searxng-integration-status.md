@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 SearXNG (privacy-focused metasearch engine) was integrated into SystemNix following the standard service-add pattern (port → module → Caddy → DNS → Gatus → Homepage → enable → smoke test). All evaluation passes (`nix flake check --no-build`, full system eval). The service is **not yet deployed**.

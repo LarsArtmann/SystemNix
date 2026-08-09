@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## A. FULLY DONE
 
 ### go-cqrs-lite (`storage/turso/errors.go` + `errors_test.go`) — committed `b5628220` (via `4ec6fd7c`/`452f74d4`)

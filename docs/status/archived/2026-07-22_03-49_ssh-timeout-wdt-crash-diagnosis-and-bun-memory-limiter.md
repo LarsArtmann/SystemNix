@@ -5,6 +5,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 > **Update 2026-07-22 (commit `a000fe0c`):** The bun memory limiter overlay **shipped and deployed**. It is committed in `overlays/linux.nix` as `bunMemoryLimitOverlay` (MemoryMax=8G, MemorySwapMax=0, oom_score_adj=1000). The WDT crash root-cause diagnosis remains valid — `user-1000.slice` at 64G MemoryMax is still the structural risk (lowering to 48G is still an open TODO_LIST item).

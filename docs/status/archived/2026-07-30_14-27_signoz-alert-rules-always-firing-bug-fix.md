@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 The TODO was stale. The v5 API format migration was already deployed on 2026-07-29 (19 rules provision successfully with HTTP 200). But 4 rules had a semantic bug: `target=0` with `above_or_equal` (the default operator) means "alert when metric >= 0" — mathematically always true for non-negative metrics. Three rules were permanently `state: "firing"` in the live API. Fixed all 4 rules, improved the provision script to log response bodies on failure, deployed, and verified all 19 rules are now `state: "inactive"`.

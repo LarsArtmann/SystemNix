@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## What Actually Happened
 
 The user pasted deploy logs showing `ExitStatus(Exited(4))` during activation, with `pocket-id.service` as the failed unit. The instruction was "check all the logs and make sure we didn't break anything."

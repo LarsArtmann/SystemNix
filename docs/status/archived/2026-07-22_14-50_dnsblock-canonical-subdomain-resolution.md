@@ -9,6 +9,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Swap proxy/redirect roles in Caddy** — `dnsblock.home.lan` is now the `protectedVHost` reverse-proxying to `localhost:9090`, and `dnsblockd.home.lan` is now the 301 redirect to `dnsblock.home.lan` (`modules/nixos/services/caddy.nix:170`).

@@ -5,6 +5,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Root cause identified (295% CPU on monitor365 agent):** The cloud sync loop's early-flush optimization bypassed the backoff sleep whenever the segment buffer had ≥200 pending events (`flush_event_threshold`). With a massive backlog and the circuit breaker open (1.15M consecutive failures), every operation (upload, sync, config fetch) short-circuited in microseconds. The loop busy-spun at ~16Hz, consuming ~3 CPU cores for 22+ hours straight.

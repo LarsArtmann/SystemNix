@@ -9,6 +9,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Root-cause diagnosis** — Caddy had no virtual host for `dnsblock.home.lan` or `dnsblockd.home.lan`. The wildcard `*.home.lan` DNS record resolves both to the server IP, and Caddy’s catch-all `https://*.home.lan` vhost (added in `123a27f5`) redirects every unknown subdomain to `dash.home.lan`. The dnsblockd dashboard actually runs on `localhost:9090`, not behind a Caddy subdomain.

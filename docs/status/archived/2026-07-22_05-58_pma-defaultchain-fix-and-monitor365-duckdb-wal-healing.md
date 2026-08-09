@@ -9,6 +9,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 ### 1. PMA Auto-Commit — Root Cause Found, Fixed, Pushed, Flake Updated

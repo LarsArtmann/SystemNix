@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Context
 
 A previous session (`2026-07-23_15-21`) hand-rolled the OpenSEO Caddy vHost to exempt `/api/gsc/oauth/callback` from oauth2-proxy forward-auth, added a runtime `openseo-validate` ExecStartPre, and rewrote module comments. That session's own self-review (`2026-07-23_15-53`) identified critical gaps — most importantly that the callback path was **never verified against OpenSEO source**, and no config rendering was validated.

@@ -5,6 +5,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 ### Upstream fix (file-and-image-renamer repo, commit `8bf60bd`, pushed to master)

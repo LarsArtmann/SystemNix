@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 The SigNoz alert rules endpoint (`GET /api/v1/rules`) returned `{"data":{"rules":[]}}` — zero rules despite 19 being defined in `_signoz-alerts.nix`. The jq path fix (`.rules[]` → `.data.rules[]`) was already deployed but the `Type=oneshot` + `RemainAfterExit=true` provisioner service never re-ran. This session added `restartTriggers` to 10 provisioner oneshots, added a Prometheus textfile collector + Gatus health check for alert rules, fixed two pre-existing upstream build blockers (go-cqrs-lite, mr-sync), and added an explicit provisioner restart loop to `deploy.sh`. The provisioner now runs and creates rules (verified via journal), but the rules endpoint still returns empty — likely a silent POST failure requiring API format investigation.

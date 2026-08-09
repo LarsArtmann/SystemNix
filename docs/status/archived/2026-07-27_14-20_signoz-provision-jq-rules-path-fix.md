@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## TL;DR
 
 A 4-month-old jq path bug in `signoz-provision` returned the right answer by accident (it iterated an object whose value was a `[]` empty array, then tried to index `null` with `.rule.name` and failed only when real rules existed). New SigNoz 0.127.1 returns `{"data":{"rules":[...]}}` for `/api/v1/rules` (not `{"data":[…]}` for channels). Channels were already correct; rules were not. Fixed it. Deploy passes. Rules did NOT re-provision because `signoz-provision` is `RemainAfterExit=yes` + `Restart=no` and was already in `active (exited)` state from the failed deploy.

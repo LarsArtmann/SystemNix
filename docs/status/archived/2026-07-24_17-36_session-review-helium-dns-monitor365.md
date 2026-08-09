@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Session Work Summary
 
 Three independent issues were diagnosed and fixed in this session:

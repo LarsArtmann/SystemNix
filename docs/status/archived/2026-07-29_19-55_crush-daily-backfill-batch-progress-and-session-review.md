@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 A batch job is backfilling cross-project insights for 31 dates that had **zero** `ProjectInsightsGenerated` events due to two upstream bugs in crush-daily (`errgroup.WithContext` cancelling on first error + partial results discarded before storage). Both bugs were fixed, a binary built, and a 31-date batch is processing fewest-projects-first. The batch has been running for ~4.5 hours. 20 of 31 dates completed successfully. 2 dates failed during a transient Synthetic API outage (~5 min window around 18:26). 9 dates remain in the queue. No rate limit has been hit.

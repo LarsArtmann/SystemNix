@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## What Was Done
 
 Fixed statix warning `[20]` ("Avoid repeated keys in attribute sets") in `platforms/nixos/system/configuration.nix`.

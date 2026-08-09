@@ -20,8 +20,8 @@ if ! pgrep -x niri >/dev/null 2>&1; then
 fi
 
 # Count niri restarts (service start events) in the window
-restarts=$(journalctl --user -u niri --no-pager --since "$CRASH_WINDOW" 2>/dev/null |
-  grep -c "Started niri" || true)
+restarts=$(journalctl --grep "Started niri" --user -u niri --since "$CRASH_WINDOW" --no-pager --output cat 2>/dev/null |
+  wc -l || echo 0)
 
 if [ "$restarts" -gt "$CRASH_THRESHOLD" ]; then
   echo "CRITICAL: niri restarted $restarts times in $CRASH_WINDOW (threshold: $CRASH_THRESHOLD)"
@@ -29,8 +29,8 @@ if [ "$restarts" -gt "$CRASH_THRESHOLD" ]; then
 fi
 
 # Check for DRM errors
-drm_errors=$(journalctl --user -u niri --no-pager -n 20 --since "30 sec ago" 2>/dev/null |
-  grep -cE "Permission denied|DeviceMissing" || true)
+drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" --user -u niri -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null |
+  wc -l || echo 0)
 
 if [ "$drm_errors" -ge "$DRM_ERROR_THRESHOLD" ]; then
   echo "WARNING: $drm_errors DRM errors in 30s"

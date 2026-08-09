@@ -10,6 +10,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## TL;DR
 
 In one session: five distinct bugs in crush-daily (one architectural, four code-level) were fixed, pushed upstream, pinned in SystemNix, and shipped via `nix run .#deploy`. The final post-deploy check shows **29 PASS / 0 FAIL** including a brand-new `silent-zero-data` assertion that catches the entire class of bug that hid this outage for ~10 days.

@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Executive Summary
 
 The monitor365 agent (PID 589624) was burning **295% CPU (~3 cores) for 23+ hours** due to a busy-loop in the cloud sync code. The circuit breaker was open (1.15M failures), and the early-flush optimization bypassed the backoff sleep when buffer ≥200 events, causing a ~16Hz spin with zero progress.

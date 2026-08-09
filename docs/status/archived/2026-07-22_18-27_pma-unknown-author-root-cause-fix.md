@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Root cause identified:** go-git's `repo.Config()` reads ONLY `.git/config` (local scope). It does NOT merge global (`~/.config/git/config`), system (`/etc/gitconfig`), or other config scopes. Home Manager writes `user.name`/`user.email` to `~/.config/git/config` (global scope). Therefore both `getAuthorSignature` implementations (go-commit's and PMA's) always saw empty strings → fell back to `Unknown Author <unknown@example.com>`.

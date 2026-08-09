@@ -9,6 +9,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Root cause identified** — `watcher.convertEvent` attributed every file event to the watch root (`/home/lars/projects`) instead of the actual git repository root. Since the watch root is not a git repo, `git status` failed with exit 128 in an infinite loop, and `MarkDirty` continuously invalidated the entire discovery cache (forcing 33s full re-discovery that exceeded the SDK daemon client's 30s timeout).

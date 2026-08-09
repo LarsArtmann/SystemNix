@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## The Incident
 
 At ~05:56 today, `helium.service` entered a crash loop that spawned **11 empty browser windows in 36 seconds** before systemd's start-limit-hit killed it at 05:56:59. The user saw rapid empty windows opening.

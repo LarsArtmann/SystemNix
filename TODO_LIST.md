@@ -55,6 +55,7 @@
 - [ ] **VendorHash CI check across LarsArtmann repos** — dnsblockd has a `vendor-hash` check; replicate across browser-history, crush-daily, file-and-image-renamer, and all other Go repos
 - [ ] **Pocket ID provision: `api_get` timeout** — `pocket-id.nix:79` still has `--max-time 10` (POST/PUT were raised to 30s). Add `--retry 3 --retry-delay 2` to all provision curl calls for transient SQLITE_BUSY resilience
 - [ ] **Implement cgroup I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 3 FPS. Wrap dev commands with `IOSchedulingClass=idle` or `IOWeight` limits. Give Helium elevated `IOWeight=1000`
+- [ ] **Fix IO-heavy journalctl patterns** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48`, `scripts/internet-diagnostic.sh:97` use `journalctl | grep` (burns 98% CPU). Switch to `journalctl --grep`. Add pre-commit guard for `journalctl.*|.*grep` pattern
 
 ## Priority 5: Desktop
 

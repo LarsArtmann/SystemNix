@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## TL;DR
 
 **I shipped a P0 bug to production.** The bookmarks `bookmarks.yaml` I wrote in the

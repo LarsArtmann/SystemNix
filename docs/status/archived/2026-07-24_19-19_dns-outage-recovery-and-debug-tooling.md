@@ -4,6 +4,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## A) FULLY DONE
 
 1. **DNS/network debug tools installed system-wide** — Added to `platforms/common/packages/base.nix:269-275` (in `linuxUtilities`):

@@ -5,6 +5,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## A) FULLY DONE
 
 ### 1. Root Cause Analysis: 31 Dates Had ZERO Per-Project Insights (Not Just Missing Cross-Project)

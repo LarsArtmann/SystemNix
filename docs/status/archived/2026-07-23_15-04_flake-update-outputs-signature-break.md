@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## A. Fully Done
 
 1. **Diagnosed root cause** — `nix flake update` pulled two upstream commits that broke the `outputs` function contract:

@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. ✅ **mr-sync `package.nix`**: Changed `doCheck = false` + dead custom `checkPhase` to `checkFlags = [ "-skip" "<6 tests>" ]`. Verified nix build passes with tests running (6 skipped, rest pass).

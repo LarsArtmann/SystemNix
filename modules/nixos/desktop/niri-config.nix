@@ -153,6 +153,7 @@ _: {
                           pkgs.procps
                           pkgs.systemd
                           pkgs.gawk
+                          pkgs.coreutils
                         ];
                         text = ''
                           OUT="/var/lib/prometheus-node-exporter/textfile_collectors/niri.prom"
@@ -161,8 +162,8 @@ _: {
                           mkdir -p "$TEXTFILE_DIR"
 
                           running=$(pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-                          restarts=$(journalctl _SYSTEMD_USER_UNIT=niri.service --no-pager --since "10 min" 2>/dev/null | grep -c "Started niri" || true)
-                          drm_errors=$(journalctl _SYSTEMD_USER_UNIT=niri.service --no-pager -n 20 --since "30 sec ago" 2>/dev/null | grep -cE "Permission denied|DeviceMissing" || true)
+                          restarts=$(journalctl --grep "Started niri" _SYSTEMD_USER_UNIT=niri.service --since "10 min" --no-pager --output cat 2>/dev/null | wc -l || echo 0)
+                          drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" _SYSTEMD_USER_UNIT=niri.service -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null | wc -l || echo 0)
 
                           {
                             echo "niri_running $running"

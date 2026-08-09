@@ -7,6 +7,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Timeline — What Actually Happened Across Both Sessions
 
 | Time      | Commit      | Action                                                                    | Correct? |

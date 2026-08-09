@@ -6,6 +6,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## Context
 
 This session continued from a prior session where three incidents were diagnosed and code-fixed but NOT yet deployed:

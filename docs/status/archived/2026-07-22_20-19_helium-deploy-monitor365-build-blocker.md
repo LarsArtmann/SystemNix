@@ -8,6 +8,10 @@
 
 ---
 
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
+
+
 ## a) FULLY DONE
 
 1. **Helium systemd user service deployed and running** (`niri-wrapped.nix:608-623`). `Restart=always`, `RestartSec=5`, `StartLimitBurst=10`. Helium process (PID 1489430) confirmed alive after deploy. Service file symlinked from HM store path to `~/.config/systemd/user/helium.service` with `WantedBy=graphical-session.target`.

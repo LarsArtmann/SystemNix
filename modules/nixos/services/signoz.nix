@@ -133,6 +133,9 @@ in
               cadvisor = lib.mkEnableOption "cAdvisor container metrics" // {
                 default = true;
               };
+              journaldLogs = lib.mkEnableOption "journald log collection via OTel receiver" // {
+                default = true;
+              };
             };
           };
           default = { };
@@ -442,24 +445,25 @@ in
                   };
                 };
               }
-              // lib.optionalAttrs (cfg.components.nodeExporter || cfg.components.cadvisor) {
+              // lib.optionalAttrs cfg.components.journaldLogs {
                 journald = {
                   directory = "/var/log/journal";
-                  priority = "info";
+                  # warning+ only — collecting info-level logs from 14 services
+                  # via `journalctl --follow` burned 96% CPU and 3.78 GB read
+                  # because the OTel receiver serializes every entry to JSON in
+                  # real-time. monitor365-server alone generated 270 MB / 5 min
+                  # at info level.
+                  priority = "warning";
                   units = [
                     "signoz.service"
                     "signoz-collector.service"
                     "caddy.service"
                     "immich-server.service"
                     "forgejo.service"
-                    "docker.service"
-                    "postgresql.service"
                     "pocket-id.service"
                     "oauth2-proxy.service"
-                    "monitor365-server.service"
                     "discordsync.service"
                     "hermes.service"
-                    "projects-management-automation.service"
                     "dnsblockd.service"
                   ];
                 };
@@ -502,7 +506,7 @@ in
                     receivers = [
                       "otlp"
                     ]
-                    ++ lib.optional (cfg.components.nodeExporter || cfg.components.cadvisor) "journald";
+                    ++ lib.optional cfg.components.journaldLogs "journald";
                     exporters = [ "clickhouselogsexporter" ];
                   };
                 };
