@@ -123,8 +123,8 @@ This is because `otelEndpoint` is set to `127.0.0.1:4317` but the Go OTel librar
 3. Verify the backup job produces files that backup-coordination can monitor
 
 ### High Priority (Correctness & Monitoring)
-4. Update AGENTS.md with the LoadCredential + isolated StateDirectory fix and the ProviderConfig.Validate() root cause
-5. Update AGENTS.md Browser History section with `OAUTH2_POCKET_ID_CLIENT_ID` env-var split gotcha
+4. ~~Update AGENTS.md with the LoadCredential + isolated StateDirectory fix and the ProviderConfig.Validate() root cause~~ done — AGENTS.md:156-158
+5. ~~Update AGENTS.md Browser History section with `OAUTH2_POCKET_ID_CLIENT_ID` env-var split gotcha~~ done — AGENTS.md:158, 424
 6. Fix agent timing race: add `after = [ "browser-history.service" ]` to agent's systemd config in SystemNix layer
 7. Add browser-history `/health` to post-deploy-check.sh smoke tests
 8. Add browser-history HTTPS vHost check to post-deploy-check.sh external checks
@@ -137,14 +137,14 @@ This is because `otelEndpoint` is set to `127.0.0.1:4317` but the Go OTel librar
 13. Fix OTel endpoint URL scheme upstream in browser-history repo (add `http://` prefix)
 14. Add Gatus health check for agent timer staleness (alert if `browser-history-agent.timer` hasn't fired in >1h)
 15. Add Gatus functional check for OAuth2 callback endpoint (not just liveness)
-16. Consider whether browser-history should be in Layer 1 or Layer 2 SSO table in AGENTS.md (it's native OIDC, direct TLS proxy — Layer 1)
-17. Add browser-history to the SSO architecture table in AGENTS.md
+16. ~~Consider whether browser-history should be in Layer 1 or Layer 2 SSO table in AGENTS.md (it's native OIDC, direct TLS proxy — Layer 1)~~ done — AGENTS.md:206
+17. ~~Add browser-history to the SSO architecture table in AGENTS.md~~ done — AGENTS.md:206
 18. Verify `SSL_CERT_FILE` env var is actually needed (OIDC discovery succeeded, but was it via SSL_CERT_FILE or system cert pool?)
 
 ### Low Priority (Polish)
 19. Consider whether the `-"${oauth2SecretsFile}"` optional prefix is still needed now that we removed the upstream env vars
 20. Clean up the stale `/var/lib/browser-history/oauth2-secrets.env` file from the first two failed deploys
-21. Add a comment in the module explaining why all three Pocket ID vars must come from the same env file
+21. ~~Add a comment in the module explaining why all three Pocket ID vars must come from the same env file~~ done — `browser-history.nix:106-108`
 22. Consider adding a pre-deploy check that verifies the Pocket ID client secret file exists
 23. Consider adding a pre-deploy check that verifies the OIDC setup oneshot can write to its StateDirectory
 24. Add browser-history to the `post-deploy-check.sh` "Functional Checks" section (not just HTTP liveness)
@@ -152,14 +152,14 @@ This is because `otelEndpoint` is set to `127.0.0.1:4317` but the Go OTel librar
 26. Consider whether the server's upstream `MemoryMax = 512M` is sufficient (DynamicUser, SQLite + Go runtime — monitor for OOM)
 27. Add OTel trace verification (send a test request, check if SigNoz receives a span)
 28. Consider whether the `SSL_CERT_FILE` should be `SSL_CERT_DIR` instead (Go cert pool behavior)
-29. Document the agent token format in AGENTS.md (raw hex constant-time compare, NOT `bh_` prefixed)
+29. ~~Document the agent token format in AGENTS.md (raw hex constant-time compare, NOT `bh_` prefixed)~~ done — AGENTS.md:155
 30. Consider whether the agent cursor DB (`/var/lib/browser-history-agent/cursor.sqlite`) needs backup coordination
 
 ### Cleanup
 31. Remove the `install -d` line from the OIDC setup script (StateDirectory handles directory creation)
 32. Verify the `rm -f "${oauth2SecretsFile}"` in the WebAuthn-only fallback path actually works with the new StateDirectory
 33. Consider whether the OIDC setup oneshot needs `partOf = [ "browser-history.service" ]` for better restart semantics
-34. Add browser-history to the "Non-Obvious Gotchas" section: upstream `optionalEnv` always sets env vars even when value is empty
+34. ~~Add browser-history to the "Non-Obvious Gotchas" section: upstream `optionalEnv` always sets env vars even when value is empty~~ done — AGENTS.md:424
 35. Consider whether the deploy.sh provisioner restart list needs updating for the new StateDirectory path
 36. Remove any stale env files from `/var/lib/browser-history/` left by iterations 1-2
 37. Consider adding a Gatus alert for browser-history response time (>500ms threshold already set — verify it's reasonable)

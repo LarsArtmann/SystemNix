@@ -136,13 +136,13 @@ The deploy script restarts 8 provisioner oneshots. `browser-history-oidc-setup` 
 ### Critical / High Priority
 
 1. **Complete end-to-end OAuth2 login test** — Visit `https://history.home.lan/login`, click "Login with Pocket ID", complete the flow, verify session cookie and dashboard access
-2. **Commit SystemNix changes** — deploy.sh fix + flake.lock updates are uncommitted
-3. **Update AGENTS.md** — Add Pocket ID SQLite BUSY timeout gotcha, browser-history-oidc-setup deploy ordering, OAuth2 begin redirect fix
+2. ~~**Commit SystemNix changes** — deploy.sh fix + flake.lock updates are uncommitted~~ done — committed
+3. ~~**Update AGENTS.md** — Add Pocket ID SQLite BUSY timeout gotcha, browser-history-oidc-setup deploy ordering, OAuth2 begin redirect fix~~ done — AGENTS.md updated with all patterns
 4. **Fix `api_get` timeout** — Change `--max-time 10` to `--max-time 30` in pocket-id.nix for consistency
-5. **Add `TimeoutStartSec = "3min"` to pocket-id-provision** — With 6 clients at 30s each + re-fetches, 90s default is insufficient
+5. ~~**Add `TimeoutStartSec = "3min"` to pocket-id-provision**~~ done — global `DefaultTimeoutStartSec=3min` via `timeout-audit.nix`
 6. **Add `restartTriggers` to `browser-history-oidc-setup`** — Watch the secret file path so the oneshot re-runs when the secret appears
 7. **Investigate nixpkgs tarball regression root cause** — Why does it keep recurring despite the local empty flake-registry fix?
-8. **Fix buildflow vendorHash mismatch** — Update buildflow input proactively before it blocks deploys
+8. ~~**Fix buildflow vendorHash mismatch**~~ done — vendorHash cascade fix (`15f264c2`)
 
 ### Auth / SSO
 
@@ -151,14 +151,14 @@ The deploy script restarts 8 provisioner oneshots. `browser-history-oidc-setup` 
 11. **Verify OAuth2 callback success URL** — Confirm redirect goes to `/` (dashboard) after login
 12. **Test OAuth2 error handling** — What happens if user denies consent in Pocket ID?
 13. **Consider auto-linking** — If a user registers with email `X` via WebAuthn, then logs in via Pocket ID with the same email, are the accounts linked?
-14. **Document the two auth paths** — Browser History has BOTH WebAuthn AND OAuth2. Document when to use which and how they interact
+14. ~~**Document the two auth paths**~~ done — AGENTS.md:421
 
 ### Deploy Infrastructure
 
 15. **Auto-discover provisioner oneshots in deploy.sh** — Replace hardcoded list with `systemctl list-units --type=service --property=Type,RemainAfterExit`
 16. **Add binary version check to post-deploy-check.sh** — Compare `/proc/<pid>/exe` against expected nix store path
 17. **Make pre-deploy-check verify builds will succeed** — Currently `nix flake check --no-build` passes but `nix build` fails (vendorHash mismatches). Should do a dry-run build.
-18. **Add `browser-history-oidc-setup` to deploy.sh restart list** — DONE this session, but commit it
+18. ~~**Add `browser-history-oidc-setup` to deploy.sh restart list**~~ done — `deploy.sh:52`
 19. **Consider `PartOf` relationships** — `browser-history-oidc-setup` should be `PartOf` `browser-history.service` so it restarts together
 20. **Stagger deploy script restarts** — All provisioners restart simultaneously, causing IO contention on QLC NAND
 
@@ -199,11 +199,11 @@ The deploy script restarts 8 provisioner oneshots. `browser-history-oidc-setup` 
 41. **Document the OAuth2 redirect fix in cqrs-htmx CHANGELOG** — The usermgmt/v4.7.1 tag has a message but no CHANGELOG entry
 42. **Update browser-history FEATURES.md** — OAuth2/Pocket ID integration is a feature
 43. **Document the 3-repo dependency chain** — cqrs-htmx → browser-history → SystemNix, with the publish/tag/bump flow
-44. **Add browser-history-oidc-setup to the SSO architecture table in AGENTS.md** — It's a Layer 1 service now
+44. ~~**Add browser-history-oidc-setup to the SSO architecture table in AGENTS.md**~~ done — AGENTS.md:206 Layer 1
 
 ### Cleanup
 
-45. **Remove unused `writeJSON` import if any** — After the redirect change, check if `writeJSON` is still used elsewhere in `oauth2_http.go` (it is, in the callback handler — never mind)
+45. ~~**Remove unused `writeJSON` import if any**~~ done — "never mind", still used in callback handler
 46. **Clean up stale build sandboxes** — Pre-deploy check warned: "12 stale build sandboxes in /nix/var/nix/builds"
 47. **Run `nix-build-cleanup`** — Address the warning from pre-deploy check
 48. **Root filesystem at 88%** — Pre-deploy warning. Consider garbage collection.

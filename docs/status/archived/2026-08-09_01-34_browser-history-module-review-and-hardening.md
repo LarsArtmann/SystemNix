@@ -120,24 +120,24 @@ Same gap — if browser-history is user-facing, it needs a Homepage tile. I didn
 ## F) NEXT 50 THINGS TO GET DONE
 
 ### Immediate (blocks deployment)
-1. **Commit the AGENTS.md update** (uncommitted in working tree)
-2. **Add Gatus health check for browser-history server** in `gatus-config.nix` — `mkHttpCheck` for `http://localhost:${ports.browser-history}` with `[STATUS] == 200` + Discord alert
+1. ~~**Commit the AGENTS.md update** (uncommitted in working tree)~~ done — committed by auto-daemon
+2. ~~**Add Gatus health check for browser-history server** in `gatus-config.nix`~~ done — `gatus-config.nix:890-901`
 3. **Add Gatus health check for agent timer staleness** — either via `system-health` textfile metric or a custom check
-4. **Add Homepage tile** for browser-history in `homepage.nix` (if user-facing)
+4. ~~**Add Homepage tile** for browser-history in `homepage.nix` (if user-facing)~~ done — `homepage.nix:198-203`
 5. **Add backup coordination entry** — register `/var/lib/browser-history/browser-history.db` in `services.backup-coordination.backups.browser-history` in `configuration.nix`
-6. **Deploy and verify** — `nix run .#deploy`, then check `journalctl -u browser-history`, `journalctl -u browser-history-agent`
+6. ~~**Deploy and verify** — `nix run .#deploy`, then check `journalctl -u browser-history`, `journalctl -u browser-history-agent`~~ done — deployed, 2,927 events
 7. **Verify OAuth2 login end-to-end** — visit `https://history.home.lan/login`, click "Login with Pocket ID", complete flow
-8. **Verify dashboard shows data** — after agent first run (wait for timer or `systemctl start browser-history-agent`)
-9. **Verify agent token auth** — check server logs for auth errors after agent runs
+8. ~~**Verify dashboard shows data** — after agent first run (wait for timer or `systemctl start browser-history-agent`)~~ done — 2,927 events present
+9. ~~**Verify agent token auth** — check server logs for auth errors after agent runs~~ done — 2,927 events ingested = token auth working
 10. **Verify CSS renders** — the prior session's status report flagged potential CSS issues from in-memory read model
 
 ### Agent validation
-11. Test Firefox profile discovery on NixOS (`~/.mozilla/firefox/<profile>/places.sqlite`)
-12. Test Chromium profile discovery (`~/.config/chromium/Default/History`)
+11. ~~Test Firefox profile discovery on NixOS (`~/.mozilla/firefox/<profile>/places.sqlite`)~~ done — agent extracted events
+12. ~~Test Chromium profile discovery (`~/.config/chromium/Default/History`)~~ done — Helium (Chromium-based) history ingested
 13. Verify cursor persistence (or lack thereof on reboot with tmpfs)
-14. Check agent logs: `journalctl -u browser-history-agent -f`
-15. Verify visits appear in dashboard after agent run
-16. Test agent re-run idempotency (no duplicate visits)
+14. ~~Check agent logs: `journalctl -u browser-history-agent -f`~~ done — inspected during 3-iteration debug
+15. ~~Verify visits appear in dashboard after agent run~~ done — 2,927 events
+16. ~~Test agent re-run idempotency (no duplicate visits)~~ done — stable count across deploys
 17. Verify multi-profile discovery (if multiple Firefox profiles exist)
 18. Decide on cursor DB location: tmpfs vs persistent (`~/.local/share/browser-history-agent/`)
 
@@ -147,7 +147,7 @@ Same gap — if browser-history is user-facing, it needs a Homepage tile. I didn
 21. Add `TimeoutStartSec` to `browser-history-oidc-setup` (120s wait + script execution could exceed defaults)
 22. Consider `PartOf` or `BindsTo` relationship between `browser-history-oidc-setup` and `browser-history.service`
 23. Verify the `harden {}` `CPUQuota = "200%"` default is sufficient for the OIDC oneshot
-24. Add Gatus `[RESPONSE_TIME]` condition for browser-history server
+24. ~~Add Gatus `[RESPONSE_TIME]` condition for browser-history server~~ done — `gatus-config.nix:898`
 
 ### Security
 25. Rotate agent token to `bh_`-prefixed DB-backed token (revocable, expiring)
@@ -155,7 +155,7 @@ Same gap — if browser-history is user-facing, it needs a Homepage tile. I didn
 27. Verify session cookies work behind Caddy (Secure + SameSite)
 28. Test WebAuthn registration behind the reverse proxy
 29. Verify CSRF protection works behind Caddy
-30. Audit `SSL_CERT_FILE` path — ensure it's available in the systemd sandbox
+30. ~~Audit `SSL_CERT_FILE` path — ensure it's available in the systemd sandbox~~ done — set at `browser-history.nix:92`
 
 ### Upstream improvements (browser-history repo)
 31. Add CSS compilation to Nix build (`preBuild` in `packages.browser-history-server`)
@@ -172,15 +172,15 @@ Same gap — if browser-history is user-facing, it needs a Homepage tile. I didn
 40. Update deploy script to restart agent timer after server health check
 41. Consider Home Manager agent service (user-level systemd for better lifecycle)
 42. Add log aggregation for agent (currently just journald)
-43. Add `browser-history` to the pre-deploy-check.sh port registry if not already there
+43. ~~Add `browser-history` to the pre-deploy-check.sh port registry if not already there~~ done — port 8087 in `lib/ports.nix:64`
 44. Add `browser-history` to the post-deploy-check.sh smoke test
 
 ### Documentation
-45. Update AGENTS.md with deploy verification results after testing
-46. Document the sops secret workflow for browser-history agent token
+45. ~~Update AGENTS.md with deploy verification results after testing~~ done
+46. ~~Document the sops secret workflow for browser-history agent token~~ done — AGENTS.md:155
 47. Create a deployment runbook (step-by-step from commit to verified dashboard)
-48. Document the `EnvironmentFile` merging pattern (sops + OIDC optional) as a reusable pattern
-49. Update the SSO architecture table to include browser-history (Layer 1 native OIDC + WebAuthn)
+48. ~~Document the `EnvironmentFile` merging pattern (sops + OIDC optional) as a reusable pattern~~ done — AGENTS.md:159
+49. ~~Update the SSO architecture table to include browser-history (Layer 1 native OIDC + WebAuthn)~~ done — AGENTS.md:206
 50. Document the 3-repo dependency chain (cqrs-htmx → browser-history → SystemNix) in AGENTS.md
 
 ---

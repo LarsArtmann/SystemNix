@@ -471,6 +471,8 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | Auditd            | Disabled due to NixOS 26.05 bug #483085                                                                                                                                                                                                                     | Medium   |
 | AppArmor          | Explicitly disabled (`mkDefault false`) in security-hardening                                                                                                                                                                                               | Medium   |
 | DNS-over-QUIC     | Overlay disabled — breaks binary cache (40+ min builds)                                                                                                                                                                                                     | Low      |
+| Browser History   | Deployed and healthy (2,927 events). Known gaps: OTel traces not reaching SigNoz (gRPC endpoint `127.0.0.1:4317` missing URL scheme — upstream fix needed), DB not in backup-coordination, agent timing race (no `after` dep on server), OAuth2 login not manually tested end-to-end | Medium   |
+| Off-site backup   | No DR backup exists. All data (Forgejo, Immich, Twenty, DiscordSync, browser-history) local-only. Flagged since 2026-06-25. Aug 3 corruption event (13 files lost) proves this is not theoretical                                                                 | High     |
 
 ---
 
