@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-06 | **Last sessions:** QLC SLC cache crash root cause (daily fstrim + `commit=300`), nixpkgs tarball regression defense (4-layer), WDT crash fix (`builtins.toString null`), monitor365 pool deadlock watchdog, dnsblockd OOM mitigation (GOMEMLIMIT), Hyprland purge, mass vendorHash fixes (8 repos), swww removal (DMS wallpaper native), go-humanize-linter integration, AGENTS.md gotcha archive extraction
+**Updated:** 2026-08-09 | **Last sessions:** Browser-history deployment (3-iteration OAuth2/sandbox fix cascade, now deployed + healthy), vendorHash cascade fix (5 Go repos), Pocket ID provision SQLite BUSY timeout fix, DNSblockd TLS handshake spam investigation, Helium video anti-throttling flags (4 flags), Prevention Plan M1–M15 complete (gatus pattern validator, timeout audit, metric validator, Unknown Author rejection, daily nixpkgs compat CI, auth gateway health check, ref=master audit, monitoring-the-monitor)
 
 ---
 
@@ -12,9 +12,12 @@
 
 ## Priority 1: High (Deploy Pending)
 
-- [ ] **Deploy pending changes** — Multiple sessions' work committed but deploy status uncertain. Key undeployed changes: QLC SLC cache mitigation (daily fstrim `commit=300` idle priority), nixpkgs tarball defense (registry override + guard + recovery script), `user-1000.slice` memory cap fix (90G/80G), dnsblockd OOM mitigation (GOMEMLIMIT+2G), display watchdog login-screen guard, PSI I/O monitoring, monitor365-server-watchdog, go-humanize-linter, Hyprland purge, AGENTS.md gotcha archive. Run `nix run .#deploy` then `nix run .#post-deploy-check`
+- [ ] **Deploy pending changes** — Browser-history deployed Aug 8–9 (3 iterations). System has been deployed recently, but verify: Helium anti-throttle flags, Pocket ID provision timeout fix, vendorHash cascade fix, Prevention Plan M12–M14 (system-health collector, Gatus VM tests, PMA identity test). Run `nix run .#deploy` then `nix run .#post-deploy-check`
 - [ ] **Reboot evo-x2** — NixOS system registry override for nixpkgs is in config but NOT active until reboot (currently running old registry). Hyprland purge also needs reboot to take effect. The registry override is critical defense against the recurring tarball regression
 - [ ] **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification
+- [ ] **Test browser-history OAuth2 login end-to-end** — Visit `https://history.home.lan`, click "Login with Pocket ID", verify redirect flow completes and dashboard loads with data. Server is deployed and healthy (2,927 events), OAuth2 providers configured (`pocket-id`), but full browser flow not manually tested yet
+- [ ] **Add browser-history agent `after` dependency** — Agent is `Type=oneshot` with no `after = [ "browser-history.service" ]`, causing transient 502 retries during server restarts. Add ordering in SystemNix layer (`modules/nixos/services/browser-history.nix`)
+- [ ] **Add browser-history to post-deploy smoke tests** — `/health` HTTP check + external HTTPS vHost check for `history.home.lan` in `scripts/post-deploy-check.sh`
 - [ ] **Create Attic cache + CI token** — Attic module deployed but cache not yet created. Steps: `attic cache create monitor365`, `atticadm make-token --sub ci --validity 1y --push monitor365 --pull monitor365`, configure Forgejo runner. See `docs/services/nix-binary-cache-setup.md`
 - [ ] **Enable niri blur** — Terminal transparency added (88%/90%) but niri's blur option is NOT configured (niri HM module lacks `blur {}` option). Transparent terminals without blur are hard to read. Workaround: raw KDL config, wait for niri-flake, or drop transparency
 
@@ -26,8 +29,12 @@
 - [ ] **Turso plan decision** — DiscordSync crash-loops on Turso `unexpected EOF` after dbHeal cascade (dbHeal created fresh local DB, Turso sync can't initialize). Currently on sqlite-only backend. Decide: keep sqlite-only, re-auth Turso, or upgrade plan
 - [ ] **Reduce `/data` fill below 80%** — Currently 92% full (700 GiB / 758 GiB). High fill on QLC NAND increases write amplification and failure risk. Candidates: clean Docker images (`docker system prune`), re-download corrupted AI models only when needed, audit `/data/activitywatch` (12G), Steam (5.9G), DuckDB (13G)
 - [ ] **Deploy to macOS** — Darwin registry override for nixpkgs written in config (`platforms/darwin/nix/settings.nix`) but NOT deployed. Run `nix run .#deploy` on `Lars-MacBook-Air`
+- [ ] **Clean up orphaned dnsblockd tracking DB** — `/var/lib/dnsblockd/dnsblockd_tracking.db` (724 MB, last modified Jul 15) is the old database from before the rename to `tracking.db`. **Manual:** `sudo trash /var/lib/dnsblockd/dnsblockd_tracking.db`
+- [ ] **DNSblockd whitelist policy decisions** — Consider whitelisting iCloud Private Relay domains (`mask.icloud.com`, `mask-h2.icloud.com` — privacy-enhancing, can't work through DNS-blocking resolver) and DoH bypass domains (`dns.quad9.net`, `one.one.one.one` — already blocked at resolver level)
 
 ## Priority 3: Infrastructure
+
+- [ ] **Browser-history DB backup** — `/var/lib/browser-history/data.db` (SQLite WAL mode, 2,927 events) is NOT in `backup-coordination`. Needs periodic `sqlite3 .backup` job (matching Immich/Twenty pattern) + entry in `configuration.nix` `services.backup-coordination.backups`. Stagger schedule (01:00–03:00 window)
 
 - [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), has btrbk snapshot protection but not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime
 - [ ] **`/data` compression decision** — `compress=zstd:3` on `/data` is under review (corruption report recommended removal). Needs user decision: keep, lower to `zstd:1`, or remove. Blocked by reboot requirement
@@ -44,6 +51,10 @@
 - [ ] **Consolidate systemd blocks for statix** — `statix.toml` disables `repeated_keys` (false positive for NixOS modules). Alternative: consolidate service+timer pairs into single blocks
 - [ ] **PMA `GenerateMessage` handler leak** — Same `defer Close()` pattern as the fixed `Commit()` site, but `GenerateMessage` was missed. Upstream fix needed in PMA repo
 - [ ] **vendorHash drift detection** — Systemic issue: nixpkgs updates break Go vendorHashes across 8+ repos. Consider CI check (`nix flake check` doesn't catch FOD mismatches), batch script, or pre-commit hook
+- [ ] **Pre-deploy vendorHash validation** — `scripts/pre-deploy-check.sh` checks ports, mounts, and metrics but NOT vendorHash freshness. Add `nix build .#X.goModules --dry-run` check for all Go packages
+- [ ] **VendorHash CI check across LarsArtmann repos** — dnsblockd has a `vendor-hash` check; replicate across browser-history, crush-daily, file-and-image-renamer, and all other Go repos
+- [ ] **Pocket ID provision: `api_get` timeout** — `pocket-id.nix:79` still has `--max-time 10` (POST/PUT were raised to 30s). Add `--retry 3 --retry-delay 2` to all provision curl calls for transient SQLITE_BUSY resilience
+- [ ] **Implement cgroup I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 3 FPS. Wrap dev commands with `IOSchedulingClass=idle` or `IOWeight` limits. Give Helium elevated `IOWeight=1000`
 
 ## Priority 5: Desktop
 
@@ -82,21 +93,14 @@
 - [ ] **file-and-image-renamer: `GOTOOLCHAIN=auto` → `local`** — In both `preBuild` blocks + vet check. Currently safe but will break sandbox purity when go.mod exceeds go_1_26
 - [ ] **`hermes`**: Auto-create directory structure on first run; handle own state migration; sane defaults for `OLLAMA_API_KEY`; use PID file or socket-based single-instance locking instead of `--replace` flag
 
-## Priority 7: Prevention & Early Detection (From Aug 6 Incident Analysis)
+---
 
-- [x] **M1: Gatus pat() syntax validator** — `flake.nix` check rejects `?`/`+` in `pat()` patterns; pre-commit fast guard
-- [x] **M2: TimeoutStartSec on all ExecStartPre services** — 10 service files + global `DefaultTimeoutStartSec=3min` via `timeout-audit.nix`
-- [x] **M3: ExecStartPre/TimeoutStartSec eval-time audit** — `modules/nixos/services/timeout-audit.nix` sets global default
-- [x] **M4: Metric presence validator** — `pre-deploy-check.sh` section 10: extracts metric names from gatus patterns, verifies presence in `/metrics`
-- [x] **M5: Unknown Author commit rejection** — pre-commit hook blocks "Unknown Author" / "unknown@" / empty identity
-- [x] **M6: Daily nixpkgs compat CI** — `.github/workflows/nixpkgs-compat.yml`: daily scheduled update + check + auto-issue
-- [x] **M7: Auth gateway health smoke test** — `post-deploy-check.sh` checks protected vHosts for 500/502 (oauth2-proxy failure)
-- [x] **M8: ref=master + GOTOOLCHAIN audit** — `scripts/check-flake-inputs.sh` + pre-commit GOTOOLCHAIN guard + CI step
-- [x] **M9: Audit 38 Gatus pat() patterns** — All verified present by M4 automated check. Zero phantom metrics found
-- [x] **M10: Prevention layer documentation** — AGENTS.md updated with prevention table + Gatus design patterns
-- [x] **M12: Gatus pattern VM test** — `tests/test-gatus-patterns.nix`: mock metrics server + 5 test endpoints, all evaluate GREEN
-- [x] **M13: PMA daemon identity VM test** — `tests/test-pma-identity.nix`: validates git identity env var propagation chain + pre-commit hook enforcement (6 tests)
-- [x] **M14: Monitoring-the-monitor meta-check** — `system-health.nix` emits `system_gatus_endpoints_in_error_long`; Gatus endpoint alerts on sustained failures
+## Priority 7: Browser History
+
+- [ ] **AGENTS.md browser-history updates** — Document (a) LoadCredential + isolated StateDirectory pattern for OIDC oneshot, (b) `ProviderConfig.Validate()` crash-loop root cause (CLIENT_ID always emitted by upstream `optionalEnv` even when secret missing), (c) add browser-history to SSO Layer 1 table (native OIDC, direct TLS proxy — NOT `protectedVHost`)
+- [ ] **Fix OTel endpoint URL scheme upstream** — browser-history uses `otlptracegrpc` with `127.0.0.1:4317` (missing `http://` scheme). Go OTel library expects a URL. Should use HTTP port 4318 (`OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318`) or fix upstream to add scheme. Requires commit → push → flake update → redeploy
+- [ ] **Add Gatus monitoring for agent timer staleness** — Agent is `Type=oneshot` + timer. Alert if `browser-history-agent.timer` hasn't fired in >1h via system-health textfile metric
+- [ ] **Clean up stale OAuth2 env files** — `/var/lib/browser-history/oauth2-secrets.env` from failed deploy iterations 1–2 (now at `/var/lib/browser-history-oidc/oauth2-secrets.env`)
 
 ---
 
@@ -130,6 +134,7 @@ After `nix run .#deploy`, verify:
 8. **Registry** — Verify nixpkgs registry override active: `nix registry list | grep nixpkgs`
 9. **Monitor365** — Verify server-watchdog active (`systemctl status monitor365-server-watchdog.timer`), check `/health` endpoint
 10. **DNS** — Verify `getent hosts dash.home.lan` resolves, check dnsblockd memory stays under 2G
+11. **Browser History** — Verify `history.home.lan` loads, test OAuth2 login via Pocket ID, verify dashboard shows visit data, check agent timer fires (`systemctl list-timers browser-history-agent*`)
 
 ---
 
