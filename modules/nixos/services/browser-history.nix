@@ -34,7 +34,8 @@
         ;
 
       cfg = config.services.browser-history;
-      serverPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server;
+      serverPkg =
+        inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-server;
       agentPkg = inputs.browser-history.packages.${pkgs.stdenv.hostPlatform.system}.browser-history-agent;
       primaryUser = config.users.primaryUser or "lars";
       sopsEnvPath = config.sops.templates."browser-history-env".path;
@@ -127,7 +128,7 @@
               (harden {
                 ProtectSystem = "strict";
               })
-              (serviceOneshotDefaults {})
+              (serviceOneshotDefaults { })
             ];
 
             path = [

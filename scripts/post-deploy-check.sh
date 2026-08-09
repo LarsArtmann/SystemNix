@@ -74,10 +74,22 @@ check_local() {
 }
 
 # Report helpers for non-HTTP checks (system state, timers, journals, etc.)
-report_pass() { echo -e "${GREEN}PASS${NC} $1"; PASS=$((PASS + 1)); }
-report_fail() { echo -e "${RED}FAIL${NC} $1"; FAIL=$((FAIL + 1)); }
-report_skip() { echo -e "${YELLOW}SKIP${NC} $1"; SKIP=$((SKIP + 1)); }
-report_warn() { echo -e "${YELLOW}WARN${NC} $1"; SKIP=$((SKIP + 1)); }
+report_pass() {
+  echo -e "${GREEN}PASS${NC} $1"
+  PASS=$((PASS + 1))
+}
+report_fail() {
+  echo -e "${RED}FAIL${NC} $1"
+  FAIL=$((FAIL + 1))
+}
+report_skip() {
+  echo -e "${YELLOW}SKIP${NC} $1"
+  SKIP=$((SKIP + 1))
+}
+report_warn() {
+  echo -e "${YELLOW}WARN${NC} $1"
+  SKIP=$((SKIP + 1))
+}
 
 echo "=== Post-Deploy Smoke Test ==="
 echo "Domain: $DOMAIN"
@@ -92,7 +104,7 @@ check_local "Pocket ID" "1411" "/healthz" "204" 2>/dev/null ||
 
 # Pocket ID: scan recent journal for SQLITE_BUSY or francis panics.
 # Write to file then grep — avoids pipefail SIGPIPE trap on large journal output.
-journalctl -u pocket-id.service --since "-30min" --no-pager 2>/dev/null > /tmp/.smoke-pocket-id || true
+journalctl -u pocket-id.service --since "-30min" --no-pager 2>/dev/null >/tmp/.smoke-pocket-id || true
 if grep -qEi "SQLITE_BUSY|panic" /tmp/.smoke-pocket-id 2>/dev/null; then
   report_fail "Pocket ID — SQLITE_BUSY or panic in recent journal (run: journalctl -u pocket-id --since -30min)"
 else
@@ -117,9 +129,9 @@ fi
 # DNS: dnsblockd memory must stay under 2G
 _dns_rss=$(systemctl show -p MemoryCurrent --value dnsblockd 2>/dev/null || echo "0")
 if [ "$_dns_rss" -gt 0 ] 2>/dev/null && [ "$_dns_rss" -lt 2147483648 ]; then
-  report_pass "DNS — dnsblockd memory $(( _dns_rss / 1048576 ))MB (<2G)"
+  report_pass "DNS — dnsblockd memory $((_dns_rss / 1048576))MB (<2G)"
 elif [ "$_dns_rss" -gt 0 ] 2>/dev/null; then
-  report_fail "DNS — dnsblockd memory $(( _dns_rss / 1048576 ))MB (exceeds 2G limit)"
+  report_fail "DNS — dnsblockd memory $((_dns_rss / 1048576))MB (exceeds 2G limit)"
 else
   report_skip "DNS — cannot determine dnsblockd memory"
 fi
@@ -493,7 +505,7 @@ if command -v fish >/dev/null 2>&1; then
   _fish_start=$(date +%s%N)
   fish -i -c exit >/dev/null 2>&1 || true
   _fish_end=$(date +%s%N)
-  _fish_ms=$(( (_fish_end - _fish_start) / 1000000 ))
+  _fish_ms=$(((_fish_end - _fish_start) / 1000000))
   if [ "$_fish_ms" -lt 200 ]; then
     report_pass "Shell — fish startup ${_fish_ms}ms"
   else
