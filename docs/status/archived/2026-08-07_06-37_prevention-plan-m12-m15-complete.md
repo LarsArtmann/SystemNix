@@ -144,9 +144,9 @@ Nothing. All deliverables pass their verification checks. No regressions introdu
 ### f) Up to 50 Things to Get Done Next
 
 #### High Priority (Prevention Plan Gaps)
-1. Add M12–M14 to AGENTS.md prevention layer table
-2. Deploy the new system-health collector and verify `system_gatus_endpoints_in_error_long` appears in `/metrics`
-3. Verify M14 Gatus "Gatus Sustained Failures" endpoint shows GREEN on live system after deploy
+~~1. Add M12–M14 to AGENTS.md prevention layer table~~ done — prevention layers table at AGENTS.md:52-62 covers all 5 layers including CI VM tests
+~~2. Deploy the new system-health collector and verify `system_gatus_endpoints_in_error_long` appears in `/metrics`~~ done — collector deployed, metric present
+~~3. Verify M14 Gatus "Gatus Sustained Failures" endpoint shows GREEN on live system after deploy~~ done — system running, Gatus healthy
 4. Thread flake `inputs` through `tests/default.nix` so VM tests can import upstream modules
 5. Add M13 upstream PMA module wiring test (gitIdentity → systemd Environment)
 6. Refine M14 jq filter to use 24h timestamp threshold instead of "all results failed"
@@ -182,7 +182,7 @@ Nothing. All deliverables pass their verification checks. No regressions introdu
 29. Audit `UMask` across services (default 022 vs 007)
 
 #### Test Coverage
-30. Add VM test for oauth2-proxy forward-auth flow (M7 only checks HTTP status)
+~~30. Add VM test for oauth2-proxy forward-auth flow (M7 only checks HTTP status)~~ done — `tests/test-oauth2-proxy.nix` exists
 31. Add VM test for Caddy TLS config (cert expiry, protocol version)
 32. Add VM test for dnsblockd config reload (DNS query after config change)
 33. Add VM test for backup-coordination module (metric emission)
@@ -219,4 +219,4 @@ Nothing. All deliverables pass their verification checks. No regressions introdu
 ---
 
 > **RESOLVED — M12–M15 complete. Prevention plan fully executed (M1–M15). All 15 tasks done across 3 sessions.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> Core plan items 1–3 are genuinely done. Item 30 (oauth2-proxy VM test) exists. Items 4–50 are FUTURE ENHANCEMENTS outside the prevention plan — most remain open. Notable: item 44 (remote backup) is the #1 data loss risk — snapshots are LOCAL-ONLY.
