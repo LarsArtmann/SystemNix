@@ -127,6 +127,21 @@ else
     log_info "No staged .nix files — skipping Nix linters."
 fi
 
+# Shellcheck on staged .sh files
+STAGED_SH=$(git diff --cached --name-only --diff-filter=ACM '*.sh')
+if [ -n "$STAGED_SH" ]; then
+    log_info "Running shellcheck on staged shell scripts..."
+    if echo "$STAGED_SH" | xargs nix shell nixpkgs#shellcheck --command shellcheck --severity=warning > /tmp/shellcheck.log 2>&1; then
+        log_success "Shellcheck passed! No issues found."
+    else
+        log_error "Shellcheck found issues!"
+        cat /tmp/shellcheck.log
+        all_passed=false
+    fi
+else
+    log_info "No staged .sh files — skipping shellcheck."
+fi
+
 # Nix flake check always runs (validates whole config)
 log_info "Running Nix flake check..."
 if nix flake check > /tmp/nix-check.log 2>&1; then

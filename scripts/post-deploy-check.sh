@@ -29,7 +29,7 @@ check() {
   local response
   local status
 
-  response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")
+  response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || true)
   status="$response"
 
   if [ "$status" = "000" ]; then
@@ -135,7 +135,7 @@ check_local "Immich" "2283" "/api/server/ping" "200" "" 2>/dev/null || true
 # /api/stats (can take 10+ seconds on a fully loaded instance).
 discordsync_ready=false
 for _ in 1 2 3; do
-  if [ "$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://localhost:8085/healthz" 2>/dev/null || echo 000)" = "200" ]; then
+  if [ "$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "http://localhost:8085/healthz" 2>/dev/null || true)" = "200" ]; then
     discordsync_ready=true
     break
   fi
@@ -440,7 +440,7 @@ AUTH_VHOSTS=(
   "manifest.$DOMAIN"
 )
 for vhost in "${AUTH_VHOSTS[@]}"; do
-  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || echo "000")
+  status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://$vhost/" 2>/dev/null || true)
   case "$status" in
   200 | 301 | 302 | 303)
     echo -e "${GREEN}PASS${NC} $vhost → $status (auth gateway healthy)"

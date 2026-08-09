@@ -30,11 +30,14 @@
 
         # OTel traces → local SigNoz OTLP/HTTP collector. Uses raw OTel SDK
         # (no go-cqrs-lite). Noop tracer when unset (zero overhead).
-        # PMA_COMMITTER_WORKERS=4 reduces concurrent git+LLM operations from
-        # the default 8 to 4, halving IO/memory spikes during batch processing.
+        # PMA_COMMITTER_WORKERS=2: each worker drives a git subprocess + LLM
+        # API call concurrently. 4 workers on 260 repos was enough to generate
+        # sustained 91% CPU and 16G page-cache pressure (see crash-analysis
+        # 2026-08-09). 2 workers halves the concurrent pressure while still
+        # keeping commit latency acceptable for a background daemon.
         systemd.services.projects-management-automation.environment = {
           OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
-          PMA_COMMITTER_WORKERS = lib.mkDefault "4";
+          PMA_COMMITTER_WORKERS = lib.mkDefault "2";
         };
 
         # The upstream NixOS module sets Type=notify + WatchdogSec=30s (commit
@@ -45,17 +48,35 @@
         # execve succeeds. WatchdogSec is inert without READY=1, zeroed for
         # clarity. Remove this override once upstream adds sd_notify support.
         #
-        # MemoryMax=16G: the process RSS is only ~367 MB, but cgroup v2
-        # charges page cache (from reading 260 git repos during discovery)
-        # against the limit. The upstream 8G default and previous 12G override
-        # were too low — page-cache exhaustion caused EOF errors in go-git
-        # file operations, which cascaded into commit failures and CPU
-        # death-loops. 16G gives sufficient headroom for page cache while
-        # keeping an OOM guardrail.
+        # ── Death-loop prevention (2026-08-09 crash) ──
+        # PMA's anonymous memory (actual heap) is only ~370 MB, but reading
+        # 260+ git repos during discovery charges ~16 GB of page cache to the
+        # cgroup. The upstream module set NO MemoryHigh, NO CPUQuota, and
+        # MemoryMax=16G. Result: page cache filled to 16G → kernel reclaimed
+        # pages → PMA immediately re-read them → thrash loop with 91% CPU.
+        # The kernel never OOM-killed (page cache is reclaimable), so the
+        # thrashing ran indefinitely until system-wide memory pressure hit
+        # 95% → kernel freeze → hardware watchdog reset.
+        #
+        # Fix: layered cgroup containment.
+        #   MemoryHigh=6G: kernel starts throttling PMA's allocations at 6G
+        #     via direct reclaim. PMA slows down but doesn't die. This is the
+        #     primary defense — it prevents the exponential page-cache growth
+        #     that caused the death-loop.
+        #   MemoryMax=8G: hard ceiling. If PMA somehow exceeds 8G (e.g. a
+        #     memory leak in the LLM client), the cgroup OOM killer fires
+        #     and systemd restarts the service cleanly.
+        #   MemorySwapMax=0: PMA has only 370 MB anon — swapping is
+        #     counterproductive and risks swap-thrashing.
+        #   CPUQuota=200%: caps PMA at 2 cores. Without this, the death-loop
+        #     consumed 91% of all CPU, starving everything else.
         systemd.services.projects-management-automation.serviceConfig = {
           Type = lib.mkForce "exec";
           WatchdogSec = lib.mkForce "0";
-          MemoryMax = lib.mkForce "16G";
+          MemoryMax = lib.mkForce "8G";
+          MemoryHigh = lib.mkForce "6G";
+          MemorySwapMax = lib.mkForce "0";
+          CPUQuota = lib.mkForce "200%";
         };
       };
     };
