@@ -31,6 +31,8 @@
 - [ ] **Deploy to macOS** — Darwin registry override for nixpkgs written in config (`platforms/darwin/nix/settings.nix`) but NOT deployed. Run `nix run .#deploy` on `Lars-MacBook-Air`
 - [ ] **Clean up orphaned dnsblockd tracking DB** — `/var/lib/dnsblockd/dnsblockd_tracking.db` (724 MB, last modified Jul 15) is the old database from before the rename to `tracking.db`. **Manual:** `sudo trash /var/lib/dnsblockd/dnsblockd_tracking.db`
 - [ ] **DNSblockd whitelist policy decisions** — Consider whitelisting iCloud Private Relay domains (`mask.icloud.com`, `mask-h2.icloud.com` — privacy-enhancing, can't work through DNS-blocking resolver) and DoH bypass domains (`dns.quad9.net`, `one.one.one.one` — already blocked at resolver level)
+- [ ] **Browser-history: registration lock after first user** — `POST /auth/register` is open to anyone on LAN. Add `registration_open = false` flag after first user created. Upstream code change in browser-history repo. Surfaces from 3 separate status reports (02-12, 07-47, 10-36)
+- [ ] **WebAuthn `.lan` RP ID browser validation** — Verify browsers accept passkey registration on `history.home.lan` (`.lan` is not a real TLD; Chrome/Firefox may reject). If rejected, Pocket ID OAuth2 is the fallback (already integrated). Manual: open `chrome://gpu` in Helium, test `navigator.credentials.create()`
 
 ## Priority 3: Infrastructure
 
@@ -41,6 +43,11 @@
 - [ ] **Remove Pocket ID WAL band-aid** — Pocket ID 2.12.0 (deployed via nixpkgs update) includes upstream francis fixes. The WAL-clearing ExecStartPre, `ACTORS_HOST=127.0.0.1`, and `MemoryMax=1G` overrides may no longer be needed. Remove one at a time, verify SQLITE_BUSY doesn't recur. **NOTE 2026-08-09:** Post-deploy-check now scans journal for `SQLITE_BUSY|panic` — confirmed alarm lease renewal is STILL hitting `database is locked` every ~10s on 2.12.0. WAL band-aid removal should wait until SQLITE_BUSY is resolved upstream or via config
 - [ ] **SearXNG streaming exploration** — User wants streaming results (progressive rendering), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy flush_buffers
 - [ ] **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is a hand-maintained list of only 4 services (caddy, forgejo, dnsblockd, postgresql). Missing active services: discordsync, searx, qmd-mcp, emeet-pixyd, monitor365, signoz, immich, pocket-id. Generate list from Nix config or `systemctl list-units` instead
+- [ ] **Caddy reload root-cause fix** — `PrivateTmp=true` in `harden {}` blocks `systemctl reload caddy` on every deploy (exit code 4). Currently band-aided with unconditional restart in `deploy.sh`. Investigate: (a) `PrivateTmp = lib.mkForce false` on Caddy, (b) `restartTriggers = [ configFile ]` as defense-in-depth, (c) make deploy.sh restart conditional on config diff
+- [ ] **Thread flake `inputs` through `tests/default.nix`** — Test infrastructure doesn't receive flake `inputs`, blocking VM tests that need upstream modules (e.g., PMA module gitIdentity → systemd Environment wiring test)
+- [ ] **Add `GOTOOLCHAIN=local` to all Go devShells** — Proactive prevention against sandbox purity breaks when `go.mod` exceeds `go_1_26`. Currently safe but will break silently
+- [ ] **Browser-history VM test** — Create `tests/browser-history.nix` verifying service starts and `/health` returns 200. Register in `tests/default.nix`
+- [ ] **I/O pressure check in post-deploy-check.sh** — Add `/proc/pressure/io` avg10 check (warn if >80% for sustained period). Catches the I/O contention that caused Helium 3 FPS video and WDT crashes
 
 ## Priority 4: Code Quality
 
@@ -56,6 +63,12 @@
 - [ ] **Pocket ID provision: `api_get` timeout** — `pocket-id.nix:79` still has `--max-time 10` (POST/PUT were raised to 30s). Add `--retry 3 --retry-delay 2` to all provision curl calls for transient SQLITE_BUSY resilience
 - [ ] **Implement cgroup I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 3 FPS. Wrap dev commands with `IOSchedulingClass=idle` or `IOWeight` limits. Give Helium elevated `IOWeight=1000`
 - [ ] **Fix IO-heavy journalctl patterns** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48`, `scripts/internet-diagnostic.sh:97` use `journalctl | grep` (burns 98% CPU). Switch to `journalctl --grep`. Add pre-commit guard for `journalctl.*|.*grep` pattern. **NOTE 2026-08-09:** post-deploy-check.sh Pocket ID scan uses `journalctl ... > file` then `grep file` — acceptable (file-based, no pipe), but could be optimized with `journalctl --grep`
+- [ ] **Systemd hardening consistency audit** — Several hardening primitives are in some services but not all. Audit: `TimeoutStopSec` (services that hang on shutdown), `RestartSec` consistency (5s/10s/30s variation), `ProcSubset` (kernel 6.2+), `RestrictAddressFamilies`, `SystemCallArchitectures`, `LockPersonality`, `UMask` (022 vs 007). Add missing primitives to `harden()` helper
+- [ ] **Monitoring gaps from prevention plan** — Add Gatus checks for: oauth2-proxy itself (not just services behind it), Caddy config reload success (silent failures), dnsblockd block page HTTPS endpoint (cert issues), BTRFS scrub freshness (days since last successful scrub as textfile metric)
+- [ ] **CI improvements** — (a) Add `gatus-patterns` and `pma-identity` to `.github/workflows/nix-check.yml` vm-tests job, (b) run VM tests on PR not just push, (c) add CI check for duplicate port assignments across modules, (d) add pre-commit check for `lib.optionalAttrs` without `config.services.X.enable` guard
+- [ ] **AGENTS.md documentation gaps** — (a) Document Caddy `PrivateTmp` reload gotcha (reload fails on every deploy due to hardening), (b) document phantom metric pre-deploy check chicken-and-egg, (c) fix stale version "Chromium 150" → "Chromium 151" in Helium gotcha, (d) document prevention layers in `docs/CONTRIBUTING.md` for non-AGENTS.md readers
+- [ ] **Create dep-audit script for LarsArtmann Go repos** — Cross-reference ALL `go.mod` require lines against flake.nix pinned revs before deploy. Would have caught go-etag, go-idempotency, AND go-retry cascading failures in one pass instead of 3 separate deploy cycles
+- [ ] **dnsblockd CA cert deployment automation** — Create deployment script for macOS (`security add-trusted-cert` flow) and guide for iOS/Android (MDM profile or manual import). Prevents TLS handshake spam (224K errors/day) when devices don't trust the CA
 
 ## Priority 5: Desktop
 

@@ -20,7 +20,6 @@ check_count() {
 
 # Module count (non-underscore .nix files in services/ only — desktop counted separately)
 SERVICE_MODULES=$(find modules/nixos/services -maxdepth 1 -name '*.nix' ! -name '_*' 2>/dev/null | wc -l)
-DESKTOP_MODULES=$(find modules/nixos/desktop -maxdepth 1 -name '*.nix' ! -name '_*' 2>/dev/null | wc -l)
 
 # Gatus endpoints
 GATUS_COUNT=$(grep -c 'name =' modules/nixos/services/gatus-config.nix 2>/dev/null || echo 0)
