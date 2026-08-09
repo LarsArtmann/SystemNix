@@ -42,7 +42,7 @@
       domain = config.networking.domain;
       fqdn = "history.${domain}";
       pocketIdEnabled = config.services.pocket-id-config.enable;
-      oauth2SecretsFile = "/var/lib/browser-history/oauth2-secrets.env";
+      oauth2SecretsFile = "/var/lib/browser-history-oidc/oauth2-secrets.env";
     in
     {
       imports = [
@@ -98,10 +98,14 @@
           };
 
           # Bridges the Pocket ID client secret into an env file.
-          # Pocket ID writes the secret to /var/lib/pocket-id/client-secrets/browser-history
-          # (owned pocket-id:pocket-id, 640). This oneshot reads it as root and writes
-          # an EnvironmentFile at /var/lib/browser-history/oauth2-secrets.env that
-          # browser-history loads via systemd.
+          # Uses systemd LoadCredential (like Forgejo) to read the secret from
+          # /var/lib/pocket-id/client-secrets/browser-history inside the hardened
+          # namespace. Writes all OAUTH2_POCKET_ID_* vars to an EnvironmentFile in
+          # the oneshot's own StateDirectory (separate from the server's DynamicUser
+          # StateDirectory, which is inaccessible to other services).
+          # CLIENT_ID, CLIENT_SECRET, and ISSUER are ONLY set via this file, so
+          # when the secret is missing, the server degrades to WebAuthn-only
+          # instead of crash-looping on ProviderConfig.Validate().
           systemd.services.browser-history-oidc-setup = {
             description = "Browser History — Pocket ID OAuth2 secret provisioning";
             after = [ "pocket-id-provision.service" ];
@@ -115,13 +119,13 @@
               {
                 Type = "oneshot";
                 RemainAfterExit = true;
+                StateDirectory = "browser-history-oidc";
                 LoadCredential = [
                   "pocket-id-secret:${config.services.pocket-id.dataDir}/client-secrets/browser-history"
                 ];
               }
               (harden {
                 ProtectSystem = "strict";
-                ReadWritePaths = [ "/var/lib/browser-history" ];
               })
               (serviceOneshotDefaults {})
             ];
