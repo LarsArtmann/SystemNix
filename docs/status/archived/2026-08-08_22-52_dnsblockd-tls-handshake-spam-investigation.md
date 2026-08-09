@@ -146,40 +146,40 @@ Two stray `EOF` errors at 22:27 and 22:42 are from macOS daemon TLS session cach
 ## f) Next Steps (up to 50)
 
 ### High Priority
-~~1. Clean up orphaned database: `sudo rm /var/lib/dnsblockd/dnsblockd_tracking.db` (724 MB freed)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~2. Reboot Mac to clear remaining cached daemon TLS sessions (2 stray EOF errors)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~3. Update SystemNix `AGENTS.md` with the dnsblockd CA cert macOS installation procedure~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~4. Verify TLS errors are fully zero after Mac reboot (check `journalctl -u dnsblockd -f`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+1. Clean up orphaned database: `sudo rm /var/lib/dnsblockd/dnsblockd_tracking.db` (724 MB freed)
+2. Reboot Mac to clear remaining cached daemon TLS sessions (2 stray EOF errors)
+3. Update SystemNix `AGENTS.md` with the dnsblockd CA cert macOS installation procedure
+4. Verify TLS errors are fully zero after Mac reboot (check `journalctl -u dnsblockd -f`)
 
 ### Medium Priority
-~~5. Consider whitelisting iCloud Private Relay domains (`mask.icloud.com`, `mask-h2.icloud.com`) — they're privacy-enhancing and can't work through a DNS-blocking resolver anyway~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~6. Consider whitelisting `dns.quad9.net` and `one.one.one.one` — DoH bypass attempts are already blocked at resolver level~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~7. Identify device at `192.168.1.62` in router DHCP table and give it a stable hostname for future log analysis~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~8. Check if other devices on the network also need the dnsblockd CA cert (check `journalctl` for TLS errors from other IPs)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~9. Create a dnsblockd CA cert deployment script for macOS devices (automate the `security add-trusted-cert` flow)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~10. Create a dnsblockd CA cert deployment guide for iOS/Android devices (MDM profile or manual import)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~11. File upstream issue/PR in dnsblockd for per-domain block response type support~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~12. File upstream issue/PR in dnsblockd to suppress or downgrade `http: TLS handshake error` log lines~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~13. Add Iroh (`dns.iroh.link`) to the dnsblockd blocklist or rate-limit its queries~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~14. Investigate what's running Iroh on the network (check all devices for Iroh/Iroh-based apps)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~15. Add a Gatus health check for the dnsblockd block page HTTPS endpoint to detect cert issues~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~16. Document the `dnsblockd_tracking.db` → `tracking.db` migration in the dnsblockd changelog~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+5. Consider whitelisting iCloud Private Relay domains (`mask.icloud.com`, `mask-h2.icloud.com`) — they're privacy-enhancing and can't work through a DNS-blocking resolver anyway
+6. Consider whitelisting `dns.quad9.net` and `one.one.one.one` — DoH bypass attempts are already blocked at resolver level
+7. Identify device at `192.168.1.62` in router DHCP table and give it a stable hostname for future log analysis
+8. Check if other devices on the network also need the dnsblockd CA cert (check `journalctl` for TLS errors from other IPs)
+9. Create a dnsblockd CA cert deployment script for macOS devices (automate the `security add-trusted-cert` flow)
+10. Create a dnsblockd CA cert deployment guide for iOS/Android devices (MDM profile or manual import)
+11. File upstream issue/PR in dnsblockd for per-domain block response type support
+12. File upstream issue/PR in dnsblockd to suppress or downgrade `http: TLS handshake error` log lines
+13. Add Iroh (`dns.iroh.link`) to the dnsblockd blocklist or rate-limit its queries
+14. Investigate what's running Iroh on the network (check all devices for Iroh/Iroh-based apps)
+15. Add a Gatus health check for the dnsblockd block page HTTPS endpoint to detect cert issues
+16. Document the `dnsblockd_tracking.db` → `tracking.db` migration in the dnsblockd changelog
 
 ### Low Priority
-~~17. Consider switching `dnsBlockResponse` to `nxdomain` globally if the block page is rarely useful (eliminates all TLS retry storms by design)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~18. Add a dnsblockd log rotation or rate-limiting rule for `TLS handshake error` messages (journald filter)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~19. Check the `false_positive_reports` table in both databases for any actionable user feedback~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~20. Review the `dns_resolve_timeout` (currently 10s) — consider reducing to 5s to fail faster on DoT forwarder stalls~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~21. Review DoT forwarder health (`tls://1.1.1.1:853`, `tls://9.9.9.9:853`) — add monitoring for forwarder timeout rates~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~22. Add a systemd journal cursor or watchdog for TLS handshake error spikes (>1000/hour from a single IP = alert)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~23. Consider adding a dnsblockd maintenance oneshot that vacuums the tracking DB periodically (164 MB with WAL)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~24. Check if the `temp-allowlist` feature is being used — if not, consider disabling it to reduce complexity~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~25. Review the 2.5M blocklist entries — check for false positives by reviewing the `false_positive_reports` table~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~26. Consider adding `dns.iroh.link` to `extraDomains` in `dns-blocklists.nix` if it's deemed unwanted~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~27. Document the full dnsblockd cert trust architecture (CA → per-domain minting → device trust chain) in SystemNix docs~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~28. Add the dnsblockd CA cert fingerprint to SystemNix documentation for verification during installation~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~29. Create a NixOS module option to export the dnsblockd CA cert to a network-accessible location for easy device enrollment~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~30. Consider mDNS-based CA cert discovery for automatic device enrollment (Bonjour profile distribution)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+17. Consider switching `dnsBlockResponse` to `nxdomain` globally if the block page is rarely useful (eliminates all TLS retry storms by design)
+18. Add a dnsblockd log rotation or rate-limiting rule for `TLS handshake error` messages (journald filter)
+19. Check the `false_positive_reports` table in both databases for any actionable user feedback
+20. Review the `dns_resolve_timeout` (currently 10s) — consider reducing to 5s to fail faster on DoT forwarder stalls
+21. Review DoT forwarder health (`tls://1.1.1.1:853`, `tls://9.9.9.9:853`) — add monitoring for forwarder timeout rates
+22. Add a systemd journal cursor or watchdog for TLS handshake error spikes (>1000/hour from a single IP = alert)
+23. Consider adding a dnsblockd maintenance oneshot that vacuums the tracking DB periodically (164 MB with WAL)
+24. Check if the `temp-allowlist` feature is being used — if not, consider disabling it to reduce complexity
+25. Review the 2.5M blocklist entries — check for false positives by reviewing the `false_positive_reports` table
+26. Consider adding `dns.iroh.link` to `extraDomains` in `dns-blocklists.nix` if it's deemed unwanted
+27. Document the full dnsblockd cert trust architecture (CA → per-domain minting → device trust chain) in SystemNix docs
+28. Add the dnsblockd CA cert fingerprint to SystemNix documentation for verification during installation
+29. Create a NixOS module option to export the dnsblockd CA cert to a network-accessible location for easy device enrollment
+30. Consider mDNS-based CA cert discovery for automatic device enrollment (Bonjour profile distribution)
 
 ---
 
@@ -199,5 +199,4 @@ These domains (`mask.icloud.com`, `mask-h2.icloud.com`, `dns.quad9.net`, `one.on
 
 ---
 
-> **RESOLVED — Investigation complete. Root cause: macOS daemon TLS session caching + orphaned tracking DB. Items harvested to TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> **INVESTIGATION COMPLETE — Root cause identified and fixed (CA cert installed on macOS, 99.96% reduction).** The numbered action items (1–30) are mostly OPEN — they are future improvements (orphaned DB cleanup, whitelist policy decisions, upstream dnsblockd features, CA cert deployment automation). See TODO_LIST.md Priority 2 for harvested items.

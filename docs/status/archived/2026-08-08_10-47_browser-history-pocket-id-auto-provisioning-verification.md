@@ -144,71 +144,71 @@ browser-history's `go.work` replaces `cqrs-htmx/*` with local source paths (`../
 
 ### Critical — Unblock Deploy
 
-~~1. **Push 8 browser-history commits**: `cd /home/lars/projects/browser-history && git push origin master`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~2. **Fix nixpkgs tarball regression**: `bash scripts/fix-nixpkgs-lock.sh`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~3. **Update SystemNix flake input to browser-history HEAD**: `GIT_CONFIG_GLOBAL=/dev/null nix flake lock --update-input browser-history`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~4. **Verify flake.lock nixpkgs type is github**: `python3 -c "import json; print(json.load(open('flake.lock'))['nodes']['nixpkgs']['original']['type'])"`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~5. **Run flake check**: `nix flake check --no-build`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~6. **Deploy**: `nix run .#deploy`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~1. **Push 8 browser-history commits**: `cd /home/lars/projects/browser-history && git push origin master`~~ done
+~~2. **Fix nixpkgs tarball regression**: `bash scripts/fix-nixpkgs-lock.sh`~~ done
+~~3. **Update SystemNix flake input to browser-history HEAD**: `GIT_CONFIG_GLOBAL=/dev/null nix flake lock --update-input browser-history`~~ done
+~~4. **Verify flake.lock nixpkgs type is github**: `python3 -c "import json; print(json.load(open('flake.lock'))['nodes']['nixpkgs']['original']['type'])"`~~ done
+~~5. **Run flake check**: `nix flake check --no-build`~~ done
+~~6. **Deploy**: `nix run .#deploy`~~ done
 
 ### Post-Deploy Verification
 
-~~7. **Check oneshot service**: `sudo systemctl status browser-history-oidc-setup.service`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~8. **Verify env vars loaded**: `sudo systemctl show browser-history --property=Environment`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~9. **Verify OIDC env file exists**: `sudo cat /var/lib/browser-history/oauth2-secrets.env` (should contain `OAUTH2_POCKET_ID_CLIENT_ID` and `OAUTH2_POCKET_ID_CLIENT_SECRET`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~10. **Check browser-history logs for OIDC discovery**: `sudo journalctl -u browser-history -n 50 --no-pager`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~11. **Verify "Login with Pocket ID" button**: `curl -sk https://history.home.lan/register | grep -i pocket`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~12. **Test OAuth2 flow in browser**: Navigate to register page → click Pocket ID → complete passkey → verify session~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~13. **Verify user auto-created**: Check browser-history database for the new user with `RoleViewer + RoleUser`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~7. **Check oneshot service**: `sudo systemctl status browser-history-oidc-setup.service`~~ done
+~~8. **Verify env vars loaded**: `sudo systemctl show browser-history --property=Environment`~~ done
+~~9. **Verify OIDC env file exists**: `sudo cat /var/lib/browser-history/oauth2-secrets.env` (should contain `OAUTH2_POCKET_ID_CLIENT_ID` and `OAUTH2_POCKET_ID_CLIENT_SECRET`)~~ done
+~~10. **Check browser-history logs for OIDC discovery**: `sudo journalctl -u browser-history -n 50 --no-pager`~~ done
+~~11. **Verify "Login with Pocket ID" button**: `curl -sk https://history.home.lan/register | grep -i pocket`~~ done
+12. **Test OAuth2 flow in browser**: Navigate to register page → click Pocket ID → complete passkey → verify session
+13. **Verify user auto-created**: Check browser-history database for the new user with `RoleViewer + RoleUser`
 
 ### Hardening & Monitoring
 
-~~14. **Add Gatus health check** for the OAuth2 begin endpoint (`GET /auth/oauth/pocket-id/begin` should return 302)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~15. **Add Gatus alert** for browser-history startup failure (detect OIDC discovery failures)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~16. **Verify Pocket ID shows browser-history** in the admin UI client list with correct callback URL~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~17. **Test OIDC discovery failure mode**: Stop Pocket ID, restart browser-history, verify it starts in WebAuthn-only mode (graceful degradation)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+14. **Add Gatus health check** for the OAuth2 begin endpoint (`GET /auth/oauth/pocket-id/begin` should return 302)
+15. **Add Gatus alert** for browser-history startup failure (detect OIDC discovery failures)
+16. **Verify Pocket ID shows browser-history** in the admin UI client list with correct callback URL
+17. **Test OIDC discovery failure mode**: Stop Pocket ID, restart browser-history, verify it starts in WebAuthn-only mode (graceful degradation)
 
 ### Documentation & Cleanup
 
-~~18. **Update browser-history AGENTS.md** with the OAuth2/Pocket ID architecture and auto-provisioning behavior~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~19. **Update SystemNix AGENTS.md** browser-history section with the OAuth2 integration details~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~20. **Document the `matchOrCreateUser` 3-tier strategy** in browser-history's domain docs~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~21. **Add the PKCE-always-on behavior** to the Pocket ID OIDC client notes~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~22. **Mark prior status report as resolved** with link to this report~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~23. **Remove empty commit** `10d13bb` from browser-history history (if rebase is safe)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+18. **Update browser-history AGENTS.md** with the OAuth2/Pocket ID architecture and auto-provisioning behavior
+~~19. **Update SystemNix AGENTS.md** browser-history section with the OAuth2 integration details~~ done — AGENTS.md:148-160
+20. **Document the `matchOrCreateUser` 3-tier strategy** in browser-history's domain docs
+21. **Add the PKCE-always-on behavior** to the Pocket ID OIDC client notes
+22. **Mark prior status report as resolved** with link to this report
+23. **Remove empty commit** `10d13bb` from browser-history history (if rebase is safe)
 
 ### Testing
 
-~~24. **Add integration test** for the full OAuth2 callback → user creation path in browser-history~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~25. **Test multi-provider linking**: Register via WebAuthn, then link Pocket ID account via OAuth2 (tier 2 of `matchOrCreateUser`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~26. **Test provider unlinking**: `POST /auth/oauth/pocket-id/unlink` should remove the external account link~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~27. **Test state token expiry**: OAuth2 state has 10-minute TTL — verify expired state is rejected~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~28. **Add CSRF test** for the OAuth2 unlink endpoint~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+24. **Add integration test** for the full OAuth2 callback → user creation path in browser-history
+25. **Test multi-provider linking**: Register via WebAuthn, then link Pocket ID account via OAuth2 (tier 2 of `matchOrCreateUser`)
+26. **Test provider unlinking**: `POST /auth/oauth/pocket-id/unlink` should remove the external account link
+27. **Test state token expiry**: OAuth2 state has 10-minute TTL — verify expired state is rejected
+28. **Add CSRF test** for the OAuth2 unlink endpoint
 
 ### Architecture & Future
 
-~~29. **Consider adding `RoleAdmin` for the first user** — currently all auto-created users get `RoleViewer + RoleUser`. If admin features are ever added, the first user needs elevation.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~30. **Evaluate SLO for OAuth2 login path** — OIDC discovery + token exchange + user creation should complete in <3s. Add a Gatus response-time condition.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~31. **Consider adding a Gatus check for Pocket ID OIDC discovery endpoint** (`/.well-known/openid-configuration` at `auth.home.lan`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~32. **Review whether `SSL_CERT_FILE` is needed permanently** or if Go 1.26+ has better system cert pool detection on NixOS~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~33. **Consider adding OIDC discovery caching** to avoid hitting `auth.home.lan` on every browser-history restart~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~34. **Evaluate whether browser-history should expose a `/health` endpoint** that checks OIDC provider connectivity~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~35. **Document the graceful degradation behavior** — when Pocket ID is unavailable, browser-history falls back to WebAuthn-only mode. This should be in the AGENTS.md.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~36. **Review the 10-minute OAuth2 state TTL** — consider whether this is appropriate for the homelab use case (may be too short for slow passkey prompts)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~37. **Consider adding a logout endpoint** that clears both the session cookie and the OAuth2 provider session~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~38. **Evaluate whether the email auto-verification side-effect** could be a security concern (trusting the IdP's `email_verified` claim without additional checks)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~39. **Review the `RoleViewer + RoleUser` default roles** — browser-history doesn't use roles, but if multi-tenancy is added, these defaults matter~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~40. **Consider adding rate limiting** on the OAuth2 begin/callback endpoints to prevent abuse~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~41. **Add a Gatus check for the Pocket ID service itself** (`https://auth.home.lan/.well-known/openid-configuration`) to detect IdP outages~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~42. **Review whether the `browser-history-oidc-setup.service` should have `Restart=on-failure`** instead of being a pure oneshot with `RemainAfterExit=true`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~43. **Consider adding a `systemd-analyze verify`** step to the deploy script for the new service files~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~44. **Evaluate whether the `oauth2SecretsFile` should be in `/run/`** (tmpfs) instead of `/var/lib/` (persistent) — secrets don't need to survive reboot since Pocket ID re-provisions them~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~45. **Add a test for the `browser-history-oidc-setup.service`** in the NixOS VM test suite~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~46. **Consider adding a Pocket ID client rotation monitoring** check for browser-history (90-day threshold, like other services)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~47. **Review whether `OAUTH2_REDIRECT_BASE` should be derived from Caddy config** instead of hardcoded in the env var~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~48. **Consider adding a `nixpkgsTarballGuard` unit test** to verify it catches the regression~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~49. **Add a pre-commit hook** that runs `nix flake check --no-build` on flake.lock changes~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~50. **Consider a CI pipeline** that builds browser-history-server on every push to catch vendorHash mismatches early~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+29. **Consider adding `RoleAdmin` for the first user** — currently all auto-created users get `RoleViewer + RoleUser`. If admin features are ever added, the first user needs elevation.
+30. **Evaluate SLO for OAuth2 login path** — OIDC discovery + token exchange + user creation should complete in <3s. Add a Gatus response-time condition.
+31. **Consider adding a Gatus check for Pocket ID OIDC discovery endpoint** (`/.well-known/openid-configuration` at `auth.home.lan`)
+32. **Review whether `SSL_CERT_FILE` is needed permanently** or if Go 1.26+ has better system cert pool detection on NixOS
+33. **Consider adding OIDC discovery caching** to avoid hitting `auth.home.lan` on every browser-history restart
+34. **Evaluate whether browser-history should expose a `/health` endpoint** that checks OIDC provider connectivity
+35. **Document the graceful degradation behavior** — when Pocket ID is unavailable, browser-history falls back to WebAuthn-only mode. This should be in the AGENTS.md.
+36. **Review the 10-minute OAuth2 state TTL** — consider whether this is appropriate for the homelab use case (may be too short for slow passkey prompts)
+37. **Consider adding a logout endpoint** that clears both the session cookie and the OAuth2 provider session
+38. **Evaluate whether the email auto-verification side-effect** could be a security concern (trusting the IdP's `email_verified` claim without additional checks)
+39. **Review the `RoleViewer + RoleUser` default roles** — browser-history doesn't use roles, but if multi-tenancy is added, these defaults matter
+40. **Consider adding rate limiting** on the OAuth2 begin/callback endpoints to prevent abuse
+41. **Add a Gatus check for the Pocket ID service itself** (`https://auth.home.lan/.well-known/openid-configuration`) to detect IdP outages
+42. **Review whether the `browser-history-oidc-setup.service` should have `Restart=on-failure`** instead of being a pure oneshot with `RemainAfterExit=true`
+43. **Consider adding a `systemd-analyze verify`** step to the deploy script for the new service files
+44. **Evaluate whether the `oauth2SecretsFile` should be in `/run/`** (tmpfs) instead of `/var/lib/` (persistent) — secrets don't need to survive reboot since Pocket ID re-provisions them
+45. **Add a test for the `browser-history-oidc-setup.service`** in the NixOS VM test suite
+46. **Consider adding a Pocket ID client rotation monitoring** check for browser-history (90-day threshold, like other services)
+47. **Review whether `OAUTH2_REDIRECT_BASE` should be derived from Caddy config** instead of hardcoded in the env var
+48. **Consider adding a `nixpkgsTarballGuard` unit test** to verify it catches the regression
+49. **Add a pre-commit hook** that runs `nix flake check --no-build` on flake.lock changes
+50. **Consider a CI pipeline** that builds browser-history-server on every push to catch vendorHash mismatches early
 
 ---
 
@@ -228,5 +228,4 @@ The AGENTS.md documents the root cause and the fix, but the fix is reactive (run
 
 ---
 
-> **RESOLVED — Auto-provisioning verified. Browser-history deployed with OAuth2. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> **PARTIALLY RESOLVED — Auto-provisioning verified. Browser-history deployed with OAuth2.** Deployment items (1–11), AGENTS.md (19) are done. Still open: item 12 (OAuth2 browser flow test), item 13 (user auto-creation verification), items 14–18/20–50 (hardening, docs, testing, architecture).

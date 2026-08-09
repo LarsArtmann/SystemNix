@@ -118,74 +118,74 @@
 
 ### P0 — Blocking deployment from working end-to-end
 
-~~1. `nix flake lock --update-input browser-history` in SystemNix to pick up auth pages~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~2. `nh os switch .` to deploy browser-history with auth pages~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~3. `sudo systemctl restart caddy` to load the `history.home.lan` vHost~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~4. Open `https://history.home.lan/register` in browser — verify registration form renders~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~5. Register an account — verify POST `/auth/register` returns 201~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~6. Set up a passkey — verify WebAuthn ceremony works over internal CA TLS~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~7. Verify redirect to dashboard — confirm session cookie is set~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~8. Test login flow — log out, go to `/login`, log back in with passkey~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~1. `nix flake lock --update-input browser-history` in SystemNix to pick up auth pages~~ done — deployed
+~~2. `nh os switch .` to deploy browser-history with auth pages~~ done — deployed
+~~3. `sudo systemctl restart caddy` to load the `history.home.lan` vHost~~ done — deploy.sh restarts caddy
+~~4. Open `https://history.home.lan/register` in browser — verify registration form renders~~ done — server accessible
+5. Register an account — verify POST `/auth/register` returns 201
+6. Set up a passkey — verify WebAuthn ceremony works over internal CA TLS
+7. Verify redirect to dashboard — confirm session cookie is set
+8. Test login flow — log out, go to `/login`, log back in with passkey
 
 ### P1 — Fix systemic deploy issues
 
-~~9. Add `sudo systemctl restart caddy` to `scripts/deploy.sh` after `nh os switch`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~10. Fix `pre-deploy-check.sh` phantom metric check (`fail()` → `warn()`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~11. Consider `PrivateTmp = lib.mkForce false` on Caddy service~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~12. Add `restartTriggers` to Caddy module as defense-in-depth~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~13. Test that `nix run .#deploy` works end-to-end after fixes~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~9. Add `sudo systemctl restart caddy` to `scripts/deploy.sh` after `nh os switch`~~ done
+~~10. Fix `pre-deploy-check.sh` phantom metric check (`fail()` → `warn()`)~~ done — metric now present post-deploy
+11. Consider `PrivateTmp = lib.mkForce false` on Caddy service
+12. Add `restartTriggers` to Caddy module as defense-in-depth
+13. Test that `nix run .#deploy` works end-to-end after fixes
 
 ### P2 — Browser-history auth improvements
 
-~~14. Add unit tests for `GET /register` route (200, redirect when authenticated)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~15. Add unit tests for `GET /login` route (200, redirect when authenticated)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~16. Add unit test for `GET /` unauthenticated (302 → /register)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~17. Fix `TestDashboard_DateRangeFilter_TodayIncludesVisits` date filter bug~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~18. Investigate and fix the CSRF test failure~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~19. Add error handling for WebAuthn API not available (no `window.PublicKeyCredential`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~20. Add "skip passkey" option on registration page~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~21. Add account deletion flow~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~22. Consider registration lock (disable open registration after first user)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+14. Add unit tests for `GET /register` route (200, redirect when authenticated)
+15. Add unit tests for `GET /login` route (200, redirect when authenticated)
+16. Add unit test for `GET /` unauthenticated (302 → /register)
+17. Fix `TestDashboard_DateRangeFilter_TodayIncludesVisits` date filter bug
+18. Investigate and fix the CSRF test failure
+19. Add error handling for WebAuthn API not available (no `window.PublicKeyCredential`)
+20. Add "skip passkey" option on registration page
+21. Add account deletion flow
+22. Consider registration lock (disable open registration after first user)
 
 ### P3 — Agent deployment
 
-~~23. Read `nix/agent-module.nix` in browser-history repo~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~24. Wire agent token via sops secret~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~25. Enable agent in `configuration.nix`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~26. Deploy agent to evo-x2~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~27. Verify agent sends data to `/ingest` endpoint~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~28. Consider macOS agent deployment~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~29. Test agent with Chrome/Brave/Firefox history DBs~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~30. Verify data appears in dashboard after agent run~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~23. Read `nix/agent-module.nix` in browser-history repo~~ done
+~~24. Wire agent token via sops secret~~ done — sops secret configured
+~~25. Enable agent in `configuration.nix`~~ done
+~~26. Deploy agent to evo-x2~~ done — 2,927 events synced
+~~27. Verify agent sends data to `/ingest` endpoint~~ done
+28. Consider macOS agent deployment
+~~29. Test agent with Chrome/Brave/Firefox history DBs~~ done — Firefox (646) + Helium (7,449) synced
+30. Verify data appears in dashboard after agent run
 
 ### P4 — Monitoring & observability
 
-~~31. Verify OTel traces appear in SigNoz for `browser-history` service~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~32. Verify Gatus health check passes for `history.home.lan`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~33. Add Gatus alert for auth endpoint failure rate~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~34. Add Homepage tile verification (already added — verify it links correctly)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~35. Consider adding OTel traces to the agent~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+31. Verify OTel traces appear in SigNoz for `browser-history` service
+~~32. Verify Gatus health check passes for `history.home.lan`~~ done
+33. Add Gatus alert for auth endpoint failure rate
+~~34. Add Homepage tile verification (already added — verify it links correctly)~~ done — tile present
+35. Consider adding OTel traces to the agent
 
 ### P5 — SystemNix improvements
 
-~~36. Document the `PrivateTmp` Caddy reload gotcha in AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~37. Document the phantom metric pre-deploy check gotcha~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~38. Consider a post-deploy smoke test for all vHosts (not just services)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~39. Add Caddy config validation to pre-deploy check~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~40. Consider switching Caddy to `Type=notify` with `sd_notify` for proper reload signaling~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+36. Document the `PrivateTmp` Caddy reload gotcha in AGENTS.md
+37. Document the phantom metric pre-deploy check gotcha
+38. Consider a post-deploy smoke test for all vHosts (not just services)
+39. Add Caddy config validation to pre-deploy check
+40. Consider switching Caddy to `Type=notify` with `sd_notify` for proper reload signaling
 
 ### P6 — Browser-history features
 
-~~41. Add favicon for history.home.lan~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~42. Add OIDC/Pocket ID as alternative auth method~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~43. Add data export/backup UI~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~44. Add domain tagging UI~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~45. Add AI summary features (if AI keys configured)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~46. Add timeline view~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~47. Add productivity heatmap~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~48. Add search query tracking~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~49. Add download tracking~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~50. Add engagement metrics~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+41. Add favicon for history.home.lan
+~~42. Add OIDC/Pocket ID as alternative auth method~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
+43. Add data export/backup UI
+44. Add domain tagging UI
+45. Add AI summary features (if AI keys configured)
+46. Add timeline view
+47. Add productivity heatmap
+48. Add search query tracking
+49. Add download tracking
+50. Add engagement metrics
 
 ---
 
@@ -205,5 +205,4 @@ Currently `POST /auth/register` is open to anyone who can reach the server. On t
 
 ---
 
-> **RESOLVED — Auth UI and Caddy reload resolved. Browser-history deployed and healthy. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> **PARTIALLY RESOLVED — Auth UI and Caddy reload resolved. Browser-history deployed and healthy.** Deployment items (1–4, 9–10), agent deployment (23–27, 29), monitoring (32, 34), and OAuth2 (42) are done. Still open: items 5–8 (WebAuthn browser testing), 11–13 (Caddy hardening alternatives), 14–22 (upstream auth improvements), 28 (macOS agent), 31 (OTel verification — known bug), 33/35 (additional monitoring), 36–40 (SystemNix docs), 41/43–50 (future features).
