@@ -710,9 +710,9 @@ _: {
                 interval = "2m";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] == pat(*system_service_memory_bytes{service=\"projects-management-automation\"} [0-5]*)"
+                  "[BODY] == pat(*system_service_memory_over_threshold{service=\"projects-management-automation\"} 0*)"
                 ];
-                alerts = discordAlert "PMA cgroup memory exceeds ~5 GB — page cache from repo discovery is growing dangerously. MemoryHigh=6G will throttle, MemoryMax=8G will OOM-kill+restart. If this alert fires repeatedly, PMA is in a page-cache thrash loop (2026-08-09 crash root cause). Check: systemctl status projects-management-automation";
+                alerts = discordAlert "PMA cgroup memory exceeds 5 GB — page cache from repo discovery is growing dangerously. MemoryHigh=6G will throttle, MemoryMax=8G will OOM-kill+restart. If this alert fires repeatedly, PMA is in a page-cache thrash loop (2026-08-09 crash root cause). Check: systemctl status projects-management-automation";
               })
               (mkHttpCheck {
                 name = "Service Restart Metrics";

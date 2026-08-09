@@ -30,6 +30,8 @@ let
     system_monitor365_buffer_pressure 0
     system_service_start_limit_hit{service="monitor365-server"} 0
     system_service_active{service="projects-management-automation"} 1
+    system_service_cpu_over_threshold{service="projects-management-automation"} 0
+    system_service_memory_over_threshold{service="projects-management-automation"} 0
     system_service_nrestarts{service="gatus"} 2
     node_psi_memory_alert 0
     node_psi_io_alert 0

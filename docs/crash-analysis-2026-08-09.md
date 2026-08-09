@@ -196,11 +196,42 @@ The real fix is in the PMA daemon (`/home/lars/projects/projects-management-auto
 
 ---
 
-## Prevention Recommendations
+## Fixes Applied (2026-08-09)
 
-1. **Gatus alert on PMA CPU > 50% sustained** — the 91% death-loop should alert before it crashes the system
-2. **Gatus alert on PMA memory.events `max` > 1000/min** — cgroup boundary thrashing is the early warning signal
-3. **Reduce PMA MemoryMax to 8G + add MemoryHigh=6G** — force clean OOM-kill-restart instead of infinite thrash
-4. **Fix PMA upstream commit backoff** — the death-loop is the root cause; memory limits are a band-aid
-5. **Consider `MemorySwapMax=0`** — prevent PMA page cache from pushing other processes into swap
-6. **Evaluate whether PMA needs to read all 260 repos on every cycle** — incremental discovery would dramatically reduce page cache pressure
+All recommendations have been implemented across two repos:
+
+### Layer 1: Upstream Code Fix (PMA daemon)
+
+**Repo:** `/home/lars/projects/projects-management-automation`
+**Files:** `pma-daemon/committer/committer.go`, `pma-daemon/committer/committer_test.go`
+
+The commit handler now detects TOCTOU race conditions where the working tree was already clean by the time `git commit` ran. Previously, "nothing to commit" / "clean working tree" errors were treated as `StatusFailed`, triggering the 5-minute per-project failure cooldown and wasting LLM API calls on every retry cycle.
+
+- Added `isNothingToCommit()` helper that pattern-matches error strings for benign git race outcomes
+- Such results now return `StatusSkipped` (like the pre-commit `HasChanges` check), keeping the project eligible for future events without penalty
+- 8 table-driven test cases covering clean-working-tree, nothing-to-commit, infrastructure-wrapped errors, real git errors, EOF errors, and nil edge cases
+
+### Layer 2: SystemNix Cgroup Hardening
+
+**File:** `modules/nixos/services/projects-management-automation.nix`
+
+| Setting | Before | After | Rationale |
+|---------|--------|-------|-----------|
+| `MemoryMax` | 16G (no OOM kill possible) | **8G** | Lower ceiling → faster OOM kill + clean restart |
+| `MemoryHigh` | not set (unlimited) | **6G** | Throttles via direct reclaim before hitting the wall |
+| `MemorySwapMax` | not set (unlimited) | **0** | PMA has only 370 MB anon — swap is counterproductive |
+| `CPUQuota` | not set (unlimited) | **200%** | Caps at 2 cores — prevents 91% CPU death-loop |
+| `PMA_COMMITTER_WORKERS` | 4 | **2** | Halves concurrent git+LLM pressure |
+
+### Layer 3: Monitoring (Early Warning)
+
+**Files:** `modules/nixos/services/system-health.nix`, `modules/nixos/services/gatus-config.nix`, `tests/test-gatus-patterns.nix`
+
+Added two new Gatus health checks with Discord alerts:
+
+1. **PMA CPU Death-Loop** — alerts when `system_service_cpu_over_threshold{service="projects-management-automation"}` is `1` (CPU > 150% sustained). This is the early warning that would have caught the crash hours before the WDT fired.
+
+2. **PMA Memory Pressure** — alerts when `system_service_memory_over_threshold{service="projects-management-automation"}` is `1` (cgroup memory > 5 GiB). Added a new per-service `system_service_memory_bytes` and `system_service_memory_over_threshold` metric to system-health.nix (following the existing CPU pattern), with a configurable `serviceMemoryThreshold` (default 5 GiB).
+
+Both checks run at 2-minute intervals. The test patterns file was updated with mock metric values for the new checks.
+

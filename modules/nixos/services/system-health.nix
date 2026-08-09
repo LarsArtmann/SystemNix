@@ -42,6 +42,12 @@ _: {
       # CPU alert threshold: average CPU% over collection interval that triggers alert
       cpuAlertThreshold = 150;
 
+      # Per-service memory alert threshold in bytes. Services that exceed this
+      # are flagged via system_service_memory_over_threshold for Gatus alerting.
+      # PMA reads 260+ git repos during discovery, charging ~16G of page cache.
+      # Its MemoryHigh=6G, so 5G is the early-warning threshold (83% of high).
+      serviceMemoryThreshold = 5 * 1024 * 1024 * 1024; # 5 GiB
+
       # /tmp tmpfs usage alert threshold (percentage). /tmp is capped at 48 GiB
       # (boot.nix static systemd mount). 80% ≈ 38 GiB — catches runaway builds
       # (go-build caches, dev temp files) before hitting the ceiling.
@@ -260,11 +266,19 @@ _: {
             echo "# HELP system_service_memory_bytes Cgroup memory.current for monitored services"
             echo "# TYPE system_service_memory_bytes gauge"
 
+            echo "# HELP system_service_memory_over_threshold 1 if service cgroup memory exceeds ${toString serviceMemoryThreshold} bytes, 0 otherwise"
+            echo "# TYPE system_service_memory_over_threshold gauge"
+
             ${lib.concatMapStrings (svc: ''
               svc="${svc}"
               mem_bytes=$(systemctl show "$svc" -p MemoryCurrent --value 2>/dev/null) || mem_bytes=0
               mem_bytes="''${mem_bytes:-0}"
               echo "system_service_memory_bytes{service=\"$svc\"} ''${mem_bytes}"
+              mem_over=0
+              if [ "$mem_bytes" -gt ${toString serviceMemoryThreshold} ] 2>/dev/null; then
+                mem_over=1
+              fi
+              echo "system_service_memory_over_threshold{service=\"$svc\"} ''${mem_over}"
             '') cfg.monitoredServices}
 
             echo "# HELP system_user_slice_memory_bytes Memory usage of user-1000.slice in bytes"
