@@ -16,7 +16,7 @@ let
 
   buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_25; };
 
-  collectorVendorHash = lib.fakeHash;
+  collectorVendorHash = "sha256-41K2izMlUTpYrIXW+1rpy4F/yosSMQvvbO/EpOwQJvE=";
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
