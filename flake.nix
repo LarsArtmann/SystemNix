@@ -106,11 +106,11 @@
 
     # SigNoz observability platform sources
     signoz-src = {
-      url = "github:SigNoz/signoz/v0.127.1";
+      url = "github:SigNoz/signoz";
       flake = false;
     };
     signoz-collector-src = {
-      url = "github:SigNoz/signoz-otel-collector/v0.144.5";
+      url = "github:SigNoz/signoz-otel-collector";
       flake = false;
     };
 

@@ -379,7 +379,7 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 - **DMS `systemd.enable` defaults false** — MUST explicitly set `programs.dank-material-shell.systemd.enable = true`.
 - **DMS owns wallpaper management** — awww RETIRED. `enableDynamicTheming = false` (matugen conflicts with Catppuccin Mocha).
 - **DMS notification conflict** — Dunst disabled. DMS owns `org.freedesktop.Notifications`.
-- **DMS `plugin_settings.json` read-only** — Nix-managed symlink. `settings.json` is user-owned/mutable. UI changes to plugin settings disappear on rebuild.
+- **DMS config split-brain** — Both `settings.json` and `plugin_settings.json` are HM-managed symlinks (NOT user-owned). DMS may replace the `settings.json` symlink with a real file at runtime (expanding 19 declarative keys to 530+ with defaults + UI changes). `deploy.sh` backs up real-file versions before `nh os switch` overwrites them. UI changes to either file are ephemeral — only declarative Nix settings survive rebuilds.
 - **cliphist RETIRED** — DMS owns clipboard history exclusively.
 - **Quickshell `Process` has NO `onFailed`** — Use `onStreamFinished` with text-length check.
 - **ScriptModel UAF (unfixed upstream)** — Quickshell 0.3.0 + Qt 6.11.1 use-after-free in ScriptModel. Mitigation: `Restart=always` + `StartLimitBurst=30`.

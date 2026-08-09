@@ -6,8 +6,8 @@
 }:
 let
   inherit ((import ../../../lib/default.nix lib)) ports;
-  version = "0.127.1";
-  collectorVersion = "0.144.5";
+  version = inputs.signoz-src.shortRev or "latest";
+  collectorVersion = inputs.signoz-collector-src.shortRev or "latest";
 in
 pkgs:
 let
@@ -16,7 +16,7 @@ let
 
   buildGoModule = pkgs.buildGoModule.override { go = pkgs.go_1_25; };
 
-  collectorVendorHash = "sha256-Woj11mfGSyxiZvCUb32r1Jp86IyT+6Ymwl0ZhhnlzQk=";
+  collectorVendorHash = lib.fakeHash;
 
   schemaMigrator = buildGoModule {
     pname = "signoz-schema-migrator";
@@ -49,7 +49,7 @@ let
     pname = "signoz";
     inherit version;
     inherit src;
-    vendorHash = "sha256-4HkmDq+c7Oygei2QzlPFtdQNDdalS2M27p3ALxQKi24=";
+    vendorHash = lib.fakeHash;
     subPackages = [ "cmd/community" ];
     tags = [ "timetzdata" ];
 

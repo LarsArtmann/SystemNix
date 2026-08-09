@@ -181,35 +181,35 @@
 
 ### Post-Plan Quality
 
-~~27. **Add the Gatus VM test to CI** — add `gatus-patterns` to `.github/workflows/nix-check.yml` vm-tests job~~ done — Prevention Plan M1-M15 complete
+27. **Add the Gatus VM test to CI** — add `gatus-patterns` to `.github/workflows/nix-check.yml` vm-tests job ← not done
 ~~28. **Add `check-flake-inputs.sh` to CI** — as a dedicated step or workflow~~ done — Prevention Plan M1-M15 complete
 ~~29. **Run the full post-deploy-check.sh** against live system to verify M7 auth gateway checks work~~ done — Prevention Plan M1-M15 complete
-~~30. **Verify M6 nixpkgs compat CI** — trigger the workflow manually via GitHub UI to confirm it runs~~ done — Prevention Plan M1-M15 complete
-~~31. **Document the prevention layers in CONTRIBUTING.md** — for contributors who don't read AGENTS.md~~ done — Prevention Plan M1-M15 complete
-~~32. **Consider adding `tests/test-timeout-audit.nix`** — VM test that verifies the global DefaultTimeoutStartSec is actually set in the generated systemd config~~ done — Prevention Plan M1-M15 complete
-~~33. **Consider a `pre-receive` hook** — server-side Unknown Author rejection (catches pushes from other machines that bypass the local pre-commit hook)~~ done — Prevention Plan M1-M15 complete
-~~34. **Monitor pre-commit hook performance** — with 5 guards + nix flake check, commits may take 60-90s. Consider caching or parallelizing.~~ done — Prevention Plan M1-M15 complete
+30. **Verify M6 nixpkgs compat CI** — trigger the workflow manually via GitHub UI to confirm it runs ← not verified
+31. **Document the prevention layers in CONTRIBUTING.md** — for contributors who don't read AGENTS.md ← not done
+32. **Consider adding `tests/test-timeout-audit.nix`** — VM test that verifies the global DefaultTimeoutStartSec is actually set in the generated systemd config ← not done
+33. **Consider a `pre-receive` hook** — server-side Unknown Author rejection (catches pushes from other machines that bypass the local pre-commit hook) ← not done
+34. **Monitor pre-commit hook performance** — with 5 guards + nix flake check, commits may take 60-90s. Consider caching or parallelizing. ← not done
 
 ### From the Original Plan (Lower Priority)
 
-~~35. **Audit all 32 `ref=master` inputs** — classify as "justified" (active development) or "should pin" (stable releases)~~ done — Prevention Plan M1-M15 complete
-~~36. **Consider pinning stable external flakes** — niri, dankMaterialShell, etc. to specific tags~~ done — Prevention Plan M1-M15 complete
-~~37. **Add `GOTOOLCHAIN=local` to all Go devShells** — proactive prevention~~ done — Prevention Plan M1-M15 complete
+35. **Audit all 32 `ref=master` inputs** — classify as "justified" (active development) or "should pin" (stable releases) ← not systematically done
+36. **Consider pinning stable external flakes** — niri, dankMaterialShell, etc. to specific tags ← not done
+37. **Add `GOTOOLCHAIN=local` to all Go devShells** — proactive prevention ← not done
 ~~38. **Monitor365 507M event backlog** — still a live production issue~~ done — Prevention Plan M1-M15 complete
-~~39. **SigNoz no-auth exposure** — still a live production issue, verify firewall~~ done — Prevention Plan M1-M15 complete
-~~40. **Off-site backup** — still #1 data loss risk (from TODO_LIST Priority 0)~~ done — Prevention Plan M1-M15 complete
+39. **SigNoz no-auth exposure** — still a live production issue, verify firewall ← ongoing (impersonation mode is intentional, behind Layer 2)
+40. **Off-site backup** — still #1 data loss risk (from TODO_LIST Priority 0) ← still open (snapshots are LOCAL-ONLY)
 
 ### Nice-to-Have
 
-~~41. **Add `gatus-pattern-lint` to explain violations** — show the offending line, not just "FAIL"~~ done — Prevention Plan M1-M15 complete
-~~42. **Add `--fix` mode to `check-flake-inputs.sh`** — auto-suggest pinned refs~~ done — Prevention Plan M1-M15 complete
-~~43. **Add color output to `check-flake-inputs.sh`** — match pre-deploy-check.sh style~~ done — Prevention Plan M1-M15 complete
-~~44. **Consider a `make check` or `nix run .#check`** — single command that runs ALL checks (flake, pre-deploy, post-deploy, flake inputs)~~ done — Prevention Plan M1-M15 complete
-~~45. **Add a `pre-push` hook** — run VM tests before pushing (slower but catches more)~~ done — Prevention Plan M1-M15 complete
+41. **Add `gatus-pattern-lint` to explain violations** — show the offending line, not just "FAIL" ← not done
+42. **Add `--fix` mode to `check-flake-inputs.sh`** — auto-suggest pinned refs ← not done
+43. **Add color output to `check-flake-inputs.sh`** — match pre-deploy-check.sh style ← not done
+44. **Consider a `make check` or `nix run .#check`** — single command that runs ALL checks (flake, pre-deploy, post-deploy, flake inputs) ← not done
+45. **Add a `pre-push` hook** — run VM tests before pushing (slower but catches more) ← not done
 ~~46. **Consider Nix VM test for oauth2-proxy** — test the actual forward-auth flow, not just HTTP status~~ done — Prevention Plan M1-M15 complete
-~~47. **Document the verschlimmbessern risks** — add to AGENTS.md which checks have what risk level~~ done — Prevention Plan M1-M15 complete
-~~48. **Add monitoring for the prevention system itself** — Gatus check that pre-commit hooks are installed~~ done — Prevention Plan M1-M15 complete
-~~49. **Consider integrating `treefmt` with `org-coverage`** — verify all .nix files are formatted~~ done — Prevention Plan M1-M15 complete
+47. **Document the verschlimmbessern risks** — add to AGENTS.md which checks have what risk level ← not done
+48. **Add monitoring for the prevention system itself** — Gatus check that pre-commit hooks are installed ← not done
+49. **Consider integrating `treefmt` with `org-coverage`** — verify all .nix files are formatted ← not done
 ~~50. **Celebrate** — 11 of 15 tasks done in one session, zero regressions~~ done — Prevention Plan M1-M15 complete
 
 ---
@@ -249,5 +249,5 @@ The Gatus API at `/api/v1/endpoints/statuses` returns JSON with endpoint health 
 
 ---
 
-> **RESOLVED — M1–M11 complete, M12–M15 completed by 2026-08-07_06-37 report. Prevention plan fully executed.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> **RESOLVED — M1–M15 completed by 2026-08-07_06-37 report. Prevention plan fully executed.**
+> Core plan items (1–29) are genuinely done. Items 27, 30–50 were OUTSIDE the prevention plan scope (post-plan quality, original-plan leftovers, nice-to-haves) and are mostly still open. Notable live issues: item 40 (off-site backup) is the #1 data loss risk — snapshots are LOCAL-ONLY.

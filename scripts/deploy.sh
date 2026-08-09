@@ -11,6 +11,21 @@ if nix run .#pre-deploy-check; then
   systemctl --user reset-failed 2>/dev/null || true
 
   echo ""
+  echo "=== Backing up DMS settings (if user-modified) ==="
+  # DMS may replace the HM-managed settings.json symlink with a real file
+  # containing runtime state + user UI customizations. nh os switch overwrites
+  # it with the symlink, losing those changes. Back up first if it's a real file.
+  dms_config_dir="$HOME/.config/DankMaterialShell"
+  for f in settings.json plugin_settings.json; do
+    target="$dms_config_dir/$f"
+    if [ -e "$target" ] && [ ! -L "$target" ]; then
+      backup="$dms_config_dir/${f}.pre-deploy.$(date +%Y%m%d%H%M%S).bak"
+      cp "$target" "$backup"
+      echo "  Backed up $f (was real file, not symlink) → $(basename "$backup")"
+    fi
+  done
+
+  echo ""
   echo "=== Deploying NixOS config to evo-x2 ==="
   set +e
   nh os switch . 2>&1

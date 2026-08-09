@@ -95,7 +95,7 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ~~6. Run `nix flake check --no-build` on the upstream flake~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~7. Commit and push the upstream changes (need `git push`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~8. Verify `nix build github:LarsArtmann/browser-history#browser-history-server` works from the pushed rev~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~9. Consider adding `packages.browser-history-agent` (cmd/agent) for multi-machine sync~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+9. Consider adding `packages.browser-history-agent` (cmd/agent) for multi-machine sync
 ~~10. Document the multi-module workspace build pattern in browser-history/AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix flake.nix
@@ -134,7 +134,7 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ~~33. Enable: `services.browser-history = { enable = true; };`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~34. Wire WebAuthn RP ID to the real domain (not localhost)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~35. Wire WebAuthn origins to `https://history.${domain}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~36. Consider backup-coordination for `/var/lib/browser-history/`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+36. Consider backup-coordination for `/var/lib/browser-history/` ← still open (TODO_LIST Priority 7)
 
 ### SystemNix DNS
 ~~37. Add `history` to `dnsLocal.localSubdomains` in dnsblockd config~~ done — work captured in CHANGELOG.md / TODO_LIST.md
@@ -147,7 +147,7 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ~~40. Create sops template or environment file for the service~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix OTel
-~~41. Verify `OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}"` works with browser-history's OTel instrumentation~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~41. Verify `OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}"` works with browser-history's OTel instrumentation~~ partially — known OTel URL scheme bug (`127.0.0.1:4317` needs `http://` prefix); traces may not ship. Fix belongs upstream
 
 ### Testing & Verification
 ~~42. Run `nix flake check --no-build` on SystemNix~~ done — work captured in CHANGELOG.md / TODO_LIST.md
@@ -156,7 +156,7 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ~~45. Verify service starts: `systemctl status browser-history`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~46. Verify health endpoint: `curl http://localhost:${PORT}/health`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~47. Verify Caddy proxy: `curl https://history.${domain}/health`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~48. Register a WebAuthn credential and test login~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+48. Register a WebAuthn credential and test login ← not yet tested in browser
 ~~49. Run an extraction: `curl -X POST .../extract -d '{"browser":"chrome","limit":10}'`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 ~~50. Verify Gatus shows the service as healthy~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
