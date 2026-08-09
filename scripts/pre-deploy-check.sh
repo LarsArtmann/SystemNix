@@ -192,9 +192,14 @@ fi
 
 if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
+  # Metrics being introduced in this deploy — not yet emitted by the running
+  # system. Remove entries after deploy verification confirms them in /metrics.
+  KNOWN_NEW_METRICS="system_service_memory_over_threshold"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
+    elif echo "$KNOWN_NEW_METRICS" | grep -qw "$metric"; then
+      warn "Metric '$metric' absent (known new metric in this deploy — will appear post-switch)"
     else
       fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
       MISSING_METRICS=$((MISSING_METRICS + 1))
