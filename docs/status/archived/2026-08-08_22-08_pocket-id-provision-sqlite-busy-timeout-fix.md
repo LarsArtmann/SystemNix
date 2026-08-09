@@ -92,17 +92,17 @@ Nothing this session. The fix was correct and verified. However:
 
 | # | Task | Priority |
 |---|------|----------|
-| 1 | Update AGENTS.md with SQLite BUSY / provisioning timeout gotcha | HIGH |
-| 2 | Verify `browser-history.service` has OAuth2 env file loaded and is running | HIGH |
+| ~~1~~ | ~~Update AGENTS.md with SQLite BUSY / provisioning timeout gotcha~~ done — AGENTS.md updated | ~~HIGH~~ |
+| ~~2~~ | ~~Verify `browser-history.service` has OAuth2 env file loaded and is running~~ done — deployed, 2,927 events | ~~HIGH~~ |
 | 3 | Test Browser History OAuth2 login end-to-end (visit history.home.lan) | HIGH |
-| 4 | Add `TimeoutStartSec = "3min"` to pocket-id-provision service | MEDIUM |
+| ~~4~~ | ~~Add `TimeoutStartSec = "3min"` to pocket-id-provision service~~ done — global DefaultTimeoutStartSec=3min | ~~MEDIUM~~ |
 | 5 | Increase `api_get` timeout from 10s to 30s for consistency | MEDIUM |
 | 6 | Investigate auth gateway health warnings (6 vHosts returning 000000) | MEDIUM |
 | 7 | Investigate `cache.home.lan` DNS resolution failure during builds | MEDIUM |
 | 8 | Add `--retry` to provisioning curl calls for SQLITE_BUSY resilience | LOW |
 | 9 | Consider upstream Pocket ID issue: SQLite `PRAGMA busy_timeout` tuning | LOW |
-| 10 | Add Gatus health check for Browser History service | MEDIUM |
-| 11 | Run `nix flake check --no-build` to validate full flake after changes | MEDIUM |
+| ~~10~~ | ~~Add Gatus health check for Browser History service~~ done — `gatus-config.nix:890-901` | ~~MEDIUM~~ |
+| ~~11~~ | ~~Run `nix flake check --no-build` to validate full flake after changes~~ done — passes | ~~MEDIUM~~ |
 | 12 | Verify Browser History appears in Pocket ID admin UI with correct callback URL | LOW |
 
 ## (g) Questions I Cannot Answer Myself
