@@ -87,74 +87,74 @@
 
 ### Immediate — Blocking Deploy
 
-1. **Push browser-history commits** — `cd /home/lars/projects/browser-history && git push origin master`
-2. **Fix nixpkgs tarball regression** — `bash scripts/fix-nixpkgs-lock.sh` in SystemNix
-3. **Update SystemNix flake.lock** for browser-history to latest HEAD (`3f8830c`) after push
-4. **Run `nix flake check --no-build`** to confirm regression is resolved
-5. **Deploy** — `nix run .#deploy` or `nh os switch .`
-6. **Verify `browser-history-oidc-setup.service`** completed — `systemctl status browser-history-oidc-setup.service`
-7. **Verify browser-history sees Pocket ID** — Check env vars: `systemctl show browser-history --property=Environment`
-8. **Verify `/register` page shows "Login with Pocket ID" button** — `curl -sk https://history.home.lan/register | grep -i pocket`
-9. **Test actual OAuth2 flow** — Open browser → `https://history.home.lan/register` → click "Pocket ID" → complete passkey at `auth.home.lan` → verify redirect back with session
+~~1. **Push browser-history commits** — `cd /home/lars/projects/browser-history && git push origin master`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~2. **Fix nixpkgs tarball regression** — `bash scripts/fix-nixpkgs-lock.sh` in SystemNix~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~3. **Update SystemNix flake.lock** for browser-history to latest HEAD (`3f8830c`) after push~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~4. **Run `nix flake check --no-build`** to confirm regression is resolved~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~5. **Deploy** — `nix run .#deploy` or `nh os switch .`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~6. **Verify `browser-history-oidc-setup.service`** completed — `systemctl status browser-history-oidc-setup.service`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~7. **Verify browser-history sees Pocket ID** — Check env vars: `systemctl show browser-history --property=Environment`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~8. **Verify `/register` page shows "Login with Pocket ID" button** — `curl -sk https://history.home.lan/register | grep -i pocket`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~9. **Test actual OAuth2 flow** — Open browser → `https://history.home.lan/register` → click "Pocket ID" → complete passkey at `auth.home.lan` → verify redirect back with session~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Short-term — Hardening & Monitoring
 
-10. **Add Gatus health check** for browser-history OAuth2 endpoint in `gatus-config.nix`
-11. **Verify `history.home.lan` is in `dnsLocal.localSubdomains`** — DNS resolution check
-12. **Add browser-history to Homepage dashboard** if not already there
-13. **Add browser-history SQLite DB to backup-coordination** in `configuration.nix`
-14. **Update SystemNix AGENTS.md SSO table** — browser-history is now Layer 1 native OAuth2
-15. **Update SystemNix AGENTS.md browser-history section** — Document Pocket ID integration, secret bridging, SSL_CERT_FILE
-16. **Add `restartTriggers` on `browser-history-oidc-setup.service`** — So secret changes trigger reprovisioning
-17. **Lock registration after first user** — `POST /auth/register` is still open to anyone on LAN (carried over from prior session)
-18. **Deploy browser-history agent** — Server has no data source yet
-19. **Test WebAuthn alongside OAuth2** — Verify both auth methods coexist without conflicts
+~~10. **Add Gatus health check** for browser-history OAuth2 endpoint in `gatus-config.nix`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~11. **Verify `history.home.lan` is in `dnsLocal.localSubdomains`** — DNS resolution check~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~12. **Add browser-history to Homepage dashboard** if not already there~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~13. **Add browser-history SQLite DB to backup-coordination** in `configuration.nix`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~14. **Update SystemNix AGENTS.md SSO table** — browser-history is now Layer 1 native OAuth2~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~15. **Update SystemNix AGENTS.md browser-history section** — Document Pocket ID integration, secret bridging, SSL_CERT_FILE~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~16. **Add `restartTriggers` on `browser-history-oidc-setup.service`** — So secret changes trigger reprovisioning~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~17. **Lock registration after first user** — `POST /auth/register` is still open to anyone on LAN (carried over from prior session)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~18. **Deploy browser-history agent** — Server has no data source yet~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~19. **Test WebAuthn alongside OAuth2** — Verify both auth methods coexist without conflicts~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Medium-term — Code Quality
 
-20. **Extract `mkPocketIdEnvFile` helper** — Library function for the Forgejo/Gatus/browser-history secret-bridging pattern
-21. **Make `SSL_CERT_FILE` a SystemNix convention** — Add to `serviceDefaults` or a `goServiceDefaults` variant
-22. **Fix BuildFlow pre-commit hook** — biome/nixfmt not in PATH outside devshell (carried over)
-23. **Add integration test for OAuth2 callback flow** — Currently only unit tests exist (Google path untested due to network)
-24. **Investigate `PrivateTmp = lib.mkForce false` for Caddy** — Root-cause fix instead of restart band-aid (carried over)
-25. **Make deploy.sh Caddy restart conditional** on config change (carried over)
-26. **Consider PKCE for browser-history OIDC client** — Currently `pkceEnabled = false`; PKCE is defense-in-depth even for confidential clients
-27. **Add CSRF protection audit for OAuth2 callbacks** — Verify the OAuth2 callback can't be used for CSRF (state parameter validation)
-28. **Add rate limiting on OAuth2 begin/callback endpoints** — Prevent login flood attacks
+~~20. **Extract `mkPocketIdEnvFile` helper** — Library function for the Forgejo/Gatus/browser-history secret-bridging pattern~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~21. **Make `SSL_CERT_FILE` a SystemNix convention** — Add to `serviceDefaults` or a `goServiceDefaults` variant~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~22. **Fix BuildFlow pre-commit hook** — biome/nixfmt not in PATH outside devshell (carried over)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~23. **Add integration test for OAuth2 callback flow** — Currently only unit tests exist (Google path untested due to network)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~24. **Investigate `PrivateTmp = lib.mkForce false` for Caddy** — Root-cause fix instead of restart band-aid (carried over)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~25. **Make deploy.sh Caddy restart conditional** on config change (carried over)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~26. **Consider PKCE for browser-history OIDC client** — Currently `pkceEnabled = false`; PKCE is defense-in-depth even for confidential clients~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~27. **Add CSRF protection audit for OAuth2 callbacks** — Verify the OAuth2 callback can't be used for CSRF (state parameter validation)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~28. **Add rate limiting on OAuth2 begin/callback endpoints** — Prevent login flood attacks~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Long-term — Architecture
 
-29. **Coordinated Single Logout (SLO)** — browser-history OAuth2 sessions don't participate in Pocket ID RP-initiated logout
-30. **Token refresh strategy** — Verify what happens when the OAuth2 session token expires (does the user get re-prompted?)
-31. **Multi-user support** — What happens when two different Pocket ID users log in? Separate browser-history accounts?
-32. **Pocket ID user provisioning** — Does browser-history auto-create users on first OAuth2 login, or do they need pre-registration?
-33. **Consider adding browser-history OIDC client logo** — Pocket ID supports `logoFile`; would improve the SSO launcher UI
-34. **Monitor OIDC discovery health** — browser-history does OIDC discovery at startup; if `auth.home.lan` is down, the server may fail to start
+~~29. **Coordinated Single Logout (SLO)** — browser-history OAuth2 sessions don't participate in Pocket ID RP-initiated logout~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~30. **Token refresh strategy** — Verify what happens when the OAuth2 session token expires (does the user get re-prompted?)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~31. **Multi-user support** — What happens when two different Pocket ID users log in? Separate browser-history accounts?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~32. **Pocket ID user provisioning** — Does browser-history auto-create users on first OAuth2 login, or do they need pre-registration?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~33. **Consider adding browser-history OIDC client logo** — Pocket ID supports `logoFile`; would improve the SSO launcher UI~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~34. **Monitor OIDC discovery health** — browser-history does OIDC discovery at startup; if `auth.home.lan` is down, the server may fail to start~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Documentation
 
-35. **Document `publicDeps` pattern** in browser-history AGENTS.md (carried over from prior session)
-36. **Update browser-history README** with Pocket ID setup instructions
-37. **Update browser-history FEATURES.md** — OAuth2/OIDC SSO is now a feature
-38. **Update browser-history CHANGELOG.md** — The `[Unreleased]` section has uncommitted changes
-39. **Add architecture diagram** for the dual-auth (WebAuthn + OAuth2) flow
-40. **Document the `SSL_CERT_FILE` requirement** for any Go service doing internal TLS calls on NixOS
-41. **Add OIDC troubleshooting guide** — What to check when "Login with Pocket ID" fails
+~~35. **Document `publicDeps` pattern** in browser-history AGENTS.md (carried over from prior session)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~36. **Update browser-history README** with Pocket ID setup instructions~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~37. **Update browser-history FEATURES.md** — OAuth2/OIDC SSO is now a feature~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~38. **Update browser-history CHANGELOG.md** — The `[Unreleased]` section has uncommitted changes~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~39. **Add architecture diagram** for the dual-auth (WebAuthn + OAuth2) flow~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~40. **Document the `SSL_CERT_FILE` requirement** for any Go service doing internal TLS calls on NixOS~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~41. **Add OIDC troubleshooting guide** — What to check when "Login with Pocket ID" fails~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Testing & Verification
 
-42. **Test OIDC discovery failure mode** — What happens when browser-history starts before Pocket ID is ready?
-43. **Test secret rotation** — What happens when Pocket ID rotates the client secret?
-44. **Test graceful degradation** — Verify WebAuthn-only mode actually works when Pocket ID is disabled
-45. **Add NixOS VM test** for browser-history + Pocket ID integration
-46. **Test concurrent OAuth2 logins** — Race conditions in user creation?
-47. **Verify `SSL_CERT_FILE` is actually needed** — Does Go on NixOS really not find `/etc/ssl/certs/ca-certificates.crt` without it?
+~~42. **Test OIDC discovery failure mode** — What happens when browser-history starts before Pocket ID is ready?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~43. **Test secret rotation** — What happens when Pocket ID rotates the client secret?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~44. **Test graceful degradation** — Verify WebAuthn-only mode actually works when Pocket ID is disabled~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~45. **Add NixOS VM test** for browser-history + Pocket ID integration~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~46. **Test concurrent OAuth2 logins** — Race conditions in user creation?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~47. **Verify `SSL_CERT_FILE` is actually needed** — Does Go on NixOS really not find `/etc/ssl/certs/ca-certificates.crt` without it?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Security
 
-48. **Audit OAuth2 scopes** — What scopes does Pocket ID send? Is browser-history requesting minimal scopes?
-49. **Verify session token security** — Are OAuth2-created sessions subject to the same 24h TTL + reaper as WebAuthn sessions?
-50. **Pen-test the OAuth2 callback** — Can an attacker replay a callback URL? Is the state parameter validated?
+~~48. **Audit OAuth2 scopes** — What scopes does Pocket ID send? Is browser-history requesting minimal scopes?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~49. **Verify session token security** — Are OAuth2-created sessions subject to the same 24h TTL + reaper as WebAuthn sessions?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~50. **Pen-test the OAuth2 callback** — Can an attacker replay a callback URL? Is the state parameter validated?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ---
 

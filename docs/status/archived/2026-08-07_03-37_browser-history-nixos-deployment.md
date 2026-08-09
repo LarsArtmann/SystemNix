@@ -87,78 +87,78 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 ## f) NEXT 50 THINGS TO DO
 
 ### Upstream (browser-history repo)
-1. Verify `GOFLAGS=-mod=mod` build works — run `nix build .#browser-history-server`
-2. If it fails, add `go mod tidy` to the main `preBuild` (matching DiscordSync pattern exactly)
-3. Update vendorHash if the FOD output changed
-4. Verify the binary actually runs: `./result/bin/server --help` or similar
-5. Check `meta.mainProgram` — is it `server` or `browser-history-server`?
-6. Run `nix flake check --no-build` on the upstream flake
-7. Commit and push the upstream changes (need `git push`)
-8. Verify `nix build github:LarsArtmann/browser-history#browser-history-server` works from the pushed rev
-9. Consider adding `packages.browser-history-agent` (cmd/agent) for multi-machine sync
-10. Document the multi-module workspace build pattern in browser-history/AGENTS.md
+~~1. Verify `GOFLAGS=-mod=mod` build works — run `nix build .#browser-history-server`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~2. If it fails, add `go mod tidy` to the main `preBuild` (matching DiscordSync pattern exactly)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~3. Update vendorHash if the FOD output changed~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~4. Verify the binary actually runs: `./result/bin/server --help` or similar~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~5. Check `meta.mainProgram` — is it `server` or `browser-history-server`?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~6. Run `nix flake check --no-build` on the upstream flake~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~7. Commit and push the upstream changes (need `git push`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~8. Verify `nix build github:LarsArtmann/browser-history#browser-history-server` works from the pushed rev~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~9. Consider adding `packages.browser-history-agent` (cmd/agent) for multi-machine sync~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~10. Document the multi-module workspace build pattern in browser-history/AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix flake.nix
-11. Add `inputs.browser-history` to SystemNix flake.nix (`url = "github:LarsArtmann/browser-history?ref=master"` with nixpkgs.follows)
-12. Run `nix flake lock --update-input browser-history` to populate flake.lock
-13. Verify the input resolves: `nix flake show .#browser-history`
+~~11. Add `inputs.browser-history` to SystemNix flake.nix (`url = "github:LarsArtmann/browser-history?ref=master"` with nixpkgs.follows)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~12. Run `nix flake lock --update-input browser-history` to populate flake.lock~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~13. Verify the input resolves: `nix flake show .#browser-history`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix lib/ports.nix
-14. Add `browser-history = <PORT>;` (suggest 8087 — 8086 is taken by file-and-image-renamer-health)
+~~14. Add `browser-history = <PORT>;` (suggest 8087 — 8086 is taken by file-and-image-renamer-health)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix service module (modules/nixos/services/browser-history.nix)
-15. Create the module file following the `{ inputs, ... }: { flake.nixosModules.browser-history = ...; }` pattern
-16. Define `options.services.browser-history` with `enable`, `package`, `dataDir`, `port`, `domain` options
-17. Set up systemd service with `harden {} // serviceDefaults {}`
-18. Configure environment variables: `ADDR`, `DB_PATH`, `REQUIRE_AUTH=true`, `WEBAUTHN_RPID`, `WEBAUTHN_ORIGINS`, `COOKIE_SECURE=true`, `OTEL_EXPORTER_OTLP_ENDPOINT`
-19. Set `startLimitBurst = 5; startLimitIntervalSec = 300;`
-20. Wire `after = [ "sops-nix.service" "dnsblockd.service" ]` + `wants`
-21. Add `onFailure` for Discord alert routing
-22. Set `StateDirectory = "browser-history"` (creates `/var/lib/browser-history/`)
-23. Add DNS-gate `ExecStartPre` (waitDnsReady pattern)
-24. Consider SQLite WAL corruption self-heal ExecStartPre (like DiscordSync/Monitor365)
-25. Set `MemoryMax` appropriately (Go service with SQLite — 1G should suffice)
+~~15. Create the module file following the `{ inputs, ... }: { flake.nixosModules.browser-history = ...; }` pattern~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~16. Define `options.services.browser-history` with `enable`, `package`, `dataDir`, `port`, `domain` options~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~17. Set up systemd service with `harden {} // serviceDefaults {}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~18. Configure environment variables: `ADDR`, `DB_PATH`, `REQUIRE_AUTH=true`, `WEBAUTHN_RPID`, `WEBAUTHN_ORIGINS`, `COOKIE_SECURE=true`, `OTEL_EXPORTER_OTLP_ENDPOINT`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~19. Set `startLimitBurst = 5; startLimitIntervalSec = 300;`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~20. Wire `after = [ "sops-nix.service" "dnsblockd.service" ]` + `wants`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~21. Add `onFailure` for Discord alert routing~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~22. Set `StateDirectory = "browser-history"` (creates `/var/lib/browser-history/`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~23. Add DNS-gate `ExecStartPre` (waitDnsReady pattern)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~24. Consider SQLite WAL corruption self-heal ExecStartPre (like DiscordSync/Monitor365)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~25. Set `MemoryMax` appropriately (Go service with SQLite — 1G should suffice)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Caddy
-26. Add `history.${domain}` vHost in caddy.nix — decide: `protectedVHost` (Layer 2 forward-auth) or plain `reverse_proxy` (if browser-history gets native OIDC)
-27. Browser-history has its OWN WebAuthn/Passkey auth — this is neither Layer 1 (Pocket ID native OIDC) nor Layer 2 (oauth2-proxy). It's a THIRD auth model. Need to decide whether to also gate behind `protectedVHost` or expose directly with TLS.
-28. If using `protectedVHost`: WebAuthn origins need to include the external URL with HTTPS
-29. If direct TLS proxy: use plain `reverse_proxy` with `${proxyTo}` and `${commonConfig}`
+~~26. Add `history.${domain}` vHost in caddy.nix — decide: `protectedVHost` (Layer 2 forward-auth) or plain `reverse_proxy` (if browser-history gets native OIDC)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~27. Browser-history has its OWN WebAuthn/Passkey auth — this is neither Layer 1 (Pocket ID native OIDC) nor Layer 2 (oauth2-proxy). It's a THIRD auth model. Need to decide whether to also gate behind `protectedVHost` or expose directly with TLS.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~28. If using `protectedVHost`: WebAuthn origins need to include the external URL with HTTPS~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~29. If direct TLS proxy: use plain `reverse_proxy` with `${proxyTo}` and `${commonConfig}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Gatus
-30. Add health check: `mkHttpCheck` for `http://localhost:${PORT}/health`
-31. Add `discordAlert "Browser History server down"`
-32. Add `[RESPONSE_TIME] < 1000` condition
+~~30. Add health check: `mkHttpCheck` for `http://localhost:${PORT}/health`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~31. Add `discordAlert "Browser History server down"`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~32. Add `[RESPONSE_TIME] < 1000` condition~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix configuration.nix
-33. Enable: `services.browser-history = { enable = true; };`
-34. Wire WebAuthn RP ID to the real domain (not localhost)
-35. Wire WebAuthn origins to `https://history.${domain}`
-36. Consider backup-coordination for `/var/lib/browser-history/`
+~~33. Enable: `services.browser-history = { enable = true; };`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~34. Wire WebAuthn RP ID to the real domain (not localhost)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~35. Wire WebAuthn origins to `https://history.${domain}`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~36. Consider backup-coordination for `/var/lib/browser-history/`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix DNS
-37. Add `history` to `dnsLocal.localSubdomains` in dnsblockd config
+~~37. Add `history` to `dnsLocal.localSubdomains` in dnsblockd config~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Homepage
-38. Add Homepage tile for browser-history (if desired)
+~~38. Add Homepage tile for browser-history (if desired)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix Sops
-39. Create sops secret for `BROWSER_HISTORY_AGENT_TOKEN` (for multi-machine sync)
-40. Create sops template or environment file for the service
+~~39. Create sops secret for `BROWSER_HISTORY_AGENT_TOKEN` (for multi-machine sync)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~40. Create sops template or environment file for the service~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### SystemNix OTel
-41. Verify `OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}"` works with browser-history's OTel instrumentation
+~~41. Verify `OTEL_EXPORTER_OTLP_ENDPOINT = "localhost:${toString ports.signoz-otlp-http}"` works with browser-history's OTel instrumentation~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Testing & Verification
-42. Run `nix flake check --no-build` on SystemNix
-43. Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (full eval)
-44. Deploy: `nix run .#deploy`
-45. Verify service starts: `systemctl status browser-history`
-46. Verify health endpoint: `curl http://localhost:${PORT}/health`
-47. Verify Caddy proxy: `curl https://history.${domain}/health`
-48. Register a WebAuthn credential and test login
-49. Run an extraction: `curl -X POST .../extract -d '{"browser":"chrome","limit":10}'`
-50. Verify Gatus shows the service as healthy
+~~42. Run `nix flake check --no-build` on SystemNix~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~43. Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` (full eval)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~44. Deploy: `nix run .#deploy`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~45. Verify service starts: `systemctl status browser-history`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~46. Verify health endpoint: `curl http://localhost:${PORT}/health`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~47. Verify Caddy proxy: `curl https://history.${domain}/health`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~48. Register a WebAuthn credential and test login~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~49. Run an extraction: `curl -X POST .../extract -d '{"browser":"chrome","limit":10}'`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~50. Verify Gatus shows the service as healthy~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ---
 

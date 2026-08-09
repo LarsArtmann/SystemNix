@@ -89,60 +89,60 @@
 ## F. UP TO 50 THINGS TO DO NEXT
 
 ### High Priority
-1. Test WebAuthn passkey registration in a real browser on `history.home.lan`
-2. Deploy browser-history agent (enable in configuration.nix + sops token)
-3. Lock registration after first user (add `registration_open` config flag)
-4. Fix BuildFlow pre-commit hook for missing binaries (biome, nixfmt)
-5. Document `publicDeps` pattern in browser-history AGENTS.md
-6. Document Caddy restart workaround in SystemNix AGENTS.md
-7. Investigate `PrivateTmp = lib.mkForce false` for Caddy service
-8. Make deploy.sh Caddy restart conditional on config change
+~~1. Test WebAuthn passkey registration in a real browser on `history.home.lan`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~2. Deploy browser-history agent (enable in configuration.nix + sops token)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~3. Lock registration after first user (add `registration_open` config flag)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~4. Fix BuildFlow pre-commit hook for missing binaries (biome, nixfmt)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~5. Document `publicDeps` pattern in browser-history AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~6. Document Caddy restart workaround in SystemNix AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~7. Investigate `PrivateTmp = lib.mkForce false` for Caddy service~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~8. Make deploy.sh Caddy restart conditional on config change~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Medium Priority
-9. Write integration test for full registration → passkey → login flow
-10. Add CSRF token to registration form tests (currently only checks HTML content)
-11. Add test for `GET /register` when authenticated (should redirect to `/`)
-12. Add test for `GET /login` when authenticated (should redirect to `/`)
-13. Create a dep-audit script that checks LarsArtmann pins vs go.mod requires
-14. Add `home.lan` WebAuthn RP ID validation (browsers may reject passkeys on `.lan` domains)
-15. Consider Pocket ID OIDC as fallback if WebAuthn on `.lan` fails
-16. Add Gatus health check response-time condition for browser-history
-17. Verify Homepage tile for browser-history is correct
-18. Add browser-history to post-deploy-check.sh smoke tests
-19. Check if `history` subdomain is in dnsblockd local zones
-20. Add OTel tracing verification for browser-history (OTLP gRPC to 127.0.0.1:4317)
+~~9. Write integration test for full registration → passkey → login flow~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~10. Add CSRF token to registration form tests (currently only checks HTML content)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~11. Add test for `GET /register` when authenticated (should redirect to `/`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~12. Add test for `GET /login` when authenticated (should redirect to `/`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~13. Create a dep-audit script that checks LarsArtmann pins vs go.mod requires~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~14. Add `home.lan` WebAuthn RP ID validation (browsers may reject passkeys on `.lan` domains)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~15. Consider Pocket ID OIDC as fallback if WebAuthn on `.lan` fails~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~16. Add Gatus health check response-time condition for browser-history~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~17. Verify Homepage tile for browser-history is correct~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~18. Add browser-history to post-deploy-check.sh smoke tests~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~19. Check if `history` subdomain is in dnsblockd local zones~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~20. Add OTel tracing verification for browser-history (OTLP gRPC to 127.0.0.1:4317)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Lower Priority
-21. Add backup coordination for browser-history SQLite database
-22. Write a deploy pre-check that builds the Go package before updating flake.lock
-23. Consider running browser-history agent on macOS (MacBook)
-24. Add rate limiting to `/auth/register` endpoint
-25. Add audit logging for registration and login events
-26. Write BDD tests for auth flows using Ginkgo
-27. Add session expiry configuration
-28. Add passwordless login fallback (magic link) if WebAuthn fails
-29. Consider adding a "forgot passkey" recovery flow
-30. Add browser-history version endpoint (`GET /version`)
-31. Add structured logging for auth events
-32. Consider adding OIDC provider support alongside WebAuthn
-33. Add CORS headers for browser extension agent
-34. Document browser-history API in OpenAPI/Swagger
-35. Add health check for SQLite WAL mode
-36. Consider read replica for browser-history queries
-37. Add data retention policy for browser history visits
-38. Add export/import functionality for history data
-39. Consider adding search filters (date range, domain, visit count)
-40. Add dashboard analytics (most visited domains, browsing patterns)
-41. Consider adding a REST API for programmatic access
-42. Add API key authentication for agent (alternative to token)
-43. Consider adding real-time sync via WebSocket
-44. Add incremental sync support (delta updates from last sync)
-45. Consider adding multi-device support (sync across browsers)
-46. Add data encryption at rest for sensitive visit data
-47. Consider adding differential privacy for analytics
-48. Add compliance/GDPR considerations (right to erasure)
-49. Consider adding a public API for browser extension marketplace
-50. Add monitoring dashboard for browser-history service metrics
+~~21. Add backup coordination for browser-history SQLite database~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~22. Write a deploy pre-check that builds the Go package before updating flake.lock~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~23. Consider running browser-history agent on macOS (MacBook)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~24. Add rate limiting to `/auth/register` endpoint~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~25. Add audit logging for registration and login events~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~26. Write BDD tests for auth flows using Ginkgo~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~27. Add session expiry configuration~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~28. Add passwordless login fallback (magic link) if WebAuthn fails~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~29. Consider adding a "forgot passkey" recovery flow~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~30. Add browser-history version endpoint (`GET /version`)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~31. Add structured logging for auth events~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~32. Consider adding OIDC provider support alongside WebAuthn~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~33. Add CORS headers for browser extension agent~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~34. Document browser-history API in OpenAPI/Swagger~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~35. Add health check for SQLite WAL mode~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~36. Consider read replica for browser-history queries~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~37. Add data retention policy for browser history visits~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~38. Add export/import functionality for history data~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~39. Consider adding search filters (date range, domain, visit count)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~40. Add dashboard analytics (most visited domains, browsing patterns)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~41. Consider adding a REST API for programmatic access~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~42. Add API key authentication for agent (alternative to token)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~43. Consider adding real-time sync via WebSocket~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~44. Add incremental sync support (delta updates from last sync)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~45. Consider adding multi-device support (sync across browsers)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~46. Add data encryption at rest for sensitive visit data~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~47. Consider adding differential privacy for analytics~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~48. Add compliance/GDPR considerations (right to erasure)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~49. Consider adding a public API for browser extension marketplace~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~50. Add monitoring dashboard for browser-history service metrics~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ---
 

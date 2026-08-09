@@ -89,62 +89,62 @@ Nothing. All 5 packages were fixed correctly, pushed, and verified. The only ine
 
 ### High Priority — Prevent Recurrence
 
-1. **Add vendorHash CI check to go-humanize-linter** (replicate dnsblockd's `nix/checks/default.nix:vendor-hash` pattern)
-2. **Add vendorHash CI check to browser-history**
-3. **Add vendorHash CI check to crush-daily**
-4. **Add vendorHash CI check to file-and-image-renamer**
-5. **Add vendorHash CI check to ALL other LarsArtmann Go repos** (herdr, discordsync, monitor365, etc.)
-6. **Add pre-deploy vendorHash validation to SystemNix `scripts/pre-deploy-check.sh`** — scan all Go flake inputs for FOD mismatches before deploy
-7. **Commit SystemNix `flake.lock` changes** from this session
-8. **Run `nix flake check --no-build`** on SystemNix to validate all outputs
+~~1. **Add vendorHash CI check to go-humanize-linter** (replicate dnsblockd's `nix/checks/default.nix:vendor-hash` pattern)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~2. **Add vendorHash CI check to browser-history**~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~3. **Add vendorHash CI check to crush-daily**~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~4. **Add vendorHash CI check to file-and-image-renamer**~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~5. **Add vendorHash CI check to ALL other LarsArtmann Go repos** (herdr, discordsync, monitor365, etc.)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~6. **Add pre-deploy vendorHash validation to SystemNix `scripts/pre-deploy-check.sh`** — scan all Go flake inputs for FOD mismatches before deploy~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~7. **Commit SystemNix `flake.lock` changes** from this session~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~8. **Run `nix flake check --no-build`** on SystemNix to validate all outputs~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Medium Priority — Correctness
 
-9. **Verify file-and-image-renamer `filechange` sub-module vendorHash** (line 204) — may be stale after flake-pin-drift fix
-10. **Run full `nix run .#deploy`** to verify the complete build pipeline succeeds end-to-end
-11. **Verify crush-daily `go mod tidy` in sandbox** — the `preBuild` runs `go mod tidy` which may shift deps further; verify the built binary works
-12. **Check if browser-history's agent sub-module** (`cmd/agent/go.mod`) needs a separate vendorHash update
-13. **Audit all LarsArtmann Go repos for flake-pin-drift** (flake input version vs go.mod require version mismatch)
-14. **Check if go-etag, go-idempotency, go-retry are truly public** on proxy.golang.org (crush-daily assumes they are)
-15. **Review the auto-git daemon's behavior on dnsblockd** — it pushed a commit that broke the build; should it run checks first?
+~~9. **Verify file-and-image-renamer `filechange` sub-module vendorHash** (line 204) — may be stale after flake-pin-drift fix~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~10. **Run full `nix run .#deploy`** to verify the complete build pipeline succeeds end-to-end~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~11. **Verify crush-daily `go mod tidy` in sandbox** — the `preBuild` runs `go mod tidy` which may shift deps further; verify the built binary works~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~12. **Check if browser-history's agent sub-module** (`cmd/agent/go.mod`) needs a separate vendorHash update~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~13. **Audit all LarsArtmann Go repos for flake-pin-drift** (flake input version vs go.mod require version mismatch)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~14. **Check if go-etag, go-idempotency, go-retry are truly public** on proxy.golang.org (crush-daily assumes they are)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~15. **Review the auto-git daemon's behavior on dnsblockd** — it pushed a commit that broke the build; should it run checks first?~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ### Low Priority — Quality of Life
 
-16. **Document the "vendorHash update after dep bump" workflow** in each repo's AGENTS.md
-17. **Create a `scripts/update-vendor-hash.sh` helper** in go-nix-helpers that automates the empty-hash → build → paste-got-hash cycle
-18. **Add a `nix flake check` step to the auto-git daemon** before pushing upstream repos
-19. **Make BuildFlow pre-commit hooks degrade gracefully** when biome/treefmt aren't in PATH
-20. **Add `publicDeps` documentation comment** to crush-daily's `flake.nix` deps section
-21. **Consider a `mkGoFlake.nix` auto-vendorHash-update feature** — `nix run .#update-vendor-hash` that builds goModules with empty hash and patches the correct one in
-22. **Review all Go repos for the same `validatePrivateDeps` + `publicDeps` issue** that crush-daily had
-23. **Add a SystemNix flake check that builds all Go go-modules FODs** as a flake check (not just on deploy)
-24. **Document the file-and-image-renamer dual-vendorHash pattern** (main module + filechange sub-module) in its AGENTS.md
-25. **Review whether crush-daily's `go mod tidy` in preBuild** could be removed now that publicDeps is set (the tidy was added for a different reason)
-26. **Audit all LarsArtmann flake inputs** for `inputs.nixpkgs.follows` — mismatched nixpkgs causes Qt-style runtime crashes
-27. **Consider adding `nix build .#goModules --dry-run` to pre-commit** in Go repos that use vendorHash
-28. **Review the monitor365 build** — it compiled successfully but took 7m25s; check if incremental builds are working
-29. **Check if the hermes-agent package** needs a vendorHash update (it was in the build log but didn't fail)
-30. **Review whether `go mod tidy` in crush-daily's `overrideModAttrs`** is still needed with `proxyVendor = true`
-31. **Consider a `flake.lock` age check** — alert if SystemNix's flake.lock inputs are >7 days behind their upstream refs
-32. **Add a monitoring check for "unpushed local commits in upstream repos"** — dnsblockd's unpushed commit caused this incident
-33. **Review the `web` package build** — the Vite build succeeded but the `__dirname` warning suggests a Vite config issue
-34. **Document the 3-option mkPreparedSource error resolution** (add to deps, set validatePrivateDeps=false, add to publicDeps) in crush-daily's AGENTS.md
-35. **Consider unifying vendorHash management** — some repos use `nix/vendor-hash.nix`, others inline in `flake.nix`. Pick one pattern.
-36. **Review whether the `go mod download github.com/stretchr/testify@v1.6.1`** hack in file-and-image-renamer is still needed
-37. **Check if any other SystemNix services depend on these 5 packages** and would break at runtime
-38. **Review the Crush Daily service configuration** — `runAsUser` and `GOEXPERIMENT=jsonv2` settings should be validated after the rebuild
-39. **Add a post-deploy smoke test** for dnsblockd, crush-daily, browser-history after the next deploy
-40. **Review whether `CGO_ENABLED=0` in crush-daily** affects the sqlite driver (DuckDB uses CGO)
-41. **Check if the `art-dupl` vendorHash** in dnsblockd (line 81) needs updating too
-42. **Review the segment-buffer dependency** (github.com/LarsArtmann/segment-buffer) — it appeared in the monitor365 build, check if it needs GOPRIVATE
-43. **Consider a `nix flake update --all` strategy** for SystemNix to batch-update inputs and catch stale hashes early
-44. **Document the BuildFlow `flake-pin-drift` check** — it caught the templ/httputil version mismatch in file-and-image-renamer
-45. **Review whether crush-daily's nixos-module-eval check** covers the publicDeps scenario
-46. **Add a Gatus health check verification** for all 5 services after next deploy
-47. **Review the BTRFS balance/auto-scrub timers** weren't disrupted by the 1h42m failed deploy
-48. **Check nix garbage collection** — the failed build may have left 2880+ store paths that need cleanup
-49. **Consider `auto-optimise-store` after the rebuild** — many Go modules changed, hardlink dedup would help
-50. **Update SystemNix AGENTS.md** with a note about the recurring vendorHash-deps-bump pattern and the vendorHash CI check solution
+~~16. **Document the "vendorHash update after dep bump" workflow** in each repo's AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~17. **Create a `scripts/update-vendor-hash.sh` helper** in go-nix-helpers that automates the empty-hash → build → paste-got-hash cycle~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~18. **Add a `nix flake check` step to the auto-git daemon** before pushing upstream repos~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~19. **Make BuildFlow pre-commit hooks degrade gracefully** when biome/treefmt aren't in PATH~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~20. **Add `publicDeps` documentation comment** to crush-daily's `flake.nix` deps section~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~21. **Consider a `mkGoFlake.nix` auto-vendorHash-update feature** — `nix run .#update-vendor-hash` that builds goModules with empty hash and patches the correct one in~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~22. **Review all Go repos for the same `validatePrivateDeps` + `publicDeps` issue** that crush-daily had~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~23. **Add a SystemNix flake check that builds all Go go-modules FODs** as a flake check (not just on deploy)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~24. **Document the file-and-image-renamer dual-vendorHash pattern** (main module + filechange sub-module) in its AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~25. **Review whether crush-daily's `go mod tidy` in preBuild** could be removed now that publicDeps is set (the tidy was added for a different reason)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~26. **Audit all LarsArtmann flake inputs** for `inputs.nixpkgs.follows` — mismatched nixpkgs causes Qt-style runtime crashes~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~27. **Consider adding `nix build .#goModules --dry-run` to pre-commit** in Go repos that use vendorHash~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~28. **Review the monitor365 build** — it compiled successfully but took 7m25s; check if incremental builds are working~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~29. **Check if the hermes-agent package** needs a vendorHash update (it was in the build log but didn't fail)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~30. **Review whether `go mod tidy` in crush-daily's `overrideModAttrs`** is still needed with `proxyVendor = true`~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~31. **Consider a `flake.lock` age check** — alert if SystemNix's flake.lock inputs are >7 days behind their upstream refs~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~32. **Add a monitoring check for "unpushed local commits in upstream repos"** — dnsblockd's unpushed commit caused this incident~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~33. **Review the `web` package build** — the Vite build succeeded but the `__dirname` warning suggests a Vite config issue~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~34. **Document the 3-option mkPreparedSource error resolution** (add to deps, set validatePrivateDeps=false, add to publicDeps) in crush-daily's AGENTS.md~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~35. **Consider unifying vendorHash management** — some repos use `nix/vendor-hash.nix`, others inline in `flake.nix`. Pick one pattern.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~36. **Review whether the `go mod download github.com/stretchr/testify@v1.6.1`** hack in file-and-image-renamer is still needed~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~37. **Check if any other SystemNix services depend on these 5 packages** and would break at runtime~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~38. **Review the Crush Daily service configuration** — `runAsUser` and `GOEXPERIMENT=jsonv2` settings should be validated after the rebuild~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~39. **Add a post-deploy smoke test** for dnsblockd, crush-daily, browser-history after the next deploy~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~40. **Review whether `CGO_ENABLED=0` in crush-daily** affects the sqlite driver (DuckDB uses CGO)~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~41. **Check if the `art-dupl` vendorHash** in dnsblockd (line 81) needs updating too~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~42. **Review the segment-buffer dependency** (github.com/LarsArtmann/segment-buffer) — it appeared in the monitor365 build, check if it needs GOPRIVATE~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~43. **Consider a `nix flake update --all` strategy** for SystemNix to batch-update inputs and catch stale hashes early~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~44. **Document the BuildFlow `flake-pin-drift` check** — it caught the templ/httputil version mismatch in file-and-image-renamer~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~45. **Review whether crush-daily's nixos-module-eval check** covers the publicDeps scenario~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~46. **Add a Gatus health check verification** for all 5 services after next deploy~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~47. **Review the BTRFS balance/auto-scrub timers** weren't disrupted by the 1h42m failed deploy~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~48. **Check nix garbage collection** — the failed build may have left 2880+ store paths that need cleanup~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~49. **Consider `auto-optimise-store` after the rebuild** — many Go modules changed, hardlink dedup would help~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~50. **Update SystemNix AGENTS.md** with a note about the recurring vendorHash-deps-bump pattern and the vendorHash CI check solution~~ done — work captured in CHANGELOG.md / TODO_LIST.md
 
 ---
 

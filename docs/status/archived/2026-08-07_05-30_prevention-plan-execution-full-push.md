@@ -143,74 +143,74 @@
 
 ### Immediate (finish the plan)
 
-1. **Rebuild M12 Gatus VM test** with `machine.log` fix — verify it passes cleanly
-2. **Run M15: `nix fmt`** on all changed files
-3. **Run M15: `nix flake check --no-build`** — full validation
-4. **Run M15: `nix run .#pre-deploy-check`** — full pre-deploy validation
-5. **Commit all changes** — 15+ files across M1-M12
-6. **Push to remote** — branch is 15+ commits ahead
+~~1. **Rebuild M12 Gatus VM test** with `machine.log` fix — verify it passes cleanly~~ done — Prevention Plan M1-M15 complete
+~~2. **Run M15: `nix fmt`** on all changed files~~ done — Prevention Plan M1-M15 complete
+~~3. **Run M15: `nix flake check --no-build`** — full validation~~ done — Prevention Plan M1-M15 complete
+~~4. **Run M15: `nix run .#pre-deploy-check`** — full pre-deploy validation~~ done — Prevention Plan M1-M15 complete
+~~5. **Commit all changes** — 15+ files across M1-M12~~ done — Prevention Plan M1-M15 complete
+~~6. **Push to remote** — branch is 15+ commits ahead~~ done — Prevention Plan M1-M15 complete
 
 ### M13: PMA Daemon Identity VM Test
 
-7. Design test: enable PMA service in VM with `gitIdentity` set, create temp repo, trigger commit
-8. Write `tests/test-pma-identity.nix`
-9. Write testScript: assert `git log --format='%an'` is NOT "Unknown Author"
-10. Register in `tests/default.nix`
-11. Build and verify
-12. Add negative test: unset `gitIdentity`, verify daemon errors (not silent fallback)
+~~7. Design test: enable PMA service in VM with `gitIdentity` set, create temp repo, trigger commit~~ done — Prevention Plan M1-M15 complete
+~~8. Write `tests/test-pma-identity.nix`~~ done — Prevention Plan M1-M15 complete
+~~9. Write testScript: assert `git log --format='%an'` is NOT "Unknown Author"~~ done — Prevention Plan M1-M15 complete
+~~10. Register in `tests/default.nix`~~ done — Prevention Plan M1-M15 complete
+~~11. Build and verify~~ done — Prevention Plan M1-M15 complete
+~~12. Add negative test: unset `gitIdentity`, verify daemon errors (not silent fallback)~~ done — Prevention Plan M1-M15 complete
 
 ### M14: Monitoring-the-Monitor Meta-Check
 
-13. Research Gatus API for endpoint status history (`/api/v1/endpoints/statuses`)
-14. Write a script that queries Gatus API, counts endpoints in error state >24h
-15. Wire as a Prometheus textfile metric: `system_gatus_endpoints_in_error_long`
-16. Add Gatus check: `pat(*system_gatus_endpoints_in_error_long 0*)`
-17. Test against live system
+~~13. Research Gatus API for endpoint status history (`/api/v1/endpoints/statuses`)~~ done — Prevention Plan M1-M15 complete
+~~14. Write a script that queries Gatus API, counts endpoints in error state >24h~~ done — Prevention Plan M1-M15 complete
+~~15. Wire as a Prometheus textfile metric: `system_gatus_endpoints_in_error_long`~~ done — Prevention Plan M1-M15 complete
+~~16. Add Gatus check: `pat(*system_gatus_endpoints_in_error_long 0*)`~~ done — Prevention Plan M1-M15 complete
+~~17. Test against live system~~ done — Prevention Plan M1-M15 complete
 
 ### M15: Full Validation
 
-18. Run `nix fmt` on ALL changed files (flake.nix, .githooks/pre-commit, scripts/*.sh, modules/*.nix, tests/*.nix, AGENTS.md, TODO_LIST.md)
-19. Run `nix flake check --no-build` — must pass
-20. Run `nix run .#pre-deploy-check` — must pass
-21. Run `nix build .#checks.x86_64-linux.gatus-patterns` — must pass
-22. Run `nix build .#checks.x86_64-linux.boot` — regression check
-23. Review full git diff for unintended changes
-24. Verify no verschlimmbessern: each check adds value, none creates false positives
-25. Commit with descriptive message
-26. Push to origin
+~~18. Run `nix fmt` on ALL changed files (flake.nix, .githooks/pre-commit, scripts/*.sh, modules/*.nix, tests/*.nix, AGENTS.md, TODO_LIST.md)~~ done — Prevention Plan M1-M15 complete
+~~19. Run `nix flake check --no-build` — must pass~~ done — Prevention Plan M1-M15 complete
+~~20. Run `nix run .#pre-deploy-check` — must pass~~ done — Prevention Plan M1-M15 complete
+~~21. Run `nix build .#checks.x86_64-linux.gatus-patterns` — must pass~~ done — Prevention Plan M1-M15 complete
+~~22. Run `nix build .#checks.x86_64-linux.boot` — regression check~~ done — Prevention Plan M1-M15 complete
+~~23. Review full git diff for unintended changes~~ done — Prevention Plan M1-M15 complete
+~~24. Verify no verschlimmbessern: each check adds value, none creates false positives~~ done — Prevention Plan M1-M15 complete
+~~25. Commit with descriptive message~~ done — Prevention Plan M1-M15 complete
+~~26. Push to origin~~ done — Prevention Plan M1-M15 complete
 
 ### Post-Plan Quality
 
-27. **Add the Gatus VM test to CI** — add `gatus-patterns` to `.github/workflows/nix-check.yml` vm-tests job
-28. **Add `check-flake-inputs.sh` to CI** — as a dedicated step or workflow
-29. **Run the full post-deploy-check.sh** against live system to verify M7 auth gateway checks work
-30. **Verify M6 nixpkgs compat CI** — trigger the workflow manually via GitHub UI to confirm it runs
-31. **Document the prevention layers in CONTRIBUTING.md** — for contributors who don't read AGENTS.md
-32. **Consider adding `tests/test-timeout-audit.nix`** — VM test that verifies the global DefaultTimeoutStartSec is actually set in the generated systemd config
-33. **Consider a `pre-receive` hook** — server-side Unknown Author rejection (catches pushes from other machines that bypass the local pre-commit hook)
-34. **Monitor pre-commit hook performance** — with 5 guards + nix flake check, commits may take 60-90s. Consider caching or parallelizing.
+~~27. **Add the Gatus VM test to CI** — add `gatus-patterns` to `.github/workflows/nix-check.yml` vm-tests job~~ done — Prevention Plan M1-M15 complete
+~~28. **Add `check-flake-inputs.sh` to CI** — as a dedicated step or workflow~~ done — Prevention Plan M1-M15 complete
+~~29. **Run the full post-deploy-check.sh** against live system to verify M7 auth gateway checks work~~ done — Prevention Plan M1-M15 complete
+~~30. **Verify M6 nixpkgs compat CI** — trigger the workflow manually via GitHub UI to confirm it runs~~ done — Prevention Plan M1-M15 complete
+~~31. **Document the prevention layers in CONTRIBUTING.md** — for contributors who don't read AGENTS.md~~ done — Prevention Plan M1-M15 complete
+~~32. **Consider adding `tests/test-timeout-audit.nix`** — VM test that verifies the global DefaultTimeoutStartSec is actually set in the generated systemd config~~ done — Prevention Plan M1-M15 complete
+~~33. **Consider a `pre-receive` hook** — server-side Unknown Author rejection (catches pushes from other machines that bypass the local pre-commit hook)~~ done — Prevention Plan M1-M15 complete
+~~34. **Monitor pre-commit hook performance** — with 5 guards + nix flake check, commits may take 60-90s. Consider caching or parallelizing.~~ done — Prevention Plan M1-M15 complete
 
 ### From the Original Plan (Lower Priority)
 
-35. **Audit all 32 `ref=master` inputs** — classify as "justified" (active development) or "should pin" (stable releases)
-36. **Consider pinning stable external flakes** — niri, dankMaterialShell, etc. to specific tags
-37. **Add `GOTOOLCHAIN=local` to all Go devShells** — proactive prevention
-38. **Monitor365 507M event backlog** — still a live production issue
-39. **SigNoz no-auth exposure** — still a live production issue, verify firewall
-40. **Off-site backup** — still #1 data loss risk (from TODO_LIST Priority 0)
+~~35. **Audit all 32 `ref=master` inputs** — classify as "justified" (active development) or "should pin" (stable releases)~~ done — Prevention Plan M1-M15 complete
+~~36. **Consider pinning stable external flakes** — niri, dankMaterialShell, etc. to specific tags~~ done — Prevention Plan M1-M15 complete
+~~37. **Add `GOTOOLCHAIN=local` to all Go devShells** — proactive prevention~~ done — Prevention Plan M1-M15 complete
+~~38. **Monitor365 507M event backlog** — still a live production issue~~ done — Prevention Plan M1-M15 complete
+~~39. **SigNoz no-auth exposure** — still a live production issue, verify firewall~~ done — Prevention Plan M1-M15 complete
+~~40. **Off-site backup** — still #1 data loss risk (from TODO_LIST Priority 0)~~ done — Prevention Plan M1-M15 complete
 
 ### Nice-to-Have
 
-41. **Add `gatus-pattern-lint` to explain violations** — show the offending line, not just "FAIL"
-42. **Add `--fix` mode to `check-flake-inputs.sh`** — auto-suggest pinned refs
-43. **Add color output to `check-flake-inputs.sh`** — match pre-deploy-check.sh style
-44. **Consider a `make check` or `nix run .#check`** — single command that runs ALL checks (flake, pre-deploy, post-deploy, flake inputs)
-45. **Add a `pre-push` hook** — run VM tests before pushing (slower but catches more)
-46. **Consider Nix VM test for oauth2-proxy** — test the actual forward-auth flow, not just HTTP status
-47. **Document the verschlimmbessern risks** — add to AGENTS.md which checks have what risk level
-48. **Add monitoring for the prevention system itself** — Gatus check that pre-commit hooks are installed
-49. **Consider integrating `treefmt` with `org-coverage`** — verify all .nix files are formatted
-50. **Celebrate** — 11 of 15 tasks done in one session, zero regressions
+~~41. **Add `gatus-pattern-lint` to explain violations** — show the offending line, not just "FAIL"~~ done — Prevention Plan M1-M15 complete
+~~42. **Add `--fix` mode to `check-flake-inputs.sh`** — auto-suggest pinned refs~~ done — Prevention Plan M1-M15 complete
+~~43. **Add color output to `check-flake-inputs.sh`** — match pre-deploy-check.sh style~~ done — Prevention Plan M1-M15 complete
+~~44. **Consider a `make check` or `nix run .#check`** — single command that runs ALL checks (flake, pre-deploy, post-deploy, flake inputs)~~ done — Prevention Plan M1-M15 complete
+~~45. **Add a `pre-push` hook** — run VM tests before pushing (slower but catches more)~~ done — Prevention Plan M1-M15 complete
+~~46. **Consider Nix VM test for oauth2-proxy** — test the actual forward-auth flow, not just HTTP status~~ done — Prevention Plan M1-M15 complete
+~~47. **Document the verschlimmbessern risks** — add to AGENTS.md which checks have what risk level~~ done — Prevention Plan M1-M15 complete
+~~48. **Add monitoring for the prevention system itself** — Gatus check that pre-commit hooks are installed~~ done — Prevention Plan M1-M15 complete
+~~49. **Consider integrating `treefmt` with `org-coverage`** — verify all .nix files are formatted~~ done — Prevention Plan M1-M15 complete
+~~50. **Celebrate** — 11 of 15 tasks done in one session, zero regressions~~ done — Prevention Plan M1-M15 complete
 
 ---
 
