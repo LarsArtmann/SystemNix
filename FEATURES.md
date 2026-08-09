@@ -53,7 +53,7 @@ _A brutally honest audit of every feature the project actually has._
 | Service                        | Status | Module                 | Key Details                                                                                                                                  |
 | ------------------------------ | ------ | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | Docker                         | ✅     | `default-services.nix` | Always-on, overlay2, `/data/docker`, weekly auto-prune, user `lars` in docker group                                                          |
-| Caddy (reverse proxy)          | ✅     | `caddy.nix`            | TLS via sops certs, forward auth via oauth2-proxy + Pocket ID, 15 virtual hosts (14 auth-protected), metrics enabled, sops-nix boot ordering |
+| Caddy (reverse proxy)          | ✅     | `caddy.nix`            | TLS via sops certs, forward auth via oauth2-proxy + Pocket ID, 16+ virtual hosts (14 auth-protected), metrics enabled, sops-nix boot ordering |
 | SOPS secrets management        | ✅     | `sops.nix`             | Age-encrypted via SSH host key, 4 sops files, auto-restart per secret, ALL service-specific secrets guarded with `lib.optionalAttrs`         |
 | Pocket ID (OIDC provider)      | ✅     | `pocket-id.nix`        | Passkey-only OIDC provider, Go backend, SQLite, web UI for user/client management                                                            |
 | oauth2-proxy                   | ✅     | `oauth2-proxy.nix`     | Forward-auth bridge between Caddy and Pocket ID, cookie-based sessions                                                                       |
@@ -113,7 +113,7 @@ _A brutally honest audit of every feature the project actually has._
 | Steam gaming              | ✅     | `steam.nix`                  | extest, protontricks, gamemode (renice=10, GPU temp 80°C), gamescope, mangohud                                                                                                                                                                                 |
 | Multi-WM (Sway backup)    | ✅     | `multi-wm.nix`               | Sway as backup at SDDM login — enabled in config                                                                                                                                                                                                               |
 | File & Image Renamer (AI) | ✅     | `file-and-image-renamer.nix` | AI screenshot renaming via charm.land/fantasy. Watcher + health dashboard unified on `dataDir` state (split-brain fixed `b0c76b58`). Auth fallback via `ErrorTypeAuth` (upstream `8bf60bd`). Post-deploy-check asserts `total_operations > 0`.                 |
-| Helium auto-restart       | ✅     | `niri-wrapped.nix`           | systemd user service (`helium.service`) with `Restart=always`, `RestartSec=5`, `StartLimitBurst=10`. `helium-launch` wrapper pgrep-checks existing process to prevent empty-window crash loop. Recovers from niri zero-output client death on display hotplug. |
+| Helium auto-restart       | ✅     | `niri-wrapped.nix`           | systemd user service (`helium.service`) with `Restart=always`, `RestartSec=5`, `StartLimitBurst=10`. `helium-launch` wrapper pgrep-checks existing process to prevent empty-window crash loop. Recovers from niri zero-output client death on display hotplug. Anti-throttle flags: `--disable-background-timer-throttling`, `--disable-backgrounding-occluded-windows`, `--disable-renderer-backgrounding`, `--disable-background-media-suspend` (prevents 1–3 FPS video under I/O contention). |
 
 ### Monitoring
 
@@ -295,7 +295,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | Static IP networking       | ✅     | `eno1` 192.168.1.150, no DHCP/NetworkManager                                                                                                                                                                 |
 | Firewall                   | ✅     | TCP 22,53,80,443; UDP 53,853                                                                                                                                                                                 |
 | Centralized network config | ✅     | `local-network.nix` module options — lanIP, gateway, subnet, blockIP, virtualIP, piIP                                                                                                                        |
-| Local DNS records          | ✅     | auth/immich/forgejo/dash/signoz/tasks/crm/manifest/status/seo/daily/logs/monitor/dnsblock/search → `*.home.lan` (explicitly listed in `localSubdomains` — dnsblockd does NOT support wildcard local records) |
+| Local DNS records          | ✅     | auth/immich/forgejo/dash/signoz/tasks/crm/manifest/status/seo/daily/logs/monitor/dnsblock/search/history/cache → `*.home.lan` (explicitly listed in `localSubdomains` — dnsblockd does NOT support wildcard local records) |
 | Mullvad VPN                | 🔧     | WireGuard VPN — **disabled** (talpid_dns corrupted `/etc/resolv.conf`). Config kept for future re-enablement                                                                                                 |
 | Dual-WAN (MPTCP)           | ✅     | MPTCP dual-WAN with route health monitoring, automatic failover                                                                                                                                              |
 | SSH banner                 | ✅     | Legal warning banner on SSH login                                                                                                                                                                            |
@@ -552,7 +552,7 @@ _Counts computed from code; re-verify with `rg` / `ls` before citing._
 | NixOS service modules      | 49    | `ls modules/nixos/services/*.nix modules/nixos/desktop/*.nix \| grep -v '/_' \| wc -l` |
 | Custom packages            | 30    | 15 mkLarsPackages + 8 pkgs/ + 7 flake-input overlays                          |
 | Gatus health endpoints     | 79    | `grep -c 'name =' modules/nixos/services/gatus-config.nix`                    |
-| Sops secret files          | 13    | `ls platforms/nixos/secrets/*.yaml \| wc -l`                                  |
+| Sops secret files          | 14    | `ls platforms/nixos/secrets/*.yaml \| wc -l`                                  |
 | DMS plugins                | 15    | 13 SystemNix + 2 community (`ls pkgs/dms-plugins/`)                           |
 | Architecture patterns      | 7     | See section 11                                                                |
 | ADRs                       | 13    | 8 canonical (`docs/adr/`) + 5 platform (`docs/architecture/`)                 |

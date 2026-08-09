@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-08-06
+**Updated:** 2026-08-09
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
@@ -37,6 +37,7 @@ The system has been hardened through multiple crash cycles (QLC SLC cache exhaus
 ## Theme 3: Desktop Experience
 
 - **Niri blur** — Desktop Renaissance v3 added terminal transparency but niri's HM module lacks a `blur {}` option. Transparent terminals without blur are hard to read. Options: raw KDL config, wait for niri-flake, or drop transparency
+- **I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 1–3 FPS. Anti-throttle flags added to Helium, but root cause is dev builds saturating NVMe I/O. Consider cgroup `IOSchedulingClass=idle` wrappers for dev commands, elevated `IOWeight` for media apps
 - **SearXNG streaming results** — User wants progressive rendering (stream results as engines respond), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy `flush_buffers -1`
 - **Darwin Home Manager parity** — macOS HM config is minimal (no terminal, editor, theme parity). Blocked by 256GB disk constraint
 - **Disabled service triage** (decided 2026-06-25):
@@ -67,7 +68,7 @@ Items that benefit the broader Nix ecosystem:
 - **nixpkgs PRs**: `aw-watcher-utilization` poetry-core migration, `valkey`/`aiocache` test fixes, `taskwarrior3` build flags, Kitty GC resilience patch, KeePassXC Chromium manifests
 - **Home Manager PRs**: ActivityWatch Wayland watcher deps, ActivityWatch theme option, Darwin user definition requirement (#6036)
 - **Third-party**: `jscpd` lockfile publishing, XRT boost 1.87+ compat for `nix-amd-npu`, direnv caching pattern (fish-native mtime gate, GC root optimization)
-- **LarsArtmann apps**: dnsblockd OTEL cardinality leak (unbounded labels), Monitor365 DuckDB pool deadlock root cause, DiscordSync chattr ExecStartPre (upstream module fix), PMA daemon broken flake.lock commits, file-and-image-renamer input pinning (`ref=master` → tags), Hermes directory auto-creation + state migration, PMA `GenerateMessage` handler leak
+- **LarsArtmann apps**: dnsblockd OTEL cardinality leak (unbounded labels), dnsblockd per-domain block response type (NXDOMAIN for background services, zero_ip for browser-visible), dnsblockd TLS handshake log noise suppression, Monitor365 DuckDB pool deadlock root cause, DiscordSync chattr ExecStartPre (upstream module fix), PMA daemon broken flake.lock commits, file-and-image-renamer input pinning (`ref=master` → tags), Hermes directory auto-creation + state migration, PMA `GenerateMessage` handler leak, browser-history OTel endpoint URL scheme (gRPC `127.0.0.1:4317` → HTTP `http://localhost:4318`)
 
 See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 
