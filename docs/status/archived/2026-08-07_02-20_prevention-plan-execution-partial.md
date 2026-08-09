@@ -129,11 +129,11 @@
 ### M3: ExecStartPre/TimeoutStartSec audit
 
 ~~13. Read `lib/default.nix` port collision pattern (L144-153)~~ done — Prevention Plan M1-M15 complete
-~~14. Write `lib/systemd-audit.nix` — introspect `config.systemd.services` post-merge~~ done — Prevention Plan M1-M15 complete
-~~15. Export from `lib/default.nix`~~ done — Prevention Plan M1-M15 complete
-~~16. Wire into `configuration.nix` as `assert`~~ done — Prevention Plan M1-M15 complete
+~~14. Write `lib/systemd-audit.nix` — introspect `config.systemd.services` post-merge~~ **Won't implement — replaced by global `timeout-audit.nix` `DefaultTimeoutStartSec=3min`**
+~~15. Export from `lib/default.nix`~~ **Won't implement — replaced by global `timeout-audit.nix`**
+~~16. Wire into `configuration.nix` as `assert`~~ **Won't implement — replaced by global `timeout-audit.nix`**
 ~~17. Test: `nix flake check --no-build` passes (all services now have timeout)~~ done — Prevention Plan M1-M15 complete
-~~18. Test: temporarily remove one timeout, verify assertion fires with service name~~ done — Prevention Plan M1-M15 complete
+~~18. Test: temporarily remove one timeout, verify assertion fires with service name~~ **Won't implement — per-service assertion never built; global default covers all services**
 
 ### M4: Runtime metric presence validator
 
@@ -234,5 +234,4 @@ I cannot figure out which approach matches your CI preferences without asking. M
 
 ---
 
-> **RESOLVED — M1 complete, M2–M15 all completed by 2026-08-07_06-37 report. See TODO_LIST.md Priority 7 (removed — all done) and CHANGELOG.md for details.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> **RESOLVED — M1 complete, M2–M15 all completed by 2026-08-07_06-37 report.** Most forward-looking items shipped. Exception: items 14–16, 18 (M3 per-service `lib/systemd-audit.nix` assertion) were abandoned in favor of the simpler global `timeout-audit.nix` `DefaultTimeoutStartSec=3min`. See CHANGELOG.md for details.
