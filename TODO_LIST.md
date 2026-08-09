@@ -60,7 +60,7 @@
 ## Priority 5: Desktop
 
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary
-- [ ] **Verify all extension IDs are live on Chrome Web Store** — Dead IDs cause silent download failures now that background networking is enabled
+- [x] **Verify all extension IDs are live on Chrome Web Store** — Dead IDs cause silent download failures now that background networking is enabled. **Verified 2026-08-09:** All 19 active NixOS extension IDs confirmed live via Chrome Web Store update API (`clients2.google.com/service/update2/crx`). All return valid CRX codebase + version (uBlock Origin v1.73.0, React DevTools v7.0.1, Refined GitHub v26.8.8, etc.)
 - [ ] **Verify DMS wallpaper management** — swww removed, DMS manages wallpapers via IPC (`dms ipc call wallpaper next`). Verify `dms-wallpaper-init` seeds correctly from `~/.local/share/wallpapers/`. Check `journalctl --user -u quickshell` for errors
 - [ ] **Backup DMS `settings.json` before deploy** — DMS may overwrite user-owned `settings.json` on rebuild (split-brain risk). Backup before deploying
 
