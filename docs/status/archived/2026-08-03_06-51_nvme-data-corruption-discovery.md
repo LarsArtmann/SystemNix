@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -507,3 +504,8 @@ This report's central claim — **"`nodiscard` is NOT working, async discard is 
 - `/data` at 92% fill (systemic risk, needs cleanup)
 - Investigate the 58 unsafe shutdowns (WDT resets, OOM cascades, power events)
 - `/data` compression removal (`compress=zstd:3` → undecided)
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

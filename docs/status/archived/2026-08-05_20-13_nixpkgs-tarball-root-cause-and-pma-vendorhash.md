@@ -1,13 +1,10 @@
 # Status: nixpkgs Tarball Root-Cause Fix + PMA vendorHash Mismatch (In Progress)
 
-**Date:** 2026-08-05 20:13  
-**Session scope:** Fix the recurring `nixpkgs flake.lock regression: original type is "tarball"` error, get all inputs on latest, and unblock `nix run .#deploy` / `nh os switch`.  
+**Date:** 2026-08-05 20:13
+**Session scope:** Fix the recurring `nixpkgs flake.lock regression: original type is "tarball"` error, get all inputs on latest, and unblock `nix run .#deploy` / `nh os switch`.
 **Overall verdict:** nixpkgs lock regression is fixed at the root cause (NixOS system registry override). All inputs are updated to latest. Deploy is still blocked by a PMA vendorHash mismatch that surfaced after moving nixpkks to current GitHub.
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## What the user reported
@@ -91,3 +88,8 @@ The auto-commit daemon already committed the SystemNix-side changes:
 - The global Nix registry entry `flake:nixpkgs/nixos-unstable → https://channels.nixos.org/nixos-unstable/nixexprs.tar.xz` is what rewrites the lockfile. It is not a SystemNix bug and cannot be disabled by `nix flake update` flags (`--no-use-registries`, `--override-flake`, `--override-input` all failed in testing).
 - The only reliable fix is a **system registry override** deployed via NixOS `nix.registry."nixpkgs/nixos-unstable"`. After it is deployed, future `nix flake update` runs will keep nixpkgs on GitHub.
 - The upstream `projects-management-automation` vendorHash is stale relative to current `nixos-unstable`; this is a normal consequence of updating nixpkgs after a long stale period.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

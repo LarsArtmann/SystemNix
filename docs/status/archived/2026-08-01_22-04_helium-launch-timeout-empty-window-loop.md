@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -88,3 +85,8 @@ The Helium browser was opening a new empty window every 5 minutes. The 2026-07-2
 2. **Is there a reason the 300s timeout was originally added?** The comment said "Cap the wait at 300s to avoid hanging forever on a zombie process." Was there a specific zombie/stuck helium incident that motivated the cap? If so, we may need a zombie-detection heuristic (e.g., check if the process is in `D` state or has 0 CPU for N minutes) rather than a blind timeout.
 
 3. **Should the desktop entry (`xdg.desktopEntries.helium`) also use `helium-launch` instead of bare `helium`?** Currently, clicking a link or opening a file via MIME handler runs `env -u QT_STYLE_OVERRIDE helium %U` directly — bypassing the guard. If an instance is already running (normal case), this is fine (Chromium delegates to the existing instance and exits). But if the SingletonLock is stale, it could also open an empty window. Probably not worth fixing (the desktop entry path doesn't have `Restart=always`), but worth confirming the intent.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -259,3 +256,8 @@ Deploying just the bun overlay is safe and fast. But if we're also lowering `use
 | 44 | REJECTED | Postmortem document — status reports serve this purpose |
 | 45 | DONE | stale-lsp-cleanup.service extended to all dev LSPs |
 | 46-50 | REJECTED | dev-tool-memory-guard, Crush guardrails, session accounting, SSH timeout, Forgejo runner limits — aspirational, not pursued |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

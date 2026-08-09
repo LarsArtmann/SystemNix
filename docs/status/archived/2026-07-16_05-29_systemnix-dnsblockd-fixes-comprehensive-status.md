@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -242,3 +239,8 @@ blind spot I only noticed during this review.
    _signoz-alerts.nix + gatus-config.nix), or do you want to review the diff first
    and/or batch this with other pending work? _(Commit timing is a workflow
    preference — I don't know what else you have staged or if you want a PR.)_
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

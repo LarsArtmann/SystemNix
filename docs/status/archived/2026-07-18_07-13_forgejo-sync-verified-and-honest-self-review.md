@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -253,3 +250,8 @@ The sync runs every 6h. Each run without the fix prints 113 HTTP 400 warnings (~
 **What I'm least proud of:** I spent 4+ hours across two sessions on a problem that, in hindsight, could have been diagnosed in 30 minutes by: (1) checking the sync logs first (showed CHANGE_ME), (2) paginating the API correctly (showed 7 then 113), (3) reading the migrate response codes (showed 409 "files exist"). I over-complicated with theories about silent background failures when the data was there all along — I just wasn't reading it correctly.
 
 **What I'm most proud of:** The honest HTTP-status reporting fix. It turned a silent failure into a visible one, which is how I discovered the push-mirror bug within minutes of the fix deploying. The principle ("never trust `curl &&` for APIs") is now encoded in the codebase and will prevent the next silent failure.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

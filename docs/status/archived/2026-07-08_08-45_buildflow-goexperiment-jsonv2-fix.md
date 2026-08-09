@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -157,3 +154,8 @@ BuildFlow's working tree added 5 external LarsArtmann tool packages (`branching-
 ### 2. Should we add a post-deploy binary existence check to catch silent empty `buildGoModule` outputs?
 
 The root cause of this entire incident was a "successful" nix build that produced zero binaries — and a "successful" deploy that activated a system missing the binary. The post-deploy smoke test was supposed to catch this, but `post-deploy-check.sh` was broken. Should we (a) fix the existing `post-deploy-check.sh` path issue, (b) add a new assertion that verifies every package in `larsPackages` has a non-empty `$out/bin/`, or (c) both? The `buildGoDir` silent-swallow behavior means this class of bug will recur whenever a Go experiment flag or build tag is misconfigured.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE ✅
 
@@ -152,3 +149,8 @@ The buildflow derivation fails with `could not read Username for github.com` whe
 
 ### Q2: Should the hash recompute (fix B) be skipped for events created after fix A?
 Currently, `event_to_cloud_event` recomputes the hash for EVERY event, even new ones that are already canonical (created after fix A). This costs ~19µs/event (53K/sec capacity). For the 597M backlog, this adds ~3.1 hours of pure hash computation time. Skipping the recompute for already-canonical events would save this. **But detecting "already canonical" requires either a version flag on the event (storage format change) or comparing the stored hash with the recomputed one (same cost as just recomputing). I cannot decide this architectural tradeoff without knowing if you're willing to change the event storage format.**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

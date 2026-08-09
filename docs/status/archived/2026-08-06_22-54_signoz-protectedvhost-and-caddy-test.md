@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -102,3 +99,8 @@ This is strictly better than both:
   services (Homepage, Twenty, Dozzle, SearXNG, etc.) are working normally.
 - **Previous no-auth commit (`edc653d4`):** This change SUPERSEDES that commit.
   The no-auth approach was too permissive; `protectedVHost` is the correct fix.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

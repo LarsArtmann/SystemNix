@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -178,3 +175,8 @@ This is the one thing blocking an otherwise-clean service startup picture, and t
 | `AGENTS.md`                                   | + 6 gotcha entries                                      |
 
 **Validation:** `nix flake check --no-build` ✅ · `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` ✅
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

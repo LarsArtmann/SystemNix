@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -236,3 +233,8 @@ I assumed `fallocate` allocates real uncompressed extents on BTRFS, but I'm not 
 ### Q3: Should the balance also cover `/data` (the separate BTRFS filesystem)?
 
 Currently the balance scripts only target `/`. The `/data` partition (Docker volumes, Immich, AI models) has its own chunk allocation and can also fragment. Should I add parallel balance services for `/data`, or is the `/` filesystem the only one that has hit ENOSPC?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

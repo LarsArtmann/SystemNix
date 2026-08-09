@@ -4,9 +4,6 @@ _2026-08-02 00:50_
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Goal
 
@@ -409,3 +406,7 @@ The report admitted this in E6 but left it undone. **Fixed:** added an
 - **Workflow `--accept-flake-config`** (E2): lives in the Monitor365 repo.
   The `attic use` step mitigates it, but CI won't reuse the cache without it.
 
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

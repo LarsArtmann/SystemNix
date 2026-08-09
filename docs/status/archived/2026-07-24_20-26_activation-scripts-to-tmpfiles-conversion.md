@@ -1,14 +1,11 @@
 # Status Report: activationScripts → systemd.tmpfiles.rules Conversion
 
-**Date:** 2026-07-24 20:26  
+**Date:** 2026-07-24 20:26
 **Session scope:** Convert `activationScripts` → `systemd.tmpfiles.rules` (hermes, discordsync, crush-daily, configuration, darwin)
 
 > **Update 2026-07-29 (deployed):** This conversion shipped and is live. Confirmed by TODO_LIST `[x]` checkbox (marked done 2026-07-24). The `ssh-config.nix` `home.activation.ssh-sockets-dir` conversion remains open as a follow-up (TODO_LIST Priority 4).
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## a) FULLY DONE
@@ -68,7 +65,7 @@ Nothing. All in-scope items are fully converted.
 ## d) TOTALLY FUCKED UP
 
 ### Alejandra Reformatted Entire Files
-**This is the biggest issue with this session's work.** I ran `alejandra` manually on all 4 files, which reformatted the ENTIRE file — not just the lines I changed. The diff shows 446 insertions / 466 deletions across 4 files, but the actual logical change is ~50 lines. The rest is alejandra normalizing indentation (e.g., `let` on same line as function pattern, `[` spacing, `{} ` → `{}`). 
+**This is the biggest issue with this session's work.** I ran `alejandra` manually on all 4 files, which reformatted the ENTIRE file — not just the lines I changed. The diff shows 446 insertions / 466 deletions across 4 files, but the actual logical change is ~50 lines. The rest is alejandra normalizing indentation (e.g., `let` on same line as function pattern, `[` spacing, `{} ` → `{}`).
 
 **Impact:** The PR/diff is much harder to review. The pre-commit hook already handles formatting staged files — I should have let it do its job instead of running alejandra manually.
 
@@ -160,3 +157,8 @@ It's the same class of conversion (mkdir + chmod → tmpfiles) but at the Home M
 ## Item Resolution (2026-07-30)
 
 Activation scripts to tmpfiles. Items 1-10 DONE (hermes, discordsync, crush-daily, configuration converted). Items 11-25 REJECTED/MIXED: ssh-config.nix conversion OPEN in TODO_LIST; rest REJECTED.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -162,3 +159,8 @@ The SystemNix `monitor365.nix` references `displayUser`, which only exists in th
 ### Q2: The monitor365 runtimeDeps list includes X11-only tools (`xdotool`, `xprintidle`, `scrot`) but evo-x2 runs niri (Wayland-only). Should I replace them with Wayland equivalents (`wlr-randr`, `grim`, `slurp`, `wtype`)?
 
 The display discovery I implemented will correctly export `WAYLAND_DISPLAY`, but `xdotool`/`xprintidle`/`scrot` can't use it — they're X11 protocols. The Rust collectors have native fallbacks (xcap for screenshots, x11rb for window titles), but the CLI fallback tools are X11-only. On evo-x2, the CLI fallbacks will always fail. Should I update the runtimeDeps list to include Wayland tools, or is this acceptable since the native Rust providers should work?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

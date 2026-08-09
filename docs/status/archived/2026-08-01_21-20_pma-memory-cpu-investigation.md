@@ -1,13 +1,10 @@
 # PMA Memory & CPU Investigation
 
-**Date:** 2026-08-01 21:20  
-**Service:** `projects-management-automation.service` (PMA)  
-**Trigger:** `systemctl status` showed `Memory: 11.9G (max: 12G, available: 1.6M, peak: 12G)` with `8min 33s CPU` in `4min 43s` wall time  
+**Date:** 2026-08-01 21:20
+**Service:** `projects-management-automation.service` (PMA)
+**Trigger:** `systemctl status` showed `Memory: 11.9G (max: 12G, available: 1.6M, peak: 12G)` with `8min 33s CPU` in `4min 43s` wall time
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## TL;DR
@@ -175,3 +172,8 @@ This ensures the actual git/LLM error is logged, enabling diagnosis.
 - `/home/lars/projects/go-commit/pkg/commit/git/diff.go:14-21,45-52` — subprocess diff calls
 - `/home/lars/projects/go-commit/pkg/commit/git/gogit_stage.go:36-55` — `StageAll` walks full index
 - `/home/lars/projects/go-commit/pkg/commit/commit.go:99-140` — `Execute` pipeline
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

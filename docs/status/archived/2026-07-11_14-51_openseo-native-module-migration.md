@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -194,3 +191,8 @@ The Docker module is completely replaced — there's no fallback path without `g
 | Full system eval             | PASS                                                                                                                       |
 | Runtime tested               | NO                                                                                                                         |
 | Deployed                     | NO                                                                                                                         |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

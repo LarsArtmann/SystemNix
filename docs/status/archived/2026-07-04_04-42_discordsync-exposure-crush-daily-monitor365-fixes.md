@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -214,3 +211,8 @@ A quick `grep -r "ProtectHome\|ReadWritePaths\|home" modules/nixos/services/*.ni
 | Files changed                  | —                           | 4                              | caddy.nix, dns-blocklists.nix, homepage.nix, crush-daily.nix, monitor365.nix |
 | Deploy status                  | gen 434                     | **Still gen 434**              | ~17 commits pending                                                          |
 | Known broken services          | 2 (crush-daily, monitor365) | 0 (both fixed, pending deploy) | —                                                                            |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

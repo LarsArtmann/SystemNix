@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -193,3 +190,8 @@ The GOMEMLIMIT+2G mitigation will reduce OOM frequency but the real fix is dropp
 ---
 
 *Status generated 2026-08-04 02:01. System: evo-x2, NixOS 26.11 unstable, kernel 7.1.5, 93 GB RAM.*
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -197,3 +194,8 @@ The keyboard pairing itself is complete and functional. The three open questions
 ## Item Resolution (2026-07-30)
 
 AJAZZ keyboard pairing. Core pairing DONE. Follow-ups (AGENTS.md doc, ERTM config, reboot test) are OPEN user decisions — not code items.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

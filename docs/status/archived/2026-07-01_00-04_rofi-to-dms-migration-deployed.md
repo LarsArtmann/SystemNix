@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -170,3 +167,8 @@ Sorted by impact → effort → urgency.
  platforms/nixos/users/home.nix           |  5 ++--
  8 files changed, 70 insertions(+), 55 deletions(-)
 ```
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

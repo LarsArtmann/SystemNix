@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Browser-history deployed and healthy. OAuth2 via Pocket ID working. Remaining items harvested to TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -154,3 +151,8 @@
 2. **Do you want browser-history behind Pocket ID SSO eventually, or is WebAuthn the permanent auth model?** This affects whether we should plan upstream OIDC work or treat the direct TLS proxy as final. (The server has no native OIDC support today — it would require upstream code changes.)
 
 3. **Should the browser-history agent run on the MacBook (macOS) too, or just on evo-x2?** The agent syncs browser history to the server. Running it on macOS would capture Safari/Chrome history from the MacBook, but the agent module may need nix-darwin testing.
+
+---
+
+> **RESOLVED — Browser-history deployed and healthy. OAuth2 via Pocket ID working. Remaining items harvested to TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

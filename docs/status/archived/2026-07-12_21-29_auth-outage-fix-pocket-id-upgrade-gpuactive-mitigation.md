@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -198,3 +195,8 @@ This is the monitoring stack's primary job, and it failed silently. **I cannot d
 ### 2. Should we migrate Pocket ID from SQLite to PostgreSQL?
 
 The root cause is fundamentally SQLite's sensitivity to I/O latency under memory pressure. Even with v2.10.0's Francis actor framework (which makes lock contention non-fatal), the `SQLITE_BUSY` errors still occur and degrade service quality. Pocket ID supports PostgreSQL via `DB_CONNECTION_STRING`. We already run ClickHouse (for SigNoz) and could run PostgreSQL easily. **I cannot answer whether this is worth the operational complexity without knowing how much I/O pressure will drop after the TTM reboot — if GPUActive drops from 51 GiB to < 20 GiB, SQLite may be fine.**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

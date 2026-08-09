@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -219,3 +216,8 @@
    encrypted DNS to LAN clients), or is plain UDP/TCP :53 the intended surface and
    encrypted transports are out of scope? _(Depends on your LAN threat model / client
    capabilities — not inferable from code.)_
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

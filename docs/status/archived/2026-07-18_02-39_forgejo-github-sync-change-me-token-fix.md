@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Summary
 
@@ -189,3 +186,8 @@ Three secondary bugs compounded this:
 ---
 
 _Self-review honesty: I did not verify end-to-end that a single repo mirrors successfully. The token is regenerated and the config is correct by inspection, but until `sudo systemctl start forgejo-github-sync.service` runs and repos appear in the UI, this is a "high-confidence fix" not a "proven fix". The file-permission question (g.1) is the one thing that could still break it — please run that `sudo ls` before declaring victory._
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

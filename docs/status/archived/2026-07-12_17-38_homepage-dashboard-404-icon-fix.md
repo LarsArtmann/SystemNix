@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -120,3 +117,8 @@ Nothing in this session's work was incorrect. However:
 **Q1:** The working tree has uncommitted changes in `pocket-id.nix`, `overlays/linux.nix`, `boot.nix`, and additional `homepage.nix` settings (`fileAndImageRenamerEnabled`, `hideVersion`, `disableUpdateCheck`, `quicklaunch`) that were NOT made in this session. Should I commit all of these together with the icon fix, or do you want to review/commit them separately?
 
 **Q2:** The deploy is blocked by `discordsync`'s missing `go-cqrs-lite/v3` private module inputs. Should I fix the flake inputs/deps map to unblock the deploy, or temporarily disable the discordsync service to get the homepage fix deployed first?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

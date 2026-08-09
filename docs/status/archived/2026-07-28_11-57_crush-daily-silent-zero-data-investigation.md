@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -229,3 +226,8 @@ _Session end._
 ## Item Resolution (2026-07-30)
 
 Crush-daily diagnosis. Items 1-20 DONE (3 root causes found and fixed: runAsUser, CLI schema drift, SQLite DSN). Items 21-61 REJECTED as brainstorms. Update block at end already corrects the 3 factual errors.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -217,3 +214,8 @@ evo-x2 has 128 GB physical RAM (94 GB visible). The chronic memory pressure docu
 | ----------------------------------------- | ----------------------------------------------------- |
 | `scripts/verify-deployment.sh:101`        | Hardcoded port 8080 (pre-existing, works but fragile) |
 | `platforms/nixos/system/snapshots.nix:98` | Pre-existing syntax error blocks `nix flake check`    |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

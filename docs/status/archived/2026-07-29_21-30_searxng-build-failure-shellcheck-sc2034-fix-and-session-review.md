@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Happened
 
@@ -176,3 +173,8 @@ The one-character fix (`i` -> `_`) was committed (`d09f6693`) and deployed in a 
 ## Item Resolution (2026-07-30)
 
 SC2034 fix. DONE: i→_ fix committed (d09f6693), deployed. Most items REJECTED as brainstorms (pre-commit hook, mkDnsGate helper, auto-git daemon docs).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

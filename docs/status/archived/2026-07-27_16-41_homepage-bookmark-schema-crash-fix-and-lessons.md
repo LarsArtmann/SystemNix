@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -290,3 +287,8 @@ The fix (`9600cf8b`) was deployed in a subsequent deploy. Homepage dashboard is 
 ## Item Resolution (2026-07-30)
 
 Homepage bookmark crash fix. DONE: fix committed (9600cf8b), deployed. Resolution section at end confirms deployment. Remaining items REJECTED as brainstorms.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

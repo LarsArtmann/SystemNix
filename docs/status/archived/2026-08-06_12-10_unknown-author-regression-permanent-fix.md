@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -222,3 +219,8 @@ Sorted by Pareto (high impact first):
 2. **Should the auto-commit daemon ever run pre-commit hooks?** Currently it does NOT (go-git can't). For projects with husky/buildflow/lint-staged, this means broken code (lint failures, type errors, missing build outputs) gets committed silently. For `typespec-asyncapi`, the pre-commit hook runs `bun run build && eslint && vitest` — the daemon bypassed all of that. Is the intent "auto-commit even when broken" or "auto-commit only when green"? This is a product/UX decision, not technical.
 
 3. **Should I deploy this fix now (rolling the new PMA + env vars on evo-x2) or wait for user review?** The fix is in `flake.lock` (`b611b4cf`) but the running daemon still uses the old binary (`34b62ce`). A `nix run .#deploy` would: (1) rebuild PMA with the new code, (2) restart the daemon, (3) inject the new env vars. This is a brief service restart (~5-10s) on a production server with active workloads. The risk is low (the new code path is well-tested) but the user may want to review first, especially given the Gatus alerts and the fact that the daemon watches 293 projects and could trigger many parallel commits on restart.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

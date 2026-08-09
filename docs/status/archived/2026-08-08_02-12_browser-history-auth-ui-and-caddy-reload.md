@@ -1,13 +1,10 @@
 # Status Report: Browser History Registration UI + Caddy Reload Fix
 
-**Date:** 2026-08-08 02:12  
-**Session Focus:** Fix `history.home.lan` auth rejection + diagnose Caddy reload failure  
+**Date:** 2026-08-08 02:12
+**Session Focus:** Fix `history.home.lan` auth rejection + diagnose Caddy reload failure
 **Previous Report:** `docs/status/2026-08-08_01-28_browser-history-nixos-deployment.md`
 
 ---
-
-> **RESOLVED — Auth UI and Caddy reload resolved. Browser-history deployed and healthy. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## What Triggered This Session
@@ -205,3 +202,8 @@ The MacBook has 256GB SSD (90%+ full) and 24GB RAM. The agent reads Chrome/Brave
 ### 3. Should registration be locked after the first user?
 
 Currently `POST /auth/register` is open to anyone who can reach the server. On the LAN, this is low risk (DNS resolves `history.home.lan` only locally). But if Caddy's TLS vHost is accidentally exposed externally (or if someone adds a Tailscale/Cloudflare tunnel later), anyone can create an account. **Question:** Do you want a registration lock (disable `/auth/register` after the first user is created), or is open registration acceptable for this homelab?
+
+---
+
+> **RESOLVED — Auth UI and Caddy reload resolved. Browser-history deployed and healthy. Remaining items in TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

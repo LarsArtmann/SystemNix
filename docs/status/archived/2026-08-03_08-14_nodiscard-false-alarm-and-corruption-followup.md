@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -242,3 +239,8 @@ The 330 GiB fstrim event at 01:17 preceded the first corruption at 05:47. On QLC
 ### 3. Do you want to deploy now, or wait until the fresh scrub completes?
 
 The deploy includes the weekly scrub change + monitoring fix + reverted dangerous changes. Deploying now means the next autoScrub runs weekly instead of monthly. But deploying also triggers service restarts which add I/O load while the scrub may still be running. **Deploy now, or wait?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

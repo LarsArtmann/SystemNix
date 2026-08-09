@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -292,3 +289,8 @@ Git:            master, up to date with origin, clean working tree
 | -------------------------------------------------------------------------------- | ------------------------------------------ |
 | `docs/status/2026-06-25_19-20_oauth-diagnosis-immich-outage-dms-matugen-fix.md`  | Previous report (OAuth diagnosis + outage) |
 | `docs/status/2026-06-25_20-12_oauth-verified-immich-hardening-deploy-pending.md` | This report                                |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

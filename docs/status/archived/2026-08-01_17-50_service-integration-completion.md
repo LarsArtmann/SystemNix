@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -190,3 +187,8 @@ Everything is ready for deployment. The only remaining steps require running on 
 | Phase 4A: QMD ↔ SearXNG adapter | P3 — optional |
 | Phase 4B: QMD → Crush Daily context | P3 — optional |
 | Gatus badge integration on Homepage | Low priority — visual only |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

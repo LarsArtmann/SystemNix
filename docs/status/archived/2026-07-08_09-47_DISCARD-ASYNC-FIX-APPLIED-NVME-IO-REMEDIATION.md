@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -232,3 +229,8 @@ The config change requires a deploy or reboot to take effect. But:
 - A safer path might be: manually run `sudo fstrim -v /data` to clear the TRIM backlog, then reboot (which activates the new mount options without a build)
 
 I don't know if the nix build for this change will be heavy enough to re-trigger the I/O choke, or if it'll substitute from cache and be trivial. **The user needs to decide: deploy now (and risk another freeze) vs. reboot now (safe, activates fix) + deploy later.**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

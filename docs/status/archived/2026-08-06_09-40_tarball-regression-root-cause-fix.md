@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## The Root Cause (Finally)
 
@@ -126,3 +123,8 @@ Replaced the 4-line "RECURRING" tarball regression entry with a comprehensive ro
 2. **Deploy to macOS** — activate Darwin registry override (`nix run .#deploy` on macOS)
 3. **Run `nix-collect-garbage --delete-older-than 3d`** — after confirming new profile works for a day
 4. **DiscordSync Turso quota** — external cloud sync plan limit, not caused by this work
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

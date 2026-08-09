@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -329,3 +326,8 @@ Three options:
 | Health score            | ~5.5/10 | 9.5/10 | +4.0            |
 | Skill references loaded | 1 of 5  | 1 of 5 | —               |
 | Commits made            | 0       | 0      | — (uncommitted) |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

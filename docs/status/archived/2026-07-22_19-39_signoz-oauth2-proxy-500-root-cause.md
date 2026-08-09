@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE ✅
 
@@ -261,3 +258,8 @@ Every `nix run .#deploy` fails because of three independent build failures (dnsb
 | 17 | DONE | `-k` curl flags audited |
 | 18-19 | DONE/REJECTED | OIDC monitoring DONE via Gatus; read-only API key REJECTED |
 | 20-50 | MIXED | Items 20-50 are oauth2-proxy hardening brainstorms. Most REJECTED as over-engineering for single-admin. Key survivors: item 24 (localhost:8080 firewall) noted in AGENTS.md. |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

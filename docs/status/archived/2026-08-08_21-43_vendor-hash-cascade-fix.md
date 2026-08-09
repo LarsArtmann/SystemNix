@@ -6,9 +6,6 @@ A full system deploy (`nix run .#deploy`) failed after 1h42m with 5 Go module FO
 
 ---
 
-> **RESOLVED — All vendorHashes fixed across 5 Go repos. flake.lock committed. See CHANGELOG.md 'vendorHash cascade' entry.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -158,3 +155,8 @@ Nothing. All 5 packages were fixed correctly, pushed, and verified. The only ine
 2. **Should the auto-git daemon run `nix build .#default.goModules` before pushing upstream Go repos?** dnsblockd's unpushed local commit (`8132637`) bumped deps without updating the vendorHash, and the daemon pushed it blindly. A pre-push check would catch this, but it adds ~20s per push.
 
 3. **Should all LarsArtmann Go repos standardize on dnsblockd's `nix/vendor-hash.nix` pattern (separate file) vs inline `vendorHash` in `flake.nix`?** The separate-file pattern gives cleaner diffs (+1 −1) and is trivially scriptable. 4 of the 5 repos fixed in this session use inline vendorHash; only dnsblockd uses the separate file.
+
+---
+
+> **RESOLVED — All vendorHashes fixed across 5 Go repos. flake.lock committed. See CHANGELOG.md 'vendorHash cascade' entry.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -263,3 +260,8 @@ Should I add the assertion, or just document the anti-pattern in AGENTS.md (whic
 ## Item Resolution (2026-07-30)
 
 No NEXT items — bug fix report. 4 always-firing rules fixed (target=0 → target=1), provision script v4, deployed, 19 rules verified. All work done.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

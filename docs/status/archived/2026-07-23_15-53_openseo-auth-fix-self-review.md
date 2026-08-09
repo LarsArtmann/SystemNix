@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -178,3 +175,8 @@ The validate script is the right tool (runtime > eval-time for sops-backed featu
 ## Item Resolution (2026-07-30)
 
 OpenSEO auth self-review. Items 1-20 DONE (deployed, callback path verified, validate script). Items 21-61 REJECTED as brainstorms (protectedVHost extraction, upstream PRs, etc.). MCP integration OPEN in TODO_LIST.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

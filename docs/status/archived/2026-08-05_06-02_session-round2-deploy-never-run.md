@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## The Elephant in the Room
 
@@ -210,3 +207,8 @@ To be fair to myself:
 ---
 
 *End of report. The deploy has not been run. Waiting for instructions.*
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

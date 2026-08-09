@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -189,3 +186,8 @@ The auth fix is **structurally sound and eval-verified**. The GSC callback path 
 ## Item Resolution (2026-07-30)
 
 OpenSEO verification. Items 1-15 DONE (callback verified, Caddy rendering verified, docs updated). Items 16-50 REJECTED as brainstorms. MCP integration OPEN in TODO_LIST.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

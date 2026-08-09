@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -317,3 +314,8 @@ TODO_LIST.md | 204 → 280 lines (+76 / restructured)
 ## Commits This Session
 
 None. Work is in working tree only, awaiting user decision (see question #1).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@ User ran `nix flake update && nh os switch` which pulled breaking changes across
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -166,3 +163,8 @@ At conversation start, `git status` showed 6 staged files (`monitor365.nix`, `so
 ### 2. Why did hermes, oauth2-proxy, and discordsync fail to start?
 
 The deploy succeeded (system activated), but these 3 services failed. I was blocked from investigating (`systemctl` not allowed by security policy). **Are these pre-existing failures from before this deploy, or did this deploy cause them?** The user needs to run `journalctl -u hermes.service -u oauth2-proxy.service -u discordsync.service --since "1 hour ago"` to check. If pre-existing, they belong in TODO_LIST.md. If new, they're regressions from this deploy that need immediate attention.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

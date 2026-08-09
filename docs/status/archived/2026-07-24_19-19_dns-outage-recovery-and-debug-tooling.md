@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -166,3 +163,8 @@
 ## Item Resolution (2026-07-30)
 
 DNS outage recovery. Items 1-20 DONE (debug tools installed, dns-diagnostics.sh rewritten, Overview 503 traced to PMA Type=notify bug). Items 21-69 MIXED: DNS root cause (CNAME-chase) DONE upstream; most remaining items REJECTED as brainstorms. Off-site backup OPEN in TODO_LIST P0.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

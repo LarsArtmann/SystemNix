@@ -1,13 +1,10 @@
 # Crush Daily Insights Pipeline — Complete Recovery & Root Cause Fix
 
-**Date:** 2026-07-30 00:05 CEST  
-**Session:** Multi-session effort (3 sessions, ~6 hours total)  
+**Date:** 2026-07-30 00:05 CEST
+**Session:** Multi-session effort (3 sessions, ~6 hours total)
 **Outcome:** All 46 collected dates now have project + cross-project insights. 3 root-cause bugs fixed, deployed, verified. Nightly scheduler will work correctly tonight.
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## A) FULLY DONE
@@ -307,3 +304,8 @@ print(f'Missing: {sorted(collected - cross)}')
 ## Item Resolution (2026-07-30)
 
 Crush-daily capstone. Items 1-20 DONE (46/46 dates complete, deployed, nightly scheduler fixed). Items 21-71 MIXED: event-store compaction OPEN in TODO_LIST; reclassify ErrNoDataCollected REJECTED; cost data verification OPEN; most REJECTED as brainstorms.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Actually Happened
 
@@ -297,3 +294,8 @@ Changes deployed: NO (committed in 99ac60a5 but not activated on live system) �
 | 48 | DONE | post-deploy-check expanded with each new service |
 | 49 | DONE | stat timestamp gotcha documented in AGENTS.md |
 | 50 | REJECTED | btrfs-health.nix already provides unified snapshot health |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

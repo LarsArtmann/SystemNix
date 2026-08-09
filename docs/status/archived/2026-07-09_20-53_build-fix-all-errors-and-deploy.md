@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -166,3 +163,8 @@ The diff shows three browser policy files were REMOVED in this generation:
 - `etc-opt-chrome-policies-managed-default.json`
 
 I did NOT touch any browser policy code this session. These were removed by the `nix flake update` (pulling newer versions of modules) or by changes from a previous session. I don't know if this was intentional or an accidental regression from an upstream change. If browser management policies were supposed to be active, they're now silently gone.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

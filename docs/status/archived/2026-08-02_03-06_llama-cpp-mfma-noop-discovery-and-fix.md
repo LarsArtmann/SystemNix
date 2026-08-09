@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -142,3 +139,8 @@ The `llama-cpp-rocwmma` derivation in `modules/nixos/services/ai-stack.nix` had 
 ---
 
 *Created and Reviewed by Lars Artmann with the help of GLM-5.2 via Z.ai and Crush*
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

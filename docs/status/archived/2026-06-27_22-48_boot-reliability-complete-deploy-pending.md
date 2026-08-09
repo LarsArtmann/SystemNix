@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -193,3 +190,8 @@ I need to know: are these your changes? Should I commit them, or are they WIP fr
 | `internal/db/db_test.go` | + 3 tests for splitter + trigger verification                                 |
 
 **Validation:** `nix flake check --no-build` ✅ · `nix eval .#nixosConfigurations.evo-x2` ✅ · `go test ./...` ✅ · BuildFlow ✅
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

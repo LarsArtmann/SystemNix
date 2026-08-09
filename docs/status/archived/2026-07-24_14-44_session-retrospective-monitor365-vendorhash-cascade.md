@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -170,3 +167,8 @@ Six new gotchas discovered during this session have NOT been added to AGENTS.md:
 ## Item Resolution (2026-07-30)
 
 Retrospective. All items are retrospective observations, not action items. GPUActive/off-site backup/Turso items tracked in TODO_LIST/ROADMAP.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

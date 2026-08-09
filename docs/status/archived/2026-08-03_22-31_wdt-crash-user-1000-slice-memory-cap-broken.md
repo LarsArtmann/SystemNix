@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Crash Summary
 
@@ -207,3 +204,8 @@ all checks passed!
 null UID references **silent bugs** rather than build failures. When using
 `config.users.users.<name>.uid` in Nix expressions, ALWAYS verify it's not null at eval time,
 or hardcode the UID.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

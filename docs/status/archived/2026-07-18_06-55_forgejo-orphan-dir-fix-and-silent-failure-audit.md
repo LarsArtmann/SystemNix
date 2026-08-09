@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -259,3 +256,8 @@ The working tree has 641 modified files — almost entirely formatter damage (tr
 2d12a613 fix(forgejo): clear orphan git dirs so all GitHub repos mirror, not just 7
 3ca1ad69 fix: eliminate CHANGE_ME placeholder from Forgejo GitHub-sync and prevent silent auth failures  (prior session)
 ```
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

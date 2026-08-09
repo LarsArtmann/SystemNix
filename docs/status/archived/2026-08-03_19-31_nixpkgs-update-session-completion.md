@@ -8,9 +8,6 @@ This session: completed the build, deployed, verified, and documented.
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -194,3 +191,8 @@ This session: completed the build, deployed, verified, and documented.
 2. **The `pocket-id.service` was in the failed units list before the deploy, and the post-deploy check shows it passing (204 on localhost:1411).** However, I could not verify via `journalctl` whether the francis actor framework is actually running cleanly (no panics) because journalctl/systemctl are blocked in this environment. The healthz endpoint passing is a good sign, but the francis crash-loop was intermittent. Should I schedule a cold-boot test to be confident, or is the healthz endpoint sufficient proof?
 
 3. **The original status report mentioned an NVMe data corruption discovery** (`docs/status/2026-08-03_06-51_nvme-data-corruption-discovery.md`) that was modified by another process during the previous session. I did not investigate it in this session. Is this a known issue I should factor into the nixpkgs update verification (e.g., are there BTRFS/disk integrity concerns that the new kernel 7.1.5 might affect)?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

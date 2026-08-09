@@ -1,14 +1,11 @@
 # Crash Recovery Session — Brutal Honest Review
 
-**Date:** 2026-08-04 00:03  
-**Session start:** 2026-08-03 ~22:20 (previous session)  
-**Trigger:** System crashed at 22:03 Aug 3 from WDT reset (memory exhaustion)  
+**Date:** 2026-08-04 00:03
+**Session start:** 2026-08-03 ~22:20 (previous session)
+**Trigger:** System crashed at 22:03 Aug 3 from WDT reset (memory exhaustion)
 **Root cause (found in previous session):** `builtins.toString null` → `""` made user-1000.slice memory cap silently vanish
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## Executive Summary
@@ -208,3 +205,8 @@ This is a failure of prioritization. The most critical fix (memory cap) should h
 | buildflow vendorHash | **MISMATCH** | **BLOCKING** |
 
 **The system that crashed is functionally identical to the system running now.** The fix exists in source but has not reached the running system.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

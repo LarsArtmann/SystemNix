@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -145,3 +142,8 @@
 2. **The `flake.lock` shows as modified from a prior session — should I investigate/revert those changes, or are they intentional?** — The git status at conversation start showed `M flake.lock`. I didn't touch it, but it's in the working tree. I need to know if these are your changes or stale.
 
 3. **Should I deploy now (`nix run .#deploy`), or do you want to review the overlay changes first?** — The build is verified at the package level, but a full deploy takes 1h+ and switches the running system. I don't want to deploy without your explicit go-ahead.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

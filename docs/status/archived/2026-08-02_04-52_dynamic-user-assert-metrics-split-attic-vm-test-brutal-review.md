@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -178,3 +175,8 @@ The nixpkgs module creates an `atticd-atticadm` wrapper binary. I can either: (a
 ### Q3: The auto-commit daemon committed `d001eac1` with the heredoc indentation bug mid-session. Should I squash `d001eac1` + `191ecb17` into a single clean commit, or leave the history as-is?
 
 `d001eac1` contains broken Prometheus metrics output (leading whitespace). `191ecb17` fixes it. The intermediate broken state is in the git history. Neither has been deployed, so there's no runtime impact. But `git bisect` would land on a broken commit if someone bisected through this range.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -162,3 +159,8 @@ Run `nix run .#deploy` on evo-x2 to apply the canonical-subdomain change, then v
 | 16-17 | REJECTED | Prometheus gauge / Grafana panel for dnsblockd — over-monitoring |
 | 18 | DONE | Architecture documented in AGENTS.md |
 | 19-50 | MIXED | Items 20-50 are brainstorms. Key survivors: item 30 (Darwin CA trust) is OPEN in TODO_LIST. Rest REJECTED as aspirational (homepage linter, quarterly audit, flatPath helper, etc.) |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

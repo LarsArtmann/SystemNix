@@ -4,9 +4,6 @@ _2026-08-02 03:12 CEST_
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -272,3 +269,8 @@ The changes (attic.nix GC comment + restartTriggers + localhost binding, sops se
 ### Q3 — Is the hermes flake input change (pinned tag → default branch) intentional?
 
 `flake.nix` has an unstaged change: `hermes-agent` URL changed from `github:NousResearch/hermes-agent/v2026.7.20` (pinned tag) to `github:NousResearch/hermes-agent` (default branch). This is NOT from this session — it's a parallel change. Unpinning a flake input from a tag to a rolling branch can cause unpredictable updates. Was this intentional?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -150,3 +147,8 @@ AGENTS.md states: _"lib.mkMerge + flake-parts does not work — use inline confi
 The user said "tell me where we are fighting Nix" — which I interpreted as a review/report task. But the session prompt also says "Execute and Verify them one step at a time. Repeat until done." The report identifies ~40 fixable issues across ~20 files. Applying all fixes is a multi-hour effort with real regression risk on a production NixOS system.
 
 **What I need:** Confirmation on whether to start applying fixes (and if so, should I start with the HIGH priority items like the `monitor365.nix` port-collision bug and the homepage YAML emitter?), or whether this report is the deliverable.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — M1 complete, M2–M15 all completed by 2026-08-07_06-37 report. See TODO_LIST.md Priority 7 (removed — all done) and CHANGELOG.md for details.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -234,3 +231,8 @@ I cannot figure out which approach matches your CI preferences without asking. M
 | Time efficiency | Below target — too much context gathering, not enough editing |
 | Verschlimmbessern risk so far | Zero — M1 check has zero false-positive rate |
 | Uncommitted changes | M1 changes in `flake.nix` + `.githooks/pre-commit` (not yet committed) |
+
+---
+
+> **RESOLVED — M1 complete, M2–M15 all completed by 2026-08-07_06-37 report. See TODO_LIST.md Priority 7 (removed — all done) and CHANGELOG.md for details.**
+> All forward-looking items in this report were completed in subsequent sessions.

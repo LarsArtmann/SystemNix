@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Deploy deps fixed, browser-history deployed and healthy. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A. FULLY DONE
 
@@ -156,3 +153,8 @@
 2. **Should the browser-history agent also run on the MacBook?** The MacBook has 256GB SSD (90%+ full) and 24GB RAM. The agent is lightweight (Chrome extension companion), but I need to know if you want cross-device history sync before I set up the macOS side.
 
 3. **Should registration be locked after the first user?** Currently anyone on the LAN can register. This is fine for a single-user homelab, but if you ever expose this externally (or have guests on the LAN), it's an open door. Do you want a `registration_open = false` flag after first user, or is open registration acceptable?
+
+---
+
+> **RESOLVED — Deploy deps fixed, browser-history deployed and healthy. Remaining items in TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -223,3 +220,8 @@ The last thing we saw was Pocket ID crashing mid-passkey-authentication with `re
 ### Q2: Is the Pocket ID `renew lock: lock ownership lost` crash going to recur?
 
 This error occurred during the deploy/restart cycle. Pocket ID 2.9.0 uses some form of distributed lock (likely SQLite-based, since Pocket ID is backed by SQLite). If the lock ownership mechanism is fragile under systemd `Restart=always` cycles, this could crash during every deploy that touches Pocket ID. I don't know if this is a known upstream bug, a configuration issue, or a one-time fluke. **Have you seen this error before, or was this the first time?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

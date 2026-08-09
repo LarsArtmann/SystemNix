@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -294,3 +291,8 @@ Failed:   nix-build-cleanup.service
 BTRFS:    Metadata 96.5% used (55.69/57.70 GiB) — approaching ENOSPC
 Flake:    ✓ check passes, ✓ eval passes
 ```
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

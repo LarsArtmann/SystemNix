@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -184,3 +181,8 @@
 | Date references remaining | 4 (cleanup needed) |
 | Sections NOT cleaned | Key Procedures (BTRFS, SearXNG, Qmd, Quickshell) |
 | Validation | `nix flake check --no-build` passes (but doesn't validate AGENTS.md content) |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

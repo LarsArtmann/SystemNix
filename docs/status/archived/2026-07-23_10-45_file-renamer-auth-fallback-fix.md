@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -141,3 +138,8 @@
 ## Item Resolution (2026-07-30)
 
 Auth fallback fix. DONE: deployed (eca4cb20), ErrorTypeAuth added upstream (8bf60bd), sops key provisioned, restartTriggers added system-wide. All 6 items resolved.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

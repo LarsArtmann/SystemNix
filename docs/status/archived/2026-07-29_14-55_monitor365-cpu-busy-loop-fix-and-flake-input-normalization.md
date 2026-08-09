@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -155,3 +152,8 @@ All resolved. The CPU busy-loop fix was pushed upstream (`f72cf1073`) and deploy
 ## Item Resolution (2026-07-30)
 
 Monitor365 CPU busy-loop. Items 1-10 DONE (fix pushed f72cf1073, deployed 16-58). Items 11-53 REJECTED. Real root cause was server COALESCE crash, not 404/429. Resolution section at end corrects the root cause.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

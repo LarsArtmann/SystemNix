@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — M12–M15 complete. Prevention plan fully executed (M1–M15). All 15 tasks done across 3 sessions.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done This Session
 
@@ -218,3 +215,8 @@ Nothing. All deliverables pass their verification checks. No regressions introdu
 2. **Should the M14 jq filter be refined** to use a 24h timestamp threshold (more precise, but requires understanding the exact Gatus API response schema), or is the current "all results failed" approach good enough for a homelab?
 
 3. **Should I deploy the changes now** so the `system_gatus_endpoints_in_error_long` metric appears and the pre-deploy check goes fully green, or wait?
+
+---
+
+> **RESOLVED — M12–M15 complete. Prevention plan fully executed (M1–M15). All 15 tasks done across 3 sessions.**
+> All forward-looking items in this report were completed in subsequent sessions.

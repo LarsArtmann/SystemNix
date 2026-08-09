@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -287,3 +284,8 @@ All remaining items resolved by `2026-07-30_00-05`: 10/10 retry dates succeeded,
 ## Item Resolution (2026-07-30)
 
 Crush-daily timezone root cause. DONE: bug fixed (9286bf0), full recovery in 00-05. Resolution section at end confirms all 46 dates complete.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Iteration History
 
@@ -197,3 +194,8 @@ Currently `nix run .#dms-locks` (plural) runs the lock, but the binary is `dms-l
 ### Q3: Do you want me to deploy now and visually verify, or continue iterating on the code first?
 
 The changes compile and eval correctly, but have never run. Deploying would let us see the lock screen and catch runtime issues (like D1/D2 above). But deploying also means if something is broken, you're locked out of your session until you switch to a TTY and fix it. Should I deploy, or do you want to review the code more first?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

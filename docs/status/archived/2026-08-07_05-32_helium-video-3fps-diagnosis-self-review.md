@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — All 4 anti-throttle flags added to Helium wrapper in base.nix (lines 78-81). Deployed. See CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## THE REAL ROOT CAUSE: Disk I/O Saturation
 
@@ -277,3 +274,8 @@ System-level VA-API working ≠ Chromium using it. I never checked `chrome://gpu
 **Still unverified:** Whether VA-API hardware decode is actually working inside Chromium (only verified at system level via `vainfo`). Need user to check `chrome://gpu`.
 
 **Fix NOT deployed.** User is still at 3 FPS.
+
+---
+
+> **RESOLVED — All 4 anti-throttle flags added to Helium wrapper in base.nix (lines 78-81). Deployed. See CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

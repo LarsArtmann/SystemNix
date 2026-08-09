@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## (A) FULLY DONE
 
@@ -174,3 +171,8 @@ When I started this session, `caddy.nix` and `openseo.nix` had unstaged pure-for
 ## Item Resolution (2026-07-30)
 
 File renamer upstream self-review. Items 1-20 DONE (pin at eca4cb20, 26 upstream tests pass, deployed). Items 21-67 REJECTED as brainstorms (upstream refactoring ideas, additional tests, etc.).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

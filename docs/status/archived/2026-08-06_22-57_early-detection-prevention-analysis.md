@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Requested
 
@@ -243,3 +240,8 @@ The full Gatus VM test would need to mock 40+ endpoints (Forgejo, Immich, SigNoz
 ### 3. Are the 2 live production issues (Monitor365 507M backlog + SigNoz no-auth) things you're already aware of and handling, or do they need immediate investigation in the next session?
 
 The 22:40 report flagged 16 consecutive sync failures and a 507M-event backlog as "the #1 priority." The 22:34 report flagged SigNoz as potentially externally exposed with root-admin access. Both are from earlier tonight. I don't know if you've already addressed these, if they're known/accepted states, or if they're still actively on fire. This determines whether the next session should be "fix production" or "build prevention."
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

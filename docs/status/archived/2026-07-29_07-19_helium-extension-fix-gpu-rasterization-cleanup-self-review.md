@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -196,3 +193,8 @@
 **Why I can't figure this out myself:** Deploying takes 5-10 minutes and I don't know your preference for deploy cadence. There are at least 2 other small fixes that should go in before deploy: (1) remove the dead 9gag Post Filter extension from `configuration.nix`, (2) add `ExtensionManifestV2Availability = 2` to prevent MV2 silent failures. Batching these would mean one deploy instead of three. But it also means more unverified changes stacked together, making it harder to isolate which fix worked if something breaks.
 
 **How to find out:** Your call. If you want maximum confidence in the diagnosis, deploy now with just the `--disable-background-networking` removal. If you want efficiency, let me add the 2 other fixes first, then deploy once.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE ✅
 
@@ -213,3 +210,8 @@ accept another hash format change.**
 verification. The system is NOT yet fully operational because the 10K/day limit
 blocks the backlog. The fix will be fully operational once the limit is raised or
 the backlog is purged (Q1/Q2 above).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

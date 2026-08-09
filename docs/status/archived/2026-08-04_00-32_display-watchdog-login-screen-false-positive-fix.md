@@ -1,13 +1,10 @@
 # Status: Display-Watchdog Login-Screen False Positive Fix
 
-**Date:** 2026-08-04 00:32  
-**Session scope:** SDDM restart-loop diagnosis + display-watchdog guard  
+**Date:** 2026-08-04 00:32
+**Session scope:** SDDM restart-loop diagnosis + display-watchdog guard
 **Verdict:** Fix written and verified, **NOT deployed**. User is still experiencing the loop.
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## What Was Done
@@ -112,3 +109,8 @@ Add a defensive check: if `loginctl list-sessions` returns empty but the system 
 2. **Is the monitor supposed to sleep at the login screen?** If the user WANTS the monitor to power-save at the login screen (overnight, etc.), the guard approach (don't restart) is correct. If the user wants the monitor always-on at the login screen, disabling DPMS in SDDM is better. I can't determine the user's preference without asking.
 
 3. **Did this start recently or has it always happened?** The watchdog was added in `d5e48c4c`. If the user only noticed it now, something may have changed (monitor DPMS timeout, SDDM config, or they just never sat at the login screen for 10+ min before). I can't determine the timeline without the user's input.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -291,3 +288,8 @@ Working tree:   clean
 - `TODO_LIST.md` — Updated Monitor365/Twenty CRM/Gatus status
 - `AGENTS.md` — matugen decision, 5 new gotchas
 - 197 status files archived (docs/status/ → docs/status/archive/)
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

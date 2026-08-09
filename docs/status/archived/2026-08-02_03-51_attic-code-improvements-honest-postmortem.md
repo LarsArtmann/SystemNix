@@ -4,9 +4,6 @@ _2026-08-02 03:51 CEST_
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -298,3 +295,8 @@ homepage.nix, gatus-config.nix, .githooks/pre-commit, AGENTS.md, setup guide,
 status reports, sops secret). Committing now means deploy uses exactly these
 changes. But if deploy reveals runtime issues (DynamicUser storage, heredoc
 metrics), we'd need another commit cycle. Commit now or post-deploy?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

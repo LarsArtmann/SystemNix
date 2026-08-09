@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — OAuth2 login fix deployed. Browser-history healthy with OAuth2 providers configured. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -222,3 +219,8 @@ Adding `PartOf = [ "browser-history.service" ]` would make it restart when brows
 
 ### Q3: Is the `BeginOAuthLoginResponse` struct part of the public API?
 I changed the handler to use `http.Redirect` instead of returning the struct as JSON. But the struct and the `BeginOAuthLogin` service method still exist. Should I deprecate/remove the struct, or is it part of the published `usermgmt/v4` API that other consumers might depend on? I can't check all consumers of `cqrs-htmx/usermgmt` from this repo.
+
+---
+
+> **RESOLVED — OAuth2 login fix deployed. Browser-history healthy with OAuth2 providers configured. Remaining items in TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -99,3 +96,8 @@ Priority ordered (P0 = blocking / silent failure today):
 ## Item Resolution (2026-07-30)
 
 SigNoz jq fix. P0 items (14-16) DONE (restartTriggers added, Gatus check added, rules provisioned via v5 API). Items 17-29 REJECTED as brainstorms. Update block at top + body annotations already cover key items.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

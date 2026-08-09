@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What This Session Did
 
@@ -154,3 +151,8 @@ The user asked "What did you forget? What could you have done better?" about the
 2. **When exactly did the "No account found for this email" SSO error occur?** The prior session's logs showed SSO working at 20:09:53, then the server restarted at 20:49 (projection rebuild from event store). If you tried SSO AFTER the restart and it failed, the projection rebuild may have dropped or corrupted the user row in DuckDB. This would mean the event store has a gap, and SSO will still fail after deploy regardless of the API key fix. The approximate time you saw the error determines whether we need to also re-provision the admin user.
 
 3. **Should I deploy now, or do you want to verify the DB state first?** The API key sync oneshot modifies the DuckDB database directly before the server starts. You could first manually check the DB state (existing API key hash, user rows) before deploying. This requires running `duckdb /var/lib/monitor365-server/monitor365.duckdb "SELECT id, email FROM users; SELECT id, api_key FROM tenants;"` as the `monitor365-server` user. If you prefer to just deploy and let the automated checks (post-deploy-check + Gatus) catch issues, that works too — but the DB inspection would give us certainty before the deploy.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

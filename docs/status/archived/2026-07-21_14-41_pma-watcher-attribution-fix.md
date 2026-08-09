@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -171,3 +168,8 @@ The reported symptom ("daemon not working") is **fixed and verified**. The under
 ## Item Resolution (2026-07-30)
 
 PMA watcher fix. Items 1-10 DONE (watcher fix committed 52c01b18, auto-commit fixed d1d013d2, AGENTS.md updated). Items 11-53 REJECTED as brainstorms (dead param, cache eviction, load testing, etc.).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

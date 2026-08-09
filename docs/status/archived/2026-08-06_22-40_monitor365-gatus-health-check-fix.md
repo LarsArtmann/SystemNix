@@ -2,9 +2,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -200,3 +197,8 @@ This is a monitoring design decision with operational tradeoffs. A true health c
 ### 3. Is the 507M-event backlog expected or anomalous?
 
 `cloud_sync_upload_backlog_size = 507353010`. This is ~507 million events. The agent has uploaded 240,000 total (`cloud_sync_events_uploaded_from_store`). At this rate, draining the backlog would take ~85,000 upload cycles. Is this a known state (e.g., the agent was offline for a long time and accumulated events), or did something break recently? This determines whether the priority is "fix the sync" vs "purge the backlog and start fresh."
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -258,3 +255,8 @@ The module has a `blocklist-auto-update.service` referenced in the systemd units
 ### Q2: Should the whitelist filter live in dnsblockd upstream instead?
 
 The current approach (build-time filtering in Nix) works but creates 23 derivations and requires a rebuild to change the whitelist. Adding a `dns_whitelist` config key to dnsblockd's runtime resolver would be cleaner — the handler already has an `allowlist` check at line 312-317 of `handler.go` (for temp-allowlist), so adding a permanent whitelist check is a small change. Should I implement this upstream and remove the Nix-side filter, or is the build-time approach preferred for its declarative nature?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

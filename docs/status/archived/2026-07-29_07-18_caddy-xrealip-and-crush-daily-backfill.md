@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -251,3 +248,8 @@ The event store has NO `DailyDataCollected` event for 2026-06-24 (it jumps from 
 ## Item Resolution (2026-07-30)
 
 Caddy proxyTo + crush-daily backfill. Items 1-20 DONE (proxyTo generalized to all 9 directives, 45 dates backfilled). Items 21-64 MIXED: deploy items OPEN in TODO_LIST; backfill script integration DONE; most REJECTED as brainstorms.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

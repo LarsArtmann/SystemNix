@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -192,3 +189,8 @@ Internal links: ALL RESOLVE
 Cross-file counts: VERIFIED (52 modules, 74 Gatus endpoints)
 TODO_LIST done items: 0 (correct — all open work)
 ```
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

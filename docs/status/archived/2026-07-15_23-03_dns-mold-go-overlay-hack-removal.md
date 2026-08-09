@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -187,3 +184,8 @@
 1. **Should dnsblockd's sdns root recursion be fixed properly, or is DoT forwarding the permanent architecture?** Root recursion gives maximum privacy (no third-party resolver), but the sdns middleware pipeline gap is a non-trivial fix. DoT forwarding through Cloudflare/Quad9 is pragmatic and reliable. I recommend DoT forwarding as the permanent architecture unless privacy requirements demand root recursion.
 
 2. **Should `discord.com` be whitelisted in the blocklist, or should discordsync use direct IP/DoT to Discord's API?** The HaGeZi social blocklist blocks `discord.com`, which crashes discordsync. Whitelisting opens a tracking vector. Using direct IP or a DoH endpoint in discordsync itself would be cleaner but requires upstream changes.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

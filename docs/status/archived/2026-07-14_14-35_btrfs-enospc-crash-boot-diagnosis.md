@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -200,3 +197,8 @@ The structural problem is clear: BTRFS + Docker overlay2 + Nix store = metadata 
 - **Strategic:** Reformat root as ext4 (lose snapshots) or ZFS (gain better space management, lose macOS compat). Major migration but solves the root cause permanently.
 
 This is a reversible vs irreversible decision that needs user input.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (Completed and Verified)
 
@@ -283,3 +280,8 @@ Most items flagged here were resolved in later sessions the same day and next da
 ## Item Resolution (2026-07-30)
 
 No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

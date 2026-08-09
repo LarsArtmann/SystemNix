@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Triggered This Session
 
@@ -228,3 +225,8 @@ New gotcha entry: "monitor365 DuckDB pool deadlock — degraded-but-alive outage
 | Swap used | 15Gi (full) | 13Gi |
 | Server watchdog | DID NOT EXIST | Active (5min interval) |
 | Agent watchdog server check | BROKEN (silent -sf failure) | Fixed (explicit HTTP status) |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

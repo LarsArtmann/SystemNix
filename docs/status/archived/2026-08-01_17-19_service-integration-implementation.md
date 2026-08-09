@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -292,3 +289,8 @@ There are now TWO backup health monitors for Monitor365: the existing `monitor36
 ### G3. Should the Monitor365 `otel` cargo feature be enabled unconditionally or made configurable?
 
 I hardcoded `cargoExtraArgs = "--features otel"` in the upstream flake.nix `commonArgs`. This means EVERY build of monitor365 (including `monitor365-cli-fast`, devShells, etc.) will compile with the otel feature — adding tonic, prost, and the full gRPC stack to every build. This increases build times. Should this be a build flag that's only enabled in the SystemNix wrapper (via `overrideAttrs`), or is unconditional enablement acceptable?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

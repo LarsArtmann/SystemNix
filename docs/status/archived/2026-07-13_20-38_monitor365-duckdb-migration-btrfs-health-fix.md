@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -209,3 +206,8 @@ The old `/var/lib/monitor365-server/monitor365.db` file exists. DuckDB created a
 ### 2. How deep does the DuckDB migration go in the monitor365 codebase?
 
 I fixed `normalize_db_path` and the config defaults, but the runtime logs show `julianday does not exist` and datetime parsing failures. These suggest there are SQL queries throughout the Rust codebase that use SQLite-specific functions. I don't know the full scope — are there 5 queries to fix or 50? Is there a systematic DuckDB migration effort needed upstream, or are these isolated edge cases in background tasks? **Should I do a full audit of SQLite-isms in the monitor365 Rust code, or just fix the errors as they surface?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

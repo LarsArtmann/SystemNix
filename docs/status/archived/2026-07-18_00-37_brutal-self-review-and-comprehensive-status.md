@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE — Shipped, verified, production-green
 
@@ -296,3 +293,8 @@ The device `evo-x2` returns 404 after projection rebuilds because `DeviceRegiste
 ### G3. Is the concurrent oauth2-proxy.nix change yours, and do you want it kept?
 
 I committed `modules/nixos/services/oauth2-proxy.nix` changes (TLS verification, SSL_CERT_FILE) that appeared in the working tree from a concurrent session. I bundled them into my commit `d5719019`. If those changes are incomplete or experimental, I should not have committed them. **Were those changes ready to ship?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

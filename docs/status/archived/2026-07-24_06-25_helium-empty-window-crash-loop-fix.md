@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## The Incident
 
@@ -93,3 +90,8 @@ The diagnosis was fast and correct. The fix is pragmatic and consistent with exi
 ## Item Resolution (2026-07-30)
 
 Helium empty-window fix. DONE: helium-launch wrapper deployed, pgrep-check prevents empty-window loop. All 3 items resolved.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

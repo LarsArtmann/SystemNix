@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -163,3 +160,8 @@ User asked why `hermes-agent-0.19.0` never gets cached. The investigation reveal
 2. **Should I commit the flake change now, or do you want to build-test 0.19.1 first?** The change evals clean but hasn't been built. If 0.19.1 has a build regression (FOD hash mismatch from the updated uv2nix/pyproject-nix), you'd want to know before committing. Alternatively, commit now and let the deploy catch it — the lock file makes rollback trivial (`git checkout flake.lock`).
 
 3. **Do you want attic push automation in `deploy.sh`, or will you push manually?** Auto-pushing the full system closure after every deploy guarantees the cache stays warm, but adds deploy time (pushing ~N GB of store paths). Manual push gives you control over when the cache is populated. I don't know your deploy frequency or bandwidth constraints well enough to recommend.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

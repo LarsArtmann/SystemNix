@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -175,3 +172,8 @@ The previous session planned to push `9b709d83`. The user ran `nix flake update`
 ### Q2: Did you intentionally run `nix flake update` (updating ALL 13 inputs), or did you only mean to update specific inputs?
 
 The `nix flake update` command updated art-dupl, branching-flow, buildflow, discordsync, emeet-pixyd, go-branded-id, go-error-family, go-filewatcher, go-output, herdr, nur, and all their transitive deps. Some of these (buildflow, discordsync) have had breaking changes in recent sessions. I only fixed the monitor365 eval failure — there could be more build failures from the other 12 updated inputs. Should I scope the flake.lock update to only the inputs you actually wanted to update?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

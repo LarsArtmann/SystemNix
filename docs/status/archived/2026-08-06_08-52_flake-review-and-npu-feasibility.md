@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Requested
 
@@ -223,3 +220,8 @@ The renamer has a `watch` command (`cmd/file-renamer/watch.go`) that uses `filec
 **Verification:** `nix flake check --no-build` ✓ | `nix build` ✓ | `nix fmt --ci` ✓ | `nix run .#test` ✗ (NOT RUN)
 
 **Honest self-assessment:** I found and fixed 2 real issues but missed 3+ equally important ones because I didn't systematically execute the nix-review checklist I loaded. The filechange sub-module review was shallow despite an explicit user request. Tests were not run. The NPU answer was architecturally correct but lacked actionable next steps.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

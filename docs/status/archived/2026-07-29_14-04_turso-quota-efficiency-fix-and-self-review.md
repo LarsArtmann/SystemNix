@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A. FULLY DONE
 
@@ -212,3 +209,8 @@ Deployed and resolved. DiscordSync backend switched to `sqlite` (eliminates Turs
 ## Item Resolution (2026-07-30)
 
 Turso quota efficiency. Items 1-15 DONE (IsQuotaExceeded, circuit breaker backoff, committed). Items 16-41 REJECTED as brainstorms. Resolution section at end confirms deployment.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

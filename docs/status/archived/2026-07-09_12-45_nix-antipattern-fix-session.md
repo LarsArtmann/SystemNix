@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -219,3 +216,8 @@ Cuts the 50-item list to what has real value vs what is churn or YAGNI.
 | **Helper functions** (`mkDockerService`, `mkEnvTemplate`, `mkMergedServiceConfig`) | F45-47 | YAGNI. Extract when repetition justifies it, not preemptively.                                                                        |
 | **Pre-commit checks for `//` / `with pkgs;` / `grep -oP`**                         | F48-50 | Speculative infrastructure for patterns just eliminated. Add when regressions actually appear.                                        |
 | **"Review X file" items** (yazi, niri-wrapped, darwin, pkgs/, lib/, templates/)    | F24-32 | Speculative audits with no known issues. Review when you touch the file.                                                              |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -123,3 +120,8 @@
 ## Item Resolution (2026-07-30)
 
 PMA Unknown Author fix. Items 1-10 DONE (go-git config reader fixed, deployed e8380b44, go-commit tagged v0.4.0). Items 11-29 REJECTED as brainstorms (regression tests, audit, openRepo cleanup).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

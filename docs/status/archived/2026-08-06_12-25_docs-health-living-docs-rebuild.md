@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Requested
 
@@ -283,3 +280,8 @@ A full rebuild means re-reading every module and verifying status. But many feat
 ---
 
 _This report was written immediately after the docs-health session. It reflects only work done in this session._
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

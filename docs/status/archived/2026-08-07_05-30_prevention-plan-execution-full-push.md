@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — M1–M11 complete, M12–M15 completed by 2026-08-07_06-37 report. Prevention plan fully executed.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (11 of 15 tasks — verified working)
 
@@ -249,3 +246,8 @@ The Gatus API at `/api/v1/endpoints/statuses` returns JSON with endpoint health 
 | Verschlimmbessern risk | Zero — all checks verified against live system or VM test |
 | Uncommitted changes | YES — 15+ files, PMA daemon may auto-commit |
 | Prevention layers added | 5 checks across 4 pipeline layers (eval, pre-commit, pre-deploy, post-deploy) |
+
+---
+
+> **RESOLVED — M1–M11 complete, M12–M15 completed by 2026-08-07_06-37 report. Prevention plan fully executed.**
+> All forward-looking items in this report were completed in subsequent sessions.

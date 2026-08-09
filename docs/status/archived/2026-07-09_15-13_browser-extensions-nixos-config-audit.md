@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -190,3 +187,8 @@
 ### Q2: Should `defaultInstallationMode` be `"blocked"` (allowlist-only)?
 
 **Why I can't figure this out myself:** This is a security vs. usability tradeoff that depends on your workflow. `"allowed"` (current) means any extension can be installed manually — convenient but a security risk (malicious extensions). `"blocked"` means ONLY the 20 listed extensions can exist in the browser — maximally secure but prevents installing one-off extensions without a config change + rebuild. For a single-user homelab, `"allowed"` is probably fine, but `"blocked"` is the "correct" security posture if you never install random extensions.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

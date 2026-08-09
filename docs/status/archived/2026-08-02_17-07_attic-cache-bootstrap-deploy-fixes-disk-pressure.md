@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -334,3 +331,8 @@ the token generation + login are wasteful on every deploy.
 | Bug fixes | 3 (scheduled-tasks escaping, storage mount race, retention quoting) |
 | Files modified | 4 (`attic.nix`, `scheduled-tasks.nix`, `configuration.nix`, `gatus-config.nix` already had checks) |
 | Iterations to bootstrap | 4 (PATH, wantedBy, quoting, permissions) |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

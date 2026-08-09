@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -216,3 +213,8 @@ The current implementation starts with `graphical-session.target` (auto-start). 
 ## Item Resolution (2026-07-30)
 
 Helium display crash. Items 1-10 DONE (helium.service deployed, AGENTS.md updated, SIGBUS minidump decoded). Items 11-50 MIXED: dummy plug REJECTED; DP-2 investigation REJECTED (documented); xwayland restart REJECTED; most are brainstorms.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

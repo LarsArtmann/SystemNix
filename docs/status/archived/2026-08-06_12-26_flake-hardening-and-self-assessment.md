@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -229,3 +226,8 @@ The vet check at `flake.nix:450` uses `GOFLAGS=-mod=mod`, which allows Go to mut
 The vet failure is from commit `d5f1c0c` which I did not author. It's a Go generics inference issue in `cmd/file-renamer/test.go:30`. Fixing it requires understanding the cmdguard API refactor that `d5f1c0c` introduced, which may still be in-progress by the session that authored it.
 
 **I cannot decide this myself** because touching another session's in-progress work risks merge conflicts. The other session may already have a fix queued.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

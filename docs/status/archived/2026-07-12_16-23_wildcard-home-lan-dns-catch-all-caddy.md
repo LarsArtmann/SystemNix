@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -138,3 +135,8 @@ Unbound's `local-zone "home.lan." static` only returned A records for 16 explici
 1. **Does the `*.home.lan` TLS certificate also cover the bare apex `home.lan`?** I added `home.lan.` as a local-data record, and Caddy's catch-all is `https://*.${domain}`. If a user visits `https://home.lan` (no subdomain), Caddy needs to serve TLS for it. Most wildcard certs (`*.home.lan`) do NOT cover the apex (`home.lan`) — they're separate. If the cert doesn't cover the apex, the TLS handshake will fail for `https://home.lan`. **I need to know: does the dnsblockd-generated wildcard cert include `home.lan` as a SAN, or only `*.home.lan`?** I can check this after deploy with `openssl s_client -connect 192.168.1.150:443 -servername home.lan`.
 
 2. **Should the browser (Helium) also be configured to NEVER search for `.lan` / `.home.lan` domains?** The DNS wildcard fix is necessary but may not be sufficient. Chromium's omnibox has a "keyword search" feature that can intercept certain inputs before DNS lookup. If the user types something that looks ambiguous, the browser might search instead of doing a DNS lookup at all. Is the intent purely "DNS must resolve" (Layer 3 fix, done) or also "browser must never search for `.lan`" (Layer 7 fix, not investigated)? Configuring `browser.fixup.alternate.enabled` or Helium's search settings would be the complete fix. **I need to know: should I also add Chromium flags / policies to disable keyword-search for `.lan` domains, or is the DNS fix sufficient for your usage?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

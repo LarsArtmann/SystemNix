@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Summary
 
@@ -122,3 +119,8 @@ The `forgejo-oidc-setup` oneshot service had been **crashing on every boot since
 2. **Should I rewrite `oidcSetupScript` to remove `runuser` entirely, or keep the passthrough function?** The passthrough works but is fragile. Rewriting is cleaner but changes more code. What's your preference — minimal diff (keep passthrough) or clean fix (rewrite script)?
 
 3. **The `forgejo-gen-runner-token` script also uses `runuser -u forgejo` (line 367) but works because it's called with the `+` ExecStart prefix. Should I standardize it to `User = "forgejo"` too, or leave it since it works?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

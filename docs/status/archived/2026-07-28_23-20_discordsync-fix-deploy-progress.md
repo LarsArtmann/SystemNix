@@ -1,7 +1,7 @@
 # DiscordSync Fix — Deploy Progress
 
-**Date:** 2026-07-28 23:20+02:00  
-**System:** evo-x2 (NixOS)  
+**Date:** 2026-07-28 23:20+02:00
+**System:** evo-x2 (NixOS)
 **Status:** Resolved. Upstream fix deployed, backend switched to `sqlite` (local-only), and service is healthy. `/healthz` and `/readyz` return 200 once the startup thumb-hash backfill completes.
 
 ## What Was Done
@@ -72,12 +72,14 @@ Final health-check verification for the new process will be appended below once 
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ---
 
 ## Item Resolution (2026-07-30)
 
 No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

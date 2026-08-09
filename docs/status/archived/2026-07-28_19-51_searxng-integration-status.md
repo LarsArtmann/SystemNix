@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -203,3 +200,8 @@ Currently the key is auto-generated on first boot via `openssl rand -hex 32` and
 ## Item Resolution (2026-07-30)
 
 SearXNG integration. Items 1-15 DONE (deployed on port 8889, functional). Items 16-50 MIXED: most REJECTED as brainstorms. Engine tuning/browser verification items OPEN in TODO_LIST deploy checklist.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

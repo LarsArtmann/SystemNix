@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -239,3 +236,8 @@ This session started with a todo list of 11 items from the prior session's self-
 All three are now fixed, committed, pushed, and deployed. The agent connects and registers successfully. The remaining issue is the 50GB stale event buffer that needs manual clearing (requires sudo).
 
 **Key lesson:** The prior session's self-review correctly identified that something was wrong with the WS connection, but I dismissed it based on code analysis. Production logs showed the problem instantly. **Read logs first, reason about code second.**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

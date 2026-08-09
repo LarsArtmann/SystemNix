@@ -1,13 +1,10 @@
 # SearXNG TTFB Optimization — Session Status
 
-**Date:** 2026-08-03 12:31 CEST  
-**Session goal:** Diagnose and fix slow time-to-first-byte (TTFB) on `https://search.home.lan/search?q=%s`  
+**Date:** 2026-08-03 12:31 CEST
+**Session goal:** Diagnose and fix slow time-to-first-byte (TTFB) on `https://search.home.lan/search?q=%s`
 **Commits this session:** `27aed87b`, `95c86023` (auto-git daemon captured the changes)
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## What the User Asked For
@@ -193,3 +190,8 @@ This is a significant commitment — weeks of work, permanent maintenance burden
 ### 3. Should I make slow engines `inactive` (available via bangs) or keep all ~75 active?
 
 With `request_timeout = 3.0`, engines slower than 3s are silently dropped — they waste timeout budget but don't block the page. Making them `inactive` means they don't even try, freeing connection pool slots for faster engines. But it also means fewer results if you search in a category without using the bang prefix. Your call on the coverage vs. speed tradeoff.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

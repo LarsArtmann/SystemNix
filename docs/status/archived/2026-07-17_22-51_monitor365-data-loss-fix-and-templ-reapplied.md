@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -271,3 +268,8 @@ The `api_key_hash` field is now typed as `ApiKeyHash` (a `#[serde(transparent)]`
 | `14c0278a` | Flake lock → DuckDB fix 2                               |
 | `ad4062ee` | AGENTS.md: DuckDB SQL compat + pre-commit hook entries  |
 | `7ceecf04` | Old status report annotated with resolution             |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

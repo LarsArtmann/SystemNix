@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Auto-provisioning verified. Browser-history deployed with OAuth2. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A. Fully Done
 
@@ -228,3 +225,8 @@ The 4 blocking items (push, fix tarball, update flake, deploy) are all executabl
 ### G3. The nixpkgs tarball regression has now happened multiple times across sessions. Is the `fix-nixpkgs-lock.sh` script the right long-term fix, or should we investigate why `nix.settings.flake-registry` (the local empty JSON) isn't preventing the rewrite?
 
 The AGENTS.md documents the root cause and the fix, but the fix is reactive (run script after regression). The local empty registry was supposed to be proactive (prevent the rewrite). Understanding why the proactive fix fails would eliminate this recurring issue permanently.
+
+---
+
+> **RESOLVED — Auto-provisioning verified. Browser-history deployed with OAuth2. Remaining items in TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

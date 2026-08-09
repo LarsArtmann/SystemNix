@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Pocket ID provision SQLite BUSY timeout fixed (curl --max-time 30s on POST/PUT). See CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Happened
 
@@ -115,3 +112,8 @@ Nothing this session. The fix was correct and verified. However:
 2. **Should `browser-history` be added to the Layer 1 native OIDC table in AGENTS.md?** It has both WebAuthn AND OAuth2 (Pocket ID). The AGENTS.md SSO architecture table doesn't list it yet. I don't know if you consider it Layer 1 or a hybrid.
 
 3. **Is `cache.home.lan` supposed to resolve during builds?** The Attic binary cache hostname failed DNS resolution during `nix run .#deploy`. Is this a known issue (DNS not ready at build time) or should `cache` be in the dnsblockd local subdomains list?
+
+---
+
+> **RESOLVED — Pocket ID provision SQLite BUSY timeout fixed (curl --max-time 30s on POST/PUT). See CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

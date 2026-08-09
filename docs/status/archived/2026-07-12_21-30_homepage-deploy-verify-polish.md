@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -226,3 +223,8 @@ The monitor365 flake input is at revCount 2228, which has the `CREATE SEQUENCE` 
 - **(c)** Leave it broken and just accept monitor365-server doesn't run
 
 **Which approach do you want?** This determines whether monitor365 appears on the dashboard with a green or red status dot.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

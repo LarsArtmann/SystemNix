@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Investigation complete. Root cause: macOS daemon TLS session caching + orphaned tracking DB. Items harvested to TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -199,3 +196,8 @@ I verified the config now uses `tracking.db`, the old DB hasn't been modified si
 ### 3. Do you want to whitelist the iCloud Private Relay and DoH bypass domains?
 
 These domains (`mask.icloud.com`, `mask-h2.icloud.com`, `dns.quad9.net`, `one.one.one.one`) are responsible for the majority of the remaining blocked queries from your Mac. Whitelisting them would eliminate the remaining TLS errors entirely. But this is a policy decision: Private Relay is privacy-enhancing (good), but it also bypasses your DNS blocking (potentially unwanted). DoH bypass domains are blocked because they allow encrypted DNS to circumvent your resolver, but blocking them causes retry loops. I can't decide this tradeoff for you.
+
+---
+
+> **RESOLVED — Investigation complete. Root cause: macOS daemon TLS session caching + orphaned tracking DB. Items harvested to TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

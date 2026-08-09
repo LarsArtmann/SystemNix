@@ -4,9 +4,6 @@ _2026-08-02 01:35 CEST_
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -380,3 +377,8 @@ of unique paths. The 20 GB is the emergency GC trigger, not a hard quota.
 Snapshots cost zero exclusive bytes (BTRFS CoW). Docker and Immich share the
 partition but have 367 GB of headroom. The `/data` partition is the correct
 location — it protects the root NVMe from write endurance wear.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

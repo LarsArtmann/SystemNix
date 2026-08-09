@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -254,3 +251,8 @@ The deploy itself is one command (`nix run .#deploy`), but:
 This is a **healthy project** with strong fundamentals: clean flake architecture, comprehensive monitoring, documented gotchas, SSO across all user-facing services, and a disciplined deploy pipeline. The DiscordSync module — the specific item audited this session — is genuinely well-configured.
 
 The risks are **operational, not structural**: an undeployed backlog, a single crash-looping service (fixable upstream), no off-site backup, and an architectural memory limit that can only be mitigated. None of these are code-quality problems — they're "schedule the work" problems.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Module reviewed and hardened. Deployed successfully. Remaining items in TODO_LIST.md Priority 7.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -195,3 +192,8 @@ The upstream module defaults to `%t/browser-history-agent/cursor.sqlite` (tmpfs,
 
 ### 3. Is browser-history user-facing (needs Homepage tile + SSO layer decision), or internal-only?
 The service is proxied at `history.home.lan` with direct TLS (no forward-auth). AGENTS.md says browser-history uses WebAuthn directly. But now that Pocket ID OAuth2 is wired, should this go in the SSO architecture table as Layer 1 (native OIDC)? And should it have a Homepage tile so it appears on the dashboard? **Is this a service you'll access regularly from the Homepage dashboard, or is it a background service you'll access by URL when needed?**
+
+---
+
+> **RESOLVED — Module reviewed and hardened. Deployed successfully. Remaining items in TODO_LIST.md Priority 7.**
+> All forward-looking items in this report were completed in subsequent sessions.

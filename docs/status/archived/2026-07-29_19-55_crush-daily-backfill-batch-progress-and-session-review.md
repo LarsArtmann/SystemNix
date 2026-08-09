@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -239,3 +236,8 @@ Superseded. The batch completed (27/31), and a THIRD bug (`Yesterday()` timezone
 ## Item Resolution (2026-07-30)
 
 Crush-daily batch progress. Superseded by 22-05 and 00-05. All items resolved — batch completed, timezone bug found and fixed, full recovery. Resolution section at end.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

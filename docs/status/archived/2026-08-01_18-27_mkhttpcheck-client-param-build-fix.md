@@ -6,9 +6,6 @@ Fix a blocking NixOS build failure: `function 'mkHttpCheck' called with unexpect
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Triggered This Session
 
@@ -144,3 +141,8 @@ Ranked by impact (P0 = unblock/protect, P1 = quality, P2 = nice-to-have):
 ---
 
 *End of report.*
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

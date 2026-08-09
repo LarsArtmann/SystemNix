@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -183,3 +180,8 @@ Per the AGENTS.md safety rule ("NEVER revert changes you didn't author"), I left
 ## Summary
 
 The templ addition itself is trivial (one line) and was verified correct on both platforms via eval. But the edit **vanished** from the working tree for reasons I cannot explain via git, and I did not deploy or verify the live outcome. The session exposed process weaknesses: blanket formatting, no pre-edit baseline check, and no investigation of anomalous working-tree state. The task needs a clean redo with deploy.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

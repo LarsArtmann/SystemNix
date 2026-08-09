@@ -9,9 +9,6 @@ services, diagnose and fix oauth2-proxy 500 error on OIDC callback.
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE ✅
 
@@ -314,3 +311,8 @@ from oblivion.
 The original question asked whether the changes were "intentionally reverted."
 They weren't reverted — they were never committed. The re-application is
 unambiguously needed.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

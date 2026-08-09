@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE ✅
 
@@ -36,7 +33,7 @@ The working tree had flake.lock churn from multiple auto-commits by other sessio
 
 Reverted flake.lock to the state matching the last successfully deployed generation (commit `88419e21`), where all three critical inputs have cached store paths:
 - `monitor365: 90b20839` ✅ cached
-- `dnsblockd: d74adf44` ✅ cached  
+- `dnsblockd: d74adf44` ✅ cached
 - `buildflow: 258abe0c` ✅ cached
 
 ### 4. Full Deploy Succeeded (Generation 565 = Git HEAD)
@@ -221,3 +218,8 @@ The working tree has a full `nix flake update` from another session. None of the
 | 6-10 | DONE | partOf/restartTriggers, Gatus, native OIDC, PKCE all done |
 | 11 | DONE | cqrs-lint vendorHash fixed (2026-07-29) |
 | 12-50 | MIXED | Items 12-50 overlap heavily with file 12 (signoz-oauth2-proxy). Most are oauth2-proxy hardening brainstorms — REJECTED as over-engineering. Key survivors tracked in TODO_LIST/ROADMAP. |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

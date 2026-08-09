@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -326,3 +323,8 @@ before declaring an upstream bug; didn't give a remediation order.
 **Net:** Diagnosis is now **evidence-backed** for the tarball regression and the crush-daily transitive
 break. The vendorHash failures are a **separate, independent** problem from nixpkgs staleness.
 Treat Tier 1 steps as a plan to validate, not gospel.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

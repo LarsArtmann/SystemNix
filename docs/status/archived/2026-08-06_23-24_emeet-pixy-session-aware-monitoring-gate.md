@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -241,3 +238,8 @@ running (no session = connection refused). Should I:
 The 2-minute interval creates up to 2 minutes of lag between a crash and an alert. Moving
 just this check to the 30s `niri-health-metrics` collector would halve the lag, but fragments
 the monitoring logic across two collectors. Your call on the latency/simplicity tradeoff.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

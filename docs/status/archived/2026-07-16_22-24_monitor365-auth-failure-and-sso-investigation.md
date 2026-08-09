@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Hardening Session (2026-07-16 23:00)
 
@@ -152,3 +149,8 @@ Critical review of the initial fix identified 7 issues. All code-level issues fi
 2. **The "No account found for this email" error — when exactly did you see it?** The logs show SSO worked at 20:09:53, then the server restarted at 20:49 (projection rebuild). If you tried SSO after the restart and it failed, the projection rebuild may have dropped the user row. This would mean the event store has a gap. Can you tell me the approximate time you saw the error?
 
 3. **Should I deploy now, or do you want to review the changes first?** The API key sync oneshot modifies the DuckDB database directly. If you prefer, I can first verify the current DB state (check if the user row exists, check the current API key hash) before deploying. This requires running `duckdb` as the `monitor365-server` user.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

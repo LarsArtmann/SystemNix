@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Incident Summary: The 2026-06-19 Crash
 
@@ -293,3 +290,8 @@ The `sp5100-tco` watchdog fires a **hardware reset** — the machine should rebo
 nix flake check --no-build  →  ✅ all checks passed
 nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel  →  ✅ evaluates
 ```
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

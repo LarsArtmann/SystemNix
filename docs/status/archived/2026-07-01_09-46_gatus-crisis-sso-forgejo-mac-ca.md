@@ -7,9 +7,6 @@ and diagnosed the Pocket ID Mac Touch ID registration blocker (untrusted CA).
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE ✅
 
@@ -234,3 +231,8 @@ But there is **zero infrastructure** for cross-platform CA distribution. The Mac
 | Git HEAD           | `c5d45de2`                  | —                   |
 | Deployed Gen       | `e73de5b` (Jun 26)          | ⚠️ 3 commits behind |
 | Undeployed Commits | 3                           | 🔴                  |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

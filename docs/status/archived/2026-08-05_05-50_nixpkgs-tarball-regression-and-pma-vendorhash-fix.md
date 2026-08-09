@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Session Narrative
 
@@ -224,3 +221,8 @@ The `nixpkgsTarballGuard` assertion at `flake.nix:526` fired correctly — the n
 ---
 
 *End of report. Waiting for instructions.*
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

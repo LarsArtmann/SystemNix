@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -208,3 +205,8 @@ The cqrs-lint fix later **regressed** — commit `b0d76b68` wrongly reverted go-
 ## Item Resolution (2026-07-30)
 
 cqrs-lint fix. Items 1-15 DONE (cmdguard v4 migration, lock cleaned, builds 0.2.2). Items 16-54 REJECTED. Later regressed (22-01) and re-fixed. Resolution section at end documents the regression.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

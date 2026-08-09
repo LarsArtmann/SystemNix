@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Session Arc
 
@@ -227,3 +224,8 @@ Without blur, transparent terminals show raw wallpaper behind them — text may 
 ### Q3: Should swww fully replace DMS wallpaper management, or should DMS remain the primary?
 
 Currently it's split: swww displays the wallpaper, but `swww-wallpaper` syncs back to DMS via IPC. DMS may still try to render its own wallpaper layer behind swww, creating a double-layer. **Do you want me to fully disable DMS wallpaper rendering and let swww own it entirely, or keep the sync?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

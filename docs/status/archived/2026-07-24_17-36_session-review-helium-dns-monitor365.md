@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Session Work Summary
 
@@ -173,3 +170,8 @@ Three independent issues were diagnosed and fixed in this session:
 ## Item Resolution (2026-07-30)
 
 Session review of 3 incident fixes. All 3 incidents DONE (helium, DNS, monitor365 deployed). Remaining items are process observations. watchdog bug FIXED (runs as root).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

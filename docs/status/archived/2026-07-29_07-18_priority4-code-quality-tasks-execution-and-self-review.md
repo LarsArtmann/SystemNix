@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE (working, verified)
 
@@ -183,3 +180,8 @@
 ## Item Resolution (2026-07-30)
 
 Priority 4 code quality. Items 1-20 DONE (ssh-config tmpfiles, runtimeInputs audit, go-commit pin, mr-sync re-enabled, signoz split, cqrs-lint). Items 21-60 REJECTED as brainstorms. samber-do-auditlog pin removed (dead code).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

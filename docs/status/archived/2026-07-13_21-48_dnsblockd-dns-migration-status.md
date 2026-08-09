@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -277,3 +274,8 @@ I could not determine this from reading the code alone because `validation.NewDo
 ### 2. Should I have kept unbound as a fallback on :5353 for 24h?
 
 The dnsblockd migration doc (`docs/feedback/systemnix-integration.md`) explicitly recommended a phased approach: dnsblockd on :53 + unbound on :5353, observe for 24h, then remove unbound. I instead did a clean cutover (unbound removed entirely). My reasoning: all gaps are closed and tested in dnsblockd, `nix flake check` passes, and rollback is trivial. But the user may have preferred the safer phased approach, especially for a production DNS resolver that every device on the LAN depends on. **Is a clean cutover acceptable, or should I implement the phased approach?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

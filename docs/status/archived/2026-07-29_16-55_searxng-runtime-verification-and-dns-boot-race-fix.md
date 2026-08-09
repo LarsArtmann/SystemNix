@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -242,3 +239,8 @@ The DNS boot-race fix (adding `dnsblockd.service` dependency + `searxng-wait-dns
 ## Item Resolution (2026-07-30)
 
 SearXNG runtime + DNS race. Items 1-20 DONE (all 4 items verified, DNS boot-race fixed). Items 21-39 REJECTED as brainstorms. DNS fix later caused SC2034 build failure (fixed 21-30).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

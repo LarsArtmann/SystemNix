@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done (3 commits)
 
@@ -197,3 +194,8 @@ The `ssh-suspend-guard` only inhibits suspend. With the new 10-min lock, working
 ## Resolution (2026-08-03 03:32)
 
 **This report was SUPERSEDED by v2** (`2026-08-03_03-32_lockscreen-improvements-v2-brutal-self-review.md`). All three open questions were answered and addressed: 10-min lock rejected (timeouts reverted), media inhibition added, wallpaper-based lock. Shared `pkgs/dms-lock.nix` extracted. Further extended in Desktop Renaissance v3 (`2026-08-03_04-44`) with swww wallpaper daemon + GLSL shaders.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

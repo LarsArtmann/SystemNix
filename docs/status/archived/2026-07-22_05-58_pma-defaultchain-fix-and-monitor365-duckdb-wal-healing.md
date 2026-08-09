@@ -1,16 +1,13 @@
 # Status Report: PMA Auto-Commit Fix + Monitor365 DuckDB WAL Healing
 
-**Date:** 2026-07-22 05:58  
-**Session scope:** Diagnose and fix two Priority 0 issues from TODO_LIST.md  
-**Branch:** master (SystemNix), master (PMA upstream)  
+**Date:** 2026-07-22 05:58
+**Session scope:** Diagnose and fix two Priority 0 issues from TODO_LIST.md
+**Branch:** master (SystemNix), master (PMA upstream)
 **Deploys needed:** ~~1 (neither fix is deployed yet)~~ **Both deployed.**
 
 > **Update 2026-07-24:** Both fixes are live. PMA auto-commit uses `providers.DefaultChainFromEnv()` (upstream `d1d013d2`, PMA `e8380b44`). Monitor365 DuckDB WAL healing (`monitor365-duckdb-heal` ExecStartPre) is deployed — server reports `{"status":"ok","database":"connected"}` with 12h+ uptime. The subsequent "version" column binder bug (see `2026-07-24_03-14`) was resolved by pinning to upstream `0615301` + `monitor365-schema-migrate.service`. Remaining open: monitor365 buffer backlog purge (TODO_LIST Priority 1).
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## a) FULLY DONE
@@ -300,3 +297,8 @@ The healing script tries to restore from `*.backup_*.db` if the main DB is corru
 | 48 | DONE | Circuit breaker clears on process restart (watchdog handles this) |
 | 49 | DONE | StartLimitBurst=5 on critical services, documented in AGENTS.md |
 | 50 | N/A | No item 50 in this file |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

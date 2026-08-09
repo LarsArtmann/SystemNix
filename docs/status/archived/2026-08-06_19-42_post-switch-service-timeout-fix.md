@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -191,3 +188,8 @@ Nothing this session. The previous session had cascading failures (tarball regre
 2. **Is the Turso plan quota issue something to address now?** DiscordSync's Turso sync is failing with `SQL read operations are forbidden` — this means the free plan is exhausted. Do you want to upgrade the Turso plan, migrate DiscordSync to local-only SQLite, or leave it as-is (the service runs fine with local data)?
 
 3. **Should `TimeoutStartSec` become a `serviceDefaults` standard or stay per-service?** Adding it to `serviceDefaults` (via `lib/default.nix`) would make ALL services get 3min by default, which could mask genuinely stuck services. Keeping it per-service requires manual audit. Your preference on the tradeoff.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

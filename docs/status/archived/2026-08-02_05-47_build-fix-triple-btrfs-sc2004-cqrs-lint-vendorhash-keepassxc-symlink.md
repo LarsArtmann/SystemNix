@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -136,3 +133,8 @@ There are 26 files with uncommitted changes in SystemNix (from this session and 
 
 ### 3. The pre-existing uncommitted changes (26 files) — are those yours or from a previous agent session?
 I see changes to tests, service modules, CI workflow, flake.nix, overlays, and secrets that predate this session. I did NOT touch these and will NOT revert them, but I need to know if they should be included in any commit I make, or if they're work-in-progress from another context.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Timeline of the Discovery
 
@@ -307,3 +304,8 @@ The terrible benchmark numbers (14 MiB/s) were likely caused by background I/O c
 - It was successfully deployed on 2026-08-03 (all 30 post-deploy checks passed)
 
 **The previous report's comment "Root filesystem has never had discard=async and has been fine" was also misleading** — root may or may not have had `discard=async` at some point, but the current evidence shows it does NOT have it now, and the fstab never specified it.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (Committed by auto-git daemon)
 
@@ -186,3 +183,8 @@ The auto-git daemon committed all changes across 6 commits. Only 2 files remain 
 2. **Should we raise the I/O PSI alert threshold above 10%?** At 10% avg300, the alert will fire during every daily fstrim run (which legitimately causes I/O stall for 10-15 min). Options: (a) 10% — catches real SLC exhaustion but false-alarms during fstrim, (b) 20% — misses early warning but avoids fstrim false alarms, (c) 10% with a fstrim-active suppression gate in the system-health collector. Which approach?
 
 3. **Should the orphaned `scripts/nvme-metrics.sh` be deleted or made the single source of truth?** Currently it's dead code — the inline `pkgs.writeShellApplication` in `_signoz-metrics.nix` is what actually runs. Having two implementations is a split brain. Deleting it loses a reference implementation. Wiring it up adds a layer of indirection. Which do you prefer?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -98,3 +95,8 @@ Nothing relevant to this session's scope.
 ## Item Resolution (2026-07-30)
 
 Statix repeated keys fix. DONE: committed (3f113a0e), statix clean, nix eval passes. All 12 items resolved (mostly process observations).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

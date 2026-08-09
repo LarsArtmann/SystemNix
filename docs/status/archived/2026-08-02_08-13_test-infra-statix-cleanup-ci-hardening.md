@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A. FULLY DONE
 
@@ -244,3 +241,8 @@ The BTRFS balance scripts in `btrfs-health.nix` have SC2004 shellcheck violation
 
 ### G3. Squash Auto-Commit Noise?
 The auto-commit daemon created 8 commits for what should be 2-3 logical changes. Should I squash before pushing, or leave the history as-is? (Squashing requires force-push which violates the "never force-push" rule — but these are local-only commits not yet on origin.)
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

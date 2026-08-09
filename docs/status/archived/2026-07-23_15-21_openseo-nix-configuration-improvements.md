@@ -12,9 +12,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -179,3 +176,8 @@ The OpenSEO configuration is **functionally better** than before: latest version
 ## Item Resolution (2026-07-30)
 
 OpenSEO Nix improvements. Items 1-30 DONE (deployed, GSC callback verified, telemetry opt-out, validate script). Items 31-61 MIXED: MCP integration OPEN in TODO_LIST; D1 backup OPEN in TODO_LIST P0; rest REJECTED as brainstorms.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

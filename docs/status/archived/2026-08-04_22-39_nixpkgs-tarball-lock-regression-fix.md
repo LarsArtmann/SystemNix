@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -131,3 +128,8 @@
 2. **Should the auto-git daemon's `nix flake update` behavior be changed, and if so — should it be scoped (targeted `--update-input`) or gated (post-update `nix flake check`)?** This is a config decision about the daemon that I can't make without knowing your preference for automation vs. safety. The daemon is external to this repo.
 
 3. **Is `cache.home.lan` (Attic) supposed to be running right now?** It's unreachable (DNS failure), which blocks `--no-build` evaluation and suggests either the Attic service is down or dnsblockd isn't resolving it. I don't know if this is an expected state (e.g., you're reconfiguring it) or an outage I should investigate.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

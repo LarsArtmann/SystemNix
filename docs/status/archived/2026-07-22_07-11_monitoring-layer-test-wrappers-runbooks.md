@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (shipped, verified, committed as `9a56c1a7`)
 
@@ -227,3 +224,8 @@ There's an untracked file from earlier today that I didn't create. It appears to
 | 37-39 | DONE/REJECTED | Monitoring runbook DONE; pat() gotcha DONE; architecture diagram REJECTED |
 | 40-43 | REJECTED | VM tests — aspirational, no NixOS test infrastructure |
 | 44-50 | DONE/REJECTED | PMA health check REJECTED; nix-daemon memory REJECTED; others DONE or REJECTED as brainstorms |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -185,3 +182,8 @@ The working tree has changes from another session that I didn't make and didn't 
 Deploying my homepage changes means also deploying all of these. I don't know if those changes are tested or intended for deploy.
 
 **What I need:** Confirmation that the pre-existing changes are ready, or instruction to isolate only the homepage changes (which would require stashing the others — messy).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

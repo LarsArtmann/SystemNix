@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (genuinely complete)
 
@@ -199,3 +196,8 @@
 | Questions | 3 | All blocking |
 
 **The one-sentence honest summary:** I fixed the crash loop (good), but I declared success without noticing that 100% of events are still being dropped — the system is "healthy" by process metrics and completely broken by data metrics. The real root cause (non-canonical JSON serialization causing hash mismatches on ALL events) is untouched.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

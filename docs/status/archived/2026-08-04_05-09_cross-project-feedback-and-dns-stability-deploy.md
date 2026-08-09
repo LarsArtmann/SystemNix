@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -207,3 +204,8 @@ The GOMEMLIMIT+2G mitigation is deployed but the real fix is dropping high-cardi
 ---
 
 *Status generated 2026-08-04 05:09. System: evo-x2, NixOS 26.11 unstable, kernel 7.1.5, 93 GB RAM. dnsblockd 0 OOM-kills since deploy (~3h ago). DiscordSync crash-looping on Turso EOF. 7 feedback files written across 7 repos.*
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

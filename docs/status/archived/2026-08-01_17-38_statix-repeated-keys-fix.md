@@ -6,9 +6,6 @@ Fixed two statix `[20] Warning: Avoid repeated keys in attribute sets` warnings 
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) Fully Done
 
@@ -116,3 +113,8 @@ Nothing. Both fixes were clean, verified, and non-breaking.
 2. **Do you want these changes committed?** — The auto-git daemon may handle this, but I want to confirm whether you want a specific commit message or if the daemon should handle it.
 
 3. **Should the convention "use grouped attrsets over dotted keys" be added to AGENTS.md or CONTRIBUTING.md?** — This would prevent the pattern from recurring in new code, but it's a style preference decision only you can make.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## ⚡ WHAT CHANGED SINCE SESSION 144
 
@@ -244,3 +241,8 @@ I cannot run `sudo btrfs filesystem du` or `sudo du` to investigate (sudo is blo
 nix flake check --no-build  →  ✅ all checks passed
 Pre-commit hooks            →  ✅ all passed (gitleaks, statix, deadnix, alejandra)
 ```
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

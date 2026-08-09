@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE ✅
 
@@ -176,3 +173,8 @@ The two commands that would unblock all remaining work:
 2. **Clean stale sandboxes**: `sudo rm -rf /nix/var/nix/builds/nix-*` (frees 7.3G, gets disk to ~92%)
 
 Without sudo, I'm blocked on the two most critical follow-ups (backlog drain + disk space). Everything else I could do, I've done. **Can you run these, or should I wait?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -16,9 +16,6 @@ User demanded: "You know I like to have ALL my software on the fucking latest ve
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -226,3 +223,8 @@ Nix resolved the GitHub URL through the registry, which rewrote it to a tarball.
 ---
 
 _Generated: 2026-08-03 07:01 CEST_
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

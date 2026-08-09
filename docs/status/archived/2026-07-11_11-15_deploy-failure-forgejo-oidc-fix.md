@@ -6,9 +6,6 @@ A `nh os switch . -v --show-activation-logs --keep-going` deploy at ~09:23 CEST 
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -174,3 +171,8 @@ The migration bug is: `ALTER TABLE messages RENAME COLUMN stored TO messages_sto
 ### Q2: Should I deploy now (`nix run .#deploy`) with just the forgejo fix, or batch it with the DMS Restart conflict fix and discordsync resolution first?
 
 Deploying now fixes forgejo OIDC but leaves discordsync crash-looping. The DMS `nix flake check` error is pre-existing and doesn't block `nix run .#deploy` (which uses `nh`, not `nix flake check`). Your call on whether to batch or deploy immediately.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

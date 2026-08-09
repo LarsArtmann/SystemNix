@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -321,3 +318,8 @@ The bookmarks change described here caused a **full-page React crash** (wrong YA
 ## Item Resolution (2026-07-30)
 
 Homepage improvements. Items 1-10 DONE (icons fixed, tiles deduplicated). Bookmarks caused crash (fixed in 16-41). Resolution section at end already documents the crash. Most remaining items REJECTED as brainstorms.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

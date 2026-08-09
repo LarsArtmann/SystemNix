@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -220,3 +217,8 @@ The committed `83608262` has `emeet-pixyd` at `a9fc43c` and `go-branded-id` at `
 | Root cause identified              | ✅ deadnix:repair removes params without `...` |
 | All deadnix-modified files audited | ✅ 12/12 reviewed                              |
 | Time to fix                        | ~5 minutes (after 5 min analysis)              |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

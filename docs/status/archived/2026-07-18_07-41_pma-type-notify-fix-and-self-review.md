@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -240,3 +237,8 @@ rpi3 carries the same dns-blocker dir-vs-file bug. Its DNS blocking is silently 
 I solved the immediate problem (PMA crash loop + Overview cascade + DNS Blocker Gatus check). The system is healthier now than when I started. But I made two deploy mistakes (stale generation, jsonpath rabbit hole), left 3 files uncommitted, did not deploy rpi3, did not clear the Monitor365 backlog, did not add the missing Gatus alerts, and did not run disk cleanup. The generation mismatch at session end means my last changes may not even be live. I should have been more careful and more thorough.
 
 **Grade: B-** — Fixed the right things, but sloppy process and too many loose ends.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

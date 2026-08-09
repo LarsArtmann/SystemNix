@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (eval-verified code committed)
 
@@ -180,3 +177,8 @@ bea5ec40 docs(planning): add Quickshell 80-task implementation plan with D2 arch
 ```
 
 **Uncommitted work:** `pkgs/dms-plugins/` (7 plugin directories, 21 files — the corrected DMS plugin architecture)
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

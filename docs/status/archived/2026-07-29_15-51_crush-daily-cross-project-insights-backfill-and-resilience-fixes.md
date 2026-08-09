@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -273,3 +270,8 @@ Superseded by two later sessions. A THIRD root-cause bug (`Yesterday()` timezone
 ## Item Resolution (2026-07-30)
 
 Crush-daily insights backfill. Items 1-10 DONE (errgroup fix, partial-results fix). Items 11-66 REJECTED. THIRD bug (timezone) found in 22-05. Resolution section at end documents full recovery.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -324,3 +321,8 @@ AGENTS.md. Tested the guard both ways (passes on github, throws on tarball).
 
 **Net:** The deploy blocker is resolved and verified at the component level. The full deploy and
 remaining package verification are the critical remaining steps before declaring victory.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -9,9 +9,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -265,3 +262,8 @@ Unpushed commits (3):
 | Desktop          | DMS (13 plugins), niri, Quickshell                                                                     | ✅ Operational                          |
 | Disabled         | voice-agents, minecraft, photomap                                                                      | 🔧 Intentionally disabled               |
 | Monitoring       | Gatus (36/38 endpoints passing)                                                                        | ⚠️ 2 expected DOWN (Ollama, Monitor365) |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

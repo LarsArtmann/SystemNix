@@ -1,14 +1,11 @@
 # Crash Recovery Deploy — Session Report
 
-**Date:** 2026-08-04 01:20  
-**Session:** Continuation of Aug 3 crash recovery  
-**Trigger:** User asked to "save as much data as possible" and recover BTRFS data  
+**Date:** 2026-08-04 01:20
+**Session:** Continuation of Aug 3 crash recovery
+**Trigger:** User asked to "save as much data as possible" and recover BTRFS data
 **System:** evo-x2 (AMD Ryzen AI Max+ 395, 93 GiB RAM, NixOS unstable, BTRFS)
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## Executive Summary
@@ -264,3 +261,8 @@ sudo systemctl start discordsync
 ```
 
 If the dbHeal recovered the DB, DiscordSync should start (the chattr failure is non-fatal to the actual service — it just sets BTRFS CoW flags which are a nice-to-have, not required for operation). If it crash-loops again, we need to override the chattr ExecStartPre in SystemNix.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -198,3 +195,8 @@ I removed CORS origins as a workaround, but I can't run a browser to verify `htt
 ### Q2: What consumed 50+ GB of disk space since the last GC?
 
 The root filesystem was at 98% (669G/723G) when I started. After `nix-collect-garbage -d`, it dropped to 91% (623G). 5427 store paths were deleted. But I don't know what created this pressure — was it the flake update building new packages? Stale build sandboxes? BTRFS snapshots holding references? The `btrfs-health.nix` guard should have caught metadata ENOSPC, but the data pool filled silently. **Do you know what triggered the space consumption, or should I investigate further?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -199,3 +196,8 @@ Used `git commit --no-verify` to bypass the PMA pre-commit hook because it faile
 2. **Should I switch the niri input from tracking `niri-flake` master to a pinned rev?** The libdisplay-info breakage was caused by upstream not keeping up with nixpkgs. Pinning would prevent future surprise breakages but requires manual updates. What's your preference?
 
 3. **Do you want me to file the upstream issues/PRs for the niri-flake libdisplay-info pin and the go-commit DefaultChainFromEnv signature change, or handle those yourself?** I have access to both repos locally but want to confirm before opening PRs.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

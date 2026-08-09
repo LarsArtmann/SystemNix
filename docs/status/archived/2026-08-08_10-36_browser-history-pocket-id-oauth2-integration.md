@@ -4,9 +4,6 @@
 
 ---
 
-> **RESOLVED — OAuth2 integration complete. Server running with pocket-id provider. Auto-creates users on first login. Remaining items in TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -174,3 +171,8 @@ The Forgejo and Gatus clients don't use PKCE (they're confidential clients with 
 ### Q3: The nixpkgs tarball regression keeps recurring despite the documented fix — is the auto-commit daemon bypassing the local empty registry?
 
 The AGENTS.md documents a fix (`nix.settings.flake-registry` → local empty JSON + correct-format system registry overrides). It was "verified" as working on Aug 6. But it broke again today during this session. The most likely explanation is that the auto-commit daemon runs `nix flake update` with different Nix settings than the interactive shell (perhaps it doesn't use the same `nix.conf`). I can't verify this without checking the daemon's runtime environment, which requires sudo to inspect the systemd unit.
+
+---
+
+> **RESOLVED — OAuth2 integration complete. Server running with pocket-id provider. Auto-creates users on first login. Remaining items in TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

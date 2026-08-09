@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -244,3 +241,8 @@ This session's 3 changes are code-complete but undeployed. There are also multip
 | Doc freshness | ✅ all current |
 | Quality gate confidence | Medium-high (code correct, assumptions unverified post-deploy) |
 | Brutal self-assessment | Widgets audit was shallow. Assumptions unverified. UX decision unilateral. Status report should have been written proactively. |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

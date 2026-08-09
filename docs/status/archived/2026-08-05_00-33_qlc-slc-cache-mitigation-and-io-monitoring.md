@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE (Verified)
 
@@ -200,3 +197,8 @@ The Gatus check was added and evaluates, but the **metric it checks (`node_nvme_
 2. **Should the SLC cache exhaustion fixes be deployed immediately (before `nix fmt` and the nvme-metrics fix), or should we batch everything?** The fstrim idle priority and `commit=300` are urgent (the manual fstrim is demonstrating 44% I/O PSI right now), but deploying with the broken nvme-metrics Gatus check means a permanent false alarm until the next deploy.
 
 3. **Should we move ClickHouse data to `/data`?** ClickHouse (SigNoz) is likely the #1 sustained I/O writer on the root filesystem. Moving it to `/data` (separate BTRFS partition, 297 GiB free) would dramatically reduce root I/O contention. But this requires stopping SigNoz, rsyncing ~50+ GiB of data, and updating the config. Is this worth the downtime?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

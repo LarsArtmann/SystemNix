@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What This Session Actually Did
 
@@ -235,3 +232,8 @@ The review found the codebase clean (0 statix, 0 deadnix, 0 purity violations). 
 | 42 | DONE | Hardcoded /home/lars/notes in qmd-config.nix documented |
 | 43-46 | DONE | All `//` chains converted to `lib.mkMerge` |
 | 47-50 | DONE | signoz.nix split (943→511L), forgejo.nix split (725→353L); others are acceptable size |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

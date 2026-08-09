@@ -1,13 +1,10 @@
 # Status: go-humanize-linter NixOS Integration
 
-**Date:** 2026-08-05 03:09  
-**Session scope:** Adding `~/projects/go-humanize-linter/` to SystemNix as a system package  
+**Date:** 2026-08-05 03:09
+**Session scope:** Adding `~/projects/go-humanize-linter/` to SystemNix as a system package
 **Overall verdict:** Functionally complete, verified end-to-end. Two manual steps remain before deploy (push upstream, update lockfile).
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## What Was Done
@@ -202,3 +199,8 @@ Nothing. All builds pass, all tests pass, binary works correctly. No regressions
 2. **Should I push the upstream commits and update the SystemNix lockfile + deploy now, or do you want to review the changes first?** — The upstream has 3 uncommitted+3 committed changes ready to push. SystemNix has 1 commit. The lockfile update + deploy are the final two steps.
 
 3. **Should `go-humanize-linter` also be added to the macOS (Darwin) config, or is `evo-x2` (NixOS) sufficient for now?** — The `mkLarsPackages` function already supports `aarch64-darwin` and the package builds on `lib.platforms.unix`. But the 256GB SSD on the MacBook Air is 90%+ full. Is adding another Go binary to Darwin acceptable, or should it be Linux-only?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

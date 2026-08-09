@@ -10,9 +10,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -246,3 +243,8 @@ The most important deliverable from this session is **not** any of the five bug 
 ## Item Resolution (2026-07-30)
 
 Crush-daily fix execution. All 36 items DONE — 5 bugs fixed upstream (83cb19d, 4b94ed8, b8095de, 106b773), deployed, 29/29 smoke tests pass, backfill script wired.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

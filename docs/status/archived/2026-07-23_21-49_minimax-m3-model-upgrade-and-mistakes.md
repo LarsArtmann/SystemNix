@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -198,3 +195,8 @@ The flake changes are committed but not deployed. Should I run `nix run .#deploy
 ## Item Resolution (2026-07-30)
 
 MiniMax-M3 upgrade. Items 1-10 DONE (model verified valid: 1,147 commits in 7 days, zero errors). Items 11-55 REJECTED as brainstorms. go-commit pin concern resolved (unpinned to master).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

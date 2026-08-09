@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Critical Context: The User Fixed It Manually
 
@@ -215,3 +212,8 @@ The user asked me to READ → UNDERSTAND → RESEARCH → REFLECT → Execute on
 2. **When did you manually remount the filesystems?** Was it right after the prior session ended (removing `discard=async` from `/` and all subvolumes), or at some other point? This would help reconstruct the timeline and determine whether the prior session's `/proc/mounts` observation was before or after your manual fix.
 
 3. **Should the AGENTS.md BTRFS section note that BTRFS auto-adds `ssd` on NVMe?** This is confirmed (visible in `/proc/mounts` on every boot) and non-obvious. It's separate from the `discard` question.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

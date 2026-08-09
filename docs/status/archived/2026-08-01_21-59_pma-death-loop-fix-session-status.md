@@ -1,14 +1,11 @@
 # PMA Memory & CPU Death-Loop Fix — Session Status Report
 
-**Date:** 2026-08-01 21:59  
-**Session window:** ~21:00 → ~21:59 CEST  
-**Commits shipped:** 3 (1 PMA `3bb24b30`, 1 SystemNix `5a8a3065`, 1 investigation `4e71df38`)  
-**Both repos pushed:** YES  
+**Date:** 2026-08-01 21:59
+**Session window:** ~21:00 → ~21:59 CEST
+**Commits shipped:** 3 (1 PMA `3bb24b30`, 1 SystemNix `5a8a3065`, 1 investigation `4e71df38`)
+**Both repos pushed:** YES
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## a) FULLY DONE
@@ -218,3 +215,8 @@ Currently `markFailure` is only called in the commit result path (after `committ
 | Time to diagnosis | ~20 min |
 | Time to fix | ~25 min |
 | Verschlimmbesserung risk | Low — all changes are additive/guarded |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

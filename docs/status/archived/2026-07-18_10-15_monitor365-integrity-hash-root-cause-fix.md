@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -115,3 +112,8 @@ signal added in this session would have caught this immediately.
 **Lesson**: Always verify the OUTCOME (data stored), not just the MECHANISM
 (cursor moved). A pipeline that "succeeds" while dropping 100% of data is worse
 than one that fails loudly.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

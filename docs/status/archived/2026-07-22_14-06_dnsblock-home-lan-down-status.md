@@ -1,16 +1,13 @@
 # Status Report: `dnsblock.home.lan` Outage & Fix
 
-**Date:** 2026-07-22 14:06 CEST  
-**Session focus:** Why `dnsblock.home.lan` was down and fixing the Caddy/DNS routing gap.  
-**Reporter:** Crush (autonomous session)  
+**Date:** 2026-07-22 14:06 CEST
+**Session focus:** Why `dnsblock.home.lan` was down and fixing the Caddy/DNS routing gap.
+**Reporter:** Crush (autonomous session)
 **Branch:** `master` (working tree clean before edits)
 
 > **Update 2026-07-24:** Deployed. `dnsblock.home.lan` resolves (verified via `getent hosts` → `192.168.1.150`) and serves the dashboard behind Caddy. The canonical subdomain decision from the follow-up report (`2026-07-22_14-50`) shipped: `dnsblock.home.lan` is the `protectedVHost`, `dnsblockd.home.lan` 301-redirects to it. Post-deploy smoke test checks `https://dnsblock.$DOMAIN/health`. See AGENTS.md "dnsblockd wildcard `*.home.lan` does not resolve" for the local-subdomain requirement.
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## a) FULLY DONE
@@ -193,3 +190,8 @@ Run `nix run .#deploy` on evo-x2 to apply the Caddy vhost change, then validate 
 ## Item Resolution (2026-07-30)
 
 dnsblock.home.lan outage. DONE: Caddy vHost added, deployed, dnsblock.home.lan serving. Subdomain canonicalized in follow-up (14-50). All items resolved.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

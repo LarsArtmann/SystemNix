@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -220,3 +217,8 @@ The root cause of ALL graphical collector issues is that a system service (runni
 | 41-44 | REJECTED | graphicalSessionEnv helper, user service, upstream PR — aspirational, not pursued |
 | 45-48 | REJECTED | Process improvements — checklist/CI/hardcoded values, not actionable |
 | 49-50 | DONE | DiscordSync healthCheck URL bug documented in AGENTS.md; ProtectProc default change deployed |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

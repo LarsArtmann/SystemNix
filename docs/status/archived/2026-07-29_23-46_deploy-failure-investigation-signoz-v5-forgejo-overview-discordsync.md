@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -149,3 +146,8 @@ I verified 19 rules provision, but I never compared the provisioned rule names a
 ## Item Resolution (2026-07-30)
 
 Deploy failure investigation. Items 1-20 DONE (SigNoz v5 API, Forgejo SSH keys, DiscordSync Turso fallback, Overview 503 watchdog — all deployed). Items 21-44 MIXED: Turso plan OPEN in TODO_LIST; always-firing rules resolved (14-27); rest REJECTED.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

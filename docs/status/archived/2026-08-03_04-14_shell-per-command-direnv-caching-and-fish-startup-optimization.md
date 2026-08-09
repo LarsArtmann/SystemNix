@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -162,3 +159,8 @@ A Python migration script (`scripts/migrate-envrc.py`) was created to migrate ot
 **The `segment-buffer-0.6.0` deploy blocker diagnosis was WRONG.** The follow-up session (`2026-08-03_09-37`) proved the real deploy blockers were: (1) libspa-sys lint failures in monitor365, (2) vendorHash drift in crush-daily, (3) vendorHash drift in discordsync, (4) vendorHash drift in library-policy. All four were fixed and the system deployed successfully (commit `c599a727`, 29 PASS/0 FAIL/2 SKIP). The `segment-buffer` crate was a red herring — it was resolved by the nixpkgs update (`06ed9234`) which updated `outputHashes` entries.
 
 **What shipped from this report:** All fish/direnv optimizations (per-command caching, carapace/starship init caching, per-session sentinel isolation) were deployed and verified in `2026-08-03_09-37`. Fish startup: 67ms→54ms. Per-command: 46ms→0.7ms. Cold path: 14.8s→2.9s.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

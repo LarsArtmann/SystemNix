@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -192,3 +189,8 @@ Dead partitions: ALL REMOVED (p1, p2, p3, p5 — 47.3 GiB reclaimed)
 | Personal data affected  | NONE                                  |
 | Databases affected      | NONE                                  |
 | Docker volumes affected | NONE                                  |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

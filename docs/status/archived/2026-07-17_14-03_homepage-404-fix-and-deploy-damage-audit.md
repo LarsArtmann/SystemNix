@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Root Cause Chain
 
@@ -180,3 +177,8 @@ git diff --stat
 1. **The `forgejo.nix` changes (runuser mock, user root→forgejo, restartTriggers) — are these from a prior session or another agent?** They appeared during this session's deploy but I did not author them. They were deployed to the running system.
 2. **Should I immediately revert `monitor365.nix` and `forgejo.nix` and redeploy, or do you want to review the diffs first?** The monitor365 API key sync deletion is a regression of a documented fix.
 3. **Do you want me to audit ALL services for missing `restartTriggers` now, or is that a separate task?** This is a systemic gap — any service serving static files from the nix store has the same orphaned-process risk as homepage had.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

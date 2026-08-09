@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -238,3 +235,8 @@ I can't decide because I don't know if ERROR-level log noise is acceptable in th
 ## Item Resolution (2026-07-30)
 
 No NEXT items — this is a deploy progress report. sops crush-daily issue resolved in 00-05 follow-up. All work done.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

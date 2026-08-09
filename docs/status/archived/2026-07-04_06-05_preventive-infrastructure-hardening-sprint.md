@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -222,3 +219,8 @@ The tradeoff: hard-fail prevents deploying broken configs but also blocks deploy
 This session was about **preventing the next silent failure**, not just fixing the two we found. The three-layer defense (pre-commit hook → functional Gatus checks → post-deploy smoke test) means the next service that tries to fail silently will be caught at commit time, in monitoring, or within seconds of deploy — not weeks later when someone happens to visit the dashboard.
 
 The project is in good structural shape. The code quality is high, the module architecture is clean, and the monitoring is now genuinely functional. The remaining risks are all **operational** (deploy, off-site backup, firewall) — not code-quality problems.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

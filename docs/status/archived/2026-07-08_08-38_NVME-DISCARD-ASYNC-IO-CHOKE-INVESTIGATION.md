@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE — Correct Findings
 
@@ -240,3 +237,8 @@ The BTRFS device stats counter (`corrupt 3603676277`) is **persistent across reb
 - Or whether the corruption counter started at a non-zero value from a previous incident
 
 Running `sudo btrfs device stats /data` before and after a scrub would tell us if new corruption is still accumulating. Without sudo, I can't check.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

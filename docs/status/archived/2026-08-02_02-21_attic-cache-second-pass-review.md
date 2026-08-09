@@ -4,9 +4,6 @@ _2026-08-02 02:21 CEST_
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -325,3 +322,8 @@ made by this session. Commit them before deploying if they're ready.
 **Current mechanism is correct.** Verified from Attic source (`gc.rs:34-64`):
 the GC loop runs `run_garbage_collection_once` FIRST (before sleeping), so every
 restart triggers an immediate GC sweep. No redesign needed.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

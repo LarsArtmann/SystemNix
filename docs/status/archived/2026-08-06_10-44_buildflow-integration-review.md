@@ -1,13 +1,10 @@
 # BuildFlow Integration Review — Status Report
 
-**Date:** 2026-08-06 10:44  
-**Session scope:** Review of `~/projects/BuildFlow/flake.nix` integration into SystemNix  
+**Date:** 2026-08-06 10:44
+**Session scope:** Review of `~/projects/BuildFlow/flake.nix` integration into SystemNix
 **Reviewer:** Crush (AI)
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## What Was Done This Session
@@ -160,3 +157,8 @@ BuildFlow exports a `tools` package that bundles Go, Rust, Node, all formatters,
 ### 3. Should the `?ref=master` on the `buildflow` flake input be changed to a tagged release?
 
 AGENTS.md says "CLI tool flake inputs must use tags, never `ref=master`, so they drift independently from go.mod." But this guideline is for third-party repos. BuildFlow is first-party, and the lock file pins the exact revision. However, if BuildFlow ever publishes tagged releases, pinning to a tag would be more explicit and prevent accidental updates to unreleased code when `nix flake update` runs. I cannot determine whether BuildFlow uses tagged releases or if `ref=master` is the intended workflow.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

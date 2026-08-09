@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -188,3 +185,8 @@ I verified the code defines it and `nix eval` shows it (from a stale cache), but
 2. **Should `/data` ownership be changed?** `/data` is owned by `lars:users` which causes systemd-tmpfiles unsafe path transitions for any service that needs root-owned subdirectories on `/data`. Changing to `root:root` would fix this class of bug permanently but might break Docker volume permissions or other services that expect `lars` ownership. This is a system-level decision with broad blast radius.
 
 3. **Should the tmp-cleanup service be allowed to delete other users' files in /tmp?** Currently it can't (`CapabilityBoundingSet=""`), and it silently skips them. This is arguably correct (defense-in-depth — a cleanup service shouldn't have blanket delete power), but it means Go test artifacts (`TestTrailingSlash_*`) accumulate until manual cleanup. Should we add `CAP_DAC_OVERRIDE` to the service, or accept the limitation?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

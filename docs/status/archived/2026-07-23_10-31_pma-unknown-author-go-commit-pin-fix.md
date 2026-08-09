@@ -1,14 +1,11 @@
 # PMA "Unknown Author" — go-commit mkPreparedSource Pin Fix
 
-**Date:** 2026-07-23 10:31  
+**Date:** 2026-07-23 10:31
 **Session Focus:** Fix PMA auto-commits using `Unknown Author <unknown@example.com>` instead of `Lars Artmann <git@lars.software>`
 
 > **Update 2026-07-24:** PMA is deployed at upstream `e8380b44` with the `git config user.name`/`user.email` fix in its own `service_gogit.go`. The Unknown Author symptom is resolved via PMA's code path. The go-commit v0.4.0 top-level flake input pin proposed here remains an **open follow-up** — flake.lock still shows go-commit at `ref=master, rev=3f74fd19` (pre-fix). If go-commit's `gogit.go` is exercised independently (CLI path), the old buggy code compiles via `mkPreparedSource` override. See AGENTS.md "go-git `repo.Config()` only reads local scope" for details.
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## Problem
@@ -132,3 +129,8 @@ However, a **prior session failure** is worth noting: the AGENTS.md entry for th
 ## Item Resolution (2026-07-30)
 
 PMA go-commit pin fix. Items 1-18 are all about the go-commit pin. DONE: PMA deployed at e8380b44 with its own service_gogit.go fix. go-commit unpinned to ref=master (fd9a9664 has the fix). mkPreparedSource trap documented in AGENTS.md.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

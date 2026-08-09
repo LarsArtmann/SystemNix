@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Happened (Chronological)
 
@@ -249,3 +246,8 @@ The terrible benchmark numbers (14 MiB/s read) were most likely caused by:
 - The fio O_DIRECT benchmark competing with all of the above
 
 The `nodiscard` config fix was deployed on 2026-08-03 as defense-in-depth (explicit > implicit), and all 30 post-deploy checks passed. The deployed fstab now correctly includes `nodiscard` on all BTRFS/ext4 mounts.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

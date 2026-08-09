@@ -1,13 +1,10 @@
 # Status: Hyprland Removal + Mass vendorHash Fix + Successful Boot Deploy
 
-**Date:** 2026-08-05 22:02  
-**Session scope:** Started from "why do we have hyprland-0.56.1?!" → discovered grimblast leftover → removed it → boot-deploy exposed 8 Go vendorHash mismatches → fixed all upstream → deployed successfully.  
+**Date:** 2026-08-05 22:02
+**Session scope:** Started from "why do we have hyprland-0.56.1?!" → discovered grimblast leftover → removed it → boot-deploy exposed 8 Go vendorHash mismatches → fixed all upstream → deployed successfully.
 **Overall verdict:** DEPLOY SUCCEEDED. hyprland-0.56.1 and all 10 hypr* dependencies purged from system closure (-122 MiB, 3850→3824 paths).
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## The user's question
@@ -147,7 +144,7 @@ Two commits (`4b2efeb4`, `ad5401b8`) have empty commit messages. These were from
 
 ### Hyprland cleanup (dead code removal)
 
-6. **Search for remaining hyprland references in active code** (not docs/archive) — `rg -l 'hyprland|hyprpaper|hyprlock|hypridle|hyprpicker|hyprsunset' platforms/ modules/` 
+6. **Search for remaining hyprland references in active code** (not docs/archive) — `rg -l 'hyprland|hyprpaper|hyprlock|hypridle|hyprpicker|hyprsunset' platforms/ modules/`
 7. **Remove `swww-daemon.service` and `swww-wallpaper`** if they appear in the new closure (the deploy diff showed them as removed `[R.] swww-daemon.service` and `[R.] swww-wallpaper` — verify they're actually gone, not just renamed)
 8. **Clean up `docs/status/archive/` hyprland references** — 20+ archived status reports reference hyprland configs that no longer exist
 9. **Check if `uwsm` is still needed** — it was in the removal diff (`[R.] uwsm 0.26.6`). If it was only for Hyprland session management, it may be dead code now
@@ -179,7 +176,7 @@ Two commits (`4b2efeb4`, `ad5401b8`) have empty commit messages. These were from
 
 24. **Fix emeet-pixyd CI** — 4 BuildFlow steps failed on push (biome, vitest, jest, tailwind — all "not found", likely missing in devShell)
 25. **Fix mr-sync CI** — 1 BuildFlow step failed
-26. **Fix md-go-validator CI** — 4 BuildFlow steps failed  
+26. **Fix md-go-validator CI** — 4 BuildFlow steps failed
 27. **Fix branching-flow CI** — 1 BuildFlow step failed
 28. **Consolidate go-error-family dep version** across all repos — multiple repos updated to `8baa8344` independently
 
@@ -241,3 +238,8 @@ The daemon runs `nix flake update` which triggers the registry rewrite. I could 
 ### Q3: Is the `nixpkgsTarballGuard` in flake.nix still worth keeping?
 
 The eval-time assertion adds latency to every `nix eval` / `nix flake check`. With the registry override deployed and the pre-commit guard active, is the eval-time guard redundant? Or is defense-in-depth worth the cost?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

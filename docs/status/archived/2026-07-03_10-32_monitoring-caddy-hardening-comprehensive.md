@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -190,3 +187,8 @@ testing on the live system.
 | Commits this session                    | —       | 7                | —                                            |
 | Files changed                           | —       | 3                | `caddy.nix`, `gatus-config.nix`, `AGENTS.md` |
 | Deploy status                           | —       | **Not deployed** | 7 commits pending                            |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

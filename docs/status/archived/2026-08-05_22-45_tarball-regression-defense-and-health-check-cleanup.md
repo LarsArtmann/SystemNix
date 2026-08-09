@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## The inciting problem
 
@@ -236,3 +233,8 @@ nix flake lock --no-use-registries                  # Still tarball
 | `.github/workflows/flake-update.yml` | Rewrote: add normalization step after update | `78a0ed31` |
 | `platforms/nixos/scripts/service-health-check` | Removed `unbound`, `waybar`, `awww-daemon` | `78a0ed31` |
 | `AGENTS.md:251` | Expanded tarball gotcha to full paragraph | `78a0ed31` |
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

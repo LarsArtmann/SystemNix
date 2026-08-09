@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -173,3 +170,8 @@ Fully resolved in `2026-07-29_17-01`. All 3 repos pushed/tagged/deployed: go-ato
 ## Item Resolution (2026-07-30)
 
 mr-sync + go-atomic-write. Items 1-10 DONE (all pushed/tagged/deployed in 17-01). Items 11-59 REJECTED as brainstorms. Resolution section at end confirms all pushed.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — IO-heavy journalctl patterns eliminated. Manual script fixes harvested to TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -182,3 +179,8 @@ The metrics script uses `_SYSTEMD_USER_UNIT=niri.service` to find "Started niri"
 ### Q3: Should I deploy now or batch with other pending work?
 
 The changes are validated but not deployed. The IO-heavy processes are still running in production. Should I deploy immediately, or do you have other changes to batch into the same deploy?
+
+---
+
+> **RESOLVED — IO-heavy journalctl patterns eliminated. Manual script fixes harvested to TODO_LIST.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

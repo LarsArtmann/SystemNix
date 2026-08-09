@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -205,3 +202,8 @@ I wrote "firewall (LAN-only)" in the comments without verifying. If Caddy's 443 
 | Over-reaction risk | **Moderate** | Went full no-auth when `protectedVHost` might have been better |
 
 **Bottom line:** The change works syntactically but is UNDEPLOYED, the security claim is UNVERIFIED, the root cause is UNINVESTIGATED, and the approach may be more permissive than what was actually needed. Deploy, verify, and decide on `protectedVHost` vs full-open.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

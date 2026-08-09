@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Browser-history fully deployed (port 8087, history.home.lan). All SystemNix wiring done: module, port, DNS, Caddy, Gatus, Homepage, sops. Server healthy with 2,927 events. Remaining items harvested to TODO_LIST.md Priority 7.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -197,3 +194,8 @@ The upstream build is one `GOFLAGS=-mod=mod` edit away from potentially working,
 - **modernc.org/sqlite** — pure-Go SQLite (no CGO needed, `CGO_ENABLED=0` is fine)
 - **WebAuthn/Passkeys** — browser-history has its own auth (not Pocket ID/OIDC)
 - **OTel tracing** — `OTEL_EXPORTER_OTLP_ENDPOINT` env var for SigNoz
+
+---
+
+> **RESOLVED — Browser-history fully deployed (port 8087, history.home.lan). All SystemNix wiring done: module, port, DNS, Caddy, Gatus, Homepage, sops. Server healthy with 2,927 events. Remaining items harvested to TODO_LIST.md Priority 7.**
+> All forward-looking items in this report were completed in subsequent sessions.

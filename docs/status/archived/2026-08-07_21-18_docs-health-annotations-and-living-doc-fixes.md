@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Superseded by 2026-08-09 docs-health pass. Living docs updated again with browser-history items.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Requested
 
@@ -231,3 +228,8 @@ The row has said ⚠️ "PG role mismatch — app down" for 3+ days. Nobody has 
 ---
 
 _This report covers work done in the 2026-08-07 18:30-21:18 session, continuing from the 2026-08-06 docs-health session._
+
+---
+
+> **RESOLVED — Superseded by 2026-08-09 docs-health pass. Living docs updated again with browser-history items.**
+> All forward-looking items in this report were completed in subsequent sessions.

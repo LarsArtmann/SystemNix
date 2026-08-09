@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -289,3 +286,8 @@ f94722c7 feat(quickshell): add DankMaterialShell flake input and HM module (P0)
 ```
 
 **Total: 60 files changed, +5563 insertions, -2200 deletions across 14 commits**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

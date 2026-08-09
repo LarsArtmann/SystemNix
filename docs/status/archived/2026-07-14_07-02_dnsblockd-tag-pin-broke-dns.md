@@ -6,9 +6,6 @@ Gen 516 deploy (`nh os switch`) removed unbound and relied on dnsblockd's "embed
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -171,3 +168,8 @@ The user ran `nix flake update -v` as part of their retry, which updated ALL inp
 
 - (a) Commit as-is (the unrelated updates are benign — buildflow/cmdguard are master HEAD updates that already built successfully on gen 516's second attempt)
 - (b) Try to isolate only the dnsblockd change (would require manually reverting the other lock entries — messy and low-value)
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

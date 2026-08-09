@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Session Timeline (what actually happened, in order)
 
@@ -294,3 +291,8 @@ This determines whether we need a UPS (power-loss) or WDT/oomd tuning (system ha
 ### 3. Should fstrim.timer be disabled on this drive?
 
 The 330 GiB fstrim event at 01:17 preceded the first corruption at 05:47 by 4.5 hours. On QLC NAND with 253ms discard latency, fstrim sends TRIM commands that cause I/O stalls. Without fstrim, the FTL loses knowledge of freed blocks → write amplification → faster wear. **Do you want fstrim disabled, or is the write amplification tradeoff worse?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

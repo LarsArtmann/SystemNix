@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What This Session Was Asked To Do
 
@@ -297,3 +294,8 @@ Commit `27aed87b` dropped Redis entirely from SearXNG and disabled the rate limi
 - The prior session's misdiagnosis propagated unchecked — I should have verified on step 1, not step 3
 - Didn't add any automated tests for the new caching behavior
 - 4 empty-message commits from the auto-git daemon went unnoticed and unaddressed
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

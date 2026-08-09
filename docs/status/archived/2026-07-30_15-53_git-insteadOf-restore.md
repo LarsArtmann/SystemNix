@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## TL;DR
 
@@ -210,3 +207,8 @@ Sorted by impact (Pareto: 80/20). The first ~10 are the real winners.
 **Q2: Do you want the `insteadOf` rule scoped to `https://github.com/LarsArtmann/` only?** This would eliminate the `flake.lock` SSH URL pollution entirely while keeping the convenience for your own repos. The current rule is too broad — it rewrites ALL GitHub HTTPS URLs, including those for projects you don't own.
 
 **Q3: Should I push the 7 unpushed commits to `origin/master`?** They're the auto-commit daemon's output. I don't know if you've reviewed them, if they're private, or if they're intended. Pushing them is irreversible.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

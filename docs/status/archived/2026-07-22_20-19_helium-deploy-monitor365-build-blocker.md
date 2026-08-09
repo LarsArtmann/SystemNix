@@ -1,15 +1,12 @@
 # Helium Auto-Restart Deploy + Monitor365 Build Blocker
 
-**Date:** 2026-07-22 20:19  
-**Session goal:** Deploy the helium auto-restart fix and runtime-verify it works  
+**Date:** 2026-07-22 20:19
+**Session goal:** Deploy the helium auto-restart fix and runtime-verify it works
 **Outcome:** Helium service deployed and running. ~~Monitor365 DISABLED to unblock deploy.~~ Monitor365 since RE-ENABLED and healthy — see update. Fix untested at runtime.
 
 > **Update 2026-07-24:** Monitor365 was re-enabled in a subsequent session. Upstream `0615301` resolved the `wasm_bindgen_test` build failure (pinned in flake.nix). Server is healthy (`{"status":"ok","database":"connected"}`), agent running, watchdog deployed (runs as root). The `monitor365-schema-migrate.service` oneshot handles the "version" column binder error. Helium auto-restart (`helium-launch` wrapper) is also deployed and running.
 
 ---
-
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
 
 
 ## a) FULLY DONE
@@ -165,3 +162,8 @@
 ## Item Resolution (2026-07-30)
 
 Helium deploy + monitor365 blocker. Items 1-10 DONE (helium deployed, monitor365 re-enabled at 0615301). Items 11-55 REJECTED as brainstorms. Physical cable-swap test requires user.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

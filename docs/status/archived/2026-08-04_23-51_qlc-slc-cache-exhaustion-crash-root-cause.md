@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Happened
 
@@ -215,3 +212,8 @@ Nothing partial. All changes I made are complete and verified.
 2. **The /data BTRFS chunk is at 96.22% — should I run a balance now?** Running `btrfs balance start -dusage=50 /data` would reclaim space but could take hours and compete with I/O. Given the crash was I/O-related, is it safe to balance right now, or should we wait until fstrim has recovered the SLC cache?
 
 3. **Should the WDT timeout be raised to 60s?** The current 30s means we never get pstore dumps — the WDT fires before `hung_task_timeout_secs=120` can trigger a panic with a stack trace. Raising to 60s gives forensics but means 60s of unresponsiveness on genuine hangs. Is the forensics tradeoff worth it?
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

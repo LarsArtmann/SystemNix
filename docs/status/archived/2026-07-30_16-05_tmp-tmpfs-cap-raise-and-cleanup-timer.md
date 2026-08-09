@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Requested
 
@@ -204,3 +201,8 @@ I can add a `df /tmp` metric to the `system-health` textfile collector and a Gat
 ## Resolution (2026-07-30)
 
 Code is committed and `nix flake check --no-build` passes. The tmpfs cap raise (16G -> 48G) and cleanup timer are **pending deploy** — the tmpfs size change requires a remount or reboot to take effect. The cleanup timer (`nix-build-cleanup-timer` variant for /tmp) will activate on next deploy. The three questions above remain open user decisions (staleness threshold, /tmp monitoring).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What This Session Actually Did
 
@@ -184,3 +181,8 @@ Project rules say "NEVER `git reset`" and the auto-git daemon committed it. An i
 ### 3. Does anyone actually access SigNoz from outside the LAN?
 
 If SigNoz is only ever used from inside the LAN, the external forward-auth path is unnecessary complexity. In that case, we might consider a plain proxy (like Forgejo/Gatus) with firewall-only protection, simplifying the setup. But this depends on usage patterns I can't observe.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md [Unreleased].**
+> All forward-looking items in this report were completed in subsequent sessions.

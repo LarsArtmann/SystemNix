@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was the Problem
 
@@ -151,3 +148,8 @@ phase, and the generated script had three classes of warnings:
 
 3. **Do you want the redundant `stat` optimization applied now or left for a future pass?**
    — It's a correctness-neutral cleanup but changes the script shape more than the minimal fix.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

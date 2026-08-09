@@ -8,9 +8,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE ✅
 
@@ -190,3 +187,8 @@ This requires domain knowledge of the LarsArtmann Go ecosystem (go-cqrs-lite, wa
 - **flake.lock** has uncommitted changes from before this session — not committed (unrelated to docs work)
 - **No off-site backup** remains the #1 systemic risk
 - **DiscordSync** is down with an unclear migration path
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

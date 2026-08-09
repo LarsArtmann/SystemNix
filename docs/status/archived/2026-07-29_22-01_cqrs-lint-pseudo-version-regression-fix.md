@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Timeline — What Actually Happened Across Both Sessions
 
@@ -324,3 +321,8 @@ The SystemNix `flake.lock` was committed and deployed. cqrs-lint v0.2.2 builds s
 ## Item Resolution (2026-07-30)
 
 cqrs-lint pseudo-version fix. DONE: build fixed (649bcd5f), flake.lock committed/deployed. Most items REJECTED as brainstorms (CI guard, functional test).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

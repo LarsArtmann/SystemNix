@@ -7,9 +7,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What This Session Did
 
@@ -265,3 +262,8 @@ You expressed interest in a SOCKS5 proxy on a VPS to hide evo-x2's IP. I need: (
 | `modules/nixos/services/searxng.nix` | Engine list (8→71), timeouts (3s→8s), Redis cache, autocomplete, `disabled` fix | ~100 lines |
 
 No other files were modified. No AGENTS.md, no Gatus config, no post-deploy-check — all identified as next steps above.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

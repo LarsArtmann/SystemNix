@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## A) FULLY DONE
 
@@ -225,3 +222,8 @@ The migration task is **functionally complete and verified** (shellcheck + `nix 
 ## Item Resolution (2026-07-30)
 
 writeShellApplication migration. Items 1-10 DONE (8 scripts migrated, bugs fixed, shellcheck clean). Items 11-53 REJECTED as brainstorms (pre-commit guard, testing, etc.).
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

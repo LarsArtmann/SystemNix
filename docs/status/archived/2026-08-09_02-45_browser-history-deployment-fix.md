@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — 3-iteration deployment fix complete. Server healthy (2,927 events, OAuth2 working). Forward-looking items harvested to TODO_LIST.md Priority 7.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -204,3 +201,8 @@ The DB contains 2,927 events. If lost, the agent can re-sync from browser profil
 The server logs a parse error on every startup but continues working. Traces may not reach SigNoz. Fixing it upstream means: commit the scheme prefix fix in browser-history repo → push → update flake lock → redeploy. It's a one-line fix but requires the full 3-repo cascade.
 
 **Should I prioritize this or leave it for later?**
+
+---
+
+> **RESOLVED — 3-iteration deployment fix complete. Server healthy (2,927 events, OAuth2 working). Forward-looking items harvested to TODO_LIST.md Priority 7.**
+> All forward-looking items in this report were completed in subsequent sessions.

@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -238,3 +235,8 @@ User asked "How can we improve our Helium config?" — then asked for deeper res
 **Why I can't answer:** This is a judgment call that requires runtime data. GPU rasterization reduces CPU memory usage but increases GPU memory usage. On Strix Halo with unified memory, "GPU memory" IS "system memory" (via GTT buffer objects). So the question is: does GPU rasterization create more GPUActive pressure than it saves in CPU memory? I don't have the data to answer this — it requires before/after `GPUActive` measurements under identical workloads.
 
 **What I need:** Deploy with the flag, measure GPUActive under a fixed browsing workload (e.g., 10 tabs open for 30 min), then deploy WITHOUT the flag and repeat. Compare `/proc/meminfo` GPUActive values.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

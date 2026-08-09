@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Context
 
@@ -266,3 +263,8 @@ The "Not started" items from the scorecard were later resolved:
 ## Item Resolution (2026-07-30)
 
 Brutal status review. All 3 incidents DONE (deployed). Overview 503 + StartLimitIntervalSec resolved in later sessions. Resolution table at end of file covers all items.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

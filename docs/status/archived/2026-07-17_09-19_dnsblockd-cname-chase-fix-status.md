@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE ✅
 
@@ -203,3 +200,8 @@ The pre-deploy check hard-aborts on disk + failed units. But the DNS fix is a si
 When I checked `git status` in SystemNix, there's an uncommitted `monitor365SwaggerUiFixOverlay` in `overlays/linux.nix` that **I did not write.** It's a detailed fix for a utoipa-swagger-ui Rust build permission issue (nix store 0444 files → EACCES on re-copy).
 
 **Is this from another session/agent, and should it be included in the next deploy?** I don't want to commit or revert something I didn't author, but it'll be in the working tree when we deploy.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

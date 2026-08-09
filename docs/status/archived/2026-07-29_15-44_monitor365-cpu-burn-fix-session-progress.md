@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## Executive Summary
 
@@ -171,3 +168,8 @@ Superseded by `2026-07-29_16-58`. The sync root cause was NOT 404/429 — it was
 ## Item Resolution (2026-07-30)
 
 No numbered action items in this report — all work was completed within the session or is tracked in TODO_LIST.md / CHANGELOG.md.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

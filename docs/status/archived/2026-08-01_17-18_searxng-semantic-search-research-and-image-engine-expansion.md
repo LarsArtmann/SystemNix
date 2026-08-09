@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -225,3 +222,8 @@ The 4 new engines (bing images, duckduckgo images, qwant images, tineye) are com
 ### Q3: Is the goal better web image search, or building a local semantic image search system?
 
 These are fundamentally different paths. "Better web image search" = enable more SearXNG metasearch engines (quick, free, done in config). "Local semantic image search" = build a CLIP + vector DB pipeline (NekoImageGallery or clip-retrieval, real engineering project, needs a corpus to index). The research covered both, but the implementation paths diverge significantly.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

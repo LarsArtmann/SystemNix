@@ -5,9 +5,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## What Was Done
 
@@ -172,3 +169,8 @@ _nix_add_gcroot() {
 2. **Should I cache carapace/starship/fzf init scripts?** This would drop fish startup from 67ms to ~50ms by pre-generating their init scripts to files instead of piping through `source` each time. But it adds complexity (cache invalidation when versions change) and the savings are modest (~17ms).
 
 3. **Do you want this upstreamed to nix-direnv?** The `_nix_add_gcroot` optimization (detect already-existing store paths, use `ln -sfn` instead of `nix build --out-link`) would benefit ALL large flake users, not just SystemNix. I can open a PR with the batch approach.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

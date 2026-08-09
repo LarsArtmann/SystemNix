@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -160,3 +157,8 @@ treefmt reformatted 25 HTML files that commit `9aec8bd9` already reformatted. I 
 - **(c)** Add the HTML files to treefmt's exclude list
 
 This is a judgment call about whether formatting consistency or diff cleanliness matters more in this context.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

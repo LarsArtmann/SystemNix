@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -158,3 +155,8 @@ The paste shows a prior session was working on Pocket ID (upgrading to v2.10.0, 
 ### Q2: Is the openseo `.vite-temp` fix the right approach, or should Vite's cache dir be redirected?
 
 The error is specifically Vite's `loadConfigFromBundledFile()` writing to `node_modules/.vite-temp/`. My fix makes that path writable by restructuring `node_modules`. But Vite has a `cacheDir` option (default `node_modules/.vite`) and Vite 7 may have other temp paths. A cleaner approach might be `vite preview --cacheDir /var/lib/openseo/.vite-cache` or setting an env var. **Does Vite 7 support redirecting the config-bundle temp dir via CLI flag or env var, or is the node_modules restructure the only option?**
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

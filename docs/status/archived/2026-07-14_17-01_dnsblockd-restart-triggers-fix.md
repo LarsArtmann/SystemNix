@@ -6,9 +6,6 @@ The gen 516 deploy (unbound→dnsblockd migration with master-tracked dnsblockd)
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -189,3 +186,8 @@ The deploy log shows the user ran `nh os switch` (not `nix run .#deploy`). The `
 ### Q2: Why did `switch-to-configuration` not detect the dnsblockd unit file change?
 
 The nvd diff shows `[C.] dnsblockd ad14663 -> 4fa21f8` — the package changed. The ExecStart line in the unit file embeds the full store path (`/nix/store/xxx-dnsblockd-4fa21f8.../bin/dnsblockd`), so the unit file content MUST have changed. NixOS's `switch-to-configuration` compares old and new unit files by content hash and restarts services whose unit files differ. Yet dnsblockd appeared in NONE of the activation lists. I cannot explain this without reading the actual old and new unit files or the `switch-to-configuration.pl` source code. The `restartTriggers` mechanism works around this by adding an explicit `X-Restart-Triggers` hash, but understanding WHY the normal change detection failed would reveal whether this is a one-off edge case or a systemic NixOS bug affecting other services.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

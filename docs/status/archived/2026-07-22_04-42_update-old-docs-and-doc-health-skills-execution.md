@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -288,3 +285,8 @@ I placed them in Priority 0 (Critical) and Priority 0 respectively because they 
 ## Item Resolution (2026-07-30)
 
 Docs-health meta-session. All work done within session (7 files annotated, TODO_LIST rebuilt, FEATURES/CHANGELOG/ROADMAP updated). Forward items (DOMAIN_LANGUAGE, README audit, doc-freshness CI) all DONE in later sessions.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.

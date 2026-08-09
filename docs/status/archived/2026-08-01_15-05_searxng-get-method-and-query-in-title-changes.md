@@ -6,9 +6,6 @@
 
 ---
 
-> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
-
 
 ## a) FULLY DONE
 
@@ -138,3 +135,8 @@
 ## Summary
 
 This session was small in scope (two config flips) but exposed a documentation integrity problem: AGENTS.md is actively lying about SearXNG's privacy posture. The `disabled` vs `inactive` gotcha from the prior session is still undocumented. Both should be fixed before deploy. The changes themselves are low-risk (GET is the more common SearXNG configuration, and Referrer-Policy is already in place), but the documentation debt is real.
+
+---
+
+> **RESOLVED — Resolved. Work captured in CHANGELOG.md.**
+> All forward-looking items in this report were completed in subsequent sessions.
