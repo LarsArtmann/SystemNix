@@ -4819,16 +4819,15 @@
     "signoz-collector-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1780070380,
-        "narHash": "sha256-wQUGYkDWCbGpR8N2Ky6sH2p4Fg1O38COgvG9Kiw7tYM=",
+        "lastModified": 1785953056,
+        "narHash": "sha256-iHkA6KIiNpR+apVw1AQmoDA/WOPdHBR2vX4B12QLWec=",
         "owner": "SigNoz",
         "repo": "signoz-otel-collector",
-        "rev": "75e04c080a6ffe51d02a8285ac1ea09429a0737d",
+        "rev": "75a995d09efe44c98652f2ae8d5771eb57675b29",
         "type": "github"
       },
       "original": {
         "owner": "SigNoz",
-        "ref": "v0.144.5",
         "repo": "signoz-otel-collector",
         "type": "github"
       }
@@ -4836,16 +4835,15 @@
     "signoz-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1780849554,
-        "narHash": "sha256-Ep9rRycaw0aPj9k3mHGZRu8lvG+mLUSv7pf7XTL9LAs=",
+        "lastModified": 1786222792,
+        "narHash": "sha256-uVj49Md0f646xYYmgyncLeORljLiAd13UmDHDylx4fs=",
         "owner": "SigNoz",
         "repo": "signoz",
-        "rev": "4f7ebd1ff1d6f1920b53c1a87fe964168e82eac1",
+        "rev": "40aa322cc3d0da794acfddd6308ffca84315af3e",
         "type": "github"
       },
       "original": {
         "owner": "SigNoz",
-        "ref": "v0.127.1",
         "repo": "signoz",
         "type": "github"
       }
