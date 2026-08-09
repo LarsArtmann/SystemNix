@@ -82,13 +82,17 @@ def get_zero_data_events(conn: sqlite3.Connection, date_filter: set[str] | None 
 
     results = []
     for row in rows:
-        payload = json.loads(row[2]) if row[2] else {}
+        try:
+            payload = json.loads(row[2]) if row[2] else {}
+        except json.JSONDecodeError:
+            print(f"WARNING: corrupt JSON payload in event id={row[0]}, skipping", file=sys.stderr)
+            continue
         d = payload.get("date", "")
         stats = payload.get("total_stats", payload.get("stats", {}))
         sessions = stats.get("session_count", 0)
         if sessions == 0:
             if date_filter is None or d in date_filter:
-                results.append({"id": row[0], "aggregate_id": row[1], "date": d, "occurred_at": row[3]})
+                results.append({"id": row[0], "aggregate_id": row[1], "date": d, "occurred_at": row[3], "payload": row[2]})
     return results
 
 
@@ -121,9 +125,12 @@ def run_step(binary: str, step: str, target_date: str, config: str, api_key: str
         "CRUSH_DAILY_LLM_API_KEY": api_key,
     }
     cmd = [binary, step, "--date", target_date, "--config", config]
-    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
-    output = (result.stdout + result.stderr).strip()
-    return result.returncode == 0, output
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, env=env, timeout=300)
+        output = (result.stdout + result.stderr).strip()
+        return result.returncode == 0, output
+    except subprocess.TimeoutExpired:
+        return False, f"TIMEOUT after 300s on step '{step}' for {target_date}"
 
 
 def verify_event(conn: sqlite3.Connection, target_date: str) -> int:
@@ -131,7 +138,10 @@ def verify_event(conn: sqlite3.Connection, target_date: str) -> int:
         "SELECT payload FROM events WHERE event_type = 'DailyDataCollected'",
     ).fetchall()
     for row in rows:
-        payload = json.loads(row[0]) if row[0] else {}
+        try:
+            payload = json.loads(row[0]) if row[0] else {}
+        except json.JSONDecodeError:
+            continue
         if payload.get("date") == target_date:
             stats = payload.get("total_stats", payload.get("stats", {}))
             return stats.get("session_count", 0)
@@ -149,80 +159,88 @@ def main() -> int:
     date_filter = parse_date_range(args.from_date, args.to_date, args.date)
 
     conn = sqlite3.connect(str(db_path))
-    zero_events = get_zero_data_events(conn, date_filter)
+    try:
+        zero_events = get_zero_data_events(conn, date_filter)
 
-    if not zero_events:
-        print("No zero-data events found for the specified range.")
-        conn.close()
-        return 0
+        if not zero_events:
+            print("No zero-data events found for the specified range.")
+            return 0
 
-    zero_events.sort(key=lambda e: e["date"])
-    print(f"Found {len(zero_events)} zero-data dates:")
-    for e in zero_events:
-        print(f"  {e['date']}")
-    print()
+        zero_events.sort(key=lambda e: e["date"])
+        print(f"Found {len(zero_events)} zero-data dates:")
+        for e in zero_events:
+            print(f"  {e['date']}")
+        print()
 
-    if args.dry_run:
-        print("[DRY-RUN] No changes made.")
-        conn.close()
-        return 0
+        if args.dry_run:
+            print("[DRY-RUN] No changes made.")
+            return 0
 
-    binary = find_binary()
-    config = find_config()
-    api_key = read_api_key() if not args.collect_only else "unused"
-    print(f"Binary:  {binary}")
-    print(f"Config:  {config}")
-    print(f"Mode:    {'collect-only' if args.collect_only else 'full (collect + insights + report)'}")
-    print()
+        binary = find_binary()
+        config = find_config()
+        api_key = read_api_key() if not args.collect_only else "unused"
+        print(f"Binary:  {binary}")
+        print(f"Config:  {config}")
+        print(f"Mode:    {'collect-only' if args.collect_only else 'full (collect + insights + report)'}")
+        print()
 
-    backup_db(db_path)
+        backup_db(db_path)
 
-    succeeded = 0
-    failed = 0
-    for event in zero_events:
-        target_date = event["date"]
-        idx = succeeded + failed + 1
-        print(f"[{idx}/{len(zero_events)}] {target_date}")
+        succeeded = 0
+        failed = 0
+        for event in zero_events:
+            target_date = event["date"]
+            idx = succeeded + failed + 1
+            print(f"[{idx}/{len(zero_events)}] {target_date}")
 
-        conn.execute("DELETE FROM events WHERE id = ?", (event["id"],))
-        conn.commit()
+            conn.execute("DELETE FROM events WHERE id = ?", (event["id"],))
+            conn.commit()
 
-        # Step 1: Collect (always required)
-        ok, output = run_step(binary, "collect", target_date, config, api_key)
-        if not ok:
-            print(f"  COLLECT FAILED: {output[-200:]}")
-            failed += 1
-            continue
+            # Step 1: Collect (always required)
+            ok, output = run_step(binary, "collect", target_date, config, api_key)
+            if not ok:
+                print(f"  COLLECT FAILED: {output[-200:]}")
+                failed += 1
+                # Re-insert the deleted event so the data isn't permanently lost.
+                # We have the backup, but this avoids requiring manual restore.
+                conn.execute(
+                    "INSERT INTO events (id, aggregate_id, event_type, payload, occurred_at) "
+                    "VALUES (?, ?, 'DailyDataCollected', ?, ?)",
+                    (event["id"], event["aggregate_id"], event.get("payload", ""), event["occurred_at"]),
+                )
+                conn.commit()
+                print(f"  Restored original event (id={event['id']})")
+                continue
 
-        sessions = verify_event(conn, target_date)
-        if sessions < 0:
-            print(f"  COLLECT FAILED: event not found after collect")
-            failed += 1
-            continue
+            sessions = verify_event(conn, target_date)
+            if sessions < 0:
+                print(f"  COLLECT FAILED: event not found after collect")
+                failed += 1
+                continue
 
-        print(f"  collect: {sessions} sessions")
+            print(f"  collect: {sessions} sessions")
 
-        if args.collect_only:
+            if args.collect_only:
+                succeeded += 1
+                continue
+
+            # Step 2: Insights (optional — failures are non-fatal)
+            ok, output = run_step(binary, "insights", target_date, config, api_key)
+            if ok:
+                print(f"  insights: done")
+            else:
+                print(f"  insights: FAILED (non-fatal) — {output[-150:]}")
+
+            # Step 3: Report (optional — failures are non-fatal)
+            ok, output = run_step(binary, "report", target_date, config, api_key)
+            if ok:
+                print(f"  report: done")
+            else:
+                print(f"  report: FAILED (non-fatal) — {output[-150:]}")
+
             succeeded += 1
-            continue
-
-        # Step 2: Insights (optional — failures are non-fatal)
-        ok, output = run_step(binary, "insights", target_date, config, api_key)
-        if ok:
-            print(f"  insights: done")
-        else:
-            print(f"  insights: FAILED (non-fatal) — {output[-150:]}")
-
-        # Step 3: Report (optional — failures are non-fatal)
-        ok, output = run_step(binary, "report", target_date, config, api_key)
-        if ok:
-            print(f"  report: done")
-        else:
-            print(f"  report: FAILED (non-fatal) — {output[-150:]}")
-
-        succeeded += 1
-
-    conn.close()
+    finally:
+        conn.close()
 
     print(f"\n{'='*60}")
     print(f"Backfill complete: {succeeded} succeeded, {failed} failed out of {len(zero_events)}")

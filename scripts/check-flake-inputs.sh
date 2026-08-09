@@ -19,7 +19,7 @@ echo ""
 
 # 1. Check for ref=master (WARNING — 32 existing inputs, don't block)
 echo "1. ref=master inputs (reproducibility risk)"
-MASTER_REFS=$(grep -n 'ref\s*=\s*"master"' flake.nix 2>/dev/null || true)
+MASTER_REFS=$(grep -nE 'ref[[:space:]]*=[[:space:]]*"master"' flake.nix 2>/dev/null || true)
 if [ -n "$MASTER_REFS" ]; then
   COUNT=$(echo "$MASTER_REFS" | wc -l)
   echo "  ⚠ Found $COUNT input(s) on ref=\"master\" — consider pinning to a release branch or tag"

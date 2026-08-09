@@ -283,14 +283,16 @@ in
               };
             };
           }
-          // lib.optionalAttrs (svcEnabled "hermes" && svcEnabled "projects-management-automation") {
+          // lib.optionalAttrs (svcEnabled "projects-management-automation") {
             "pma-env" = {
               owner = primaryUser;
               group = "users";
               restartUnits = [ "projects-management-automation.service" ];
-              content = lib.generators.toKeyValue { } {
-                MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
-              };
+              content = lib.generators.toKeyValue { } (
+                lib.optionalAttrs (svcEnabled "hermes") {
+                  MINIMAX_API_KEY = config.sops.placeholder.hermes_minimax_api_key;
+                }
+              );
             };
           }
           // lib.optionalAttrs (svcEnabled "monitor365-server") {

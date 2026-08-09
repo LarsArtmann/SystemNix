@@ -31,10 +31,7 @@ done
 echo ""
 echo "=== Extracting current commits ==="
 for repo in "${!REPO_URLS[@]}"; do
-  url="${REPO_URLS[$repo]}"
-  url_escaped="${url//\//\\/}"
-  url_escaped="${url_escaped//\./\\.}"
-  current=$(grep -oP "raw\.githubusercontent\.com/${repo}/[^/]+" "$BLOCKLIST_FILE" | head -1 | sed "s|raw\.githubusercontent\.com/${repo}/||")
+  current=$(grep -oP "raw\.githubusercontent\.com/${repo}/[^/]+" "$BLOCKLIST_FILE" | head -1 | sed "s|raw\.githubusercontent\.com/${repo}/||" || true)
   if [[ -n $current ]]; then
     CURRENT_COMMITS["$repo"]="$current"
     echo "  $repo: $current → ${NEW_COMMITS[$repo]}"
@@ -73,27 +70,25 @@ count=0
 
 while IFS= read -r url; do
   count=$((count + 1))
-  name=$(grep -B2 "$url" "$BLOCKLIST_FILE" | grep 'name =' | sed 's/.*name = "//;s/".*//')
+  name=$(grep -B2 "$url" "$BLOCKLIST_FILE" | grep 'name =' | sed 's/.*name = "//;s/".*//' || true)
   printf "  [%2d/%d] %-40s " "$count" "$total" "$name"
 
-  base32_hash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1)
+  base32_hash=$(nix-prefetch-url --type sha256 "$url" 2>/dev/null | tail -1 || true)
   if [[ -z $base32_hash ]]; then
     echo "FAILED (nix-prefetch-url)"
     continue
   fi
 
-  sri_hash=$(nix hash convert --hash-algo sha256 --to sri "$base32_hash" 2>/dev/null)
+  sri_hash=$(nix hash convert --hash-algo sha256 --to sri "$base32_hash" 2>/dev/null || true)
   if [[ -z $sri_hash ]]; then
     echo "FAILED (nix hash convert)"
     continue
   fi
 
-  url_escaped="${url//\//\\/}"
-  url_escaped="${url_escaped//\./\\.}"
-  old_hash=$(grep -A1 "$url" "$BLOCKLIST_FILE" | grep 'hash =' | sed 's/.*hash = "//;s/".*//')
+  old_hash=$(grep -A1 "$url" "$BLOCKLIST_FILE" | grep 'hash =' | sed 's/.*hash = "//;s/".*//' || true)
 
   if [[ -n $old_hash && $old_hash != "$sri_hash" ]]; then
-    sed -i "s/${old_hash}/${sri_hash}/g" "$BLOCKLIST_FILE"
+    sed -i "s|${old_hash}|${sri_hash}|g" "$BLOCKLIST_FILE"
     echo "OK"
   elif [[ $old_hash == "$sri_hash" ]]; then
     echo "unchanged"

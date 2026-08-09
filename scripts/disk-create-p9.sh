@@ -67,7 +67,7 @@ ok "p8 covers BTRFS with ${MARGIN} GiB margin"
 
 # Check scrub status
 echo "Scrub status:"
-sudo btrfs scrub status /data 2>/dev/null | head -15 | sed 's/^/  /'
+sudo btrfs scrub status /data 2>/dev/null | head -15 | sed 's/^/  /' || true
 echo ""
 
 SCRUB_STATUS=$(sudo btrfs scrub status /data 2>/dev/null)
@@ -75,9 +75,12 @@ if echo "$SCRUB_STATUS" | grep -q "running"; then
   die "Scrub still running. Wait for it to finish before creating p9."
 fi
 
-if echo "$SCRUB_STATUS" | grep -qi "uncorrectable" && ! echo "$SCRUB_STATUS" | grep -qP "uncorrectable.*0"; then
-  warn "Scrub found uncorrectable errors. Review before proceeding."
-  confirm "Proceed anyway despite scrub errors?"
+if echo "$SCRUB_STATUS" | grep -qi "uncorrectable"; then
+  UNCORR_COUNT=$(echo "$SCRUB_STATUS" | grep -oiP 'uncorrectable[^0-9]*\K[0-9]+' | head -1 || echo 0)
+  if [ "${UNCORR_COUNT:-0}" -gt 0 ]; then
+    warn "Scrub found ${UNCORR_COUNT} uncorrectable errors. Review before proceeding."
+    confirm "Proceed anyway despite scrub errors?"
+  fi
 fi
 
 ok "Scrub complete — safe to create p9"

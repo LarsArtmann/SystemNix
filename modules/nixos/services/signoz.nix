@@ -231,6 +231,10 @@ in
                   ];
                 })
                 (serviceDefaults { })
+                {
+                  IOSchedulingClass = "best-effort";
+                  IOSchedulingPriority = 5;
+                }
               ];
             };
           })
@@ -386,6 +390,10 @@ in
                   MemoryMax = lib.mkForce "1G";
                 })
                 (serviceDefaults { RestartSec = "10"; })
+                {
+                  IOSchedulingClass = "best-effort";
+                  IOSchedulingPriority = 6;
+                }
               ];
             };
             environment.etc."signoz/collector.yaml".text = lib.generators.toYAML { } {

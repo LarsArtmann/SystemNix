@@ -432,7 +432,7 @@ in
 
       # Hermes AI Agent Gateway (Discord, cron jobs, messaging)
       hermes = {
-        enable = true;
+        enable = false; # TEMP: npm cache ENODATA in hermes-tui blocks deploy; PMA hardening is urgent
       };
 
       # Crush Daily — AI-powered development insights from Crush databases

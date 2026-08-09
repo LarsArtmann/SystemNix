@@ -43,9 +43,10 @@ fi
 
 # Check GLM-5.1 rate limit in logs
 log_info "Checking GLM-5.1 rate limit logs (last 50 lines)..."
-if journalctl -u hermes --since "24 hours ago" -n 50 | grep -qi "rate.*limit\|429\|402"; then
+_hermes_log=$(journalctl -u hermes --since "24 hours ago" -n 50 --no-pager 2>/dev/null || true)
+if echo "$_hermes_log" | grep -qi "rate.*limit\|429\|402"; then
   log_warn "Rate limit errors found in hermes logs — investigate GLM-5.1 usage"
-  journalctl -u hermes --since "24 hours ago" | grep -i "rate.*limit\|429\|402" | tail -5
+  echo "$_hermes_log" | grep -i "rate.*limit\|429\|402" | tail -5 || true
 else
   log_pass "No rate limit errors in last 24h"
 fi
@@ -53,7 +54,8 @@ fi
 # Check hermes git remote access
 if [ -f /home/hermes/.ssh/id_ed25519 ]; then
   log_pass "hermes SSH key installed"
-  if sudo -u hermes ssh -o ConnectTimeout=5 -T git@github.com 2>&1 | grep -q "successfully authenticated"; then
+  _ssh_out=$(sudo -u hermes ssh -o ConnectTimeout=5 -T git@github.com 2>&1 || true)
+  if echo "$_ssh_out" | grep -q "successfully authenticated"; then
     log_pass "hermes GitHub SSH authentication works"
   else
     log_warn "hermes GitHub SSH not yet configured — add deploy key to GitHub"
@@ -85,7 +87,7 @@ BOOT_TIME=$(systemd-analyze 2>/dev/null | head -1 | grep -oP '[\d.]+s' | head -1
 if [ "$BOOT_TIME" != "unknown" ]; then
   # Extract numeric value
   BT_NUM=$(echo "$BOOT_TIME" | sed 's/s//')
-  if (($(echo "$BT_NUM < 60" | bc -l 2>/dev/null || echo "0"))); then
+  if awk -v t="$BT_NUM" 'BEGIN{exit !(t<60)}' 2>/dev/null; then
     log_pass "Boot time: $BOOT_TIME (target: <60s)"
   else
     log_warn "Boot time: $BOOT_TIME (target: ~35s, investigate if >60s)"
@@ -161,7 +163,7 @@ log_info "Memory: ${MEM_USED}MB / ${MEM_TOTAL}MB used, Swap: ${SWAP_USED}MB used
 
 # BTRFS snapshot health
 if [ -d /mnt/btrfs-root/@snapshots ]; then
-  LATEST=$(ls -t /mnt/btrfs-root/@snapshots 2>/dev/null | head -1)
+  LATEST=$(ls -t /mnt/btrfs-root/@snapshots 2>/dev/null | head -1 || true)
   if [ -n "$LATEST" ]; then
     AGE=$((($(date +%s) - $(stat -c %Y "/mnt/btrfs-root/@snapshots/$LATEST" 2>/dev/null || echo 0)) / 86400))
     if [ "$AGE" -le 3 ]; then

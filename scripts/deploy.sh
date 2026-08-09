@@ -33,12 +33,18 @@ if nix run .#pre-deploy-check; then
   set -e
 
   if [ "$switch_exit" -ne 0 ]; then
-    echo ""
-    echo "⚠ nh os switch returned exit code $switch_exit"
-    echo "  (exit code 4 = some services failed during activation, but config IS activated)"
-    echo "  Resetting start-limit-hit and retrying failed units..."
-    sudo systemctl reset-failed 2>/dev/null || true
-    systemctl --user reset-failed 2>/dev/null || true
+    if [ "$switch_exit" -eq 4 ]; then
+      echo ""
+      echo "⚠ nh os switch returned exit code 4"
+      echo "  (some services failed during activation, but config IS activated)"
+      echo "  Resetting start-limit-hit and retrying failed units..."
+      sudo systemctl reset-failed 2>/dev/null || true
+      systemctl --user reset-failed 2>/dev/null || true
+    else
+      echo ""
+      echo "❌ nh os switch FAILED (exit $switch_exit) — config NOT activated. Aborting."
+      exit "$switch_exit"
+    fi
   fi
 
   # Start critical services that deploy may have left in inactive/dead state.

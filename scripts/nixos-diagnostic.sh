@@ -43,9 +43,9 @@ check_home_manager() {
   echo "Version: $(home-manager --version)"
 
   # Check Home Manager generations
-  if [[ -d /nix/var/nix/profiles/per-user/$USER/home-manager ]]; then
+  if [[ -d "/nix/var/nix/profiles/per-user/$USER/home-manager" ]]; then
     echo "✅ Home Manager profile exists"
-    echo "Generations: $(nix-env --list-generations --profile /nix/var/nix/profiles/per-user/$USER/home-manager | wc -l)"
+    echo "Generations: $(nix-env --list-generations --profile "/nix/var/nix/profiles/per-user/$USER/home-manager" | wc -l)"
   else
     echo "⚠️  No Home Manager generations found"
   fi
@@ -86,7 +86,7 @@ test_nixos_config() {
     echo "❌ nixos-rebuild check failed"
     echo ""
     echo "🔧 Trying to get more detailed error information..."
-    sudo nixos-rebuild build --flake "$FLAKE_REF" --show-trace 2>&1 | head -50
+    sudo nixos-rebuild build --flake "$FLAKE_REF" --show-trace 2>&1 | head -50 || true
     return 1
   fi
 }
@@ -127,26 +127,26 @@ provide_remediation() {
   echo "   nix-env --delete-generations old --profile /nix/var/nix/profiles/per-user/$USER/home-manager"
   echo ""
   echo "3. Rebuild configuration:"
-  echo "   sudo nixos-rebuild switch --flake $FLAKE_REF"
+  echo "   sudo nixos-rebuild switch --flake '$FLAKE_REF'"
   echo ""
   echo "4. If still failing, try cleaning the Nix store:"
   echo "   sudo nix-collect-garbage -d"
   echo "   sudo nix-store --optimise"
-  echo "   sudo nixos-rebuild switch --flake $FLAKE_REF"
+  echo "   sudo nixos-rebuild switch --flake '$FLAKE_REF'"
 }
 
 # Main execution
 main() {
   check_root
   check_nixos
-  check_home_manager
-  test_flake
-  test_nixos_config
+  check_home_manager || return 1
+  test_flake || return 1
+  test_nixos_config || return 1
   check_common_issues
 
   echo ""
   echo "✅ All diagnostics passed!"
-  echo "You can safely run: sudo nixos-rebuild switch --flake $FLAKE_REF"
+  echo "You can safely run: sudo nixos-rebuild switch --flake '$FLAKE_REF'"
 }
 
 # Run with error handling

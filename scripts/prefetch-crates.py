@@ -27,13 +27,13 @@ def parse_cargo_lock(path: Path) -> list[tuple[str, str]]:
     crates = []
     for pkg in data.get("package", []):
         source = pkg.get("source", "")
-        if "crates.io-index" in source:
+        if "crates.io-index" in source or "index.crates.io" in source:
             crates.append((pkg["name"], pkg["version"]))
 
     return crates
 
 
-def prefetch_crate(name: str, version: str) -> bool:
+def prefetch_crate(name: str, version: str) -> tuple[bool, str]:
     store_name = f"crate-{name}-{version}.tar.gz"
     url = f"https://static.crates.io/crates/{name}/{version}/download"
 
@@ -43,7 +43,7 @@ def prefetch_crate(name: str, version: str) -> bool:
         text=True,
         timeout=120,
     )
-    return result.returncode == 0
+    return result.returncode == 0, result.stderr.strip()
 
 
 def main() -> int:
@@ -62,11 +62,12 @@ def main() -> int:
     done = 0
     failed = 0
     for i, (name, version) in enumerate(crates):
-        if prefetch_crate(name, version):
+        ok, err = prefetch_crate(name, version)
+        if ok:
             done += 1
         else:
             failed += 1
-            print(f"  FAILED: {name}-{version}", file=sys.stderr)
+            print(f"  FAILED: {name}-{version}: {err[:120]}", file=sys.stderr)
 
         if (i + 1) % 50 == 0 or (i + 1) == len(crates):
             print(f"  [{i+1}/{len(crates)}] done={done} failed={failed}")

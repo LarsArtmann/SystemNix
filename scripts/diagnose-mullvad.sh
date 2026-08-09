@@ -50,7 +50,7 @@ sudo iptables -t mangle -L -n -v --line-numbers 2>&1 | head -20
 
 echo ""
 echo "=== nftables ruleset (if any) ==="
-sudo /nix/store/a7sf90yc74dha1bcj2wx6hh3w10qf19z-nftables-1.1.6/bin/nft list ruleset 2>&1 | head -80
+sudo "$(command -v nft || echo nft)" list ruleset 2>&1 | head -80
 
 echo ""
 echo "=== conntrack stats ==="

@@ -24,8 +24,8 @@ for fs in / /data /mnt/btrfs-root; do
   esac
 
   if [ -n "$snapshot_dir" ] && [ -d "$snapshot_dir" ]; then
-    count=$(find "$snapshot_dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null | wc -l)
-    latest=$(find "$snapshot_dir" -maxdepth 1 -mindepth 1 -type d -printf '%T@ %p\n' 2>/dev/null | sort -rn | head -1 | awk '{print $2}')
+    count=$( (find "$snapshot_dir" -maxdepth 1 -mindepth 1 -type d 2>/dev/null || true) | wc -l)
+    latest=$( (find "$snapshot_dir" -maxdepth 1 -mindepth 1 -type d -printf '%T@ %p\n' 2>/dev/null || true) | sort -rn | head -1 | awk '{print $2}' || true)
     echo "  Location: $snapshot_dir"
     echo "  Count: $count"
     [ -n "$latest" ] && echo "  Latest: $(basename "$latest")"

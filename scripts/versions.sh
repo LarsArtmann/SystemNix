@@ -28,7 +28,7 @@ packages=(
 
 # Detect platform
 if [[ "$(uname)" == "Darwin" ]]; then
-  eval_attr="nixosConfigurations" # won't work on Darwin for most
+  eval_attr="darwinConfigurations" # limited on Darwin
 else
   eval_attr="nixosConfigurations.evo-x2.pkgs"
 fi
@@ -48,11 +48,11 @@ for entry in "${packages[@]}"; do
 import json, sys
 try:
     lock = json.load(open('flake.lock'))
-    r = lock['nodes'].get('$input', {}).get('locked', {}).get('rev', 'N/A')
+    r = lock['nodes'].get(sys.argv[1], {}).get('locked', {}).get('rev', 'N/A')
     print(r[:12])
-except:
+except Exception:
     print('N/A')
-" 2>/dev/null || echo "N/A")
+" "$input" 2>/dev/null || echo "N/A")
 
   printf "%-40s %-12s %-12s\n" "$pkg" "$ver" "$rev"
 done

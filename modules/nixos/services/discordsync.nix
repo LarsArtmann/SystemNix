@@ -247,6 +247,10 @@
               MemoryMax = lib.mkForce "2G";
               ReadWritePaths = [ cfg.dataDir ];
             })
+            {
+              IOSchedulingClass = "best-effort";
+              IOSchedulingPriority = 6;
+            }
           ];
         };
 

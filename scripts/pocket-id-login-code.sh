@@ -7,7 +7,7 @@ API_URL="http://127.0.0.1:1411"
 # Get admin user ID
 ADMIN_ID=$(curl -sf -H "X-API-Key: $API_KEY" \
   "$API_URL/api/users?pagination%5Blimit%5D=100" |
-  jq -r '.data[] | select(.isAdmin == true) | .id' | head -1)
+  jq -r '[.data[] | select(.isAdmin == true)][0].id // empty' 2>/dev/null || true)
 
 if [ -z "$ADMIN_ID" ]; then
   echo "ERROR: No admin user found in Pocket ID" >&2

@@ -13,12 +13,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 set -euo pipefail
 
-DISK="/dev/nvme0n1"
-P8_START_SECTOR=1097861120    # p8 start — hardcoded, never changes
-BTRFS_SIZE_SECTORS=2147483648 # 1.00 TiB
-BTRFS_END_SECTOR=$((P8_START_SECTOR + BTRFS_SIZE_SECTORS))
-TARGET_P8_END_GIB=1560 # gives ~12.5 GiB margin past BTRFS
-TARGET_P8_END_SECTOR=$((TARGET_P8_END_GIB * 1024 * 1024 * 1024 / 512))
+source "$(dirname "$0")/disk-common.sh"
 
 RED='\033[0;31m'
 GRN='\033[0;32m'
@@ -53,15 +48,14 @@ resize_p8() {
   partprobe
   sgdisk -n "8:${P8_START_SECTOR}:${new_end_sector}" "$DISK"
   sgdisk -t 8:8300 "$DISK"
+  sgdisk -c 8:"data" "$DISK"
   partprobe
 }
-partprobe() { sudo nix shell nixpkgs#parted -c partprobe "$DISK" 2>/dev/null || true; }
 
 part_exists() { [ -b "${DISK}p$1" ]; }
 part_start() { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo 0; }
 part_size() { cat "/sys/block/nvme0n1/nvme0n1p$1/size" 2>/dev/null || echo 0; }
 part_end() { echo $(($(part_start "$1") + $(part_size "$1"))); }
-sectors_to_gib() { awk "BEGIN { printf \"%.1f\", $1 * 512 / 1073741824 }"; }
 
 assert() {
   local desc="$1"
@@ -110,7 +104,9 @@ log "══════ PHASE 1: Delete p9 (stop ext4 overwrite) ═════
 
 if part_exists 9; then
   log "Unmounting and deleting p9..."
-  findmnt --source "${DISK}p9" >/dev/null 2>&1 && sudo umount "${DISK}p9" || true
+  if findmnt --source "${DISK}p9" >/dev/null 2>&1; then
+    sudo umount "${DISK}p9" || die "Failed to unmount p9 — refusing to delete a mounted partition"
+  fi
   sgdisk -d 9 "$DISK"
   partprobe
   assert "p9 deleted" bash -c '! part_exists 9'
@@ -187,7 +183,7 @@ if sudo btrfs scrub status /data 2>/dev/null | grep -q "running"; then
   warn "Scrub already running"
 else
   log "Starting scrub..."
-  sudo btrfs scrub start /data >/dev/null 2>&1 && ok "Scrub started" || warn "Scrub failed to start"
+  if sudo btrfs scrub start /data >/dev/null 2>&1; then ok "Scrub started"; else warn "Scrub failed to start — check manually: sudo btrfs scrub status /data"; fi
 fi
 
 # ═══════════════════════════════════════════════════════════════════════════

@@ -12,6 +12,7 @@ Multi-line constructs (if/fi, function defs) are handled as atomic units.
 """
 from __future__ import annotations
 
+import argparse
 import re
 import sys
 from pathlib import Path
@@ -91,12 +92,13 @@ def find_if_end(lines: list[str], start: int) -> int:
 
 
 def find_func_end(lines: list[str], start: int) -> int:
-    """Find the `}` matching a function `{` at line `start`."""
-    depth = 0
-    for i in range(start, len(lines)):
-        s = lines[i]
-        depth += s.count("{") - s.count("}")
-        if depth <= 0 and i > start:
+    """Find the `}` matching a function `{` at line `start`.
+
+    Matches closing braces only at column 0 (bash convention for function end),
+    avoiding false matches from braces inside strings or parameter expansions.
+    """
+    for i in range(start + 1, len(lines)):
+        if lines[i].startswith("}"):
             return i
     return -1
 
@@ -125,7 +127,7 @@ def migrate_content(old_content: str, project_dir: Path) -> str:
             continue
 
         # ── if/fi block ──
-        if s.startswith("if ") and ("then" in s or "if " in s):
+        if s.startswith("if "):
             end = find_if_end(lines, i)
             if end != -1:
                 block = lines[i : end + 1]
@@ -191,23 +193,30 @@ def migrate_project(project_dir: Path, dry_run: bool = False) -> tuple[bool, str
     if not envrc.exists():
         return False, "", ""
 
-    old = envrc.read_text()
+    old = envrc.read_text(encoding="utf-8")
     new = migrate_content(old, project_dir)
 
     if old.rstrip() == new.rstrip():
         return False, "already optimal", new
 
     if not dry_run:
-        envrc.write_text(new)
+        backup = envrc.with_suffix(".envrc.bak")
+        backup.write_text(old, encoding="utf-8")
+        envrc.write_text(new, encoding="utf-8")
 
     old_n = len([l for l in old.strip().splitlines() if l.strip()])
     new_n = len([l for l in new.strip().splitlines() if l.strip()])
     return True, f"{old_n} → {new_n} lines", new
 
 
-def main() -> None:
-    dry_run = "--dry-run" in sys.argv
-    only = [a for a in sys.argv[1:] if not a.startswith("--")]
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Migrate .envrc files to smart direnv library pattern")
+    parser.add_argument("--dry-run", action="store_true", help="Preview without writing")
+    parser.add_argument("projects", nargs="*", help="Specific project names (default: all)")
+    args = parser.parse_args()
+
+    only = args.projects
+    dry_run = args.dry_run
 
     changed = 0
     unchanged = 0
@@ -230,7 +239,8 @@ def main() -> None:
     print(f"Migrated: {changed}  Already optimal: {unchanged}")
     if dry_run:
         print("(dry-run — no files modified)")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

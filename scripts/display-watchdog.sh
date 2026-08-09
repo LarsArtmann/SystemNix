@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Display watchdog: detects dead display and recovers.
 #
 # Two scenarios:
@@ -12,7 +12,7 @@
 #   2. If niri dead + display dead → restart display-manager (SDDM)
 #   3. After 3 consecutive failures, log critical alert (manual intervention required)
 
-set -eu
+set -euo pipefail
 
 # --- State persistence (inlined from lib.sh — writeShellApplication breaks relative sourcing) ---
 _state_dir=""

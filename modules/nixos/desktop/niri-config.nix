@@ -77,7 +77,7 @@ _: {
                               noBindsTo;
                         in
                         unitLimits
-                        + "\nRestart=always\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\n"
+                        + "\nRestart=always\nRestartSec=2s\nOOMScoreAdjust=-1000\nLimitNPROC=infinity\nLimitNOFILE=524288\nIOSchedulingClass=best-effort\nIOSchedulingPriority=3\n"
                         + "\n[Install]\nWantedBy=graphical-session.target\n"
                       else
                         baseText;

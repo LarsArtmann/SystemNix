@@ -30,7 +30,7 @@ extract() {
 
 # Temperature: extract numeric value from "40°C" or raw Kelvin
 TEMP_KELVIN=$(echo "$SMART" | grep -oP '"temperature"\s*:\s*\K[0-9]+')
-TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+TEMP_CELSIUS=$((${TEMP_KELVIN:-0} - 273))
 
 CRITICAL_WARNING=$(extract "critical_warning")
 AVAILABLE_SPARE=$(extract "available_spare")
@@ -76,11 +76,11 @@ CRITICAL_COMP_TEMP_TIME=$(extract "critical_composite_temperature_time")
   echo "# TYPE node_nvme_endurance_warning gauge"
   echo "node_nvme_endurance_warning{device=\"${DEV_NAME}\"} ${ENDURANCE_WARNING}"
 
-  echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 512 bytes)"
+  echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 1000 * 512 = 512000 bytes per NVMe spec)"
   echo "# TYPE node_nvme_data_units_read_total counter"
   echo "node_nvme_data_units_read_total{device=\"${DEV_NAME}\"} ${DATA_UNITS_READ}"
 
-  echo "# HELP node_nvme_data_units_written_total NVMe data units written (1 unit = 512 bytes)"
+  echo "# HELP node_nvme_data_units_written_total NVMe data units written (1 unit = 1000 * 512 = 512000 bytes per NVMe spec)"
   echo "# TYPE node_nvme_data_units_written_total counter"
   echo "node_nvme_data_units_written_total{device=\"${DEV_NAME}\"} ${DATA_UNITS_WRITTEN}"
 

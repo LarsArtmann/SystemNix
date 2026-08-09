@@ -1656,11 +1656,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786277257,
-        "narHash": "sha256-hcmF9p9TdEaEJvGUK02RDVutCCUttjSix2Z7pLLRhFE=",
+        "lastModified": 1786311910,
+        "narHash": "sha256-lrNbicn4hqJN9nfDUAaC5049Rb5xzjxQ9o7j0Es9FCk=",
         "ref": "master",
-        "rev": "58870fdf79462a0b3a1899385fcd035f921f5643",
-        "revCount": 5423,
+        "rev": "c82d855b3990c9b01d3c7769f9ff0fd9ef156b8c",
+        "revCount": 5425,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
@@ -4492,11 +4492,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786269447,
-        "narHash": "sha256-AKkvNKiCgiO3095r2gYZEhWbubdI5/S5VAEnR3DCjGc=",
+        "lastModified": 1786313544,
+        "narHash": "sha256-1icEtx+TrvrgVbV5ZgO9dv+CO8QR3wt9PSbpUlbYesA=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "624905861ff5b29aac2460a8783662645441a5ff",
+        "rev": "d9a41fd73205ff79774fc8ce0eb8aa1443572282",
         "type": "github"
       },
       "original": {

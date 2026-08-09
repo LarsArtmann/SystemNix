@@ -103,7 +103,7 @@ if command -v systemctl &>/dev/null; then
     pass "No failed units"
   else
     warn "$FAILED failed unit(s) — review before deploying"
-    systemctl --failed --no-pager 2>/dev/null | head -10
+    systemctl --failed --no-pager 2>/dev/null | head -10 || true
   fi
 fi
 

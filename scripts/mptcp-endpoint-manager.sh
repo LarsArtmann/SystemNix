@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # mptcp-endpoint-manager — Manages MPTCP subflow endpoints
 #
 # Modes:
@@ -80,7 +80,7 @@ wifi-up)
 wifi-down)
   # Called by NM dispatcher on WiFi disconnect
   IFACE="${DEVICE_IFACE:-$WIFI_IF}"
-  CURRENT=$(ip mptcp endpoint show 2>/dev/null | grep "dev $IFACE" | awk '{print $2}' || echo "")
+  CURRENT=$(ip mptcp endpoint show 2>/dev/null | grep "dev $IFACE" | awk '{print $1}' || echo "")
   if [ -n "$CURRENT" ]; then
     remove_endpoint "$CURRENT"
   fi

@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEV="/dev/sda"
-PART="/dev/sda1"
+DEV="${1:-/dev/sda}"
+BASENAME=$(basename "$DEV")
+PART="${DEV}1"
 echo "========================================"
-echo "  SanDisk USB Stick Diagnostic Report"
+echo "  USB Stick Diagnostic Report — $DEV"
 echo "========================================"
 echo ""
 
@@ -15,16 +16,16 @@ echo ""
 echo "=== Mount Status ==="
 findmnt "$DEV" 2>/dev/null || echo "Not mounted"
 findmnt "$PART" 2>/dev/null || echo "$PART not mounted"
-grep sda /proc/mounts || echo "No sda entries in /proc/mounts"
+grep "$BASENAME" /proc/mounts || echo "No $BASENAME entries in /proc/mounts"
 echo ""
 
-echo "=== Swap on sda? ==="
-swapon --show 2>/dev/null | grep sda || echo "No swap on sda"
-grep sda /proc/swaps 2>/dev/null || echo "No sda in /proc/swaps"
+echo "=== Swap on $BASENAME? ==="
+swapon --show 2>/dev/null | grep "$BASENAME" || echo "No swap on $BASENAME"
+grep "$BASENAME" /proc/swaps 2>/dev/null || echo "No $BASENAME in /proc/swaps"
 echo ""
 
 echo "=== Kernel Disk Stats ==="
-cat /sys/block/sda/stat
+cat /sys/block/$BASENAME/stat 2>/dev/null || echo "Device /sys/block/$BASENAME/stat not found"
 echo ""
 echo "Fields: reads_completed reads_merged sectors_read ms_reading writes_completed writes_merged sectors_written ms_writing ios_in_progress ms_doing_io weighted_ms_doing_io"
 echo ""
@@ -42,7 +43,7 @@ sudo lsof "$DEV" "$PART" 2>&1 || echo "Nothing open"
 echo ""
 
 echo "=== Udev Info ==="
-udevadm info --query=all --name="$DEV" 2>/dev/null | head -30
+udevadm info --query=all --name="$DEV" 2>/dev/null | head -30 || true
 echo ""
 
 echo "=== SMART/Health (if available) ==="
@@ -50,7 +51,7 @@ sudo smartctl -a "$DEV" 2>&1 | head -40 || echo "smartctl not available"
 echo ""
 
 echo "=== Kernel Messages ==="
-journalctl -k --no-pager | grep -i "sda\|san\|usb" | tail -20
+journalctl -k --no-pager | grep -i "$BASENAME\|san\|usb" | tail -20 || true
 echo ""
 
 echo "=== Per-Process I/O (top writers) ==="
@@ -62,13 +63,13 @@ for pid in /proc/[0-9]*; do
   if [ "$w" -gt 1000000 ] 2>/dev/null || [ "$r" -gt 1000000 ] 2>/dev/null; then
     echo "$(basename "$pid")  $pname  $((w / 1024))  $((r / 1024))"
   fi
-done | sort -t' ' -k3 -n -r | head -20
+done | sort -t' ' -k3 -n -r | head -20 || true
 echo ""
 
 echo "=== Live I/O Snapshot (3s delta) ==="
-read1=$(cat /sys/block/sda/stat)
+read1=$(cat /sys/block/$BASENAME/stat 2>/dev/null || echo "0 0 0 0 0 0 0 0 0 0 0")
 sleep 3
-read2=$(cat /sys/block/sda/stat)
+read2=$(cat /sys/block/$BASENAME/stat 2>/dev/null || echo "0 0 0 0 0 0 0 0 0 0 0")
 echo "Before: $read1"
 echo "After:  $read2"
 

@@ -82,3 +82,19 @@ state_reset() {
   rm -f "$state_file"
   state_count=0
 }
+
+# --- Safe pipe helpers ---
+# Under `set -o pipefail`, `cmd | head -N` kills cmd with SIGPIPE (exit 141)
+# when head exits after N lines. pipefail propagates 141, and `set -e` aborts.
+# These helpers centralize the `|| true` fix so callers don't repeat it.
+
+# Capture first N lines safely (no SIGPIPE abort under pipefail).
+# Usage: result=$(safe_head 10 <<< "$output")
+# Or:   result=$(some_cmd | safe_head 10)
+safe_head() { head -n "${1:-10}" 2>/dev/null || true; }
+
+# Capture last N lines safely.
+safe_tail() { tail -n "${1:-10}" 2>/dev/null || true; }
+
+# Sort then take first N lines safely.
+safe_sort_head() { local n="${1:-10}"; shift; sort "$@" 2>/dev/null | head -n "$n" || true; }

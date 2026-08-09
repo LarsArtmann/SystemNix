@@ -446,6 +446,8 @@
               CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
               MemoryMax = lib.mkForce "4G";
               MemoryHigh = lib.mkForce "3G";
+              IOSchedulingClass = "best-effort";
+              IOSchedulingPriority = 5;
             };
           };
         })

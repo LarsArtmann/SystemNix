@@ -62,6 +62,9 @@ _: {
           inherit onFailure;
           wantedBy = lib.mkForce [ ];
           after = lib.mkForce [ "basic.target" ];
+          serviceConfig = {
+            IOSchedulingClass = "idle";
+          };
         };
 
         # Defensive security tools only

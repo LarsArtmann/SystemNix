@@ -6,10 +6,12 @@ Usage:
   python3 fix-versions.py --dry-run    # Preview changes
   python3 fix-versions.py              # Apply changes
 """
+from __future__ import annotations
 
 import argparse
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 PROJECTS_DIR = Path.home() / "projects"
@@ -39,8 +41,8 @@ def get_latest_semver(repo_path: str) -> str | None:
             m = re.match(r"^v?(\d+\.\d+\.\d+)", tag)
             if m:
                 return m.group(1)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"  WARNING: git tag failed in {repo_path}: {e}", file=sys.stderr)
     return None
 
 
@@ -52,22 +54,22 @@ def find_affected_files(repo_path: Path) -> list[tuple[Path, list[tuple[int, str
         if nix_file.is_symlink():
             continue
         try:
-            content = nix_file.read_text()
-        except Exception:
+            content = nix_file.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError) as e:
+            print(f"  WARNING: cannot read {nix_file}: {e}", file=sys.stderr)
             continue
 
         matches = []
         for i, line in enumerate(content.split("\n"), 1):
             if "version" not in line:
                 continue
-            has_version_assign = "version" in line and "=" in line
             has_self_ref = bool(re.search(
                 r'self\.(rev|shortRev|dirtyRev|dirtyShortRev)|'
                 r'inputs\.self\.(rev|shortRev|dirtyRev|dirtyShortRev)|'
                 r'builtins\.substring.*self\.rev',
                 line,
             ))
-            if has_version_assign and has_self_ref:
+            if has_self_ref:
                 matches.append((i, line))
 
         if matches:
@@ -114,17 +116,17 @@ def fix_ldflags_line(line: str, version: str) -> str:
     return line
 
 
-def process_project(repo_path: Path, dry_run: bool) -> bool:
+def process_project(repo_path: Path, dry_run: bool, affected: list[tuple[Path, list[tuple[int, str]]]] | None = None, version: str = "0.1.0") -> bool:
     name = repo_path.name
-    affected = find_affected_files(repo_path)
+    if affected is None:
+        affected = find_affected_files(repo_path)
     if not affected:
         return False
 
-    version = VERSION_OVERRIDES.get(name) or get_latest_semver(str(repo_path)) or "0.1.0"
     any_changed = False
 
     for nix_file, matches in affected:
-        content = nix_file.read_text()
+        content = nix_file.read_text(encoding="utf-8")
         lines = content.split("\n")
         changed = False
 
@@ -175,7 +177,7 @@ def main():
         print(f"\n{'='*60}")
         print(f"  {entry.name}  →  {version}")
 
-        if process_project(entry, args.dry_run):
+        if process_project(entry, args.dry_run, affected, version):
             changed_projects.append((entry.name, version))
         else:
             skipped_projects.append(entry.name)
@@ -187,7 +189,8 @@ def main():
         print(f"    {name} → {ver}")
     if skipped_projects:
         print(f"  Skipped (no changes needed): {', '.join(skipped_projects)}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

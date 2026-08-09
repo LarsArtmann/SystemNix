@@ -77,6 +77,9 @@
           MemoryHigh = lib.mkForce "6G";
           MemorySwapMax = lib.mkForce "0";
           CPUQuota = lib.mkForce "200%";
+          IOSchedulingClass = "best-effort";
+          IOSchedulingPriority = 7;
+          Nice = 10;
         };
       };
     };

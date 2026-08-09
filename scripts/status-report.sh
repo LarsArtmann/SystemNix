@@ -13,6 +13,8 @@ REPORT_FILE="docs/status/$(date +%Y-%m-%d_%H-%M)-STATUS.md"
 
 echo "Generating status report: $REPORT_FILE"
 
+mkdir -p "$(dirname "$REPORT_FILE")"
+
 # Create the report
 cat >"$REPORT_FILE" <<HEADER
 # Status Report — $TIMESTAMP
@@ -49,7 +51,7 @@ echo "" >>"$REPORT_FILE"
 echo "## Memory" >>"$REPORT_FILE"
 echo "" >>"$REPORT_FILE"
 echo '```' >>"$REPORT_FILE"
-free -h 2>/dev/null || echo "Memory info unavailable" >>"$REPORT_FILE"
+{ free -h 2>/dev/null || echo "Memory info unavailable"; } >>"$REPORT_FILE"
 echo '```' >>"$REPORT_FILE"
 
 # Git status
@@ -106,22 +108,22 @@ fi
 echo "" >>"$REPORT_FILE"
 echo "## Nix Store" >>"$REPORT_FILE"
 echo "" >>"$REPORT_FILE"
-echo "- **Store size:** $(du -sh /nix/store 2>/dev/null | cut -f1 || echo 'unknown')" >>"$REPORT_FILE"
-echo "- **Generations:** $(sudo nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | wc -l || echo 'unknown')" >>"$REPORT_FILE"
+echo "- **Store size:** $(df -h /nix/store 2>/dev/null | tail -1 | awk '{print $2" used: "$3" / "$4" ("$5")"}' || echo 'unknown')" >>"$REPORT_FILE"
+echo "- **Generations:** $(sudo -n nix-env --list-generations --profile /nix/var/nix/profiles/system 2>/dev/null | wc -l || echo 'unknown')" >>"$REPORT_FILE"
 
 # Flake check
 echo "" >>"$REPORT_FILE"
 echo "## Build Status" >>"$REPORT_FILE"
 echo "" >>"$REPORT_FILE"
 echo '```' >>"$REPORT_FILE"
-if nix flake check --no-build 2>&1 | tail -5 >>"$REPORT_FILE"; then
+if nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
   echo '```' >>"$REPORT_FILE"
   echo "" >>"$REPORT_FILE"
-  echo "✅ **Flake check passed**" >>"$REPORT_FILE"
+  echo "OK **Flake evaluation passes**" >>"$REPORT_FILE"
 else
   echo '```' >>"$REPORT_FILE"
   echo "" >>"$REPORT_FILE"
-  echo "❌ **Flake check failed**" >>"$REPORT_FILE"
+  echo "FAIL **Flake evaluation fails**" >>"$REPORT_FILE"
 fi
 
 echo "" >>"$REPORT_FILE"

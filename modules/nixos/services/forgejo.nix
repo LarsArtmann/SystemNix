@@ -361,6 +361,9 @@ _: {
             ];
             TimeoutStartSec = "3min";
             MemoryMax = "16G";
+            IOSchedulingClass = "best-effort";
+            IOSchedulingPriority = 7;
+            Nice = 10;
           };
         };
 

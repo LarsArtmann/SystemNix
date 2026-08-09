@@ -4,7 +4,7 @@
 # Exit non-zero if any doc count is stale.
 set -euo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
 
 FAIL=0
 
@@ -22,7 +22,7 @@ check_count() {
 SERVICE_MODULES=$(find modules/nixos/services -maxdepth 1 -name '*.nix' ! -name '_*' 2>/dev/null | wc -l)
 
 # Gatus endpoints
-GATUS_COUNT=$(grep -c 'name =' modules/nixos/services/gatus-config.nix 2>/dev/null || echo 0)
+GATUS_COUNT=$(grep -c 'name =' modules/nixos/services/gatus-config.nix 2>/dev/null || true)
 
 # Scripts
 SCRIPT_COUNT=$(find scripts -maxdepth 1 -type f 2>/dev/null | wc -l)

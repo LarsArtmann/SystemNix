@@ -184,4 +184,11 @@ if [[ $FISH_COMMON -lt 8 ]] || [[ $ZSH_COMMON -lt 8 ]] || [[ $BASH_COMMON -lt 8 
   exit 1
 fi
 
+# On Darwin, also enforce Darwin alias counts
+if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ ${FISH_DARWIN:-0} -lt 3 ]] || [[ ${ZSH_DARWIN:-0} -lt 3 ]] || [[ ${BASH_DARWIN:-0} -lt 3 ]]; then
+    exit 1
+  fi
+fi
+
 exit 0

@@ -2,7 +2,9 @@
 """
 commit-tag-push.py — Commit, tag, and push version fixes for all LarsArtmann projects.
 """
+from __future__ import annotations
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -17,7 +19,7 @@ SKIP_PROJECTS = {
 # Map project name to the version it was fixed to
 def get_version_from_file(nix_file: Path) -> str | None:
     """Extract the hardcoded version from a nix file."""
-    content = nix_file.read_text()
+    content = nix_file.read_text(encoding="utf-8")
     for line in content.split("\n"):
         m = re.match(r'\s*version\s*=\s*"(\d+\.\d+\.\d+)"\s*;', line)
         if m:
@@ -81,11 +83,16 @@ def main():
         print(f"\n  {name} → {version} (tag={'needed' if needs_tag else 'exists'})")
         print(f"    Files: {', '.join(nix_changes)}")
 
-        # Stage changed nix files
+        # Stage changed nix files (parse porcelain status: "XY filename" or "XY "filename"" for paths with spaces)
         for f in nix_changes:
-            # Parse " M flake.nix" → "flake.nix"
-            fname = f.split()[-1] if " " in f else f
-            subprocess.run(["git", "add", fname], cwd=entry, capture_output=True, timeout=5)
+            fname = f[3:] if len(f) > 3 else f
+            if fname.startswith('"') and fname.endswith('"'):
+                fname = fname[1:-1]
+            add_result = subprocess.run(["git", "add", fname], cwd=entry, capture_output=True, text=True, timeout=5)
+            if add_result.returncode != 0:
+                print(f"    FAIL add {fname}: {add_result.stderr[:100]}")
+                failed.append((name, "add"))
+                break
 
         # Commit
         commit_result = subprocess.run(
@@ -106,16 +113,16 @@ def main():
             tag_result = subprocess.run(
                 ["git", "tag", "-a", tag, "-m", tag],
                 cwd=entry, capture_output=True, text=True, timeout=5,
-                env={**__import__('os').environ, "GIT_EDITOR": "true"},
+                env={**os.environ, "GIT_EDITOR": "true"},
             )
             if tag_result.returncode != 0:
                 print(f"    FAIL tag: {tag_result.stderr[:100]}")
                 failed.append((name, "tag"))
                 continue
 
-        # Push
+        # Push current branch (not hardcoded master)
         push_result = subprocess.run(
-            ["git", "push", "origin", "master"],
+            ["git", "push", "origin", "HEAD"],
             cwd=entry, capture_output=True, text=True, timeout=30,
         )
         if push_result.returncode != 0:
@@ -144,7 +151,8 @@ def main():
         print(f"  FAILED: {len(failed)}")
         for name, step in failed:
             print(f"    {name} ({step})")
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

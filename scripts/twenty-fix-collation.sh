@@ -15,7 +15,7 @@ CONTAINER="twenty-db-1"
 USER="postgres"
 
 echo "==> Checking container '$CONTAINER' is running..."
-if ! docker ps --format '{{.Names}}' | grep -q "^${CONTAINER}$"; then
+if ! docker ps --format '{{.Names}}' | grep -qx "^${CONTAINER}$"; then
   echo "ERROR: Container '$CONTAINER' is not running."
   echo "Available containers:"
   docker ps --format '{{.Names}}'
@@ -25,10 +25,11 @@ fi
 echo "==> Listing databases..."
 dbs=$(docker exec "$CONTAINER" psql -U "$USER" -t -A -c "SELECT datname FROM pg_database WHERE datistemplate = false;")
 
-for db in $dbs; do
+while IFS= read -r db; do
+  [ -z "$db" ] && continue
   echo "==> Refreshing collation version for database: $db"
   docker exec "$CONTAINER" psql -U "$USER" -d "$db" -c "ALTER DATABASE \"$db\" REFRESH COLLATION VERSION;"
-done
+done <<<"$dbs"
 
 echo ""
 echo "==> Verifying — checking for remaining collation warnings..."

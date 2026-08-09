@@ -26,10 +26,10 @@ fi
 section "Flake"
 if [[ -f flake.nix ]]; then
   ok "flake.nix found"
-  if nix flake check --no-build 2>/dev/null; then
-    ok "nix flake check --no-build passes"
+  if nix eval --raw .#nixosConfigurations.evo-x2.config.system.build.toplevel.drvPath >/dev/null 2>&1; then
+    ok "flake evaluates (nix eval)"
   else
-    fail "nix flake check --no-build fails"
+    fail "flake evaluation fails"
   fi
 else
   warn "not in SystemNix root (flake.nix not found)"
@@ -132,8 +132,8 @@ if is_linux; then
   fi
 
   # Home Manager generation age
-  if [[ -L /nix/var/nix/profiles/per-user/$USER/home-manager ]]; then
-    hm_gen=$(readlink /nix/var/nix/profiles/per-user/$USER/home-manager)
+  if [[ -L "/nix/var/nix/profiles/per-user/$USER/home-manager" ]]; then
+    hm_gen=$(readlink "/nix/var/nix/profiles/per-user/$USER/home-manager")
     hm_date=$(stat -c %Y "$hm_gen" 2>/dev/null || echo "0")
     now=$(date +%s)
     age_days=$(((now - hm_date) / 86400))

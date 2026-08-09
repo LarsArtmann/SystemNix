@@ -13,6 +13,7 @@ DOMAIN="${SYSTEMNIX_DOMAIN:-home.lan}"
 PASS=0
 FAIL=0
 SKIP=0
+WARN=0
 
 # Colors
 RED='\033[0;31m'
@@ -35,13 +36,13 @@ check() {
   if [ "$status" = "000" ]; then
     echo -e "${RED}FAIL${NC} $name — $url unreachable"
     FAIL=$((FAIL + 1))
-    return
+    return 1
   fi
 
   if [ "$status" != "$expect_status" ]; then
     echo -e "${RED}FAIL${NC} $name — expected HTTP $expect_status, got $status ($url)"
     FAIL=$((FAIL + 1))
-    return
+    return 1
   fi
 
   # Read pattern directly from the body file instead of piping through echo.
@@ -55,7 +56,7 @@ check() {
       echo -e "${RED}FAIL${NC} $name — status OK ($status) but body mismatch: expected pattern '$expect_body' not found ($url)"
       echo -e "     first 100 chars: $(head -c 100 /tmp/.smoke-body 2>/dev/null)"
       FAIL=$((FAIL + 1))
-      return
+      return 1
     fi
   fi
 
@@ -88,7 +89,7 @@ report_skip() {
 }
 report_warn() {
   echo -e "${YELLOW}WARN${NC} $1"
-  SKIP=$((SKIP + 1))
+  WARN=$((WARN + 1))
 }
 
 echo "=== Post-Deploy Smoke Test ==="
@@ -531,7 +532,7 @@ fi
 
 # Desktop: quickshell journal errors (last 1h)
 export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u 2>/dev/null || echo 0)}"
-_qs_errors=$(journalctl --user -u quickshell --since "-1hour" --no-pager -p err 2>/dev/null | wc -l)
+_qs_errors=$(journalctl --user -u quickshell --since "-1hour" --no-pager -p err 2>/dev/null | wc -l || echo 0)
 if [ "${_qs_errors:-0}" -eq 0 ]; then
   report_pass "Desktop — no errors in quickshell journal (last 1h)"
 else
@@ -541,7 +542,7 @@ fi
 # --- Summary ---
 echo ""
 echo "=== Summary ==="
-echo -e "${GREEN}PASS: $PASS${NC}  ${RED}FAIL: $FAIL${NC}  ${YELLOW}SKIP: $SKIP${NC}"
+echo -e "${GREEN}PASS: $PASS${NC}  ${RED}FAIL: $FAIL${NC}  ${YELLOW}SKIP: $SKIP${NC}  WARN: $WARN"
 
 if [ "$FAIL" -gt 0 ]; then
   echo ""

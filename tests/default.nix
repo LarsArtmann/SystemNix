@@ -25,3 +25,4 @@ in
   gatus-patterns = makeTest (import ./test-gatus-patterns.nix { inherit pkgs; });
   pma-identity = makeTest (import ./test-pma-identity.nix { inherit pkgs; });
 }
+// (import ./test-scripts.nix { inherit pkgs; })

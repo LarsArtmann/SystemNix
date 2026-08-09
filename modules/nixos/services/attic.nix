@@ -183,6 +183,10 @@ _: {
               MemoryMax = "2G";
             })
             (serviceDefaults { })
+            {
+              IOSchedulingClass = "best-effort";
+              IOSchedulingPriority = 6;
+            }
           ];
         };
 

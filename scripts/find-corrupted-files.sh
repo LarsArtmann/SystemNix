@@ -21,9 +21,8 @@ NC='\033[0m'
 log() { echo -e "${BLU}[$(date +%H:%M:%S)]${NC} $*"; }
 ok() { echo -e "${GRN}[$(date +%H:%M:%S)] ✓${NC} $*"; }
 warn() { echo -e "${YLW}[$(date +%H:%M:%S)] ⚠${NC} $*"; }
-err() { echo -e "${RED}[$(date +%H:%M:%S)] ✗${NC} $*" >&2; }
 
-echo "" >"$REPORT"
+: >"$REPORT"
 
 log "Scanning ${SCAN_DIR} for corrupted files..."
 log "Damaged files will be listed to: ${REPORT}"
@@ -70,7 +69,8 @@ echo "Report saved:   ${REPORT}"
 if [ "$CORRUPTED" -gt 0 ]; then
   echo ""
   log "${BLD}Damaged files:${NC}"
-  cat "$REPORT" | while IFS=$'\t' read -r path _ human; do
+  while IFS=$'\t' read -r path _ human; do
+    [ -z "$path" ] && continue
     echo -e "  ${RED}✗${NC} ${path} (${human})"
-  done
+  done <"$REPORT"
 fi

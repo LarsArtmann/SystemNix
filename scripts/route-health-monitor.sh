@@ -63,7 +63,7 @@ check_isp_internet() {
   fi
   # HTTP-level check — bind to eno1 specifically
   if command -v curl >/dev/null 2>&1; then
-    curl -s -o /dev/null -w '' \
+    curl -s -o /dev/null \
       --connect-timeout "$HTTP_TIMEOUT" \
       --max-time "$HTTP_TIMEOUT" \
       --interface "$ENO1_IF" \
@@ -81,7 +81,7 @@ detect_wifi_gateway() {
   if ! ip link show "$WIFI_IF" >/dev/null 2>&1; then
     local detected_if
     detected_if=$(nmcli -t -f DEVICE,TYPE,STATE device status 2>/dev/null |
-      grep ":wifi:connected" | head -1 | cut -d: -f1 || echo "")
+      awk -F: '/:wifi:connected/{print $1; exit}' || echo "")
     if [ -n "$detected_if" ]; then
       log "AUTO-DETECT: WiFi interface $WIFI_IF not found, using $detected_if"
       WIFI_IF="$detected_if"
@@ -136,8 +136,7 @@ detect_initial_mode
 
 # Only set route if no default route exists at all
 if [ -z "$(ip route show default 2>/dev/null)" ]; then
-  set_route_single "$ENO1_GW" "$ENO1_IF"
-  log "no default route found — set eno1 as default"
+  set_route_single "$ENO1_GW" "$ENO1_IF" || log "WARN: failed to set initial eno1 route"
 fi
 
 # --- Main loop ---
@@ -181,7 +180,7 @@ while true; do
           log "ECMP RESTORE: ISP recovered → eno1 weight=10, WiFi weight=3"
           CURRENT_MODE="ecmp"
         else
-          set_route_single "$ENO1_GW" "$ENO1_IF"
+          set_route_single "$ENO1_GW" "$ENO1_IF" || log "WARN: failed to set eno1-only route"
           log "FAILBACK: ISP recovered, WiFi gone → eno1 only"
           CURRENT_MODE="eno1-only"
         fi
@@ -194,7 +193,7 @@ while true; do
 
       # ISP still degraded after shifting — go WiFi-only
       if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ] && $WIFI_AVAILABLE; then
-        set_route_single "$WIFI_GW" "$WIFI_IF"
+        set_route_single "$WIFI_GW" "$WIFI_IF" || log "WARN: failed to failover to WiFi"
         log "FAILOVER: ISP dead → WiFi only ($WIFI_IF via $WIFI_GW)"
         CURRENT_MODE="wifi-only"
         ISP_FAIL_COUNT=0
@@ -212,7 +211,7 @@ while true; do
           log "FAILBACK: ISP recovered → ECMP (eno1=10, WiFi=3)"
           CURRENT_MODE="ecmp"
         else
-          set_route_single "$ENO1_GW" "$ENO1_IF"
+          set_route_single "$ENO1_GW" "$ENO1_IF" || log "WARN: failed to set eno1-only route"
           log "FAILBACK: ISP recovered → eno1 only"
           CURRENT_MODE="eno1-only"
         fi
@@ -244,7 +243,7 @@ while true; do
       ISP_FAIL_COUNT=$((ISP_FAIL_COUNT + 1))
       if [ "$ISP_FAIL_COUNT" -ge "$FAILOVER_THRESHOLD" ]; then
         if $WIFI_AVAILABLE; then
-          set_route_single "$WIFI_GW" "$WIFI_IF"
+          set_route_single "$WIFI_GW" "$WIFI_IF" || log "WARN: failed to failover to WiFi"
           log "FAILOVER: ISP down, no ECMP → WiFi only ($WIFI_IF via $WIFI_GW)"
           CURRENT_MODE="wifi-only"
         else
@@ -257,7 +256,7 @@ while true; do
 
   *)
     log "UNKNOWN MODE: $CURRENT_MODE — resetting to eno1"
-    set_route_single "$ENO1_GW" "$ENO1_IF"
+    set_route_single "$ENO1_GW" "$ENO1_IF" || log "WARN: failed to reset to eno1"
     CURRENT_MODE="eno1-only"
     ;;
   esac

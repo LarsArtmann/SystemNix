@@ -9,10 +9,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 set -uo pipefail
 
-DISK="/dev/nvme0n1"
-P8_START_SECTOR=1097861120
-BTRFS_SIZE_SECTORS=2147483648 # 1.00 TiB
-BTRFS_END_SECTOR=$((P8_START_SECTOR + BTRFS_SIZE_SECTORS))
+source "$(dirname "$0")/disk-common.sh"
 
 RED='\033[0;31m'
 GRN='\033[0;32m'
@@ -23,8 +20,6 @@ NC='\033[0m'
 hr() { echo -e "${CYN}────────────────────────────────────────────────────────────────────────${NC}"; }
 h1() { echo -e "\n${BLD}${CYN}═══ $1 ═══${NC}\n"; }
 
-sectors_to_gib() { awk "BEGIN { printf \"%.1f\", $1 * 512 / 1073741824 }"; }
-sectors_to_tib() { awk "BEGIN { printf \"%.2f\", $1 * 512 / 1099511627776 }"; }
 
 # ─── Partition helpers ─────────────────────────────────────────────────────
 part_exists() { [ -b "${DISK}p$1" ]; }
@@ -114,15 +109,12 @@ else
       echo "   p9 end:       sector ${P9_E}"
       echo "   p9 size:      $(sectors_to_gib "$P9_Z") GiB"
       # Check if p9 overlaps the BTRFS overflow area
-      if [ "$P9_S" -lt "$P8_E" ] || [ "$P9_S" -ge "$P8_E" ]; then
-        # p9 starts where p8 ends — but BTRFS extends past p8
-        if [ "$P9_S" -lt "$BTRFS_END_SECTOR" ]; then
-          P9_BTRFS_OVERLAP=$((P9_E < BTRFS_END_SECTOR ? P9_E - P9_S : BTRFS_END_SECTOR - P9_S))
-          P9_BTRFS_OVERLAP_GIB=$(sectors_to_gib "$P9_BTRFS_OVERLAP")
-          echo -e "${RED}   p9 overlaps BTRFS data by ${P9_BTRFS_OVERLAP_GIB} GiB${NC}"
-          echo -e "${RED}   That ext4 data has OVERWRITTEN BTRFS blocks in this range.${NC}"
-          echo -e "${YLW}   BTRFS DUP metadata copies MAY survive — scrub will reveal extent.${NC}"
-        fi
+      if [ "$P9_S" -lt "$BTRFS_END_SECTOR" ]; then
+        P9_BTRFS_OVERLAP=$((P9_E < BTRFS_END_SECTOR ? P9_E - P9_S : BTRFS_END_SECTOR - P9_S))
+        P9_BTRFS_OVERLAP_GIB=$(sectors_to_gib "$P9_BTRFS_OVERLAP")
+        echo -e "${RED}   p9 overlaps BTRFS data by ${P9_BTRFS_OVERLAP_GIB} GiB${NC}"
+        echo -e "${RED}   That ext4 data has OVERWRITTEN BTRFS blocks in this range.${NC}"
+        echo -e "${YLW}   BTRFS DUP metadata copies MAY survive — scrub will reveal extent.${NC}"
       fi
     else
       echo "   p9 does not exist — no ext4 overwrite, but BTRFS is still exposed"
@@ -179,7 +171,7 @@ echo "Active swap devices:"
 swapon --show 2>/dev/null || echo "  No swap active"
 echo ""
 echo "ZRAM config (from running system):"
-cat /sys/block/zram0/disksize 2>/dev/null && echo "  (zram0 active)" || echo "  zram0 not configured"
+if cat /sys/block/zram0/disksize 2>/dev/null >/dev/null; then echo "  (zram0 active)"; else echo "  zram0 not configured"; fi
 
 # ═══════════════════════════════════════════════════════════════════════════
 h1 "6. DEAD PARTITIONS (reclaimable space)"
@@ -203,8 +195,6 @@ fi
 # ═══════════════════════════════════════════════════════════════════════════
 h1 "7. TARGET LAYOUT (what disk-fix.sh will produce)"
 # ───────────────────────────────────────────────────────────────────────────
-TARGET_P8_END_GIB=1548
-TARGET_P8_END_SECTOR=$((TARGET_P8_END_GIB * 1024 * 1024 * 1024 / 512))
 MARGIN_SECTORS=$((TARGET_P8_END_SECTOR - BTRFS_END_SECTOR))
 MARGIN_GIB=$(sectors_to_gib "$MARGIN_SECTORS")
 

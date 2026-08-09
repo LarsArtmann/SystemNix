@@ -195,7 +195,11 @@ in
   # systemd-udevd: -500 (device node management — death breaks /dev/dri/* access)
   systemd = {
     services = {
-      "sshd".serviceConfig.OOMScoreAdjust = -1000;
+      "sshd".serviceConfig = {
+        OOMScoreAdjust = -1000;
+        IOSchedulingClass = "best-effort";
+        IOSchedulingPriority = 1;
+      };
       "systemd-journald".serviceConfig.OOMScoreAdjust = -500;
       "dbus-broker".serviceConfig.OOMScoreAdjust = -500;
       "systemd-logind".serviceConfig.OOMScoreAdjust = -500;
@@ -226,8 +230,16 @@ in
     };
 
     user.services = {
-      "dms".serviceConfig.OOMScoreAdjust = -500;
-      "pipewire".serviceConfig.OOMScoreAdjust = -500;
+      "dms".serviceConfig = {
+        OOMScoreAdjust = -500;
+        IOSchedulingClass = "best-effort";
+        IOSchedulingPriority = 3;
+      };
+      "pipewire".serviceConfig = {
+        OOMScoreAdjust = -500;
+        IOSchedulingClass = "best-effort";
+        IOSchedulingPriority = 3;
+      };
     };
 
     # ── Resilience: coredump storage limits ───────────────────────────────

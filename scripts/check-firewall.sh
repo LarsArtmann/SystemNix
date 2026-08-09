@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 
-NFT=/nix/store/a7sf90yc74dha1bcj2wx6hh3w10qf19z-nftables-1.1.6/bin/nft
+NFT="$(command -v nft || echo nft)"
 
 echo "=== NixOS firewall (inet nixos-fw) ==="
-sudo $NFT list table inet nixos-fw 2>&1
+sudo "$NFT" list table inet nixos-fw 2>&1
 
 echo ""
 echo "=== Mullvad firewall (inet mullvad) ==="
-sudo $NFT list table inet mullvad 2>&1
+sudo "$NFT" list table inet mullvad 2>&1
 
 echo ""
 echo "=== All nftables tables ==="
-sudo $NFT list tables 2>&1
+sudo "$NFT" list tables 2>&1
 
 echo ""
 echo "=== ip route ==="

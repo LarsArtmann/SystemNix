@@ -22,7 +22,7 @@ echo
 
 # 3. All routes (for debugging)
 echo "--- All Routes ---"
-ip route show | head -20
+ip route show | head -20 || true
 echo
 
 # 4. Gateway reachability
@@ -78,8 +78,8 @@ echo
 
 # 7. Dual-WAN services
 echo "--- Dual-WAN Services ---"
-systemctl is-active route-health-monitor >/dev/null 2>&1 && ok "route-health-monitor: active" || fail "route-health-monitor: NOT active"
-systemctl is-active mptcp-endpoint-manager >/dev/null 2>&1 && ok "mptcp-endpoint-manager: active" || fail "mptcp-endpoint-manager: NOT active"
+if systemctl is-active route-health-monitor >/dev/null 2>&1; then ok "route-health-monitor: active"; else fail "route-health-monitor: NOT active"; fi
+if systemctl is-active mptcp-endpoint-manager >/dev/null 2>&1; then ok "mptcp-endpoint-manager: active"; else fail "mptcp-endpoint-manager: NOT active"; fi
 echo
 
 # 8. MPTCP endpoints
@@ -123,6 +123,9 @@ if ! ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1; then
     fail "Gateway reachable but no internet — ISP outage. WiFi failover should activate."
   fi
 fi
+
+echo
+summary
 
 echo
 echo "Emergency commands:"

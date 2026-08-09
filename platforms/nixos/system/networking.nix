@@ -69,10 +69,18 @@
       };
       polkit.restartIfChanged = false;
 
-      # Reload Nix daemon after config changes to apply settings
+      # nix-daemon: deprioritize builds so SSH/desktop/services keep I/O priority.
+      # BFQ respects IOSchedulingClass — nix builds get best-effort/7 (lowest BE),
+      # while interactive sessions stay at default BE/4. Nice=10 drops CPU priority
+      # so builds don't starve the desktop under heavy compilation.
       nix-daemon = {
         restartIfChanged = true;
-        serviceConfig.LimitNOFILE = 65536;
+        serviceConfig = {
+          LimitNOFILE = 65536;
+          IOSchedulingClass = lib.mkForce "best-effort";
+          IOSchedulingPriority = lib.mkForce 7;
+          Nice = 10;
+        };
       };
     };
 

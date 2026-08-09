@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # Detects niri DRM zombie state and triggers recovery.
 #
 # Two detection methods:
@@ -9,7 +9,7 @@
 # Display death uses a lower threshold (2 consecutive checks) because GPU
 # corruption only gets worse with time. Journal errors use threshold 3.
 
-set -eu
+set -euo pipefail
 
 STATE_DIR="/var/lib/niri-drm-healthcheck"
 mkdir -p "$STATE_DIR" 2>/dev/null || true

@@ -8,7 +8,6 @@ set -euo pipefail
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 echo "🧪 Testing Home Manager Integration..."
@@ -19,45 +18,7 @@ TESTS_PASSED=0
 TESTS_FAILED=0
 TESTS_TOTAL=0
 
-# Test function
-run_test() {
-  local test_name="$1"
-  local test_command="$2"
-  local expected="$3"
-
-  TESTS_TOTAL=$((TESTS_TOTAL + 1))
-
-  echo -n "  [$TESTS_TOTAL] Testing: $test_name... "
-
-  if [ -n "$test_command" ]; then
-    result=$(eval "$test_command" 2>&1) || result="FAILED"
-  else
-    result="SKIPPED"
-  fi
-
-  if [ -n "$expected" ]; then
-    if [ "$result" == "$expected" ]; then
-      echo -e "${GREEN}PASSED${NC}"
-      TESTS_PASSED=$((TESTS_PASSED + 1))
-    else
-      echo -e "${RED}FAILED${NC}"
-      echo "    Expected: $expected"
-      echo "    Got: $result"
-      TESTS_FAILED=$((TESTS_FAILED + 1))
-    fi
-  else
-    if [ "$result" == "FAILED" ]; then
-      echo -e "${RED}FAILED${NC}"
-      TESTS_FAILED=$((TESTS_FAILED + 1))
-    elif [ "$result" == "SKIPPED" ]; then
-      echo -e "${YELLOW}SKIPPED${NC}"
-    else
-      echo -e "${GREEN}PASSED${NC}"
-      TESTS_PASSED=$((TESTS_PASSED + 1))
-    fi
-  fi
-}
-
+# Test counters
 # Test 1: Starship is installed
 echo ""
 echo "1️⃣  Starship Prompt"
@@ -172,27 +133,27 @@ fi
 echo ""
 echo "3️⃣  Environment Variables"
 
-if [ "$EDITOR" == "micro" ]; then
-  echo "  ✅ EDITOR set correctly: $EDITOR"
+if [ "${EDITOR:-}" == "micro" ]; then
+  echo "  ✅ EDITOR set correctly: ${EDITOR:-}"
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  echo "  ⚠️  EDITOR not set correctly: $EDITOR (expected: micro)"
+  echo "  ⚠️  EDITOR not set correctly: ${EDITOR:-} (expected: micro)"
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
-if [ "$LANG" == "en_GB.UTF-8" ]; then
-  echo "  ✅ LANG set correctly: $LANG"
+if [ "${LANG:-}" == "en_GB.UTF-8" ]; then
+  echo "  ✅ LANG set correctly: ${LANG:-}"
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  echo "  ⚠️  LANG not set correctly: $LANG (expected: en_GB.UTF-8)"
+  echo "  ⚠️  LANG not set correctly: ${LANG:-} (expected: en_GB.UTF-8)"
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 
-if [ "$LC_ALL" == "en_GB.UTF-8" ]; then
-  echo "  ✅ LC_ALL set correctly: $LC_ALL"
+if [ "${LC_ALL:-}" == "en_GB.UTF-8" ]; then
+  echo "  ✅ LC_ALL set correctly: ${LC_ALL:-}"
   TESTS_PASSED=$((TESTS_PASSED + 1))
 else
-  echo "  ⚠️  LC_ALL not set correctly: $LC_ALL (expected: en_GB.UTF-8)"
+  echo "  ⚠️  LC_ALL not set correctly: ${LC_ALL:-} (expected: en_GB.UTF-8)"
 fi
 TESTS_TOTAL=$((TESTS_TOTAL + 1))
 

@@ -31,8 +31,11 @@
       ];
       warn-dirty = false;
 
-      # Optimize during each build (dedup hardlinks)
-      auto-optimise-store = true;
+      # auto-optimise-store disabled — runs dedup after EVERY build, generating
+      # random read I/O that competes with the build itself on QLC NAND.
+      # optimise.automatic (daily ~04:00 via nix-optimise.timer) handles dedup
+      # once a day during low-activity hours instead.
+      auto-optimise-store = false;
     };
 
     # Automatic garbage collection

@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-PROJECTS_ROOT="/home/lars/projects"
+PROJECTS_ROOT="${PROJECTS_ROOT:-$HOME/projects}"
 CHECK_ONLY=false
 TARGET_PROJECT=""
 
@@ -31,28 +31,28 @@ NC='\033[0m'
 
 declare -A PROJECT_FILES=(
   [GmbH]="flake.nix"
-  [vision - review - agent]="flake.nix"
-  [go - plugin - mvp]="flake.nix"
-  [project - dependency - graph]="flake.nix"
-  [artmann - technologies - website]="flake.nix"
-  [go - website - template]="flake.nix"
+  [vision-review-agent]="flake.nix"
+  [go-plugin-mvp]="flake.nix"
+  [project-dependency-graph]="flake.nix"
+  [artmann-technologies-website]="flake.nix"
+  [go-website-template]="flake.nix"
   [PapDashboard]="flake.nix"
-  [standard - bug - tracking - schema]="flake.nix"
-  [lean - business - plan]="flake.nix"
+  [standard-bug-tracking-schema]="flake.nix"
+  [lean-business-plan]="flake.nix"
   [testing]="flake.nix"
-  [docs - organizer]="flake.nix"
-  [golangci - lint - auto - configure]="flake.nix"
+  [docs-organizer]="flake.nix"
+  [golangci-lint-auto-configure]="flake.nix"
   [KeyCountdown]="flake.nix"
-  [projects - management - automation]="flake.nix"
+  [projects-management-automation]="flake.nix"
   [buildflow]="flake.nix"
   [BuildFlow]="flake.nix"
-  [go - structure - linter]="flake.nix"
-  [art - dupl]="flake.nix"
-  [branching - flow]="flake.nix"
-  [go - auto - upgrade]="flake.nix"
-  [Standup - Killer]="flake.nix"
-  [hierarchical - errors]="flake.nix"
-  [library - policy]="nix/packages/default.nix"
+  [go-structure-linter]="flake.nix"
+  [art-dupl]="flake.nix"
+  [branching-flow]="flake.nix"
+  [go-auto-upgrade]="flake.nix"
+  [Standup-Killer]="flake.nix"
+  [hierarchical-errors]="flake.nix"
+  [library-policy]="nix/packages/default.nix"
   [SwettySwipperWeb]="flake.nix"
 )
 
@@ -151,7 +151,7 @@ else
   broken=0
 
   # Sort projects for consistent output
-  for project in $(echo "${!PROJECT_FILES[@]}" | tr ' ' '\n' | sort); do
+  for project in $(printf '%s\n' "${!PROJECT_FILES[@]}" | sort); do
     nix_file="${PROJECT_FILES[$project]}"
     if update_vendor_hash "$project" "$nix_file"; then
       ok=$((ok + 1))
