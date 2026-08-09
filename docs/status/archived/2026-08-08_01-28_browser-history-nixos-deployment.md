@@ -102,45 +102,45 @@
 
 ### Immediate (blocking / user-facing)
 
-~~1. **Restart Caddy** — `sudo systemctl restart caddy` to load the `history.home.lan` vHost. This is the immediate fix for the user's redirect issue.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~2. **Verify `history.home.lan` loads in browser** — After Caddy restart, confirm the WebAuthn registration page appears.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~3. **Test WebAuthn passkey registration** — Register a passkey and verify login works end-to-end.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~4. **Verify TLS cert for `history.home.lan`** — Check if Caddy serves a valid cert or if a sops cert entry is needed.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~1. **Restart Caddy** — `sudo systemctl restart caddy` to load the `history.home.lan` vHost. This is the immediate fix for the user's redirect issue.~~ done — Caddy restarted, vHost live
+~~2. **Verify `history.home.lan` loads in browser** — After Caddy restart, confirm the WebAuthn registration page appears.~~ done — server accessible
+3. **Test WebAuthn passkey registration** — Register a passkey and verify login works end-to-end.
+~~4. **Verify TLS cert for `history.home.lan`** — Check if Caddy serves a valid cert or if a sops cert entry is needed.~~ done — HTTPS working
 
 ### Short-term (this week)
 
-~~5. **Fix Caddy reload failure in deploy.sh** — Add `sudo systemctl restart caddy` to `deploy.sh` after `nh os switch`, similar to the provisioner restart block. This ensures new vHosts are always loaded.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~6. **Fix pre-deploy phantom metric check** — Change `system_gatus_endpoints_in_error_long` from a hard FAIL to a WARN in `pre-deploy-check.sh`, or pre-seed the metric.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~7. **Change SystemNix `go-cqrs-lite` input permanently to SSH** — Already done this session, but verify it doesn't break `cqrs-lint` on next uncontaminated deploy.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~8. **Deploy browser-history agent on evo-x2** — The server is running but has no data source. Deploy the agent module locally first.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~9. **Verify OTel traces arrive in SigNoz** — Check SigNoz for `browser-history` service traces.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~10. **Add browser-history backup to backup-coordination** — SQLite DB at `/var/lib/browser-history/browser-history.db` should be backed up.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~11. **Add `history.home.lan` to Homepage tile verification** — Verify the Homepage tile links correctly after Caddy restart.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~12. **Configure `BROWSER_HISTORY_AGENT_TOKEN` secret** — The `/ingest` endpoint requires this token. Set up a sops secret for it.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+~~5. **Fix Caddy reload failure in deploy.sh** — Add `sudo systemctl restart caddy` to `deploy.sh` after `nh os switch`, similar to the provisioner restart block. This ensures new vHosts are always loaded.~~ done — deploy.sh restarts caddy.service
+~~6. **Fix pre-deploy phantom metric check** — Change `system_gatus_endpoints_in_error_long` from a hard FAIL to a WARN in `pre-deploy-check.sh`, or pre-seed the metric.~~ done — metric now present post-deploy
+~~7. **Change SystemNix `go-cqrs-lite` input permanently to SSH** — Already done this session, but verify it doesn't break `cqrs-lint` on next uncontaminated deploy.~~ done
+~~8. **Deploy browser-history agent on evo-x2** — The server is running but has no data source. Deploy the agent module locally first.~~ done — agent synced 2,927 events
+9. **Verify OTel traces arrive in SigNoz** — Check SigNoz for `browser-history` service traces.
+10. **Add browser-history backup to backup-coordination** — SQLite DB at `/var/lib/browser-history/browser-history.db` should be backed up.
+~~11. **Add `history.home.lan` to Homepage tile verification** — Verify the Homepage tile links correctly after Caddy restart.~~ done — tile present
+~~12. **Configure `BROWSER_HISTORY_AGENT_TOKEN` secret** — The `/ingest` endpoint requires this token. Set up a sops secret for it.~~ done — sops secret configured
 
 ### Medium-term
 
-~~13. **Deploy browser-history agent on macOS** — The agent-module.nix supports macOS via nix-darwin. Would sync Safari/Chrome history from the MacBook.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~14. **Fix browser-history OTel to use HTTP (port 4318)** — Align with SystemNix convention. Change `otlptracegrpc` to `otlptracehttp` upstream.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~15. **Add Gatus `[RESPONSE_TIME]` threshold tuning** — The 500ms threshold may be too aggressive for a SQLite-backed app with analytics queries. Monitor and adjust.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~16. **Add Caddy access log rotation for `history.home.lan`** — Currently logs to `/var/log/caddy/access-history.home.lan.log` but no rotation is configured.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~17. **Consider Pocket ID OIDC integration** — Browser-history has its own WebAuthn. If Pocket ID SSO is desired, upstream needs OIDC code. Currently NOT feasible (like Homepage/SigNoz — no native OIDC).~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~18. **Review Caddy vHost pattern for WebAuthn services** — The direct TLS proxy (no forward-auth) pattern should be documented for future WebAuthn services.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~19. **Add browser-history to SystemNix VM tests** — Create a `tests/browser-history.nix` test that verifies the service starts and `/health` returns 200.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~20. **Monitor memory usage** — `MemoryMax=512M` may be too low for a CQRS/ES app with SQLite. Watch for OOM kills.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+13. **Deploy browser-history agent on macOS** — The agent-module.nix supports macOS via nix-darwin. Would sync Safari/Chrome history from the MacBook.
+14. **Fix browser-history OTel to use HTTP (port 4318)** — Align with SystemNix convention. Change `otlptracegrpc` to `otlptracehttp` upstream.
+~~15. **Add Gatus `[RESPONSE_TIME]` threshold tuning** — The 500ms threshold may be too aggressive for a SQLite-backed app with analytics queries. Monitor and adjust.~~ done — threshold adequate, no issues reported
+~~16. **Add Caddy access log rotation for `history.home.lan`** — Currently logs to `/var/log/caddy/access-history.home.lan.log` but no rotation is configured.~~ done — global Caddy log rotation (roll_size 100MB)
+~~17. **Consider Pocket ID OIDC integration** — Browser-history has its own WebAuthn. If Pocket ID SSO is desired, upstream needs OIDC code. Currently NOT feasible (like Homepage/SigNoz — no native OIDC).~~ done — OAuth2 via Pocket ID integrated (see 02-45 report)
+~~18. **Review Caddy vHost pattern for WebAuthn services** — The direct TLS proxy (no forward-auth) pattern should be documented for future WebAuthn services.~~ done — documented in AGENTS.md
+19. **Add browser-history to SystemNix VM tests** — Create a `tests/browser-history.nix` test that verifies the service starts and `/health` returns 200.
+~~20. **Monitor memory usage** — `MemoryMax=512M` may be too low for a CQRS/ES app with SQLite. Watch for OOM kills.~~ done — no OOM issues, peaked at 54.1M
 
 ### Long-term / nice-to-have
 
-~~21. **Fix all private repo inputs in SystemNix to use SSH** — Audit all `github:LarsArtmann/*` inputs for private repos and change to `git+ssh://`.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~22. **Add a flake-level check for private repo input URL consistency** — Lint that all private repos (matching the GOPRIVATE pattern) use `git+ssh://` in SystemNix flake inputs.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~23. **Consider a Caddy reload watchdog** — A timer that checks if Caddy's loaded config matches the on-disk config and restarts if they diverge.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~24. **Add LLM API key for AI summaries** — browser-history supports AI-powered browsing summaries (`LLM_API_KEY`, `LLM_MODEL`, `LLM_BASE_URL`). Configure with Ollama or a cloud provider.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~25. **Add search theme keywords config** — `SEARCH_THEME_KEYWORDS` env var for custom keyword-to-theme classification.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~26. **Review extraction filter defaults** — `FILTER_POPUPS`, `DEDUPE_RELOADS`, `FILTER_HIDDEN`, `FILTER_GIBBERISH` are all ON by default. Review if these match the use case.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~27. **Configure rate limits for production** — `RATE_LIMIT_RPS=100` default may need tuning for multi-agent ingest.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~28. **Set up CORS for cross-origin agent access** — `CORS_ORIGINS` may need configuration if agents run on different origins.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~29. **Add trusted proxies config** — `TRUSTED_PROXIES` should include `127.0.0.1` for Caddy reverse proxy.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
-~~30. **Consider enabling `USE_SQLITE_READ_MODEL`** — Currently `false`. May improve read performance for analytics queries.~~ done — work captured in CHANGELOG.md / TODO_LIST.md
+21. **Fix all private repo inputs in SystemNix to use SSH** — Audit all `github:LarsArtmann/*` inputs for private repos and change to `git+ssh://`.
+22. **Add a flake-level check for private repo input URL consistency** — Lint that all private repos (matching the GOPRIVATE pattern) use `git+ssh://` in SystemNix flake inputs.
+23. **Consider a Caddy reload watchdog** — A timer that checks if Caddy's loaded config matches the on-disk config and restarts if they diverge.
+24. **Add LLM API key for AI summaries** — browser-history supports AI-powered browsing summaries (`LLM_API_KEY`, `LLM_MODEL`, `LLM_BASE_URL`). Configure with Ollama or a cloud provider.
+25. **Add search theme keywords config** — `SEARCH_THEME_KEYWORDS` env var for custom keyword-to-theme classification.
+26. **Review extraction filter defaults** — `FILTER_POPUPS`, `DEDUPE_RELOADS`, `FILTER_HIDDEN`, `FILTER_GIBBERISH` are all ON by default. Review if these match the use case.
+27. **Configure rate limits for production** — `RATE_LIMIT_RPS=100` default may need tuning for multi-agent ingest.
+28. **Set up CORS for cross-origin agent access** — `CORS_ORIGINS` may need configuration if agents run on different origins.
+29. **Add trusted proxies config** — `TRUSTED_PROXIES` should include `127.0.0.1` for Caddy reverse proxy.
+~~30. **Consider enabling `USE_SQLITE_READ_MODEL`** — Currently `false`. May improve read performance for analytics queries.~~ done — upstream module sets it to `true` by default
 
 ---
 
@@ -154,5 +154,4 @@
 
 ---
 
-> **RESOLVED — Browser-history deployed and healthy. OAuth2 via Pocket ID working. Remaining items harvested to TODO_LIST.md.**
-> All forward-looking items in this report were completed in subsequent sessions.
+> **PARTIALLY RESOLVED — Browser-history deployed and healthy. OAuth2 via Pocket ID working.** Core deployment items (1,2,4,5,7,8,11,12,17,18) are done. Still open: item 3 (WebAuthn browser test), item 9 (OTel verification — known URL scheme bug), item 10 (backup coordination — in TODO_LIST), item 13 (macOS agent), item 14 (OTel HTTP — upstream fix needed), item 19 (VM test), items 21–29 (future enhancements).
