@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-09 | **Last sessions:** Browser-history deployment (3-iteration OAuth2/sandbox fix cascade, now deployed + healthy), vendorHash cascade fix (5 Go repos), Pocket ID provision SQLite BUSY timeout fix, DNSblockd TLS handshake spam investigation, Helium video anti-throttling flags (4 flags), Prevention Plan M1–M15 complete (gatus pattern validator, timeout audit, metric validator, Unknown Author rejection, daily nixpkgs compat CI, auth gateway health check, ref=master audit, monitoring-the-monitor)
+**Updated:** 2026-08-09 | **Last sessions:** Browser-history deployment (3-iteration OAuth2/sandbox fix cascade, now deployed + healthy), vendorHash cascade fix (5 Go repos), Pocket ID provision SQLite BUSY timeout fix, DNSblockd TLS handshake spam investigation, Helium video anti-throttling flags (4 flags), Prevention Plan M1–M15 complete (gatus pattern validator, timeout audit, metric validator, Unknown Author rejection, daily nixpkgs compat CI, auth gateway health check, ref=master audit, monitoring-the-monitor), post-deploy-check automation (all 11 manual checklist items automated — Pocket ID journal scan, SearXNG functional search, Attic, Browser History, Monitor365 watchdog timer, DNS resolution + memory, BTRFS commit/fstrim, nix registry, shell timing, DMS/quickshell desktop checks)
 
 ---
 
@@ -17,7 +17,7 @@
 - [ ] **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification
 - [ ] **Test browser-history OAuth2 login end-to-end** — Visit `https://history.home.lan`, click "Login with Pocket ID", verify redirect flow completes and dashboard loads with data. Server is deployed and healthy (2,927 events), OAuth2 providers configured (`pocket-id`), but full browser flow not manually tested yet
 - [ ] **Add browser-history agent `after` dependency** — Agent is `Type=oneshot` with no `after = [ "browser-history.service" ]`, causing transient 502 retries during server restarts. Add ordering in SystemNix layer (`modules/nixos/services/browser-history.nix`)
-- [ ] **Add browser-history to post-deploy smoke tests** — `/health` HTTP check + external HTTPS vHost check for `history.home.lan` in `scripts/post-deploy-check.sh`
+- [x] **Add browser-history to post-deploy smoke tests** — `/health` HTTP check + external HTTPS vHost check for `history.home.lan` in `scripts/post-deploy-check.sh`. **Done 2026-08-09:** `check_local "Browser History" 8087` + agent timer `systemctl is-active` check added. Browser History server currently DOWN (port 8087 refused) — caught by the new check
 - [ ] **Create Attic cache + CI token** — Attic module deployed but cache not yet created. Steps: `attic cache create monitor365`, `atticadm make-token --sub ci --validity 1y --push monitor365 --pull monitor365`, configure Forgejo runner. See `docs/services/nix-binary-cache-setup.md`
 - [ ] **Enable niri blur** — Terminal transparency added (88%/90%) but niri's blur option is NOT configured (niri HM module lacks `blur {}` option). Transparent terminals without blur are hard to read. Workaround: raw KDL config, wait for niri-flake, or drop transparency
 
@@ -38,7 +38,7 @@
 
 - [ ] **BTRFS `/data` subvolume migration** — currently toplevel (subvolid=5), has btrbk snapshot protection but not a named subvolume. Migration to `@data` would enable separate CoW semantics. Requires ~1h downtime
 - [ ] **`/data` compression decision** — `compress=zstd:3` on `/data` is under review (corruption report recommended removal). Needs user decision: keep, lower to `zstd:1`, or remove. Blocked by reboot requirement
-- [ ] **Remove Pocket ID WAL band-aid** — Pocket ID 2.12.0 (deployed via nixpkgs update) includes upstream francis fixes. The WAL-clearing ExecStartPre, `ACTORS_HOST=127.0.0.1`, and `MemoryMax=1G` overrides may no longer be needed. Remove one at a time, verify SQLITE_BUSY doesn't recur
+- [ ] **Remove Pocket ID WAL band-aid** — Pocket ID 2.12.0 (deployed via nixpkgs update) includes upstream francis fixes. The WAL-clearing ExecStartPre, `ACTORS_HOST=127.0.0.1`, and `MemoryMax=1G` overrides may no longer be needed. Remove one at a time, verify SQLITE_BUSY doesn't recur. **NOTE 2026-08-09:** Post-deploy-check now scans journal for `SQLITE_BUSY|panic` — confirmed alarm lease renewal is STILL hitting `database is locked` every ~10s on 2.12.0. WAL band-aid removal should wait until SQLITE_BUSY is resolved upstream or via config
 - [ ] **SearXNG streaming exploration** — User wants streaming results (progressive rendering), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy flush_buffers
 - [ ] **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is a hand-maintained list of only 4 services (caddy, forgejo, dnsblockd, postgresql). Missing active services: discordsync, searx, qmd-mcp, emeet-pixyd, monitor365, signoz, immich, pocket-id. Generate list from Nix config or `systemctl list-units` instead
 
@@ -55,7 +55,7 @@
 - [ ] **VendorHash CI check across LarsArtmann repos** — dnsblockd has a `vendor-hash` check; replicate across browser-history, crush-daily, file-and-image-renamer, and all other Go repos
 - [ ] **Pocket ID provision: `api_get` timeout** — `pocket-id.nix:79` still has `--max-time 10` (POST/PUT were raised to 30s). Add `--retry 3 --retry-delay 2` to all provision curl calls for transient SQLITE_BUSY resilience
 - [ ] **Implement cgroup I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 3 FPS. Wrap dev commands with `IOSchedulingClass=idle` or `IOWeight` limits. Give Helium elevated `IOWeight=1000`
-- [ ] **Fix IO-heavy journalctl patterns** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48`, `scripts/internet-diagnostic.sh:97` use `journalctl | grep` (burns 98% CPU). Switch to `journalctl --grep`. Add pre-commit guard for `journalctl.*|.*grep` pattern
+- [ ] **Fix IO-heavy journalctl patterns** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48`, `scripts/internet-diagnostic.sh:97` use `journalctl | grep` (burns 98% CPU). Switch to `journalctl --grep`. Add pre-commit guard for `journalctl.*|.*grep` pattern. **NOTE 2026-08-09:** post-deploy-check.sh Pocket ID scan uses `journalctl ... > file` then `grep file` — acceptable (file-based, no pipe), but could be optimized with `journalctl --grep`
 
 ## Priority 5: Desktop
 
@@ -123,19 +123,27 @@
 
 ## Deploy Verification Checklist
 
-After `nix run .#deploy`, verify:
+**All 11 items below are now automated in `scripts/post-deploy-check.sh`.** Run `nix run .#post-deploy-check` after every deploy — no manual steps required.
 
-1. **Post-deploy check** — `nix run .#post-deploy-check` (hard-fails on critical issues)
-2. **Pocket ID** — Verify `auth.home.lan` loads, check `journalctl -u pocket-id.service` for SQLITE_BUSY or francis panics (should be resolved by 2.12.0)
-3. **SearXNG** — Verify `search.home.lan` loads, test a search query, confirm rate limiter removal didn't break functionality
-4. **Attic cache** — Verify `cache.home.lan` loads, run `attic cache info monitor365`
-5. **BTRFS** — Verify daily fstrim schedule (`systemctl cat fstrim.timer`), verify `commit=300` on mounts (`mount | grep commit`), check PSI I/O metrics in SigNoz
-6. **Shell** — Verify fish startup < 60ms (`fish -i -c exit` with timing), verify direnv caching works (`time cd .`)
-7. **Desktop** — Verify DMS wallpaper management (`dms ipc call wallpaper next`), check `journalctl --user -u quickshell` for errors
-8. **Registry** — Verify nixpkgs registry override active: `nix registry list | grep nixpkgs`
-9. **Monitor365** — Verify server-watchdog active (`systemctl status monitor365-server-watchdog.timer`), check `/health` endpoint
-10. **DNS** — Verify `getent hosts dash.home.lan` resolves, check dnsblockd memory stays under 2G
-11. **Browser History** — Verify `history.home.lan` loads, test OAuth2 login via Pocket ID, verify dashboard shows visit data, check agent timer fires (`systemctl list-timers browser-history-agent*`)
+| # | Item | Automated Check |
+|---|------|----------------|
+| 1 | Post-deploy check | Self (the script itself) |
+| 2 | Pocket ID — SQLITE_BUSY/panic scan | `journalctl -u pocket-id --since -30min` grep |
+| 3 | SearXNG — functional search | `curl /search?q=test` grep for `<article\|result-default` |
+| 4 | Attic cache | `check_local 8200` |
+| 5 | BTRFS — commit=300 + fstrim | `grep commit=300 /proc/mounts` + `systemctl is-enabled fstrim.timer` |
+| 6 | Shell — fish startup + direnv | `date +%s%N` around `fish -i -c exit` + direnv lib check |
+| 7 | Desktop — DMS wallpaper + quickshell | `dms ipc call wallpaper get` + `journalctl --user -u quickshell -p err` |
+| 8 | Registry — nixpkgs github vs tarball | `nix registry list \| grep nixpkgs` |
+| 9 | Monitor365 — watchdog timer | `systemctl is-active monitor365-server-watchdog.timer` |
+| 10 | DNS — resolution + memory | `getent hosts` + `systemctl show -p MemoryCurrent dnsblockd` |
+| 11 | Browser History — liveness + agent timer | `check_local 8087` + `systemctl is-active browser-history-agent.timer` |
+
+### Remaining manual-only items (not yet automated)
+
+- [ ] **Fix `check()` double-000 bug** — `post-deploy-check.sh:32` appends `000` when curl fails, producing `000000` instead of `000`. One-liner: `\|\| echo "000"` → `\|\| true`. Same bug on line 381 (auth gateway checks)
+- [ ] **Declare all runtimeInputs** — flake app has `[curl jq]` but script also uses `systemctl`, `journalctl`, `getent`, `nix`, `fish`, `date`, `wc`, `grep` (works via system PATH, not hermetic)
+- [ ] **Add shellcheck to pre-commit** — new bash code (~100 lines) not shellchecked. Add shellcheck hook for `.sh` files
 
 ---
 
