@@ -76,8 +76,6 @@
         (lib.mkIf (cfg.enable && pocketIdEnabled) {
           services.browser-history = {
             oauth2.redirectBase = lib.mkDefault "https://${fqdn}";
-            oauth2.pocketId.clientId = lib.mkDefault "browser-history";
-            oauth2.pocketId.issuer = lib.mkDefault "https://auth.${domain}";
           };
 
           systemd.services.browser-history = {
@@ -117,6 +115,9 @@
               {
                 Type = "oneshot";
                 RemainAfterExit = true;
+                LoadCredential = [
+                  "pocket-id-secret:${config.services.pocket-id.dataDir}/client-secrets/browser-history"
+                ];
               }
               (harden {
                 ProtectSystem = "strict";
@@ -131,10 +132,9 @@
             ];
 
             script = ''
-              SECRET_FILE="/var/lib/pocket-id/client-secrets/browser-history"
-
-              # Wait up to 120s for Pocket ID to provision the client secret.
-              timeout 120 bash -c 'until [ -s "$1" ]; do sleep 2; done' _ "$SECRET_FILE" || true
+              # Secret is injected via systemd LoadCredential (like Forgejo).
+              # %d resolves to the per-service credentials directory.
+              SECRET_FILE="''${CREDENTIALS_DIRECTORY}/pocket-id-secret"
 
               if [ ! -s "$SECRET_FILE" ]; then
                 echo "browser-history-oidc-setup: Pocket ID secret not found — starting in WebAuthn-only mode"
@@ -146,6 +146,7 @@
               {
                 echo "OAUTH2_POCKET_ID_CLIENT_ID=browser-history"
                 echo "OAUTH2_POCKET_ID_CLIENT_SECRET=$(cat "$SECRET_FILE")"
+                echo "OAUTH2_POCKET_ID_ISSUER=https://auth.${domain}"
               } > "${oauth2SecretsFile}"
               chmod 600 "${oauth2SecretsFile}"
               echo "browser-history-oidc-setup: Pocket ID OAuth2 secret written"
