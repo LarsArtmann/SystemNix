@@ -539,6 +539,21 @@ else
   report_warn "Desktop — ${_qs_errors} error line(s) in quickshell journal (last 1h)"
 fi
 
+# System: I/O pressure (PSI) — catches the exact condition that caused
+# Helium 3 FPS + WDT crashes during nix build storms on QLC NAND.
+# avg10 > 80% means I/O is saturated for the last 10 seconds.
+if [ -f /proc/pressure/io ]; then
+  _io_avg10=$(awk '/^some/{print $2}' /proc/pressure/io | cut -d= -f2)
+  _io_warn=$(awk "BEGIN { exit !(${_io_avg10:-0} > 80) }" && echo 1 || echo 0)
+  if [ "$_io_warn" = "1" ]; then
+    report_warn "System — I/O pressure avg10=${_io_avg10}% (>80% threshold — BFQ tiers may need attention)"
+  else
+    report_pass "System — I/O pressure avg10=${_io_avg10}% (healthy)"
+  fi
+else
+  report_skip "System — /proc/pressure/io not available"
+fi
+
 # --- Summary ---
 echo ""
 echo "=== Summary ==="

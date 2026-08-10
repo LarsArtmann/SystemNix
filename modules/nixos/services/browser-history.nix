@@ -31,6 +31,7 @@
         onFailure
         ports
         serviceOneshotDefaults
+        ioTier
         ;
 
       cfg = config.services.browser-history;
@@ -71,9 +72,7 @@
             # so root-owned sops template works for the DynamicUser server.
             serviceConfig = {
               EnvironmentFile = [ sopsEnvPath ];
-              IOSchedulingClass = "best-effort";
-              IOSchedulingPriority = 6;
-            };
+            } // ioTier.background;
           };
         })
 

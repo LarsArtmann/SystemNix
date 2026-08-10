@@ -18,6 +18,7 @@ _: {
         serviceOneshotDefaults
         onFailure
         ports
+        ioTier
         ;
       forgejoPort = config.services.forgejo.settings.server.HTTP_PORT;
       forgejoUrl = "http://localhost:${toString forgejoPort}";
@@ -361,10 +362,7 @@ _: {
             ];
             TimeoutStartSec = "3min";
             MemoryMax = "16G";
-            IOSchedulingClass = "best-effort";
-            IOSchedulingPriority = 7;
-            Nice = 10;
-          };
+          } // ioTier.build;
         };
 
         # Fix ownership after Gitea→Forgejo data migration (recursively)

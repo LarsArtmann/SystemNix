@@ -9,7 +9,7 @@ _: {
     }:
     let
       libHelpers = import ../../../lib/default.nix lib;
-      inherit (libHelpers) harden serviceDefaults ports;
+      inherit (libHelpers) harden serviceDefaults ports ioTier;
       inherit (config.users) primaryUser;
 
       rocm = libHelpers.rocm { inherit pkgs; };
@@ -107,10 +107,7 @@ _: {
               ProtectHome = false;
               NoNewPrivileges = false;
             })
-            {
-              IOSchedulingClass = "best-effort";
-              IOSchedulingPriority = 6;
-            }
+            ioTier.background
           ];
         };
 

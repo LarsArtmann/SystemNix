@@ -14,7 +14,7 @@
       primaryUser = config.users.primaryUser;
       pmaModule = inputs.projects-management-automation.nixosModules.default;
       sopsEnvPath = config.sops.templates."pma-env".path;
-      inherit (import ../../../lib/default.nix lib) ports;
+      inherit (import ../../../lib/default.nix lib) ports ioTier;
     in
     {
       imports = [ pmaModule ];

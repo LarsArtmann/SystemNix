@@ -47,7 +47,7 @@
     }:
     let
       inherit (config.users) primaryUser;
-      inherit (import ../../../lib/default.nix lib) ports;
+      inherit (import ../../../lib/default.nix lib) ports ioTier;
       domain = config.networking.domain;
 
       # Agent event buffer lives on /data (separate BTRFS partition, 367 GiB
@@ -446,9 +446,7 @@
               CPUQuota = "200%"; # Cap at 2 cores — prevents retry-loop runaway
               MemoryMax = lib.mkForce "4G";
               MemoryHigh = lib.mkForce "3G";
-              IOSchedulingClass = "best-effort";
-              IOSchedulingPriority = 5;
-            };
+            } // ioTier.heavyDB;
           };
         })
 

@@ -39,6 +39,7 @@ _: {
         serviceDefaults
         serviceOneshotDefaults
         onFailure
+        ioTier
         ;
       atticPort = ports.attic;
       stateDir = "/var/lib/atticd";
@@ -183,10 +184,7 @@ _: {
               MemoryMax = "2G";
             })
             (serviceDefaults { })
-            {
-              IOSchedulingClass = "best-effort";
-              IOSchedulingPriority = 6;
-            }
+            ioTier.background
           ];
         };
 

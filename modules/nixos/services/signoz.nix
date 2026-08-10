@@ -46,6 +46,7 @@ in
         onFailure
         mkStateDir
         ports
+        ioTier
         ;
       alerts = import ./_signoz-alerts.nix { inherit pkgs lib inputs; };
       signozScripts = import ./_signoz-scripts.nix { inherit pkgs cfg config; };
@@ -231,10 +232,7 @@ in
                   ];
                 })
                 (serviceDefaults { })
-                {
-                  IOSchedulingClass = "best-effort";
-                  IOSchedulingPriority = 5;
-                }
+                ioTier.heavyDB
               ];
             };
           })
@@ -300,10 +298,7 @@ in
                   ReadWritePaths = [ cfg.settings.queryService.dataDir ];
                 })
                 (serviceDefaults { RestartSec = "10"; })
-                {
-                  IOSchedulingClass = "best-effort";
-                  IOSchedulingPriority = 6;
-                }
+                ioTier.background
               ];
             };
 
@@ -394,10 +389,7 @@ in
                   MemoryMax = lib.mkForce "1G";
                 })
                 (serviceDefaults { RestartSec = "10"; })
-                {
-                  IOSchedulingClass = "best-effort";
-                  IOSchedulingPriority = 6;
-                }
+                ioTier.background
               ];
             };
             environment.etc."signoz/collector.yaml".text = lib.generators.toYAML { } {

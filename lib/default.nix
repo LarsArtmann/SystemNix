@@ -152,6 +152,57 @@ in
     in
     if dupes == [ ] then raw else builtins.throw "Port collision: ${dupeMsg}";
 
+  # BFQ I/O priority tiers for the evo-x2 QLC NVMe. Each helper returns a
+  # systemd serviceConfig fragment — merge with `mkMerge` alongside `harden {}`.
+  #
+  # Tier philosophy: lower BE priority = higher I/O precedence. SSH (BE/1) always
+  # gets I/O before builds (BE/7). Maintenance (idle) only runs when nothing else
+  # needs I/O. This prevents build storms from freezing SSH sessions.
+  #
+  # Usage: `serviceConfig = lib.mkMerge [ (harden {}) (ioTier.build) ];`
+  ioTier = {
+    # BE/1 — SSH and critical remote access. Highest priority below realtime.
+    interactive = {
+      IOSchedulingClass = "best-effort";
+      IOSchedulingPriority = 1;
+    };
+    # BE/3 — Desktop session (compositor, shell, audio). Must stay responsive.
+    desktop = {
+      IOSchedulingClass = "best-effort";
+      IOSchedulingPriority = 3;
+    };
+    # BE/4 — Default for unclassified services. Most services sit here implicitly.
+    service = {
+      IOSchedulingClass = "best-effort";
+      IOSchedulingPriority = 4;
+    };
+    # BE/5 — Latency-sensitive databases needing consistent I/O without
+    # starving interactive/desktop workloads (clickhouse, monitor365).
+    heavyDB = {
+      IOSchedulingClass = "best-effort";
+      IOSchedulingPriority = 5;
+    };
+    # BE/6 — Standard background daemons tolerating I/O latency
+    # (signoz, discordsync, browser-history, ollama, attic).
+    background = {
+      IOSchedulingClass = "best-effort";
+      IOSchedulingPriority = 6;
+    };
+    # BE/7 — Batch builds and CI. Lowest BE priority + CPU Nice=10.
+    # Nix builds, automated commits, git runners.
+    build = {
+      IOSchedulingClass = "best-effort";
+      IOSchedulingPriority = 7;
+      Nice = 10;
+    };
+    # idle — Maintenance tasks using I/O only when nothing else needs it.
+    # BFQ serves these last. Pairs with CPU Nice=10 (fstrim, clamav).
+    maintenance = {
+      IOSchedulingClass = "idle";
+      Nice = 10;
+    };
+  };
+
   images = import ./images.nix;
 
   rocm = import ./rocm.nix;

@@ -22,6 +22,7 @@
         mkStateDir
         ports
         onFailure
+        ioTier
         ;
       cfg = config.services.discordsync;
       discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -249,10 +250,7 @@
               MemoryMax = lib.mkForce "2G";
               ReadWritePaths = [ cfg.dataDir ];
             })
-            {
-              IOSchedulingClass = "best-effort";
-              IOSchedulingPriority = 6;
-            }
+            ioTier.background
           ];
         };
 
