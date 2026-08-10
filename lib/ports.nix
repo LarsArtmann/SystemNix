@@ -68,5 +68,7 @@
     searxng = 8889;
 
     attic = 8200;
+
+    pma-health = 9192;
   };
 }
