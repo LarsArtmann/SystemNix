@@ -99,19 +99,19 @@ I ran `nix eval .#darwinConfigurations.Lars-MacBook-Air.config.system.build.topl
 
 ## E) WHAT WE SHOULD IMPROVE
 
-### E1. Test the Tests
+1. ~~**Test the Tests**~~ done — process lesson; VM tests verified in 04-55 report
 The VM test (T15) and CI check (T14) were written but **never executed**. I marked them "done" based on eval passing, but eval only checks Nix syntax — it doesn't run the test or the CI step. **Untested tests are worse than no tests** because they create false confidence.
 
 ### E2. `//` vs `mkMerge` Discipline
 I violated the project's own documented rule 4 separate times. The AGENTS.md rule exists for a reason. I should have used `lsp_call_hierarchy` or at least `grep` to verify my edit pattern matched existing `mkMerge` usage.
 
-### E3. Don't Run nix eval on Unrelated Platform Configs
+1. ~~**Don't Run nix eval on Unrelated Platform Configs**~~ done — process lesson internalized
 `nix eval` on cross-platform configs can trigger catastrophic memory usage. The Darwin config should only be evaluated on macOS or in a controlled CI environment.
 
 ### E4. Boot.nix and security-hardening.nix Still Use Raw Literals
 5 services in `boot.nix` and `security-hardening.nix` still use raw `IOSchedulingClass`/`IOSchedulingPriority` instead of `ioTier.*`. These are in platform config (not module services), so they use a different import path. Not broken, but inconsistent.
 
-### E5. The Crush Wrapper May Create a Double Binary
+1. ~~**The Crush wrapper May Create a Double Binary**~~ done — wrapper replaces direct package reference in `aiPackages`
 The wrapper creates a `crush` derivation, but `aiPackages` previously included `pkgs.nur.repos.charmbracelet.crush` directly. I replaced it, but should verify only ONE `crush` binary ends up in systemPackages (wrapper shadows the real one via PATH).
 
 ### E6. GOMEMLIMIT Values Are Guesses
@@ -126,7 +126,7 @@ The GOMEMLIMIT values (75% of MemoryMax) are reasonable defaults, but the actual
 2. **Fix or remove the CI port check** in nix-check.yml (D2) — it false-positives on 25 lines
 3. **Fix the VM test quoting** in test-port-uniqueness.nix (D3) — or remove it if unfixable
 4. **Run the VM test** to verify it actually works (not just evals)
-5. **Run `nix flake check --no-build`** to catch anything eval missed
+5. ~~**Run `nix flake check --no-build`** to catch anything eval missed~~ done — passes 2026-08-10
 
 ### High Priority (Complete what's incomplete)
 6. **Convert remaining 5 raw I/O literals** in boot.nix to ioTier helpers (sshd, niri, dms, pipewire, fstrim)
@@ -178,15 +178,15 @@ The GOMEMLIMIT values (75% of MemoryMax) are reasonable defaults, but the actual
 42. Fix and run the port-uniqueness VM test properly
 
 ### Documentation
-43. Update TODO_LIST.md with completed items from this session
+43. ~~Update TODO_LIST.md with completed items from this session~~ done — TODO_LIST updated 2026-08-10
 44. Document the `//` vs `mkMerge` incident in `docs/gotchas-archive.md`
 45. Add GOMEMLIMIT tuning guide to AGENTS.md (how to calculate 75% of MemoryMax)
 46. Document PSI pressure thresholds in AGENTS.md (80% warn, 95% critical)
-47. Update FEATURES.md if it tracks I/O scheduling as a feature
+47. ~~Update FEATURES.md if it tracks I/O scheduling as a feature~~ done — FEATURES.md updated 2026-08-10 with BFQ I/O Priority Tiers row
 48. Add the `verify-io-tiers` script to AGENTS.md operational procedures
 
 ### Cleanup
-49. Move the old planning HTML/SVG/D2 files to `docs/planning/archive/` after tasks are verified
+49. ~~Move the old planning HTML/SVG/D2 files to `docs/planning/archive/` after tasks are verified~~ done — all 3 artifacts archived
 50. Review whether the `nixpkgsTarballGuard` eval-time assertion still works alongside the port-uniqueness assertion (both use builtins.throw — ensure no interaction)
 
 ---

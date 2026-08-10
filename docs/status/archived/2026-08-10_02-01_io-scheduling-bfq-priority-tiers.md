@@ -79,9 +79,9 @@ These services were identified but left at default. They are light-I/O (network-
 
 ## c) NOT STARTED
 
-1. **Deploy** — none of these changes have been deployed. Eval passes, but real-world BFQ behavior during build storms is unverified
-2. **Gatus monitoring** — no alerting for "I/O contention above threshold" exists. The system-health textfile collector doesn't export I/O wait metrics
-3. **AGENTS.md update** — the I/O tier system, the `auto-optimise-store` rationale, and the Crush alias all need to be documented
+1. ~~**Deploy** — none of these changes have been deployed. Eval passes, but real-world BFQ behavior during build storms is unverified~~ done — deployed; deploy fallout fixed in 02-53 report
+2. ~~**Gatus monitoring** — no alerting for "I/O contention above threshold" exists. The system-health textfile collector doesn't export I/O wait metrics~~ done — PSI I/O pressure check at `post-deploy-check.sh:542`
+3. ~~**AGENTS.md update** — the I/O tier system, the `auto-optimise-store` rationale, and the Crush alias all need to be documented~~ done — BFQ I/O Priority Tiers section in AGENTS.md
 4. **Build parallelism reduction** (`build-max-jobs` 4→2) — discussed but user did not request it
 5. **`nix-daemon.service` CPUQuota** — discussed but not implemented (BFQ I/O scheduling should be sufficient)
 
@@ -108,11 +108,11 @@ The auto-git daemon committed the first batch of I/O changes in `4691be1f`, but 
 ### Immediate
 1. **Verify BFQ is actually respecting priorities at runtime** — after deploy, run `iotop` during a build and confirm nix-daemon shows lower IO% than sshd
 2. **Consider `build-max-jobs = 2`** — halves concurrent write pressure. The I/O scheduling helps fairness but doesn't reduce total I/O volume. 4 concurrent Go/Rust builds writing to CoW BTRFS is still a lot
-3. **Convert Crush alias to wrapper package** — guarantees BE/3 from all invocation paths
-4. **Document the tier system in AGENTS.md** — under a new "I/O Scheduling" section, so future services get the right tier by default
+3. ~~**Convert Crush alias to wrapper package** — guarantees BE/3 from all invocation paths~~ done at `50fd16c4` — wrapper in `platforms/common/packages/base.nix` with `ionice -c 2 -n 3 nice -n 5`
+4. ~~**Document the tier system in AGENTS.md** — under a new "I/O Scheduling" section, so future services get the right tier by default~~ done — BFQ I/O Priority Tiers section in AGENTS.md
 
 ### Architectural
-5. **I/O tier helper in `lib/default.nix`** — instead of hand-writing `IOSchedulingClass`/`IOSchedulingPriority` in every service, create helpers like `ioTier.interactive`, `ioTier.background`, `ioTier.build` that expand to the right systemd directives. This prevents drift and makes tier changes a one-liner
+5. ~~**I/O tier helper in `lib/default.nix`** — instead of hand-writing `IOSchedulingClass`/`IOSchedulingPriority` in every service, create helpers like `ioTier.interactive`, `ioTier.background`, `ioTier.build` that expand to the right systemd directives. This prevents drift and makes tier changes a one-liner~~ done at `6a2b642d`
 6. **Docker/OCI containers bypass cgroup I/O scheduling** — Docker services (twenty, whisper-asr, manifest, immich) run in their own cgroup hierarchy. `IOSchedulingClass` on the `docker.service` unit applies to the daemon, not individual containers. Consider `blkio` cgroup weights per container if these become I/O issues
 7. **`commit=600` on BTRFS mounts** — currently `commit=300` (5 min). Doubling to 10 min halves metadata write frequency further. Data loss window grows to 10 min (acceptable with daily btrbk snapshots). This directly reduces kworker pressure during builds
 8. **Separate `/nix` subvolume** — currently `/nix` lives inside `@` (root subvolume). A dedicated `@nix` subvolume would isolate nix store CoW churn from root filesystem snapshots and could be mounted with different options (e.g., `noatime,compress=zstd,commit=600` without affecting root)
@@ -122,17 +122,17 @@ The auto-git daemon committed the first batch of I/O changes in `4691be1f`, but 
 ## f) Up to 50 Things to Get Done Next
 
 ### I/O Scheduling (1-8)
-1. Deploy the changes and verify BFQ priorities work at runtime via `iotop`
-2. Commit the 3 uncommitted files (signoz, browser-history, ollama)
-3. Create I/O tier helpers in `lib/default.nix` (`ioTier.interactive`, `.background`, `.build`)
-4. Convert Crush alias to `writeShellApplication` wrapper package in `pkgs/`
+1. ~~Deploy the changes and verify BFQ priorities work at runtime via `iotop`~~ done — `verify-io-tiers.sh` exists; deployed with fixes in 02-53
+2. ~~Commit the 3 uncommitted files (signoz, browser-history, ollama)~~ done — committed by auto-git daemon
+3. ~~Create I/O tier helpers in `lib/default.nix` (`ioTier.interactive`, `.background`, `.build`)~~ done at `6a2b642d`
+4. ~~Convert Crush alias to `writeShellApplication` wrapper package in `pkgs/`~~ done at `50fd16c4`
 5. Add `build-max-jobs = 2` (reduce concurrent write pressure)
-6. Document the I/O tier system in AGENTS.md under "I/O Scheduling"
+6. ~~Document the I/O tier system in AGENTS.md under "I/O Scheduling"~~ done — BFQ I/O Priority Tiers section in AGENTS.md
 7. Add `commit=600` to BTRFS mounts (`/` and `/data`)
 8. Evaluate dedicated `@nix` BTRFS subvolume for nix store isolation
 
 ### Monitoring (9-14)
-9. Add I/O wait metric to `system-health` textfile collector (export `system_io_wait_percent`)
+9. ~~Add I/O wait metric to `system-health` textfile collector (export `system_io_wait_percent`)~~ done — PSI I/O pressure check in `post-deploy-check.sh:542`
 10. Add Gatus alert for sustained high I/O wait (>80% for 5 min)
 11. Add Gatus alert for nix-daemon I/O dominance (check via `iotop` cron or eBPF)
 12. Monitor `nix-optimise.timer` duration after disabling `auto-optimise-store` — daily dedup may take longer than expected
@@ -176,9 +176,9 @@ The auto-git daemon committed the first batch of I/O changes in `4691be1f`, but 
 42. Benchmark `go mod tidy` I/O on ext4 vs BTRFS to quantify the CoW tax
 
 ### Documentation & Process (43-50)
-43. Update AGENTS.md "Non-Obvious Gotchas" with BFQ I/O scheduling notes
+43. ~~Update AGENTS.md "Non-Obvious Gotchas" with BFQ I/O scheduling notes~~ done — BFQ I/O Priority Tiers section in AGENTS.md
 44. Add I/O tier decision guide to `docs/CONTRIBUTING.md` for new services
-45. Document the `auto-optimise-store` removal rationale in AGENTS.md
+45. ~~Document the `auto-optimise-store` removal rationale in AGENTS.md~~ done — documented in AGENTS.md BFQ section
 46. Add pre-deploy check for IOSchedulingClass presence on new services
 47. Write a runbook for "SSH slow during builds" troubleshooting
 48. Add I/O tier classification to the service inventory in AGENTS.md

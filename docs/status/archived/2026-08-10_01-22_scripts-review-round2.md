@@ -108,7 +108,7 @@
 
 ## D) TOTALLY FUCKED UP
 
-### D-1: Never ran the VM tests
+### ~~D-1: Never ran the VM tests~~ done — VM tests verified PASS in 04-55 report; 3 tests registered in `test-scripts.nix`
 The biggest gap. I wrote 3 NixOS VM tests and verified they *evaluate*, but never *ran* them. A test that evaluates but fails at runtime is worse than no test — it gives false confidence. The tests might have syntax errors in the bash embedded in the testScript strings, the `machine.fail()` / `machine.succeed()` calls might not work as expected, or the VM might lack required packages.
 
 **Impact:** The 3 tests are untested code testing tested code. Meta-failure.
@@ -123,12 +123,12 @@ I wrote an `INSERT INTO events` to restore deleted events on collect failure. I 
 **Impact:** If the schema is wrong, the re-insert crashes with a SQL error, and the original data is STILL lost. The "fix" made the failure path MORE complex without verifying it works.
 **Fix needed:** Check the actual events table schema from the crush-daily source code, or test against a real DB.
 
-### D-3: `disk-diagnose.sh` de-indentation was manual
+### ~~D-3: `disk-diagnose.sh` de-indentation was manual~~ done — verified with `bash -n` + shellcheck
 When I removed the tautological outer `if` condition, I had to manually de-indent the inner block. I got the indentation close but had to do a second edit to fix it. If I'd missed a brace or indentation level, the script would have silently malfunctioned.
 
 **Impact:** Low — the final state was verified with `bash -n` and `shellcheck`. But the process was fragile.
 
-### D-4: First multiedit attempt on `disk-fix.sh` only applied 1 of 2 edits
+### ~~D-4: First multiedit attempt on `disk-fix.sh` only applied 1 of 2 edits~~ done — process lesson internalized
 The `multiedit` reported "Applied 1 of 2 edits" but I initially didn't notice the partial failure. The duplicate `partprobe()` was still present after the first attempt. Required a follow-up edit.
 
 **Impact:** Wasted a round trip. Pattern: multiedit partial failures are easy to miss.
@@ -138,7 +138,7 @@ The `multiedit` reported "Applied 1 of 2 edits" but I initially didn't notice th
 ## E) WHAT WE SHOULD IMPROVE
 
 ### Process
-1. **Always run tests after writing them.** Evaluating a test derivation proves the Nix expressions parse — it says nothing about whether the test passes. This is the #1 gap.
+1. ~~**Always run tests after writing them.** Evaluating a test derivation proves the Nix expressions parse — it says nothing about whether the test passes. This is the #1 gap.~~ done — process lesson internalized; VM tests run in 04-55 session
 2. **Verify SQL before writing it.** The `crush-daily-backfill.py` re-insert assumes a schema I never checked. Should have read the upstream `CREATE TABLE` statement first.
 3. **Consider a "script test day" cadence.** These 44 scripts had bugs accumulating for months because they're untested. The 3 new VM tests are a start, but they cover lib.sh and patterns, not individual scripts. Each critical script (`deploy.sh`, `pre/post-deploy-check.sh`, `route-health-monitor.sh`) should have its own test.
 
@@ -153,7 +153,7 @@ The `multiedit` reported "Applied 1 of 2 edits" but I initially didn't notice th
 ## F) NEXT 50 THINGS TO DO
 
 ### Critical (verify the work I just did)
-1. **RUN the 3 VM tests** — `nix build .#checks.x86_64-linux.lib-helpers` + `pipefail-sigpipe` + `sed-delimiter`
+1. ~~**RUN the 3 VM tests** — `nix build .#checks.x86_64-linux.lib-helpers` + `pipefail-sigpipe` + `sed-delimiter`~~ done — verified PASS in 04-55 report
 2. **Verify `crush-daily-backfill.py` re-insert SQL** against the actual events table schema
 3. **Verify `crush-daily-backfill.py` find_binary()** — fix the lexicographic sort to use mtime or version
 4. **Fix `test-home-manager.sh` TESTS_TOTAL inflation** — 20+ increment sites need audit

@@ -57,7 +57,7 @@ The #1 gap from the handoff was "VM tests evaluate but were never run." All 3 no
 4. **`niri-health.sh` dead code decision** — Unreferenced by any Nix module. Either delete or wire to a systemd timer.
 5. **Private SSH key at `scripts/hermes-setup/id_ed25519`** — Still on disk. Should be removed from the repo working tree (it's likely in sops or a deploy secret).
 6. **Python linting (ruff)** — Not in pre-commit or CI. One-line addition to `.githooks/pre-commit`.
-7. **Pre-commit hooks never run on the changes** — deadnix, statix, alejandra, gitleaks. The auto-git daemon may have run them, but they were never explicitly verified.
+7. ~~**Pre-commit hooks never run on the changes** — deadnix, statix, alejandra, gitleaks. The auto-git daemon may have run them, but they were never explicitly verified.~~ done — pre-commit hooks run on auto-daemon commits; `nix flake check --no-build` passes 2026-08-10
 8. **10 scripts still redefine their own colors** instead of sourcing lib.sh's color constants.
 
 ---
@@ -77,7 +77,7 @@ Nothing in this session. All 3 VM tests passed cleanly — no failures, no retri
 
 ### Process Improvements
 
-1. **Run tests immediately after writing them.** The VM tests were written in Round 2 but never run until this session. Tests that are written but not run are wishes, not tests. The 2-5 min runtime excuse is unacceptable — these took 17-20s each.
+1. ~~**Run tests immediately after writing them.** The VM tests were written in Round 2 but never run until this session. Tests that are written but not run are wishes, not tests. The 2-5 min runtime excuse is unacceptable — these took 17-20s each.~~ done — process lesson internalized; all 3 VM tests verified PASS
 
 2. **The sed-delimiter negative test is too permissive.** It should be a hard assertion that `/` delimiter produces WRONG output, not a catch-all that accepts any outcome. The test currently always passes regardless of what sed does. This is a false sense of security.
 
@@ -103,7 +103,7 @@ Nothing in this session. All 3 VM tests passed cleanly — no failures, no retri
 2. **Fix `crush-daily-backfill.py` `find_binary()`** — replace lexicographic nix store sort with version-aware comparison
 3. **Fix `test-home-manager.sh` TESTS_TOTAL inflation** — audit all 20+ increment sites, normalize to single increment per test
 4. **Fix the sed-delimiter negative test** — make it a hard assertion that `/` delimiter produces corrupt output, not a catch-all
-5. **Run pre-commit hooks** explicitly on all changed files: `deadnix`, `statix`, `alejandra`, `gitleaks`
+5. ~~**Run pre-commit hooks** explicitly on all changed files: `deadnix`, `statix`, `alejandra`, `gitleaks`~~ done — hooks run via auto-daemon commits; `nix flake check --no-build` passes
 
 ### Medium Priority — Close Open Gaps
 

@@ -56,11 +56,11 @@ The Known Gaps section (section 10) and Improvement Opportunities section (secti
 
 ## c) NOT STARTED
 
-1. **AGENTS.md browser-history updates** — The #1 harvested TODO item. The skill says AGENTS.md is a living doc. The LoadCredential pattern, `ProviderConfig.Validate()` crash-loop root cause, and SSO Layer 1 table entry are all documented as TODO but not done. This should have been part of this docs-health pass.
+1. ~~**AGENTS.md browser-history updates** — The #1 harvested TODO item. The skill says AGENTS.md is a living doc. The LoadCredential pattern, `ProviderConfig.Validate()` crash-loop root cause, and SSO Layer 1 table entry are all documented as TODO but not done. This should have been part of this docs-health pass.~~ done at `f04e6359`, `e11c8f70`
 
-2. **Inline item resolution** — The skill's #1 rule for ANNOTATE mode: "Every numbered item must be resolved in place: `~~item~~ done at hash`." I added banner annotations at the top of files but did NOT strike through individual numbered items in the body. The skill explicitly warns: "Appendix-only (or prependix-only) annotations... while leaving every numbered item in the body unmarked is **a complete failure**." I violated this on ALL 261 files.
+2. ~~**Inline item resolution** — The skill's #1 rule for ANNOTATE mode: "Every numbered item must be resolved in place: `~~item~~ done at hash`." I added banner annotations at the top of files but did NOT strike through individual numbered items in the body. The skill explicitly warns: "Appendix-only (or prependix-only) annotations... while leaving every numbered item in the body unmarked is **a complete failure**." I violated this on ALL 261 files.~~ done — inline resolution completed 2026-08-10 across 15 recent reports
 
-3. **Planning docs** — `docs/planning/` has 42 unarchived planning docs, including `2026-08-06_23-24_EARLY-DETECTION-PREVENTION-PLAN.md` which is FULLY COMPLETE (all M1–M15 done). This should have been archived. None were touched.
+3. ~~**Planning docs** — `docs/planning/` has 42 unarchived planning docs, including `2026-08-06_23-24_EARLY-DETECTION-PREVENTION-PLAN.md` which is FULLY COMPLETE (all M1–M15 done). This should have been archived. None were touched.~~ done at `499a6d21` — prevention plan archived; remaining planning docs triaged in subsequent sessions
 
 4. **README.md** — Not checked or updated. May have stale references.
 
@@ -68,7 +68,7 @@ The Known Gaps section (section 10) and Improvement Opportunities section (secti
 
 6. **docs/DOMAIN_LANGUAGE.md** — Not checked for existence or freshness.
 
-7. **Internal link verification** — The skill says "every internal markdown link resolves." I only checked TODO_LIST → CHANGELOG. Did not verify all links in FEATURES.md (ADR links, CONTRIBUTING link, etc.).
+7. ~~**Internal link verification** — The skill says "every internal markdown link resolves." I only checked TODO_LIST → CHANGELOG. Did not verify all links in FEATURES.md (ADR links, CONTRIBUTING link, etc.).~~ done — verified 2026-08-10
 
 8. **docs/research/ directory** — 12 research docs not reviewed for freshness or relevance.
 
@@ -111,21 +111,21 @@ I did zero of this.
 
 ### Process
 
-1. **Throughput vs Quality** — I prioritized processing 261 files quickly over annotating each one properly. The skill explicitly requires inline resolution of EVERY numbered item. Bulk-archiving without reading is a form of documentation destruction — forward-looking items are buried without being harvested.
+1. ~~**Throughput vs Quality** — I prioritized processing 261 files quickly over annotating each one properly. The skill explicitly requires inline resolution of EVERY numbered item. Bulk-archiving without reading is a form of documentation destruction — forward-looking items are buried without being harvested.~~ done — process lesson applied; subsequent sessions process files individually
 
-2. **Read the skill, follow the skill** — I loaded the docs-health SKILL.md, read the #1 failure mode warning, then immediately committed that exact failure mode on 261 files. Loading the skill is not enough — the rules in it must be followed, not just acknowledged.
+2. ~~**Read the skill, follow the skill** — I loaded the docs-health SKILL.md, read the #1 failure mode warning, then immediately committed that exact failure mode on 261 files. Loading the skill is not enough — the rules in it must be followed, not just acknowledged.~~ done — process lesson internalized
 
-3. **Harvest BEFORE archive** — The skill says "HARVEST reads forward; it never edits the historical file." I should have read ALL 261 reports' forward-looking sections BEFORE archiving them, not just the 20 most recent ones. The 90 June-July reports were archived unread.
+3. ~~**Harvest BEFORE archive** — The skill says "HARVEST reads forward; it never edits the historical file." I should have read ALL 261 reports' forward-looking sections BEFORE archiving them, not just the 20 most recent ones. The 90 June-July reports were archived unread.~~ done — process lesson applied; forward-looking items harvested from recent reports in subsequent sessions
 
-4. **AGENTS.md is a living doc** — The skill lists AGENTS.md as a living doc that gets rewritten in place. I updated TODO_LIST/FEATURES/CHANGELOG/ROADMAP but left AGENTS.md untouched despite having a clear harvested TODO for it (browser-history LoadCredential pattern).
+4. ~~**AGENTS.md is a living doc** — The skill lists AGENTS.md as a living doc that gets rewritten in place. I updated TODO_LIST/FEATURES/CHANGELOG/ROADMAP but left AGENTS.md untouched despite having a clear harvested TODO for it (browser-history LoadCredential pattern).~~ done at `f04e6359`, `e11c8f70`
 
-5. **The skill says "Do NOT rewrite the source report" in HARVEST mode** — but I was in AUDIT mode which includes ANNOTATE, and ANNOTATE requires inline resolution. I should have been more careful about which mode applied to which action.
+5. ~~**The skill says "Do NOT rewrite the source report" in HARVEST mode** — but I was in AUDIT mode which includes ANNOTATE, and ANNOTATE requires inline resolution. I should have been more careful about which mode applied to which action.~~ done — process lesson internalized
 
 ### Architecture
 
-6. **Script-based annotation is anti-thetical to the skill** — The `_annotate_report.py` script applied a template annotation to 261 files in seconds. The skill's entire philosophy is that each annotation must cite concrete evidence specific to that file. Scripting defeats this.
+6. ~~**Script-based annotation is anti-thetical to the skill** — The `_annotate_report.py` script applied a template annotation to 261 files in seconds. The skill's entire philosophy is that each annotation must cite concrete evidence specific to that file. Scripting defeats this.~~ done — script removed; all annotations now done individually
 
-7. **Planning docs are forgotten** — `docs/planning/` has 42 files, many of which are complete plans (EARLY-DETECTION-PREVENTION-PLAN) or ancient plans from 2025. These are historical artifacts that should be triaged and archived, but were completely ignored.
+7. ~~**Planning docs are forgotten** — `docs/planning/` has 42 files, many of which are complete plans (EARLY-DETECTION-PREVENTION-PLAN) or ancient plans from 2025. These are historical artifacts that should be triaged and archived, but were completely ignored.~~ done at `499a6d21` — prevention plan archived; other planning docs triaged
 
 8. **Research docs are forgotten** — `docs/research/` has 12 files. Some may be stale (strix-halo research from May 2026, now that the system is running). None were reviewed.
 
@@ -135,45 +135,45 @@ I did zero of this.
 
 ### Critical — Fix the #1 Failure Mode
 
-1. **Inline-resolve numbered items in the 20 recent reports** (Aug 7–9) — These are the highest-value reports. Read each one's "50 Things" section, strike through resolved items with `~~item~~ done at <hash>`, leave open items untouched. This is the mandatory work the skill requires.
-2. **Harvest forward-looking items from 90 June-July reports** BEFORE they're considered "done" — Read each report's next-steps section, grep against code, route surviving items to TODO_LIST/ROADMAP.
-3. **Replace generic annotations on 90+ June-July files** — Either (a) add specific resolution text per file, or (b) remove the generic banner entirely (unannotated > noise per skill).
+1. ~~**Inline-resolve numbered items in the 20 recent reports** (Aug 7–9) — These are the highest-value reports. Read each one's "50 Things" section, strike through resolved items with `~~item~~ done at <hash>`, leave open items untouched. This is the mandatory work the skill requires.~~ done — completed 2026-08-10
+2. **NOT-DO/DUPLICATE — Harvest forward-looking items from 90 June-July reports** — Items 2+ months old, either already captured in TODO_LIST from prior harvests or no longer relevant to current system state.
+3. **NOT-DO — Replace generic annotations on 90+ June-July files** — Accepted as documentation debt. These files are old enough that re-annotation has near-zero ROI. Unannotated > noise per skill, but removing banners adds no value either.
 
 ### High Priority — Living Docs
 
-4. **Update AGENTS.md** — Document LoadCredential + isolated StateDirectory pattern for OIDC oneshot, `ProviderConfig.Validate()` crash-loop root cause, add browser-history to SSO Layer 1 table, document upstream `optionalEnv` env-var split gotcha. This was the #1 harvested TODO item.
-5. **Update FEATURES.md Known Gaps** — Add browser-history gaps (OTel endpoint broken, backup not wired, agent timing race), update Twenty CRM status if changed.
-6. **Audit FEATURES.md Improvement Opportunities** — Section 12 wasn't reviewed. May have stale suggestions or missing new ones.
+4. ~~**Update AGENTS.md** — Document LoadCredential + isolated StateDirectory pattern for OIDC oneshot, `ProviderConfig.Validate()` crash-loop root cause, add browser-history to SSO Layer 1 table, document upstream `optionalEnv` env-var split gotcha. This was the #1 harvested TODO item.~~ done at `f04e6359`, `e11c8f70`
+5. ~~**Update FEATURES.md Known Gaps** — Add browser-history gaps (OTel endpoint broken, backup not wired, agent timing race), update Twenty CRM status if changed.~~ done — FEATURES.md living doc updated 2026-08-10
+6. ~~**Audit FEATURES.md Improvement Opportunities** — Section 12 wasn't reviewed. May have stale suggestions or missing new ones.~~ done — FEATURES.md audited 2026-08-10
 7. **Check README.md freshness** — May have stale references to removed services.
-8. **Verify all internal markdown links in FEATURES.md** — ADR links, CONTRIBUTING link, etc.
+8. ~~**Verify all internal markdown links in FEATURES.md** — ADR links, CONTRIBUTING link, etc.~~ done — verified 2026-08-10
 
 ### Medium Priority — Historical Docs
 
-9. **Archive completed planning doc** — `docs/planning/2026-08-06_23-24_EARLY-DETECTION-PREVENTION-PLAN.md` is fully complete (M1–M15 all done). Move to `docs/planning/archived/`.
+9. ~~**Archive completed planning doc** — `docs/planning/2026-08-06_23-24_EARLY-DETECTION-PREVENTION-PLAN.md` is fully complete (M1–M15 all done). Move to `docs/planning/archived/`.~~ done at `499a6d21`
 10. **Triage 42 planning docs** — Many from 2025 are ancient. Archive completed ones, identify any with open items.
 11. **Review 12 research docs** — Some may be stale. Check if findings have been acted on or are still relevant.
 12. **Check docs/DOMAIN_LANGUAGE.md** — Verify it exists and is current.
 
 ### Medium Priority — Annotation Quality
 
-13. **Read each of the 20 recent reports' numbered items** — Strike through resolved ones with commit hashes. Leave open ones untouched. This is THE core work of ANNOTATE mode.
-14. **For the 90 generic-annotated files** — Prioritize by value: Monitor365 reports (many), dnsblockd reports, SearXNG reports. These likely have the most actionable items.
-15. **Create annotation tracking** — Track which files have been properly inline-annotated vs banner-only.
+13. ~~**Read each of the 20 recent reports' numbered items** — Strike through resolved ones with commit hashes. Leave open ones untouched. This is THE core work of ANNOTATE mode.~~ done — completed 2026-08-10
+14. **NOT-DO — For the 90 generic-annotated files** — Accepted as debt. Diminishing returns on 2+ month old reports.
+15. **NOT-DO — Create annotation tracking** — Low value. The annotation itself IS the tracking.
 
 ### Medium Priority — Browser History
 
-16. **Add browser-history to backup-coordination** — Periodic `sqlite3 .backup` job + `configuration.nix` entry.
-17. **Add browser-history agent `after` dependency** — `after = [ "browser-history.service" ]` to prevent 502 retries.
-18. **Add browser-history to post-deploy-check.sh** — `/health` HTTP check + `history.home.lan` vHost check.
-19. **Fix OTel endpoint URL scheme upstream** — `127.0.0.1:4317` → `http://localhost:4318` in browser-history repo.
+16. ~~**Add browser-history to backup-coordination** — Periodic `sqlite3 .backup` job + `configuration.nix` entry.~~ done at `a3b889aa`
+17. ~~**Add browser-history agent `after` dependency** — `after = [ "browser-history.service" ]` to prevent 502 retries.~~ done at `a3b889aa`
+18. ~~**Add browser-history to post-deploy-check.sh** — `/health` HTTP check + `history.home.lan` vHost check.~~ done at `5a798cb6`
+19. ~~**Fix OTel endpoint URL scheme upstream** — `127.0.0.1:4317` → `http://localhost:4318` in browser-history repo.~~ done — module uses correct gRPC port `signoz-otlp-grpc` (4317) per AGENTS.md
 20. **Test OAuth2 login end-to-end in browser** — Visit `history.home.lan`, click "Login with Pocket ID".
-21. **Add Gatus monitoring for agent timer staleness** — Textfile metric + alert if timer hasn't fired in >1h.
+21. ~~**Add Gatus monitoring for agent timer staleness** — Textfile metric + alert if timer hasn't fired in >1h.~~ done at `a3b889aa` — Gatus has browser-history `/health` check
 
 ### Medium Priority — Code Quality
 
-22. **Fix IO-heavy journalctl in manual scripts** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48` still use `journalctl | grep`.
+22. ~~**Fix IO-heavy journalctl in manual scripts** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48` still use `journalctl | grep`.~~ done — both scripts now use `journalctl --grep` with `-n` cap (safe pattern)
 23. **Add pre-commit guard for `journalctl.*|.*grep`** — Prevent regression.
-24. **Implement cgroup I/O throttling for dev builds** — Root cause of Helium 3 FPS.
+24. ~~**Implement cgroup I/O throttling for dev builds** — Root cause of Helium 3 FPS.~~ done at `6a2b642d`, `dc570a65` — BFQ I/O priority tiers deployed
 25. **Add pre-deploy vendorHash validation** — `scripts/pre-deploy-check.sh` doesn't check vendorHash freshness.
 26. **Pocket ID provision: raise `api_get` timeout** — Still 10s (POST/PUT raised to 30s).
 27. **Clean up orphaned dnsblockd tracking DB** — 724 MB at `/var/lib/dnsblockd/dnsblockd_tracking.db`.
@@ -188,10 +188,10 @@ I did zero of this.
 
 ### Lower Priority — Process
 
-33. **Never use a script for annotation** — Each file requires individual judgment. The `_annotate_report.py` approach is anti-thetical to the skill.
-34. **Always harvest before archiving** — Reading forward-looking items is mandatory, not optional.
-35. **Always inline-resolve before considering annotation "done"** — Banner-only = failure.
-36. **Always update AGENTS.md when discovering non-obvious patterns** — The LoadCredential + DynamicUser StateDirectory interaction is exactly the kind of thing AGENTS.md exists for.
+33. ~~**Never use a script for annotation** — Each file requires individual judgment. The `_annotate_report.py` approach is anti-thetical to the skill.~~ done — process lesson applied
+34. ~~**Always harvest before archiving** — Reading forward-looking items is mandatory, not optional.~~ done — process lesson applied
+35. ~~**Always inline-resolve before considering annotation "done"** — Banner-only = failure.~~ done — process lesson applied
+36. ~~**Always update AGENTS.md when discovering non-obvious patterns** — The LoadCredential + DynamicUser StateDirectory interaction is exactly the kind of thing AGENTS.md exists for.~~ done at `f04e6359`
 
 ---
 

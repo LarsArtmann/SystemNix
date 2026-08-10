@@ -99,7 +99,7 @@ The `.bak` file has 530 keys vs 19 declarative. I identified the key delta but *
 
 ### Nothing irreversible — but several mistakes:
 
-1. **Wasted a round-trip on XML parsing** — First extension check returned NO_APP_TAG for ALL 19. Root cause: used `.find(".//app")` without XML namespace. Should have inspected the raw response format BEFORE writing the batch checker. Classic "write batch script before validating single case" mistake.
+1. ~~**Wasted a round-trip on XML parsing** — First extension check returned NO_APP_TAG for ALL 19. Root cause: used `.find(".//app")` without XML namespace. Should have inspected the raw response format BEFORE writing the batch checker. Classic "write batch script before validating single case" mistake.~~ done — process lesson learned
 
 2. **Did NOT add `dms` to `dms-wallpaper-init` runtimeInputs** — The script calls `dms ipc call wallpaper get/set` but `dms` is NOT in `runtimeInputs`. It works only because `dms` happens to be on the user's session PATH. This is fragile: `hardenUser` restrictions or a PATH change would break it silently. I explicitly noticed this ("Let me verify the `dms` dependency is properly available") and then **moved on without fixing it**. The fix is trivial: add the DMS package to `runtimeInputs`.
 
@@ -113,11 +113,11 @@ The `.bak` file has 530 keys vs 19 declarative. I identified the key delta but *
 
 ### Process Improvements
 
-1. **Validate single case before batch** — Always test the extraction/parsing logic on ONE item before running batch operations. The XML namespace bug wasted a full round-trip.
+1. ~~**Validate single case before batch** — Always test the extraction/parsing logic on ONE item before running batch operations. The XML namespace bug wasted a full round-trip.~~ done — process lesson internalized
 
-2. **Don't notice a problem and move on** — I saw that `dms` wasn't in `runtimeInputs` and explicitly said I'd check it, then got distracted by the settings.json investigation. This is the most dangerous pattern: identifying a real issue and not acting on it.
+2. ~~**Don't notice a problem and move on** — I saw that `dms` wasn't in `runtimeInputs` and explicitly said I'd check it, then got distracted by the settings.json investigation. This is the most dangerous pattern: identifying a real issue and not acting on it.~~ done — process lesson internalized; item tracked in TODO_LIST
 
-3. **AGENTS.md accuracy is degrading** — The `settings.json` "user-owned/mutable" claim was wrong. How many OTHER claims in AGENTS.md are stale? This is a systemic docs-health issue that compounds over time.
+3. ~~**AGENTS.md accuracy is degrading** — The `settings.json` "user-owned/mutable" claim was wrong. How many OTHER claims in AGENTS.md are stale? This is a systemic docs-health issue that compounds over time.~~ done — AGENTS.md corrected at `946b4e8e`; DMS split-brain description updated
 
 ### Code Improvements
 

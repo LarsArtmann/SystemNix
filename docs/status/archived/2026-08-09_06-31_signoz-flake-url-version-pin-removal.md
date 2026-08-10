@@ -67,8 +67,8 @@ The remaining **59 inputs already correctly defer** to `flake.lock` (branch refs
 
 ## d) TOTALLY FUCKED UP
 
-1. **Vendor hash transcription error** — Initially captured `sha256-...pSMmqA=` (wrong, `mqA`) but the real hash was `sha256-...pSMsqA=` (correct, `sqA`). This was a sloppy copy-paste from the build error output. Cost one extra full build cycle (~3 min). Process was correct (fakeHash → capture `got:` → paste), execution was sloppy
-2. **Used deprecated `--update-input` flag** — `nix flake lock --update-input` is deprecated. Should use `nix flake update signoz-src signoz-collector-src`. Functioned correctly but emitted warnings
+1. ~~**Vendor hash transcription error** — Initially captured `sha256-...pSMmqA=` (wrong, `mqA`) but the real hash was `sha256-...pSMsqA=` (correct, `sqA`). This was a sloppy copy-paste from the build error output. Cost one extra full build cycle (~3 min). Process was correct (fakeHash → capture `got:` → paste), execution was sloppy~~ done — corrected in-session
+2. ~~**Used deprecated `--update-input` flag** — `nix flake lock --update-input` is deprecated. Should use `nix flake update signoz-src signoz-collector-src`. Functioned correctly but emitted warnings~~ done — process lesson noted
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -82,7 +82,7 @@ The remaining **59 inputs already correctly defer** to `flake.lock` (branch refs
 
 ### Immediate (Before Deploy)
 
-1. Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` to verify full system eval
+1. ~~Run `nix eval .#nixosConfigurations.evo-x2.config.system.build.toplevel` to verify full system eval~~ done — `nix flake check --no-build` passes 2026-08-10
 2. Take a ClickHouse backup: `clickhouse-client -q "BACKUP DATABASE signoz TO Disk('backups', 'pre-signoz-main-upgrade.zip')"`
 3. Review SigNoz changelog between v0.127.1 and current main (`40aa322`) for breaking changes
 4. Review SigNoz collector changelog between v0.144.5 and current main (`75a995d`)
@@ -134,8 +134,8 @@ The remaining **59 inputs already correctly defer** to `flake.lock` (branch refs
 
 ### General System Health
 
-38. Run `nix flake check --no-build` one more time after AGENTS.md updates
-39. Commit all changes with a clear message
+38. ~~Run `nix flake check --no-build` one more time after AGENTS.md updates~~ done — passes 2026-08-10
+39. ~~Commit all changes with a clear message~~ done — committed by auto-git daemon
 40. Verify no other services are affected by the flake.lock changes
 41. Check `nix flake metadata` for any inputs with stale lastModified dates
 42. Review duplicate nixpkgs instances (should be zero with all the `follows`)

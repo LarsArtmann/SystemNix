@@ -64,7 +64,7 @@ The provisioning script now POSTs to v2, but the dashboard JSON files are still 
 2. **Node exporter textfile investigation** — Why `system_health.prom` content is valid but node_exporter 1.12.1 doesn't serve the metrics. This is the root cause of 14 phantom Gatus alerts
 3. **Browser-history server crash** — `server.create_user_service` exit 69 is an upstream bug. Needs investigation in the `browser-history` repo, not SystemNix
 4. **SigNoz dashboard JSONs v1→v2 migration** — 5 dashboard files need rewriting in Perses schema
-5. **DiscordSync DB heal architecture** — Consider making the 11GB integrity check async rather than blocking service start
+5. ~~**DiscordSync DB heal architecture** — Consider making the 11GB integrity check async rather than blocking service start~~ done — `discordsync-db-heal.service` extracted as separate oneshot (`discordsync.nix:195`)
 
 ---
 
@@ -95,7 +95,7 @@ Adding 14 metrics to `KNOWN_NEW_METRICS` is a **suppression**, not a fix. The re
 ### Architectural
 4. **Port conflict detection at eval time** — The cadvisor/PMA port collision should have been caught by an eval-time assertion. `lib/ports.nix` could have a uniqueness check that throws if two services reference the same port
 5. **Pre-deploy check should verify unit file content, not just nix eval** — The `PMA_HEALTH_LISTEN_ADDR` override appeared correct in `nix eval` but produced a broken unit file. A pre-deploy check that diffs the generated unit file for duplicate `Environment=` entries would catch this class of bug
-6. **DiscordSync DB heal should not block service start** — An 11GB integrity check as ExecStartPre is architecturally wrong. It should be a separate oneshot service that runs periodically, with the main service starting independently
+6. ~~**DiscordSync DB heal should not block service start** — An 11GB integrity check as ExecStartPre is architecturally wrong. It should be a separate oneshot service that runs periodically, with the main service starting independently~~ done — extracted to `discordsync-db-heal.service` oneshot
 
 ---
 
@@ -125,12 +125,12 @@ Adding 14 metrics to `KNOWN_NEW_METRICS` is a **suppression**, not a fix. The re
 
 ### DiscordSync (17-20)
 17. Monitor discordsync startup after build storm settles — verify it starts with 5min timeout
-18. If still failing: make DB heal a separate oneshot service (not ExecStartPre)
+18. ~~If still failing: make DB heal a separate oneshot service (not ExecStartPre)~~ done — `discordsync-db-heal.service` extracted
 19. Consider moving the DB heal to a timer-based periodic check instead of startup
 20. Add Gatus alert for discordsync ExecStartPre timeout specifically
 
 ### Port Safety (21-24)
-21. Add eval-time port uniqueness assertion in `lib/ports.nix`
+21. ~~Add eval-time port uniqueness assertion in `lib/ports.nix`~~ done — `tests/test-port-uniqueness.nix` exists
 22. Document cadvisor port change (9190→9193) in AGENTS.md
 23. Update Gatus cadvisor health check to point to port 9193
 24. Update any Homepage/service config that references cadvisor on 9190
@@ -168,7 +168,7 @@ Adding 14 metrics to `KNOWN_NEW_METRICS` is a **suppression**, not a fix. The re
 46. Set hermes to BE/5 — state DB writes
 
 ### Testing (47-50)
-47. Add NixOS VM test for port conflict detection
+47. ~~Add NixOS VM test for port conflict detection~~ done — `tests/test-port-uniqueness.nix` exists
 48. Add NixOS VM test for I/O priority application on services
 49. Add test for signoz-provision with v2 dashboard API
 50. Add test for pre-deploy check phantom metric tolerance

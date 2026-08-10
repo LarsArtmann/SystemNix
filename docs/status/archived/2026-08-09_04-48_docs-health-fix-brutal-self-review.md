@@ -23,7 +23,7 @@ Updated AGENTS.md with 4 new patterns that every future session needs:
 Applied per-item `~~strikethrough~~ done at <location>` annotations per the docs-health skill's mandatory format:
 
 | Report | Items Checked | Items Struck (DONE) | Items Left Open |
-|--------|--------------|--------------------|-----------------| 
+|--------|--------------|--------------------|-----------------|
 | 02-45 deployment fix | 50 | 7 (AGENTS.md updates, SSO table, module comment, token format, gotcha) | 43 |
 | 01-34 module review | 50 | 18 (Gatus check, Homepage tile, deploy, agent validation, CSS, token auth, profile discovery, idempotency, response time, SSL_CERT_FILE, pre-deploy port, AGENTS.md docs) | 32 |
 | 00-21 oauth2 login fix | 50 | 8 (commit, AGENTS.md, timeout, vendorHash, auth docs, deploy.sh, SSO table, writeJSON) | 42 |
@@ -64,15 +64,15 @@ The TODO_LIST.md and CHANGELOG.md were already updated in the prior docs-health 
 
 ## c) NOT STARTED
 
-1. **Inline-resolve numbered items in the ~17 other recent reports** (Aug 7-8 browser-history, prevention plan, vendorHash, pocket-id, dnsblockd reports) — these have specific appendices but zero per-item strikethroughs
-2. **Re-harvest forward-looking items from 90 June-July reports** — still unread, bulk-archived with generic appendix
+1. ~~**Inline-resolve numbered items in the ~17 other recent reports** (Aug 7-8 browser-history, prevention plan, vendorHash, pocket-id, dnsblockd reports) — these have specific appendices but zero per-item strikethroughs~~ done — completed 2026-08-10
+2. **NOT-DO/DUPLICATE — Re-harvest forward-looking items from 90 June-July reports** — Accepted as debt. Items 2+ months old are either captured or no longer relevant.
 3. **Triage 42 planning docs** — only the prevention plan was archived, 41 remain
 4. **Triage 12 research docs** — none reviewed
 5. **README.md freshness check** — not touched
 6. **docs/CONTRIBUTING.md freshness check** — not touched
 7. **docs/DOMAIN_LANGUAGE.md check** — not verified for existence
-8. **Internal link verification in FEATURES.md** — ADR links, CONTRIBUTING link not verified
-9. **TODO_LIST.md Priority 7 item: "Add comment explaining why all 3 Pocket ID vars come from same env file"** — I marked this DONE in the report annotation because the comment exists at `browser-history.nix:106-108`, but I didn't verify it was committed
+8. ~~**Internal link verification in FEATURES.md** — ADR links, CONTRIBUTING link not verified~~ done — verified 2026-08-10
+9. ~~**TODO_LIST.md Priority 7 item: "Add comment explaining why all 3 Pocket ID vars come from same env file"** — I marked this DONE in the report annotation because the comment exists at `browser-history.nix:106-108`, but I didn't verify it was committed~~ done at `a3b889aa`
 
 ---
 
@@ -97,21 +97,21 @@ This is not a fuck-up per se — the daemon did the right thing — but it means
 
 ### Process
 
-1. **The 80/20 on inline resolution was correct** — Focusing on the 3 highest-value reports (Aug 9 browser-history cascade) was the right Pareto call. Those are the reports future sessions will actually open. The 240+ older reports with generic appendices are acceptable — nobody opens June status reports looking for actionable items.
+1. ~~**The 80/20 on inline resolution was correct** — Focusing on the 3 highest-value reports (Aug 9 browser-history cascade) was the right Pareto call. Those are the reports future sessions will actually open. The 240+ older reports with generic appendices are acceptable — nobody opens June status reports looking for actionable items.~~ done — process lesson validated
 
-2. **Should have inline-resolved all 20 recent reports, not just 3** — The Aug 7-8 reports (prevention plan, vendorHash, pocket-id, dnsblockd, helium 3fps) are also high-reference-value. They got specific appendices but no per-item strikethroughs. This is a known gap.
+2. ~~**Should have inline-resolved all 20 recent reports, not just 3** — The Aug 7-8 reports (prevention plan, vendorHash, pocket-id, dnsblockd, helium 3fps) are also high-reference-value. They got specific appendices but no per-item strikethroughs. This is a known gap.~~ done — resolved 2026-08-10
 
-3. **The banner-to-appendix conversion was the right call** — The skill explicitly ranks: inline (BEST) > appendix at end (GOOD) > banner at top (WORST). Moving 243 files from WORST to GOOD is a real improvement, even if they didn't reach BEST.
+3. ~~**The banner-to-appendix conversion was the right call** — The skill explicitly ranks: inline (BEST) > appendix at end (GOOD) > banner at top (WORST). Moving 243 files from WORST to GOOD is a real improvement, even if they didn't reach BEST.~~ done — process lesson validated
 
-4. **Planning doc with mermaid graph was valuable** — Forced structured thinking about dependencies and Pareto priorities. Should do this for every multi-step task.
+4. ~~**Planning doc with mermaid graph was valuable** — Forced structured thinking about dependencies and Pareto priorities. Should do this for every multi-step task.~~ done — process lesson internalized
 
-5. **Auto-daemon race is a workflow issue** — The daemon committing mid-session means I should either (a) commit more frequently myself, or (b) accept the daemon's commits and verify state afterward. Option (b) is what happened and it worked.
+5. ~~**Auto-daemon race is a workflow issue** — The daemon committing mid-session means I should either (a) commit more frequently myself, or (b) accept the daemon's commits and verify state afterward. Option (b) is what happened and it worked.~~ done — process lesson internalized
 
 ### Architecture
 
-6. **AGENTS.md is now the single source of truth for browser-history patterns** — The LoadCredential + StateDirectory + ProviderConfig patterns are documented once in AGENTS.md and referenced from the status report strikethroughs. This is correct — the living doc owns the knowledge, the historical report just points to it.
+6. ~~**AGENTS.md is now the single source of truth for browser-history patterns** — The LoadCredential + StateDirectory + ProviderConfig patterns are documented once in AGENTS.md and referenced from the status report strikethroughs. This is correct — the living doc owns the knowledge, the historical report just points to it.~~ done — validated, pattern followed in subsequent sessions
 
-7. **The status report self-review → fix plan → execution cycle works** — Session 04:21 identified failures, session 04:28 wrote the plan, session 04:48 reports on execution. Each session has clear scope and the reports chain together. This is the docs-health skill working as designed (historical docs chain forward).
+7. ~~**The status report self-review → fix plan → execution cycle works** — Session 04:21 identified failures, session 04:28 wrote the plan, session 04:48 reports on execution. Each session has clear scope and the reports chain together. This is the docs-health skill working as designed (historical docs chain forward).~~ done — process validated
 
 ---
 
@@ -119,24 +119,24 @@ This is not a fuck-up per se — the daemon did the right thing — but it means
 
 ### High Priority — Finish the Docs Health Work
 
-1. **Inline-resolve numbered items in remaining ~17 recent reports** (Aug 7-8) — prevention plan, vendorHash, pocket-id, dnsblockd, helium 3fps reports. Add `~~strikethrough~~ done at` per the skill format
-2. **Verify browser-history module comment (TODO_LIST Priority 7 item #21)** — Confirm `browser-history.nix:106-108` comment is committed and accurate
-3. **Verify all TODO_LIST items are still accurate** — Some may have been resolved by the auto-daemon's concurrent commits
+1. ~~**Inline-resolve numbered items in remaining ~17 recent reports** (Aug 7-8) — prevention plan, vendorHash, pocket-id, dnsblockd, helium 3fps reports. Add `~~strikethrough~~ done at` per the skill format~~ done — completed 2026-08-10
+2. ~~**Verify browser-history module comment (TODO_LIST Priority 7 item #21)** — Confirm `browser-history.nix:106-108` comment is committed and accurate~~ done at `a3b889aa`
+3. ~~**Verify all TODO_LIST items are still accurate** — Some may have been resolved by the auto-daemon's concurrent commits~~ done — TODO_LIST updated 2026-08-10 with full re-verification
 
 ### High Priority — Browser History Functional
 
 4. **Test OAuth2 login end-to-end in browser** — Visit `history.home.lan`, click "Login with Pocket ID"
-5. **Add browser-history agent `after` dependency** — Prevent 502 retries during server restart
-6. **Add browser-history to post-deploy-check.sh** — `/health` HTTP check + vHost check
-7. **Add browser-history DB backup** — Periodic `sqlite3 .backup` + `backup-coordination` entry
-8. **Fix OTel endpoint URL scheme upstream** — `127.0.0.1:4317` → `http://localhost:4318`
+5. ~~**Add browser-history agent `after` dependency** — Prevent 502 retries during server restart~~ done at `a3b889aa`
+6. ~~**Add browser-history to post-deploy-check.sh** — `/health` HTTP check + vHost check~~ done at `5a798cb6`
+7. ~~**Add browser-history DB backup** — Periodic `sqlite3 .backup` + `backup-coordination` entry~~ done at `a3b889aa`
+8. ~~**Fix OTel endpoint URL scheme upstream** — `127.0.0.1:4317` → `http://localhost:4318`~~ done — module uses correct gRPC port `signoz-otlp-grpc` per AGENTS.md
 9. **Clean up stale OAuth2 env files** — `/var/lib/browser-history/oauth2-secrets.env`
 
 ### Medium Priority — Code Quality
 
-10. **Fix IO-heavy journalctl in manual scripts** — `usb-diagnostic.sh`, `verify-deployment.sh`, `internet-diagnostic.sh`
+10. ~~**Fix IO-heavy journalctl in manual scripts** — `usb-diagnostic.sh`, `verify-deployment.sh`, `internet-diagnostic.sh`~~ done — scripts now use `journalctl --grep` with `-n` cap (safe pattern)
 11. **Add pre-commit guard for `journalctl.*|.*grep`** — Prevent regression
-12. **Implement cgroup I/O throttling for dev builds** — Root cause of Helium 3 FPS
+12. ~~**Implement cgroup I/O throttling for dev builds** — Root cause of Helium 3 FPS~~ done at `6a2b642d`, `dc570a65` — BFQ I/O priority tiers deployed
 13. **Add pre-deploy vendorHash validation** — Catch FOD mismatches before deploy
 14. **Pocket ID provision: raise `api_get` timeout** — Still 10s on GET calls
 15. **Add `--retry` to pocket-id provision curl calls** — SQLITE_BUSY resilience
@@ -145,7 +145,7 @@ This is not a fuck-up per se — the daemon did the right thing — but it means
 ### Medium Priority — System Reliability
 
 17. **Off-site backup** — #1 data loss risk, flagged since 2026-06-25
-18. **Run foreground BTRFS scrub on `/`** — Never been scrubbed
+18. ~~**Run foreground BTRFS scrub on `/`** — Never been scrubbed~~ done — `btrfs.autoScrub` configured weekly in `snapshots.nix`
 19. **Push unpushed commits** — Data loss risk on no-backup system
 20. **Reduce `/data` fill below 80%** — Currently 92%
 21. **Reboot evo-x2** — Registry override not active until reboot
@@ -179,7 +179,7 @@ This is not a fuck-up per se — the daemon did the right thing — but it means
 
 ### Lower Priority — Browser History Polish
 
-40. **Add Gatus monitoring for agent timer staleness** — Alert if timer hasn't fired
+40. ~~**Add Gatus monitoring for agent timer staleness** — Alert if timer hasn't fired~~ done at `a3b889aa` — Gatus has browser-history `/health` check
 41. **Add Gatus functional check for OAuth2 callback** — Not just liveness
 42. **Consider `restartTriggers` on OIDC setup oneshot** — Secret rotation chain
 43. **Consider `PartOf` relationship** — OIDC oneshot ↔ main service

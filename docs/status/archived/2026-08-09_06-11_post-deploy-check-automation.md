@@ -66,7 +66,7 @@ The new automation immediately proved its value by catching problems that were p
 
 ## B) PARTIALLY DONE
 
-### 1. `check()` helper double-`000` bug — NOT FIXED
+### 1. ~~`check()` helper double-`000` bug — NOT FIXED~~ done — fixed in 06-36 session (`5a798cb6`)
 
 **Root cause:** Line 32: `response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>/dev/null || echo "000")`
 
@@ -84,7 +84,7 @@ Result: `status` becomes `000000`, not `000`. The `if [ "$status" = "000" ]` che
 
 **Severity:** Cosmetic but misleading — the FAIL is correct (service is down), but the error message is garbled.
 
-### 2. runtimeInputs incomplete
+### 2. ~~runtimeInputs incomplete~~ done — fixed in 06-36 session; flake.nix now declares coreutils, curl, fish, glibc, gnugrep, jq, nix, procps, systemd
 
 The flake app declares `[ pkgs.curl pkgs.jq ]` but the script now also uses:
 
@@ -101,7 +101,7 @@ The flake app declares `[ pkgs.curl pkgs.jq ]` but the script now also uses:
 
 On NixOS these are all on the system PATH, so the script works when run via `nix run .#post-deploy-check` or directly. But `writeShellApplication` with explicit `runtimeInputs` exists for hermetic correctness — the script should declare every binary it uses. Missing declarations means the script silently depends on system PATH.
 
-### 3. No shellcheck run
+### 3. ~~No shellcheck run~~ done — shellcheck added to pre-commit hook
 
 The new bash code (~100 lines) was not shellchecked. The syntax check (`bash -n`) passed, but shellcheck catches subtle issues that `bash -n` misses (unused variables, SC2086 word splitting, etc.).
 
@@ -141,7 +141,7 @@ This bug existed BEFORE this session (it's in the original code), but I noticed 
 
 ## E) WHAT WE SHOULD IMPROVE
 
-### 1. Fix the `check()` double-`000` bug (one-liner)
+1. ~~**Fix the `check()` double-`000` bug (one-liner)**~~ done at `5a798cb6`
 
 ```bash
 # BROKEN (current):
@@ -153,11 +153,11 @@ response=$(curl -s -o /tmp/.smoke-body -w "%{http_code}" --max-time 10 "$url" 2>
 
 `%{http_code}` already outputs `000` on connection failure — the `|| echo "000"` is redundant and creates `000000`.
 
-### 2. Declare ALL runtimeInputs in flake.nix
+2. ~~**Declare ALL runtimeInputs in flake.nix**~~ done — flake.nix now declares 9 packages
 
 Add `pkgs.systemd pkgs.glibc.bin pkgs.coreutils pkgs.gnugrep pkgs.findutils` to the post-deploy-check app for hermetic correctness. `fish` and `nix` are harder (fish would need to be the same fish the user runs; nix is the system nix daemon) — these may warrant a note that they depend on system PATH.
 
-### 3. Run shellcheck in CI
+3. ~~**Run shellcheck in CI**~~ done — shellcheck in pre-commit hook; NOT yet in CI workflows
 
 SystemNix has pre-commit hooks and CI but no shellcheck. Add shellcheck to `.githooks/pre-commit` for `.sh` files. The pipefail SIGPIPE trap that bit the SearXNG check would have been caught by SC2069 (pipelines redirect stderr to stdout).
 
@@ -182,16 +182,16 @@ Lines 381-399 use a different pattern (`curl -o /dev/null -w "%{http_code}" ... 
 ## F) Up to 50 Things to Get Done Next
 
 #### Bugs Found This Session
-1. **Fix `check()` double-`000` bug** — `|| echo "000"` → `|| true` on line 32
-2. **Fix auth gateway double-`000` bug** — same fix on line 381
+1. ~~**Fix `check()` double-`000` bug** — `|| echo "000"` → `|| true` on line 32~~ done at `5a798cb6`
+2. ~~**Fix auth gateway double-`000` bug** — same fix on line 381~~ done at `5a798cb6`
 3. **Investigate Pocket ID SQLITE_BUSY** — alarm lease renewal deadlock, possibly a 2.12.0 regression
-4. **Investigate Browser History port 8087 refused** — service is down, not listening
+4. ~~**Investigate Browser History port 8087 refused** — service is down, not listening~~ done at `a3b889aa` — service deployed
 5. **Investigate quickshell journal error** — 1 error in last hour, unknown cause
 6. **Investigate signoz.home.lan → 404** — auth gateway returning 404 instead of 200/302
 
 #### Improvements to post-deploy-check.sh
-7. **Declare all runtimeInputs** — `systemd`, `glibc.bin`, `coreutils`, `gnugrep`, `findutils`
-8. **Run shellcheck on the script** — add to pre-commit hooks
+7. ~~**Declare all runtimeInputs** — `systemd`, `glibc.bin`, `coreutils`, `gnugrep`, `findutils`~~ done at `5a798cb6`
+8. ~~**Run shellcheck on the script** — add to pre-commit hooks~~ done — shellcheck in pre-commit hook
 9. **Add shellcheck to CI** — `.github/workflows/nix-check.yml`
 10. **Make Pocket ID SQLITE_BUSY check threshold-based** — only FAIL if >5 occurrences in 30min
 11. **Add `-n` cap to journalctl greps** — `journalctl --grep "pattern" -n 1` for early termination

@@ -1,7 +1,7 @@
 # Status Report: Post-Deploy Check Hardening & Shellcheck
 
-**Date:** 2026-08-09 06:36  
-**Session scope:** Fix 3 remaining manual-only items from post-deploy-check automation work  
+**Date:** 2026-08-09 06:36
+**Session scope:** Fix 3 remaining manual-only items from post-deploy-check automation work
 **Commits this session:** `5a798cb6`, `57bb772e` (auto-git daemon)
 
 ---
@@ -97,7 +97,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 
 1. **Ran `nix fmt` on the entire repo** — this was unnecessary and produced 1101 lines of formatting churn in `monitor365.nix` that I did not intend to touch. The working tree now has uncommitted formatting changes that are noise. This makes the diff harder to review and could mask real changes.
 
-2. **Didn't verify whether `deploy.sh` calls post-deploy-check via the flake app or directly** — if `deploy.sh` calls `./scripts/post-deploy-check.sh` directly (not `nix run .#post-deploy-check`), the hermetic runtimeInputs are bypassed entirely, making that work moot for the most common invocation path. (I didn't check this — it's a gap in my verification.)
+2. ~~**Didn't verify whether `deploy.sh` calls post-deploy-check via the flake app or directly** — if `deploy.sh` calls `./scripts/post-deploy-check.sh` directly (not `nix run .#post-deploy-check`), the hermetic runtimeInputs are bypassed entirely, making that work moot for the most common invocation path. (I didn't check this — it's a gap in my verification.)~~ done — verified: deploy.sh uses `nix run .#post-deploy-check` (hermetic path)
 
 ---
 
@@ -109,7 +109,7 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 
 2. **Use devShell shellcheck instead of `nix shell nixpkgs#shellcheck`** in the pre-commit hook — the devShell already has shellcheck (flake.nix:616). The `nix shell nixpkgs#shellcheck` pattern requires network access and is slow (~5s cold start per invocation). Same issue exists for deadnix/statix/alejandra in the same hook.
 
-3. **Verify `deploy.sh` invocation path** — confirm whether post-deploy-check runs via `nix run .#post-deploy-check` (hermetic) or `bash scripts/post-deploy-check.sh` (non-hermetic, system PATH).
+3. ~~**Verify `deploy.sh` invocation path** — confirm whether post-deploy-check runs via `nix run .#post-deploy-check` (hermetic) or `bash scripts/post-deploy-check.sh` (non-hermetic, system PATH).~~ done — deploy.sh uses `nix run .#post-deploy-check` (hermetic)
 
 4. **Add shellcheck SC2360/SC2086 guards** — the script has many unquoted variables (`$url`, `$expect_body`). Shellcheck at `--severity=warning` doesn't catch all word-splitting issues. Consider `--severity=info` for new code.
 
@@ -126,11 +126,11 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 ## f) Up to 50 Things to Get Done Next
 
 #### High Priority — Correctness & Safety
-1. Verify `deploy.sh` invocation path for post-deploy-check (hermetic vs system PATH)
+1. ~~Verify `deploy.sh` invocation path for post-deploy-check (hermetic vs system PATH)~~ done — uses `nix run .#post-deploy-check`
 2. Add shellcheck to `.github/workflows/nix-check.yml` CI job
-3. Clean up uncommitted formatting drift in `monitor365.nix` (1101 lines — commit or revert)
-4. Clean up uncommitted formatting drift in `browser-history.nix` (5 lines)
-5. Clean up uncommitted shfmt changes in `post-deploy-check.sh`
+3. ~~Clean up uncommitted formatting drift in `monitor365.nix` (1101 lines — commit or revert)~~ done at `0a67e776`
+4. ~~Clean up uncommitted formatting drift in `browser-history.nix` (5 lines)~~ done at `0a67e776`
+5. ~~Clean up uncommitted shfmt changes in `post-deploy-check.sh`~~ done at `0a67e776`
 6. Remove `|| true` from alejandra in pre-commit (L121) — it silently swallows formatting failures
 7. Run shellcheck on `.githooks/pre-commit` itself
 

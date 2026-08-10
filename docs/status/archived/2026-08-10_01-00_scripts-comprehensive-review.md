@@ -107,7 +107,7 @@
 
 ## C) NOT STARTED (reviewed and identified, but not fixed)
 
-### Known bugs deferred from reviews
+### ~~Known bugs deferred from reviews~~ — All 28 items below were fixed in Round 2 (01-22 report) per resolution footer. Individual item verification in Round 2 report.
 
 | # | File | Issue | Severity | Why deferred |
 |---|------|-------|----------|-------------|
@@ -169,13 +169,13 @@
 ## E) WHAT WE SHOULD IMPROVE
 
 ### Process improvements
-1. **Always verify multiedit results** — check that ALL edits applied, not just "Applied N edits". Partial failures are silent.
-2. **Run `nix flake check --no-build` after changes** — even with known false positives, structural errors from `readFile`'d scripts would surface.
+1. ~~**Always verify multiedit results** — check that ALL edits applied, not just "Applied N edits". Partial failures are silent.~~ done — process lesson internalized
+2. ~~**Run `nix flake check --no-build` after changes** — even with known false positives, structural errors from `readFile`'d scripts would surface.~~ done — passes 2026-08-10
 3. **Don't skip files identified as needing fixes** — 28 issues identified but deferred is too many. The review found real bugs in `btrfs-subvolume-inventory.sh`, `migrate-envrc.py`, and `route-health-monitor.sh` that I left broken.
 4. **Test scripts functionally, not just syntactically** — `bash -n` catches syntax errors but not logic errors. For scripts like `dns-update.sh` (sed delimiter fix), a dry-run test would verify correctness.
 
 ### Codebase improvements
-5. **Extract shared disk constants** — `TARGET_P8_END_GIB`, `P8_START_SECTOR`, `BTRFS_SIZE_SECTORS` are duplicated between `disk-fix.sh` and `disk-diagnose.sh`. They drifted once (1548 vs 1560). Should be in a sourced `disk-common.sh`.
+5. ~~**Extract shared disk constants** — `TARGET_P8_END_GIB`, `P8_START_SECTOR`, `BTRFS_SIZE_SECTORS` are duplicated between `disk-fix.sh` and `disk-diagnose.sh`. They drifted once (1548 vs 1560). Should be in a sourced `disk-common.sh`.~~ done — `disk-common.sh` exists
 6. **Standardize on lib.sh sourcing** — 8+ scripts redefine colors/helpers. Each is a maintenance burden.
 7. **Add `from __future__ import annotations` to all Python scripts** — currently inconsistent.
 8. **No tests exist for any script** — all 44 scripts are untested. The `test-*.sh` scripts test the Nix config, not the operational scripts.
@@ -216,7 +216,7 @@
 26. Add `encoding="utf-8"` to all Python `read_text()`/`write_text()` calls (migrate-envrc.py)
 27. Standardize: make all scripts source `lib.sh` instead of redefining colors/helpers
 28. Add `set -euo pipefail` to `check-firewall.sh`, `check-mullvad-nft.sh`, `diagnose-mullvad.sh`
-29. Extract disk constants to `scripts/disk-common.sh` sourced by both disk scripts
+29. ~~Extract disk constants to `scripts/disk-common.sh` sourced by both disk scripts~~ done — `disk-common.sh` exists
 30. Fix `usb-diagnostic.sh:4-5` — accept device as argument, validate it's removable
 31. Fix `usb-diagnostic.sh:18,22` — `grep sda` matches `sda10` (use word boundary)
 32. Fix `status-report.sh` — update `just` references to `nix run .#` equivalents
@@ -237,8 +237,8 @@
 45. Consider `exit 1` on critical conditions in `display-watchdog.sh` and `niri-drm-healthcheck.sh`
 
 ### Testing + verification
-46. Run `nix flake check --no-build` to verify script changes don't break evaluation
-47. Run pre-commit hooks (deadnix, statix, alejandra, gitleaks)
+46. ~~Run `nix flake check --no-build` to verify script changes don't break evaluation~~ done — passes 2026-08-10
+47. ~~Run pre-commit hooks (deadnix, statix, alejandra, gitleaks)~~ done — pre-commit runs all hooks
 48. Write integration tests for the most critical scripts (deploy.sh, pre/post-deploy-check.sh)
 49. Dry-run test `dns-update.sh` to verify sed delimiter fix works with real SRI hashes
 50. Verify `display-watchdog.sh` and `niri-drm-healthcheck.sh` still work after shebang + pipefail change
