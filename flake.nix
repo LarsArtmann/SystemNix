@@ -162,6 +162,7 @@
 
     # NixOS hardware profiles (Raspberry Pi, etc.)
     nixos-hardware.url = "github:NixOS/nixos-hardware";
+    nixos-hardware.inputs.nixpkgs.follows = "nixpkgs";
 
     # EMEET PIXY webcam auto-activation daemon
     emeet-pixyd = {
