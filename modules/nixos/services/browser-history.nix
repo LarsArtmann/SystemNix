@@ -69,7 +69,11 @@
 
             # Agent token from sops. Systemd reads EnvironmentFile as root,
             # so root-owned sops template works for the DynamicUser server.
-            serviceConfig.EnvironmentFile = [ sopsEnvPath ];
+            serviceConfig = {
+              EnvironmentFile = [ sopsEnvPath ];
+              IOSchedulingClass = "best-effort";
+              IOSchedulingPriority = 6;
+            };
           };
         })
 

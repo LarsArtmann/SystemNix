@@ -107,6 +107,10 @@ _: {
               ProtectHome = false;
               NoNewPrivileges = false;
             })
+            {
+              IOSchedulingClass = "best-effort";
+              IOSchedulingPriority = 6;
+            }
           ];
         };
 

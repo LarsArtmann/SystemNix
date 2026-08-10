@@ -300,6 +300,10 @@ in
                   ReadWritePaths = [ cfg.settings.queryService.dataDir ];
                 })
                 (serviceDefaults { RestartSec = "10"; })
+                {
+                  IOSchedulingClass = "best-effort";
+                  IOSchedulingPriority = 6;
+                }
               ];
             };
 
