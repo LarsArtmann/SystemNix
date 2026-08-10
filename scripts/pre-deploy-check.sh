@@ -192,12 +192,14 @@ fi
 
 if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
-  # Metrics being introduced in this deploy — not yet emitted by the running
-  # system. Remove entries after deploy verification confirms them in /metrics.
-  # NOTE: system_* metrics below are from system-health textfile collector.
-  # node_exporter 1.12.1 is not serving them despite valid .prom file content.
-  # This is a pre-existing issue — investigate separately from deploy-blocking.
-  KNOWN_NEW_METRICS="system_service_memory_over_threshold system_service_active system_service_nrestarts system_service_start_limit_hit system_service_cpu_over_threshold system_any_service_cpu_over_threshold system_fstrim_duration_over_threshold system_gpu_active_over_threshold system_monitor365_buffer_pressure system_gatus_endpoints_in_error_long system_service_cpu_percent system_signoz_alert_rules_healthy system_tmpfs_tmp_over_threshold system_user_slice_memory_over_threshold system_emeet_pixyd_expected_down niri_running"
+  # Metrics not yet emitted by the RUNNING system (pre-deploy). These metrics
+  # exist in the to-be-deployed config but not in the currently running system.
+  # Remove entries after deploy verification confirms them in /metrics.
+  #
+  # Most system_* textfile metrics are now live (verified 2026-08-10). Only
+  # system_service_memory_over_threshold remains — added to system-health.nix
+  # for PMA page-cache death-loop prevention (2026-08-09 crash), not yet deployed.
+  KNOWN_NEW_METRICS="system_service_memory_over_threshold"
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
