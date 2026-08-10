@@ -51,7 +51,7 @@ sudo smartctl -a "$DEV" 2>&1 | head -40 || echo "smartctl not available"
 echo ""
 
 echo "=== Kernel Messages ==="
-journalctl -k --no-pager | grep -i "$BASENAME\|san\|usb" | tail -20 || true
+journalctl -k --grep "$BASENAME|san|usb" --no-pager -n 20 || true
 echo ""
 
 echo "=== Per-Process I/O (top writers) ==="

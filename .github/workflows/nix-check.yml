@@ -33,6 +33,23 @@ jobs:
       - name: Evaluate flake (no build)
         run: nix flake check --no-build
 
+      - name: Check for unregistered port numbers
+        run: |
+          # Catches port assignments in modules that bypass lib/ports.nix.
+          # The eval-time assertion in lib/default.nix catches duplicates WITHIN
+          # ports.nix. This check catches raw numbers used outside the registry.
+          UNREGISTERED=$(
+            grep -rnE '(=|:)[[:space:]]*[0-9]{4,5}([^0-9]|$)' --include="*.nix" modules/ 2>/dev/null |
+            grep -vE 'ports\.|^\s*#|Timeout|Burst|Interval|Nice|Quota|Memory|Limit|Watchdog|Signal|UMask|Delay|Retry|Second|Interval|OnUnit|OnBoot|fallocate|offset|subvolid|Year|Month|threshold|priority|version|uid|gid|capacity|window|slim|tty|vtnr|code|exit|status|color|port_range' ||
+            true
+          )
+          if [ -n "$UNREGISTERED" ]; then
+            echo "::warning::Potential unregistered port numbers found (review and move to lib/ports.nix if applicable):"
+            echo "$UNREGISTERED" | head -20
+          else
+            echo "No unregistered port numbers detected"
+          fi
+
       - name: Flake input hygiene (ref=master + GOTOOLCHAIN)
         run: |
           # Fail on GOTOOLCHAIN=auto (sandbox purity violation)

@@ -253,6 +253,37 @@ Two SSO layers, both backed by **Pocket ID** (passkey-only OIDC IdP at `auth.<do
 
 **Emergency reserve:** A 10 GiB `fallocate`d file at `/btrfs-emergency-reserve`, created on boot by `btrfs-emergency-reserve.service`. Delete it (`rm /btrfs-emergency-reserve`) for instant 10 GiB free space when you need to run balance, repair, or survive metadata ENOSPC. The file is NOT auto-recreated after deletion — manually re-provision with `sudo systemctl start btrfs-emergency-reserve` after recovery. Tracked via Prometheus metrics (`btrfs_emergency_reserve_present`, `btrfs_emergency_reserve_bytes`) and Gatus alerts on Discord if the reserve goes missing.
 
+### BFQ I/O Priority Tiers (evo-x2)
+
+The evo-x2 has a 2TB QLC NVMe (Lexar NQ790) with an SLC write cache that BTRFS CoW churn exhausts within 22-47h. BFQ I/O scheduling prevents build storms from freezing SSH sessions and the desktop compositor.
+
+**Tier system** (lower BE priority = higher I/O precedence):
+
+| Tier | Helper | BFQ Class/Pri | Services | Purpose |
+|------|--------|---------------|----------|---------|
+| Interactive | `ioTier.interactive` | BE/1 | sshd | SSH must always respond |
+| Desktop | `ioTier.desktop` | BE/3 | niri, dms, pipewire, crush (wrapper) | Compositor/audio must stay responsive |
+| Service (default) | `ioTier.service` | BE/4 | Most services | Default for unclassified services |
+| Heavy DB | `ioTier.heavyDB` | BE/5 | clickhouse, monitor365-server | Latency-sensitive databases |
+| Background | `ioTier.background` | BE/6 | signoz, discordsync, browser-history, ollama, attic | Standard daemons tolerating I/O latency |
+| Build | `ioTier.build` | BE/7 + Nice=10 | nix-daemon, forgejo-runner, PMA | Batch builds and CI — lowest BE |
+| Maintenance | `ioTier.maintenance` | idle + Nice=10 | fstrim, clamav | Only runs when nothing else needs I/O |
+
+**Usage:** Import `ioTier` from `lib/default.nix`, merge with `harden {}` via `mkMerge`:
+
+```nix
+inherit (import ../../../lib/default.nix lib) harden ioTier;
+# ...
+serviceConfig = lib.mkMerge [
+  (harden { MemoryMax = "1G"; })
+  ioTier.background
+];
+```
+
+**Crush wrapper:** The `crush` binary is wrapped with `ionice -c 2 -n 3 nice -n 5` (BE/3) via `writeShellApplication` in `base.nix`. Works in all contexts (interactive, scripts, MCP) — not just interactive shells like the old alias. Scheduled tasks (`crush-update-providers`) use the raw binary directly via `lib.getExe'`.
+
+**DB-heal oneshot:** DiscordSync's 11 GB SQLite integrity check runs as `discordsync-db-heal.service` (Type=oneshot, RemainAfterExit=true) with its own 10-min timeout — extracted from ExecStartPre so deploy activation isn't blocked by DB recovery during build storms.
+
 ---
 
 ## Critical Rules

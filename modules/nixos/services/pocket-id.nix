@@ -548,6 +548,7 @@ _: {
                 (harden { MemoryMax = "1G"; })
                 {
                   TimeoutStartSec = "180s";
+                  Environment = [ "GOMEMLIMIT=768MiB" ];
                   ExecStartPre = [
                     "+${lib.getExe clearStaleWal}"
                     "+${lib.getExe checkEncryptionKey}"
