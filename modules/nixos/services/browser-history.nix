@@ -72,6 +72,7 @@
             # so root-owned sops template works for the DynamicUser server.
             serviceConfig = {
               EnvironmentFile = [ sopsEnvPath ];
+              Environment = [ "GOMEMLIMIT=384MiB" ];
             } // ioTier.background;
           };
         })

@@ -299,6 +299,9 @@ in
                 })
                 (serviceDefaults { RestartSec = "10"; })
                 ioTier.background
+                {
+                  Environment = [ "GOMEMLIMIT=768MiB" ];
+                }
               ];
             };
 
@@ -390,6 +393,9 @@ in
                 })
                 (serviceDefaults { RestartSec = "10"; })
                 ioTier.background
+                {
+                  Environment = [ "GOMEMLIMIT=384MiB" ];
+                }
               ];
             };
             environment.etc."signoz/collector.yaml".text = lib.generators.toYAML { } {

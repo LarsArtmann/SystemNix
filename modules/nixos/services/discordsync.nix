@@ -269,6 +269,9 @@
               ReadWritePaths = [ cfg.dataDir ];
             })
             ioTier.background
+            {
+              Environment = [ "GOMEMLIMIT=1536MiB" ];
+            }
           ];
         };
 
