@@ -99,3 +99,9 @@ graph TD
 | S12 | Resolve pocket-id-provision-sqlite-busy-timeout-fix (20 items) | T3 | 8min |
 | S13 | Resolve dnsblockd-tls-handshake-spam-investigation (21 items) | T3 | 8min |
 | S14 | Commit + push | T4 | 5min |
+
+---
+
+## Resolution (2026-08-10)
+
+Plan executed in 05-10 session. 13 reports inline-resolved. Over-struck items corrected by 06-40 session.

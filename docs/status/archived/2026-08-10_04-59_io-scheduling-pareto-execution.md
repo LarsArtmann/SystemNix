@@ -204,3 +204,9 @@ I made the fix in `/home/lars/projects/browser-history/api/oauth2.go` but haven'
 ### Q3: Should I commit this entire session's work as one commit, or split it?
 
 The changes span: ioTier helpers + 8 service refactors + DB-heal extraction + Crush wrapper + GOMEMLIMIT + phantom metrics fix + AGENTS.md docs + new scripts + CI check + VM test. That's 20+ files. One commit is easier to revert but harder to review. The auto-commit daemon may also beat me to it.
+
+---
+
+## Resolution (2026-08-10)
+
+Core Pareto plan executed: ioTier helpers (T11), 8 services refactored (T18), GOMEMLIMIT on 6 Go services (T22), DiscordSync DB-heal oneshot (T24+T25), Crush wrapper (T26), journalctl --grep fix (T23), AGENTS.md docs (T10), verify-io-tiers script (T13), I/O pressure check (T41), browser-history OAuth2 upstream fix (T27). Known issues: 4 files use `// ioTier.*` instead of `mkMerge` (D1), CI port check false-positives (D2), VM test quoting (D3) — all in TODO_LIST. Work captured in CHANGELOG [Unreleased].

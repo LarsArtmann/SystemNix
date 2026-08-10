@@ -169,3 +169,9 @@ The `.bak` file has 530 keys vs 19 declarative. I identified the key delta but *
 23. **deploy.sh backup doesn't handle DMS config dir absence** — If `~/.config/DankMaterialShell/` doesn't exist, the backup loop silently skips (correct but could log)
 24. **Extension update_url is Google-hosted** — Helium is ungoogled-chromium but still fetches extensions from `clients2.google.com`. Verify this is intentional vs. a self-hosted update URL
 25. **No extension version pinning** — Extensions auto-update to latest. Consider pinning versions for reproducibility (Chrome policy supports `minimum_version_only`)
+
+---
+
+## Resolution (2026-08-10)
+
+All verification tasks completed: 19 extension IDs confirmed live, DMS wallpaper management verified working, deploy.sh backup step added. Forward-looking items (dms runtimeInputs, backup retention, Darwin extension verification) harvested into TODO_LIST.

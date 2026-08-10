@@ -181,3 +181,9 @@ Removing a real key that's still needed would break hermes deployment.
 ### Q3: Should I continue fixing the remaining items (1-50 above), or is the scripts review considered complete?
 
 The original scope was "comprehensive code review of all 44 scripts." All CRITICAL/HIGH/MEDIUM bugs are fixed and the VM tests now pass. Items 1-50 are improvements of varying value — some are real hardening (SQL verification, ruff linting), others are nice-to-have (more VM tests, docs). I don't know if you want me to keep going or if this effort is considered done.
+
+---
+
+## Resolution (2026-08-10)
+
+All 3 VM tests (lib-helpers, pipefail-sigpipe, sed-delimiter) verified PASS at runtime (~17-20s each). Scripts review complete — all CRITICAL/HIGH/MEDIUM bugs fixed across 38 shell + 5 Python scripts. Remaining items harvested into TODO_LIST.

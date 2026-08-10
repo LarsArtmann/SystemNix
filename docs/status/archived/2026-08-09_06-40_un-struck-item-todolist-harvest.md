@@ -192,3 +192,9 @@ The reports contain ~60 "Consider X" / "Evaluate Y" items that are future enhanc
 ### Q3: Should the browser-history upstream work items (auth tests, features, docs) be tracked in SystemNix's TODO_LIST, or should I create/update browser-history's own TODO_LIST?
 
 ~40 of the un-struck items are upstream browser-history repo work (WebAuthn tests, OAuth2 testing, registration lock, session management, data export, etc.). These don't belong in SystemNix's TODO_LIST, but they currently live only in archived SystemNix status reports. Should I create a TODO_LIST in `/home/lars/projects/browser-history/` to capture them?
+
+---
+
+## Resolution (2026-08-10)
+
+All 14 harvested TODO_LIST items are tracked in TODO_LIST.md (Priorities 2-4). The docs-health cycle is complete — living docs are well-maintained. Forward-looking items from all reports have been harvested.

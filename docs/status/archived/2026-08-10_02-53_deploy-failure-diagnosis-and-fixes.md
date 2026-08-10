@@ -185,3 +185,9 @@ This is an upstream Go binary crash (exit 69, 61 restarts). The error appears 30
 
 ### Q3: Should I prioritize fixing the node_exporter textfile metric issue over the SigNoz dashboard migration?
 Both are pre-existing issues I worked around rather than fixed. The textfile issue blinds 14 Gatus health checks (monitoring blind spot). The dashboard issue means 5 dashboards don't deploy (observability gap). The textfile issue is likely a simpler fix (permissions, config, or node_exporter version bug), while the dashboard migration requires reading Perses schema docs and rewriting 5 JSON files. Which should I tackle first?
+
+---
+
+## Resolution (2026-08-10)
+
+All deploy fixes applied: cadvisor port 9190→9193 (PMA conflict), gatus config regenerated, SigNoz v2 dashboard API, DiscordSync timeout 3min→5min, phantom metrics tolerated. DiscordSync DB-heal later extracted to separate oneshot (04-59 report). Work captured in CHANGELOG [Unreleased]. Remaining items (SigNoz dashboard migration, node_exporter textfile issue) harvested into TODO_LIST.

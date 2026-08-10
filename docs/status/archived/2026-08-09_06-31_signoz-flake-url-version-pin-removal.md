@@ -175,3 +175,9 @@ All other LarsArtmann repos use `ref=master`. Only `go-humanize-linter` uses `re
 **What was missed:** No full-system eval verification. No ClickHouse backup recommendation before the migration risk was accepted. No changelog review. The "convert and verify" choice was executed literally (packages build) but the production deployment risk (schema migrations on live data) was only mentioned, not mitigated.
 
 **Quality bar:** The code change itself is clean and correct. The process gaps are in verification depth (module-level eval vs full-system eval) and production safety (migration risk assessment).
+
+---
+
+## Resolution (2026-08-10)
+
+Code change complete — both SigNoz inputs now track default branch via `shortRev`. All 61 flake inputs are version-tag-free. Packages build, eval passes. Deploy pending (ClickHouse backup + changelog review tracked in TODO_LIST). Work captured in CHANGELOG [Unreleased].

@@ -215,3 +215,9 @@ Running `nix fmt` to verify my edits triggered `shfmt`/`alejandra` reformatting 
 | Pre-commit hooks added | 1 (shellcheck) |
 | Verification commands run | 5 (grep, shellcheck, nix eval, nix flake check, nix fmt) |
 | Things I should have done differently | 2 (ran nix fmt globally, didn't check deploy.sh invocation) |
+
+---
+
+## Resolution (2026-08-10)
+
+All 3 manual-only items (double-000 fix, hermetic runtimeInputs, shellcheck pre-commit) resolved and in CHANGELOG [Unreleased]. Forward-looking items (shellcheck in CI, formatting drift cleanup, devShell linter lookup) harvested into TODO_LIST.

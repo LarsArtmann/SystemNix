@@ -255,3 +255,9 @@ It's dead code — not referenced by any Nix config or systemd service. The prod
 
 ### 3. Should the `hermes-setup/id_ed25519` private key be removed from the repo directory?
 A live SSH private key exists at `scripts/hermes-setup/id_ed25519`. It's `.gitignore`d (never committed) but it sits on disk alongside source code. Any `git add -f` mistake, backup, or sync leaks it. Should I delete it from the working directory (it's already installed at `/home/hermes/.ssh/`), or does the user want to keep it there for re-installation convenience?
+
+---
+
+## Resolution (2026-08-10)
+
+Round 1 of scripts review. All 28 deferred bugs were fixed in Round 2 (01-22 report). VM tests verified in 04-55 report. Work captured in CHANGELOG [Unreleased] under "Scripts comprehensive review". Remaining items harvested into TODO_LIST.

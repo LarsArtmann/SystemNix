@@ -197,3 +197,9 @@ The alias only works in interactive shells. If you launch Crush from a keybindin
 
 ### Q3: Are you OK with `commit=600` (10-minute data loss window on crash)?
 Doubling `commit` from 300→600 halves metadata write frequency, directly reducing kworker pressure during builds. The tradeoff is a 10-minute data loss window on power failure (vs current 5 min). With daily btrbk snapshots + CoW journaling consistency, 5 vs 10 minutes is unlikely to matter — but only you can make the data-loss-vs-performance call.
+
+---
+
+## Resolution (2026-08-10)
+
+Initial I/O scheduling work. Superseded by 04-59 report (Pareto execution). BFQ tier system fully implemented: `ioTier` helpers in `lib/default.nix`, 14+ services classified, Crush wrapper, verify-io-tiers script. Deploy fallout fixes in 02-53 report. Work captured in CHANGELOG [Unreleased]. Remaining items (`//` → mkMerge, raw literals, GOMEMLIMIT validation) harvested into TODO_LIST.

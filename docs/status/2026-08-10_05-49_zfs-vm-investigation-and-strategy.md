@@ -243,3 +243,19 @@ always-on VM, monitoring, automated backups, drive health checks. **What's the l
 | `systems/zfs-vm.nix` | Created, git-staged | NixOS VM config (kernel 6.18 + ZFS + USB passthrough) |
 | `pkgs/freebsd-zfs-vm.nix` | Created, git-staged | FreeBSD 14.2 QEMU launcher script with USB passthrough |
 | `flake.nix` | Modified | Wired `nixosConfigurations.zfs-vm` + `packages.freebsd-zfs-vm` |
+
+---
+
+## Resolution Status (2026-08-10)
+
+**PARTIALLY DONE — DO NOT ARCHIVE.** Analysis work is complete. VM configs are written but UNTESTED. Key open items:
+- ~~Drive detection & identification~~ done (2x16TB, JMicron JMS567 USB bridge)
+- ~~Host kernel/ZFS compatibility analysis~~ done (ZFS 2.4.3 supports 7.0, host is 7.1 — ONE minor behind)
+- ~~Architecture research~~ done (containers share kernel, FreeBSD has first-class ZFS, OpenBSD has none)
+- ~~VM configs written and wired into flake~~ done (NixOS VM evaluates, FreeBSD VM package built)
+- **NOT DONE:** Native ZFS on host kernel 7.1 (simplest option, never attempted) — in TODO_LIST Priority 8
+- **NOT DONE:** ZFS pool import, data assessment, backup strategy — in TODO_LIST Priority 8
+- **NOT DONE:** SMART monitoring for external drives — in TODO_LIST Priority 8
+- **NOT DONE:** `nix flake check --no-build`, `nix fmt` on new files
+
+> **UPDATE 2026-08-10 06:44:** VFIO PCIe passthrough SUCCEEDED. See `docs/status/2026-08-10_06-44_zfs-vfio-passthrough-success.md`. NixOS VM (kernel 6.18.43) imported `datapool` mirror. Pool is 99.86% empty (21GB of 14.5TB, mostly disposable Docker images). Native ZFS on 7.1 still untested.

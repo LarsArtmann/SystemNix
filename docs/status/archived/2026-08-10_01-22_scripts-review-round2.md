@@ -230,3 +230,9 @@ It's unreferenced by any Nix config. The production equivalent is inlined in `ni
 
 ### 3. Should I add Python linting (`ruff`) to pre-commit and CI right now?
 Adding `ruff check scripts/*.py` to `.githooks/pre-commit` is a one-line change that would catch bare excepts, missing encodings, unsafe subprocess patterns, etc. But it would also flag issues in the 5 Python scripts that I haven't fixed yet (if any remain after this session). Should I add it and deal with any new findings, or hold off?
+
+---
+
+## Resolution (2026-08-10)
+
+Round 2 of scripts review. All 28 deferred bugs fixed, 3 VM tests written. VM tests verified PASS in 04-55 report. Work captured in CHANGELOG [Unreleased] under "Scripts comprehensive review". Remaining items (crush-daily-backfill.py SQL, niri-health.sh dead code, ruff pre-commit) harvested into TODO_LIST.

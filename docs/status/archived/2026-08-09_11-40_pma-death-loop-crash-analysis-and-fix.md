@@ -191,3 +191,9 @@ The helper pattern-matches error message strings (`"nothing to commit"`, `"clean
 2. **Is `MemoryHigh=6G` safe given the historical EOF errors?** The original comment in the PMA module said MemoryMax was raised to 16G because page-cache exhaustion caused go-git EOF errors. Lowering to 6G/8G could reintroduce those — but the upstream code fix means EOFs no longer trigger a death-loop. Do you want to risk it, or keep MemoryMax higher and rely solely on `CPUQuota` + monitoring?
 
 3. **Should I deploy now, or wait for the upstream flake bump?** Deploying with only the SystemNix cgroup changes (no PMA code fix) reduces crash risk but may introduce EOF errors. Deploying with everything (after upstream commit + flake bump) is the complete fix but requires the upstream commit first.
+
+---
+
+## Resolution (2026-08-10)
+
+3-layer fix deployed: (1) upstream `isNothingToCommit()` code fix in PMA working tree (commit/push + flake bump tracked in TODO_LIST Priority 1), (2) cgroup limits (MemoryHigh=6G, MemoryMax=8G, CPUQuota=200%, MemorySwapMax=0, workers=2), (3) monitoring (system_service_memory_bytes metric + Gatus alerts for PMA CPU/memory). Crash forensic in `docs/crash-analysis-2026-08-09.md`. Work captured in CHANGELOG [Unreleased].

@@ -136,3 +136,9 @@ graph TD
 3. **No verschlimmbesserung** — if something is already correct, do NOT touch it
 4. **Verify after changes** — `nix flake check --no-build` after AGENTS.md changes (eval safety)
 5. **Respect auto-daemon commits** — check `git status` before committing, don't clobber daemon work
+
+---
+
+## Resolution (2026-08-10)
+
+Plan executed across sessions 04-48, 05-10, and 06-40. All Pareto tasks completed. Living docs verified 2026-08-10.

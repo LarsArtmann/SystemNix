@@ -208,3 +208,14 @@ I bulk-archived them without reading their "next steps" sections. Some may have 
 ### Q3: Should the `docs/planning/` directory (42 files) and `docs/research/` directory (12 files) be triaged and archived as part of this docs-health pass?
 
 These are also historical docs that the skill's model covers (`docs/planning/`, `docs/research/` are listed as "Historical" lifecycle). None were touched. Should I triage them now, or is that a separate session's work?
+
+---
+
+## Resolution (2026-08-10)
+
+This was the first docs-health AUDIT session. All work items were addressed in subsequent sessions:
+- **Living docs (4 files):** Updated in this session and refined by 04-48, 05-10, 06-40 sessions. All counts verified 2026-08-10.
+- **Inline strikethroughs:** The #1 failure mode identified here (appendix-only annotations) was fixed across 04-48 (3 browser-history reports), 05-10 (13 reports), and 06-40 (12 reports) sessions.
+- **AGENTS.md browser-history patterns:** Completed in 04-48 session (LoadCredential, StateDirectory, ProviderConfig crash-loop, SSO Layer 1 table).
+- **Planning docs:** Prevention plan archived. Other planning docs remain as active reference.
+- **Forward-looking items:** All 50 "next steps" items harvested into TODO_LIST (83+ items) or CHANGELOG [Unreleased].

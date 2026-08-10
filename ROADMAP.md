@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-08-09
+**Updated:** 2026-08-10
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
@@ -16,7 +16,8 @@ The system has been hardened through multiple crash cycles (QLC SLC cache exhaus
 - **Reduce unsafe shutdowns** — 58 of 126 power cycles (46%) were unsafe (WDT resets, OOM cascades, power events). This is the ROOT CAUSE of the data corruption. Options: UPS, WDT timeout tuning, oomd threshold adjustment, hung_task_timeout review
 - **BTRFS `/data` subvolume migration** — `/data` is BTRFS toplevel (subvolid=5). Migration to `@data` would enable separate CoW semantics. Has btrbk snapshot protection but not a named subvolume. Requires ~1h downtime
 - **`/data` fill reduction** — at 92% (700 GiB / 758 GiB). High fill on QLC NAND increases write amplification. Target: <80%
-- **QLC NAND SLC cache health** — root-caused as the mechanism behind ALL 3 WDT crashes (Aug 1, 3, 4). BTRFS CoW churn re-exhausts the SLC cache within 22-47h when fstrim is weekly. Daily fstrim + `commit=300` deployed. Monitor PSI I/O stall rate via Gatus. If crashes resume, consider TLC replacement or UPS
+- **QLC NAND SLC cache health** — root-caused as the mechanism behind ALL 3 WDT crashes (Aug 1, 3, 4). BTRFS CoW churn re-exhausts the SLC cache within 22-47h when fstrim is weekly. Daily fstrim + `commit=300` deployed. BFQ I/O priority tiers deployed (7-tier system). Monitor PSI I/O stall rate via Gatus. If crashes resume, consider TLC replacement or UPS
+- **PMA page-cache death-loop** — Root-caused Aug 9 crash: PMA commit-failure loop consumed 91% CPU, pinned 16G page cache, 27,312 memory boundary hits, system-wide PSI 95%, kernel freeze, WDT reset. 3-layer fix deployed: upstream `isNothingToCommit()` code fix (uncommitted), cgroup limits (MemoryHigh=6G, MemoryMax=8G, CPUQuota=200%), memory monitoring + Gatus alerts. `memory.events` metric would provide earlier detection
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP). Module and config ready, hardware not purchased
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085. Re-evaluate when fixed upstream
 - **Disk space monitoring** — Darwin is 90%+ full on 256GB SSD. Need automated alerting before builds fail
@@ -37,7 +38,8 @@ The system has been hardened through multiple crash cycles (QLC SLC cache exhaus
 ## Theme 3: Desktop Experience
 
 - **Niri blur** — Desktop Renaissance v3 added terminal transparency but niri's HM module lacks a `blur {}` option. Transparent terminals without blur are hard to read. Options: raw KDL config, wait for niri-flake, or drop transparency
-- **I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 1–3 FPS. Anti-throttle flags added to Helium, but root cause is dev builds saturating NVMe I/O. Consider cgroup `IOSchedulingClass=idle` wrappers for dev commands, elevated `IOWeight` for media apps
+- **I/O throttling for dev builds** — BFQ I/O scheduling deployed (7-tier system, `ioTier` helpers, 14+ services classified). Crush wrapped with ionice/nice. Remaining: wrap dev commands (`go`, `cargo`, `npm`, `pnpm`) with `IOSchedulingClass=idle` or `IOWeight` limits. 5 services in `boot.nix` still use raw I/O literals instead of `ioTier.*`
+- **ZFS external drive access** — Connected 2x16TB external ZFS mirror pool (`datapool`, only 21GB used — disposable Docker images). VFIO PCIe passthrough PROVEN WORKING in NixOS VM (kernel 6.18.43, ZFS 2.4.3). QEMU usb-host does NOT work for JMicron dual-LUN bridge. Native ZFS on host kernel 7.1 still untested (simplest option — ZFS 2.4.3 has 7.1 forward-compat patches). Decision needed: native ZFS, permanent VM, or reformat to BTRFS (pool is 99.86% empty)
 - **SearXNG streaming results** — User wants progressive rendering (stream results as engines respond), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy `flush_buffers -1`
 - **Darwin Home Manager parity** — macOS HM config is minimal (no terminal, editor, theme parity). Blocked by 256GB disk constraint
 - **Disabled service triage** (decided 2026-06-25):
@@ -57,6 +59,8 @@ The system has been hardened through multiple crash cycles (QLC SLC cache exhaus
 - **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression (global registry rewrites github→tarball). 4-layer defense deployed (eval guard + pre-commit + CI normalization + recovery script). Registry override needs reboot to activate. Daemon itself needs to normalize or stop committing flake.lock
 - **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond Attic/SearXNG to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, `builtins.toString null` slice key bug
 - **vendorHash drift detection** — Systemic issue: nixpkgs updates break Go vendorHashes across 8+ repos. `nix flake check` does NOT catch FOD mismatches. Consider CI matrix, batch script, or pre-commit hook
+- **SigNoz dashboard v1→v2 migration** — 5 dashboard JSONs in v1 flat format, POSTed to v2 API (non-fatal warnings). Perses v2 schema requires rewriting `spec.display`, `spec.layouts`, `spec.panels`. Mechanical but non-trivial
+- **node_exporter textfile phantom metrics** — 14 `system_*` metrics in valid `.prom` files don't appear in node_exporter output. Root cause unknown. 14 Gatus health checks permanently RED
 - **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is hand-maintained (only 4 services). Generate from Nix config instead
 
 ---

@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-09 | **Last sessions:** Browser-history deployment (3-iteration OAuth2/sandbox fix cascade, now deployed + healthy), vendorHash cascade fix (5 Go repos), Pocket ID provision SQLite BUSY timeout fix, DNSblockd TLS handshake spam investigation, Helium video anti-throttling flags (4 flags), Prevention Plan M1–M15 complete (gatus pattern validator, timeout audit, metric validator, Unknown Author rejection, daily nixpkgs compat CI, auth gateway health check, ref=master audit, monitoring-the-monitor), post-deploy-check automation (all 11 manual checklist items automated — Pocket ID journal scan, SearXNG functional search, Attic, Browser History, Monitor365 watchdog timer, DNS resolution + memory, BTRFS commit/fstrim, nix registry, shell timing, DMS/quickshell desktop checks)
+**Updated:** 2026-08-10 | **Last sessions:** BFQ I/O priority tier system (7 tiers, `ioTier` helpers, 14+ services classified), GOMEMLIMIT on 6 Go services, DiscordSync DB-heal oneshot extraction, Crush ionice/nice wrapper, scripts comprehensive review (~60 bugs fixed, 3 VM tests verified), PMA death-loop crash fix (3-layer: upstream `isNothingToCommit` + cgroup hardening + memory monitoring), post-deploy check hardening (double-000 fix, hermetic runtimeInputs, shellcheck pre-commit), SigNoz flake URL pin removal (all 61 inputs now version-tag-free), cadvisor port conflict fix (9190→9193), ZFS VM investigation (2x16TB external HDD, NixOS + FreeBSD VM configs written but untested), auto-optimise-store disabled (per-build dedup → daily nix-optimise.timer), I/O pressure check in post-deploy
 
 ---
 
@@ -12,12 +12,13 @@
 
 ## Priority 1: High (Deploy Pending)
 
-- [ ] **Deploy pending changes** — Browser-history deployed Aug 8–9 (3 iterations). System has been deployed recently, but verify: Helium anti-throttle flags, Pocket ID provision timeout fix, vendorHash cascade fix, Prevention Plan M12–M14 (system-health collector, Gatus VM tests, PMA identity test). Run `nix run .#deploy` then `nix run .#post-deploy-check`
+- [ ] **Deploy pending changes** — I/O scheduling (BFQ tiers, GOMEMLIMIT), PMA death-loop fix, scripts review, post-deploy check hardening, SigNoz flake pin removal, cadvisor port fix, auto-optimise-store disabled. Run `nix run .#deploy` then `nix run .#post-deploy-check`
 - [ ] **Reboot evo-x2** — NixOS system registry override for nixpkgs is in config but NOT active until reboot (currently running old registry). Hyprland purge also needs reboot to take effect. The registry override is critical defense against the recurring tarball regression
+- [ ] **Commit/push PMA upstream fix + bump flake** — `isNothingToCommit()` TOCTOU fix is in `/home/lars/projects/projects-management-automation` working tree but NOT committed. SystemNix cgroup limits work WITHOUT the code fix (reduces crash risk) but the code fix prevents unnecessary cooldown cycles. Commit → push → `nix flake lock --update-input projects-management-automation`
+- [ ] **Commit/push browser-history OAuth2 fix + bump flake** — `ClientSecret != ""` guard added to all 3 OAuth2 provider checks in `/home/lars/projects/browser-history/api/oauth2.go`. Commit → push → tag → bump SystemNix flake input
 - [ ] **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification
 - [ ] **Test browser-history OAuth2 login end-to-end** — Visit `https://history.home.lan`, click "Login with Pocket ID", verify redirect flow completes and dashboard loads with data. Server is deployed and healthy (2,927 events), OAuth2 providers configured (`pocket-id`), but full browser flow not manually tested yet
 - [ ] **Add browser-history agent `after` dependency** — Agent is `Type=oneshot` with no `after = [ "browser-history.service" ]`, causing transient 502 retries during server restarts. Add ordering in SystemNix layer (`modules/nixos/services/browser-history.nix`)
-- [x] **Add browser-history to post-deploy smoke tests** — `/health` HTTP check + external HTTPS vHost check for `history.home.lan` in `scripts/post-deploy-check.sh`. **Done 2026-08-09:** `check_local "Browser History" 8087` + agent timer `systemctl is-active` check added. Browser History server currently DOWN (port 8087 refused) — caught by the new check
 - [ ] **Create Attic cache + CI token** — Attic module deployed but cache not yet created. Steps: `attic cache create monitor365`, `atticadm make-token --sub ci --validity 1y --push monitor365 --pull monitor365`, configure Forgejo runner. See `docs/services/nix-binary-cache-setup.md`
 - [ ] **Enable niri blur** — Terminal transparency added (88%/90%) but niri's blur option is NOT configured (niri HM module lacks `blur {}` option). Transparent terminals without blur are hard to read. Workaround: raw KDL config, wait for niri-flake, or drop transparency
 
@@ -25,7 +26,7 @@
 
 - [ ] **Hermes: install SSH deploy key** — private key to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model`
-- [x] **Install `dnsblockd-CA` on Mac** — Without it, Chrome/Helium block Touch ID platform authenticator for `*.home.lan`, breaking Gatus/Forgejo SSO. Manual: `sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain /tmp/dnsblockd-ca.pem`
+- [ ] **WebAuthn `.lan` RP ID browser validation** — Verify browsers accept passkey registration on `history.home.lan`
 - [ ] **Turso plan decision** — DiscordSync crash-loops on Turso `unexpected EOF` after dbHeal cascade (dbHeal created fresh local DB, Turso sync can't initialize). Currently on sqlite-only backend. Decide: keep sqlite-only, re-auth Turso, or upgrade plan
 - [ ] **Reduce `/data` fill below 80%** — Currently 92% full (700 GiB / 758 GiB). High fill on QLC NAND increases write amplification and failure risk. Candidates: clean Docker images (`docker system prune`), re-download corrupted AI models only when needed, audit `/data/activitywatch` (12G), Steam (5.9G), DuckDB (13G)
 - [ ] **Deploy to macOS** — Darwin registry override for nixpkgs written in config (`platforms/darwin/nix/settings.nix`) but NOT deployed. Run `nix run .#deploy` on `Lars-MacBook-Air`
@@ -47,11 +48,24 @@
 - [ ] **Thread flake `inputs` through `tests/default.nix`** — Test infrastructure doesn't receive flake `inputs`, blocking VM tests that need upstream modules (e.g., PMA module gitIdentity → systemd Environment wiring test)
 - [ ] **Add `GOTOOLCHAIN=local` to all Go devShells** — Proactive prevention against sandbox purity breaks when `go.mod` exceeds `go_1_26`. Currently safe but will break silently
 - [ ] **Browser-history VM test** — Create `tests/browser-history.nix` verifying service starts and `/health` returns 200. Register in `tests/default.nix`
-- [ ] **I/O pressure check in post-deploy-check.sh** — Add `/proc/pressure/io` avg10 check (warn if >80% for sustained period). Catches the I/O contention that caused Helium 3 FPS video and WDT crashes
+- [ ] **Fix `// ioTier.*` → `mkMerge` in 4 files** — `//` shallow merge on `serviceConfig` discards priority (AGENTS.md rule). Currently works because ioTier attrsets have no mkDefault/mkForce, but is a time bomb. Affected: `projects-management-automation.nix` (`// ioTier.build`), `monitor365.nix` (`// ioTier.heavyDB`), `browser-history.nix` (`// ioTier.background`), `forgejo.nix` (`// ioTier.build`). Source: `docs/status/2026-08-10_04-59_io-scheduling-pareto-execution.md` (D1)
+- [ ] **Fix CI port check false-positives** — Regex `(=|:)[[:space:]]*[0-9]{4,5}` in `.github/workflows/nix-check.yml` matches 25 false positives (Docker configs, UIDs, subvolume IDs). Either tighten or remove. Source: 04-59 report (D2)
+- [ ] **Fix port-uniqueness VM test quoting** — `tests/test-port-uniqueness.nix` has nested `''${}` escaping issues in testScript string. May not run correctly — was never executed. Source: 04-59 report (D3)
+- [ ] **SigNoz dashboard JSONs v1→v2 Perses schema migration** — 5 dashboard files (`signoz-overview.json`, `gpu.json`, `dns.json`, `docker.json`, `caddy.json`) are in v1 flat format but POSTed to v2 API. Currently non-fatal warnings. Perses schema requires `spec.display`, `spec.layouts`, `spec.panels`. Source: `docs/status/2026-08-10_02-53_deploy-failure-diagnosis-and-fixes.md`
+- [ ] **node_exporter textfile metrics phantom issue** — 14 `system_*` and `niri_running` metrics in valid `.prom` files don't appear in node_exporter's `/metrics` output. 14 Gatus health checks permanently RED. Worked around in `KNOWN_NEW_METRICS` list but root cause unknown (textfile collector config, file permissions, or node_exporter version bug). Source: 02-53 report
+- [ ] **Convert remaining raw I/O literals to `ioTier.*`** — 5 services in `boot.nix` (sshd, niri, dms, pipewire, fstrim) and 1 in `security-hardening.nix` (clamav) still use raw `IOSchedulingClass`/`IOSchedulingPriority` instead of `ioTier.*` helpers. Source: 04-59 report (E4)
+- [ ] **GOMEMLIMIT runtime validation** — Values (75% of MemoryMax) are reasonable defaults but actual Go GC behavior depends on heap live-set. dnsblockd's value was tuned from real OOM data; the new 6 values are starting points that need runtime verification via `runtime.MemStats` or GC logs. Source: 04-59 report (E6)
+- [ ] **Add GOMEMLIMIT to remaining Go services** — attic, file-and-image-renamer, crush-daily still lack GOMEMLIMIT. Source: 04-59 report (item 32-33)
+- [ ] **ClickHouse backup before SigNoz upgrade** — Schema migrator runs on startup. No backup taken before v0.127.1→main upgrade. `clickhouse-client -q "BACKUP DATABASE signoz TO Disk('backups', 'pre-signoz-main-upgrade.zip')"`. Source: `docs/status/2026-08-09_06-31_signoz-flake-url-version-pin-removal.md`
+- [ ] **memory.events metric monitoring** — Scrape `/sys/fs/cgroup/.../memory.events` per monitored service. The `max` counter is the truest death-loop signal — fires at cgroup boundary before CPU/memory thresholds. Would have caught the PMA death-loop (27,312 hits) before PSI hit 95%. Source: `docs/status/2026-08-09_11-40_pma-death-loop-crash-analysis-and-fix.md`
 
 ## Priority 4: Code Quality
 
 - [ ] **Delete dead `scripts/nvme-metrics.sh`** — Orphaned script split-brained with inline `nvmeMetrics` in `_signoz-metrics.nix`. The deployed collector is the inline version; the script is dead code that was accidentally edited instead of the real implementation
+- [ ] **Verify `crush-daily-backfill.py` re-insert SQL schema** — The `INSERT INTO events` assumes columns `id, aggregate_id, event_type, payload, occurred_at`. Never checked against the actual `CREATE TABLE` in crush-daily source. If column names/types don't match, the re-insert crashes. Source: `docs/status/2026-08-10_04-55_vm-tests-verified-and-self-assessment.md`
+- [ ] **Fix `test-home-manager.sh` TESTS_TOTAL inflation** — 20+ increment sites, some branches increment by 2-3. The summary line reports an inflated total. Source: 04-55 report
+- [ ] **Decide on `niri-health.sh`** — Unreferenced by any Nix module. Either delete (dead code) or wire to a systemd service/timer. Source: 04-55 report
+- [ ] **Add `ruff check scripts/*.py` to pre-commit** — Python scripts (5) have zero linting. One-line addition to `.githooks/pre-commit`. Source: 04-55 report
 - [ ] **Add GOMEMLIMIT to all Go services** — dnsblockd OOM mitigation proved GOMEMLIMIT effectiveness. Audit all Go services with `MemoryMax` and add `GOMEMLIMIT` at ~75% of MemoryMax. Prevents Go GC from waiting until heap doubles before collecting
 - [ ] **Wire `doc-freshness-check.sh` into pre-commit or CI** — Script exists (`scripts/doc-freshness-check.sh`) but is not automated. Validates doc counts against code
 - [ ] **Add regression tests for past bugs** — VM test infrastructure exists (`tests/`). Add tests for: DynamicUser + sops owner mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail + SIGPIPE patterns, `builtins.toString null` slice key bug
@@ -73,9 +87,6 @@
 ## Priority 5: Desktop
 
 - [ ] **Test removing `--enable-zero-copy`** — if it prevents display hotplug crashes, `--disable-gpu-watchdog` may become unnecessary
-- [x] **Verify all extension IDs are live on Chrome Web Store** — Dead IDs cause silent download failures now that background networking is enabled. **Verified 2026-08-09:** All 19 active NixOS extension IDs confirmed live via Chrome Web Store update API (`clients2.google.com/service/update2/crx`). All return valid CRX codebase + version (uBlock Origin v1.73.0, React DevTools v7.0.1, Refined GitHub v26.8.8, etc.)
-- [x] **Verify DMS wallpaper management** — swww removed, DMS manages wallpapers via IPC (`dms ipc call wallpaper next`). Verify `dms-wallpaper-init` seeds correctly from `~/.local/share/wallpapers/`. Check `journalctl --user -u quickshell` for errors. **Verified 2026-08-09:** (1) Zero swww/awww refs in .nix files. (2) Deployed binary (`p3x39p...`) uses `dms ipc call wallpaper get/set` correctly. (3) `dms-wallpaper-init` completed successfully on Aug 07 boot (17s). (4) DMS running 24h+ stable, all 13 plugins loaded, only benign warnings (polkit duplicate agent, evdev device removal). (5) 5 wallpapers available in `~/.local/share/wallpapers/`. (6) Stale old binary (`g4zni9...`) with swww still in store but GC will reclaim; systemd unit correctly references new path
-- [x] **Backup DMS `settings.json` before deploy** — DMS may overwrite user-owned `settings.json` on rebuild (split-brain risk). Backup before deploying. **Resolved 2026-08-09:** (1) Found BOTH `settings.json` and `plugin_settings.json` are HM-managed symlinks (AGENTS.md was wrong — settings.json is NOT user-owned). (2) Added auto-backup step to `deploy.sh` that detects when DMS has replaced the symlink with a real file and creates a timestamped `.bak` before `nh os switch`. (3) Existing `.bak` (22KB, 530 keys from Jul 27) preserved as safety net. (4) Corrected AGENTS.md and gotchas-archive.md to reflect actual symlink architecture
 
 ## Priority 6: Upstream Contributions
 
@@ -121,6 +132,11 @@
 ## Priority 8: Long-Term
 
 - [ ] **Provision Pi 3** for DNS failover cluster — hardware required
+- [ ] **Try native ZFS on host kernel 7.1** — Connected 2x16TB external ZFS mirror pool (`datapool`, only 21.4GB / 0.14% used — mostly disposable Docker images). nixpkgs claims ZFS 2.4.3 max kernel is 6.18, but OpenZFS 2.4.3 actually supports up to 7.0 (ONE minor behind host's 7.1). VFIO VM passthrough PROVEN WORKING but unnecessary if native ZFS compiles. 3-line config change: `boot.supportedFilesystems = [ "zfs" ]`. Source: `docs/status/2026-08-10_06-44_zfs-vfio-passthrough-success.md`
+- [ ] **Decide ZFS pool fate: keep, reformat to BTRFS, or dismiss** — Pool is 99.86% empty (21GB of 14.5TB). Data is almost entirely disposable Docker container images. Reformatting costs nothing. Source: 06-44 report
+- [ ] **SMART monitoring for external ZFS drives** — `smartctl -a /dev/sda` and `/dev/sdb`. 16TB HDDs in USB enclosures run hot. Check reallocated sectors, pending sectors, temperature. Source: 05-49 report
+- [ ] **Deploy.sh backup retention** — Backup step creates timestamped `.bak` files on every deploy but never cleans them up. Add retention policy (keep last 3). Source: `docs/status/2026-08-09_05-28_extension-dms-verification-and-settings-backup.md`
+- [ ] **Add `dms` to `dms-wallpaper-init` runtimeInputs** — Script calls `dms ipc call wallpaper get/set` but `dms` is NOT in runtimeInputs. Works only because `dms` is on session PATH. Fragile under `hardenUser` restrictions or PATH changes. Source: 05-28 report
 - [ ] **Auditd enablement** — blocked on NixOS 26.05 bug #483085
 - [ ] **AppArmor enablement** — commented out in security-hardening.nix
 - [ ] **Darwin Home Manager parity** — disk constrained (256GB, 90%+ full)
@@ -152,11 +168,7 @@
 | 10 | DNS — resolution + memory | `getent hosts` + `systemctl show -p MemoryCurrent dnsblockd` |
 | 11 | Browser History — liveness + agent timer | `check_local 8087` + `systemctl is-active browser-history-agent.timer` |
 
-### Remaining manual-only items (not yet automated)
-
-- [ ] **Fix `check()` double-000 bug** — `post-deploy-check.sh:32` appends `000` when curl fails, producing `000000` instead of `000`. One-liner: `\|\| echo "000"` → `\|\| true`. Same bug on line 381 (auth gateway checks)
-- [ ] **Declare all runtimeInputs** — flake app has `[curl jq]` but script also uses `systemctl`, `journalctl`, `getent`, `nix`, `fish`, `date`, `wc`, `grep` (works via system PATH, not hermetic)
-- [ ] **Add shellcheck to pre-commit** — new bash code (~100 lines) not shellchecked. Add shellcheck hook for `.sh` files
+_All post-deploy-check manual-only items have been resolved (double-000 fix, hermetic runtimeInputs, shellcheck pre-commit). No remaining manual-only items._
 
 ---
 

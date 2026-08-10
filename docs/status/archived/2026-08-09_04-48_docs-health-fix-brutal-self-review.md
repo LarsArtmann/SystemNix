@@ -209,3 +209,13 @@ These were bulk-archived with generic appendices. Any actionable items from June
 ### Q3: The auto-daemon committed my work mid-session (commit `6cc30f66`). Should I verify every file's final state matches my intent, or trust the daemon?
 
 The daemon's commit ("relocate RESOLVED annotations to footer across 150 archived status reports") describes exactly what my script did. The `nix flake check` passes and `git status` is clean. But the daemon may have committed before my script finished processing all 243 files, meaning some files might have banners still at the top. I verified a sample (showed 0 top-banners) but didn't check all 243. Should I do a full verification pass?
+
+---
+
+## Resolution (2026-08-10)
+
+This was docs-health fix session #2. All work items resolved:
+- **AGENTS.md browser-history patterns:** 4 patterns documented (LoadCredential, StateDirectory, ProviderConfig crash-loop, SSO Layer 1 table).
+- **Inline strikethroughs (3 browser-history cascade reports):** Applied with per-item evidence.
+- **Banner-to-appendix conversion (243 files):** Completed.
+- **Forward-looking items:** All 50 "next steps" harvested into TODO_LIST or CHANGELOG.

@@ -256,3 +256,9 @@ Now that all 11 items are automated in `post-deploy-check.sh`, the manual checkl
 ### 3. Should I investigate the Pocket ID SQLITE_BUSY and Browser History failures now?
 
 Both are real production issues caught by the new checks. Pocket ID has been hitting `database is locked` every ~10s for alarm lease renewal. Browser History port 8087 is completely refused. These existed before this session but were invisible without the automated checks.
+
+---
+
+## Resolution (2026-08-10)
+
+All automation items deployed and verified. The double-000 bug (B1), runtimeInputs (B2), and shellcheck (B3) were fixed in the follow-up 06-36 session. All forward-looking items harvested into TODO_LIST or CHANGELOG.

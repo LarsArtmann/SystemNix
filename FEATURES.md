@@ -2,7 +2,7 @@
 
 _A brutally honest audit of every feature the project actually has._
 
-**Generated:** 2026-05-03 | **Updated:** 2026-08-09 | **Scope:** Full codebase scan
+**Generated:** 2026-05-03 | **Updated:** 2026-08-10 | **Scope:** Full codebase scan
 
 ---
 
@@ -80,7 +80,7 @@ _A brutally honest audit of every feature the project actually has._
 | System Health Collector               | ✅     | `system-health.nix`                  | Prometheus textfile collector: systemd service state, `user-1000.slice` memory, GPUActive thresholds, monitor365 buffer pressure. Pre-computes boolean flags for Gatus `pat()` matching                                                                                                                                                                                                                                                       |
 | Monitor365 (device monitoring)        | ✅     | `monitor365.nix`                     | Agent + server dashboard, ActivityWatch integration, DuckDB backend, dual-instance (system + desktop), native OIDC via Pocket ID. Schema-migrate oneshot, agent watchdog timer (root), server health watchdog (DuckDB pool deadlock recovery, 5min interval), graphical-restart path unit, backup health monitoring, restartTriggers                                                                                                                                                                                 |
 | PMA (auto-commit daemon)              | ✅     | `projects-management-automation.nix` | Watches ~/projects, AI commit messages, repo discovery daemon, debounce + min-interval                                                                                                                                                                                                                                                                                                                                                        |
-|| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 79 health check endpoints (run `grep -c 'name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
+|| Gatus (health checks)                 | ✅     | `gatus-config.nix`                   | 78 health check endpoints (run `grep -c '^\s*name =' modules/nixos/services/gatus-config.nix`), Discord alerting, SQLite storage, port 9110, `status.home.lan`                                                                                                                                                                                                                                                                                    |
 | Disk Monitor                          | ✅     | `disk-monitor.nix`                   | Desktop notifications at disk usage thresholds                                                                                                                                                                                                                                                                                                                                                                                                |
 | NVMe Health Monitor                   | ✅     | `nvme-health-monitor.nix`            | Desktop notifications for critical NVMe SMART events                                                                                                                                                                                                                                                                                                                                                                                          |
 | DiscordSync                           | ✅     | `discordsync.nix`                    | Continuous Discord channel backup bot — real-time sync via Discord Gateway, sqlite backend, backfill, attachment downloads, SQLite corruption self-heal (`PRAGMA integrity_check` + `sqlite3 .recover` on boot), HTTP API (`/metrics`, `/api/events/stream`, `/api/export`) on port 8085 (localhost-only). Consumes upstream `nixosModules.default` (Monitor365 gold-standard pattern). GCS attachment backup opt-in via `gcsBucket`. OTel tracing into SigNoz.       |
@@ -314,6 +314,8 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | Smart monitoring                  | ✅     | smartd with scheduled short/long tests                                                                                                        |
 | Nix GC                            | ✅     | Weekly, delete older than 7 days, auto-optimise-store                                                                                         |
 | systemd-boot                      | ✅     | 50 generation limit, latest kernel                                                                                                            |
+| BFQ I/O Priority Tiers            | ✅     | 7-tier BFQ scheduling (`lib/default.nix`): sshd (BE/1), desktop (BE/3), default (BE/4), heavy DB (BE/5), background (BE/6), build (BE/7+Nice), maintenance (idle). `verify-io-tiers` flake app validates assignments. Prevents build storms from freezing SSH and desktop compositor on QLC NAND |
+| GOMEMLIMIT on Go services         | ✅     | 6 Go services (discordsync, browser-history, PMA, signoz-query, signoz-otel, pocket-id) configured with `GOMEMLIMIT` at ~75% of MemoryMax. dnsblockd has tuned value from OOM data |
 
 ### Scheduled Tasks
 
@@ -473,6 +475,10 @@ The justfile was **removed** in favor of direct Nix flake commands. Scripts are 
 | DNS-over-QUIC     | Overlay disabled — breaks binary cache (40+ min builds)                                                                                                                                                                                                     | Low      |
 | Browser History   | Deployed and healthy (2,927 events). Known gaps: OTel traces not reaching SigNoz (gRPC endpoint `127.0.0.1:4317` missing URL scheme — upstream fix needed), DB not in backup-coordination, agent timing race (no `after` dep on server), OAuth2 login not manually tested end-to-end | Medium   |
 | Off-site backup   | No DR backup exists. All data (Forgejo, Immich, Twenty, DiscordSync, browser-history) local-only. Flagged since 2026-06-25. Aug 3 corruption event (13 files lost) proves this is not theoretical                                                                 | High     |
+| ZFS VM configs    | VFIO PCIe passthrough PROVEN WORKING — NixOS VM (kernel 6.18.43, ZFS 2.4.3) successfully imported `datapool` mirror (2x16TB, only 21GB used — mostly disposable Docker images). QEMU `usb-host` does NOT work for JMicron JMS567 dual-LUN bridge (fundamental QEMU limitation). FreeBSD VM config written but untested. Native ZFS on host kernel 7.1 not attempted (simplest option). Source: `docs/status/2026-08-10_06-44_zfs-vfio-passthrough-success.md` | Low      |
+| PMA upstream fix  | `isNothingToCommit()` TOCTOU fix is in PMA working tree but NOT committed/pushed. SystemNix flake input not bumped. Cgroup limits (Layer 2) and monitoring (Layer 3) are active, but the code fix (Layer 1) is invisible until committed + flake bumped | Medium   |
+| SigNoz dashboards | v1 dashboard API deprecated. Provisioning POSTs to v2 API but 5 dashboard JSONs are still in v1 flat format. Currently non-fatal warnings. Perses v2 schema migration pending | Low      |
+| `// ioTier.*` anti-pattern | 4 services use `//` shallow merge instead of `mkMerge` for ioTier fragments. Works today (ioTier attrsets have no mkDefault/mkForce) but violates AGENTS.md rule. Time bomb if mkForce is added to ioTier values | Low      |
 
 ---
 
@@ -553,13 +559,13 @@ _Counts computed from code; re-verify with `rg` / `ls` before citing._
 | -------------------------- | ----- | ----------------------------------------------------------------------------- |
 | NixOS service modules      | 49    | `ls modules/nixos/services/*.nix modules/nixos/desktop/*.nix \| grep -v '/_' \| wc -l` |
 | Custom packages            | 30    | 15 mkLarsPackages + 8 pkgs/ + 7 flake-input overlays                          |
-| Gatus health endpoints     | 79    | `grep -c 'name =' modules/nixos/services/gatus-config.nix`                    |
+| Gatus health endpoints     | 78    | `grep -c '^\s*name =' modules/nixos/services/gatus-config.nix`               |
 | Sops secret files          | 14    | `ls platforms/nixos/secrets/*.yaml \| wc -l`                                  |
 | DMS plugins                | 15    | 13 SystemNix + 2 community (`ls pkgs/dms-plugins/`)                           |
 | Architecture patterns      | 7     | See section 11                                                                |
 | ADRs                       | 13    | 8 canonical (`docs/adr/`) + 5 platform (`docs/architecture/`)                 |
-| NixOS VM tests             | 2     | `tests/default.nix`                                                           |
-| Known gaps                 | 12    | See section 10                                                                |
+| NixOS VM tests             | 10    | 7 in `tests/default.nix` + 3 in `tests/test-scripts.nix`                      |
+| Known gaps                 | 16    | See section 10                                                                |
 
 ---
 

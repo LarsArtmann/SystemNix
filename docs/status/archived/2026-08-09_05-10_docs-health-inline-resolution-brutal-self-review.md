@@ -232,3 +232,12 @@ These reports have generic appendices only. Reading and individually resolving t
 ### Q3: Has this 3-session docs-health effort produced net positive value, or has the verschlimmbesserung outweighed the improvements?
 
 Honest assessment: The living docs (TODO_LIST, FEATURES, CHANGELOG, ROADMAP, AGENTS.md) are genuinely better — new items captured, counts verified, browser-history patterns documented. The AGENTS.md update alone (LoadCredential, ProviderConfig crash-loop, SSO table) will save future sessions hours. But the status report archival has been a 3-session cascade of failures: banner-only annotations, then batch-strikethrough false positives. The archival IS done (261 reports in archived/), the appendices ARE at the correct position (end-of-file), and the 3 highest-value reports (Aug 9 cascade) DO have correct inline annotations. But the 10 batch-processed reports have false data. Was this worth it?
+
+---
+
+## Resolution (2026-08-10)
+
+This was docs-health inline resolution session #3. All work items resolved:
+- **13 reports inline-resolved:** 574 strikethrough markers applied. Over-struck items corrected by 06-40 session.
+- **False strikethrough correction:** The 06-40 session re-verified all un-struck items and harvested 14 new actionable items into TODO_LIST.
+- **Forward-looking items:** All 50 "next steps" harvested into TODO_LIST or CHANGELOG.
