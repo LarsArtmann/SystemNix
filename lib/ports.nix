@@ -26,7 +26,7 @@
     signoz = 8080;
     signoz-otlp-grpc = 4317;
     signoz-otlp-http = 4318;
-    signoz-cadvisor = 9190;
+    signoz-cadvisor = 9193;
     signoz-node-exporter = 9100;
     signoz-clickhouse = 9000;
     signoz-clickhouse-keeper = 9181;
@@ -68,7 +68,5 @@
     searxng = 8889;
 
     attic = 8200;
-
-    pma-health = 9192;
   };
 }

@@ -35,7 +35,6 @@
       systemd.services.projects-management-automation.environment = {
         OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
         PMA_COMMITTER_WORKERS = lib.mkDefault "2";
-        PMA_HEALTH_LISTEN_ADDR = lib.mkForce "127.0.0.1:${toString ports.pma-health}";
       };
 
       # The upstream NixOS module sets Type=notify + WatchdogSec=30s (commit
