@@ -73,7 +73,8 @@
             serviceConfig = {
               EnvironmentFile = [ sopsEnvPath ];
               Environment = [ "GOMEMLIMIT=384MiB" ];
-            } // ioTier.background;
+            }
+            // ioTier.background;
           };
         })
 

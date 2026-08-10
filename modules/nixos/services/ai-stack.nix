@@ -9,7 +9,12 @@ _: {
     }:
     let
       libHelpers = import ../../../lib/default.nix lib;
-      inherit (libHelpers) harden serviceDefaults ports ioTier;
+      inherit (libHelpers)
+        harden
+        serviceDefaults
+        ports
+        ioTier
+        ;
       inherit (config.users) primaryUser;
 
       rocm = libHelpers.rocm { inherit pkgs; };

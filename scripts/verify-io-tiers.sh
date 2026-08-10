@@ -9,8 +9,14 @@ set -euo pipefail
 PASS=0
 FAIL=0
 
-pass() { echo "  ✓ $1"; PASS=$((PASS + 1)); }
-fail() { echo "  ✗ $1"; FAIL=$((FAIL + 1)); }
+pass() {
+  echo "  ✓ $1"
+  PASS=$((PASS + 1))
+}
+fail() {
+  echo "  ✗ $1"
+  FAIL=$((FAIL + 1))
+}
 
 echo "=== BFQ I/O Priority Tier Verification ==="
 echo ""

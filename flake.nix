@@ -732,10 +732,10 @@
                 pkgs.coreutils
                 pkgs.findutils
               ] ./scripts/btrfs-subvolume-inventory.sh;
-              verify-io-tiers =
-                mkApp "verify-io-tiers" "Verify BFQ I/O priority tiers are correctly applied"
-                  [ pkgs.systemd pkgs.procps ]
-                  ./scripts/verify-io-tiers.sh;
+              verify-io-tiers = mkApp "verify-io-tiers" "Verify BFQ I/O priority tiers are correctly applied" [
+                pkgs.systemd
+                pkgs.procps
+              ] ./scripts/verify-io-tiers.sh;
               pocket-id-login-code =
                 mkApp "pocket-id-login-code" "Generate a one-time Pocket ID login code for a new device"
                   [ pkgs.curl pkgs.jq ]

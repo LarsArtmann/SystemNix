@@ -362,7 +362,8 @@ _: {
             ];
             TimeoutStartSec = "3min";
             MemoryMax = "16G";
-          } // ioTier.build;
+          }
+          // ioTier.build;
         };
 
         # Fix ownership after Gitea→Forgejo data migration (recursively)

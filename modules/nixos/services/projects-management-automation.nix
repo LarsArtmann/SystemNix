@@ -78,7 +78,8 @@
           MemorySwapMax = lib.mkForce "0";
           CPUQuota = lib.mkForce "200%";
           Environment = [ "GOMEMLIMIT=6144MiB" ];
-        } // ioTier.build;
+        }
+        // ioTier.build;
       };
     };
 }
