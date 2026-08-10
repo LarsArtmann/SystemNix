@@ -1,0 +1,62 @@
+direction: down
+title: I/O Scheduling & Deploy Stabilization Execution Graph
+
+# Tiers as containers
+tier1: 1% → 51% (Prevent bug class) {
+  style.fill: "#3a1a1a"
+  T08: Port-uniqueness assertion\n(lib/ports.nix)
+  T02a: Diagnose phantom\ntextfile metrics
+  T02b: Fix phantom root cause
+  T02c: Remove KNOWN_NEW_METRICS band-aid
+  T41: I/O pressure check\n(post-deploy-check.sh)
+  T11: ioTier helpers\n(lib/default.nix)
+
+  T08 -> T02b: no-op (independent)
+  T02a -> T02b
+  T02b -> T02c
+}
+
+tier2: 4% → 64% (Maintainable + unblock deploys) {
+  style.fill: "#2a2a1a"
+  T18: Refactor 6 services\nto ioTier helpers
+  T24: DB-heal oneshot\n(discordsync)
+  T25: Wire discordsync\nafter heal oneshot
+  T26: Crush wrapper package
+  T14: Port-duplication CI check
+  T15: Port-assertion VM test
+  T17: build-max-jobs research
+  T16: commit=600 research
+
+  T24 -> T25
+}
+
+tier3: 20% → 80% (Polish + knowledge) {
+  style.fill: "#1a2a2a"
+  T10: Document I/O tiers\n(AGENTS.md)
+  T12: Commit formatting churn
+  T19: SigNoz v2 dashboards
+  T20: Fix dashboard POST v2
+  T22: GOMEMLIMIT all Go svcs
+  T23: Fix journalctl|grep patterns
+  T13: iotop verify script
+  T21: Crush wrapper tradeoff rec
+}
+
+tier4: Decisions (blocked on user) {
+  style.fill: "#1a1a2a"
+  Q1: build-max-jobs=2?
+  Q2: Crush wrapper?
+  Q3: commit=600?
+  Q4: browser-history upstream?
+  Q5: phantom vs dashboards?
+}
+
+# Cross-tier dependencies
+tier1.T11 -> tier2.T18: helpers enable refactor
+tier1.T08 -> tier2.T14: assertion → CI check
+tier1.T08 -> tier2.T15: assertion → VM test
+tier2.T17 -> tier4.Q1: research feeds decision
+tier2.T16 -> tier4.Q3: research feeds decision
+tier1.T02a -> tier4.Q5: diagnosis feeds priority
+tier2.T26 -> tier3.T21 -> tier4.Q2
+tier3.T13 -> tier1.T41: verify → ongoing check
