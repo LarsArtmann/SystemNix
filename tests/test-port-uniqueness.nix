@@ -1,4 +1,4 @@
-{pkgs}: {
+_: {
   name = "port-uniqueness";
 
   nodes.machine = _: {
