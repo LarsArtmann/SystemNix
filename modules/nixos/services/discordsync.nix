@@ -23,6 +23,7 @@
         ports
         onFailure
         ioTier
+        serviceOneshotDefaults
         ;
       cfg = config.services.discordsync;
       discordsyncPkg = inputs.discordsync.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -191,15 +192,42 @@
           tursoAuthTokenFile = lib.mkDefault sopsEnvPath;
         };
 
+        systemd.services.discordsync-db-heal = {
+          description = "DiscordSync SQLite DB integrity check and recovery";
+          after = [ "sops-nix.service" ];
+          wants = [ "sops-nix.service" ];
+          inherit onFailure;
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
+
+          serviceConfig = lib.mkMerge [
+            (harden {
+              MemoryMax = "256M";
+              ReadWritePaths = [ cfg.dataDir ];
+            })
+            (serviceOneshotDefaults { })
+            {
+              Type = "oneshot";
+              RemainAfterExit = true;
+              ExecStart = "+${lib.getExe dbHeal}";
+              TimeoutStartSec = "10min";
+            }
+            ioTier.background
+          ];
+        };
+
         systemd.services.discordsync = {
           # SystemNix DNS-gate: dnsblockd must resolve before Discord connect.
+          # DB-heal oneshot runs independently (not blocking deploy activation).
           after = [
             "sops-nix.service"
             "dnsblockd.service"
+            "discordsync-db-heal.service"
           ];
           wants = [
             "sops-nix.service"
             "dnsblockd.service"
+            "discordsync-db-heal.service"
           ];
           inherit onFailure;
           startLimitBurst = lib.mkForce 10; # SystemNix uses 10 (upstream is 5)
@@ -227,23 +255,13 @@
               # as the service user → "Operation not permitted". BTRFS +C (nodatacow) is
               # nice-to-have for SQLite but not required — DiscordSync uses WAL mode.
               # Fix upstream: wrap in pkgs.writeShellApplication or use ExecStartPre=+/bin/sh -c '...'.
+              #
+              # DB heal extracted to discordsync-db-heal.service oneshot (see above).
+              # Only DNS wait remains in ExecStartPre — fast (~2-10s).
               ExecStartPre = lib.mkForce [
-                "+${lib.getExe dbHeal}"
                 "+${lib.getExe waitDnsReady}"
               ];
-              # DNS wait + DB integrity check can exceed systemd's default 90s
-              # during system switches when I/O contention is high and dnsblockd
-              # is still settling. The DB heal reads 11GB SQLite at BE/6 I/O
-              # priority (set below), which takes ~3min under load. 5 min covers
-              # worst observed case during build storms on QLC NAND.
-              TimeoutStartSec = "5min";
-              # NO ExecStartPost readiness gate: the API server binds in a
-              # goroutine AFTER thumb-hash backfill completes (3139+ attachments
-              # at ~7/sec = 5-11 min). ExecStartPost runs immediately after
-              # ExecStart, so any /readyz probe during backfill kills the
-              # service via systemd timeout → crash loop. Health monitoring is
-              # delegated to Gatus (60s interval) which correctly handles the
-              # startup delay. See AGENTS.md "DiscordSync API startup race".
+              TimeoutStartSec = "2min";
             }
             (harden {
               # Backfill bursts + turso-sync need more than upstream's 512M.
