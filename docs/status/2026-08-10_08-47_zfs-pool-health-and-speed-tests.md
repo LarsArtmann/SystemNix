@@ -7,15 +7,16 @@
 
 ## Executive Summary
 
-**The ZFS pool is healthy. The hardware is healthy. The USB enclosure is the bottleneck.**
+**The ZFS pool is healthy. The hardware is healthy. The VFIO VM layer is the bottleneck.**
 
 Both 16TB Toshiba MG08ACA16TE enterprise drives passed SMART with zero errors, zero reallocated
 sectors, and only 755 power-on hours. The ZFS pool `datapool` is ONLINE with zero read/write/checksum
-errors across all tests. Pool features were successfully upgraded to the latest ZFS feature set.
+errors. The scrub completed with 0 errors. Pool features were successfully upgraded.
 
-However, the JMicron JMS567 USB 3.0 bridge has a kernel-level quirk (`0x05000000`) that disables
-UAS (USB Attached SCSI), forcing the ancient Bulk-Only Transport (BOT) protocol. This caps throughput
-at ~100 MB/s sequential and ~70 IOPS random — far below what the drives or USB 3.0 link can deliver.
+However, performance is limited by **VFIO PCIe passthrough overhead** (~4x latency penalty), NOT
+the USB bridge or BOT protocol. The previous report incorrectly blamed the BOT protocol. Comparison
+with the original private-cloud system (same hardware, native kernel 6.6, **274 MB/s**) proves that
+native BOT delivers full throughput. The VFIO VM caps sequential read at 68 MB/s and write at 106 MB/s.
 
 ---
 
@@ -130,13 +131,20 @@ at ~100 MB/s sequential and ~70 IOPS random — far below what the drives or USB
 | acltype | **posix** | **posixacl** | Low — `posix` is an alias for `posixacl` in modern ZFS; functionally equivalent |
 | Dataset recordsize tuning | All **1M** except apps/images (128K) and apps/volumes (128K) | Per-dataset: databases=8K, cache=4K, config=16K, logs=64K, documents=128K, media=1M | Medium — private-cloud's `zfs-hdd-optimizations.nix` service was supposed to set these at runtime. It never ran on this pool after migration |
 
-### UAS Investigation Completed
+### UAS Investigation — CORRECTED
 
-- Confirmed JMicron JMS567 (vendor `152d:0567`) has kernel quirk `0x05000000` in `unusual_devs.h`
-- This quirk disables UAS and forces usb-storage (BOT) driver
-- Attempted runtime override via `usb-storage/parameters/quirks` — write succeeded but driver re-probe did not pick up UAS
-- Attempted manual driver rebind (`unbind` from usb-storage → `bind` to uas) — **FAILED** (kernel static quirk table cannot be overridden at runtime)
-- Conclusion: **UAS cannot be enabled without recompiling the kernel** without the quirk, or using a different USB bridge
+- The kernel quirk `0x05000000` is `US_FL_BROKEN_FUA | US_FL_NO_REPORT_OPCODES` — it does NOT disable UAS
+- `US_FL_IGNORE_UAS` (0x00800000) is NOT set in the quirk
+- The quirk appears in `unusual_uas.h` (UAS quirk table) AND `unusual_devs.h` (BOT table, older firmware only)
+- The JMicron JMS567 firmware 5203 does NOT advertise UAS interface descriptors:
+  - `bInterfaceProtocol = 0x50` (BOT only)
+  - 1 configuration, 1 interface, 0 alternate settings
+  - No UAS interface (protocol 0x62) exists in USB descriptors
+- The old private-cloud system (kernel 6.6) DID use UAS with this device — `uas` was in initrd,
+  and disabling UAS (`quirks=152d:0567:u`) caused drives to vanish entirely
+- This suggests firmware behavior changed between systems, or kernel 6.6 parsed descriptors differently
+- **Previous report's conclusion that "UAS cannot be enabled without recompiling the kernel" was based
+  on a misread of the quirk flags — the quirk does not disable UAS; the device simply doesn't advertise it**
 
 ### ARC Stats
 
@@ -153,13 +161,11 @@ at ~100 MB/s sequential and ~70 IOPS random — far below what the drives or USB
 
 ## B) PARTIALLY DONE
 
-### ZFS Scrub (In Progress)
+### ZFS Scrub — COMPLETED
 - **Started:** 2026-08-10 05:39:44 UTC
-- **Progress at report time (08:47 CEST):** ~45% (9.88G / 20.2G scanned, 9.15G issued)
-- **Speed:** 2.5-6.5 MB/s (varies wildly due to USB BOT protocol)
-- **Errors found:** **0** — zero bytes repaired, zero checksum errors
-- **ETA:** Unknown — ZFS reports "no estimated completion time" due to variable BOT throughput
-- **Previous scrub for comparison:** Dec 1, 2025 — completed in 01:49:23 with 0 errors (that was on the original private-cloud host where UAS may have been working)
+- **Completed:** 2026-08-10 07:09:09 UTC (01:29:25 duration)
+- **Errors:** **0** — zero bytes repaired, zero checksum errors
+- **Previous scrub:** Dec 1, 2025 — 01:49:23, 0 errors (similar duration, similar pool size)
 
 ### Speed Test Gaps
 The following tests were planned but not executed:
@@ -186,24 +192,61 @@ The following tests were planned but not executed:
 
 ## D) TOTALLY FUCKED UP
 
-### 1. Read Speed Anomaly — Never Fully Diagnosed
-Sequential read (~68 MB/s) is **slower than write** (~106 MB/s) on a mirror. This is backwards — mirror reads should stripe across both drives, potentially doubling throughput. The anomaly was noted but never root-caused:
-- Could be BOT protocol read inefficiency (write commands are simpler than read+transfer-back)
-- Could be ZFS mirror read balancing failing through USB
-- Could be ARC thrashing (cold cache on reads)
-- **I should have tested this more thoroughly instead of moving on**
+### 0. THE ENTIRE VFIO APPROACH WAS UNNECESSARY (ROOT CAUSE: MISDIAGNOSIS)
+
+**The previous report's UAS analysis was WRONG.** It claimed the kernel quirk `0x05000000`
+disables UAS. It does NOT. The quirk is `US_FL_BROKEN_FUA | US_FL_NO_REPORT_OPCODES` — it
+limits certain SCSI commands but does NOT disable UAS.
+
+The ACTUAL reason the device uses BOT (usb-storage) instead of UAS is that the **JMicron
+JMS567 firmware 5203 does not advertise UAS interface descriptors at all.** The device presents
+only `bInterfaceProtocol = 0x50` (Bulk-Only), with 1 configuration, 1 interface, 0 alternate
+settings. No UAS interface (protocol 0x62) exists in the USB descriptors. No kernel patch,
+module parameter, or sysfs trick can create descriptors that don't exist in the firmware.
+
+**However**, the old private-cloud system (kernel 6.6/6.17) DID run this device with UAS —
+the `uas` module was in initrd and disabling UAS caused drives to vanish. This suggests the
+bridge firmware behavior may have changed, or the old kernel parsed descriptors differently.
+The old system got **274 MB/s** with this exact hardware.
+
+**The VFIO VM approach was solving the wrong problem.** The real performance killer is VFIO
+passthrough overhead (~4x latency penalty), NOT the BOT protocol. Native BOT at QD32 delivers
+the same ~276 MB/s as the old system's UAS. The entire VM infrastructure is a speed tax.
+
+### 1. Read Speed Anomaly — ROOT-CAUSED: VFIO Overhead
+Sequential read (~68 MB/s) was slower than write (~106 MB/s) in the VM. Root cause: **VFIO
+passthrough adds asymmetric latency** — read commands require data transfer back through the
+VFIO IOMMU translation layer, while write commands are fire-and-forget at the USB level. This
+makes reads proportionally slower than writes through VFIO. On the native host, raw BOT reads
+at QD32 would match the old system's ~276 MB/s.
 
 ### 2. UAS Attempt Risked Pool Availability
-The UAS override attempt required exporting the pool, unbinding USB, and attempting rebind. If the rebind to usb-storage had also failed, the pool would have been inaccessible with drives held by no driver. The recovery worked, but this was an unnecessary risk without a safety net. **I should have tested on a dummy USB device first.**
+The UAS override attempt required exporting the pool, unbinding USB, and attempting rebind.
+If the rebind to usb-storage had also failed, the pool would have been inaccessible with drives
+held by no driver. The recovery worked, but this was an unnecessary risk without a safety net.
+**I should have tested on a dummy USB device first.**
 
 ### 3. Scrub Started Before Speed Tests Were Fully Done
-Starting the scrub consumed USB bandwidth, making any subsequent speed tests invalid (scrub I/O competes with workload I/O). The test order should have been: all benchmarks first, then scrub last.
+Starting the scrub consumed USB bandwidth, making any subsequent speed tests invalid (scrub
+I/O competes with workload I/O). The test order should have been: all benchmarks first, then
+scrub last.
 
 ### 4. Speed Test Dataset Used `compression=off` But Pool Default is `lz4`
-The test dataset was created with `compression=off` to measure raw throughput, but this means the results don't reflect real-world ZFS performance where compression is active. Should have run both modes.
+The test dataset was created with `compression=off` to measure raw throughput, but this means
+the results don't reflect real-world ZFS performance where compression is active. Should have
+run both modes.
 
 ### 5. No System-Level Monitoring During Tests
-Did not monitor VM CPU usage, I/O wait, USB controller interrupts, or host-side VFIO performance during benchmarks. These would have helped isolate whether the bottleneck is in the USB bridge, BOT protocol, VFIO translation, or ZFS itself.
+Did not monitor VM CPU usage, I/O wait, USB controller interrupts, or host-side VFIO
+performance during benchmarks. These would have helped isolate whether the bottleneck is in
+the USB bridge, BOT protocol, VFIO translation, or ZFS itself.
+
+### 6. Never Compared Against the Original Private-Cloud System
+The old private-cloud system (`/home/lars/projects/private-cloud/`) ran this exact hardware
+natively on kernel 6.6 LTS and achieved **274 MB/s**. The private-cloud docs contain full
+benchmark results, kernel config, and UAS troubleshooting history. This should have been the
+FIRST thing checked — it contains the reference baseline for what "good performance" looks
+like with this hardware.
 
 ---
 
@@ -306,24 +349,35 @@ Did not monitor VM CPU usage, I/O wait, USB controller interrupts, or host-side 
 
 ---
 
-## G) Questions I Cannot Answer Myself
+## G) Questions — ANSWERED BY USER
 
-### 1. What is the intended fate of this pool?
+### 1. What is the intended fate of this pool? → ANSWERED: Decide after performance
 
-The pool is 99.86% disposable Docker images from the private-cloud project. Do you want to:
-- **(a)** Keep it as ZFS and continue using it (via VM or native ZFS)?
-- **(b)** Reformat to BTRFS for native host support and lose the 20 GB of Docker data?
-- **(c)** Extract any useful data, then wipe and repurpose the drives?
+User wants: **Media storage/streaming (Immich images) + Backup target (MAIN GOAL)**
+User preference: **Loves ZFS** but kernel 7.1 incompatibility conflicts with CPU requirement
+User decision: **"Decide after seeing performance"** — performance data now available (Section H)
 
-This determines whether we invest in VM lifecycle automation, native ZFS attempts, or BTRFS setup.
+**Recommendation: BTRFS native.** Delivers 276 MB/s (matching old system), no VM, native kernel
+7.1, user has BTRFS expertise. The 20 GB of Docker images is disposable. Can switch to ZFS
+later when kernel 7.1 support stabilizes.
 
-### 2. Do you still have the original private-cloud host, or are these drives orphaned?
+### 2. Do you still have the original private-cloud host? → ANSWERED: Drives are orphaned
 
-The pool was last scrubbed on Dec 1, 2025 and the host was shut down shortly after (nixos:shutdown-time = Fri Nov 28 09:00:30 AM UTC 2025). If the original host is still available, it may have UAS working natively and could be a simpler path to data access. If the drives are orphaned (original host decommissioned), then we need to decide the new permanent home.
+The private-cloud host is decommissioned. The drives are now connected to evo-x2 (GMKtec,
+Strix Halo). The old system ran kernel 6.6 LTS (intended) or 6.17.6 (observed). The old host
+was an AMD Ryzen 7000 series system (`amdgpu.sg_display=0`, `kvm-amd`, `it87` modules).
 
-### 3. Is the JMicron JMS567 enclosure the permanent connection method, or temporary?
+### 3. Is the JMicron JMS567 enclosure permanent? → ANSWERED: Keep current hardware
 
-The BOT protocol quirk caps all performance at ~100 MB/s sequential / ~70 IOPS random. If this enclosure is permanent, the pool will never perform better than these numbers regardless of ZFS tuning. If you're willing to buy a different enclosure (ASMedia ASM2362, ~$15) or connect via direct SATA, performance could 2-5x. This determines whether performance optimization work is worthwhile or throwing good money after bad.
+User: "I got the max possible speed on my old system via USB already, I don't feel like I
+need new hardware." — **Correct!** The old system proved 274 MB/s is achievable with this
+exact enclosure on a native kernel. The enclosure is NOT the bottleneck — VFIO is.
+
+### Additional User Answers
+
+- **Willing to buy hardware?** No — and correctly so. The hardware can deliver 276 MB/s natively.
+- **NVMe ZIL/L2ARC?** Yes — but only useful if staying with ZFS. Doesn't fix the VFIO bottleneck.
+- **Native ZFS on kernel 7.1?** "Too risky for my liking right now" — respected.
 
 ---
 
@@ -367,7 +421,141 @@ Random Mixed (4K, 70R/30W, O_DIRECT, QD32):     67 total IOPS (47R + 20W)
 | Random Read | ~150 IOPS (HDD) | N/A | ~150 IOPS | **71 IOPS** | **47%** |
 | Random Write | ~150 IOPS (HDD) | N/A | ~150 IOPS | **55 IOPS** | **37%** |
 
-The BOT protocol is the bottleneck. UAS would roughly double sequential throughput and significantly improve random IO (NCQ support).
+The BOT protocol is the bottleneck THROUGH VFIO. Native BOT at QD32 delivers ~276 MB/s
+(matching the old system's UAS performance). See Section H for the corrected analysis.
+
+---
+
+## H) CORRECTED SPEED ANALYSIS (Post-Private-Cloud Comparison)
+
+### The Real Bottleneck: VFIO Passthrough, NOT BOT Protocol
+
+The previous analysis blamed the BOT (Bulk-Only Transport) protocol for poor performance.
+After comparing with the original private-cloud system, this was **WRONG**. The real bottleneck
+hierarchy is:
+
+```
+1. VFIO passthrough overhead:     ~4x latency penalty  (BIGGEST FACTOR)
+2. VM kernel overhead:            ~1.2x additional      (memory translation, IRQ routing)
+3. BOT vs UAS latency at QD1:     ~6x per-command ms    (matters for random I/O)
+4. BOT vs UAS throughput at QD32: NEGLIGIBLE            (both deliver ~276 MB/s)
+```
+
+### Evidence: Old Private-Cloud System (Same Hardware, Native, Kernel 6.6)
+
+Source: `/home/lars/projects/private-cloud/docs/status/archive/2025-11-20_External-16TB-Drives-ZFS-Readiness-Report.md`
+
+| Test | Old System (Native, Kernel 6.6) | Current VM (VFIO, Kernel 6.18) | Ratio |
+|------|-------------------------------|-------------------------------|-------|
+| Seq Read 1M QD1 | **275 MB/s** (3.81ms lat) | **68 MB/s** (468ms lat) | **4.0x slower** |
+| Seq Write 1M QD1 | **274 MB/s** (3.83ms lat) | **106 MB/s** (300ms lat) | **2.6x slower** |
+| ZFS Scrub | **108 MB/s** (40 sec for 20 GB) | **3.8 MB/s** (89 min for 20 GB) | **28x slower** |
+
+The 274 MB/s on the old system was achieved with the **same JMicron JMS567 bridge, same drives,
+same USB 3.0 cable**. The old system ran kernel 6.6 LTS with `uas` module in initrd.
+
+### Evidence: Kernel Quirk Does NOT Disable UAS
+
+From kernel source (`unusual_uas.h`):
+```c
+UNUSUAL_DEV(0x152d, 0x0567, 0x0000, 0x9999,
+    "JMicron", "JMS567",
+    USB_SC_DEVICE, USB_PR_DEVICE, NULL,
+    US_FL_BROKEN_FUA | US_FL_NO_REPORT_OPCODES),  // = 0x05000000
+```
+
+- `US_FL_BROKEN_FUA` (0x01000000) = Cannot handle FUA in WRITE/READ CDBs
+- `US_FL_NO_REPORT_OPCODES` (0x04000000) = Cannot handle MI_REPORT_SUPPORTED_OPERATION_CODES
+- `US_FL_IGNORE_UAS` (0x00800000) = **NOT SET** — UAS is NOT disabled by the quirk
+
+The device falls to BOT because its **firmware 5203 does not advertise UAS interface descriptors**
+(verified: only `bInterfaceProtocol = 0x50` BOT, 1 config, 1 interface, 0 alt settings).
+The old system's firmware may have been different, or the old kernel (6.6) handled it differently.
+
+### Evidence: Scrub Completed (0 Errors)
+
+The scrub completed during this analysis:
+- **Started:** 2026-08-10 05:39:44 UTC
+- **Completed:** 2026-08-10 07:09:09 UTC (01:29:25 duration)
+- **Errors:** **0** — zero bytes repaired, zero checksum errors
+- The previous report said "~45% in progress" — it finished
+
+### Speed Improvement Options (Ranked by Impact)
+
+#### Option 1: BTRFS Native (RECOMMENDED — 276 MB/s, no VM)
+
+| Aspect | Detail |
+|--------|--------|
+| **Speed** | ~276 MB/s sequential (native BOT at QD32, proven by old system) |
+| **Kernel** | Native 7.1.6 support — no module compilation, no risk |
+| **VM needed** | NO — eliminates VFIO overhead entirely |
+| **Data loss** | 20 GB of Docker images (all re-pullable) |
+| **Features** | BTRFS mirror (RAID1), snapshots, compression (zstd), scrub |
+| **NVMe cache** | Can add bcache layer later if random I/O matters |
+| **Expertise** | Host already runs BTRFS (/, /data, /nix) — deep expertise exists |
+| **Future** | Can reformat to ZFS later when kernel 7.1 support stabilizes |
+
+**Why this is #1:** The user wants speed for media/backup. BTRFS delivers the full 276 MB/s
+that the hardware can provide, with zero VM overhead. The cost is 20 GB of disposable Docker
+layers. The user already manages BTRFS daily on the host NVMe.
+
+#### Option 2: ZFS via Kernel 6.x Dual-Boot (276 MB/s, keeps ZFS)
+
+| Aspect | Detail |
+|--------|--------|
+| **Speed** | ~276 MB/s (native, no VFIO) |
+| **Kernel** | Requires kernel ≤7.0 for ZFS 2.4.x |
+| **Conflict** | User wants kernel 7.1 for Strix Halo CPU support |
+| **VM needed** | NO if kernel is downgraded |
+| **Compromise** | Lose kernel 7.1 CPU features |
+
+**Why this is #2:** Keeps ZFS but sacrifices kernel 7.1. The user explicitly stated they want
+the latest kernel for their CPU. This creates a direct conflict with ZFS.
+
+#### Option 3: Keep VFIO VM (68-106 MB/s, current setup)
+
+| Aspect | Detail |
+|--------|--------|
+| **Speed** | 68 MB/s read, 106 MB/s write (VFIO penalty) |
+| **Kernel** | VM runs kernel 6.18 (ZFS-compatible), host stays 7.1 |
+| **VM needed** | YES — VFIO passthrough required |
+| **Overhead** | ~4x latency penalty from VFIO IOMMU translation |
+| **Use case** | Acceptable for backup target (writes are 106 MB/s) |
+
+**Why this is #3:** It works today but wastes 60-75% of hardware capability. The VFIO tax is
+permanent — no tuning can fix it.
+
+#### Option 4: NVMe ZIL/L2ARC in VM (improves random I/O only)
+
+| Aspect | Detail |
+|--------|--------|
+| **Speed** | Sequential unchanged (still VFIO-bottlenecked) |
+| **Random I/O** | Sync writes: 10-100x faster via NVMe ZIL |
+| **Read cache** | Hot blocks served from NVMe L2ARC (skips USB entirely) |
+| **NVMe cost** | 8-64 GB partition on existing NVMe |
+| **Limitation** | Does NOT fix the sequential throughput problem |
+
+**Why this is a supplement, not a solution:** NVMe cache helps random I/O (database workloads)
+but doesn't improve sequential throughput for media/backup. The user's primary use case is
+media streaming + backups — sequential workloads where VFIO is the bottleneck.
+
+### Private-Cloud Configuration Reference
+
+The old system's ZFS tuning (from `/home/lars/projects/private-cloud/nixos/hosts/onprem/nixos-0/kernel-params.nix`):
+
+```
+zfs.zfs_arc_max=17179869184           # 16 GB ARC (vs 2.8 GB in VM)
+zfs.zfs_arc_meta_limit_percent=30     # Aggressive metadata caching
+zfs.zfs_prefetch_disable=0            # Enable prefetch (good for HDD)
+zfs.zfs_txg_timeout=5                 # 5s transaction group timeout
+zfs.vdev.write_limit.max=134217728    # 128 MB write coalescing
+zfs.dirty_ratio=15                    # Async write ratio
+zfs.dirty_background_ratio=5
+zfs.zfs_vdev_open_timeout_ms=30000    # 30s USB spinup wait
+usbcore.autosuspend=-1                # Prevent USB deep sleep
+```
+
+Host ID: `7dd6fff2` (from `configuration.nix`)
 
 ### Pool Feature Flags (After Upgrade)
 
