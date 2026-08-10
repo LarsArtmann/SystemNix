@@ -18,9 +18,5 @@ _: {
     gc = "git commit";
     gp = "git push";
     gl = "git log --oneline --graph --decorate --all";
-
-    # Elevate Crush I/O priority above builds (BE/3 vs nix-daemon BE/7)
-    # so the AI assistant stays responsive during heavy compiles
-    crush = "ionice -c 2 -n 3 nice -n 5 crush";
   };
 }

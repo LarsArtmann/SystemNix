@@ -328,7 +328,25 @@ let
 
   # Use NUR (Nix User Repository) for the most up-to-date version of Crush
   # NUR is updated much more frequently than nixpkgs unstable
-  aiPackages = [ pkgs.nur.repos.charmbracelet.crush ];
+  #
+  # Wrapped with ionice/nice to elevate I/O and CPU priority above builds
+  # (BE/3 vs nix-daemon BE/7). Works in scripts, MCP, and non-login shells —
+  # not just interactive sessions like a shell alias would.
+  realCrush = pkgs.nur.repos.charmbracelet.crush;
+  crushWithIoPriority = pkgs.writeShellApplication {
+    name = "crush";
+    runtimeInputs = lib.optionals pkgs.stdenv.isLinux [ pkgs.util-linux ];
+    text =
+      if pkgs.stdenv.isLinux then
+        ''
+          exec ionice -c 2 -n 3 nice -n 5 ${lib.getExe' realCrush "crush"} "$@"
+        ''
+      else
+        ''
+          exec ${lib.getExe' realCrush "crush"} "$@"
+        '';
+  };
+  aiPackages = [ crushWithIoPriority ];
 in
 {
   # System packages list
