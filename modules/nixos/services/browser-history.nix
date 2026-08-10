@@ -40,6 +40,23 @@
     primaryUser = config.users.primaryUser or "lars";
     sopsEnvPath = config.sops.templates."browser-history-env".path;
 
+    # Health-gate: wait for the server to answer /health before the agent
+    # starts pushing batches. Prevents 502 race during simultaneous restarts
+    # (deploy stops both, starts both — server Type=simple is "active" before
+    # Go binds the port, agent Type=oneshot fails after 4 retries = exit 1).
+    waitServerReady = pkgs.writeShellApplication {
+      name = "browser-history-agent-wait-server";
+      runtimeInputs = [pkgs.curl];
+      text = ''
+        SERVER_URL="http://127.0.0.1:${toString ports.browser-history}/health"
+        echo "browser-history-agent: waiting for server at $SERVER_URL ..."
+        curl -sf --max-time 5 --retry 30 --retry-delay 2 --retry-all-errors \
+          -o /dev/null "$SERVER_URL" \
+          || { echo "browser-history-agent: server not ready after 60s — aborting" >&2; exit 1; }
+        echo "browser-history-agent: server ready"
+      '';
+    };
+
     domain = config.networking.domain;
     fqdn = "history.${domain}";
     pocketIdEnabled = config.services.pocket-id-config.enable;
@@ -188,6 +205,26 @@
           serviceConfig = {
             User = primaryUser;
             MemoryMax = lib.mkDefault "512M";
+          };
+        };
+      })
+
+      # ── Co-located server+agent ordering ─────────────────────────────────────
+      # When the agent and server run on the same machine (evo-x2), the agent
+      # must wait for the server to accept HTTP requests before pushing batches.
+      # During deploy, systemd stops and starts both simultaneously — the server
+      # is Type=simple (marked "active" before Go binds the port), and the agent
+      # is Type=oneshot with only 4 retries per batch (~7s). Without this gate,
+      # the agent races ahead, gets 502 from Caddy, fails all 4 retries, exits 1,
+      # and blocks the deploy with "Activation (test) failed: exit status 4".
+      (lib.mkIf (config.services.browser-history-agent.enable && cfg.enable) {
+        systemd.services.browser-history-agent = {
+          after = ["browser-history.service"];
+          wants = ["browser-history.service"];
+
+          serviceConfig = {
+            ExecStartPre = "+${lib.getExe waitServerReady}";
+            TimeoutStartSec = "2min";
           };
         };
       })
