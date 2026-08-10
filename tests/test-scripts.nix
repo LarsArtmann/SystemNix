@@ -9,13 +9,6 @@
 #   - lib.sh helper functions
 { pkgs }:
 
-let
-  # Write a script from the repo into the test VM
-  script = name: pkgs.writeShellApplication {
-    inherit name;
-    text = builtins.readFile ../scripts/${name};
-  };
-in
 {
   lib-helpers = pkgs.testers.runNixOSTest {
     name = "lib-helpers";

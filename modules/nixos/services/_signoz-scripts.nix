@@ -4,7 +4,8 @@
   pkgs,
   cfg,
   config,
-}: {
+}:
+{
   waitReadyScript = pkgs.writeShellApplication {
     name = "signoz-wait-ready";
     runtimeInputs = [

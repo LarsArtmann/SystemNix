@@ -64,7 +64,7 @@
           };
 
           systemd.services.browser-history = {
-            onFailure = onFailure;
+            inherit onFailure;
             restartTriggers = [ serverPkg ];
 
             # Agent token from sops. Systemd reads EnvironmentFile as root,
@@ -179,7 +179,7 @@
           };
 
           systemd.services.browser-history-agent = {
-            onFailure = onFailure;
+            inherit onFailure;
 
             # Run as the desktop user — browser profiles are mode 0700 and
             # not readable by other users. ProtectHome=read-only (from the

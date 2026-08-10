@@ -20,7 +20,6 @@ NC='\033[0m'
 hr() { echo -e "${CYN}────────────────────────────────────────────────────────────────────────${NC}"; }
 h1() { echo -e "\n${BLD}${CYN}═══ $1 ═══${NC}\n"; }
 
-
 # ─── Partition helpers ─────────────────────────────────────────────────────
 part_exists() { [ -b "${DISK}p$1" ]; }
 part_start() { cat "/sys/block/nvme0n1/nvme0n1p$1/start" 2>/dev/null || echo "N/A"; }

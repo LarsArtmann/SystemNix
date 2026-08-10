@@ -97,4 +97,8 @@ safe_head() { head -n "${1:-10}" 2>/dev/null || true; }
 safe_tail() { tail -n "${1:-10}" 2>/dev/null || true; }
 
 # Sort then take first N lines safely.
-safe_sort_head() { local n="${1:-10}"; shift; sort "$@" 2>/dev/null | head -n "$n" || true; }
+safe_sort_head() {
+  local n="${1:-10}"
+  shift
+  sort "$@" 2>/dev/null | head -n "$n" || true
+}
