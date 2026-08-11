@@ -203,6 +203,8 @@ if [ -s "$METRICS_FILE" ]; then
     niri_graphical_session
     niri_desktop_died
     niri_crash_loop
+    niri_running
+    system_memory_events_any_high
   "
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
