@@ -81,6 +81,18 @@ _: {
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
           NOW_EPOCH=$(date +%s)
 
+          # systemctl show --value returns literal "[not set]" on stdout
+          # (exit 0) for stopped/inactive services. This sanitizes it to 0
+          # so node_exporter doesn't reject the entire textfile.
+          systemctl_value() {
+            local val
+            val=$(systemctl show "$@" --value 2>/dev/null) || val=0
+            if [ -z "$val" ] || [ "$val" = "[not set]" ]; then
+              val=0
+            fi
+            printf '%s' "$val"
+          }
+
           emit_service() {
             local svc="''${1?}"
             local active_val=0
@@ -91,7 +103,7 @@ _: {
               active_val=1
             fi
 
-            nrestarts=$(systemctl show "$svc" -p NRestarts --value 2>/dev/null) || nrestarts=0
+            nrestarts=$(systemctl_value "$svc" -p NRestarts)
             nrestarts="''${nrestarts:-0}"
 
             local result
@@ -117,7 +129,7 @@ _: {
           # Write new state for next run
           : > "''${CPU_STATE}.tmp"
           for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") cfg.monitoredServices}; do
-            cpu_nsec=$(systemctl show "$svc" -p CPUUsageNSec --value 2>/dev/null) || cpu_nsec=0
+            cpu_nsec=$(systemctl_value "$svc" -p CPUUsageNSec)
             cpu_nsec="''${cpu_nsec:-0}"
             echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
           done
@@ -128,7 +140,7 @@ _: {
           SLICE_OVER=0
           SLICE_MEM=0
           if [ "$collect_user_slice" = "true" ]; then
-            SLICE_MEM=$(systemctl show user-1000.slice -p MemoryCurrent --value 2>/dev/null) || SLICE_MEM=0
+            SLICE_MEM=$(systemctl_value user-1000.slice -p MemoryCurrent)
             SLICE_MEM="''${SLICE_MEM:-0}"
             [ "$SLICE_MEM" -gt ${toString userSliceThreshold} ] 2>/dev/null && SLICE_OVER=1
           fi
@@ -285,7 +297,7 @@ _: {
 
             ${lib.concatMapStrings (svc: ''
               svc="${svc}"
-              mem_bytes=$(systemctl show "$svc" -p MemoryCurrent --value 2>/dev/null) || mem_bytes=0
+              mem_bytes=$(systemctl_value "$svc" -p MemoryCurrent)
               mem_bytes="''${mem_bytes:-0}"
               echo "system_service_memory_bytes{service=\"$svc\"} ''${mem_bytes}"
               mem_over=0
