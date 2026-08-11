@@ -13,7 +13,6 @@ This pre-populates the Nix store with crate tarballs so that subsequent
 Nix builds don't need to hit the crates.io API at all.
 """
 
-import json
 import subprocess
 import sys
 import tomllib

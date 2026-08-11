@@ -4,6 +4,8 @@
   ...
 }:
 let
+  inherit (import ../../../lib/default.nix lib) ioTier;
+
   # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
   # 29360128 pages × 4096 = 112 GiB (exceeds ~94 GiB visible, but it's a ceiling not a reservation)
   ttmPagesLimit = 29360128;
@@ -104,6 +106,17 @@ in
       # enabled" without it. Near-zero overhead. eBPF tools (bcc/bpftrace) don't need it
       # but iotop does for SWAPIN%/IO% columns.
       "delayacct"
+      # JMicron JMS567 USB-SATA bridge (152d:0567) — force UAS instead of BOT.
+      # The UAS module has a device-specific alias for this bridge, but usb-storage's
+      # generic BOT catch-all claims it first on firmware >= 0118. The 'i' flag tells
+      # usb-storage to IGNORE this device so UAS binds instead. UAS uses multiple
+      # concurrent commands vs BOT's single-command pipeline.
+      # If drives vanish after adding this, remove the parameter — firmware may not
+      # support UAS despite the alias.
+      "usb-storage.quirks=152d:0567:i"
+      # Disable USB autosuspend for external drives — prevents latency spikes
+      # from device waking up between commands. Old system (private-cloud) used this.
+      "usbcore.autosuspend=-1"
     ];
 
     binfmt.emulatedSystems = [ "aarch64-linux" ];
@@ -195,11 +208,10 @@ in
   # systemd-udevd: -500 (device node management — death breaks /dev/dri/* access)
   systemd = {
     services = {
-      "sshd".serviceConfig = {
-        OOMScoreAdjust = -1000;
-        IOSchedulingClass = "best-effort";
-        IOSchedulingPriority = 1;
-      };
+      "sshd".serviceConfig = lib.mkMerge [
+        { OOMScoreAdjust = -1000; }
+        ioTier.interactive
+      ];
       "systemd-journald".serviceConfig.OOMScoreAdjust = -500;
       "dbus-broker".serviceConfig.OOMScoreAdjust = -500;
       "systemd-logind".serviceConfig.OOMScoreAdjust = -500;
@@ -230,16 +242,14 @@ in
     };
 
     user.services = {
-      "dms".serviceConfig = {
-        OOMScoreAdjust = -500;
-        IOSchedulingClass = "best-effort";
-        IOSchedulingPriority = 3;
-      };
-      "pipewire".serviceConfig = {
-        OOMScoreAdjust = -500;
-        IOSchedulingClass = "best-effort";
-        IOSchedulingPriority = 3;
-      };
+      "dms".serviceConfig = lib.mkMerge [
+        { OOMScoreAdjust = -500; }
+        ioTier.desktop
+      ];
+      "pipewire".serviceConfig = lib.mkMerge [
+        { OOMScoreAdjust = -500; }
+        ioTier.desktop
+      ];
     };
 
     # ── Resilience: coredump storage limits ───────────────────────────────
@@ -372,10 +382,7 @@ in
   # fstrim is a background maintenance task; a 10-15 min trim run at idle
   # priority is preferable to a 5 min run that starves foreground I/O and
   # risks SLC cache exhaustion from the trim-induced write amplification.
-  systemd.services.fstrim.serviceConfig = {
-    IOSchedulingClass = "idle";
-    Nice = 10;
-  };
+  systemd.services.fstrim.serviceConfig = ioTier.maintenance;
 
   # ZRAM: compressed swap emergency buffer on unified memory APU.
   # ~17% = ~16 GiB virtual device. zstd compresses ~2.7x, so 16 GiB of swap

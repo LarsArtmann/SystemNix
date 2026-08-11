@@ -142,6 +142,21 @@ else
     log_info "No staged .sh files — skipping shellcheck."
 fi
 
+# Ruff on staged .py files
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACM '*.py')
+if [ -n "$STAGED_PY" ]; then
+    log_info "Running ruff on staged Python scripts..."
+    if echo "$STAGED_PY" | xargs nix shell nixpkgs#ruff --command ruff check > /tmp/ruff.log 2>&1; then
+        log_success "Ruff passed! No issues found."
+    else
+        log_error "Ruff found issues!"
+        cat /tmp/ruff.log
+        all_passed=false
+    fi
+else
+    log_info "No staged .py files — skipping ruff."
+fi
+
 # Nix flake check always runs (validates whole config)
 log_info "Running Nix flake check..."
 if nix flake check > /tmp/nix-check.log 2>&1; then

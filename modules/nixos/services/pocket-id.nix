@@ -76,7 +76,7 @@ _: {
           api_get() {
             local path="$1"
             local resp
-            resp=$(curl -s --max-time 10 -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
+            resp=$(curl -s --max-time 10 --retry 3 --retry-delay 2 --retry-all-errors -H "X-API-Key: $API_KEY" "$API_URL$path" 2>&1) || true
             echo "$resp"
           }
 

@@ -1,4 +1,10 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  system,
+  inputs,
+  ...
+}:
 let
   # Modern NixOS test runner — replaces the deprecated make-test-python.nix.
   # Same { nodes, testScript, name } shape, cleaner API.
@@ -25,5 +31,6 @@ in
   gatus-patterns = makeTest (import ./test-gatus-patterns.nix { inherit pkgs; });
   pma-identity = makeTest (import ./test-pma-identity.nix { inherit pkgs; });
   port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
+  browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
 }
 // (import ./test-scripts.nix { inherit pkgs; })

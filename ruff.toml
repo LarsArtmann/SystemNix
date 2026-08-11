@@ -1,0 +1,17 @@
+target-version = "py312"
+line-length = 120
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes (unused imports, undefined names, etc.)
+    "W",    # pycodestyle warnings
+    "I",    # isort (import sorting)
+    "UP",   # pyupgrade (modernize syntax)
+]
+ignore = [
+    "DTZ001", # naive datetime created (intentional for date parsing in scripts)
+    "DTZ005", # datetime.now() without tz (used for backup filenames)
+    "DTZ007", # naive datetime strptime (date-only parsing, no timezone needed)
+    "PLW1510", # subprocess.run without check (return code handled manually)
+]

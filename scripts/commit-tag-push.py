@@ -55,7 +55,7 @@ def main():
             ["git", "status", "--porcelain"],
             cwd=entry, capture_output=True, text=True, timeout=5,
         )
-        changed_files = [l.strip() for l in status_result.stdout.strip().split("\n") if l.strip()]
+        changed_files = [line.strip() for line in status_result.stdout.strip().split("\n") if line.strip()]
         nix_changes = [f for f in changed_files if f.endswith(".nix")]
 
         if not nix_changes:
@@ -140,7 +140,7 @@ def main():
                 failed.append((name, "tag-push"))
                 continue
 
-        print(f"    OK ✓")
+        print("    OK ✓")
         success.append((name, version))
 
     print(f"\n{'='*60}")

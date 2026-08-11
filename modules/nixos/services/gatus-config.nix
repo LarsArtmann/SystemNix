@@ -802,6 +802,17 @@ _: {
                 ];
                 alerts = discordAlert "Gatus reports endpoints with sustained failures (all recent checks failed). Either services are down or the alert chain itself is broken. Check: Gatus dashboard for which endpoints are red.";
               })
+              (mkHttpCheck {
+                name = "Memory Events Thrash";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_memory_events_any_high 0*)"
+                ];
+                alerts = discordAlert "A monitored service is thrashing against its MemoryMax ceiling (memory.events max > 100). Page-cache death-loop pattern (OOM-killer won't fire — page cache is reclaimable). Check: grep system_service_memory_events_high in /var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom to identify which service.";
+              })
             ]
             ++ [
               (mkHttpCheck {

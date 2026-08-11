@@ -38,14 +38,19 @@ jobs:
           # Catches port assignments in modules that bypass lib/ports.nix.
           # The eval-time assertion in lib/default.nix catches duplicates WITHIN
           # ports.nix. This check catches raw numbers used outside the registry.
+          # Only match bare numeric assignments (= NNNN) or proxy-style :NNNN at
+          # end of string — avoids connection URIs, memory sizes, time values.
           UNREGISTERED=$(
-            grep -rnE '(=|:)[[:space:]]*[0-9]{4,5}([^0-9]|$)' --include="*.nix" modules/ 2>/dev/null |
-            grep -vE 'ports\.|^\s*#|Timeout|Burst|Interval|Nice|Quota|Memory|Limit|Watchdog|Signal|UMask|Delay|Retry|Second|Interval|OnUnit|OnBoot|fallocate|offset|subvolid|Year|Month|threshold|priority|version|uid|gid|capacity|window|slim|tty|vtnr|code|exit|status|color|port_range' ||
+            grep -rnE '(=|:)[[:space:]]*[0-9]{4,5}([^0-9MiB]|$)' --include="*.nix" modules/ 2>/dev/null |
+            grep -vE 'ports\.|^\s*#|Timeout|Burst|Interval|Nice|Quota|Memory|Limit|Watchdog|Signal|UMask|Delay|Retry|Second|OnUnit|OnBoot|fallocate|offset|subvolid|Year|Month|threshold|priority|version|uid|gid|capacity|window|slim|tty|vtnr|code|exit|status|color|port_range|GOMEMLIMIT|BLOB_MAX|max-old-space|min-size|avg-size|bantime|Duration|default|stateVersion' ||
             true
           )
-          if [ -n "$UNREGISTERED" ]; then
+          # Filter out well-known ports inside Docker connection strings and
+          # container port mappings (not configurable via lib/ports.nix)
+          FILTERED=$(echo "$UNREGISTERED" | grep -vE '(postgres|redis|mongodb)://|containerPort|NODE_PORT|127\.0\.0\.1.*:|localhost.*:|max_old_space|postgresql://' || true)
+          if [ -n "$FILTERED" ]; then
             echo "::warning::Potential unregistered port numbers found (review and move to lib/ports.nix if applicable):"
-            echo "$UNREGISTERED" | head -20
+            echo "$FILTERED" | head -20
           else
             echo "No unregistered port numbers detected"
           fi
@@ -86,3 +91,15 @@ jobs:
           nix build .#checks.x86_64-linux.boot --no-link --print-out-paths
           nix build .#checks.x86_64-linux.attic --no-link --print-out-paths
           nix build .#checks.x86_64-linux.searxng --no-link --print-out-paths
+          nix build .#checks.x86_64-linux.browser-history --no-link --print-out-paths
+
+  shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@v16
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes pipe-operators
+      - name: Run shellcheck on scripts
+        run: nix shell nixpkgs#shellcheck --command shellcheck --severity=error scripts/*.sh .githooks/*

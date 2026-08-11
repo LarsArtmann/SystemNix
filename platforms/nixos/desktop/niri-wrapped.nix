@@ -3,6 +3,7 @@
   lib,
   wallpapers,
   colorScheme,
+  dankMaterialShell,
   ...
 }:
 let
@@ -88,6 +89,7 @@ let
     runtimeInputs = [
       pkgs.coreutils
       pkgs.findutils
+      dankMaterialShell.packages.${pkgs.system}.default
     ];
     text = ''
       wallpaper_dir="''${1:-$HOME/.local/share/wallpapers}"

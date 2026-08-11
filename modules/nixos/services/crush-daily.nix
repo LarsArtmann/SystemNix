@@ -68,6 +68,7 @@ _: {
           # identity — that is done via `services.crush-daily.runAsUser`.
           serviceConfig = lib.mkMerge [
             (harden {
+              MemoryMax = "1G";
               # ReadOnlyPaths / SupplementaryGroups only needed when running
               # as the default system user (the primary user's /home is
               # mode 750 + ACL mask; supplementary group `users` is required
@@ -78,7 +79,10 @@ _: {
               ReadWritePaths = [ cfg.dataDir ];
             })
             (serviceDefaults { })
-            { TimeoutStartSec = "3min"; }
+            {
+              TimeoutStartSec = "3min";
+              Environment = [ "GOMEMLIMIT=768MiB" ];
+            }
           ];
         };
       };

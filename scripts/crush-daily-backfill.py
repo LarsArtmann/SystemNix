@@ -76,23 +76,25 @@ def parse_args() -> argparse.Namespace:
 
 def get_zero_data_events(conn: sqlite3.Connection, date_filter: set[str] | None = None) -> list[dict]:
     rows = conn.execute(
-        "SELECT id, aggregate_id, payload, occurred_at FROM events WHERE event_type = ?",
+        "SELECT id, aggregate_id, aggregate_type, version, payload, occurred_at FROM events WHERE event_type = ?",
         ("DailyDataCollected",),
     ).fetchall()
 
     results = []
     for row in rows:
         try:
-            payload = json.loads(row[2]) if row[2] else {}
+            payload = json.loads(row[4]) if row[4] else {}
         except json.JSONDecodeError:
             print(f"WARNING: corrupt JSON payload in event id={row[0]}, skipping", file=sys.stderr)
             continue
         d = payload.get("date", "")
         stats = payload.get("total_stats", payload.get("stats", {}))
         sessions = stats.get("session_count", 0)
-        if sessions == 0:
-            if date_filter is None or d in date_filter:
-                results.append({"id": row[0], "aggregate_id": row[1], "date": d, "occurred_at": row[3], "payload": row[2]})
+        if sessions == 0 and (date_filter is None or d in date_filter):
+            results.append({
+                "id": row[0], "aggregate_id": row[1], "aggregate_type": row[2],
+                "version": row[3], "date": d, "occurred_at": row[5], "payload": row[4],
+            })
     return results
 
 
@@ -204,9 +206,12 @@ def main() -> int:
                 # Re-insert the deleted event so the data isn't permanently lost.
                 # We have the backup, but this avoids requiring manual restore.
                 conn.execute(
-                    "INSERT INTO events (id, aggregate_id, event_type, payload, occurred_at) "
-                    "VALUES (?, ?, 'DailyDataCollected', ?, ?)",
-                    (event["id"], event["aggregate_id"], event.get("payload", ""), event["occurred_at"]),
+                    "INSERT INTO events (id, aggregate_id, aggregate_type, version, event_type, payload, occurred_at) "
+                    "VALUES (?, ?, ?, ?, 'DailyDataCollected', ?, ?)",
+                    (
+                        event["id"], event["aggregate_id"], event["aggregate_type"],
+                        event["version"], event.get("payload", ""), event["occurred_at"],
+                    ),
                 )
                 conn.commit()
                 print(f"  Restored original event (id={event['id']})")
@@ -214,7 +219,7 @@ def main() -> int:
 
             sessions = verify_event(conn, target_date)
             if sessions < 0:
-                print(f"  COLLECT FAILED: event not found after collect")
+                print("  COLLECT FAILED: event not found after collect")
                 failed += 1
                 continue
 
@@ -227,14 +232,14 @@ def main() -> int:
             # Step 2: Insights (optional — failures are non-fatal)
             ok, output = run_step(binary, "insights", target_date, config, api_key)
             if ok:
-                print(f"  insights: done")
+                print("  insights: done")
             else:
                 print(f"  insights: FAILED (non-fatal) — {output[-150:]}")
 
             # Step 3: Report (optional — failures are non-fatal)
             ok, output = run_step(binary, "report", target_date, config, api_key)
             if ok:
-                print(f"  report: done")
+                print("  report: done")
             else:
                 print(f"  report: FAILED (non-fatal) — {output[-150:]}")
 

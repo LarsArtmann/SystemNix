@@ -57,6 +57,9 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Port-uniqueness VM test** — `tests/test-port-uniqueness.nix` verifies the eval-time port collision assertion in `lib/default.nix` fires correctly
 - **disk-common.sh + lib.sh safe pipe helpers** — `scripts/disk-common.sh` provides shared geometry constants (`TARGET_P8_END_GIB`, sector offsets) sourced by both `disk-fix.sh` and `disk-diagnose.sh` (kills the 1548 vs 1560 drift class). `lib.sh` adds `safe_head`, `safe_tail`, `safe_sort_head` for pipefail-safe `| head` patterns
 - **ZFS VM configs (untested)** — `systems/zfs-vm.nix` (NixOS VM with ZFS on kernel 6.18, USB passthrough) and `pkgs/freebsd-zfs-vm.nix` (FreeBSD 14.2 cloud image QEMU launcher) wired into flake. NixOS VM evaluates successfully. VFIO PCIe passthrough PROVEN WORKING: NixOS VM (kernel 6.18.43, ZFS 2.4.3) successfully imported `datapool` mirror (2x16TB HDDs, 21GB used). QEMU `usb-host` does NOT work for JMicron JMS567 dual-LUN USB bridge (fundamental limitation). Native ZFS on host kernel 7.1 not attempted
+- **memory.events death-loop detection** — system-health collector now scrapes `/sys/fs/cgroup/system.slice/<svc>/memory.events` for all monitored services. Emits `system_service_memory_events_max` (raw counter) and `system_service_memory_events_high` (threshold flag at 100). Gatus alert on PMA thrash loop. Catches the page-cache death-loop pattern (27,312 max events without a single oom_kill — page cache is reclaimable so OOM-killer never fires)
+- **browser-history VM test** — `tests/test-browser-history.nix` — NixOS VM test verifying browser-history service starts and `/health` returns 200. Imports upstream module, mocks sops + Pocket ID (WebAuthn-only mode)
+- **Ruff pre-commit hook** — `.githooks/pre-commit` now runs `ruff check` on staged `.py` files via `nix shell nixpkgs#ruff`
 
 ### Changed
 
@@ -137,12 +140,25 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Monitor365 MemoryMax** — 2G → 4G (+ MemoryHigh 3G) for DuckDB 597M event backlog processing.
 - **Hermes `inputs.nixpkgs.follows` restored** — prior session wrongly removed `follows`, causing root nixpkgs to silently downgrade to hermes's pinned `0954f7ee2f6b` (Jan 2026). Restored to follow main nixpkgs.
 - **nix profile cleanup** — 4 duplicate packages removed from `nix profile` (cqrs-lint, direnv, herdr, mr) that were already provided by SystemNix. `herdr` upgraded 0.7.1 → 0.8.0 via SystemNix. Principle: SystemNix owns persistent tools; `nix profile` is for transient experiments only.
+- **ioTier shallow merge fix** — 4 services (forgejo, monitor365, browser-history, PMA) used `// ioTier.*` (shallow merge) instead of `lib.mkMerge [ { ... } ioTier.* ]`. Shallow merge discards Nix priority semantics (`mkDefault`/`mkForce`). Worked today only because ioTier attrsets have no priority annotations — a time bomb. All 4 converted to `mkMerge`
+- **GOMEMLIMIT expanded to 8 Go services** — Added `GOMEMLIMIT` to crush-daily (768MiB, 75% of new 1G MemoryMax) and file-and-image-renamer (384MiB, 75% of existing 512M MemoryMax). Total Go services with GOMEMLIMIT: 8
+- **crush-daily memory cap** — Added `MemoryMax=1G` (previously uncapped). Combined with `GOMEMLIMIT=768MiB` to prevent Go GC from waiting until heap doubles before collecting
+- **boot.nix ioTier conversion** — sshd, dms, pipewire converted from inline `IOSchedulingClass`/`IOSchedulingPriority` literals to `ioTier.interactive` / `ioTier.desktop` via `mkMerge`. Centralizes I/O priority config alongside the ioTier system
+- **Pocket ID provision retry** — `api_get()` curl calls now use `--retry 3 --retry-delay 2 --retry-all-errors` for transient failures during SQLITE_BUSY contention. POST/PUT left unchanged (non-idempotent)
+- **CI port check accuracy** — Tightened unregistered-port regex in `.github/workflows/nix-check.yml` from `[^0-9]` to `[^0-9MiB]`, added 10 exclusion terms (GOMEMLIMIT, BLOB_MAX, etc.), added Docker connection-string filter. False positives reduced 25→2 (92% reduction)
+- **PMA flake input decoupling** — Removed `go-nix-helpers.follows`, `treefmt-nix.follows`, `systems.follows` from PMA input. PMA now uses its own versions of these deps, reducing cross-input coupling
+- **Test infrastructure** — Threaded flake `inputs` through `tests/default.nix` to enable upstream-module VM tests. Signature changed to accept `{ pkgs, lib, system, inputs, ... }`
+- **ioTier expansion** — fstrim (`boot.nix`) and clamav-daemon (`security-hardening.nix`) converted from raw `IOSchedulingClass = "idle"` literals to `ioTier.maintenance`. Networking nix-daemon kept as raw literal (uses `mkForce` — semantically different from `ioTier.build`'s `mkDefault`)
+- **browser-history flake bump** — Updated to `451fa4d` (CSP-safe .templ templates + Tailwind v4 CSS refresh). Prior session incorrectly reported the upstream `ClientSecret` guard was missing — it already exists at `api/oauth2.go:64` (provider silently skipped when either ClientID or ClientSecret is empty). PMA `isNothingToCommit()` TOCTOU fix also already exists at `pma-daemon/committer/committer.go:289`
+- **CI improvements** — browser-history VM test added to CI VM test matrix. Shellcheck CI job added (`--severity=error` on `scripts/*.sh` + `.githooks/*`)
+- **ruff.toml** — Project-level ruff configuration selecting E/F/W/I/UP rules, ignoring DTZ/PLW (inappropriate for operational scripts). All 6 Python scripts cleaned: 3 auto-fixed (unused imports, f-strings), 5 manual fixes (ambiguous `l` variables, unused `name`, line-length wraps)
 
 ### Removed
 
 - **swww wallpaper daemon** — ghost service crash-looping 1220+ times/boot (GC'd nix store binary). Replaced with DMS IPC (`dms ipc call wallpaper next`). GLSL fire/circle shader transitions removed. `dms-wallpaper-init` rewritten to seed wallpaper via DMS IPC. DMS owns wallpaper management natively.
 - **Hyprland package set** — `grimblast` (screenshot helper) pulled in hyprland-0.56.1 + all hypr* deps (hyprcursor, hyprgraphics, hyprland-qt-support, hyprland-qtutils, hyprlang, hyprpicker, hyprutils, hyprwire). ~122 MiB purged (3850 → 3824 store paths). Screenshots now via grim + slurp + swappy directly (grimblast was a redundant Hyprland wrapper).
 - **justfile** — removed in favor of direct Nix flake commands (`nix run .#deploy`, `nix flake check --no-build`, `nix fmt`). All recipes replaced by flake apps and `scripts/` shell scripts
+- **Dead scripts** — `scripts/nvme-metrics.sh` (superseded by inline `_signoz-metrics.nix` nvmeMetrics derivation) and `scripts/niri-health.sh` (superseded by inline `niri-health-metrics` in `niri-config.nix`) deleted. Neither was referenced by any `.nix` file
 
 ### Fixed
 
@@ -217,6 +233,8 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 - **Browser-history OAuth2 crash-loop (3-iteration fix)** — `ProviderConfig.Validate()` in `cqrs-htmx/usermgmt/oauth2/provider.go` rejects empty ClientSecret. Upstream `optionalEnv` always emits `OAUTH2_POCKET_ID_CLIENT_ID` as systemd Environment (even when secret missing), triggering provider creation → Validate → crash-loop. Fix: remove clientId/issuer from upstream module options; route all 3 OAuth2 vars through a single env file from the OIDC oneshot. Additionally: oneshot switched from direct file read (blocked by `ProtectSystem=strict`) to systemd `LoadCredential`; OIDC oneshot moved to separate `StateDirectory=browser-history-oidc` (DynamicUser server's `StateDirectory=browser-history` is private to its dynamic UID)
 - **vendorHash cascade (5 Go repos)** — Browser-history, crush-daily, file-and-image-renamer, and 2 other Go repos had stale vendorHashes after flake-pin-drift fix. All updated via `vendorHash = ""` → build → paste `got:` hash
 - **Pocket ID provision SQLITE_BUSY** — francis actor framework SQLite contention caused curl POST timeouts during OIDC client provisioning. POST/PUT `--max-time` raised 10s→30s
+- **dms-wallpaper-init missing dms binary** — service called `dms ipc call wallpaper next` but `dms` was not in PATH. Added `dankMaterialShell.packages.${system}.default` to runtimeInputs
+- **crush-daily-backfill.py data-loss bug** — INSERT into `events` table was missing two NOT NULL columns (`aggregate_type`, `version`) that have no defaults. The "restore original event" fallback (used when collect fails after deleting the original event) would crash with `NOT NULL constraint failed`, permanently losing the deleted event. Fixed: SELECT, dict, and INSERT all now include `aggregate_type` and `version`
 
 ### Disabled
 

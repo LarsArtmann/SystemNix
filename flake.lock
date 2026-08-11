@@ -157,11 +157,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786368414,
-        "narHash": "sha256-WR712CDd6Is9HgFsUEYTryrgkUC5rSn2cEUjxVNYyII=",
+        "lastModified": 1786374265,
+        "narHash": "sha256-Bxe3juuX2wgtDt3mEH2MazeawVuggszXJRfieX6/pGs=",
         "owner": "LarsArtmann",
         "repo": "browser-history",
-        "rev": "5c1a1b75777218212943b63d951e73de5377c259",
+        "rev": "451fa4d1e89617141984472eb5f3f17be7610990",
         "type": "github"
       },
       "original": {
@@ -761,6 +761,28 @@
       }
     },
     "flake-parts_10": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "projects-management-automation",
+          "go-nix-helpers",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785627969,
+        "narHash": "sha256-4dtXQk/NMePegK/nWp5NSeuZKLATItOq61lpEvmXqGw=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "427bf4bd9435fdf21321c8cc628c24efc14c0f7a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_11": {
       "inputs": {
         "nixpkgs-lib": [
           "todo-list-ai",
@@ -2751,11 +2773,11 @@
     "go-nix-helpers_4": {
       "flake": false,
       "locked": {
-        "lastModified": 1786346836,
-        "narHash": "sha256-AxMUVXwD6zbRa9NFI+cVigqceFxMp6OtJuEbd45qmIo=",
+        "lastModified": 1786370176,
+        "narHash": "sha256-5XR8vuKgilVrPf+pkA2UpTpiS6JT5pFjZk5lUd25gco=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
-        "rev": "a199f6b933018ea55c80de24e3c270e8e4db59a9",
+        "rev": "2f3b6b2b45bf08980446fedaffe52ac3ab3916ba",
         "type": "github"
       },
       "original": {
@@ -2790,6 +2812,31 @@
         "ref": "master",
         "rev": "064a269eecb548c64bbd8bd3627f99a13db952bb",
         "revCount": 103,
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
+      },
+      "original": {
+        "ref": "master",
+        "type": "git",
+        "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
+      }
+    },
+    "go-nix-helpers_7": {
+      "inputs": {
+        "flake-parts": "flake-parts_10",
+        "nixpkgs": [
+          "projects-management-automation",
+          "nixpkgs"
+        ],
+        "systems": "systems_12",
+        "treefmt-nix": "treefmt-nix_10"
+      },
+      "locked": {
+        "lastModified": 1786370176,
+        "narHash": "sha256-5XR8vuKgilVrPf+pkA2UpTpiS6JT5pFjZk5lUd25gco=",
+        "ref": "master",
+        "rev": "2f3b6b2b45bf08980446fedaffe52ac3ab3916ba",
+        "revCount": 134,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-nix-helpers"
       },
@@ -4458,9 +4505,7 @@
         "go-finding": "go-finding_10",
         "go-health": "go-health",
         "go-ndjson": "go-ndjson_8",
-        "go-nix-helpers": [
-          "go-nix-helpers"
-        ],
+        "go-nix-helpers": "go-nix-helpers_7",
         "go-output": "go-output_11",
         "go-sse": "go-sse_6",
         "gogenfilter": "gogenfilter_10",
@@ -4469,20 +4514,14 @@
         ],
         "project-discovery-sdk": "project-discovery-sdk_4",
         "project-meta": "project-meta_2",
-        "samber-do-auditlog": "samber-do-auditlog_8",
-        "systems": [
-          "systems"
-        ],
-        "treefmt-nix": [
-          "treefmt-nix"
-        ]
+        "samber-do-auditlog": "samber-do-auditlog_8"
       },
       "locked": {
-        "lastModified": 1786346255,
-        "narHash": "sha256-7p0HQCI/823tmqbe3HdYRdv3LIPD2p9IdTL6NsOvPr8=",
+        "lastModified": 1786373792,
+        "narHash": "sha256-OwJUHPDdCc4bA6B6VqJe9h9w/VBD8jPZR0R4bYl4AcM=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "a383c381e68367e4e0f974eb7a6e56bc37bee7cc",
+        "rev": "c65e225270195a110fb4c5482696dc8ad5583b5e",
         "type": "github"
       },
       "original": {
@@ -4600,10 +4639,10 @@
         "signoz-src": "signoz-src",
         "silent-sddm": "silent-sddm",
         "sops-nix": "sops-nix",
-        "systems": "systems_12",
+        "systems": "systems_13",
         "todo-list-ai": "todo-list-ai",
         "treefmt-full-flake": "treefmt-full-flake",
-        "treefmt-nix": "treefmt-nix_11",
+        "treefmt-nix": "treefmt-nix_12",
         "wallpapers-src": "wallpapers-src"
       }
     },
@@ -4932,6 +4971,21 @@
         "type": "github"
       }
     },
+    "systems_14": {
+      "locked": {
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
     "systems_2": {
       "locked": {
         "lastModified": 1681028828,
@@ -5123,12 +5177,12 @@
     },
     "todo-list-ai": {
       "inputs": {
-        "flake-parts": "flake-parts_10",
+        "flake-parts": "flake-parts_11",
         "nixpkgs": [
           "nixpkgs"
         ],
-        "systems": "systems_13",
-        "treefmt-nix": "treefmt-nix_10"
+        "systems": "systems_14",
+        "treefmt-nix": "treefmt-nix_11"
       },
       "locked": {
         "lastModified": 1785430995,
@@ -5195,6 +5249,28 @@
     "treefmt-nix_10": {
       "inputs": {
         "nixpkgs": [
+          "projects-management-automation",
+          "go-nix-helpers",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785945821,
+        "narHash": "sha256-NLSyTCW4K4ofhNBllt3omPasm6QpralXH1DBZOc91Dw=",
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "rev": "ae7910970dddc408fe6ab1c8e4b277bb21d72dc0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "treefmt-nix",
+        "type": "github"
+      }
+    },
+    "treefmt-nix_11": {
+      "inputs": {
+        "nixpkgs": [
           "todo-list-ai",
           "nixpkgs"
         ]
@@ -5213,7 +5289,7 @@
         "type": "github"
       }
     },
-    "treefmt-nix_11": {
+    "treefmt-nix_12": {
       "inputs": {
         "nixpkgs": [
           "nixpkgs"

@@ -116,8 +116,12 @@ def fix_ldflags_line(line: str, version: str) -> str:
     return line
 
 
-def process_project(repo_path: Path, dry_run: bool, affected: list[tuple[Path, list[tuple[int, str]]]] | None = None, version: str = "0.1.0") -> bool:
-    name = repo_path.name
+def process_project(
+    repo_path: Path,
+    dry_run: bool,
+    affected: list[tuple[Path, list[tuple[int, str]]]] | None = None,
+    version: str = "0.1.0",
+) -> bool:
     if affected is None:
         affected = find_affected_files(repo_path)
     if not affected:

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import sys
 from pathlib import Path
 
 PROJECTS_DIR = Path("/home/lars/projects")
@@ -204,8 +203,8 @@ def migrate_project(project_dir: Path, dry_run: bool = False) -> tuple[bool, str
         backup.write_text(old, encoding="utf-8")
         envrc.write_text(new, encoding="utf-8")
 
-    old_n = len([l for l in old.strip().splitlines() if l.strip()])
-    new_n = len([l for l in new.strip().splitlines() if l.strip()])
+    old_n = len([line for line in old.strip().splitlines() if line.strip()])
+    new_n = len([line for line in new.strip().splitlines() if line.strip()])
     return True, f"{old_n} → {new_n} lines", new
 
 

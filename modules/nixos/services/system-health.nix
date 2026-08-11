@@ -53,6 +53,11 @@ _: {
       # (go-build caches, dev temp files) before hitting the ceiling.
       tmpfsThreshold = 80;
 
+      # memory.events max threshold: when a service's cgroup hits MemoryMax this
+      # many times, flag it. The PMA page-cache death-loop hit max 27,312 times
+      # in minutes. A healthy service should be 0. >100 indicates a thrash loop.
+      memoryEventsMaxThreshold = 100;
+
       # fstrim duration alert threshold (seconds). Daily fstrim on QLC NAND
       # should take 10-15 min after the initial 446 GiB backlog is cleared.
       # >30 min indicates either a huge backlog (SLC cache churn) or the trim
@@ -200,6 +205,15 @@ _: {
             EMEET_EXPECTED_DOWN=1
           fi
 
+          # === memory.events max counter (death-loop detection) ===
+          # The PMA page-cache death-loop hit MemoryMax 27,312 times without a
+          # single oom_kill (page cache is reclaimable). This counter catches
+          # that pattern: high max events = thrashing against the memory ceiling.
+          #
+          # Sandbox note: this service runs as root with ProtectSystem=full.
+          # "full" only mounts /usr, /boot, /efi, /etc read-only — /sys/fs/cgroup
+          # is NOT affected, so memory.events is readable without additional grants.
+
           # === Gatus self-monitoring meta-check ===
           # Counts endpoints where ALL recent results are failures (sustained
           # failure across the entire result window). This catches monitoring
@@ -280,6 +294,34 @@ _: {
               fi
               echo "system_service_memory_over_threshold{service=\"$svc\"} ''${mem_over}"
             '') cfg.monitoredServices}
+
+            echo "# HELP system_service_memory_events_max Cgroup memory.events max counter (times service hit MemoryMax)"
+            echo "# TYPE system_service_memory_events_max gauge"
+
+            echo "# HELP system_service_memory_events_high 1 if service memory.events max exceeds ${toString memoryEventsMaxThreshold}, 0 otherwise"
+            echo "# TYPE system_service_memory_events_high gauge"
+
+            any_events_high=0
+            ${lib.concatMapStrings (svc: ''
+              svc="${svc}"
+              events_file="/sys/fs/cgroup/system.slice/''${svc}.service/memory.events"
+              max_events=0
+              if [ -f "$events_file" ]; then
+                max_events=$(awk '/^max / {print $2}' "$events_file" 2>/dev/null) || max_events=0
+              fi
+              max_events="''${max_events:-0}"
+              echo "system_service_memory_events_max{service=\"$svc\"} ''${max_events}"
+              events_high=0
+              if [ "$max_events" -gt ${toString memoryEventsMaxThreshold} ] 2>/dev/null; then
+                events_high=1
+              fi
+              echo "system_service_memory_events_high{service=\"$svc\"} ''${events_high}"
+              if [ "$events_high" = "1" ]; then any_events_high=1; fi
+            '') cfg.monitoredServices}
+
+            echo "# HELP system_memory_events_any_high 1 if ANY monitored service exceeds the memory.events max threshold, 0 otherwise"
+            echo "# TYPE system_memory_events_any_high gauge"
+            echo "system_memory_events_any_high ''${any_events_high}"
 
             echo "# HELP system_user_slice_memory_bytes Memory usage of user-1000.slice in bytes"
             echo "# TYPE system_user_slice_memory_bytes gauge"

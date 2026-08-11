@@ -10,7 +10,7 @@ _: {
     }:
     let
       cfg = config.services.security-hardening;
-      inherit (import ../../../lib/default.nix lib) onFailure;
+      inherit (import ../../../lib/default.nix lib) onFailure ioTier;
       ignoreIpList = "127.0.0.1/8 ::1 ${config.networking.local.subnet} 10.0.0.0/8 172.16.0.0/12";
     in
     {
@@ -62,9 +62,7 @@ _: {
           inherit onFailure;
           wantedBy = lib.mkForce [ ];
           after = lib.mkForce [ "basic.target" ];
-          serviceConfig = {
-            IOSchedulingClass = "idle";
-          };
+          serviceConfig = ioTier.maintenance;
         };
 
         # Defensive security tools only
