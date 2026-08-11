@@ -59,8 +59,8 @@ cleanup() {
       echo "Rebinding USB controller to xhci_hcd..."
       # Unbind from vfio-pci
       echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
-      # Unload vfio-pci override
-      echo "152d 0567" > /sys/bus/pci/drivers/vfio-pci/remove_id 2>/dev/null || true
+      # Clear driver_override so xhci_hcd can claim it again
+      echo "" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
       # Bind back to xhci_hcd
       echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
       sleep 2
@@ -74,6 +74,16 @@ cleanup() {
 }
 
 trap cleanup EXIT
+
+get_driver() {
+  local addr="$1"
+  local link="/sys/bus/pci/devices/$addr/driver"
+  if [ -L "$link" ]; then
+    basename "$(readlink "$link")"
+  else
+    echo "none"
+  fi
+}
 
 # ── Step 1: Prepare VFIO passthrough ─────────────────────────────────
 
@@ -89,27 +99,31 @@ if ! lsmod | grep -q vfio_pci; then
 fi
 
 # Unbind USB controller from xhci_hcd
-if [ -d "/sys/bus/pci/drivers/xhci_hcd/$USB_CONTROLLER" ]; then
+current="$(get_driver "$USB_CONTROLLER")"
+if [ "$current" = "xhci_hcd" ]; then
   echo "Unbinding $USB_CONTROLLER from xhci_hcd..."
   echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/unbind
   sleep 1
 else
-  echo "Controller already unbound from xhci_hcd."
+  echo "Controller currently bound to: $current (expected xhci_hcd)"
 fi
 
-# Bind to vfio-pci
-if [ ! -d "/sys/bus/pci/drivers/vfio-pci/$USB_CONTROLLER" ]; then
-  echo "Binding $USB_CONTROLLER to vfio-pci..."
-  echo "152d 0567" > /sys/bus/pci/drivers/vfio-pci/new_id 2>/dev/null || true
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/bind 2>/dev/null || true
+# Bind to vfio-pci via driver_override (more reliable than new_id)
+current="$(get_driver "$USB_CONTROLLER")"
+if [ "$current" != "vfio-pci" ]; then
+  echo "Binding $USB_CONTROLLER to vfio-pci via driver_override..."
+  echo "vfio-pci" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
+  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/bind
   sleep 1
 fi
 
 # Verify
-driver=$(basename "$(readlink -f "/sys/bus/pci/devices/$USB_CONTROLLER/driver" 2>/dev/null)" 2>/dev/null || echo "none")
+driver="$(get_driver "$USB_CONTROLLER")"
 echo "Controller driver: $driver"
 if [ "$driver" != "vfio-pci" ]; then
   echo "ERROR: Controller not bound to vfio-pci (got: $driver)"
+  echo "PCI device info:"
+  cat /sys/bus/pci/devices/"$USB_CONTROLLER"/uevent 2>/dev/null
   exit 1
 fi
 echo "VFIO setup OK."

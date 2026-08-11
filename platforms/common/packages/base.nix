@@ -248,6 +248,7 @@ let
       # Nix helper tools
       nh
       statix # Lints and suggestions for Nix code
+      deadnix # Find and remove dead code (unused bindings) in Nix files
 
       # Go testing
       ginkgo # BDD testing framework for Go
