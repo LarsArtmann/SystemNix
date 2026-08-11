@@ -66,6 +66,7 @@ Every change passes through 5 pipeline layers. Each catches a different class of
 - `pat(*metric_name 0*)` = value check (metric exists AND equals 0 — e.g. "no errors")
 - `pat(*<html*)` = HTML body check (web UI is serving HTML)
 - **Liveness vs health**: liveness = "process alive" (`[STATUS] == 200`), health = "functional" (`[BODY] == pat(*metric*)`). Always include BOTH conditions — liveness alone gives false greens
+- **"Intentionally headless" vs "desktop died"**: `niri-health-metrics` emits `niri_graphical_session` (1 if user has a wayland/x11 session via `loginctl`), `niri_desktop_died` (1 if graphical session active but niri not running), and `niri_crash_loop` (1 if `niri_restarts_10m >= 3`). Gatus alerts on `niri_desktop_died 0` and `niri_crash_loop 0` — NOT on `niri_running 0`. This avoids false alerts when the user is SSH-only and hasn't logged in via SDDM
 - **Phantom metrics**: Rust `metrics` crate lazily serializes — a metric that's never incremented never appears in `/metrics`. Always verify the metric exists at runtime via pre-deploy-check.sh section 10
 
 ### Consuming LarsArtmann Flakes (DiscordSync/Monitor365 pattern)
