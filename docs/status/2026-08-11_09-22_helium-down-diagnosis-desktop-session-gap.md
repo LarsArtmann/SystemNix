@@ -2,6 +2,8 @@
 
 **Session scope:** Diagnosing "Why is Helium down?!?" — root cause analysis of inactive `helium.service`.
 
+> **Correction (2026-08-11 09:35):** The recommendation below to enable SDDM auto-login was wrong. The user clarified that SSH-only operation is intentional and must remain valid. The correct fix was implemented in a follow-up report: session-aware monitoring that distinguishes "intentionally headless" from "desktop died". See `2026-08-11_09-35_niri-headless-vs-desktop-died-alerting.md`.
+
 ---
 
 ## a) FULLY DONE
@@ -24,7 +26,7 @@
 
 ## b) PARTIALLY DONE
 
-1. **SDDM auto-login** — Identified that `display-manager.nix` does NOT configure auto-login (`services.displayManager.autoLogin`). The config only sets `defaultSession = "niri"`. This means every reboot requires physical login. Fix is straightforward but NOT implemented — waiting for user approval.
+1. **SDDM auto-login** — Identified that `display-manager.nix` does NOT configure auto-login (`services.displayManager.autoLogin`). The config only sets `defaultSession = "niri"`. ~~The recommended fix was to enable auto-login; this was rejected by the user~~. The user clarified that SSH-only operation is intentional, so the real fix is session-aware monitoring (implemented in the follow-up report).
 
 2. **Load average investigation** — Noted load average of 35-46 with `browser-history-server` at 100% CPU and PMA at 70%. Did not investigate further — out of scope for the Helium diagnosis, but flagged as a concern.
 
@@ -32,7 +34,7 @@
 
 ## c) NOT STARTED
 
-1. **SDDM auto-login implementation** — Not started. Need user approval to enable `services.displayManager.sddm.autoLogin.enable = true` with `autoLogin.user = "lars"`.
+1. ~~SDDM auto-login implementation~~ — Not applicable. User rejected auto-login; monitoring fix implemented instead.
 2. **Post-deploy verification for desktop services** — The pre/post-deploy checks (`scripts/pre-deploy-check.sh`, `scripts/post-deploy-check.sh`) do not verify graphical session activation. A post-deploy check that detects "no graphical session active after deploy" would have caught this immediately.
 3. **Gatus monitoring for niri/Helium liveness** — `niri-health-metrics` collects `niri_running` as a Prometheus metric, but no Gatus alert fires when niri is down for an extended period. The metric exists but the alert doesn't.
 4. **Session-start notification** — No mechanism alerts the user (e.g., via Discord) when the system reboots and no graphical session starts within N minutes.
@@ -41,7 +43,7 @@
 
 ## d) TOTALLY FUCKED UP
 
-1. **No auto-login on a single-user desktop** — This is a personal desktop machine (evo-x2, single user `lars`). Requiring physical SDDM login after every reboot means Helium, DMS, sway-audio-idle-inhibit, swayidle, and all `graphical-session.target` services are down until someone physically logs in. For a homelab that reboots (58 unsafe shutdowns documented), this is operationally fragile. The desktop is effectively dead on every boot until human intervention.
+1. ~~No auto-login on a single-user desktop~~ — *Correction:* auto-login is intentionally disabled. The real gap is that monitoring could not distinguish "no one logged in" from "desktop crashed while logged in". That is fixed in the follow-up report.
 
 2. **No alerting for "desktop is down"** — Gatus monitors 79+ endpoints but NONE of them detect "niri compositor is down" or "graphical session never started." The `niri_running` metric is collected to a textfile but no Gatus endpoint checks it. The system can be in a headless state for 17+ hours (as demonstrated this session) with zero alerts. Monitor365 even logs "no DISPLAY or WAYLAND_DISPLAY found" every 2 seconds — a clear signal — but it's just a WARN log, not an alert.
 
@@ -51,9 +53,9 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Add SDDM auto-login** — Single-user desktop should auto-login. This is the #1 fix. `display-manager.nix` should set `services.displayManager.sddm.autoLogin.enable = true; autoLogin.user = "lars";`.
+1. ~~Add SDDM auto-login~~ — Rejected. Single-user desktop should remain capable of SSH-only/headless operation.
 
-2. **Add Gatus alert for niri liveness** — The `niri_running` Prometheus metric already exists. Add a Gatus endpoint that checks `pat(*niri_running 1*)` on the node-exporter metrics endpoint with a Discord alert. If niri is down for >10 minutes after boot, alert.
+2. **Add Gatus alert for niri liveness** — ~~The `niri_running` Prometheus metric already exists. Add a Gatus endpoint that checks `pat(*niri_running 1*)` on the node-exporter metrics endpoint with a Discord alert. If niri is down for >10 minutes after boot, alert.~~ Implemented in follow-up: session-aware alerts for `niri_desktop_died` and `niri_crash_loop`, plus a non-alerting debug check for `niri_graphical_session`.
 
 3. **Add post-deploy check for graphical session** — `post-deploy-check.sh` should verify that `graphical-session.target` is active when deploying to a desktop system. If not, warn (not fail — headless deploys are valid).
 
@@ -69,7 +71,7 @@
 
 ### Critical (do first)
 
-1. **Enable SDDM auto-login** for user `lars` in `display-manager.nix` — prevents headless state after every reboot
+1. ~~Enable SDDM auto-login for user `lars` in `display-manager.nix` — prevents headless state after every reboot~~ — Rejected by user; implement session-aware monitoring instead (done in follow-up report)
 2. **Add Gatus alert on `niri_running` metric** — Discord alert when niri is down >10 min
 3. **Investigate `browser-history-server` 100% CPU** — new service, possibly stuck in a loop
 4. **Investigate load average 35-46** — abnormally high, WDT crash risk on QLC NAND hardware
@@ -145,7 +147,7 @@
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **Should I enable SDDM auto-login for user `lars`?** — This is a single-user personal desktop, but auto-login has security implications (anyone with physical access gets a desktop session). Is the machine in a physically secure location? Is there full-disk encryption that already gates boot? I cannot assess the physical security posture from the config alone.
+1. ~~Should I enable SDDM auto-login for user `lars`?~~ — **Answered:** Rejected. The user explicitly wants SSH-only/headless operation to remain valid. The implemented fix is session-aware monitoring that distinguishes "intentionally headless" from "desktop died".
 
 2. **Is the machine currently at the SDDM login screen on the physical display, or is the display connected at all?** — The display-watchdog says "display idle/DPMS-off is normal" for the login screen, but I can't tell if a monitor is physically connected and showing the greeter, or if the machine is running headless with no display attached. This affects whether you can just walk over and log in vs. needing to connect a display first.
 

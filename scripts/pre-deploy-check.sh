@@ -196,10 +196,14 @@ if [ -s "$METRICS_FILE" ]; then
   # exist in the to-be-deployed config but not in the currently running system.
   # Remove entries after deploy verification confirms them in /metrics.
   #
-  # Most system_* textfile metrics are now live (verified 2026-08-10). Only
-  # system_service_memory_over_threshold remains — added to system-health.nix
-  # for PMA page-cache death-loop prevention (2026-08-09 crash), not yet deployed.
-  KNOWN_NEW_METRICS="system_service_memory_over_threshold"
+  # Most system_* textfile metrics are now live (verified 2026-08-10).
+  # Remove entries after deploy verification confirms them in /metrics.
+  KNOWN_NEW_METRICS="
+    system_service_memory_over_threshold
+    niri_graphical_session
+    niri_desktop_died
+    niri_crash_loop
+  "
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then
       pass "Metric '$metric' present"
