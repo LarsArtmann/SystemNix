@@ -4517,11 +4517,11 @@
         "samber-do-auditlog": "samber-do-auditlog_8"
       },
       "locked": {
-        "lastModified": 1786373792,
-        "narHash": "sha256-OwJUHPDdCc4bA6B6VqJe9h9w/VBD8jPZR0R4bYl4AcM=",
+        "lastModified": 1786425647,
+        "narHash": "sha256-oKfKKJ/rTCh/BIJe5OFE566A83bEYjF1dYtmb6rHn9U=",
         "owner": "LarsArtmann",
         "repo": "projects-management-automation",
-        "rev": "c65e225270195a110fb4c5482696dc8ad5583b5e",
+        "rev": "020c313f43aed496dd0689a9cb14a6aafe77e926",
         "type": "github"
       },
       "original": {
