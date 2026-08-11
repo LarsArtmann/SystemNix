@@ -155,9 +155,27 @@ _: {
                       TEXTFILE_DIR="/var/lib/prometheus-node-exporter/textfile_collectors"
                       mkdir -p "$TEXTFILE_DIR"
 
+                      # State file for desktop_died grace period — prevents false alerts
+                      # during niri's 2s auto-restart window (RestartSec=2s, StartLimitBurst=3).
+                      # Requires 2 consecutive checks (~60s) of niri_down + session_up before
+                      # setting desktop_died=1. Same pattern as niri-drm-healthcheck.sh.
+                      STATE_DIR="/var/lib/niri-health-metrics"
+                      mkdir -p "$STATE_DIR" 2>/dev/null || true
+                      DOWN_COUNT_FILE="$STATE_DIR/down_count"
+
+                      read_down_count() {
+                        if [ -f "$DOWN_COUNT_FILE" ]; then
+                          cat "$DOWN_COUNT_FILE" 2>/dev/null || echo 0
+                        else
+                          echo 0
+                        fi
+                      }
+
                       running=$(pgrep -x niri >/dev/null 2>&1 && echo 1 || echo 0)
-                      restarts=$(journalctl --grep "Started niri" _SYSTEMD_USER_UNIT=niri.service --since "10 min" --no-pager --output cat 2>/dev/null | wc -l || echo 0)
-                      drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" _SYSTEMD_USER_UNIT=niri.service -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null | wc -l || echo 0)
+                      restarts=$(journalctl --grep "Started niri" _SYSTEMD_USER_UNIT=niri.service --since "10 min" --no-pager --output cat 2>/dev/null | wc -l || true)
+                      restarts="''${restarts:-0}"
+                      drm_errors=$(journalctl --grep "Permission denied|DeviceMissing" _SYSTEMD_USER_UNIT=niri.service -n 11 --since "30 sec ago" --no-pager --output cat 2>/dev/null | wc -l || true)
+                      drm_errors="''${drm_errors:-0}"
 
                       # Detect whether a graphical session is expected (user logged in via SDDM).
                       # This distinguishes "intentionally headless" (SSH-only, no login) from
@@ -180,9 +198,18 @@ _: {
                       # "Desktop died" = user has a graphical session but niri is not running.
                       # This is the only condition that warrants an alert — not "niri down"
                       # when the user simply hasn't logged in (intentionally headless).
+                      # Grace period: 2 consecutive checks (~60s) before alerting, to avoid
+                      # false positives during niri's 2s auto-restart window.
                       desktop_died=0
                       if [ "$graphical_session" -eq 1 ] && [ "$running" -eq 0 ]; then
-                        desktop_died=1
+                        count=$(read_down_count)
+                        count=$((count + 1))
+                        echo "$count" > "$DOWN_COUNT_FILE" 2>/dev/null || true
+                        if [ "$count" -ge 2 ]; then
+                          desktop_died=1
+                        fi
+                      else
+                        rm -f "$DOWN_COUNT_FILE" 2>/dev/null || true
                       fi
 
                       # "Crash loop" = niri restarted 3+ times in 10 min (StartLimitBurst=3).
@@ -207,7 +234,10 @@ _: {
               }
               (harden {
                 MemoryMax = "1G";
-                ReadWritePaths = ["/var/lib/prometheus-node-exporter/textfile_collectors"];
+                ReadWritePaths = [
+                  "/var/lib/prometheus-node-exporter/textfile_collectors"
+                  "/var/lib/niri-health-metrics"
+                ];
               })
             ];
           };

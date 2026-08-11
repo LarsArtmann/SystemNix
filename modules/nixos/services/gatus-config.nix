@@ -610,6 +610,16 @@ _: {
                 ];
               })
               (mkHttpCheck {
+                name = "Niri Graphical Session";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "60s";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*niri_graphical_session*)"
+                ];
+              })
+              (mkHttpCheck {
                 name = "Niri Desktop Died";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";
