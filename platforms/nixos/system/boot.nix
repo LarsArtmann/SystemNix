@@ -2,8 +2,7 @@
   pkgs,
   lib,
   ...
-}:
-let
+}: let
   inherit (import ../../../lib/default.nix lib) ioTier;
 
   # Ceiling for active GPU buffer object allocations — ML model loading needs this high.
@@ -15,8 +14,7 @@ let
   # were NEVER returned to the kernel, causing GPUActive=51+ GiB with only desktop workloads).
   # 24 GiB is enough for smooth desktop compositing; excess freed pages return to kernel's free pool.
   ttmPagePoolSize = 6291456;
-in
-{
+in {
   # Bootloader and Kernel Configuration
   boot = {
     # Systemd boot configuration
@@ -106,20 +104,9 @@ in
       # enabled" without it. Near-zero overhead. eBPF tools (bcc/bpftrace) don't need it
       # but iotop does for SWAPIN%/IO% columns.
       "delayacct"
-      # JMicron JMS567 USB-SATA bridge (152d:0567) — force UAS instead of BOT.
-      # The UAS module has a device-specific alias for this bridge, but usb-storage's
-      # generic BOT catch-all claims it first on firmware >= 0118. The 'i' flag tells
-      # usb-storage to IGNORE this device so UAS binds instead. UAS uses multiple
-      # concurrent commands vs BOT's single-command pipeline.
-      # If drives vanish after adding this, remove the parameter — firmware may not
-      # support UAS despite the alias.
-      "usb-storage.quirks=152d:0567:i"
-      # Disable USB autosuspend for external drives — prevents latency spikes
-      # from device waking up between commands. Old system (private-cloud) used this.
-      "usbcore.autosuspend=-1"
     ];
 
-    binfmt.emulatedSystems = [ "aarch64-linux" ];
+    binfmt.emulatedSystems = ["aarch64-linux"];
 
     # Wipe /tmp on every boot — prevents stale nix build caches from accumulating
     # (2011 go-build dirs / 59 GB observed in a single boot cycle)
@@ -132,6 +119,15 @@ in
     # to unmount /tmp, which fails (busy) → activation exit code 1.
     tmp.useTmpfs = false;
   };
+
+  # USB HDD enclosure tuning — JMicron JMS567 (152d:0567) BOT bridge
+  # Kernel defaults nr_requests=2 for USB mass storage, starving the block layer.
+  # With only 2 pending requests, the USB pipe idles between transfers, throttling
+  # sequential throughput. nr_requests=128 keeps the pipe saturated — drives are
+  # 2x Toshiba MG08ACA16TE (16TB 7200RPM) that deliver ~276 MB/s when unchoked.
+  services.udev.extraRules = ''
+    ACTION=="add|change", SUBSYSTEM=="block", ATTRS{idVendor}=="152d", ATTRS{idProduct}=="0567", ATTR{queue/nr_requests}="128"
+  '';
 
   # Static /tmp tmpfs mount with explicit 48 GiB size cap.
   # MUST use systemd.mounts (NOT fileSystems) so the unit is in the Nix store
@@ -209,7 +205,7 @@ in
   systemd = {
     services = {
       "sshd".serviceConfig = lib.mkMerge [
-        { OOMScoreAdjust = -1000; }
+        {OOMScoreAdjust = -1000;}
         ioTier.interactive
       ];
       "systemd-journald".serviceConfig.OOMScoreAdjust = -500;
@@ -229,8 +225,8 @@ in
       # not a /proc/sys/ sysctl, so it can't go in boot.kernel.sysctl.
       mglru-thrash-protection = {
         description = "Enable MGLRU thrashing prevention (min_ttl_ms=1000)";
-        wantedBy = [ "multi-user.target" ];
-        after = [ "systemd-modules-load.service" ];
+        wantedBy = ["multi-user.target"];
+        after = ["systemd-modules-load.service"];
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
@@ -243,11 +239,11 @@ in
 
     user.services = {
       "dms".serviceConfig = lib.mkMerge [
-        { OOMScoreAdjust = -500; }
+        {OOMScoreAdjust = -500;}
         ioTier.desktop
       ];
       "pipewire".serviceConfig = lib.mkMerge [
-        { OOMScoreAdjust = -500; }
+        {OOMScoreAdjust = -500;}
         ioTier.desktop
       ];
     };
