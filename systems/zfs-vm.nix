@@ -7,7 +7,7 @@
 # #
 # # Build:  nix build .#nixosConfigurations.zfs-vm.config.system.build.vm
 # # Run:    sudo ./result/bin/run-nixos-vm
-# # Access: serial console (telnet) or ssh root@localhost -p 2222
+# # Access: serial console or ssh root@localhost -p 2222
 { inputs }:
 let
   # The USB controller hosting the JMicron JMS567 bridge (bus 8).
@@ -66,7 +66,10 @@ inputs.nixpkgs.lib.nixosSystem {
           qemu.options = [
             # VFIO PCIe passthrough of the entire USB controller.
             # Host must unbind xhci_hcd and bind vfio-pci before VM start.
+            # See scripts/zfs-vm-survey.sh for turnkey setup + data enumeration.
             "-device vfio-pci,host=${usbController}"
+            # Headless mode — run in background, access via SSH only
+            "-display none"
           ];
         };
       }
