@@ -29,7 +29,6 @@ lib.filterAttrs (_: v: v != null) {
   # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
   mr-sync = flakePkg inputs.mr-sync;
   project-meta = flakePkg inputs.project-meta;
-  # TEMP: commented out — PMA build failure blocks deploy (mkPreparedSource replace directive issue)
-  # projects-management-automation = flakePkg inputs.projects-management-automation;
+  projects-management-automation = flakePkg inputs.projects-management-automation;
   todo-list-ai = flakePkg inputs.todo-list-ai;
 }

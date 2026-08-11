@@ -615,7 +615,7 @@ in
       # See modules/nixos/services/projects-management-automation.nix for the
       # env wiring; see go-commit pkg/commit/git/gogit.go for the resolver.
       projects-management-automation = {
-        enable = false; # TEMP: disabled to deploy USB UAS kernel params (pre-existing PMA build failure)
+        enable = true;
         paths = [ "/home/${config.users.primaryUser}/projects" ];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"
