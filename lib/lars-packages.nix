@@ -21,7 +21,9 @@ lib.filterAttrs (_: v: v != null) {
   go-auto-upgrade = null;
   go-humanize-linter = flakePkg inputs.go-humanize-linter;
   go-structure-linter = flakePkg inputs.go-structure-linter;
-  golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
+  # Temporarily disabled: golangci-lint-auto-configure has incomplete vendoring
+  # with local deps (gogenfilter). Needs upstream fix in the repo.
+  # golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
   hierarchical-errors = flakePkg inputs.hierarchical-errors;
   library-policy = flakePkg inputs.library-policy;
   md-go-validator = flakePkg inputs.md-go-validator;

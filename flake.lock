@@ -554,11 +554,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786427583,
-        "narHash": "sha256-kBy1jOIVGlSbKwdOHGQnw+Qwn5rk83vpMNBeVee0fMI=",
+        "lastModified": 1786451795,
+        "narHash": "sha256-oNw8ddkFAZ8LWll05YTL0ftEQBSOVRk02bZtkFsUedQ=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "01ee5d8fbfb33fbfe1fd4699e84d08a0a5c187c0",
+        "rev": "c432b20c1400eb142f46f9778734ba115146b2eb",
         "type": "github"
       },
       "original": {
@@ -3664,11 +3664,11 @@
     "gogenfilter_8": {
       "flake": false,
       "locked": {
-        "lastModified": 1786374347,
-        "narHash": "sha256-/Mq7xdR0xdqqFcvxBpUnJPtAxrpOyc95+KsFc0zag0M=",
+        "lastModified": 1786421025,
+        "narHash": "sha256-ocW+7A3ZrUXk40jhrY3kVe7EqLndoZRmn8vgyH1grRY=",
         "ref": "master",
-        "rev": "ac2e9d221de0faad15536db9ce3bffa17ebb064e",
-        "revCount": 848,
+        "rev": "386909a2dc3bcda28067b6b51b54175de157129b",
+        "revCount": 855,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/gogenfilter"
       },
@@ -3723,11 +3723,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786426835,
-        "narHash": "sha256-Vh8gHWgDVKLG1npRM/XI/LnyvY9tvVVXxVMSEo6j5vs=",
+        "lastModified": 1786452204,
+        "narHash": "sha256-rZhPN4hpYuvTg4n4rxam2TGbyPwiGzxHEFc1uK0tj3Q=",
         "owner": "LarsArtmann",
         "repo": "golangci-lint-auto-configure",
-        "rev": "02f8e78ea2196d9ef3e493b8c8a0a51afa521fad",
+        "rev": "a30a46502339c05dd297cf0fd39583ee5ee1f0d4",
         "type": "github"
       },
       "original": {
@@ -3828,11 +3828,11 @@
         "samber-do-auditlog": "samber-do-auditlog_5"
       },
       "locked": {
-        "lastModified": 1786381276,
-        "narHash": "sha256-86z8L2k5/E4tSXSQVoMZecIjNOE0YpQdy5qukbEQy8o=",
+        "lastModified": 1786451200,
+        "narHash": "sha256-BnFsmVzamZG0adeNvZCLIR1oSYNM7f8SxSQ2wrcG8Oc=",
         "owner": "LarsArtmann",
         "repo": "hierarchical-errors",
-        "rev": "3c34763554feb77ac5d633930c2b2e0cf49332c1",
+        "rev": "5ab1994dc7b15320f081a0ed86fd8ebe75dd4547",
         "type": "github"
       },
       "original": {
@@ -4631,11 +4631,11 @@
         "project-discovery-sdk": "project-discovery-sdk_3"
       },
       "locked": {
-        "lastModified": 1786426843,
-        "narHash": "sha256-7yglWa8RSpQXusKCebAcerAeDBF/Zyy0OCOjJAiXpAg=",
+        "lastModified": 1786452206,
+        "narHash": "sha256-Eifk9pZQsvnZc0O+deX53IbJWHzIzWTaUWog/Ae7Y8g=",
         "owner": "LarsArtmann",
         "repo": "project-meta",
-        "rev": "95f905113526caa8624ff49ec533838c3a182f3e",
+        "rev": "01e212f8d87d565eeefce130c532c4ad14899378",
         "type": "github"
       },
       "original": {
