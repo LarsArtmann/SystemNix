@@ -264,7 +264,8 @@
     };
     go-nix-helpers = {
       url = "github:LarsArtmann/go-nix-helpers?ref=master";
-      flake = false;
+      # project-meta consumes go-nix-helpers.flakeModules.go-standard, so this
+      # must remain a flake input even though Go libraries are the primary use.
     };
 
     # golangci-lint-auto-configure — auto-configure golangci-lint for Go projects
