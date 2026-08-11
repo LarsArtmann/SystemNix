@@ -195,6 +195,11 @@ in
             services.clickhouse.enable = true;
             services.clickhouse.extraServerConfig = ''
               <clickhouse>
+                <background_pool_size>2</background_pool_size>
+                <background_schedule_pool_size>8</background_schedule_pool_size>
+                <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
+                <background_move_pool_size>2</background_move_pool_size>
+                <background_fetches_pool_size>1</background_fetches_pool_size>
                 <keeper_server>
                   <tcp_port>${toString ports.signoz-clickhouse-keeper}</tcp_port>
                   <server_id>1</server_id>
@@ -214,6 +219,15 @@ in
                     <port>${toString ports.signoz-clickhouse-keeper}</port>
                   </node>
                 </zookeeper>
+              </clickhouse>
+            '';
+            services.clickhouse.extraUsersConfig = ''
+              <clickhouse>
+                <profiles>
+                  <default>
+                    <max_threads>2</max_threads>
+                  </default>
+                </profiles>
               </clickhouse>
             '';
             systemd.tmpfiles.rules = [

@@ -140,7 +140,7 @@ _A brutally honest audit of every feature the project actually has._
 
 | Program          | Status | Notes                                                                                                                                                      |
 | ---------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Git              | ✅     | GPG signing, max compression, SSH multiplexing, HTTPS→SSH rewrite, Git Town aliases, LFS, `.crush` in global ignores                                       |
+| Git              | ✅     | GPG signing, SSH multiplexing, HTTPS→SSH rewrite, Git Town aliases, LFS, `.crush` in global ignores                                                        |
 | Tmux             | ✅     | Resurrect + yank plugins, custom SystemNix dev session, vi copy-mode, Catppuccin-themed status bar                                                         |
 | Fzf              | ✅     | Fish/Zsh/Bash integration, reverse layout, rg-powered, colorScheme-driven colors                                                                           |
 | Pre-commit hooks | ✅     | 10 hooks: gitleaks, trailing-whitespace, deadnix, statix, alejandra, nix-check, flake-lock-validate, shellcheck, check-merge-conflicts, protect-home-audit |

@@ -18,11 +18,12 @@
         email = "git@lars.software";
       };
 
+      # Deliberately NOT setting core.compression — git default (zlib 6) is the
+      # optimal speed/size tradeoff. Level 9 was 3-10x slower on every loose
+      # object write for ~5% smaller objects. Do NOT re-add without benchmarks.
+      # pack.compression inherits from core.compression when unset — this is fine.
       core = {
         autocrlf = "input";
-        compression = 9;
-        packedGitLimit = "512m";
-        packedGitWindowSize = "512m";
         quotePath = false;
         editor = "code --wait";
       };
@@ -67,13 +68,6 @@
 
       init = {
         defaultBranch = "master";
-      };
-
-      gc = {
-        auto = 6700;
-        autopacklimit = 50;
-        autodetach = true;
-        pruneexpire = "2 weeks ago";
       };
 
       credential = {

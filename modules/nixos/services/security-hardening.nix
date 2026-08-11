@@ -85,7 +85,7 @@ _: {
 
           pkgs.lsof
           pkgs.inotify-tools
-          pkgs.iotop
+          pkgs.iotop-c
           pkgs.sysstat # iostat -dx 1 — per-device I/O stats
           pkgs.bcc # biotop, biosnoop, biolatency — eBPF per-process block I/O tools (work without CONFIG_TASK_DELAY_ACCT)
           pkgs.bpftrace # eBPF tracing language for custom I/O one-liners

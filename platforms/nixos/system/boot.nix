@@ -383,14 +383,26 @@ in
   systemd.services.fstrim.serviceConfig = ioTier.maintenance;
 
   # ZRAM: compressed swap emergency buffer on unified memory APU.
-  # ~17% = ~16 GiB virtual device. zstd compresses ~2.7x, so 16 GiB of swap
-  # costs ~6 GiB of physical RAM for the compressed data. GPU and CPU share
+  # ~17% = ~16 GiB virtual device. zstd(level=1) compresses ~4x on real swap
+  # data, so 16 GiB of swap costs ~4 GiB of physical RAM. GPU and CPU share
   # this RAM, so AI workloads compete directly with system processes.
   # swappiness=10 ensures the kernel uses swap before OOM kills.
   # swappiness=1 caused the 2026-05-25 OOM crash (kernel killed user@1000 processes
   # instead of swapping out nix-daemon build memory).
+  #
+  # level=1 (not the kernel default of 3): zram compresses individual 4 KiB
+  # pages synchronously in the reclaim path. At 4 KiB block sizes, higher zstd
+  # levels can't find enough patterns to justify their CPU cost. Benchmark on
+  # 256 MiB of representative data (binary code, text, zeros, structures):
+  #   L1: 2.85x ratio, 373 MiB/s compress  (1.7% worse ratio than L3)
+  #   L3: 2.90x ratio, 334 MiB/s compress  (kernel default)
+  #   L5: 2.96x ratio, 172 MiB/s compress  (48% slower for +2% ratio)
+  # On the live 4.2x ratio, L1 costs ~60 MiB extra physical RAM across a full
+  # 16 GiB device — negligible. The 11.5% compress speed gain compounds under
+  # memory pressure (swap-in/swap-out is synchronous and blocks the reclaim path).
   zramSwap = {
     enable = true;
     memoryPercent = 17;
+    algorithm = "zstd(level=1)";
   };
 }
