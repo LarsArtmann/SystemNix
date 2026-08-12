@@ -147,6 +147,8 @@ Verified: `nix flake check --no-build` passes.
 
 ## f) Next 50 Things to Get Done
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Immediate (blocks deploy)
 
 1. **Deploy the fix** — `nix run .#deploy` and verify `niri-health-metrics.service` starts cleanly

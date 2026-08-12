@@ -182,6 +182,8 @@ SystemNix's PMA input had overrides for `treefmt-nix`, `systems`, and `go-nix-he
 
 ## F) Next 50 Things To Do
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Immediate (Do These First)
 
 1. **Deploy the fix** — `nix run .#deploy` — the system is running on borrowed time
