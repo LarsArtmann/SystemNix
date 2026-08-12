@@ -87,6 +87,8 @@
         systemd.services.browser-history = {
           inherit onFailure;
           restartTriggers = [serverPkg];
+          startLimitBurst = 3;
+          startLimitIntervalSec = 600;
 
           # Agent token from sops. Systemd reads EnvironmentFile as root,
           # so root-owned sops template works for the DynamicUser server.
@@ -98,8 +100,6 @@
                 "LOG_LEVEL=debug"
               ];
               RestartSec = lib.mkForce "2min";
-              StartLimitBurst = lib.mkForce 3;
-              StartLimitIntervalSec = lib.mkForce 600;
             }
             ioTier.background
           ];
@@ -236,14 +236,14 @@
         systemd.services.browser-history-agent = {
           after = ["browser-history.service"];
           wants = ["browser-history.service"];
+          startLimitBurst = 2;
+          startLimitIntervalSec = 1800;
 
           serviceConfig = lib.mkMerge [
             {
               ExecStartPre = "+${lib.getExe waitServerReady}";
               TimeoutStartSec = "2min";
               RestartSec = lib.mkForce "5min";
-              StartLimitBurst = lib.mkForce 2;
-              StartLimitIntervalSec = lib.mkForce 1800;
             }
           ];
         };

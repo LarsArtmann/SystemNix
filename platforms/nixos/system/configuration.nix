@@ -332,7 +332,7 @@ in
       };
       steam-config.enable = true;
       discordsync = {
-        enable = true; # Discord backup service
+        enable = false; # TEMPORARILY DISABLED: vendorHash mismatch (stale FOD cache)
         gcsBucket = "discordsync-backup";
       };
 
@@ -501,8 +501,10 @@ in
       };
 
       # Monitor365 unified agent — system + desktop collectors
+      # TEMPORARILY DISABLED: wireguard-collector Cargo.toml missing (Rust workspace issue)
+      # Re-enable after fixing upstream Monitor365 build
       monitor365 = {
-        enable = true;
+        enable = false;
         settings.collectors = {
           # Headless collectors
           network.enabled = lib.mkDefault true;
@@ -529,8 +531,9 @@ in
       };
 
       # Monitor365 server (dashboard + API) runs on the same machine
+      # TEMPORARILY DISABLED: wireguard-collector Cargo.toml missing (Rust workspace issue)
       monitor365-server = {
-        enable = true;
+        enable = false;
         # DuckDB is the sole store on local-only BTRFS (#1 data-loss risk).
         # Local nightly backup is the prerequisite for any future offsite sync.
         backup = {
@@ -615,7 +618,7 @@ in
       # See modules/nixos/services/projects-management-automation.nix for the
       # env wiring; see go-commit pkg/commit/git/gogit.go for the resolver.
       projects-management-automation = {
-        enable = true;
+        enable = false; # TEMPORARILY DISABLED: go-cqrs-lite/codec/v4 private repo FOD rebuild needed
         paths = [ "/home/${config.users.primaryUser}/projects" ];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"

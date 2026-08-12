@@ -157,12 +157,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1786465304,
-        "narHash": "sha256-aSYfuT/cr9s3IqhtJ8hiYl25nlsv0F0lPULXgN8SKZc=",
-        "owner": "LarsArtmann",
-        "repo": "browser-history",
-        "rev": "2b75858767a2a1d868f7a8276c24822e1bd126b4",
-        "type": "github"
+        "lastModified": 1786487179,
+        "narHash": "sha256-KE9rXCHJvZddw1qh9xQLeO6jXQZ4+ZXa4RHJt2eFEhg=",
+        "path": "/home/lars/projects/browser-history",
+        "type": "path"
       },
       "original": {
         "owner": "LarsArtmann",
@@ -1766,11 +1764,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786483566,
-        "narHash": "sha256-MrD32Di4Ru9OglDWNJnqGxhDFUQBlwuNprqNDiTdBKE=",
+        "lastModified": 1786486089,
+        "narHash": "sha256-5cR3p33r748965Jf35soD2h4UTr8Y4qpKN73bCiExfk=",
         "ref": "master",
-        "rev": "dba3c7c44bae820dc1dd45cef47a9828df012a21",
-        "revCount": 5554,
+        "rev": "96b1c0d95f4d6242dbb3cb4c1ac8aca5293bdc71",
+        "revCount": 5556,
         "type": "git",
         "url": "ssh://git@github.com/LarsArtmann/go-cqrs-lite"
       },
