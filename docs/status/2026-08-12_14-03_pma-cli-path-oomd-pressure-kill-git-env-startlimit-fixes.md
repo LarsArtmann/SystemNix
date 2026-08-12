@@ -33,7 +33,7 @@ User ran `nh os switch` and observed:
 
 | # | Task | Status | What Remains |
 |---|------|--------|--------------|
-| 1 | **Prevent PMA from being OOM-killed during discovery** | **WRONG FIX APPLIED** | `ManagedOOMMemoryPressure = "auto"` was set, but `auto` is the DEFAULT behavior when oomd is enabled — it does NOT exempt PMA. See section D. |
+| 1 | **Prevent PMA from being OOM-killed during discovery** | **FIXED** | Changed `ManagedOOMMemoryPressure = "auto"` (no-op default) to `ManagedOOMPreference = "omit"` (actual oomd exemption). Verified via `nix eval`, `nix fmt`, `nix flake check --no-build` all pass. |
 | 2 | **`nix flake check --no-build`** | PASS | But changes not deployed to runtime. |
 | 3 | **`nix build .#projects-management-automation`** | PASS | But not verified at runtime whether the CLI is actually on PATH after deploy. |
 
@@ -60,22 +60,18 @@ User ran `nh os switch` and observed:
 
 ## D. TOTALLY FUCKED UP
 
-### D1. `ManagedOOMMemoryPressure = "auto"` IS A NO-OP
+### D1. `ManagedOOMMemoryPressure = "auto"` IS A NO-OP — **FIXED**
 
-**This is the critical mistake.** I set `ManagedOOMMemoryPressure = "auto"` thinking it would exempt PMA from oomd's memory-pressure killer. It does NOT.
+**This was the critical mistake.** I initially set `ManagedOOMMemoryPressure = "auto"` thinking it would exempt PMA from oomd's memory-pressure killer. It does NOT.
 
 From systemd.resource-control(5):
 - `ManagedOOMMemoryPressure = auto` — oomd **will** kill processes when pressure thresholds are met (this is the DEFAULT when oomd is enabled)
 - `ManagedOOMMemoryPressure = kill` — oomd will kill regardless of pressure
 - There is NO "off" or "disable" value for this directive
 
-`auto` is already the implicit default. Setting it explicitly changes nothing. PMA will still be killed by oomd on the next discovery cycle.
+`auto` is already the implicit default. Setting it explicitly changes nothing.
 
-**The correct fix is `ManagedOOMPreference = "omit"`**, which tells oomd to NEVER kill processes in this cgroup. This is documented in systemd.resource-control(5) under `ManagedOOMPreference=`:
-- `avoid` — oomd avoids killing unless no other option
-- `omit` — oomd never kills this service
-
-This means **the primary problem (PMA OOM-killed every ~2min) is NOT FIXED**. The fix needs to be changed from `ManagedOOMMemoryPressure = "auto"` to `ManagedOOMPreference = "omit"` before deploying.
+**FIX APPLIED:** Changed to `ManagedOOMPreference = "omit"`, which tells oomd to NEVER kill processes in this cgroup. Comment updated to document why. Verified via `nix eval` (returns `"omit"`), `nix fmt` clean, `nix flake check --no-build` all passed.
 
 ### D2. First instinct was "throw more memory at it"
 
@@ -252,7 +248,7 @@ The downstream patches work but create a maintenance burden — they override up
 | File | Change |
 |------|--------|
 | `lib/lars-packages.nix:34-35` | Uncommented `projects-management-automation` (was "TEMPORARILY DISABLED") |
-| `modules/nixos/services/projects-management-automation.nix:62-92` | Added `ManagedOOMMemoryPressure = "auto"` (**WRONG — needs to be `ManagedOOMPreference = "omit"`**), added quoted GIT_*_NAME env overrides, removed duplicate GOMEMLIMIT |
+| `modules/nixos/services/projects-management-automation.nix:62-92` | Added `ManagedOOMPreference = "omit"` (oomd exemption for burst workloads), added quoted GIT_*_NAME env overrides, removed duplicate GOMEMLIMIT |
 | `modules/nixos/services/overview.nix:104-108` | Added `serviceConfig.StartLimitBurst = lib.mkForce null` and `serviceConfig.StartLimitIntervalSec = lib.mkForce null` |
 | `platforms/nixos/system/configuration.nix:631-632` | Added `goMemLimit = "6GiB"` |
 
