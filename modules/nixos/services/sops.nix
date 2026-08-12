@@ -255,6 +255,11 @@ in
                 group = "root";
                 restartUnits = [ "browser-history.service" ];
               } [ "browser_history_agent_token" ]
+            )
+            // lib.optionalAttrs (svcEnabled "dns-blocker") (
+              mkSecrets "dnsblockd-auth.yaml" {
+                restartUnits = [ "dnsblockd.service" ];
+              } [ "dnsblockd_auth_token" ]
             );
 
           templates = {
@@ -399,6 +404,18 @@ in
               ];
               content = lib.generators.toKeyValue { } {
                 BROWSER_HISTORY_AGENT_TOKEN = config.sops.placeholder.browser_history_agent_token;
+              };
+            };
+          }
+          // lib.optionalAttrs (svcEnabled "dns-blocker") {
+            # dnsblockd reads DNSBLOCKD_AUTH_TOKEN via koanf env provider,
+            # which overrides the auth_token config key. This keeps the token
+            # out of the nix-store YAML (world-readable) and gates the
+            # dashboard's /stats endpoint behind token auth.
+            "dnsblockd-auth-env" = {
+              restartUnits = [ "dnsblockd.service" ];
+              content = lib.generators.toKeyValue { } {
+                DNSBLOCKD_AUTH_TOKEN = config.sops.placeholder.dnsblockd_auth_token;
               };
             };
           };

@@ -686,6 +686,7 @@ _: {
                     # from 600M base), but MemoryMax kills first. Fix upstream by
                     # dropping high-cardinality labels from telemetry.go.
                     Environment = [ "GOMEMLIMIT=1500MiB" ];
+                    EnvironmentFile = [ "/run/secrets/rendered/dnsblockd-auth-env" ];
                     ExecStartPre = [
                       "+-${lib.getExe initScript}"
                       "${lib.getExe secretCheck}"
