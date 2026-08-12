@@ -172,6 +172,8 @@ I changed 4 `.nix` files (real code, not docs). The skill says done items go to 
 ---
 
 ## f) Up to 50 Things to Get Done Next
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Critical — Fix What I Fucked Up This Session
 

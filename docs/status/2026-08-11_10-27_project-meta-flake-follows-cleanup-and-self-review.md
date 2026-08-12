@@ -48,6 +48,8 @@
 
 ## c) NOT STARTED
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 1. **Apply the same follows-cleanup pattern to other migrated inputs.**
    - Only done reactively for `project-meta`. Others will break one-by-one as their upstreams migrate to `go-standard` unless audited.
 

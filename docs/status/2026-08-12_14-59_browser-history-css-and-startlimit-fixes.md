@@ -132,6 +132,8 @@
 ---
 
 ## f) NEXT STEPS (up to 50)
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Immediate (this session context)
 1. **User hard-refreshes** `https://history.home.lan/register` and confirms page is styled ✓

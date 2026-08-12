@@ -141,6 +141,8 @@ Session had three phases: (1) UAS vs BOT investigation on the JMicron JMS567 USB
 ---
 
 ## F) NEXT TASKS (Prioritized)
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Critical (Before Reboot)
 1. Commit the uncommitted `flake.lock` (PMA bump)

@@ -135,6 +135,8 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 ---
 
 ## f) NEXT 50 THINGS TO GET DONE
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Critical (do now)
 1. Deploy the reverted config to clear `regenerateSecretsFor = ["browser-history"]` from the running system

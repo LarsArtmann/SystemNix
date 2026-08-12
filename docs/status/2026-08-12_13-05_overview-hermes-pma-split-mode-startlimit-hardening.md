@@ -128,7 +128,9 @@ auto-commit daemon) so overview could work without re-introducing the
 
 ---
 
-## 4. What should still be improved / next steps
+## 4. What should still be improved
+
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through. / next steps
 
 1. **Runtime verification** (next deploy): confirm `hermes.service` is
    healthy, `overview.service` is reachable, and `project-discovery` socket

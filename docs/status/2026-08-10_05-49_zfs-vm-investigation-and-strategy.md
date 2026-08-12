@@ -136,6 +136,8 @@ The simplest fix (native ZFS on host) was NOT attempted.
 ---
 
 ## f) NEXT STEPS (up to 50)
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Immediate — Access Strategy (highest impact first)
 

@@ -157,7 +157,9 @@ away** from succeeding.
 
 ---
 
-## f) NEXT TASKS (up to 50)
+## f) NEXT TASKS
+
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through. (up to 50)
 
 ### Critical (block deploy)
 1. Finish deploy attempt 6 (was interrupted mid-build)
@@ -166,7 +168,7 @@ away** from succeeding.
 4. Verify the `LOG_LEVEL=debug` output appears in journalctl
 
 ### High priority (fix the actual bug)
-5. Read the debug log output from browser-history server to identify the real
+5. ~~Read the debug log output from browser-history server to identify the real error cause~~ done (root-caused to SQLite DSN mismatch) from browser-history server to identify the real
    error cause behind `server.create_user_service`
 6. Fix the upstream browser-history/cqrs-htmx projection replay bug
 7. Build and push the browser-history debug logging change (repair go.work first)

@@ -181,6 +181,8 @@ The original FEATURES.md used `grep -c 'name ='` (gives 81). I changed it to `gr
 ---
 
 ## f) Up to 50 Things to Get Done Next
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Critical — Fix What I Fucked Up
 

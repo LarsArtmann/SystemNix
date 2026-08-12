@@ -63,10 +63,10 @@ cascading memory/IO pressure that froze the kernel.
 
 ## Remaining Work
 
-1. Push go-cqrs-lite vendorHash fix (fix pre-commit CI failures)
-2. Update SystemNix flake input for go-cqrs-lite
-3. Deploy SystemNix crash-loop backoff
-4. Debug server crash from LOG_LEVEL=debug output
-5. Fix upstream browser-history crash
+1. ~~Push go-cqrs-lite vendorHash fix~~ done (fix pre-commit CI failures)
+2. ~~Update SystemNix flake input for go-cqrs-lite~~ done
+3. ~~Deploy SystemNix crash-loop backoff~~ done at `a941f88d`
+4. ~~Debug server crash from LOG_LEVEL=debug output~~ done (root-caused to SQLite DSN mismatch)
+5. ~~Fix upstream browser-history crash~~ done at `a1223f22`
 6. Add system-wide crash-loop circuit breaker
 7. Update AGENTS.md with this incident

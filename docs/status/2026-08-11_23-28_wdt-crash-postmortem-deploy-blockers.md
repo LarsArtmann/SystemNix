@@ -108,8 +108,8 @@ The system crashed at 20:30 via sp5100-tco hardware watchdog reset. I investigat
 
 ### Immediate (do NOW — system still at risk)
 
-1. **Stop browser-history-agent crash loop** — `systemctl stop browser-history-agent.service` (520 restarts, still going)
-2. **Re-attempt deploy** with system-health fix + local browser-history override
+1. ~~**Stop browser-history-agent crash loop**~~ done at `a941f88d` — `systemctl stop browser-history-agent.service` (520 restarts, still going)
+2. ~~**Re-attempt deploy**~~ done with system-health fix + local browser-history override
 3. **Verify deploy succeeded** — check exit code, check `browser-history.service` starts clean
 4. **Verify browser-history server starts without `create_user_service` error** — DSN fix should resolve it
 5. **Verify `system_health.prom` has no `[not set]` values** — after deploy + one collector cycle

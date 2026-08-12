@@ -155,6 +155,8 @@
 ---
 
 ## f) NEXT STEPS (up to 50)
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Immediate — Access & Data (highest impact first)
 

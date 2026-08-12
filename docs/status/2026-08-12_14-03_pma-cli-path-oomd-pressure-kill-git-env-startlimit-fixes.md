@@ -143,11 +143,13 @@ When PMA was disabled in `configuration.nix` (prior session), someone also comme
 
 ---
 
-## F. Next Steps (Up to 50)
+## F. Next Steps
+
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through. (Up to 50)
 
 ### Critical — Do Before Deploying
 
-1. **Fix the oomd exemption**: Change `ManagedOOMMemoryPressure = "auto"` to `ManagedOOMPreference = "omit"` in `projects-management-automation.nix:81`
+1. ~~**Fix the oomd exemption**~~ done at `ef863c26`: Change `ManagedOOMMemoryPressure = "auto"` to `ManagedOOMPreference = "omit"` in `projects-management-automation.nix:81`
 2. **Update the comment** above that line to correctly explain `ManagedOOMPreference`
 3. **Run `nix fmt`** on the three changed files
 4. **Run `nix flake check --no-build`** to confirm the fix

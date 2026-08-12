@@ -132,6 +132,8 @@ The flake.lock is now clean (`type: github`, no local path override). Both upstr
 
 ## f) UP TO 50 THINGS TO DO NEXT
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Immediate (do NOW — system at risk)
 
 1. **Free disk space** — 93% on QLC. Delete old BTRFS snapshots: `sudo btrbk prune` or `sudo btrfs subvolume list /` + delete old ones. This is the #1 priority.

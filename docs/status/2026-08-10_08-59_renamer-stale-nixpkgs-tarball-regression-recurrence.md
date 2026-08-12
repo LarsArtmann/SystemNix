@@ -83,6 +83,8 @@
 6. **No CI check for missing follows** — A simple grep-based check could verify every input in flake.nix that could have `inputs.nixpkgs.follows` actually does. This would have prevented the regression entirely
 
 ## f) Up to 50 Things to Get Done Next
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Immediate (blocks renamer.home.lan from working)
 

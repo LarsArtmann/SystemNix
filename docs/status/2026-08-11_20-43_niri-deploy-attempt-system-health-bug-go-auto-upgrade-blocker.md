@@ -95,12 +95,14 @@ I spent time investigating the `go-auto-upgrade` lock node (v0.3.0, `flake: fals
 
 ---
 
-## f) NEXT STEPS (Prioritized)
+## f) NEXT STEPS
+
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through. (Prioritized)
 
 ### CRITICAL — Do First
 
-1. **Re-apply the `system-health.nix` `[not set]` fix** — Add `[ "$mem_bytes" = "[not set]" ] && mem_bytes=0` after line 289. This is the #1 priority — it's a production monitoring outage.
-2. **Audit ALL `systemctl show --value` calls in system-health.nix** — There may be other places where `[not set]` leaks through (CPU%, nrestarts, etc.). Apply the same guard everywhere.
+1. ~~**Re-apply the `system-health.nix`~~ done `[not set]` fix** — Add `[ "$mem_bytes" = "[not set]" ] && mem_bytes=0` after line 289. This is the #1 priority — it's a production monitoring outage.
+2. ~~**Audit ALL `systemctl show --value`~~ done calls in system-health.nix** — There may be other places where `[not set]` leaks through (CPU%, nrestarts, etc.). Apply the same guard everywhere.
 3. **Add Gatus check for `node_textfile_scrape_error`** — Alert on Discord when non-zero. This would have caught this bug immediately.
 4. **Run `nix fmt`** — Verify formatting is clean.
 5. **Run `nix flake check --no-build`** — Verify eval passes.

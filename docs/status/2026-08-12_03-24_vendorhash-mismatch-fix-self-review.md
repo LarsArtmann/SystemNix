@@ -113,6 +113,8 @@ Claimed success for browser-history without ever building it. Only ran a dry-run
 ---
 
 ## f) Up to 50 Things to Do Next
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Critical (blocks deploy)
 1. **Fix browser-history flake.lock contamination** — revert `type: "path"` back to `type: "github"` with the correct rev (`dc3de07` or current master tip)

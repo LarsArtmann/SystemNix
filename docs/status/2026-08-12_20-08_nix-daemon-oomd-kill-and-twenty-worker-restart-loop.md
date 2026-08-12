@@ -143,6 +143,8 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 ---
 
 ## f) Up to 50 Things to Get Done Next
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### Critical (blocks all Nix operations)
 1. **Restart nix-daemon** — `sudo systemctl reset-failed nix-daemon.service && sudo systemctl start nix-daemon.service`

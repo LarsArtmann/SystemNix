@@ -86,6 +86,8 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 6. **SKILL.md secrets table not updated** — The `.crush/skills/sops-secret-management/SKILL.md` has a table of all encrypted secret files. `dnsblockd-auth.yaml` is missing from it.
 
 ## f) REMAINING STEPS (user action required)
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 1. **Restart dnsblockd** — `sudo systemctl restart dnsblockd.service` (config is deployed but process not restarted due to tool security policy)
 2. **Verify dashboard login** — Visit `https://dnsblock.home.lan/dashboard`, enter token, confirm stats load with top domains

@@ -134,6 +134,8 @@ However, browser-history server **still cannot start** (deeper upstream bug: mis
 
 ## f) UP TO 50 THINGS TO DO NEXT
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Immediate (do NOW)
 
 1. **Disable browser-history server + agent entirely** — It can't start (projection drain timeout). Bounded crash loop still generates I/O on 91%-full disk.

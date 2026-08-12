@@ -161,6 +161,8 @@ All verification was deferred to "the user should check." This is unacceptable f
 ---
 
 ## f) NEXT STEPS (prioritized, up to 50)
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 
 ### CRITICAL — User must do these
 
