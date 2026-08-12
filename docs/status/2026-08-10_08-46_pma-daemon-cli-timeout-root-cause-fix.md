@@ -102,9 +102,9 @@ The running `pma[1418]` process started at 03:03 with the old SDK code. The fix 
 
 ## c) NOT STARTED
 
-1. **SDK tag/release** — No `v0.18.1` or `v0.19.0` tag pushed
-2. **PMA vendorHash update** — PMA's `go.sum` still references SDK `v0.18.0`
-3. **SystemNix deploy** — Flake not bumped, daemon not restarted with new code
+1. ~~**SDK tag/release** — No `v0.18.1` or `v0.19.0` tag pushed~~ done at `3ef0f26a`
+2. ~~**PMA vendorHash update** — PMA's `go.sum` still references SDK `v0.18.0`~~ done at `3ef0f26a`
+3. ~~**SystemNix deploy** — Flake not bumped, daemon not restarted with new code~~ done at `3ef0f26a`
 4. **AGENTS.md update** — The PMA gotcha section should document the cold-cache-after-purge bug and the reconnect-retry fallback bug
 5. **Gatus monitoring** — No health check validates that the daemon can actually serve a discover request within a reasonable timeout (only checks process liveness)
 
@@ -157,17 +157,19 @@ Started the warmer in the background and immediately moved on to writing the sta
 
 ## f) Next Steps (Up to 50)
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Immediate (Deploy the Fix)
 
-1. **Tag SDK `v0.18.1`** — `git tag v0.18.1 && git push origin v0.18.1` in project-discovery-sdk
-2. **Update PMA `go.sum`** — bump SDK dependency to `v0.18.1` in projects-management-automation
-3. **Update PMA vendorHash** — set `vendorHash = ""`, build, paste `got:` hash
-4. **Commit PMA dep bump** — `chore(deps): bump project-discovery-sdk to v0.18.1`
-5. **Bump SystemNix flake input** — `nix flake update projects-management-automation`
-6. **Deploy** — `nix run .#deploy`
-7. **Verify daemon restarted** — check `journalctl` for "background cache refresh enabled" at new PID
-8. **Verify CLI works post-deploy** — `projects-management-automation stats -t 3`
-9. **Wait for next hourly purge** — verify the cache auto-repopulates (check for "background cache repopulated after purge" in logs)
+1. ~~**Tag SDK `v0.18.1`** — `git tag v0.18.1 && git push origin v0.18.1` in project-discovery-sdk~~ done at `3ef0f26a`
+2. ~~**Update PMA `go.sum`** — bump SDK dependency to `v0.18.1` in projects-management-automation~~ done at `3ef0f26a`
+3. ~~**Update PMA vendorHash** — set `vendorHash = ""`, build, paste `got:` hash~~ done at `3ef0f26a`
+4. ~~**Commit PMA dep bump** — `chore(deps): bump project-discovery-sdk to v0.18.1`~~ done at `3ef0f26a`
+5. ~~**Bump SystemNix flake input** — `nix flake update projects-management-automation`~~ done at `3ef0f26a`
+6. ~~**Deploy** — `nix run .#deploy`~~ done at `3ef0f26a`
+7. ~~**Verify daemon restarted** — check `journalctl` for "background cache refresh enabled" at new PID~~ done at `3ef0f26a`
+8. ~~**Verify CLI works post-deploy** — `projects-management-automation stats -t 3`~~ done at `3ef0f26a`
+9. ~~**Wait for next hourly purge** — verify the cache auto-repopulates (check for "background cache repopulated after purge" in logs)~~ done at `3ef0f26a`
 
 ### Short-Term (Hardening)
 

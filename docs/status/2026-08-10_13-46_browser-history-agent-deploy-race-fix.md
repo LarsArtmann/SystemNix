@@ -58,7 +58,7 @@ During `nix run .#deploy` (nh os switch), systemd stopped and started `browser-h
 
 ## c) NOT STARTED
 
-1. Actual deploy (`nix run .#deploy`) to confirm the agent no longer fails
+1. ~~Actual deploy (`nix run .#deploy`) to confirm the agent no longer fails~~ done at `a941f88d`
 2. Checking whether other co-located server+agent pairs on evo-x2 have similar races
 3. Evaluating whether the agent timer needs a similar `after` dependency for boot-time scenarios
 
@@ -88,17 +88,19 @@ Nothing. The fix is clean, consistent with existing patterns, and eval-verified.
 
 ## f) Up to 50 Things to Do Next
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 | # | Priority | Task |
 |---|----------|------|
-| 1 | **CRITICAL** | Run `nix run .#deploy` and verify `browser-history-agent.service` starts cleanly |
-| 2 | **HIGH** | Manually `curl -sf http://localhost:8087/health` to confirm the health endpoint returns 200 |
+| 1 | **CRITICAL** | ~~Run `nix run .#deploy` and verify `browser-history-agent.service` starts cleanly~~ done at `a941f88d` |
+| 2 | **HIGH** | ~~Manually `curl -sf http://localhost:8087/health` to confirm the health endpoint returns 200~~ done at `a941f88d` |
 | 3 | **HIGH** | Add `after = ["browser-history.service"]` to `browser-history-agent.timer` to prevent boot-time race |
 | 4 | **HIGH** | Audit all co-located client+server pairs on evo-x2 for similar startup races (monitor365, discordsync, etc.) |
 | 5 | **MEDIUM** | Consider whether the `+` prefix on `waitServerReady` ExecStartPre is needed (agent already has AF_INET) |
 | 6 | **MEDIUM** | Add the browser-health-agent to `deploy.sh` explicit restart list if it's not already there |
 | 7 | **MEDIUM** | Check if Gatus health check for Browser History should also cover the agent (currently only server is monitored) |
 | 8 | **LOW** | Consider extracting a reusable `mkHealthGate` helper in `lib/default.nix` for the repeated curl-poll pattern (discordsync, signoz, browser-history all do the same thing) |
-| 9 | **LOW** | Review whether `StartLimitBurst=3` on the agent is too aggressive — with the health gate, legitimate failures should retry more |
+| 9 | **LOW** | ~~Review whether `StartLimitBurst=3` on the agent is too aggressive — with the health gate, legitimate failures should retry more~~ done at `a941f88d` |
 | 10 | **LOW** | Document the co-located ordering pattern in `docs/CONTRIBUTING.md` as a module-authoring guideline |
 
 ---
