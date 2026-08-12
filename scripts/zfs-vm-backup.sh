@@ -4,7 +4,7 @@
 # At ~100 MB/s, 20 GB takes ~3-4 min.
 set -euo pipefail
 
-VM_PATH="/nix/store/036pkvfsp6q1x0i9cwc34md5q7lmjddz-nixos-vm"
+VM_PATH="/nix/store/gn9ny2alr7cigb4r254q7srq1i0r1rwd-nixos-vm"
 USB_CONTROLLER="0000:c7:00.4"
 SSH_PORT=2222
 VM_PIDFILE="/tmp/zfs-backup-vm.pid"
