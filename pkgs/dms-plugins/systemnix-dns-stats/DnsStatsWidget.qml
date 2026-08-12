@@ -9,6 +9,7 @@ PluginComponent {
     id: root
 
     property string statsUrl: pluginData.statsUrl || "http://127.0.0.1:9090/stats"
+    property string tokenPath: pluginData.tokenPath || ""
     property int totalBlocked: 0
     property int blockedToday: 0
     property bool online: false
@@ -25,7 +26,9 @@ PluginComponent {
 
     Process {
         id: dnsProcess
-        command: ["curl", "-sf", "--connect-timeout", "2", root.statsUrl]
+        command: root.tokenPath !== ""
+            ? ["sh", "-c", "curl -sf --connect-timeout 2 -H 'Authorization: Bearer $(cat " + root.tokenPath + ")' " + root.statsUrl]
+            : ["curl", "-sf", "--connect-timeout", "2", root.statsUrl]
         running: true
 
         stdout: StdioCollector {

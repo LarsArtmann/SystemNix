@@ -110,6 +110,7 @@ sops-nix decrypts ALL secrets atomically. One bad owner → everything fails. Gu
 | `secrets.yaml`         | forgejo_token, github_token, github_user                                                                                                                        |
 | `pocket-id.yaml`       | pocket_id_encryption_key, pocket_id_static_api_key, pocket_id_smtp_password, oauth2_proxy_client_secret, oauth2_proxy_cookie_secret, immich_oauth_client_secret |
 | `dnsblockd-certs.yaml` | dnsblockd_ca_cert, dnsblockd_ca_key, dnsblockd_server_cert, dnsblockd_server_key                                                                                |
+| `dnsblockd-auth.yaml`  | dnsblockd_auth_token (owned by primaryUser — DMS widget reads it for Bearer auth on /stats; systemd reads template copy for EnvironmentFile)                    |
 | `voice-agents.yaml`    | livekit_keys                                                                                                                                                    |
 | `hermes.yaml`          | discord_bot_token, glm_api_key, minimax_api_key, xiaomi_api_key, fal_key, firecrawl_api_key                                                                     |
 | `crush-daily.yaml`     | synthetic_api_key (also used by file-and-image-renamer via `mkKeyedSecrets` as `file_renamer_synthetic_api_key`)                                               |

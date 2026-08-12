@@ -387,6 +387,7 @@ serviceConfig = lib.mkMerge [
 - **`restartTriggers` on dnsblockd** — Without it, config changes may not restart the process → stale config → DNS outage.
 - **`ProtectSystem=strict` + SQLite** — Needs `WorkingDirectory` alongside `StateDirectory` or CANTOPEN errors.
 - **Manual `/etc/resolv.conf` edits break local DNS** — Nix config writes static resolv.conf with only `127.0.0.1`. Every deploy restores it. Do NOT add fallback nameservers.
+- **Dashboard auth token via sops env** — `auth_token` is passed via `DNSBLOCKD_AUTH_TOKEN` EnvironmentFile (koanf env override), NOT the nix-store config YAML. The sops secret `dnsblockd_auth_token` is owned by `primaryUser:users` so the DMS DnsStatsWidget can read it for its `Authorization: Bearer` header. The sops template `dnsblockd-auth-env` (root-owned) feeds the systemd EnvironmentFile. Two renderings of the same key, different owners, different consumers. Protected routes: `/stats`, `/api/allow`, `/api/report`, `/api/cache/flush`. Unprotected: `/health`, `/metrics`, `/dashboard`, `/api/dashboard-data` (cookie-gated).
 
 ### Monitor365
 
