@@ -157,10 +157,12 @@
         ]
       },
       "locked": {
-        "lastModified": 1786487179,
-        "narHash": "sha256-KE9rXCHJvZddw1qh9xQLeO6jXQZ4+ZXa4RHJt2eFEhg=",
-        "path": "/home/lars/projects/browser-history",
-        "type": "path"
+        "lastModified": 1786517253,
+        "narHash": "sha256-CKSmfHdQalVy/MUGCPBM4uIZliIdBd9loSfovc21Xh8=",
+        "owner": "LarsArtmann",
+        "repo": "browser-history",
+        "rev": "43bb94aebb1790863fc476cbf69110aeb7215cde",
+        "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
@@ -552,11 +554,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786473100,
-        "narHash": "sha256-MOY1aqc6nY9FVx+UUnbG8v+WAcfqJGkWGDNtgal/Kcg=",
+        "lastModified": 1786517812,
+        "narHash": "sha256-vwo3G5VjCTs8FCRQhmg3Ie2VR/TsNiikhtTmiImJDIQ=",
         "owner": "LarsArtmann",
         "repo": "DiscordSync",
-        "rev": "66363d91d0b934167d3601ed6a18b3a8bca2f732",
+        "rev": "cc234f60440a018da191736e5b8e7a3d33178cac",
         "type": "github"
       },
       "original": {
