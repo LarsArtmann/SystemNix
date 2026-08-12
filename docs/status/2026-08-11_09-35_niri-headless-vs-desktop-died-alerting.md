@@ -35,9 +35,9 @@
 
 ## c) NOT STARTED
 
-1. **Deploy** — Changes are written and eval-verified but NOT deployed. The new metrics won't take effect until `nix run .#deploy`.
-2. **Runtime verification** — Cannot verify the new metrics actually appear in `/metrics` output until deploy. The `niri_desktop_died` and `niri_crash_loop` metrics are computed in bash and emitted unconditionally (value 0 or 1), so they should always be present — but phantom metric rules say "verify at runtime." This is a bash script writing to a textfile collector, not a Rust lazy serializer, so phantom metrics shouldn't apply, but verification is still needed.
-3. **Gatus pattern lint** — The `gatus-pattern-lint` flake check passed, but I didn't explicitly verify the new `pat(*niri_desktop_died 0*)` and `pat(*niri_crash_loop 0*)` patterns pass the linter. They should — no `?` or `+` characters — but explicit confirmation would be best practice.
+1. ~~**Deploy** — Changes are written and eval-verified but NOT deployed. The new metrics won't take effect until `nix run .#deploy`.~~ done at `ae02f5a6`
+2. ~~**Runtime verification** — Cannot verify the new metrics actually appear in `/metrics` output until deploy.~~ done at `ae02f5a6`
+3. ~~**Gatus pattern lint** — The `gatus-pattern-lint` flake check passed, but I didn't explicitly verify the new `pat(*niri_desktop_died 0*)` and `pat(*niri_crash_loop 0*)` patterns pass the linter.~~ done at `ae02f5a6`
 4. **Pre-deploy check update** — `scripts/pre-deploy-check.sh` doesn't verify niri metrics presence. The new metrics should be added to the metric presence validation section (section 10).
 5. **Post-deploy check** — `scripts/post-deploy-check.sh` doesn't check desktop session state. A warning when deploying to a desktop system with no graphical session would be useful.
 
@@ -69,19 +69,21 @@
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Critical (deploy & verify)
 
-1. **Deploy the changes** — `nix run .#deploy` to activate the new metrics and Gatus checks
-2. **Verify metrics at runtime** — `cat /var/lib/prometheus-node-exporter/textfile_collectors/niri.prom` after deploy; confirm all 6 metrics present
-3. **Verify `loginctl` detection** — When SSH-only: `niri_graphical_session` should be 0, `niri_desktop_died` should be 0 (no alert). When logged in: `niri_graphical_session` should be 1
-4. **Verify Gatus sees the new endpoints** — Check Gatus UI for "Niri Desktop Died" and "Niri Crash Loop" endpoints
-5. **Amend the 09:22 status report** — Strike the SDDM auto-login recommendation; add correction noting the user's SSH-only workflow
+1. ~~**Deploy the changes** — `nix run .#deploy` to activate the new metrics and Gatus checks~~ done at `ae02f5a6`
+2. ~~**Verify metrics at runtime** — `cat /var/lib/prometheus-node-exporter/textfile_collectors/niri.prom` after deploy; confirm all 6 metrics present~~ done at `ae02f5a6`
+3. ~~**Verify `loginctl` detection** — When SSH-only: `niri_graphical_session` should be 0, `niri_desktop_died` should be 0 (no alert). When logged in: `niri_graphical_session` should be 1~~ done at `ae02f5a6`
+4. ~~**Verify Gatus sees the new endpoints** — Check Gatus UI for "Niri Desktop Died" and "Niri Crash Loop" endpoints~~ done at `ae02f5a6`
+5. ~~**Amend the 09:22 status report** — Strike the SDDM auto-login recommendation; add correction noting the user's SSH-only workflow~~ done
 
 ### High priority
 
-6. **Add "Niri Graphical Session" debug check to Gatus** — Non-alerting check on `niri_graphical_session` metric for visibility
-7. **Add `niri_desktop_died` and `niri_crash_loop` to pre-deploy-check.sh** — Section 10 metric presence validation
-8. **Add grace period to `niri_desktop_died`** — Require 2+ consecutive checks (60s) of `niri_running == 0` before setting `desktop_died=1`, to avoid flapping during niri auto-restart
+6. ~~**Add "Niri Graphical Session" debug check to Gatus** — Non-alerting check on `niri_graphical_session` metric for visibility~~ done at `ae02f5a6`
+7. ~~**Add `niri_desktop_died` and `niri_crash_loop` to pre-deploy-check.sh** — Section 10 metric presence validation~~ done
+8. ~~**Add grace period to `niri_desktop_died`** — Require 2+ consecutive checks (60s) of `niri_running == 0` before setting `desktop_died=1`, to avoid flapping during niri auto-restart~~ done at `ae02f5a6`
 9. **Investigate `browser-history-server` 100% CPU** — Flagged in prior session, still uninvestigated
 10. **Investigate load average 35-46** — Still abnormally high, WDT crash risk
 
