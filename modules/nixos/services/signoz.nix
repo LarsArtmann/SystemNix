@@ -200,6 +200,15 @@ in
                 <background_buffer_flush_schedule_pool_size>4</background_buffer_flush_schedule_pool_size>
                 <background_move_pool_size>2</background_move_pool_size>
                 <background_fetches_pool_size>1</background_fetches_pool_size>
+                <!--
+                  With background_pool_size=2 and background_merges_mutations_concurrency_ratio=2,
+                  the effective pool capacity for mutations is 4. This merge_tree setting must
+                  be < 4 or ClickHouse rejects startup with exit code 36 (BAD_ARGUMENTS).
+                  Default is 20 which only works with the default pool_size of 16.
+                -->
+                <merge_tree>
+                  <number_of_free_entries_in_pool_to_execute_mutation>2</number_of_free_entries_in_pool_to_execute_mutation>
+                </merge_tree>
                 <keeper_server>
                   <tcp_port>${toString ports.signoz-clickhouse-keeper}</tcp_port>
                   <server_id>1</server_id>

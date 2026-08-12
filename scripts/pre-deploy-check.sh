@@ -174,21 +174,30 @@ extract_gatus_metrics() {
     grep -vE '^<|connected'
 }
 
-# Fetch metrics from both endpoints into a temp file for searching
+# Fetch metrics from each endpoint separately to avoid false-positive phantom
+# failures when one endpoint is down but metrics from it are checked anyway.
 METRICS_FILE=$(mktemp)
 trap 'rm -f "$METRICS_FILE"' EXIT
+
+MONITOR365_UP=false
 
 if curl -sf --max-time 5 "http://127.0.0.1:${NODE_EXPORTER_PORT}/metrics" -o "$METRICS_FILE" 2>/dev/null; then
   pass "Node exporter (port ${NODE_EXPORTER_PORT}) responding"
 else
-  warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — skipping metric checks that depend on it"
+  warn "Node exporter (port ${NODE_EXPORTER_PORT}) not responding — node-exporter metrics will be skipped"
 fi
 
 if curl -sf --max-time 5 "http://127.0.0.1:${MONITOR365_PORT}/metrics" >>"$METRICS_FILE" 2>/dev/null; then
   pass "Monitor365 metrics (port ${MONITOR365_PORT}) responding"
+  MONITOR365_UP=true
 else
-  warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — skipping metric checks that depend on it"
+  warn "Monitor365 metrics (port ${MONITOR365_PORT}) not responding — monitor365 metrics will be skipped"
 fi
+
+# Metrics known to come from Monitor365's endpoint (not node exporter textfile).
+# When Monitor365 is down, these are absent for infrastructure reasons, not
+# because they're phantom metrics in the config.
+MONITOR365_METRICS="collector_events_collected cloud_sync_consecutive_failures cloud_sync_upload_backlog_size"
 
 if [ -s "$METRICS_FILE" ]; then
   MISSING_METRICS=0
@@ -211,6 +220,8 @@ if [ -s "$METRICS_FILE" ]; then
       pass "Metric '$metric' present"
     elif echo "$KNOWN_NEW_METRICS" | grep -qw "$metric"; then
       warn "Metric '$metric' absent (known new metric in this deploy — will appear post-switch)"
+    elif echo "$MONITOR365_METRICS" | grep -qw "$metric" && [ "$MONITOR365_UP" = false ]; then
+      warn "Metric '$metric' absent (Monitor365 endpoint down — not a phantom metric)"
     else
       fail "Metric '$metric' ABSENT — Gatus health check will be permanently RED (phantom metric)"
       MISSING_METRICS=$((MISSING_METRICS + 1))
