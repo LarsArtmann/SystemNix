@@ -23,7 +23,7 @@ Added explicit `disabled = false; inactive = false;` declarations for:
 | Category | Count | Engines |
 |---|---|---|
 | General search | 7 | google, google images, bing, yandex, yandex images, baidu images, quark images |
-| Package registries | 15 | alpine, cachy, crates.io, docker hub, hex, hoogle, lib.rs, metacpan, npm, packagist, pkg.go.dev, pub.dev, pypi, rubygems, voidlinux |
+| Package registries | 15 | alpine, cachy, crates.io, docker hub, hex, hoogle, lib.rs, metacpan, pnpm, packagist, pkg.go.dev, pub.dev, pypi, rubygems, voidlinux |
 | Q&A forums | 6 | askubuntu, caddy.community, discuss.python, pi-hole.community, stackoverflow, superuser |
 | Code repos | 10 | bitbucket, codeberg, gitea.com, github, gitlab, huggingface (3), ollama, sourcehut |
 | Video search | 33 | google videos, bing videos, brave.videos, qwant videos, ddg videos, youtube, dailymotion, vimeo, rumble, peertube, sepiasearch, odysee, bilibili, media.ccc.de, wikicommons.videos, pixabay, bitchute, google play movies, mediathekviewweb, naver, acfun, iqiyi, sogou, 360search, adobe stock, dogpile, findfiles, fireball, niconico, privacywall, tusksearch, vuhuv, ina |

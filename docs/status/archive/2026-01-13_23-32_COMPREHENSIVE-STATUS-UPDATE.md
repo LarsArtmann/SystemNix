@@ -428,7 +428,7 @@ https://localhost:53443
 **Node.js:**
 
 - Node.js toolchain not verified in configs
-- npm, yarn package managers not configured
+- pnpm, yarn package managers not configured
 - TypeScript tooling not verified
 
 **Python:**
@@ -647,7 +647,7 @@ https://localhost:53443
 
 11. **Node.js Development** (Priority: LOW, 2 hours)
     - Verify Node.js configuration
-    - Add npm, yarn package managers
+    - Add pnpm, yarn package managers
     - TypeScript tooling
 
 12. **Documentation Consolidation** (Priority: LOW, 4 hours)

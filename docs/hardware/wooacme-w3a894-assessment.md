@@ -301,7 +301,7 @@ The drive contains a recoverable NixOS installation from the previous machine. T
 | `/home/art/.ollama` | 6.3 GB | Models (re-downloadable) |
 | `/home/art/.cache` | 3.7 GB | Build caches |
 | `/home/art/go/` | 1 GB | Go module cache |
-| `/home/art/.npm` | 26 MB | npm cache |
+| `/home/art/.npm` | 26 MB | pnpm cache |
 | `/storage*` (x5 dirs) | 140 MB | Empty NAS scaffolding |
 | `/nas` | 16 KB | Empty mount points |
 

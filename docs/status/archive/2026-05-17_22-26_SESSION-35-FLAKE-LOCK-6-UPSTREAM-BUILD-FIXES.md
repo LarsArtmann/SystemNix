@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Session 35 started as a routine `nix flake update && nh os boot` but cascaded into **7 distinct upstream build failures** across Go and Node.js packages. Root causes: stale vendor hashes, missing `go-branded-id` transitive dependency, missing `replace` directive in prepared source, stale npm lockfile, and an upstream module referencing a non-existent package. All but one (`projects-management-automation`) were resolved. The `jscpd` package was also fully repaired after the pnpm migration left it without a working install phase.
+Session 35 started as a routine `nix flake update && nh os boot` but cascaded into **7 distinct upstream build failures** across Go and Node.js packages. Root causes: stale vendor hashes, missing `go-branded-id` transitive dependency, missing `replace` directive in prepared source, stale pnpm lockfile, and an upstream module referencing a non-existent package. All but one (`projects-management-automation`) were resolved. The `jscpd` package was also fully repaired after the pnpm migration left it without a working install phase.
 
 **Build status:** `nix flake check --all-systems` passes clean. 5 of 6 original failures fixed. 1 new upstream failure (`projects-management-automation` — missing Go module) blocks full `nh os boot`.
 
@@ -71,7 +71,7 @@ Session 35 started as a routine `nix flake update && nh os boot` but cascaded in
 
 | Item           | Detail                                                                                                                                                                                        |
 | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Root cause** | Session 34's npm→pnpm migration left jscpd with `fetchPnpmDeps` pointing at a source without `pnpm-lock.yaml` (the lockfile was only copied in `postPatch`, which runs AFTER `fetchPnpmDeps`) |
+| **Root cause** | Session 34's pnpm→pnpm migration left jscpd with `fetchPnpmDeps` pointing at a source without `pnpm-lock.yaml` (the lockfile was only copied in `postPatch`, which runs AFTER `fetchPnpmDeps`) |
 | **Fix**        | Wrapped `src` in a derivation that copies `pnpm-lock.yaml` before `fetchPnpmDeps` runs                                                                                                        |
 | **Fix**        | Set correct pnpm hash: `sha256-W/O1e8Rk...`                                                                                                                                                   |
 | **Fix**        | Added `installPhase` with `makeWrapper` to create `bin/jscpd` wrapper                                                                                                                         |

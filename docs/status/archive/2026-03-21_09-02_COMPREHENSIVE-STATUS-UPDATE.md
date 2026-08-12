@@ -87,7 +87,7 @@ NONE
 1. **Add just recipe for jscpd** - Convenience wrapper
 2. **Add jscpd to pre-commit hooks** - CI duplicate detection
 3. **Document jscpd in AGENTS.md** - Usage documentation
-4. **Proper npm packaging** - Create buildNpmPackage if used frequently
+4. **Proper pnpm packaging** - Create buildNpmPackage if used frequently
 5. **Explore native tools** - scc, dupl (Rust alternative)
 6. **Update flake inputs** - Run nix flake update
 7. **Full system test** - just test

@@ -1795,7 +1795,7 @@ packages:
       }
     engines: { node: ">=0.10.0" }
 
-  npm-run-path@4.0.1:
+  pnpm-run-path@4.0.1:
     resolution:
       {
         integrity: sha512-S48WzZW777zhNIrn7gxOlISNAqi9ZC/uQFnRdbeIHhZhCA6UqpkOT8T1G7BvfdgP4Er8gF4sUbaS0i7QvIfCWw==,
@@ -2071,7 +2071,7 @@ packages:
       {
         integrity: sha512-J9qZyW++QK/09NyN/zeO0dG/1GdGfyp9lV8ajHnRVLfo/uFsbji5mHnDgn/qYdUHyCkM2N+8VyspgZclfAh0eQ==,
       }
-    engines: { node: ">=18.0.0", npm: ">=8.0.0" }
+    engines: { node: ">=18.0.0", pnpm: ">=8.0.0" }
     hasBin: true
 
   run-parallel@1.2.0:
@@ -3131,7 +3131,7 @@ snapshots:
       human-signals: 1.1.1
       is-stream: 2.0.1
       merge-stream: 2.0.0
-      npm-run-path: 4.0.1
+      pnpm-run-path: 4.0.1
       onetime: 5.1.2
       signal-exit: 3.0.7
       strip-final-newline: 2.0.0
@@ -3379,7 +3379,7 @@ snapshots:
 
   normalize-path@3.0.0: {}
 
-  npm-run-path@4.0.1:
+  pnpm-run-path@4.0.1:
     dependencies:
       path-key: 3.1.1
 

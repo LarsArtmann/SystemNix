@@ -10,13 +10,13 @@
 
 ### Honest Verdict: HIGH RISK, HIGH EFFORT, CONDITIONALLY FEASIBLE
 
-OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application built on TanStack Start + Vite 7 + React 19. Its entire runtime — D1 (SQLite), KV namespaces, R2 object storage, Durable Objects, and Cloudflare Workflows — is designed for the Cloudflare edge platform. The Docker self-host image works by running `vite preview`, which proxies through `workerd` (Cloudflare's local runtime emulator) bundled inside the `wrangler` npm package.
+OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application built on TanStack Start + Vite 7 + React 19. Its entire runtime — D1 (SQLite), KV namespaces, R2 object storage, Durable Objects, and Cloudflare Workflows — is designed for the Cloudflare edge platform. The Docker self-host image works by running `vite preview`, which proxies through `workerd` (Cloudflare's local runtime emulator) bundled inside the `wrangler` pnpm package.
 
 ### Key Blockers & Mitigations
 
 | #   | Blocker                                                                                      | Impact                                                              | Mitigation                                                                                                                                                                                                            |
 | --- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **`workerd` not in nixpkgs** (issue #355460, closed "not planned" — bazel build too complex) | Critical: the runtime depends on `workerd`                          | The `wrangler` npm package bundles a pre-compiled `workerd` binary for linux-x64. We use that binary directly. It should work in Nix if it can find its shared libraries (typically just glibc, which NixOS provides) |
+| 1   | **`workerd` not in nixpkgs** (issue #355460, closed "not planned" — bazel build too complex) | Critical: the runtime depends on `workerd`                          | The `wrangler` pnpm package bundles a pre-compiled `workerd` binary for linux-x64. We use that binary directly. It should work in Nix if it can find its shared libraries (typically just glibc, which NixOS provides) |
 | 2   | **No `buildPnpmPackage`** in nixpkgs                                                         | High: manual pnpm packaging required                                | Use `fetchPnpmDeps` + `pnpmConfigHook` pattern (project precedent: `pkgs/jscpd.nix`). Requires checked-in `pnpm-lock.yaml`                                                                                            |
 | 3   | **Build-time env var inlining** (`AUTH_MODE` baked into client bundle by `vite build`)       | Medium: Docker rebuilds at container start to handle this           | SystemNix always uses `AUTH_MODE=local_noauth` — hardcode at Nix build time                                                                                                                                           |
 | 4   | **4GB heap build** (~7400 Vite modules)                                                      | Low: evo-x2 has 128GB RAM                                           | Set `NODE_OPTIONS=--max-old-space-size=4096` in `buildPhase`                                                                                                                                                          |
@@ -107,7 +107,7 @@ OpenSEO is **not a typical web app**. It is a **Cloudflare Workers** application
 4. Build phase: `AUTH_MODE=local_noauth NODE_OPTIONS=--max-old-space-size=4096 pnpm run build`
 5. Install phase: copy project tree to `$out/lib/openseo/`, create `bin/openseo-migrate` and `bin/openseo-serve` wrappers
 
-**Risk:** `workerd` binary from npm may fail in Nix sandbox (missing shared libs, ELF patching needed). If so, will need `autoPatchelfHook`.
+**Risk:** `workerd` binary from pnpm may fail in Nix sandbox (missing shared libs, ELF patching needed). If so, will need `autoPatchelfHook`.
 
 **Verification:** `nix build .#openseo` succeeds, `ls result/lib/openseo/dist/` shows built assets.
 

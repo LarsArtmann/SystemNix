@@ -114,7 +114,7 @@ OpenTelemetry-native observability platform. Single app for metrics, traces, and
 | 3   | **`signoz` vendorHash is fake**            | 30 min    | Run `nix build`, copy hash from error                                                               |
 | 4   | **`otelCollector` vendorHash is fake**     | 30 min    | Run `nix build`, copy hash from error                                                               |
 | 5   | **`schemaMigrator` vendorHash is fake**    | 15 min    | Run `nix build`, copy hash from error                                                               |
-| 6   | **Frontend yarn build untested**           | 30-60 min | May need `--no-lockfile` or `npm` instead                                                           |
+| 6   | **Frontend yarn build untested**           | 30-60 min | May need `--no-lockfile` or `pnpm` instead                                                           |
 | 7   | **Go module path may be wrong**            | 15 min    | v0.117.1 changed from `go.signoz.io/signoz` to `github.com/signoz/signoz` — ldflags may need update |
 | 8   | **`subPackages` path untested**            | 15 min    | `"pkg/query-service"` must match go.mod structure                                                   |
 | 9   | **CGO/sqlite linking untested**            | 15 min    | `CGO_ENABLED = 1` with `pkgs.sqlite` — may need extra flags                                         |
@@ -184,7 +184,7 @@ Keep existing:          Add new:
 | Risk                            | Likelihood | Impact | Mitigation                                  |
 | ------------------------------- | ---------- | ------ | ------------------------------------------- |
 | Go vendor hash resolution fails | Medium     | Medium | Use `go mod vendor` manually                |
-| Frontend build fails (yarn)     | Medium     | Low    | Use npm instead, or pre-built Docker assets |
+| Frontend build fails (yarn)     | Medium     | Low    | Use pnpm instead, or pre-built Docker assets |
 | ClickHouse resource usage       | Low        | Medium | Cap at 8GB, monitor                         |
 | SigNoz query-service crashes    | Low        | High   | Keep Prometheus as fallback until stable    |
 | OTel Collector plugin missing   | Low        | Medium | Standard collector has most plugins         |

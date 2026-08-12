@@ -9,7 +9,7 @@ Session: overview + hermes recovery, StartLimitBurst hardening, PMA split-mode.
 Two distinct workstreams ended up in this session:
 
 1. **Hermes Agent** — originally down because it was temporarily disabled on
-   2026-08-10 to unblock a deploy that was failing on the `hermes-tui` npm
+   2026-08-10 to unblock a deploy that was failing on the `hermes-tui` pnpm
    build inside the Nix sandbox (OOM kill). The upstream
    `hermes-agent` flake had already fixed it; SystemNix was still pinned to the
    broken revision.
@@ -32,7 +32,7 @@ auto-commit daemon) so overview could work without re-introducing the
 ### a) Fully done
 
 - Bumped `hermes-agent` flake input from `ed5e17f4` to `ee472a7f`
-  (2026-08-12), which resolves the `hermes-tui` npm-build OOM kill.
+  (2026-08-12), which resolves the `hermes-tui` pnpm-build OOM kill.
 - Re-enabled `services.hermes.enable = true` in
   `platforms/nixos/system/configuration.nix` (removed the TEMP disable comment).
 - Built and activated the full system toplevel on `evo-x2`.
@@ -74,7 +74,7 @@ auto-commit daemon) so overview could work without re-introducing the
 - Overview's dependency graph is fixed in configuration, but the actual
   runtime interaction between overview and the re-enabled PMA discovery daemon
   has not been observed yet because the system was just activated.
-- The long-standing `hermes-tui` npm build fragility is mitigated by tracking
+- The long-standing `hermes-tui` pnpm build fragility is mitigated by tracking
   upstream, but not eliminated locally. A local upstream npmDepsHash
   regression would still break deploys until the next upstream bump.
 

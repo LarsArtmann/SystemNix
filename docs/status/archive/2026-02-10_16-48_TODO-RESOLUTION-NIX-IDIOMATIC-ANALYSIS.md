@@ -414,7 +414,7 @@ sudo sed -i '' 's/nameserver.*/nameserver 1.1.1.1/' /etc/resolv.conf
 ### Long Term (This Quarter)
 
 1. **Complete Nix migration** – Eliminate all imperative configuration scripts
-2. **Nix-only toolchain** – No more `go install`, `brew install`, `npm install -g`
+2. **Nix-only toolchain** – No more `go install`, `brew install`, `pnpm add -g`
 3. **Cross-platform consistency** – >80% code sharing between Darwin/NixOS
 
 ---

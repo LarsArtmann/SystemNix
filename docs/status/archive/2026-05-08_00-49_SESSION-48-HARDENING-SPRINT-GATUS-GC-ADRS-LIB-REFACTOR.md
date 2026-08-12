@@ -21,7 +21,7 @@ Session 48 executed 9 improvements from the session 47 action plan. Ran emergenc
 **After:** 88% (64GB free of 512GB) — 22GB recovered
 
 - Nix store: 5886 paths deleted (270MiB freed)
-- npm cache: 3058 packages pruned
+- pnpm cache: 3058 packages pruned
 - Docker: 834.5MB reclaimed from build cache
 - `nix-store --optimize` run
 

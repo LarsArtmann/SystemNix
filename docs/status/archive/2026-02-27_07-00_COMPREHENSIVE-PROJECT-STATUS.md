@@ -203,7 +203,7 @@ SystemNix is a **production-ready, cross-platform Nix configuration system** man
 
 - [ ] **Rust Toolchain**: rustup, cargo, clippy
 - [ ] **Python UV**: Modern Python package management
-- [ ] **Node.js**: Advanced npm/pnpm configuration
+- [ ] **Node.js**: Advanced pnpm/pnpm configuration
 
 ### 6. Backup & Sync
 

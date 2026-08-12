@@ -134,7 +134,7 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 
 **Module:** `modules/nixos/services/qmd-config.nix` (filename → `services.qmd-config`, named `-config` to avoid colliding with the upstream `pkgs.qmd` attribute)
 
-- **Input:** GitHub `tobi/qmd` (Nix-native: VCS source + real `pnpm-lock.yaml`). Packaged in `pkgs/qmd.nix` via `fetchFromGitHub` + `pnpmConfigHook` + `pnpm run build` to produce `dist/`. The npm tarball is no longer used — this avoids vendoring a regenerated lockfile.
+- **Input:** GitHub `tobi/qmd` (Nix-native: VCS source + real `pnpm-lock.yaml`). Packaged in `pkgs/qmd.nix` via `fetchFromGitHub` + `pnpmConfigHook` + `pnpm run build` to produce `dist/`. The pnpm tarball is no longer used — this avoids vendoring a regenerated lockfile.
 - **Service:** `qmd mcp --http` runs as a Home Manager **user** systemd service (`qmd-mcp.service`) on `127.0.0.1:8181` so embedding/reranker GGUF models (~2 GiB) stay loaded across requests. StdIO MCP mode spawns a fresh process per connection, paying 5-15s model-reload cost on every reconnect.
 - **Index location:** `~/.cache/qmd/index.sqlite` (XDG_CACHE_HOME). Models cached in `~/.cache/qmd/models/`. Config in `~/.config/qmd/index.yml`. Declarative bootstrap collections via `services.qmd-config.bootstrapCollections` option.
 - **CLI:** Available system-wide from `base.nix`. Use `qmd collection add ~/notes --name notes`, `qmd search ...`, `qmd query ...`, `qmd get ...`, `qmd status`.
@@ -380,6 +380,7 @@ serviceConfig = lib.mkMerge [
 - **`oci-containers` backend defaults to Podman** — Set `backend = "docker"` when Docker is already enabled.
 - **Docker 29.x `userland-proxy-path`** — `daemon.settings.userland-proxy = false`.
 - **containerd bbolt corruption** — Recovery: stop docker → `mv meta.db meta.db.bak` → remove `containers/`/`containerd/`/`network/` dirs → restart.
+- **systemd-oomd kills Docker containers under system-slice pressure (Twenty worker)** — Docker containers run as `docker-<id>.scope` under `/system.slice`. systemd-oomd picks the largest memory consumer to kill when system-slice pressure exceeds 50% for 20s. The Twenty worker (~856MB, largest container) was SIGKILL'd (exitCode=137) every ~15s: oomd kills → `restart: always` restarts → Node.js init spike → more pressure → oomd kills again → infinite loop (136 restarts in 40 min). Docker reports `OOMKilled: false` because systemd-oomd kills via cgroup signal, not Docker's own OOM handler. Fix: `mem_limit: "2g"` + `memswap_limit: "2g"` + `NODE_OPTIONS="--max-old-space-size=1536"` in the compose file. `ManagedOOMPreference=omit` canNOT be set on Docker scopes from NixOS (transient units). The nix-daemon oomd exemption reduces cascade pressure events, which indirectly reduces worker kills.
 
 ### DNS (dnsblockd)
 

@@ -526,7 +526,7 @@ Options:
 
 **Declarative Management**:
 
-- No manual npm/bun installations required
+- No manual pnpm/bun installations required
 - Atomic updates via `just update && just switch`
 - Cross-platform consistency (macOS + NixOS)
 - Version pinning via nixpkgs

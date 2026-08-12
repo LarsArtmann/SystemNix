@@ -82,7 +82,7 @@ Install and configure a modern Terminal User Interface (TUI) for Taskwarrior to 
 
 **Features:**
 
-- Auto-detection of package manager (bun, pnpm, npm, yarn) based on lockfile
+- Auto-detection of package manager (bun, pnpm, pnpm, yarn) based on lockfile
 - Intelligent tool selection with clear error messages
 - Version reporting for troubleshooting
 - Consistent with existing Go development workflow patterns

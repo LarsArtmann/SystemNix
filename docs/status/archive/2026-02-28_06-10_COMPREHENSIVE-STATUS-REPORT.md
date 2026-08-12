@@ -32,7 +32,7 @@ SystemNix is a **production-ready, cross-platform Nix configuration system** man
 
 #### Portless Integration (2026-02-28)
 
-- [x] **Package Definition**: `pkgs/portless.nix` created with npm/bun build pattern
+- [x] **Package Definition**: `pkgs/portless.nix` created with pnpm/bun build pattern
 - [x] **Flake Integration**: Added to `flake.nix` packages output (line 127)
 - [x] **Base Packages**: Imported and added to `platforms/common/packages/base.nix`
 - [x] **Build Verified**: `nix build .#portless` succeeds, version 0.4.2
@@ -155,7 +155,7 @@ portless list            # Show active routes
 
 - [ ] **Rust Toolchain**: rustup, cargo, clippy
 - [ ] **Python UV**: Modern Python package management
-- [ ] **Node.js**: Advanced npm/pnpm configuration
+- [ ] **Node.js**: Advanced pnpm/pnpm configuration
 
 ### 4. Advanced Features
 

@@ -2,7 +2,7 @@
 # (BM25 + vector embeddings + LLM reranking, all local via node-llama-cpp).
 #
 # Built from upstream GitHub source using pnpmConfigHook + the real
-# pnpm-lock.yaml. The npm tarball is a prebuilt distribution artifact; this
+# pnpm-lock.yaml. The pnpm tarball is a prebuilt distribution artifact; this
 # derivation is closer to Nix conventions: VCS source, lockfile-driven install,
 # and a build step that produces dist/ from TypeScript.
 #

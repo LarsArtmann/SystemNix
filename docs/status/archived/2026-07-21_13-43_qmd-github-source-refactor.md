@@ -1,8 +1,8 @@
 # Status Update — qmd Deployment (GitHub Source + pnpmConfigHook Refactor)
 
 **Date:** 2026-07-21 13:43 CEST
-**Context:** User asked to switch qmd packaging from npm-tarball + vendored `pnpm-lock.yaml` to the more Nix-native GitHub source + `pnpmConfigHook` approach.
-**Current state:** A `feat(qmd)` commit already exists at `HEAD` (99ac60a5) using the npm-tarball approach. Working-tree + staged changes are now migrating it to GitHub source.
+**Context:** User asked to switch qmd packaging from pnpm-tarball + vendored `pnpm-lock.yaml` to the more Nix-native GitHub source + `pnpmConfigHook` approach.
+**Current state:** A `feat(qmd)` commit already exists at `HEAD` (99ac60a5) using the pnpm-tarball approach. Working-tree + staged changes are now migrating it to GitHub source.
 
 ---
 
@@ -127,7 +127,7 @@
 
 ## Questions I can't figure out myself
 
-1. **Mixed git state:** Was the `feat(qmd)` commit at `HEAD` (99ac60a5) created intentionally during this session, or did it pre-exist? The commit message describes the npm-tarball approach, but I was asked to switch to GitHub source. Should I `git reset` it and make a single clean GitHub-source commit, or amend it?
+1. **Mixed git state:** Was the `feat(qmd)` commit at `HEAD` (99ac60a5) created intentionally during this session, or did it pre-exist? The commit message describes the pnpm-tarball approach, but I was asked to switch to GitHub source. Should I `git reset` it and make a single clean GitHub-source commit, or amend it?
 
 2. **flake.lock changes:** `flake.lock` has both staged and unstaged modifications. Are those from the pre-existing session or from the qmd refactor? I did not touch flake inputs, so I need to verify whether the lockfile diff is safe to commit or should be reverted to avoid unintended input bumps.
 

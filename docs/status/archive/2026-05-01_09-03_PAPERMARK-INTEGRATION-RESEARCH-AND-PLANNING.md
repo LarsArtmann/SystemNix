@@ -28,7 +28,7 @@ Additionally, there are **3 uncommitted changes** from Session 10's mkGoTool ref
 | **Required secrets**       | ✅ Done | NEXTAUTH_SECRET, POSTGRES_PASSWORD, S3 credentials, OAuth credentials (Google/GitHub)                                                  |
 | **Caddy integration**      | ✅ Done | `papermark.${domain}` with forward auth (same pattern as Twenty/Immich)                                                                |
 | **Implementation pattern** | ✅ Done | Follow `twenty.nix` — Docker Compose managed by systemd service, sops for secrets                                                      |
-| **Database migrations**    | ✅ Done | `npx prisma db push --skip-generate` in Docker entrypoint                                                                              |
+| **Database migrations**    | ✅ Done | `pnpm dlx prisma db push --skip-generate` in Docker entrypoint                                                                              |
 | **Health check**           | ✅ Done | `GET /api/health` on port 3000                                                                                                         |
 | **Backup pattern**         | ✅ Done | Daily `pg_dump` via systemd timer (same as Immich/Twenty)                                                                              |
 | **GCS S3 interop**         | ✅ Done | Fully supported via HMAC keys. Endpoint: `https://storage.googleapis.com`. No multipart upload support but Papermark doesn't need it.  |

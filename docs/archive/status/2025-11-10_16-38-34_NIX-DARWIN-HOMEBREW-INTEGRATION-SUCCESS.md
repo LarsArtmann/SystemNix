@@ -115,7 +115,7 @@ shellInit = '''
 **JavaScript/TypeScript Stack**: Modern
 
 - **Runtime**: Bun (incredibly fast JavaScript runtime)
-- **Package Manager**: Bun instead of npm (performance advantage)
+- **Package Manager**: Bun instead of pnpm (performance advantage)
 - **Node.js**: Available in environment packages
 - **Development**: Proper cache and configuration optimization
 

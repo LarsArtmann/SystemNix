@@ -100,16 +100,16 @@ print(torch.cuda.get_device_properties(0).name)
 
 ### Problem
 
-Phase 3 of `unsloth-setup` runs `npm run build`, which executes `tsc -b && vite build`. The `tsc` (TypeScript compiler) spawns child processes using `sh`, which is not in the service's `path`.
+Phase 3 of `unsloth-setup` runs `pnpm run build`, which executes `tsc -b && vite build`. The `tsc` (TypeScript compiler) spawns child processes using `sh`, which is not in the service's `path`.
 
 The setup log from the initial install:
 
 ```
-npm error enoent spawn sh ENOENT
-npm error enoent This is related to npm not being able to find a file.
+pnpm error enoent spawn sh ENOENT
+pnpm error enoent This is related to pnpm not being able to find a file.
 ```
 
-The script has `set -euo pipefail` but the npm build failure didn't cause the script to exit because it was a child process exit code. The setup continued to `date -Iseconds > ${setupDone}` and wrote the marker file despite the frontend never being built.
+The script has `set -euo pipefail` but the pnpm build failure didn't cause the script to exit because it was a child process exit code. The setup continued to `date -Iseconds > ${setupDone}` and wrote the marker file despite the frontend never being built.
 
 This is why the first switch showed:
 
@@ -128,7 +128,7 @@ path = with pkgs; [
 ];
 ```
 
-Missing: `bash` (provides `sh`). NixOS systemd services don't inherit the system PATH — only what's explicitly listed. While `coreutils` is there, `bash` is not, so `sh` is unavailable to npm's child process spawning.
+Missing: `bash` (provides `sh`). NixOS systemd services don't inherit the system PATH — only what's explicitly listed. While `coreutils` is there, `bash` is not, so `sh` is unavailable to pnpm's child process spawning.
 
 ### Fix
 
@@ -136,7 +136,7 @@ Add `bash` to the setup service's `path`:
 
 ```nix
 path = with pkgs; [
-  bashInteractive  # provides /bin/sh for npm child processes
+  bashInteractive  # provides /bin/sh for pnpm child processes
   python313 git gcc gnumake cmake ninja cacert
   nodejs_22 coreutils
 ];

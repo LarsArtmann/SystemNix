@@ -37,7 +37,7 @@ Three hardcoded version pins upgraded to latest releases, all building cleanly. 
 | hermes-agent flake input | v2026.5.16                                     | v2026.6.5                          | ✅ Built      |
 | Overlay complexity       | 37 lines, `fixedHash` + `interceptCallPackage` | 15 lines, simple extend + override | ✅ Simplified |
 
-**Key discovery:** Upstream v2026.6.5 added `fetcherVersion = 2` and `npmDepsFetcherVersion = 2` to `nix/lib.nix`, with a correct `npmDepsHash`. The old workaround (intercepting `callPackage` to patch the TUI npm deps hash) is permanently unnecessary.
+**Key discovery:** Upstream v2026.6.5 added `fetcherVersion = 2` and `npmDepsFetcherVersion = 2` to `nix/lib.nix`, with a correct `npmDepsHash`. The old workaround (intercepting `callPackage` to patch the TUI pnpm deps hash) is permanently unnecessary.
 
 **Files changed:**
 
@@ -95,17 +95,17 @@ Three hardcoded version pins upgraded to latest releases, all building cleanly. 
 - **Impact:** Low — not a runtime dependency, development tooling only
 - **Fix:** Needs upstream go.mod fix or `overrideModAttrs` with `go mod tidy`
 
-### Hermes npm deps fetcher version hell (RESOLVED, but worth documenting)
+### Hermes pnpm deps fetcher version hell (RESOLVED, but worth documenting)
 
 During the hermes upgrade, multiple build attempts failed with:
 
 ```
-error: fetcher version in the arguments to buildNpmPackage (2) is not the same as the one in npm-deps (1)
+error: fetcher version in the arguments to buildNpmPackage (2) is not the same as the one in pnpm-deps (1)
 ```
 
-Root cause: The nix store had **cached npm-deps outputs from fetcher v1** that were stale. Even after updating the code, Nix kept reusing the old fixed-output derivation. Required:
+Root cause: The nix store had **cached pnpm-deps outputs from fetcher v1** that were stale. Even after updating the code, Nix kept reusing the old fixed-output derivation. Required:
 
-1. `nix store delete` on the stale npm-deps paths
+1. `nix store delete` on the stale pnpm-deps paths
 2. `nix-collect-garbage` to clean unreachable store entries
 3. Only THEN would the new fetcher v2 output be computed
 

@@ -391,7 +391,7 @@ This determines whether item 1 in the priority list is "fix it" or "remove it".
 | Commit     | Files                 | Summary                                                                                                              |
 | ---------- | --------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `1a409877` | 11 files (-102 lines) | `mkStateDir` adoption across 10 services + `imagePull` extension to `mkDockerService` + `voice-agents.nix` migration |
-| Unstaged   | 6 files               | `flake.lock` drift, `just hash-check` recipe, `jscpd.nix` fix, `ai-stack.nix` npm→pnpm, `base.nix` nodejs removal    |
+| Unstaged   | 6 files               | `flake.lock` drift, `just hash-check` recipe, `jscpd.nix` fix, `ai-stack.nix` pnpm→pnpm, `base.nix` nodejs removal    |
 
 ---
 

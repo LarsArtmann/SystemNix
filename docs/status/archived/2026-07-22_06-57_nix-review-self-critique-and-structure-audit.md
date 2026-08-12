@@ -164,7 +164,7 @@
 25. Read `pkgs/openseo.nix` — Cloudflare Workers in Nix
 26. Read `pkgs/dms-plugins/` — all widget/plugin definitions
 27. Read `pkgs/netwatch.nix` — Rust package
-28. Read `pkgs/jscpd.nix` — npm package
+28. Read `pkgs/jscpd.nix` — pnpm package
 29. Read `pkgs/govalid.nix` — Go package
 30. Check `maintainers` field on all 7 packages
 31. Verify `lib.fileset` usage in custom packages

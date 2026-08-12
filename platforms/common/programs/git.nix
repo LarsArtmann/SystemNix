@@ -149,7 +149,7 @@
 
       # Node.js
       "node_modules/"
-      "npm-debug.log*"
+      "pnpm-debug.log*"
       "yarn-debug.log*"
       "yarn-error.log*"
 

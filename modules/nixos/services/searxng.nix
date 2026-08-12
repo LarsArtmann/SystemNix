@@ -290,7 +290,7 @@ _: {
                 inactive = true;
               }
               {
-                name = "npm";
+                name = "pnpm";
                 disabled = false;
                 inactive = true;
               }

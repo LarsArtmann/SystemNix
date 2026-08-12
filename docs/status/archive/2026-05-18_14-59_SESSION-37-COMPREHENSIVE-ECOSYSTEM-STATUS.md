@@ -189,7 +189,7 @@ The `just update-vendor-hashes` recipe uses `nix build .#pkg --no-link` which re
 
 | File                           | Issue                                                               |
 | ------------------------------ | ------------------------------------------------------------------- |
-| `pkgs/jscpd-package-lock.json` | Leftover from npm-based build, not referenced. jscpd now uses pnpm. |
+| `pkgs/jscpd-package-lock.json` | Leftover from pnpm-based build, not referenced. jscpd now uses pnpm. |
 
 ### 3. Unused Exports
 
@@ -227,7 +227,7 @@ In `configuration.nix:131`: `# photomap.enable = true;` — commented out. Eithe
 
 4. **Consolidate hash-check recipes** — `just hash-check` and `just update-vendor-hashes` do overlapping things but with different behaviors. `hash-check` actually builds, `update-vendor-hashes` can miss stale hashes. Should be one recipe that always works.
 
-5. **Dead file cleanup** — `pkgs/jscpd-package-lock.json` should be deleted. It's from the npm era, jscpd now uses pnpm.
+5. **Dead file cleanup** — `pkgs/jscpd-package-lock.json` should be deleted. It's from the pnpm era, jscpd now uses pnpm.
 
 6. **Status doc hygiene** — 10 status reports in `docs/status/` plus older ones in `archive/`. Consider a rolling window (keep last 5, archive the rest).
 
@@ -253,7 +253,7 @@ In `configuration.nix:131`: `# photomap.enable = true;` — commented out. Eithe
 
 | #   | Task                                                                           | Why                                           | Effort |
 | --- | ------------------------------------------------------------------------------ | --------------------------------------------- | ------ |
-| 1   | **Delete `pkgs/jscpd-package-lock.json`**                                      | Dead file, leftover from npm→pnpm migration   | 1 min  |
+| 1   | **Delete `pkgs/jscpd-package-lock.json`**                                      | Dead file, leftover from pnpm→pnpm migration   | 1 min  |
 | 2   | **Add `netwatch` and `govalid` to `base.nix`** (or document why not)           | Built but not installed = confusing           | 5 min  |
 | 3   | **Decide on `photomap`** — enable or remove                                    | Dead commented code in configuration.nix      | 5 min  |
 | 4   | **Fix `update-vendor-hashes` false negatives**                                 | Missed buildflow stale hash in session 36     | Medium |

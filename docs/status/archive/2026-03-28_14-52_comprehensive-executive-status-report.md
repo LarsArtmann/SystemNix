@@ -190,7 +190,7 @@ f8932fe docs: add YouTube frontend alternatives research
 - CI/CD integration (Drone/Gitea Actions)
 - LDAP authentication
 - Repository templates
-- Package registry (npm, pypi, docker)
+- Package registry (pnpm, pypi, docker)
 
 ### 2. DNS Blocker Advanced Features
 

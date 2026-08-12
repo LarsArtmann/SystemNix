@@ -69,7 +69,14 @@ _: {
                 APP_SECRET = "\${APP_SECRET}";
                 DISABLE_DB_MIGRATIONS = "true";
                 DISABLE_CRON_JOBS_REGISTRATION = "true";
+                # Cap Node.js heap at 1.5G so V8 GC aggressively reclaims before
+                # hitting the 2G container mem_limit. Without this, the worker
+                # accumulates ~840MB RSS + page cache, making it the #1 target
+                # for systemd-oomd under /system.slice pressure.
+                NODE_OPTIONS = "--max-old-space-size=1536";
               };
+              mem_limit = "2g";
+              memswap_limit = "2g";
               volumes = [ "server-local-data:/app/packages/twenty-server/.local-storage" ];
               depends_on = {
                 db.condition = "service_healthy";

@@ -34,7 +34,7 @@
 ## B. PARTIALLY DONE
 
 1. **Full `just switch` not yet verified** — only `nix build .#branching-flow` tested
-   - The build may still have other failures (Rust crates, npm deps, etc.)
+   - The build may still have other failures (Rust crates, pnpm deps, etc.)
    - Need to run full `just switch` to confirm end-to-end
 
 ---
@@ -88,7 +88,7 @@
 | 10  | Add `go-branded-id` injection to branching-flow's prepared-source postPatch | High     | Low    | Prevention |
 | 11  | Run `just validate-scripts` to verify all shell scripts                     | Low      | Low    | Quality    |
 | 12  | Run `just format` to ensure all .nix files formatted                        | Low      | Low    | Quality    |
-| 13  | Check hermes vendorHash isn't stale after npm dep changes                   | Medium   | Low    | Fix        |
+| 13  | Check hermes vendorHash isn't stale after pnpm dep changes                   | Medium   | Low    | Fix        |
 | 14  | Verify monitor365 build (Rust crates downloading)                           | Medium   | Low    | Fix        |
 | 15  | Run `just test-fast` to validate Nix syntax                                 | Medium   | Low    | Quality    |
 | 16  | Add CI pipeline for private Go repos (GitHub Actions)                       | High     | High   | Prevention |

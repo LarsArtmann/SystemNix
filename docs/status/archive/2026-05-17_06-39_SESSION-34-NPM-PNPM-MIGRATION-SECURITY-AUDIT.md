@@ -8,9 +8,9 @@
 
 ## Executive Summary
 
-Session 34 focused on **eliminating npm from the build chain** and conducting a full security posture review. The npm→pnpm migration is nearly complete across all local code — `buildNpmPackage` is fully removed, `nodejs` is no longer a system package, and all local npm invocations are replaced with pnpm. Two upstream-only dependencies (hermes-agent's `fetchNpmDeps` and Twenty CRM's Docker `yarn`) remain outside our control. The security audit revealed 5 failed systemd services, 86% root disk usage, and several hardening bypass patterns in service configs.
+Session 34 focused on **eliminating pnpm from the build chain** and conducting a full security posture review. The pnpm→pnpm migration is nearly complete across all local code — `buildNpmPackage` is fully removed, `nodejs` is no longer a system package, and all local pnpm invocations are replaced with pnpm. Two upstream-only dependencies (hermes-agent's `fetchNpmDeps` and Twenty CRM's Docker `yarn`) remain outside our control. The security audit revealed 5 failed systemd services, 86% root disk usage, and several hardening bypass patterns in service configs.
 
-**Key metric:** `buildNpmPackage` usage: 0. npm CLI usage: 0 (local). `nodejs` system package: removed. pnpm adopted everywhere local.
+**Key metric:** `buildNpmPackage` usage: 0. pnpm CLI usage: 0 (local). `nodejs` system package: removed. pnpm adopted everywhere local.
 
 **Build status:** `just test-fast` passes clean. All NixOS modules evaluate.
 
@@ -18,22 +18,22 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 
 ## a) FULLY DONE ✅
 
-### npm → pnpm Migration (Session 34)
+### pnpm → pnpm Migration (Session 34)
 
 | Item                              | Before                                                           | After                                                          | Status      |
 | --------------------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------- | ----------- |
 | `pkgs/jscpd.nix`                  | `buildNpmPackage` + `npmDepsHash` + vendored `package-lock.json` | `fetchPnpmDeps` + `pnpmConfigHook` + vendored `pnpm-lock.yaml` | ✅ Migrated |
 | `ai-stack.nix` (unsloth frontend) | `${pkgs.nodejs_22}/bin/npm install/build` (3 calls)              | `${pkgs.pnpm}/bin/pnpm install/build` (3 calls)                | ✅ Migrated |
 | `base.nix` system packages        | `nodejs` + `pnpm` installed                                      | `pnpm` only (bun provides JS runtime)                          | ✅ Removed  |
-| `justfile` clean recipe           | `npm cache clean --force`                                        | Removed (pnpm store prune retained)                            | ✅ Removed  |
+| `justfile` clean recipe           | `pnpm cache clean --force`                                        | Removed (pnpm store prune retained)                            | ✅ Removed  |
 | `buildNpmPackage` references      | 1 (`jscpd.nix`)                                                  | 0                                                              | ✅ Zero     |
 | `nodejs` in buildInputs           | `ai-stack.nix` (`nodejs_22`)                                     | Replaced with `pnpm`                                           | ✅ Removed  |
 
-**Remaining npm (outside our control):**
+**Remaining pnpm (outside our control):**
 
 - `hermes.nix:22` — patches upstream hermes-agent's stale `npmDepsHash` via `fetchNpmDeps` (upstream build system, not ours)
 - `twenty.nix:55` — Docker container runs `yarn worker:prod` (upstream image, not ours)
-- `flake.lock` — `npm-lockfile-fix` transitive dependency (not directly referenced)
+- `flake.lock` — `pnpm-lockfile-fix` transitive dependency (not directly referenced)
 
 ### Infrastructure & Core Services (Cumulative)
 
@@ -213,7 +213,7 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 
 8. **Old lock file to clean up** — `pkgs/jscpd-package-lock.json` is dead code after pnpm migration.
 
-9. **npm-debug.log in gitignore** — `platforms/common/programs/git.nix:160` still has `"npm-debug.log*"` — cosmetic but could be cleaned.
+9. **pnpm-debug.log in gitignore** — `platforms/common/programs/git.nix:160` still has `"pnpm-debug.log*"` — cosmetic but could be cleaned.
 
 10. **TODO_LIST.md stale** — Last updated session 74 (2026-05-11), doesn't reflect session 33-34 work.
 
@@ -237,7 +237,7 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 | 2   | **Investigate Caddy failure** — check logs, fix TLS/sops/config                       | Restores all reverse proxy | 30 min |
 | 3   | **Fix timeshift-backup/verify** — root cause 4-session persistent failure             | Restores backup capability | 1h     |
 | 4   | **Clean up root disk** — `nix-collect-garbage --delete-older-than 7d`, auto-GC config | Prevents disk exhaustion   | 15 min |
-| 5   | **Trash `pkgs/jscpd-package-lock.json`** — dead npm lockfile                          | Cleanup                    | 1 min  |
+| 5   | **Trash `pkgs/jscpd-package-lock.json`** — dead pnpm lockfile                          | Cleanup                    | 1 min  |
 
 ### Priority 2: Security Hardening (this week)
 
@@ -254,8 +254,8 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 | #   | Task                                                                         | Impact                   | Effort |
 | --- | ---------------------------------------------------------------------------- | ------------------------ | ------ |
 | 11  | **Update TODO_LIST.md** — reflect sessions 33-34 work                        | Accurate tracking        | 15 min |
-| 12  | **Update AGENTS.md** — document npm→pnpm migration, remove nodejs references | Knowledge base accuracy  | 20 min |
-| 13  | **Clean gitignore** — remove `npm-debug.log*` from git.nix                   | Cleanup                  | 2 min  |
+| 12  | **Update AGENTS.md** — document pnpm→pnpm migration, remove nodejs references | Knowledge base accuracy  | 20 min |
+| 13  | **Clean gitignore** — remove `pnpm-debug.log*` from git.nix                   | Cleanup                  | 2 min  |
 | 14  | **Consolidate voice-agents Caddy vHost** — into caddy.nix pattern            | Architecture consistency | 30 min |
 | 15  | **Add SigNoz per-threshold channel routing** — critical→Discord, warning→log | Alert quality            | 1h     |
 
@@ -286,7 +286,7 @@ Session 34 focused on **eliminating npm from the build chain** and conducting a 
 **Why is Caddy failing?** The health check reports `caddy.service` as FAILED, but I cannot run `systemctl` or `journalctl` from this environment (security policy blocks those commands). Caddy is the single most critical service — it's the reverse proxy for ALL web services (`*.home.lan`). The failure could be:
 
 1. **sops secret not decrypted** — TLS cert/key not available at boot
-2. **Config validation error** — after the npm→pnpm changes (unlikely, we didn't touch caddy.nix)
+2. **Config validation error** — after the pnpm→pnpm changes (unlikely, we didn't touch caddy.nix)
 3. **Port conflict** — something else grabbed 443/80
 4. **DNS resolution failure** — Caddy can't resolve ACME or backend hosts
 
@@ -325,11 +325,11 @@ systemctl status caddy.service
 
 | File                                  | Change                                                                |
 | ------------------------------------- | --------------------------------------------------------------------- |
-| `modules/nixos/services/ai-stack.nix` | npm → pnpm (3 calls), `nodejs_22` → `pnpm`                            |
+| `modules/nixos/services/ai-stack.nix` | pnpm → pnpm (3 calls), `nodejs_22` → `pnpm`                            |
 | `pkgs/jscpd.nix`                      | `buildNpmPackage` → `fetchPnpmDeps` + `pnpmConfigHook`                |
 | `pkgs/jscpd-pnpm-lock.yaml`           | **NEW** — vendored pnpm lockfile (replaces `jscpd-package-lock.json`) |
 | `platforms/common/packages/base.nix`  | Removed `nodejs` from system packages                                 |
-| `justfile`                            | Removed `npm cache clean --force`                                     |
+| `justfile`                            | Removed `pnpm cache clean --force`                                     |
 | `pkgs/README.md`                      | Updated jscpd source description                                      |
 
 ---

@@ -201,7 +201,7 @@ The `just update-vendor-hashes` recipe uses `nix build .#pkg --no-link` which re
 
 | File                           | Issue                                                                                 |
 | ------------------------------ | ------------------------------------------------------------------------------------- |
-| `pkgs/jscpd-package-lock.json` | Leftover from npm-based build, not referenced. jscpd now uses pnpm. **Still exists.** |
+| `pkgs/jscpd-package-lock.json` | Leftover from pnpm-based build, not referenced. jscpd now uses pnpm. **Still exists.** |
 
 ### 3. Unused Exports
 
@@ -241,7 +241,7 @@ Either enable it, fix the podman permission issue, or remove the module and the 
 
 4. **Consolidate hash-check recipes** — `just hash-check` and `just update-vendor-hashes` do overlapping things but with different behaviors. `hash-check` actually builds; `update-vendor-hashes` can miss stale hashes.
 
-5. **Dead file cleanup** — `pkgs/jscpd-package-lock.json` should be deleted. It's from the npm era; jscpd now uses pnpm.
+5. **Dead file cleanup** — `pkgs/jscpd-package-lock.json` should be deleted. It's from the pnpm era; jscpd now uses pnpm.
 
 6. **Status doc hygiene** — 55 status reports in `docs/status/` (including archived). Consider a rolling window (keep last 5-10 active, archive the rest).
 
@@ -267,7 +267,7 @@ Either enable it, fix the podman permission issue, or remove the module and the 
 
 | #   | Task                                                                           | Why                                              | Effort |
 | --- | ------------------------------------------------------------------------------ | ------------------------------------------------ | ------ |
-| 1   | **Delete `pkgs/jscpd-package-lock.json`**                                      | Dead file, leftover from npm→pnpm migration      | 1 min  |
+| 1   | **Delete `pkgs/jscpd-package-lock.json`**                                      | Dead file, leftover from pnpm→pnpm migration      | 1 min  |
 | 2   | **Decide on `netwatch`** — add to `base.nix` or document as overlay-only       | Only remaining "built but not installed" package | 5 min  |
 | 3   | **Decide on `photomap`** — fix podman issue, enable, or remove module          | Dead commented code in configuration.nix         | 10 min |
 | 4   | **Fix `update-vendor-hashes` false negatives**                                 | Missed buildflow stale hash in session 36        | Medium |

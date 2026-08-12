@@ -148,7 +148,7 @@ The auto-git daemon committed the first batch of I/O changes in `4691be1f`, but 
 20. Profile which derivations are the I/O hogs (likely Go vendor + Rust cargo vendor)
 
 ### Desktop & Interactive (21-26)
-21. Add ionice wrappers for `go`, `cargo`, `npm`, `pnpm` in shell aliases
+21. Add ionice wrappers for `go`, `cargo`, `pnpm`, `pnpm` in shell aliases
 22. Elevate `helium` (browser) user service to BE/3 (interactive)
 23. Elevate `qmd-mcp` user service if it does disk I/O during searches
 24. Check if `niri-drm-healthcheck` needs I/O priority (it reads DRM state — probably not disk-bound)

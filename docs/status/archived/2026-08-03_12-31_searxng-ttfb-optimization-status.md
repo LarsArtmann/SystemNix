@@ -116,7 +116,7 @@
 10. Audit engine response times via SearXNG `/stats` endpoint after deploy
 11. Make geo-restricted Asian video engines `inactive: true` (bilibili, niconico, acfun, iqiyi, sogou, naver, 360search, vuhuv)
 12. Make obscure video engines `inactive: true` (bitchute, ina, dogpile, findfiles, fireball, privacywall, tusksearch)
-13. Make niche package registries `inactive: true` (keep only crates.io, npm, pypi, pkg.go.dev active)
+13. Make niche package registries `inactive: true` (keep only crates.io, pnpm, pypi, pkg.go.dev active)
 14. Consider making ALL video engines `inactive: true` (available via `!videos` bang)
 15. Consider making ALL image engines `inactive: true` (available via `!images` bang)
 16. Consider making ALL code repos `inactive: true` except github (available via `!repos` bang)

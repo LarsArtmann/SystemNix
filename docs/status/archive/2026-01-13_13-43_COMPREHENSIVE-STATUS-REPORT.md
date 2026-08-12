@@ -468,7 +468,7 @@ programs.git = {
 - IDE and editor files: `.vscode/`, `.idea/`, `*.swp`
 - Temporary files: `*.tmp`, `*.temp`, `.cache/`
 - Build artifacts: `dist/`, `build/`, `target/`
-- Node.js: `node_modules/`, `npm-debug.log*`
+- Node.js: `node_modules/`, `pnpm-debug.log*`
 - Python: `__pycache__/`, `*.py[cod]`, `venv/`
 - Go: `*.exe`, `*.dll`, `*.so`, `go.work`
 - Rust: `target/`, `Cargo.lock`

@@ -203,7 +203,7 @@ First attempt only added `replace` directives for go-output sub-modules without 
 
 Currently `pkgs/` has 5 files:
 
-- `jscpd.nix` — Node.js, always needs local pkg (npm lockfile)
+- `jscpd.nix` — Node.js, always needs local pkg (pnpm lockfile)
 - `modernize.nix` — fetches from golang.org/x/tools, always needs local pkg
 - `aw-watcher-utilization.nix` — Python, fetched from GitHub fork
 - `openaudible.nix` — AppImage wrapper, always needs local pkg
