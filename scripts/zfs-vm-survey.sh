@@ -58,11 +58,11 @@ cleanup() {
     if [ "$driver_link" != "/sys/bus/pci/drivers/xhci_hcd" ]; then
       echo "Rebinding USB controller to xhci_hcd..."
       # Unbind from vfio-pci
-      echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
+      echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
       # Clear driver_override so xhci_hcd can claim it again
-      echo "" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
+      echo "" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
       # Bind back to xhci_hcd
-      echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
+      echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
       sleep 2
       echo "Controller rebound: $(ls -la /sys/bus/pci/devices/$USB_CONTROLLER/driver 2>/dev/null)"
     else
@@ -102,7 +102,7 @@ fi
 current="$(get_driver "$USB_CONTROLLER")"
 if [ "$current" = "xhci_hcd" ]; then
   echo "Unbinding $USB_CONTROLLER from xhci_hcd..."
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/unbind
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/unbind
   sleep 1
 else
   echo "Controller currently bound to: $current (expected xhci_hcd)"
@@ -112,8 +112,8 @@ fi
 current="$(get_driver "$USB_CONTROLLER")"
 if [ "$current" != "vfio-pci" ]; then
   echo "Binding $USB_CONTROLLER to vfio-pci via driver_override..."
-  echo "vfio-pci" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/bind
+  echo "vfio-pci" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/bind
   sleep 1
 fi
 
@@ -138,9 +138,9 @@ echo "VM path: $VM_PATH"
 rm -f ./nixos.qcow2 2>/dev/null || true
 
 # Start VM in background
-"$VM_PATH/bin/run-nixos-vm" > "$VM_LOG" 2>&1 &
+"$VM_PATH/bin/run-nixos-vm" >"$VM_LOG" 2>&1 &
 VM_PID=$!
-echo "$VM_PID" > "$VM_PIDFILE"
+echo "$VM_PID" >"$VM_PIDFILE"
 echo "VM started (PID $VM_PID). Waiting for SSH..."
 
 # Wait for SSH to become available (up to 120s)

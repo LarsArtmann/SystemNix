@@ -17,17 +17,19 @@ get_driver() {
 }
 
 cleanup() {
-  echo ""; echo "=== Cleanup ==="
+  echo ""
+  echo "=== Cleanup ==="
   if [ -f "$VM_PIDFILE" ]; then
     kill "$(cat "$VM_PIDFILE")" 2>/dev/null || true
-    sleep 2; kill -9 "$(cat "$VM_PIDFILE")" 2>/dev/null || true
+    sleep 2
+    kill -9 "$(cat "$VM_PIDFILE")" 2>/dev/null || true
     rm -f "$VM_PIDFILE"
   fi
   if [ "$(get_driver "$USB_CONTROLLER")" != "xhci_hcd" ]; then
     echo "Rebinding USB controller..."
-    echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
-    echo "" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
-    echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
+    echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
+    echo "" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
+    echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
   fi
   echo "Done."
 }
@@ -37,25 +39,37 @@ trap cleanup EXIT
 echo "=== VFIO Setup ==="
 lsmod | grep -q vfio_pci || modprobe vfio-pci
 [ "$(get_driver "$USB_CONTROLLER")" = "xhci_hcd" ] && {
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/unbind; sleep 1; }
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/unbind
+  sleep 1
+}
 [ "$(get_driver "$USB_CONTROLLER")" != "vfio-pci" ] && {
-  echo "vfio-pci" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/bind; sleep 1; }
+  echo "vfio-pci" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/bind
+  sleep 1
+}
 echo "Driver: $(get_driver "$USB_CONTROLLER")"
 
 # ── Boot VM ──
 echo "=== Booting VM ==="
 rm -f ./nixos.qcow2 2>/dev/null || true
-"$VM_PATH/bin/run-nixos-vm" > "$VM_LOG" 2>&1 &
-echo $! > "$VM_PIDFILE"
+"$VM_PATH/bin/run-nixos-vm" >"$VM_LOG" 2>&1 &
+echo $! >"$VM_PIDFILE"
 
 echo "Waiting for SSH..."
 for i in $(seq 1 60); do
   ssh_cmd "echo READY" 2>/dev/null | grep -q READY && break
-  kill -0 "$(cat "$VM_PIDFILE")" 2>/dev/null || { echo "VM died"; tail -20 "$VM_LOG"; exit 1; }
+  kill -0 "$(cat "$VM_PIDFILE")" 2>/dev/null || {
+    echo "VM died"
+    tail -20 "$VM_LOG"
+    exit 1
+  }
   sleep 2
 done
-ssh_cmd "echo READY" 2>/dev/null | grep -q READY || { echo "SSH failed"; tail -20 "$VM_LOG"; exit 1; }
+ssh_cmd "echo READY" 2>/dev/null | grep -q READY || {
+  echo "SSH failed"
+  tail -20 "$VM_LOG"
+  exit 1
+}
 
 # ── Deep Dive ──
 echo "=== Importing pool ==="

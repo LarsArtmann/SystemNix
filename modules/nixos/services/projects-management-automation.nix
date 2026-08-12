@@ -60,16 +60,20 @@
         #
         # Fix: layered cgroup containment.
         #   MemoryHigh=6G: kernel starts throttling PMA's allocations at 6G
-        #     via direct reclaim. PMA slows down but doesn't die. This is the
-        #     primary defense — it prevents the exponential page-cache growth
-        #     that caused the death-loop.
-        #   MemoryMax=8G: hard ceiling. If PMA somehow exceeds 8G (e.g. a
-        #     memory leak in the LLM client), the cgroup OOM killer fires
-        #     and systemd restarts the service cleanly.
-        #   MemorySwapMax=0: PMA has only 370 MB anon — swapping is
+        #     via direct reclaim. PMA slows down but doesn't die.
+        #   MemoryMax=8G: hard ceiling (OOM-kill from cgroup, not systemd-oomd).
+        #   ManagedOOMPreference=omit: exempts PMA from systemd-oomd's
+        #     memory-pressure killer. Discovery of 260+ repos legitimately
+        #     causes >50% pressure for >20s (oomd's DefaultMemoryPressureLimit
+        #     and DefaultMemoryPressureDurationSec), which oomd interprets as a
+        #     runaway process and kills. Discovery is a burst, not a leak — it
+        #     settles to ~250 MB after the scan completes.
+        #     NOTE: ManagedOOMMemoryPressure has NO "off" value — "auto" is the
+        #     DEFAULT (oomd will kill), and "kill" makes it more aggressive.
+        #     The correct exemption directive is ManagedOOMPreference = "omit".
+        #   MemorySwapMax=0: PMA has only ~370 MB anon — swapping is
         #     counterproductive and risks swap-thrashing.
-        #   CPUQuota=200%: caps PMA at 2 cores. Without this, the death-loop
-        #     consumed 91% of all CPU, starving everything else.
+        #   CPUQuota=200%: caps PMA at 2 cores.
         systemd.services.projects-management-automation.serviceConfig = lib.mkMerge [
           {
             Type = lib.mkForce "exec";
@@ -78,7 +82,15 @@
             MemoryHigh = lib.mkForce "6G";
             MemorySwapMax = lib.mkForce "0";
             CPUQuota = lib.mkForce "200%";
-            Environment = [ "GOMEMLIMIT=6144MiB" ];
+            ManagedOOMPreference = "omit";
+            # Override upstream's unquoted GIT_*_NAME env entries.
+            # Upstream emits "GIT_AUTHOR_NAME=Lars Artmann" as a raw
+            # Environment= list item; systemd parses the space as a delimiter
+            # and drops "Artmann". These quoted versions fix that.
+            Environment = [
+              ''GIT_AUTHOR_NAME="Lars Artmann"''
+              ''GIT_COMMITTER_NAME="Lars Artmann"''
+            ];
           }
           ioTier.build
         ];

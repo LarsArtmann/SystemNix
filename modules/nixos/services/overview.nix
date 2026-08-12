@@ -101,6 +101,11 @@
             # map to [Unit] where they actually take effect.
             startLimitBurst = 3;
             startLimitIntervalSec = 60;
+            # Null out the upstream module's serviceConfig entries for these.
+            # systemd 261+ ignores StartLimit* in [Service] with a warning.
+            # The top-level options above correctly map to [Unit].
+            serviceConfig.StartLimitBurst = lib.mkForce null;
+            serviceConfig.StartLimitIntervalSec = lib.mkForce null;
             serviceConfig.ExecStartPre = lib.mkIf daemonMode "+${lib.getExe waitDaemonReady}";
             serviceConfig.TimeoutStartSec = "3min";
             environment = {

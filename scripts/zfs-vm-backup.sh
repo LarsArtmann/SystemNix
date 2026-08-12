@@ -21,17 +21,19 @@ get_driver() {
 }
 
 cleanup() {
-  echo ""; echo "=== Cleanup ==="
+  echo ""
+  echo "=== Cleanup ==="
   if [ -f "$VM_PIDFILE" ]; then
     kill "$(cat "$VM_PIDFILE")" 2>/dev/null || true
-    sleep 2; kill -9 "$(cat "$VM_PIDFILE")" 2>/dev/null || true
+    sleep 2
+    kill -9 "$(cat "$VM_PIDFILE")" 2>/dev/null || true
     rm -f "$VM_PIDFILE"
   fi
   if [ "$(get_driver "$USB_CONTROLLER")" != "xhci_hcd" ]; then
     echo "Rebinding USB controller..."
-    echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
-    echo "" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
-    echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
+    echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
+    echo "" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
+    echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
     sleep 2
     echo "Controller: $(get_driver "$USB_CONTROLLER")"
   fi
@@ -43,27 +45,37 @@ trap cleanup EXIT
 echo "=== VFIO Setup ==="
 lsmod | grep -q vfio_pci || modprobe vfio-pci
 if [ "$(get_driver "$USB_CONTROLLER")" = "xhci_hcd" ]; then
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/unbind; sleep 1
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/unbind
+  sleep 1
 fi
 if [ "$(get_driver "$USB_CONTROLLER")" != "vfio-pci" ]; then
-  echo "vfio-pci" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/bind; sleep 1
+  echo "vfio-pci" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/bind
+  sleep 1
 fi
 echo "Driver: $(get_driver "$USB_CONTROLLER")"
 
 # ── Boot VM ──
 echo "=== Booting VM ==="
 rm -f ./nixos.qcow2 2>/dev/null || true
-"$VM_PATH/bin/run-nixos-vm" > "$VM_LOG" 2>&1 &
-echo $! > "$VM_PIDFILE"
+"$VM_PATH/bin/run-nixos-vm" >"$VM_LOG" 2>&1 &
+echo $! >"$VM_PIDFILE"
 
 echo "Waiting for SSH..."
 for i in $(seq 1 60); do
   ssh_cmd "echo READY" 2>/dev/null | grep -q READY && break
-  kill -0 "$(cat "$VM_PIDFILE")" 2>/dev/null || { echo "VM died"; tail -20 "$VM_LOG"; exit 1; }
+  kill -0 "$(cat "$VM_PIDFILE")" 2>/dev/null || {
+    echo "VM died"
+    tail -20 "$VM_LOG"
+    exit 1
+  }
   sleep 2
 done
-ssh_cmd "echo READY" 2>/dev/null | grep -q READY || { echo "SSH failed"; tail -20 "$VM_LOG"; exit 1; }
+ssh_cmd "echo READY" 2>/dev/null | grep -q READY || {
+  echo "SSH failed"
+  tail -20 "$VM_LOG"
+  exit 1
+}
 
 # ── Import pool & mount everything ──
 echo "=== Importing pool ==="
@@ -104,19 +116,19 @@ echo ""
 #   cache/health* — ZFS health check benchmark (disposable)
 echo "--- Copying /storage (minus Docker + benchmarks) ---"
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-  "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*_test*' --exclude='./cache/health_check*' ." \
-  | tar xvf - -C "$BACKUP_DIR" 2>&1 | tail -10
+  "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*_test*' --exclude='./cache/health_check*' ." |
+  tar xvf - -C "$BACKUP_DIR" 2>&1 | tail -10
 
 # Copy legacy-mounted datasets
 echo ""
 echo "--- Copying legacy datasets ---"
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-  "for d in /mnt/datapool/*; do [ -d \"\$d\" ] && echo \"\$d\"; done" 2>/dev/null | while read -r ds_path; do
-    ds_name=$(basename "$ds_path")
-    echo "  Copying legacy: $ds_name"
-    "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-      "tar cf - -C '$ds_path' ." 2>/dev/null | tar xf - -C "$BACKUP_DIR/legacy-$ds_name" 2>/dev/null || true
-    mkdir -p "$BACKUP_DIR/legacy-$ds_name"
+  'for d in /mnt/datapool/*; do [ -d "$d" ] && echo "$d"; done' 2>/dev/null | while read -r ds_path; do
+  ds_name=$(basename "$ds_path")
+  echo "  Copying legacy: $ds_name"
+  "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
+    "tar cf - -C '$ds_path' ." 2>/dev/null | tar xf - -C "$BACKUP_DIR/legacy-$ds_name" 2>/dev/null || true
+  mkdir -p "$BACKUP_DIR/legacy-$ds_name"
 done
 
 # ── Verify ──
