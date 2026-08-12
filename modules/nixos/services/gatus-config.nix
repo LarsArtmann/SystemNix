@@ -713,6 +713,18 @@ _: {
                 alerts = discordAlert "Monitor365 server hit start-limit — crash loop detected (DuckDB WAL corruption or OOM). Run: sudo systemctl reset-failed monitor365-server && sudo systemctl start monitor365-server";
               })
               (mkHttpCheck {
+                name = "Nix Daemon";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "1m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_service_active{service=\"nix-daemon\"} 1*)"
+                  "[BODY] == pat(*system_service_start_limit_hit{service=\"nix-daemon\"} 0*)"
+                ];
+                alerts = discordAlert "Nix daemon down or in start-limit crash-loop — ALL nix operations fail with 'Connection refused'. Likely killed by systemd-oomd during a build. Fix: sudo systemctl reset-failed nix-daemon && sudo systemctl start nix-daemon";
+              })
+              (mkHttpCheck {
                 name = "PMA Service";
                 group = "Monitoring";
                 url = "http://localhost:${toString nodePort}/metrics";

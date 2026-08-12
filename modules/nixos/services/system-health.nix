@@ -416,6 +416,7 @@ _: {
             "homepage-dashboard"
             "monitor365"
             "monitor365-server"
+            "nix-daemon"
             "pocket-id"
             "projects-management-automation"
             "signoz"

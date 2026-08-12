@@ -80,6 +80,30 @@
           IOSchedulingClass = lib.mkForce "best-effort";
           IOSchedulingPriority = lib.mkForce 7;
           Nice = 10;
+          # nix-daemon is critical infrastructure — it must be the LAST process
+          # killed under memory pressure. Two independent OOM mechanisms exist:
+          #
+          # 1. systemd-oomd (PSI-based): ManagedOOMPreference = "omit" tells oomd
+          #    to NEVER select nix-daemon for killing. oomd kills other services
+          #    first. This alone fixed the 2026-08-12 outage where oomd killed
+          #    nix-daemon mid-build (4-8G peak) → socket activation re-triggered
+          #    → start-limit-hit → "Connection refused" on ALL nix operations.
+          #
+          # 2. Kernel OOM killer (invoked only when system is truly exhausted):
+          #    OOMScoreAdjust = -1000 makes nix-daemon the absolute lowest kill
+          #    priority. The kernel OOM killer scores every process 0-1000 and
+          #    kills the highest scorer; -1000 means "never kill this unless
+          #    there is literally nothing else left." This protects against the
+          #    scenario where ManagedOOMPreference=omit prevents oomd from
+          #    killing nix-daemon, but the system genuinely runs out of RAM and
+          #    the kernel's own OOM killer fires.
+          #
+          # Together: oomd never touches it, kernel OOM killer targets it last.
+          # If nix-daemon IS killed, it means the system was completely out of
+          # memory with no other reclaimable processes — a hard reboot was
+          # imminent anyway.
+          ManagedOOMPreference = "omit";
+          OOMScoreAdjust = -1000;
         };
       };
     };
