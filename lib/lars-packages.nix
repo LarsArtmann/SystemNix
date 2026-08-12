@@ -8,30 +8,27 @@
 {
   lib,
   inputs,
-}:
-system:
-let
-  flakePkg = input: (input.packages.${system} or { }).default or null;
+}: system: let
+  flakePkg = input: (input.packages.${system} or {}).default or null;
 in
-lib.filterAttrs (_: v: v != null) {
-  art-dupl = flakePkg inputs.art-dupl;
-  branching-flow = flakePkg inputs.branching-flow;
-  buildflow = flakePkg inputs.buildflow;
-  cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
-  go-auto-upgrade = null;
-  go-humanize-linter = flakePkg inputs.go-humanize-linter;
-  go-structure-linter = flakePkg inputs.go-structure-linter;
-  # Temporarily disabled: golangci-lint-auto-configure has incomplete vendoring
-  # with local deps (gogenfilter). Needs upstream fix in the repo.
-  # golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
-  hierarchical-errors = flakePkg inputs.hierarchical-errors;
-  library-policy = flakePkg inputs.library-policy;
-  md-go-validator = flakePkg inputs.md-go-validator;
-  # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
-  # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
-  mr-sync = flakePkg inputs.mr-sync;
-  project-meta = flakePkg inputs.project-meta;
-  # TEMPORARILY DISABLED: go-cqrs-lite/codec/v4 private repo FOD rebuild needed
-  # projects-management-automation = flakePkg inputs.projects-management-automation;
-  todo-list-ai = flakePkg inputs.todo-list-ai;
-}
+  lib.filterAttrs (_: v: v != null) {
+    art-dupl = flakePkg inputs.art-dupl;
+    branching-flow = flakePkg inputs.branching-flow;
+    buildflow = flakePkg inputs.buildflow;
+    cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
+    go-auto-upgrade = null;
+    go-humanize-linter = flakePkg inputs.go-humanize-linter;
+    go-structure-linter = flakePkg inputs.go-structure-linter;
+    # Temporarily disabled: golangci-lint-auto-configure has incomplete vendoring
+    # with local deps (gogenfilter). Needs upstream fix in the repo.
+    # golangci-lint-auto-configure = flakePkg inputs.golangci-lint-auto-configure;
+    hierarchical-errors = flakePkg inputs.hierarchical-errors;
+    library-policy = flakePkg inputs.library-policy;
+    md-go-validator = flakePkg inputs.md-go-validator;
+    # mr-sync: CLI to keep ~/.mrconfig in sync with GitHub repos.
+    # Resolves samber-do-auditlog transitively at v0.8.1 via cmdguard v3.1.0+.
+    mr-sync = flakePkg inputs.mr-sync;
+    project-meta = flakePkg inputs.project-meta;
+    projects-management-automation = flakePkg inputs.projects-management-automation;
+    todo-list-ai = flakePkg inputs.todo-list-ai;
+  }
