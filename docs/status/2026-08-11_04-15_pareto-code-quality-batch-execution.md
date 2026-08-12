@@ -133,8 +133,10 @@
 
 ## f) Top 50 Things to Get Done Next
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Critical (data safety + activation)
-1. `git push origin master` — unpushed changes are at risk
+1. ~~`git push origin master` — unpushed changes are at risk~~ done (0 unpushed commits as of 2026-08-12)
 2. `nix run .#deploy` — activate ALL changes from this + prior sessions
 3. `nix run .#post-deploy-check` — verify functional outcomes
 4. `nix run .#verify-io-tiers` — verify BFQ I/O tier assignments
@@ -143,16 +145,16 @@
 7. Verify `systemctl --failed` is empty after reboot
 
 ### This session's debt (must fix before deploy is "clean")
-8. Add CHANGELOG entries for ALL 11 changes made this session
-9. Verify memory.events collector can read `/sys/fs/cgroup/` under `ProtectSystem=strict`
-10. Run browser-history VM test at runtime (`nix build .#checks.x86_64-linux.browser-history`)
-11. Make memory.events Gatus alert generic (all monitored services, not just PMA)
+8. ~~Add CHANGELOG entries for ALL 11 changes made this session~~ done
+9. ~~Verify memory.events collector can read `/sys/fs/cgroup/` under `ProtectSystem=strict`~~ done
+10. ~~Run browser-history VM test at runtime~~ done (`nix build .#checks.x86_64-linux.browser-history`)
+11. ~~Make memory.events Gatus alert generic (all monitored services, not just PMA)~~ done
 12. Verify crush-daily doesn't OOM-kill with new MemoryMax=1G
-13. Update AGENTS.md with memory.events monitoring pattern + dms runtimeInputs gotcha
+13. ~~Update AGENTS.md with memory.events monitoring pattern~~ done + dms runtimeInputs gotcha
 
 ### Upstream code fixes
-14. Write `isNothingToCommit()` TOCTOU fix in PMA repo (or confirm SystemNix cgroup limits are the actual fix)
-15. Write `ClientSecret != ""` guard in browser-history repo (or confirm OIDC routing is the actual fix)
+14. ~~Write `isNothingToCommit()` TOCTOU fix in PMA repo~~ done (already existed at `committer.go:289`) (or confirm SystemNix cgroup limits are the actual fix)
+15. ~~Write `ClientSecret != ""` guard in browser-history repo~~ done (already existed at `api/oauth2.go:64`) (or confirm OIDC routing is the actual fix)
 16. Commit + push + tag PMA fix (if written)
 17. Commit + push + tag browser-history fix (if written)
 18. Bump PMA flake input after upstream fix
@@ -173,7 +175,7 @@
 29. Investigate node_exporter textfile phantom metrics (14 missing metrics → 14 RED Gatus checks)
 30. GOMEMLIMIT runtime validation: verify Go GC stats for 8 services after deploy
 31. SigNoz dashboard v2 migration (Perses v2 schema — 6 dashboards pending)
-32. Add CI workflow to run browser-history VM test automatically
+32. ~~Add CI workflow to run browser-history VM test automatically~~ done
 
 ### Infrastructure
 33. Twenty CRM PostgreSQL role fix (`CREATE ROLE twenty`)
@@ -185,7 +187,7 @@
 
 ### Code quality
 39. Audit ALL `scripts/*.sh` for dead/unreferenced scripts (comprehensive, not one-by-one)
-40. Add `shellcheck .githooks/pre-commit` to CI (the hook itself is never checked)
+40. ~~Add `shellcheck .githooks/pre-commit` to CI~~ done (the hook itself is never checked)
 41. Add `GOTOOLCHAIN=local` to Go devShells (if any exist — verify)
 42. Verify crush-daily-backfill.py SQL against actual CREATE TABLE schema
 43. Fix `test-home-manager.sh` TESTS_TOTAL inflation (20+ increment sites)

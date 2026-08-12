@@ -120,8 +120,8 @@ AGENTS.md and multiple docs reference "zstd compressed ~6G physical" and "2.7:1"
 1. **Test zram-generator level parsing manually** — Create a second zram device, write `level=1` to `algorithm_params`, verify it sticks
 2. **Benchmark via real kernel zram device** — Not libzstd userspace. Create test zram, fill with real data, read mm_stat
 3. **Capture representative swap corpus** — Read actual process memory from top RSS consumers
-4. **Deploy the change and verify** — `nix run .#deploy`, reboot, check `algorithm_params` is populated
-5. **Verify live ratio at level 1** — Compare mm_stat ratio before/after deploy over same workload period
+4. ~~**Deploy the change and verify**~~ done at `b81e5094` — `nix run .#deploy`, reboot, check `algorithm_params` is populated
+5. ~~**Verify live ratio at level 1**~~ done at `b81e5094` — Compare mm_stat ratio before/after deploy over same workload period
 6. **Explore multi-compression** — `zstd(level=1)` primary + `zstd(level=19)` secondary for idle pages
 7. **Consider BTRFS zstd:1** — Same 4 KiB block compression logic applies
 8. **Save benchmark script** to `scripts/zram-zstd-benchmark.py`

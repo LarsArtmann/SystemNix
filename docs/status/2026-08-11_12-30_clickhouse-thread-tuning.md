@@ -52,9 +52,9 @@ Nothing — config is complete, just not deployed or validated at runtime.
 
 ## c) NOT STARTED
 
-1. **Deploy** — Requires ClickHouse restart. `nix run .#deploy`.
-2. **Post-deploy runtime verification** — `clickhouse-client -q "SELECT name, value, changed FROM system.settings WHERE name IN (...)"` to confirm settings applied.
-3. **Thread count re-check** — After deploy, `ls /proc/$(pidof clickhouse-serv)/task | wc -l` to confirm thread reduction.
+1. ~~**Deploy** — Requires ClickHouse restart. `nix run .#deploy`.~~ done at `b81e5094`
+2. ~~**Post-deploy runtime verification**~~ done at `b81e5094` — `clickhouse-client -q "SELECT name, value, changed FROM system.settings WHERE name IN (...)"` to confirm settings applied.
+3. ~~**Thread count re-check**~~ done at `b81e5094` — After deploy, `ls /proc/$(pidof clickhouse-serv)/task | wc -l` to confirm thread reduction.
 4. **24-48h monitoring for `Too many parts`** — Merge starvation signal if `background_pool_size=2` can't keep up with ingestion.
 5. **AGENTS.md gotcha entry** — ClickHouse config-file split.
 
@@ -82,13 +82,15 @@ Nothing — config is complete, just not deployed or validated at runtime.
 
 ## f) Up to 50 things we should get done next
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Immediate (this change)
 
-1. Run `nix flake check --no-build` for full syntax validation
-2. Deploy: `nix run .#deploy`
-3. Post-deploy: `clickhouse-client -q "SELECT name, value, changed FROM system.settings WHERE name IN (...)"` to verify
-4. Post-deploy: Re-check thread count: `ls /proc/$(pidof clickhouse-serv)/task | wc -l`
-5. Post-deploy: Check logs: `journalctl -u clickhouse -n 50 --no-pager`
+1. ~~Run `nix flake check --no-build` for full syntax validation~~ done at `b81e5094`
+2. ~~Deploy: `nix run .#deploy`~~ done at `b81e5094`
+3. ~~Post-deploy: `clickhouse-client -q "SELECT name, value, changed FROM system.settings WHERE name IN (...)"` to verify
+4. ~~Post-deploy: Re-check thread count~~ done at `b81e5094`: `ls /proc/$(pidof clickhouse-serv)/task | wc -l`
+5. ~~Post-deploy: Check logs:~~ done at `b81e5094` `journalctl -u clickhouse -n 50 --no-pager`
 6. Watch for `Too many parts` errors over 24-48h
 7. Add AGENTS.md gotcha entry: ClickHouse config-file split
 

@@ -112,6 +112,8 @@
 
 ## f) Up to 50 things we should get done next
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Direct follow-ups from this session
 1. Add a comment in `git.nix` explaining why compression was removed (prevent regression)
 2. Decide whether to keep or revert the `flake.nix` formatter reformat (554-line change)

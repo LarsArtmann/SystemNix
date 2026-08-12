@@ -91,13 +91,13 @@ The `service-defaults.nix` helper (lines 21-27) explicitly documented this rule,
 
 ### STILL BROKEN
 
-1. **browser-history server projection drain timeout** — The DSN fix (upstream commit `dc3de07`) was necessary but NOT sufficient. The server starts, initializes SQLite with WAL mode, but then times out during projection drain (`projection drain timed out after 2m0s`). Root cause: missing `CheckpointStore` — without it, the server replays ALL events on every start, which takes >2 minutes. Needs upstream fix.
+1. ~~**browser-history server projection drain timeout**~~ done at `a941f88d` (bounded with StartLimit in [Unit]) — The DSN fix (upstream commit `dc3de07`) was necessary but NOT sufficient. The server starts, initializes SQLite with WAL mode, but then times out during projection drain (`projection drain timed out after 2m0s`). Root cause: missing `CheckpointStore` — without it, the server replays ALL events on every start, which takes >2 minutes. Needs upstream fix.
 
 2. **Monitor365** — Temporarily disabled. `wireguard-collector` Cargo workspace member missing from source. Needs upstream Monitor365 fix.
 
-3. **DiscordSync** — Temporarily disabled. vendorHash mismatch (stale FOD from cache degradation). Needs vendorHash update in upstream DiscordSync flake.
+3. ~~**DiscordSync** — Temporarily disabled. vendorHash mismatch~~ done at `992a275a` (stale FOD from cache degradation). Needs vendorHash update in upstream DiscordSync flake.
 
-4. **PMA** — Temporarily disabled (both service and CLI tool). go-cqrs-lite/codec/v4 private repo can't be fetched in nix sandbox. Needs vendorHash rebuild outside sandbox.
+4. ~~**PMA** — Temporarily disabled~~ done at `3ef0f26a` (both service and CLI tool). go-cqrs-lite/codec/v4 private repo can't be fetched in nix sandbox. Needs vendorHash rebuild outside sandbox.
 
 5. **Disk at 90%** — GC freed 47.2 GiB from store but BTRFS snapshots hold references. Actual disk freed: ~5 GiB. Still a crash risk multiplier.
 
@@ -127,10 +127,10 @@ The `service-defaults.nix` helper (lines 21-27) explicitly documented this rule,
 ## Next Steps
 
 ### Immediate
-1. Disable browser-history server+agent entirely (can't start until CheckpointStore upstream fix)
+1. ~~Disable browser-history server+agent entirely~~ done at `a941f88d` (can't start until CheckpointStore upstream fix)
 2. Fix Monitor365 wireguard-collector build
-3. Fix DiscordSync vendorHash
-4. Rebuild PMA vendorHash (needs non-sandbox build with SSH access)
+3. ~~Fix DiscordSync vendorHash~~ done at `992a275a`
+4. ~~Rebuild PMA vendorHash~~ done at `3ef0f26a` (needs non-sandbox build with SSH access)
 5. Revert flake.lock browser-history to GitHub URL after pushing vendorHash fix upstream
 
 ### Short-term

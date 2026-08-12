@@ -69,11 +69,13 @@
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Critical (do first)
 
 1. ~~Enable SDDM auto-login for user `lars` in `display-manager.nix` — prevents headless state after every reboot~~ — Rejected by user; implement session-aware monitoring instead (done in follow-up report)
-2. **Add Gatus alert on `niri_running` metric** — Discord alert when niri is down >10 min
-3. **Investigate `browser-history-server` 100% CPU** — new service, possibly stuck in a loop
+2. ~~**Add Gatus alert on `niri_running` metric**~~ done at `ae02f5a6` (replaced with session-aware `niri_desktop_died`) — Discord alert when niri is down >10 min
+3. ~~**Investigate `browser-history-server` 100% CPU**~~ done at `a1223f22` (root-caused to SQLite DSN crash loop) — new service, possibly stuck in a loop
 4. **Investigate load average 35-46** — abnormally high, WDT crash risk on QLC NAND hardware
 5. **Add post-deploy check for `graphical-session.target`** — warn if desktop system has no graphical session after deploy
 

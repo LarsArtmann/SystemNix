@@ -34,7 +34,7 @@
 
 ## c) NOT STARTED
 
-1. **Fix go-auto-upgrade vendorHash upstream** — The fix lives in `/home/lars/projects/go-auto-upgrade/flake.nix` (the upstream repo). The vendorHash needs to be updated from `sha256-xnq7o8PEl8Er6lXRkJO/Ksuw/zdVc0TyoRxcPF35yow=` to `sha256-E5DpPpl2zhWx9ixhaNpimnYgQ1ZfSiziRI8J8AMpr48=` (or set to `""` and rebuild).
+1. ~~**Fix go-auto-upgrade vendorHash upstream**~~ done at `5f948e0d` (disabled instead — `= null` in lars-packages.nix) — The fix lives in `/home/lars/projects/go-auto-upgrade/flake.nix` (the upstream repo). The vendorHash needs to be updated from `sha256-xnq7o8PEl8Er6lXRkJO/Ksuw/zdVc0TyoRxcPF35yow=` to `sha256-E5DpPpl2zhWx9ixhaNpimnYgQ1ZfSiziRI8J8AMpr48=` (or set to `""` and rebuild).
 
 2. **Bump SystemNix flake input for go-auto-upgrade** — After fixing the vendorHash upstream, push, tag, and update the SystemNix flake lock: `nix flake lock --update-input go-auto-upgrade`.
 
@@ -72,6 +72,8 @@
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
 
+> **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
+
 ### Critical (do first)
 
 1. **Fix go-auto-upgrade vendorHash upstream** — Set `vendorHash = ""` in `/home/lars/projects/go-auto-upgrade/flake.nix`, rebuild, paste the `got:` hash. Or directly set the new hash: `sha256-E5DpPpl2zhWx9ixhaNpimnYgQ1ZfSiziRI8J8AMpr48=`
@@ -89,7 +91,7 @@
 
 ### Medium priority
 
-10. **Remove the project-meta follows warnings** — `project-meta` has overrides for non-existent inputs `systems` and `treefmt-nix`. Clean up the `inputs.project-meta.inputs` in flake.nix
+10. ~~**Remove the project-meta follows warnings**~~ done at `debf26a2` — `project-meta` has overrides for non-existent inputs `systems` and `treefmt-nix`. Clean up the `inputs.project-meta.inputs` in flake.nix
 11. **Add niri_session_active metric** — Expose whether `graphical-session.target` is active (not just whether a user session exists) for more granular monitoring
 12. **Consider shared loginctl helper** — The loginctl session detection code is duplicated between `display-watchdog.sh` and `niri-health-metrics`. Extract to a shared function
 13. **Add post-deploy-check for niri metrics** — Verify all 6 niri metrics are present in `/metrics` endpoint after deploy
