@@ -617,7 +617,8 @@ in {
       # See modules/nixos/services/projects-management-automation.nix for the
       # env wiring; see go-commit pkg/commit/git/gogit.go for the resolver.
       projects-management-automation = {
-        enable = false; # TEMPORARILY DISABLED: go-cqrs-lite/codec/v4 private repo FOD rebuild needed
+        enable = true;
+        mode = "passive"; # git auto-commit disabled (log only); discovery daemon still runs
         paths = ["/home/${config.users.primaryUser}/projects"];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"
