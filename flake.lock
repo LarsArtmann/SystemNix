@@ -3813,11 +3813,11 @@
         "uv2nix": "uv2nix"
       },
       "locked": {
-        "lastModified": 1786478455,
-        "narHash": "sha256-S7oDNj4rRVxRNzXdEwJ+Ci77Ymon3JKp3FP5AagyttE=",
+        "lastModified": 1786524318,
+        "narHash": "sha256-RRhKG1u62DIQc5CH/6PiTBW9dtpoFIak8kCkRLPkBYE=",
         "owner": "NousResearch",
         "repo": "hermes-agent",
-        "rev": "ed5e17f4b86da0c4f09c0694757b6074ae6b9d16",
+        "rev": "ee472a7fdbbc55924f91ab122dbaa29bd07668b0",
         "type": "github"
       },
       "original": {
