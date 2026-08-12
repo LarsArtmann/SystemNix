@@ -550,7 +550,10 @@ in
 
       smartd = {
         enable = true;
-        autodetect = true;
+        autodetect = false;
+        devices = [
+          { device = "/dev/nvme0n1"; }
+        ];
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };
 

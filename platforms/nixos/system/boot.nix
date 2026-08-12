@@ -129,6 +129,12 @@ in
   # 2x Toshiba MG08ACA16TE (16TB 7200RPM) that deliver ~276 MB/s when unchoked.
   services.udev.extraRules = ''
     ACTION=="add|change", SUBSYSTEM=="block", ATTRS{idVendor}=="152d", ATTRS{idProduct}=="0567", ATTR{queue/nr_requests}="128"
+    # Spindown for idle spinning disks (retired ZFS pool on sda/sdb).
+    # -S 120 = standby after 10 min idle (120 × 5s)
+    # -B 127 = APM level permitting spindown
+    # Without this, any incidental access (blkid, udev probe) spins them up
+    # and they stay spinning forever — heat, wear, noise for a retired pool.
+    ACTION=="add|change", SUBSYSTEM=="block", KERNEL=="sd[ab]", RUN+="${pkgs.hdparm}/bin/hdparm -S 120 -B 127 $devnode"
   '';
 
   # Static /tmp tmpfs mount with explicit 48 GiB size cap.
