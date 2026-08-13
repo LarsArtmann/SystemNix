@@ -100,16 +100,16 @@
       "locked": {
         "lastModified": 1785234566,
         "narHash": "sha256-3Q7bNyqeJ6kOVI1qUBmbCYLIdzmDTYrmPbz0nQcm9ck=",
-        "ref": "refs/tags/v0.6.0",
+        "owner": "LarsArtmann",
+        "repo": "branching-flow",
         "rev": "fb71feb822175d8330fe49392ecd13b21bbb14c9",
-        "revCount": 2387,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.6.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/branching-flow"
+        "repo": "branching-flow",
+        "type": "github"
       }
     },
     "brew-src": {
@@ -200,11 +200,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1786471992,
-        "narHash": "sha256-YCU/gKenFABaBSCWBh9Jiy+IMErNjj9H7Lp8dYhyziA=",
+        "lastModified": 1786541055,
+        "narHash": "sha256-1bofBDi0KPNjymwtWAZj0i9EdrvZ8Lym8xVH77Jz5VA=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "b3709a27a3a8b3a0f2e8a23c3865e8e6f45e2c5a",
+        "rev": "92ef31ed5aaa3b74260562d8185fedd5a4036718",
         "type": "github"
       },
       "original": {
@@ -236,16 +236,16 @@
       "locked": {
         "lastModified": 1786087174,
         "narHash": "sha256-/E+9Px23NdV1XgwAeCr3iE+p3IYlgmubv6N+FEP5zcA=",
-        "ref": "refs/tags/v4.0.2",
+        "owner": "LarsArtmann",
+        "repo": "cmdguard",
         "rev": "e29b5c0df8ae1ec2355d64fc28af7f23873d27fd",
-        "revCount": 969,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/cmdguard"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v4.0.2",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/cmdguard"
+        "repo": "cmdguard",
+        "type": "github"
       }
     },
     "cmdguard-src": {
@@ -626,16 +626,16 @@
       "locked": {
         "lastModified": 1784951884,
         "narHash": "sha256-kX1mlBMy+8DrJsExVrZ6Z08qvIIsGu003pHuCPAokgk=",
-        "ref": "refs/tags/v0.3.0",
+        "owner": "LarsArtmann",
+        "repo": "erraudit",
         "rev": "2859fe5bfe36f6341a284c5bcf567f6f13bdd273",
-        "revCount": 949,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/erraudit.git"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.3.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/erraudit.git"
+        "repo": "erraudit",
+        "type": "github"
       }
     },
     "file-and-image-renamer": {
@@ -1263,18 +1263,18 @@
     "go-auto-upgrade": {
       "flake": false,
       "locked": {
-        "lastModified": 1784335799,
-        "narHash": "sha256-XMfghY5J6SOXtj45ebqhlYkCHoVjoCY0Sc6oWBDpfLE=",
-        "ref": "refs/tags/v0.3.0",
-        "rev": "0e5f0ab5e469df2b7641fe45bf1014e310ec24ec",
-        "revCount": 644,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
+        "lastModified": 1786428105,
+        "narHash": "sha256-/naYdXbhNek1G94UU+qlKJc1e/+YPgjrAja/cw3fhT8=",
+        "owner": "LarsArtmann",
+        "repo": "go-auto-upgrade",
+        "rev": "2101a6634c7aa625113aa4a152c85b982af15b0c",
+        "type": "github"
       },
       "original": {
-        "ref": "refs/tags/v0.3.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-auto-upgrade"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.4.0",
+        "repo": "go-auto-upgrade",
+        "type": "github"
       }
     },
     "go-auto-upgrade_2": {
@@ -1450,16 +1450,16 @@
       "locked": {
         "lastModified": 1785250432,
         "narHash": "sha256-sXmjQG6Me3SufnYO08it/5aqeGCe8fD3GYvU3/5uUgw=",
-        "ref": "refs/tags/v0.5.1",
+        "owner": "LarsArtmann",
+        "repo": "go-branded-id",
         "rev": "20603a7ecce98f15baaad67111c6c0b4cf6e584b",
-        "revCount": 141,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.5.1",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-branded-id"
+        "repo": "go-branded-id",
+        "type": "github"
       }
     },
     "go-branded-id_4": {
@@ -1569,16 +1569,16 @@
       "locked": {
         "lastModified": 1785106305,
         "narHash": "sha256-h0CKNCikJoFOGs2SKYDD4xz+k8xey3yoyvdUXz1Q9Cw=",
-        "ref": "refs/tags/v0.2.0",
+        "owner": "LarsArtmann",
+        "repo": "go-checker-helpers",
         "rev": "316c2a880ce7472738b5d593af4c8d2d789879a8",
-        "revCount": 46,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-checker-helpers"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.2.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-checker-helpers"
+        "repo": "go-checker-helpers",
+        "type": "github"
       }
     },
     "go-commit": {
@@ -1780,16 +1780,16 @@
       "locked": {
         "lastModified": 1784399344,
         "narHash": "sha256-UcWsVnvabuJETPer7OymOCy+VEiXExe6hVVKoujEFx8=",
-        "ref": "refs/tags/v0.1.0",
+        "owner": "LarsArtmann",
+        "repo": "go-dag-app",
         "rev": "6e3fefe1077b13f6f4ca4964fce82f451897894b",
-        "revCount": 2,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-dag-app"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.1.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-dag-app"
+        "repo": "go-dag-app",
+        "type": "github"
       }
     },
     "go-dag-app_2": {
@@ -2341,16 +2341,16 @@
       "locked": {
         "lastModified": 1786220359,
         "narHash": "sha256-DrMIRYV7YjdCkefsdDtX5CutFyuHb9C2lLAgiPpIxuk=",
-        "ref": "refs/tags/v1.6.0",
+        "owner": "LarsArtmann",
+        "repo": "go-finding",
         "rev": "bbbc147ff3ce39f5194341c2752fe1cb011038ae",
-        "revCount": 1136,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v1.6.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-finding"
+        "repo": "go-finding",
+        "type": "github"
       }
     },
     "go-finding_3": {
@@ -2681,16 +2681,16 @@
       "locked": {
         "lastModified": 1785422637,
         "narHash": "sha256-LcnzK7j/rJ8NsqYAaytxg0VrXgw8Aqo9Z9XpkKmpo1s=",
-        "ref": "refs/tags/v0.1.0",
+        "owner": "LarsArtmann",
+        "repo": "go-linter-sdk",
         "rev": "16fbfe7f41a5da06d3b131a1c0ac7dfd74397825",
-        "revCount": 51,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-linter-sdk"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.1.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-linter-sdk"
+        "repo": "go-linter-sdk",
+        "type": "github"
       }
     },
     "go-linter-sdk_2": {
@@ -2732,16 +2732,16 @@
       "locked": {
         "lastModified": 1784826135,
         "narHash": "sha256-2dmU1U5pv1/Nu+aaMT/SA3VpS6YD48XnRVQE3yF5aYw=",
-        "ref": "refs/tags/v0.0.1",
+        "owner": "LarsArtmann",
+        "repo": "go-ndjson",
         "rev": "210f54404028843b8fef1d47b39ef27410a7e7e4",
-        "revCount": 6,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-ndjson"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.0.1",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-ndjson"
+        "repo": "go-ndjson",
+        "type": "github"
       }
     },
     "go-ndjson_2": {
@@ -3068,16 +3068,16 @@
       "locked": {
         "lastModified": 1785815982,
         "narHash": "sha256-5+mMo+hLjq0QtVoGqPWnvwFDxrROw0y9HrRv9hSS0V8=",
-        "ref": "refs/tags/v0.37.0",
+        "owner": "LarsArtmann",
+        "repo": "go-output",
         "rev": "dd051b47921f4f0e5a687bc6dc47f58e69554c3b",
-        "revCount": 1155,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-output"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.37.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-output"
+        "repo": "go-output",
+        "type": "github"
       }
     },
     "go-output_3": {
@@ -3406,18 +3406,18 @@
     "go-structure-linter": {
       "flake": false,
       "locked": {
-        "lastModified": 1784950431,
-        "narHash": "sha256-CURcR6DnaEOTjlqTE6A5uLiYdAHWchD3mojKzkq8t9w=",
-        "ref": "refs/tags/v0.8.0",
-        "rev": "67aa161f42b05bb16d886379205fea3b5327c5b0",
-        "revCount": 1459,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
+        "lastModified": 1786050093,
+        "narHash": "sha256-8wXJuqFETBDRBwQGkev3AsJXnE6Xb7EUUny2eE81Ry8=",
+        "owner": "LarsArtmann",
+        "repo": "go-structure-linter",
+        "rev": "7a738400fb5b9ce5b9aace40d2b22879d52196fd",
+        "type": "github"
       },
       "original": {
-        "ref": "refs/tags/v0.8.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-structure-linter"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.9.0",
+        "repo": "go-structure-linter",
+        "type": "github"
       }
     },
     "go-structure-linter_2": {
@@ -3458,18 +3458,18 @@
     "go-workflow-auditlog": {
       "flake": false,
       "locked": {
-        "lastModified": 1785108030,
-        "narHash": "sha256-hGXJCcNixH2FAFjc+eWVo0GzFeDIIe44jS9987d33t4=",
-        "ref": "refs/tags/v0.8.2",
-        "rev": "6ea7a01a70e214c34047855a065965c3150fb9cb",
-        "revCount": 344,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-workflow-auditlog"
+        "lastModified": 1786520556,
+        "narHash": "sha256-hIpy0v5hL27NJvnaKkfV6x1ouiTo1PqY4pYLLAqUPU8=",
+        "owner": "LarsArtmann",
+        "repo": "go-workflow-auditlog",
+        "rev": "685bf99b88cd1e397283b338e695e4f0c801fb58",
+        "type": "github"
       },
       "original": {
-        "ref": "refs/tags/v0.8.2",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/go-workflow-auditlog"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.9.0",
+        "repo": "go-workflow-auditlog",
+        "type": "github"
       }
     },
     "go-workflow-auditlog_2": {
@@ -3698,16 +3698,16 @@
       "locked": {
         "lastModified": 1785107811,
         "narHash": "sha256-pq/3So7huiFu7Fwq7GJLNOwjHnac/AQieFd+31iPWDs=",
-        "ref": "refs/tags/v0.6.0",
+        "owner": "LarsArtmann",
+        "repo": "golangci-lint-auto-configure",
         "rev": "f685f111171265a09670336bf209408888aaa4fe",
-        "revCount": 961,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.6.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/golangci-lint-auto-configure"
+        "repo": "golangci-lint-auto-configure",
+        "type": "github"
       }
     },
     "golangci-lint-auto-configure_2": {
@@ -4008,18 +4008,18 @@
     "licenseforge": {
       "flake": false,
       "locked": {
-        "lastModified": 1785108000,
-        "narHash": "sha256-0GmGlm/N7SNcOe25YxmuZ8Q/sGhpPTScCotpOISh15Q=",
-        "ref": "refs/tags/v0.3.0",
-        "rev": "54d7235a5f574318c46c451c429f8cb476cdf6cc",
-        "revCount": 360,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/licenseforge"
+        "lastModified": 1785471039,
+        "narHash": "sha256-HgatNBZlIsWV9jQdn2VoOm/dTK1O0KVneqEevx8WZ74=",
+        "owner": "LarsArtmann",
+        "repo": "licenseforge",
+        "rev": "33ec8bb1dbcc395de6daf47f23c7be1c87f595a7",
+        "type": "github"
       },
       "original": {
-        "ref": "refs/tags/v0.3.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/licenseforge"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.3.1",
+        "repo": "licenseforge",
+        "type": "github"
       }
     },
     "licenseforge_2": {
@@ -4529,16 +4529,16 @@
       "locked": {
         "lastModified": 1778986218,
         "narHash": "sha256-5cujOdSAeXwYmHImbgRsVbvZIHGL3iEgnZURgIOkOWw=",
-        "ref": "refs/tags/v0.4.0",
+        "owner": "LarsArtmann",
+        "repo": "oxlint-auto-configure",
         "rev": "dccd53cc5cc985cd73b939c2d43edde8295f6177",
-        "revCount": 99,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/oxlint-auto-configure"
+        "type": "github"
       },
       "original": {
+        "owner": "LarsArtmann",
         "ref": "refs/tags/v0.4.0",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/oxlint-auto-configure"
+        "repo": "oxlint-auto-configure",
+        "type": "github"
       }
     },
     "project-discovery-sdk": {
@@ -4868,18 +4868,18 @@
     "samber-do-auditlog": {
       "flake": false,
       "locked": {
-        "lastModified": 1785107133,
-        "narHash": "sha256-074ikCRouc8ecZPO79APL3ei5IyVrL/7bs7WJLIiyvg=",
-        "ref": "refs/tags/v0.8.1",
-        "rev": "aae2e298f94f706689ee61b99c415b8e0714aa68",
-        "revCount": 556,
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
+        "lastModified": 1786521207,
+        "narHash": "sha256-n/93aXnmWEDyfeVHC6ndK6lg2j5xY7SdWw9koLe1Isk=",
+        "owner": "LarsArtmann",
+        "repo": "samber-do-auditlog",
+        "rev": "bfb29da8a00ccb8c797e5b9fa5265bb6cfbbbc84",
+        "type": "github"
       },
       "original": {
-        "ref": "refs/tags/v0.8.1",
-        "type": "git",
-        "url": "ssh://git@github.com/LarsArtmann/samber-do-auditlog"
+        "owner": "LarsArtmann",
+        "ref": "refs/tags/v0.9.0",
+        "repo": "samber-do-auditlog",
+        "type": "github"
       }
     },
     "samber-do-auditlog_2": {
