@@ -1,5 +1,7 @@
 # Status: ClickHouse Thread & Background Pool Tuning
 
+> **⚠️ ANNOTATION (2026-08-13):** `background_pool_size=2` was REVERTED in commit `116051ee`. It triggered cascading ClickHouse `MergeTreeSettingsImpl::sanityCheck()` failures that caused exit code 36 and start-limit-hit, blocking all deploys. The sanity checks validate that `number_of_free_entries_in_pool_*` settings (defaults: 20, 8, 25) must be less than `background_pool_size * concurrency_ratio` (2*2=4). An eval-time assertion was added to `signoz.nix` to prevent recurrence. The other 5 pool reductions remain in effect and are safe. See `docs/status/2026-08-13_01-50_clickhouse-merge-tree-sanity-check-fix.md` for full details.
+
 **Date:** 2026-08-11 12:30
 **Session scope:** Reduce ClickHouse CPU/thread footprint on evo-x2 (shared homelab box)
 **Status:** Config written and evaluated. NOT deployed. Diff is surgical (15 lines added, zero formatting churn).
