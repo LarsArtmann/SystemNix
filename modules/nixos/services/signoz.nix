@@ -543,7 +543,7 @@ in {
         {}
 
         {
-          config.assertions = lib.optionals cfg.enable [
+          assertions = lib.optionals cfg.enable [
             {
               assertion = !(lib.hasInfix "<background_pool_size>2</background_pool_size>" (config.services.clickhouse.extraServerConfig or ""));
               message = "signoz: background_pool_size=2 triggers ClickHouse merge_tree sanity check failures. Use the default (16).";

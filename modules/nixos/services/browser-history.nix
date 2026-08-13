@@ -81,7 +81,7 @@
           webauthn.rpId = lib.mkDefault fqdn;
           webauthn.rpName = lib.mkDefault "BrowserHistory";
           webauthn.origins = lib.mkDefault ["https://${fqdn}"];
-          otelEndpoint = lib.mkDefault "http://127.0.0.1:${toString ports.signoz-otlp-grpc}";
+          otelEndpoint = lib.mkDefault "127.0.0.1:${toString ports.signoz-otlp-grpc}";
         };
 
         systemd.services.browser-history = {
