@@ -4,7 +4,15 @@
 # At ~100 MB/s, 20 GB takes ~3-4 min.
 set -euo pipefail
 
-VM_PATH="/nix/store/gn9ny2alr7cigb4r254q7srq1i0r1rwd-nixos-vm"
+# Resolve VM path dynamically (survives GC/reboot)
+echo "Resolving VM build..."
+VM_PATH="$(nix path-info .#nixosConfigurations.zfs-vm.config.system.build.vm 2>/dev/null || nix build .#nixosConfigurations.zfs-vm.config.system.build.vm --no-link --print-out-paths 2>/dev/null)"
+if [ -z "$VM_PATH" ] || [ ! -x "$VM_PATH/bin/run-nixos-vm" ]; then
+  echo "ERROR: Cannot resolve VM build. Run manually:"
+  echo "  nix build .#nixosConfigurations.zfs-vm.config.system.build.vm"
+  exit 1
+fi
+echo "VM path: $VM_PATH"
 USB_CONTROLLER="0000:c7:00.4"
 SSH_PORT=2222
 VM_PIDFILE="/tmp/zfs-backup-vm.pid"
