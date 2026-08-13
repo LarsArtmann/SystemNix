@@ -1,9 +1,16 @@
-# ZFS Pool Backup — copy non-Docker data to /data/backup-2026-08-11-private-cloud/
+# ZFS Pool Backup v2 — copy ONLY real data with SHA256 verification
 #
-# Phase 1 (user): Build VM
-# Phase 2 (root): VFIO + VM boot + data copy + cleanup
+# Excludes:
+#   - apps/ (Docker image layers — 3.44 GB disposable)
+#   - cache/zfs_*_test* (ZFS benchmark files)
+#   - cache/health_check* (ZFS health benchmark)
+#   - All legacy datasets under datapool/apps/ (Docker layers)
+#
+# Includes hash verification: SHA256 manifest generated on source,
+# verified on destination after copy.
 #
 # Usage: bash scripts/zfs-vm-backup.sh
+# PERMISSION REQUIRED: Do NOT run without user approval.
 set -euo pipefail
 
 PROJECT_DIR="/home/lars/projects/SystemNix"
@@ -15,15 +22,17 @@ export BACKUP_DIR="/data/backup-2026-08-11-private-cloud"
 export VM_PIDFILE="/tmp/zfs-backup-vm.pid"
 export VM_LOG="/tmp/zfs-backup-vm.log"
 export SSH_OPTS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 -o PreferredAuthentications=password"
+export MANIFEST="/tmp/zfs-backup-manifest.sha256"
+export MANIFEST_DEST="$BACKUP_DIR/.source-manifest.sha256"
 
 cd "$PROJECT_DIR"
 
 # ── Phase 1: Build VM as user ────────────────────────────────────────
 if [ "$(id -u)" -ne 0 ]; then
-  echo "=== Phase 1: Building VM (as user) ==="
+  echo "=== Phase 1: Resolving VM build (as user) ==="
   VM_PATH="$("$NIX" path-info .#nixosConfigurations.zfs-vm.config.system.build.vm 2>/dev/null || true)"
   if [ -z "$VM_PATH" ] || [ ! -x "$VM_PATH/bin/run-nixos-vm" ]; then
-    echo "Building..."
+    echo "Building VM..."
     VM_PATH="$("$NIX" build .#nixosConfigurations.zfs-vm.config.system.build.vm --no-link --print-out-paths 2>&1 | tail -1)"
   fi
   if [ -z "$VM_PATH" ] || [ ! -x "$VM_PATH/bin/run-nixos-vm" ]; then
@@ -123,48 +132,138 @@ ssh_cmd "zpool import datapool 2>/dev/null || zpool import -f datapool"
 echo "=== Mounting all datasets ==="
 ssh_cmd 'for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 != \"legacy\" && \$2 != \"-\" && \$2 != \"none\" {print \$1}"); do zfs mount "$ds" 2>/dev/null || true; done; for ds in $(zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2 == \"legacy\" {print \$1}"); do mnt="/mnt/$ds"; mkdir -p "$mnt"; mount -t zfs "$ds" "$mnt" 2>/dev/null || true; done; echo "All datasets mounted."'
 
-# ── Backup ──
+# ── Generate SHA256 manifest on source ───────────────────────────────
 echo ""
-echo "=== Creating backup directory ==="
+echo "=== Generating SHA256 manifest on source ==="
+echo "Excluding: apps/, cache/zfs_*_test*, cache/health_check*"
+
+# Generate manifest for /storage (excluding Docker + benchmarks)
+ssh_cmd bash -s <<'REMOTE'
+set -euo pipefail
+
+# /storage manifest — exclude Docker layers and ZFS benchmarks
+find /storage \
+  -not -path '/storage/apps/*' \
+  -not -path '/storage/apps' \
+  -not -name 'zfs_*_test*' \
+  -not -name 'health_check*' \
+  -type f -exec sha256sum {} + 2>/dev/null | \
+  sed 's|/storage/||' > /tmp/source-manifest.sha256
+
+# Legacy datasets — ONLY datapool root (documents/ + media/), NOT apps/
+# datapool root is mounted at /mnt/datapool and contains documents/ and media/ dirs
+# datapool/apps/<hash> are all Docker layers — SKIP
+find /mnt/datapool \
+  -not -path '/mnt/datapool/apps/*' \
+  -not -path '/mnt/datapool/apps' \
+  -type f -exec sha256sum {} + 2>/dev/null | \
+  sed 's|/mnt/datapool/|legacy/|' >> /tmp/source-manifest.sha256
+
+echo "Manifest entries: $(wc -l < /tmp/source-manifest.sha256)"
+echo "Manifest preview:"
+head -20 /tmp/source-manifest.sha256
+REMOTE
+
+# Pull manifest to host
+echo ""
+echo "=== Pulling manifest to host ==="
+ssh_cmd "cat /tmp/source-manifest.sha256" > "$MANIFEST"
+echo "Manifest entries: $(wc -l < "$MANIFEST")"
+
+# ── Clear old backup and create fresh dir ────────────────────────────
+echo ""
+echo "=== Preparing backup directory ==="
+echo "Clearing old backup at $BACKUP_DIR..."
+rm -rf "$BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
 
-echo "=== Copying data (excluding Docker layers + ZFS benchmarks) ==="
-echo "Skipping: apps/ (Docker layers), cache/zfs_*_test*, cache/health_check*"
+# ── Copy /storage (excluding Docker + benchmarks) ────────────────────
 echo ""
+echo "=== Copying /storage (excluding Docker layers + ZFS benchmarks) ==="
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
   "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*_test*' --exclude='./cache/health_check*' ." \
   | tar xvf - -C "$BACKUP_DIR" 2>&1 | grep -v '^$' || true
 
+# ── Copy legacy datasets (ONLY datapool root — documents/ + media/) ──
 echo ""
-echo "=== Copying legacy datasets ==="
-LEGACY_DS="$("$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-  'zfs list -H -o name,mountpoint 2>/dev/null | awk "\$2==\"legacy\"{print \$1}"' 2>/dev/null || true)"
-for ds in $LEGACY_DS; do
-  ds_clean=$(echo "$ds" | tr '/' '_')
-  mnt="/mnt/$ds"
-  echo "  Copying legacy: $ds"
-  mkdir -p "$BACKUP_DIR/legacy-$ds_clean"
-  "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-    "tar cf - -C '$mnt' ." 2>/dev/null | tar xf - -C "$BACKUP_DIR/legacy-$ds_clean" 2>/dev/null || true
-done
+echo "=== Copying legacy: datapool root (documents/ + media/ only) ==="
+mkdir -p "$BACKUP_DIR/legacy"
 
-# ── Verify ──
+"$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
+  "tar cf - -C /mnt/datapool --exclude='./apps' ." \
+  | tar xvf - -C "$BACKUP_DIR/legacy" 2>&1 | grep -v '^$' || true
+
+# ── Save manifest to backup dir ──────────────────────────────────────
+cp "$MANIFEST" "$MANIFEST_DEST"
+
+# ── Verify: generate dest manifest and compare ───────────────────────
 echo ""
 echo "=========================================="
-echo "=== BACKUP VERIFICATION ==="
+echo "=== SHA256 VERIFICATION ==="
 echo "=========================================="
 echo ""
-echo "Total backup size:"
+echo "Source manifest entries: $(wc -l < "$MANIFEST")"
+echo ""
+
+# Generate destination manifest in the same format
+echo "Generating destination manifest..."
+pushd "$BACKUP_DIR" > /dev/null
+find . -type f -exec sha256sum {} + 2>/dev/null | \
+  sed 's| \./| |' | sort > /tmp/dest-manifest.sha256
+popd > /dev/null
+
+# Normalize source manifest for comparison (strip leading /storage/ or legacy/ prefix)
+# Source format: <hash>  /storage/<path>  OR  <hash>  legacy/<path>
+# Dest format:   <hash>  <path>
+# We need to normalize both to: <hash>  <relative-path>
+
+# Normalize source: strip /storage/ prefix and legacy/ prefix
+sort "$MANIFEST" | sed -e 's|  /storage/|  |' -e 's|  legacy/|  |' > /tmp/source-manifest-normalized.sha256
+
+# Normalize dest: strip leading ./
+sort /tmp/dest-manifest.sha256 | sed 's|  \./|  |' > /tmp/dest-manifest-normalized.sha256
+
+echo "Source files (normalized): $(wc -l < /tmp/source-manifest-normalized.sha256)"
+echo "Dest files (normalized):   $(wc -l < /tmp/dest-manifest-normalized.sha256)"
+echo ""
+
+# Compare
+DIFF_OUTPUT="$(diff /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 2>&1 || true)"
+
+if [ -z "$DIFF_OUTPUT" ]; then
+  echo "✅ ALL FILES VERIFIED — SHA256 hashes match"
+else
+  echo "❌ VERIFICATION FAILED — mismatches found:"
+  echo "$DIFF_OUTPUT" | head -30
+  echo ""
+  echo "Files in source but not in dest:"
+  comm -23 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l
+  echo "Files in dest but not in source:"
+  comm -13 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l
+  echo "Files with different hashes:"
+  comm -12 /tmp/source-manifest-normalized.sha256 /tmp/dest-manifest-normalized.sha256 | wc -l
+fi
+
+# ── Final summary ────────────────────────────────────────────────────
+echo ""
+echo "=========================================="
+echo "=== BACKUP SUMMARY ==="
+echo "=========================================="
+echo ""
+echo "Location: $BACKUP_DIR"
+echo "Total size:"
 du -sh "$BACKUP_DIR"
 echo ""
 echo "All files:"
-find "$BACKUP_DIR" -type f -exec ls -lh {} \; 2>/dev/null
+find "$BACKUP_DIR" -type f -not -name '.source-manifest.sha256' -exec ls -lh {} \; 2>/dev/null
 echo ""
-echo "Directory sizes:"
-du -sh "$BACKUP_DIR"/*/ 2>/dev/null | sort -rh
+echo "Directory tree:"
+find "$BACKUP_DIR" -type d | sort
 echo ""
-echo "Total file count:"
-find "$BACKUP_DIR" -type f 2>/dev/null | wc -l
+echo "Total file count (excluding manifest):"
+find "$BACKUP_DIR" -type f -not -name '.source-manifest.sha256' | wc -l
 echo ""
-echo "=== BACKUP COMPLETE: $BACKUP_DIR ==="
+echo "Manifest saved at: $MANIFEST_DEST"
+echo ""
+echo "=== BACKUP COMPLETE ==="
