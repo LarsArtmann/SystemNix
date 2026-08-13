@@ -138,7 +138,7 @@
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
+        go-nix-helpers.follows = "go-nix-helpers";
       };
     };
 
@@ -273,6 +273,7 @@
       url = "github:LarsArtmann/golangci-lint-auto-configure?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
       };
     };
 
@@ -296,6 +297,7 @@
       url = "github:LarsArtmann/hierarchical-errors?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         # go-finding: NOT followed — hierarchical-errors hasn't been updated for the new Confidence type API
       };
     };
@@ -314,6 +316,7 @@
       url = "github:LarsArtmann/go-auto-upgrade?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
       };
     };
 
@@ -333,6 +336,7 @@
       url = "git+ssh://git@github.com/LarsArtmann/go-cqrs-lite?ref=master";
       inputs = {
         nixpkgs.follows = "nixpkgs";
+        go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
         treefmt-nix.follows = "treefmt-nix";
         systems.follows = "systems";
@@ -458,8 +462,6 @@
         nixpkgs.follows = "nixpkgs";
         go-nix-helpers.follows = "go-nix-helpers";
         flake-parts.follows = "flake-parts";
-        treefmt-nix.follows = "treefmt-nix";
-        systems.follows = "systems";
       };
     };
   };
