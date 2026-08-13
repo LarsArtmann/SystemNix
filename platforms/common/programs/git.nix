@@ -1,4 +1,4 @@
-{pkgs, ...}: {
+{ pkgs, ... }: {
   programs.git = {
     enable = true;
     lfs.enable = true;
@@ -72,9 +72,7 @@
 
       credential = {
         helper =
-          if pkgs.stdenv.isDarwin
-          then "osxkeychain"
-          else "${pkgs.gitFull}/bin/git-credential-libsecret";
+          if pkgs.stdenv.isDarwin then "osxkeychain" else "${pkgs.gitFull}/bin/git-credential-libsecret";
       };
 
       # Rewrite HTTPS GitHub URLs to SSH. WARNING: this caused `nix flake lock`

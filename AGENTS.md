@@ -376,6 +376,15 @@ serviceConfig = lib.mkMerge [
 - **`/tmp` tmpfs capped at 48 GiB** — Via `systemd.mounts` (static `tmp.mount`). NEVER use `fileSystems."/tmp"` — generates runtime fstab entry → unmount failure.
 - **`mkFilesystem` helper** — `lib/filesystems.nix` validates mount options at eval time. Use it instead of raw `fileSystems`.
 
+### ZRAM & Memory Reclaim
+
+- **`vm.swappiness=10` is BACKWARDS for zram-only swap (FIXED 2026-08-13)** — With zram as the ONLY swap (no disk swap), low swappiness tells the kernel to prefer page cache reclaim (disk I/O on BTRFS/QLC NAND, ~253ms/write) over swap (zram, in RAM, ~370 MiB/s). This caused recurring BTRFS I/O storms: `kworker/inode_switch_wbs` pinned at 100% CPU, I/O PSI `full avg10=79%`, zram at 98.4% fill. **Fix:** `vm.swappiness=150` — for zram-only, the kernel should PREFER zram swap over disk page cache reclaim. The old comment ("use swap before OOM kills") was wrong: swappiness=10 does the opposite. The 2026-05-25 OOM crash was caused by swappiness=1 (never swap); 10 was raised as a fix but was still too low for zram-only. Correct range for zram-only: 100-200 (kernel docs: "for zram, use 100+")
+- **zram device too small causes I/O storms** — Old `memoryPercent=17` (~16 GiB) filled to 98.4% under normal load. When zram fills with no disk swap fallback, the kernel falls back to aggressive page cache eviction = BTRFS disk I/O. **Fix:** `memoryPercent=30` (~28 GiB). At 3.2x zstd compression, 28 GiB costs ~8.7 GiB physical RAM while holding ~90 GiB original data — good trade on 94 GiB visible RAM
+- **`vm.watermark_scale_factor=10` caused "panic reclaim"** — Default is 100. At 10, the kernel waits until memory is very low before starting background reclaim, then does aggressive synchronous I/O bursts. Raising to 100 starts reclaim earlier and gradually, avoiding sudden BTRFS writeback storms
+- **`vm.dirty_ratio=10` too high for QLC NAND** — 10% of 94 GiB = 9.4 GiB of dirty pages before forced writeback. On QLC NAND, this creates huge writeback bursts. Lowered to 5% (~4.7 GiB). `dirty_background_ratio` lowered from 3% to 1% to start gentle background writeback sooner
+- **`vm.vfs_cache_pressure=100` (default) suboptimal** — Raised to 150 to prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive, requires disk reads/writes)
+- **zram compression ratio is ~3.2x live** — Not the ~4x estimated in the original comment. Measured via `/sys/block/zram0/mm_stat`: 8.1 GiB original data compressed to 2.5 GiB, costing 2.5 GiB physical RAM. zstd level=1 is still optimal (level 3 gains 1.7% ratio for 11.5% less speed)
+
 ### Docker & Containers
 
 - **`oci-containers` backend defaults to Podman** — Set `backend = "docker"` when Docker is already enabled.

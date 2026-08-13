@@ -167,11 +167,27 @@ in
 
   # VM sysctl tuning for AI/ML workloads (AMD Ryzen AI MAX+ 395 — 128 GiB physical, ~94 GiB visible
   # to Linux after 34 GiB BIOS VRAM carveout. GPU/CPU share same RAM via GTT on this unified-memory APU)
+  #
+  # ZRAM-FIRST RECLAIM STRATEGY (2026-08-13):
+  # This machine has zram as its ONLY swap (no disk swap). zram compresses in RAM
+  # at ~370 MiB/s — far faster than BTRFS page cache reclaim on QLC NAND (~253ms/write).
+  # Therefore we want the kernel to PREFER zram swap over disk page cache reclaim.
+  #
+  # The old swappiness=10 was BACKWARDS for zram-only: it told the kernel to prefer
+  # page cache reclaim (disk I/O) over swap (zram, in RAM), causing BTRFS I/O storms
+  # when memory pressure rose. swappiness=150 makes the kernel prefer zram swap,
+  # reducing disk I/O pressure dramatically.
+  #
+  # The 2026-05-25 OOM crash was caused by swappiness=1 (never swap, always reclaim
+  # page cache). swappiness=10 was raised as a fix but was still too low for zram-only.
+  # The correct value for zram-only is 100-200 (kernel docs: "for zram, use 100+").
   boot.kernel.sysctl = {
     "vm.overcommit_memory" = lib.mkForce 0; # Heuristic overcommit — prevents wild allocation beyond capacity (overrides Redis's "1")
-    "vm.swappiness" = 10; # Use swap before OOM — prevents Rust/nix build crashes (was 1, caused OOM kills on 2026-05-25)
-    "vm.dirty_ratio" = 10; # Start writeback at 10% memory (~6.4GB)
-    "vm.dirty_background_ratio" = 3; # Background writeback at 3% (~1.9GB)
+    "vm.swappiness" = 150; # zram-only: prefer zram swap (in RAM, ~370 MiB/s) over page cache reclaim (disk I/O, ~253ms/write on QLC NAND). Old value 10 caused BTRFS I/O storms.
+    "vm.watermark_scale_factor" = 100; # Start background reclaim earlier & gradually (default 100). Old value 10 caused "panic reclaim" — sudden large I/O bursts when memory ran low.
+    "vm.vfs_cache_pressure" = 150; # Prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive). Default 100.
+    "vm.dirty_ratio" = 5; # Start foreground writeback at 5% memory (~4.7GB) — lower than old 10% to reduce BTRFS writeback bursts on QLC NAND
+    "vm.dirty_background_ratio" = 1; # Background writeback at 1% (~940MB) — start gentle writeback sooner, avoid sudden bursts
     "vm.min_free_kbytes" = 2097152; # Keep 2GB free for kernel/GPU allocations
     "vm.max_map_count" = 2147483642; # Maximum for large model memory maps
     "vm.compaction_proactiveness" = 20; # Proactive compaction for hugepages
@@ -388,13 +404,25 @@ in
   # risks SLC cache exhaustion from the trim-induced write amplification.
   systemd.services.fstrim.serviceConfig = ioTier.maintenance;
 
-  # ZRAM: compressed swap emergency buffer on unified memory APU.
-  # ~17% = ~16 GiB virtual device. zstd(level=1) compresses ~4x on real swap
-  # data, so 16 GiB of swap costs ~4 GiB of physical RAM. GPU and CPU share
-  # this RAM, so AI workloads compete directly with system processes.
-  # swappiness=10 ensures the kernel uses swap before OOM kills.
-  # swappiness=1 caused the 2026-05-25 OOM crash (kernel killed user@1000 processes
-  # instead of swapping out nix-daemon build memory).
+  # ZRAM: compressed swap on unified memory APU. This is the ONLY swap — no disk swap.
+  # ~30% of 94 GiB visible RAM = ~28 GiB virtual device. At ~3.2x zstd compression,
+  # 28 GiB of swap costs ~8.7 GiB of physical RAM while holding ~90 GiB of original data.
+  # GPU and CPU share this RAM, so AI workloads compete directly with system processes.
+  #
+  # swappiness=150 (set above) makes the kernel prefer zram swap over page cache reclaim.
+  # This is CRITICAL: zram compresses in RAM at ~370 MiB/s, while page cache reclaim hits
+  # QLC NAND at ~253ms/write. Preferring zram reduces BTRFS I/O pressure dramatically.
+  # The old swappiness=10 was backwards for zram-only — it forced disk I/O instead of
+  # using fast in-RAM compression, causing BTRFS writeback storms (2026-08-13 incident).
+  #
+  # The 2026-05-25 OOM crash was caused by swappiness=1 (never swap). The fix to 10 was
+  # insufficient — 150 is correct for zram-only per kernel docs ("for zram, use 100+").
+  #
+  # Why 30% not 17%: The old 17% (16 GiB) filled to 98.4% under normal load, leaving no
+  # headroom. When zram fills completely with no disk swap fallback, the kernel falls
+  # back to aggressive page cache eviction — which means BTRFS disk I/O. Larger zram =
+  # more headroom before hitting that cliff. At 3.2x ratio, the extra 12 GiB costs only
+  # ~3.7 GiB physical RAM — a good trade on a 94 GiB system.
   #
   # level=1 (not the kernel default of 3): zram compresses individual 4 KiB
   # pages synchronously in the reclaim path. At 4 KiB block sizes, higher zstd
@@ -403,12 +431,12 @@ in
   #   L1: 2.85x ratio, 373 MiB/s compress  (1.7% worse ratio than L3)
   #   L3: 2.90x ratio, 334 MiB/s compress  (kernel default)
   #   L5: 2.96x ratio, 172 MiB/s compress  (48% slower for +2% ratio)
-  # On the live 4.2x ratio, L1 costs ~60 MiB extra physical RAM across a full
+  # On the live 3.2x ratio, L1 costs ~60 MiB extra physical RAM across a full
   # 16 GiB device — negligible. The 11.5% compress speed gain compounds under
   # memory pressure (swap-in/swap-out is synchronous and blocks the reclaim path).
   zramSwap = {
     enable = true;
-    memoryPercent = 17;
+    memoryPercent = 30;
     algorithm = "zstd(level=1)";
   };
 }

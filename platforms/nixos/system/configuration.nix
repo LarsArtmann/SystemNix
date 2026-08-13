@@ -4,10 +4,12 @@
   nix-ssh-config,
   lib,
   ...
-}: let
+}:
+let
   inherit (import ../../../lib/default.nix lib) ports;
   theme = import ../../common/theme.nix;
-in {
+in
+{
   imports = [
     # Import common packages shared with macOS
     ../../common/packages/base.nix
@@ -213,8 +215,8 @@ in {
     virtualisation.oci-containers.containers.dozzle = {
       autoStart = true;
       image = "amir20/dozzle:latest";
-      ports = ["127.0.0.1:${toString ports.dozzle}:8080"];
-      volumes = ["/var/run/docker.sock:/var/run/docker.sock:ro"];
+      ports = [ "127.0.0.1:${toString ports.dozzle}:8080" ];
+      volumes = [ "/var/run/docker.sock:/var/run/docker.sock:ro" ];
       environment = {
         DOZZLE_TAILSIZE = "300";
         DOZZLE_FILTER = "status=running";
@@ -252,7 +254,7 @@ in {
         "DejaVu Serif"
         "Noto Serif"
       ];
-      emoji = ["Noto Color Emoji"];
+      emoji = [ "Noto Color Emoji" ];
     };
 
     # Experimental features
@@ -295,38 +297,40 @@ in {
       multi-wm.enable = true;
       browser-policies = {
         enable = true;
-        chromiumExtensions = let
-          ext = id: name: {inherit id name;};
-        in [
-          # Privacy / Content Blocking
-          (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
-          # Productivity
-          (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
-          # Time Tracking
-          (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
-          # Email
-          (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
-          # YouTube
-          (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
-          (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
-          (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
-          (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
-          (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
-          (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
-          # GitHub
-          (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
-          (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
-          (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
-          (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
-          (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
-          # Development Tools
-          (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
-          (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
-          # Translation
-          (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
-          # Social / Content
-          (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
-        ];
+        chromiumExtensions =
+          let
+            ext = id: name: { inherit id name; };
+          in
+          [
+            # Privacy / Content Blocking
+            (ext "cjpalhdlnbpafiamejdnhcphjbkeiagm" "uBlock Origin")
+            # Productivity
+            (ext "chphlpgkkbolifaimnlloiipkdnihall" "OneTab")
+            # Time Tracking
+            (ext "nglaklhklhcoonedhgnpgddginnjdadi" "ActivityWatch Web Watcher")
+            # Email
+            (ext "oeopbcgkkoapgobdbedcemjljbihmemj" "Checker Plus for Gmail")
+            # YouTube
+            (ext "ckagfhpboagdopichicnebandlofghbc" "YouTube Shorts Blocker")
+            (ext "bbeaicapbccfllodepmimpkgecanonai" "BlockTube")
+            (ext "mnjggcdmjocbbbhaepdhchncahnbgone" "SponsorBlock for YouTube")
+            (ext "enamippconapkdmgfgjchkhakpfinmaj" "DeArrow - Better Titles and Thumbnails")
+            (ext "hdannnflhlmdablckfkjpleikpphncik" "YouTube Playback Speed Control")
+            (ext "pgpdaocammeipkkgaeelifgakbhjoiel" "YouTube Full Title For Videos")
+            # GitHub
+            (ext "hlepfoohegkhhmjieoechaddaejaokhf" "Refined GitHub")
+            (ext "nbiddhncecgemgccalnoanpnenalmkic" "GitHub Issue Link Status")
+            (ext "ocfdgncpifmegplaglcnglhioflaimkd" "GitHub Better Line Counts")
+            (ext "pemednoikdemhakcchcmjlckmepoighb" "GitHub Milestones Timeline")
+            (ext "ialbpcipalajnakfondkflpkagbkdoib" "Lovely forks")
+            # Development Tools
+            (ext "fmkadmapgofadopljbjfkapdkoienihi" "React Developer Tools")
+            (ext "jabopobgcpjmedljpbcaablpmlmfcogm" "WhatFont")
+            # Translation
+            (ext "cofdbpoegempjloogbagkncekinflcnj" "DeepL: translate and write with AI")
+            # Social / Content
+            (ext "iffnacikcgjlndahdgnckeekdefoafbn" "Reddit Image Opener")
+          ];
       };
       steam-config.enable = true;
       discordsync = {
@@ -464,7 +468,7 @@ in {
       overview = {
         enable = true;
         port = ports.overview;
-        searchPaths = ["/home/${config.users.primaryUser}/projects"];
+        searchPaths = [ "/home/${config.users.primaryUser}/projects" ];
         logLevel = "info";
         # Daemon architecture: overview delegates all discovery to the
         # project-discovery daemon over the unix socket. It never touches the
@@ -550,7 +554,7 @@ in {
         enable = true;
         autodetect = false;
         devices = [
-          {device = "/dev/nvme0n1";}
+          { device = "/dev/nvme0n1"; }
         ];
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };
@@ -586,10 +590,10 @@ in {
       # SSH server with hardening (from nix-ssh-config)
       ssh-server = {
         enable = true;
-        allowUsers = [config.users.primaryUser];
+        allowUsers = [ config.users.primaryUser ];
         passwordAuthentication = false;
         allowRootLogin = false;
-        authorizedKeys = [nix-ssh-config.sshKeys.lars];
+        authorizedKeys = [ nix-ssh-config.sshKeys.lars ];
       };
 
       # Declarative Forgejo repository mirroring
@@ -621,7 +625,7 @@ in {
       projects-management-automation = {
         enable = true;
         mode = "passive"; # git auto-commit disabled (log only); discovery daemon still runs
-        paths = ["/home/${config.users.primaryUser}/projects"];
+        paths = [ "/home/${config.users.primaryUser}/projects" ];
         excludePaths = [
           "/home/${config.users.primaryUser}/projects/forks"
           "/home/${config.users.primaryUser}/projects/archived"

@@ -14,7 +14,8 @@
   config,
   lib,
   ...
-}: {
+}:
+{
   # dnsblockd (127.0.0.1) is primary; 9.9.9.9 is fallback for when dnsblockd
   # is down or slow. Order matters: 127.0.0.1 MUST be first so local names
   # (*.home.lan) resolve via dnsblockd. If dnsblockd refuses/times out, glibc
@@ -39,7 +40,7 @@
         "nameserver 9.9.9.9"
       ]
       ++ lib.optional (config.networking.domain != "") "search ${config.networking.domain}"
-      ++ ["options edns0 trust-ad"]
+      ++ [ "options edns0 trust-ad" ]
     );
     mode = "0444";
   };

@@ -56,17 +56,19 @@ get_driver() {
 }
 
 cleanup() {
-  echo ""; echo "=== Cleanup ==="
+  echo ""
+  echo "=== Cleanup ==="
   if [ -f "$VM_PIDFILE" ]; then
     kill "$(cat "$VM_PIDFILE")" 2>/dev/null || true
-    sleep 2; kill -9 "$(cat "$VM_PIDFILE")" 2>/dev/null || true
+    sleep 2
+    kill -9 "$(cat "$VM_PIDFILE")" 2>/dev/null || true
     rm -f "$VM_PIDFILE"
   fi
   if [ "$(get_driver "$USB_CONTROLLER")" != "xhci_hcd" ]; then
     echo "Rebinding USB controller to xhci_hcd..."
-    echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
-    echo "" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
-    echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
+    echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/unbind 2>/dev/null || true
+    echo "" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override 2>/dev/null || true
+    echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/bind 2>/dev/null || true
     sleep 2
     echo "Controller: $(get_driver "$USB_CONTROLLER")"
   else
@@ -80,12 +82,12 @@ trap cleanup EXIT
 echo "=== VFIO Setup ==="
 lsmod | grep -q vfio_pci || modprobe vfio-pci
 if [ "$(get_driver "$USB_CONTROLLER")" = "xhci_hcd" ]; then
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/xhci_hcd/unbind
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/xhci_hcd/unbind
   sleep 1
 fi
 if [ "$(get_driver "$USB_CONTROLLER")" != "vfio-pci" ]; then
-  echo "vfio-pci" > /sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
-  echo "$USB_CONTROLLER" > /sys/bus/pci/drivers/vfio-pci/bind
+  echo "vfio-pci" >/sys/bus/pci/devices/"$USB_CONTROLLER"/driver_override
+  echo "$USB_CONTROLLER" >/sys/bus/pci/drivers/vfio-pci/bind
   sleep 1
 fi
 DRIVER="$(get_driver "$USB_CONTROLLER")"
@@ -99,8 +101,8 @@ fi
 echo ""
 echo "=== Booting VM (headless) ==="
 rm -f ./nixos.qcow2 2>/dev/null || true
-"$VM_PATH/bin/run-nixos-vm" > "$VM_LOG" 2>&1 &
-echo $! > "$VM_PIDFILE"
+"$VM_PATH/bin/run-nixos-vm" >"$VM_LOG" 2>&1 &
+echo $! >"$VM_PIDFILE"
 echo "VM PID: $(cat "$VM_PIDFILE")"
 
 echo "Waiting for SSH (up to 120s)..."
@@ -167,8 +169,8 @@ REMOTE
 # Pull manifest to host
 echo ""
 echo "=== Pulling manifest to host ==="
-ssh_cmd "cat /tmp/source-manifest.sha256" > "$MANIFEST"
-echo "Manifest entries: $(wc -l < "$MANIFEST")"
+ssh_cmd "cat /tmp/source-manifest.sha256" >"$MANIFEST"
+echo "Manifest entries: $(wc -l <"$MANIFEST")"
 
 # ── Clear old backup and create fresh dir ────────────────────────────
 echo ""
@@ -182,8 +184,8 @@ echo ""
 echo "=== Copying /storage (excluding Docker layers + ZFS benchmarks) ==="
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-  "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*_test*' --exclude='./cache/health_check*' ." \
-  | tar xvf - -C "$BACKUP_DIR" 2>&1 | grep -v '^$' || true
+  "tar cf - -C /storage --exclude='./apps' --exclude='./cache/zfs_*_test*' --exclude='./cache/health_check*' ." |
+  tar xvf - -C "$BACKUP_DIR" 2>&1 | grep -v '^$' || true
 
 # ── Copy legacy datasets (ONLY datapool root — documents/ + media/) ──
 echo ""
@@ -191,8 +193,8 @@ echo "=== Copying legacy: datapool root (documents/ + media/ only) ==="
 mkdir -p "$BACKUP_DIR/legacy"
 
 "$SSHPASS_BIN" -p zfs ssh $SSH_OPTS -p "$SSH_PORT" root@localhost \
-  "tar cf - -C /mnt/datapool --exclude='./apps' ." \
-  | tar xvf - -C "$BACKUP_DIR/legacy" 2>&1 | grep -v '^$' || true
+  "tar cf - -C /mnt/datapool --exclude='./apps' ." |
+  tar xvf - -C "$BACKUP_DIR/legacy" 2>&1 | grep -v '^$' || true
 
 # ── Save manifest to backup dir ──────────────────────────────────────
 cp "$MANIFEST" "$MANIFEST_DEST"
@@ -203,15 +205,15 @@ echo "=========================================="
 echo "=== SHA256 VERIFICATION ==="
 echo "=========================================="
 echo ""
-echo "Source manifest entries: $(wc -l < "$MANIFEST")"
+echo "Source manifest entries: $(wc -l <"$MANIFEST")"
 echo ""
 
 # Generate destination manifest in the same format
 echo "Generating destination manifest..."
-pushd "$BACKUP_DIR" > /dev/null
-find . -type f -exec sha256sum {} + 2>/dev/null | \
-  sed 's| \./| |' | sort > /tmp/dest-manifest.sha256
-popd > /dev/null
+pushd "$BACKUP_DIR" >/dev/null
+find . -type f -exec sha256sum {} + 2>/dev/null |
+  sed 's| \./| |' | sort >/tmp/dest-manifest.sha256
+popd >/dev/null
 
 # Normalize source manifest for comparison (strip leading /storage/ or legacy/ prefix)
 # Source format: <hash>  /storage/<path>  OR  <hash>  legacy/<path>
@@ -219,13 +221,13 @@ popd > /dev/null
 # We need to normalize both to: <hash>  <relative-path>
 
 # Normalize source: strip /storage/ prefix and legacy/ prefix
-sort "$MANIFEST" | sed -e 's|  /storage/|  |' -e 's|  legacy/|  |' > /tmp/source-manifest-normalized.sha256
+sort "$MANIFEST" | sed -e 's|  /storage/|  |' -e 's|  legacy/|  |' >/tmp/source-manifest-normalized.sha256
 
 # Normalize dest: strip leading ./
-sort /tmp/dest-manifest.sha256 | sed 's|  \./|  |' > /tmp/dest-manifest-normalized.sha256
+sort /tmp/dest-manifest.sha256 | sed 's|  \./|  |' >/tmp/dest-manifest-normalized.sha256
 
-echo "Source files (normalized): $(wc -l < /tmp/source-manifest-normalized.sha256)"
-echo "Dest files (normalized):   $(wc -l < /tmp/dest-manifest-normalized.sha256)"
+echo "Source files (normalized): $(wc -l </tmp/source-manifest-normalized.sha256)"
+echo "Dest files (normalized):   $(wc -l </tmp/dest-manifest-normalized.sha256)"
 echo ""
 
 # Compare

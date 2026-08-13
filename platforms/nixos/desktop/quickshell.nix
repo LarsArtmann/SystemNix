@@ -4,11 +4,13 @@
   pkgs,
   dankMaterialShell,
   ...
-}: let
+}:
+let
   cfg = config.programs.systemnix-quickshell;
   theme = import ../../common/theme.nix;
   inherit (import ../../../lib/default.nix lib) ports;
-in {
+in
+{
   imports = [
     dankMaterialShell.homeModules.niri
     dankMaterialShell.homeModules.dank-material-shell
@@ -117,7 +119,7 @@ in {
         };
         systemnix-dual-wan = {
           src = ../../../pkgs/dms-plugins/systemnix-dual-wan;
-          settings = {};
+          settings = { };
         };
         systemnix-npu = {
           src = ../../../pkgs/dms-plugins/systemnix-npu;
@@ -138,7 +140,7 @@ in {
             rev = "1c0a7d337a52b48f9499060076703a35e8dd4f4f";
             hash = "sha256-NQ14YenDiNK2VqXQ3z7jAkatbSRtYJHhOhvv7AJlUD8=";
           };
-          settings = {};
+          settings = { };
         };
         dms-calculator = {
           src = pkgs.fetchFromGitHub {
