@@ -124,6 +124,33 @@ in
     programs.niri.settings = {
       prefer-no-csd = true;
 
+      outputs = {
+        "DP-1" = {
+          mode = {
+            width = 3840;
+            height = 2160;
+            refresh = 59.997;
+          };
+          scale = 1.25;
+          position = {
+            x = 0;
+            y = 0;
+          };
+        };
+        "DP-2" = {
+          mode = {
+            width = 3840;
+            height = 2160;
+            refresh = 30.0;
+          };
+          scale = 2.0;
+          position = {
+            x = 3072;
+            y = 0;
+          };
+        };
+      };
+
       spawn-at-startup = [
         {
           command = [
