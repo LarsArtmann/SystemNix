@@ -2889,7 +2889,7 @@
       },
       "locked": {
         "lastModified": 1786525710,
-        "narHash": "sha256-Bh02sYLZYuB3Gql5kIudyyG/aVOlsbOj3pNRd3XZWyI=",
+        "narHash": "sha256-PqzzzWCmE3dkEF/MTGR/8B4Alzp+VjfmPlSkzGQIXu0=",
         "owner": "LarsArtmann",
         "repo": "go-nix-helpers",
         "rev": "e6d392b95252bbfb99777bf7b2f531bbe7bcd4d0",
