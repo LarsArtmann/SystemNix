@@ -200,11 +200,11 @@
         "systems": "systems_2"
       },
       "locked": {
-        "lastModified": 1786541055,
-        "narHash": "sha256-1bofBDi0KPNjymwtWAZj0i9EdrvZ8Lym8xVH77Jz5VA=",
+        "lastModified": 1786587732,
+        "narHash": "sha256-kWx3DptAFWSOizGM+rJyqMB5dFMdNrcFGTHD1Hz/Sy8=",
         "owner": "LarsArtmann",
         "repo": "BuildFlow",
-        "rev": "92ef31ed5aaa3b74260562d8185fedd5a4036718",
+        "rev": "c1f627b72f32fe5764af7a48150b45443b6518f1",
         "type": "github"
       },
       "original": {
@@ -4868,16 +4868,16 @@
     "samber-do-auditlog": {
       "flake": false,
       "locked": {
-        "lastModified": 1786521207,
-        "narHash": "sha256-n/93aXnmWEDyfeVHC6ndK6lg2j5xY7SdWw9koLe1Isk=",
+        "lastModified": 1786587519,
+        "narHash": "sha256-Rtg0s8Ldkh6phAWev+029u2B3cYDu9a7VrIxG9saTN8=",
         "owner": "LarsArtmann",
         "repo": "samber-do-auditlog",
-        "rev": "bfb29da8a00ccb8c797e5b9fa5265bb6cfbbbc84",
+        "rev": "33bda487a2e350738685db000e3ea3244942c4d3",
         "type": "github"
       },
       "original": {
         "owner": "LarsArtmann",
-        "ref": "refs/tags/v0.9.0",
+        "ref": "refs/tags/v0.9.1",
         "repo": "samber-do-auditlog",
         "type": "github"
       }
