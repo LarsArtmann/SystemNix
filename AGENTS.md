@@ -462,6 +462,7 @@ serviceConfig = lib.mkMerge [
 ### Desktop (DMS / Quickshell / Helium)
 
 - **DMS `inputs.nixpkgs.follows` MANDATORY** — Mismatched Qt causes silent runtime crashes.
+- **DMS modals already follow the focused monitor** — Spotlight/clipboard/emoji/keybinds modals open on niri's focused output (upstream fix #869, included since DMS 1.5.3). No settings key needed; there is NO way to pin modals to a screen. `notificationFocusedMonitor` only affects notification popups. Monitor navigation binds: `Mod+Ctrl+H/J/K/L` (or arrows) = focus monitor, `+Shift` = move column/window to monitor. Named workspaces pinned via `open-on-output` (DP-1 = main/browser/dev, DP-2 = chat/media; missing output falls back to primary). Rofi (Sway backup) uses `monitor = "-1"` = focused monitor.
 - **DMS `systemd.enable` defaults false** — MUST explicitly set `programs.dank-material-shell.systemd.enable = true`.
 - **DMS owns wallpaper management** — awww RETIRED. `enableDynamicTheming = false` (matugen conflicts with Catppuccin Mocha).
 - **DMS notification conflict** — Dunst disabled. DMS owns `org.freedesktop.Notifications`.

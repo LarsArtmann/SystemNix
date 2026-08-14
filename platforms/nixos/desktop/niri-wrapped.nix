@@ -317,6 +317,28 @@ in
           "Mod+Shift+K".action.move-window-up = { };
           "Mod+Shift+J".action.move-window-down = { };
 
+          # Monitor-aware: Ctrl jumps between monitors (DP-1 <-> DP-2),
+          # Ctrl+Shift carries the focused column/window across
+          "Mod+Ctrl+Left".action.focus-monitor-left = { };
+          "Mod+Ctrl+Right".action.focus-monitor-right = { };
+          "Mod+Ctrl+Up".action.focus-monitor-up = { };
+          "Mod+Ctrl+Down".action.focus-monitor-down = { };
+
+          "Mod+Ctrl+H".action.focus-monitor-left = { };
+          "Mod+Ctrl+L".action.focus-monitor-right = { };
+          "Mod+Ctrl+K".action.focus-monitor-up = { };
+          "Mod+Ctrl+J".action.focus-monitor-down = { };
+
+          "Mod+Ctrl+Shift+Left".action.move-column-to-monitor-left = { };
+          "Mod+Ctrl+Shift+Right".action.move-column-to-monitor-right = { };
+          "Mod+Ctrl+Shift+Up".action.move-window-to-monitor-up = { };
+          "Mod+Ctrl+Shift+Down".action.move-window-to-monitor-down = { };
+
+          "Mod+Ctrl+Shift+H".action.move-column-to-monitor-left = { };
+          "Mod+Ctrl+Shift+L".action.move-column-to-monitor-right = { };
+          "Mod+Ctrl+Shift+K".action.move-window-to-monitor-up = { };
+          "Mod+Ctrl+Shift+J".action.move-window-to-monitor-down = { };
+
           "Mod+BracketLeft".action.consume-window-into-column = { };
           "Mod+BracketRight".action.expel-window-from-column = { };
           "Mod+R".action.switch-preset-column-width = { };
@@ -603,11 +625,14 @@ in
       ];
 
       workspaces = {
-        main = { };
-        browser = { };
-        dev = { };
-        chat = { };
-        media = { };
+        # Monitor-aware routing: work apps on DP-1 (primary, 60Hz),
+        # chat/media on DP-2 (secondary, right). Falls back to the
+        # primary output when DP-2 is disconnected.
+        main.open-on-output = "DP-1";
+        browser.open-on-output = "DP-1";
+        dev.open-on-output = "DP-1";
+        chat.open-on-output = "DP-2";
+        media.open-on-output = "DP-2";
       };
 
       animations = {

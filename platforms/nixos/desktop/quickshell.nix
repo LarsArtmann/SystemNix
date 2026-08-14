@@ -59,6 +59,8 @@ in
         notificationOverlayEnabled = true;
         notificationPopupShadowEnabled = true;
         notificationPopupPrivacyMode = false;
+        # Monitor-aware: popups only on the focused monitor, not both screens
+        notificationFocusedMonitor = true;
       };
 
       # SystemNix DMS plugins — declaratively installed via DMS's plugin system.

@@ -88,7 +88,10 @@
             webauthn.rpId = lib.mkDefault fqdn;
             webauthn.rpName = lib.mkDefault "BrowserHistory";
             webauthn.origins = lib.mkDefault [ "https://${fqdn}" ];
-            otelEndpoint = lib.mkDefault "127.0.0.1:${toString ports.signoz-otlp-grpc}";
+            # Scheme included on purpose: v0.5.0 normalizes the value for the
+            # gRPC exporter (which wants bare host:port) while anything that
+            # parses the env var as a URL (OTel spec) requires the scheme.
+            otelEndpoint = lib.mkDefault "http://127.0.0.1:${toString ports.signoz-otlp-grpc}";
           };
 
           systemd.services.browser-history = {

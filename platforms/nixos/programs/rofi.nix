@@ -199,6 +199,8 @@ in
       display-drun = " ";
       drun-display-format = "{name}";
       location = 0;
+      # Monitor-aware: -1 = currently focused monitor (Sway backup WM)
+      monitor = "-1";
       disable-history = false;
       hide-scrollbar = true;
       sidebar-mode = false;

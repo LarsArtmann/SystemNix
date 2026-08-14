@@ -113,11 +113,14 @@ _: {
           serviceConfig = lib.mkMerge [
             (harden {
               MemoryMax = "128M";
-              # Runs as root: backup dirs are owned by different users
-              # (immich, twenty, manifest, monitor365-server). Root can read
-              # all of them and write to the textfile collector dir.
-              # ProtectSystem=full (default) only makes /usr and /boot
-              # read-only — /var/lib backup dirs remain readable.
+              # Runs as root, but harden {} strips ALL capabilities from the
+              # bounding set — including CAP_DAC_OVERRIDE — so "root" obeys
+              # file permission bits. Backup dirs owned by service users with
+              # 0700/0750 modes (immich, monitor365-server) were therefore
+              # INVISIBLE to find: backup_healthy stayed 0 forever while
+              # backups actually landed fine. CAP_DAC_READ_SEARCH grants
+              # read-only traversal of those dirs without a write bypass.
+              CapabilityBoundingSet = "CAP_DAC_READ_SEARCH";
               ReadWritePaths = [ textfileDir ];
             })
             (serviceOneshotDefaults { })

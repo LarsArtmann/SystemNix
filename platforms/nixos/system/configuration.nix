@@ -332,7 +332,9 @@ in {
       };
       steam-config.enable = true;
       discordsync = {
-        enable = false; # TEMPORARILY DISABLED: vendorHash mismatch (stale FOD cache)
+        # Re-enabled 2026-08-15: the locked rev (923d4071) builds clean — the
+        # Aug 12 "vendorHash mismatch" was a stale FOD cache entry, since evicted.
+        enable = true;
         gcsBucket = "discordsync-backup";
       };
 
@@ -486,8 +488,12 @@ in {
       };
 
       # Monitor365 unified agent — system + desktop collectors
-      # TEMPORARILY DISABLED: wireguard-collector Cargo.toml missing (Rust workspace issue)
-      # Re-enable after fixing upstream Monitor365 build
+      # DISABLED since 2026-08-12 (a941f88d): the wireguard-collector git
+      # dependency is a PRIVATE repo (github.com/LarsArtmann/wireguard-collector),
+      # so the Nix sandbox can never fetch it — the build fails at git fetch
+      # with "could not read Username", no hash fix can help. Re-enable only
+      # after the crate is published to crates.io, the repo made public, or
+      # the crate vendored into the monitor365 workspace (owner decision).
       monitor365 = {
         enable = false;
         settings.collectors = {
@@ -516,7 +522,7 @@ in {
       };
 
       # Monitor365 server (dashboard + API) runs on the same machine
-      # TEMPORARILY DISABLED: wireguard-collector Cargo.toml missing (Rust workspace issue)
+      # Same private-git-dep blocker as the agent above (wireguard-collector).
       monitor365-server = {
         enable = false;
         # DuckDB is the sole store on local-only BTRFS (#1 data-loss risk).
