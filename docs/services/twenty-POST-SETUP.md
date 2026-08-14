@@ -2,7 +2,12 @@
 
 Settings that must be configured via the admin panel (not available as env vars).
 
-Access: **https://crm.home.lan** (LAN, no Authelia required after Caddy bypass)
+Access: **https://crm.home.lan** (LAN traffic bypasses auth; external requests authenticate via Pocket ID through oauth2-proxy forward-auth).
+
+## Authentication
+
+- **Reverse-proxy access (Layer 2):** `crm.home.lan` is a `protectedVHost` in Caddy. External requests are redirected to Pocket ID (`auth.home.lan`) via oauth2-proxy before reaching Twenty. LAN requests go straight through.
+- **App-level SSO (native OIDC/SAML):** Not available in the self-hosted open-source Twenty build. Twenty gates OIDC/SAML behind a paid entitlement, so there is no "Login with Pocket ID" button inside the CRM. Once past the reverse-proxy gate, users log in with Twenty's own local/workspace credentials.
 
 ## Settings
 
