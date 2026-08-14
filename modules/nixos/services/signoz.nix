@@ -407,7 +407,10 @@ in
                 (serviceDefaults { RestartSec = "10"; })
                 ioTier.background
                 {
-                  Environment = [ "GOMEMLIMIT=384MiB" ];
+                  # 75% of MemoryMax (1G) — matches the query service pattern.
+                  # Was 384MiB (37.5%, cargo-culted from a 512M service) since
+                  # the ZRAM tuning commit; normalized 2026-08-14.
+                  Environment = [ "GOMEMLIMIT=768MiB" ];
                 }
               ];
             };

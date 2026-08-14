@@ -25,6 +25,22 @@
 #     startLimitIntervalSec = 60;
 #     serviceConfig = harden {} // serviceDefaults {};
 #   };
+#
+# RestartSec convention (2026-08-14 audit): the 5s default fits most daemons.
+# Intentional outliers: dnsblockd 3s (DNS must recover fast), browser-history
+# 2-5min (avoid crash-loop amplification), immich/manifest/twenty 10s (heavy
+# startup). Do NOT normalize these — each is tuned to the service's restart cost.
+#
+# TimeoutStopSec convention: no global default. Systemd default (90s) applies;
+# services with slow graceful shutdown set their own (15s-60s). A manager-level
+# DefaultTimeoutStopSec could be added later if 90s proves too generous.
+#
+# Deliberately NOT in harden() (service-specific, not safe as defaults):
+# - ProcSubset / ProtectProc: breaks services that pgrep other processes
+#   (monitor365 already overrides ProtectProc=default via mkForce)
+# - RestrictAddressFamilies: service-specific socket needs (only dnsblockd sets it)
+# - UMask: application-specific file permission model
+# - PrivateDevices: audio/video/DVB services need /dev device access
 lib:
 let
   mkDefaults =

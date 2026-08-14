@@ -210,10 +210,17 @@ in
   mkFilesystem = import ./filesystems.nix lib;
 
   # wrapWithMemoryLimit: creates a wrapper script that runs a command under a
-  # systemd transient user scope with a cgroup MemoryMax limit. Prevents
-  # memory-hungry dev/test commands (cargo test, go test, pnpm) from consuming
-  # all system RAM on memory-constrained hosts like evo-x2 (Strix Halo with
-  # chronic GPUActive memory pressure).
+  # systemd transient user scope with cgroup MemoryMax + I/O scheduling limits.
+  # Prevents memory-hungry dev/test commands (cargo test, go test, pnpm) from
+  # consuming all system RAM on memory-constrained hosts like evo-x2 (Strix Halo
+  # with chronic GPUActive memory pressure), AND prevents their I/O from starving
+  # the desktop on QLC NAND (BE/7 yields to desktop BE/3 — fixes Helium 3 FPS
+  # video drops during build storms).
+  #
+  # I/O defaults match ioTier.build: best-effort priority 7 + Nice=10. This is
+  # deliberate — NOT idle class, which would stall foreground builds whenever
+  # any background I/O runs. BE/7 gives builds the lowest best-effort priority
+  # while still making forward progress.
   #
   # Returns a writeShellApplication derivation. NOT for use inside Nix build
   # sandboxes (systemd-run is unavailable there). Use in devShells or
@@ -226,7 +233,8 @@ in
   #     command = lib.getExe pkgs.go;
   #     extraArgs = ["test"];
   #   }
-  #   → produces a `go-test-memlimit` script that runs `go test "$@"`
+  #   → produces a `go-test-memlimit` script that runs `go test "$@"` under
+  #     MemoryMax=4G, IOSchedulingClass=best-effort/7, Nice=10
   wrapWithMemoryLimit =
     pkgs:
     {
@@ -234,6 +242,9 @@ in
       maxMemory,
       command,
       extraArgs ? [ ],
+      ioClass ? "best-effort",
+      ioPriority ? 7,
+      nice ? 10,
     }:
     pkgs.writeShellApplication {
       name = "${name}-memlimit";
@@ -244,6 +255,9 @@ in
           --same-dir \
           --setenv="*" \
           -p MemoryMax=${maxMemory} \
+          -p IOSchedulingClass=${ioClass} \
+          -p IOSchedulingPriority=${toString ioPriority} \
+          -p Nice=${toString nice} \
           -- ${command} ${lib.escapeShellArgs extraArgs} "$@"
       '';
     };

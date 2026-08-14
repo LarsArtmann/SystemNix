@@ -186,9 +186,11 @@ in
       rust-analyzer # Rust language server
       gitui # Terminal UI for git
 
-      # Memory-limited test runners — wrap go/cargo/pnpm test with cgroup
-      # MemoryMax to prevent OOM on Strix Halo under GPUActive pressure.
-      # Usage: go-test-memlimit ./..., cargo-test-memlimit, pnpm-test-memlimit test
+      # Memory-limited + I/O-throttled dev commands — wrap go/cargo/pnpm with
+      # cgroup MemoryMax (prevents OOM on Strix Halo under GPUActive pressure)
+      # and BFQ I/O scheduling BE/7 + Nice=10 (prevents QLC NAND I/O storms
+      # from starving the desktop — fixes Helium 3 FPS video drops during
+      # build storms). Usage: go-test-memlimit ./..., cargo-build-memlimit --release
       (wrapWithMemoryLimit pkgs {
         name = "go-test";
         maxMemory = "4G";
@@ -196,10 +198,22 @@ in
         extraArgs = [ "test" ];
       })
       (wrapWithMemoryLimit pkgs {
+        name = "go-build";
+        maxMemory = "4G";
+        command = lib.getExe pkgs.go;
+        extraArgs = [ "build" ];
+      })
+      (wrapWithMemoryLimit pkgs {
         name = "cargo-test";
         maxMemory = "8G";
         command = lib.getExe pkgs.cargo;
         extraArgs = [ "test" ];
+      })
+      (wrapWithMemoryLimit pkgs {
+        name = "cargo-build";
+        maxMemory = "8G";
+        command = lib.getExe pkgs.cargo;
+        extraArgs = [ "build" ];
       })
       (wrapWithMemoryLimit pkgs {
         name = "pnpm-test";
