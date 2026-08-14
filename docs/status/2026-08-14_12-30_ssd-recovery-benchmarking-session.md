@@ -96,8 +96,8 @@ Both drives are **fully healthy**. Zero bad blocks, zero retired blocks, 100% re
 
 ### 4.1 Evidence Chain
 
-1. **0 lifetime writes on both drives** — nobody ran `dd if=/dev/zero` (that would show ~223 GiB writes). The data vanished without any write operation.
-2. **SandForce secure erase** — these SanDisk SSDs use SandForce controllers with AES-256 per-block encryption. A secure erase (`ATA SECURITY ERASE`) doesn't overwrite data — it drops all encryption keys. Without keys, the controller can't resolve LBAs to NAND pages, so reads deterministically return zeros. It's near-instantaneous and counts as zero writes.
+1. **0 lifetime writes on both drives** — the SMART write counter shows 0 GiB. However, this is ambiguous: SandForce secure erase likely **resets the SMART write counters** (the read counter on SSD1 shows 223 GiB, which exactly matches our full-disk scan — meaning the counters track post-erase activity). With 15,852 power-on hours of server use, 0 lifetime writes is implausible unless the counters were reset. The 0 writes therefore supports the secure-erase theory (the erase itself doesn't write) but does not prove the drives were never written to.
+2. **SandForce secure erase** — these SanDisk SSDs use SandForce controllers with AES-128 per-block encryption (SandForce advertised AES-256, but in 2012 it was discovered that SF-2000-based drives only implement AES-128 — see [Wikipedia: SandForce § Issues](https://en.wikipedia.org/wiki/SandForce#Issues)). A secure erase (`ATA SECURITY ERASE`) doesn't overwrite data — it drops all encryption keys. Without keys, the controller can't resolve LBAs to NAND pages, so reads deterministically return zeros. It's near-instantaneous and counts as zero writes.
 3. **Identical profiles** — same power cycles (35), same unexpected power losses (34), same zero-write counter. Both drives were erased in the same operation, consistent with a RAID controller deleting the array and issuing secure erase to all member disks.
 4. **34 of 35 power losses were dirty** — this server had no UPS or the UPS failed. The one clean shutdown was likely when the server was properly decommissioned — and that's probably when the RAID controller secure-erased the drives as part of array deletion.
 
@@ -116,12 +116,12 @@ Physically possible but cryptographically impossible:
 
 | What you'd recover from raw NAND | Status |
 |---|--- |
-| User data (files, filesystem) | AES-256 encrypted — unrecoverable |
+| User data (files, filesystem) | AES-128 encrypted — unrecoverable |
 | Encryption key | Was in controller SRAM — destroyed |
 | FTL mapping (LBA→NAND page) | Was in controller metadata — destroyed |
 | Filesystem structure | Was encrypted at rest — unrecoverable |
 
-SandForce secure erase is considered one of the most thorough data sanitization methods available — NIST SP 800-88 lists it as a "Clear" sanitization method. Even with unlimited budget (PC-3000 Flash, cleanroom, expert technician), recovery is mathematically impossible.
+SandForce secure erase is considered one of the most thorough data sanitization methods available — NIST SP 800-88 lists it as a "Clear" sanitization method. Even with unlimited budget (PC-3000 Flash, cleanroom, expert technician), recovery is effectively impossible — the encryption keys are destroyed and the NAND holds only AES-128 ciphertext without its mapping context.
 
 ---
 
@@ -241,7 +241,7 @@ zstd reference: 1,073,741,824 → 858,810,851 bytes (20.0% compression).
 
 ### 7.4 Results — Large Compressible Data (5 GiB, ~25% compressible)
 
-Test generated but benchmark was interrupted by the ext4 write speed investigation (see Section 8). The 5 GiB test data was prepared and copied to both SSDs, and `compsize` confirmed the compression ratio on btrfs. The read/write speed benchmarks for this test were not completed.
+Test data was generated (5 GiB of mixed text logs + random data) and copied to both SSDs. `compsize` confirmed the compression ratio on btrfs. However, the read/write speed benchmarks were not completed because the ext4 write speed investigation (Section 8) took priority and the test data was cleaned up. This remains a loose end — the 1 GiB semi-compressible test (Section 7.3) provides sufficient data for comparison.
 
 ### 7.5 First Benchmark Bug (Important)
 
@@ -268,15 +268,17 @@ ext4 sequential write was 136 MB/s — 2.5x slower than btrfs (342 MB/s) on iden
 
 Key finding: ext4 O_DIRECT (159 MB/s) matches fdatasync (155 MB/s). The speed ceiling is not the page cache — it's the filesystem's write path itself.
 
-#### Test 2: Write Cache State — CRITICAL FINDING (Corrected Twice)
+#### Test 2: Write Cache State — Corrected Through Research
+
+**I was wrong twice about the write cache.** Here's the corrected understanding:
 
 **First assessment (wrong):** "The SSD has no write cache. Every write must complete to NAND flash before the controller acknowledges it."
 
 **Second assessment (also wrong):** "The USB bridge hides the SSD's DRAM write-back cache from the kernel. The SSD has DRAM cache that reorders writes, but the kernel doesn't send FLUSH_CACHE barriers."
 
-**Third assessment (correct, after researching how SandForce actually works):**
+**Third assessment (correct, after researching SandForce architecture):** See Section 8.6. Short version: SandForce controllers are **DRAM-less**. The `hdparm -I` "Write cache" feature flag means the controller has an internal SRAM buffer (on-die) and supports `FLUSH_CACHE` — NOT that it has DRAM write-back cache. The kernel's `write_cache = write through` is approximately correct for this hardware.
 
-See Section 8.6 for the full explanation. Short version: **SandForce controllers are DRAM-less.** The `hdparm -I` "Write cache" feature flag does NOT mean the drive has DRAM write-back cache — it means the controller has an internal write buffer (SRAM on the controller die) and supports the ATA `FLUSH_CACHE` command. There is no DRAM to lose on power failure. The kernel's `write_cache = write through` is actually **correct** for this hardware.
+The raw evidence, for completeness:
 
 The kernel reports `write_cache = write through` for both drives:
 ```
@@ -290,26 +292,21 @@ dmesg shows why:
 [sdb] Assuming drive cache: write through
 ```
 
-**But `hdparm -I` (direct ATA query through SAT) reveals the SSD actually has write-back cache:**
+`hdparm -I` (direct ATA query through SAT) reports ATA write cache features:
 ```
 /dev/sdb:
    *    Write cache
    *    Mandatory FLUSH_CACHE
    *    FLUSH_CACHE_EXT
-
-/dev/sdc:
-   *    Write cache
-   *    Mandatory FLUSH_CACHE
-   *    FLUSH_CACHE_EXT
 ```
 
-And `hdparm -W` confirms write cache is **enabled** at the drive level:
+`hdparm -W` confirms write cache is **enabled** at the ATA level:
 ```
 /dev/sdb: write-caching = 1 (on)
 /dev/sdc: write-caching = 1 (on)
 ```
 
-**The USB bridge chip doesn't expose a SCSI Caching mode page.** The kernel sees "No Caching mode page found" and defaults to `write through`. `hdparm -W` reports `write-caching = 1 (on)` at the ATA level, which initially seemed to contradict the kernel. But this doesn't mean what I thought it meant — see Section 8.6.
+The USB bridge chip doesn't expose a SCSI Caching mode page, so the kernel defaults to `write through`. `hdparm -W`'s `write-caching = 1` initially seemed to contradict the kernel. But on SandForce, this controls the SRAM write coalescing buffer — not a DRAM write-back cache. See Section 8.6 for why.
 
 Attempts to change cache state:
 - `hdparm -W1 /dev/sdb` — succeeds at ATA level but kernel sysfs stays `write through` (bridge doesn't propagate)
@@ -360,6 +357,23 @@ From Wikipedia's SandForce article:
 > SandForce controllers **did not use DRAM** for caching which reduces cost and complexity compared to other SSD controllers.
 
 Unlike most SSDs that have a separate DRAM chip for the FTL (Flash Translation Layer) mapping table and write buffer, SandForce controllers store the FTL map **on the NAND flash itself** and use a small **internal SRAM buffer on the controller die** for in-flight data. There is no external DRAM chip.
+
+This was confirmed by multiple sources:
+- Wikipedia: "SandForce controllers did not use DRAM for caching"
+- Reddit (r/buildapcsales): "if you end up with a TLC DRAMless SSD like the 120 and 240GB models"
+- Reddit (r/buildapc): "No Sandisk Plus does not [have DRAM]"
+- smartctl database: identifies the drive as "SandForce Driven SSDs" based on model number matching
+
+#### SandForce DuraWrite Compression
+
+SandForce controllers include a proprietary hardware compression engine called **DuraWrite** that compresses data before writing to NAND. This is separate from any filesystem-level compression (like btrfs zstd) and operates at the controller level.
+
+Key implications:
+- Write amplification can be as low as 0.5 (or even 0.14 best-case on SF-2281) because compressed data takes less NAND space
+- Incompressible data (random data, encrypted files, already-compressed files like JPEGs) is slower to write because the compression fails and write amplification approaches 1.0
+- This affects our benchmark results: the ext4 vs btrfs speed difference is independent of DuraWrite (both filesystems sit on top of the same SandForce compression layer), but it explains why these drives are slower with incompressible data than with compressible data in general
+
+This is also why the `Lifetime_Writes_GiB = 0` SMART counter is plausible: SandForce counts physical NAND writes, not logical writes from the host. A secure erase doesn't write any data to NAND — it just rotates the encryption keys.
 
 #### What `hdparm -I` "Write cache" Actually Means
 
@@ -516,7 +530,7 @@ All scripts are in `/tmp/` and are safe to delete. They are read-only on target 
 
 ## 11. Key Takeaways
 
-1. **Both SSDs are cryptographically erased.** SandForce secure erase destroyed the AES-256 encryption keys. Data recovery is mathematically impossible — not just "very hard."
+1. **Both SSDs are cryptographically erased.** SandForce secure erase destroyed the AES-128 encryption keys (SandForce advertised AES-256 but only implements AES-128). Data recovery is mathematically impossible — not just "very hard."
 2. **Both SSDs are fully healthy.** Zero bad blocks, 100% reserve, SMART PASSED. Safe to repurpose for years of additional use.
 3. **The server had power issues.** 34 of 35 power cycles were unexpected (no UPS or UPS failure). This likely triggered the RAID controller's secure erase on array deletion.
 4. **btrfs outperforms ext4 on throughput** on this hardware: 2.5x faster sequential writes, 16% better random IOPS. The ext4 journal double-write is the bottleneck.
@@ -524,3 +538,17 @@ All scripts are in `/tmp/` and are safe to delete. They are read-only on target 
 6. **btrfs compression saves space only on compressible data.** JPEGs/PNGs/WebPs are already compressed — zstd can't improve them. For documents, logs, CSVs, and VM disk images, expect 15-30% savings.
 7. **Always use incompressible data when benchmarking compressed filesystems.** Using `/dev/zero` on btrfs with `compress=zstd` produces absurd numbers (2.7 GB/s) because zeros compress to nothing.
 8. **SandForce controllers are DRAM-less.** The `hdparm -I` "Write cache" feature flag means the controller has an internal SRAM buffer (on-die) and supports `FLUSH_CACHE` — NOT that it has a DRAM write-back cache. The FTL mapping table is stored on NAND, not in DRAM. The kernel's `write_cache = write through` is approximately correct for this hardware. Data safety on power loss is NOT a concern from write cache mismatch — the SRAM buffer is small (a few MiB) and data reaches NAND within milliseconds. The 34 power losses on these drives did not cause corruption through a cache mismatch. See Section 8.6 for the full corrected analysis.
+9. **SandForce uses AES-128, not AES-256.** Despite marketing claims of AES-256, SandForce SF-2000 controllers were discovered in 2012 to only implement AES-128. This was speculated to be for US ITAR export compliance. The encryption is still sufficient for secure-erase purposes — the key is destroyed, making data unrecoverable regardless of key size.
+10. **SandForce DuraWrite compresses data at the controller level.** This is separate from filesystem compression (like btrfs zstd). It reduces write amplification for compressible data but doesn't help with already-compressed files (JPEGs, PNGs). Both ext4 and btrfs sit on top of the same SandForce compression layer, so it doesn't affect the ext4 vs btrfs comparison.
+11. **The "0 lifetime writes" SMART counter is ambiguous.** With 15,852 power-on hours of server use, 0 writes is implausible unless the counter was reset by the secure erase. The 223 GiB read counter on SSD1 matches our full-disk scan, confirming the counters track post-erase activity. The 0 writes supports the secure-erase theory (the erase itself doesn't write) but doesn't prove the drives were never written to.
+
+---
+
+## 12. Sources
+
+- [Wikipedia: SandForce](https://en.wikipedia.org/wiki/SandForce) — DRAM-less design, DuraWrite compression, AES-128 discovery, RAISE
+- [Wikipedia: Write amplification](https://en.wikipedia.org/wiki/Write_amplification) — SandForce write amplification of 0.5-0.14, factors affecting WA
+- [Wikipedia: Solid-state drive](https://en.wikipedia.org/wiki/Solid-state_drive) — SSD architecture, controller, cache and buffer
+- [smartctl database](https://www.smartmontools.org/) (smartmontools 7.5) — Drive identification, SMART attribute decoding
+- Reddit r/buildapcsales — [SanDisk SDSSDA-240G DRAM-less confirmation](https://www.reddit.com/r/buildapcsales/comments/7nmxy3/) ("TLC DRAMless SSD like the 120 and 240GB models")
+- Reddit r/buildapc — [SanDisk Plus DRAM confirmation](https://www.reddit.com/r/buildapc/comments/hlzv18/) ("No Sandisk Plus does not [have DRAM]")
