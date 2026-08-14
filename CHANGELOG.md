@@ -10,6 +10,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Added
 
+- **dnsblockd memory limit raise (2G→4G)** — dnsblockd was being oomd-killed 730x/day (1,591 since boot) because 2G was too tight for Go GC + OTEL cardinality + SQLite tracking pages. GOMEMLIMIT raised 1500MiB→3GiB to match. PMA MemoryMax confirmed at 8G (already set). Root cause: PMA's 6.6 GiB page-cache reclaim drives system-slice pressure to 65%, triggering oomd's 50%/20s kill threshold on dnsblockd as the largest non-exempt target
 - **Auth/DNS gate helpers (`mkOidcGate` / `mkDnsGate`)** — two composable Nix helpers in `lib/default.nix` that eliminate duplicated curl/getent shell scripts across the codebase. `mkOidcGate` probes `https://auth.${domain}/.well-known/openid-configuration` via curl (120s timeout, TLS verified), returning `{ after, wants, serviceConfig.ExecStartPre }`. `mkDnsGate` probes DNS resolution via `getent hosts` with optional non-fatal mode. Both support `includeProvision` for Pocket ID provision dependency. Documented in `AGENTS.md`
 - **Service refactors to gate helpers** — refactored 4 services from hand-rolled wait scripts to `mkOidcGate`/`mkDnsGate`, eliminating ~65 lines of duplicated shell: `oauth2-proxy.nix` (mkOidcGate), `gatus-config.nix` (mkOidcGate), `forgejo.nix` (mkDnsGate), `searxng.nix` (mkDnsGate)
 - **qmd doc cleanup** — removed all qmd references from active docs after retirement: `FEATURES.md`, `pkgs/README.md`, `docs/gotchas-archive.md` (3 entries), `TODO_LIST.md`, `service-health-check` script
