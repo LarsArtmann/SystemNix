@@ -86,7 +86,7 @@ Nothing — no file has been written yet. The session ended between "understand"
 22. Decide `duration`/`refreshInterval` per dashboard (v1 had 6h/1h + 30s refresh — carry over as `"6h"`/`"30s"`).
 23. Panel keys: use semantic slugs (`cpu-usage`, `vram-usage`) — must match `[a-zA-Z0-9_-]+`.
 24. Post-deploy-check: does `scripts/post-deploy-check.sh` need a SigNoz dashboard-count assertion? (Gatus owns liveness; dashboards are content, arguably in scope for silent-zero regression checks.)
-25. Record outcome in a new status report / close the TODO in `TODO_LIST` if tracked there.
+25. ~~Record outcome in a new status report / close the TODO in `TODO_LIST` if tracked there.~~ done — this report IS the record; the full migration (provisioner fix → purge → 5 rewrites → lint) is tracked in `TODO_LIST.md:52` and the schema lint in `TODO_LIST.md:53`. Live re-verification 2026-08-14 20:15: **251 duplicates still in the DB** (count unchanged), dashboard JSONs still v1, `overview.json` leftover still present — every other next-step remains open.
 26. If PUT-by-name turns out unsupported (name immutability: update requires same name — verify route shape `PUT /api/v2/dashboards/{id}` with `UpdatableDashboardV2`), fall back to delete-by-name-then-create (mirrors rules loop) — decide after reading `pkg/apiserver/signozapiserver/dashboard.go` routes.
 27. Verify `links: []` omission tolerance (`omitzero`) — omit where allowed to minimize payload, include where Go round-trip emits it.
 28. Double-check `variables: []` vs null handling in the final files (null → hard reject).
