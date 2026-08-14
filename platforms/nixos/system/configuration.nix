@@ -536,11 +536,29 @@ in
         sso.enable = lib.mkDefault true;
       };
 
+      # USB SSD build cache (/mnt/buildcache) — keeps Go/Rust/npm build churn
+      # off the QLC NVMe (root cause of the 2026-08-12 SLC exhaustion crashes).
+      # Migration: nix run .#migrate-buildcache (see module docs).
+      buildcache.enable = true;
+
       smartd = {
         enable = true;
         autodetect = false;
         devices = [
           { device = "/dev/nvme0n1"; }
+          # USB-attached SanDisk SDSSDA240G SSDs. by-id (ata- serial form) is
+          # stable across sdb/sdc letter swaps between the two enclosures;
+          # -d sat is required — the USB bridge hides the ATA identity at the
+          # plain SCSI layer. SSD 1 = build cache (services.buildcache),
+          # SSD 2 = future Docker storage.
+          {
+            device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311";
+            options = "-d sat";
+          }
+          {
+            device = "/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174244451713";
+            options = "-d sat";
+          }
         ];
         defaults.monitored = "-a -o on -s (S/../.././02|L/../../6/03)";
       };

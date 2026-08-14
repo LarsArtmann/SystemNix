@@ -8,7 +8,9 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ## [Unreleased]
 
-_Nothing pending — cut into [2026-08] below._
+### Added
+
+- **Build cache SSD (`/mnt/buildcache`)** — repurposed a healthy-but-idle SanDisk SDSSDA240G (USB 3.0, SandForce, 60 TBW) as the build-cache drive: new `services.buildcache` module (ext4 `data=writeback` mount + `buildcache-init` dir oneshot + `buildcache-metrics` SMART/usage textfile collector + 2 Gatus checks + smartd `-d sat` entries for both USB SSDs). Migrated ~115 GB of rebuildable caches off the QLC NVMe — the same churn class that drove the SLC-exhaustion WDT crashes: `GOCACHE` (64 GB), `GOMODCACHE`, `golangci-lint`, `goimports`/`go` (HM symlinks), pip, npm/pnpm store, Playwright browsers, and Rust `target/` dirs (`snapshots.nix` symlinks now point at `/mnt/buildcache/rust/<project>`, replacing the `/rust-cache` NVMe partition's role). Env vars in `platforms/nixos/users/home.nix` (NixOS-only — darwin unaffected). One-time migration: `nix run .#migrate-buildcache` (rsync + byte/file verification + trash-put sources). Also fixes stale-green monitoring: the collector always writes metrics even when the drive is absent. Analysis: `docs/status/2026-08-14_13-15_ssd-repurposing-options.md`
 
 ---
 

@@ -39,7 +39,7 @@
 ## b) PARTIALLY DONE
 
 ### Deploy — INCOMPLETE
-`nh os switch` aborted with exit code 4 due to `hermes.service` crash-loop. The smart-audio unit was written to `/etc/systemd/user/` but the NixOS activation didn't complete cleanly. I started the service manually via D-Bus, but the system is in a partially-activated state. A clean `nix run .#deploy` (with `reset-failed`) is needed to complete activation.
+`nh os switch` aborted with exit code 4 due to `hermes.service` crash-loop. The smart-audio unit was written to `/etc/systemd/user/` but the NixOS activation didn't complete cleanly. I started the service manually via D-Bus, but the system is in a partially-activated state. A clean `nix run .#deploy` (with `reset-failed`) is needed to complete activation. **→ RESOLVED:** the hermes blocker was patched at `54781ffe` and subsequent deploys (`5b9f596a` era onward) completed activation cleanly.
 
 ### Reverse direction test — NOT VERIFIED
 Only verified DP-2 (TV) routing works. Never tested switching focus to DP-1 (monitor) to confirm the profile switches back to HDMI 2. The daemon logic handles it, but it's untested live.
@@ -51,12 +51,12 @@ Same mistake as the first session — verified PipeWire routing via `wpctl statu
 
 ## c) NOT STARTED
 
-- No AGENTS.md update documenting the smart-audio module
-- No flake check (`nix flake check --no-build`) run before or after changes
+- ~~No AGENTS.md update documenting the smart-audio module~~ done at `61a2224b` (Smart-Audio section)
+- ~~No flake check (`nix flake check --no-build`) run before or after changes~~ done — routine since; ran clean in the `4a02342d` pre-commit hook
 - No cleanup of the old `audio.nix` WirePlumber profile priority rules (now potentially conflicting/redundant)
 - No DMS widget to show/control active audio output
 - No Gatus monitoring for smart-audio service health
-- No handling of hermes.service crash (pre-existing, noticed but not addressed)
+- ~~No handling of hermes.service crash (pre-existing, noticed but not addressed)~~ done at `54781ffe` (registration_lifecycle patch)
 
 ---
 
@@ -119,9 +119,9 @@ Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration
 
 1. **Play a test sound on the TV** — Confirm actual audio output, not just PipeWire routing
 2. **Test reverse direction** — Switch focus to DP-1 (monitor), verify audio follows
-3. **Complete the deploy properly** — Run `nix run .#deploy` with `reset-failed` to get a clean activation
-4. **Fix hermes.service crash** — `ModuleNotFoundError: No module named 'registration_lifecycle'` — pre-existing Python packaging issue blocking deploys
-5. **Run `nix flake check --no-build`** — Validate the full flake after changes
+3. ~~**Complete the deploy properly** — Run `nix run .#deploy` with `reset-failed` to get a clean activation~~ done — hermes fixed at `54781ffe`; later deploys activated cleanly
+4. ~~**Fix hermes.service crash** — `ModuleNotFoundError: No module named 'registration_lifecycle'` — pre-existing Python packaging issue blocking deploys~~ done at `54781ffe`
+5. ~~**Run `nix flake check --no-build`** — Validate the full flake after changes~~ done — passes routinely (pre-commit enforces it)
 
 ### Audio System Correctness
 
@@ -143,16 +143,16 @@ Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration
 
 ### AGENTS.md Documentation
 
-18. **Document smart-audio module in AGENTS.md** — Architecture, options, how it works
-19. **Document the `writePython3Bin` linting trap** — Use `writeScriptBin` + shebang instead
-20. **Document WirePlumber profile vs sink distinction** — Profile = which HDMI output on a card; Sink = which card is default. These are different things.
-21. **Document that HDMI audio profiles are mutually exclusive** — Only one HDMI output active at a time on the Radeon card
+18. ~~**Document smart-audio module in AGENTS.md** — Architecture, options, how it works~~ done at `61a2224b`
+19. ~~**Document the `writePython3Bin` linting trap** — Use `writeScriptBin` + shebang instead~~ done at `61a2224b`
+20. ~~**Document WirePlumber profile vs sink distinction** — Profile = which HDMI output on a card; Sink = which card is default. These are different things.~~ done at `61a2224b` (Smart-Audio section)
+21. ~~**Document that HDMI audio profiles are mutually exclusive** — Only one HDMI output active at a time on the Radeon card~~ done at `61a2224b`
 
 ### Hermes Fix
 
-22. **Diagnose `registration_lifecycle` missing module** — Check hermes package derivation, Python path
-23. **Fix hermes Python packaging** — Missing module in the env derivation
-24. **Verify hermes starts after fix** — Run deploy and confirm
+22. ~~**Diagnose `registration_lifecycle` missing module** — Check hermes package derivation, Python path~~ done at `54781ffe`
+23. ~~**Fix hermes Python packaging** — Missing module in the env derivation~~ done at `54781ffe` (extract + PYTHONPATH suffix patch, documented in AGENTS.md Hermes section)
+24. ~~**Verify hermes starts after fix** — Run deploy and confirm~~ done — deployed in the 13-44 session (see `2026-08-14_13-44`)
 
 ### Monitoring & Alerting
 
@@ -172,7 +172,7 @@ Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration
 32. **Add smart-audio to post-deploy-check.sh** — Verify the service is running after deploy
 33. **Add smart-audio to pre-deploy-check.sh** — Verify audio device exists before deploy
 34. **VM test for smart-audio** — Mock niri event stream, verify profile switching logic
-35. **CI: verify module evaluates** — `nix eval` in GitHub Actions
+35. ~~**CI: verify module evaluates** — `nix eval` in GitHub Actions~~ done (moot) — `nix-check.yml` already runs `nix flake check --no-build`, which evaluates every module
 
 ### Code Quality
 
@@ -184,14 +184,14 @@ Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration
 
 ### Previous Session Debt
 
-41. **Reconcile `2026-08-13_09-06_hdmi-audio-routing-wireplumber-profile-priority.md`** — That report claims HDMI audio routing was "solved" — it wasn't (or was replaced by smart-audio). Mark as superseded.
-42. **Update `2026-08-13_23-39` report** — Mark the persistence gap as RESOLVED by smart-audio daemon
-43. **Remove the old `wpctl set-default 50` manual workaround** from any docs — smart-audio handles it now
+41. ~~**Reconcile `2026-08-13_09-06_hdmi-audio-routing-wireplumber-profile-priority.md`** — That report claims HDMI audio routing was "solved" — it wasn't (or was replaced by smart-audio). Mark as superseded.~~ done at `4a02342d` (SUPERSEDED banner)
+42. ~~**Update `2026-08-13_23-39` report** — Mark the persistence gap as RESOLVED by smart-audio daemon~~ done at `4a02342d`
+43. ~~**Remove the old `wpctl set-default 50` manual workaround** from any docs — smart-audio handles it now~~ done (moot) — it survives only as historical narrative in 08-13 reports; 23-39 §f.41 separately tracks the manual-fallback doc decision
 
 ### System Health (Observed)
 
-44. **Hermes crash is blocking ALL deploys** — Every `nh os switch` will fail until hermes is fixed or its `OnFailure` escalation is changed to non-blocking
-45. **Consider making hermes deploy-non-blocking** — `Type=oneshot` wrapper or remove from critical path
+44. ~~**Hermes crash is blocking ALL deploys** — Every `nh os switch` will fail until hermes is fixed or its `OnFailure` escalation is changed to non-blocking~~ done at `54781ffe` (root cause patched)
+45. ~~**Consider making hermes deploy-non-blocking** — `Type=oneshot` wrapper or remove from critical path~~ done (moot) — the crash was fixed at `54781ffe`, nothing left to route around
 
 ### Future Features
 
@@ -209,4 +209,4 @@ Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration
 
 2. **Should ALL audio move when focus changes, or only the focused app's audio?** The current daemon switches the system default sink, which moves ALL audio. If you're playing music on the monitor and switch to a browser on the TV, the music moves too. Is that the desired behavior, or do you want per-app routing (only the focused window's audio follows focus)?
 
-3. **Should I fix hermes.service now, or is it intentionally disabled/broken?** Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration_lifecycle'` and blocking deploys. It's a pre-existing issue unrelated to smart-audio, but it will block every future deploy until fixed. Do you want me to investigate and fix it, or is it already known/tracked?
+3. ~~**Should I fix hermes.service now, or is it intentionally disabled/broken?** Hermes is crash-looping with `ModuleNotFoundError: No module named 'registration_lifecycle'` and blocking deploys. It's a pre-existing issue unrelated to smart-audio, but it will block every future deploy until fixed. Do you want me to investigate and fix it, or is it already known/tracked?~~ answered — fixed at `54781ffe` (upstream `py-modules` gap patched downstream; upstream PR pending per TODO_LIST)

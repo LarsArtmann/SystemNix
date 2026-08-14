@@ -133,6 +133,18 @@ in
 
   home = {
     enableNixpkgsReleaseCheck = false;
+
+    # Build caches moved to the USB SSD (/mnt/buildcache) — keeps ephemeral
+    # build churn off the QLC NVMe (SLC cache exhaustion) and out of tmpfs
+    # (RAM pressure). Managed by modules/nixos/services/buildcache.nix.
+    # GOCACHE is content-hash verified by go itself; corruption from
+    # data=writeback + no PLP just triggers a rebuild.
+    # Note: gopls stays on NVMe (~/.cache/gopls) — LSP is latency-sensitive;
+    # ~/.cache/nix stays on NVMe — touched on every nix eval.
+    file = {
+      ".cache/goimports".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/goimports";
+      ".cache/go".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go";
+    };
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
     activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
       JAN_DATA="$HOME/.config/Jan/data"
@@ -148,6 +160,18 @@ in
 
     # NixOS-specific session variables
     sessionVariables = {
+      # Build caches on the USB SSD — run nix run .#migrate-buildcache BEFORE
+      # the first deploy so the target dirs exist and the symlinked sources
+      # (~/.cache/goimports, ~/.cache/go) have been moved aside.
+      GOCACHE = "/mnt/buildcache/go-build";
+      GOMODCACHE = "/mnt/buildcache/go-mod";
+      GOLANGCI_LINT_CACHE = "/mnt/buildcache/golangci-lint";
+      PIP_CACHE_DIR = "/mnt/buildcache/pip";
+      PLAYWRIGHT_BROWSERS_PATH = "/mnt/buildcache/playwright";
+      # npm reads npm_config_* env vars as .npmrc settings (pnpm too)
+      npm_config_cache = "/mnt/buildcache/npm";
+      npm_config_store_dir = "/mnt/buildcache/pnpm-store";
+
       # Wayland specific
       MOZ_ENABLE_WAYLAND = "1";
       QT_QPA_PLATFORM = "wayland";

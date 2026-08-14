@@ -309,6 +309,19 @@ serviceConfig = lib.mkMerge [
 
 **DB-heal oneshot:** DiscordSync's 11 GB SQLite integrity check runs as `discordsync-db-heal.service` (Type=oneshot, RemainAfterExit=true) with its own 10-min timeout — extracted from ExecStartPre so deploy activation isn't blocked by DB recovery during build storms.
 
+### Build Cache SSD (`/mnt/buildcache`)
+
+**Module:** `modules/nixos/services/buildcache.nix` — SanDisk SDSSDA240G (240 GB, SandForce SF-2000, DRAM-less) on USB 3.0, ext4 `noatime,lazytime,commit=120,data=writeback`, `nofail` + automount. Deployed 2026-08-14.
+
+- **Purpose:** All rebuildable build caches live OFF the QLC NVMe — the ephemeral build churn (64 GB Go build cache, Rust targets, npm/pnpm) was a root contributor to the SLC-cache-exhaustion WDT crashes and the 93% disk crisis. ~115 GB of caches moved.
+- **Consumers:** `GOCACHE`, `GOMODCACHE`, `GOLANGCI_LINT_CACHE`, `PIP_CACHE_DIR`, `PLAYWRIGHT_BROWSERS_PATH`, `npm_config_cache`, `npm_config_store_dir` (set in `platforms/nixos/users/home.nix` — NixOS ONLY, not darwin). `~/.cache/goimports` and `~/.cache/go` are HM symlinks into the mount. Rust `target/` dirs: `snapshots.nix` symlinks `~/projects/<p>/target → /mnt/buildcache/rust/<p>` (via `services.buildcache.rustProjects`).
+- **Device identification:** `/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` — the kernel creates ata-serial by-id symlinks via SAT even though the USB bridge hides the model at the SCSI layer. Stable across sdb/sdc swaps between the two enclosures. SSD 2 (serial `174244451713`, btrfs) is earmarked for Docker storage.
+- **Monitoring:** `buildcache-metrics` (every 5 min) writes `buildcache.prom` — mount presence, SMART health (`smartctl -d sat`), usage %. Gatus alerts on `buildcache_mounted`, `buildcache_smart_healthy`, usage >85%. The collector ALWAYS writes the .prom (even when the drive is absent) so a dead drive flips to 0 instead of serving stale greens. smartd monitors both SSDs with `-d sat`.
+- **No TRIM through the USB bridge** (`lsblk -D` = 0B). If write perf degrades from stale-block pressure, reformat the drive — it's a cache (`mkfs.ext4 -L buildcache <device>`, then re-run `nix run .#migrate-buildcache` semantics).
+- **Failure mode:** if the drive dies, builds fail with missing-directory errors until `GOCACHE`/`GOMODCACHE` are reverted in home.nix. Acceptable trade: Gatus alerts on Discord within minutes.
+- **Corruption tolerance:** `data=writeback` + no PLP + SandForce SRAM means a dirty shutdown can corrupt cache entries. Go verifies content hashes itself; cargo/npm/pnpm just need a `clean`/`prune`. Never store anything irreplaceable here.
+- **Old `/rust-cache` (nvme0n1p9, ext4):** its 32 GB `monitor365` target was copied to `/mnt/buildcache/rust/monitor365`; the partition itself is still mounted and awaits reclamation (TODO_LIST).
+
 ---
 
 ## Critical Rules

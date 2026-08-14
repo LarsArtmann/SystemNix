@@ -71,25 +71,25 @@ Added `"niri.service"` to the `After` list in `activitywatch.nix:31-34`. Same pa
 ### 1. qmd Doc Cleanup — INCOMPLETE
 
 Still references qmd in these non-historical files:
-- `CHANGELOG.md` — historical entries (OK to leave)
-- `FEATURES.md` — feature table row needs marking as REMOVED
-- `TODO_LIST.md:50` — references qmd in `criticalSystemServices`
-- `pkgs/README.md` — packaging table row
-- `docs/gotchas-archive.md:87-89` — 3 qmd gotcha entries (enduring rules)
-- `platforms/nixos/scripts/service-health-check` — may reference qmd port
+- `CHANGELOG.md` — ~~historical entries (OK to leave)~~ done (moot) — historical entries stay by design
+- `FEATURES.md` — ~~feature table row needs marking as REMOVED~~ done at `7afab3f8` (both rows marked ❌ Removed)
+- `TODO_LIST.md:50` — ~~references qmd in `criticalSystemServices`~~ done — the list (`scheduled-tasks.nix:197`) has no qmd
+- `pkgs/README.md` — ~~packaging table row~~ done — 0 qmd refs remain
+- `docs/gotchas-archive.md:87-89` — ~~3 qmd gotcha entries (enduring rules)~~ done at `7afab3f8` — 0 qmd refs remain
+- `platforms/nixos/scripts/service-health-check` — ~~may reference qmd port~~ done (moot) — script has no qmd refs; planning-doc stragglers tracked in TODO_LIST
 
 ### 2. Gatus Fix — Not "Nix-Native"
 
-User explicitly asked "Can we do something even more Nix native?" about the curl ExecStartPre pattern. I started researching (found 6 duplicated implementations of the OIDC/DNS wait pattern across services) but was redirected before delivering a solution. A shared `mkOidcGate` helper in `lib/` would DRY this up — this is still open.
+User explicitly asked "Can we do something even more Nix native?" about the curl ExecStartPre pattern. I started researching (found 6 duplicated implementations of the OIDC/DNS wait pattern across services) but was redirected before delivering a solution. A shared `mkOidcGate` helper in `lib/` would DRY this up — this is still open. **→ RESOLVED:** `mkOidcGate`/`mkDnsGate` shipped at `7afab3f8` (`lib/default.nix:265,316`); 4 services refactored onto them (see `2026-08-14_09-30`).
 
 ---
 
 ## C) NOT STARTED
 
-1. **Deploy** — `nix run .#deploy` has NOT been run. All uncommitted changes are live in the working tree only.
+1. ~~**Deploy** — `nix run .#deploy` has NOT been run. All uncommitted changes are live in the working tree only.~~ done — landed at `7afab3f8`/`8ad493c9` and deployed in the 09:30 session (see `2026-08-14_09-30`)
 2. **Reboot test** — no verification that the fixes actually prevent the boot failures on next reboot.
 3. **BIOS fix** — requires manual BIOS configuration (disable USB boot, enable Fast Boot). Cannot be done from NixOS.
-4. **Shared DNS/OIDC gate helper** — the `mkDnsGate` / `mkOidcGate` helper in `lib/` was proposed but never built. 6 services duplicate the pattern: oauth2-proxy, gatus, forgejo, searxng, discordsync, browser-history.
+4. ~~**Shared DNS/OIDC gate helper** — the `mkDnsGate` / `mkOidcGate` helper in `lib/` was proposed but never built. 6 services duplicate the pattern: oauth2-proxy, gatus, forgejo, searxng, discordsync, browser-history.~~ done at `7afab3f8` (mkOidcGate + mkDnsGate in `lib/default.nix`)
 
 ---
 
@@ -129,28 +129,28 @@ The working tree has changes I did NOT make: `smart-audio.nix` (staged add), `sy
 
 | # | Task | Impact | Effort |
 |---|------|--------|--------|
-| 1 | **Deploy** all changes (`nix run .#deploy`) | Critical — fixes are inert until deployed | 10 min |
+| 1 | ~~**Deploy** all changes (`nix run .#deploy`)~~ done — deployed in the 09:30 session (`7afab3f8`, `8ad493c9`) | Critical — fixes are inert until deployed | 10 min |
 | 2 | **Fix BIOS settings** (disable USB boot, enable Fast Boot) | Critical — prevents boot hang | 5 min (manual) |
-| 3 | Clean up remaining qmd references: `FEATURES.md`, `TODO_LIST.md`, `pkgs/README.md` | Medium — stale docs | 10 min |
-| 4 | Build shared `mkOidcGate` helper in `lib/` to DRY 6 duplicated implementations | High — prevents future "forgot the DNS gate" bugs | 30 min |
+| 3 | ~~Clean up remaining qmd references: `FEATURES.md`, `TODO_LIST.md`, `pkgs/README.md`~~ done at `7afab3f8` (all named files clean; planning-doc stragglers in TODO_LIST) | Medium — stale docs | 10 min |
+| 4 | ~~Build shared `mkOidcGate` helper in `lib/` to DRY 6 duplicated implementations~~ done at `7afab3f8` | High — prevents future "forgot the DNS gate" bugs | 30 min |
 | 5 | Audit all HM user services using `graphical-session.target` — add `niri.service` ordering where needed | Medium — prevents start-limit-hit on other Wayland services | 20 min |
 | 6 | Add eval-time check: any service referencing `auth.${domain}` must have `dnsblockd.service` in after/wants | High — catches missing DNS gates at build time | 30 min |
 | 7 | Clean up `docs/services/HOME-MANAGER-ACTIVITYWATCH-GRAPHICAL-SESSION-PATCH.md` — document the `niri.service` fix | Low — documentation accuracy | 10 min |
-| 8 | Review and commit/trash the unexplained `smart-audio.nix`, `system-health.nix`, `twenty.nix` changes | Medium — these will deploy if not reviewed | 15 min |
-| 9 | Remove qmd from Crush MCP config (crush.json) if present | Low — prevents connection errors in Crush | 5 min |
+| 8 | ~~Review and commit/trash the unexplained `smart-audio.nix`, `system-health.nix`, `twenty.nix` changes~~ done — smart-audio + Twenty landed at `8ad493c9`, system-health at `9b6590bf` | Medium — these will deploy if not reviewed | 15 min |
+| 9 | ~~Remove qmd from Crush MCP config (crush.json) if present~~ done (moot) — no qmd in any crush config | Low — prevents connection errors in Crush | 5 min |
 | 10 | Reboot test after deploy to verify all 3 boot failures are resolved | High — validates the fixes | 10 min |
-| 11 | Check `platforms/nixos/scripts/service-health-check` for qmd port reference | Low — stale reference | 5 min |
-| 12 | Consider `auth-ready.target` systemd target as the Nix-native alternative to curl gates | High — architectural improvement | 1-2h |
-| 13 | Remove qmd gotcha entries from `docs/gotchas-archive.md:87-89` | Low — stale rules | 5 min |
+| 11 | ~~Check `platforms/nixos/scripts/service-health-check` for qmd port reference~~ done (moot) — no qmd refs in the script | Low — stale reference | 5 min |
+| 12 | ~~Consider `auth-ready.target` systemd target as the Nix-native alternative to curl gates~~ done (superseded) — `mkOidcGate`/`mkDnsGate` (`7afab3f8`) won; curl lives inside the helper | High — architectural improvement | 1-2h |
+| 13 | ~~Remove qmd gotcha entries from `docs/gotchas-archive.md:87-89`~~ done at `7afab3f8` | Low — stale rules | 5 min |
 | 14 | Verify the `overview.service` Gatus check recovers cleanly on next reboot (it was failing briefly) | Low — monitoring hygiene | 5 min |
-| 15 | Check if qmd GGUF models in `~/.cache/qmd/models/` should be cleaned up (~2GB) | Low — disk space | 5 min |
+| 15 | ~~Check if qmd GGUF models in `~/.cache/qmd/models/` should be cleaned up (~2GB)~~ done (moot) — models already gone; only 184K `index.sqlite` remains (TODO_LIST entry is stale) | Low — disk space | 5 min |
 
 ---
 
 ## G) QUESTIONS
 
-1. **Should I deploy now?** The gatus fix, qmd removal, and activitywatch fix are all uncommitted and undeployed. There are also unexplained changes from PMA/previous sessions (`smart-audio.nix`, `system-health.nix`, `twenty.nix`) in the working tree. Should I deploy everything, or do you want to review the non-session changes first?
+1. ~~**Should I deploy now?** The gatus fix, qmd removal, and activitywatch fix are all uncommitted and undeployed. There are also unexplained changes from PMA/previous sessions (`smart-audio.nix`, `system-health.nix`, `twenty.nix`) in the working tree. Should I deploy everything, or do you want to review the non-session changes first?~~ answered — deployed in the 09:30 session; the "unexplained" changes landed as smart-audio + Twenty hardening (`8ad493c9`) and system-health checks (`9b6590bf`)
 
-2. **Do you want the Nix-native OIDC gate now?** You asked "Can we do something even more Nix native?" — I can build either a shared `mkOidcGate` helper or a systemd `auth-ready.target` that fires after Pocket-ID passes its healthz check. The target approach eliminates curl entirely — services just add `after = [ "auth-ready.target" ]`. Should I build this before deploying?
+2. ~~**Do you want the Nix-native OIDC gate now?** You asked "Can we do something even more Nix native?" — I can build either a shared `mkOidcGate` helper or a systemd `auth-ready.target` that fires after Pocket-ID passes its healthz check. The target approach eliminates curl entirely — services just add `after = [ "auth-ready.target" ]`. Should I build this before deploying?~~ answered — `mkOidcGate`/`mkDnsGate` built at `7afab3f8`; `auth-ready.target` not pursued (curl retained inside the helper)
 
-3. **Should I clean up the qmd cache (~2GB in `~/.cache/qmd/`)?** The models and SQLite index are still on disk. Worth reclaiming, but `trash` on cache dirs can be slow on BTRFS.
+3. ~~**Should I clean up the qmd cache (~2GB in `~/.cache/qmd/`)?** The models and SQLite index are still on disk. Worth reclaiming, but `trash` on cache dirs can be slow on BTRFS.~~ answered (moot) — the GGUF models are already gone; only a 184K `index.sqlite` remains

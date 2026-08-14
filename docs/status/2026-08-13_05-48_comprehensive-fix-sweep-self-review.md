@@ -115,7 +115,7 @@
 7. ~~**Status report from previous session update** — `docs/status/2026-08-13_01-50_clickhouse-merge-tree-sanity-check-fix.md` still has 3 pending questions that were answered by this session's work. Should be annotated as resolved.~~ done at `61a2224b` (docs-health audit)
 8. **CI check for committed templ files** — Flake check that verifies `*_templ.go` files exist in git for any `*.templ` source. Would catch this class of bug at PR time.
 9. **BuildFlow pre-commit missing devShell binaries** — `go-licenses`, `tsc`, `npm`, `tailwindcss`, `vulnix`, `codespell`, `shellcheck`, `eslint` are referenced by BuildFlow's pre-commit but not in its devShell. Causes `--no-verify` bypass necessity.
-10. ~~**Browser History `session reaper failed: no such column: expires_at`** — DB schema mismatch. The `expires_at` column is missing from the sessions table. Upstream migration issue. Not investigated.~~ done (moot) — column has been in the schema since `6d4622c` (06-23, upstream browser-history); the deployed DB was stale and has since been rebuilt — no recurrence
+10. ~~**Browser History `session reaper failed: no such column: expires_at`** — DB schema mismatch. The `expires_at` column is missing from the sessions table. Upstream migration issue. Not investigated.~~ **correction 08-14: STILL BROKEN** — the earlier "done (moot)" claim was false: the error fires every 5 min to this day (journal 16:38 on 08-14); the deployed DB still lacks the column. Open in TODO_LIST
 
 ---
 
@@ -179,7 +179,7 @@ The logs clearly show `session reaper failed: no such column: expires_at (1)` ev
 
 ### Critical (blocks correctness or monitoring)
 
-1. ~~**Fix Browser History session reaper schema** — `expires_at` column missing from sessions table. Upstream migration issue. Every 5 min error.~~ done (moot) — schema has had the column since `6d4622c`; deployed DB rebuilt, no recurrence
+1. ~~**Fix Browser History session reaper schema** — `expires_at` column missing from sessions table. Upstream migration issue. Every 5 min error.~~ **correction 08-14: STILL BROKEN** — error persists live (journal 16:38 on 08-14); the "moot" verdict was wrong. Tracked in TODO_LIST
 2. ~~**Fix post-deploy check for Browser History** — Test `/health` not `/`. False positive FAIL.~~ done (moot) — `/` probe non-fatal since `adb1301a`; Gatus owns `/health`
 3. ~~**Fix Overview 503** — Investigate missing project-discovery daemon socket.~~ done at `3ef0f26a`
 4. ~~**Fix `signoz.home.lan` 404** — Caddy vHost routing for SigNoz web UI.~~ done (moot) — did not recur; monitored by 4 Gatus SigNoz checks

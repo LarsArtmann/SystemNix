@@ -735,6 +735,19 @@
                 pkgs.coreutils
                 pkgs.findutils
               ] ./scripts/btrfs-subvolume-inventory.sh;
+              migrate-buildcache =
+                mkApp "migrate-buildcache"
+                  "One-time migration of build caches (Go/Rust/npm/pip/pnpm/playwright) to the USB SSD at /mnt/buildcache. Run BEFORE the first deploy of services.buildcache"
+                  [
+                    pkgs.coreutils # cut, du, find, tr, wc
+                    pkgs.e2fsprogs # e2label
+                    pkgs.findutils
+                    pkgs.gnugrep
+                    pkgs.rsync
+                    pkgs.trash-cli
+                    pkgs.util-linux # findmnt, mountpoint
+                  ]
+                  ./scripts/migrate-buildcache.sh;
               verify-io-tiers = mkApp "verify-io-tiers" "Verify BFQ I/O priority tiers are correctly applied" [
                 pkgs.systemd
                 pkgs.procps

@@ -32,17 +32,16 @@ let
     };
   }) cacheSubvolumes;
 
-  # Rust projects whose target/ dirs should live on ext4 (/rust-cache)
-  # instead of BTRFS — avoids COW fragmentation from 85K+ small files
-  # and keeps them out of btrbk snapshots.
+  # Rust projects whose target/ dirs should live on ext4 — avoids COW
+  # fragmentation from 85K+ small files and keeps them out of btrbk snapshots.
+  # Target dirs moved from the old /rust-cache NVMe partition (p9) to the USB
+  # SSD build cache (services.buildcache) on 2026-08-14: removes build churn
+  # from the QLC NVMe entirely. Dirs are created by buildcache-init (post-
+  # mount); only the ~/projects/<p>/target symlinks are managed here.
   rustCacheProjects = [ "monitor365" ];
 
-  rustCacheDirs = builtins.map (
-    p: "d /rust-cache/${p} 0755 ${primaryUser} users -"
-  ) rustCacheProjects;
-
   rustCacheLinks = builtins.map (
-    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /rust-cache/${p}"
+    p: "L+ /home/${primaryUser}/projects/${p}/target - - - - /mnt/buildcache/rust/${p}"
   ) rustCacheProjects;
 in
 {
@@ -110,18 +109,19 @@ in
         "/data"
       ];
     };
+
+    # Rust target dirs now live on the USB SSD build cache (see rustCacheLinks
+    # above). buildcache-init creates the directories after the mount is up.
+    buildcache.rustProjects = rustCacheProjects;
   };
 
   systemd = {
-    tmpfiles.rules =
-      rustCacheDirs
-      ++ rustCacheLinks
-      ++ [
-        # btrbk-data needs /data/.snapshots to exist before it can create
-        # snapshot subvolumes. Without this, btrbk-data fails with
-        # "Failed to fetch subvolume detail for snapshot_dir".
-        "d /data/.snapshots 0755 root root -"
-      ];
+    tmpfiles.rules = rustCacheLinks ++ [
+      # btrbk-data needs /data/.snapshots to exist before it can create
+      # snapshot subvolumes. Without this, btrbk-data fails with
+      # "Failed to fetch subvolume detail for snapshot_dir".
+      "d /data/.snapshots 0755 root root -"
+    ];
 
     services."btrfs-verify-snapshots" = {
       description = "Verify BTRFS snapshot freshness";

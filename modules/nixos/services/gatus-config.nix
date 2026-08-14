@@ -983,6 +983,31 @@ _: {
                 alerts = discordAlert "PMA health endpoint reports not-ready — the auto-commit daemon or discovery daemon is failing. The process may be alive but non-functional. Check: journalctl -u projects-management-automation -n 50";
               })
             ]
+            ++ lib.optionals (config.services.buildcache.enable or false) [
+              (mkHttpCheck {
+                name = "Build Cache SSD";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*buildcache_mounted 1*)"
+                  "[BODY] == pat(*buildcache_smart_healthy 1*)"
+                ];
+                alerts = discordAlert "Build cache SSD (/mnt/buildcache) unmounted or SMART-failing — go/cargo/pnpm builds will fail with missing-directory errors. Check: findmnt /mnt/buildcache, sudo smartctl -d sat -H /dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311. If the drive died: revert GOCACHE/GOMODCACHE in platforms/nixos/users/home.nix and rebuild caches on NVMe.";
+              })
+              (mkHttpCheck {
+                name = "Build Cache Usage";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "30m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*buildcache_usage_over_threshold 0*)"
+                ];
+                alerts = discordAlert "Build cache SSD exceeds 85% — the 240 GB drive is filling. Prune: GOCACHE=/mnt/buildcache/go-build go clean -cache; cargo clean in monitor365; pnpm store prune; rm old Playwright browsers.";
+              })
+            ]
             ++ lib.optionals config.services.discordsync.enable [
               (mkHttpCheck {
                 name = "DiscordSync";

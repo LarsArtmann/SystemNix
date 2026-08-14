@@ -50,6 +50,7 @@
 - **What:** `system_oomd_kills_total`, `_recent`, `_alert` from `journalctl -u systemd-oomd --grep "Killed"` with delta tracking. Gatus "OOMD Kills" alert
 - **ISSUE 1 (potential):** The `journalctl --grep "Killed"` query scans the ENTIRE oomd journal since boot every 2 minutes. Over time (weeks of uptime), this could grow large. Unlike the niri-health-metrics gotcha (which was fixed by adding `-n` for early termination), this query needs to count ALL matches so `-n` can't help. However, systemd-oomd should have relatively few log entries compared to niri (which logs every 30s). **Risk: LOW** but should monitor.
 - **ISSUE 2 (unverified):** The exact systemd-oomd log message format was not verified at runtime. I used `--grep "Killed"` based on the TODO description, but systemd-oomd might use different wording (e.g., "Memory pressure reached... Killing", "oomd kill"). The `--grep` flag does substring matching so "Killed" should match "Killed process..." but this is UNVERIFIED on the actual system.
+- **→ VERIFIED LIVE (08-14):** the pattern matches real events — `system_oomd_kills_total 2408` in the running collector output.
 - **New module option:** `collectOomdKills` (default true)
 
 ### 8. Docker container restart count monitoring
@@ -60,6 +61,7 @@
 - **ISSUE 3 (no timeout):** `docker inspect` has no timeout. If the Docker daemon hangs, the collector will hang. The systemd service has no per-command timeout.
 - **ISSUE 4 (MemoryMax):** Added `pkgs.docker` to runtimeInputs but MemoryMax is still 128M. Running docker commands + journalctl queries could exceed this under load.
 - **New module option:** `collectDockerRestarts` (default true, auto-disabled when Docker off)
+- **→ VERIFIED LIVE (08-14):** restart metrics emit correctly for all 7 containers (dozzle, mnfst-*, twenty-*), all 0. The word-splitting (§f.17), timeout (§f.18), and MemoryMax (§f.20) concerns remain OPEN.
 
 ---
 
@@ -89,6 +91,7 @@
 
 ### 12. Runtime verification of collector output
 - The collector script was never run to verify it produces valid Prometheus text format. `nix flake check` validates Nix syntax but NOT bash correctness. The entire `node_textfile_scrape_error` alert exists BECAUSE of invalid .prom files — irony if we ship a new one.
+- **→ RESOLVED (08-14):** verified live via node_exporter `/metrics` — `system_health.prom` serves disk/oomd/docker metrics in valid text format.
 
 ---
 
@@ -104,9 +107,9 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 
 1. **Add Docker metrics to `KNOWN_NEW_METRICS` in pre-deploy-check.sh** — Without this, `nix run .#pre-deploy-check` will FAIL on the new Docker phantom metrics before any container starts. This blocks deploy.
 
-2. **Run the collector script locally** — Execute `system-health-metrics` manually to verify it produces valid `.prom` output. This is especially important for the Docker collector (word splitting, docker inspect output format) and the oomd collector (journalctl grep pattern).
+2. ~~**Run the collector script locally** — Execute `system-health-metrics` manually to verify it produces valid `.prom` output. This is especially important for the Docker collector (word splitting, docker inspect output format) and the oomd collector (journalctl grep pattern).~~ done — verified live 08-14 via node_exporter `/metrics`
 
-3. **Verify systemd-oomd journal message format** — Run `journalctl -u systemd-oomd --grep "Killed" -n 5` on evo-x2 to confirm the grep pattern matches actual kill events. If the wording is different, the counter will always be 0 and the alert will never fire.
+3. ~~**Verify systemd-oomd journal message format** — Run `journalctl -u systemd-oomd --grep "Killed" -n 5` on evo-x2 to confirm the grep pattern matches actual kill events. If the wording is different, the counter will always be 0 and the alert will never fire.~~ done — pattern verified live (`system_oomd_kills_total 2408`)
 
 ### Important (post-deploy)
 
@@ -134,16 +137,16 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 
 ### Immediate (blocks correct deploy)
 1. Add Docker phantom metrics to `KNOWN_NEW_METRICS` in `pre-deploy-check.sh`
-2. Run `system-health-metrics` locally to verify valid `.prom` output
-3. Verify `journalctl -u systemd-oomd --grep "Killed"` matches actual kill events
-4. Verify `docker inspect --format '{{.RestartCount}}'` output format on evo-x2
+2. ~~Run `system-health-metrics` locally to verify valid `.prom` output~~ done — live `/metrics` verified 08-14
+3. ~~Verify `journalctl -u systemd-oomd --grep "Killed"` matches actual kill events~~ done — 2408 matches counted live
+4. ~~Verify `docker inspect --format '{{.RestartCount}}'` output format on evo-x2~~ done — restart metrics live for all 7 containers
 5. Verify PMA `/readyz` endpoint responds on `127.0.0.1:9190`
 
 ### Deploy + Verify
-6. Deploy to evo-x2: `nix run .#deploy`
-7. Verify `system_health.prom` contains all new metrics: `grep -E 'system_disk|crash_loop|oomd|docker_container' /var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`
+6. ~~Deploy to evo-x2: `nix run .#deploy`~~ done — deployed in the 09:30 session (`7afab3f8`)
+7. ~~Verify `system_health.prom` contains all new metrics: `grep -E 'system_disk|crash_loop|oomd|docker_container' /var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom`~~ done — verified live 08-14
 8. Verify new Gatus checks appear in dashboard (all should be GREEN)
-9. Wait 2min and verify `system_disk_usage_percent` has a real value
+9. ~~Wait 2min and verify `system_disk_usage_percent` has a real value~~ done — live value observed (86) on 08-14
 10. Verify `node_textfile_scrape_error` is present and equals 0
 11. Check Gatus "PMA Daemon Health" check is GREEN (not 503)
 12. Check Gatus "Textfile Collector Health" check is GREEN
@@ -167,7 +170,7 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 24. Update AGENTS.md "Prevention Layers" table with new Gatus checks
 25. Update AGENTS.md monitored services list to include browser-history
 26. Document `pma-health = 9190` port in AGENTS.md
-27. Add oomd journalctl pattern to AGENTS.md gotchas if it differs from "Killed"
+27. ~~Add oomd journalctl pattern to AGENTS.md gotchas if it differs from "Killed"~~ done (moot) — pattern confirmed live as `Killed` (2408 matches); nothing to document
 
 ### Monitoring (next gaps)
 28. Add `system_textfile_collector_parse_errors` per-file metric (which .prom file failed)
@@ -202,14 +205,14 @@ No catastrophic errors. All changes pass `nix flake check --no-build`, full eval
 
 ### 1. Should the oomd collector use `--grep "Killed"` or a broader pattern?
 
-I based the grep pattern on the TODO description ("journalctl -u systemd-oomd --grep 'killed'"). But systemd-oomd log messages might say "Killing" (not "Killed"), or use "oomd killed" lowercase, or have a different format entirely. I cannot verify this without access to evo-x2's journal. Should I:
+~~I based the grep pattern on the TODO description ("journalctl -u systemd-oomd --grep 'killed'"). But systemd-oomd log messages might say "Killing" (not "Killed"), or use "oomd killed" lowercase, or have a different format entirely. I cannot verify this without access to evo-x2's journal. Should I:~~ **answered (08-14):** option (b) was correct — `Killed` matches real events (2408 counted live); no broader pattern needed.
 - (a) Use `--grep "Killed|killed|Killing|killed process"` (broader)?
 - (b) Keep `"Killed"` and verify post-deploy?
 - (c) Use a case-insensitive grep equivalent?
 
 ### 2. Should I deploy now or fix the pre-deploy-check phantom metric issue first?
 
-The Docker metrics (`docker_container_restart_count`, `docker_container_restart_alert`, `system_any_docker_container_restart_alert`) won't exist until containers are running post-deploy. This means `nix run .#pre-deploy-check` will FAIL them as phantom metrics. Should I:
+~~The Docker metrics (`docker_container_restart_count`, `docker_container_restart_alert`, `system_any_docker_container_restart_alert`) won't exist until containers are running post-deploy. This means `nix run .#pre-deploy-check` will FAIL them as phantom metrics. Should I:~~ **answered by history:** the deploy proceeded anyway (09:30 session, `7afab3f8`) and the metrics went live — but the whitelist gap (§f.1) is STILL OPEN and will bite the next fresh-deploy pre-deploy check.
 - (a) Fix pre-deploy-check.sh first, then deploy?
 - (b) Deploy directly (pre-deploy-check is a warning tool, not a hard gate)?
 - (c) Add the whitelist entry AND deploy in one step?

@@ -317,6 +317,7 @@ The DNS blocker uses dnsblockd's embedded sdns recursive resolver — the sole D
 | systemd-boot                      | ✅     | 50 generation limit, latest kernel                                                                                                            |
 | BFQ I/O Priority Tiers            | ✅     | 7-tier BFQ scheduling (`lib/default.nix`): sshd (BE/1), desktop (BE/3), default (BE/4), heavy DB (BE/5), background (BE/6), build (BE/7+Nice), maintenance (idle). `verify-io-tiers` flake app validates assignments. Prevents build storms from freezing SSH and desktop compositor on QLC NAND |
 | GOMEMLIMIT on Go services         | ✅     | 8 Go services (discordsync, browser-history, PMA, signoz-query, signoz-otel 768MiB, pocket-id, crush-daily, file-and-image-renamer) configured with `GOMEMLIMIT` at ~75% of MemoryMax. dnsblockd has tuned value (3GiB) from OOM data |
+| Build cache SSD (`/mnt/buildcache`) | ✅     | 240 GB SanDisk on USB 3.0 (`services.buildcache`): ext4 `data=writeback`, holds GOCACHE/GOMODCACHE/golangci-lint/goimports/Rust targets/npm/pnpm/pip/Playwright — ~115 GB of rebuildable caches off the QLC NVMe. Gatus: mount + SMART + usage alerts. smartd `-d sat` on both USB SSDs. No TRIM via bridge; drive is disposable-by-design |
 
 ### Scheduled Tasks
 

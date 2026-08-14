@@ -67,12 +67,13 @@
 - Twenty Docker memory limits were committed by the auto-commit daemon in a prior session
 - PG role issue was transient (verified healthy at runtime)
 - Twenty backup already registered in `backup-coordination` (maxAgeHours=31)
-- **NOT DEPLOYED** — the running containers match by coincidence (prior ad-hoc runtime changes), not because Nix config is authoritative. `nix run .#deploy` is needed to make the config authoritative.
+- **NOT DEPLOYED** — the running containers match by coincidence (prior ad-hoc runtime changes), not because Nix config is authoritative. `nix run .#deploy` is needed to make the config authoritative. **→ RESOLVED:** deployed in the 09:30 session (`7afab3f8`)
 - **Server NODE_OPTIONS=768M untested under load** — only at-rest memory (480MB) was observed. Bulk imports or heavy GraphQL queries may exceed 768M heap.
 
 ### vendorHash pre-deploy check
 
 - Check added to script but **NOT yet run end-to-end** at deploy time. The `nix build .#<pkg>.goModules --dry-run` invocations have not been tested against actual stale-hash scenarios. The grep patterns for "would build" vs "would copy/fetch" are based on nix CLI output conventions but not verified at runtime.
+- **→ RESOLVED (partially):** exercised during the 09:30 deploy; the 7 failures it raised were dismissed as "pre-existing" without investigation (see `2026-08-14_09-30` §f.7) — pattern behavior under a REAL stale hash remains unproven
 
 ---
 
@@ -98,7 +99,7 @@
 
 ### Nothing destructive — but several mistakes in approach:
 
-1. **Did not deploy.** All changes are in the working tree, pass eval, but are NOT live. The Manifest postgres container is still running unbounded in production because the config change hasn't been activated. This is the biggest gap.
+1. **Did not deploy.** All changes are in the working tree, pass eval, but are NOT live. The Manifest postgres container is still running unbounded in production because the config change hasn't been activated. This is the biggest gap. **→ RESOLVED:** deployed in the 09:30 session (`7afab3f8`); Manifest postgres verified live at 1G
 
 2. **Did not test the vendorHash check at runtime.** The check #11 in pre-deploy-check.sh was added blind — the grep patterns (`"would build"`, `"would (copy|fetch)"`) were written from memory of nix CLI output, not verified by actually running the command. If the patterns don't match real output, the check silently warns on everything.
 
@@ -106,7 +107,7 @@
 
 4. **The `--retry` on POST/PUT without `--retry-all-errors` may not actually retry on SQLITE_BUSY.** curl's default retry behavior only retries on transient HTTP errors (5xx) and connection failures. If Pocket ID returns HTTP 500 with a SQLITE_BUSY body, curl WILL retry. But if it returns HTTP 400 (which some frameworks do for busy errors), curl will NOT retry. The `--retry-all-errors` flag on `api_get` retries everything. The asymmetry is intentional (safer for writes) but may not fully solve the SQLITE_BUSY resilience goal.
 
-5. **Forgot to check whether the `criticalSystemServices` list in `scheduled-tasks.nix` still references `qmd-mcp`** — qmd was retired in a prior session. The TODO_LIST.md diff accidentally shows this line was modified (removed `qmd-mcp` from the description), but the actual `scheduled-tasks.nix` file was NOT checked or fixed. If `qmd-mcp` is still in the list, the health check may be failing silently.
+5. **Forgot to check whether the `criticalSystemServices` list in `scheduled-tasks.nix` still references `qmd-mcp`** — qmd was retired in a prior session. The TODO_LIST.md diff accidentally shows this line was modified (removed `qmd-mcp` from the description), but the actual `scheduled-tasks.nix` file was NOT checked or fixed. If `qmd-mcp` is still in the list, the health check may be failing silently. **→ CHECKED (08-14):** the list is clean — caddy/forgejo/dnsblockd/postgresql only (`scheduled-tasks.nix:197-202`)
 
 ---
 
@@ -136,46 +137,46 @@
 
 ### Critical / Immediate
 
-1. **Deploy all changes** (`nix run .#deploy`) — Manifest postgres running unbounded in production
-2. **Run pre-deploy-check.sh end-to-end** — Verify check #11 vendorHash patterns match real nix output
-3. **Verify Manifest postgres memory after deploy** — `docker inspect mnfst-postgres-1 --format '{{.HostConfig.Memory}}'`
-4. **Verify Dozzle memory after deploy** — `docker inspect dozzle --format '{{.HostConfig.Memory}}'`
-5. **Check `scheduled-tasks.nix` for stale `qmd-mcp` reference** — qmd was retired
-6. **Reboot evo-x2** — Nixpkgs tarball registry override not active until reboot (Priority 0)
+1. ~~**Deploy all changes** (`nix run .#deploy`) — Manifest postgres running unbounded in production~~ done — deployed in the 09:30 session (`7afab3f8`)
+2. ~~**Run pre-deploy-check.sh end-to-end** — Verify check #11 vendorHash patterns match real nix output~~ done — exercised at the 09:30 deploy (failures dismissed uninvestigated; real stale-hash case still unproven)
+3. ~~**Verify Manifest postgres memory after deploy** — `docker inspect mnfst-postgres-1 --format '{{.HostConfig.Memory}}'`~~ done — verified live 08-14: 1073741824 (1G)
+4. **Verify Dozzle memory after deploy** — `docker inspect dozzle --format '{{.HostConfig.Memory}}'` — **live counter-evidence 08-14: still 0 (unbounded)** despite `--memory=256m` in `dozzle.nix:39`; the running container predates the limit and was never recreated
+5. ~~**Check `scheduled-tasks.nix` for stale `qmd-mcp` reference** — qmd was retired~~ done — list verified clean (caddy/forgejo/dnsblockd/postgresql)
+6. ~~**Reboot evo-x2** — Nixpkgs tarball registry override not active until reboot (Priority 0)~~ done (moot) — last boot (08-13 21:42) post-dates the 08-06 registry fix (`d2443c29`)
 
 ### Deploy Verification
 
 7. **Test Twenty CRM under load** — Bulk import or heavy GraphQL to verify 768M heap is sufficient
-8. **Run `nix run .#post-deploy-check`** after deploy to verify all 53 checks pass
-9. **Check Twenty backup freshness** — `ls -la /var/lib/twenty/backup/` — verify pg_dump succeeding
+8. ~~**Run `nix run .#post-deploy-check`** after deploy to verify all 53 checks pass~~ done — ran in the 09:30 session
+9. ~~**Check Twenty backup freshness** — `ls -la /var/lib/twenty/backup/` — verify pg_dump succeeding~~ done — verified live 08-14: dumps through 08-14 02:06, `backup_healthy{backup="twenty"}=1`
 10. **Verify Pocket ID OIDC client provisioning with new retries** — Restart pocket-id-provision, check journal for retry behavior
 
 ### Infrastructure (Priority 0-1)
 
 11. **Off-site backup** — No DR backup exists. Forgejo, Immich, Twenty, DiscordSync all at risk on SSD failure
 12. **Free disk space** — Root filesystem at 90-93% on QLC NAND, increases crash risk
-13. **Run foreground BTRFS scrub on `/`** — Has NEVER been scrubbed, same physical NVMe as `/data` which had corruption
+13. ~~**Run foreground BTRFS scrub on `/`** — Has NEVER been scrubbed, same physical NVMe as `/data` which had corruption~~ done (superseded) — weekly `autoScrub` (`snapshots.nix:104`, `ab7c331a`) + scrub metrics; both mounts currently show status=interrupted (frequent reboots cut scrubs short)
 14. **Browser-history DB backup** — `/var/lib/browser-history/data.db` NOT in backup-coordination
-15. **Create Attic cache + CI token** — Module deployed but cache not created
+15. **Create Attic cache + CI token** — Module deployed but cache not created — **live evidence 08-14: `attic_storage_gb 0`**, cache still empty
 
 ### Code Quality (Priority 3-4)
 
 16. **Add eval-time StartLimitBurst assertion** — `start-limit-audit.nix` module to catch misplaced directives automatically
 17. **Add `security_opt` + `cap_drop` to Dozzle** — Container has Docker socket access, needs hardening
-18. **Systemd hardening consistency audit** — `TimeoutStopSec`, `RestartSec`, `ProcSubset`, `RestrictAddressFamilies`, `SystemCallArchitectures`, `LockPersonality`, `UMask`
-19. **Add missing primitives to `harden()` helper** — Based on audit results
-20. **VendorHash CI check across LarsArtmann Go repos** — Replicate dnsblockd pattern upstream
+18. ~~**Systemd hardening consistency audit** — `TimeoutStopSec`, `RestartSec`, `ProcSubset`, `RestrictAddressFamilies`, `SystemCallArchitectures`, `LockPersonality`, `UMask`~~ done at `0fce1ed9` (documented-rationale closure in `lib/systemd`)
+19. ~~**Add missing primitives to `harden()` helper** — Based on audit results~~ done at `0fce1ed9` — deliberate omissions documented; no primitives added by design
+20. **VendorHash CI check across LarsArtmann Go repos** — Replicate dnsblockd pattern upstream (open: crush-daily, PMA, erraudit)
 21. **PMA `GenerateMessage` handler leak** — Upstream fix in PMA repo
 22. **Create dep-audit script** — Cross-reference go.mod requires against flake.nix pinned revs
-23. **Implement cgroup I/O throttling for dev builds** — Prevent build storms from freezing desktop
-24. **GOMEMLIMIT runtime validation** — Verify Go GC behavior under load
+23. ~~**Implement cgroup I/O throttling for dev builds** — Prevent build storms from freezing desktop~~ done at `9a56c1a7` (`wrapWithMemoryLimit` wrappers + ionice'd crush wrapper)
+24. ~~**GOMEMLIMIT runtime validation** — Verify Go GC behavior under load~~ done at `0fce1ed9` (`scripts/validate-gomemlimit.sh`)
 25. **Standardize Docker hardening helper** — Single pattern for memory/log/security across Compose + oci-containers
 
 ### Service Issues (Priority 2-3)
 
-26. **Fix browser-history `expires_at` session reaper** — Every 5 min error, upstream migration gap
-27. **Fix browser-history `CheckpointStore` upstream** — 4-min projection drain on every restart
-28. **Fix OTel endpoint URL scheme upstream** — browser-history uses `127.0.0.1:4317` without `http://` scheme
+26. **Fix browser-history `expires_at` session reaper** — Every 5 min error, upstream migration gap — **live-verified 08-14 16:38: STILL FAILING**; TODO_LIST item correct
+27. **Fix browser-history `CheckpointStore` upstream** — 4-min projection drain on every restart (tracked in TODO_LIST)
+28. ~~**Fix OTel endpoint URL scheme upstream** — browser-history uses `127.0.0.1:4317` without `http://` scheme~~ done — endpoint now `127.0.0.1:4317` (gRPC) via `otelEndpoint` (`browser-history.nix:86`); CHANGELOG [2026-08] Fixed
 29. **Hermes: install SSH deploy key** — Blocked on manual step
 30. **Hermes: set fallback model** — Blocked on manual step
 31. **Hermes runtime verification** — Bot presence, cron, gateway never verified
@@ -183,8 +184,8 @@
 33. **Verify dnsblockd dashboard auth** — Restart service, visit dashboard, confirm token works
 34. **WebAuthn `.lan` RP ID browser validation** — May be rejected by Chrome/Firefox
 35. **Turso plan decision** — DiscordSync on sqlite-only backend after crash-loop
-36. **Browser-history registration lock** — `POST /auth/register` open to anyone on LAN
-37. **Evaluate oomd pressure threshold** — 50%/20s may be too aggressive for build+Docker+AI workload
+36. ~~**Browser-history registration lock** — `POST /auth/register` open to anyone on LAN~~ done at `17731861` (`MAX_USERS=1`)
+37. ~~**Evaluate oomd pressure threshold** — 50%/20s may be too aggressive for build+Docker+AI workload~~ done at `17731861` (raised to 60%/30s)
 38. **Clean up orphaned dnsblockd tracking DB** — 724 MB old database
 39. **Deploy to macOS** — Darwin registry override written but not deployed
 40. **Caddy reload root-cause fix** — `PrivateTmp=true` blocks `systemctl reload caddy`
@@ -208,7 +209,7 @@
 
 ### 1. Should I deploy now, or are you planning to batch these with other changes?
 
-The Manifest postgres memory limit change is not live — the container is running unbounded in production. But deploying requires a full NixOS switch which takes 5-15 min on this hardware and restarts services. If you're planning other changes, it may be better to batch. If not, this should deploy now.
+~~The Manifest postgres memory limit change is not live — the container is running unbounded in production. But deploying requires a full NixOS switch which takes 5-15 min on this hardware and restarts services. If you're planning other changes, it may be better to batch. If not, this should deploy now.~~ **answered:** deployed in the 09:30 session (`7afab3f8`) — Manifest postgres live at 1G; note Dozzle's runtime container was never recreated and is still unbounded (§f.4)
 
 ### 2. The Twenty server `NODE_OPTIONS=--max-old-space-size=768` was set based on at-rest memory (480MB). Should I raise it to 1024M for safety, or is 768M intentional?
 
