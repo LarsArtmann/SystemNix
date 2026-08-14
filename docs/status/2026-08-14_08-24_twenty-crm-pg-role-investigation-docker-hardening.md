@@ -99,10 +99,10 @@ The running Docker containers ALREADY have the memory limits applied (verified v
 
 1. **Always verify the "current" error state before acting** — The TODO said "crash-loops" but the system was healthy. I should have led with "the issue is already resolved at runtime" rather than investigating for 10 tool calls before reaching that conclusion. Status reports and TODO items are point-in-time — they may already be stale
 2. **Deploy after making changes** — I made Nix edits and verified eval, but didn't deploy. The running system matches by coincidence (prior runtime changes), not because my Nix config is live. This is a hidden drift risk
-3. **Register Twenty backup in backup-coordination** — The backup timer exists but is unmonitored. A silent backup failure would go unnoticed indefinitely
+3. ~~**Register Twenty backup in backup-coordination** — The backup timer exists but is unmonitored. A silent backup failure would go unnoticed indefinitely~~ done (existing rule) — already registered since `976e9547` (verified live: `backup_healthy{backup="twenty"}=1`); premise was wrong
 4. **Add startup PG role validation** — A compose `healthcheck` or startup script that verifies the expected PG role exists would catch volume recreation mismatches early, preventing the confusing `role "twenty" does not exist` error from recurring
 5. **Consider `mkDockerServiceFactory` per-container memory limit support** — Instead of manually adding `mem_limit` to each service in each compose file, the factory could accept a `containerMemoryLimits` attrset and inject limits automatically
-6. **Check Docker container restart counts in monitoring** — The 235-restart worker loop went undetected. A Prometheus metric + Gatus alert on `docker inspect --format '{{.RestartCount}}'` would catch all future restart loops across ALL containers
+6. ~~**Check Docker container restart counts in monitoring** — The 235-restart worker loop went undetected. A Prometheus metric + Gatus alert on `docker inspect --format '{{.RestartCount}}'` would catch all future restart loops across ALL containers~~ done at `9b6590bf` — all 7 containers emit restart metrics (live: count 0)
 
 ---
 
