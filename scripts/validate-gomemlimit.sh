@@ -32,12 +32,12 @@ to_bytes() {
   local number="${value%*[KMGTP]iB}"
   local unit="${value#"$number"}"
   case "$unit" in
-    KiB) echo $((number * 1024)) ;;
-    MiB) echo $((number * 1024 * 1024)) ;;
-    GiB) echo $((number * 1024 * 1024 * 1024)) ;;
-    TiB) echo $((number * 1024 * 1024 * 1024 * 1024)) ;;
-    "") echo "$number" ;;
-    *) echo "0" ;;
+  KiB) echo $((number * 1024)) ;;
+  MiB) echo $((number * 1024 * 1024)) ;;
+  GiB) echo $((number * 1024 * 1024 * 1024)) ;;
+  TiB) echo $((number * 1024 * 1024 * 1024 * 1024)) ;;
+  "") echo "$number" ;;
+  *) echo "0" ;;
   esac
 }
 
@@ -74,8 +74,8 @@ for entry in "${SERVICES[@]}"; do
 
   # Go heap-level check (requires /metrics with go runtime stats)
   if [ "$metrics_port" != "0" ]; then
-    heap=$(curl -sf --max-time 3 "http://127.0.0.1:${metrics_port}/metrics" 2>/dev/null \
-      | awk '/^go_memstats_heap_inuse_bytes/ {print $2; exit}' || true)
+    heap=$(curl -sf --max-time 3 "http://127.0.0.1:${metrics_port}/metrics" 2>/dev/null |
+      awk '/^go_memstats_heap_inuse_bytes/ {print $2; exit}' || true)
     if [ -n "$heap" ] && [ "$memlimit" -gt 0 ]; then
       heap_pct=$((heap * 100 / memlimit))
       if [ "$heap_pct" -ge 90 ]; then

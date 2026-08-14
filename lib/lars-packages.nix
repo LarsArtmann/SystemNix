@@ -18,7 +18,7 @@ lib.filterAttrs (_: v: v != null) {
   branching-flow = flakePkg inputs.branching-flow;
   buildflow = flakePkg inputs.buildflow;
   cqrs-lint = inputs.go-cqrs-lite.packages.${system}.cqrs-lint or null;
-  go-auto-upgrade = null;
+  go-auto-upgrade = flakePkg inputs.go-auto-upgrade;
   go-humanize-linter = flakePkg inputs.go-humanize-linter;
   go-structure-linter = flakePkg inputs.go-structure-linter;
   # Temporarily disabled: golangci-lint-auto-configure has incomplete vendoring
