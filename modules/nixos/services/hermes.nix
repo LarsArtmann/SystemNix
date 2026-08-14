@@ -41,37 +41,39 @@
             in
             base
             // {
-              hermes-agent = (base.hermes-agent.override {
-                extraDependencyGroups = [
-                  "anthropic"
-                  "azure-identity"
-                  "bedrock"
-                  "daytona"
-                  "dingtalk"
-                  "edge-tts"
-                  "exa"
-                  "fal"
-                  "feishu"
-                  "firecrawl"
-                  "hindsight"
-                  "honcho"
-                  "messaging"
-                  "matrix"
-                  "modal"
-                  "parallel-web"
-                  "tts-premium"
-                  "voice"
-                ];
-              }).overrideAttrs (old: {
-                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
-                postInstall = (old.postInstall or "") + ''
-                  for bin in $out/bin/hermes $out/bin/hermes-agent $out/bin/hermes-acp; do
-                    if [ -f "$bin" ]; then
-                      wrapProgram "$bin" --suffix PYTHONPATH : "${pythonPath}"
-                    fi
-                  done
-                '';
-              });
+              hermes-agent =
+                (base.hermes-agent.override {
+                  extraDependencyGroups = [
+                    "anthropic"
+                    "azure-identity"
+                    "bedrock"
+                    "daytona"
+                    "dingtalk"
+                    "edge-tts"
+                    "exa"
+                    "fal"
+                    "feishu"
+                    "firecrawl"
+                    "hindsight"
+                    "honcho"
+                    "messaging"
+                    "matrix"
+                    "modal"
+                    "parallel-web"
+                    "tts-premium"
+                    "voice"
+                  ];
+                }).overrideAttrs
+                  (old: {
+                    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+                    postInstall = (old.postInstall or "") + ''
+                      for bin in $out/bin/hermes $out/bin/hermes-agent $out/bin/hermes-acp; do
+                        if [ -f "$bin" ]; then
+                          wrapProgram "$bin" --suffix PYTHONPATH : "${pythonPath}"
+                        fi
+                      done
+                    '';
+                  });
             };
           pkgs' = pkgs.extend patchedOverlay;
         in

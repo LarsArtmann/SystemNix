@@ -14,7 +14,7 @@
 
 ## Priority 1: High (Service Outages)
 
-- [ ] **Fix hermes crash-loop — `ModuleNotFoundError: No module named 'registration_lifecycle'`** — hermes.service hits `start-limit-hit` after 5 restarts (verified live Aug 14 09:19; error persists in journal within the last 48h). Python packaging gap: the module is missing from the env derivation. Dead since the 2026-08-13 deploy and it blocks clean `nh os switch` activations (deploy.sh `reset-failed` only works around it). Fix the derivation, verify with `journalctl -u hermes.service`, then do the Hermes runtime verification below. **Source:** `docs/status/2026-08-14_08-24_smart-audio-daemon-built-deployed-with-gaps.md`
+- [x] **Fix hermes crash-loop — `ModuleNotFoundError: No module named 'registration_lifecycle'`** — FIXED 2026-08-14. Root cause: upstream `pyproject.toml` `[tool.setuptools] py-modules` list missing `registration_lifecycle` (imported by `hermes_cli/plugins.py` at module level). Fix: `hermes.nix` overlay extracts `registration_lifecycle.py` from flake source into a `runCommand` derivation, injects via `wrapProgram --suffix PYTHONPATH` in `overrideAttrs postInstall`. Verified: service started successfully, no `ModuleNotFoundError` in journal, gateway running with cron scheduler and agent conversation loop active. Deploy activation still fails on `browser-history.service` and `forgejo-oidc-setup.service` (pre-existing, unrelated to hermes)
 
 ## Priority 2: Manual Steps (Blocked on Human)
 
@@ -22,7 +22,7 @@
 - [ ] **Clean up qmd cache** — `~/.cache/qmd/` still holds ~2GB GGUF models + index after the qmd retirement. **Manual:** `trash ~/.cache/qmd`
 - [ ] **Hermes: install SSH deploy key** — private key to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model`
-- [ ] **Hermes runtime verification** — Hermes re-enabled (`2090bd7e`) but Discord bot presence, cron job registration, and gateway request handling were NEVER verified. Check `journalctl -u hermes.service`. **Source:** `docs/status/2026-08-12_13-05_overview-hermes-pma-split-mode-startlimit-hardening.md`
+- [x] **Hermes runtime verification** — Verified 2026-08-14. Service starts, no crash-loop, no `ModuleNotFoundError`. Gateway running with cron scheduler, tool registry, agent conversation loop, and messaging platforms active. API rate limit errors (429s) are operational quota issues, not crashes. **Source:** `docs/status/2026-08-12_13-05_overview-hermes-pma-split-mode-startlimit-hardening.md`
 - [ ] **Test browser-history OAuth2 login end-to-end** — Visit `https://history.home.lan`, click "Login with Pocket ID", verify redirect flow completes and dashboard loads with data. CSS fix deployed (`bb998e8d`), StartLimit fixed (`a941f88d`). **Source:** `docs/status/2026-08-12_14-59_browser-history-css-and-startlimit-fixes.md`
 - [ ] **Verify dnsblockd dashboard auth** — `sudo systemctl restart dnsblockd.service`, then visit `https://dnsblock.home.lan/dashboard`, enter token (retrieve via sops), confirm stats load. Widget should show block counts. **Source:** `docs/status/2026-08-12_14-55_dnsblockd-dashboard-auth-comprehensive-review.md`
 - [ ] **WebAuthn `.lan` RP ID browser validation** — Verify browsers accept passkey registration on `history.home.lan` (`.lan` is not a real TLD; Chrome/Firefox may reject)

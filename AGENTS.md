@@ -199,6 +199,8 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 
 Active pip extras: `messaging`, `anthropic`, `firecrawl`, `edge-tts`, `fal`, `exa`. Do NOT add blindly — `voice` has complex native deps, `matrix` needs python-olm (Linux-only).
 
+**`registration_lifecycle` missing module fix (2026-08-14):** Upstream `pyproject.toml` `[tool.setuptools] py-modules` list is missing `registration_lifecycle`, a top-level module imported by `hermes_cli/plugins.py` at module level. Without it, the sealed uv2nix venv is missing the file → `ModuleNotFoundError` → crash-loop → `start-limit-hit`. Fix in `hermes.nix`: extract `registration_lifecycle.py` from the flake input source into a `runCommand` derivation, inject via `wrapProgram --suffix PYTHONPATH` in `overrideAttrs postInstall`. The module only imports stdlib (`threading`, `dataclasses`, `collections.abc`), so no additional deps needed. When upstream adds `registration_lifecycle` to `py-modules`, the SystemNix patch becomes a no-op (PYTHONPATH suffix is harmless if the module is already in site-packages). Also `mini_swe_runner.py` is missing from `py-modules` but is not imported at runtime (only by its own test file), so it doesn't need patching.
+
 ### SearXNG (Privacy Metasearch)
 
 **Module:** `modules/nixos/services/searxng.nix` (wraps nixpkgs `services.searx` with package `searxng`)
