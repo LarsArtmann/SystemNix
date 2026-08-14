@@ -268,11 +268,15 @@ ext4 sequential write was 136 MB/s — 2.5x slower than btrfs (342 MB/s) on iden
 
 Key finding: ext4 O_DIRECT (159 MB/s) matches fdatasync (155 MB/s). The speed ceiling is not the page cache — it's the filesystem's write path itself.
 
-#### Test 2: Write Cache State — CRITICAL FINDING (Corrected)
+#### Test 2: Write Cache State — CRITICAL FINDING (Corrected Twice)
 
-**Initial (wrong) assessment:** "Both drives report write-through cache — the USB enclosure doesn't report a write-back cache to the kernel. Every write must complete to NAND flash before the controller acknowledges it. No buffering at the hardware level."
+**First assessment (wrong):** "The SSD has no write cache. Every write must complete to NAND flash before the controller acknowledges it."
 
-**Corrected assessment after deeper investigation:**
+**Second assessment (also wrong):** "The USB bridge hides the SSD's DRAM write-back cache from the kernel. The SSD has DRAM cache that reorders writes, but the kernel doesn't send FLUSH_CACHE barriers."
+
+**Third assessment (correct, after researching how SandForce actually works):**
+
+See Section 8.6 for the full explanation. Short version: **SandForce controllers are DRAM-less.** The `hdparm -I` "Write cache" feature flag does NOT mean the drive has DRAM write-back cache — it means the controller has an internal write buffer (SRAM on the controller die) and supports the ATA `FLUSH_CACHE` command. There is no DRAM to lose on power failure. The kernel's `write_cache = write through` is actually **correct** for this hardware.
 
 The kernel reports `write_cache = write through` for both drives:
 ```
@@ -305,14 +309,14 @@ And `hdparm -W` confirms write cache is **enabled** at the drive level:
 /dev/sdc: write-caching = 1 (on)
 ```
 
-**The USB bridge chip (not the SSD) is the problem.** The bridge doesn't expose a SCSI Caching mode page to the kernel, so the kernel falls back to `write through`. But the SSD behind the bridge has its own DRAM write cache enabled and **does** buffer and reorder writes. The kernel doesn't know this.
+**The USB bridge chip doesn't expose a SCSI Caching mode page.** The kernel sees "No Caching mode page found" and defaults to `write through`. `hdparm -W` reports `write-caching = 1 (on)` at the ATA level, which initially seemed to contradict the kernel. But this doesn't mean what I thought it meant — see Section 8.6.
 
-Attempts to fix this:
-- `hdparm -W1 /dev/sdb` — succeeds at the ATA level (`write-caching = 1 (on)`) but the kernel's `write_cache` sysfs stays `write through` (the bridge doesn't propagate the state change to the SCSI layer)
-- `echo write_back > /sys/block/sdb/queue/write_cache` — fails (permission denied even as root; the kernel won't override the bridge's reported cache mode)
-- `queue/fua = 0` on both drives — the kernel does not believe the device supports FUA (Force Unit Access), meaning write barriers are not being sent
+Attempts to change cache state:
+- `hdparm -W1 /dev/sdb` — succeeds at ATA level but kernel sysfs stays `write through` (bridge doesn't propagate)
+- `echo write_back > /sys/block/sdb/queue/write_cache` — fails (kernel won't override bridge reporting)
+- `queue/fua = 0` — kernel believes device doesn't support FUA
 
-**This is a data safety issue, not just a performance issue.** See Section 8.6.
+**This is NOT a data safety issue.** See Section 8.6 for why.
 
 #### Test 3: Block Size Sweep
 

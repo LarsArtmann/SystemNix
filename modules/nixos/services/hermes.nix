@@ -21,6 +21,19 @@
         let
           # Upstream (v2026.7.20+) uses fetcherVersion=2 in nix/lib.nix, no hash patching needed.
           baseOverlay = inputs.hermes-agent.overlays.default;
+          # registration_lifecycle.py is a top-level module in the upstream
+          # source but is missing from pyproject.toml's [tool.setuptools]
+          # py-modules list, so uv2nix doesn't install it into the sealed
+          # venv. hermes_cli/plugins.py imports it at module level, causing
+          # ModuleNotFoundError on every startup. We extract the file from
+          # the flake source and inject it via PYTHONPATH until upstream
+          # adds it to py-modules.
+          registrationLifecycle = pkgs.runCommand "hermes-registration-lifecycle" { } ''
+            mkdir -p $out/lib/python3.12/site-packages
+            cp ${inputs.hermes-agent}/registration_lifecycle.py \
+              $out/lib/python3.12/site-packages/
+          '';
+          pythonPath = "${registrationLifecycle}/lib/python3.12/site-packages";
           patchedOverlay =
             final: prev:
             let
@@ -28,7 +41,7 @@
             in
             base
             // {
-              hermes-agent = base.hermes-agent.override {
+              hermes-agent = (base.hermes-agent.override {
                 extraDependencyGroups = [
                   "anthropic"
                   "azure-identity"
@@ -49,7 +62,16 @@
                   "tts-premium"
                   "voice"
                 ];
-              };
+              }).overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ pkgs.makeWrapper ];
+                postInstall = (old.postInstall or "") + ''
+                  for bin in $out/bin/hermes $out/bin/hermes-agent $out/bin/hermes-acp; do
+                    if [ -f "$bin" ]; then
+                      wrapProgram "$bin" --suffix PYTHONPATH : "${pythonPath}"
+                    fi
+                  done
+                '';
+              });
             };
           pkgs' = pkgs.extend patchedOverlay;
         in
