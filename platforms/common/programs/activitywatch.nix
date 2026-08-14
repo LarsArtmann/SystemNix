@@ -28,7 +28,10 @@ in
   systemd.user.services = lib.optionalAttrs pkgs.stdenv.isLinux {
     activitywatch-watcher-aw-watcher-window-wayland = {
       Unit = {
-        After = lib.mkAfter [ "graphical-session.target" ];
+        After = lib.mkAfter [
+          "graphical-session.target"
+          "niri.service"
+        ];
         PartOf = lib.mkAfter [ "graphical-session.target" ];
         StartLimitBurst = 5;
         StartLimitIntervalSec = 300;

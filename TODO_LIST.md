@@ -23,7 +23,7 @@
 
 ## Priority 2: Manual Steps (Blocked on Human)
 
-- [ ] **Twenty CRM: fix PG role** — `twenty-server` crash-loops with `FATAL: role "twenty" does not exist`. Data is NOT lost (1 user, 1 workspace, 66 companies across 90 tables). Needs PG role fix + decision on Docker vs native nixification. Worker now has `mem_limit=2g` + `NODE_OPTIONS=--max-old-space-size=1536`
+- [x] **Twenty CRM: PG role resolved + Docker hardening** — PG role issue was transient (volume recreated with correct `POSTGRES_USER=postgres`). System verified healthy: 66 companies, 90 tables, 0 restarts. Docker stays (third-party NestJS app, nixification not viable). Added `mem_limit`+`memswap_limit` to all containers (server=1g, db=2g, redis=256m) and `NODE_OPTIONS=--max-old-space-size=768` to server
 - [ ] **Hermes: install SSH deploy key** — private key to `/home/hermes/.ssh/id_ed25519`, add public key to GitHub deploy keys
 - [ ] **Hermes: set fallback model** — `sudo -u hermes hermes config set fallback_model`
 - [ ] **Hermes runtime verification** — Hermes re-enabled (`2090bd7e`) but Discord bot presence, cron job registration, and gateway request handling were NEVER verified. Check `journalctl -u hermes.service`. **Source:** `docs/status/2026-08-12_13-05_overview-hermes-pma-split-mode-startlimit-hardening.md`
@@ -39,7 +39,7 @@
 ## Priority 3: Infrastructure
 
 - [ ] **Add eval-time assertion for `StartLimitBurst` placement** — In systemd 261+, `StartLimitBurst`/`StartLimitIntervalSec` in `serviceConfig` (=[Service]) are SILENTLY IGNORED. This caused the 2026-08-11 WDT crash chain (browser-history 592 restarts). Create `start-limit-audit.nix` that catches this pattern at eval time. **Source:** `docs/status/2026-08-11_23-28_wdt-crash-postmortem-deploy-blockers.md`, AGENTS.md StartLimitBurst gotcha
-- [ ] **Add Docker container memory limits** — Only `twenty-worker-1` has `mem_limit`. All other containers (`twenty-server`, `twenty-db`, `twenty-redis`, `mnfst-manifest`, `mnfst-postgres`, `dozzle`) are unbounded — potential oomd victims. Add `mem_limit` + `memswap_limit` to each. Consider `mkDockerServiceFactory` support for per-container limits. **Source:** `docs/status/2026-08-12_20-08_nix-daemon-oomd-kill-and-twenty-worker-restart-loop.md`
+- [ ] **Add Docker container memory limits (Manifest, Dozzle)** — Twenty containers done (server=1g, db=2g, redis=256m, worker=2g). Remaining: `mnfst-manifest`, `mnfst-postgres`, `dozzle` still unbounded. Consider `mkDockerServiceFactory` support for per-container limits.`
 - [ ] **Fix browser-history `expires_at` session reaper error** — Every 5 min: `session reaper failed: no such column: expires_at`. SQLite sessions table missing column, migration gap in browser-history upstream. Investigate schema migration. **Source:** `docs/status/2026-08-12_14-17_browser-history-oidc-secret-desync-fix.md`
 - [ ] **Fix browser-history `CheckpointStore` upstream** — Server replays ALL events on startup (4-min projection drain) because there's no persistent checkpoint store. Requires cqrs-htmx `HydrateFromSQL`. Causes availability gap on every restart. **Source:** `docs/status/2026-08-12_10-20_comprehensive-session-review.md`
 - [ ] **Browser-history DB backup** — `/var/lib/browser-history/data.db` (SQLite WAL mode) is NOT in `backup-coordination`. Needs periodic `sqlite3 .backup` job + entry in `configuration.nix` `services.backup-coordination.backups`. Stagger schedule (01:00–03:00 window)

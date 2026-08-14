@@ -64,6 +64,20 @@ _: {
       # is competing with heavy host I/O.
       fstrimDurationThreshold = 1800;
 
+      # Disk usage alert threshold (percentage). Root filesystem fill (90-93%)
+      # has been a chronic issue across multiple reports. 85% gives early
+      # warning before the critical zone.
+      diskUsageThreshold = 85;
+
+      # Crash-loop detection: restarts per collection interval (2min) that
+      # indicate a crash loop. The browser-history 520-restart loop had ~26
+      # restarts per 2min. 3 restarts in 2 minutes is definitely a crash loop.
+      crashLoopRestartThreshold = 3;
+
+      # Docker container restart alert: restarts per collection interval (2min).
+      # The Twenty 235-restart loop had ~12 restarts per 2min. 3 catches rapid loops.
+      dockerRestartAlertThreshold = 3;
+
       systemHealthMetrics = pkgs.writeShellApplication {
         name = "system-health-metrics";
         runtimeInputs = [
@@ -74,11 +88,15 @@ _: {
           pkgs.curl
           pkgs.jq
           pkgs.procps
+          pkgs.docker
         ];
         text = ''
           OUT="${textfileDir}/system_health.prom"
           TMP="''${OUT}.tmp"
           CPU_STATE="${textfileDir}/.system_health_cpu_state"
+          RESTART_STATE="${textfileDir}/.system_health_restart_state"
+          OOMD_STATE="${textfileDir}/.system_health_oomd_state"
+          DOCKER_STATE="${textfileDir}/.system_health_docker_state"
           NOW_EPOCH=$(date +%s)
 
           # systemctl show --value returns literal "[not set]" on stdout
@@ -134,6 +152,20 @@ _: {
             echo "$svc $cpu_nsec $NOW_EPOCH" >> "''${CPU_STATE}.tmp"
           done
           mv "''${CPU_STATE}.tmp" "$CPU_STATE"
+
+          # === Crash-loop detection: track restart count deltas per service ===
+          declare -A prev_restarts
+          if [ -f "$RESTART_STATE" ]; then
+            while IFS=' ' read -r s n; do
+              [ -n "$s" ] && prev_restarts["$s"]="$n"
+            done < "$RESTART_STATE"
+          fi
+          : > "''${RESTART_STATE}.tmp"
+          for svc in ${lib.concatMapStringsSep " " (s: "'${s}'") cfg.monitoredServices}; do
+            cur_r=$(systemctl_value "$svc" -p NRestarts)
+            echo "$svc ''${cur_r:-0}" >> "''${RESTART_STATE}.tmp"
+          done
+          mv "''${RESTART_STATE}.tmp" "$RESTART_STATE"
 
           # === User-1000.slice memory (desktop-only) ===
           collect_user_slice=${lib.boolToString cfg.collectUserSlice}
@@ -237,6 +269,53 @@ _: {
             GATUS_ENDPOINTS_LONG_FAIL=$(curl -sf --max-time 5 "http://127.0.0.1:${toString cfg.gatus.port}/api/v1/endpoints/statuses" 2>/dev/null | \
               jq '[.[] | select(.results | length > 0) | select((.results | map(.success) | any(. == true)) | not)] | length' 2>/dev/null) || GATUS_ENDPOINTS_LONG_FAIL=0
             GATUS_ENDPOINTS_LONG_FAIL="''${GATUS_ENDPOINTS_LONG_FAIL:-0}"
+          fi
+
+          # === Root disk usage ===
+          collect_disk_usage=${lib.boolToString cfg.collectDiskUsage}
+          DISK_USAGE=0
+          DISK_OVER=0
+          if [ "$collect_disk_usage" = "true" ] && df / >/dev/null 2>&1; then
+            DISK_USAGE=$(df --output=pcent / 2>/dev/null | tail -1 | tr -dc '0-9') || DISK_USAGE=0
+            DISK_USAGE="''${DISK_USAGE:-0}"
+            [ "$DISK_USAGE" -ge ${toString diskUsageThreshold} ] 2>/dev/null && DISK_OVER=1
+          fi
+
+          # === systemd-oomd kills tracking ===
+          # systemd-oomd kills (nix-daemon, Twenty worker) went completely
+          # undetected. This counts kill events from the journal since boot
+          # and tracks the delta since last collection to catch new kills.
+          collect_oomd=${lib.boolToString cfg.collectOomdKills}
+          OOMD_KILLS_TOTAL=0
+          OOMD_KILLS_RECENT=0
+          OOMD_ALERT=0
+          if [ "$collect_oomd" = "true" ]; then
+            OOMD_KILLS_TOTAL=$(journalctl -u systemd-oomd --grep "Killed" --output cat --no-pager 2>/dev/null | wc -l) || OOMD_KILLS_TOTAL=0
+            OOMD_KILLS_TOTAL="''${OOMD_KILLS_TOTAL:-0}"
+            prev_oomd=0
+            if [ -f "$OOMD_STATE" ]; then
+              prev_oomd=$(cat "$OOMD_STATE" 2>/dev/null) || prev_oomd=0
+            fi
+            prev_oomd="''${prev_oomd:-0}"
+            if [ "$OOMD_KILLS_TOTAL" -gt "$prev_oomd" ] 2>/dev/null; then
+              OOMD_KILLS_RECENT=$((OOMD_KILLS_TOTAL - prev_oomd))
+              OOMD_ALERT=1
+            fi
+            echo "$OOMD_KILLS_TOTAL" > "''${OOMD_STATE}.tmp"
+            mv "''${OOMD_STATE}.tmp" "$OOMD_STATE"
+          fi
+
+          # === Docker container restart count monitoring ===
+          # Docker container restart counts are not exported as Prometheus
+          # metrics by default. The Twenty 235-restart loop went unnoticed.
+          # This collector tracks restart count deltas per container.
+          collect_docker=${lib.boolToString cfg.collectDockerRestarts}
+          DOCKER_ANY_ALERT=0
+          declare -A prev_docker_restarts
+          if [ "$collect_docker" = "true" ] && [ -f "$DOCKER_STATE" ]; then
+            while IFS=' ' read -r n r; do
+              [ -n "$n" ] && prev_docker_restarts["$n"]="$r"
+            done < "$DOCKER_STATE"
           fi
 
           {
@@ -390,6 +469,83 @@ _: {
             echo "# HELP system_gatus_endpoints_in_error_long Count of Gatus endpoints with sustained failures (all recent results failed)"
             echo "# TYPE system_gatus_endpoints_in_error_long gauge"
             echo "system_gatus_endpoints_in_error_long ''${GATUS_ENDPOINTS_LONG_FAIL}"
+
+            echo "# HELP system_disk_usage_percent Root filesystem usage percentage (0-100)"
+            echo "# TYPE system_disk_usage_percent gauge"
+            echo "system_disk_usage_percent ''${DISK_USAGE}"
+
+            echo "# HELP system_disk_usage_over_threshold 1 if root filesystem exceeds ${toString diskUsageThreshold}% usage, 0 otherwise"
+            echo "# TYPE system_disk_usage_over_threshold gauge"
+            echo "system_disk_usage_over_threshold ''${DISK_OVER}"
+
+            echo "# HELP system_service_crash_loop 1 if service restarted >=${toString crashLoopRestartThreshold} times since last collection, 0 otherwise"
+            echo "# TYPE system_service_crash_loop gauge"
+
+            ANY_CRASH_LOOP=0
+            ${lib.concatMapStrings (svc: ''
+              svc="${svc}"
+              cur_r=$(systemctl_value "$svc" -p NRestarts)
+              cur_r="''${cur_r:-0}"
+              prev_r="''${prev_restarts[$svc]:-0}"
+              r_delta=0
+              if [ "$cur_r" -gt "$prev_r" ] 2>/dev/null; then
+                r_delta=$((cur_r - prev_r))
+              fi
+              crash_loop=0
+              if [ "$r_delta" -ge ${toString crashLoopRestartThreshold} ] 2>/dev/null; then
+                crash_loop=1
+                ANY_CRASH_LOOP=1
+              fi
+              echo "system_service_crash_loop{service=\"$svc\"} ''${crash_loop}"
+            '') cfg.monitoredServices}
+
+            echo "# HELP system_any_service_crash_loop 1 if ANY monitored service is crash-looping (>=${toString crashLoopRestartThreshold} restarts per interval), 0 otherwise"
+            echo "# TYPE system_any_service_crash_loop gauge"
+            echo "system_any_service_crash_loop ''${ANY_CRASH_LOOP}"
+
+            echo "# HELP system_oomd_kills_total Total systemd-oomd kill events since boot"
+            echo "# TYPE system_oomd_kills_total gauge"
+            echo "system_oomd_kills_total ''${OOMD_KILLS_TOTAL}"
+
+            echo "# HELP system_oomd_kills_recent systemd-oomd kill events since last collection"
+            echo "# TYPE system_oomd_kills_recent gauge"
+            echo "system_oomd_kills_recent ''${OOMD_KILLS_RECENT}"
+
+            echo "# HELP system_oomd_kills_alert 1 if oomd killed a process since last collection, 0 otherwise"
+            echo "# TYPE system_oomd_kills_alert gauge"
+            echo "system_oomd_kills_alert ''${OOMD_ALERT}"
+
+            echo "# HELP docker_container_restart_count Total restart count per Docker container"
+            echo "# TYPE docker_container_restart_count gauge"
+
+            echo "# HELP docker_container_restart_alert 1 if container restarted >=${toString dockerRestartAlertThreshold} times since last collection, 0 otherwise"
+            echo "# TYPE docker_container_restart_alert gauge"
+
+            if [ "$collect_docker" = "true" ] && docker info >/dev/null 2>&1; then
+              : > "''${DOCKER_STATE}.tmp"
+              for cname in $(docker ps --format '{{.Names}}' 2>/dev/null); do
+                cur_rc=$(docker inspect --format '{{.RestartCount}}' "$cname" 2>/dev/null) || cur_rc=0
+                cur_rc="''${cur_rc:-0}"
+                echo "$cname $cur_rc" >> "''${DOCKER_STATE}.tmp"
+                prev_rc="''${prev_docker_restarts[$cname]:-0}"
+                rc_delta=0
+                if [ "$cur_rc" -gt "$prev_rc" ] 2>/dev/null; then
+                  rc_delta=$((cur_rc - prev_rc))
+                fi
+                rc_alert=0
+                if [ "$rc_delta" -ge ${toString dockerRestartAlertThreshold} ] 2>/dev/null; then
+                  rc_alert=1
+                  DOCKER_ANY_ALERT=1
+                fi
+                echo "docker_container_restart_count{name=\"$cname\"} ''${cur_rc}"
+                echo "docker_container_restart_alert{name=\"$cname\"} ''${rc_alert}"
+              done
+              mv "''${DOCKER_STATE}.tmp" "$DOCKER_STATE"
+            fi
+
+            echo "# HELP system_any_docker_container_restart_alert 1 if ANY Docker container is rapidly restarting, 0 otherwise"
+            echo "# TYPE system_any_docker_container_restart_alert gauge"
+            echo "system_any_docker_container_restart_alert ''${DOCKER_ANY_ALERT}"
           } > "$TMP"
           mv "$TMP" "$OUT"
         '';
@@ -408,6 +564,8 @@ _: {
         monitoredServices = lib.mkOption {
           type = lib.types.listOf lib.types.str;
           default = [
+            "browser-history"
+            "browser-history-agent"
             "caddy"
             "dnsblockd"
             "discordsync"
@@ -421,7 +579,7 @@ _: {
             "projects-management-automation"
             "signoz"
           ];
-          description = "Systemd services to monitor for state, restart count, and start-limit-hit";
+          description = "Systemd services to monitor for state, restart count, crash-loop detection, and start-limit-hit";
         };
 
         collectUserSlice = lib.mkOption {
@@ -460,6 +618,24 @@ _: {
           description = "Collect Gatus endpoint failure meta-check (monitoring the monitor)";
         };
 
+        collectDiskUsage = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect root filesystem usage percentage with threshold flag";
+        };
+
+        collectOomdKills = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect systemd-oomd kill events from journal";
+        };
+
+        collectDockerRestarts = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+          description = "Collect Docker container restart count metrics (auto-disabled if Docker is not enabled)";
+        };
+
         signoz.port = lib.mkOption {
           type = lib.types.int;
           default = 8080;
@@ -495,6 +671,9 @@ _: {
           })
           // (lib.optionalAttrs (options ? services.gatus) {
             collectGatusHealth = lib.mkDefault (config.services.gatus.enable or false);
+          })
+          // (lib.optionalAttrs (options ? virtualisation.docker) {
+            collectDockerRestarts = lib.mkDefault (config.virtualisation.docker.enable or false);
           });
 
         systemd = {

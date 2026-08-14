@@ -39,11 +39,7 @@
     jscpd = prev.callPackage ../pkgs/jscpd.nix { };
   })
 
-  (_final: prev: {
-    qmd = prev.callPackage ../pkgs/qmd.nix { };
-  })
-
-  (_final: prev: {
+(_final: prev: {
     govalid = prev.callPackage ../pkgs/govalid.nix { };
   })
 

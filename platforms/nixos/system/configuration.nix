@@ -290,6 +290,7 @@ in
       taskchampion-config.enable = true;
       display-manager-config.enable = true;
       audio-config.enable = true;
+      smart-audio.enable = true;
       niri-desktop.enable = true;
       niri-session-manager.enable = true;
       security-hardening.enable = true;
@@ -447,21 +448,6 @@ in
         # (mode 700 + ACL mask ---) so `crush projects --json` returns an empty
         # list and "collect done projects=0" forever.
         runAsUser = config.users.primaryUser;
-      };
-
-      # qmd — on-device markdown hybrid search engine.
-      # CLI: `qmd search ...`, `qmd collection add ...`
-      # Service: persistent HTTP MCP on localhost:8181 — Crush/clients connect
-      # to http://localhost:8181/mcp so embedding/reranker models stay loaded
-      # across requests (stdio mode pays 5-15s reload cost per reconnect).
-      # CPU-only by default — Vulkan probing is brittle on Strix Halo and
-      # competes with Ollama for VRAM. Override `qmdForceCpu = false` to opt in.
-      qmd-config = {
-        enable = true;
-        # Add per-user collections declaratively here if desired:
-        # bootstrapCollections = [
-        #   { name = "notes"; path = "/home/${config.users.primaryUser}/notes"; pattern = "**/*.md"; context = "Personal notes and ideas"; }
-        # ];
       };
 
       # Overview — local project dashboard (discovers git repos, shows stats/activity)

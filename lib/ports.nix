@@ -54,6 +54,7 @@
     crush-daily = 8081;
 
     overview = 8083;
+    pma-health = 9190;
 
     activitywatch = 5600;
 
@@ -62,8 +63,6 @@
     file-and-image-renamer-health = 8086;
 
     browser-history = 8087;
-
-    qmd = 8181;
 
     searxng = 8889;
 

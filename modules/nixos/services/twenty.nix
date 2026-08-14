@@ -41,12 +41,15 @@ _: {
                 REDIS_URL = "redis://redis:6379";
                 STORAGE_TYPE = "local";
                 APP_SECRET = "\${APP_SECRET}";
+                NODE_OPTIONS = "--max-old-space-size=768";
               };
               volumes = [ "server-local-data:/app/packages/twenty-server/.local-storage" ];
               depends_on = {
                 db.condition = "service_healthy";
                 redis.condition = "service_healthy";
               };
+              mem_limit = "1g";
+              memswap_limit = "1g";
               healthcheck = {
                 test = "curl --fail http://localhost:3000/healthz";
                 interval = "5s";
@@ -92,6 +95,8 @@ _: {
                 POSTGRES_USER = pgUser;
               };
               volumes = [ "db-data:/var/lib/postgresql/data" ];
+              mem_limit = "2g";
+              memswap_limit = "2g";
               healthcheck = {
                 test = "pg_isready -U ${pgUser} -h localhost -d postgres";
                 interval = "5s";
@@ -106,6 +111,8 @@ _: {
                 "--maxmemory-policy"
                 "noeviction"
               ];
+              mem_limit = "256m";
+              memswap_limit = "256m";
               healthcheck = {
                 test = [
                   "CMD"
