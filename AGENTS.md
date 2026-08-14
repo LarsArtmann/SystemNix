@@ -158,6 +158,7 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **Runtime verified:** DMS owns `org.freedesktop.Notifications`, `org.gnome.ScreenSaver`, `org.kde.StatusNotifierWatcher` DBus names
 - **DMS niri module:** Import `dankMaterialShell.homeModules.niri` for niri-specific integration (workspace IPC via `$NIRI_SOCKET`)
 - **`inputs.nixpkgs.follows`** on the DMS input is MANDATORY — mismatched Qt causes runtime crashes
+- **Shutdown countdown overlay (2026-08-14):** `modules/nixos/desktop/shutdown-overlay.nix` runs a SECOND Quickshell instance (`services.shutdown-overlay`, user service) that shows a fullscreen overlay on ALL monitors when `/run/systemd/shutdown/scheduled` has ≤60s left — `WlrLayer.Overlay` + `ExclusionMode.Ignore` + click-through `mask: Region {}` (DMS FrameWindow pattern). It reads the µs timestamp from line 1; `shutdown -c` removes the file and the overlay hides within 200ms. niri's built-in hotkey overlay ("Important hotkeys", compositor-drawn while a keybind chord is pending) renders above the ENTIRE layer-shell Overlay layer (`Niri::render_inner` pushes it before `Layer::Overlay`) — no client can top it; only session-lock/exit-dialog do. A standalone quickshell run from SSH needs `DISPLAY` set or it dies silently after a Gtk warning (session user services get both DISPLAY and WAYLAND_DISPLAY imported, so the unit is unaffected)
 
 ### Smart-Audio (focus-following HDMI audio router)
 

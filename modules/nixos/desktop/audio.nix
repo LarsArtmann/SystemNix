@@ -34,8 +34,8 @@ _: {
 
             # The Radeon audio controller (pci-0000:c5:00.1) exposes multiple
             # HDMI/DisplayPort outputs. Two monitors are connected:
-            #   HDMI 2 (eld#0.1) = "LG HDR 4K"  — the main monitor (stereo speakers)
-            #   HDMI 3 (eld#0.2) = "LG TV SSCR2" — a TV (full surround)
+            #   HDMI 2 (eld#0.1) = "LG HDR 4K" (the main monitor, stereo speakers)
+            #   HDMI 3 (eld#0.2) = "LG TV SSCR2" (a TV, full surround)
             # HDMI 3 (the TV) is the preferred audio output.
             "device.profile.priority.rules" = [
               {
