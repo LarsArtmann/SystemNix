@@ -54,21 +54,21 @@
 
 ## b) PARTIALLY DONE
 
-### CreditReformBilanzampel DSN fix — committed but untagged
+### ~~CreditReformBilanzampel DSN fix — committed but untagged~~ committed at `b1e5e701` ("fix SQLite DSN pragmas", bundled with the npm→pnpm switch); repo has NO tags at all — still untagged
 - The `connection.go` fix is applied and compiles (`go build ./infrastructure/db/...` = PASS), but:
   - No test files exist for the `db` package (`[no test files]`)
-  - The fix is uncommitted in the repo (auto-git daemon may sweep it)
+  - ~~The fix is uncommitted in the repo (auto-git daemon may sweep it)~~ committed (tree clean, verified 08-14)
   - No tag or version bump — downstream consumers (if any) won't get the fix until tagged
 
-### Kernovia event-sourced-plugin DSN fix — committed but untagged
+### ~~Kernovia event-sourced-plugin DSN fix — committed but untagged~~ committed (bundled into `d139446d` pnpm-migration commit); not contained in any tag — still untagged
 - The `sqlite_store.go` fix is applied, but:
   - The package has `//go:build example` constraint — cannot compile without `-tags example`
   - Even with the tag, it needs `GOEXPERIMENT=jsonv2` (pre-existing, unrelated to the DSN fix)
   - No test coverage for this example plugin
 
-### browser-history HandleConfig.Logger wiring — committed but untagged
+### ~~browser-history HandleConfig.Logger wiring — committed but untagged~~ committed at `b350c96` ("switch error handler to HandleWithConfig") — still untagged, still undeployed (flake input predates it)
 - The `main.go` fix is applied and compiles, API tests pass, but:
-  - No tag or version bump — the fix won't reach SystemNix's deployed browser-history until the flake input is bumped to a new tag
+  - No tag or version bump — the fix won't reach SystemNix's deployed browser-history until the flake input is bumped to a new tag (same open chain as the registration lock — see the 10-04 annotations)
   - The `go.work.sum` file also changed (3 lines) — unclear if this was from my edit or a parallel session
 
 ---
@@ -146,9 +146,9 @@
 6. **Verify browser-history logs after deploy** — `journalctl -u browser-history.service` should show structured JSON on startup failure
 7. **Add `HandleConfig.Logger` audit to CI** — grep all LarsArtmann repos for `HandleError(` calls that don't pass `HandleConfig`
 8. **Add DSN mismatch CI check** — script that flags mattn driver + `_pragma=` DSN, or modernc + mattn-only params
-9. **Verify go-auto-upgrade is on PATH** — `which go-auto-upgrade` after opening a new terminal (shell changes need new session)
-10. **Run `nix fmt`** — verify formatting is clean after `lars-packages.nix` edit
-11. **Run pre-commit hooks** — `.githooks/pre-commit` should pass (gitleaks, deadnix, statix, alejandra, nix flake check)
+9. ~~**Verify go-auto-upgrade is on PATH** — `which go-auto-upgrade` after opening a new terminal (shell changes need new session)~~ done — live at `/run/current-system/sw/bin/go-auto-upgrade`
+10. ~~**Run `nix fmt`** — verify formatting is clean after `lars-packages.nix` edit~~ done (moot) — formatting clean; `nix flake check --no-build` green at every commit since
+11. ~~**Run pre-commit hooks** — `.githooks/pre-commit` should pass (gitleaks, deadnix, statix, alejandra, nix flake check)~~ done — passed at `42674b5e`, `2c9be5ca`, `e5dfe0ae`, `fbf0156b`, `cbbba3fa` (2026-08-14 evening session)
 
 ### Short-Term (This Week)
 12. **Audit ALL LarsArtmann Go repos for `HandleError` without `HandleConfig.Logger`** — same pattern as browser-history
@@ -193,27 +193,18 @@
 47. **Kernovia: remove `//go:build example` constraint from event-sourced-plugin** — or tag it properly so CI can build it
 48. **Browser-history: add structured logging to the agent** — agent uses `os.Exit(run(logger, config))` but `run()` returns int, no error-family integration
 49. **SystemNix: consider adding `go-auto-upgrade` to the devShell `packages` list** — currently only available via `mkLarsPackages`, not in devShell
-50. **Document the auto-git daemon's commit behavior in AGENTS.md** — how to detect daemon commits, when to expect them, how to coordinate
+50. ~~**Document the auto-git daemon's commit behavior in AGENTS.md** — how to detect daemon commits, when to expect them, how to coordinate~~ done (existing rule) — the global `~/.config/crush/AGENTS.md` Git Workflow section documents the daemon ("an auto-git commit daemon runs continuously... do not be surprised by commits you did not make"); SystemNix's own AGENTS.md has no entry
 
 ---
 
 ## g) Questions I Cannot Answer Myself
 
-### Q1: Should I tag browser-history, CreditReformBilanzampel, and Kernovia now?
-These repos have uncommitted fixes (browser-history `main.go`, CreditReformBilanzampel `connection.go`, Kernovia `sqlite_store.go`). The auto-git daemon may have already committed them — I didn't check. Tagging requires:
-1. Verifying the commits landed
-2. Choosing a semver version
-3. `git tag -a v0.X.0 -m "..."`
-4. `git push origin master --tags`
-5. Bumping SystemNix flake inputs
-
-I cannot decide the version numbers or whether these repos even use semver tagging. Some repos (Kernovia) may not be tagged at all.
+### Q1: ~~Should I tag browser-history, CreditReformBilanzampel, and Kernovia now?~~ **answered** — all three fixes are now COMMITTED but all three remain UNTAGGED: browser-history `b750ec5`/`b350c96` (part of the open registration-lock chain — see 10-04 annotations), CreditReformBilanzampel `b1e5e701` (repo has no tags at all), Kernovia `d139446d` (not contained in `v0.5.0-watermill`). Tagging + flake bumps are still owed.
 
 ### Q2: Should CreditReformBilanzampel migrate from mattn/go-sqlite3 to modernc.org/sqlite?
 The mattn driver requires CGO (C compiler in the Nix build). modernc is pure-Go. All other LarsArtmann repos use modernc. But CreditReformBilanzampel may have a reason to use mattn (performance, specific features). I cannot make this architectural decision.
 
-### Q3: Should the browser-history `HandleConfig.Logger` fix be deployed immediately?
-The fix ensures structured JSON logs reach journald before `os.Exit` on startup failure. This is a debuggability improvement, not a correctness fix. But the browser-history service has been crash-looping (see `docs/crash-analysis-2026-08-11.md`), and the missing logs made diagnosis 10x harder. Deploying requires `nix run .#deploy`, which I should not run without explicit permission.
+### Q3: ~~Should the browser-history `HandleConfig.Logger` fix be deployed immediately?~~ **answered by events, partially** — multiple deploys happened since, but the flake input still points at `a1b78afa` (08-12), which predates the `b350c96` logger fix — so the fix remains undeployed, blocked on the same tag+flake chain as the registration lock
 
 ---
 
