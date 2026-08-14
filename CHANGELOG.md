@@ -26,6 +26,8 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 - **~18 GiB reclaimed on the QLC NVMe root** (90-93% → 86%) — removed the migrated cache sources that pre-env-change processes kept writing (`~/.cache/go-build` 22G, `~/.cache/golangci-lint` 5.1G, `~/go/pkg/mod` 4.3G, `~/.npm` contents) after verifying all consumers build off the SSD; emptied all trash volumes (Go's read-only 0555 mod-cache dirs needed a `chmod -R u+w` first). Session record correction: the "~75 GiB in trash" claim from the migration session was wrong — most sources were still in place, not trashed
 - **`pre-deploy-check.sh` phantom-metric allowlist pruned** — the three `buildcache_*` entries removed now that the metrics are confirmed live in `/metrics` (allowlist entries mask real phantom-metric regressions once their metric ships)
+- **Reboot requirement cleared (verified)** — the long-pending "Reboot evo-x2" item is done: user rebooted 2026-08-14 20:05; post-reboot verification confirms `/mnt/buildcache` now mounts with the intended `data=writeback,commit=120,lazytime,noatime` (ext4 journal mode cannot change by remount — the reboot was the only path). Item deleted from TODO_LIST
+- **browser-history outage self-resolved (root-cause work remains)** — the 20:34 "port never binds" hang cleared itself: the service crash-looped 3× (21:13/21:20/21:27) and the 21:29 instance has served `/health` 200 + live ingest for hours. The underlying OTel schemeless-endpoint bug and the pre-gate binary (`MAX_USERS=1` no-op) remain open under the release-chain item
 
 ---
 
