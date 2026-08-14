@@ -4,6 +4,8 @@
 
 Two old SanDisk SDSSDA240G SSDs from a decommissioned server were added via USB 3.0 enclosures to the evo-x2 DAS. Goal: recover any remaining data, assess drive health, then repurpose both drives — one as ext4, one as btrfs — with full benchmarking.
 
+> **[SUPERSEDED 2026-08-14 evening]** Both drives were repurposed beyond this report's plan: **SSD 1 (174444471311) is now the `/mnt/buildcache` drive** — relabeled `buildcache` and mounted declaratively via `modules/nixos/services/buildcache.nix` (`19c195e9`, `5e22c678`) with `noatime,lazytime,commit=120,data=writeback`; the ext4 journal analysis in §8 directly informed those mount options. **SSD 2 (174244451713, btrfs `ssd-btrfs`) is unmounted and earmarked for Docker storage** (decision pending, see `2026-08-14_13-15_ssd-repurposing-options.md`).
+
 ---
 
 ## 1. Drive Identification
@@ -160,10 +162,10 @@ Additionally, ext4 reserves 5% of blocks for root by default (~11 GiB), further 
 
 ### 5.4 fstab Entries (for persistence)
 
-```
+~~```
 UUID=<ext4-uuid>   /mnt/ssd-ext4   ext4   defaults,noatime  0 2
 UUID=<btrfs-uuid>  /mnt/ssd-btrfs  btrfs  defaults,noatime,compress=zstd  0 0
-```
+```~~ done (superseded) — never added to fstab; SSD 1 is mounted declaratively by stable `/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1` in `buildcache.nix` (by-id survives sda/sdb swaps between enclosures)
 
 ---
 
@@ -191,8 +193,8 @@ Both SSDs received an identical copy via `cp -a` (preserving attributes). Files 
 
 ### 6.4 Visual Verification Paths
 
-- **ext4:** `/mnt/ssd-ext4/me/`
-- **btrfs:** `/mnt/ssd-btrfs/me/`
+- **ext4:** ~~`/mnt/ssd-ext4/me/`~~ now `/mnt/buildcache/me/` — the photos SURVIVED the buildcache repurposing (drive was relabeled, not wiped; verified live 2026-08-14: 22 files present). Trivial cleanup TODO
+- **btrfs:** `/mnt/ssd-btrfs/me/` — currently INACCESSIBLE: SSD 2 is unmounted (earmarked for Docker storage); the `/mnt/ssd-btrfs` directory is a stale empty mountpoint
 
 ### 6.5 btrfs Compression on Real Pictures
 
@@ -504,7 +506,7 @@ Developed by Silicon Graphics (SGI) in 1993 for IRIX, ported to Linux in 2001. D
 
 ## 10. Scripts Created
 
-All scripts are in `/tmp/` and are safe to delete. They are read-only on target devices unless explicitly formatting.
+All scripts are in `/tmp/` and are safe to delete. They are read-only on target devices unless explicitly formatting. (gone — `/tmp` was cleared by the 2026-08-14 20:04 reboot)
 
 | Script | Purpose |
 |---|---|
