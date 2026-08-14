@@ -50,13 +50,13 @@ However, several things were forgotten or done suboptimally. The most significan
 
 ## c) NOT STARTED
 
-1. **Tag cqrs-htmx** — identity-model + usermgmt consumers need new tags. `b1ad3350` is committed but untagged. No `git tag` run.
-2. **Bump browser-history `go.mod`** — `go.work` replaces hide the version dependency locally. browser-history's `go.mod` must require the new cqrs-htmx tags before the SystemNix flake bump. **Not done.**
-3. **Tag browser-history** — `f6c5c0b` is committed but untagged.
-4. **Bump SystemNix `browser-history` flake input** — Depends on browser-history tag. **Not done.**
-5. **Deploy** — Nothing is live. `nix run .#deploy` not run. The oomd 60%/30s change also requires a reboot to take effect.
-6. **Verify live** — `POST /auth/register` → 403 while logged-out; second Pocket ID first-login → 403; `oomctl` shows 60%/30s.
-7. **`context_actor_test.go` gofmt** — Verified gofmt-clean (already formatted). No action needed.
+1. ~~**Tag cqrs-htmx** — identity-model + usermgmt consumers need new tags. `b1ad3350` is committed but untagged. No `git tag` run.~~ done — full `v4.8.0` train tagged (identity-model, usermgmt, adminui, setup, auditlog, dashboardui); `b1ad3350` verified inside the tags via `git tag --contains`
+2. **Bump browser-history `go.mod`** — `go.work` replaces hide the version dependency locally. browser-history's `go.mod` must require the new cqrs-htmx tags before the SystemNix flake bump. **Not done.** — still open: go.sum contains zero `v4.8.0` references (verified 08-14 20:2x)
+3. **Tag browser-history** — `f6c5c0b` is committed but untagged. — still open: `v0.4.2` = `f567966` (08-10) predates the gate work; nothing tags the lock commits
+4. **Bump SystemNix `browser-history` flake input** — Depends on browser-history tag. **Not done.** — still open: flake.lock rev = `a1b78afa` (08-12); the deployed binary predates ALL gate work, so `MAX_USERS=1` is currently a no-op
+5. **Deploy** — Nothing is live. `nix run .#deploy` not run. The oomd 60%/30s change also requires a reboot to take effect. — lock deploy still open, but the reboot half is done: 2026-08-14 20:04, oomd 60%/30s active (live `oomctl`)
+6. ~~**Verify live** — `POST /auth/register` → 403 while logged-out; second Pocket ID first-login → 403; `oomctl` shows 60%/30s.~~ partial — `oomctl` half verified live (60.00%/30s); both 403 checks remain blocked on items 2–5 (the deployed binary has no gate)
+7. ~~**`context_actor_test.go` gofmt** — Verified gofmt-clean (already formatted). No action needed.~~ done — re-verified 08-14: clean
 8. **browser-history full test suite** — Ran `go test ./...` (passes). But no tests exist in `api/` (only `cmd/*` and root). The "full suite" is effectively just a build check. Not a real test suite.
 
 ---
@@ -90,19 +90,19 @@ However, several things were forgotten or done suboptimally. The most significan
 ## f) UP TO 50 THINGS TO DO NEXT
 
 ### Security (Priority 1)
-1. **Gate `import_export.go:156`** — Add `MaxUsers` check + `registrationMu` lock to `importUsers()`. This is the remaining security hole. 15-min fix.
-2. **Audit for any other `RegisterUserCmd` dispatch sites** — Run `rg "NewRegisterUserCmd" usermgmt/*.go | grep -v test` and verify every site is gated. Currently: `service_register.go:92` (gated), `service_oauth2_extracted.go:262` (gated), `import_export.go:156` (NOT gated). Are there others?
+1. **Gate `import_export.go:156`** — Add `MaxUsers` check + `registrationMu` lock to `importUsers()`. This is the remaining security hole. 15-min fix. — still open: verified 08-14, `v4.8.0` shipped WITHOUT the import gate (`import_export.go` has no maxUsers/registrationMu references)
+2. ~~**Audit for any other `RegisterUserCmd` dispatch sites** — Run `rg "NewRegisterUserCmd" usermgmt/*.go | grep -v test` and verify every site is gated. Currently: `service_register.go:92` (gated), `service_oauth2_extracted.go:262` (gated), `import_export.go:156` (NOT gated). Are there others?~~ done — re-audited 08-14: exactly 3 dispatch sites exist (`service_register.go:98`, `service_oauth2_extracted.go:263`, `import_export.go:156`); no others
 3. **Document the per-process mutex limitation** in `ServiceConfig.MaxUsers` field comment — "only effective for single-process deployments; multi-process requires a DB-level lock or fold invariant."
 4. **Add `slog.Warn` when `NewOAuth2Service` gets `registrationMu == nil && maxUsers > 0`** — silent degradation to advisory-only gate.
 
 ### Release & Deploy (Priority 2)
-5. **Tag cqrs-htmx** — `git tag identity-model/v4.X.0 usermgmt/v4.X.0 b1ad3350` (determine version bump: minor for new feature, or patch — the breaking `NewOAuth2Service` change argues for minor).
-6. **Bump browser-history `go.mod`** — Require the new cqrs-htmx tags. Run `cd /home/lars/projects/browser-history && go get github.com/larsartmann/cqrs-htmx/usermgmt/v4@<new-tag> && go mod tidy`.
-7. **Tag browser-history** — After go.mod bump.
-8. **Bump SystemNix `browser-history` flake input** — `nix flake lock --update-input browser-history`.
-9. **Deploy** — `nix run .#deploy`.
-10. **Reboot evo-x2** — Activates oomd 60%/30s + the already-pending nixpkgs registry override.
-11. **Verify live** — `POST /auth/register` → 403 while logged-out; second Pocket ID first-login → 403; `oomctl` shows 60%/30s; watch `system_oomd_kills_total`.
+5. ~~**Tag cqrs-htmx** — `git tag identity-model/v4.X.0 usermgmt/v4.X.0 b1ad3350` (determine version bump: minor for new feature, or patch — the breaking `NewOAuth2Service` change argues for minor).~~ done — minor chosen: full `v4.8.0` train
+6. **Bump browser-history `go.mod`** — Require the new cqrs-htmx tags. Run `cd /home/lars/projects/browser-history && go get github.com/larsartmann/cqrs-htmx/usermgmt/v4@<new-tag> && go mod tidy`. — still open
+7. **Tag browser-history** — After go.mod bump. — still open
+8. **Bump SystemNix `browser-history` flake input** — `nix flake lock --update-input browser-history`. — still open
+9. **Deploy** — `nix run .#deploy`. — open for the gate (the deployed binary predates it)
+10. ~~**Reboot evo-x2** — Activates oomd 60%/30s + the already-pending nixpkgs registry override.~~ done — 2026-08-14 20:04; oomd 60%/30s live-verified via `oomctl`
+11. **Verify live** — `POST /auth/register` → 403 while logged-out; second Pocket ID first-login → 403; `oomctl` shows 60%/30s; watch `system_oomd_kills_total`. — oomctl half done (see c.6); the 403 checks blocked on 6–9
 
 ### Test Coverage (Priority 3)
 12. **Test OAuth2 error-redirect path with `OAuth2ErrorURL` configured** — Verify the 403 status is preserved (or intentionally lost) when `OAuth2ErrorURL` is set. `TestHandler_OAuth2Callback_RegistrationClosed_ErrorRedirect`.
@@ -112,8 +112,8 @@ However, several things were forgotten or done suboptimally. The most significan
 16. **Unify or document test stub incompatibility** — `perProviderOAuth2Stub` vs `testOAuth2Provider` — different email schemes. Either merge or add a comment.
 
 ### Documentation (Priority 4)
-17. **Document `MAX_USERS` in browser-history `docs/deployment-nixos.md`** — The NixOS deployment guide should show the env var in the environment file example.
-18. **Add `NewOAuth2Service` migration note** — The breaking signature change needs a migration note for any consumer that calls it directly (none found, but the public API is broken).
+17. ~~**Document `MAX_USERS` in browser-history `docs/deployment-nixos.md`** — The NixOS deployment guide should show the env var in the environment file example.~~ NOT-DO/DUPLICATE — that file does not exist; `MAX_USERS` is already documented in README.md + docs/configuration.md (`f6c5c0b`)
+18. ~~**Add `NewOAuth2Service` migration note** — The breaking signature change needs a migration note for any consumer that calls it directly (none found, but the public API is broken).~~ done — usermgmt/CHANGELOG.md:21 documents the signature change and who's unaffected
 19. **Update browser-history `docs/architecture-diagram.md`** if it shows the auth flow — the registration gate should be visible.
 20. **Add a "security boundaries" section to browser-history docs** — Document what `MAX_USERS` covers (Register, OAuth2 auto-provision, import) and what it doesn't (multi-process, fold-level).
 
@@ -123,9 +123,9 @@ However, several things were forgotten or done suboptimally. The most significan
 23. **Add Gatus check for `browser_history_registration_rejected_total`** — Counter metric on 403 responses. Detects bypass attempts.
 
 ### oomd (Priority 6)
-24. **Verify oomd 60%/30s after reboot** — `oomctl` output, `systemd-oomd` journal.
+24. ~~**Verify oomd 60%/30s after reboot** — `oomctl` output, `systemd-oomd` journal.~~ done — live 2026-08-14: `oomctl` reports `60.00% / 30s`
 25. **Monitor `system_oomd_kills_total` for 24h** — dnsblockd kill rate should drop from 730x/day.
-26. **Monitor Twenty worker `RestartCount`** — Should stabilize after oomd threshold raise.
+26. ~~**Monitor Twenty worker `RestartCount`** — Should stabilize after oomd threshold raise.~~ done — live 2026-08-14: `RestartCount 0`; all 7 containers at 0 in `docker_container_restart_count`
 27. **Consider `ManagedOOMSwap = "auto"` on user slice** — If swap pressure is also a factor.
 
 ### Code Quality (Priority 7)
@@ -144,20 +144,20 @@ However, several things were forgotten or done suboptimally. The most significan
 36. **Document the registration gate's threat model** — What it protects against (LAN-open registration, OAuth2 bypass) and what it doesn't (admin import, multi-process race, fold-level bypass).
 
 ### Operational (Priority 10)
-37. **Add browser-history DB backup to `backup-coordination`** — `/var/lib/browser-history/data.db` is not backed up.
-38. **Fix browser-history `expires_at` session reaper error** — Every 5 min: `no such column: expires_at`. Migration gap.
+37. ~~**Add browser-history DB backup to `backup-coordination`** — `/var/lib/browser-history/data.db` is not backed up.~~ done (existing rule) — registered since `f84e7b62` (`configuration.nix:343`)
+38. **Fix browser-history `expires_at` session reaper error** — Every 5 min: `no such column: expires_at`. Migration gap. — still broken live: error firing every 5 min as of 2026-08-14 16:38
 39. **Fix browser-history `CheckpointStore` upstream** — Server replays ALL events on startup (4-min projection drain).
 40. **Fix browser-history OTel endpoint URL scheme** — `otlptracegrpc` with `127.0.0.1:4317` (missing `http://` scheme).
-41. **Annotate superseded status reports** — `2026-08-12_20-08_nix-daemon-oomd-kill-and-twenty-worker-restart-loop.md` (resolved by oomd 60%/30s once rebooted).
+41. ~~**Annotate superseded status reports** — `2026-08-12_20-08_nix-daemon-oomd-kill-and-twenty-worker-restart-loop.md` (resolved by oomd 60%/30s once rebooted).~~ done — 11 inline `done at` markers present in that report
 
 ### Cleanup (Priority 11)
 42. **Remove the `perProviderOAuth2Stub` if `testOAuth2Provider` can be parameterized** — Reduce test stub duplication.
 43. **Move `stateFromRedirectURL` to a shared test helper** — It duplicates `extractStateFromURL` from `service_oauth2_errorcontext_test.go`.
-44. **Verify `context_actor_test.go` is gofmt-clean** — Verified this session (already formatted). Close the TODO item.
-45. **Run `gofmt -w` on the entire `usermgmt/` package** — After all parallel work settles, to catch any remaining formatting drift.
+44. ~~**Verify `context_actor_test.go` is gofmt-clean** — Verified this session (already formatted). Close the TODO item.~~ done — re-verified 08-14: clean
+45. ~~**Run `gofmt -w` on the entire `usermgmt/` package** — After all parallel work settles, to catch any remaining formatting drift.~~ done — `gofmt -l usermgmt/` reports 0 files (verified 08-14)
 46. **Add `import_export.go` to the `NewOAuth2Service` consumer audit** — Verify it doesn't construct its own `OAuth2Service` (it doesn't, but the pattern should be documented).
-47. **Review the auto-git commit `b1ad3350` for completeness** — Verify all 6 of my files are in the commit and nothing was lost.
-48. **Review the auto-git commit `b1ad3350` for foreign contamination** — Verify the MySQL/dialect/setup work in the same commit doesn't break anything I depend on.
+47. ~~**Review the auto-git commit `b1ad3350` for completeness** — Verify all 6 of my files are in the commit and nothing was lost.~~ done — verified 08-14: all 6 files present in the 23-file commit
+48. ~~**Review the auto-git commit `b1ad3350` for foreign contamination** — Verify the MySQL/dialect/setup work in the same commit doesn't break anything I depend on.~~ done — the coexisting MySQL/dialect work compiles and passes; the full `usermgmt` suite is green and the `v4.8.0` train built past it
 49. **Add a CI check for ungated `RegisterUserCmd` dispatch sites** — A linter rule that flags `dispatcher.Dispatch(ctx, NewRegisterUserCmd(...))` outside `Service.Register()` / `OAuth2Service.matchOrCreateUser` / `importUsers()` (once gated).
 50. **Celebrate** — The OAuth2 bypass + TOCTOU were real security gaps. They're closed. The import path is the remaining hole. Ship it.
 
@@ -167,9 +167,9 @@ However, several things were forgotten or done suboptimally. The most significan
 
 1. **Should `importUsers()` (the CSV import path) also be gated by `MaxUsers`?** It's an admin-only path (requires authentication + CSV upload), so the practical risk is lower than the OAuth2 bypass. But the gate is incomplete as long as it's ungated. Options: (a) gate it the same way (reject import when count >= maxUsers), (b) gate it but allow importing users that replace existing ones (import = replace, not add), (c) leave it ungated because it's admin-only and the admin is trusted. I cannot know your trust model for admin operations.
 
-2. **Patch or minor version bump for the cqrs-htmx tag?** The `NewOAuth2Service` signature change is breaking for any direct consumer. SemVer says breaking = major (v5). But this is a homelab with one consumer (browser-history) that I also control, and the function is rarely called directly (consumers use `NewService`). Options: (a) minor bump (v4.8.0) with a migration note, (b) patch bump (v4.7.1) treating the signature change as internal, (c) major bump (v5.0.0) following strict SemVer. I cannot know your versioning philosophy for this ecosystem.
+2. ~~**Patch or minor version bump for the cqrs-htmx tag?** The `NewOAuth2Service` signature change is breaking for any direct consumer. SemVer says breaking = major (v5). But this is a homelab with one consumer (browser-history) that I also control, and the function is rarely called directly (consumers use `NewService`). Options: (a) minor bump (v4.8.0) with a migration note, (b) patch bump (v4.7.1) treating the signature change as internal, (c) major bump (v5.0.0) following strict SemVer. I cannot know your versioning philosophy for this ecosystem.~~ **answered** — minor (v4.8.0) chosen, with the migration note in usermgmt/CHANGELOG.md:21; tagged and verified
 
-3. **Should I gate the import path NOW (before the status report is done) or wait for your decision?** I discovered the `import_export.go` bypass during this status report. It's a 15-minute fix (same pattern as the other two paths). But you said "DO NOT RESEARCH OTHER STUFF UNRELATED TO WHAT YOU DID. Just report based on this current sessions run and what you noticed." — so I'm reporting it, not fixing it. Should I fix it before the release chain (tag/bump/deploy) or is it acceptable to ship with the import path ungated for now?
+3. **Should I gate the import path NOW (before the status report is done) or wait for your decision?** I discovered the `import_export.go` bypass during this status report. It's a 15-minute fix (same pattern as the other two paths). But you said "DO NOT RESEARCH OTHER STUFF UNRELATED TO WHAT YOU DID. Just report based on this current sessions run and what you noticed." — so I'm reporting it, not fixing it. Should I fix it before the release chain (tag/bump/deploy) or is it acceptable to ship with the import path ungated for now? — **unanswered; as of 2026-08-14 20:2x `v4.8.0` shipped with the import path ungated and the browser-history consumption chain (tag/go.mod/flake/deploy) still open**
 
 ---
 
