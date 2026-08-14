@@ -124,11 +124,18 @@
         systemd.services.buildcache-init = {
           description = "Initialize build cache directories on the USB SSD";
           wantedBy = [ "multi-user.target" ];
+          startLimitBurst = 5;
+          startLimitIntervalSec = 300;
           unitConfig = {
             # With x-systemd.automount the mount happens on first ACCESS;
             # ConditionPathExists + ExecStart touching the path trigger it.
             RequiresMountsFor = cfg.mountPoint;
             ConditionPathExists = "!${cfg.mountPoint}/.initialized";
+            # Guard against root-fs contamination: if the automount unit is dead
+            # and the drive absent, mkdir would create dirs on the NVMe root.
+            # While the automount is active the path IS a mountpoint (autofs),
+            # and a blocked trigger fails the mkdir instead of falling through.
+            ConditionPathIsMountPoint = cfg.mountPoint;
           };
           path = [ pkgs.util-linux ];
           serviceConfig = lib.mkMerge [
@@ -136,9 +143,12 @@
               Type = "oneshot";
               User = "root";
             }
+            # Root oneshot doing ownership ops: overrides REPLACE harden's empty
+            # default (which drops all capabilities). CAP_CHOWN for chown(2),
+            # CAP_FOWNER/CAP_DAC_OVERRIDE for chmod/traversal on re-init.
             (harden {
               ReadWritePaths = [ cfg.mountPoint ];
-              CapabilityBoundingSet = "CAP_SYS_ADMIN";
+              CapabilityBoundingSet = "CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE";
               MemoryMax = "64M";
             })
             (serviceOneshotDefaults { })

@@ -144,6 +144,10 @@ in
     file = {
       ".cache/goimports".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/goimports";
       ".cache/go".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/go";
+      # pnpm 11 ignores npm_config_* env vars AND .npmrc for store-dir, so the
+      # store is redirected via symlink at its default location instead —
+      # mechanism-independent, survives pnpm config-scheme changes.
+      ".local/share/pnpm/store".source = config.lib.file.mkOutOfStoreSymlink "/mnt/buildcache/pnpm-store";
     };
     # Jan AI: symlink data folder to centralized /data/ai/models/jan
     activation.jan-data-link = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -168,9 +172,9 @@ in
       GOLANGCI_LINT_CACHE = "/mnt/buildcache/golangci-lint";
       PIP_CACHE_DIR = "/mnt/buildcache/pip";
       PLAYWRIGHT_BROWSERS_PATH = "/mnt/buildcache/playwright";
-      # npm reads npm_config_* env vars as .npmrc settings (pnpm too)
+      # npm reads npm_config_* env vars as .npmrc settings. pnpm 11 does NOT
+      # (see the pnpm store symlink above) — its metadata cache only.
       npm_config_cache = "/mnt/buildcache/npm";
-      npm_config_store_dir = "/mnt/buildcache/pnpm-store";
 
       # Wayland specific
       MOZ_ENABLE_WAYLAND = "1";

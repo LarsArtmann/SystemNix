@@ -214,9 +214,6 @@ if [ -s "$METRICS_FILE" ]; then
     niri_crash_loop
     niri_running
     system_memory_events_any_high
-    buildcache_mounted
-    buildcache_smart_healthy
-    buildcache_usage_over_threshold
   "
   for metric in $(extract_gatus_metrics); do
     if grep -qE "^${metric}(|[{[:space:]])|^# HELP ${metric} |^# TYPE ${metric} " "$METRICS_FILE"; then

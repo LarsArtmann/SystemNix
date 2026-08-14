@@ -99,13 +99,13 @@
             # Fix: upstream sets these in serviceConfig ([Service] section)
             # where systemd 261+ silently ignores them. Top-level options
             # map to [Unit] where they actually take effect.
+            # NOTE: do NOT try to null out the upstream serviceConfig entries —
+            # nixpkgs renders null as an empty key ("StartLimitBurst="), which
+            # systemd rejects with a parse warning. Upstream moved them to the
+            # top level (see LarsArtmann/overview module.nix); once the flake
+            # input is bumped past ac307aa8 the stale [Service] copies vanish.
             startLimitBurst = 3;
             startLimitIntervalSec = 60;
-            # Null out the upstream module's serviceConfig entries for these.
-            # systemd 261+ ignores StartLimit* in [Service] with a warning.
-            # The top-level options above correctly map to [Unit].
-            serviceConfig.StartLimitBurst = lib.mkForce null;
-            serviceConfig.StartLimitIntervalSec = lib.mkForce null;
             serviceConfig.ExecStartPre = lib.mkIf daemonMode "+${lib.getExe waitDaemonReady}";
             serviceConfig.TimeoutStartSec = "3min";
             environment = {

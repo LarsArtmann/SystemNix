@@ -15,6 +15,34 @@
       pmaModule = inputs.projects-management-automation.nixosModules.default;
       sopsEnvPath = config.sops.templates."pma-env".path;
       inherit (import ../../../lib/default.nix lib) ports ioTier;
+
+      # PMA's discovery daemon starves when the cgroup hits MemoryHigh and
+      # enters page-cache direct reclaim: the unix socket keeps accepting
+      # connections but never answers (observed twice on 2026-08-14 — the
+      # 21h Overview-503 outage and a blocked deploy were both this). The
+      # process stays "active", so only active probing catches it. Two
+      # failed probes 30s apart → restart. Root cause needs an upstream fix
+      # (memory-bounded scan starving the daemon goroutine); this bounds the
+      # outage to ~5 min instead of hours.
+      pmaDaemonWatchdog = pkgs.writeShellApplication {
+        name = "pma-daemon-watchdog";
+        runtimeInputs = [
+          pkgs.curl
+          pkgs.systemd
+        ];
+        text = ''
+          set -u
+          sock=/run/project-discovery/daemon.sock
+          probe() {
+            curl -sf --max-time 5 --unix-socket "$sock" http://localhost/v1/health >/dev/null 2>&1
+          }
+          if probe; then exit 0; fi
+          sleep 30
+          if probe; then exit 0; fi
+          echo "pma daemon unresponsive on $sock (2 probes 30s apart) — restarting projects-management-automation"
+          systemctl restart projects-management-automation.service
+        '';
+      };
     in
     {
       imports = [ pmaModule ];
@@ -38,6 +66,13 @@
         systemd.services.projects-management-automation.environment = {
           OTEL_EXPORTER_OTLP_ENDPOINT = lib.mkDefault "localhost:${toString ports.signoz-otlp-http}";
           PMA_COMMITTER_WORKERS = lib.mkDefault "2";
+          # 8 discovery workers (default min(GOMAXPROCS,8)) fault page cache
+          # fast enough to push the cgroup into MemoryHigh direct reclaim,
+          # starving the daemon goroutine — socket hangs observed 3x on
+          # 2026-08-14 (21h, 9min, 5min after restart). 2 workers spread the
+          # same IO over time; discovery is a background cache, latency is OK.
+          # Remove if PMA bounds scan memory per-worker upstream.
+          PMA_DISCOVERY_WORKERS = lib.mkDefault "2";
         };
 
         # The upstream NixOS module sets Type=notify + WatchdogSec=30s (commit
@@ -59,9 +94,14 @@
         # 95% → kernel freeze → hardware watchdog reset.
         #
         # Fix: layered cgroup containment.
-        #   MemoryHigh=6G: kernel starts throttling PMA's allocations at 6G
-        #     via direct reclaim. PMA slows down but doesn't die.
-        #   MemoryMax=8G: hard ceiling (OOM-kill from cgroup, not systemd-oomd).
+        #   MemoryHigh=12G / MemoryMax=16G: the scan working set of 260+ repos
+        #     grew beyond the original 6G ceiling (2026-08-14: memory pinned at
+        #     6.2-6.4G in permanent direct reclaim on every restart, daemon
+        #     goroutine starved — socket hung 3x in one day, watchdog flapped
+        #     PMA every ~5 min). Pre-incident config ran scans fine under a 16G
+        #     max, so 12G high gives the scan headroom while 16G max keeps the
+        #     hard bound that prevents the 2026-08-09 system freeze (16G of
+        #     94G RAM cannot exhaust the machine alone).
         #   ManagedOOMPreference=omit: exempts PMA from systemd-oomd's
         #     memory-pressure killer. Discovery of 260+ repos legitimately
         #     causes >50% pressure for >20s (oomd's DefaultMemoryPressureLimit
@@ -78,8 +118,8 @@
           {
             Type = lib.mkForce "exec";
             WatchdogSec = lib.mkForce "0";
-            MemoryMax = lib.mkForce "8G";
-            MemoryHigh = lib.mkForce "6G";
+            MemoryMax = lib.mkForce "16G";
+            MemoryHigh = lib.mkForce "12G";
             MemorySwapMax = lib.mkForce "0";
             CPUQuota = lib.mkForce "200%";
             ManagedOOMPreference = "omit";
@@ -94,6 +134,24 @@
           }
           ioTier.build
         ];
+
+        systemd.services.pma-daemon-watchdog = {
+          description = "Restart PMA when its discovery daemon hangs (responsive-socket probe)";
+          serviceConfig = {
+            Type = "oneshot";
+            ExecStart = lib.getExe pmaDaemonWatchdog;
+          };
+        };
+
+        systemd.timers.pma-daemon-watchdog = {
+          description = "Probe the PMA discovery daemon every 5 minutes";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnBootSec = "5min";
+            OnUnitActiveSec = "5min";
+            AccuracySec = "1min";
+          };
+        };
       };
     };
 }

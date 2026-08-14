@@ -51,9 +51,14 @@
         text = ''
           SERVER_URL="http://127.0.0.1:${toString ports.browser-history}/health"
           echo "browser-history-agent: waiting for server at $SERVER_URL ..."
-          curl -sf --max-time 5 --retry 30 --retry-delay 2 --retry-all-errors \
+          # The server's projection drain after a restart takes up to ~5 min
+          # (no persistent checkpoint store upstream — replays ALL events).
+          # A 60s gate aborted during every deploy window, and with the
+          # deliberate startLimitBurst=2 that bricked the agent until a manual
+          # reset-failed. 7 min covers the observed worst case (4m50s) + margin.
+          curl -sf --max-time 5 --retry 60 --retry-delay 7 --retry-all-errors \
             -o /dev/null "$SERVER_URL" \
-            || { echo "browser-history-agent: server not ready after 60s — aborting" >&2; exit 1; }
+            || { echo "browser-history-agent: server not ready after 7min — aborting" >&2; exit 1; }
           echo "browser-history-agent: server ready"
         '';
       };
@@ -245,7 +250,7 @@
             serviceConfig = lib.mkMerge [
               {
                 ExecStartPre = "+${lib.getExe waitServerReady}";
-                TimeoutStartSec = "2min";
+                TimeoutStartSec = "9min";
                 RestartSec = lib.mkForce "5min";
               }
             ];
