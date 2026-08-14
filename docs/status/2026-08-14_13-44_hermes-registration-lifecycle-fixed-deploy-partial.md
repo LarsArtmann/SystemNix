@@ -107,14 +107,14 @@ Wrote a `builtins.replaceStrings` installPhase-patching hack (with mangled escap
 ## f) Next 50 Things We Should Get Done
 
 ### Immediate (This Session's Debt)
-1. **Re-run `nix run .#deploy`** to complete activation cleanly (reset-failed + provisioner restarts + post-deploy-check included)
+1. ~~**Re-run `nix run .#deploy`** to complete activation cleanly (reset-failed + provisioner restarts + post-deploy-check included)~~ done — subsequent deploys (the 18:xx buildcache generation) plus the clean 2026-08-14 20:04 reboot completed activation; all boot-0 units recovered
 2. **Run `nix run .#post-deploy-check`** after the successful deploy
-3. **Check upstream hermes-agent main** for `registration_lifecycle` in `py-modules` — if present, `nix flake lock --update-input hermes-agent` and DELETE the overlay patch
-4. **File upstream issue/PR** to NousResearch/hermes-agent: add `registration_lifecycle` to `[tool.setuptools] py-modules`
-5. **Soak-verify hermes**: restart counter + `journalctl -u hermes` after 30+ min; confirm no further oomd kills
-6. **Fix forgejo-oidc-setup ordering** — `after`/`wants` caddy.service or reuse `mkOidcGate` so the deploy race stops failing activations
+3. ~~**Check upstream hermes-agent main** for `registration_lifecycle` in `py-modules` — if present, `nix flake lock --update-input hermes-agent` and DELETE the overlay patch~~ done — **upstream main (v0.20.1) NOW ships `registration_lifecycle` in `[tool.setuptools] py-modules`** (verified 2026-08-14 against raw.githubusercontent.com); bumping the input and deleting the SystemNix patch is tracked in `TODO_LIST.md:36`
+4. ~~**File upstream issue/PR** to NousResearch/hermes-agent: add `registration_lifecycle` to `[tool.setuptools] py-modules`~~ NOT-DO/DUPLICATE — upstream already fixed it in main; no PR needed, only the flake input bump remains
+5. **Soak-verify hermes**: restart counter + `journalctl -u hermes` after 30+ min; confirm no further oomd kills — still open: 2 further OOM-kill markers in the unit journal since 13:44 (service auto-recovered each time; running after the 20:05 boot)
+6. **Fix forgejo-oidc-setup ordering** — `after`/`wants` caddy.service or reuse `mkOidcGate` so the deploy race stops failing activations — still open, verified recurring: failed at the 2026-08-14 20:05 boot (`connection refused`) then succeeded on retry ("✓ OIDC auth source configured")
 7. **Investigate browser-history OTel URL parse error** (`127.0.0.1:4317` no scheme) — tracing likely broken despite "enabled" log
-8. **Move completed TODO items to CHANGELOG.md** (hermes fix + runtime verification)
+8. ~~**Move completed TODO items to CHANGELOG.md** (hermes fix + runtime verification)~~ done — CHANGELOG.md:318 carries the full registration_lifecycle entry
 
 ### Hermes Follow-ups
 9. **Verify Discord bot presence** — bot shows online in Discord servers
@@ -126,7 +126,7 @@ Wrote a `builtins.replaceStrings` installPhase-patching hack (with mangled escap
 15. **hermes fallback model** (open manual TODO) — `sudo -u hermes hermes config set fallback_model`
 16. **Unclean-shutdown ledger warning** — prior gateway life exited SIGKILL'd (the crash-loop); confirm lifecycle ledger stops warning
 17. **cron job `479d34ea99f9` thread_id loss** — delivery target lost `thread_id`, messages may go to wrong channel
-18. **Verify hermes is in system-health monitored set** — `system_service_start_limit_hit` metric should cover it
+18. ~~**Verify hermes is in system-health monitored set** — `system_service_start_limit_hit` metric should cover it~~ done at `9b6590bf` — the crash-loop/start-limit metrics scan all units generically, hermes included
 
 ### Guard Rails (Prevent Recurrence)
 19. **Add build-time import smoke test** for hermes: `python -c "import hermes_cli.plugins"` in a flake check (catches py-modules drift at build time)
@@ -149,10 +149,10 @@ Wrote a `builtins.replaceStrings` installPhase-patching hack (with mangled escap
 32. **Check oomd kill cascade risk during deploy restart storms** — many services restarting simultaneously spikes memory pressure by design
 
 ### Documentation
-33. **Annotate `2026-08-14_08-24` report** — hermes items 4/22/23/24 resolved
-34. **AGENTS.md: note that `mini_swe_runner` is also missing from py-modules** (harmless today, confusing tomorrow)
-35. **Track upstream fix landing** — when hermes-agent releases with the fix, remove the SystemNix patch (add to TODO so it isn't forgotten)
-36. **CHANGELOG entry** for the hermes outage + fix window (dead 08-13 → 08-14 13:11)
+33. ~~**Annotate `2026-08-14_08-24` report** — hermes items 4/22/23/24 resolved~~ done — the evening docs-health session annotated it (hermes chain closed at `54781ffe`)
+34. ~~**AGENTS.md: note that `mini_swe_runner` is also missing from py-modules** (harmless today, confusing tomorrow)~~ done at `54781ffe` — present in the AGENTS Hermes section
+35. ~~**Track upstream fix landing** — when hermes-agent releases with the fix, remove the SystemNix patch (add to TODO so it isn't forgotten)~~ done — tracked in `TODO_LIST.md:36`; upstream fix confirmed present in main (v0.20.1)
+36. ~~**CHANGELOG entry** for the hermes outage + fix window (dead 08-13 → 08-14 13:11)~~ done — CHANGELOG.md:318
 
 ### Monitoring
 37. **Gatus/systemd alert for hermes start-limit-hit** — this outage lasted 1.5 days with no alert path visible; confirm `system_service_start_limit_hit` would have fired
@@ -160,17 +160,17 @@ Wrote a `builtins.replaceStrings` installPhase-patching hack (with mangled escap
 39. **Backlog-drain detection** — after multi-day outage, hermes burns API quota; a "queue depth" or "429 rate" signal would make this visible
 
 ### Hygiene
-40. **Review pre-existing modified file** `docs/status/2026-08-14_12-30_ssd-recovery-benchmarking-session.md` (staged before this session — not mine, left untouched)
+40. ~~**Review pre-existing modified file** `docs/status/2026-08-14_12-30_ssd-recovery-benchmarking-session.md` (staged before this session — not mine, left untouched)~~ done (moot) — that file was committed (`2bedae34` and later) and fully annotated by the evening docs-health session
 41. **Verify nvd diff noise** — deploy showed +107/-101 paths; unrelated churn from input drift worth a glance
-42. **Check whether auto-git committed this session's changes** with sane attribution
+42. ~~**Check whether auto-git committed this session's changes** with sane attribution~~ done — landed as `54781ffe` with attribution
 
 ---
 
 ## g) Questions (cannot figure out myself)
 
-1. **Upstream comms:** Should I file the issue/PR against `NousResearch/hermes-agent` (add `registration_lifecycle` to `py-modules`), or do you handle upstream comms for third-party repos yourself?
-2. **Re-deploy now?** The system is partially activated (forgejo-oidc-setup + browser-history failed during activation). Re-running `nix run .#deploy` restarts ~30 services on a machine with WDT-crash history under I/O load — your call: re-deploy immediately, or investigate the two failing units first?
-3. **MiniMax quota:** hermes hit "Token Plan rate limit reached (2062)" while draining backlog. Upgrade the Token Plan, switch that provider to pay-as-you-go, or leave it retrying until the quota resets?
+1. ~~**Upstream comms:** Should I file the issue/PR against `NousResearch/hermes-agent` (add `registration_lifecycle` to `py-modules`), or do you handle upstream comms for third-party repos yourself?~~ **answered by events** — no PR needed: upstream main already ships `registration_lifecycle` in py-modules (v0.20.1, verified 08-14). The only remaining action is the flake input bump + patch deletion (TODO_LIST:36)
+2. ~~**Re-deploy now?** The system is partially activated (forgejo-oidc-setup + browser-history failed during activation). Re-running `nix run .#deploy` restarts ~30 services on a machine with WDT-crash history under I/O load — your call: re-deploy immediately, or investigate the two failing units first?~~ **answered by events** — later deploys + the clean 20:04 reboot completed activation; both units recovered (forgejo-oidc-setup still races at boot, then succeeds on retry — see item 6)
+3. **MiniMax quota:** hermes hit "Token Plan rate limit reached (2062)" while draining backlog. Upgrade the Token Plan, switch that provider to pay-as-you-go, or leave it retrying until the quota resets? — still open (user decision)
 
 ---
 
