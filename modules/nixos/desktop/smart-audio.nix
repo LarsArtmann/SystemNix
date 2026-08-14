@@ -33,7 +33,6 @@ _: {
         current_output = None
         last_switch = 0.0
         workspace_outputs = {}
-        focused_workspace_id = None
 
 
         def log(msg):
@@ -99,7 +98,9 @@ _: {
 
             now = time.time()
             if now - last_switch < DEBOUNCE_SEC:
-                return
+                # Wait out the debounce instead of dropping the switch:
+                # rapid focus changes must still end on the final target.
+                time.sleep(DEBOUNCE_SEC - (now - last_switch))
 
             out_cfg = OUTPUT_MAP[target_output]
             profile_name = out_cfg.get("profileName", "")
@@ -135,8 +136,44 @@ _: {
             log(f"Audio routed to {target_output} (node {sink_node})")
 
 
+        FOCUS_EVENTS = {
+            "WindowFocusChanged",
+            "WindowFocusTimestampChanged",
+            "WorkspaceFocused",
+            "WorkspaceActiveWindowChanged",
+        }
+
+
+        def focused_output():
+            """Output name of the currently focused workspace, or None."""
+            r = subprocess.run(
+                ["niri", "msg", "--json", "focused-window"],
+                capture_output=True, text=True,
+            )
+            if r.returncode == 0:
+                try:
+                    win = json.loads(r.stdout)
+                except json.JSONDecodeError:
+                    win = None
+                if isinstance(win, dict) and win.get("workspace_id") is not None:
+                    return workspace_outputs.get(win["workspace_id"])
+            # No focused window (e.g. empty workspace): fall back to focused workspace
+            r = subprocess.run(
+                ["niri", "msg", "--json", "workspaces"],
+                capture_output=True, text=True,
+            )
+            if r.returncode == 0:
+                try:
+                    for ws in json.loads(r.stdout):
+                        if ws.get("is_focused"):
+                            return ws.get("output")
+                except json.JSONDecodeError:
+                    pass
+            return None
+
+
         def on_event(line):
-            global workspace_outputs, focused_workspace_id
+            global workspace_outputs
 
             try:
                 event = json.loads(line)
@@ -151,15 +188,8 @@ _: {
                     if wid is not None:
                         workspace_outputs[wid] = ws.get("output", "")
 
-            elif etype == "WindowsChanged":
-                focused_workspace_id = None
-                for w in event.get("WindowsChanged", {}).get("windows", []):
-                    if w.get("is_focused"):
-                        focused_workspace_id = w.get("workspace_id")
-                        break
-
-            if focused_workspace_id is not None:
-                target = workspace_outputs.get(focused_workspace_id)
+            if etype in FOCUS_EVENTS or etype in ("WorkspacesChanged", "WindowsChanged"):
+                target = focused_output()
                 if target:
                     switch_audio(target)
 
@@ -195,22 +225,9 @@ _: {
                 except json.JSONDecodeError:
                     pass
 
-            # Determine initial focus
-            r = subprocess.run(
-                ["niri", "msg", "--json", "focused-window"],
-                capture_output=True, text=True,
-            )
-            if r.returncode == 0:
-                try:
-                    win = json.loads(r.stdout)
-                    focused_workspace_id = win.get("workspace_id")
-                except json.JSONDecodeError:
-                    pass
-
-            if focused_workspace_id is not None:
-                target = workspace_outputs.get(focused_workspace_id)
-                if target:
-                    switch_audio(target)
+            target = focused_output()
+            if target:
+                switch_audio(target)
 
             # Listen to niri event stream
             log("Listening to niri event stream...")
