@@ -83,6 +83,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Changed
 
+- **Service auth gates refactored to shared helpers** — `oauth2-proxy.nix`, `gatus-config.nix`, `forgejo.nix`, `searxng.nix` replaced hand-rolled `waitOidcReady`/`waitDnsReady`/`forgejoOidcWaitDns` shell scripts with `mkOidcGate`/`mkDnsGate` from `lib/default.nix`. ~65 lines of duplicated curl/getent scripts eliminated
 - **auto-optimise-store disabled** — Per-build hardlink dedup (`auto-optimise-store = true`) was generating random read I/O competing with the build itself on QLC NAND. Dedup now happens once during low-activity hours via `nix-optimise.timer` (daily ~04:00)
 - **SigNoz flake URL pin removal** — `signoz-src` and `signoz-collector-src` inputs converted from hardcoded version tags (`/v0.127.1`, `/v0.144.5`) to default-branch tracking. Version derived via `shortRev or "latest"`. All 61 flake inputs now defer versioning to `flake.lock` (zero hardcoded version tags in URLs)
 - **Cadvisor port 9190→9193** — PMA (`projects-management-automation`) listens on `127.0.0.1:9190` via upstream `PMA_HEALTH_LISTEN_ADDR`. Cadvisor was also on 9190, causing a port conflict crash-loop on boot. Cadvisor moved to 9193
@@ -187,6 +188,7 @@ Given the project's history (2,927 commits), this changelog focuses on significa
 
 ### Removed
 
+- **qmd (on-device markdown search)** — retired after NAR hash drift across 4 deploy cycles (stale Cargo.lock after nixpkgs pin updates) and missing systemd wrapper. Module (`qmd-config.nix`), package (`pkgs/qmd.nix`), overlay, port (8181), CLI tool, health check, and all doc references removed. `~/.cache/qmd/` (~2GB models + index) still on disk — manual cleanup needed
 - **swww wallpaper daemon** — ghost service crash-looping 1220+ times/boot (GC'd nix store binary). Replaced with DMS IPC (`dms ipc call wallpaper next`). GLSL fire/circle shader transitions removed. `dms-wallpaper-init` rewritten to seed wallpaper via DMS IPC. DMS owns wallpaper management natively.
 - **Hyprland package set** — `grimblast` (screenshot helper) pulled in hyprland-0.56.1 + all hypr* deps (hyprcursor, hyprgraphics, hyprland-qt-support, hyprland-qtutils, hyprlang, hyprpicker, hyprutils, hyprwire). ~122 MiB purged (3850 → 3824 store paths). Screenshots now via grim + slurp + swappy directly (grimblast was a redundant Hyprland wrapper).
 - **justfile** — removed in favor of direct Nix flake commands (`nix run .#deploy`, `nix flake check --no-build`, `nix fmt`). All recipes replaced by flake apps and `scripts/` shell scripts
