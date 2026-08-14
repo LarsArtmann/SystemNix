@@ -72,9 +72,9 @@
 ## f) NEXT — up to 50 things, sorted by impact
 
 **Critical (deploy/verify this session's work):**
-1. Deploy SystemNix (`nix run .#deploy`) — harden primitives, SigNoz GOMEMLIMIT, wrappers
-2. Post-deploy: verify display-watchdog still writes `/sys/class/drm` (new `ProtectKernelTunables`)
-3. Post-deploy: verify btrfs-health/balance/scrub still work (new kernel-module/control-group directives)
+1. ~~Deploy SystemNix (`nix run .#deploy`) — harden primitives, SigNoz GOMEMLIMIT, wrappers~~ done — landed via subsequent deploys (`0fce1ed9`, `9a56c1a7`, then the 18:xx buildcache generation); the 2026-08-14 20:04 reboot restarted every `harden()` service under the new sandbox
+2. ~~Post-deploy: verify display-watchdog still writes `/sys/class/drm` (new `ProtectKernelTunables`)~~ done — boot 0 journal: zero failures/denials, oneshot "Finished Detect dead display" clean
+3. ~~Post-deploy: verify btrfs-health/balance/scrub still work (new kernel-module/control-group directives)~~ done — boot 0 journal: zero btrfs-service failures (scrub interruptions are the separate pre-existing reboot issue)
 4. Post-deploy: run `sudo bash scripts/validate-gomemlimit.sh` — first real execution
 5. Post-deploy: `nix run .#post-deploy-check` (full 53-check suite)
 6. Check `systemctl show` output format against the script's grep (fix if it mismatches — likely the first bug found)
@@ -89,42 +89,42 @@
 
 **Known P0 items (from TODO_LIST, unchanged):**
 13. Off-site backup (Hetzner StorageBox + BorgBackup) — flagged since 2026-06-25
-14. Free disk space urgently (root at 90-93%)
-15. `ManagedOOMPreference=omit` for dnsblockd (730 kills/day; mitigation applied, exemption still needed)
-16. Foreground BTRFS scrub on `/` (never scrubbed)
-17. Reboot evo-x2 (registry override + Hyprland purge pending since 08-10)
+14. Free disk space urgently (root at 90-93%) — improved but open: 87% live 08-14 after the buildcache offload (`19c195e9`)
+15. `ManagedOOMPreference=omit` for dnsblockd (730 kills/day; mitigation applied, exemption still needed) — still open (only nix-daemon + PMA carry exemptions)
+16. Foreground BTRFS scrub on `/` (never scrubbed) — open; both mounts show `status=interrupted` live (reboots cut weekly scrubs)
+17. ~~Reboot evo-x2 (registry override + Hyprland purge pending since 08-10)~~ done — 2026-08-14 20:04 (clean, user-initiated); oomd 60%/30s confirmed active via `oomctl`
 
 **Registration-lock release chain (parallel session, still open):**
-18. Commit/verify sweep of cqrs-htmx OAuth2-gate working-tree changes
-19. Tag cqrs-htmx (identity-model + usermgmt), bump browser-history go.mod to tags
-20. Tag browser-history, bump SystemNix flake input, deploy
-21. Verify 403 on `POST /auth/register` AND second Pocket ID first-login rejected
+18. ~~Commit/verify sweep of cqrs-htmx OAuth2-gate working-tree changes~~ done — committed `e5cdc925` + `b1ad3350` (trees clean)
+19. ~~Tag cqrs-htmx (identity-model + usermgmt), bump browser-history go.mod to tags~~ partial — cqrs-htmx tagged `v4.8.0` (verified via `git tag --contains`); the browser-history go.mod bump is STILL OPEN (go.sum has zero v4.8.0 refs)
+20. Tag browser-history, bump SystemNix flake input, deploy — still open: `v0.4.2` predates the lock; flake input at `a1b78afa` (08-12); the deployed binary has no gate
+21. Verify 403 on `POST /auth/register` AND second Pocket ID first-login rejected — blocked on 20
 
 **Infrastructure quality (TODO_LIST carryovers):**
 22. `start-limit-audit.nix` eval-time assertion (StartLimitBurst in [Service] silently ignored)
 23. browser-history `expires_at` session reaper fix (upstream migration gap)
 24. browser-history CheckpointStore (4-min projection drain on restart)
-25. browser-history DB backup → `backup-coordination`
+25. ~~browser-history DB backup → `backup-coordination`~~ done (existing rule) — registered since `f84e7b62` (`configuration.nix:343`)
 26. Declarative `criticalSystemServices` list (currently hand-maintained 4)
 27. Caddy reload `PrivateTmp` root-cause fix (deploy band-aid exists)
 28. Dozzle container security hardening (cap_drop, no-new-privileges)
 29. Docker hardening standardization helper (like `harden {}` for containers)
 30. Verify pre-deploy check #11 `--dry-run` grep patterns at runtime
-31. `deploy.sh --force`/`--skip-phantom-checks` flag for new-metric deploys
+31. ~~`deploy.sh --force`/`--skip-phantom-checks` flag for new-metric deploys~~ done at `18093b83` — per-metric `KNOWN_NEW_METRICS` allowlist (see the 09-30 annotations)
 32. `mkHttpGate` for discordsync (external-HTTP readiness probe)
 33. Move gate helpers to `lib/gates.nix` + eval-time assertions on args
 34. SigNoz dashboard v1→v2 Perses migration (251 dupes, dead queries found in research)
 35. ClickHouse backup before next SigNoz upgrade
-36. Attic cache create + CI token (module deployed, cache never created)
+36. Attic cache create + CI token (module deployed, cache never created) — still open: `attic_storage_gb 0` live 08-14
 
 **Upstream app fixes (LarsArtmann):**
 37. dnsblockd OTEL cardinality leak (domain/path labels)
 38. Monitor365 DuckDB pool deadlock root cause
 39. DiscordSync chattr ExecStartPre upstream fix
 40. PMA daemon: stop committing broken flake.lock
-41. file-and-image-renamer: pin 3 `ref=master` inputs to tags + `GOTOOLCHAIN=local`
-42. modernc/mattn SQLite DSN mismatch audit across all Go repos
-43. errorfamily: flush logger before `os.Exit`
+41. ~~file-and-image-renamer: pin 3 `ref=master` inputs to tags + `GOTOOLCHAIN=local`~~ done — verified already-completed upstream at rev `25d32b2` (12-53 session, §a.1/§a.2; TODO closed)
+42. ~~modernc/mattn SQLite DSN mismatch audit across all Go repos~~ done — full cross-repo audit + 2 fixes (CreditReformBilanzampel `b1e5e701`, Kernovia `d139446d`) in the 12-53 session
+43. ~~errorfamily: flush logger before `os.Exit`~~ done — premise corrected (HandleError never exits); real fix = `HandleConfig.Logger` wiring at 3 call sites (`b350c96`)
 44. GOMEMLIMIT runtime tuning pass (heap telemetry where /metrics exists)
 
 **Session-specific follow-ups:**
@@ -132,7 +132,7 @@
 46. `pnpm build`/`install` wrappers if JS builds also starve I/O
 47. Audit hardenUser consumers for `RestrictRealtime` (only audio/JACK-class services could care)
 48. Add harden()-primitives note to AGENTS.md systemd section (overrides + exclusions)
-49. Re-check CHANGELOG "5 stale hashes" wording stays consistent through release
+49. ~~Re-check CHANGELOG "5 stale hashes" wording stays consistent through release~~ done — CHANGELOG.md:37 carries the consistent "5 genuine stale hashes + 1 missing publicDeps entry" wording
 50. Revisit `benchstat` inclusion: consider dropping the third-party tool's check or vendoring a pinned copy
 
 ---
@@ -140,7 +140,7 @@
 ## g) Questions I CANNOT answer myself
 
 1. **Push policy for the 11 upstream repos:** May I commit and push the vendor-hash check + hash fixes in browser-history, crush-daily, file-and-image-renamer, DiscordSync, art-dupl, branching-flow, go-cqrs-lite, go-humanize-linter, go-structure-linter, project-meta, projects-management-automation? (I never push without explicit approval; until pushed, no CI runs the checks anywhere.)
-2. **Deploy timing for the harden() change:** It alters the sandbox of every `harden()` service at once. Deploy now with the post-deploy verification list above, or bundle with the registration-lock release to keep one risky change per deploy window?
+2. ~~**Deploy timing for the harden() change:** It alters the sandbox of every `harden()` service at once. Deploy now with the post-deploy verification list above, or bundle with the registration-lock release to keep one risky change per deploy window?~~ **answered by events** — deployed with subsequent deploys (not bundled); runtime verified clean: display-watchdog + all btrfs services healthy under the new sandbox in the 2026-08-14 20:04 boot journal
 3. **SigNoz collector GOMEMLIMIT=384MiB origin:** The value came from the ZRAM-tuning commit with no recorded rationale. Was there runtime heap evidence behind 384MiB that I normalized away, or was it cargo-culted? (Git history can't tell me; only you/that session know. GOMEMLIMIT is soft, so the 768MiB raise is low-risk either way.)
 
 ---
