@@ -116,20 +116,20 @@ Deleted 8574 eval cache SQLite files unnecessarily. These were harmless and rebu
 ## f) Up to 50 Things to Get Done Next
 
 ### Immediate (blocking deploy)
-1. **Deploy the changes:** `nix run .#deploy` — activates DNS fix + clears daemon cache
-2. **Verify resolv.conf after deploy:** `cat /etc/resolv.conf` should show `127.0.0.1` first, `9.9.9.9` second
-3. **Verify `cache.home.lan` resolves after deploy:** `dig cache.home.lan @127.0.0.1 +short`
-4. **Run `nix flake check --no-build`** — full syntax validation
-5. **Run `scripts/pre-deploy-check.sh`** — verify mount safety, ports, disk space
+1. ~~**Deploy the changes:** `nix run .#deploy` — activates DNS fix + clears daemon cache~~ done — deployed via subsequent deploys
+2. ~~**Verify resolv.conf after deploy:** `cat /etc/resolv.conf` should show `127.0.0.1` first, `9.9.9.9` second~~ done — Nix-managed symlink restored on every deploy; post-deploy DNS checks green
+3. **Verify `cache.home.lan` resolves after deploy:** `dig cache.home.lan @127.0.0.1 +short` — blocked on Attic cache creation (TODO_LIST Priority 3)
+4. ~~**Run `nix flake check --no-build`** — full syntax validation~~ done — passes on every deploy since
+5. ~~**Run `scripts/pre-deploy-check.sh`** — verify mount safety, ports, disk space~~ done — runs on every deploy since
 
 ### Short-term (cleanup)
-6. **Clean up orphan `go-nix-helpers` lock node** — remove the stale `type: "git"` / `flake: false` entry from flake.lock
-7. **Convert remaining `git+ssh:` go-nix-helpers lock entries to `github:` type** — update go-nix-helpers_2, _5, _6 to use the `github:` tarball fetch type (run `nix flake lock --update-input` for each consuming input with `GIT_CONFIG_GLOBAL=/dev/null`)
+6. ~~**Clean up orphan `go-nix-helpers` lock node** — remove the stale `type: "git"` / `flake: false` entry from flake.lock~~ done at `82963f04`/`caf2cab8` (stale nodes removed during the 08-13 follows dedup)
+7. ~~**Convert remaining `git+ssh:` go-nix-helpers lock entries to `github:` type** — update go-nix-helpers_2, _5, _6~~ done at `1d3a53a0` (LarsArtmann inputs switched from `git+ssh:` to `github:` tarball fetches)
 8. **Add eval-time assertion for missing `go-nix-helpers.follows`** — similar to `nixpkgsTarballGuard` in flake.nix
 9. **Check go-checker-helpers and other `flake = false` git+ssh inputs** for similar fetch-type inconsistencies
 10. **Investigate whether go-nix-helpers rev `e6d392b` was intentionally force-pushed** — check if this was an amend or a rebase
-11. **Run `scripts/post-deploy-check.sh`** after deploy to verify functional outcomes
-12. **Check if the `jscpd-pnpm-lock.yaml` change** (committed by auto-git) is correct or spurious
+11. ~~**Run `scripts/post-deploy-check.sh`** after deploy to verify functional outcomes~~ done — runs on every deploy since
+12. ~~**Check if the `jscpd-pnpm-lock.yaml` change** (committed by auto-git) is correct or spurious~~ done — correct (the `pnpm-run-path`→`npm-run-path` typo fix, `72115c62`)
 
 ### DNS hardening
 13. **Monitor dnsblockd stability** with the new fallback — does Quad9 being in resolv.conf cause any unexpected behavior?
@@ -148,7 +148,7 @@ Deleted 8574 eval cache SQLite files unnecessarily. These were harmless and rebu
 ### Nix daemon hardening
 23. **Consider a cron job that restarts nix-daemon daily** — clears in-memory fetchTree cache, prevents stale-hash accumulation
 24. **Investigate `nix.daemonNrBuilds` and fetch caching behavior** — understand when the daemon evicts stale entries
-25. **Document the daemon in-memory cache as a gotcha** — "nix daemon caches fetchTree results in RAM by (url, rev); stale entries persist until daemon restart"
+25. ~~**Document the daemon in-memory cache as a gotcha** — "nix daemon caches fetchTree results in RAM by (url, rev); stale entries persist until daemon restart"~~ done — AGENTS.md "NAR hash differs" gotcha documents the daemon cache + recovery (`sudo systemctl restart nix-daemon`)
 
 ### Testing
 26. **Write a VM test for the DNS fallback behavior** — verify local names resolve via 127.0.0.1, external via fallback
@@ -158,7 +158,7 @@ Deleted 8574 eval cache SQLite files unnecessarily. These were harmless and rebu
 ### Documentation
 29. **Update AGENTS.md "Adding a Service" procedure** — add step: "ensure all shared inputs have `.follows` declarations"
 30. **Create a runbook for NAR hash mismatches** — step-by-step: check follows → check fetch type → check daemon cache → restart daemon
-31. **Document the `github:` vs `git+ssh:` narHash difference** in the "Consuming LarsArtmann Flakes" section of AGENTS.md
+31. ~~**Document the `github:` vs `git+ssh:` narHash difference** in the "Consuming LarsArtmann Flakes" section of AGENTS.md~~ done — AGENTS.md gotcha + follows rule cover it
 32. **Add the DNS fallback rationale to `docs/gotchas-archive.md`** — full incident narrative
 
 ### Monitoring

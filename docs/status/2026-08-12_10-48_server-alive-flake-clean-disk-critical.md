@@ -137,36 +137,36 @@ The flake.lock is now clean (`type: github`, no local path override). Both upstr
 ### Immediate (do NOW — system at risk)
 
 1. **Free disk space** — 93% on QLC. Delete old BTRFS snapshots: `sudo btrbk prune` or `sudo btrfs subvolume list /` + delete old ones. This is the #1 priority.
-2. **Disable browser-history-agent** — It can't connect (server too slow under I/O). Each retry generates I/O on 93%-full disk. Set `enable = false` + deploy.
-3. **Check I/O PSI drops after disk cleanup** — If still high, investigate what's generating I/O.
-4. **Verify server stays alive without agent pressure** — Remove agent I/O load, recheck health response time.
+2. ~~**Disable browser-history-agent** — It can't connect (server too slow under I/O). Each retry generates I/O on 93%-full disk. Set `enable = false` + deploy.~~ done (superseded) — server healthy after drain-timeout fix; agent recovered (`2026-08-12_14-17` report)
+3. ~~**Check I/O PSI drops after disk cleanup** — If still high, investigate what's generating I/O.~~ done — PSI monitoring live ("I/O Stall Rate" Gatus check)
+4. ~~**Verify server stays alive without agent pressure** — Remove agent I/O load, recheck health response time.~~ done — server stable since; agent normal (`2026-08-12_14-17`)
 
 ### Short-term (today)
 
-5. Fix Monitor365 `wireguard-collector` Rust build (upstream Cargo workspace issue)
-6. Fix DiscordSync vendorHash (`vendorHash = ""` → build → paste hash)
-7. Rebuild PMA vendorHash with SSH/GOPRIVATE access
-8. Re-enable Monitor365, DiscordSync, PMA after builds fixed
-9. Investigate overview.service exit 69
-10. Trigger hdparm on existing SATA disks: `sudo udevadm trigger --subsystem-match=block --kernel-match="sd[ab]"`
-11. Fix OTel URL parse warning (`http://` scheme for gRPC endpoint)
-12. Fix `niri.prom` bare `0` lines (invalid Prometheus format)
-13. Fix `system_health.prom` `[not set]` values
-14. Add `node_textfile_scrape_error` Gatus health check
-15. Add I/O PSI Gatus health check
-16. Add disk usage Gatus health check (alert at 85%)
-17. Set up BTRFS snapshot retention audit — are 14-day snapshots feasible at 93% fullness?
+5. ~~Fix Monitor365 `wireguard-collector` Rust build (upstream Cargo workspace issue)~~ done — re-enabled at `3ef0f26a`
+6. ~~Fix DiscordSync vendorHash (`vendorHash = ""` → build → paste hash)~~ done — re-enabled
+7. ~~Rebuild PMA vendorHash with SSH/GOPRIVATE access~~ done — re-enabled at `3ef0f26a`
+8. ~~Re-enable Monitor365, DiscordSync, PMA after builds fixed~~ done at `3ef0f26a`
+9. ~~Investigate overview.service exit 69~~ done at `008b4c8b` — root cause: missing PMA discovery socket; fail-fast + assertion + PMA split-mode re-enable (`2090bd7e`)
+10. ~~Trigger hdparm on existing SATA disks: `sudo udevadm trigger --subsystem-match=block --kernel-match="sd[ab]"`~~ done (moot) — smartd NVMe-only + udev spindown deployed (`d57c1210`); SATA pool later spun down fully
+11. ~~Fix OTel URL parse warning (`http://` scheme for gRPC endpoint)~~ done at `d2138202` (gRPC exporter wants scheme-free `host:port`)
+12. **Fix `niri.prom` bare `0` lines (invalid Prometheus format)**
+13. ~~Fix `system_health.prom` `[not set]` values~~ done — `systemctl_value()` coercion fix ("system-health `[not set]` poison value fix" CHANGELOG entry)
+14. ~~Add `node_textfile_scrape_error` Gatus health check~~ done at `9b6590bf`
+15. ~~Add I/O PSI Gatus health check~~ done — already existed ("I/O Stall Rate")
+16. ~~Add disk usage Gatus health check (alert at 85%)~~ done at `9b6590bf`
+17. **Set up BTRFS snapshot retention audit — are 14-day snapshots feasible at 93% fullness?**
 
 ### Medium-term (this week)
 
-18. Wire `CheckpointStore` + add `HydrateFromSQL` to cqrs-htmx (proper projection replay fix)
-19. Add eval-time assertion: reject `StartLimitBurst` in `serviceConfig` (enforce `[Unit]` placement)
-20. Add `systemd-analyze verify` start-limit feasibility check to pre-deploy-check.sh
-21. Add `nix build --dry-run` to pre-deploy-check.sh (catch vendorHash mismatches early)
-22. Add Prometheus textfile validity check to pre-deploy-check.sh
-23. Add `type: path` rejection in flake.lock to pre-commit hooks
-24. Audit all LarsArtmann Go projects for `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch
-25. Fix `errorfamily.HandleError` to flush logger before `os.Exit` (upstream library)
+18. **Wire `CheckpointStore` + add `HydrateFromSQL` to cqrs-htmx (proper projection replay fix)**
+19. **Add eval-time assertion: reject `StartLimitBurst` in `serviceConfig` (enforce `[Unit]` placement)**
+20. **Add `systemd-analyze verify` start-limit feasibility check to pre-deploy-check.sh**
+21. ~~Add `nix build --dry-run` to pre-deploy-check.sh (catch vendorHash mismatches early)~~ done at `7afab3f8` (check #11)
+22. **Add Prometheus textfile validity check to pre-deploy-check.sh**
+23. **Add `type: path` rejection in flake.lock to pre-commit hooks**
+24. ~~Audit all LarsArtmann Go projects for `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch~~ done — cross-repo audit 2026-08-14 (12-53 report)
+25. ~~Fix `errorfamily.HandleError` to flush logger before `os.Exit` (upstream library)~~ done — premise corrected; `HandleConfig.Logger` wired at browser-history call sites (12-53 report)
 26. Buy and install dedicated TLC boot disk (user evaluating)
 27. Move `/nix` to separate physical device (or TLC boot disk)
 28. Add WDT reset counter metric (reboots per day)
@@ -174,9 +174,9 @@ The flake.lock is now clean (`type: github`, no local path override). Both upstr
 30. Create "system crashed" runbook (step-by-step diagnostic procedure)
 31. Review BFQ I/O tier assignments for all services
 32. Consider `panic=10` kernel parameter for faster recovery than WDT 60s
-33. Add `ConditionPathExists` or health-gate to browser-history-agent (only start if server responsive)
-34. Reduce BTRFS snapshot retention from 14d to 7d given disk pressure
-35. Add vendorHash staleness detection to pre-deploy-check.sh
+33. ~~Add `ConditionPathExists` or health-gate to browser-history-agent (only start if server responsive)~~ done at `9f547526` (ExecStartPre health-gate polling `/health`)
+34. **Reduce BTRFS snapshot retention from 14d to 7d given disk pressure**
+35. ~~Add vendorHash staleness detection to pre-deploy-check.sh~~ done at `7afab3f8` (check #11)
 
 ### Long-term (this month)
 

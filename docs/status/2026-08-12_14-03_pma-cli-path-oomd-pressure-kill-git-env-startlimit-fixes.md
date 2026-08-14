@@ -150,21 +150,21 @@ When PMA was disabled in `configuration.nix` (prior session), someone also comme
 ### Critical — Do Before Deploying
 
 1. ~~**Fix the oomd exemption**~~ done at `ef863c26`: Change `ManagedOOMMemoryPressure = "auto"` to `ManagedOOMPreference = "omit"` in `projects-management-automation.nix:81`
-2. **Update the comment** above that line to correctly explain `ManagedOOMPreference`
-3. **Run `nix fmt`** on the three changed files
-4. **Run `nix flake check --no-build`** to confirm the fix
-5. **Deploy**: `nh os switch`
-6. **Verify PMA survives discovery**: `journalctl -u projects-management-automation -f` — watch for a full discovery cycle (~2min) with no oomd kill
+2. ~~**Update the comment** above that line to correctly explain `ManagedOOMPreference`~~ done at `ef863c26`
+3. ~~**Run `nix fmt`** on the three changed files~~ done (reformatted `fe891bff` era)
+4. ~~**Run `nix flake check --no-build`** to confirm the fix~~ done — passes on every deploy since
+5. ~~**Deploy**: `nh os switch`~~ done (multiple deploys since 08-12)
+6. ~~**Verify PMA survives discovery**: `journalctl -u projects-management-automation -f` — watch for a full discovery cycle (~2min) with no oomd kill~~ done — PMA stable since the exemption (`ef863c26`); later further protected by the 60%/30s oomd threshold (`17731861`)
 7. **Verify overview gets discovery data**: `curl -s http://127.0.0.1:8083/` — should return HTML with project data, not 503
 
 ### High Priority — Runtime Verification
 
-8. **Verify PMA CLI is on PATH**: `which projects-management-automation` in a new terminal
-9. **Verify hermes.service** is running: `journalctl -u hermes.service -n 30`
-10. **Verify the "Invalid environment assignment: Artmann" warning is gone** from the PMA journal
-11. **Verify the "Unknown key StartLimitIntervalSec in section [Service]" warning is gone** from the overview journal
+8. ~~**Verify PMA CLI is on PATH**: `which projects-management-automation` in a new terminal~~ done at `ef863c26` (lars-packages entry uncommented; deployed)
+9. ~~**Verify hermes.service** is running: `journalctl -u hermes.service -n 30`~~ done (superseded) — hermes re-verified 2026-08-14 after the `registration_lifecycle` fix (`959631d6`); process-level healthy
+10. ~~**Verify the "Invalid environment assignment: Artmann" warning is gone** from the PMA journal~~ done at `ef863c26` (quoted GIT_* env overrides)
+11. ~~**Verify the "Unknown key StartLimitIntervalSec in section [Service]" warning is gone** from the overview journal~~ done at `ef863c26` (`mkForce null` on upstream's misplaced directives)
 12. **Investigate overview `WARN Search path does not exist path=/home/lars/projects`** — likely a permissions/sandbox issue
-13. **Monitor PMA memory after discovery settles** — should drop to ~250 MB after the scan completes
+13. ~~**Monitor PMA memory after discovery settles** — should drop to ~250 MB after the scan completes~~ done — `system_service_memory_{bytes,over_threshold}` metrics + Gatus alerts live (`9b6590bf` era)
 
 ### Upstream Fixes (AGENTS.md: "fix upstream, not in SystemNix")
 
@@ -180,24 +180,24 @@ When PMA was disabled in `configuration.nix` (prior session), someone also comme
 
 21. **Add Gatus check for overview** — HTTP endpoint on `127.0.0.1:8083`, alert on non-200
 22. **Add Gatus check for PMA discovery daemon** — unix socket `/run/project-discovery/daemon.sock` health endpoint
-23. **Add Gatus check for PMA health endpoint** — `127.0.0.1:9190`
+23. ~~**Add Gatus check for PMA health endpoint** — `127.0.0.1:9190`~~ done at `9b6590bf` ("PMA Daemon Health" `/readyz`; `pma-health = 9190` in ports.nix)
 24. **Add `[RESPONSE_TIME]` condition** for overview (user-facing dashboard)
 
 ### Documentation
 
-25. **Update AGENTS.md** with `ManagedOOMPreference = "omit"` pattern for burst workloads killed by oomd
-26. **Update AGENTS.md** with the distinction between oomd pressure kill vs cgroup OOM kill
-27. **Update AGENTS.md** with the `Environment = [ "KEY=value with space" ]` quoting gotcha
-28. **Update FEATURES.md** — PMA CLI is now available on PATH again
-29. **Update TODO_LIST.md** — strike the PMA CLI / lars-packages entry
+25. ~~**Update AGENTS.md** with `ManagedOOMPreference = "omit"` pattern for burst workloads killed by oomd~~ done — systemd gotcha section documents the pattern
+26. ~~**Update AGENTS.md** with the distinction between oomd pressure kill vs cgroup OOM kill~~ done — nix-daemon/PMA oomd gotchas cover both mechanisms
+27. **Update AGENTS.md with the `Environment = [ "KEY=value with space" ]` quoting gotcha**
+28. ~~**Update FEATURES.md** — PMA CLI is now available on PATH again~~ done — FEATURES PMA row ✅ with oomd exemption + split-mode noted
+29. ~~**Update TODO_LIST.md** — strike the PMA CLI / lars-packages entry~~ done (item removed)
 
 ### Code Quality
 
 30. **Simplify hermes.nix overlay** — remove redundant `extraDependencyGroups` (noted in prior session)
 31. **Add eval-time assertion** that lars-packages entries are consistent with service enables (prevent silent CLI disappearance)
-32. **Audit ALL other services for StartLimitBurst in serviceConfig** — same bug class as overview and browser-history
+32. ~~**Audit ALL other services for StartLimitBurst in serviceConfig** — same bug class as overview and browser-history~~ done — comprehensive audit 2026-08-14, zero violations (`2026-08-14_09-14` report)
 33. **Consider whether `partOf` is the right linkage** for overview → PMA dependency, or if `after` + `wants` is sufficient (avoids cascade restarts)
-34. **Check if go-auto-upgrade = null in lars-packages.nix is still needed** (line 21)
+34. ~~**Check if go-auto-upgrade = null in lars-packages.nix is still needed** (line 21)~~ done — re-enabled 2026-08-14 (`flakePkg inputs.go-auto-upgrade`; upstream vendoring fixed `c2722a2`)
 35. **Check if golangci-lint-auto-configure comment-out is still needed** (line 24-26)
 
 ### Deeper PMA Investigation
@@ -205,8 +205,8 @@ When PMA was disabled in `configuration.nix` (prior session), someone also comme
 36. **Reduce PMA discovery workers from 32** — `background cache refresh enabled interval=1m0s workers=32` is a lot of concurrent git operations; reducing to 8-16 would lower memory pressure
 37. **Investimate whether `GOMEMLIMIT=6GiB` is correct** — discovery peaks at 6.3G; GOMEMLIMIT should be below MemoryMax but high enough to not throttle normal GC
 38. **Consider incremental/streaming discovery** instead of scanning all 260 repos at once (upstream PMA change)
-39. **Resolve the go-cqrs-lite/codec/v4 FOD issue** so PMA can run in `mode = "active"` again
-40. **Add PMA mode = "active" Gatus alert** for when the git auto-commit daemon is ready to re-enable
+39. ~~**Resolve the go-cqrs-lite/codec/v4 FOD issue** so PMA can run in `mode = "active"` again~~ done — PMA runs active mode (the auto-git daemon is PMA committing)
+40. ~~**Add PMA mode = "active" Gatus alert** for when the git auto-commit daemon is ready to re-enable~~ done (superseded) — "PMA Daemon Health" `/readyz` check (`9b6590bf`) covers daemon readiness
 
 ### Overview Improvements
 
@@ -225,7 +225,7 @@ When PMA was disabled in `configuration.nix` (prior session), someone also comme
 
 48. **Commit the current uncommitted changes** (3 files modified)
 49. **Archive the prior session status report** (`2026-08-12_13-05_...`)
-50. **Review whether systemd-oomd global config needs tuning** for this homelab workload mix
+50. ~~**Review whether systemd-oomd global config needs tuning** for this homelab workload mix~~ done at `17731861` — threshold raised 50%/20s → 60%/30s (post-reboot activation pending)
 
 ---
 

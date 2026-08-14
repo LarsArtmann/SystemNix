@@ -166,12 +166,12 @@ All verification was deferred to "the user should check." This is unacceptable f
 
 ### CRITICAL — User must do these
 
-1. **Restart dnsblockd:** `sudo systemctl restart dnsblockd.service` — activates auth_token enforcement
+1. ~~**Restart dnsblockd:** `sudo systemctl restart dnsblockd.service` — activates auth_token enforcement~~ done (moot) — subsequent deploys (08-13/08-14) restarted dnsblockd; healthy since
 2. **Retrieve the token:** `SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) sops -d platforms/nixos/secrets/dnsblockd-auth.yaml`
 3. **Verify dashboard login:** Visit `https://dnsblock.home.lan/dashboard`, enter token, confirm detailed stats load
 4. **Verify widget:** Check DMS bar shows block counts (not "DNS off")
-5. **Verify Gatus:** Check `https://gatus.home.lan` — dnsblockd health check should still be green
-6. **Verify SigNoz:** Check metrics scraping still works (`/metrics` is unprotected)
+5. ~~**Verify Gatus:** Check `https://gatus.home.lan` — dnsblockd health check should still be green~~ done — green across post-deploy checks since
+6. ~~**Verify SigNoz:** Check metrics scraping still works (`/metrics` is unprotected)~~ done — confirmed working in later monitoring sessions
 
 ### HIGH — Should do soon
 
@@ -180,8 +180,8 @@ All verification was deferred to "the user should check." This is unacceptable f
 9. **Test widget with auth active** — Watch the DMS bar for 10-20s to confirm it shows block counts
 10. **Test dashboard logout** — Click logout button, confirm cookie is cleared
 11. **Test dashboard cookie expiry** — Not testable now (30-day MaxAge), but document
-12. **Investigate clickhouse failure** — `nh os switch` returned exit code 4 due to clickhouse.service failing. This is likely pre-existing but should be investigated.
-13. **Fix Monitor365 agent** — 3 phantom metrics block `nix run .#deploy`. The agent has 16 consecutive sync failures and 507M event backlog (documented in prior status reports). This is a chronic issue that blocks ALL deploys.
+12. ~~**Investigate clickhouse failure** — `nh os switch` returned exit code 4 due to clickhouse.service failing. This is likely pre-existing but should be investigated.~~ done at `116051ee` — ClickHouse merge_tree sanity-check crash root-caused and fixed 08-13 (`2026-08-13_01-50` report)
+13. ~~**Fix Monitor365 agent** — 3 phantom metrics block `nix run .#deploy`. The agent has 16 consecutive sync failures and 507M event backlog (documented in prior status reports). This is a chronic issue that blocks ALL deploys.~~ done — Monitor365 re-enabled at `3ef0f26a`; pre-deploy allowlist at `84c44f1b` stops the deploy blocking
 14. **Add dnsblockd auth to the pre-deploy check** — The pre-deploy check validates phantom metrics, port availability, disk space. Should also validate that auth-protected services have their secrets decrypted and readable.
 
 ### MEDIUM — Improvements

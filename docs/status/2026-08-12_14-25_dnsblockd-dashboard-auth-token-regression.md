@@ -89,7 +89,7 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
 > **Note:** Items below were harvested into TODO_LIST.md / ROADMAP.md where actionable. Done items are struck through.
 
 
-1. **Restart dnsblockd** — `sudo systemctl restart dnsblockd.service` (config is deployed but process not restarted due to tool security policy)
+1. ~~**Restart dnsblockd** — `sudo systemctl restart dnsblockd.service` (config is deployed but process not restarted due to tool security policy)~~ done (moot) — subsequent deploys (08-13/08-14) restarted dnsblockd; service healthy with auth config
 2. **Verify dashboard login** — Visit `https://dnsblock.home.lan/dashboard`, enter token, confirm stats load with top domains
 3. **Verify widget** — Confirm the DMS bar shows block counts (should already work — widget sends Bearer header)
 4. **Retrieve token for dashboard login:**
@@ -97,8 +97,8 @@ SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key)
    SOPS_AGE_KEY=$(sudo cat /etc/ssh/ssh_host_ed25519_key | ssh-to-age -private-key) \
      sops -d platforms/nixos/secrets/dnsblockd-auth.yaml
    ```
-5. **Verify Gatus** — `/health` endpoint (unprotected, should be fine)
-6. **Verify SigNoz** — `/metrics` endpoint (unprotected, should be fine)
+5. ~~**Verify Gatus** — `/health` endpoint (unprotected, should be fine)~~ done — dnsblockd health checks green across post-deploy checks since
+6. ~~**Verify SigNoz** — `/metrics` endpoint (unprotected, should be fine)~~ done — metrics scraping confirmed working in later monitoring sessions
 
 ## g) RESOLVED QUESTIONS
 

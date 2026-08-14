@@ -141,12 +141,12 @@ auto-commit daemon) so overview could work without re-introducing the
 3. **Simplify `hermes.nix` overlay**: remove the 18 `extraDependencyGroups`
    override since the upstream `full` package already includes them. This
    reduces maintenance surface and avoids future group-name mismatches.
-4. **Audit other imported modules** for `StartLimitBurst` in `serviceConfig`;
+4. ~~**Audit other imported modules** for `StartLimitBurst` in `serviceConfig`;
    at minimum grep the lockfile-pinned upstream modules for the same
-   systemd-261 pitfall.
-5. **Resolve the PMA `go-cqrs-lite/codec/v4` FOD issue** so the git
+   systemd-261 pitfall.~~ done — comprehensive audit 2026-08-14, zero violations (`2026-08-14_09-14` report §a.7)
+5. ~~**Resolve the PMA `go-cqrs-lite/codec/v4` FOD issue** so the git
    auto-commit daemon can be re-enabled. Right now PMA is running only for
-   discovery, which is a half-measure.
+   discovery, which is a half-measure.~~ done — PMA full mode runs (the auto-git daemon committing across sessions IS PMA active mode)
 6. **Update `TODO_LIST.md`** items for Hermes (SSH deploy key, fallback model)
    and verify whether they are still needed.
 7. **Consider an upstream PR to `overview`**: move `StartLimitBurst`/
@@ -155,10 +155,10 @@ auto-commit daemon) so overview could work without re-introducing the
 8. **Add a test or VM test** that asserts `services.overview.enable` fails
    eval when `services.projects-management-automation.enable = false` and
    `daemonSocket` is set, to prevent regression.
-9. **Post-deploy-check**: run `nix run .#post-deploy-check` after the next
-   switch and ensure overview and hermes are in the smoke test set.
-10. **Hermes runtime validation**: check Discord bot presence, cron job
-    registration, and gateway request handling.
+9. ~~**Post-deploy-check**: run `nix run .#post-deploy-check` after the next
+   switch and ensure overview and hermes are in the smoke test set.~~ done — post-deploy-check runs on every deploy (57 checks, 0 failed at the 08-14 hermes deploy)
+10. ~~**Hermes runtime validation**: check Discord bot presence, cron job
+    registration, and gateway request handling.~~ done (process level) 2026-08-14 — gateway, cron scheduler, agent loop verified after `registration_lifecycle` fix; Discord bot presence/end-to-end still untested (TODO_LIST)
 
 ---
 

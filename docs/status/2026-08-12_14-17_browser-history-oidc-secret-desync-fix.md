@@ -139,25 +139,25 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 
 
 ### Critical (do now)
-1. Deploy the reverted config to clear `regenerateSecretsFor = ["browser-history"]` from the running system
-2. Fix `startLimitBurst`/`startLimitIntervalSec` placement in `browser-history.nix` — move to `unitConfig`
-3. Fix the same pattern in `browser-history-oidc-setup` and `browser-history-agent` blocks
-4. Audit ALL service modules for `startLimitBurst`/`startLimitIntervalSec` outside `unitConfig` (systemic bug)
-5. Add an eval-time assertion (`start-limit-audit.nix`) that catches `startLimitBurst`/`startLimitIntervalSec` in `[Service]` section
+1. ~~Deploy the reverted config to clear `regenerateSecretsFor = ["browser-history"]` from the running system~~ done — verified deployed, `nix eval` returns `[ ]` (`2026-08-12_14-59` report §a.3)
+2. ~~Fix `startLimitBurst`/`startLimitIntervalSec` placement in `browser-history.nix` — move to `unitConfig`~~ done at `a941f88d` (top-level `[Unit]` placement, verified in deployed unit)
+3. ~~Fix the same pattern in `browser-history-oidc-setup` and `browser-history-agent` blocks~~ done — upstream `a1b78af` fixed server+agent modules; SystemNix already correct (`2026-08-12_14-59` §a.4)
+4. ~~Audit ALL service modules for `startLimitBurst`/`startLimitIntervalSec` outside `unitConfig` (systemic bug)~~ done — comprehensive audit 2026-08-14, zero violations (`2026-08-14_09-14` report)
+5. **Add an eval-time assertion (`start-limit-audit.nix`) that catches `startLimitBurst`/`startLimitIntervalSec` in `[Service]` section**
 
 ### High priority
 6. Investigate and fix the `no such column: expires_at` session reaper error (upstream browser-history schema migration)
-7. Fix OTel endpoint format: add `http://` prefix to `otelEndpoint` for browser-history
-8. Investigate the 3 phantom metrics (`cloud_sync_consecutive_failures`, `cloud_sync_upload_backlog_size`, `collector_events_collected`)
-9. Investigate Monitor365 outage (API + UI + agent all down)
-10. Investigate Pocket ID SQLITE_BUSY warning
-11. Verify browser-history login works end-to-end (have the user test, or simulate the OAuth2 flow)
-12. Add the 3 phantom metrics to `KNOWN_NEW_METRICS` list if they're legitimately from a not-yet-deployed service, or fix the Gatus config if they're stale
+7. ~~Fix OTel endpoint format: add `http://` prefix to `otelEndpoint` for browser-history~~ done (inverted) — the CORRECT fix for `otlptracegrpc` is a scheme-free `host:port` (`d2138202`); traces export, one benign startup warning remains
+8. ~~Investigate the 3 phantom metrics (`cloud_sync_consecutive_failures`, `cloud_sync_upload_backlog_size`, `collector_events_collected`)~~ done at `84c44f1b` — pre-deploy-check downgrades Monitor365 metrics to warnings when the agent endpoint is down
+9. ~~Investigate Monitor365 outage (API + UI + agent all down)~~ done — Monitor365 re-enabled at `3ef0f26a`, healthy
+10. ~~Investigate Pocket ID SQLITE_BUSY warning~~ done — provision retries + 30s curl timeouts + WAL clearing deployed (`7afab3f8` era; francis fixed by Pocket ID 2.12.0)
+11. **Verify browser-history login works end-to-end (have the user test, or simulate the OAuth2 flow)**
+12. ~~Add the 3 phantom metrics to `KNOWN_NEW_METRICS` list if they're legitimately from a not-yet-deployed service, or fix the Gatus config if they're stale~~ done at `84c44f1b` (Monitor365 allowlist)
 
 ### Medium priority
 13. Consider auto-clearing `regenerateSecretsFor` after a successful provision run (script-level)
 14. Add a pre-deploy warning when `regenerateSecretsFor` is non-empty (assertion or check script)
-15. Investigate the `parse url` OTel error in browser-history more broadly — are other services affected?
+15. ~~Investigate the `parse url` OTel error in browser-history more broadly — are other services affected?~~ done at `d2138202` (browser-history was the only affected service; scheme-free endpoint deployed)
 16. Review the browser-history `RestartSec = lib.mkForce "2min"` — is a 2-minute restart delay appropriate given the start-limit is ignored?
 17. Check if the session reaper error is causing any user-visible issues (sessions not expiring, security risk)
 18. The `body_size=174` on the failed token exchange — could indicate PKCE verifier mismatch in the POST body. Worth capturing the actual request body to confirm secret was the issue, not PKCE
@@ -197,8 +197,8 @@ Post-deploy check flagged: `FAIL Pocket ID — SQLITE_BUSY or panic in recent jo
 46. Monitor365 has been down — check if the watchdog timer circuit breaker is deadlocked
 47. Monitor365 agent metrics not responding — may indicate the agent is crash-looped
 48. The Pocket ID SQLITE_BUSY could indicate the francis SQLite driver needs WAL tuning
-49. 43 stale build sandboxes in `/nix/var/nix/builds` — run cleanup
-50. Root filesystem at 91% — schedule garbage collection
+49. ~~43 stale build sandboxes in `/nix/var/nix/builds` — run cleanup~~ done at `c39b6d50` (daily stale-sandbox cleanup timer)
+50. **Root filesystem at 91% — schedule garbage collection**
 
 ---
 

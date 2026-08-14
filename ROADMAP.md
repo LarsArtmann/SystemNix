@@ -2,7 +2,7 @@
 
 _Long-term direction and raw ideas not yet refined into actionable tasks._
 
-**Updated:** 2026-08-12
+**Updated:** 2026-08-14
 
 For short-term actionable work, see [TODO_LIST.md](./TODO_LIST.md). For current feature status, see [FEATURES.md](./FEATURES.md).
 
@@ -15,10 +15,8 @@ The system has been hardened through multiple crash cycles. The root cause chain
 - **Off-site backup** — no DR backup exists. The Aug 3 corruption event (13 files lost) proves this is not theoretical. Evaluate BorgBackup to Hetzner StorageBox (see `docs/research/hetzner-storagebox-borgbackup.md`). **This is the #1 data loss risk — flagged since 2026-06-25.**
 - **Reduce unsafe shutdowns** — 58+ unsafe shutdowns from WDT resets. This is the ROOT CAUSE of data corruption. Options: UPS, WDT timeout tuning, oomd threshold adjustment, dedicated TLC boot disk
 - **Disk space management** — Root filesystem chronically at 90-93%. BTRFS snapshots hold references preventing GC reclamation. Need snapshot retention tuning or capacity expansion
-- **oomd pressure threshold tuning** — Current 50%/20s killed both nix-daemon (mid-build) and Twenty worker (steady-state). May be too aggressive for a homelab that regularly runs nix builds + Docker + AI workloads. Consider 60%/30s or per-slice config
-- **Docker container memory limits** — Only twenty-worker-1 has `mem_limit`. All other containers are unbounded potential oomd victims. Need systematic `mem_limit` + `memswap_limit` on every container
 - **BTRFS `/data` subvolume migration** — `/data` is BTRFS toplevel (subvolid=5). Migration to `@data` would enable separate CoW semantics
-- **Crash-loop circuit breaker** — No system-wide mechanism to detect and bound crash loops before they cause I/O pressure → WDT crash. The browser-history 592-restart and Twenty 235-restart loops both went undetected
+- **Crash-loop circuit breaker** — No system-wide mechanism to detect and bound crash loops before they cause I/O pressure → WDT crash. The browser-history 592-restart and Twenty 235-restart loops both went undetected (crash-loop DETECTION metrics now live — auto-remediation/reset-failed is the remaining gap)
 - **Provision Raspberry Pi 3** — hardware needed for DNS failover cluster (VRRP)
 - **Auditd enablement** — blocked on NixOS 26.05 bug #483085
 - **GPUActive memory pressure** — `system-health.nix` collects GPUActive metrics and alerts at 60G threshold. TTM `page_pool_size` reduced from 112 GiB to 24 GiB. Remaining: investigate lowering `ttmPagesLimit` and `GPUReclaim` tuning
@@ -38,7 +36,7 @@ The system has been hardened through multiple crash cycles. The root cause chain
 ## Theme 3: Desktop Experience
 
 - **Niri blur** — Desktop Renaissance v3 added terminal transparency but niri's HM module lacks a `blur {}` option. Transparent terminals without blur are hard to read. Options: raw KDL config, wait for niri-flake, or drop transparency
-- **I/O throttling for dev builds** — BFQ I/O scheduling deployed (7-tier system, `ioTier` helpers, 14+ services classified). Crush wrapped with ionice/nice. Remaining: wrap dev commands (`go`, `cargo`, `pnpm`) with `IOSchedulingClass=idle` or `IOWeight` limits
+- **Smart-audio per-app routing** — current daemon moves ALL audio on focus change (default sink). True per-app routing (matching PipeWire stream PIDs to niri window PIDs) would only move the focused window's audio. Also: manual-override cooldown, DMS output widget
 - **ZFS external drive access** — Connected 2x16TB external ZFS mirror pool (`datapool`, only 21GB used — disposable Docker images). VFIO PCIe passthrough PROVEN WORKING in NixOS VM. SATA pool spun down. Native ZFS on host kernel 7.1 still untested. Decision needed: native ZFS, permanent VM, or reformat to BTRFS (pool is 99.86% empty)
 - **SearXNG streaming results** — User wants progressive rendering (stream results as engines respond), not the current "wait for all engines" model. Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy `flush_buffers -1`
 - **Darwin Home Manager parity** — macOS HM config is minimal (no terminal, editor, theme parity). Blocked by 256GB disk constraint
@@ -56,12 +54,9 @@ The system has been hardened through multiple crash cycles. The root cause chain
 - **Extract dnsblockd** — ~930 lines of production Go embedded in the Nix config. Candidate for standalone repo (see `docs/planning/2026-05-03_02-52_extract-dnsblockd-from-systemnix.md`)
 - **Typed NixOS module options** — many modules use `mkEnableOption` only. Add typed options for ports, paths, timeouts → enables validation and testing
 - **dnsblockd category enum** — categories are stringly-typed (10 hardcoded strings). Define Go enum type
-- **StartLimitBurst eval-time audit** — Create `start-limit-audit.nix` that catches `StartLimitBurst`/`StartLimitIntervalSec` in `serviceConfig` (silently ignored by systemd 261+). The 2026-08-11 WDT crash was caused by this pattern in browser-history.nix
 - **Deploy pipeline reliability** — PMA auto-commit daemon runs unscoped `nix flake update` which triggers the recurring nixpkgs tarball regression. 4-layer defense deployed. Registry override needs reboot to activate
 - **Regression test coverage** — VM test infrastructure exists (`tests/`). Expand beyond current 11 tests to cover: DynamicUser + sops mismatch, deploy.sh start-limit reset, `writeShellApplication` pipefail patterns, StartLimitBurst placement audit
-- **vendorHash drift detection** — Systemic issue: nixpkgs updates break Go vendorHashes across 8+ repos. `nix flake check` does NOT catch FOD mismatches. Consider CI matrix, batch script, or pre-commit hook
-- **SigNoz dashboard v1→v2 migration** — 5 dashboard JSONs in v1 flat format, POSTed to v2 API (non-fatal warnings). Perses v2 schema requires rewriting `spec.display`, `spec.layouts`, `spec.panels`
-- **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is hand-maintained (only 4 services). Generate from Nix config instead
+- **Unified readiness gates** — `mkOidcGate`/`mkDnsGate` cover OIDC + DNS probing; a generalized `mkReadinessGate { type = "http"|"dns"|"tcp" }` would also cover DiscordSync's external-HTTP probe and service-to-service health probes
 
 ---
 
@@ -71,8 +66,8 @@ Items that benefit the broader Nix ecosystem:
 
 - **nixpkgs PRs**: `aw-watcher-utilization` poetry-core migration, `valkey`/`aiocache` test fixes, `taskwarrior3` build flags, Kitty GC resilience patch, KeePassXC Chromium manifests
 - **Home Manager PRs**: ActivityWatch Wayland watcher deps, ActivityWatch theme option, Darwin user definition requirement (#6036)
-- **Third-party**: `jscpd` lockfile publishing, XRT boost 1.87+ compat for `nix-amd-npu`, direnv caching pattern (fish-native mtime gate, GC root optimization)
-- **LarsArtmann apps**: dnsblockd OTEL cardinality leak, Monitor365 DuckDB pool deadlock root cause, DiscordSync chattr ExecStartPre, PMA daemon broken flake.lock commits, file-and-image-renamer input pinning, Hermes directory auto-creation, browser-history `CheckpointStore` + `modernc.org/sqlite` DSN audit, errorfamily logger flush, go-auto-upgrade `charm.land` vendoring fix
+- **Third-party**: `jscpd` lockfile publishing, XRT boost 1.87+ compat for `nix-amd-npu`, direnv caching pattern (fish-native mtime gate, GC root optimization), wf-recorder FFmpeg 7 compat, hermes-agent `py-modules` fix
+- **LarsArtmann apps**: dnsblockd OTEL cardinality leak, Monitor365 DuckDB pool deadlock root cause, DiscordSync chattr ExecStartPre, PMA daemon broken flake.lock commits, Hermes directory auto-creation, browser-history `CheckpointStore` + `expires_at` reaper + registration-lock release, cqrs-htmx import-path gating, BuildFlow pre-commit devShell binaries, picoclaw modernc bump, golangci-lint-auto-configure vendoring
 
 See [TODO_LIST.md](./TODO_LIST.md) Priority 6 for detailed task breakdowns.
 

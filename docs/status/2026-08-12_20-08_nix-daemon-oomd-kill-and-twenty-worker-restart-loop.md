@@ -147,32 +147,32 @@ The current oomd config (`boot.nix`): `DefaultMemoryPressureLimit = 50%`, `Defau
 
 
 ### Critical (blocks all Nix operations)
-1. **Restart nix-daemon** — `sudo systemctl reset-failed nix-daemon.service && sudo systemctl start nix-daemon.service`
-2. **Run `nix flake check --no-build`** — verify all changes from this session eval cleanly
-3. **Deploy** — `nix run .#deploy` to apply nix-daemon oomd exemption, Gatus monitoring, and Twenty worker mem_limit
-4. **Verify Twenty worker stops crash-looping** after deploy — check `docker inspect twenty-worker-1 --format '{{.RestartCount}}'` is stable
+1. ~~**Restart nix-daemon** — `sudo systemctl reset-failed nix-daemon.service && sudo systemctl start nix-daemon.service`~~ done — recovered; nix operations working since
+2. ~~**Run `nix flake check --no-build`** — verify all changes from this session eval cleanly~~ done — passes on every deploy since
+3. ~~**Deploy** — `nix run .#deploy` to apply nix-daemon oomd exemption, Gatus monitoring, and Twenty worker mem_limit~~ done at `505ac4de` (deployed via subsequent sessions)
+4. ~~**Verify Twenty worker stops crash-looping** after deploy — check `docker inspect twenty-worker-1 --format '{{.RestartCount}}'` is stable~~ done (pending post-reboot confirmation) — mem limits live, oomd raised to 60%/30s (`17731861`), docker restart monitoring live (`9b6590bf`)
 
 ### Monitoring Gaps
-5. Add `system_oomd_kills_total` metric — textfile collector grepping `journalctl -u systemd-oomd --grep "killed"` per unit
-6. Add Docker container restart count collector — `docker inspect --format '{{.RestartCount}}'` for all containers → Prometheus metrics
-7. Add Gatus alert on Docker container restart count > threshold (e.g., > 10 in 1h)
-8. Add Gatus alert for `system_oomd_kills_total` increasing (oomd killed ANYTHING)
-9. Add `mnfst-manifest-1` health monitoring — it's currently `(unhealthy)` and nobody noticed
-10. Consider a Gatus check for nix-daemon socket connectivity (not just metrics-based liveness)
+5. ~~Add `system_oomd_kills_total` metric — textfile collector grepping `journalctl -u systemd-oomd --grep "killed"` per unit~~ done at `9b6590bf` (`system_oomd_kills_total`/`_recent`/`_alert`; grep pattern verified live: `"Marked.*for killing"`)
+6. ~~Add Docker container restart count collector — `docker inspect --format '{{.RestartCount}}'` for all containers → Prometheus metrics~~ done at `9b6590bf`
+7. ~~Add Gatus alert on Docker container restart count > threshold (e.g., > 10 in 1h)~~ done at `9b6590bf` ("Docker Container Restarts" alert)
+8. ~~Add Gatus alert for `system_oomd_kills_total` increasing (oomd killed ANYTHING)~~ done at `9b6590bf` ("OOMD Kills" alert)
+9. **Add `mnfst-manifest-1` health monitoring — it's currently `(unhealthy)` and nobody noticed**
+10. **Consider a Gatus check for nix-daemon socket connectivity (not just metrics-based liveness)**
 
 ### Docker Memory Limits
-11. Add `mem_limit` + `memswap_limit` to twenty-server-1 (529MB, #2 consumer)
-12. Add `mem_limit` + `memswap_limit` to twenty-db-1 (PostgreSQL — should have a defined limit)
-13. Add `mem_limit` + `memswap_limit` to twenty-redis-1
-14. Add `mem_limit` + `memswap_limit` to mnfst-manifest-1
-15. Add `mem_limit` + `memswap_limit` to mnfst-postgres-1
-16. Add `mem_limit` + `memswap_limit` to dozzle
-17. Audit ALL Docker services in SystemNix for missing container-level memory limits
-18. Consider adding `mem_limit` support to `mkDockerServiceFactory` as a per-container option
+11. ~~Add `mem_limit` + `memswap_limit` to twenty-server-1 (529MB, #2 consumer)~~ done at `8ad493c9` (1g + 768M heap)
+12. ~~Add `mem_limit` + `memswap_limit` to twenty-db-1 (PostgreSQL — should have a defined limit)~~ done (2g)
+13. ~~Add `mem_limit` + `memswap_limit` to twenty-redis-1~~ done (256m)
+14. ~~Add `mem_limit` + `memswap_limit` to mnfst-manifest-1~~ done at `7afab3f8` (1g + memswap 1g)
+15. ~~Add `mem_limit` + `memswap_limit` to mnfst-postgres-1~~ done at `7afab3f8` (1g + 1g)
+16. ~~Add `mem_limit` + `memswap_limit` to dozzle~~ done at `7afab3f8` (256m + log rotation)
+17. ~~Audit ALL Docker services in SystemNix for missing container-level memory limits~~ done — all Docker containers on evo-x2 bounded (`2026-08-14_09-14` report)
+18. **Consider adding `mem_limit` support to `mkDockerServiceFactory` as a per-container option**
 
 ### oomd / Memory Pressure
-19. Evaluate raising `DefaultMemoryPressureLimit` from 50% to 60-70% — builds are legitimate burst pressure
-20. Evaluate raising `DefaultMemoryPressureDurationSec` from 20s to 30s — give bursts time to self-resolve
+19. ~~Evaluate raising `DefaultMemoryPressureLimit` from 50% to 60-70% — builds are legitimate burst pressure~~ done at `17731861` (60%)
+20. ~~Evaluate raising `DefaultMemoryPressureDurationSec` from 20s to 30s — give bursts time to self-resolve~~ done at `17731861` (30s; activation pending reboot)
 21. Audit ALL services under `/system.slice` for `ManagedOOMPreference` — which ones should be exempt vs killable?
 22. Consider per-slice oomd config instead of system-wide — separate Docker containers into their own slice with different pressure thresholds
 23. Investigate `ManagedOOMPreference=omit` via Docker label or runtime config for critical containers

@@ -69,11 +69,11 @@
 
 ### Immediate (this week)
 
-1. Deploy the fixed `jscpd` closure to `evo-x2` via `nix run .#deploy`.
+1. ~~Deploy the fixed `jscpd` closure to `evo-x2` via `nix run .#deploy`.~~ done — deployed via subsequent deploys; builds clean (`72115c62`)
 2. Run `jscpd` against `SystemNix` sources to confirm the tool still produces meaningful output.
 3. Investigate `cache.home.lan` reachability; determine if it is a transient network issue or a missing VPN/tunnel.
 4. Run `nix flake check --all-systems` (or on a Darwin host) to confirm the fix does not break aarch64-darwin.
-5. Update `TODO_LIST.md` to mark any `jscpd` lockfile task as completed or closed.
+5. ~~Update `TODO_LIST.md` to mark any `jscpd` lockfile task as completed or closed.~~ done — no jscpd lockfile item remained after the 2026-08-12 harvest + 2026-08-14 audit (upstream-lockfile PR remains in TODO Priority 6)
 6. Add a CI step that builds `jscpd` (and any other custom Node packages) on PRs.
 7. Audit all other vendored pnpm lockfiles for similar package-name typos (`pnpm-*` vs `npm-*`).
 8. Consider pinning `pnpm` version more explicitly in `jscpd.nix` to avoid lockfile-format drift.

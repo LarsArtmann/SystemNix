@@ -80,16 +80,16 @@
 
 ### Immediate (this session's unfinished work)
 
-1. **Verify SigNoz recovered** — Check `signoz.service` and `signoz-collector.service` status after ClickHouse catch-up completes. Restart if needed.
-2. **Investigate browser-history-agent** — Was `failed` in original deploy output. May need attention.
-3. **Investigate Monitor365 down** — Port 9191 not responding. Pre-existing but uninvestigated.
-4. **Revert signoz.nix formatting churn** — `git checkout HEAD~2 -- modules/nixos/services/signoz.nix` + re-apply only the `background_pool_size` removal (delete the line) + AGENTS.md addition. OR accept the new baseline.
-5. **Annotate the 2026-08-11 thread tuning report** — Mark `background_pool_size=2` as REVERTED with a pointer to this report.
+1. ~~**Verify SigNoz recovered** — Check `signoz.service` and `signoz-collector.service` status after ClickHouse catch-up completes. Restart if needed.~~ done — SigNoz healthy in subsequent sessions (alert rules + dashboards serving)
+2. ~~**Investigate browser-history-agent** — Was `failed` in original deploy output. May need attention.~~ done — recovered after the drain-timeout fix; agent timer active
+3. ~~**Investigate Monitor365 down** — Port 9191 not responding. Pre-existing but uninvestigated.~~ done — Monitor365 re-enabled at `3ef0f26a`
+4. ~~**Revert signoz.nix formatting churn** — `git checkout HEAD~2 -- modules/nixos/services/signoz.nix` + re-apply only the `background_pool_size` removal (delete the line) + AGENTS.md addition. OR accept the new baseline.~~ done — accepted as baseline (alejandra pre-commit makes the old style unreachable; `2026-08-13_05-48` §b.1)
+5. ~~**Annotate the 2026-08-11 thread tuning report** — Mark `background_pool_size=2` as REVERTED with a pointer to this report.~~ done (`2026-08-13_05-48` §a.9 — ⚠ ANNOTATION added to the archived report)
 
 ### ClickHouse hardening
 
-6. **Add eval-time assertion** — Warn when `background_pool_size < 16` in `signoz.nix` without merge_tree overrides.
-7. **Add Gatus health check for ClickHouse** — HTTP ping to `:8123/ping` with alert on failure. The 14h outage had NO alerting.
+6. ~~**Add eval-time assertion** — Warn when `background_pool_size < 16` in `signoz.nix` without merge_tree overrides.~~ done (`2026-08-13_05-48` §a.6 — assertion in `signoz.nix`)
+7. ~~**Add Gatus health check for ClickHouse** — HTTP ping to `:8123/ping` with alert on failure. The 14h outage had NO alerting.~~ done at `43e11db3` (`mkHttpCheck` + Discord alert)
 8. **Document all `number_of_free_entries_in_pool_*` settings** — Query `system.merge_tree_settings` to enumerate every pool-dependent sanity check for future reference.
 9. **Add ClickHouse `Ready for connections` log monitoring** — Gatus/textfile metric that tracks whether ClickHouse successfully started, not just whether the process is alive.
 10. **Consider ClickHouse backup before future SigNoz schema migrations** — TODO_LIST line 53, still not implemented.
@@ -102,21 +102,21 @@
 
 ### SigNoz observability
 
-14. **Verify SigNoz alert rules still work** — After 14h ClickHouse downtime, alert rules may be stale or in error state.
+14. ~~**Verify SigNoz alert rules still work** — After 14h ClickHouse downtime, alert rules may be stale or in error state.~~ done — 23 rules verified provisioned and evaluating
 15. **Check SigNoz data gaps** — 14h of traces/logs/metrics may be missing. Assess impact.
 16. **Add SigNoz self-monitoring** — Gatus check for SigNoz query service health (not just ClickHouse).
 
 ### System health (from post-deploy failures)
 
-17. **Fix `overview.home.lan` 503** — Post-deploy smoke test showed Homepage or similar returning 503.
-18. **Investigate `signoz.home.lan` 404** — Auth gateway health check showed unexpected 404.
+17. ~~**Fix `overview.home.lan` 503** — Post-deploy smoke test showed Homepage or similar returning 503.~~ done at `008b4c8b` (fail-fast + PMA re-enable; Overview watchdog from earlier work)
+18. ~~**Investigate `signoz.home.lan` 404** — Auth gateway health check showed unexpected 404.~~ done — resolved (SigNoz moved to `protectedVHost` with LAN bypass; auth gateway health checks green in later post-deploy runs)
 19. **Root filesystem at 91%** — Pre-deploy warning. Needs garbage collection or store optimization.
-20. **84 stale build sandboxes** — Pre-deploy warning. Run `nix-build-cleanup`.
+20. ~~**84 stale build sandboxes** — Pre-deploy warning. Run `nix-build-cleanup`.~~ done at `c39b6d50` (daily stale-sandbox timer)
 
 ### Documentation
 
-21. **Update TODO_LIST** — Add ClickHouse health monitoring task.
-22. **Update FEATURES.md** — Verify SigNoz feature status after recovery.
+21. ~~**Update TODO_LIST** — Add ClickHouse health monitoring task.~~ done — ClickHouse check deployed; TODO updated
+22. ~~**Update FEATURES.md** — Verify SigNoz feature status after recovery.~~ done — SigNoz ✅ with ClickHouse Gatus check noted (2026-08-14 audit)
 23. **Add ClickHouse config validation to the 5-layer prevention pipeline** — Document in AGENTS.md prevention layers table.
 
 ---

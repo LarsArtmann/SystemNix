@@ -138,47 +138,47 @@ However, browser-history server **still cannot start** (deeper upstream bug: mis
 
 ### Immediate (do NOW)
 
-1. **Disable browser-history server + agent entirely** — It can't start (projection drain timeout). Bounded crash loop still generates I/O on 91%-full disk.
-2. **Deploy smartd + hdparm changes** — Already committed, just needs `nh os switch .`
-3. **Verify disk usage after deploy** — Builds add paths; check `df -h` doesn't increase
+1. ~~**Disable browser-history server + agent entirely** — It can't start (projection drain timeout). Bounded crash loop still generates I/O on 91%-full disk.~~ done (superseded) — server recovered via drain-timeout fix `73aef2b`, operational as of `2026-08-12_10-48` report
+2. ~~**Deploy smartd + hdparm changes** — Already committed, just needs `nh os switch .`~~ done at `d57c1210` (deployed; verified in running smartd, 10-48 report)
+3. ~~**Verify disk usage after deploy** — Builds add paths; check `df -h` doesn't increase~~ done (verified 91→93% in 10-48 report; chronic fill now tracked as P0 TODO + Gatus "Root Disk Usage" alert)
 4. **Free disk space** — 91% on QLC NAND. Delete old BTRFS snapshots: `sudo btrbk prune` or manual `btrfs subvolume delete`
 
 ### Short-term (today)
 
-5. Fix Monitor365 `wireguard-collector` Rust build (upstream Cargo workspace issue)
-6. Fix DiscordSync vendorHash (`vendorHash = ""` → build → paste hash)
-7. Rebuild PMA vendorHash with SSH/GOPRIVATE access
-8. Re-enable Monitor365, DiscordSync, PMA after builds fixed
-9. Push browser-history vendorHash fix to GitHub
-10. Revert flake.lock browser-history from local path to GitHub URL
-11. Write `CheckpointStore` upstream fix for browser-history
-12. Re-enable browser-history after CheckpointStore fix
-13. Fix OTel URL parse warning (`http://` scheme for gRPC endpoint)
-14. Fix `niri.prom` bare `0` lines (invalid Prometheus format)
-15. Add `node_textfile_scrape_error` Gatus health check
-16. Add I/O PSI Gatus health check
-17. Add disk usage Gatus health check (alert at 85%)
+5. ~~Fix Monitor365 `wireguard-collector` Rust build (upstream Cargo workspace issue)~~ done — Monitor365 re-enabled at `3ef0f26a`
+6. ~~Fix DiscordSync vendorHash (`vendorHash = ""` → build → paste hash)~~ done — DiscordSync re-enabled (flake bump `992a275a` era)
+7. ~~Rebuild PMA vendorHash with SSH/GOPRIVATE access~~ done — PMA re-enabled at `3ef0f26a` (passive mode), full mode later
+8. ~~Re-enable Monitor365, DiscordSync, PMA after builds fixed~~ done at `3ef0f26a`
+9. ~~Push browser-history vendorHash fix to GitHub~~ done — pushed as `22a1247`
+10. ~~Revert flake.lock browser-history from local path to GitHub URL~~ done (flake.lock clean `type: github` per 10-48 report)
+11. **Write `CheckpointStore` upstream fix for browser-history**
+12. ~~Re-enable browser-history after CheckpointStore fix~~ done (superseded) — server recovered via drain-timeout raise `73aef2b` (CheckpointStore still open, TODO_LIST)
+13. ~~Fix OTel URL parse warning (`http://` scheme for gRPC endpoint)~~ done at `d2138202` (gRPC exporter needs scheme-free `host:port`; one benign startup parse warning remains)
+14. **Fix `niri.prom` bare `0` lines (invalid Prometheus format)**
+15. ~~Add `node_textfile_scrape_error` Gatus health check~~ done at `9b6590bf` ("Textfile Collector Health")
+16. ~~Add I/O PSI Gatus health check~~ done — already existed ("I/O Stall Rate"), verified `9b6590bf` session
+17. ~~Add disk usage Gatus health check (alert at 85%)~~ done at `9b6590bf` ("Root Disk Usage", `system_disk_usage_percent`)
 
 ### Medium-term (this week)
 
-18. Add crash-loop detector metric to system-health (restarts per 10-min window)
-19. Add eval-time assertion: reject `StartLimitBurst` in `serviceConfig` (enforce `[Unit]` placement)
-20. Add `systemd-analyze verify` start-limit feasibility check to pre-deploy-check.sh
-21. Add `nix build --dry-run` to pre-deploy-check.sh (catch build failures before wasting time)
-22. Add Prometheus textfile validity check to pre-deploy-check.sh
-23. Audit all LarsArtmann Go projects for `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch
-24. Fix `errorfamily.HandleError` to flush logger before `os.Exit` (upstream library)
+18. ~~Add crash-loop detector metric to system-health (restarts per 10-min window)~~ done at `9b6590bf` (`system_service_crash_loop` + aggregate, Gatus alert)
+19. **Add eval-time assertion: reject `StartLimitBurst` in `serviceConfig` (enforce `[Unit]` placement)**
+20. **Add `systemd-analyze verify` start-limit feasibility check to pre-deploy-check.sh**
+21. ~~Add `nix build --dry-run` to pre-deploy-check.sh (catch build failures before wasting time)~~ done at `7afab3f8` (check #11: vendorHash FOD dry-run for 6 local Go packages)
+22. **Add Prometheus textfile validity check to pre-deploy-check.sh**
+23. ~~Audit all LarsArtmann Go projects for `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch~~ done — cross-repo audit completed 2026-08-14 (`5b9f596a` era; CreditReformBilanzampel + Kernovia fixed, 5 repos verified clean)
+24. ~~Fix `errorfamily.HandleError` to flush logger before `os.Exit` (upstream library)~~ done — premise corrected; browser-history call sites now pass `HandleConfig.Logger` (`93f38bd4` era, 12-53 report)
 25. Consider dedicated TLC boot disk (user is evaluating)
 26. Consider moving `/nix` to separate physical device
 27. Add WDT reset counter metric (reboots per day)
 28. Add system generation age metric (alert if >7 days old)
 29. Create "system crashed" runbook (step-by-step diagnostic procedure)
-30. Review BFQ I/O tier assignments for all services
+30. ~~Review BFQ I/O tier assignments for all services~~ done at `a62c57d4` (ioTier conversion + `verify-io-tiers.sh` flake app)
 31. Consider `panic=10` kernel parameter for faster recovery than WDT 60s
 32. Review sp5100-tco heartbeat (60s) — consider 120s for build-heavy workloads
 33. Add `ConditionPathExists` or health-gate to browser-history-agent (only start if server healthy)
 34. Review BTRFS balance schedule — metadata ENOSPC could recur with 91% fullness
-35. Add vendorHash staleness detection to pre-deploy-check.sh
+35. ~~Add vendorHash staleness detection to pre-deploy-check.sh~~ done at `7afab3f8` (check #11)
 
 ### Long-term (this month)
 

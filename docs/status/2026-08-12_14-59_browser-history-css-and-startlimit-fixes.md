@@ -138,10 +138,10 @@
 ### Immediate (this session context)
 1. **User hard-refreshes** `https://history.home.lan/register` and confirms page is styled ✓
 2. **User tests OAuth2 login** — click "Pocket ID", authenticate, confirm redirect + dashboard
-3. **Deploy OTel + StartLimit fixes** — `nh os switch .` (will cause ~4 min browser-history downtime)
-4. **Verify OTel traces export** — check SigNoz for browser-history traces after deploy
-5. **Verify StartLimit** — check deployed unit file: `cat /etc/systemd/system/browser-history.service | grep -A2 StartLimit` should show them in `[Unit]` section, NOT `[Service]`
-6. **Verify no `Unknown key 'StartLimitIntervalSec'` warning** in journalctl after deploy
+3. ~~**Deploy OTel + StartLimit fixes** — `nh os switch .` (will cause ~4 min browser-history downtime)~~ done at `d2138202` (deployed via subsequent deploys)
+4. ~~**Verify OTel traces export** — check SigNoz for browser-history traces after deploy~~ done — scheme-free endpoint exports traces; one benign startup parse warning remains (`2026-08-13_05-48` report)
+5. ~~**Verify StartLimit** — check deployed unit file: `cat /etc/systemd/system/browser-history.service | grep -A2 StartLimit` should show them in `[Unit]` section, NOT `[Service]`~~ done — verified in deployed unit (`2026-08-12_10-20` §a.2)
+6. ~~**Verify no `Unknown key 'StartLimitIntervalSec'` warning** in journalctl after deploy~~ done — upstream fix `a1b78af` + SystemNix verified clean
 
 ### Short-term (browser-history upstream)
 7. **Add CSS freshness CI guard** — in `apps.ci` or as a pre-commit hook: run `build-css.sh`, check `git diff --exit-code api/static/styles.css`
@@ -151,13 +151,13 @@
 11. **Add `apps.ci` CSS check** — the CI app runs templ generate + build + vet + test + lint but NOT CSS rebuild
 
 ### Short-term (SystemNix)
-12. **Fix 3 phantom metrics** — `cloud_sync_consecutive_failures`, `cloud_sync_upload_backlog_size`, `collector_events_collected` — either fix emitting services or add to `KNOWN_NEW_METRICS`
-13. **Fix clickhouse** — `clickhouse.service` is in failed state, blocking pre-deploy-check
-14. **Audit ALL service modules** for StartLimit placement bug: `grep -rn 'startLimitBurst\|startLimitIntervalSec' modules/nixos/services/` — any result NOT inside `unitConfig` or top-level NixOS options is a bug
+12. ~~**Fix 3 phantom metrics** — `cloud_sync_consecutive_failures`, `cloud_sync_upload_backlog_size`, `collector_events_collected` — either fix emitting services or add to `KNOWN_NEW_METRICS`~~ done at `84c44f1b` (pre-deploy Monitor365 allowlist)
+13. ~~**Fix clickhouse** — `clickhouse.service` is in failed state, blocking pre-deploy-check~~ done at `116051ee` (merge_tree sanity-check fix, `2026-08-13_01-50` report)
+14. ~~**Audit ALL service modules** for StartLimit placement bug: `grep -rn 'startLimitBurst\|startLimitIntervalSec' modules/nixos/services/` — any result NOT inside `unitConfig` or top-level NixOS options is a bug~~ done — comprehensive audit 2026-08-14, zero violations (`2026-08-14_09-14` report)
 15. **Add DNS health check to Gatus** — alert when `127.0.0.1:53` stops responding
-16. **Deploy pre-deploy-check revert** — the running system has the temporary bypass
+16. ~~**Deploy pre-deploy-check revert** — the running system has the temporary bypass~~ done — file reverted and deployed via subsequent deploys
 17. **Add browser-history startup health note to AGENTS.md** — document the ~4 min projection drain delay so future deploys aren't surprising
-18. **Commit SystemNix changes** — `flake.lock` update + `browser-history.nix` OTel fix are uncommitted
+18. ~~**Commit SystemNix changes** — `flake.lock` update + `browser-history.nix` OTel fix are uncommitted~~ done — swept by auto-git (`bb998e8d` era)
 
 ### Medium-term
 19. **Consider browser-history deploy strategy** — health-gated rolling deploy or blue-green to avoid 4-min outage
@@ -174,7 +174,7 @@
 30. **Review browser-history startup sequence** — can `OAuth2 providers configured` log appear AFTER `server starting` to avoid the confusing gap?
 
 ### Lower priority
-31. **Clean up stale build sandboxes** — 43 in `/nix/var/nix/builds`
+31. ~~**Clean up stale build sandboxes** — 43 in `/nix/var/nix/builds`~~ done at `c39b6d50` (daily cleanup timer)
 32. **Review Monitor365 metrics endpoint** — port 9191 not responding (skipped in pre-deploy-check)
 33. **Consider sops secret rotation monitoring** for browser-history agent token
 34. **Review whether `LOG_LEVEL=debug` is appropriate for production** — currently set in browser-history serviceConfig
@@ -188,7 +188,7 @@
 42. **Add a pre-deploy warning (not block) for services with known long startup times**
 43. **Review the `OnFailure` alert routing for browser-history** — ensure failures are surfaced to Discord
 44. **Consider a Gatus check for browser-history startup time** — alert if the service takes >5 min to become healthy after restart
-45. **Review the `GOMEMLIMIT=384MiB` setting** — is this appropriate given the 512M MemoryMax?
+45. ~~**Review the `GOMEMLIMIT=384MiB` setting** — is this appropriate given the 512M MemoryMax?~~ done — 384MiB = 75% of 512M MemoryMax, matches the established policy (SigNoz collector's off-policy 384MiB-on-1G was the actual anomaly, normalized to 768MiB)
 46. **Audit all Caddy vHosts for missing CSP headers** — browser-history sets its own CSP via Go middleware, but other services may not
 47. **Consider adding `Cache-Control: must-revalidate` for static assets** — the current `no-cache` may cause unnecessary re-fetches
 48. **Review whether browser-history needs `MemoryMax` tuning** — 512M with 4-min startup suggests memory pressure during projection replay
