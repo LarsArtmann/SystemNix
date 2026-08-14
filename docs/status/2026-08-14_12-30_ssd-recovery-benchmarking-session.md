@@ -268,20 +268,51 @@ ext4 sequential write was 136 MB/s — 2.5x slower than btrfs (342 MB/s) on iden
 
 Key finding: ext4 O_DIRECT (159 MB/s) matches fdatasync (155 MB/s). The speed ceiling is not the page cache — it's the filesystem's write path itself.
 
-#### Test 2: Write Cache State
+#### Test 2: Write Cache State — CRITICAL FINDING (Corrected)
 
+**Initial (wrong) assessment:** "Both drives report write-through cache — the USB enclosure doesn't report a write-back cache to the kernel. Every write must complete to NAND flash before the controller acknowledges it. No buffering at the hardware level."
+
+**Corrected assessment after deeper investigation:**
+
+The kernel reports `write_cache = write through` for both drives:
 ```
 /sys/block/sdb/queue/write_cache = write through
 /sys/block/sdc/queue/write_cache = write through
 ```
 
-Both drives report **write-through cache** — the USB enclosure doesn't report a write-back cache to the kernel. Every write must complete to NAND flash before the controller acknowledges it. No hardware write buffering.
-
-dmesg confirms:
+dmesg shows why:
 ```
 [sdb] No Caching mode page found
 [sdb] Assuming drive cache: write through
 ```
+
+**But `hdparm -I` (direct ATA query through SAT) reveals the SSD actually has write-back cache:**
+```
+/dev/sdb:
+   *    Write cache
+   *    Mandatory FLUSH_CACHE
+   *    FLUSH_CACHE_EXT
+
+/dev/sdc:
+   *    Write cache
+   *    Mandatory FLUSH_CACHE
+   *    FLUSH_CACHE_EXT
+```
+
+And `hdparm -W` confirms write cache is **enabled** at the drive level:
+```
+/dev/sdb: write-caching = 1 (on)
+/dev/sdc: write-caching = 1 (on)
+```
+
+**The USB bridge chip (not the SSD) is the problem.** The bridge doesn't expose a SCSI Caching mode page to the kernel, so the kernel falls back to `write through`. But the SSD behind the bridge has its own DRAM write cache enabled and **does** buffer and reorder writes. The kernel doesn't know this.
+
+Attempts to fix this:
+- `hdparm -W1 /dev/sdb` — succeeds at the ATA level (`write-caching = 1 (on)`) but the kernel's `write_cache` sysfs stays `write through` (the bridge doesn't propagate the state change to the SCSI layer)
+- `echo write_back > /sys/block/sdb/queue/write_cache` — fails (permission denied even as root; the kernel won't override the bridge's reported cache mode)
+- `queue/fua = 0` on both drives — the kernel does not believe the device supports FUA (Force Unit Access), meaning write barriers are not being sent
+
+**This is a data safety issue, not just a performance issue.** See Section 8.6.
 
 #### Test 3: Block Size Sweep
 
@@ -294,7 +325,7 @@ ext4's default journal mode is `ordered data mode`:
 2. Writes a metadata journal entry
 3. Commits the journal
 
-This means **every write goes to flash twice**: once for data, once for the journal metadata. On a write-through cache device with no write buffering, this double-write penalty is fully exposed.
+This means **every write goes to flash twice**: once for data, once for the journal metadata. With the kernel believing the cache is write-through (no reordering), it doesn't send explicit flush/barrier commands between these steps — it assumes ordered writes are preserved. The double-write penalty is fully exposed.
 
 btrfs doesn't have this problem because:
 - btrfs uses **copy-on-write** — metadata is written alongside data in the same flush, not as a separate journal pass
@@ -313,6 +344,75 @@ btrfs doesn't have this problem because:
 ### 8.5 Verification
 
 The O_DIRECT test confirms the diagnosis: ext4 O_DIRECT (159 MB/s) is the same as fdatasync (155 MB/s). If the journal were not the bottleneck, O_DIRECT would be faster (it bypasses the journal). The fact that both are ~155 MB/s proves the journal double-write is the ceiling.
+
+### 8.6 Data Safety Implications of the Write Cache Mismatch
+
+**This is the most important finding of the session.** The kernel and the SSD disagree about write cache state:
+
+| Layer | What it believes | Reality |
+|---|---|---|
+| **Kernel** (`/sys/block/sdX/queue/write_cache`) | `write through` — no reordering, no flush needed | Wrong |
+| **Kernel** (`/sys/block/sdX/queue/fua`) | `0` — device doesn't support FUA/barriers | Wrong |
+| **SSD** (`hdparm -W`) | Write cache **enabled** (on) | Correct |
+| **SSD** (`hdparm -I`) | Has `Write cache`, `FLUSH_CACHE`, `FLUSH_CACHE_EXT` | Correct |
+
+The USB bridge chip (reporting as `USB3.0 DISK01/DISK02`) doesn't expose a SCSI Caching mode page. The kernel sees "No Caching mode page found" and defaults to `write through`. But the SSD behind the bridge has its own DRAM write cache that **does** buffer and reorder writes.
+
+#### What happens on power loss
+
+Because the kernel believes the device is write-through:
+1. **ext4 does not send FLUSH_CACHE / FUA commands** between data writes and journal commits. It assumes the device preserves write ordering.
+2. **The SSD's DRAM cache reorders writes** for performance. On power loss, pending writes in DRAM are lost.
+3. **ext4 journal ordering can be violated**: metadata may be committed to NAND before the data it references, leaving the filesystem in an inconsistent state after journal replay.
+4. **btrfs is less affected** because CoW writes are atomic at the B-tree level: a new copy is written, then the pointer is atomically swapped. If the new copy isn't fully written, the old copy is still valid. But without barriers, even the pointer swap ordering isn't guaranteed.
+
+#### The fdatasync timing evidence
+
+10x 64 MiB writes with `conv=fdatasync`:
+
+| Write # | ext4 (seconds) | btrfs (seconds) |
+|---|---|---|
+| 1 | 0.204 | 0.204 |
+| 2 | 0.196 | 0.196 |
+| 3 | 0.203 | 0.203 |
+| 4 | 0.383 | 0.207 |
+| 5 | **0.997** | 0.212 |
+| 6 | 0.196 | 0.213 |
+| 7 | 0.204 | 0.209 |
+| 8 | **1.163** | 0.214 |
+| 9 | 0.195 | 0.205 |
+| 10 | 0.192 | 0.204 |
+
+ext4 shows periodic **stalls** (writes 5 and 8: 1.0s and 1.2s vs typical 0.2s). These are journal commit flushes — ext4 is flushing the journal to disk and waiting for acknowledgment. The 5x variance means ext4 is doing real flushes but they're bursty.
+
+btrfs is **perfectly consistent** (~0.2s every write). This suggests btrfs is not actually flushing to NAND on every fdatasync — it may be relying on the SSD's DRAM cache without explicit barriers. This is faster but **less safe** if the SSD's DRAM cache is volatile (it is — it's DRAM, not NAND).
+
+#### Why this matters for these specific drives
+
+These SSDs have **34 unexpected power losses** out of 35 power cycles. If the kernel had correctly detected write-back cache, it would send FLUSH_CACHE commands on every `fdatasync`/`fsync`, ensuring data reaches NAND before acknowledging. Instead, the kernel skips the flush because it believes the device is write-through.
+
+#### What can be done
+
+| Option | Effect | Feasibility |
+|---|---|---|
+| **Use a USB bridge that exposes caching mode page** | Kernel would correctly detect write-back and send barriers | Requires different enclosure |
+| **Mount ext4 with `barrier=1`** | Forces flush commands even when kernel thinks they're unnecessary | Works, but kernel may ignore barriers when `fua=0` |
+| **Mount ext4 with `data=writeback`** | Eliminates the journal double-write (faster) but doesn't fix the barrier issue | Partial — faster but still unsafe |
+| **Use btrfs with `nobarrier` not set** | btrfs sends barriers by default, but kernel may not forward them when `fua=0` | Partial — depends on kernel behavior |
+| **Connect via direct SATA** (not USB) | Eliminates the bridge chip entirely; kernel would query the SSD directly | Best option, requires SATA port |
+| **Use `hdparm -W0` to disable write cache on the SSD** | SSD becomes truly write-through; kernel's belief matches reality | Works, but halves write performance |
+
+#### Summary of the cache mismatch
+
+```
+Kernel thinks:  write-through (no barriers needed)
+SSD reality:   write-back (DRAM cache, reorders writes, needs FLUSH)
+Result:        Kernel doesn't send FLUSH_CACHE → SSD may lose writes on power loss
+               ext4 journal ordering can be violated → potential corruption
+               btrfs CoW is more resilient but not immune
+```
+
+This is a known class of bug with USB-SATA bridges. The USB SAT (SCSI-ATA Translation) specification doesn't require the bridge to forward the ATA caching mode page as a SCSI mode page. Many cheap bridge chips (JMicron, ASMedia, Sunplus) omit it. The kernel defaults to `write through` as a safe fallback, but ironically this is **less safe** when the drive actually has write-back cache, because the kernel stops sending flush commands.
 
 ---
 
@@ -388,6 +488,8 @@ All scripts are in `/tmp/` and are safe to delete. They are read-only on target 
 | `/tmp/diagnose-ext4-write.sh` | Diagnosis: buffered vs O_DIRECT vs fdatasync vs fsync |
 | `/tmp/diag2.sh` | USB bridge identity, block size sweep, dmesg errors |
 | `/tmp/diag3.sh` | Write cache state, journal mode confirmation |
+| `/tmp/diag-write-cache.sh` | Deep write cache investigation: USB driver, hdparm ATA query, enable write-back attempts |
+| `/tmp/diag-cache-safety.sh` | Data safety analysis: FUA support, fdatasync flush timing, barrier state |
 | `/tmp/fs-compare.sh` | Exact block counts and overhead comparison |
 | `/tmp/btrfs-compressed-size.sh` | btrfs actual on-disk compressed size via compsize |
 
@@ -398,8 +500,8 @@ All scripts are in `/tmp/` and are safe to delete. They are read-only on target 
 1. **Both SSDs are cryptographically erased.** SandForce secure erase destroyed the AES-256 encryption keys. Data recovery is mathematically impossible — not just "very hard."
 2. **Both SSDs are fully healthy.** Zero bad blocks, 100% reserve, SMART PASSED. Safe to repurpose for years of additional use.
 3. **The server had power issues.** 34 of 35 power cycles were unexpected (no UPS or UPS failure). This likely triggered the RAID controller's secure erase on array deletion.
-4. **btrfs outperforms ext4 on throughput** on this hardware: 2.5x faster sequential writes, 16% better random IOPS. The ext4 journal double-write is the bottleneck on write-through cache devices.
+4. **btrfs outperforms ext4 on throughput** on this hardware: 2.5x faster sequential writes, 16% better random IOPS. The ext4 journal double-write is the bottleneck.
 5. **ext4 has lower per-operation latency** for random 4K operations (234us vs 503us read, 112us vs 173us write). This matters for databases and latency-sensitive workloads.
 6. **btrfs compression saves space only on compressible data.** JPEGs/PNGs/WebPs are already compressed — zstd can't improve them. For documents, logs, CSVs, and VM disk images, expect 15-30% savings.
 7. **Always use incompressible data when benchmarking compressed filesystems.** Using `/dev/zero` on btrfs with `compress=zstd` produces absurd numbers (2.7 GB/s) because zeros compress to nothing.
-8. **USB enclosures report write-through cache.** This exposes filesystem journaling overhead — ext4's ordered data mode double-writes are fully visible at 155 MB/s, while btrfs's single-pass CoW achieves 328 MB/s.
+8. **CRITICAL: USB bridge hides SSD write-back cache from kernel.** The USB-SATA bridge doesn't expose a SCSI Caching mode page, so the kernel defaults to `write through` — but the SSD actually has write-back cache enabled (`hdparm -W` = on). The kernel doesn't send FLUSH_CACHE/FUA barriers because it believes they're unnecessary. On power loss, ext4 journal ordering can be violated (potential corruption) and even btrfs CoW isn't fully protected. This is a data safety issue, not just performance. The 34 unexpected power losses on these drives make this a real risk, not theoretical. See Section 8.6 for full analysis.
