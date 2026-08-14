@@ -68,6 +68,7 @@ _: {
               security_opt = [ "no-new-privileges:true" ];
               cap_drop = [ "ALL" ];
               mem_limit = "1g";
+              memswap_limit = "1g";
               pids_limit = 512;
               networks = [
                 "internal"
@@ -96,6 +97,8 @@ _: {
                   max-file = "5";
                 };
               };
+              mem_limit = "1g";
+              memswap_limit = "1g";
               security_opt = [ "no-new-privileges:true" ];
               networks = [ "internal" ];
             };

@@ -21,6 +21,7 @@ _: {
         serviceOneshotDefaults
         onFailure
         ports
+        mkDnsGate
         ;
 
       cfg = config.services.searx;
@@ -46,28 +47,11 @@ _: {
         '';
       };
 
-      # DNS-gate: SearXNG engine init() runs at process startup and makes
-      # network calls (wikidata fetches SPARQL properties, radio browser
-      # resolves its server list, ClearURLs downloads tracker-pattern rules).
-      # If DNS isn't ready at boot, these engines fail init PERMANENTLY and
-      # stay disabled for the entire process lifetime — no retry. dnsblockd
-      # is Type=simple, so after/wants ordering alone doesn't guarantee
-      # readiness; this ExecStartPre actively probes resolution.
-      waitDnsReady = pkgs.writeShellApplication {
-        name = "searxng-wait-dns";
-        runtimeInputs = [ pkgs.getent ];
-        text = ''
-          echo "searxng: waiting for DNS resolution..."
-          for _ in $(seq 1 60); do
-            if getent hosts wikidata.org >/dev/null 2>&1; then
-              echo "searxng: DNS resolution ready"
-              exit 0
-            fi
-            sleep 2
-          done
-          echo "searxng: DNS not ready after 120s — engines requiring init-time network will be disabled" >&2
-          exit 0
-        '';
+      searxDnsGate = mkDnsGate {
+        inherit pkgs;
+        serviceName = "searxng";
+        hostname = "wikidata.org";
+        fatal = false; # non-fatal: engines requiring init-time network stay disabled but service runs
       };
     in
     {
@@ -620,7 +604,7 @@ _: {
             ];
             serviceConfig = lib.mkMerge [
               {
-                ExecStartPre = "+${lib.getExe waitDnsReady}";
+                ExecStartPre = searxDnsGate.serviceConfig.ExecStartPre;
                 TimeoutStartSec = "3min";
               }
               (harden { MemoryMax = "512M"; })

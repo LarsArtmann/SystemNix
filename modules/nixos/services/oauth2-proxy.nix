@@ -16,6 +16,7 @@ _: {
         onFailure
         serviceTypes
         mkSecretCheck
+        mkOidcGate
         ports
         ;
       proxyPort = cfg.port;
@@ -40,27 +41,6 @@ _: {
         '';
       };
 
-      waitOidcReady = pkgs.writeShellApplication {
-        name = "oauth2-proxy-wait-oidc";
-        runtimeInputs = [ pkgs.curl ];
-        text = ''
-          echo "oauth2-proxy: waiting for OIDC endpoint at auth.${domain}..."
-          # No -k: TLS verification MUST succeed so oauth2-proxy (which verifies
-          # TLS for token exchange) can actually reach Pocket ID.  A -k here
-          # would mask a CA mismatch and produce mysterious 500s on callback.
-          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
-            -o /dev/null "https://auth.${domain}/.well-known/openid-configuration" \
-            || {
-              echo "oauth2-proxy: OIDC endpoint unreachable or TLS verification failed after 120s" >&2
-              echo "  If TLS failed, the dnsblockd-CA may not match the server cert." >&2
-              echo "  Compare fingerprints:" >&2
-              echo "    openssl x509 -fingerprint -sha1 -noout -in /run/secrets/dnsblockd_ca_cert" >&2
-              echo "    Expected: 05:3B:B1:48:34:14:4D:94:84:85:DD:DB:AC:1B:83:33:8D:15:F7:B0" >&2
-              exit 1
-            }
-          echo "oauth2-proxy: OIDC endpoint ready (TLS verified)"
-        '';
-      };
     in
     {
       options.services.oauth2-proxy-config = {
@@ -101,49 +81,47 @@ _: {
           };
         };
 
-        systemd.services.oauth2-proxy = {
-          inherit onFailure;
-          # Restart when provision runs: oauth2-proxy loads the client secret
-          # via systemd LoadCredential at start time. If provision regenerates
-          # the secret (e.g. after desync recovery), oauth2-proxy must restart
-          # to pick up the new credential.
-          partOf = lib.optional provisionEnabled "pocket-id-provision.service";
-          after = [
-            "network-online.target"
-            "pocket-id.service"
-            "dnsblockd.service"
-          ]
-          ++ lib.optional provisionEnabled "pocket-id-provision.service";
-          wants = [
-            "network-online.target"
-            "pocket-id.service"
-            "dnsblockd.service"
-          ]
-          ++ lib.optional provisionEnabled "pocket-id-provision.service";
-          unitConfig = {
-            StartLimitBurst = lib.mkForce 10;
-            StartLimitIntervalSec = lib.mkForce 300;
+        systemd.services.oauth2-proxy =
+          let
+            oidcGate = mkOidcGate {
+              inherit pkgs domain;
+              serviceName = "oauth2-proxy";
+              includeProvision = provisionEnabled;
+            };
+          in
+          {
+            inherit onFailure;
+            # Restart when provision runs: oauth2-proxy loads the client secret
+            # via systemd LoadCredential at start time. If provision regenerates
+            # the secret (e.g. after desync recovery), oauth2-proxy must restart
+            # to pick up the new credential.
+            partOf = lib.optional provisionEnabled "pocket-id-provision.service";
+            after = oidcGate.after;
+            wants = oidcGate.wants;
+            unitConfig = {
+              StartLimitBurst = lib.mkForce 10;
+              StartLimitIntervalSec = lib.mkForce 300;
+            };
+            serviceConfig = lib.mkMerge [
+              (harden { })
+              (serviceDefaults { })
+              {
+                ExecStartPre = [
+                  "+${lib.getExe checkCookieSecret}"
+                ]
+                ++ oidcGate.serviceConfig.ExecStartPre;
+                TimeoutStartSec = "3min";
+                ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
+              }
+            ];
+            # Explicit CA bundle path for Go's crypto/tls on NixOS.
+            # /etc/ssl/certs/ca-certificates.crt is the NixOS-merged bundle that
+            # includes both the Mozilla roots and the dnsblockd-CA from
+            # security.pki.certificates.  Without SSL_CERT_FILE, some Go binaries
+            # on NixOS silently fail to find the system cert pool, causing
+            # token-exchange 500 errors against TLS-terminated upstreams.
+            environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
           };
-          serviceConfig = lib.mkMerge [
-            (harden { })
-            (serviceDefaults { })
-            {
-              ExecStartPre = [
-                "+${lib.getExe checkCookieSecret}"
-                "+${lib.getExe waitOidcReady}"
-              ];
-              TimeoutStartSec = "3min";
-              ExecStartPost = "${lib.getExe pkgs.curl} -sf --max-time 3 --retry 30 --retry-delay 1 --retry-all-errors http://127.0.0.1:${toString proxyPort}/ping";
-            }
-          ];
-          # Explicit CA bundle path for Go's crypto/tls on NixOS.
-          # /etc/ssl/certs/ca-certificates.crt is the NixOS-merged bundle that
-          # includes both the Mozilla roots and the dnsblockd-CA from
-          # security.pki.certificates.  Without SSL_CERT_FILE, some Go binaries
-          # on NixOS silently fail to find the system cert pool, causing
-          # token-exchange 500 errors against TLS-terminated upstreams.
-          environment.SSL_CERT_FILE = "/etc/ssl/certs/ca-certificates.crt";
-        };
       };
     };
 }

@@ -1,6 +1,5 @@
 # Smart audio routing: follows niri window focus to select HDMI audio output
-_:
-{
+_: {
   flake.nixosModules.smart-audio =
     {
       config,

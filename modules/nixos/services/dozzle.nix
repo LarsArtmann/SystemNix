@@ -35,6 +35,13 @@ _: {
             DOZZLE_TAILSIZE = "300";
             DOZZLE_FILTER = "status=running";
           };
+          extraOptions = [
+            "--memory=256m"
+            "--memory-swap=256m"
+            "--log-driver=json-file"
+            "--log-opt=max-size=5m"
+            "--log-opt=max-file=3"
+          ];
         };
       };
     };

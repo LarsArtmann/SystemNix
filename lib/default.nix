@@ -247,4 +247,104 @@ in
           -- ${command} ${lib.escapeShellArgs extraArgs} "$@"
       '';
     };
+
+  # mkOidcGate: generates a systemd config fragment that gates service startup
+  # on OIDC stack readiness (Pocket ID + DNS resolution + TLS).
+  #
+  # The generated ExecStartPre probes the OIDC discovery endpoint via curl,
+  # verifying the full chain: DNS resolution → TLS handshake → HTTP 200.
+  # This is more robust than pure After= ordering because dnsblockd is
+  # Type=simple (process started ≠ DNS resolving) and Pocket ID's own
+  # ExecStartPost healthz only checks localhost (no DNS/TLS).
+  #
+  # Returns: { after, wants, serviceConfig.ExecStartPre }
+  # Merge with: systemd.services.foo = lib.mkMerge [ (mkOidcGate {...}) {...} ];
+  #
+  # Example:
+  #   mkOidcGate { inherit pkgs domain; serviceName = "gatus"; }
+  #   → { after = ["network-online.target" "pocket-id.service" ...];
+  #       wants = [...]; serviceConfig.ExecStartPre = ["+gatus-wait-oidc"]; }
+  mkOidcGate =
+    {
+      pkgs,
+      domain,
+      serviceName,
+      includeProvision ? true,
+    }:
+    let
+      deps = [
+        "network-online.target"
+        "pocket-id.service"
+        "dnsblockd.service"
+      ]
+      ++ lib.optional includeProvision "pocket-id-provision.service";
+      script = pkgs.writeShellApplication {
+        name = "${serviceName}-wait-oidc";
+        runtimeInputs = [ pkgs.curl ];
+        text = ''
+          echo "${serviceName}: waiting for OIDC endpoint at auth.${domain}..."
+          curl -sf --max-time 5 --retry 60 --retry-delay 2 --retry-all-errors \
+            -o /dev/null "https://auth.${domain}/.well-known/openid-configuration" \
+            || {
+              echo "${serviceName}: OIDC endpoint unreachable after 120s" >&2
+              exit 1
+            }
+          echo "${serviceName}: OIDC endpoint ready (TLS verified)"
+        '';
+      };
+    in
+    {
+      after = deps;
+      wants = deps;
+      serviceConfig.ExecStartPre = [ "+${lib.getExe script}" ];
+    };
+
+  # mkDnsGate: generates a systemd config fragment that gates service startup
+  # on DNS resolution readiness. Probes via getent (no TLS, no HTTP).
+  #
+  # Use for services that need DNS resolution at init time but don't depend
+  # on the OIDC stack (e.g., searxng engine init, forgejo OIDC DNS resolution).
+  #
+  # Returns: { after, wants, serviceConfig.ExecStartPre }
+  #
+  # Example:
+  #   mkDnsGate { inherit pkgs serviceName; hostname = "wikidata.org"; fatal = false; }
+  mkDnsGate =
+    {
+      pkgs,
+      serviceName,
+      hostname,
+      maxAttempts ? 60,
+      intervalSec ? 2,
+      fatal ? true,
+    }:
+    let
+      script = pkgs.writeShellApplication {
+        name = "${serviceName}-wait-dns";
+        runtimeInputs = [ pkgs.getent ];
+        text = ''
+          echo "${serviceName}: waiting for DNS resolution of ${hostname}..."
+          for _ in $(seq 1 ${toString maxAttempts}); do
+            if getent hosts ${hostname} >/dev/null 2>&1; then
+              echo "${serviceName}: DNS resolution ready"
+              exit 0
+            fi
+            sleep ${toString intervalSec}
+          done
+          echo "${serviceName}: DNS not ready after ${toString (maxAttempts * intervalSec)}s" >&2
+          ${if fatal then "exit 1" else "exit 0"}
+        '';
+      };
+    in
+    {
+      after = [
+        "network-online.target"
+        "dnsblockd.service"
+      ];
+      wants = [
+        "network-online.target"
+        "dnsblockd.service"
+      ];
+      serviceConfig.ExecStartPre = [ "+${lib.getExe script}" ];
+    };
 }

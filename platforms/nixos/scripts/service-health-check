@@ -64,7 +64,6 @@ check_user_service emeet-pixyd
 check_user_service niri-session-manager
 check_user_service monitor365
 check_user_service monitor365-server
-check_user_service qmd-mcp
 
 # === Report ===
 if [ -n "$FAILED" ]; then

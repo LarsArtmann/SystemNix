@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-14 | **Last sessions:** monitoring gap closures (textfile scrape error meta-check, disk usage alert, crash-loop detector, oomd kills tracking, Docker restart monitoring, PMA daemon health check), smart-audio daemon + qmd retirement + Twenty hardening
+**Updated:** 2026-08-14 | **Last sessions:** code-quality audit (9 TODO items resolved: StartLimitBurst audit, Docker limits for Manifest/Dozzle, Pocket ID retries, vendorHash pre-deploy check, test-home-manager.sh counter fix, 4 stale TODOs closed), monitoring gap closures (textfile scrape error meta-check, disk usage alert, crash-loop detector, oomd kills tracking, Docker restart monitoring, PMA daemon health check), smart-audio daemon + qmd retirement + Twenty hardening
 
 ---
 
@@ -39,7 +39,7 @@
 ## Priority 3: Infrastructure
 
 - [ ] **Add eval-time assertion for `StartLimitBurst` placement** — In systemd 261+, `StartLimitBurst`/`StartLimitIntervalSec` in `serviceConfig` (=[Service]) are SILENTLY IGNORED. This caused the 2026-08-11 WDT crash chain (browser-history 592 restarts). Create `start-limit-audit.nix` that catches this pattern at eval time. **Source:** `docs/status/2026-08-11_23-28_wdt-crash-postmortem-deploy-blockers.md`, AGENTS.md StartLimitBurst gotcha
-- [ ] **Add Docker container memory limits (Manifest, Dozzle)** — Twenty containers done (server=1g, db=2g, redis=256m, worker=2g). Remaining: `mnfst-manifest`, `mnfst-postgres`, `dozzle` still unbounded. Consider `mkDockerServiceFactory` support for per-container limits.`
+- [x] **Add Docker container memory limits (Manifest, Dozzle)** — DONE: Manifest postgres got `mem_limit=1g`+`memswap_limit=1g`, manifest container got `memswap_limit=1g`, Dozzle got `mem_limit=256m`+`memswap_limit=256m`+log rotation. All Docker containers now bounded
 - [ ] **Fix browser-history `expires_at` session reaper error** — Every 5 min: `session reaper failed: no such column: expires_at`. SQLite sessions table missing column, migration gap in browser-history upstream. Investigate schema migration. **Source:** `docs/status/2026-08-12_14-17_browser-history-oidc-secret-desync-fix.md`
 - [ ] **Fix browser-history `CheckpointStore` upstream** — Server replays ALL events on startup (4-min projection drain) because there's no persistent checkpoint store. Requires cqrs-htmx `HydrateFromSQL`. Causes availability gap on every restart. **Source:** `docs/status/2026-08-12_10-20_comprehensive-session-review.md`
 - [ ] **Browser-history DB backup** — `/var/lib/browser-history/data.db` (SQLite WAL mode) is NOT in `backup-coordination`. Needs periodic `sqlite3 .backup` job + entry in `configuration.nix` `services.backup-coordination.backups`. Stagger schedule (01:00–03:00 window)
@@ -47,28 +47,32 @@
 - [ ] **Create Attic cache + CI token** — Attic module deployed but cache not yet created. Steps: `attic cache create monitor365`, `atticadm make-token --sub ci --validity 1y --push monitor365 --pull monitor365`, configure Forgejo runner. See `docs/services/nix-binary-cache-setup.md`
 - [ ] **Enable niri blur** — Terminal transparency added (88%/90%) but niri's blur option is NOT configured (niri HM module lacks `blur {}` option). Transparent terminals without blur are hard to read
 - [ ] **Caddy reload root-cause fix** — `PrivateTmp=true` in `harden {}` blocks `systemctl reload caddy` on every deploy (exit code 4). Currently band-aided with unconditional restart in `deploy.sh`
-- [ ] **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is a hand-maintained list of only 4 services. Missing active services: discordsync, searx, qmd-mcp, monitor365, signoz, immich, pocket-id. Generate list from Nix config instead
+- [ ] **Declarative health-check** — `criticalSystemServices` in `scheduled-tasks.nix` is a hand-maintained list of only 4 services. Missing active services: discordsync, searx, monitor365, signoz, immich, pocket-id. Generate list from Nix config instead. Also check for stale `qmd-mcp` reference (qmd was retired)
 - [ ] **Fix OTel endpoint URL scheme upstream (browser-history)** — Uses `otlptracegrpc` with `127.0.0.1:4317` (missing `http://` scheme). Go OTel library expects a URL. Fix edited in SystemNix but needs upstream confirmation + deploy. **Source:** `docs/status/2026-08-12_14-59_browser-history-css-and-startlimit-fixes.md`
 - [ ] **SigNoz dashboard JSONs v1→v2 Perses schema migration** — 5 dashboard files are in v1 flat format but POSTed to v2 API. Currently non-fatal warnings
 - [ ] **ClickHouse backup before SigNoz upgrade** — Schema migrator runs on startup. No backup taken before upgrades. `clickhouse-client -q "BACKUP DATABASE signoz TO Disk('backups', 'pre-signoz-upgrade.zip')"`
+- [ ] **Add Dozzle container security hardening** — Dozzle has Docker socket mounted read-only but is missing `security_opt = ["no-new-privileges:true"]`, `cap_drop = ["ALL"]`. A container with Docker socket access can escape to the host. Memory limits were added but security hardening was not. Uses `oci-containers` abstraction (not Compose), so uses `extraOptions` not YAML keys
+- [ ] **Standardize Docker container hardening** — No single helper exists for applying standard memory limits, log rotation, security options to Docker containers. Manifest/Twenty use Compose (`mkDockerServiceFactory`) with `mem_limit`/`memswap_limit` keys. Dozzle uses `oci-containers` with `extraOptions` flags. Create a helper analogous to `harden {}` for systemd
+- [ ] **Verify vendorHash pre-deploy check patterns at runtime** — Check #11 in `pre-deploy-check.sh` uses grep patterns (`"would build"`, `"would (copy|fetch)"`) based on nix CLI conventions but NOT yet verified against real `nix build --dry-run` output. Run end-to-end at next deploy to confirm patterns match
+- [ ] **Deploy pending changes** — Manifest postgres memory limits, Dozzle memory limits, Pocket ID retries, vendorHash check, test-home-manager.sh fix — all pass eval but NOT deployed. Manifest postgres running unbounded in production
 - [ ] **SearXNG streaming exploration** — User wants streaming results (progressive rendering). Options: SearXNG fork with SSE endpoint, Go/Rust streaming proxy, or Caddy flush_buffers
 
 ## Priority 4: Code Quality
 
-- [ ] **Audit ALL service modules for `StartLimitBurst` in `serviceConfig`** — Same bug class as the WDT crash. browser-history.nix was fixed (`a941f88d`), but other modules haven't been audited. The correct placement is top-level `systemd.services.<name>.startLimitBurst` or `unitConfig`. **Source:** AGENTS.md StartLimitBurst gotcha
-- [ ] **Verify `crush-daily-backfill.py` re-insert SQL schema** — The `INSERT INTO events` assumes columns `id, aggregate_id, event_type, payload, occurred_at`. Never checked against the actual `CREATE TABLE` in crush-daily source
-- [ ] **Fix `test-home-manager.sh` TESTS_TOTAL inflation** — 20+ increment sites, some branches increment by 2-3. The summary line reports an inflated total
-- [ ] **Pocket ID provision: `api_get` timeout** — `pocket-id.nix:79` still has `--max-time 10` (POST/PUT were raised to 30s). Add `--retry 3 --retry-delay 2` to all provision curl calls for transient SQLITE_BUSY resilience
-- [ ] **Pre-deploy vendorHash validation** — `scripts/pre-deploy-check.sh` checks ports, mounts, and metrics but NOT vendorHash freshness. Add `nix build .#X.goModules --dry-run` check for all Go packages
+- [x] **Audit ALL service modules for `StartLimitBurst` in `serviceConfig`** — DONE: Full audit complete. Zero violations found across all modules. All `startLimitBurst`/`StartLimitBurst` correctly placed at top-level or in `unitConfig`. browser-history.nix fix (`a941f88d`) was the only instance of this bug class. Also confirmed `overview.nix` uses intentional `mkForce null` override pattern
+- [x] **Verify `crush-daily-backfill.py` re-insert SQL schema** — DONE: Verified against `go-cqrs-lite/storage/sql/migrations/sqlite.sql`. All 7 INSERT columns (`id`, `aggregate_id`, `aggregate_type`, `version`, `event_type`, `payload`, `occurred_at`) exist in the `events` table. Omitted columns (`schema_version`, `payload_encoding`, `metadata`) have defaults. Insert is safe
+- [x] **Fix `test-home-manager.sh` TESTS_TOTAL inflation** — DONE: Fixed 4 error branches that double/triple incremented TESTS_TOTAL (Starship not found +2→+1, Fish command not found +2→+1, Fish shell not active +3→+1, Tmux not found +2→+1). Each check now counts as exactly 1 test regardless of outcome
+- [x] **Pocket ID provision: `api_get` timeout** — DONE: `api_get` already had `--retry 3 --retry-delay 2 --retry-all-errors`. Added `--retry 3 --retry-delay 2` to `api_put` and `api_post` (without `--retry-all-errors` — safer for non-idempotent POST/PUT, still retries on transient HTTP 500/502/503 SQLITE_BUSY)
+- [x] **Pre-deploy vendorHash validation** — DONE: Added check #11 to `scripts/pre-deploy-check.sh` that runs `nix build .#<pkg>.goModules --dry-run` for all 6 local Go packages (dnsblockd, monitor365, netwatch, emeet-pixyd, file-and-image-renamer, crush-daily). Warns when FOD not cached (potential stale hash)
 - [ ] **VendorHash CI check across LarsArtmann repos** — dnsblockd has a `vendor-hash` check; replicate across browser-history, crush-daily, file-and-image-renamer, and all other Go repos
 - [ ] **PMA `GenerateMessage` handler leak** — Same `defer Close()` pattern as the fixed `Commit()` site, but `GenerateMessage` was missed. Upstream fix needed in PMA repo
 - [ ] **Systemd hardening consistency audit** — Audit: `TimeoutStopSec`, `RestartSec` consistency (5s/10s/30s variation), `ProcSubset`, `RestrictAddressFamilies`, `SystemCallArchitectures`, `LockPersonality`, `UMask`. Add missing primitives to `harden()` helper
 - [ ] **Implement cgroup I/O throttling for dev builds** — QLC NAND I/O contention from `cargo`, `go test`, `nix build` caused Helium video to drop to 3 FPS. Wrap dev commands with `IOSchedulingClass=idle` or `IOWeight` limits
 - [ ] **GOMEMLIMIT runtime validation** — Values (75% of MemoryMax) are reasonable defaults but actual Go GC behavior depends on heap live-set. Verify via `runtime.MemStats` or GC logs after deploy
-- [ ] **Fix port-uniqueness VM test quoting** — `tests/test-port-uniqueness.nix` has nested `''${}` escaping issues in testScript string. May not run correctly
-- [ ] **Add `GOTOOLCHAIN=local` to Go builds** — Proactive prevention against sandbox purity breaks when `go.mod` exceeds `go_1_26`. Currently safe but will break silently
+- [x] **Fix port-uniqueness VM test quoting** — DONE (stale TODO): Investigated `tests/test-port-uniqueness.nix`. No nested `''${}` escaping issues exist. The testScript is pure static Python string with no interpolation. No fix needed
+- [x] **Add `GOTOOLCHAIN=local` to Go builds** — DONE (already handled): nixpkgs `buildGoModule` already injects `GOTOOLCHAIN = "local"` via `pkgs/build-support/go/module.nix` env attrset. No manual addition needed. Pre-commit hook + CI already guard against `GOTOOLCHAIN=auto`. Template devShell correctly sets it too
 - [ ] **Create dep-audit script for LarsArtmann Go repos** — Cross-reference ALL `go.mod` require lines against flake.nix pinned revs before deploy
-- [ ] **Fix IO-heavy journalctl patterns** — `scripts/usb-diagnostic.sh:53`, `scripts/verify-deployment.sh:46,48`, `scripts/internet-diagnostic.sh:97` use `journalctl | grep` (burns 98% CPU). Switch to `journalctl --grep`
+- [x] **Fix IO-heavy journalctl patterns** — DONE (already fixed): All 6 `journalctl` call sites across scripts/ already use safe patterns (`--grep`, `-n` caps, write-to-file, capture-to-variable). No `journalctl | grep` pipe traps remain
 
 ## Priority 5: Desktop
 

@@ -234,6 +234,24 @@ else
   warn "No metrics endpoints responding — cannot validate phantom metrics"
 fi
 
+# 11. vendorHash freshness for local Go packages
+echo ""
+echo "11. vendorHash freshness for local Go packages"
+# vendorHash mismatches are FOD failures that --no-build cannot catch (AGENTS.md).
+# --dry-run reveals whether the FOD is cached or would need building (stale hash).
+GO_PKGS=("dnsblockd" "monitor365" "netwatch" "emeet-pixyd" "file-and-image-renamer" "crush-daily")
+for pkg in "${GO_PKGS[@]}"; do
+  # shellcheck disable=SC2086
+  output=$(nix build .#$pkg.goModules --dry-run 2>&1 || true)
+  if echo "$output" | grep -q "would build"; then
+    warn "$pkg.goModules not cached — vendorHash may be stale or needs building"
+  elif echo "$output" | grep -qE "would (copy|fetch)"; then
+    pass "$pkg.goModules cached (vendorHash valid)"
+  else
+    warn "$pkg.goModules — unable to determine status (may not be a buildGoModule)"
+  fi
+done
+
 # Summary
 echo ""
 echo "=== Summary: $PASS passed, $WARN warnings, $FAIL failed ==="

@@ -50,7 +50,6 @@ else
   echo "  ❌ Starship not found"
   TESTS_FAILED=$((TESTS_FAILED + 1))
   TESTS_TOTAL=$((TESTS_TOTAL + 1))
-  TESTS_TOTAL=$((TESTS_TOTAL + 1))
 fi
 
 # Test 2: Fish shell
@@ -118,14 +117,11 @@ if [[ $SHELL == *"fish"* ]]; then
     echo "  ❌ Fish command not found"
     TESTS_FAILED=$((TESTS_FAILED + 1))
     TESTS_TOTAL=$((TESTS_TOTAL + 1))
-    TESTS_TOTAL=$((TESTS_TOTAL + 1))
   fi
 else
   echo "  ⚠️  Fish shell not active: $SHELL (expected: fish)"
   echo "  ℹ️  Note: This test is run from $SHELL, not Fish shell"
   echo "  ℹ️  Note: To test Fish shell, run this script from Fish: fish scripts/test-home-manager.sh"
-  TESTS_TOTAL=$((TESTS_TOTAL + 1))
-  TESTS_TOTAL=$((TESTS_TOTAL + 1))
   TESTS_TOTAL=$((TESTS_TOTAL + 1))
 fi
 
@@ -233,7 +229,6 @@ if command -v tmux &>/dev/null; then
 else
   echo "  ❌ Tmux not found"
   TESTS_FAILED=$((TESTS_FAILED + 1))
-  TESTS_TOTAL=$((TESTS_TOTAL + 1))
   TESTS_TOTAL=$((TESTS_TOTAL + 1))
 fi
 

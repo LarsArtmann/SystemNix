@@ -69,6 +69,35 @@ Every change passes through 5 pipeline layers. Each catches a different class of
 - **"Intentionally headless" vs "desktop died"**: `niri-health-metrics` emits `niri_graphical_session` (1 if user has a wayland/x11 session via `loginctl`), `niri_desktop_died` (1 if graphical session active but niri not running), and `niri_crash_loop` (1 if `niri_restarts_10m >= 3`). Gatus alerts on `niri_desktop_died 0` and `niri_crash_loop 0` — NOT on `niri_running 0`. This avoids false alerts when the user is SSH-only and hasn't logged in via SDDM. `niri_desktop_died` uses a 60s grace period (2 consecutive checks) to avoid flapping during niri's 2s auto-restart window
 - **Phantom metrics**: Rust `metrics` crate lazily serializes — a metric that's never incremented never appears in `/metrics`. Always verify the metric exists at runtime via pre-deploy-check.sh section 10
 
+### Auth/DNS Gate Helpers (`mkOidcGate` / `mkDnsGate`)
+
+Services that need the OIDC stack (Pocket ID + DNS + TLS) or DNS resolution at boot MUST use the shared helpers from `lib/default.nix` instead of hand-rolling curl/getent scripts. Both return a `{ after, wants, serviceConfig.ExecStartPre }` fragment that merges into `systemd.services.<name>`.
+
+**`mkOidcGate`** — probes `https://auth.${domain}/.well-known/openid-configuration` via curl (120s timeout, TLS verified). Verifies the full chain: DNS → TLS → HTTP. Use for any service consuming native OIDC or oauth2-proxy.
+
+```nix
+inherit (import ../../../lib/default.nix lib) mkOidcGate;
+# ...
+systemd.services.my-service =
+  let oidcGate = mkOidcGate { inherit pkgs domain; serviceName = "my-service"; };
+  in {
+    after = oidcGate.after ++ [ "other-dep.service" ];
+    wants = oidcGate.wants;
+    serviceConfig = lib.mkMerge [
+      (harden {})
+      { ExecStartPre = [ "${lib.getExe myCheckScript}" ] ++ oidcGate.serviceConfig.ExecStartPre; }
+    ];
+  };
+```
+
+**`mkDnsGate`** — probes DNS resolution via `getent hosts <hostname>`. Use for services that need DNS at init time but don't depend on OIDC (e.g., SearXNG engine init). Supports `fatal = false` for non-blocking warnings.
+
+```nix
+dnsGate = mkDnsGate { inherit pkgs; serviceName = "my-svc"; hostname = "wikidata.org"; fatal = false; };
+```
+
+**`includeProvision`** (default `true`) — adds `pocket-id-provision.service` to after/wants. Set to `false` for services that don't need provisioned OIDC clients.
+
 ### Consuming LarsArtmann Flakes (DiscordSync/Monitor365 pattern)
 
 When a service has an upstream LarsArtmann flake that exports `nixosModules`, **always consume the upstream module** — never hand-roll a parallel one:
@@ -95,7 +124,7 @@ When a service has an upstream LarsArtmann flake that exports `nixosModules`, **
 }
 ```
 
-**What to layer (SystemNix-only, upstream cannot provide):** sops templates, DNS-gate (`waitDnsReady`), `onFailure` alert routing, port wiring from `lib/ports.nix`, GCS/OTel env vars, activation scripts for subdir creation. **What NOT to re-declare:** `enable`, `package`, `user`, `group`, `dataDir`, `backend`, or any option upstream already declares — these arrive via `imports`.
+**What to layer (SystemNix-only, upstream cannot provide):** sops templates, DNS-gate (`mkDnsGate`/`mkOidcGate` from `lib/default.nix`), `onFailure` alert routing, port wiring from `lib/ports.nix`, GCS/OTel env vars, activation scripts for subdir creation. **What NOT to re-declare:** `enable`, `package`, `user`, `group`, `dataDir`, `backend`, or any option upstream already declares — these arrive via `imports`.
 
 **Fix application bugs upstream, not in SystemNix.** When a LarsArtmann service has a code-level bug (migration error, logic bug, schema drift), the fix belongs in the upstream repo (`/home/lars/projects/<repo>`) with tests, not as a local patch under `patches/` or an `overrideAttrs` hack in SystemNix. Downstream patches are reserved for build-environment problems (sandbox paths, missing dependencies). Patching logic downstream creates a hidden second source of truth, bypasses upstream tests, and makes rollback/rebuild fragile. The DiscordSync crash-loop was resolved by fixing `internal/db/backfill_nulls.go` in DiscordSync and bumping the flake input, not by maintaining a SystemNix patch.
 
@@ -429,7 +458,7 @@ serviceConfig = lib.mkMerge [
 - **`enable` infinite recursion** — Wrapper MUST NOT set `services.searx.enable` inside `lib.mkIf cfg.enable` where `cfg = config.services.searx`.
 - **No `restartTriggers` in direct server mode** — nixpkgs only sets them for uWSGI mode. SystemNix adds them.
 - **Port 8889** (not 8888 — SigNoz OTel collector owns 8888).
-- **Engine init never retried** — Engines that fail network during `init()` at boot stay permanently disabled. DNS-gate `ExecStartPre` ensures DNS is ready.
+- **Engine init never retried** — Engines that fail network during `init()` at boot stay permanently disabled. DNS-gate `mkDnsGate` in `ExecStartPre` ensures DNS is ready.
 - **`formats = [ "html" ]`** — Blocks JSON API (403). Deliberate privacy hardening. Test in HTML mode.
 - **`autocomplete = "duckduckgo"`** — Google leaked every keystroke.
 - **XFF health-check noise is benign** — `/healthz` is exempt from limiter.

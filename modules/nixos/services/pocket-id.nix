@@ -83,14 +83,14 @@ _: {
           api_put() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 30 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X PUT -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
           api_post() {
             local path="$1"
             local body="$2"
-            curl -s --max-time 30 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
+            curl -s --max-time 30 --retry 3 --retry-delay 2 -w '\n%{http_code}' -X POST -H "Content-Type: application/json" -H "X-API-Key: $API_KEY" \
               -d "$body" "$API_URL$path" 2>&1 || true
           }
 
