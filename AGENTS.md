@@ -516,6 +516,7 @@ serviceConfig = lib.mkMerge [
 - **Fish per-prompt direnv caching** — mtime-gated; 0.7ms cache hit vs 43ms. Per-session sentinel includes `$fish_pid`.
 - **`git insteadOf` flake.lock SSH pollution** — Global rule rewrites `https://github.com/` → `git@github.com:`. Workaround: `GIT_CONFIG_GLOBAL=/dev/null nix flake update <input>`.
 - **statix `repeated_keys` disabled** — False positive for NixOS modules. `statix.toml` (non-dotted) has `disabled = ["repeated_keys"]`.
+- **Pre-commit statix lints STAGED `.nix` files only** — Unstaged/pre-existing debt does NOT block commits (pathspec-scoped commits stay clean), so `statix check .` repo-wide (always exit 0 in practice) is NOT a gate predictor. Run `nix fmt` or stage the files to lint them.
 
 ### Infrastructure Patterns
 
@@ -543,6 +544,8 @@ nix flake check --no-build  # Validate syntax (fast)
 nix run .#deploy            # Build + deploy via nh
 nix fmt                     # treefmt + alejandra
 ```
+
+`nix flake check` skips `aarch64-darwin` by default (the "incompatible systems" warning is EXPECTED — the dms-shell/quickshell input is Linux-only and fails Darwin eval intentionally). Do not add `--all-systems` to CI.
 
 For contributor style, module templates, and verification commands, see [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md).
 
