@@ -98,12 +98,12 @@
 - [ ] **Monitor365: investigate DuckDB pool deadlock root cause** — Watchdog recovers the state but doesn't prevent it. All pool connections get stuck; upstream investigation needed
 - [ ] **DiscordSync: fix chattr ExecStartPre upstream** — Push proper fix to upstream NixOS module
 - [ ] **PMA daemon: stop committing broken flake.lock** — Auto-commit daemon runs unscoped `nix flake update` which triggers tarball regression
-- [ ] **file-and-image-renamer: pin 3 inputs from `ref=master` to tags** — `go-filewatcher-src`, `vision-review-agent-src`, `go-nix-helpers`
-- [ ] **file-and-image-renamer: `GOTOOLCHAIN=auto` → `local`** — In both `preBuild` blocks + vet check
+- [x] **file-and-image-renamer: pin 3 inputs from `ref=master` to tags** — Done upstream via go-standard migration (2026-08-12): `go-filewatcher-src` v2.3.0, `vision-review-agent-src` v0.5.1, `go-nix-helpers` at commit 064a269. SystemNix lock at rev `25d32b2`
+- [x] **file-and-image-renamer: `GOTOOLCHAIN=auto` → `local`** — Done upstream: `GOTOOLCHAIN=local` in all 3 preBuild blocks (flake.nix lines 133, 210, 407). go-standard auto-wires it in devShells
 - [ ] **`hermes`**: Auto-create directory structure on first run; handle own state migration; sane defaults for `OLLAMA_API_KEY`; use PID file or socket-based single-instance locking
-- [ ] **browser-history: fix `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch** — Root-caused the Aug 11 WDT crash. The DSN uses `mattn/go-sqlite3` params (`_journal=WAL`) with the `modernc.org/sqlite` driver. Audit all LarsArtmann Go projects for the same mismatch
-- [ ] **errorfamily: flush logger before `os.Exit`** — `HandleError` calls `os.Exit(1)` without flushing the logger, losing the final error message. Upstream library fix needed
-- [ ] **go-auto-upgrade: fix `charm.land/lipgloss/v2/table` vendoring** — Multi-module vendoring issue blocks re-enabling. Currently disabled (`= null` in `lars-packages.nix`)
+- [x] **browser-history: fix `modernc.org/sqlite` vs `mattn/go-sqlite3` DSN mismatch** — Core fix landed upstream (`dc3de07`). Cross-repo audit completed 2026-08-14: CreditReformBilanzampel had the inverse bug (mattn driver + modernc `_pragma=` DSN — ALL pragmas silently dropped, fixed); Kernovia event-sourced-plugin used `_cache_size` + `cache=shared` (mattn-only on modernc, fixed to `_pragma=cache_size()`); picoclaw `_foreign_keys=on` on v1.48.0 is redundant but not broken (FKs enforced via explicit `PRAGMA foreign_keys = ON` SQL); BuildFlow + InboxClean use valid v1.56.0 shorthands
+- [x] **errorfamily: flush logger before `os.Exit`** — Root cause corrected: `HandleError` never calls `os.Exit` (library returns exit code, caller exits). Real issue was browser-history calling `HandleError(err)` without `HandleConfig.Logger`, so structured logs never fired on startup crash. Fixed: all post-logger `HandleError` call sites now use `HandleErrorWithConfig(err, HandleConfig{Logger: logger})` — structured JSON logs reach journald before exit. Line 17 (pre-logger `LoadConfig` failure) correctly uses bare `HandleError` (no logger exists yet)
+- [x] **go-auto-upgrade: fix `charm.land/lipgloss/v2/table` vendoring** — Vendoring fixed upstream (`c2722a2`). SystemNix lock updated to HEAD `1f729bf`. Package re-enabled in `lars-packages.nix` (was `= null`). Builds clean from SystemNix flake
 
 ## Priority 7: Long-Term
 
@@ -121,7 +121,7 @@
 - [ ] **NVMe drive replacement evaluation** — SMART says healthy (11% wear) but 58 unsafe shutdowns (WDT resets from QLC SLC exhaustion) are the real risk. Consider TLC replacement, RAID1 for `/data`, or UPS
 - [ ] **NPU utilization** — AMD XDNA 2 (50 TOPS) confirmed completely idle. Explore ONNX Runtime / Ryzen AI SDK for small model offloading
 - [ ] **Deploy.sh backup retention** — Backup step creates timestamped `.bak` files on every deploy but never cleans them up. Add retention policy (keep last 3)
-- [ ] **`go-standard` migration for file-and-image-renamer** — 13 inputs + ~400 lines of perSystem boilerplate could collapse to ~3 inputs + ~20 lines via `inputs.go-nix-helpers.flakeModules.go-standard`
+- [x] **`go-standard` migration for file-and-image-renamer** — Completed upstream (2026-08-12): flake now imports `go-nix-helpers.flakeModules.go-standard`, deps pinned to tags, GOTOOLCHAIN auto-wired, vendor-hash checks added
 - [ ] **Re-evaluate oomd thresholds after reboot** — If 60%/30s proves insufficient (dnsblockd kill rate stays high), consider per-slice refinement: tighter limit on `system.slice` only, looser globally. Also re-check `user-1000.slice` `MemoryHigh=80G/MemoryMax=90G` headroom against the raised threshold. Watch `system_oomd_kills_total` and the Twenty worker restart count post-reboot
 
 ---
