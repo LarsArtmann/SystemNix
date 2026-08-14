@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-14 | **Last sessions:** mkOidcGate/mkDnsGate helpers + 4 service refactors (oauth2-proxy, gatus, forgejo, searxng), qmd doc cleanup, deploy of accumulated changes, code-quality audit (9 TODO items resolved: StartLimitBurst audit, Docker limits for Manifest/Dozzle, Pocket ID retries, vendorHash pre-deploy check, test-home-manager.sh counter fix, 4 stale TODOs closed), monitoring gap closures (textfile scrape error meta-check, disk usage alert, crash-loop detector, oomd kills tracking, Docker restart monitoring, PMA daemon health check), smart-audio daemon + qmd retirement + Twenty hardening
+**Updated:** 2026-08-14 | **Last sessions:** browser-history registration lock (cqrs-htmx `MaxUsers` gate, HTTP 403 after first user) + oomd threshold raise 50%/20s→60%/30s; mkOidcGate/mkDnsGate helpers + 4 service refactors (oauth2-proxy, gatus, forgejo, searxng), qmd doc cleanup, deploy of accumulated changes, code-quality audit (9 TODO items resolved: StartLimitBurst audit, Docker limits for Manifest/Dozzle, Pocket ID retries, vendorHash pre-deploy check, test-home-manager.sh counter fix, 4 stale TODOs closed), monitoring gap closures (textfile scrape error meta-check, disk usage alert, crash-loop detector, oomd kills tracking, Docker restart monitoring, PMA daemon health check), smart-audio daemon + qmd retirement + Twenty hardening
 
 ---
 
