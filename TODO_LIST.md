@@ -1,6 +1,6 @@
 # SystemNix TODO List
 
-**Updated:** 2026-08-12 | **Last sessions:** nix-daemon oomd exemption + Gatus monitoring, Twenty worker memory limits, dnsblockd dashboard auth token, PMA oomd exemption/PATH/env fixes, Overview fail-fast + Hermes re-enable, browser-history crash-loop bounding + CSS/StartLimit fixes, smartd NVMe-only + SATA pool spindown, niri-health-metrics namespace fix, ClickHouse thread tuning + zstd-level1 zram, git compression cleanup, project-meta follows removal, go-auto-upgrade disabled, USB HDD nr_requests udev rule
+**Updated:** 2026-08-14 | **Last sessions:** monitoring gap closures (textfile scrape error meta-check, disk usage alert, crash-loop detector, oomd kills tracking, Docker restart monitoring, PMA daemon health check), smart-audio daemon + qmd retirement + Twenty hardening
 
 ---
 
@@ -13,13 +13,13 @@
 
 ## Priority 1: High (Monitoring Gaps)
 
-- [ ] **Add `node_textfile_scrape_error` Gatus check** — When system-health produces invalid `.prom` files (e.g. `[not set]` poison values, bare `0` lines), node_exporter silently drops ALL textfile metrics. 14 Gatus checks went permanently RED because of this. A meta-check on `node_textfile_scrape_error == 0` would catch monitoring outages proactively. **Source:** `docs/status/2026-08-11_20-43_niri-deploy-attempt-system-health-bug-go-auto-upgrade-blocker.md`
-- [ ] **Add disk usage Gatus alert (85% threshold)** — Root filesystem fill (90-93%) has been a chronic issue across 5+ reports with no proactive alerting. Textfile metric from system-health + Gatus Discord alert. **Source:** Multiple 08-11/08-12 reports
-- [ ] **Add I/O PSI Gatus alert** — PSI I/O data is collected (`node_psi_io_some_avg300`) but has NO Gatus alert. I/O stall rate is the leading indicator of QLC SLC cache exhaustion → WDT crash. Alert at 10% sustained. **Source:** `docs/status/2026-08-11_23-28_wdt-crash-postmortem-deploy-blockers.md`
-- [ ] **Add crash-loop detector metric** — `system_service_nrestarts` exists per service but there's no rate-based alert (restarts per 10-min window). The browser-history 520-restart loop and Twenty 235-restart loop went undetected. Add a textfile metric computing restart rate + Gatus alert. **Source:** Multiple 08-11/08-12 reports
-- [ ] **Add `system_oomd_kills_total` metric** — systemd-oomd kills (nix-daemon, Twenty worker) went completely undetected. A textfile collector grepping `journalctl -u systemd-oomd --grep "killed"` per unit would catch ALL future oomd kills. **Source:** `docs/status/2026-08-12_20-08_nix-daemon-oomd-kill-and-twenty-worker-restart-loop.md`
-- [ ] **Add Gatus health checks for overview + PMA discovery daemon** — Overview (`127.0.0.1:8083`) and PMA daemon (`/run/project-discovery/daemon.sock`, health on `127.0.0.1:9190`) have no monitoring. Both were failing silently. **Source:** `docs/status/2026-08-12_13-05_overview-hermes-pma-split-mode-startlimit-hardening.md`
-- [ ] **Add Docker container restart count monitoring** — Docker container restart counts are not exported as Prometheus metrics. The Twenty 235-restart loop went unnoticed. Collector running `docker inspect --format '{{.RestartCount}}'` + Gatus alert on >10 restarts/hour. **Source:** `docs/status/2026-08-12_20-08_nix-daemon-oomd-kill-and-twenty-worker-restart-loop.md`
+- [x] **Add `node_textfile_scrape_error` Gatus check** — DONE: Added "Textfile Collector Health" Gatus check in `gatus-config.nix` that alerts when `node_textfile_scrape_error != 0`. When system-health produced invalid `.prom` files, node_exporter silently dropped ALL textfile metrics and 14 Gatus checks went permanently RED
+- [x] **Add disk usage Gatus alert (85% threshold)** — DONE: Added `system_disk_usage_percent` + `system_disk_usage_over_threshold` textfile metrics in `system-health.nix` and "Root Disk Usage" Gatus alert in `gatus-config.nix`
+- [x] **Add I/O PSI Gatus alert** — ALREADY EXISTED: "I/O Stall Rate" Gatus check was already present in `gatus-config.nix` (line 716-726), alerting on `node_psi_io_alert 0` (PSI I/O stall >10% over 5min)
+- [x] **Add crash-loop detector metric** — DONE: Added `system_service_crash_loop` per-service + `system_any_service_crash_loop` aggregate textfile metrics in `system-health.nix` (tracks NRestarts delta per 2min interval, threshold 3 restarts). "Service Crash Loop" Gatus alert added in `gatus-config.nix`. Also added browser-history + browser-history-agent to monitoredServices
+- [x] **Add `system_oomd_kills_total` metric** — DONE: Added `system_oomd_kills_total`, `system_oomd_kills_recent`, and `system_oomd_kills_alert` textfile metrics in `system-health.nix` (counts systemd-oomd kill events from journal with delta tracking). "OOMD Kills" Gatus alert added in `gatus-config.nix`
+- [x] **Add Gatus health checks for overview + PMA discovery daemon** — DONE: Overview Gatus check already existed (line 908-919). Added "PMA Daemon Health" Gatus check in `gatus-config.nix` hitting `127.0.0.1:9190/readyz` (Kubernetes-style readiness probe — 503 if auto-commit or discovery daemon fails). Added `pma-health = 9190` to `lib/ports.nix`
+- [x] **Add Docker container restart count monitoring** — DONE: Added `docker_container_restart_count`, `docker_container_restart_alert` per-container, and `system_any_docker_container_restart_alert` aggregate textfile metrics in `system-health.nix` (uses `docker inspect --format '{{.RestartCount}}'` with delta tracking per 2min interval, threshold 3 restarts). "Docker Container Restarts" Gatus alert added. Auto-disabled when Docker is not enabled
 
 ## Priority 2: Manual Steps (Blocked on Human)
 

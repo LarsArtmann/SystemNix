@@ -881,6 +881,50 @@ _: {
                 ];
                 alerts = discordAlert "A monitored service is thrashing against its MemoryMax ceiling (memory.events max > 100). Page-cache death-loop pattern (OOM-killer won't fire — page cache is reclaimable). Check: grep system_service_memory_events_high in /var/lib/prometheus-node-exporter/textfile_collectors/system_health.prom to identify which service.";
               })
+              (mkHttpCheck {
+                name = "Root Disk Usage";
+                group = "Filesystem";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_disk_usage_over_threshold 0*)"
+                ];
+                alerts = discordAlert "Root filesystem exceeds 85% usage — chronic disk fill issue. Check: du -sh /nix/store/* | sort -rh | head, nix-collect-garbage --delete-older-than 7d, btrfs filesystem usage /";
+              })
+              (mkHttpCheck {
+                name = "Service Crash Loop";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_any_service_crash_loop 0*)"
+                ];
+                alerts = discordAlert "A monitored service is crash-looping (3+ restarts in 2 min). Check: curl localhost:9100/metrics | grep system_service_crash_loop | grep ' 1$'. Run: sudo systemctl reset-failed <svc> && sudo systemctl start <svc>";
+              })
+              (mkHttpCheck {
+                name = "OOMD Kills";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_oomd_kills_alert 0*)"
+                ];
+                alerts = discordAlert "systemd-oomd killed a process since last check — memory pressure triggered OOM. Check: journalctl -u systemd-oomd --grep 'Killed' -n 20. The killed service may be in start-limit-hit state.";
+              })
+              (mkHttpCheck {
+                name = "Docker Container Restarts";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*system_any_docker_container_restart_alert 0*)"
+                ];
+                alerts = discordAlert "A Docker container is rapidly restarting (3+ restarts in 2 min). Check: docker ps -a, docker inspect --format '{{.RestartCount}}' <container>. Likely OOM-killed by systemd-oomd (exit code 137).";
+              })
             ]
             ++ [
               (mkHttpCheck {
@@ -930,6 +974,30 @@ _: {
                   then ["[STATUS] < 400"]
                   else ["[STATUS] == 200"];
               })
+              (mkHttpCheck {
+                name = "Textfile Collector Health";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_textfile_scrape_error 0*)"
+                ];
+                alerts = discordAlert "node_exporter textfile collector has parse errors — ALL textfile metrics (system_health, psi, nvme, btrfs, niri) are being silently dropped. Check each .prom file in /var/lib/prometheus-node-exporter/textfile_collectors/ for invalid syntax (e.g. [not set] poison values, bare lines). This is a meta-check: when it fires, 14+ Gatus checks go permanently RED because their underlying metrics vanish.";
+              })
+            ]
+            ++ lib.optionals (config.services.projects-management-automation.enable or false) [
+              (mkHttpCheck {
+                name = "PMA Daemon Health";
+                group = "Monitoring";
+                url = "http://127.0.0.1:${toString ports.pma-health}/readyz";
+                interval = "2m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[RESPONSE_TIME] < 500"
+                ];
+                alerts = discordAlert "PMA health endpoint reports not-ready — the auto-commit daemon or discovery daemon is failing. The process may be alive but non-functional. Check: journalctl -u projects-management-automation -n 50";
+              })
             ]
             ++ lib.optionals config.services.discordsync.enable [
               (mkHttpCheck {
@@ -962,7 +1030,7 @@ _: {
                 alerts = discordAlert "File and Image Renamer health dashboard down — screenshot renaming may be stuck";
               })
             ]
-++ lib.optionals (config.services.searx.enable or false) [
+            ++ lib.optionals (config.services.searx.enable or false) [
               (mkHttpCheck {
                 name = "SearXNG";
                 group = "Productivity";
