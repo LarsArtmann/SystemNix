@@ -100,6 +100,7 @@
                 Environment = [
                   "GOMEMLIMIT=384MiB"
                   "LOG_LEVEL=debug"
+                  "MAX_USERS=1"
                 ];
                 RestartSec = lib.mkForce "2min";
               }

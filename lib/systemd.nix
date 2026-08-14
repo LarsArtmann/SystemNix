@@ -21,6 +21,7 @@ let
     ProtectHostname = lib.mkDefault true;
     RestrictSUIDSGID = lib.mkDefault true;
     LockPersonality = lib.mkDefault true;
+    RestrictRealtime = lib.mkDefault true;
     MemoryMax = mkDefault' MemoryMax;
     MemoryHigh = mkDefault' MemoryHigh;
     CPUQuota = mkDefault' CPUQuota;
@@ -31,6 +32,10 @@ let
   systemOnly = {
     ProtectClock = lib.mkDefault true;
     ProtectKernelLogs = lib.mkDefault true;
+    ProtectKernelTunables = lib.mkDefault true;
+    ProtectKernelModules = lib.mkDefault true;
+    ProtectControlGroups = lib.mkDefault true;
+    SystemCallArchitectures = lib.mkDefault "native";
     ProtectSystem = mkDefault' ProtectSystem;
     ProtectHome = mkDefault' ProtectHome;
     ReadWritePaths = mkDefault' ReadWritePaths;

@@ -290,29 +290,35 @@ in
     #   1. Per-service MemoryMax cgroup limits (instant kill via harden {})
     #   2. systemd-oomd PSI monitoring (kills under sustained pressure, per-slice)
     #   3. watchdogd hard reboot (system completely unresponsive)
+    #
+    # Threshold rationale (adjusted 2026-08-14, up from 50%/20s):
+    # The previous 50%/20s killed nix-daemon mid-build (65% pressure during
+    # legitimate 4-8 GB nix build spike) and the Twenty Docker worker in
+    # steady-state (856 MB container was largest under system.slice).
+    # 60% sustained 30s catches genuine memory exhaustion (slow leaks, runaway
+    # processes) while tolerating the transient pressure spikes inherent to
+    # nix builds, AI model loads (Ollama 32G), and Docker container restarts.
+    # nix-daemon is additionally exempted via ManagedOOMPreference=omit.
+    # Per-slice MemoryMax limits (user-1000: 90G hard cap) remain as backstop.
     oomd = {
       enable = true;
       enableRootSlice = true;
       enableSystemSlice = true;
       enableUserSlices = true;
-      # Tighter than NixOS defaults (60% pressure sustained 30s) but tuned for AI/ML:
-      # model loads (Ollama 32G) and nix builds cause transient pressure spikes that
-      # resolve in seconds. 50% sustained 20s catches the slow-leak thrash scenario
-      # (2026-06-19: Helium grew unbounded for 66h) without killing model loads.
       settings.OOM = {
         SwapUsedLimit = "90%";
-        DefaultMemoryPressureLimit = "50%";
-        DefaultMemoryPressureDurationSec = "20s";
+        DefaultMemoryPressureLimit = "60%";
+        DefaultMemoryPressureDurationSec = "30s";
       };
     };
 
     # ── Per-slice pressure limits: override NixOS module's mkDefault 80% ──
     # The oomd module defaults ManagedOOMMemoryPressureLimit to 80% on each enabled
-    # slice. Tighten to 50% to match the global DefaultMemoryPressureLimit above.
+    # slice. Match the global DefaultMemoryPressureLimit (60%) for consistency.
     slices = {
-      "-".sliceConfig.ManagedOOMMemoryPressureLimit = "50%";
-      "system".sliceConfig.ManagedOOMMemoryPressureLimit = "50%";
-      "user".sliceConfig.ManagedOOMMemoryPressureLimit = "50%";
+      "-".sliceConfig.ManagedOOMMemoryPressureLimit = "60%";
+      "system".sliceConfig.ManagedOOMMemoryPressureLimit = "60%";
+      "user".sliceConfig.ManagedOOMMemoryPressureLimit = "60%";
 
       # Hard ceiling on the primary user session — catches runaway allocations from
       # non-systemd processes (Helium/Electron renderers, desktop AI tools) that run
