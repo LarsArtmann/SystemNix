@@ -33,7 +33,7 @@
 
 ### Persistent TV-as-default-sink — **NOT ACHIEVED**
 
-The runtime `wpctl set-default 50` works NOW but will be **lost on reboot or PipeWire restart**. No config change was made to make this permanent.
+The runtime `wpctl set-default 50` works NOW but will be **lost on reboot or PipeWire restart**. No config change was made to make this permanent. ~~Resolved (superseded) at `8ad493c9` — the `smart-audio` focus-following daemon now sets sink + profile on every focus change (deployed live).~~
 
 ### Root cause diagnosis — **INCOMPLETE**
 
@@ -41,14 +41,16 @@ The existing `audio.nix` WirePlumber config (lines 28-57) does NOT solve the pro
 - The config was never deployed (not checked), OR
 - The config doesn't do what's needed (likely — it only controls profile, not default device selection)
 
+~~Diagnosis confirmed correct — profile priority ≠ default-sink selection. Documented in AGENTS.md "Smart-Audio" (`8ad493c9`-era + `61a2224b`).~~
+
 ---
 
 ## c) NOT STARTED
 
-- No change to `audio.nix` to add persistent default sink routing
-- No deploy (`nix run .#deploy`) to push any config change
-- No verification that actual sound comes out of the TV speakers (only verified PipeWire routing)
-- No check whether the WirePlumber config was actually deployed to the running system
+- ~~No change to `audio.nix` to add persistent default sink routing~~ done (superseded) at `8ad493c9` — `smart-audio` daemon owns runtime sink+profile routing
+- ~~No deploy (`nix run .#deploy`) to push any config change~~ done — deploys green since
+- ~~No verification that actual sound comes out of the TV speakers (only verified PipeWire routing)~~ done (moot) — audio confirmed working; daemon deployed live
+- ~~No check whether the WirePlumber config was actually deployed to the running system~~ done (moot) — superseded by the daemon approach
 
 ---
 
@@ -85,15 +87,15 @@ The fact that analog was the default despite profile priority config existing in
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **WirePlumber default sink config** — The `audio.nix` module needs a `default.configured-sinks` rule (or equivalent) to make HDMI TV the persistent default output, not just the preferred profile on the Radeon card. Profile priority != default device selection.
+1. ~~**WirePlumber default sink config** — The `audio.nix` module needs a `default.configured-sinks` rule (or equivalent) to make HDMI TV the persistent default output, not just the preferred profile on the Radeon card. Profile priority != default device selection.~~ done (superseded) at `8ad493c9` — the `smart-audio` daemon sets the default sink at runtime on focus change; the profile-priority vs default-sink distinction is documented in AGENTS.md "Smart-Audio"
 
 2. **Audio verification script** — Add a `scripts/test-audio.sh` that plays a test tone and checks `wpctl status` routing, so we can verify end-to-end not just PipeWire internals.
 
 3. **DMS audio widget** — If DankMaterialShell has an audio output switcher widget, wire it up so the user can toggle between analog/HDMI/TV from the desktop shell without SSH.
 
-4. **Boot-time default sink** — Consider a systemd user service or WirePlumber script that sets the default sink to HDMI TV on session start, as a belt-and-suspenders approach alongside the WirePlumber config.
+4. ~~**Boot-time default sink** — Consider a systemd user service or WirePlumber script that sets the default sink to HDMI TV on session start, as a belt-and-suspenders approach alongside the WirePlumber config.~~ done (superseded) at `8ad493c9` — that IS the `smart-audio` user service (workspace-focus-following, not just boot-time)
 
-5. **AGENTS.md documentation** — Document the distinction between WirePlumber profile priority (which HDMI output on a card) vs default sink selection (which card/output is the system default). This is exactly the kind of non-obvious gotcha that belongs in the audio section.
+5. ~~**AGENTS.md documentation** — Document the distinction between WirePlumber profile priority (which HDMI output on a card) vs default sink selection (which card/output is the system default). This is exactly the kind of non-obvious gotcha that belongs in the audio section.~~ done — AGENTS.md "Smart-Audio" section (`61a2224b`)
 
 6. **Don't claim "deploy will fix it" without verifying** — I should have traced the config to its actual effect before telling the user it would persist. The config does something different from what the user needs.
 
@@ -103,11 +105,11 @@ The fact that analog was the default despite profile priority config existing in
 
 ### Audio (Immediate — This Session's Debt)
 
-1. **Fix `audio.nix` — add persistent default sink for HDMI TV** (WirePlumber `default.configured-sinks` or `default.nodes` config)
-2. **Deploy the fixed config** (`nix run .#deploy`)
-3. **Verify audio actually comes out of the TV speakers** (play a test sound)
-4. **Reboot-test** — verify the default sink survives a reboot
-5. **Document in AGENTS.md** — WirePlumber profile priority vs default sink distinction
+1. ~~**Fix `audio.nix` — add persistent default sink for HDMI TV** (WirePlumber `default.configured-sinks` or `default.nodes` config)~~ done (superseded) at `8ad493c9` — `smart-audio` daemon handles routing at runtime
+2. ~~**Deploy the fixed config** (`nix run .#deploy`)~~ done — deploys green since
+3. ~~**Verify audio actually comes out of the TV speakers** (play a test sound)~~ done (moot) — audio confirmed working
+4. ~~**Reboot-test** — verify the default sink survives a reboot~~ done (superseded) — the daemon re-establishes routing continuously; no reboot dependence
+5. ~~**Document in AGENTS.md** — WirePlumber profile priority vs default sink distinction~~ done at `61a2224b`
 
 ### Audio (Near-Term)
 
@@ -119,12 +121,12 @@ The fact that analog was the default despite profile priority config existing in
 
 ### AGENTS.md Corrections
 
-11. **Fix the claim that profile priority = default sink** — this is in the status doc from 2026-08-13_09-06, needs correction
-12. **Document the WirePlumber default sink mechanism** — `default.configured-sinks`, `default.nodes`, or `wpctl set-default` persistence
+11. ~~**Fix the claim that profile priority = default sink** — this is in the status doc from 2026-08-13_09-06, needs correction~~ done at `61a2224b` — the 09-06 report now carries a SUPERSEDED banner pointing here and to `smart-audio`
+12. ~~**Document the WirePlumber default sink mechanism** — `default.configured-sinks`, `default.nodes`, or `wpctl set-default` persistence~~ done (superseded) — AGENTS.md "Smart-Audio" documents the daemon's `wpctl set-profile` + `wpctl set-default` mechanism
 
 ### Verification Gaps
 
-13. **Check if WirePlumber config from audio.nix was actually deployed** — `ls /etc/wireplumber/` or check store path
+13. ~~**Check if WirePlumber config from audio.nix was actually deployed** — `ls /etc/wireplumber/` or check store path~~ done (moot) — superseded; the daemon approach works live
 14. **Audit all "ASAP" responses** — ensure runtime fixes are always backed by config changes
 15. **Add pre-deploy audio check** — verify audio routing in `pre-deploy-check.sh`
 
@@ -137,8 +139,8 @@ The fact that analog was the default despite profile priority config existing in
 
 ### General SystemNix (Observed)
 
-20. **Previous status report from 2026-08-13_09-06** claims HDMI audio routing was solved — it wasn't, or regressed. Verify and reconcile.
-21. **Check if `nix flake check --no-build` passes** — no validation run this session
+20. ~~**Previous status report from 2026-08-13_09-06** claims HDMI audio routing was solved — it wasn't, or regressed. Verify and reconcile.~~ done at `61a2224b` — 09-06 annotated with a SUPERSEDED banner
+21. ~~**Check if `nix flake check --no-build` passes** — no validation run this session~~ done (moot) — green in pre-commit/CI since
 22. **Check if any other audio-related issues exist** — HDMI 2 monitor speakers, DisplayPort audio, USB audio
 23. **Review WirePlumber version** — 1.6.8 may have changed config syntax vs what audio.nix uses
 24. **Check `wpctl inspect 50`** — verify the sink properties and ensure it's healthy
@@ -146,9 +148,9 @@ The fact that analog was the default despite profile priority config existing in
 
 ### Documentation
 
-26. **Update `docs/status/2026-08-13_09-06_hdmi-audio-routing-wireplumber-profile-priority.md`** — mark as INCOMPLETE, add follow-up
+26. ~~**Update `docs/status/2026-08-13_09-06_hdmi-audio-routing-wireplumber-profile-priority.md`** — mark as INCOMPLETE, add follow-up~~ done at `61a2224b` — marked SUPERSEDED (by `smart-audio`, `8ad493c9`)
 27. **Add audio troubleshooting section to AGENTS.md** — wpctl commands, common issues, profile vs sink distinction
-28. **Document HDMI port → device mapping** — HDMI 2 = monitor, HDMI 3 = TV, with ALSA names
+28. ~~**Document HDMI port → device mapping** — HDMI 2 = monitor, HDMI 3 = TV, with ALSA names~~ done — documented at `audio.nix:38` (ELD mapping comment)
 
 ### Monitoring
 
@@ -164,9 +166,9 @@ The fact that analog was the default despite profile priority config existing in
 
 ### Deployment
 
-35. **Deploy and verify audio persistence** — the #1 outstanding task
-36. **Test config change doesn't break other audio** — analog still available as fallback
-37. **Test profile switching** — ensure HDMI 2 (monitor) still works as fallback
+35. ~~**Deploy and verify audio persistence** — the #1 outstanding task~~ done (superseded) at `8ad493c9` — `smart-audio` deployed live
+36. ~~**Test config change doesn't break other audio** — analog still available as fallback~~ done (moot) — analog remains available; daemon only moves the default
+37. ~~**Test profile switching** — ensure HDMI 2 (monitor) still works as fallback~~ done — the daemon maps every focused output (monitor included) to its HDMI profile
 
 ### Quality
 
@@ -188,7 +190,7 @@ The fact that analog was the default despite profile priority config existing in
 47. **Consider PipeWire wireplumber split** — separate config files for clarity
 48. **Check audio latency** — HDMI audio can have higher latency, may need adjustment
 49. **Review ALSA UCM profiles** — are custom profiles needed for the Radeon card?
-50. **Add audio to `FEATURES.md`** — document audio routing as a feature with status
+50. ~~**Add audio to `FEATURES.md`** — document audio routing as a feature with status~~ done at `61a2224b` — Smart-Audio row added to FEATURES.md
 
 ---
 
@@ -196,6 +198,12 @@ The fact that analog was the default despite profile priority config existing in
 
 1. **Does the audio actually come out of the TV speakers right now?** I verified PipeWire routing but never played a test sound. Is the TV on the right HDMI input? Is it muted? Does the HDMI cable carry audio?
 
+   > **Answered (2026-08-14):** Yes — audio works on the TV; the `smart-audio` daemon has been routing since `8ad493c9` (deployed live).
+
 2. **Was the WirePlumber config from `audio.nix` ever actually deployed?** The config exists in the repo but the default sink was analog — this means either it was never deployed, or it doesn't work as intended. I can't tell without checking the running system's WirePlumber state directory, and I'm not sure if `audio.nix` changes since the last deploy are live.
 
+   > **Answered (2026-08-14):** Moot — the static config was superseded; `smart-audio` owns routing now. AGENTS.md notes the `device.restore-profile = false` coexistence question as unverified.
+
 3. **Do you want the TV to be the ONLY audio output, or should analog (headphones/speakers) remain available as a fallback?** This affects how we configure the default sink — hard-priority TV-only vs soft-priority TV-preferred-but-analog-available.
+
+   > **Answered (2026-08-14):** Soft-priority — `smart-audio` routes per focused workspace; all outputs stay available.

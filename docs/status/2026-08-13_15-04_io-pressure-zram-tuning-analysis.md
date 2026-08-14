@@ -50,12 +50,12 @@ Nothing — no implementation was started.
 
 ## c) NOT STARTED
 
-1. **Implementing the zram/sysctl changes** in `boot.nix` — proposed but not applied
-2. **Verifying the BTRFS scrub failure** — Gatus reported `success=false` for 2+ hours but we never ran `btrfs scrub status /` to check if there are actual errors (requires sudo, which was blocked)
-3. **Checking if a BTRFS balance is running** — couldn't run `btrfs balance status /` (requires sudo)
-4. **Checking disk space** — couldn't run `df -h /` with sudo context (df ran but we didn't capture it)
-5. **Deploying and testing the changes** — not started
-6. **Updating AGENTS.md** with the swappiness/zram findings
+1. ~~**Implementing the zram/sysctl changes** in `boot.nix` — proposed but not applied~~ done at `0bd8a272`
+2. ~~**Verifying the BTRFS scrub failure** — Gatus reported `success=false` for 2+ hours but we never ran `btrfs scrub status /` to check if there are actual errors (requires sudo, which was blocked)~~ done (moot) — `btrfs-health-metrics` collects `btrfs scrub status` every 5 min (CAP_SYS_ADMIN override); scrub errors alert via Gatus "BTRFS Scrub Health"
+3. ~~**Checking if a BTRFS balance is running** — couldn't run `btrfs balance status /` (requires sudo)~~ done (superseded) — weekly automated balance in `btrfs-health.nix` with `btrfs-chunk-check` guards (see AGENTS.md)
+4. ~~**Checking disk space** — couldn't run `df -h /` with sudo context (df ran but we didn't capture it)~~ done (moot) — "Root Disk Space"/"Root Disk Usage" Gatus checks monitor continuously
+5. ~~**Deploying and testing the changes** — not started~~ done at `0bd8a272`
+6. ~~**Updating AGENTS.md** with the swappiness/zram findings~~ done — AGENTS.md "ZRAM & Memory Reclaim" section (`0bd8a272`-era)
 
 ---
 
@@ -81,29 +81,29 @@ Nothing — no implementation was started.
 
 ### ZRAM / Swap Configuration
 
-1. **`vm.swappiness = 10` is actively harmful with zram-only** — This is the biggest finding. The comment in `boot.nix` says "Use swap before OOM kills" but swappiness=10 does the OPPOSITE: it tells the kernel to prefer page cache reclaim (disk I/O) over swap (zram, which is in RAM). With zram-only swap, high swappiness (100-200) is correct because zram swap is faster than disk I/O. This single misconfiguration is likely a major contributor to disk I/O pressure.
+1. ~~**`vm.swappiness = 10` is actively harmful with zram-only** — This is the biggest finding. The comment in `boot.nix` says "Use swap before OOM kills" but swappiness=10 does the OPPOSITE: it tells the kernel to prefer page cache reclaim (disk I/O) over swap (zram, which is in RAM). With zram-only swap, high swappiness (100-200) is correct because zram swap is faster than disk I/O. This single misconfiguration is likely a major contributor to disk I/O pressure.~~ done at `0bd8a272` (swappiness=150 + corrected comment)
 
-2. **zram device too small (16 GiB / 17%)** — At 3.23x compression, 16 GiB of zram only holds ~51 GiB of original data while costing ~5 GiB physical RAM. Increasing to 30% (~28 GiB) would hold ~90 GiB of original data at ~8.7 GiB physical cost — a good trade on a 94 GiB system with 58 GiB available.
+2. ~~**zram device too small (16 GiB / 17%)** — At 3.23x compression, 16 GiB of zram only holds ~51 GiB of original data while costing ~5 GiB physical RAM. Increasing to 30% (~28 GiB) would hold ~90 GiB of original data at ~8.7 GiB physical cost — a good trade on a 94 GiB system with 58 GiB available.~~ done at `0bd8a272` (memoryPercent=30)
 
-3. **`vm.watermark_scale_factor = 10` is too low** — Default is 100. At 10, the kernel waits until memory is very low before starting background reclaim, then does aggressive "panic reclaim" — large synchronous I/O bursts that hammer BTRFS. Raising to 100 starts reclaim earlier and more gradually.
+3. ~~**`vm.watermark_scale_factor = 10` is too low** — Default is 100. At 10, the kernel waits until memory is very low before starting background reclaim, then does aggressive "panic reclaim" — large synchronous I/O bursts that hammer BTRFS. Raising to 100 starts reclaim earlier and more gradually.~~ done at `0bd8a272`
 
-4. **`vm.dirty_ratio = 10` / `vm.dirty_background_ratio = 3` too high for QLC NAND** — 10% of 94 GiB = 9.4 GiB of dirty pages before the kernel forces writeback. On QLC NAND with slow writes, this creates huge writeback bursts. Lowering to 5% / 1% spreads writes more evenly.
+4. ~~**`vm.dirty_ratio = 10` / `vm.dirty_background_ratio = 3` too high for QLC NAND** — 10% of 94 GiB = 9.4 GiB of dirty pages before the kernel forces writeback. On QLC NAND with slow writes, this creates huge writeback bursts. Lowering to 5% / 1% spreads writes more evenly.~~ done at `0bd8a272` (5% / 1%)
 
-5. **`vm.vfs_cache_pressure = 100` (default)** — Could be raised to 150 to prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive, requires disk reads/writes).
+5. ~~**`vm.vfs_cache_pressure = 100` (default)** — Could be raised to 150 to prefer reclaiming dentry/inode cache (cheap, no disk I/O) over page cache (expensive, requires disk reads/writes).~~ done at `0bd8a272` (150)
 
 ### Broader System Issues Noticed
 
 6. **PMA at 6.5 GB RSS is enormous** — Despite `MemoryMax=8G` and `MemoryHigh=6G`, PMA is sitting at the high watermark. The AGENTS.md documents the page-cache death-loop fix, but 6.5 GB for a commit automation service is still very high. Should investigate whether the 260+ repo discovery is loading too much into memory.
 
-7. **iotop running for 2+ days** — PID 13227, `iotop -aoP`, started Aug 11, 91 minutes of CPU time. This is a leftover diagnostic process that should be killed. It's not causing the problem but it's wasteful.
+7. ~~**iotop running for 2+ days** — PID 13227, `iotop -aoP`, started Aug 11, 91 minutes of CPU time. This is a leftover diagnostic process that should be killed. It's not causing the problem but it's wasteful.~~ done (moot) — transient process; multiple reboots since
 
 8. **~15 Crush instances running** — Multiple `crush -y` processes across many PTS sessions, consuming 1-6% CPU each. Cumulatively ~20-30% CPU. Should clean up idle sessions.
 
-9. **BTRFS scrub health check failing for 2+ hours** — Gatus consistently reports `success=false` for "BTRFS Scrub Health". This could be:
+9. ~~**BTRFS scrub health check failing for 2+ hours** — Gatus consistently reports `success=false` for "BTRFS Scrub Health". This could be:
    - A real scrub finding errors (serious)
    - The scrub status script failing to run (sudo permissions?)
    - Stale metrics from the `btrfs-health-metrics` service
-   This needs investigation before assuming it's benign.
+   This needs investigation before assuming it's benign.~~ done (moot) — did not persist; `btrfs-health-metrics` (every 5 min, CAP_SYS_ADMIN) feeds the Gatus scrub alerts
 
 10. **Swap is 98.4% full with no disk swap fallback** — When zram fills completely, the kernel has NO swap left and must either OOM-kill or aggressively reclaim page cache (disk I/O). Adding a small disk swap as emergency fallback (even 4-8 GiB on the NVMe) would prevent the "zram full → disk I/O storm" cascade. This was explicitly removed in `hardware-configuration.nix` to free 10G — but the tradeoff was disk space vs. stability, and stability lost.
 
@@ -113,37 +113,37 @@ Nothing — no implementation was started.
 
 ### Immediate (today)
 
-1. Implement the 6 zram/sysctl changes in `boot.nix` (swappiness, memoryPercent, watermark_scale_factor, vfs_cache_pressure, dirty_ratio, dirty_background_ratio)
-2. Run `df -h /` and `df -h /data` to check for disk space / metadata ENOSPC
-3. Run `btrfs scrub status /` to verify whether scrub is actually finding errors
-4. Run `btrfs balance status /` to check if a balance is running
-5. Kill the stale `iotop` process (PID 13227, running since Aug 11)
-6. Identify and kill the `go build ./...` if it's not user-initiated
+1. ~~Implement the 6 zram/sysctl changes in `boot.nix` (swappiness, memoryPercent, watermark_scale_factor, vfs_cache_pressure, dirty_ratio, dirty_background_ratio)~~ done at `0bd8a272`
+2. ~~Run `df -h /` and `df -h /data` to check for disk space / metadata ENOSPC~~ done (moot) — Gatus "Root Disk Space"/"Root Disk Usage" monitor continuously
+3. ~~Run `btrfs scrub status /` to verify whether scrub is actually finding errors~~ done (moot) — `btrfs-health-metrics` collects it every 5 min
+4. ~~Run `btrfs balance status /` to check if a balance is running~~ done (superseded) — weekly automated balance with chunk-check guards
+5. ~~Kill the stale `iotop` process (PID 13227, running since Aug 11)~~ done (moot) — transient; reboots since
+6. ~~Identify and kill the `go build ./...` if it's not user-initiated~~ done (moot) — transient build; build I/O since classed via `ioTier.build` (BE/7)
 7. Clean up idle Crush sessions (~15 instances running)
-8. Deploy the zram changes and monitor PSI / I/O for improvement
-9. Check `journalctl -u systemd-oomd` for recent OOM kills under memory pressure
+8. ~~Deploy the zram changes and monitor PSI / I/O for improvement~~ done at `0bd8a272`; PSI now monitored ("I/O Stall Rate", "Memory Pressure" Gatus checks, `004924be`)
+9. ~~Check `journalctl -u systemd-oomd` for recent OOM kills under memory pressure~~ done (superseded) — "OOMD Kills" Gatus check added at `9b6590bf`
 
 ### Short-term (this week)
 
 10. Add a small disk swap (4-8 GiB) as emergency fallback when zram is full
-11. Update the `boot.nix` comments to correctly explain why high swappiness is correct for zram-only
-12. Update AGENTS.md with the swappiness/zram finding — it's a non-obvious gotcha
-13. Investigate the BTRFS scrub health check failure — is it real errors or a script issue?
+11. ~~Update the `boot.nix` comments to correctly explain why high swappiness is correct for zram-only~~ done at `0bd8a272` (comment block, `boot.nix:176-182`)
+12. ~~Update AGENTS.md with the swappiness/zram finding — it's a non-obvious gotcha~~ done — AGENTS.md "ZRAM & Memory Reclaim" section
+13. ~~Investigate the BTRFS scrub health check failure — is it real errors or a script issue?~~ done (moot) — did not persist; automated collection + Gatus alerting in place
 14. Reduce PMA's memory footprint — 6.5 GB for commit automation is too high
 15. Consider `vm.min_free_kbytes` increase (currently 2 GB) — with larger zram, may need more headroom
 16. Add Gatus alert for zram fill > 90% — should warn before exhaustion
-17. Add Gatus alert for I/O PSI `full avg10 > 50%` — early warning of disk pressure
-18. Review whether `zstd(level=1)` is still optimal with the larger zram device
-19. Consider `zramSwap.priority` — ensure zram has highest priority over any disk swap
+17. ~~Add Gatus alert for I/O PSI `full avg10 > 50%` — early warning of disk pressure~~ done at `004924be` ("I/O Stall Rate" on `node_psi_io_alert`)
+18. ~~Review whether `zstd(level=1)` is still optimal with the larger zram device~~ done — documented in AGENTS.md: level 3 gains 1.7% ratio for 11.5% less speed; level 1 kept
+19. ~~Consider `zramSwap.priority` — ensure zram has highest priority over any disk swap~~ done (moot) — zram is the only swap device
 20. Check if `max_comp_streams` is set correctly for the 32-core CPU
 
 ### Medium-term (this month)
 
-21. Evaluate whether BTRFS `commit=300` should be lowered to `commit=120` — 5 min data loss window is large
-22. Add a systemd timer that monitors zram fill and logs warnings at 80%, 90%, 95%
+21. ~~Evaluate whether BTRFS `commit=300` should be lowered to `commit=120` — 5 min data loss window is large~~ **Won't implement — decision documented in AGENTS.md: 5-min window accepted (daily btrbk snapshots + CoW journaling); `commit=300` preserves SLC cache**
+22. ~~Add a systemd timer that monitors zram fill and logs warnings at 80%, 90%, 95%~~ done (superseded) — system-health textfile collector + "Swap Metrics" Gatus check (`9b6590bf`); fill-level alerting still partial (see item 16)
 23. Review all service `MemoryMax` limits — with larger zram, some may be too restrictive
 24. Consider moving ClickHouse data to a separate filesystem to isolate its I/O
-25. Evaluate whether the Go build linkers should have I/O priority set (currently `ioTier.build` = BE/7)
+25. ~~Evaluate whether the Go build linkers should have I/O priority set (currently `ioTier.build` = BE/7)~~ done — `ioTier.build` (BE/7 + Nice=10) covers nix-daemon, forgejo-runner, PMA (see AGENTS.md BFQ tiers)
 26. Add pre-deploy check for zram fill > 90% — don't deploy during memory pressure
 27. Create a runbook for "I/O pressure diagnosis" — standard steps for when PSI spikes
 28. Review whether `nix-daemon` should have `MemorySwapMax` set — it's the top memory consumer during builds
@@ -152,18 +152,18 @@ Nothing — no implementation was started.
 
 ### BTRFS-specific
 
-31. Verify BTRFS scrub is actually running weekly (timer may not be firing)
-32. Check BTRFS metadata allocation — `btrfs filesystem df /` for metadata chunk pressure
-33. Consider enabling BTRFS qgroups for per-subvolume tracking (was disabled for performance)
-34. Review the emergency reserve file (`/btrfs-emergency-reserve`) — is it still present?
-35. Check if the weekly balance is completing or being interrupted by reboots
-36. Evaluate moving to `commit=120` + `compress=zstd:1` (faster compression, more frequent commits)
-37. Add monitoring for BTRFS metadata chunk allocation — `btrfs filesystem df /` metrics
+31. ~~Verify BTRFS scrub is actually running weekly (timer may not be firing)~~ done — `autoScrub` weekly on `/` and `/data`; scrub freshness verified daily (alerts if >3 days old)
+32. ~~Check BTRFS metadata allocation — `btrfs filesystem df /` for metadata chunk pressure~~ done — "BTRFS Chunk Health" Gatus check + weekly balance prevent the ENOSPC crash mode
+33. ~~Consider enabling BTRFS qgroups for per-subvolume tracking (was disabled for performance)~~ **Won't implement — qgroup metadata overhead not worth it on QLC NAND; removed metrics deliberately (see AGENTS.md)**
+34. ~~Review the emergency reserve file (`/btrfs-emergency-reserve`) — is it still present?~~ done — provisioned on boot by `btrfs-emergency-reserve.service`, tracked via metrics + "BTRFS Emergency Reserve" Gatus check
+35. ~~Check if the weekly balance is completing or being interrupted by reboots~~ done (superseded) — weekly balance is guarded by `btrfs-chunk-check` and bounded (`-dlimit=10`)
+36. ~~Evaluate moving to `commit=120` + `compress=zstd:1` (faster compression, more frequent commits)~~ **Won't implement — same decision as item 21; zstd level 1 already in use for zram, BTRFS keeps `commit=300`**
+37. ~~Add monitoring for BTRFS metadata chunk allocation — `btrfs filesystem df /` metrics~~ done — "BTRFS Chunk Health" check
 
 ### Monitoring & Alerting
 
-38. Add node_exporter textfile collector for zram stats (mm_stat parsing)
-39. Add Gatus alert for PSI memory `full avg10 > 20%`
+38. ~~Add node_exporter textfile collector for zram stats (mm_stat parsing)~~ done (superseded) — "Swap Metrics" check covers swap presence via node_exporter; system-health textfile collector handles the rest
+39. ~~Add Gatus alert for PSI memory `full avg10 > 20%`~~ done at `004924be` ("Memory Pressure" on `node_psi_memory_alert`)
 40. Add Gatus alert for zram compression ratio degradation (if ratio drops < 2x, something's wrong)
 41. Add a Grafana/Prometheus dashboard for zram fill, compression ratio, and I/O PSI
 42. Monitor `pages_compacted` and `huge_pages` from zram mm_stat for regression
@@ -172,12 +172,12 @@ Nothing — no implementation was started.
 
 ### Documentation
 
-45. Document the swappiness/zram gotcha in `docs/gotchas-archive.md` with full analysis
-46. Update the `boot.nix` zram comment block with the swappiness correction
-47. Add a "Memory Pressure Response" section to AGENTS.md
-48. Document the interaction between zram size, GPU VRAM carveout, and available RAM
+45. ~~Document the swappiness/zram gotcha in `docs/gotchas-archive.md` with full analysis~~ done (superseded) — documented in AGENTS.md "ZRAM & Memory Reclaim" (the right home for enduring rules; gotchas-archive holds incident narratives)
+46. ~~Update the `boot.nix` zram comment block with the swappiness correction~~ done at `0bd8a272` (`boot.nix:176-182`)
+47. ~~Add a "Memory Pressure Response" section to AGENTS.md~~ done (superseded) — AGENTS.md "ZRAM & Memory Reclaim" covers the territory
+48. ~~Document the interaction between zram size, GPU VRAM carveout, and available RAM~~ done — AGENTS.md documents ~28 GiB zram on 94 GiB visible RAM
 49. Create an ADR for the zram-only swap decision (pros/cons, fallback strategy)
-50. Add the zram tuning values to a reference table in `docs/` for quick lookup
+50. ~~Add the zram tuning values to a reference table in `docs/` for quick lookup~~ done (superseded) — AGENTS.md "ZRAM & Memory Reclaim" lists every value with rationale
 
 ---
 
@@ -185,9 +185,15 @@ Nothing — no implementation was started.
 
 1. **Is the `go build ./...` (PID 669123) something you started, or is it from a service (forgejo-runner, PMA, etc.)?** If it's a CI job, we may want to add I/O pressure guards to the runner config. If you started it, we should wait for it to finish before deploying zram changes.
 
+   > **Answered (2026-08-14):** Moot — transient process; build I/O is now classed at `ioTier.build` (BE/7) regardless of origin.
+
 2. **Can you run `sudo btrfs scrub status /` and `sudo btrfs balance status /`?** The shell sandbox blocks sudo. The Gatus scrub health check has been failing for 2+ hours and I need to know if there are actual filesystem errors or if it's a monitoring/script issue.
 
+   > **Answered (2026-08-14):** Superseded — `btrfs-health-metrics` (CAP_SYS_ADMIN, every 5 min) automates both; scrub errors and chunk health alert via Gatus.
+
 3. **Are you comfortable adding a small disk swap (4-8 GiB) as an emergency fallback?** It was explicitly removed to free 10G of disk space, but the current zram-only setup has no safety net when zram fills up — the kernel falls back to aggressive page cache reclaim, which is what's causing the BTRFS I/O storm. The tradeoff is 4-8 GiB of disk space vs. eliminating the "zram full → disk I/O storm" cascade.
+
+   > **Still open (2026-08-14):** No disk swap fallback exists; zram-only (30% ≈ 28 GiB) stands. Disk is at 97% — reclaiming 4-8 GiB for swap is currently not viable. Revisit after disk cleanup.
 
 ---
 

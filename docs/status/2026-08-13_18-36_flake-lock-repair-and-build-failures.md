@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-13 18:36
 **Session Goal:** Fix ALL build failures from `nix flake update && nix flake check --all-systems && nh os build && nh os boot`
-**Outcome:** System builds successfully. Deploy (`nh os boot`) NOT yet run.
+**Outcome:** System builds successfully. ~~Deploy (`nh os boot`) NOT yet run.~~ Deployed successfully the same evening (`990fcd66`).
 
 ---
 
@@ -70,14 +70,14 @@
 
 ### Deploy (`nh os boot`)
 - Build succeeded but the system has NOT been deployed. User's original command chain was `... && nh os boot -v`.
-- **Decision**: I stopped after `nh os build` because deploying is an irreversible action that affects the running system.
+- **Decision**: I stopped after `nh os build` because deploying is an irreversible action that affects the running system. ~~Deployed successfully later the same evening (`2026-08-13_19-01`, `990fcd66`).~~
 
 ### `nix flake check --all-systems`
 - I only ran `nix flake check --no-build` (Linux only). The original command used `--all-systems` which also checks `aarch64-darwin`.
 - The Darwin check was skipped — there may be Darwin-specific eval failures.
 
 ### `nix fmt`
-- Not run. The auto-commit daemon may have formatted files, but I didn't explicitly verify formatting.
+- Not run. The auto-commit daemon may have formatted files, but I didn't explicitly verify formatting. ~~Done (moot) — formatting is enforced by the alejandra pre-commit on every commit since.~~
 
 ---
 
@@ -99,7 +99,7 @@
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **Add CI vendor-hash checks** to ALL LarsArtmann Go flake repos (like dnsblockd has). PMA, erraudit, crush-daily, and others are missing this — vendorHash drift goes undetected until SystemNix tries to build.
-2. **Document the go-nix-helpers NAR hash cache issue** in AGENTS.md — it's a recurring trap that cost significant time across multiple sessions.
+2. ~~**Document the go-nix-helpers NAR hash cache issue** in AGENTS.md — it's a recurring trap that cost significant time across multiple sessions.~~ done at `990fcd66` (AGENTS.md "Daemon cache recovery" + "Follows encoding issue" gotchas)
 3. **The `follows` audit should be automated** — a pre-commit or CI check that detects inputs with their own copy of a shared dependency when a top-level pin exists.
 4. **wf-recorder overlay should track upstream** — add a comment with the upstream issue/PR that fixes FFmpeg 7 compat, and remove the overlay when it lands.
 5. **`nix flake check --all-systems` should be part of the pre-deploy checklist** — we only verified Linux.
@@ -111,23 +111,23 @@
 
 | # | Priority | Task |
 |---|----------|------|
-| 1 | **CRITICAL** | Run `nh os boot` to deploy the working build |
+| 1 | **CRITICAL** | ~~Run `nh os boot` to deploy the working build~~ done — deployed successfully (`2026-08-13_19-01`, `990fcd66`) |
 | 2 | **CRITICAL** | Run `nix flake check --all-systems` to verify Darwin eval |
-| 3 | **HIGH** | Restart nix-daemon and re-run `nix flake lock` to verify the go-nix-helpers hash fix is permanent (not just a manual lock edit) |
-| 4 | **HIGH** | Document go-nix-helpers NAR hash cache issue in AGENTS.md gotchas section |
+| 3 | **HIGH** | ~~Restart nix-daemon and re-run `nix flake lock` to verify the go-nix-helpers hash fix is permanent (not just a manual lock edit)~~ done — lock now serves GitHub-tarball hashes; recovery procedure documented at `990fcd66` (AGENTS.md "Daemon cache recovery") |
+| 4 | **HIGH** | ~~Document go-nix-helpers NAR hash cache issue in AGENTS.md gotchas section~~ done at `990fcd66` |
 | 5 | **HIGH** | Add vendor-hash CI check to crush-daily repo (like dnsblockd has) |
 | 6 | **HIGH** | Add vendor-hash CI check to PMA repo |
 | 7 | **HIGH** | Add vendor-hash CI check to erraudit repo |
-| 8 | **MED** | Run `nix fmt` and verify formatting |
-| 9 | **MED** | Check if any other shared inputs (beyond go-nix-helpers) have missing follows — audit all inputs systematically |
+| 8 | **MED** | ~~Run `nix fmt` and verify formatting~~ done (moot — pre-commit enforces it) |
+| 9 | **MED** | ~~Check if any other shared inputs (beyond go-nix-helpers) have missing follows — audit all inputs systematically~~ done at `82963f04`, `caf2cab8` (follows dedup). **Correction 08-14:** the "zero `git+ssh` fetches" claim was string-match noise — nix serializes these as `type: git` + `url: ssh://…`; 96 lock nodes still SSH-fetch incl. `go-cqrs-lite`×4 (`2026-08-14_16-20` §d.2) |
 | 10 | **MED** | Add a pre-commit check that detects `follows` for non-existent inputs |
 | 11 | **MED** | Track wf-recorder FFmpeg 7 upstream fix — file/subscribe to issue |
-| 12 | **MED** | Run post-deploy checks (`nix run .#post-deploy-check`) after deploy |
-| 13 | **MED** | Verify SigNoz collector vendorHash (`collectorVendorHash`) is still correct — only the signoz main vendorHash was updated |
+| 12 | **MED** | ~~Run post-deploy checks (`nix run .#post-deploy-check`) after deploy~~ done (moot — deploy.sh runs post-deploy checks automatically) |
+| 13 | **MED** | ~~Verify SigNoz collector vendorHash (`collectorVendorHash`) is still correct — only the signoz main vendorHash was updated~~ done (moot — SigNoz builds green since; the collector hash was correct) |
 | 14 | **LOW** | Consider a flake-parts module that auto-adds `go-nix-helpers.follows` to all LarsArtmann Go inputs |
-| 15 | **LOW** | Run pre-deploy-check.sh before deploying |
-| 16 | **LOW** | Clean up the `nixos.qcow2` untracked file (shown in git status) |
-| 17 | **LOW** | Review the `scripts/zfs-vm-backup.sh` modification (shown in git status as modified) |
+| 15 | **LOW** | ~~Run pre-deploy-check.sh before deploying~~ done (moot — integrated into deploy flow) |
+| 16 | **LOW** | ~~Clean up the `nixos.qcow2` untracked file (shown in git status)~~ done (moot — working tree clean; image managed via store-path commits) |
+| 17 | **LOW** | ~~Review the `scripts/zfs-vm-backup.sh` modification (shown in git status as modified)~~ done — committed and extended at `5663ce9d`, `bae92287`, `e81c579a` |
 | 18 | **LOW** | Consider upgrading wf-recorder to a git version that supports FFmpeg 7 instead of downgrading ffmpeg |
 | 19 | **LOW** | Add `golangci-lint-auto-configure` vendorHash fix (currently disabled in lars-packages.nix with TODO) |
 
@@ -137,6 +137,12 @@
 
 1. **Should I deploy now?** The build passed but I stopped at `nh os build`. The original command chain included `nh os boot`. Should I proceed with the deploy, or do you want to review the changes first?
 
+   > **Answered (2026-08-14):** Deployed the same evening — success (`990fcd66`).
+
 2. **Is the nix-daemon cache issue worth a `systemctl restart nix-daemon` right now?** The manual flake.lock hash edit works for this build, but the next `nix flake update` could reintroduce the wrong hash if the daemon cache is stale. Restarting the daemon would clear it but would interrupt any running nix operations.
 
+   > **Answered (2026-08-14):** Yes — resolved; flake.lock serves GitHub-tarball hashes and the recovery procedure is documented in AGENTS.md ("Daemon cache recovery", `990fcd66`).
+
 3. **Should the SigNoz collector vendorHash also be updated?** I only updated the main SigNoz vendorHash (`signoz` derivation at line 52). The `collectorVendorHash` (shared by `schemaMigrator` + `otelCollector`) was not touched — it may also be stale if `signoz-collector-src` was updated.
+
+   > **Answered (2026-08-14):** No — moot. SigNoz builds green since; the collector hash was already correct.

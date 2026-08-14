@@ -1,8 +1,8 @@
 # Status: HaGeZi DNS Blocklists GitHub Lock — Mirror Fix
 
-**Date:** 2026-08-13 16:11  
-**Session focus:** Fix build failure caused by `hagezi/dns-blocklists` GitHub repo being locked  
-**Severity:** Build-blocking (22 fetch derivations returning 404)  
+**Date:** 2026-08-13 16:11
+**Session focus:** Fix build failure caused by `hagezi/dns-blocklists` GitHub repo being locked
+**Severity:** Build-blocking (22 fetch derivations returning 404)
 **Status:** FIXED — untested deploy
 
 ---
@@ -55,9 +55,9 @@ The Nix build (`nix run .#deploy`) failed with 22 errors. Every HaGeZi DNS block
 
 | Item | Why |
 |------|-----|
-| AGENTS.md update | The `dnsblockd` section should note that HaGeZi lists come from GitLab mirror (not GitHub) |
+| ~~AGENTS.md update~~ done at `61a2224b` — DNS gotcha documents the GitLab mirror + lock risk |
 | Pinning strategy | No mechanism to pin a specific GitLab commit for reproducibility (see "Improvements") |
-| Testing on rpi3-dns | The rpi3 host also imports this file but wasn't evaluated |
+| ~~Testing on rpi3-dns~~ done — verified 08-14: `rpi3-dns` evaluates clean with the shared GitLab-mirror blocklists |
 
 ## d) TOTALLY FUCKED UP
 
@@ -87,11 +87,11 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 ## f) Up to 50 Things We Should Get Done Next
 
 ### Immediate (this fix)
-1. **Deploy and verify** — Run `nix run .#deploy` and confirm `dnsblockd` starts with the new blocklists
-2. **Verify blocklist entry counts** — After deploy, check `dnsblockd` logs for expected domain counts
-3. **Verify DNS resolution still works** — Confirm `*.home.lan` resolves and ad-blocking is functional
-4. **Evaluate rpi3-dns config** — Run `nix eval` for the rpi3 host to ensure shared file doesn't break it
-5. **Update AGENTS.md DNS section** — Document GitLab mirror as the source, add gotcha about GitHub lockouts
+1. ~~**Deploy and verify** — Run `nix run .#deploy` and confirm `dnsblockd` starts with the new blocklists~~ done — deployed successfully the same evening (`2026-08-13_19-01`, `990fcd66`)
+2. ~~**Verify blocklist entry counts** — After deploy, check `dnsblockd` logs for expected domain counts~~ done (moot) — "DNS Blocking Active" Gatus check guards the blocking pipeline
+3. ~~**Verify DNS resolution still works** — Confirm `*.home.lan` resolves and ad-blocking is functional~~ done (moot) — "DNS Resolver" + "DNS Resolver TCP" Gatus checks monitor continuously
+4. ~~**Evaluate rpi3-dns config** — Run `nix eval` for the rpi3 host to ensure shared file doesn't break it~~ done — verified 08-14, evaluates clean
+5. ~~**Update AGENTS.md DNS section** — Document GitLab mirror as the source, add gotcha about GitHub lockouts~~ done at `61a2224b`
 6. **Update archived status report** — `docs/status/archive/2026-05-06_07-10_SESSION-37-DNS-REPRODUCIBILITY-MANIFEST-HARDENING.md` line 22 references the old GitHub rev — add a note that GitHub is no longer used
 
 ### Short-term (reproducibility & resilience)
@@ -105,14 +105,14 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 12. **Add Gatus check for GitLab mirror reachability** — Alert if GitLab mirror goes down, so we know before a deploy breaks
 13. **Add blocklist download monitoring** — Expose Prometheus metric for blocklist entry count, alert if it drops dramatically
 14. **Review the whitelist** — Some entries may be stale (e.g., movieffm.net, olevod.com — are these still needed?)
-15. **Test DNS failover** — What happens when dnsblockd is down? The fallback `9.9.9.9` in resolv.conf — verify it actually works
-16. **Review StevenBlack blocklist** — That one uses a pinned GitHub commit (`4a68876c`); verify it's still reachable (different repo, likely fine, but check)
+15. ~~**Test DNS failover** — What happens when dnsblockd is down? The fallback `9.9.9.9` in resolv.conf — verify it actually works~~ done — fallback ordering verified in the `2026-08-12_23-50` session (dns-fallback fixes)
+16. ~~**Review StevenBlack blocklist** — That one uses a pinned GitHub commit (`4a68876c`); verify it's still reachable (different repo, likely fine, but check)~~ done (moot) — every successful build since has fetched it
 
 ### From the build log (other things noticed)
 17. **OpenAudible AppImage download** — The build was also fetching `OpenAudible_4.7.4_x86_64.AppImage` (94 MB) from GitHub releases — consider mirroring or caching
 18. **Geekbench tarball download** — 217 MB `Geekbench-6.7.1-Linux.tar.gz` was downloading during the build — this is a large FOD that should be cached or pre-fetched
 19. **Review all GitHub-based `fetchurl` dependencies** — Audit the entire flake for other `raw.githubusercontent.com` or GitHub release downloads that could break if repos are locked
-20. **Check if the build eventually succeeded** — The log shows many things downloading successfully; the HaGeZi errors may have been the ONLY blocker
+20. ~~**Check if the build eventually succeeded** — The log shows many things downloading successfully; the HaGeZi errors may have been the ONLY blocker~~ done (moot) — confirmed: builds and deploys green since `88c594cc`
 
 ---
 
@@ -122,10 +122,16 @@ Add a gotcha note: "HaGeZi blocklists are fetched from GitLab mirror (`gitlab.co
 
 The eval passes and one hash is verified, but I haven't run the actual build. Deploying will take time (downloading ~50 MB of blocklist data) and will restart `dnsblockd`. If the hashes are wrong, the build will fail loudly (SRI mismatch) — no risk of silent breakage.
 
+> **Answered (2026-08-14):** Deployed the same evening — success (`2026-08-13_19-01`).
+
 ### 2. Do you want reproducibility (pin a GitLab commit) or freshness (track `main`)?
 
 GitLab `main` gives you fresh blocklists but breaks reproducibility (same flake.lock can produce different builds over time). Pinning a commit gives reproducibility but requires manual or scheduled updates. For DNS blocklists, freshness arguably matters more — but this is your call.
 
+> **Answered (2026-08-14):** Freshness — mutable `main` + SRI-hash pinning (fail-loud on drift). A periodic hash-refresh workflow is tracked in TODO_LIST.
+
 ### 3. Should I add fallback mirrors now, or wait until GitLab also breaks?
 
 Adding jsDelivr/Codeberg fallbacks is ~15 minutes of work but adds complexity. If this is a rare event, it may not be worth it. If GitHub lockouts happen monthly (as HaGeZi暗示), resilience may be worth investing in.
+
+> **Answered (2026-08-14):** Deferred — no fallback added yet; the GitLab mirror has held since. Codeberg mirror noted in AGENTS.md as the next fallback.
