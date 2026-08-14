@@ -44,19 +44,20 @@ stdenv.mkDerivation (finalAttrs: {
     hash = "sha256-bFk078qQ8Ha/1na+r5ka6yNPI/Pealh0Rk6hJxKBwNs=";
   };
 
-  nativeBuildInputs = [
-    nodejs
-    pnpm
-    pnpmConfigHook
-    makeWrapper
-    python3
-    node-gyp
-    gcc
-  ]
-  ++ lib.optionals stdenv.isLinux [
-    autoPatchelfHook
-    pkg-config
-  ];
+  nativeBuildInputs =
+    [
+      nodejs
+      pnpm
+      pnpmConfigHook
+      makeWrapper
+      python3
+      node-gyp
+      gcc
+    ]
+    ++ lib.optionals stdenv.isLinux [
+      autoPatchelfHook
+      pkg-config
+    ];
 
   # Lockfile-driven dependency store. The hash covers the offline pnpm store
   # contents, not the built node_modules. Run `nix build .#qmd` once with an
@@ -100,7 +101,8 @@ stdenv.mkDerivation (finalAttrs: {
     chmod -R u+w $out/lib/qmd
 
     makeWrapper ${nodejs}/bin/node $out/bin/qmd \
-      --add-flags $out/lib/qmd/bin/qmd
+      --add-flags $out/lib/qmd/bin/qmd \
+      --prefix PATH : ${nodejs}/bin
     runHook postInstall
   '';
 
