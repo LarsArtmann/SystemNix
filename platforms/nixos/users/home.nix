@@ -265,6 +265,35 @@ in
       # (see the pnpm store symlink above) — its metadata cache only.
       npm_config_cache = "/mnt/buildcache/npm";
 
+      # ── Cache-key unification (2026-08-15; docs/planning/2026-08-15_21-23_SMART-BUILDCACHE-OVERHAUL.md) ──
+      # The build cache grew 2-3x because identical packages were compiled
+      # under multiple cache keys. Both vars below collapse it to ONE key.
+      #
+      # GOTOOLCHAIN=local: the running (nix-pinned) go is the ONLY toolchain.
+      # The default "auto" silently downloads newer toolchains demanded by
+      # go.mod (go-codec's "go 1.26.6" pulled a 240 MiB toolchain into go-mod
+      # and forked the cache: 15k duplicate entries in one day). With "local",
+      # version mismatches fail LOUDLY — fix the go.mod or bump nixpkgs
+      # deliberately. Known loud repo today: go-codec (user is mid-upgrade).
+      GOTOOLCHAIN = "local";
+      # GOEXPERIMENT=jsonv2: gates only the encoding/json/v2 package's
+      # availability — v1 output is byte-identical (70 repos already compile
+      # their deps under this flag; verified on go1.26.5: WITHOUT the flag,
+      # importing json/v2 is a hard build error). Machine-wide setting gives
+      # all 162 repos one X: flag-set → one cache branch. Repos must still
+      # carry the flag THEMSELVES for other contributors (17 satellites are
+      # broken — TODO_LIST sweep item). Drop this var when Go graduates the
+      # experiment out of GOEXPERIMENT (unknown experiment = loud build error).
+      GOEXPERIMENT = "jsonv2";
+
+      # Rust: sccache = content-addressed GLOBAL compile cache (cross-project
+      # hits — project B's serde is a HIT, rustc never runs), hard LRU cap
+      # cargo lacks, ends per-project target/ duplication growth. Nix builds
+      # unaffected (sandboxed, no env). Dir creation + GC: buildcache module.
+      RUSTC_WRAPPER = "sccache";
+      SCCACHE_DIR = "/mnt/buildcache/sccache";
+      SCCACHE_CACHE_SIZE = "32G";
+
       # Wayland specific
       MOZ_ENABLE_WAYLAND = "1";
       QT_QPA_PLATFORM = "wayland";
@@ -302,6 +331,7 @@ in
       rustfmt # Rust code formatter
       clippy # Rust linter
       rust-analyzer # Rust language server
+      sccache # Rust/C compile cache — global, content-addressed, 32G LRU (see sessionVariables)
       gitui # Terminal UI for git
 
       # Memory-limited + I/O-throttled dev commands — wrap go/cargo/pnpm with

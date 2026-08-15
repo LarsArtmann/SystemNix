@@ -2,7 +2,8 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   inherit ((import ../../../lib/default.nix lib)) ports;
 
   # The watcher hard-fails (panic, main.rs:38) when no Wayland display is
@@ -41,7 +42,8 @@
       done
     '';
   };
-in {
+in
+{
   services.activitywatch = {
     enable = pkgs.stdenv.isLinux;
     package = pkgs.activitywatch;
@@ -69,8 +71,8 @@ in {
         ];
         # Wants= pulls the target into this unit's start transaction; without
         # it, After= is ignored whenever the target has no pending job (boot).
-        Wants = lib.mkAfter ["graphical-session.target"];
-        PartOf = lib.mkAfter ["graphical-session.target"];
+        Wants = lib.mkAfter [ "graphical-session.target" ];
+        PartOf = lib.mkAfter [ "graphical-session.target" ];
         StartLimitBurst = 5;
         StartLimitIntervalSec = 300;
       };
@@ -84,15 +86,15 @@ in {
     activitywatch-theme = {
       Unit = {
         Description = "Set ActivityWatch theme to dark";
-        After = ["activitywatch.service"];
-        PartOf = ["activitywatch.service"];
+        After = [ "activitywatch.service" ];
+        PartOf = [ "activitywatch.service" ];
       };
       Service = {
         Type = "oneshot";
         ExecStart = "${lib.getExe pkgs.curl} --retry 5 --retry-delay 2 --retry-connrefused -X POST -H 'Content-Type: application/json' -d '\"dark\"' http://localhost:${toString ports.activitywatch}/api/0/settings/theme";
         RemainAfterExit = true;
       };
-      Install.WantedBy = ["activitywatch.target"];
+      Install.WantedBy = [ "activitywatch.target" ];
     };
   };
 }

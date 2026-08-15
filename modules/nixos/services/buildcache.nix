@@ -35,6 +35,7 @@
       inherit (import ../../../lib/default.nix lib)
         mkFilesystem
         harden
+        ioTier
         serviceOneshotDefaults
         onFailure
         ;
@@ -55,6 +56,7 @@
         "pnpm-store"
         "playwright"
         "rust"
+        "sccache"
       ];
 
       rustProjectDirs = map (project: "rust/${project}") cfg.rustProjects;
@@ -100,6 +102,39 @@
           type = lib.types.int;
           default = 85;
           description = "Usage percentage at which the Gatus alert fires (240 GB drive; caches should be pruned before full).";
+        };
+
+        gc = {
+          enable = lib.mkEnableOption "weekly build cache garbage collection (npm/pnpm prune, stale rust targets, high-watermark go clean)";
+
+          maxAgeDays = lib.mkOption {
+            type = lib.types.int;
+            default = 14;
+            description = ''
+              Rust target/ dirs under <mountPoint>/rust untouched for this many
+              days are deleted. Safe with sccache: a deleted target dir rebuilds
+              from sccache hits without re-invoking rustc for dependencies.
+            '';
+          };
+
+          highWatermarkPercent = lib.mkOption {
+            type = lib.types.int;
+            default = 90;
+            description = ''
+              If usage is at or above this percentage after the regular pruning
+              steps, the nuclear option runs: go clean -cache. Rationale: Go's
+              native 5-day LRU trim is defeated by gopls refreshing mtimes
+              (markUsed), so an unbounded go-build is the one cache that CAN
+              wedge the disk — a cold rebuild is always preferable to a full
+              disk failing all builds.
+            '';
+          };
+
+          calendar = lib.mkOption {
+            type = lib.types.str;
+            default = "Sun *-*-* 05:00:00";
+            description = "OnCalendar for the GC timer (default: Sunday 05:00 — after btrbk 23:00/23:30, before Monday BTRFS balances, idle I/O tier).";
+          };
         };
       };
 
@@ -254,6 +289,91 @@
             OnBootSec = "2min";
             OnUnitActiveSec = "5min";
             Persistent = true;
+          };
+        };
+
+        # Weekly cache GC. Runs as the primary user (all cache dirs are
+        # user-owned). rm on stale rust targets instead of trash is deliberate:
+        # trashing 30G of rebuildable cache would write it to the NVMe trash —
+        # the exact I/O this SSD exists to keep OFF the NVMe. Cache data only,
+        # never user data; paths are anchored under the mount point.
+        systemd.services.buildcache-gc = lib.mkIf cfg.gc.enable {
+          description = "Build cache garbage collection (npm/pnpm prune, stale rust targets, high-watermark go clean)";
+          startLimitBurst = 3;
+          startLimitIntervalSec = 300;
+          unitConfig = {
+            RequiresMountsFor = cfg.mountPoint;
+            ConditionPathIsMountPoint = cfg.mountPoint;
+          };
+          environment = {
+            GOCACHE = "${cfg.mountPoint}/go-build";
+            npm_config_cache = "${cfg.mountPoint}/npm";
+          };
+          path = [
+            pkgs.go
+            pkgs.nodejs
+            pkgs.pnpm
+            pkgs.coreutils
+            pkgs.findutils
+            pkgs.gnused
+          ];
+          inherit onFailure;
+          serviceConfig = lib.mkMerge [
+            {
+              Type = "oneshot";
+              User = primaryUser;
+              TimeoutStartSec = "20min";
+            }
+            (harden {
+              ProtectHome = "read-only";
+              ReadWritePaths = [ cfg.mountPoint ];
+              MemoryMax = "512M";
+            })
+            ioTier.maintenance
+            (serviceOneshotDefaults { })
+          ];
+          script = ''
+            set -eu
+            mnt="${cfg.mountPoint}"
+            max_age=${toString cfg.gc.maxAgeDays}
+            watermark=${toString cfg.gc.highWatermarkPercent}
+
+            usage() {
+              df --output=pcent "$mnt" | tail -n1 | tr -dc '0-9'
+            }
+
+            echo "buildcache-gc: start at $(usage)% usage"
+
+            # 1. npm: verify garbage-collects corrupt/old tarballs
+            npm cache verify || echo "buildcache-gc: npm cache verify failed (non-fatal)"
+
+            # 2. pnpm: remove packages no longer referenced by any project
+            pnpm store prune || echo "buildcache-gc: pnpm store prune failed (non-fatal)"
+
+            # 3. Stale rust target dirs — cheap to lose with sccache
+            find "$mnt/rust" -mindepth 1 -maxdepth 1 -type d -mtime "+$max_age" -print -exec rm -rf -- {} + || true
+
+            # 4. High watermark: go-build is the only unbounded cache (gopls
+            #    mtime refresh defeats Go's 5-day LRU trim). Cold it if needed.
+            pct=$(usage)
+            echo "buildcache-gc: after pruning at "''${pct}"% usage"
+            if [ "$pct" -ge "$watermark" ]; then
+              echo "buildcache-gc: usage >= $watermark% — running go clean -cache (cold rebuild is better than a full disk)"
+              go clean -cache
+              echo "buildcache-gc: post-clean usage: $(usage)%"
+            fi
+
+            echo "buildcache-gc: done"
+          '';
+        };
+
+        systemd.timers.buildcache-gc = lib.mkIf cfg.gc.enable {
+          description = "Weekly build cache garbage collection";
+          wantedBy = [ "timers.target" ];
+          timerConfig = {
+            OnCalendar = cfg.gc.calendar;
+            Persistent = true;
+            Unit = "buildcache-gc.service";
           };
         };
       };
