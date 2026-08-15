@@ -1,7 +1,7 @@
 # SMART-BUILDCACHE-OVERHAUL — Execution Plan
 
 **Created:** 2026-08-15 21:23 (evo-x2, session: btop-disk-investigation)
-**Status:** EXECUTING
+**Status:** EXECUTED 21:23-21:40 — S1 skipped (state change: native trim dropped disk 96%→39% mid-session, active builds; clean would have destroyed live cache). T1-T8 landed in `82bb9707` + docs commit; flake check passed; deploy = manual step below
 **Trigger:** `/mnt/buildcache` hit **96% (198G/220G) one day after deployment**. Investigation found the cache growing 2-3x faster than necessary.
 
 ---
