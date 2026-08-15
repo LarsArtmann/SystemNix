@@ -11,11 +11,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1786367851,
-        "narHash": "sha256-CmrA2N2wFqH26Df4s9cOJCL50OvYyO1fr8Az4D5tw/s=",
+        "lastModified": 1786828743,
+        "narHash": "sha256-aiL5cOKjkP1rs5HWWMR4UXevOVSIqZisyH8H304xIgw=",
         "owner": "LarsArtmann",
         "repo": "art-dupl",
-        "rev": "d542085dc7d05435f31b76c47cb04d5318b0d198",
+        "rev": "31ff13ff1e9b96c4e05ae360e08dbcac9cd4a493",
         "type": "github"
       },
       "original": {
