@@ -44,6 +44,7 @@
 
       textfileDir = "/var/lib/prometheus-node-exporter/textfile_collectors";
       primaryUser = config.users.primaryUser;
+      homeDir = config.users.users.${primaryUser}.home;
 
       buildcacheDirs = [
         "go-build"
@@ -156,6 +157,10 @@
           ];
         };
 
+        # Runs on EVERY boot, deliberately: mkdir/chown/chmod are idempotent,
+        # and an init-once `.initialized` gate (removed 2026-08-15) made any
+        # newly-added buildcacheDirs entry inert — the sccache dir had to be
+        # provisioned by hand after the drive was already initialized.
         systemd.services.buildcache-init = {
           description = "Initialize build cache directories on the USB SSD";
           wantedBy = [ "multi-user.target" ];
@@ -163,16 +168,18 @@
           startLimitIntervalSec = 300;
           unitConfig = {
             # With x-systemd.automount the mount happens on first ACCESS;
-            # ConditionPathExists + ExecStart touching the path trigger it.
+            # RequiresMountsFor + ExecStart touching the path trigger it.
             RequiresMountsFor = cfg.mountPoint;
-            ConditionPathExists = "!${cfg.mountPoint}/.initialized";
             # Guard against root-fs contamination: if the automount unit is dead
             # and the drive absent, mkdir would create dirs on the NVMe root.
             # While the automount is active the path IS a mountpoint (autofs),
             # and a blocked trigger fails the mkdir instead of falling through.
             ConditionPathIsMountPoint = cfg.mountPoint;
           };
-          path = [ pkgs.util-linux ];
+          path = [
+            pkgs.coreutils
+            pkgs.util-linux
+          ];
           serviceConfig = lib.mkMerge [
             {
               Type = "oneshot";
@@ -195,7 +202,6 @@
               chown ${primaryUser}:users "${cfg.mountPoint}/$dir"
               chmod 0755 "${cfg.mountPoint}/$dir"
             done
-            touch "${cfg.mountPoint}/.initialized"
             echo "buildcache initialized at ${cfg.mountPoint}"
           '';
         };
@@ -322,11 +328,21 @@
             {
               Type = "oneshot";
               User = primaryUser;
-              TimeoutStartSec = "20min";
+              # 45min: `go clean -cache` at high-watermark scale (100G+ of
+              # small files) and rust-target rm -rf are metadata-bound on a
+              # DRAM-less USB SSD — 20min was too tight to survive the exact
+              # scenario the watermark guard exists for.
+              TimeoutStartSec = "45min";
             }
             (harden {
+              # pnpm store prune updates its state dir (~/.cache/pnpm: dlx +
+              # project registries, verified live 2026-08-15) — without this
+              # hole prune fails under read-only home every week.
               ProtectHome = "read-only";
-              ReadWritePaths = [ cfg.mountPoint ];
+              ReadWritePaths = [
+                cfg.mountPoint
+                "${homeDir}/.cache/pnpm"
+              ];
               MemoryMax = "512M";
             })
             ioTier.maintenance
@@ -356,7 +372,11 @@
             # 4. High watermark: go-build is the only unbounded cache (gopls
             #    mtime refresh defeats Go's 5-day LRU trim). Cold it if needed.
             pct=$(usage)
-            echo "buildcache-gc: after pruning at "''${pct}"% usage"
+            if [ -z "''${pct:-}" ]; then
+              echo "buildcache-gc: usage unavailable — mount vanished mid-run?" >&2
+              exit 1
+            fi
+            echo "buildcache-gc: after pruning at ''${pct}% usage"
             if [ "$pct" -ge "$watermark" ]; then
               echo "buildcache-gc: usage >= $watermark% — running go clean -cache (cold rebuild is better than a full disk)"
               go clean -cache

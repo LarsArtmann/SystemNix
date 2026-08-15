@@ -23,7 +23,7 @@ set -euo pipefail
 
 DEVICE="/dev/disk/by-id/ata-SanDisk_SDSSDA240G_174444471311-part1"
 MOUNT="/mnt/buildcache"
-STAGE="/tmp/buildcache-stage" # on the NVMe root — needs ~9G free for go-mod
+STAGE="/var/tmp/buildcache-stage" # disk-backed (/tmp is tmpfs=RAM — 9G staging must not eat RAM)
 
 echo "This REFORMATS $DEVICE — everything on it is rebuildable cache."
 read -rp "Maintenance window confirmed, no builds/gopls running? Type 'yes': " answer
