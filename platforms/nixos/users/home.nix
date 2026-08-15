@@ -10,6 +10,95 @@ let
   theme = import ../../common/theme.nix;
   colors = colorScheme.palette;
   inherit (import ../../../lib/default.nix lib) wrapWithMemoryLimit;
+
+  # `open` — macOS-style file/URL opener that works from ANY context,
+  # including SSH sessions that lack the graphical environment.
+  # SSH shells have no WAYLAND_DISPLAY/DBus session env, so raw xdg-open
+  # either fails outright ("no method available") or would launch apps
+  # detached from the niri session. This wrapper rebuilds the session env
+  # from the running compositor's sockets, validates a MIME handler exists
+  # (one actionable error line instead of xdg-open's browser-fallback
+  # waterfall), then detaches so the app survives SSH logout.
+  openCommand = pkgs.writeShellApplication {
+    name = "open";
+    runtimeInputs = with pkgs; [
+      coreutils # id, realpath, basename
+      file # xdg-mime query filetype shells out to `file`
+      util-linux # setsid
+      xdg-utils # xdg-open + xdg-mime
+    ];
+    text = ''
+      # Rebuild the graphical-session environment when missing (SSH).
+      if [ -z "''${XDG_RUNTIME_DIR:-}" ]; then
+        uid="$(id -u)"
+        export XDG_RUNTIME_DIR="/run/user/$uid"
+      fi
+
+      if [ -z "''${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+      fi
+
+      if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
+        # niri's IPC socket is named niri.<wayland-display>.<pid>.sock — the
+        # display name is recoverable even when no session env is inherited.
+        for socket in "$XDG_RUNTIME_DIR"/niri.*.sock; do
+          if [ -e "$socket" ]; then
+            display="$(basename "$socket")"
+            display="''${display#niri.}"
+            WAYLAND_DISPLAY="''${display%%.*}"
+            export WAYLAND_DISPLAY
+            break
+          fi
+        done
+      fi
+
+      if [ -z "''${WAYLAND_DISPLAY:-}" ]; then
+        # Fallback: any compositor's socket (sway backup WM, …)
+        for socket in "$XDG_RUNTIME_DIR"/wayland-*; do
+          case "$socket" in
+            *.lock) continue ;;
+          esac
+          if [ -e "$socket" ]; then
+            WAYLAND_DISPLAY="$(basename "$socket")"
+            export WAYLAND_DISPLAY
+            break
+          fi
+        done
+      fi
+
+      if [ -z "''${XDG_CURRENT_DESKTOP:-}" ]; then
+        export XDG_CURRENT_DESKTOP=niri
+      fi
+
+      if [ -z "''${WAYLAND_DISPLAY:-}" ] || [ ! -e "$XDG_RUNTIME_DIR/$WAYLAND_DISPLAY" ]; then
+        echo "open: no running graphical session found for user $(id -un)." >&2
+        echo "  This command opens files on the niri desktop, but no Wayland" >&2
+        echo "  session socket exists. Log into the niri desktop first, then retry." >&2
+        echo "  Searched: \$WAYLAND_DISPLAY, $XDG_RUNTIME_DIR/niri.*.sock, $XDG_RUNTIME_DIR/wayland-*" >&2
+        exit 1
+      fi
+
+      # Validate + absolutize BEFORE launching: a missing MIME association
+      # should produce one actionable line, and xdg-open handles absolute
+      # paths more reliably than relative ones.
+      args=()
+      for arg in "$@"; do
+        if [ -e "$arg" ]; then
+          arg="$(realpath -- "$arg")"
+          mimetype="$(xdg-mime query filetype "$arg")"
+          if [ -z "$(xdg-mime query default "$mimetype")" ]; then
+            echo "open: no default application registered for '$mimetype' ($arg)." >&2
+            echo "  Add it to xdg.mimeApps.defaultApplications in platforms/nixos/users/home.nix." >&2
+            exit 1
+          fi
+        fi
+        args+=("$arg")
+      done
+
+      # Detach (macOS `open` semantics): fire-and-forget, survives SSH logout.
+      setsid --fork xdg-open "''${args[@]}" </dev/null >/dev/null 2>&1
+    '';
+  };
 in
 {
   imports = [
@@ -198,6 +287,7 @@ in
     packages = with pkgs; [
       # GUI Tools
       pwvucontrol # Native PipeWire volume control (GTK, Rust)
+      mpv # Media player — default for audio MIME types (see mimeApps below)
       signal-desktop # Secure messaging application
 
       # AI Tools
@@ -274,6 +364,10 @@ in
       ddcutil
       wl-clipboard # Wayland clipboard utilities (wl-copy, wl-paste)
       gawk # Text processing
+
+      # macOS-style opener that works locally AND over SSH
+      # (defined in the let block above)
+      openCommand
     ];
   };
 
@@ -406,6 +500,20 @@ in
         "image/tiff" = [ "helium.desktop" ];
         "image/webp" = [ "helium.desktop" ];
         "image/x-icon" = [ "helium.desktop" ];
+
+        # Audio — mpv (browsers handle audio files poorly; mpv works via `open`
+        # from SSH too)
+        "audio/aac" = [ "mpv.desktop" ];
+        "audio/flac" = [ "mpv.desktop" ];
+        "audio/mpeg" = [ "mpv.desktop" ];
+        "audio/mp4" = [ "mpv.desktop" ];
+        "audio/ogg" = [ "mpv.desktop" ];
+        "audio/opus" = [ "mpv.desktop" ];
+        "audio/wav" = [ "mpv.desktop" ];
+        "audio/webm" = [ "mpv.desktop" ];
+        "audio/x-flac" = [ "mpv.desktop" ];
+        "audio/x-matroska" = [ "mpv.desktop" ];
+        "audio/x-wav" = [ "mpv.desktop" ];
 
         # Videos
         "video/mp4" = [ "helium.desktop" ];
