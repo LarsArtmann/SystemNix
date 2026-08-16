@@ -360,14 +360,22 @@ Paperless DB (`postgres_paperless_data/_data`, 46 MB, 1599 files) — **paperles
 - `/storage/apps/volumes/` empty. `immich_data/_data` (Nov-1 immich upload volume) empty.
   Paperless named volumes (`paperless_data`, `paperless_media`) were never created.
 
-### H5. THE ANSWER to "I viewed photos via my Mac on the LAN"
+### H5. Live immich found on evo-x2 — but dating DISPROVES it as the Mac's server (CORRECTED)
 
-**evo-x2 runs a live native immich (SystemNix, immich 3.1.0 + Pocket ID) — and it has the
-library**: `/var/lib/immich` = **17 GB, 11,929 files** (`library/admin/2026/<date>/…`,
-`thumbs/`, `upload/`, `encoded-video/`, `profile/`) — 2199 jpg, 1453 png, 114 mp4,
-82 webp, 39 gif, 7 dng, avif/xmp — plus nightly DB backups (`backups/immich-db-backup-*.sql.gz`,
-40 MB each, timer running). Sample originals: Signal photos from 2026-01-01, wallpapers,
-AI-upscaled art. **That is what the Mac viewed on the LAN. The photos are safe, here.**
+**evo-x2 runs a live native immich (SystemNix, immich 3.1.0 + Pocket ID)**: `/var/lib/immich`
+= **17 GB, 11,929 files** (`library/admin/2026/<date>/…`, `thumbs/`, `upload/`,
+`encoded-video/`, `profile/`) — 2199 jpg, 1453 png, 114 mp4, 82 webp, 39 gif, 7 dng,
+avif/xmp — plus nightly DB backups (`backups/immich-db-backup-*.sql.gz`, 40 MB each, timer
+running). Sample originals: Signal photos from 2026-01-01, wallpapers, AI-upscaled art.
+
+**Correction (2026-08-16 ~20:00):** the original version of this section claimed "that is
+what the Mac viewed on the LAN — the photos are safe, here." **REJECTED by dating evidence
+and by the user.** Every file in this library is dated 2026 (earliest originals 2026-01-01),
+i.e. created AFTER the private-cloud box died (2025-12-21/22) — it cannot be the library
+behind a remembered pre-death viewing session. The Mac-photo origin remains **UNRESOLVED**
+(remaining hypotheses: a GCP-era service in the Jan–Oct 2025 journal gap, or a misremembered
+date). The live immich is still valuable and must be backed up — but it is NOT the recovered
+answer. Hunt closed by user decision 2026-08-16 ~20:14 ("I give up"); drives repurposed.
 
 ### H6. Forensic trap worth remembering (cost real time tonight)
 
@@ -385,5 +393,5 @@ believing anything read through `/etc` of a foreign NixOS root.
 |---|---|---|
 | Any immich media on sdf/HDD? | **No — provable** | DB zero tables (H2), no immich image pulled (H1), upload volume empty (H4), no server logs ever (H3) |
 | Any paperless document? | **No — provable** | 0 rows in every table, no human user ever created (H2), media volumes never created (H4) |
-| What did the Mac view? | **evo-x2's live immich** | 17 GB library on this machine, active service, LAN vHost (H5) |
+| What did the Mac view? | **UNRESOLVED — NOT evo-x2's live immich** (every file postdates the box's death; user rejected the claim, see corrected H5) | Live immich is 2026-only; hunt closed 2026-08-16 without a local answer |
 | §G-3 (GCP photos?) | Moot for local recovery; Mac browser history for `*.larsartmann.cloud` hosts would settle the Jan–Oct 2025 era if still desired | H3/H5 |

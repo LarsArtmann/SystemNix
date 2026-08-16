@@ -4,6 +4,14 @@
 **Mission:** Definitively answer *"where are the photos I remember viewing on my Mac?"* and close out the dead private-cloud box (died 2025-12-21/22) with **every byte classified**, zero risk of losing anything, and a clean decommission.
 **Inputs:** `docs/status/2026-08-16_20-01_media-hunt-forensic-deep-dive.md` (session verdict + 40 next items), `2026-08-16_19-12_…final-verification.md` (addendum H + §F/§G), `2026-08-16_17-24_…sdf2-clone.md`.
 
+> **STATUS 2026-08-16 20:15 — ABANDONED BEFORE EXECUTION.** The user ended the hunt
+> ("I give up, let's use these 3 drives effectively instead") and pivoted to repurposing
+> the recovered drives; see `docs/planning/2026-08-16_20-22_three-drive-repurposing.md`.
+> **No carving was ever performed** — sdf2 free space and sdf3 swap remain unexamined on
+> the live drives; once they are wiped, that frontier is gone forever (the /data clones
+> are file-level and do not include unallocated space). This plan is retained as the
+> complete playbook should the hunt ever resume on a pre-wipe image.
+
 ---
 
 ## Context — what we PROVED this session (so the plan doesn't re-do it)
