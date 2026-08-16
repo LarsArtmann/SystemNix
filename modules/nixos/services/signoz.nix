@@ -24,6 +24,7 @@ in
     {
       packages = lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
         inherit (packages) signoz;
+        signoz-frontend = packages.frontend;
         signoz-otel-collector = packages.otelCollector;
         signoz-schema-migrator = packages.schemaMigrator;
       };
