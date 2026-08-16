@@ -291,6 +291,7 @@ in
       display-manager-config.enable = true;
       audio-config.enable = true;
       smart-audio.enable = true;
+      focus-new-windows.enable = true;
       shutdown-overlay.enable = true;
       niri-desktop.enable = true;
       niri-session-manager.enable = true;

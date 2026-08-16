@@ -31,118 +31,230 @@
       pkgs.curl
       pkgs.jq
       pkgs.coreutils
+      pkgs.diffutils
     ];
     text = ''
-      echo "signoz-provision: starting (v4 — HTTP status + response body logging)"
+      echo "signoz-provision: starting (v5 — converge: skip-unchanged, PUT in place, verified deletes)"
       SIGNOZ_URL="http://${cfg.settings.queryService.host}:${toString cfg.settings.queryService.port}"
       CHANNEL_NAME="Discord Alerts"
       FAILED=0
+      RESP=$(mktemp)
 
-      # Deploy notification channels (idempotent: delete existing by name, then create fresh)
+      # http METHOD PATH [JSON_BODY] → HTTP status in $HTTP_STATUS, body in $RESP.
+      # Never or-true state mutations: every caller checks the status.
+      http() {
+        local method="$1" path="$2" body="''${3:-}"
+        local args=(--silent --max-time 15 -o "$RESP" -w "%{http_code}" -X "$method")
+        if [ -n "$body" ]; then
+          args+=(-H "Content-Type: application/json" -d "$body")
+        fi
+        HTTP_STATUS=$(curl "''${args[@]}" "$SIGNOZ_URL$path") || HTTP_STATUS=000
+      }
+
+      ok() { [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; }
+
+      fail() {
+        echo "  FAILED: $*" >&2
+        FAILED=$((FAILED + 1))
+      }
+
+      # ---------------- Notification channel ----------------
+      # Create when absent, PUT when our owned fields (templates, webhook)
+      # drift. Rules reference the receiver by NAME, so the name never changes.
       WEBHOOK_FILE="${config.sops.secrets.discord_alert_webhook_url.path}"
       if [ -f "$WEBHOOK_FILE" ]; then
-        echo "Deploying notification channels..."
+        echo "Deploying notification channel..."
         WEBHOOK_URL=$(cat "$WEBHOOK_FILE")
-        EXISTING_CHANNELS=$(curl -sf "$SIGNOZ_URL/api/v1/channels" 2>/dev/null || echo '{"data":[]}')
+        # Minimal Discord rendering — overrides alertmanager's discord.default.*
+        # label-dump templates. Title = status/severity emoji + alertname,
+        # body = per-alert description (value-expanded at rule-eval time) +
+        # clickable ruleSource link (alertmanager.external_url makes it work).
+        TITLE_TPL='{{ if eq .Status "firing" }}{{ if eq .CommonLabels.severity "warning" }}🟡{{ else }}🔴{{ end }}{{ else }}🟢{{ end }} {{ .CommonLabels.alertname }}'
+        MESSAGE_TPL='{{ if eq .Status "firing" }}{{ range .Alerts }}{{ .Annotations.description }} — {{ .Labels.ruleSource }} {{ end }}{{ else }}Condition recovered.{{ end }}'
+        CHANNEL_JSON=$(jq -n --arg url "$WEBHOOK_URL" --arg title "$TITLE_TPL" --arg message "$MESSAGE_TPL" '{
+          name: "Discord Alerts",
+          discord_configs: [{ send_resolved: true, webhook_url: $url, title: $title, message: $message }]
+        }')
+        DESIRED_CHANNEL_PROJ=$(jq -S '.discord_configs[0] | {send_resolved, webhook_url, title, message}' <<<"$CHANNEL_JSON")
 
-        EXISTING_CHANNEL_ID=$(echo "$EXISTING_CHANNELS" | jq -r --arg n "$CHANNEL_NAME" '.data[] | select(.name == $n) | .id // empty' | head -1)
-        if [ -n "$EXISTING_CHANNEL_ID" ]; then
-          # Skip recreation: alert rules reference this receiver by name, so
-          # deleting + recreating it conflicts ("alertmanager_config_conflict:
-          # the receiver name has to be unique"). The channel persists with its
-          # webhook across runs; only create when absent.
-          echo "  Channel already exists: $CHANNEL_NAME ($EXISTING_CHANNEL_ID) — skipping creation"
+        http GET /api/v1/channels
+        if ! ok; then
+          fail "channel list (HTTP $HTTP_STATUS)"
         else
-          CHANNEL_JSON=$(jq -n --arg url "$WEBHOOK_URL" '{
-            name: "Discord Alerts",
-            discord_configs: [{
-              send_resolved: true,
-              webhook_url: $url
-            }]
-          }')
-          echo "  Creating channel: $CHANNEL_NAME"
-          RESPONSE_FILE=$(mktemp)
-          STATUS=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 10 -X POST \
-            -H "Content-Type: application/json" \
-            -d "$CHANNEL_JSON" \
-            "$SIGNOZ_URL/api/v1/channels")
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
-            echo "  OK channel:$CHANNEL_NAME (HTTP $STATUS)"
+          CHANNEL_ID=$(jq -r --arg n "$CHANNEL_NAME" '.data[]? | select(.name == $n) | .id' "$RESP" | head -1)
+          if [ -z "$CHANNEL_ID" ]; then
+            echo "  Creating channel: $CHANNEL_NAME"
+            http POST /api/v1/channels "$CHANNEL_JSON"
+            if ok; then
+              echo "  OK channel created (HTTP $HTTP_STATUS)"
+            else
+              fail "channel create (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            fi
           else
-            echo "  FAILED channel:$CHANNEL_NAME (HTTP $STATUS)" >&2
-            echo "    Response: $(cat "$RESPONSE_FILE" 2>/dev/null | head -c 500)" >&2
-            FAILED=$((FAILED + 1))
+            # .data is a stringified receiver config
+            LIVE_CHANNEL_PROJ=$(jq -r --arg n "$CHANNEL_NAME" '.data[]? | select(.name == $n) | .data' "$RESP" | head -1 | jq -S 'try (.discord_configs[0] | {send_resolved, webhook_url, title, message}) catch null')
+            if [ "$LIVE_CHANNEL_PROJ" = "$DESIRED_CHANNEL_PROJ" ]; then
+              echo "  Channel unchanged: $CHANNEL_NAME — skipping"
+            else
+              echo "  Updating channel: $CHANNEL_NAME ($CHANNEL_ID)"
+              http PUT "/api/v1/channels/$CHANNEL_ID" "$CHANNEL_JSON"
+              if ok; then
+                echo "  OK channel updated (HTTP $HTTP_STATUS)"
+              else
+                fail "channel update (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+              fi
+            fi
           fi
-          rm -f "$RESPONSE_FILE"
         fi
       else
         echo "Skipping channels: Discord webhook secret not found at $WEBHOOK_FILE"
       fi
 
-      # Deploy alert rules (idempotent: delete existing by name, then create fresh)
-      echo "Deploying alert rules..."
-      EXISTING_RULES=$(curl -sf --max-time 10 "$SIGNOZ_URL/api/v1/rules" 2>/dev/null || echo '{"data":{"rules":[]}}')
+      # ---------------- Alert rules (converge) ----------------
+      # The v4 provisioner DELETEd + re-created every rule on every deploy:
+      # fresh ruleIds made SigNoz emit fake RESOLVED/FIRING pairs, and an
+      # or-true delete let duplicates pile up (3 zombie rules were live).
+      # v5 converges instead:
+      #   unchanged        → skip (zero notifications)
+      #   changed           → PUT in place (ruleId preserved → no fake pairs)
+      #   zombie duplicates → PUT the first, DELETE the rest (verified)
+      #   removed from nix  → DELETE (verified)
+      #   final             → convergence assertion on names + counts
+      echo "Deploying alert rules (converge)..."
+      RULES_PATH="/api/v1/rules"
+
+      # Canonical projection of the fields we own. The live GET adds
+      # id/state/timestamps and injects query-spec defaults (disabled,
+      # stats, legend); projecting both sides through the same filter makes
+      # "unchanged" actually detectable.
+      CANON='{alert, ruleType, disabled, description, evalWindow, frequency, labels, annotations: (.annotations // {}), preferredChannels, condition: (.condition | {op, target, matchType, selectedQueryName, compositeQuery: (.compositeQuery | {queryType, panelType, queries: [.queries[] | {type, spec: {name: .spec.name, query: .spec.query, step: .spec.step}}]})})}'
+
+      DESIRED_NAMES=()
 
       for rule_file in /etc/signoz/rules/*.json; do
-        if [ -f "$rule_file" ]; then
-          RULE_NAME=$(jq -r '.alert // empty' "$rule_file")
-          if [ -n "$RULE_NAME" ]; then
-            EXISTING_ID=$(echo "$EXISTING_RULES" | jq -r --arg n "$RULE_NAME" '.data.rules[]? // empty | select(.alert == $n) | .id // empty' | head -1)
-            if [ -n "$EXISTING_ID" ]; then
-              echo "  Deleting existing: $RULE_NAME ($EXISTING_ID)"
-              curl -sf --max-time 10 -X DELETE "$SIGNOZ_URL/api/v1/rules/$EXISTING_ID" 2>/dev/null || true
+        [ -f "$rule_file" ] || continue
+        RULE_NAME=$(jq -r '.alert // empty' "$rule_file")
+        if [ -z "$RULE_NAME" ]; then
+          fail "$(basename "$rule_file"): no .alert field"
+          continue
+        fi
+        DESIRED_NAMES+=("$RULE_NAME")
+
+        http GET "$RULES_PATH"
+        if ! ok; then
+          fail "list rules before $RULE_NAME (HTTP $HTTP_STATUS)"
+          continue
+        fi
+
+        # ids of ALL live copies of this name (catches zombie duplicates)
+        mapfile -t IDS < <(jq -r --arg n "$RULE_NAME" '.data.rules[]? | select(.alert == $n) | .id' "$RESP")
+        DESIRED_CANON=$(jq -S "$CANON" "$rule_file")
+
+        if [ "''${#IDS[@]}" -eq 1 ]; then
+          LIVE_OBJ=$(jq -c --arg n "$RULE_NAME" '[.data.rules[]? | select(.alert == $n)][0]' "$RESP")
+          LIVE_CANON=$(jq -S "$CANON" <<<"$LIVE_OBJ")
+          if [ "$LIVE_CANON" = "$DESIRED_CANON" ]; then
+            echo "  Unchanged: $RULE_NAME — skipping"
+            continue
+          fi
+          echo "  Updating in place: $RULE_NAME (''${IDS[0]})"
+          http PUT "$RULES_PATH/''${IDS[0]}" "$(cat "$rule_file")"
+          if ok; then
+            echo "  OK rule updated: $RULE_NAME (HTTP $HTTP_STATUS)"
+          else
+            echo "  PUT failed (HTTP $HTTP_STATUS) — falling back to delete+create" >&2
+            http DELETE "$RULES_PATH/''${IDS[0]}"
+            if ! ok; then
+              fail "delete $RULE_NAME before recreate (HTTP $HTTP_STATUS)"
+              continue
+            fi
+            http POST "$RULES_PATH" "$(cat "$rule_file")"
+            if ok; then
+              echo "  OK rule recreated: $RULE_NAME (HTTP $HTTP_STATUS)"
+            else
+              fail "recreate $RULE_NAME (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
             fi
           fi
-          echo "  Creating: $(basename "$rule_file")"
-          RESPONSE_FILE=$(mktemp)
-          STATUS=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 10 -X POST \
-            -H "Content-Type: application/json" \
-            -d @"$rule_file" \
-            "$SIGNOZ_URL/api/v1/rules")
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
-            echo "  OK rule:$(basename "$rule_file" .json) (HTTP $STATUS)"
+        else
+          for stale_id in "''${IDS[@]}"; do
+            [ -n "$stale_id" ] || continue
+            echo "  Deleting stale copy: $RULE_NAME ($stale_id)"
+            http DELETE "$RULES_PATH/$stale_id"
+            if ! ok; then
+              fail "delete stale $RULE_NAME/$stale_id (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            fi
+          done
+          echo "  Creating: $RULE_NAME"
+          http POST "$RULES_PATH" "$(cat "$rule_file")"
+          if ok; then
+            echo "  OK rule created: $RULE_NAME (HTTP $HTTP_STATUS)"
           else
-            echo "  FAILED rule:$(basename "$rule_file" .json) (HTTP $STATUS)" >&2
-            echo "    Response: $(cat "$RESPONSE_FILE" 2>/dev/null | head -c 500)" >&2
-            FAILED=$((FAILED + 1))
+            fail "create $RULE_NAME (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
           fi
-          rm -f "$RESPONSE_FILE"
         fi
       done
 
-      # Deploy dashboards (v2 API — v1 is permanently deprecated, returns 501)
-      # NOTE: The v2 API uses a Perses-compatible schema (spec.display, spec.layouts,
-      # spec.panels). The current dashboard JSONs are in v1 flat format. SigNoz
-      # auto-migrates existing dashboards on startup, so these are best-effort:
-      # if they fail, it's a warning, not a fatal error. Rewrite in v2 format later.
+      # Delete live rules that no longer exist in /etc/signoz/rules/
+      http GET "$RULES_PATH"
+      if ! ok; then
+        fail "list rules for removal pass (HTTP $HTTP_STATUS)"
+      else
+        while IFS=$'\t' read -r live_id live_name; do
+          [ -n "$live_id" ] || continue
+          wanted=false
+          for n in "''${DESIRED_NAMES[@]}"; do
+            if [ "$n" = "$live_name" ]; then
+              wanted=true
+            fi
+          done
+          if [ "$wanted" = false ]; then
+            echo "  Deleting removed rule: $live_name ($live_id)"
+            http DELETE "$RULES_PATH/$live_id"
+            if ! ok; then
+              fail "delete removed $live_name (HTTP $HTTP_STATUS): $(head -c 300 "$RESP")"
+            fi
+          fi
+        done < <(jq -r '.data.rules[]? | [.id, .alert] | @tsv' "$RESP")
+      fi
+
+      # ---------------- Convergence assertion ----------------
+      echo "Verifying rule convergence..."
+      http GET "$RULES_PATH"
+      if ! ok; then
+        fail "convergence check could not list rules (HTTP $HTTP_STATUS)"
+      else
+        LIVE_NAMES=$(jq -r '.data.rules[]?.alert' "$RESP" | sort)
+        LIVE_TOTAL=$(jq -r '.data.rules | length' "$RESP")
+        LIVE_UNIQUE=$(jq -r '.data.rules[]?.alert' "$RESP" | sort -u)
+        DESIRED_SORTED=$(printf '%s\n' "''${DESIRED_NAMES[@]}" | sort)
+        if [ "$LIVE_NAMES" = "$DESIRED_SORTED" ] && [ "$LIVE_UNIQUE" = "$LIVE_NAMES" ] && [ "$LIVE_TOTAL" -eq "''${#DESIRED_NAMES[@]}" ]; then
+          echo "  OK $LIVE_TOTAL rules provisioned, exact desired set, zero duplicates"
+        else
+          echo "  Convergence mismatch — desired vs live:" >&2
+          diff <(printf '%s\n' "$DESIRED_SORTED") <(printf '%s\n' "$LIVE_NAMES") >&2 || true
+          fail "rules did not converge (live=$LIVE_TOTAL desired=''${#DESIRED_NAMES[@]})"
+        fi
+      fi
+
+      # ---------------- Dashboards (best-effort) ----------------
+      # v2 API uses a Perses-compatible schema; current dashboard JSONs are
+      # v1 flat format. SigNoz auto-migrates on startup, so failures here are
+      # warnings only. Rewrite in v2 format later.
       echo "Deploying dashboards..."
       for dash_file in /etc/signoz/dashboards/*.json; do
         if [ -f "$dash_file" ]; then
           echo "  Applying: $(basename "$dash_file")"
-          RESPONSE_FILE=$(mktemp)
-          STATUS=$(curl -s -o "$RESPONSE_FILE" -w "%{http_code}" --max-time 10 -X POST \
-            -H "Content-Type: application/json" \
-            -d @"$dash_file" \
-            "$SIGNOZ_URL/api/v2/dashboards")
-          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
-            echo "  OK dashboard:$(basename "$dash_file" .json) (HTTP $STATUS)"
+          http POST /api/v2/dashboards "$(cat "$dash_file")"
+          if ok; then
+            echo "  OK dashboard:$(basename "$dash_file" .json) (HTTP $HTTP_STATUS)"
           else
-            echo "  WARNING dashboard:$(basename "$dash_file" .json) (HTTP $STATUS) — may need v2 schema migration" >&2
-            echo "    Response: $(cat "$RESPONSE_FILE" 2>/dev/null | head -c 500)" >&2
+            echo "  WARNING dashboard:$(basename "$dash_file" .json) (HTTP $HTTP_STATUS) — may need v2 schema migration" >&2
+            echo "    Response: $(head -c 300 "$RESP")" >&2
           fi
-          rm -f "$RESPONSE_FILE"
         fi
       done
 
-      # Verify: GET /api/v1/rules must return >0 rules
-      echo "Verifying alert rules provisioned..."
-      RULE_COUNT=$(curl -sf --max-time 10 "$SIGNOZ_URL/api/v1/rules" 2>/dev/null | jq '.data.rules | length' 2>/dev/null || echo 0)
-      if [ "$RULE_COUNT" -gt 0 ]; then
-        echo "  OK $RULE_COUNT alert rules confirmed"
-      else
-        echo "  FAILED: 0 alert rules after provisioning — POST may be failing silently" >&2
-        FAILED=$((FAILED + 1))
-      fi
+      rm -f "$RESP"
 
       if [ "$FAILED" -gt 0 ]; then
         echo "Provisioning FAILED: $FAILED errors. See stderr above." >&2

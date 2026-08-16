@@ -42,6 +42,12 @@ let
         ruleType = "promql_rule";
         version = "v5";
         inherit description;
+        # Fired alerts carry annotations (not the top-level description, which
+        # is UI-only). The Discord message template renders
+        # .Annotations.description; $value is expanded at rule-eval time.
+        annotations = {
+          description = "${description} (current: {{ $value }})";
+        };
         evalWindow = interval;
         frequency = interval;
         disabled = false;
@@ -107,8 +113,11 @@ in
     };
     "signoz/rules/service-down.json".source = mkRule {
       name = "Systemd Service Failed";
-      description = "Systemd service {{.Labels.name}} is in failed state";
-      query = ''node_systemd_units{state="failed"}'';
+      description = "Systemd unit {{.Labels.name}} is in failed state";
+      # Per-unit series so the alert names the failing unit. The aggregate
+      # node_systemd_units{state="failed"} has no name label — alerts from it
+      # could not say WHICH unit failed.
+      query = ''node_systemd_unit_state{state="failed"} == 1'';
       step = 60;
       target = 1;
       interval = "1m";
@@ -183,8 +192,10 @@ in
     };
     "signoz/rules/service-failed-spike.json".source = mkRule {
       name = "Service Failure Spike";
-      description = "Multiple systemd services failing in rapid succession — possible systemic issue";
-      query = "sum(increase(ntfy_systemd_unit_failed_total[10m]))";
+      description = "Multiple systemd units in failed state simultaneously — possible systemic issue";
+      # ntfy_systemd_unit_failed_total was never emitted by anything (phantom
+      # metric — the rule could never fire). Sum the real per-unit failed state.
+      query = ''sum(node_systemd_unit_state{state="failed"})'';
       step = 60;
       target = 3;
     };

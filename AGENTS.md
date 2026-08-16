@@ -160,6 +160,17 @@ Quickshell is a QtQuick desktop shell replacing Waybar, Dunst, Wlogout, polkit_g
 - **`inputs.nixpkgs.follows`** on the DMS input is MANDATORY — mismatched Qt causes runtime crashes
 - **Shutdown countdown overlay (2026-08-14):** `modules/nixos/desktop/shutdown-overlay.nix` runs a SECOND Quickshell instance (`services.shutdown-overlay`, user service) that shows a fullscreen overlay on ALL monitors when `/run/systemd/shutdown/scheduled` has ≤60s left — `WlrLayer.Overlay` + `ExclusionMode.Ignore` + click-through `mask: Region {}` (DMS FrameWindow pattern). It reads the µs timestamp from line 1; `shutdown -c` removes the file and the overlay hides within 200ms. niri's built-in hotkey overlay ("Important hotkeys", compositor-drawn while a keybind chord is pending) renders above the ENTIRE layer-shell Overlay layer (`Niri::render_inner` pushes it before `Layer::Overlay`) — no client can top it; only session-lock/exit-dialog do. A standalone quickshell run from SSH needs `DISPLAY` set or it dies silently after a Gtk warning (session user services get both DISPLAY and WAYLAND_DISPLAY imported, so the unit is unaffected)
 
+### Focus-New-Windows (launch follow)
+
+**Module:** `modules/nixos/desktop/focus-new-windows.nix` (`services.focus-new-windows.enable`) — user systemd service watching `niri msg --json event-stream` (smart-audio pattern), deployed live 2026-08-16
+
+- **Purpose:** niri never moves focus to a window opening on another output (the `open-on-workspace` → `chat`/`media` on DP-2 case). The daemon calls `focus-window --id` on newly opened unfocused windows so spotlight launches take you there
+- **`WindowOpenedOrChanged` fires for opens AND updates** — the daemon tracks known window IDs (seeded from the `WindowsChanged` snapshot, pruned by `WindowClosed`) so a title change on a background window never steals focus
+- **`is_focused` gate:** niri-unstable already focuses same-output opens itself (verified live). The daemon only acts on cross-workspace/cross-output opens — same-workspace launches stay zero-touch
+- **`startupGraceSeconds`** (default 10): windows opening right after session start are NOT followed (login autostart would otherwise drag focus across workspaces)
+- **`skipAppIds`:** regex list (Python `re.search`) of app-ids that must never steal focus
+- Cross-workspace `focus-window --id` verified live (switches active workspace). The true cross-OUTPUT case (DP-2 connected) is untestable from SSH — verify after DP-2 reconnect
+
 ### Smart-Audio (focus-following HDMI audio router)
 
 **Module:** `modules/nixos/desktop/smart-audio.nix` (`services.smart-audio.enable`) — user systemd service, deployed live
@@ -529,6 +540,7 @@ serviceConfig = lib.mkMerge [
 - **`git insteadOf` flake.lock SSH pollution** — Global rule rewrites `https://github.com/` → `git@github.com:`. Workaround: `GIT_CONFIG_GLOBAL=/dev/null nix flake update <input>`.
 - **statix `repeated_keys` disabled** — False positive for NixOS modules. `statix.toml` (non-dotted) has `disabled = ["repeated_keys"]`.
 - **Pre-commit statix lints STAGED `.nix` files only** — Unstaged/pre-existing debt does NOT block commits (pathspec-scoped commits stay clean), so `statix check .` repo-wide (always exit 0 in practice) is NOT a gate predictor. Run `nix fmt` or stage the files to lint them.
+- **SSH logins auto-attach to zellij (2026-08-16)** — `platforms/common/programs/zellij.nix` appends a fish `interactiveShellInit` hook: interactive + `$SSH_TTY` set + not already in zellij (`$ZELLIJ`) → `exec zellij attach --create main`. Session `main` persists across SSH disconnects (Crush/agent sessions survive client death — the motivation). Affects BOTH hosts (module is in common config). Guards: local terminals unaffected (no SSH_TTY), `ssh host cmd`/scp unaffected (non-interactive), zellij panes unaffected (`ZELLIJ` set). Escape hatch: `ssh -t host env ZELLIJ_NO_AUTO_ATTACH=1 fish` for a raw shell. The `exec` replaces the login fish — init lines after the hook never run in that shell, which is fine because pane fish re-runs the full init.
 
 ### Infrastructure Patterns
 

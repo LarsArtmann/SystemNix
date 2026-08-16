@@ -231,6 +231,7 @@ _A brutally honest audit of every feature the project actually has._
 | Component                     | Status | Notes                                                                                                               |
 | ----------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
 | DMS spotlight (launcher)      | ✅     | Replaces rofi — `dms ipc call spotlight toggle` (Mod+D/Mod+Space). App, file, window search                         |
+| Focus-new-windows daemon      | ✅     | User service watching the niri event stream — follows spotlight launches to their `open-on-workspace` target via `focus-window --id` |
 | DMS clipboard modal           | ✅     | Replaces rofi cliphist — `dms ipc call clipboard toggle` (Alt+C)                                                    |
 | DMS keybinds modal            | ✅     | Replaces `niri msg binds                                                                                            | rofi -dmenu`—`dms ipc call keybinds toggle niri` (Mod+Shift+/) |
 | DMS emoji launcher            | ✅     | Community plugin dms-emoji-launcher — `dms ipc call spotlight toggleQuery ":e"` (Mod+.)                             |

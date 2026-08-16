@@ -184,6 +184,14 @@ in
               web = {
                 enabled = false;
               };
+              alertmanager = {
+                signoz = {
+                  # Base URL baked into fired alerts (ruleSource label → the
+                  # links Discord messages show). SigNoz defaults to
+                  # http://localhost:8080, which is useless from Discord.
+                  external_url = "https://signoz.${config.networking.domain}";
+                };
+              };
               instrumentation = {
                 logs.level = "info";
                 metrics.enabled = false;

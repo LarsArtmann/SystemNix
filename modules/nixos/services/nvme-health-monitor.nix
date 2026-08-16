@@ -48,15 +48,21 @@ _: {
 
         SMART=$(nvme smart-log -o json "$DEVICE" 2>/dev/null) || exit 0
 
-        CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // 0')
-        AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.available_spare // 0')
-        PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percentage_used // 0')
-        MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // 0')
-        TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
-        TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+        # nvme-cli 2.16 JSON keys: avail_spare / percent_used (NOT
+        # available_spare / percentage_used). `// empty` — a missing key must
+        # skip the check, not fabricate a 0 that triggers false warnings.
+        CRITICAL_WARNING=$(echo "$SMART" | jq -r '.critical_warning // empty')
+        AVAILABLE_SPARE=$(echo "$SMART" | jq -r '.avail_spare // empty')
+        PERCENTAGE_USED=$(echo "$SMART" | jq -r '.percent_used // empty')
+        MEDIA_ERRORS=$(echo "$SMART" | jq -r '.media_errors // empty')
+        TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // empty')
+        TEMP_CELSIUS=""
+        if [ -n "$TEMP_KELVIN" ]; then
+          TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+        fi
 
         # Critical warning — any non-zero value is urgent
-        if [ "$CRITICAL_WARNING" -ne 0 ]; then
+        if [ -n "$CRITICAL_WARNING" ] && [ "$CRITICAL_WARNING" -ne 0 ]; then
           if needs_notify "critical_warning" "$CRITICAL_WARNING"; then
             notify "critical" "NVMe Critical Warning!" \
               "Critical warning flags: $CRITICAL_WARNING on $(basename $DEVICE). Check SMART data immediately."
@@ -68,7 +74,7 @@ _: {
         fi
 
         # Media errors — any non-zero is urgent
-        if [ "$MEDIA_ERRORS" -ne 0 ]; then
+        if [ -n "$MEDIA_ERRORS" ] && [ "$MEDIA_ERRORS" -ne 0 ]; then
           if needs_notify "media_errors" "$MEDIA_ERRORS"; then
             notify "critical" "NVMe Media Errors Detected!" \
           "$MEDIA_ERRORS media/data integrity errors on $(basename $DEVICE). Flash cells may be degrading."
@@ -80,14 +86,14 @@ _: {
         fi
 
         # Temperature check
-        if [ "$TEMP_CELSIUS" -ge ${toString cfg.criticalTempThreshold} ]; then
+        if [ -n "$TEMP_CELSIUS" ] && [ "$TEMP_CELSIUS" -ge ${toString cfg.criticalTempThreshold} ]; then
           if needs_notify "temp_critical" "$TEMP_CELSIUS"; then
             notify "critical" "NVMe SSD Overheating!" \
               "Temperature: ''${TEMP_CELSIUS}°C (critical: ${toString cfg.criticalTempThreshold}°C) on $(basename $DEVICE)"
             logger -t "nvme-health-monitor" \
               "CRITICAL: temp=''${TEMP_CELSIUS}°C on $DEVICE"
           fi
-        elif [ "$TEMP_CELSIUS" -ge ${toString cfg.warnTempThreshold} ]; then
+        elif [ -n "$TEMP_CELSIUS" ] && [ "$TEMP_CELSIUS" -ge ${toString cfg.warnTempThreshold} ]; then
           if needs_notify "temp_warn" "$TEMP_CELSIUS"; then
             notify "normal" "NVMe SSD Temperature High" \
               "Temperature: ''${TEMP_CELSIUS}°C (warning: ${toString cfg.warnTempThreshold}°C) on $(basename $DEVICE)"
@@ -100,14 +106,14 @@ _: {
         fi
 
         # Endurance check
-        if [ "$PERCENTAGE_USED" -ge 80 ]; then
+        if [ -n "$PERCENTAGE_USED" ] && [ "$PERCENTAGE_USED" -ge 80 ]; then
           if needs_notify "endurance" "$PERCENTAGE_USED"; then
             notify "critical" "NVMe SSD Endurance Critical!" \
               "''${PERCENTAGE_USED}% of rated endurance consumed on $(basename $DEVICE). Replace drive soon."
             logger -t "nvme-health-monitor" \
               "CRITICAL: endurance=''${PERCENTAGE_USED}% on $DEVICE"
           fi
-        elif [ "$PERCENTAGE_USED" -ge 50 ]; then
+        elif [ -n "$PERCENTAGE_USED" ] && [ "$PERCENTAGE_USED" -ge 50 ]; then
           if needs_notify "endurance" "$PERCENTAGE_USED"; then
             notify "normal" "NVMe SSD Endurance Warning" \
               "''${PERCENTAGE_USED}% of rated endurance consumed on $(basename $DEVICE). Plan for replacement."
@@ -119,7 +125,7 @@ _: {
         fi
 
         # Available spare check
-        if [ "$AVAILABLE_SPARE" -lt ${toString cfg.spareWarnThreshold} ]; then
+        if [ -n "$AVAILABLE_SPARE" ] && [ "$AVAILABLE_SPARE" -lt ${toString cfg.spareWarnThreshold} ]; then
           if needs_notify "spare" "$AVAILABLE_SPARE"; then
             notify "normal" "NVMe SSD Spare Blocks Low" \
               "Only ''${AVAILABLE_SPARE}% spare blocks remaining on $(basename $DEVICE). Drive is aging."

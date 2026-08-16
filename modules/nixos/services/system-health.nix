@@ -42,11 +42,13 @@ _: {
       # CPU alert threshold: average CPU% over collection interval that triggers alert
       cpuAlertThreshold = 150;
 
-      # Per-service memory alert threshold in bytes. Services that exceed this
-      # are flagged via system_service_memory_over_threshold for Gatus alerting.
-      # PMA reads 260+ git repos during discovery, charging ~16G of page cache.
-      # Its MemoryHigh=6G, so 5G is the early-warning threshold (83% of high).
-      serviceMemoryThreshold = 5 * 1024 * 1024 * 1024; # 5 GiB
+      # Per-service memory alert threshold: 90% of the unit's OWN MemoryMax,
+      # read at collection time via systemctl. Units without a MemoryMax
+      # (infinity) fall back to this flat threshold. Thresholds must derive
+      # from the ceiling they guard — a flat 5G against PMA's
+      # MemoryHigh=12G/MemoryMax=16G (retuned 2026-08-14) made "PMA Memory
+      # Pressure" flap on every legitimate repo-discovery scan.
+      serviceMemoryThresholdFallback = 5 * 1024 * 1024 * 1024; # 5 GiB
 
       # /tmp tmpfs usage alert threshold (percentage). /tmp is capped at 48 GiB
       # (boot.nix static systemd mount). 80% ≈ 38 GiB — catches runaway builds
@@ -371,16 +373,25 @@ _: {
             echo "# HELP system_service_memory_bytes Cgroup memory.current for monitored services"
             echo "# TYPE system_service_memory_bytes gauge"
 
-            echo "# HELP system_service_memory_over_threshold 1 if service cgroup memory exceeds ${toString serviceMemoryThreshold} bytes, 0 otherwise"
+            echo "# HELP system_service_memory_threshold_bytes Per-service alert threshold: 90% of the unit's MemoryMax (fallback: ${toString serviceMemoryThresholdFallback} bytes when unlimited)"
+            echo "# TYPE system_service_memory_threshold_bytes gauge"
+
+            echo "# HELP system_service_memory_over_threshold 1 if service cgroup memory exceeds 90% of its MemoryMax, 0 otherwise"
             echo "# TYPE system_service_memory_over_threshold gauge"
 
             ${lib.concatMapStrings (svc: ''
               svc="${svc}"
               mem_bytes=$(systemctl_value "$svc" -p MemoryCurrent)
               mem_bytes="''${mem_bytes:-0}"
+              mem_max=$(systemctl show "$svc" -p MemoryMax --value 2>/dev/null || echo "")
+              mem_threshold=${toString serviceMemoryThresholdFallback}
+              if [ -n "$mem_max" ] && [ "$mem_max" != "infinity" ] && [ "$mem_max" -gt 0 ] 2>/dev/null; then
+                mem_threshold=$((mem_max * 90 / 100))
+              fi
               echo "system_service_memory_bytes{service=\"$svc\"} ''${mem_bytes}"
+              echo "system_service_memory_threshold_bytes{service=\"$svc\"} ''${mem_threshold}"
               mem_over=0
-              if [ "$mem_bytes" -gt ${toString serviceMemoryThreshold} ] 2>/dev/null; then
+              if [ "$mem_bytes" -gt "$mem_threshold" ] 2>/dev/null; then
                 mem_over=1
               fi
               echo "system_service_memory_over_threshold{service=\"$svc\"} ''${mem_over}"

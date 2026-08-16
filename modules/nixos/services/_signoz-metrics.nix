@@ -143,70 +143,97 @@ lib.mkIf cfg.components.nodeExporter {
                     }
 
                     DEV_NAME=$(basename "$DEVICE")
+                    MISSING_KEYS=0
 
+                    # extract <key>: print the numeric value, or return 1 when
+                    # the key is missing/non-numeric. NEVER default to 0 — a
+                    # phantom zero fed the "NVMe Spare Blocks Low" false alert
+                    # for weeks (nvme-cli 2.16 JSON keys are avail_spare /
+                    # percent_used; the old `// 0` fallback masked the rename).
                     extract() {
-                      echo "$SMART" | jq -r --arg key "$1" '.[$key] // 0'
+                      echo "$SMART" | jq -er --arg key "$1" '.[$key] | numbers' 2>/dev/null || {
+                        echo "nvme-metrics: smart-log key '$1' not found — available keys: $(echo "$SMART" | jq -r 'keys | join(",")')" >&2
+                        MISSING_KEYS=1
+                        return 1
+                      }
                     }
 
-                    TEMP_KELVIN=$(echo "$SMART" | jq -r '.temperature // 0')
-                    TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+                    TEMP_KELVIN=$(extract temperature) || true
+                    CRITICAL_WARNING=$(extract critical_warning) || true
+                    AVAIL_SPARE=$(extract avail_spare) || true
+                    SPARE_THRESH=$(extract spare_thresh) || true
+                    PCT_USED=$(extract percent_used) || true
+                    DATA_UNITS_READ=$(extract data_units_read) || true
+                    DATA_UNITS_WRITTEN=$(extract data_units_written) || true
+                    POWER_CYCLES=$(extract power_cycles) || true
+                    POWER_ON_HOURS=$(extract power_on_hours) || true
+                    UNSAFE_SHUTDOWNS=$(extract unsafe_shutdowns) || true
+                    MEDIA_ERRORS=$(extract media_errors) || true
+                    ERR_LOG_ENTRIES=$(extract num_err_log_entries) || true
+
+                    # emit <metric> <type> <value> <help> — skips metrics whose
+                    # key was missing (absent sample > lying zero).
+                    emit() {
+                      local metric="$1" mtype="$2" value="$3" help="$4"
+                      [ -n "$value" ] || return 0
+                      echo "# HELP $metric $help"
+                      echo "# TYPE $metric $mtype"
+                      echo "$metric{device=\"''${DEV_NAME}\"} $value"
+                    }
+
+                    TEMP_CELSIUS=""
+                    if [ -n "$TEMP_KELVIN" ]; then
+                      TEMP_CELSIUS=$((TEMP_KELVIN - 273))
+                    fi
 
                     # Endurance warning: 1 when percentage_used >= 50%
-                    PCT_USED=$(extract percentage_used)
                     ENDURANCE_WARNING=0
-                    [ "''${PCT_USED:-0}" -ge 50 ] 2>/dev/null && ENDURANCE_WARNING=1
+                    if [ -n "$PCT_USED" ] && [ "''${PCT_USED}" -ge 50 ] 2>/dev/null; then
+                      ENDURANCE_WARNING=1
+                    fi
 
                     {
-                      echo "# HELP node_nvme_temperature_celsius NVMe SSD temperature in Celsius"
-                      echo "# TYPE node_nvme_temperature_celsius gauge"
-                      echo "node_nvme_temperature_celsius{device=\"''${DEV_NAME}\"} ''${TEMP_CELSIUS}"
+                      emit node_nvme_temperature_celsius gauge "$TEMP_CELSIUS" "NVMe SSD temperature in Celsius"
 
-                      echo "# HELP node_nvme_critical_warning NVMe critical warning flags (0 = none)"
-                      echo "# TYPE node_nvme_critical_warning gauge"
-                      echo "node_nvme_critical_warning{device=\"''${DEV_NAME}\"} $(extract critical_warning)"
+                      emit node_nvme_critical_warning gauge "$CRITICAL_WARNING" "NVMe critical warning flags (0 = none)"
 
-                      echo "# HELP node_nvme_available_spare_percent NVMe available spare as percentage"
-                      echo "# TYPE node_nvme_available_spare_percent gauge"
-                      echo "node_nvme_available_spare_percent{device=\"''${DEV_NAME}\"} $(extract available_spare)"
+                      emit node_nvme_available_spare_percent gauge "$AVAIL_SPARE" "NVMe available spare as percentage (smart-log key: avail_spare)"
 
-                      echo "# HELP node_nvme_percentage_used NVMe endurance used percentage (0-100, 100 = worn out)"
-                      echo "# TYPE node_nvme_percentage_used gauge"
-                      echo "node_nvme_percentage_used{device=\"''${DEV_NAME}\"} $(extract percentage_used)"
+                      emit node_nvme_spare_threshold_percent gauge "$SPARE_THRESH" "NVMe available spare threshold as percentage (smart-log key: spare_thresh)"
+
+                      emit node_nvme_percentage_used gauge "$PCT_USED" "NVMe endurance used percentage (0-100, 100 = worn out; smart-log key: percent_used)"
 
                       echo "# HELP node_nvme_endurance_warning NVMe endurance boolean: 1 when percentage_used >= 50%"
                       echo "# TYPE node_nvme_endurance_warning gauge"
                       echo "node_nvme_endurance_warning{device=\"''${DEV_NAME}\"} ''${ENDURANCE_WARNING}"
 
-                      echo "# HELP node_nvme_data_units_read_total NVMe data units read (1 unit = 512 bytes)"
-                      echo "# TYPE node_nvme_data_units_read_total counter"
-                      echo "node_nvme_data_units_read_total{device=\"''${DEV_NAME}\"} $(extract data_units_read)"
+                      emit node_nvme_data_units_read_total counter "$DATA_UNITS_READ" "NVMe data units read (1 unit = 512 bytes)"
 
-                      echo "# HELP node_nvme_data_units_written_total NVMe data units written (1 unit = 512 bytes)"
-                      echo "# TYPE node_nvme_data_units_written_total counter"
-                      echo "node_nvme_data_units_written_total{device=\"''${DEV_NAME}\"} $(extract data_units_written)"
+                      emit node_nvme_data_units_written_total counter "$DATA_UNITS_WRITTEN" "NVMe data units written (1 unit = 512 bytes)"
 
-                      echo "# HELP node_nvme_power_cycles_total NVMe power cycle count"
-                      echo "# TYPE node_nvme_power_cycles_total counter"
-                      echo "node_nvme_power_cycles_total{device=\"''${DEV_NAME}\"} $(extract power_cycles)"
+                      emit node_nvme_power_cycles_total counter "$POWER_CYCLES" "NVMe power cycle count"
 
-                      echo "# HELP node_nvme_power_on_hours_total NVMe power-on hours"
-                      echo "# TYPE node_nvme_power_on_hours_total counter"
-                      echo "node_nvme_power_on_hours_total{device=\"''${DEV_NAME}\"} $(extract power_on_hours)"
+                      emit node_nvme_power_on_hours_total counter "$POWER_ON_HOURS" "NVMe power-on hours"
 
-                      echo "# HELP node_nvme_unsafe_shutdowns_total NVMe unsafe shutdown count"
-                      echo "# TYPE node_nvme_unsafe_shutdowns_total counter"
-                      echo "node_nvme_unsafe_shutdowns_total{device=\"''${DEV_NAME}\"} $(extract unsafe_shutdowns)"
+                      emit node_nvme_unsafe_shutdowns_total counter "$UNSAFE_SHUTDOWNS" "NVMe unsafe shutdown count"
 
-                      echo "# HELP node_nvme_media_errors_total NVMe media and data integrity errors"
-                      echo "# TYPE node_nvme_media_errors_total counter"
-                      echo "node_nvme_media_errors_total{device=\"''${DEV_NAME}\"} $(extract media_errors)"
+                      emit node_nvme_media_errors_total counter "$MEDIA_ERRORS" "NVMe media and data integrity errors"
 
-                      echo "# HELP node_nvme_error_log_entries_total NVMe error log entry count"
-                      echo "# TYPE node_nvme_error_log_entries_total counter"
-                      echo "node_nvme_error_log_entries_total{device=\"''${DEV_NAME}\"} $(extract num_err_log_entries)"
+                      emit node_nvme_error_log_entries_total counter "$ERR_LOG_ENTRIES" "NVMe error log entry count"
+
+                      echo "# HELP node_nvme_collector_keys_missing 1 if smart-log JSON keys were missing (renamed upstream?) — check journalctl -u nvme-metrics"
+                      echo "# TYPE node_nvme_collector_keys_missing gauge"
+                      echo "node_nvme_collector_keys_missing{device=\"''${DEV_NAME}\"} ''${MISSING_KEYS}"
                     } > "$TMP"
 
                     mv "$TMP" "$OUT"
+
+                    # Exit 0 on missing keys: the partial .prom keeps the other
+                    # metrics flowing and Gatus alerts on the keys_missing flag
+                    # (failing the unit every minute would spam instead).
+                    if [ "$MISSING_KEYS" -ne 0 ]; then
+                      echo "nvme-metrics: wrote partial .prom — missing keys flagged via node_nvme_collector_keys_missing" >&2
+                    fi
                   '';
                 };
               in
