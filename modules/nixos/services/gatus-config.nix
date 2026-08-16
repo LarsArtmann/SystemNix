@@ -597,9 +597,21 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*node_nvme_temperature_celsius*)"
                   "[BODY] == pat(*node_nvme_percentage_used*)"
+                  "[BODY] == pat(*node_nvme_available_spare_percent*)"
                   "[BODY] == pat(*node_nvme_media_errors_total*)"
                 ];
                 alerts = discordAlert "NVMe SMART metrics not being collected — disk health unmonitored";
+              })
+              (mkHttpCheck {
+                name = "NVMe Collector Key Integrity";
+                group = "Monitoring";
+                url = "http://localhost:${toString nodePort}/metrics";
+                interval = "5m";
+                conditions = [
+                  "[STATUS] == 200"
+                  "[BODY] == pat(*node_nvme_collector_keys_missing{device=\"nvme0n1\"} 0*)"
+                ];
+                alerts = discordAlert "nvme-metrics collector is missing smart-log JSON keys (nvme-cli key rename?). Affected metrics are omitted, not zeroed — but every alert depending on them has gone blind. The 2026-08 phantom-zero bug hid exactly this way for weeks. Check: journalctl -u nvme-metrics -n 20 (logs the available keys)";
               })
               (mkHttpCheck {
                 name = "NVMe Endurance Warning";
@@ -608,7 +620,7 @@ _: {
                 interval = "1h";
                 conditions = [
                   "[STATUS] == 200"
-                  "[BODY] == pat(*node_nvme_endurance_warning 0*)"
+                  "[BODY] == pat(*node_nvme_endurance_warning{device=\"nvme0n1\"} 0*)"
                 ];
                 alerts = discordAlert "NVMe SSD endurance exceeds 50% — plan for drive replacement. Check: nvme smart-log /dev/nvme0n1";
               })
@@ -767,7 +779,7 @@ _: {
                   "[STATUS] == 200"
                   "[BODY] == pat(*system_service_memory_over_threshold{service=\"projects-management-automation\"} 0*)"
                 ];
-                alerts = discordAlert "PMA cgroup memory exceeds 5 GB — page cache from repo discovery is growing dangerously. MemoryHigh=6G will throttle, MemoryMax=8G will OOM-kill+restart. If this alert fires repeatedly, PMA is in a page-cache thrash loop (2026-08-09 crash root cause). Check: systemctl status projects-management-automation";
+                alerts = discordAlert "PMA cgroup memory exceeds 90% of its MemoryMax (16G) — a legitimate repo-discovery scan rides MemoryHigh=12G, so this alert means the hard OOM-kill ceiling is in reach. Check: systemctl status projects-management-automation and system_service_memory_bytes in the textfile collector. Full narrative: docs/crash-analysis-2026-08-09.md";
               })
               (mkHttpCheck {
                 name = "Service Restart Metrics";

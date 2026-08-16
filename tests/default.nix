@@ -28,6 +28,7 @@ in
   caddy-auth-patterns = makeTest (import ./test-caddy-auth.nix { inherit pkgs; });
   gatus-patterns = makeTest (import ./test-gatus-patterns.nix { inherit pkgs; });
   pma-identity = makeTest (import ./test-pma-identity.nix { inherit pkgs; });
+  ksm = makeTest (import ./test-ksm.nix { inherit pkgs; });
   port-uniqueness = makeTest (import ./test-port-uniqueness.nix { inherit pkgs; });
   browser-history = makeTest (import ./test-browser-history.nix { inherit pkgs inputs; });
 }

@@ -84,18 +84,10 @@ in
         "dmask=0077"
       ];
     };
-    # nodiscard — defense-in-depth. fstrim (configuration.nix) covers this filesystem.
-    "/rust-cache" = mkFilesystem {
-      device = "/dev/disk/by-partlabel/rust-cache";
-      fsType = "ext4";
-      options = [
-        "noatime"
-        "nodiscard"
-        "nofail"
-        "x-systemd.automount"
-        "x-systemd.idle-timeout=10min"
-      ];
-    };
+    # Old /rust-cache mount (nvme0n1p9, ext4, by-partlabel/rust-cache) removed
+    # 2026-08-16: Rust targets moved to /mnt/buildcache/rust + sccache. The
+    # partition itself still exists (98G raw) — delete/grow requires manual
+    # partition-table surgery, deliberately not automated.
   };
 
   # Disk swap dropped — zramSwap (10% of 64G = ~6.4G compressed) is sufficient.
